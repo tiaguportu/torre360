@@ -1,0 +1,13 @@
+{
+    "agents": [
+        "gemini"
+    ],
+    "mcp": true,
+    "nightwatch_mcp": false,
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "tailwindcss-development",
+        "debugging-output-and-previewing-html-using-ray"
+    ]
+}

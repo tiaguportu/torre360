@@ -1,0 +1,62 @@
+/* Custom Filament Theme: The Academic Curator for Torre360 */
+
+:root {
+    --fi-primary: 0, 32, 69; /* #002045 - Deep Navy */
+    --fi-secondary: 45, 106, 79; /* #2D6A4F - Forest Green */
+}
+
+/* No-Line Aesthetic: Use Background Shading instead of 1px borders for cards */
+.fi-panel-body .fi-card {
+    border-width: 0 !important;
+    background-color: #f7f9fb !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+}
+
+/* Layering: Stacking effect for sections */
+.fi-main {
+    background-color: #f7f9fb !important;
+}
+
+.fi-section {
+    border-width: 0 !important;
+    background-color: #ffffff !important;
+    border-radius: 0.75rem !important; /* xl */
+    padding: 1.5rem !important; /* spacing.6 */
+}
+
+/* Editorial Data Tables (No Horizontal lines except header) */
+.fi-ta-content {
+    border-width: 0 !important;
+}
+
+.fi-ta-row:nth-child(even) {
+    background-color: #f2f4f6 !important; /* surface_container_low */
+}
+
+/* Glassmorphism for floating UI (TopBar/Search) */
+.fi-topbar {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 0 !important;
+}
+
+/* Sidebar Editorial Style */
+.fi-sidebar {
+    background-color: #f2f4f6 !important; /* surface_container_low */
+    border-right: 0 !important;
+}
+
+.fi-sidebar-item-active {
+    background-color: #002045 !important;
+    border-radius: 9999px !important; /* pill shape */
+}
+
+.fi-sidebar-item-active span {
+    color: #ffffff !important;
+}
+
+/* Button Refinement (Subtle gradient) */
+.fi-btn-primary {
+    background: linear-gradient(135deg, #002045 0%, #1a365d 100%) !important;
+}

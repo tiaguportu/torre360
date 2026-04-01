@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Models\CronogramaAula;
+use App\Models\Disciplina;
+use App\Models\Pessoa;
+use App\Models\Turma;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Widgets\Widget;
+
+class CronogramaCalendarWidget extends Widget implements HasForms
+{
+    use InteractsWithForms;
+
+    protected string $view = 'filament.widgets.cronograma-calendar-widget';
+
+    protected int | string | array $columnSpan = 'full';
+
+    public ?array $data = [];
+
+    // Filtros fixos vindos do componente pai (ex: página de edição)
+    public ?int $fixedTurmaId = null;
+    public ?int $fixedDisciplinaId = null;
+    public ?int $fixedProfessorId = null;
+
+    public function getAllEvents(): array
+    {
+        $query = CronogramaAula::with(['turma.serie.curso', 'disciplina', 'professor']);
+
+        // Aplica filtros fixos se definidos
+        if ($this->fixedTurmaId) {
+            $query->where('turma_id', $this->fixedTurmaId);
+        }
+        if ($this->fixedDisciplinaId) {
+            $query->where('disciplina_id', $this->fixedDisciplinaId);
+        }
+        if ($this->fixedProfessorId) {
+            $query->where('pessoa_id', $this->fixedProfessorId);
+        }
+
+        return $query->get()
+            ->map(function (CronogramaAula $record) {
+                return [
+                    'id' => $record->id,
+                    'title' => "{$record->turma?->nome} - {$record->disciplina?->nome}",
+                    'start' => "{$record->data}T{$record->hora_inicio}",
+                    'end' => "{$record->data}T{$record->hora_fim}",
+                    'url' => CronogramaAulaResource::getUrl('edit', ['record' => $record]),
+                    'turma_id' => $record->turma_id,
+                    'turma_nome' => $record->turma?->nome,
+                    'turma_cor' => $record->turma?->cor ?? '#10b981',
+                    'disciplina_id' => $record->disciplina_id,
+                    'disciplina_nome' => $record->disciplina?->nome,
+                    'disciplina_cor' => $record->disciplina?->cor ?? '#f59e0b',
+                    'curso_nome' => $record->turma?->serie?->curso?->nome_interno,
+                    'curso_cor' => $record->turma?->serie?->curso?->cor ?? '#7c3aed',
+                    'professor_id' => $record->pessoa_id,
+                    'professor_nome' => $record->professor?->nome,
+                    'hora_inicio' => $record->hora_inicio,
+                    'hora_fim' => $record->hora_fim,
+                    'data' => date('d/m/Y', strtotime($record->data)),
+                    'conteudo_ministrado_full' => $record->conteudo_ministrado,
+                    'conteudo_ministrado' => str($record->conteudo_ministrado)->limit(100),
+                    'backgroundColor' => 'transparent',
+                    'borderColor' => 'transparent',
+                ];
+            })
+            ->toArray();
+    }
+
+    public function mount(): void
+    {
+        $this->form->fill();
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Filtros')
+                    ->components([
+                        Grid::make(3)
+                            ->components([
+                                Select::make('turmas')
+                                    ->label('Turmas')
+                                    ->multiple()
+                                    ->options(Turma::whereNotNull('nome')->orderBy('nome')->pluck('nome', 'id'))
+                                    ->searchable()
+                                    ->live()
+                                    ->hidden(fn () => $this->fixedTurmaId !== null),
+                                
+                                Select::make('disciplinas')
+                                    ->label('Disciplinas')
+                                    ->multiple()
+                                    ->options(Disciplina::whereNotNull('nome')->orderBy('nome')->pluck('nome', 'id'))
+                                    ->searchable()
+                                    ->live()
+                                    ->hidden(fn () => $this->fixedDisciplinaId !== null),
+                                
+                                Select::make('professores')
+                                    ->label('Professores')
+                                    ->multiple()
+                                    ->options(Pessoa::whereHas('perfis', fn($q) => $q->where('nome', 'Professor'))
+                                    ->whereNotNull('nome')
+                                    ->orderBy('nome')
+                                    ->pluck('nome', 'id'))
+                                    ->searchable()
+                                    ->live()
+                                    ->hidden(fn () => $this->fixedProfessorId !== null),
+                            ]),
+                    ])
+                    ->collapsible()
+                    ->compact()
+                    ->hidden(fn () => 
+                        $this->fixedTurmaId !== null && 
+                        $this->fixedDisciplinaId !== null && 
+                        $this->fixedProfessorId !== null
+                    ),
+            ])
+            ->statePath('data');
+    }
+}
