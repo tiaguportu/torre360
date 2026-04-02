@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\Alunos\Tables;
 
+use App\Filament\Resources\Alunos\AlunoResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -55,6 +58,15 @@ class AlunosTable
                 //
             ])
             ->recordActions([
+                Action::make('lancar_notas')
+                    ->label('Lançar Notas')
+                    ->icon('heroicon-o-academic-cap')
+                    ->color('success')
+                    ->url(fn ($record) => AlunoResource::getUrl('lancar-notas', ['record' => $record])),
+                Action::make('boletim')
+                    ->label('Boletim')
+                    ->icon(Heroicon::DocumentText)
+                    ->url(fn ($record) => AlunoResource::getUrl('boletim', ['record' => $record])),
                 EditAction::make(),
             ])
             ->toolbarActions([

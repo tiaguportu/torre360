@@ -4,11 +4,13 @@ namespace App\Filament\Resources\Matriculas\Schemas;
 
 use App\Filament\Resources\SituacaoMatriculas\Schemas\SituacaoMatriculaForm;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
-use App\Models\Pais;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Select;
+use App\Models\Turma;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class MatriculaForm
 {
@@ -16,9 +18,15 @@ class MatriculaForm
     {
         return $schema
             ->components([
+                TextInput::make('codigo')
+                    ->label('Código')
+                    ->unique(ignoreRecord: true)
+                    ->placeholder('Gerado automaticamente se vazio')
+                    ->helperText('Formato: Ano + 6 dígitos (ex: 2026000001)')
+                    ->maxLength(20),
                 Select::make('pessoa_id')
-                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->whereNotNull('nome')->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%')))
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome . ($record->cpf ? " - {$record->cpf}" : ""))
+                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%')))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->searchable(['nome', 'cpf'])
                     ->preload()
                     ->required()
@@ -48,7 +56,9 @@ class MatriculaForm
                     ->searchable()
                     ->preload()
                     ->createOptionForm(fn (Schema $schema) => TurmaForm::configure($schema)->getComponents())
-                    ->required(),
+                    ->required()
+                    ->disabled(fn ($livewire) => $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma)
+                    ->dehydrated(),
                 Select::make('situacao_matricula_id')
                     ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->searchable()

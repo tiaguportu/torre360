@@ -21,13 +21,15 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
     protected string $view = 'filament.widgets.cronograma-calendar-widget';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public ?array $data = [];
 
     // Filtros fixos vindos do componente pai (ex: página de edição)
     public ?int $fixedTurmaId = null;
+
     public ?int $fixedDisciplinaId = null;
+
     public ?int $fixedProfessorId = null;
 
     public function getAllEvents(): array
@@ -47,29 +49,38 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
         return $query->get()
             ->map(function (CronogramaAula $record) {
+                // Formatação ISO 8601 completa para start e end
+                $start = $record->data.'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
+                $end = $record->data.'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
+
+                $turmaCor = $record->turma?->cor ?? '#10b981';
+                $disciplinaCor = $record->disciplina?->cor ?? '#f59e0b';
+                $cursoCor = $record->turma?->serie?->curso?->cor ?? '#7c3aed';
+
                 return [
-                    'id' => $record->id,
+                    'id' => (string) $record->id,
                     'title' => "{$record->turma?->nome} - {$record->disciplina?->nome}",
-                    'start' => "{$record->data}T{$record->hora_inicio}",
-                    'end' => "{$record->data}T{$record->hora_fim}",
+                    'start' => $start,
+                    'end' => $end,
                     'url' => CronogramaAulaResource::getUrl('edit', ['record' => $record]),
-                    'turma_id' => $record->turma_id,
-                    'turma_nome' => $record->turma?->nome,
-                    'turma_cor' => $record->turma?->cor ?? '#10b981',
-                    'disciplina_id' => $record->disciplina_id,
-                    'disciplina_nome' => $record->disciplina?->nome,
-                    'disciplina_cor' => $record->disciplina?->cor ?? '#f59e0b',
-                    'curso_nome' => $record->turma?->serie?->curso?->nome_interno,
-                    'curso_cor' => $record->turma?->serie?->curso?->cor ?? '#7c3aed',
-                    'professor_id' => $record->pessoa_id,
-                    'professor_nome' => $record->professor?->nome,
-                    'hora_inicio' => $record->hora_inicio,
-                    'hora_fim' => $record->hora_fim,
+                    'turma_id' => (string) $record->turma_id,
+                    'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
+                    'turma_cor' => $turmaCor,
+                    'disciplina_id' => (string) $record->disciplina_id,
+                    'disciplina_nome' => $record->disciplina?->nome ?? 'Sem Disciplina',
+                    'disciplina_cor' => $disciplinaCor,
+                    'curso_nome' => $record->turma?->serie?->curso?->nome_interno ?? 'Sem Curso',
+                    'curso_cor' => $cursoCor,
+                    'professor_id' => (string) $record->pessoa_id,
+                    'professor_nome' => $record->professor?->nome ?? 'Sem Professor',
+                    'hora_inicio' => substr($record->hora_inicio ?? '', 0, 5),
+                    'hora_fim' => substr($record->hora_fim ?? '', 0, 5),
                     'data' => date('d/m/Y', strtotime($record->data)),
                     'conteudo_ministrado_full' => $record->conteudo_ministrado,
-                    'conteudo_ministrado' => str($record->conteudo_ministrado)->limit(100),
-                    'backgroundColor' => 'transparent',
-                    'borderColor' => 'transparent',
+                    'conteudo_ministrado' => str($record->conteudo_ministrado)->limit(100)->toString(),
+                    'backgroundColor' => $disciplinaCor,
+                    'borderColor' => $disciplinaCor,
+                    'textColor' => '#ffffff',
                 ];
             })
             ->toArray();
@@ -95,7 +106,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                     ->searchable()
                                     ->live()
                                     ->hidden(fn () => $this->fixedTurmaId !== null),
-                                
+
                                 Select::make('disciplinas')
                                     ->label('Disciplinas')
                                     ->multiple()
@@ -103,14 +114,14 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                     ->searchable()
                                     ->live()
                                     ->hidden(fn () => $this->fixedDisciplinaId !== null),
-                                
+
                                 Select::make('professores')
                                     ->label('Professores')
                                     ->multiple()
-                                    ->options(Pessoa::whereHas('perfis', fn($q) => $q->where('nome', 'Professor'))
-                                    ->whereNotNull('nome')
-                                    ->orderBy('nome')
-                                    ->pluck('nome', 'id'))
+                                    ->options(Pessoa::whereHas('perfis', fn ($q) => $q->where('nome', 'Professor'))
+                                        ->whereNotNull('nome')
+                                        ->orderBy('nome')
+                                        ->pluck('nome', 'id'))
                                     ->searchable()
                                     ->live()
                                     ->hidden(fn () => $this->fixedProfessorId !== null),
@@ -118,9 +129,8 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                     ])
                     ->collapsible()
                     ->compact()
-                    ->hidden(fn () => 
-                        $this->fixedTurmaId !== null && 
-                        $this->fixedDisciplinaId !== null && 
+                    ->hidden(fn () => $this->fixedTurmaId !== null &&
+                        $this->fixedDisciplinaId !== null &&
                         $this->fixedProfessorId !== null
                     ),
             ])

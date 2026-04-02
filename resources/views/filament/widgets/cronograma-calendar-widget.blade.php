@@ -88,13 +88,19 @@
             },
             filterEvents() {
                 if (!this.calendar) return;
+                
                 const filtered = this.allEvents.filter(event => {
-                    const matchTurma = !this.filters.turmas || this.filters.turmas.length === 0 || this.filters.turmas.includes(event.turma_id.toString());
-                    const matchDisciplina = !this.filters.disciplinas || this.filters.disciplinas.length === 0 || this.filters.disciplinas.includes(event.disciplina_id.toString());
-                    const matchProfessor = !this.filters.professores || this.filters.professores.length === 0 || this.filters.professores.includes(event.professor_id.toString());
+                    const selectedTurmas = this.filters?.turmas || [];
+                    const selectedDisciplinas = this.filters?.disciplinas || [];
+                    const selectedProfessores = this.filters?.professores || [];
+
+                    const matchTurma = selectedTurmas.length === 0 || selectedTurmas.includes(String(event.turma_id));
+                    const matchDisciplina = selectedDisciplinas.length === 0 || selectedDisciplinas.includes(String(event.disciplina_id));
+                    const matchProfessor = selectedProfessores.length === 0 || selectedProfessores.includes(String(event.professor_id));
                     
                     return matchTurma && matchDisciplina && matchProfessor;
                 });
+
                 this.calendar.removeAllEvents();
                 this.calendar.addEventSource(filtered);
             }

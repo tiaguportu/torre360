@@ -10,7 +10,22 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Matricula extends Model
 {
     protected $table = 'matricula';
+
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($matricula) {
+            if (! $matricula->codigo) {
+                $anoCorrente = now()->year;
+                $ultimoNumero = static::where('codigo', 'like', $anoCorrente.'%')
+                    ->count();
+
+                $proximoNumero = $ultimoNumero + 1;
+                $matricula->codigo = $anoCorrente.str_pad($proximoNumero, 6, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     public function pessoa(): BelongsTo
     {
@@ -42,6 +57,11 @@ class Matricula extends Model
         return $this->hasMany(DocumentoInserido::class, 'matricula_id');
     }
 
+    public function frequenciaEscolars(): HasMany
+    {
+        return $this->hasMany(FrequenciaEscolar::class);
+    }
+
     /**
      * Verifica se faltam documentos obrigatórios para esta matrícula.
      * Os documentos obrigatórios se relacionam com curso, o curso se relaciona com serie, a serie se relaciona com turma, a turma se relaciona com matricula.
@@ -49,13 +69,13 @@ class Matricula extends Model
     public function hasMissingMandatoryDocuments(): bool
     {
         $curso = $this->turma?->serie?->curso;
-        
-        if (!$curso) {
+
+        if (! $curso) {
             return false;
         }
 
         $totalObrigatorios = $curso->documentos()->count();
-        
+
         if ($totalObrigatorios === 0) {
             return false;
         }

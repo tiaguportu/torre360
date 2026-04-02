@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\Pessoas\Tables;
 
+use App\Models\Perfil;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class PessoasTable
 {
@@ -75,6 +79,22 @@ class PessoasTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('adicionarPerfis')
+                        ->label('Adicionar Perfis')
+                        ->icon('heroicon-o-plus-circle')
+                        ->form([
+                            Select::make('perfis')
+                                ->label('Selecione os perfis')
+                                ->multiple()
+                                ->options(Perfil::all()->pluck('nome', 'id'))
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            foreach ($records as $record) {
+                                $record->perfis()->syncWithoutDetaching($data['perfis']);
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

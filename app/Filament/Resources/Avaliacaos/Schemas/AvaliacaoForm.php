@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Avaliacaos\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Schema;
 
 class AvaliacaoForm
@@ -12,50 +12,71 @@ class AvaliacaoForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                Select::make('etapa_avaliativa_id')
-                    ->relationship('etapaAvaliativa', 'nome')
-                    ->label('Etapa Avaliativa')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+            ->components(static::getSchemaComponents());
+    }
 
-                Select::make('turma_id')
-                    ->relationship('turma', 'nome')
-                    ->label('Turma')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+    public static function getSchemaComponents(): array
+    {
+        return [
+            Select::make('etapa_avaliativa_id')
+                ->relationship('etapaAvaliativa', 'nome')
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? 'Sem Nome')
+                ->label('Etapa Avaliativa')
+                ->required()
+                ->searchable()
+                ->preload(),
 
-                Select::make('disciplina_id')
-                    ->relationship('disciplina', 'nome')
-                    ->label('Disciplina')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+            Select::make('turma_id')
+                ->relationship('turma', 'nome')
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? 'Sem Nome')
+                ->label('Turma')
+                ->required()
+                ->searchable()
+                ->preload(),
 
-                Select::make('professor_id')
-                    ->relationship('professor', 'nome')
-                    ->label('Professor')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+            Select::make('disciplina_id')
+                ->relationship('disciplina', 'nome')
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? 'Sem Nome')
+                ->label('Disciplina')
+                ->required()
+                ->searchable()
+                ->preload(),
 
-                DatePicker::make('data_prevista')
-                    ->label('Data Prevista')
-                    ->required(),
+            Select::make('professor_id')
+                ->relationship('professor', 'nome', modifyQueryUsing: fn ($query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'Professor')))
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? 'Sem Nome')
+                ->label('Professor')
+                ->required()
+                ->searchable()
+                ->preload(),
 
-                TextInput::make('nota_maxima')
-                    ->label('Nota Máxima')
-                    ->numeric()
-                    ->default(10.00)
-                    ->required(),
+            DatePicker::make('data_prevista')
+                ->label('Data Prevista')
+                ->required(),
 
-                TextInput::make('peso_etapa_avaliativa')
-                    ->label('Peso na Etapa')
-                    ->numeric()
-                    ->default(1.00)
-                    ->required(),
-            ]);
+            DatePicker::make('data_ocorrencia')
+                ->label('Data de Ocorrência'),
+
+            DatePicker::make('data_limite_lancamento')
+                ->label('Data Limite de Lançamento')
+                ->required(),
+
+            TextInput::make('nota_maxima')
+                ->label('Nota Máxima')
+                ->numeric()
+                ->default(10.00),
+
+            TextInput::make('peso_etapa_avaliativa')
+                ->label('Peso na Etapa')
+                ->numeric()
+                ->default(1.00),
+
+            Select::make('categoria_avaliacao_id')
+                ->relationship('categoria', 'nome')
+                ->label('Categoria')
+                ->required()
+                ->searchable()
+                ->preload(),
+        ];
     }
 }

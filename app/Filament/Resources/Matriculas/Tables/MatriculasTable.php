@@ -2,20 +2,26 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
+use App\Models\Matricula;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use App\Models\Matricula;
 
 class MatriculasTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordClasses(fn (\App\Models\Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
+            ->recordClasses(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
+                TextColumn::make('codigo')
+                    ->label('Código')
+                    ->searchable()
+                    ->sortable()
+                    ->fontFamily('mono')
+                    ->copyable(),
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->searchable()

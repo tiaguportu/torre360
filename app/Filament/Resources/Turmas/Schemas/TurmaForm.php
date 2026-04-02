@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Turmas\Schemas;
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -28,14 +29,14 @@ class TurmaForm
                 Select::make('professor_conselheiro_id')
                     ->relationship('professorConselheiro', 'nome')
                     ->searchable(['nome', 'cpf'])
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome . ($record->cpf ? " - {$record->cpf}" : ""))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->preload(),
                 TextInput::make('vagas_maximas')
                     ->numeric()
                     ->default(30),
-                \Filament\Forms\Components\ColorPicker::make('cor')
+                ColorPicker::make('cor')
                     ->label('Cor da Turma')
-                    ->default('#10b981'),
+                    ->default(fn () => '#'.str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
             ]);
     }
 }

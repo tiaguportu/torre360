@@ -4,6 +4,11 @@ namespace App\Filament\Resources\Turmas\RelationManagers;
 
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Filament\Resources\Matriculas\Tables\MatriculasTable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -23,15 +28,19 @@ class MatriculasRelationManager extends RelationManager
     {
         return MatriculasTable::configure($table)
             ->headerActions([
-                \Filament\Actions\CreateAction::make(),
+                CreateAction::make()
+                    ->fillForm(fn ($livewire): array => [
+                        'turma_id' => $livewire->getOwnerRecord()->id,
+                        'data_matricula' => now()->format('Y-m-d'),
+                    ]),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

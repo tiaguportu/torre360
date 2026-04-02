@@ -5,14 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Avaliacao extends Model
 {
     protected $table = 'avaliacao';
+
     protected $guarded = [];
 
     protected $casts = [
         'data_prevista' => 'date',
+        'data_ocorrencia' => 'date',
+        'data_limite_lancamento' => 'date',
         'nota_maxima' => 'decimal:2',
         'peso_etapa_avaliativa' => 'decimal:2',
     ];
@@ -40,5 +44,15 @@ class Avaliacao extends Model
     public function professor(): BelongsTo
     {
         return $this->belongsTo(Pessoa::class, 'professor_id');
+    }
+
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(CategoriaAvaliacao::class, 'categoria_avaliacao_id');
+    }
+
+    public function matriculas(): HasManyThrough
+    {
+        return $this->hasManyThrough(Matricula::class, Turma::class, 'id', 'turma_id', 'turma_id', 'id');
     }
 }
