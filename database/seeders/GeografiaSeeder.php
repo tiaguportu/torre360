@@ -113,8 +113,8 @@ class GeografiaSeeder extends Seeder
                     ];
                 }
 
-                // Inserir em lotes de 500 para evitar limites de memória/SQL
-                if (count($cidadesParaInserir) >= 500) {
+                // Inserir em lotes de 100 para evitar limites de memória/SQL do SQLite
+                if (count($cidadesParaInserir) >= 100) {
                     DB::table('cidades')->insert($cidadesParaInserir);
                     $cidadesParaInserir = [];
                 }
