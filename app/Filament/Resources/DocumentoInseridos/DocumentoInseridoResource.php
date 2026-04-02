@@ -11,13 +11,25 @@ use App\Filament\Resources\DocumentoInseridos\Schemas\DocumentoInseridoInfolist;
 use App\Filament\Resources\DocumentoInseridos\Tables\DocumentoInseridosTable;
 use App\Models\DocumentoInserido;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class DocumentoInseridoResource extends Resource
+class DocumentoInseridoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = DocumentoInserido::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';

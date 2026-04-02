@@ -9,13 +9,26 @@ use App\Filament\Resources\CategoriaAvaliacaos\Schemas\CategoriaAvaliacaoForm;
 use App\Filament\Resources\CategoriaAvaliacaos\Tables\CategoriaAvaliacaosTable;
 use App\Models\CategoriaAvaliacao;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class CategoriaAvaliacaoResource extends Resource
+class CategoriaAvaliacaoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = CategoriaAvaliacao::class;
 
     protected static ?string $modelLabel = 'Categoria de Avaliação';

@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Alunos;
 use App\Filament\Resources\Alunos\Pages\BoletimAluno;
 use App\Filament\Resources\Alunos\Pages\CreateAluno;
 use App\Filament\Resources\Alunos\Pages\EditAluno;
-use App\Filament\Resources\Alunos\Pages\LancarNotasAluno;
 use App\Filament\Resources\Alunos\Pages\ListAlunos;
 use App\Filament\Resources\Alunos\Schemas\AlunoForm;
 use App\Filament\Resources\Alunos\Tables\AlunosTable;
@@ -64,7 +63,6 @@ class AlunoResource extends Resource
             'create' => CreateAluno::route('/create'),
             'edit' => EditAluno::route('/{record}/edit'),
             'boletim' => BoletimAluno::route('/{record}/boletim'),
-            'lancar-notas' => LancarNotasAluno::route('/{record}/lancar-notas'),
         ];
     }
 }

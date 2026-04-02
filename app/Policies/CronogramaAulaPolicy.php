@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\CronogramaAula;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class CronogramaAulaPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:CronogramaAula');
@@ -72,4 +72,8 @@ class CronogramaAulaPolicy
         return $authUser->can('Reorder:CronogramaAula');
     }
 
+    public function lancarFrequencia(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    {
+        return $authUser->can('LancarFrequencia:CronogramaAula');
+    }
 }

@@ -9,14 +9,28 @@ use App\Filament\Resources\Avaliacaos\Pages\ListAvaliacaos;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Filament\Resources\Avaliacaos\Tables\AvaliacaosTable;
 use App\Models\Avaliacao;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class AvaliacaoResource extends Resource
+class AvaliacaoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'lancarNotas',
+        ];
+    }
+
     protected static ?string $model = Avaliacao::class;
 
     protected static ?string $modelLabel = 'Avaliação';
@@ -41,11 +55,17 @@ class AvaliacaoResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withCount([
                 'matriculas',
                 'notas as notas_count' => fn ($query) => $query->whereNotNull('valor'),
             ]);
+
+        if (auth()->user()?->hasRole('professor')) {
+            $query->where('professor_id', auth()->user()->pessoa?->id);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

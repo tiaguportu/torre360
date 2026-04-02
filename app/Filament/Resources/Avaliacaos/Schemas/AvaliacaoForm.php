@@ -48,7 +48,10 @@ class AvaliacaoForm
                 ->label('Professor')
                 ->required()
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->default(auth()->user()?->hasRole('professor') ? auth()->user()->pessoa?->id : null)
+                ->disabled(auth()->user()?->hasRole('professor') && auth()->user()->pessoa?->id !== null)
+                ->dehydrated(),
 
             DatePicker::make('data_prevista')
                 ->label('Data Prevista')

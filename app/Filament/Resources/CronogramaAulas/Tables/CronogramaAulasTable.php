@@ -72,7 +72,8 @@ class CronogramaAulasTable
                     ->label('Professor')
                     ->relationship('professor', 'nome')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hidden(fn () => auth()->user()?->hasRole('professor')),
                 Filter::make('data')
                     ->form([
                         DatePicker::make('data')
@@ -97,6 +98,15 @@ class CronogramaAulasTable
                             ->seconds(false),
                     ])
                     ->query(fn ($query, array $data) => $query->when($data['hora_fim'], fn ($q) => $q->where('hora_fim', 'like', $data['hora_fim'].'%'))),
+
+                Filter::make('frequencias_pendentes')
+                    ->label('Frequência Pendente')
+                    ->indicator('Apenas Pendentes')
+                    ->default()
+                    ->query(fn ($query) => $query->whereRaw('
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
+                    ')),
             ])
             ->actions([
                 EditAction::make(),
@@ -106,6 +116,7 @@ class CronogramaAulasTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->url(fn ($record): string => CronogramaAulaResource::getUrl('lancar-frequencia', ['record' => $record]))
+                    ->visible(fn ($record): bool => auth()->user()->can('lancarFrequencia', $record))
                     ->badge(function ($record) {
                         $totalMatriculados = $record->turma->matriculas()->count();
                         $frequenciasLancadas = $record->frequencias()->whereNotNull('situacao')->count();
@@ -140,7 +151,8 @@ class CronogramaAulasTable
                                 ->label('Professor')
                                 ->relationship('professor', 'nome')
                                 ->searchable()
-                                ->preload(),
+                                ->preload()
+                                ->hidden(fn () => auth()->user()?->hasRole('professor')),
                             DatePicker::make('data')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),

@@ -58,11 +58,6 @@ class AlunosTable
                 //
             ])
             ->recordActions([
-                Action::make('lancar_notas')
-                    ->label('Lançar Notas')
-                    ->icon('heroicon-o-academic-cap')
-                    ->color('success')
-                    ->url(fn ($record) => AlunoResource::getUrl('lancar-notas', ['record' => $record])),
                 Action::make('boletim')
                     ->label('Boletim')
                     ->icon(Heroicon::DocumentText)

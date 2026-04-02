@@ -21,6 +21,11 @@ class LancarFrequencia extends EditRecord
 
     protected static ?string $title = 'Lançar Frequências';
 
+    public function authorizeAccess(): void
+    {
+        $this->authorize('lancarFrequencia', $this->getRecord());
+    }
+
     protected function getHeaderActions(): array
     {
         return [

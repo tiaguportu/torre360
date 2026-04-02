@@ -9,13 +9,25 @@ use App\Filament\Resources\SituacaoDocumentoInseridos\Schemas\SituacaoDocumentoI
 use App\Filament\Resources\SituacaoDocumentoInseridos\Tables\SituacaoDocumentoInseridosTable;
 use App\Models\SituacaoDocumentoInserido;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class SituacaoDocumentoInseridoResource extends Resource
+class SituacaoDocumentoInseridoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = SituacaoDocumentoInserido::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-check';

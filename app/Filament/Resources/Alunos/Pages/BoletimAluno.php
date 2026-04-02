@@ -29,7 +29,7 @@ class BoletimAluno extends Page implements HasSchemas
                 Section::make('Informações do Aluno')
                     ->icon('heroicon-o-user-circle')
                     ->description('Dados cadastrais do aluno vinculados ao seu registro acadêmico.')
-                    ->schema(AlunoResource::form(new Schema)->getComponents())
+                    ->schema(AlunoResource::form($schema->make())->getComponents())
                     ->columns(3)
                     ->disabled()
                     ->aside(),

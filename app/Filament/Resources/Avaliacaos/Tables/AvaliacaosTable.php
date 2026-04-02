@@ -6,6 +6,7 @@ use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Models\Avaliacao;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -13,6 +14,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -83,22 +85,41 @@ class AvaliacaosTable
                     ->toggleable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('turma_id')
+                    ->relationship('turma', 'nome')
+                    ->label('Turma')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('disciplina_id')
+                    ->relationship('disciplina', 'nome')
+                    ->label('Disciplina')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('professor_id')
+                    ->relationship('professor', 'nome')
+                    ->label('Professor')
+                    ->searchable()
+                    ->preload()
+                    ->hidden(fn () => auth()->user()?->hasRole('professor')),
             ])
-            ->recordActions([
-                EditAction::make(),
+            ->actions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    ReplicateAction::make()
+                        ->before(fn (Avaliacao $record) => $record->data_prevista = now())
+                        ->label('Clonar')
+                        ->icon('heroicon-o-document-duplicate'),
+                    DeleteAction::make(),
+                ]),
                 Action::make('lancar_notas')
-                    ->label('Lançar Notas')
+                    ->label('Notas')
+                    ->tooltip('Lançar Notas')
                     ->icon('heroicon-o-academic-cap')
                     ->color('success')
                     ->badge(fn (Avaliacao $record): ?int => ($count = (int) $record->matriculas_count - (int) $record->notas_count) > 0 ? $count : null)
                     ->badgeColor('danger')
-                    ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('lancar-notas', ['record' => $record])),
-                ReplicateAction::make()
-                    ->before(fn (Avaliacao $record) => $record->data_prevista = now())
-                    ->label('Clonar')
-                    ->icon('heroicon-o-document-duplicate'),
-                DeleteAction::make(),
+                    ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('lancar-notas', ['record' => $record]))
+                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

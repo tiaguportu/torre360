@@ -21,6 +21,11 @@ class LancarNotas extends EditRecord
 
     protected static ?string $title = 'Lançar Notas';
 
+    public function authorizeAccess(): void
+    {
+        $this->authorize('lancarNotas', $this->getRecord());
+    }
+
     protected function getHeaderActions(): array
     {
         return [

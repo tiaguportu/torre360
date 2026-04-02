@@ -2,42 +2,60 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Page;
-use Filament\Schemas\Components\Wizard;
-use Filament\Schemas\Components\Wizard\Step;
+use App\Models\Cidade;
+use App\Models\Contrato;
+use App\Models\CorRaca;
+use App\Models\Curso;
+use App\Models\Endereco;
+use App\Models\Matricula;
+use App\Models\Pais;
+use App\Models\Perfil;
+use App\Models\Pessoa;
+use App\Models\ResponsavelFinanceiro;
+use App\Models\Sexo;
+use App\Models\SituacaoMatricula;
+use App\Models\Turma;
+use App\Models\Unidade;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Group;
-use Filament\Forms\Components\DatePicker;
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Filament\Forms\Set;
-use Filament\Forms\Get;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\FileUpload;
-use App\Models\Pessoa;
-use App\Models\Matricula;
-use App\Models\Turma;
-use App\Models\ResponsavelFinanceiro;
-use App\Models\SituacaoMatricula;
-use App\Models\Unidade;
-use App\Models\Curso;
-use App\Models\Pais;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\DB;
 
-class EnrollmentWizard extends Page implements HasForms
+class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 {
     use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-plus';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+
     protected static ?string $navigationLabel = 'Nova Matrícula (Wizard)';
+
     protected static ?string $title = 'Assistente de Matrícula';
+    
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('View:EnrollmentWizard');
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
 
     protected string $view = 'filament.pages.enrollment-wizard';
 
@@ -64,19 +82,21 @@ class EnrollmentWizard extends Page implements HasForms
                     ->mask('999.999.999-99')
                     ->live(onBlur: true)
                     ->afterStateUpdated(function ($set, $state, $component) use ($statePath) {
-                        if (empty($state)) return;
-                        
+                        if (empty($state)) {
+                            return;
+                        }
+
                         $cleanState = preg_replace('/\D/', '', $state);
-                        
-                        $pessoa = \App\Models\Pessoa::with('endereco')
+
+                        $pessoa = Pessoa::with('endereco')
                             ->where('cpf', $state)
                             ->orWhere('cpf', $cleanState)
                             ->orWhereRaw("REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?", [$cleanState])
                             ->first();
-                        
+
                         if ($pessoa) {
-                            $prefix = $statePath ? "{$statePath}." : "";
-                            
+                            $prefix = $statePath ? "{$statePath}." : '';
+
                             $formData = [
                                 "{$prefix}nome" => $pessoa->nome,
                                 "{$prefix}data_nascimento" => $pessoa->data_nascimento,
@@ -119,23 +139,23 @@ class EnrollmentWizard extends Page implements HasForms
                 TextInput::make('telefone')->tel()->maxLength(20),
                 Select::make('nacionalidade_id')
                     ->label('Nacionalidade')
-                    ->options(\App\Models\Pais::pluck('nome', 'id'))
-                    ->default(fn () => \App\Models\Pais::where('nome', 'Brasil')->value('id'))
+                    ->options(Pais::pluck('nome', 'id'))
+                    ->default(fn () => Pais::where('nome', 'Brasil')->value('id'))
                     ->searchable()
                     ->live(),
                 Select::make('naturalidade_id')
                     ->label('Naturalidade')
                     ->searchable()
-                    ->getSearchResultsUsing(fn (string $search): array => \App\Models\Cidade::where('nome', 'like', "%{$search}%")->limit(20)->pluck('nome', 'id')->toArray())
-                    ->getOptionLabelUsing(fn ($value): ?string => \App\Models\Cidade::find($value)?->nome)
-                    ->visible(fn ($get) => $get('nacionalidade_id') == \App\Models\Pais::where('nome', 'Brasil')->value('id')),
+                    ->getSearchResultsUsing(fn (string $search): array => Cidade::where('nome', 'like', "%{$search}%")->limit(20)->pluck('nome', 'id')->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => Cidade::find($value)?->nome)
+                    ->visible(fn ($get) => $get('nacionalidade_id') == Pais::where('nome', 'Brasil')->value('id')),
                 Select::make('sexo_id')
                     ->label('Sexo')
-                    ->options(\App\Models\Sexo::pluck('nome', 'id'))
+                    ->options(Sexo::pluck('nome', 'id'))
                     ->searchable(),
                 Select::make('cor_raca_id')
                     ->label('Cor/Raça')
-                    ->options(\App\Models\CorRaca::pluck('nome', 'id'))
+                    ->options(CorRaca::pluck('nome', 'id'))
                     ->searchable(),
             ];
         };
@@ -144,12 +164,12 @@ class EnrollmentWizard extends Page implements HasForms
             Select::make('cidade_id')
                 ->label('Cidade')
                 ->searchable()
-                ->getSearchResultsUsing(fn (string $search): array => \App\Models\Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
+                ->getSearchResultsUsing(fn (string $search): array => Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
                     ->where('nome', 'like', "%{$search}%")
                     ->limit(20)
                     ->pluck('full_nome', 'id')
                     ->toArray())
-                ->getOptionLabelUsing(fn ($value): ?string => \App\Models\Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
+                ->getOptionLabelUsing(fn ($value): ?string => Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
                     ->find($value)?->full_nome),
             TextInput::make('cep')->label('CEP'),
             TextInput::make('logradouro')->label('Logradouro'),
@@ -160,7 +180,7 @@ class EnrollmentWizard extends Page implements HasForms
         return $schema
             ->components([
                 Wizard::make([
-                    Wizard\Step::make('Dados do Aluno')
+                    Step::make('Dados do Aluno')
                         ->description('Identificação básica do estudante')
                         ->icon('heroicon-m-user')
                         ->components([
@@ -173,7 +193,7 @@ class EnrollmentWizard extends Page implements HasForms
                                 ->statePath('aluno')
                                 ->schema($enderecoFields),
                         ]),
-                    Wizard\Step::make('Responsável Financeiro')
+                    Step::make('Responsável Financeiro')
                         ->description('Quem pagará as mensalidades')
                         ->icon('heroicon-m-credit-card')
                         ->components([
@@ -192,7 +212,7 @@ class EnrollmentWizard extends Page implements HasForms
                                         ->schema($enderecoFields),
                                 ]),
                         ]),
-                    Wizard\Step::make('Plano e Matrícula')
+                    Step::make('Plano e Matrícula')
                         ->description('Definição de curso e turma')
                         ->icon('heroicon-m-academic-cap')
                         ->components([
@@ -213,8 +233,7 @@ class EnrollmentWizard extends Page implements HasForms
                                     Select::make('turma_id')
                                         ->label('Turma')
                                         ->options(
-                                            fn($get) =>
-                                            Turma::whereHas('serie', fn($q) => $q->where('curso_id', $get('curso_id')))
+                                            fn ($get) => Turma::whereHas('serie', fn ($q) => $q->where('curso_id', $get('curso_id')))
                                                 ->pluck('nome', 'id')
                                         )
                                         ->searchable()
@@ -228,7 +247,7 @@ class EnrollmentWizard extends Page implements HasForms
                             ->color('success')
                             ->icon('heroicon-m-check-circle')
                             ->action('save')
-                    )
+                    ),
             ])
             ->statePath('data');
     }
@@ -241,11 +260,11 @@ class EnrollmentWizard extends Page implements HasForms
             DB::beginTransaction();
 
             $alunoData = $raw['aluno'];
-            
+
             // Criar Endereco do Aluno, se preenchido
             $alunoEnderecoId = null;
-            if (!empty($alunoData['logradouro']) || !empty($alunoData['cidade_id'])) {
-                $endereco = \App\Models\Endereco::create([
+            if (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id'])) {
+                $endereco = Endereco::create([
                     'cidade_id' => $alunoData['cidade_id'] ?? null,
                     'logradouro' => $alunoData['logradouro'] ?? null,
                     'numero' => $alunoData['numero'] ?? null,
@@ -270,7 +289,7 @@ class EnrollmentWizard extends Page implements HasForms
             ]);
 
             // Vincular perfis do aluno
-            $perfilAluno = \App\Models\Perfil::where('nome', 'Aluno')->first();
+            $perfilAluno = Perfil::where('nome', 'Aluno')->first();
             if ($perfilAluno) {
                 $aluno->perfis()->syncWithoutDetaching([$perfilAluno->id]);
             }
@@ -284,7 +303,7 @@ class EnrollmentWizard extends Page implements HasForms
             ]);
 
             // 4. Criar Contrato para a Matrícula
-            $contrato = \App\Models\Contrato::create([
+            $contrato = Contrato::create([
                 'matricula_id' => $matricula->id,
                 'valor_total' => 0, // Valor padrão inicial, pode ser alterado posteriormente
                 'data_aceite' => now(),
@@ -292,13 +311,13 @@ class EnrollmentWizard extends Page implements HasForms
             ]);
 
             // Iterar sobre os responsaveis
-            $perfilResp = \App\Models\Perfil::where('nome', 'Responsável')->orWhere('nome', 'Responsavel')->first();
-            
+            $perfilResp = Perfil::where('nome', 'Responsável')->orWhere('nome', 'Responsavel')->first();
+
             foreach ($raw['responsaveis'] as $respData) {
                 // Criar endereco do responsavel
                 $respEnderecoId = null;
-                if (!empty($respData['logradouro']) || !empty($respData['cidade_id'])) {
-                    $enderecoResp = \App\Models\Endereco::create([
+                if (! empty($respData['logradouro']) || ! empty($respData['cidade_id'])) {
+                    $enderecoResp = Endereco::create([
                         'cidade_id' => $respData['cidade_id'] ?? null,
                         'logradouro' => $respData['logradouro'] ?? null,
                         'numero' => $respData['numero'] ?? null,
@@ -310,14 +329,14 @@ class EnrollmentWizard extends Page implements HasForms
 
                 // Criar ou buscar pessoa responsável
                 $q = Pessoa::query();
-                if (!empty($respData['cpf'])) {
+                if (! empty($respData['cpf'])) {
                     $q->where('cpf', $respData['cpf']);
                 } else {
                     $q->where('nome', $respData['nome'])->where('email', $respData['email']);
                 }
-                
+
                 $responsavelPessoa = $q->first();
-                if (!$responsavelPessoa) {
+                if (! $responsavelPessoa) {
                     $responsavelPessoa = Pessoa::create([
                         'nome' => $respData['nome'],
                         'cpf' => $respData['cpf'] ?? null,

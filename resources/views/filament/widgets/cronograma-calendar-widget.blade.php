@@ -1,4 +1,3 @@
-<div>
 <x-filament-widgets::widget>
     <div 
         x-data="{
@@ -228,4 +227,3 @@
         </style>
     </div>
 </x-filament-widgets::widget>
-</div>

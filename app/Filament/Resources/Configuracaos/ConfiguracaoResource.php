@@ -9,13 +9,25 @@ use App\Filament\Resources\Configuracaos\Schemas\ConfiguracaoForm;
 use App\Filament\Resources\Configuracaos\Tables\ConfiguracaosTable;
 use App\Models\Configuracao;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class ConfiguracaoResource extends Resource
+class ConfiguracaoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = Configuracao::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';

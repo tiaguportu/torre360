@@ -2,30 +2,42 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Page;
+use App\Models\Curso;
+use App\Models\PeriodoLetivo;
+use App\Models\Serie;
+use App\Models\Turma;
+use App\Models\Unidade;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Section;
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use App\Models\Unidade;
-use App\Models\PeriodoLetivo;
-use App\Models\Curso;
-use App\Models\Turma;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\DB;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
 
-class SchoolSetupWizard extends Page implements HasForms
+class SchoolSetupWizard extends Page implements HasForms, HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
+
     use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home-modern';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+
     protected static ?string $navigationLabel = 'Configuração Inicial';
+
     protected static ?string $title = 'Assistente de Configuração Escolar';
 
     protected string $view = 'filament.pages.school-setup-wizard';
@@ -42,7 +54,7 @@ class SchoolSetupWizard extends Page implements HasForms
         return $schema
             ->components([
                 Wizard::make([
-                    Wizard\Step::make('A Escola')
+                    Step::make('A Escola')
                         ->description('Identificação da Unidade Sede')
                         ->icon('heroicon-m-building-office')
                         ->components([
@@ -55,7 +67,7 @@ class SchoolSetupWizard extends Page implements HasForms
                                         ->required(),
                                 ]),
                         ]),
-                    Wizard\Step::make('Calendário')
+                    Step::make('Calendário')
                         ->description('Ano Letivo de Trabalho')
                         ->icon('heroicon-m-calendar')
                         ->components([
@@ -74,7 +86,7 @@ class SchoolSetupWizard extends Page implements HasForms
                                         ->required(),
                                 ]),
                         ]),
-                    Wizard\Step::make('Estrutura de Ensino')
+                    Step::make('Estrutura de Ensino')
                         ->description('Criação do primeiro Curso e Turma')
                         ->icon('heroicon-m-academic-cap')
                         ->components([
@@ -98,7 +110,7 @@ class SchoolSetupWizard extends Page implements HasForms
                             ->color('success')
                             ->icon('heroicon-m-sparkles')
                             ->action('save')
-                    )
+                    ),
             ])
             ->statePath('data');
     }
@@ -130,7 +142,7 @@ class SchoolSetupWizard extends Page implements HasForms
             ]);
 
             // 4. Criar Série Inicial (As turmas pertencem às séries)
-            $serie = \App\Models\Serie::create([
+            $serie = Serie::create([
                 'nome' => 'Série Inicial',
                 'curso_id' => $curso->id,
                 'sistema_avaliacao' => 'Nota', // Pode ser Nota, Conceito ou Parecer - adotando Nota por pdarão inicial

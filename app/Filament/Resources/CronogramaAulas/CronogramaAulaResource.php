@@ -5,13 +5,28 @@ namespace App\Filament\Resources\CronogramaAulas;
 use App\Filament\Resources\CronogramaAulas\Schemas\CronogramaAulaForm;
 use App\Filament\Resources\CronogramaAulas\Tables\CronogramaAulasTable;
 use App\Models\CronogramaAula;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
-class CronogramaAulaResource extends Resource
+class CronogramaAulaResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'lancarFrequencia',
+        ];
+    }
+
     protected static ?string $model = CronogramaAula::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
@@ -47,5 +62,16 @@ class CronogramaAulaResource extends Resource
             'edit' => Pages\EditCronogramaAula::route('/{record}/edit'),
             'lancar-frequencia' => Pages\LancarFrequencia::route('/{record}/frequencia'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->hasRole('professor')) {
+            $query->where('pessoa_id', auth()->user()->pessoa?->id);
+        }
+
+        return $query;
     }
 }

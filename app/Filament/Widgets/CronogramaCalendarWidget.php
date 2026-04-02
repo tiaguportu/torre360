@@ -47,6 +47,10 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             $query->where('pessoa_id', $this->fixedProfessorId);
         }
 
+        if (auth()->user()?->hasRole('professor')) {
+            $query->where('pessoa_id', auth()->user()->pessoa?->id);
+        }
+
         return $query->get()
             ->map(function (CronogramaAula $record) {
                 // Formatação ISO 8601 completa para start e end
@@ -124,7 +128,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                         ->pluck('nome', 'id'))
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn () => $this->fixedProfessorId !== null),
+                                    ->hidden(fn () => $this->fixedProfessorId !== null || auth()->user()?->hasRole('professor')),
                             ]),
                     ])
                     ->collapsible()
