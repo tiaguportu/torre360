@@ -30,7 +30,7 @@ class GeografiaSeeder extends Seeder
             DB::table('paises')->updateOrInsert(['sigla' => $pais['sigla']], $pais);
         }
 
-        $brasilId = DB::table('paises')->where('sigla', 'BRA')->first()->id;
+        $brasilId = DB::table('paises')->where('sigla', 'br')->first()->id;
 
         // 2. Estados do Brasil
         $estados = [
