@@ -32,7 +32,7 @@ class DisciplinaForm
                     ->default(0),
                 \Filament\Forms\Components\ColorPicker::make('cor')
                     ->label('Cor da Disciplina')
-                    ->default('#f59e0b'),
+                    ->default(fn () => '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
             ]);
     }
 }
