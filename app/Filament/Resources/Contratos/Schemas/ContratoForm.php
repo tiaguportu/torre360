@@ -3,10 +3,12 @@
 namespace App\Filament\Resources\Contratos\Schemas;
 
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class ContratoForm
 {
@@ -14,11 +16,14 @@ class ContratoForm
     {
         return $schema
             ->components([
-                Select::make('matricula_id')
-                    ->relationship('matricula', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->pessoa?->nome ?? "Matrícula #{$record->id}")
+                Select::make('matriculas')
+                    ->relationship('matriculas', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - ".($record->pessoa?->nome ?? 'Sem nome'))
+                    ->multiple()
                     ->searchable()
-                    ->required(),
+                    ->preload()
+                    ->required()
+                    ->label('Alunos (Matrículas)'),
                 TextInput::make('valor_total')
                     ->numeric()
                     ->prefix('R$')
@@ -26,11 +31,11 @@ class ContratoForm
                 DatePicker::make('data_aceite'),
                 Textarea::make('log_assinatura')
                     ->columnSpanFull(),
-                \Filament\Forms\Components\Repeater::make('responsaveisFinanceiros')
+                Repeater::make('responsaveisFinanceiros')
                     ->relationship('responsaveisFinanceiros')
                     ->schema([
                         Select::make('pessoa_id')
-                            ->relationship('pessoa', 'nome', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Respons_vel%')->orWhere('nome', 'like', '%Responsavel%')))
+                            ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Respons_vel%')->orWhere('nome', 'like', '%Responsavel%')))
                             ->searchable()
                             ->preload()
                             ->required()

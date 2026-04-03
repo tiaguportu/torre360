@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Matricula extends Model
 {
@@ -42,9 +41,9 @@ class Matricula extends Model
         return $this->belongsTo(SituacaoMatricula::class);
     }
 
-    public function contrato(): HasOne
+    public function contrato(): BelongsTo
     {
-        return $this->hasOne(Contrato::class);
+        return $this->belongsTo(Contrato::class);
     }
 
     public function notas(): HasMany

@@ -42,6 +42,11 @@ class SchoolSetupWizard extends Page implements HasForms, HasShieldPermissions
 
     protected string $view = 'filament.pages.school-setup-wizard';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRole('super_admin') ?? false;
+    }
+
     public ?array $data = [];
 
     public function mount(): void

@@ -43,10 +43,21 @@ class AlunoResource extends Resource
      */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->whereHas('perfis', function (Builder $query) {
                 $query->where('perfil.id', 2); // Aluno
             });
+
+        $user = auth()->user();
+
+        // Se NÃO for Super Admin e tiver uma Pessoa vinculada, filtra pelos contratos
+        if ($user && ! $user->hasRole('super_admin') && $user->pessoa) {
+            $query->whereHas('matriculas.contrato.responsaveisFinanceiros', function (Builder $query) use ($user) {
+                $query->where('pessoa_id', $user->pessoa->id);
+            });
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

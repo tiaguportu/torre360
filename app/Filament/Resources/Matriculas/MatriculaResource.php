@@ -13,13 +13,16 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class MatriculaResource extends Resource
 {
     protected static ?string $model = Matricula::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+
     protected static ?int $navigationSort = 1;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
 
     public static function form(Schema $schema): Schema
@@ -32,10 +35,21 @@ class MatriculaResource extends Resource
         return MatriculasTable::configure($table);
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with(['turma.serie.curso.documentos', 'documentoInseridos', 'pessoa', 'situacaoMatricula']);
+
+        $user = auth()->user();
+
+        // Se NÃO for Super Admin e tiver uma Pessoa vinculada, filtra pelas matrículas vinculadas via contrato
+        if ($user && ! $user->hasRole('super_admin') && $user->pessoa) {
+            $query->whereHas('contrato.responsaveisFinanceiros', function ($query) use ($user) {
+                $query->where('pessoa_id', $user->pessoa->id);
+            });
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array
