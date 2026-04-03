@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Pessoa extends Model
 {
     protected $table = 'pessoa';
+
     protected $guarded = [];
 
     public function user(): BelongsTo
@@ -50,6 +51,11 @@ class Pessoa extends Model
     public function perfis(): BelongsToMany
     {
         return $this->belongsToMany(Perfil::class, 'pessoa_perfil');
+    }
+
+    public function responsaveisFinanceiros(): HasMany
+    {
+        return $this->hasMany(ResponsavelFinanceiro::class);
     }
 
     public function coordenacoes(): HasMany

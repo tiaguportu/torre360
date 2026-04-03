@@ -9,7 +9,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -53,11 +52,23 @@ class UserForm
                     ->dehydrated(false)
                     ->required(fn (string $operation): bool => $operation === 'create'),
 
+                Toggle::make('is_active')
+                    ->label('Usuário Ativo')
+                    ->default(true)
+                    ->helperText('Habilita ou desabilita o acesso do usuário ao sistema.'),
+
+                Toggle::make('email_verified_at')
+                    ->label('E-mail Verificado')
+                    ->helperText('Marca o e-mail do usuário como verificado.')
+                    ->dehydrateStateUsing(fn ($state) => $state ? now() : null)
+                    ->afterStateHydrated(function (Toggle $component, $state) {
+                        $component->state($state !== null);
+                    }),
+
                 Toggle::make('send_credentials')
-                    ->label('Enviar informações de acesso para o e-mail do usuário')
-                    ->helperText('Se marcado, um e-mail será enviado com os dados de login e senha criados.')
-                    ->dehydrated(false)
-                    ->visible(fn (string $operation): bool => $operation === 'create'),
+                    ->label(fn (string $operation): string => $operation === 'create' ? 'Enviar informações de acesso para o e-mail do usuário' : 'Informar alteração por e-mail ao usuário')
+                    ->helperText('Se marcado, um e-mail será enviado ao usuário.')
+                    ->dehydrated(false),
 
                 Select::make('roles')
                     ->label('Papéis (Roles)')
@@ -67,14 +78,6 @@ class UserForm
                     ->searchable()
                     ->required(),
 
-                Select::make('pessoa_id')
-                    ->label('Pessoa Vinculada')
-                    ->relationship('pessoa', 'nome')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome . ($record->cpf ? " - {$record->cpf}" : ""))
-                    ->searchable(['nome', 'cpf'])
-                    ->preload()
-                    ->nullable()
-                    ->helperText('Opcional: vincule este usuário a uma Pessoa existente no sistema.'),
             ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CronogramaAulas\Pages;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\CronogramaAula;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
 
@@ -15,8 +16,15 @@ class VerificaConflitos extends Page
 
     protected static ?string $title = 'Verificação de Conflitos';
 
+    public function authorizeAccess(): void
+    {
+        $this->authorize('verificaConflitos');
+    }
+
     public int $totalAlerts = 0;
+
     public int $turmaConflicts = 0;
+
     public int $profConflicts = 0;
 
     public function mount(): void
@@ -29,11 +37,11 @@ class VerificaConflitos extends Page
     public function deleteRecord(int $id): void
     {
         $record = CronogramaAula::find($id);
-        
+
         if ($record) {
             $record->delete();
-            
-            \Filament\Notifications\Notification::make()
+
+            Notification::make()
                 ->title('Registro excluído')
                 ->success()
                 ->send();
@@ -56,7 +64,7 @@ class VerificaConflitos extends Page
             ->select([
                 'a.id as a_id', 'a.hora_inicio as a_inicio', 'a.hora_fim as a_fim', 'd1.nome as a_disciplina',
                 'b.id as b_id', 'b.hora_inicio as b_inicio', 'b.hora_fim as b_fim', 'd2.nome as b_disciplina',
-                'turma.nome as turma_nome', 'a.data'
+                'turma.nome as turma_nome', 'a.data',
             ])
             ->get()->toArray();
     }
@@ -79,7 +87,7 @@ class VerificaConflitos extends Page
             ->select([
                 'a.id as a_id', 'a.hora_inicio as a_inicio', 'a.hora_fim as a_fim', 'd1.nome as a_disciplina', 't1.nome as a_turma',
                 'b.id as b_id', 'b.hora_inicio as b_inicio', 'b.hora_fim as b_fim', 'd2.nome as b_disciplina', 't2.nome as b_turma',
-                'pessoa.nome as professor_nome', 'a.data'
+                'pessoa.nome as professor_nome', 'a.data',
             ])
             ->get()->toArray();
     }

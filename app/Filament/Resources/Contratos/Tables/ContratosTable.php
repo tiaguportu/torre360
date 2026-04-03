@@ -6,6 +6,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ContratosTable
@@ -14,9 +15,16 @@ class ContratosTable
     {
         return $table
             ->columns([
-                TextColumn::make('matricula.nome')
-                    
-                    ->sortable(),
+                TextColumn::make('matriculas.pessoa.nome')
+                    ->label('Alunos / Matrículas')
+                    ->badge()
+                    ->separator(',')
+                    ->searchable(),
+                TextColumn::make('responsaveisFinanceiros.pessoa.nome')
+                    ->label('Responsáveis Financeiros')
+                    ->badge()
+                    ->separator(',')
+                    ->searchable(),
                 TextColumn::make('valor_total')
                     ->numeric()
                     ->sortable(),
@@ -33,7 +41,16 @@ class ContratosTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('aluno')
+                    ->relationship('matriculas.pessoa', 'nome')
+                    ->multiple()
+                    ->label('Filtrar por Aluno')
+                    ->searchable(),
+                SelectFilter::make('responsavel')
+                    ->relationship('responsaveisFinanceiros.pessoa', 'nome')
+                    ->multiple()
+                    ->label('Filtrar por Responsável')
+                    ->searchable(),
             ])
             ->recordActions([
                 EditAction::make(),

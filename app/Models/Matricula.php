@@ -67,22 +67,32 @@ class Matricula extends Model
      */
     public function hasMissingMandatoryDocuments(): bool
     {
+        return $this->getMissingMandatoryDocumentsCount() > 0;
+    }
+
+    /**
+     * Retorna a quantidade de documentos obrigatórios que faltam para esta matrícula.
+     */
+    public function getMissingMandatoryDocumentsCount(): int
+    {
         $curso = $this->turma?->serie?->curso;
 
         if (! $curso) {
-            return false;
+            return 0;
         }
 
-        $totalObrigatorios = $curso->documentos()->count();
+        $obrigatoriosIds = $curso->documentos()->pluck('id')->toArray();
+        $totalObrigatorios = count($obrigatoriosIds);
 
         if ($totalObrigatorios === 0) {
-            return false;
+            return 0;
         }
 
         $totalInseridos = $this->documentoInseridos()
-            ->whereIn('documento_obrigatorio_id', $curso->documentos()->pluck('id'))
+            ->whereIn('documento_obrigatorio_id', $obrigatoriosIds)
+            ->distinct('documento_obrigatorio_id')
             ->count('documento_obrigatorio_id');
 
-        return $totalInseridos < $totalObrigatorios;
+        return max(0, $totalObrigatorios - $totalInseridos);
     }
 }

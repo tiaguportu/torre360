@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\CronogramaAulas\Pages;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Models\CronogramaAula;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -13,11 +15,12 @@ class ListCronogramaAulas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('verificaConflitos')
+            Action::make('verificaConflitos')
                 ->label('Verificar Conflitos')
                 ->color('danger')
                 ->icon('heroicon-o-exclamation-triangle')
-                ->url(fn (): string => CronogramaAulaResource::getUrl('verifica-conflitos')),
+                ->url(fn (): string => CronogramaAulaResource::getUrl('verifica-conflitos'))
+                ->visible(fn () => auth()->user()->can('verificaConflitos', CronogramaAula::class)),
             CreateAction::make(),
         ];
     }

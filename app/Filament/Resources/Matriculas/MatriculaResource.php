@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas;
 
+use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\CreateMatricula;
 use App\Filament\Resources\Matriculas\Pages\EditMatricula;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
@@ -65,6 +66,7 @@ class MatriculaResource extends Resource
             'index' => ListMatriculas::route('/'),
             'create' => CreateMatricula::route('/create'),
             'edit' => EditMatricula::route('/{record}/edit'),
+            'boletim' => BoletimMatricula::route('/{record}/boletim'),
         ];
     }
 }

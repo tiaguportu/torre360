@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DocumentoObrigatorios\Schemas;
 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -12,9 +13,11 @@ class DocumentoObrigatorioForm
     {
         return $schema
             ->components([
-                TextInput::make('curso_id')
-                    ->required()
-                    ->numeric(),
+                Select::make('curso_id')
+                    ->relationship('curso', 'nome_externo')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 TextInput::make('nome')
                     ->required(),
                 Toggle::make('flag_obrigatorio')

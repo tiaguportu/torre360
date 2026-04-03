@@ -11,21 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('matricula', function (Blueprint $table) {
-            $table->foreignId('contrato_id')->nullable()->constrained('contrato')->onDelete('set null');
-        });
-
-        // Migrar dados existentes de contrato.matricula_id para matricula.contrato_id
-        $contratos = DB::table('contrato')->get();
-        foreach ($contratos as $contrato) {
-            DB::table('matricula')
-                ->where('id', $contrato->matricula_id)
-                ->update(['contrato_id' => $contrato->id]);
+        if (! Schema::hasColumn('matricula', 'contrato_id')) {
+            Schema::table('matricula', function (Blueprint $table) {
+                $table->foreignId('contrato_id')->nullable()->constrained('contrato')->onDelete('set null');
+            });
         }
 
-        Schema::table('contrato', function (Blueprint $table) {
-            $table->dropColumn('matricula_id');
-        });
+        // Migrar dados existentes de contrato.matricula_id para matricula.contrato_id
+        if (Schema::hasColumn('contrato', 'matricula_id')) {
+            $contratos = DB::table('contrato')->get();
+            foreach ($contratos as $contrato) {
+                if ($contrato->matricula_id) {
+                    DB::table('matricula')
+                        ->where('id', $contrato->matricula_id)
+                        ->update(['contrato_id' => $contrato->id]);
+                }
+            }
+
+            Schema::table('contrato', function (Blueprint $table) {
+                $table->dropColumn('matricula_id');
+            });
+        }
     }
 
     /**

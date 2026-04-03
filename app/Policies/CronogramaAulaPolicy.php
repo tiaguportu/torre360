@@ -76,4 +76,9 @@ class CronogramaAulaPolicy
     {
         return $authUser->can('LancarFrequencia:CronogramaAula');
     }
+
+    public function verificaConflitos(AuthUser $authUser): bool
+    {
+        return $authUser->can('VerificaConflitos:CronogramaAula');
+    }
 }

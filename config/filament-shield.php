@@ -193,6 +193,7 @@ return [
             ],
             CronogramaAulaResource::class => [
                 'lancarFrequencia',
+                'verificaConflitos',
             ],
 
         ],

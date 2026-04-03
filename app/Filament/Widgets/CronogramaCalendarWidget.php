@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\CronogramaAula;
 use App\Models\Disciplina;
+use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Turma;
 use Filament\Forms\Components\Select;
@@ -49,6 +50,11 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
         if (auth()->user()?->hasRole('professor')) {
             $query->where('pessoa_id', auth()->user()->pessoa?->id);
+        }
+
+        if (auth()->user()?->hasRole('responsavel')) {
+            $turmasIds = $this->getTurmasPermitidasIds();
+            $query->whereIn('turma_id', $turmasIds);
         }
 
         return $query->get()
@@ -106,7 +112,15 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                 Select::make('turmas')
                                     ->label('Turmas')
                                     ->multiple()
-                                    ->options(Turma::whereNotNull('nome')->orderBy('nome')->pluck('nome', 'id'))
+                                    ->options(function () {
+                                        $query = Turma::whereNotNull('nome')->orderBy('nome');
+
+                                        if (auth()->user()?->hasRole('responsavel')) {
+                                            $query->whereIn('id', $this->getTurmasPermitidasIds());
+                                        }
+
+                                        return $query->pluck('nome', 'id');
+                                    })
                                     ->searchable()
                                     ->live()
                                     ->hidden(fn () => $this->fixedTurmaId !== null),
@@ -139,5 +153,21 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                     ),
             ])
             ->statePath('data');
+    }
+
+    private function getTurmasPermitidasIds(): array
+    {
+        $pessoa = auth()->user()->pessoa;
+
+        if (! $pessoa) {
+            return [];
+        }
+
+        $contratosIds = $pessoa->responsaveisFinanceiros()->pluck('contrato_id');
+
+        return Matricula::whereIn('contrato_id', $contratosIds)
+            ->pluck('turma_id')
+            ->unique()
+            ->toArray();
     }
 }

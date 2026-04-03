@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Alunos\Pages;
+namespace App\Filament\Resources\Matriculas\Pages;
 
-use App\Filament\Resources\Alunos\AlunoResource;
+use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Schemas\Components\BoletimeGradesTable;
 use App\Filament\Schemas\Components\BoletimeHeader;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
@@ -11,14 +11,14 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 
-class BoletimAluno extends Page implements HasSchemas
+class BoletimMatricula extends Page implements HasSchemas
 {
     use InteractsWithRecord;
     use InteractsWithSchemas;
 
-    protected static string $resource = AlunoResource::class;
+    protected static string $resource = MatriculaResource::class;
 
-    protected string $view = 'filament.alunos.boletim';
+    protected string $view = 'filament.matriculas.boletim';
 
     public function schema(Schema $schema): Schema
     {
@@ -40,7 +40,7 @@ class BoletimAluno extends Page implements HasSchemas
     public function getBreadcrumbs(): array
     {
         return [
-            AlunoResource::getUrl() => 'Alunos',
+            MatriculaResource::getUrl() => 'Matrículas',
             '#' => 'Boletim',
         ];
     }

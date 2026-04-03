@@ -24,6 +24,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             'delete',
             'delete_any',
             'lancarFrequencia',
+            'verificaConflitos',
         ];
     }
 
@@ -67,9 +68,20 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        $user = auth()->user();
 
-        if (auth()->user()?->hasRole('professor')) {
-            $query->where('pessoa_id', auth()->user()->pessoa?->id);
+        if ($user) {
+            // Filtro para Professor
+            if ($user->hasRole('professor')) {
+                $query->where('pessoa_id', $user->pessoa?->id);
+            }
+
+            // Filtro para Responsável
+            if ($user->hasRole('responsavel') && $user->pessoa) {
+                $query->whereHas('turma.matriculas.contrato.responsaveisFinanceiros', function ($query) use ($user) {
+                    $query->where('pessoa_id', $user->pessoa->id);
+                });
+            }
         }
 
         return $query;
