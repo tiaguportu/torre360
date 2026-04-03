@@ -2,7 +2,9 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Models\Avaliacao;
 use App\Models\CronogramaAula;
 use App\Models\Disciplina;
 use App\Models\Matricula;
@@ -35,8 +37,95 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
     public function getAllEvents(): array
     {
-        $query = CronogramaAula::with(['turma.serie.curso', 'disciplina', 'professor']);
+        // 1. CronogramaAula
+        $queryCronograma = CronogramaAula::with(['turma.serie.curso', 'disciplina', 'professor']);
 
+        // Aplica filtros fixos e de permissão
+        $this->applyQueryFilters($queryCronograma, 'pessoa_id');
+
+        $eventsCronograma = $queryCronograma->get()->map(function (CronogramaAula $record) {
+            $start = $record->data.'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
+            $end = $record->data.'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
+
+            $turmaCor = $record->turma?->cor ?? '#10b981';
+            $disciplinaCor = $record->disciplina?->cor ?? '#f59e0b';
+            $cursoCor = $record->turma?->serie?->curso?->cor ?? '#7c3aed';
+
+            return [
+                'id' => (string) $record->id,
+                'type' => 'aula',
+                'title' => "{$record->turma?->nome} - {$record->disciplina?->nome}",
+                'start' => $start,
+                'end' => $end,
+                'url' => CronogramaAulaResource::getUrl('view', ['record' => $record]),
+                'turma_id' => (string) $record->turma_id,
+                'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
+                'turma_cor' => $turmaCor,
+                'disciplina_id' => (string) $record->disciplina_id,
+                'disciplina_nome' => $record->disciplina?->nome ?? 'Sem Disciplina',
+                'disciplina_cor' => $disciplinaCor,
+                'curso_nome' => $record->turma?->serie?->curso?->nome_interno ?? 'Sem Curso',
+                'curso_cor' => $cursoCor,
+                'professor_id' => (string) $record->pessoa_id,
+                'professor_nome' => $record->professor?->nome ?? 'Sem Professor',
+                'hora_inicio' => substr($record->hora_inicio ?? '', 0, 5),
+                'hora_fim' => substr($record->hora_fim ?? '', 0, 5),
+                'data' => date('d/m/Y', strtotime($record->data)),
+                'conteudo_ministrado_full' => $record->conteudo_ministrado,
+                'conteudo_ministrado' => str($record->conteudo_ministrado)->limit(100)->toString(),
+                'backgroundColor' => $disciplinaCor,
+                'borderColor' => $disciplinaCor,
+                'textColor' => '#ffffff',
+            ];
+        });
+
+        // 2. Avaliacao
+        $queryAvaliacao = Avaliacao::with(['turma', 'disciplina', 'professor', 'etapaAvaliativa', 'categoria']);
+        $this->applyQueryFilters($queryAvaliacao, 'professor_id');
+
+        $eventsAvaliacao = $queryAvaliacao->get()->map(function (Avaliacao $record) {
+            $data = $record->data_prevista ? $record->data_prevista->format('Y-m-d') : date('Y-m-d');
+            $start = $data.'T00:00:00';
+            $end = $data.'T23:59:59';
+
+            $turmaCor = $record->turma?->cor ?? '#10b981';
+            $disciplinaCor = $record->disciplina?->cor ?? '#f59e0b';
+            $cursoCor = $record->turma?->serie?->curso?->cor ?? '#7c3aed';
+
+            return [
+                'id' => 'aval-'.(string) $record->id,
+                'type' => 'avaliacao',
+                'title' => "AVALIAÇÃO: {$record->turma?->nome} - {$record->disciplina?->nome}",
+                'start' => $start,
+                'end' => $end,
+                'url' => AvaliacaoResource::getUrl('view', ['record' => $record]),
+                'turma_id' => (string) $record->turma_id,
+                'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
+                'turma_cor' => $turmaCor,
+                'disciplina_id' => (string) $record->disciplina_id,
+                'disciplina_nome' => $record->disciplina?->nome ?? 'Sem Disciplina',
+                'disciplina_cor' => $disciplinaCor,
+                'categoria_nome' => $record->categoria?->nome ?? 'Sem Categoria',
+                'curso_nome' => $record->turma?->serie?->curso?->nome_interno ?? 'Avaliação',
+                'curso_cor' => $cursoCor,
+                'professor_id' => (string) $record->professor_id,
+                'professor_nome' => $record->professor?->nome ?? 'Sem Professor',
+                'hora_inicio' => 'Dia',
+                'hora_fim' => 'Inteiro',
+                'data' => $record->data_prevista ? $record->data_prevista->format('d/m/Y') : '',
+                'conteudo_ministrado_full' => $record->etapaAvaliativa?->nome ?? 'Avaliação',
+                'conteudo_ministrado' => $record->etapaAvaliativa?->nome ?? 'Avaliação',
+                'backgroundColor' => '#facc15',
+                'borderColor' => '#facc15',
+                'textColor' => '#ffffff',
+            ];
+        });
+
+        return array_merge($eventsCronograma->toArray(), $eventsAvaliacao->toArray());
+    }
+
+    private function applyQueryFilters($query, string $professorField): void
+    {
         // Aplica filtros fixos se definidos
         if ($this->fixedTurmaId) {
             $query->where('turma_id', $this->fixedTurmaId);
@@ -45,55 +134,17 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             $query->where('disciplina_id', $this->fixedDisciplinaId);
         }
         if ($this->fixedProfessorId) {
-            $query->where('pessoa_id', $this->fixedProfessorId);
+            $query->where($professorField, $this->fixedProfessorId);
         }
 
         if (auth()->user()?->hasRole('professor')) {
-            $query->where('pessoa_id', auth()->user()->pessoa?->id);
+            $query->where($professorField, auth()->user()->pessoa?->id);
         }
 
         if (auth()->user()?->hasRole('responsavel')) {
             $turmasIds = $this->getTurmasPermitidasIds();
             $query->whereIn('turma_id', $turmasIds);
         }
-
-        return $query->get()
-            ->map(function (CronogramaAula $record) {
-                // Formatação ISO 8601 completa para start e end
-                $start = $record->data.'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
-                $end = $record->data.'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
-
-                $turmaCor = $record->turma?->cor ?? '#10b981';
-                $disciplinaCor = $record->disciplina?->cor ?? '#f59e0b';
-                $cursoCor = $record->turma?->serie?->curso?->cor ?? '#7c3aed';
-
-                return [
-                    'id' => (string) $record->id,
-                    'title' => "{$record->turma?->nome} - {$record->disciplina?->nome}",
-                    'start' => $start,
-                    'end' => $end,
-                    'url' => CronogramaAulaResource::getUrl('edit', ['record' => $record]),
-                    'turma_id' => (string) $record->turma_id,
-                    'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
-                    'turma_cor' => $turmaCor,
-                    'disciplina_id' => (string) $record->disciplina_id,
-                    'disciplina_nome' => $record->disciplina?->nome ?? 'Sem Disciplina',
-                    'disciplina_cor' => $disciplinaCor,
-                    'curso_nome' => $record->turma?->serie?->curso?->nome_interno ?? 'Sem Curso',
-                    'curso_cor' => $cursoCor,
-                    'professor_id' => (string) $record->pessoa_id,
-                    'professor_nome' => $record->professor?->nome ?? 'Sem Professor',
-                    'hora_inicio' => substr($record->hora_inicio ?? '', 0, 5),
-                    'hora_fim' => substr($record->hora_fim ?? '', 0, 5),
-                    'data' => date('d/m/Y', strtotime($record->data)),
-                    'conteudo_ministrado_full' => $record->conteudo_ministrado,
-                    'conteudo_ministrado' => str($record->conteudo_ministrado)->limit(100)->toString(),
-                    'backgroundColor' => $disciplinaCor,
-                    'borderColor' => $disciplinaCor,
-                    'textColor' => '#ffffff',
-                ];
-            })
-            ->toArray();
     }
 
     public function mount(): void

@@ -47,16 +47,19 @@
                     dayMaxEvents: false,
                     eventContent: (info) => {
                         const p = info.event.extendedProps;
+                        const isAval = p.type === 'avaliacao';
                         const hasContent = p.conteudo_ministrado_full && p.conteudo_ministrado_full.trim().length > 0;
-                        const statusColor = hasContent ? '#10b981' : '#6b7280'; // success (green) vs primary (gray)
+                        const statusColor = isAval ? '#eab308' : (hasContent ? '#10b981' : '#6b7280');
+                        const containerBg = isAval ? '#fefce8' : 'white';
+                        const textColor = 'white';
                         
                         return {
                             html: `
-                                <div style='border: 1px solid ${statusColor}; border-radius: 4px; padding: 2px; display: flex; flex-direction: column; gap: 2px; background: white; overflow: hidden;'>
-                                    <div style='background: ${p.turma_cor}; color: white; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                                <div style='border: 2px solid ${statusColor}; border-radius: 4px; padding: 2px; display: flex; flex-direction: column; gap: 2px; background: ${containerBg}; overflow: hidden;'>
+                                    <div style='background: ${p.turma_cor}; color: ${textColor}; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                                         ${p.turma_nome}
                                     </div>
-                                    <div style='background: ${p.disciplina_cor}; color: white; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
+                                    <div style='background: ${p.disciplina_cor}; color: ${textColor}; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                                         ${p.disciplina_nome}
                                     </div>
                                     <div style='background: #9ca3af; color: white; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
@@ -136,15 +139,27 @@
                             <div class="p-1.5 rounded mr-2" :style="`background-color: ${tooltip.event?.disciplina_cor}20`"><svg class="w-3 h-3" :style="`color: ${tooltip.event?.disciplina_cor}`" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
                             <strong>Professor:</strong> <span x-text="tooltip.event?.professor_nome"></span>
                         </div>
-                        <div class="tooltip-item">
+                        <div class="tooltip-item" x-show="tooltip.event?.type === 'avaliacao'">
+                            <div class="p-1.5 rounded mr-2" style="background-color: #facc1520"><svg class="w-3 h-3" style="color: #facc15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+                            <strong>Categoria:</strong> <span x-text="tooltip.event?.categoria_nome"></span>
+                        </div>
+                        <div class="tooltip-item" x-show="tooltip.event?.type !== 'avaliacao'">
                             <div class="p-1.5 rounded mr-2" style="background-color: #f59e0b20"><svg class="w-3 h-3" style="color: #f59e0b" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                             <strong>Início:</strong> <span x-text="tooltip.event?.hora_inicio"></span>
                         </div>
                         
+                        <template x-if="tooltip.event?.type === 'avaliacao'">
+                            <div class="tooltip-content" style="margin-top: 10px;">
+                                <div style="font-size: 11px; color: #854d0e; background: #fefce8; border: 1px solid #fef08a; padding: 8px; border-radius: 6px; font-weight: 500;">
+                                    Trata-se de uma avaliação da disciplina <span x-text="tooltip.event?.disciplina_nome" style="font-weight: bold;"></span>
+                                </div>
+                            </div>
+                        </template>
+
                         <template x-if="tooltip.event?.conteudo_ministrado_full || tooltip.event?.conteudo_ministrado">
                             <div class="tooltip-content">
                                 <hr :style="`border-top-color: ${tooltip.event?.disciplina_cor}30`">
-                                <div class="content-label" :style="`color: ${tooltip.event?.disciplina_cor}80`">CONTEÚDO MINISTRADO</div>
+                                <div class="content-label" :style="`color: ${tooltip.event?.disciplina_cor}80`" x-text="tooltip.event?.type === 'avaliacao' ? 'ETAPA AVALIATIVA' : 'CONTEÚDO MINISTRADO'"></div>
                                 <div class="content-text" :style="`border-left: 2px solid ${tooltip.event?.disciplina_cor}40`" x-text="tooltip.event?.conteudo_ministrado_full || tooltip.event?.conteudo_ministrado"></div>
                             </div>
                         </template>

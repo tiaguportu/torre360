@@ -3,16 +3,18 @@
 namespace App\Filament\Resources\Avaliacaos\Pages;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
-use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Models\Nota;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class LancarNotas extends EditRecord
@@ -42,12 +44,29 @@ class LancarNotas extends EditRecord
             ->columns(1)
             ->components([
                 Section::make('Informações da Avaliação')
-                    ->schema(
-                        array_map(
-                            fn ($component) => $component->disabled(),
-                            AvaliacaoForm::getSchemaComponents()
-                        )
-                    )->columns(3),
+                    ->schema([
+                        Placeholder::make('etapa_avaliativa_info')
+                            ->label('Etapa Avaliativa')
+                            ->content(fn (?Model $record): string => $record?->etapaAvaliativa?->nome ?? '-'),
+                        Placeholder::make('turma_info')
+                            ->label('Turma')
+                            ->content(fn (?Model $record): string => $record?->turma?->nome ?? '-'),
+                        Placeholder::make('disciplina_info')
+                            ->label('Disciplina')
+                            ->content(fn (?Model $record): string => $record?->disciplina?->nome ?? '-'),
+                        Placeholder::make('professor_info')
+                            ->label('Professor')
+                            ->content(fn (?Model $record): string => $record?->professor?->nome ?? '-'),
+                        Placeholder::make('categoria_info')
+                            ->label('Categoria')
+                            ->content(fn (?Model $record): string => $record?->categoria?->nome ?? '-'),
+                        Placeholder::make('data_prevista_info')
+                            ->label('Data Prevista')
+                            ->content(fn (?Model $record): string => $record?->data_prevista ? Carbon::parse($record->data_prevista)->format('d/m/Y') : '-'),
+                        Placeholder::make('nota_maxima_info')
+                            ->label('Nota Máxima')
+                            ->content(fn (?Model $record): string => $record?->nota_maxima ?? '-'),
+                    ])->columns(3),
 
                 Section::make('Notas dos Alunos')
                     ->schema([

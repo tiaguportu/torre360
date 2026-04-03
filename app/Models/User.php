@@ -8,7 +8,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
@@ -44,9 +44,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return true;
     }
 
-    public function pessoas(): HasMany
+    public function pessoas(): BelongsToMany
     {
-        return $this->hasMany(Pessoa::class, 'user_id');
+        return $this->belongsToMany(Pessoa::class, 'pessoa_user');
     }
 
     /**

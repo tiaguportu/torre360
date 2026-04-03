@@ -13,9 +13,9 @@ class Pessoa extends Model
 
     protected $guarded = [];
 
-    public function user(): BelongsTo
+    public function users(): BelongsToMany
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToMany(User::class, 'pessoa_user');
     }
 
     public function endereco(): BelongsTo

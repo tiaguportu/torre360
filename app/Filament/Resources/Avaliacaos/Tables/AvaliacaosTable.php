@@ -52,7 +52,7 @@ class AvaliacaosTable
                     ->label('Professor')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('data_prevista')
                     ->label('Data Prevista')
@@ -64,25 +64,25 @@ class AvaliacaosTable
                     ->label('Data Ocorrência')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('data_limite_lancamento')
                     ->label('Limite Lançamento')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('nota_maxima')
                     ->label('MÁX')
                     ->numeric(2)
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('peso_etapa_avaliativa')
                     ->label('Peso')
                     ->numeric(2)
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('turma_id')

@@ -9,6 +9,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section;
@@ -90,14 +91,20 @@ class LancarFrequencia extends EditRecord
                         Placeholder::make('disciplina_info')
                             ->label('Disciplina')
                             ->content(fn (?Model $record): string => $record?->disciplina?->nome ?? '-'),
+                        Placeholder::make('professor_info')
+                            ->label('Professor')
+                            ->content(fn (?Model $record): string => $record?->professor?->nome ?? '-'),
                         Placeholder::make('data_info')
                             ->label('Data')
                             ->content(fn (?Model $record): string => $record?->data ? Carbon::parse($record->data)->format('d/m/Y') : '-'),
                         Placeholder::make('horario_info')
                             ->label('Horário')
                             ->content(fn (?Model $record): string => $record ? ($record->hora_inicio.' - '.$record->hora_fim) : '-'),
+                        Placeholder::make('periodo_info')
+                            ->label('Período Letivo')
+                            ->content(fn (?Model $record): string => $record?->periodoLetivo?->nome ?? '-'),
                     ])
-                    ->columns(1),
+                    ->columns(['md' => 2, 'default' => 1]),
 
                 Section::make('Frequência dos Alunos')
                     ->description('Marque a presença dos alunos matriculados na turma para esta aula.')
@@ -117,15 +124,23 @@ class LancarFrequencia extends EditRecord
                                     ->disabled()
                                     ->dehydrated()
                                     ->columnSpan(['md' => 1]),
-                                Select::make('situacao')
+                                ToggleButtons::make('situacao')
                                     ->label('Situação')
-                                    ->placeholder('Selecione...')
                                     ->options([
                                         'presente' => 'Presente',
                                         'ausente' => 'Ausente',
                                     ])
+                                    ->colors([
+                                        'presente' => 'success',
+                                        'ausente' => 'danger',
+                                    ])
+                                    ->icons([
+                                        'presente' => 'heroicon-o-check',
+                                        'ausente' => 'heroicon-o-x-circle',
+                                    ])
                                     ->required()
-                                    ->selectablePlaceholder(true)
+                                    ->inline()
+                                    ->live()
                                     ->columnSpan(['md' => 1]),
                             ])
                             ->columns(['md' => 2])

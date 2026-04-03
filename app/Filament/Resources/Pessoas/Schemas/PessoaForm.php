@@ -79,13 +79,13 @@ class PessoaForm
                     ->searchable()
                     ->preload(),
 
-                Select::make('user_id')
-                    ->label('Usuário do Sistema')
-                    ->relationship('user', 'name')
+                Select::make('users')
+                    ->label('Usuários do Sistema')
+                    ->relationship('users', 'name')
+                    ->multiple()
                     ->searchable()
                     ->preload()
-                    ->nullable()
-                    ->helperText('Opcional: vincule esta pessoa a um usuário de acesso ao sistema.'),
+                    ->helperText('Opcional: vincule esta pessoa a um ou mais usuários de acesso ao sistema.'),
             ]);
     }
 }
