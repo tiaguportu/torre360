@@ -78,6 +78,13 @@ class UserForm
                     ->searchable()
                     ->required(),
 
+                Select::make('pessoas')
+                    ->label('Pessoas Vinculadas')
+                    ->multiple()
+                    ->relationship('pessoas', 'nome')
+                    ->preload()
+                    ->searchable()
+                    ->helperText('Um usuário pode estar vinculado a várias pessoas (ex: Professor e Responsável).'),
             ]);
     }
 }
