@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
+use App\Filament\Resources\Pessoas\PessoaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -198,6 +199,10 @@ return [
             ],
             MatriculaResource::class => [
                 'documentos',
+            ],
+            PessoaResource::class => [
+                'import',
+                'export',
             ],
 
         ],

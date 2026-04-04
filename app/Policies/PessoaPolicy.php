@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Pessoa;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PessoaPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Pessoa');
@@ -72,4 +72,13 @@ class PessoaPolicy
         return $authUser->can('Reorder:Pessoa');
     }
 
+    public function import(AuthUser $authUser): bool
+    {
+        return $authUser->can('Import:Pessoa');
+    }
+
+    public function export(AuthUser $authUser): bool
+    {
+        return $authUser->can('Export:Pessoa');
+    }
 }

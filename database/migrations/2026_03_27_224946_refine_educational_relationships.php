@@ -21,12 +21,26 @@ return new class extends Migration
             try { DB::statement("ALTER TABLE avaliacao ADD COLUMN peso_etapa_avaliativa DECIMAL(5,2)"); } catch (\Exception $e) {}
         } else {
             Schema::table('dia_nao_letivo', function (Blueprint $table) {
-                $table->dropForeign(['curso_id']);
+                // Tenta remover a chave estrangeira de forma segura para MySQL
+                try {
+                    $table->dropForeign(['curso_id']);
+                } catch (\Exception $e) {
+                    // Ignora se a chave não existir ou tiver outro nome
+                }
                 $table->dropColumn('curso_id');
             });
 
             Schema::table('etapa_avaliativa', function (Blueprint $table) {
-                $table->dropForeign(['turma_id']);
+                // Tentando dropar a chave que pode ter vindo da tabela 'etapas'
+                try {
+                    $table->dropForeign('etapas_turma_id_foreign');
+                } catch (\Exception $e) {
+                    try {
+                        $table->dropForeign(['turma_id']);
+                    } catch (\Exception $e2) {
+                        // Ignora se não conseguir remover a chave
+                    }
+                }
                 $table->dropColumn('turma_id');
             });
 

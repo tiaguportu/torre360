@@ -2,16 +2,21 @@
 
 namespace App\Filament\Resources\Pessoas\Tables;
 
+use App\Filament\Exports\PessoaExporter;
 use App\Models\Perfil;
+use App\Models\Pessoa;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportBulkAction;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 class PessoasTable
 {
@@ -79,19 +84,69 @@ class PessoasTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    BulkAction::make('adicionarPerfis')
-                        ->label('Adicionar Perfis')
-                        ->icon('heroicon-o-plus-circle')
+                    ExportBulkAction::make()
+                        ->exporter(PessoaExporter::class)
+                        ->label('Exportar Selecionados')
+                        ->visible(fn (): bool => auth()->user()->can('export', Pessoa::class)),
+                    BulkAction::make('editarLote')
+                        ->label('Editar em Lote')
+                        ->icon('heroicon-o-pencil-square')
                         ->form([
+                            Select::make('sexo_id')
+                                ->label('Sexo')
+                                ->relationship('sexo', 'nome')
+                                ->preload()
+                                ->searchable(),
+                            Select::make('cor_raca_id')
+                                ->label('Cor / Raça')
+                                ->relationship('corRaca', 'nome')
+                                ->preload()
+                                ->searchable(),
+                            Select::make('nacionalidade_id')
+                                ->label('Nacionalidade')
+                                ->relationship('nacionalidade', 'nome')
+                                ->preload()
+                                ->searchable(),
                             Select::make('perfis')
-                                ->label('Selecione os perfis')
+                                ->label('Perfis')
                                 ->multiple()
                                 ->options(Perfil::all()->pluck('nome', 'id'))
-                                ->required(),
+                                ->preload()
+                                ->searchable()
+                                ->helperText('Atenção: isto substituirá os perfis atuais dos registros selecionados.'),
                         ])
                         ->action(function (Collection $records, array $data): void {
-                            foreach ($records as $record) {
-                                $record->perfis()->syncWithoutDetaching($data['perfis']);
+                            $updateData = array_filter([
+                                'sexo_id' => $data['sexo_id'] ?? null,
+                                'cor_raca_id' => $data['cor_raca_id'] ?? null,
+                                'nacionalidade_id' => $data['nacionalidade_id'] ?? null,
+                            ], fn ($value) => filled($value));
+
+                            $perfisIds = isset($data['perfis']) ? array_filter((array) $data['perfis']) : null;
+
+                            try {
+                                foreach ($records as $record) {
+                                    if (! empty($updateData)) {
+                                        $record->update($updateData);
+                                    }
+
+                                    if (! empty($perfisIds)) {
+                                        $record->perfis()->sync($perfisIds);
+                                    }
+                                }
+
+                                Notification::make()
+                                    ->title('Atualização em lote concluída')
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Log::error('Erro no Bulk Edit de Pessoas: '.$e->getMessage());
+
+                                Notification::make()
+                                    ->title('Erro na atualização em lote')
+                                    ->body('Verifique os logs do sistema para mais detalhes.')
+                                    ->danger()
+                                    ->send();
                             }
                         })
                         ->deselectRecordsAfterCompletion(),

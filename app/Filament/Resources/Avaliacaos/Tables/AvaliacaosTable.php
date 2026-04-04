@@ -85,6 +85,16 @@ class AvaliacaosTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('etapa_avaliativa_id')
+                    ->relationship('etapaAvaliativa', 'nome')
+                    ->label('Etapa')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('categoria_avaliacao_id')
+                    ->relationship('categoria', 'nome')
+                    ->label('Categoria')
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('turma_id')
                     ->relationship('turma', 'nome')
                     ->label('Turma')
@@ -106,6 +116,7 @@ class AvaliacaosTable
                 ActionGroup::make([
                     EditAction::make(),
                     ReplicateAction::make()
+                        ->excludeAttributes(['matriculas_count', 'notas_count'])
                         ->before(fn (Avaliacao $record) => $record->data_prevista = now())
                         ->label('Clonar')
                         ->icon('heroicon-o-document-duplicate'),
@@ -127,7 +138,7 @@ class AvaliacaosTable
                         ->label('Clonar Selecionados')
                         ->icon('heroicon-o-document-duplicate')
                         ->action(fn (Collection $records) => $records->each(function ($record) {
-                            $clone = $record->replicate();
+                            $clone = $record->replicate(['matriculas_count', 'notas_count']);
                             $clone->data_prevista = now();
                             $clone->save();
                         })),

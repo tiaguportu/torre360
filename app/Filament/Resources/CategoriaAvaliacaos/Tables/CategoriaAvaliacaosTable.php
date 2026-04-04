@@ -16,6 +16,11 @@ class CategoriaAvaliacaosTable
             ->columns([
                 TextColumn::make('nome')
                     ->searchable(),
+                TextColumn::make('substituicao.nome')
+                    ->label('Substitui')
+                    ->placeholder('—')
+                    ->badge()
+                    ->color('warning'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

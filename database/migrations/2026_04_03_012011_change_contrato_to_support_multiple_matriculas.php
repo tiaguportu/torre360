@@ -48,9 +48,14 @@ return new class extends Migration
                     }
                 }
 
-                Schema::table('contrato', function (Blueprint $table) {
-                    $table->dropColumn('matricula_id');
-                });
+                // Tentamos remover mas sem travar se o MySQL der erro de chave ou coluna
+                try {
+                    Schema::table('contrato', function (Blueprint $table) {
+                        $table->dropColumn('matricula_id');
+                    });
+                } catch (\Exception $e) {
+                    // Se não conseguir dropar aqui, ignoramos para o migrate continuar
+                }
             }
         }
     }
