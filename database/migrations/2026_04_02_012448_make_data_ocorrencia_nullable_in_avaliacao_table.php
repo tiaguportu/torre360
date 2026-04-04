@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,9 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->date('data_ocorrencia')->nullable()->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // No SQLite antigo, mudar nullabilidade exige recriação de tabela.
+            // Ignoramos a mudança física para evitar erro pragma_table_xinfo.
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->date('data_ocorrencia')->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -21,8 +27,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->date('data_ocorrencia')->nullable(false)->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // No action
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->date('data_ocorrencia')->nullable(false)->change();
+            });
+        }
     }
 };

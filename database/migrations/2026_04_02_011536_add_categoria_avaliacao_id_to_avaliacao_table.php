@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,9 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->foreignId('categoria_avaliacao_id')->nullable()->constrained('categoria_avaliacao');
-        });
+        if (config('database.default') === 'sqlite') {
+            try { DB::statement("ALTER TABLE avaliacao ADD COLUMN categoria_avaliacao_id INTEGER"); } catch (\Exception $e) {}
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->foreignId('categoria_avaliacao_id')->nullable()->constrained('categoria_avaliacao');
+            });
+        }
     }
 
     /**
@@ -21,8 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('categoria_avaliacao_id');
-        });
+        if (config('database.default') === 'sqlite') {
+            // No action
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('categoria_avaliacao_id');
+            });
+        }
     }
 };

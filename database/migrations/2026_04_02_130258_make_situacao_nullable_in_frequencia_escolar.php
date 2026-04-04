@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,9 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('frequencia_escolar', function (Blueprint $table) {
-            $table->string('situacao')->nullable()->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // Ignoramos .change() no SQLite antigo (HostGator).
+        } else {
+            Schema::table('frequencia_escolar', function (Blueprint $table) {
+                $table->string('situacao')->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -21,8 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('frequencia_escolar', function (Blueprint $table) {
-            $table->string('situacao')->nullable(false)->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // No action
+        } else {
+            Schema::table('frequencia_escolar', function (Blueprint $table) {
+                $table->string('situacao')->nullable(false)->change();
+            });
+        }
     }
 };

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,10 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->decimal('nota_maxima', 5, 2)->nullable()->change();
-            $table->decimal('peso_etapa_avaliativa', 5, 2)->nullable()->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // Ignoramos o .change() no SQLite antigo para evitar o erro pragma_table_xinfo.
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->decimal('nota_maxima', 5, 2)->nullable()->change();
+                $table->decimal('peso_etapa_avaliativa', 5, 2)->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -22,9 +27,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('avaliacao', function (Blueprint $table) {
-            $table->decimal('nota_maxima', 5, 2)->nullable(false)->change();
-            $table->decimal('peso_etapa_avaliativa', 5, 2)->nullable(false)->change();
-        });
+        if (config('database.default') === 'sqlite') {
+            // No action
+        } else {
+            Schema::table('avaliacao', function (Blueprint $table) {
+                $table->decimal('nota_maxima', 5, 2)->nullable(false)->change();
+                $table->decimal('peso_etapa_avaliativa', 5, 2)->nullable(false)->change();
+            });
+        }
     }
 };
