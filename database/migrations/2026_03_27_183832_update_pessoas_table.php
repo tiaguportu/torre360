@@ -12,13 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         if (config('database.default') === 'sqlite') {
-            Schema::table('pessoas', function (Blueprint $table) {
-                $table->string('foto')->nullable();
-                $table->string('telefone')->nullable();
-                $table->string('email')->nullable();
-                $table->unsignedBigInteger('sexo_id')->nullable();
-                $table->unsignedBigInteger('cor_raca_id')->nullable();
-            });
+            // SQL bruto para evitar inspeção de esquema (pragma_table_xinfo) no SQLite antigo
+            try { DB::statement("ALTER TABLE pessoas ADD COLUMN foto VARCHAR"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE pessoas ADD COLUMN telefone VARCHAR"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE pessoas ADD COLUMN email VARCHAR"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE pessoas ADD COLUMN sexo_id INTEGER"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE pessoas ADD COLUMN cor_raca_id INTEGER"); } catch (\Exception $e) {}
         } else {
             Schema::table('pessoas', function (Blueprint $table) {
                 $table->string('foto')->nullable();
@@ -35,12 +34,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pessoas', function (Blueprint $table) {
-            if (config('database.default') !== 'sqlite') {
+        if (config('database.default') === 'sqlite') {
+            // Rollback de colunas no SQLite antigo é limitado
+        } else {
+            Schema::table('pessoas', function (Blueprint $table) {
                 $table->dropForeign(['sexo_id']);
                 $table->dropForeign(['cor_raca_id']);
-            }
-            $table->dropColumn(['foto', 'telefone', 'email', 'sexo_id', 'cor_raca_id']);
-        });
+                $table->dropColumn(['foto', 'telefone', 'email', 'sexo_id', 'cor_raca_id']);
+            });
+        }
     }
 };

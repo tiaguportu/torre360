@@ -12,30 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         if (config('database.default') === 'sqlite') {
-            Schema::table('matriculas', function (Blueprint $table) {
-                $table->unsignedBigInteger('pessoa_id')->nullable();
-                $table->unsignedBigInteger('turma_id')->nullable();
-                $table->date('data_matricula')->nullable();
-                $table->string('status')->default('ativa');
-            });
+            // No SQLite antigo, usamos SQL puro por coluna para evitar inspeções de esquema falhas
+            try { DB::statement("ALTER TABLE matriculas ADD COLUMN pessoa_id INTEGER"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE matriculas ADD COLUMN turma_id INTEGER"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE matriculas ADD COLUMN data_matricula DATE"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE matriculas ADD COLUMN status VARCHAR DEFAULT 'ativa'"); } catch (\Exception $e) {}
 
-            Schema::table('turmas', function (Blueprint $table) {
-                if (!Schema::hasColumn('turmas', 'serie_id')) {
-                    $table->unsignedBigInteger('serie_id')->nullable();
-                }
-                if (!Schema::hasColumn('turmas', 'turno_id')) {
-                    $table->unsignedBigInteger('turno_id')->nullable();
-                }
-                if (!Schema::hasColumn('turmas', 'codigo')) {
-                    $table->string('codigo')->nullable();
-                }
-            });
+            try { DB::statement("ALTER TABLE turmas ADD COLUMN serie_id INTEGER"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE turmas ADD COLUMN turno_id INTEGER"); } catch (\Exception $e) {}
+            try { DB::statement("ALTER TABLE turmas ADD COLUMN codigo VARCHAR"); } catch (\Exception $e) {}
         } else {
             Schema::table('matriculas', function (Blueprint $table) {
                 $table->foreignId('pessoa_id')->nullable()->constrained('pessoas')->onDelete('cascade');
                 $table->foreignId('turma_id')->nullable()->constrained('turmas')->onDelete('cascade');
                 $table->date('data_matricula')->nullable();
-                $table->string('status')->default('ativa'); // ativa, cancelada, trancada, concluída
+                $table->string('status')->default('ativa'); 
             });
 
             Schema::table('turmas', function (Blueprint $table) {
@@ -57,20 +48,21 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('matriculas', function (Blueprint $table) {
-            if (config('database.default') !== 'sqlite') {
+        if (config('database.default') === 'sqlite') {
+            // SQLite não suporta DROP COLUMN em versões muito antigas, 
+            // frequentemente é melhor deixar as colunas lá se for rollback de SQLite
+        } else {
+            Schema::table('matriculas', function (Blueprint $table) {
                 $table->dropForeign(['pessoa_id']);
                 $table->dropForeign(['turma_id']);
-            }
-            $table->dropColumn(['pessoa_id', 'turma_id', 'data_matricula', 'status']);
-        });
+                $table->dropColumn(['pessoa_id', 'turma_id', 'data_matricula', 'status']);
+            });
 
-        Schema::table('turmas', function (Blueprint $table) {
-            if (config('database.default') !== 'sqlite') {
+            Schema::table('turmas', function (Blueprint $table) {
                 $table->dropForeign(['serie_id']);
                 $table->dropForeign(['turno_id']);
-            }
-            $table->dropColumn(['serie_id', 'turno_id', 'codigo']);
-        });
+                $table->dropColumn(['serie_id', 'turno_id', 'codigo']);
+            });
+        }
     }
 };
