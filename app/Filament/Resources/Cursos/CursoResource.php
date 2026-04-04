@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Cursos;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Cursos\Pages\CreateCurso;
 use App\Filament\Resources\Cursos\Pages\EditCurso;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
 use App\Filament\Resources\Cursos\Schemas\CursoForm;
 use App\Filament\Resources\Cursos\Tables\CursosTable;
 use App\Models\Curso;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,10 +16,14 @@ use Filament\Tables\Table;
 
 class CursoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Curso::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+
     protected static ?int $navigationSort = 1;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
     public static function form(Schema $schema): Schema

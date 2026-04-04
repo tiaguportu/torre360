@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Turnos;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Turnos\Pages\CreateTurno;
 use App\Filament\Resources\Turnos\Pages\EditTurno;
 use App\Filament\Resources\Turnos\Pages\ListTurnos;
 use App\Filament\Resources\Turnos\Schemas\TurnoForm;
 use App\Filament\Resources\Turnos\Tables\TurnosTable;
 use App\Models\Turno;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,10 +16,14 @@ use Filament\Tables\Table;
 
 class TurnoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Turno::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+
     protected static ?int $navigationSort = 7;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
     public static function form(Schema $schema): Schema

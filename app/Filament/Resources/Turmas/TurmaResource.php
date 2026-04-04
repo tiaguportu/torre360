@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Turmas;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Turmas\Pages\CreateTurma;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TurmaResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Turma::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';

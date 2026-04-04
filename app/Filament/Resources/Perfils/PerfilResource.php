@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Perfils;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Perfils\Pages\CreatePerfil;
 use App\Filament\Resources\Perfils\Pages\EditPerfil;
 use App\Filament\Resources\Perfils\Pages\ListPerfils;
@@ -10,14 +11,14 @@ use App\Filament\Resources\Perfils\Schemas\PerfilForm;
 use App\Filament\Resources\Perfils\Schemas\PerfilInfolist;
 use App\Filament\Resources\Perfils\Tables\PerfilsTable;
 use App\Models\Perfil;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class PerfilResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Perfil::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';

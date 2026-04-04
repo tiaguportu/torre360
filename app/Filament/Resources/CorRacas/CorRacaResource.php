@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CorRacas;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\CorRacas\Pages\CreateCorRaca;
 use App\Filament\Resources\CorRacas\Pages\EditCorRaca;
 use App\Filament\Resources\CorRacas\Pages\ListCorRacas;
@@ -10,14 +11,14 @@ use App\Filament\Resources\CorRacas\Schemas\CorRacaForm;
 use App\Filament\Resources\CorRacas\Schemas\CorRacaInfolist;
 use App\Filament\Resources\CorRacas\Tables\CorRacasTable;
 use App\Models\CorRaca;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class CorRacaResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = CorRaca::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-swatch';

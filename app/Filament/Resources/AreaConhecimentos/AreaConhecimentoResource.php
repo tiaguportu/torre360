@@ -7,8 +7,8 @@ use App\Filament\Resources\AreaConhecimentos\Pages\EditAreaConhecimento;
 use App\Filament\Resources\AreaConhecimentos\Pages\ListAreaConhecimentos;
 use App\Filament\Resources\AreaConhecimentos\Schemas\AreaConhecimentoForm;
 use App\Filament\Resources\AreaConhecimentos\Tables\AreaConhecimentosTable;
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Models\AreaConhecimento;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,10 +16,14 @@ use Filament\Tables\Table;
 
 class AreaConhecimentoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = AreaConhecimento::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+
     protected static ?int $navigationSort = 5;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedVariable;
 
     public static function form(Schema $schema): Schema

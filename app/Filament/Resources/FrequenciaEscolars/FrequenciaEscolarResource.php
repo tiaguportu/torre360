@@ -27,6 +27,7 @@ class FrequenciaEscolarResource extends Resource implements HasShieldPermissions
             'delete_any',
         ];
     }
+
     protected static ?string $model = FrequenciaEscolar::class;
 
     protected static ?string $modelLabel = 'Frequência Escolar';

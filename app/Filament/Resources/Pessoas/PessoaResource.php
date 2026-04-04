@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Pessoas;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Pessoas\Pages\CreatePessoa;
 use App\Filament\Resources\Pessoas\Pages\EditPessoa;
 use App\Filament\Resources\Pessoas\Pages\ListPessoas;
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PessoaResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Pessoa::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';

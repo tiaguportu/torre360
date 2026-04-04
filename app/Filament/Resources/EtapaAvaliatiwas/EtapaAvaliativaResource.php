@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\EtapaAvaliatiwas;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\CreateEtapaAvaliativa;
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\EditEtapaAvaliativa;
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\ListEtapaAvaliatiwas;
@@ -15,9 +16,12 @@ use Filament\Tables\Table;
 
 class EtapaAvaliativaResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = EtapaAvaliativa::class;
 
     protected static ?string $modelLabel = 'Etapa Avaliativa';
+
     protected static ?string $pluralModelLabel = 'Etapas Avaliativas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';

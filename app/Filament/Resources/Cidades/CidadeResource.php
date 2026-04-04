@@ -7,8 +7,8 @@ use App\Filament\Resources\Cidades\Pages\EditCidade;
 use App\Filament\Resources\Cidades\Pages\ListCidades;
 use App\Filament\Resources\Cidades\Schemas\CidadeForm;
 use App\Filament\Resources\Cidades\Tables\CidadesTable;
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Models\Cidade;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,10 +16,14 @@ use Filament\Tables\Table;
 
 class CidadeResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Cidade::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+
     protected static ?int $navigationSort = 3;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedGlobeAsiaAustralia;
 
     public static function form(Schema $schema): Schema

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ActivityLogs;
 
 use App\Filament\Resources\ActivityLogs\Pages\ListActivityLogs;
 use App\Filament\Resources\ActivityLogs\Tables\ActivityLogsTable;
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -11,6 +12,8 @@ use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Activity::class;
 
     public static function canAccess(): bool

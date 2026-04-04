@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sexos;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Sexos\Pages\CreateSexo;
 use App\Filament\Resources\Sexos\Pages\EditSexo;
 use App\Filament\Resources\Sexos\Pages\ListSexos;
@@ -10,14 +11,14 @@ use App\Filament\Resources\Sexos\Schemas\SexoForm;
 use App\Filament\Resources\Sexos\Schemas\SexoInfolist;
 use App\Filament\Resources\Sexos\Tables\SexosTable;
 use App\Models\Sexo;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class SexoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Sexo::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';

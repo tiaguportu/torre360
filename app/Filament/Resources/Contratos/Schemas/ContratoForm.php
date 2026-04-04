@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Contratos\Schemas;
 
+use App\Models\Matricula;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -18,7 +19,26 @@ class ContratoForm
             ->components([
                 Select::make('matriculas')
                     ->relationship('matriculas', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - ".($record->pessoa?->nome ?? 'Sem nome'))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - ".($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome'))
+                    ->getSearchResultsUsing(function (string $search) {
+                        return Matricula::query()
+                            ->with(['pessoa', 'turma'])
+                            ->where('codigo', 'like', "%{$search}%")
+                            ->orWhereHas('pessoa', fn ($query) => $query->where('nome', 'like', "%{$search}%"))
+                            ->orWhereHas('turma', fn ($query) => $query->where('nome', 'like', "%{$search}%"))
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn ($record) => [$record->id => "{$record->codigo} - ".($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome')])
+                            ->toArray();
+                    })
+                    ->getOptionLabelsUsing(function (array $values) {
+                        return Matricula::query()
+                            ->with(['pessoa', 'turma'])
+                            ->whereIn('id', $values)
+                            ->get()
+                            ->mapWithKeys(fn ($record) => [$record->id => "{$record->codigo} - ".($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome')])
+                            ->toArray();
+                    })
                     ->multiple()
                     ->searchable()
                     ->preload()

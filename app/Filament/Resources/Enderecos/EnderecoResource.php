@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Enderecos;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\Enderecos\Pages\CreateEndereco;
 use App\Filament\Resources\Enderecos\Pages\EditEndereco;
 use App\Filament\Resources\Enderecos\Pages\ListEnderecos;
 use App\Filament\Resources\Enderecos\Schemas\EnderecoForm;
 use App\Filament\Resources\Enderecos\Tables\EnderecosTable;
 use App\Models\Endereco;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,10 +16,14 @@ use Filament\Tables\Table;
 
 class EnderecoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = Endereco::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+
     protected static ?int $navigationSort = 5;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
     public static function form(Schema $schema): Schema

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DiaNaoLetivos;
 
+use App\Filament\Resources\Concerns\HasNavigationBadge;
 use App\Filament\Resources\DiaNaoLetivos\Pages\CreateDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\EditDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
@@ -10,14 +11,14 @@ use App\Filament\Resources\DiaNaoLetivos\Schemas\DiaNaoLetivoForm;
 use App\Filament\Resources\DiaNaoLetivos\Schemas\DiaNaoLetivoInfolist;
 use App\Filament\Resources\DiaNaoLetivos\Tables\DiaNaoLetivosTable;
 use App\Models\DiaNaoLetivo;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class DiaNaoLetivoResource extends Resource
 {
+    use HasNavigationBadge;
+
     protected static ?string $model = DiaNaoLetivo::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
