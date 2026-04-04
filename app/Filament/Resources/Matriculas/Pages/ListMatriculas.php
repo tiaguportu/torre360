@@ -4,12 +4,12 @@ namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
+use App\Models\Pessoa;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Database\Eloquent\Builder;
 
 class ListMatriculas extends ListRecords
 {
@@ -29,18 +29,22 @@ class ListMatriculas extends ListRecords
                         ->required()
                         ->searchable()
                         ->preload(),
-                    Select::make('pessoas_ids')
+                    Select::make('aluno_ids')
                         ->label('Alunos')
                         ->multiple()
-                        ->relationship(
-                            'pessoa',
-                            'nome',
-                            modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')
-                                ->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%'))
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()
+                            ->where('nome', 'like', "%{$search}%")
+                            ->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%'))
+                            ->limit(50)
+                            ->pluck('nome', 'id')
+                            ->toArray()
                         )
-                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
-                        ->searchable(['nome', 'cpf'])
-                        ->preload()
+                        ->getOptionLabelsUsing(fn (array $values): array => Pessoa::query()
+                            ->whereIn('id', $values)
+                            ->pluck('nome', 'id')
+                            ->toArray()
+                        )
                         ->required(),
                     Select::make('situacao_matricula_id')
                         ->label('Situação')
@@ -54,7 +58,7 @@ class ListMatriculas extends ListRecords
                         ->required(),
                 ])
                 ->action(function (array $data) {
-                    foreach ($data['pessoas_ids'] as $pessoaId) {
+                    foreach ($data['aluno_ids'] as $pessoaId) {
                         Matricula::create([
                             'pessoa_id' => $pessoaId,
                             'turma_id' => $data['turma_id'],
