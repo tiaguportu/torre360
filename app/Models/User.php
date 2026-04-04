@@ -49,6 +49,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->belongsToMany(Pessoa::class, 'pessoa_user');
     }
 
+    public function getPessoaAttribute(): ?Pessoa
+    {
+        return $this->pessoas->first();
+    }
+
     /**
      * The attributes that are mass assignable.
      *

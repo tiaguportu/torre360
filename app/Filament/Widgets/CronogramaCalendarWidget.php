@@ -9,6 +9,7 @@ use App\Models\CronogramaAula;
 use App\Models\Disciplina;
 use App\Models\Matricula;
 use App\Models\Pessoa;
+use App\Models\ResponsavelFinanceiro;
 use App\Models\Turma;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -138,7 +139,8 @@ class CronogramaCalendarWidget extends Widget implements HasForms
         }
 
         if (auth()->user()?->hasRole('professor')) {
-            $query->where($professorField, auth()->user()->pessoa?->id);
+            $pessoaIds = auth()->user()->pessoas->pluck('id')->toArray();
+            $query->whereIn($professorField, $pessoaIds);
         }
 
         if (auth()->user()?->hasRole('responsavel')) {
@@ -208,13 +210,13 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
     private function getTurmasPermitidasIds(): array
     {
-        $pessoa = auth()->user()->pessoa;
+        $pessoaIds = auth()->user()->pessoas->pluck('id');
 
-        if (! $pessoa) {
+        if ($pessoaIds->isEmpty()) {
             return [];
         }
 
-        $contratosIds = $pessoa->responsaveisFinanceiros()->pluck('contrato_id');
+        $contratosIds = ResponsavelFinanceiro::whereIn('pessoa_id', $pessoaIds)->pluck('contrato_id');
 
         return Matricula::whereIn('contrato_id', $contratosIds)
             ->pluck('turma_id')
