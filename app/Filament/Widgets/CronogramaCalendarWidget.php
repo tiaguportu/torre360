@@ -11,6 +11,7 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Turma;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -21,6 +22,7 @@ use Filament\Widgets\Widget;
 
 class CronogramaCalendarWidget extends Widget implements HasForms
 {
+    use HasWidgetShield;
     use InteractsWithForms;
 
     protected string $view = 'filament.widgets.cronograma-calendar-widget';

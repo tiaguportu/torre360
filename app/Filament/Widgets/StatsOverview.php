@@ -5,17 +5,20 @@ namespace App\Filament\Widgets;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Turma;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverview extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected ?string $pollingInterval = '15s';
 
     protected function getStats(): array
     {
         return [
-            Stat::make('Total de Alunos', Pessoa::count())
+            Stat::make('Total de Pessoas', Pessoa::count())
                 ->description('Total de pessoas cadastradas')
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('primary'),
