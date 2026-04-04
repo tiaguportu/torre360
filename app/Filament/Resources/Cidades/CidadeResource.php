@@ -7,7 +7,7 @@ use App\Filament\Resources\Cidades\Pages\EditCidade;
 use App\Filament\Resources\Cidades\Pages\ListCidades;
 use App\Filament\Resources\Cidades\Schemas\CidadeForm;
 use App\Filament\Resources\Cidades\Tables\CidadesTable;
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Models\Cidade;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class CidadeResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Cidade::class;
 

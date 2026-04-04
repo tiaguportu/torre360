@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Estados;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Estados\Pages\CreateEstado;
 use App\Filament\Resources\Estados\Pages\EditEstado;
 use App\Filament\Resources\Estados\Pages\ListEstados;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class EstadoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Estado::class;
 

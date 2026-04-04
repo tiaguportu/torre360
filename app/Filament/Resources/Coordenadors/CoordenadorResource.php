@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Coordenadors;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Coordenadors\Pages\CreateCoordenador;
 use App\Filament\Resources\Coordenadors\Pages\EditCoordenador;
 use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class CoordenadorResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Coordenador::class;
 

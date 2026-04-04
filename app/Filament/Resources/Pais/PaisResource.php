@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Pais;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Pais\Pages\CreatePais;
 use App\Filament\Resources\Pais\Pages\EditPais;
 use App\Filament\Resources\Pais\Pages\ListPais;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class PaisResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Pais::class;
 

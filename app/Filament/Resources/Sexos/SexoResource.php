@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Sexos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Sexos\Pages\CreateSexo;
 use App\Filament\Resources\Sexos\Pages\EditSexo;
 use App\Filament\Resources\Sexos\Pages\ListSexos;
@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 
 class SexoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Sexo::class;
 

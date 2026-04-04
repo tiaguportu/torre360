@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Series;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Series\Pages\CreateSerie;
 use App\Filament\Resources\Series\Pages\EditSerie;
 use App\Filament\Resources\Series\Pages\ListSeries;
@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 
 class SerieResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Serie::class;
 

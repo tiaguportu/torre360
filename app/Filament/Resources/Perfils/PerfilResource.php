@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Perfils;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Perfils\Pages\CreatePerfil;
 use App\Filament\Resources\Perfils\Pages\EditPerfil;
 use App\Filament\Resources\Perfils\Pages\ListPerfils;
@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 
 class PerfilResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Perfil::class;
 

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Unidades;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Unidades\Pages\CreateUnidade;
 use App\Filament\Resources\Unidades\Pages\EditUnidade;
 use App\Filament\Resources\Unidades\Pages\ListUnidades;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class UnidadeResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Unidade::class;
 

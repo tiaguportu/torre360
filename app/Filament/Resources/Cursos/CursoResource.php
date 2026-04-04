@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Cursos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Cursos\Pages\CreateCurso;
 use App\Filament\Resources\Cursos\Pages\EditCurso;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class CursoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Curso::class;
 

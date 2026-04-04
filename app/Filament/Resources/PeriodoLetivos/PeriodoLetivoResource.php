@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PeriodoLetivos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\PeriodoLetivos\Pages\CreatePeriodoLetivo;
 use App\Filament\Resources\PeriodoLetivos\Pages\EditPeriodoLetivo;
 use App\Filament\Resources\PeriodoLetivos\Pages\ListPeriodoLetivos;
@@ -18,7 +18,6 @@ use Filament\Tables\Table;
 
 class PeriodoLetivoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = PeriodoLetivo::class;
 

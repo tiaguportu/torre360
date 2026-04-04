@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\CreateMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class MatriculaResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Matricula::class;
 

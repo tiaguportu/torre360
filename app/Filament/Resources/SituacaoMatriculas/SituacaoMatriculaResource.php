@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\SituacaoMatriculas;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\SituacaoMatriculas\Pages\CreateSituacaoMatricula;
 use App\Filament\Resources\SituacaoMatriculas\Pages\EditSituacaoMatricula;
 use App\Filament\Resources\SituacaoMatriculas\Pages\ListSituacaoMatriculas;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class SituacaoMatriculaResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = SituacaoMatricula::class;
 

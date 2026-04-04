@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\DiaNaoLetivos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\DiaNaoLetivos\Pages\CreateDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\EditDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 
 class DiaNaoLetivoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = DiaNaoLetivo::class;
 

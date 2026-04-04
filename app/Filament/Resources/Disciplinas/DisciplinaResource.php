@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Disciplinas;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Disciplinas\Pages\CreateDisciplina;
 use App\Filament\Resources\Disciplinas\Pages\EditDisciplina;
 use App\Filament\Resources\Disciplinas\Pages\ListDisciplinas;
@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DisciplinaResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Disciplina::class;
 

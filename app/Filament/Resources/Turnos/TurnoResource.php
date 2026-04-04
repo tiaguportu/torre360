@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Turnos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Turnos\Pages\CreateTurno;
 use App\Filament\Resources\Turnos\Pages\EditTurno;
 use App\Filament\Resources\Turnos\Pages\ListTurnos;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class TurnoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Turno::class;
 

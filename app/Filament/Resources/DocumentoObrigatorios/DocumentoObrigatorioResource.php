@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\DocumentoObrigatorios;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\DocumentoObrigatorios\Pages\CreateDocumentoObrigatorio;
 use App\Filament\Resources\DocumentoObrigatorios\Pages\EditDocumentoObrigatorio;
 use App\Filament\Resources\DocumentoObrigatorios\Pages\ListDocumentoObrigatorios;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class DocumentoObrigatorioResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = DocumentoObrigatorio::class;
 

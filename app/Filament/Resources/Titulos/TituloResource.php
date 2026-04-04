@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Titulos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Titulos\Pages\CreateTitulo;
 use App\Filament\Resources\Titulos\Pages\EditTitulo;
 use App\Filament\Resources\Titulos\Pages\ListTitulos;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class TituloResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Titulo::class;
 

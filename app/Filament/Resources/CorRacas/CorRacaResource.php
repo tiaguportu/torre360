@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\CorRacas;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\CorRacas\Pages\CreateCorRaca;
 use App\Filament\Resources\CorRacas\Pages\EditCorRaca;
 use App\Filament\Resources\CorRacas\Pages\ListCorRacas;
@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 
 class CorRacaResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = CorRaca::class;
 

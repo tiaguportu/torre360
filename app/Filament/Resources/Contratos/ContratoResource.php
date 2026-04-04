@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Contratos;
 
-use App\Filament\Resources\Concerns\HasNavigationBadge;
+
 use App\Filament\Resources\Contratos\Pages\CreateContrato;
 use App\Filament\Resources\Contratos\Pages\EditContrato;
 use App\Filament\Resources\Contratos\Pages\ListContratos;
@@ -16,7 +16,6 @@ use Filament\Tables\Table;
 
 class ContratoResource extends Resource
 {
-    use HasNavigationBadge;
 
     protected static ?string $model = Contrato::class;
 
