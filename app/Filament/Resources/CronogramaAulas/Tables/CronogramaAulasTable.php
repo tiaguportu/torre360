@@ -3,20 +3,26 @@
 namespace App\Filament\Resources\CronogramaAulas\Tables;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Models\CronogramaAula;
+use App\Models\Matricula;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 
 class CronogramaAulasTable
 {
@@ -81,7 +87,7 @@ class CronogramaAulasTable
                             ->native(false)
                             ->displayFormat('d/m/Y'),
                     ])
-                    ->query(fn ($query, array $data) => $query->when($data['data'], fn ($q) => $q->whereDate('data', $data['data']))),
+                    ->query(fn ($query, array $data) => $query->when($data['data'], fn ($q) => $q->whereDate('data', Carbon::parse($data['data'])->format('Y-m-d')))),
                 Filter::make('hora_inicio')
                     ->form([
                         TimePicker::make('hora_inicio')
@@ -89,7 +95,7 @@ class CronogramaAulasTable
                             ->native(false)
                             ->seconds(false),
                     ])
-                    ->query(fn ($query, array $data) => $query->when($data['hora_inicio'], fn ($q) => $q->where('hora_inicio', 'like', $data['hora_inicio'].'%'))),
+                    ->query(fn ($query, array $data) => $query->when($data['hora_inicio'], fn ($q) => $q->where('hora_inicio', 'like', Carbon::parse($data['hora_inicio'])->format('H:i').'%'))),
                 Filter::make('hora_fim')
                     ->form([
                         TimePicker::make('hora_fim')
@@ -97,7 +103,7 @@ class CronogramaAulasTable
                             ->native(false)
                             ->seconds(false),
                     ])
-                    ->query(fn ($query, array $data) => $query->when($data['hora_fim'], fn ($q) => $q->where('hora_fim', 'like', $data['hora_fim'].'%'))),
+                    ->query(fn ($query, array $data) => $query->when($data['hora_fim'], fn ($q) => $q->where('hora_fim', 'like', Carbon::parse($data['hora_fim'])->format('H:i').'%'))),
 
                 Filter::make('frequencias_pendentes')
                     ->label('Frequência Pendente')
@@ -175,16 +181,79 @@ class CronogramaAulasTable
                             }
                             $records->each(fn ($record) => $record->update($updateData));
                         })
-                        ->deselectRecordsAfterCompletion(),
-                    DeleteBulkAction::make(),
-                ]),
-            ])
-            ->toolbarActions([
-                Action::make('calendar')
-                    ->label('Visualizar Calendário')
-                    ->icon('heroicon-o-calendar')
-                    ->url(fn (): string => CronogramaAulaResource::getUrl('calendar')),
-                BulkActionGroup::make([
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->can('update', CronogramaAula::class)),
+                    BulkAction::make('bulkLancarFrequencia')
+                        ->label('Lançar Frequência em Lote')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->form(function (Collection $records) {
+                            $turmaIds = $records->pluck('turma_id')->unique();
+                            $matriculas = Matricula::whereIn('turma_id', $turmaIds)
+                                ->with('pessoa')
+                                ->get()
+                                ->unique('id')
+                                ->sortBy('pessoa.nome');
+
+                            return [
+                                Repeater::make('frequencias')
+                                    ->label('Frequência dos Alunos')
+                                    ->schema([
+                                        Select::make('matricula_id')
+                                            ->label('Aluno')
+                                            ->options($matriculas->mapWithKeys(fn ($m) => [$m->id => $m->pessoa?->nome ?? ("#{$m->id}")]))
+                                            ->required()
+                                            ->disabled()
+                                            ->dehydrated(),
+                                        ToggleButtons::make('situacao')
+                                            ->label('Situação')
+                                            ->options([
+                                                'presente' => 'Presente',
+                                                'ausente' => 'Ausente',
+                                            ])
+                                            ->colors([
+                                                'presente' => 'success',
+                                                'ausente' => 'danger',
+                                            ])
+                                            ->icons([
+                                                'presente' => 'heroicon-o-check',
+                                                'ausente' => 'heroicon-o-x-circle',
+                                            ])
+                                            ->required()
+                                            ->inline(),
+                                    ])
+                                    ->columns(2)
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->default($matriculas->map(fn ($m) => [
+                                        'matricula_id' => $m->id,
+                                        'situacao' => 'presente',
+                                    ])->toArray()),
+                            ];
+                        })
+                        ->action(function (Collection $records, array $data): void {
+                            foreach ($records as $record) {
+                                // Pega apenas as matrículas que pertencem à turma deste cronograma
+                                $matriculasDaTurma = Matricula::where('turma_id', $record->turma_id)->pluck('id')->toArray();
+
+                                foreach ($data['frequencias'] as $frequenciaData) {
+                                    if (in_array($frequenciaData['matricula_id'], $matriculasDaTurma)) {
+                                        $record->frequencias()->updateOrCreate(
+                                            ['matricula_id' => $frequenciaData['matricula_id']],
+                                            ['situacao' => $frequenciaData['situacao']]
+                                        );
+                                    }
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Frequências lançadas com sucesso para '.$records->count().' aulas!')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->can('checkLancarFrequenciaBulk', CronogramaAula::class)),
                     DeleteBulkAction::make(),
                 ]),
             ]);

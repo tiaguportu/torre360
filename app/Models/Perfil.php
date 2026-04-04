@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Perfil extends Model
 {
     protected $table = 'perfil';
+
     protected $guarded = [];
 
     public function pessoas(): BelongsToMany
     {
-        return $this->belongsToMany(Pessoa::class, 'pessoa_perfil');
+        return $this->belongsToMany(Pessoa::class, 'pessoa_perfil', 'perfil_id', 'pessoa_id');
     }
 }

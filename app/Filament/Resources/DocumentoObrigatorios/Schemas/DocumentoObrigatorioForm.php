@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DocumentoObrigatorios\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -24,6 +25,16 @@ class DocumentoObrigatorioForm
                     ->required(),
                 Toggle::make('flag_ativo')
                     ->required(),
+                FileUpload::make('modelo_arquivo')
+                    ->label('Modelo (Arquivo)')
+                    ->directory('documentos-obrigatorios-modelos')
+                    ->visibility('public')
+                    ->downloadable()
+                    ->openable(),
+                TextInput::make('modelo_link')
+                    ->label('Modelo (Link)')
+                    ->url()
+                    ->placeholder('https://...'),
             ]);
     }
 }

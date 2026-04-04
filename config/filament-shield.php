@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Filament\Resources\Matriculas\MatriculaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -194,6 +195,9 @@ return [
             CronogramaAulaResource::class => [
                 'lancarFrequencia',
                 'verificaConflitos',
+            ],
+            MatriculaResource::class => [
+                'documentos',
             ],
 
         ],

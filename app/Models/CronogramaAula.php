@@ -12,6 +12,13 @@ class CronogramaAula extends Model
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'data' => 'date',
+        ];
+    }
+
     public function frequencias(): HasMany
     {
         return $this->hasMany(FrequenciaEscolar::class);

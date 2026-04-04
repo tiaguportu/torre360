@@ -5,11 +5,13 @@ namespace App\Filament\Resources\DocumentoInseridos\Schemas;
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Models\DocumentoObrigatorio;
 use App\Models\Matricula;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -51,7 +53,29 @@ class DocumentoInseridoForm
                         return DocumentoObrigatorio::where('curso_id', $curso->id)->pluck('nome', 'id');
                     })
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->live(),
+
+                Actions::make([
+                    Action::make('download_modelo')
+                        ->label('Baixar Modelo do Documento')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->visible(fn (Get $get) => $get('documento_obrigatorio_id') &&
+                            (DocumentoObrigatorio::find($get('documento_obrigatorio_id'))?->modelo_arquivo || DocumentoObrigatorio::find($get('documento_obrigatorio_id'))?->modelo_link)
+                        )
+                        ->url(function (Get $get) {
+                            $doc = DocumentoObrigatorio::find($get('documento_obrigatorio_id'));
+                            if ($doc?->modelo_link) {
+                                return $doc->modelo_link;
+                            }
+                            if ($doc?->modelo_arquivo) {
+                                return asset('storage/'.$doc->modelo_arquivo);
+                            }
+
+                            return null;
+                        }, shouldOpenInNewTab: true),
+                ]),
 
                 Select::make('situacao_documento_inserido_id')
                     ->label('Situação')

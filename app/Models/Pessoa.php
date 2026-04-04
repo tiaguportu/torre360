@@ -15,7 +15,7 @@ class Pessoa extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'pessoa_user');
+        return $this->belongsToMany(User::class, 'pessoa_user', 'pessoa_id', 'user_id');
     }
 
     public function endereco(): BelongsTo
@@ -45,21 +45,21 @@ class Pessoa extends Model
 
     public function matriculas(): HasMany
     {
-        return $this->hasMany(Matricula::class);
+        return $this->hasMany(Matricula::class, 'pessoa_id');
     }
 
     public function perfis(): BelongsToMany
     {
-        return $this->belongsToMany(Perfil::class, 'pessoa_perfil');
+        return $this->belongsToMany(Perfil::class, 'pessoa_perfil', 'pessoa_id', 'perfil_id');
     }
 
     public function responsaveisFinanceiros(): HasMany
     {
-        return $this->hasMany(ResponsavelFinanceiro::class);
+        return $this->hasMany(ResponsavelFinanceiro::class, 'pessoa_id');
     }
 
     public function coordenacoes(): HasMany
     {
-        return $this->hasMany(Coordenador::class);
+        return $this->hasMany(Coordenador::class, 'pessoa_id');
     }
 }

@@ -17,7 +17,7 @@ class CronogramaAulaPolicy
         return $authUser->can('ViewAny:CronogramaAula');
     }
 
-    public function view(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function view(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
         return $authUser->can('View:CronogramaAula');
     }
@@ -27,12 +27,16 @@ class CronogramaAulaPolicy
         return $authUser->can('Create:CronogramaAula');
     }
 
-    public function update(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function update(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         return $authUser->can('Update:CronogramaAula');
     }
 
-    public function delete(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function delete(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
         return $authUser->can('Delete:CronogramaAula');
     }
@@ -42,12 +46,12 @@ class CronogramaAulaPolicy
         return $authUser->can('DeleteAny:CronogramaAula');
     }
 
-    public function restore(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function restore(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
         return $authUser->can('Restore:CronogramaAula');
     }
 
-    public function forceDelete(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function forceDelete(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
         return $authUser->can('ForceDelete:CronogramaAula');
     }
@@ -62,7 +66,7 @@ class CronogramaAulaPolicy
         return $authUser->can('RestoreAny:CronogramaAula');
     }
 
-    public function replicate(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function replicate(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
         return $authUser->can('Replicate:CronogramaAula');
     }
@@ -72,13 +76,30 @@ class CronogramaAulaPolicy
         return $authUser->can('Reorder:CronogramaAula');
     }
 
-    public function lancarFrequencia(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
+    public function lancarFrequencia(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
     {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $authUser->can('LancarFrequencia:CronogramaAula');
+    }
+
+    public function checkLancarFrequenciaBulk(AuthUser $authUser): bool
+    {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         return $authUser->can('LancarFrequencia:CronogramaAula');
     }
 
     public function verificaConflitos(AuthUser $authUser): bool
     {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         return $authUser->can('VerificaConflitos:CronogramaAula');
     }
 }

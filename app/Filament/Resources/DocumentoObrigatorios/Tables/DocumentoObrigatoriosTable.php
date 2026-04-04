@@ -16,7 +16,7 @@ class DocumentoObrigatoriosTable
         return $table
             ->columns([
                 TextColumn::make('curso.nome_interno')
-                    
+
                     ->sortable(),
                 TextColumn::make('nome')
                     ->searchable(),
@@ -24,6 +24,12 @@ class DocumentoObrigatoriosTable
                     ->boolean(),
                 IconColumn::make('flag_ativo')
                     ->boolean(),
+                TextColumn::make('modelo_arquivo')
+                    ->label('Arquivo')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('modelo_link')
+                    ->label('Link')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

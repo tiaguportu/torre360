@@ -82,7 +82,10 @@ class LancarNotas extends EditRecord
                                     ->label('Nota')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->maxValue(fn ($record) => $record->nota_maxima ?? 10)
+                                    ->maxValue(fn () => $this->getRecord()->nota_maxima ?? 10)
+                                    ->validationMessages([
+                                        'max' => 'A nota não pode ser maior que a nota máxima da avaliação (:max).',
+                                    ])
                                     ->columnSpan(1)
                                     ->live()
                                     ->extraInputAttributes(['wire:keydown.enter' => 'saveNotas']),
@@ -142,6 +145,16 @@ class LancarNotas extends EditRecord
             if (isset($item['valor']) && $item['valor'] !== '' && $item['valor'] !== null) {
                 $valor = (float) str_replace(',', '.', $item['valor']);
 
+                if ($valor > $avaliacao->nota_maxima) {
+                    Notification::make()
+                        ->title("Erro ao salvar nota para {$item['aluno_nome']}")
+                        ->body("A nota ({$valor}) não pode ser maior que a nota máxima da avaliação ({$avaliacao->nota_maxima}).")
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 Nota::updateOrCreate(
                     [
                         'avaliacao_id' => $avaliacao->id,
@@ -151,6 +164,12 @@ class LancarNotas extends EditRecord
                         'valor' => $valor,
                     ]
                 );
+            } else {
+                // Se o valor estiver vazio, removemos a nota se ela existir
+                Nota::where([
+                    'avaliacao_id' => $avaliacao->id,
+                    'matricula_id' => $item['matricula_id'],
+                ])->delete();
             }
         }
 

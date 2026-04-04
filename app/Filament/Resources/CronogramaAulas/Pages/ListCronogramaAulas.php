@@ -15,6 +15,10 @@ class ListCronogramaAulas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('calendar')
+                ->label('Visualizar Calendário')
+                ->icon('heroicon-o-calendar')
+                ->url(fn (): string => CronogramaAulaResource::getUrl('calendar')),
             Action::make('verificaConflitos')
                 ->label('Verificar Conflitos')
                 ->color('danger')

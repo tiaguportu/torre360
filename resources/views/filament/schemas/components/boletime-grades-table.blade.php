@@ -1,12 +1,12 @@
 @php
-    $matricula = $getRecord();
-    $aluno = $matricula->pessoa;
-    $turma = $matricula->turma;
+    $matricula = $getRecord()?->matriculas?->first();
+    $aluno = $matricula?->pessoa;
+    $turma = $matricula?->turma;
     $etapas = \App\Models\EtapaAvaliativa::orderBy('id')->get();
     $categorias = \App\Models\CategoriaAvaliacao::orderBy('id')->get();
-    $notas = $matricula->notas()
-        ->with(['avaliacao.disciplina', 'avaliacao.categoria', 'avaliacao.etapaAvaliativa'])
-        ->get();
+    $notas = $matricula?->notas()
+        ?->with(['avaliacao.disciplina', 'avaliacao.categoria', 'avaliacao.etapaAvaliativa'])
+        ?->get() ?? collect();
     
     $disciplinas = $notas->pluck('avaliacao.disciplina')
         ->filter()
@@ -28,27 +28,26 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs tabular-nums">
                     <thead>
-                        <tr class="bg-gray-50/30 dark:bg-black/20">
-                            <th rowspan="2" class="px-4 py-4 font-black uppercase border-r border-gray-100 dark:border-gray-800 min-w-[200px] text-gray-950 dark:text-gray-100">Disciplina</th>
-                            <th colspan="{{ count($categorias) + 2 }}" class="px-4 py-2 font-black uppercase text-center border-b border-gray-100 dark:border-gray-800 text-gray-950 dark:text-gray-100">{{ $etapa->nome }}</th>
-                            <th colspan="3" class="px-4 py-2 font-black uppercase text-center border-l border-b border-gray-100 dark:border-gray-800 text-gray-950 dark:text-gray-100">Resultado</th>
+                        <tr class="bg-gray-50/50 dark:bg-black/40">
+                            <th rowspan="2" class="px-6 py-5 font-black uppercase border-r border-gray-100 dark:border-gray-800 min-w-[220px] text-gray-950 dark:text-gray-100 text-[10px] tracking-widest">Disciplina</th>
+                            <th colspan="{{ count($categorias) + 2 }}" class="px-6 py-3 font-black uppercase text-center border-b border-gray-100 dark:border-gray-800 text-gray-950 dark:text-gray-100 text-[11px] tracking-[4px]">{{ $etapa->nome }}</th>
+                            <th colspan="3" class="px-6 py-3 font-black uppercase text-center border-l border-b border-gray-100 dark:border-gray-800 text-gray-950 dark:text-gray-100 text-[11px] tracking-[4px]">Resultado</th>
                         </tr>
-                        <tr class="bg-gray-50/10 dark:bg-black/10">
+                        <tr class="bg-gray-50/20 dark:bg-black/20">
                             @foreach($categorias as $categoria)
                                 @php
                                     $sigla = strtoupper(implode('', array_map(fn($w) => $w[0], explode(' ', str_replace('-', ' ', $categoria->nome)))));
-                                    // Limita sigla a 3 letras
                                     $sigla = substr($sigla, 0, 3);
                                 @endphp
-                                <th class="px-2 py-3 font-black text-center border-r border-gray-100 dark:border-gray-800 w-16 text-gray-950 dark:text-gray-100" title="{{ $categoria->nome }}">
+                                <th class="px-3 py-4 font-black text-center border-r border-gray-100 dark:border-gray-800 w-20 text-gray-950 dark:text-gray-100" title="{{ $categoria->nome }}">
                                     {{ $sigla }}
                                 </th>
                             @endforeach
-                            <th class="px-2 py-3 font-black text-center border-r border-gray-100 dark:border-gray-800 w-16 text-primary-600 dark:text-primary-400">MP</th>
-                            <th class="px-2 py-3 font-black text-center border-r border-gray-100 dark:border-gray-800 w-16 italic text-gray-400">MT</th>
-                            <th class="px-2 py-3 font-black text-center border-r border-gray-100 dark:border-gray-800 w-16 text-gray-950 dark:text-gray-100">SP</th>
-                            <th class="px-2 py-3 font-black text-center border-r border-gray-100 dark:border-gray-800 w-16 text-gray-950 dark:text-gray-100">FLT</th>
-                            <th class="px-2 py-3 font-black text-center w-16 text-gray-950 dark:text-gray-100">FREQ.</th>
+                            <th class="px-3 py-4 font-black text-center border-r border-gray-100 dark:border-gray-800 w-20 text-primary-600 dark:text-primary-400">MP</th>
+                            <th class="px-3 py-4 font-black text-center border-r border-gray-100 dark:border-gray-800 w-20 italic text-gray-400">MT</th>
+                            <th class="px-3 py-4 font-black text-center border-r border-gray-100 dark:border-gray-800 w-20 text-gray-950 dark:text-gray-100">SP</th>
+                            <th class="px-3 py-4 font-black text-center border-r border-gray-100 dark:border-gray-800 w-20 text-gray-950 dark:text-gray-100">FLT</th>
+                            <th class="px-3 py-4 font-black text-center w-20 text-gray-950 dark:text-gray-100">FREQ.</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -61,7 +60,7 @@
                                 $categoriasComNota = 0;
                             @endphp
                             <tr class="hover:bg-gray-50/30 dark:hover:bg-white/5 transition-colors">
-                                <td class="px-4 py-3 font-bold text-gray-900 dark:text-white border-r border-gray-100 dark:border-gray-800">
+                                <td class="px-6 py-5 font-bold text-gray-900 dark:text-white border-r border-gray-100 dark:border-gray-800 text-sm">
                                     {{ $disciplina->nome }}
                                 </td>
 
@@ -75,10 +74,10 @@
                                             $categoriasComNota++;
                                         }
                                     @endphp
-                                    <td class="px-2 py-3 text-center border-r border-gray-100 dark:border-gray-800 font-medium font-mono text-[11px]">
+                                    <td class="px-3 py-4 text-center border-r border-gray-100 dark:border-gray-800 font-medium font-mono text-[11px]">
                                         @if($mediaCategoria !== null)
                                             <span @class([
-                                                'text-danger-600 dark:text-danger-400 font-black px-1 rounded' => $mediaCategoria < 7,
+                                                'text-danger-600 dark:text-danger-400 font-black px-1.5 py-0.5 rounded' => $mediaCategoria < 7,
                                                 'bg-danger-50 dark:bg-danger-500/10' => $mediaCategoria < 7,
                                                 'text-gray-900 dark:text-white font-bold' => $mediaCategoria >= 7,
                                             ])>
@@ -90,15 +89,15 @@
                                     </td>
                                 @endforeach
 
-                                <td class="px-2 py-3 text-center border-r border-gray-100 dark:border-gray-800 bg-primary-50/10 dark:bg-primary-400/5 font-mono">
+                                <td class="px-3 py-4 text-center border-r border-gray-100 dark:border-gray-800 bg-primary-50/10 dark:bg-primary-400/5 font-mono">
                                     @php
                                         $mediaEtapa = $categoriasComNota > 0 ? ($somaMediasCategorias / $categoriasComNota) : null;
                                     @endphp
                                     @if($mediaEtapa !== null)
                                         <span @class([
-                                            'font-black text-[12px] px-1.5 py-0.5 rounded-md',
-                                            'text-danger-700 bg-danger-100 dark:bg-danger-500/20 dark:text-danger-400' => $mediaEtapa < 7,
-                                            'text-primary-700 bg-primary-100/50 dark:bg-primary-400/20 dark:text-primary-400' => $mediaEtapa >= 7,
+                                            'font-black text-[13px] px-2 py-1 rounded-md shadow-sm',
+                                            'text-danger-700 bg-danger-100 dark:bg-danger-500/20 dark:text-danger-400 border border-danger-200 dark:border-danger-500/30' => $mediaEtapa < 7,
+                                            'text-primary-700 bg-primary-100/50 dark:bg-primary-400/20 dark:text-primary-400 border border-primary-200 dark:border-primary-400/30' => $mediaEtapa >= 7,
                                         ])>
                                             {{ number_format($mediaEtapa, 1, ',', '.') }}
                                         </span>
@@ -107,16 +106,16 @@
                                     @endif
                                 </td>
 
-                                <td class="px-2 py-3 text-center border-r border-gray-100 dark:border-gray-800 italic text-gray-500 dark:text-gray-400 text-[10px] font-mono">
+                                <td class="px-3 py-4 text-center border-r border-gray-100 dark:border-gray-800 italic text-gray-500 dark:text-gray-400 text-[10px] font-mono">
                                     @php
                                         $mt = \App\Models\Nota::whereHas('avaliacao', fn($q) => $q->where('disciplina_id', $disciplina->id)->where('etapa_avaliativa_id', $etapa->id))
-                                            ->whereHas('matricula', fn($q) => $q->where('turma_id', $matricula->turma_id))
+                                            ->whereHas('matricula', fn($q) => $q->where('turma_id', $matricula?->turma_id))
                                             ->avg('valor');
                                     @endphp
                                     {{ $mt ? number_format($mt, 1, ',', '.') : '-' }}
                                 </td>
 
-                                <td class="px-2 py-3 text-center border-r border-gray-100 dark:border-gray-800 font-bold text-gray-600 dark:text-gray-300 font-mono">
+                                <td class="px-3 py-4 text-center border-r border-gray-100 dark:border-gray-800 font-bold text-gray-600 dark:text-gray-300 font-mono">
                                     @php
                                         // Somatório Parcial: Soma das Médias das Etapas (Bimestres) até o atual
                                         $sp = $notas->where('avaliacao.disciplina_id', $disciplina->id)
@@ -128,19 +127,19 @@
                                     {{ $sp > 0 ? number_format($sp, 1, ',', '.') : '-' }}
                                 </td>
 
-                                <td class="px-2 py-3 text-center border-r border-gray-100 dark:border-gray-800 font-mono text-gray-600 dark:text-gray-400">
+                                <td class="px-3 py-4 text-center border-r border-gray-100 dark:border-gray-800 font-mono text-gray-600 dark:text-gray-400">
                                     @php
-                                        $faltas = $matricula->frequenciaEscolars()
-                                            ->where('disciplina_id', $disciplina->id)
-                                            ->where('presente', false)
-                                            ->count();
+                                        $faltas = $matricula?->frequenciaEscolars()
+                                            ?->where('disciplina_id', $disciplina->id)
+                                            ?->where('presente', false)
+                                            ?->count() ?? 0;
                                     @endphp
                                     {{ $faltas ?: '-' }}
                                 </td>
 
-                                <td class="px-2 py-3 text-center font-bold font-mono text-gray-900 dark:text-white">
+                                <td class="px-3 py-4 text-center font-bold font-mono text-gray-900 dark:text-white">
                                     @php
-                                        $totalAulas = $matricula->frequenciaEscolars()->where('disciplina_id', $disciplina->id)->count();
+                                        $totalAulas = $matricula?->frequenciaEscolars()?->where('disciplina_id', $disciplina->id)->count() ?? 0;
                                         $freq = $totalAulas > 0 ? (($totalAulas - $faltas) / $totalAulas) * 100 : 100;
                                     @endphp
                                     {{ number_format($freq, 0) }}%
@@ -242,7 +241,7 @@
                     <div class="space-y-6">
                         <div class="space-y-1">
                              <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Aluno(a)</label>
-                             <p class="text-sm font-black text-gray-900 dark:text-white uppercase">{{ $aluno->nome }}</p>
+                             <p class="text-sm font-black text-gray-900 dark:text-white uppercase">{{ $aluno?->nome ?? $getRecord()?->nome }}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1">
