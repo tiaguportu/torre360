@@ -28,6 +28,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             'delete_any',
             'lancarFrequencia',
             'verificaConflitos',
+            'clonar',
         ];
     }
 

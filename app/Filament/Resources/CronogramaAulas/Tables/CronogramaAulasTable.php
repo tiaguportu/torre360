@@ -254,6 +254,50 @@ class CronogramaAulasTable
                         })
                         ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()->can('checkLancarFrequenciaBulk', CronogramaAula::class)),
+                    BulkAction::make('clonar')
+                        ->label('Clonar Selecionadas')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->form([
+                            DatePicker::make('data')
+                                ->label('Nova Data')
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
+                            Select::make('periodo_letivo_id')
+                                ->label('Período Letivo')
+                                ->relationship('periodoLetivo', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('turma_id')
+                                ->label('Turma')
+                                ->relationship('turma', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('disciplina_id')
+                                ->label('Disciplina')
+                                ->relationship('disciplina', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('pessoa_id')
+                                ->label('Professor')
+                                ->relationship('professor', 'nome')
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $clonedData = array_filter($data, fn ($value) => filled($value));
+                            foreach ($records as $record) {
+                                $clone = $record->replicate();
+                                $clone->fill($clonedData);
+                                $clone->save();
+                            }
+
+                            Notification::make()
+                                ->title($records->count().' aulas clonadas com sucesso!')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->can('clonar', CronogramaAula::class)),
                     DeleteBulkAction::make(),
                 ]),
             ]);

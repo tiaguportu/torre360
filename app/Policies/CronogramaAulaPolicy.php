@@ -94,6 +94,15 @@ class CronogramaAulaPolicy
         return $authUser->can('LancarFrequencia:CronogramaAula');
     }
 
+    public function clonar(AuthUser $authUser): bool
+    {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $authUser->can('Clonar:CronogramaAula');
+    }
+
     public function verificaConflitos(AuthUser $authUser): bool
     {
         if ($authUser->hasRole('super_admin')) {
