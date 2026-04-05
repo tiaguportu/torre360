@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -62,9 +63,13 @@ class Matricula extends Model
         return $this->hasMany(FrequenciaEscolar::class);
     }
 
+    public function tiposDocumentos(): BelongsToMany
+    {
+        return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_matricula');
+    }
+
     /**
      * Verifica se faltam documentos obrigatórios para esta matrícula.
-     * Os documentos obrigatórios se relacionam com curso, o curso se relaciona com serie, a serie se relaciona com turma, a turma se relaciona com matricula.
      */
     public function hasMissingMandatoryDocuments(): bool
     {
@@ -73,30 +78,36 @@ class Matricula extends Model
 
     /**
      * Retorna a coleção de documentos obrigatórios que faltam para esta matrícula.
-     * Considera apenas documentos com flag_obrigatorio = true e flag_ativo = true.
+     * Considera documentos vinculados ao Curso, à Turma ou à Matrícula diretamente.
      *
-     * @return Collection<DocumentoObrigatorio>
+     * @return Collection<TipoDocumento>
      */
     public function getMissingMandatoryDocuments(): Collection
     {
-        $curso = $this->turma?->serie?->curso;
+        $documentosRequeridos = collect();
 
-        if (! $curso) {
-            return collect();
+        // 1. Documentos vinculados ao Curso
+        if ($curso = $this->turma?->serie?->curso) {
+            $documentosRequeridos = $documentosRequeridos->concat($curso->documentos);
         }
 
-        // Busca documentos que são obrigatórios e ativos no curso
-        $obrigatorios = $curso->documentos()
-            ->where('flag_obrigatorio', true)
-            ->where('flag_ativo', true)
-            ->get();
+        // 2. Documentos vinculados à Turma
+        if ($this->turma) {
+            $documentosRequeridos = $documentosRequeridos->concat($this->turma->tiposDocumentos);
+        }
+
+        // 3. Documentos vinculados à Matrícula
+        $documentosRequeridos = $documentosRequeridos->concat($this->tiposDocumentos);
+
+        // Remover duplicados por ID e filtrar apenas obrigatórios
+        $obrigatorios = $documentosRequeridos->unique('id')->filter(fn ($doc) => $doc->flag_obrigatorio);
 
         if ($obrigatorios->isEmpty()) {
             return collect();
         }
 
         $inseridosIds = $this->documentoInseridos()
-            ->pluck('documento_obrigatorio_id')
+            ->pluck('tipo_documento_id')
             ->toArray();
 
         return $obrigatorios->reject(function ($doc) use ($inseridosIds) {

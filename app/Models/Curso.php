@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Curso extends Model
 {
     protected $table = 'curso';
+
     protected $guarded = [];
 
     public function unidade(): BelongsTo
@@ -22,9 +24,9 @@ class Curso extends Model
         return $this->hasMany(Serie::class);
     }
 
-    public function documentos(): HasMany
+    public function documentos(): BelongsToMany
     {
-        return $this->hasMany(DocumentoObrigatorio::class);
+        return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_curso');
     }
 
     public function coordenadores(): HasMany
@@ -36,6 +38,4 @@ class Curso extends Model
     {
         return $this->hasOne(TributacaoCurso::class);
     }
-
-
 }

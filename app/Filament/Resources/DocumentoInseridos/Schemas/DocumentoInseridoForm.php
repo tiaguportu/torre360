@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\DocumentoInseridos\Schemas;
 
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
-use App\Models\DocumentoObrigatorio;
 use App\Models\Matricula;
+use App\Models\TipoDocumento;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -36,21 +36,26 @@ class DocumentoInseridoForm
                     ->createOptionForm(fn (Schema $schema) => MatriculaForm::configure($schema)->getComponents())
                     ->columnSpanFull(),
 
-                Select::make('documento_obrigatorio_id')
-                    ->label('Documento Obrigatório')
+                Select::make('tipo_documento_id')
+                    ->label('Tipo de Documento')
                     ->options(function (Get $get) {
                         $matriculaId = $get('matricula_id');
                         if (! $matriculaId) {
                             return [];
                         }
 
-                        $matricula = Matricula::with('turma.serie.curso.documentos')->find($matriculaId);
-                        $curso = $matricula?->turma?->serie?->curso;
-                        if (! $curso) {
+                        $matricula = Matricula::with(['turma.serie.curso', 'tiposDocumentos', 'turma.tiposDocumentos'])->find($matriculaId);
+                        if (! $matricula) {
                             return [];
                         }
 
-                        return DocumentoObrigatorio::where('curso_id', $curso->id)->pluck('nome', 'id');
+                        return TipoDocumento::query()
+                            ->where(function ($query) use ($matricula) {
+                                $query->whereHas('cursos', fn ($q) => $q->where('id', $matricula->turma?->serie?->curso_id))
+                                    ->orWhereHas('turmas', fn ($q) => $q->where('id', $matricula->turma_id))
+                                    ->orWhereHas('matriculas', fn ($q) => $q->where('id', $matricula->id));
+                            })
+                            ->pluck('nome', 'id');
                     })
                     ->searchable()
                     ->required()
@@ -61,11 +66,11 @@ class DocumentoInseridoForm
                         ->label('Baixar Modelo do Documento')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('info')
-                        ->visible(fn (Get $get) => $get('documento_obrigatorio_id') &&
-                            (DocumentoObrigatorio::find($get('documento_obrigatorio_id'))?->modelo_arquivo || DocumentoObrigatorio::find($get('documento_obrigatorio_id'))?->modelo_link)
+                        ->visible(fn (Get $get) => $get('tipo_documento_id') &&
+                            (TipoDocumento::find($get('tipo_documento_id'))?->modelo_arquivo || TipoDocumento::find($get('tipo_documento_id'))?->modelo_link)
                         )
                         ->url(function (Get $get) {
-                            $doc = DocumentoObrigatorio::find($get('documento_obrigatorio_id'));
+                            $doc = TipoDocumento::find($get('tipo_documento_id'));
                             if ($doc?->modelo_link) {
                                 return $doc->modelo_link;
                             }
@@ -92,7 +97,7 @@ class DocumentoInseridoForm
                     ->directory('documentos_alunos')
                     ->storeFileNamesIn('nome_arquivo_original')
                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file, Get $get) {
-                        $doc = DocumentoObrigatorio::find($get('documento_obrigatorio_id'));
+                        $doc = TipoDocumento::find($get('tipo_documento_id'));
                         $docName = $doc ? Str::slug($doc->nome) : 'documento';
                         $hash = md5_file($file->getRealPath());
                         $idStr = uniqid();

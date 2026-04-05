@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Turma extends Model
 {
     protected $table = 'turma';
+
     protected $guarded = [];
 
     public function serie(): BelongsTo
@@ -44,5 +46,10 @@ class Turma extends Model
     public function cronogramasAula(): HasMany
     {
         return $this->hasMany(CronogramaAula::class);
+    }
+
+    public function tiposDocumentos(): BelongsToMany
+    {
+        return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_turma');
     }
 }

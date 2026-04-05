@@ -4,8 +4,8 @@ namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\DocumentoInserido;
-use App\Models\DocumentoObrigatorio;
 use App\Models\SituacaoDocumentoInserido;
+use App\Models\TipoDocumento;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -53,28 +53,29 @@ class DocumentosMatricula extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $cursoId = $this->record->turma?->serie?->curso_id;
-
         return $table
             ->query(
-                DocumentoObrigatorio::query()
-                    ->where('curso_id', $cursoId)
-                    ->where('flag_ativo', true)
+                TipoDocumento::query()
+                    ->where(function ($query) {
+                        $query->whereHas('cursos', fn ($q) => $q->where('id', $this->record->turma?->serie?->curso_id))
+                            ->orWhereHas('turmas', fn ($q) => $q->where('id', $this->record->turma_id))
+                            ->orWhereHas('matriculas', fn ($q) => $q->where('id', $this->record->id));
+                    })
             )
             ->columns([
                 TextColumn::make('nome')
                     ->label('Tipo de Documento')
-                    ->description(fn (DocumentoObrigatorio $record) => $record->flag_obrigatorio ? 'Obrigatório' : 'Opcional')
+                    ->description(fn (TipoDocumento $record) => $record->flag_obrigatorio ? 'Obrigatório' : 'Opcional')
                     ->weight('bold'),
 
                 TextColumn::make('modelo')
                     ->label('Modelo')
                     ->placeholder('Nenhum modelo cadastrado')
-                    ->state(fn (DocumentoObrigatorio $record) => $record->modelo_arquivo || $record->modelo_link ? 'Disponível' : null)
+                    ->state(fn (TipoDocumento $record) => $record->modelo_arquivo || $record->modelo_link ? 'Disponível' : null)
                     ->formatStateUsing(fn ($state) => $state ? 'Ver Modelo' : '-')
                     ->color(fn ($state) => $state === 'Ver Modelo' ? 'primary' : 'gray')
                     ->icon(fn ($state) => $state === 'Ver Modelo' ? 'heroicon-o-arrow-down-tray' : null)
-                    ->url(function (DocumentoObrigatorio $record) {
+                    ->url(function (TipoDocumento $record) {
                         if ($record->modelo_link) {
                             return $record->modelo_link;
                         }
@@ -88,9 +89,9 @@ class DocumentosMatricula extends Page implements HasTable
                 TextColumn::make('situacao')
                     ->label('Situação')
                     ->placeholder('Não enviado')
-                    ->getStateUsing(function (DocumentoObrigatorio $record) {
+                    ->getStateUsing(function (TipoDocumento $record) {
                         $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->first();
 
                         return $inserido?->situacao?->nome ?? 'Pendente de Envio';
@@ -106,9 +107,9 @@ class DocumentosMatricula extends Page implements HasTable
 
                 TextColumn::make('inserido_em')
                     ->label('Enviado em')
-                    ->getStateUsing(function (DocumentoObrigatorio $record) {
+                    ->getStateUsing(function (TipoDocumento $record) {
                         $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->first();
 
                         return $inserido?->created_at?->format('d/m/Y H:i');
@@ -120,29 +121,29 @@ class DocumentosMatricula extends Page implements HasTable
                     ->label('Ver Documento')
                     ->icon('heroicon-o-eye')
                     ->color('info')
-                    ->url(function (DocumentoObrigatorio $record) {
+                    ->url(function (TipoDocumento $record) {
                         $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->first();
 
                         return $inserido?->arquivo_path ? asset('storage/'.$inserido->arquivo_path) : null;
                     }, shouldOpenInNewTab: true)
-                    ->visible(fn (DocumentoObrigatorio $record) => DocumentoInserido::where('matricula_id', $this->record->id)
-                        ->where('documento_obrigatorio_id', $record->id)
+                    ->visible(fn (TipoDocumento $record) => DocumentoInserido::where('matricula_id', $this->record->id)
+                        ->where('tipo_documento_id', $record->id)
                         ->exists()),
 
                 Action::make('inserir')
-                    ->label(function (DocumentoObrigatorio $record) {
+                    ->label(function (TipoDocumento $record) {
                         $jaInserido = DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->exists();
 
                         return $jaInserido ? 'Substituir' : 'Enviar';
                     })
                     ->icon('heroicon-o-cloud-arrow-up')
-                    ->color(function (DocumentoObrigatorio $record) {
+                    ->color(function (TipoDocumento $record) {
                         return DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->exists() ? 'gray' : 'primary';
                     })
                     ->form([
@@ -154,7 +155,7 @@ class DocumentosMatricula extends Page implements HasTable
                             ->maxSize(2048)
                             ->directory('documentos_alunos')
                             ->storeFileNamesIn('nome_arquivo_original')
-                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file, DocumentoObrigatorio $record) {
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file, TipoDocumento $record) {
                                 $docName = Str::slug($record->nome);
                                 $hash = md5_file($file->getRealPath());
                                 $idStr = uniqid();
@@ -175,22 +176,22 @@ class DocumentosMatricula extends Page implements HasTable
 
                         Hidden::make('hash_arquivo'),
                     ])
-                    ->fillForm(function (DocumentoObrigatorio $record) {
+                    ->fillForm(function (TipoDocumento $record) {
                         $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
-                            ->where('documento_obrigatorio_id', $record->id)
+                            ->where('tipo_documento_id', $record->id)
                             ->first();
 
                         return [
                             'observacoes' => $inserido?->observacoes,
                         ];
                     })
-                    ->action(function (array $data, DocumentoObrigatorio $record) {
+                    ->action(function (array $data, TipoDocumento $record) {
                         $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
 
                         DocumentoInserido::updateOrCreate(
                             [
                                 'matricula_id' => $this->record->id,
-                                'documento_obrigatorio_id' => $record->id,
+                                'tipo_documento_id' => $record->id,
                             ],
                             [
                                 'arquivo_path' => $data['arquivo_path'],
@@ -208,7 +209,7 @@ class DocumentosMatricula extends Page implements HasTable
                             ->success()
                             ->send();
                     })
-                    ->modalHeading(fn (DocumentoObrigatorio $record) => "Enviar Documento: {$record->nome}")
+                    ->modalHeading(fn (TipoDocumento $record) => "Enviar Documento: {$record->nome}")
                     ->modalWidth('xl'),
             ]);
     }

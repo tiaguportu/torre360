@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Filament\Resources\DocumentoObrigatorios;
+namespace App\Filament\Resources\TipoDocumentos;
 
-use App\Filament\Resources\DocumentoObrigatorios\Pages\CreateDocumentoObrigatorio;
-use App\Filament\Resources\DocumentoObrigatorios\Pages\EditDocumentoObrigatorio;
-use App\Filament\Resources\DocumentoObrigatorios\Pages\ListDocumentoObrigatorios;
-use App\Filament\Resources\DocumentoObrigatorios\Schemas\DocumentoObrigatorioForm;
-use App\Filament\Resources\DocumentoObrigatorios\Tables\DocumentoObrigatoriosTable;
-use App\Models\DocumentoObrigatorio;
+use App\Filament\Resources\TipoDocumentos\Pages\CreateTipoDocumento;
+use App\Filament\Resources\TipoDocumentos\Pages\EditTipoDocumento;
+use App\Filament\Resources\TipoDocumentos\Pages\ListTipoDocumentos;
+use App\Filament\Resources\TipoDocumentos\Schemas\TipoDocumentoForm;
+use App\Filament\Resources\TipoDocumentos\Tables\TipoDocumentosTable;
+use App\Models\TipoDocumento;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class DocumentoObrigatorioResource extends Resource
+class TipoDocumentoResource extends Resource
 {
-    protected static ?string $model = DocumentoObrigatorio::class;
+    protected static ?string $model = TipoDocumento::class;
 
-    protected static ?string $modelLabel = 'Documento Obrigatório';
+    protected static ?string $modelLabel = 'Tipo de Documento';
 
-    protected static ?string $pluralModelLabel = 'Documentos Obrigatórios';
+    protected static ?string $pluralModelLabel = 'Tipos de Documentos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
@@ -29,12 +29,12 @@ class DocumentoObrigatorioResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return DocumentoObrigatorioForm::configure($schema);
+        return TipoDocumentoForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return DocumentoObrigatoriosTable::configure($table);
+        return TipoDocumentosTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -47,9 +47,9 @@ class DocumentoObrigatorioResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListDocumentoObrigatorios::route('/'),
-            'create' => CreateDocumentoObrigatorio::route('/create'),
-            'edit' => EditDocumentoObrigatorio::route('/{record}/edit'),
+            'index' => ListTipoDocumentos::route('/'),
+            'create' => CreateTipoDocumento::route('/create'),
+            'edit' => EditTipoDocumento::route('/{record}/edit'),
         ];
     }
 }

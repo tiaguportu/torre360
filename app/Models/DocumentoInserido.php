@@ -10,7 +10,7 @@ class DocumentoInserido extends Model
     protected $table = 'documento_inserido';
 
     protected $fillable = [
-        'documento_obrigatorio_id',
+        'tipo_documento_id',
         'matricula_id',
         'situacao_documento_inserido_id',
         'observacoes',
@@ -19,9 +19,9 @@ class DocumentoInserido extends Model
         'hash_arquivo',
     ];
 
-    public function documentoObrigatorio(): BelongsTo
+    public function tipoDocumento(): BelongsTo
     {
-        return $this->belongsTo(DocumentoObrigatorio::class, 'documento_obrigatorio_id');
+        return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');
     }
 
     public function matricula(): BelongsTo
