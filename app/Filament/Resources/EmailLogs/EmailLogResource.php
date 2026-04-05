@@ -6,15 +6,15 @@ use App\Filament\Resources\EmailLogs\Pages\ListEmailLogs;
 use App\Filament\Resources\EmailLogs\Pages\ViewEmailLog;
 use App\Models\EmailLog;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -22,7 +22,7 @@ class EmailLogResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = EmailLog::class;
 
-    protected static ?string $navigationGroup = 'Auditoria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Auditoria';
 
     protected static ?string $navigationLabel = 'E-mails Enviados';
 
@@ -101,10 +101,10 @@ class EmailLogResource extends Resource implements HasShieldPermissions
                     ->sortable(),
             ])
             ->filters([])
-            ->actions([
+            ->recordActions([
                 ViewAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
