@@ -11,34 +11,45 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Renomear se necessário (já vimos que chama tipo_documento agora)
+        // 1. Renomear se necessário
         if (Schema::hasTable('documento_obrigatorio') && !Schema::hasTable('tipo_documento')) {
             Schema::rename('documento_obrigatorio', 'tipo_documento');
         }
 
-        // 2. Modificar tipo_documento
+        // 2. Limpar tipo_documento
         Schema::table('tipo_documento', function (Blueprint $table) {
-            // Remover flag de ativo se existir
             if (Schema::hasColumn('tipo_documento', 'flag_ativo')) {
                 $table->dropColumn('flag_ativo');
             }
-
-            // flag_obrigatorio
             if (!Schema::hasColumn('tipo_documento', 'flag_obrigatorio')) {
                 $table->boolean('flag_obrigatorio')->default(true);
             }
-
-            // Remover curso_id (N:N agora)
-            if (Schema::hasColumn('tipo_documento', 'curso_id')) {
-                // Tentar remover a constraint pelo nome padrão ou apenas a coluna
-                try {
-                    $table->dropForeign(['curso_id']);
-                } catch (\Exception $e) {}
-                $table->dropColumn('curso_id');
-            }
         });
 
-        // 3. Criar pivôs
+        // 3. Remover curso_id de forma forçada
+        if (Schema::hasColumn('tipo_documento', 'curso_id')) {
+            try {
+                $dbname = DB::connection()->getDatabaseName();
+                $constraints = DB::select("
+                    SELECT CONSTRAINT_NAME
+                    FROM information_schema.KEY_COLUMN_USAGE
+                    WHERE TABLE_SCHEMA = ?
+                    AND TABLE_NAME = 'tipo_documento'
+                    AND COLUMN_NAME = 'curso_id'
+                    AND REFERENCED_TABLE_NAME IS NOT NULL
+                ", [$dbname]);
+
+                foreach ($constraints as $constraint) {
+                    DB::statement("ALTER TABLE tipo_documento DROP FOREIGN KEY " . $constraint->CONSTRAINT_NAME);
+                }
+            } catch (\Exception $e) {}
+            
+            Schema::table('tipo_documento', function (Blueprint $table) {
+                $table->dropColumn('curso_id');
+            });
+        }
+
+        // 4. Criar pivôs
         if (!Schema::hasTable('tipo_documento_curso')) {
             Schema::create('tipo_documento_curso', function (Blueprint $table) {
                 $table->id();
@@ -66,7 +77,7 @@ return new class extends Migration
             });
         }
 
-        // 4. Atualizar FK em documento_inserido
+        // 5. Atualizar documento_inserido
         if (Schema::hasTable('documento_inserido')) {
             Schema::table('documento_inserido', function (Blueprint $table) {
                 if (Schema::hasColumn('documento_inserido', 'documento_obrigatorio_id')) {
@@ -81,31 +92,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('documento_inserido')) {
-            Schema::table('documento_inserido', function (Blueprint $table) {
-                if (Schema::hasColumn('documento_inserido', 'tipo_documento_id')) {
-                    $table->renameColumn('tipo_documento_id', 'documento_obrigatorio_id');
-                }
-            });
-        }
-
         Schema::dropIfExists('tipo_documento_matricula');
         Schema::dropIfExists('tipo_documento_turma');
         Schema::dropIfExists('tipo_documento_curso');
-
-        if (Schema::hasTable('tipo_documento')) {
-            Schema::table('tipo_documento', function (Blueprint $table) {
-                if (!Schema::hasColumn('tipo_documento', 'curso_id')) {
-                    $table->foreignId('curso_id')->nullable()->constrained('curso');
-                }
-                if (!Schema::hasColumn('tipo_documento', 'flag_ativo')) {
-                    $table->boolean('flag_ativo')->default(true);
-                }
-            });
-            
-            if (!Schema::hasTable('documento_obrigatorio')) {
-                Schema::rename('tipo_documento', 'documento_obrigatorio');
-            }
-        }
     }
 };
