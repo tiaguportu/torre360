@@ -2,25 +2,24 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Component;
+use Filament\Actions\Action;
+use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Pages\Auth\EditProfile as BaseEditProfile;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class ChangePassword extends BaseEditProfile
 {
-    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-lock-closed';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 $this->getNameFormComponent(),
                 $this->getEmailFormComponent(),
                 $this->getPasswordFormComponent()
@@ -37,27 +36,28 @@ class ChangePassword extends BaseEditProfile
                     ),
                 $this->getPasswordConfirmationFormComponent()
                     ->label('Confirmar Nova Senha'),
+                $this->getCurrentPasswordFormComponent(),
             ]);
     }
 
-    protected function getPasswordFormComponent(): Component
+    protected function getPasswordFormComponent(): \Filament\Schemas\Components\Component
     {
         return TextInput::make('password')
-            ->label(__('filament-panels::pages/auth/edit-profile.form.password.label'))
+            ->label(__('filament-panels::auth/pages/edit-profile.form.password.label'))
             ->password()
             ->revealable(filament()->arePasswordsRevealable())
             ->rule(Password::default())
             ->autocomplete('new-password')
             ->dehydrated(fn ($state): bool => filled($state))
             ->dehydrateStateUsing(fn ($state): string => Hash::make($state))
-            ->live(onBlur: true)
+            ->live(debounce: 500)
             ->same('passwordConfirmation');
     }
 
-    protected function getPasswordConfirmationFormComponent(): Component
+    protected function getPasswordConfirmationFormComponent(): \Filament\Schemas\Components\Component
     {
         return TextInput::make('passwordConfirmation')
-            ->label(__('filament-panels::pages/auth/edit-profile.form.password_confirmation.label'))
+            ->label(__('filament-panels::auth/pages/edit-profile.form.password_confirmation.label'))
             ->password()
             ->revealable(filament()->arePasswordsRevealable())
             ->required()
