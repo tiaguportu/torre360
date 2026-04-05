@@ -14,7 +14,7 @@ class EmailLogPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:EmailLog');
+        return false;
     }
 
     public function view(AuthUser $authUser, EmailLog $emailLog): bool

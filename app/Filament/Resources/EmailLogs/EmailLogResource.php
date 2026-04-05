@@ -5,7 +5,6 @@ namespace App\Filament\Resources\EmailLogs;
 use App\Filament\Resources\EmailLogs\Pages\ListEmailLogs;
 use App\Filament\Resources\EmailLogs\Pages\ViewEmailLog;
 use App\Models\EmailLog;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
@@ -18,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class EmailLogResource extends Resource implements HasShieldPermissions
+class EmailLogResource extends Resource
 {
     protected static ?string $model = EmailLog::class;
 
@@ -31,16 +30,6 @@ class EmailLogResource extends Resource implements HasShieldPermissions
     protected static ?string $pluralModelLabel = 'E-mails Enviados';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view',
-            'view_any',
-            'delete',
-            'delete_any',
-        ];
-    }
 
     public static function form(Schema $schema): Schema
     {

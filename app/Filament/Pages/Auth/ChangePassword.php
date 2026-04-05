@@ -5,8 +5,9 @@ namespace App\Filament\Pages\Auth;
 use Filament\Actions\Action;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -15,6 +16,11 @@ use Illuminate\Validation\Rules\Password;
 class ChangePassword extends BaseEditProfile
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-lock-closed';
+
+    public static function getLabel(): string
+    {
+        return 'Mudar Senha';
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -40,7 +46,7 @@ class ChangePassword extends BaseEditProfile
             ]);
     }
 
-    protected function getPasswordFormComponent(): \Filament\Schemas\Components\Component
+    protected function getPasswordFormComponent(): Component
     {
         return TextInput::make('password')
             ->label(__('filament-panels::auth/pages/edit-profile.form.password.label'))
@@ -54,7 +60,7 @@ class ChangePassword extends BaseEditProfile
             ->same('passwordConfirmation');
     }
 
-    protected function getPasswordConfirmationFormComponent(): \Filament\Schemas\Components\Component
+    protected function getPasswordConfirmationFormComponent(): Component
     {
         return TextInput::make('passwordConfirmation')
             ->label(__('filament-panels::auth/pages/edit-profile.form.password_confirmation.label'))

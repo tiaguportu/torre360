@@ -10,7 +10,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
@@ -37,6 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->registration()
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
+            ->profile(ChangePassword::class)
             ->brandLogo(fn () => view('filament.logo'))
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
@@ -92,12 +92,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->userMenuItems([
-                'profile' => MenuItem::make()
-                    ->label('Mudar Senha')
-                    ->url(fn (): string => ChangePassword::getUrl())
-                    ->icon('heroicon-o-lock-closed'),
             ])
             ->navigationGroups([
                 NavigationGroup::make('Acadêmico'),
