@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
 use App\Http\Middleware\AuditMiddleware;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -9,6 +10,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
@@ -35,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->registration()
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
-            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
             ->colors([
@@ -53,11 +55,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn(): string => view('filament.hooks.register-link')->render(),
+                fn (): string => view('filament.hooks.register-link')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn(): string => '
+                fn (): string => '
                     <style>
                         .fi-simple-header-heading, 
                         .fi-simple-header-subheading, 
@@ -65,7 +67,7 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
-                    <link rel="stylesheet" href="' . asset('css/filament/admin/theme.css') . '">',
+                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">',
             )
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
@@ -90,6 +92,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->userMenuItems([
+                'profile' => MenuItem::make()
+                    ->label('Mudar Senha')
+                    ->url(fn (): string => ChangePassword::getUrl())
+                    ->icon('heroicon-o-lock-closed'),
             ])
             ->navigationGroups([
                 NavigationGroup::make('Acadêmico'),
