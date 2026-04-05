@@ -23,42 +23,24 @@ class DocumentosPendentesNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $contrato = $this->matricula->contrato;
+        $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
+        $codigo = $this->matricula->codigo;
+        $docs = $this->matricula->getMissingMandatoryDocuments()->pluck('nome')->toArray();
+
         $mensagem = (new MailMessage)
-            ->subject('Aviso de Documentos Pendentes')
+            ->subject("Aviso de Documentos Pendentes - {$codigo}")
             ->greeting('Olá, '.$notifiable->name.'!')
-            ->line('Constatamos que existem documentos obrigatórios e ativos pendentes de envio.');
+            ->line("Constatamos que existem documentos obrigatórios e ativos pendentes para a matrícula do(a) aluno(a) **{$alunoNome}**.")
+            ->line('Os documentos pendentes são:');
 
-        if ($contrato) {
-            $matriculasComPendencia = $contrato->matriculas()
-                ->get()
-                ->filter(fn ($m) => $m->hasMissingMandatoryDocuments());
-
-            foreach ($matriculasComPendencia as $m) {
-                $alunoNome = $m->pessoa?->nome ?? 'Aluno(a)';
-                $codigo = $m->codigo;
-                $docs = $m->getMissingMandatoryDocuments()->pluck('nome')->toArray();
-
-                $mensagem->line("**Matrícula: {$codigo} - {$alunoNome}**");
-                foreach ($docs as $doc) {
-                    $mensagem->line("- {$doc}");
-                }
-            }
-        } else {
-            // Fallback para apenas a matrícula atual se não houver contrato (não deve acontecer conforme estrutura)
-            $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
-            $docs = $this->matricula->getMissingMandatoryDocuments()->pluck('nome')->toArray();
-
-            $mensagem->line("**Aluno(a): {$alunoNome}**");
-            foreach ($docs as $doc) {
-                $mensagem->line("- {$doc}");
-            }
+        foreach ($docs as $doc) {
+            $mensagem->line("- {$doc}");
         }
 
         $url = route('filament.admin.resources.matriculas.documentos', ['record' => $this->matricula->id]);
 
         return $mensagem
-            ->line('A regularização desses documentos é essencial para a manutenção da(s) matrícula(s).')
+            ->line('A regularização desses documentos é essencial para a manutenção da matrícula.')
             ->action('Gerenciar Documentos', $url)
             ->line('Se você já enviou os documentos, por favor, ignore este aviso.')
             ->salutation('Atenciosamente, '.config('app.name'));
