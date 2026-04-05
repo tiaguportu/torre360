@@ -22,17 +22,18 @@ class TipoDocumentoForm
                     ->required()
                     ->default(true),
                 Select::make('cursos')
-                    ->relationship('cursos', 'nome_externo')
+                    ->relationship('cursos', 'nome_externo', modifyQueryUsing: fn ($query) => $query->whereNotNull('nome_externo'))
                     ->multiple()
                     ->searchable()
                     ->preload(),
                 Select::make('turmas')
-                    ->relationship('turmas', 'nome')
+                    ->relationship('turmas', 'nome', modifyQueryUsing: fn ($query) => $query->whereNotNull('nome'))
                     ->multiple()
                     ->searchable()
                     ->preload(),
                 Select::make('matriculas')
-                    ->relationship('matriculas', 'codigo')
+                    ->relationship('matriculas', 'codigo', modifyQueryUsing: fn ($query) => $query->whereNotNull('codigo'))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->codigo ?? "Matrícula #{$record->id}")
                     ->multiple()
                     ->searchable()
                     ->preload(),
