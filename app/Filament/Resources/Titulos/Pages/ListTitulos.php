@@ -59,9 +59,16 @@ class ListTitulos extends ListRecords
                         $valorPorTitulo = $valorTotal / ($numMatriculas * $numParcelas);
 
                         foreach ($matriculas as $matricula) {
-                            $endDate = $matricula->turma?->periodoLetivo?->data_fim
-                                ? Carbon::parse($matricula->turma->periodoLetivo->data_fim)
-                                : $startDate->copy()->addYear();
+                            $startDate = $contrato->data_aceite ? Carbon::parse($contrato->data_aceite)->startOfDay() : now()->startOfDay();
+
+                            // Se não houver data_fim no período letivo, usamos o fallback de meses
+                            $origEndDate = ($matricula->turma?->periodoLetivo?->data_fim)
+                                ? Carbon::parse($matricula->turma->periodoLetivo->data_fim)->startOfDay()
+                                : $startDate->copy()->addMonths($numParcelas);
+
+                            // O último vencimento NÃO PODE ser superior a data_fim do PeriodoLetivo
+                            // Se a data_fim for anterior ao contrato, travamos no startDate
+                            $endDate = $origEndDate->lt($startDate) ? $startDate->copy() : $origEndDate;
 
                             $totalIntervalInDays = $endDate->diffInDays($startDate);
                             $intervalBetweenPayments = $numParcelas > 1 ? $totalIntervalInDays / ($numParcelas - 1) : 0;
@@ -81,10 +88,13 @@ class ListTitulos extends ListRecords
                         // Cria parcelas globais para o contrato
                         $valorPorTitulo = $valorTotal / $numParcelas;
 
-                        // Busca a data fim da primeira matrícula ou padrão 1 ano
-                        $endDate = $matriculas->first()?->turma?->periodoLetivo?->data_fim
-                            ? Carbon::parse($matriculas->first()->turma->periodoLetivo->data_fim)
-                            : $startDate->copy()->addYear();
+                        $startDate = $contrato->data_aceite ? Carbon::parse($contrato->data_aceite)->startOfDay() : now()->startOfDay();
+
+                        $origEndDate = ($matriculas->first()?->turma?->periodoLetivo?->data_fim)
+                            ? Carbon::parse($matriculas->first()->turma->periodoLetivo->data_fim)->startOfDay()
+                            : $startDate->copy()->addMonths($numParcelas);
+
+                        $endDate = $origEndDate->lt($startDate) ? $startDate->copy() : $origEndDate;
 
                         $totalIntervalInDays = $endDate->diffInDays($startDate);
                         $intervalBetweenPayments = $numParcelas > 1 ? $totalIntervalInDays / ($numParcelas - 1) : 0;
