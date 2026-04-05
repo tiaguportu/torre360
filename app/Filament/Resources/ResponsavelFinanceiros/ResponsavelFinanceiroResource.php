@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\ResponsavelFinanceiros;
 
-
 use App\Filament\Resources\ResponsavelFinanceiros\Pages\CreateResponsavelFinanceiro;
 use App\Filament\Resources\ResponsavelFinanceiros\Pages\EditResponsavelFinanceiro;
 use App\Filament\Resources\ResponsavelFinanceiros\Pages\ListResponsavelFinanceiros;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class ResponsavelFinanceiroResource extends Resource
 {
-
     protected static ?string $model = ResponsavelFinanceiro::class;
+
+    protected static ?string $modelLabel = 'Responsável Financeiro';
+
+    protected static ?string $pluralModelLabel = 'Responsáveis Financeiros';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 

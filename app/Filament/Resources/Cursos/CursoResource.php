@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Cursos;
 
-
 use App\Filament\Resources\Cursos\Pages\CreateCurso;
 use App\Filament\Resources\Cursos\Pages\EditCurso;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class CursoResource extends Resource
 {
-
     protected static ?string $model = Curso::class;
+
+    protected static ?string $modelLabel = 'Curso';
+
+    protected static ?string $pluralModelLabel = 'Cursos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

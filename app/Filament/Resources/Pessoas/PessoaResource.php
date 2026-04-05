@@ -20,6 +20,10 @@ class PessoaResource extends Resource
 {
     protected static ?string $model = Pessoa::class;
 
+    protected static ?string $modelLabel = 'Pessoa';
+
+    protected static ?string $pluralModelLabel = 'Pessoas';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;

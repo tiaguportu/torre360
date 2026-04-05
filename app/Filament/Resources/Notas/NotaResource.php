@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Notas;
 
-
 use App\Filament\Resources\Notas\Pages\CreateNota;
 use App\Filament\Resources\Notas\Pages\EditNota;
 use App\Filament\Resources\Notas\Pages\ListNotas;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class NotaResource extends Resource
 {
-
     protected static ?string $model = Nota::class;
+
+    protected static ?string $modelLabel = 'Nota';
+
+    protected static ?string $pluralModelLabel = 'Notas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

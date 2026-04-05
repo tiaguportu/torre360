@@ -76,4 +76,9 @@ class MatriculaPolicy
     {
         return $this->view($authUser, $matricula);
     }
+
+    public function avisarPendencia(AuthUser $authUser, Matricula $matricula): bool
+    {
+        return $authUser->can('AvisarPendencia:Matricula');
+    }
 }

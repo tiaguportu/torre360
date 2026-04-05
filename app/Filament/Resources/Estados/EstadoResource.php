@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Estados;
 
-
 use App\Filament\Resources\Estados\Pages\CreateEstado;
 use App\Filament\Resources\Estados\Pages\EditEstado;
 use App\Filament\Resources\Estados\Pages\ListEstados;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class EstadoResource extends Resource
 {
-
     protected static ?string $model = Estado::class;
+
+    protected static ?string $modelLabel = 'Estado';
+
+    protected static ?string $pluralModelLabel = 'Estados';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 

@@ -30,6 +30,10 @@ class ConfiguracaoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Configuracao::class;
 
+    protected static ?string $modelLabel = 'Configuração';
+
+    protected static ?string $pluralModelLabel = 'Configurações';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog';

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Turmas;
 
-
 use App\Filament\Resources\Turmas\Pages\CreateTurma;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
@@ -18,8 +17,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TurmaResource extends Resource
 {
-
     protected static ?string $model = Turma::class;
+
+    protected static ?string $modelLabel = 'Turma';
+
+    protected static ?string $pluralModelLabel = 'Turmas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

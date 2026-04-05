@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SituacaoMatriculas;
 
-
 use App\Filament\Resources\SituacaoMatriculas\Pages\CreateSituacaoMatricula;
 use App\Filament\Resources\SituacaoMatriculas\Pages\EditSituacaoMatricula;
 use App\Filament\Resources\SituacaoMatriculas\Pages\ListSituacaoMatriculas;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class SituacaoMatriculaResource extends Resource
 {
-
     protected static ?string $model = SituacaoMatricula::class;
+
+    protected static ?string $modelLabel = 'Situação da Matrícula';
+
+    protected static ?string $pluralModelLabel = 'Situações das Matrículas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 

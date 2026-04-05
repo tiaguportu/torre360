@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\CorRacas;
 
-
 use App\Filament\Resources\CorRacas\Pages\CreateCorRaca;
 use App\Filament\Resources\CorRacas\Pages\EditCorRaca;
 use App\Filament\Resources\CorRacas\Pages\ListCorRacas;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class CorRacaResource extends Resource
 {
-
     protected static ?string $model = CorRaca::class;
+
+    protected static ?string $modelLabel = 'Cor / Raça';
+
+    protected static ?string $pluralModelLabel = 'Cores / Raças';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-swatch';
 

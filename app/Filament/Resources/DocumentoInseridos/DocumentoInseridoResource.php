@@ -32,6 +32,10 @@ class DocumentoInseridoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = DocumentoInserido::class;
 
+    protected static ?string $modelLabel = 'Documento Inserido';
+
+    protected static ?string $pluralModelLabel = 'Documentos Inseridos';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';

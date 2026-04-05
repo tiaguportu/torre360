@@ -2,11 +2,8 @@
 
 namespace App\Filament\Resources\EmailLogs;
 
-use App\Filament\Resources\EmailLogs\Pages\CreateEmailLog;
-use App\Filament\Resources\EmailLogs\Pages\EditEmailLog;
 use App\Filament\Resources\EmailLogs\Pages\ListEmailLogs;
 use App\Filament\Resources\EmailLogs\Pages\ViewEmailLog;
-use App\Filament\Resources\EmailLogs\Schemas\EmailLogForm;
 use App\Filament\Resources\EmailLogs\Schemas\EmailLogInfolist;
 use App\Filament\Resources\EmailLogs\Tables\EmailLogsTable;
 use App\Models\EmailLog;
@@ -20,11 +17,19 @@ class EmailLogResource extends Resource
 {
     protected static ?string $model = EmailLog::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationGroup = 'Auditoria';
+
+    protected static ?string $navigationLabel = 'E-mails Enviados';
+
+    protected static ?string $modelLabel = 'E-mail Enviado';
+
+    protected static ?string $pluralModelLabel = 'E-mails Enviados';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
 
     public static function form(Schema $schema): Schema
     {
-        return EmailLogForm::configure($schema);
+        return $schema;
     }
 
     public static function infolist(Schema $schema): Schema
@@ -48,9 +53,7 @@ class EmailLogResource extends Resource
     {
         return [
             'index' => ListEmailLogs::route('/'),
-            'create' => CreateEmailLog::route('/create'),
             'view' => ViewEmailLog::route('/{record}'),
-            'edit' => EditEmailLog::route('/{record}/edit'),
         ];
     }
 }

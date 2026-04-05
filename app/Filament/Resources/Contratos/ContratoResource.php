@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Contratos;
 
-
 use App\Filament\Resources\Contratos\Pages\CreateContrato;
 use App\Filament\Resources\Contratos\Pages\EditContrato;
 use App\Filament\Resources\Contratos\Pages\ListContratos;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class ContratoResource extends Resource
 {
-
     protected static ?string $model = Contrato::class;
+
+    protected static ?string $modelLabel = 'Contrato';
+
+    protected static ?string $pluralModelLabel = 'Contratos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
 

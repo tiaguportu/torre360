@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Titulos;
 
-
 use App\Filament\Resources\Titulos\Pages\CreateTitulo;
 use App\Filament\Resources\Titulos\Pages\EditTitulo;
 use App\Filament\Resources\Titulos\Pages\ListTitulos;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class TituloResource extends Resource
 {
-
     protected static ?string $model = Titulo::class;
+
+    protected static ?string $modelLabel = 'Título';
+
+    protected static ?string $pluralModelLabel = 'Títulos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
 

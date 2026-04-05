@@ -7,7 +7,6 @@ use App\Filament\Resources\AreaConhecimentos\Pages\EditAreaConhecimento;
 use App\Filament\Resources\AreaConhecimentos\Pages\ListAreaConhecimentos;
 use App\Filament\Resources\AreaConhecimentos\Schemas\AreaConhecimentoForm;
 use App\Filament\Resources\AreaConhecimentos\Tables\AreaConhecimentosTable;
-
 use App\Models\AreaConhecimento;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class AreaConhecimentoResource extends Resource
 {
-
     protected static ?string $model = AreaConhecimento::class;
+
+    protected static ?string $modelLabel = 'Área de Conhecimento';
+
+    protected static ?string $pluralModelLabel = 'Áreas de Conhecimento';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

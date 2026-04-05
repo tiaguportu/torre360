@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Unidades;
 
-
 use App\Filament\Resources\Unidades\Pages\CreateUnidade;
 use App\Filament\Resources\Unidades\Pages\EditUnidade;
 use App\Filament\Resources\Unidades\Pages\ListUnidades;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class UnidadeResource extends Resource
 {
-
     protected static ?string $model = Unidade::class;
+
+    protected static ?string $modelLabel = 'Unidade';
+
+    protected static ?string $pluralModelLabel = 'Unidades';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 

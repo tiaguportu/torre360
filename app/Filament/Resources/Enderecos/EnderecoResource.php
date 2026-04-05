@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Enderecos;
 
-
 use App\Filament\Resources\Enderecos\Pages\CreateEndereco;
 use App\Filament\Resources\Enderecos\Pages\EditEndereco;
 use App\Filament\Resources\Enderecos\Pages\ListEnderecos;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class EnderecoResource extends Resource
 {
-
     protected static ?string $model = Endereco::class;
+
+    protected static ?string $modelLabel = 'Endereço';
+
+    protected static ?string $pluralModelLabel = 'Endereços';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 

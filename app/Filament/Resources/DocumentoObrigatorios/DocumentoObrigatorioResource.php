@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\DocumentoObrigatorios;
 
-
 use App\Filament\Resources\DocumentoObrigatorios\Pages\CreateDocumentoObrigatorio;
 use App\Filament\Resources\DocumentoObrigatorios\Pages\EditDocumentoObrigatorio;
 use App\Filament\Resources\DocumentoObrigatorios\Pages\ListDocumentoObrigatorios;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class DocumentoObrigatorioResource extends Resource
 {
-
     protected static ?string $model = DocumentoObrigatorio::class;
+
+    protected static ?string $modelLabel = 'Documento Obrigatório';
+
+    protected static ?string $pluralModelLabel = 'Documentos Obrigatórios';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 

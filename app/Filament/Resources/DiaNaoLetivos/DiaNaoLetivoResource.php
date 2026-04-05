@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\DiaNaoLetivos;
 
-
 use App\Filament\Resources\DiaNaoLetivos\Pages\CreateDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\EditDiaNaoLetivo;
 use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class DiaNaoLetivoResource extends Resource
 {
-
     protected static ?string $model = DiaNaoLetivo::class;
+
+    protected static ?string $modelLabel = 'Dia Não Letivo';
+
+    protected static ?string $pluralModelLabel = 'Dias Não Letivos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

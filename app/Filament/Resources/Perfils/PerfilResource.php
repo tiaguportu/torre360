@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Perfils;
 
-
 use App\Filament\Resources\Perfils\Pages\CreatePerfil;
 use App\Filament\Resources\Perfils\Pages\EditPerfil;
 use App\Filament\Resources\Perfils\Pages\ListPerfils;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class PerfilResource extends Resource
 {
-
     protected static ?string $model = Perfil::class;
+
+    protected static ?string $modelLabel = 'Perfil';
+
+    protected static ?string $pluralModelLabel = 'Perfis';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 

@@ -73,7 +73,7 @@ class MatriculasTable
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (Matricula $record) => $record->hasMissingMandatoryDocuments())
+                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPendencia', $record) && $record->hasMissingMandatoryDocuments())
                     ->action(function (Matricula $record) {
                         /** @var Contrato $contrato */
                         $contrato = $record->contrato;

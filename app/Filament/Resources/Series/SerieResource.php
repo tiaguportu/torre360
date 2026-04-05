@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Series;
 
-
 use App\Filament\Resources\Series\Pages\CreateSerie;
 use App\Filament\Resources\Series\Pages\EditSerie;
 use App\Filament\Resources\Series\Pages\ListSeries;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class SerieResource extends Resource
 {
-
     protected static ?string $model = Serie::class;
+
+    protected static ?string $modelLabel = 'Série';
+
+    protected static ?string $pluralModelLabel = 'Séries';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

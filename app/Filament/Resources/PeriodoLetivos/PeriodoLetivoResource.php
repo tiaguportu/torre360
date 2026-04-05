@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\PeriodoLetivos;
 
-
 use App\Filament\Resources\PeriodoLetivos\Pages\CreatePeriodoLetivo;
 use App\Filament\Resources\PeriodoLetivos\Pages\EditPeriodoLetivo;
 use App\Filament\Resources\PeriodoLetivos\Pages\ListPeriodoLetivos;
@@ -18,8 +17,11 @@ use Filament\Tables\Table;
 
 class PeriodoLetivoResource extends Resource
 {
-
     protected static ?string $model = PeriodoLetivo::class;
+
+    protected static ?string $modelLabel = 'Período Letivo';
+
+    protected static ?string $pluralModelLabel = 'Períodos Letivos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

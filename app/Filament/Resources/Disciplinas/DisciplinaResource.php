@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Disciplinas;
 
-
 use App\Filament\Resources\Disciplinas\Pages\CreateDisciplina;
 use App\Filament\Resources\Disciplinas\Pages\EditDisciplina;
 use App\Filament\Resources\Disciplinas\Pages\ListDisciplinas;
@@ -17,8 +16,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DisciplinaResource extends Resource
 {
-
     protected static ?string $model = Disciplina::class;
+
+    protected static ?string $modelLabel = 'Disciplina';
+
+    protected static ?string $pluralModelLabel = 'Disciplinas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 

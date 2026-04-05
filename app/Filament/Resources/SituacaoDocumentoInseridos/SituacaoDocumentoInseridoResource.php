@@ -30,11 +30,15 @@ class SituacaoDocumentoInseridoResource extends Resource implements HasShieldPer
 
     protected static ?string $model = SituacaoDocumentoInserido::class;
 
+    protected static ?string $modelLabel = 'Situação do Documento Inserido';
+
+    protected static ?string $pluralModelLabel = 'Situações dos Documentos Inseridos';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-check';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
 
-    protected static ?string $recordTitleAttribute = 'nome\nnome';
+    protected static ?string $recordTitleAttribute = 'nome';
 
     public static function form(Schema $schema): Schema
     {

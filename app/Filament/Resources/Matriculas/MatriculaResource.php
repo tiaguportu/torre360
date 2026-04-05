@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Matriculas;
 
-
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\CreateMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
@@ -20,8 +19,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class MatriculaResource extends Resource
 {
-
     protected static ?string $model = Matricula::class;
+
+    protected static ?string $modelLabel = 'Matrícula';
+
+    protected static ?string $pluralModelLabel = 'Matrículas';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 

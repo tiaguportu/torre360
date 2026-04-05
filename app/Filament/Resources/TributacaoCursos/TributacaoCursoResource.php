@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\TributacaoCursos;
 
-
 use App\Filament\Resources\TributacaoCursos\Pages\CreateTributacaoCurso;
 use App\Filament\Resources\TributacaoCursos\Pages\EditTributacaoCurso;
 use App\Filament\Resources\TributacaoCursos\Pages\ListTributacaoCursos;
@@ -16,8 +15,11 @@ use Filament\Tables\Table;
 
 class TributacaoCursoResource extends Resource
 {
-
     protected static ?string $model = TributacaoCurso::class;
+
+    protected static ?string $modelLabel = 'Tributação do Curso';
+
+    protected static ?string $pluralModelLabel = 'Tributações dos Cursos';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
 

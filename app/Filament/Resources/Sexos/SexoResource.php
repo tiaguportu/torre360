@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Sexos;
 
-
 use App\Filament\Resources\Sexos\Pages\CreateSexo;
 use App\Filament\Resources\Sexos\Pages\EditSexo;
 use App\Filament\Resources\Sexos\Pages\ListSexos;
@@ -17,8 +16,11 @@ use Filament\Tables\Table;
 
 class SexoResource extends Resource
 {
-
     protected static ?string $model = Sexo::class;
+
+    protected static ?string $modelLabel = 'Sexo';
+
+    protected static ?string $pluralModelLabel = 'Sexos';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
 
