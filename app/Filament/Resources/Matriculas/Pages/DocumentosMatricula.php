@@ -57,9 +57,9 @@ class DocumentosMatricula extends Page implements HasTable
             ->query(
                 TipoDocumento::query()
                     ->where(function ($query) {
-                        $query->whereHas('cursos', fn ($q) => $q->where('id', $this->record->turma?->serie?->curso_id))
-                            ->orWhereHas('turmas', fn ($q) => $q->where('id', $this->record->turma_id))
-                            ->orWhereHas('matriculas', fn ($q) => $q->where('id', $this->record->id));
+                        $query->whereHas('cursos', fn ($q) => $q->where('curso.id', $this->record->turma?->serie?->curso_id))
+                            ->orWhereHas('turmas', fn ($q) => $q->where('turma.id', $this->record->turma_id))
+                            ->orWhereHas('matriculas', fn ($q) => $q->where('matricula.id', $this->record->id));
                     })
             )
             ->columns([

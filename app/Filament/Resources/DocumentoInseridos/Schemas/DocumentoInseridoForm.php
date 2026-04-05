@@ -51,9 +51,9 @@ class DocumentoInseridoForm
 
                         return TipoDocumento::query()
                             ->where(function ($query) use ($matricula) {
-                                $query->whereHas('cursos', fn ($q) => $q->where('id', $matricula->turma?->serie?->curso_id))
-                                    ->orWhereHas('turmas', fn ($q) => $q->where('id', $matricula->turma_id))
-                                    ->orWhereHas('matriculas', fn ($q) => $q->where('id', $matricula->id));
+                                $query->whereHas('cursos', fn ($q) => $q->where('curso.id', $matricula->turma?->serie?->curso_id))
+                                    ->orWhereHas('turmas', fn ($q) => $q->where('turma.id', $matricula->turma_id))
+                                    ->orWhereHas('matriculas', fn ($q) => $q->where('matricula.id', $matricula->id));
                             })
                             ->pluck('nome', 'id');
                     })
