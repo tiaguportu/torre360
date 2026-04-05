@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Matricula extends Model
 {
@@ -71,28 +72,43 @@ class Matricula extends Model
     }
 
     /**
-     * Retorna a quantidade de documentos obrigatórios que faltam para esta matrícula.
+     * Retorna a coleção de documentos obrigatórios que faltam para esta matrícula.
+     * Considera apenas documentos com flag_obrigatorio = true e flag_ativo = true.
+     *
+     * @return Collection<DocumentoObrigatorio>
      */
-    public function getMissingMandatoryDocumentsCount(): int
+    public function getMissingMandatoryDocuments(): Collection
     {
         $curso = $this->turma?->serie?->curso;
 
         if (! $curso) {
-            return 0;
+            return collect();
         }
 
-        $obrigatoriosIds = $curso->documentos()->pluck('id')->toArray();
-        $totalObrigatorios = count($obrigatoriosIds);
+        // Busca documentos que são obrigatórios e ativos no curso
+        $obrigatorios = $curso->documentos()
+            ->where('flag_obrigatorio', true)
+            ->where('flag_ativo', true)
+            ->get();
 
-        if ($totalObrigatorios === 0) {
-            return 0;
+        if ($obrigatorios->isEmpty()) {
+            return collect();
         }
 
-        $totalInseridos = $this->documentoInseridos()
-            ->whereIn('documento_obrigatorio_id', $obrigatoriosIds)
-            ->distinct('documento_obrigatorio_id')
-            ->count('documento_obrigatorio_id');
+        $inseridosIds = $this->documentoInseridos()
+            ->pluck('documento_obrigatorio_id')
+            ->toArray();
 
-        return max(0, $totalObrigatorios - $totalInseridos);
+        return $obrigatorios->reject(function ($doc) use ($inseridosIds) {
+            return in_array($doc->id, $inseridosIds);
+        });
+    }
+
+    /**
+     * Retorna a quantidade de documentos obrigatórios que faltam para esta matrícula.
+     */
+    public function getMissingMandatoryDocumentsCount(): int
+    {
+        return $this->getMissingMandatoryDocuments()->count();
     }
 }
