@@ -9,10 +9,15 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
@@ -56,7 +61,48 @@ class MatriculasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('curso')
+                    ->relationship('turma.serie.curso', 'nome')
+                    ->preload()
+                    ->searchable()
+                    ->label('Curso'),
+                SelectFilter::make('turma')
+                    ->relationship('turma', 'nome')
+                    ->preload()
+                    ->searchable()
+                    ->label('Turma'),
+                SelectFilter::make('situacaoMatricula')
+                    ->relationship('situacaoMatricula', 'nome')
+                    ->preload()
+                    ->searchable()
+                    ->label('Situação'),
+                Filter::make('data_matricula')
+                    ->form([
+                        DatePicker::make('from')->label('Data Início'),
+                        DatePicker::make('until')->label('Data Fim'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data_matricula', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data_matricula', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators['from'] = 'Início: '.Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators['until'] = 'Fim: '.Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+
+                        return $indicators;
+                    }),
             ])
             ->actions([
                 EditAction::make(),
