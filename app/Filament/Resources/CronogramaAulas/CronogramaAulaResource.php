@@ -29,6 +29,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             'lancarFrequencia',
             'verificaConflitos',
             'clonar',
+            'notificarProfessorManual',
         ];
     }
 

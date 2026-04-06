@@ -111,4 +111,13 @@ class CronogramaAulaPolicy
 
         return $authUser->can('VerificaConflitos:CronogramaAula');
     }
+
+    public function notificarProfessorManual(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $authUser->can('NotificarProfessorManual:CronogramaAula');
+    }
 }

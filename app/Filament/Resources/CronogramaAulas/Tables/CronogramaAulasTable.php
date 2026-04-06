@@ -121,7 +121,7 @@ class CronogramaAulasTable
                     ->tooltip('Enviar e-mail de pendência para o Professor')
                     ->icon('heroicon-o-envelope')
                     ->color('warning')
-                    ->visible(fn ($record): bool => $record->data->isPast() || $record->data->isToday())
+                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && ($record->data->isPast() || $record->data->isToday()))
                     ->action(function ($record) {
                         $professor = $record->professor;
                         $user = $professor?->users->first();
@@ -372,7 +372,8 @@ class CronogramaAulasTable
 
                             $notification->body($body)->send();
                         })
-                        ->deselectRecordsAfterCompletion(),
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->can('notificarProfessorManual', CronogramaAula::class)),
                     DeleteBulkAction::make(),
                 ]),
             ]);

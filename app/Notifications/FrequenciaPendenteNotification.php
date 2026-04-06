@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\CronogramaAula;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -35,7 +36,7 @@ class FrequenciaPendenteNotification extends Notification
         $turma = $this->cronogramaAula->turma?->nome ?? 'N/A';
         $disciplina = $this->cronogramaAula->disciplina?->nome ?? 'N/A';
         $data = optional($this->cronogramaAula->data)->format('d/m/Y') ?? 'N/A';
-        $url = config('app.url')."/admin/cronograma-aulas/{$this->cronogramaAula->id}/frequencia";
+        $url = CronogramaAulaResource::getUrl('lancar-frequencia', ['record' => $this->cronogramaAula]);
 
         return (new MailMessage)
             ->subject("Pendência de Lançamento de Frequência - {$data} - {$turma} - {$disciplina}")
