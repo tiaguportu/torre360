@@ -164,11 +164,20 @@ class MatriculasTable
 
                         $countSent = $record->notifyMissingMandatoryDocuments();
 
-                        Notification::make()
-                            ->title('E-mail enviado!')
-                            ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
-                            ->success()
-                            ->send();
+                        if ($countSent > 0) {
+                            Notification::make()
+                                ->title('E-mail enviado!')
+                                ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Falha no envio')
+                                ->body('O e-mail foi rejeitado pelo servidor do destinatário ou o endereço é inválido. Verifique os logs do sistema para mais detalhes.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        }
                     }),
             ])
             ->bulkActions([
@@ -220,8 +229,8 @@ class MatriculasTable
 
                             if ($totalSent === 0 && $countMatriculasSemEmail === 0) {
                                 Notification::make()
-                                    ->title('Nenhuma pendência notificada')
-                                    ->body('As matrículas selecionadas não possuem pendências de documentos obrigatórios.')
+                                    ->title('Nenhuma notificação enviada')
+                                    ->body('As matrículas selecionadas não possuem pendências de documentos obrigatórios ou todos os envios falharam. Verifique os logs se houver erros de e-mail.')
                                     ->info()
                                     ->send();
                             }

@@ -171,8 +171,12 @@ class Matricula extends Model
         $countSent = 0;
 
         foreach ($destinatarios as $user) {
-            $user->notify(new DocumentosPendentesNotification($this));
-            $countSent++;
+            try {
+                $user->notify(new DocumentosPendentesNotification($this));
+                $countSent++;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Erro ao enviar notificação de documentos pendentes para {$user->email} na matrícula {$this->id}: ".$e->getMessage());
+            }
         }
 
         return $countSent;
