@@ -30,7 +30,7 @@ class UsersTable
                     ->badge()
                     ->separator(','),
 
-                TextColumn::make('pessoa.nome')
+                TextColumn::make('pessoas.nome')
                     ->label('Pessoa Vinculada')
                     ->searchable()
                     ->placeholder('—'),
