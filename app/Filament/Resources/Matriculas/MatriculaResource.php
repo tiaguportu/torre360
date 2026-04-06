@@ -11,14 +11,28 @@ use App\Filament\Resources\Matriculas\RelationManagers\DocumentoInseridosRelatio
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Filament\Resources\Matriculas\Tables\MatriculasTable;
 use App\Models\Matricula;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class MatriculaResource extends Resource
+class MatriculaResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'documentos',
+            'avisarPendencia',
+        ];
+    }
     protected static ?string $model = Matricula::class;
 
     protected static ?string $modelLabel = 'Matrícula';

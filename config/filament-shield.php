@@ -201,6 +201,7 @@ return [
             ],
             MatriculaResource::class => [
                 'documentos',
+                'avisarPendencia',
             ],
             PessoaResource::class => [
                 'import',
