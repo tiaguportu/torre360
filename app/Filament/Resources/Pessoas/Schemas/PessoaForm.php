@@ -18,6 +18,7 @@ class PessoaForm
                 FileUpload::make('foto')
                     ->image()
                     ->imageEditor()
+                    ->imageCropAspectRatio('3:4')
                     ->imageEditorAspectRatios(['3:4'])
                     ->directory('pessoas_fotos'),
 
