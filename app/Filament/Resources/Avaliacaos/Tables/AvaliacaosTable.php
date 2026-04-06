@@ -200,6 +200,20 @@ class AvaliacaosTable
                                 return;
                             }
 
+                            $completedAvaliacao = $records->first(fn (Avaliacao $record) => $record->matriculas_count <= $record->notas_count);
+
+                            if ($completedAvaliacao) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Operação Cancelada')
+                                    ->body("A avaliação '{$completedAvaliacao->categoria?->nome}' já está com todos os lançamentos concluídos.")
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+
                             $enviados = 0;
                             $falhas = 0;
 
