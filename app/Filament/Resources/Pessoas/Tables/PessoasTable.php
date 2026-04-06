@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Pessoas\Tables;
 
 use App\Filament\Exports\PessoaExporter;
-use App\Models\Perfil;
 use App\Models\Pessoa;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -38,11 +37,6 @@ class PessoasTable
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
-
-                TextColumn::make('perfis.nome')
-                    ->badge()
-                    ->label('Perfis')
-                    ->searchable(),
 
                 TextColumn::make('data_nascimento')
                     ->date('d/m/Y')
@@ -107,13 +101,7 @@ class PessoasTable
                                 ->relationship('nacionalidade', 'nome')
                                 ->preload()
                                 ->searchable(),
-                            Select::make('perfis')
-                                ->label('Perfis')
-                                ->multiple()
-                                ->options(Perfil::all()->pluck('nome', 'id'))
-                                ->preload()
-                                ->searchable()
-                                ->helperText('Atenção: isto substituirá os perfis atuais dos registros selecionados.'),
+
                         ])
                         ->action(function (Collection $records, array $data): void {
                             $updateData = array_filter([
@@ -122,17 +110,12 @@ class PessoasTable
                                 'nacionalidade_id' => $data['nacionalidade_id'] ?? null,
                             ], fn ($value) => filled($value));
 
-                            $perfisIds = isset($data['perfis']) ? array_filter((array) $data['perfis']) : null;
-
                             try {
                                 foreach ($records as $record) {
                                     if (! empty($updateData)) {
                                         $record->update($updateData);
                                     }
 
-                                    if (! empty($perfisIds)) {
-                                        $record->perfis()->sync($perfisIds);
-                                    }
                                 }
 
                                 Notification::make()

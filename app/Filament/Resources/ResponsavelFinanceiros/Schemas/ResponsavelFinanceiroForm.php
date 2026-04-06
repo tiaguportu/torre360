@@ -17,7 +17,7 @@ class ResponsavelFinanceiroForm
                     ->required()
                     ->numeric(),
                 Select::make('pessoa_id')
-                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Respons_vel%')->orWhere('nome', 'like', '%Responsavel%')))
+                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('users', fn ($q) => $q->role('responsavel')))
                     ->searchable()
                     ->preload()
                     ->required()

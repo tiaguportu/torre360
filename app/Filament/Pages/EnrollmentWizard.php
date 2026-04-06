@@ -9,7 +9,6 @@ use App\Models\Curso;
 use App\Models\Endereco;
 use App\Models\Matricula;
 use App\Models\Pais;
-use App\Models\Perfil;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Sexo;
@@ -288,12 +287,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 'endereco_id' => $alunoEnderecoId,
             ]);
 
-            // Vincular perfis do aluno
-            $perfilAluno = Perfil::where('nome', 'Aluno')->first();
-            if ($perfilAluno) {
-                $aluno->perfis()->syncWithoutDetaching([$perfilAluno->id]);
-            }
-
             // 3. Criar Matrícula
             $matricula = Matricula::create([
                 'pessoa_id' => $aluno->id,
@@ -311,9 +304,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
             // Vincular contrato à matrícula
             $matricula->update(['contrato_id' => $contrato->id]);
-
-            // Iterar sobre os responsaveis
-            $perfilResp = Perfil::where('nome', 'Responsável')->orWhere('nome', 'Responsavel')->first();
 
             foreach ($raw['responsaveis'] as $respData) {
                 // Criar endereco do responsavel
@@ -351,10 +341,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'cor_raca_id' => $respData['cor_raca_id'] ?? null,
                         'endereco_id' => $respEnderecoId,
                     ]);
-                }
-
-                if ($perfilResp) {
-                    $responsavelPessoa->perfis()->syncWithoutDetaching([$perfilResp->id]);
                 }
 
                 // 5. Criar Vinculo Responsável Financeiro

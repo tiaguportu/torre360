@@ -191,7 +191,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                 Select::make('professores')
                                     ->label('Professores')
                                     ->multiple()
-                                    ->options(Pessoa::whereHas('perfis', fn ($q) => $q->where('nome', 'Professor'))
+                                    ->options(Pessoa::whereHas('users', fn ($q) => $q->role('professor'))
                                         ->whereNotNull('nome')
                                         ->orderBy('nome')
                                         ->pluck('nome', 'id'))

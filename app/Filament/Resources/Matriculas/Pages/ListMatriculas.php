@@ -35,7 +35,7 @@ class ListMatriculas extends ListRecords
                         ->searchable()
                         ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()
                             ->where('nome', 'like', "%{$search}%")
-                            ->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%'))
+                            ->whereHas('users', fn ($q) => $q->role('aluno'))
                             ->limit(50)
                             ->pluck('nome', 'id')
                             ->toArray()

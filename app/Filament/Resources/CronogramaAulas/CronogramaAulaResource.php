@@ -122,10 +122,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             return $query;
         }
 
-        // Verifica se qualquer uma das pessoas associadas ao usuário tem perfil professor (ID 1)
-        $isProfessor = $user->pessoas()->whereHas('perfis', function ($q) {
-            $q->where('perfil.id', 1);
-        })->exists();
+        $isProfessor = $user->hasRole('professor');
 
         if ($isProfessor) {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();
@@ -133,10 +130,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             $query->whereIn('pessoa_id', $pessoasIds);
         }
 
-        // Filtro para Responsável
-        $isResponsavel = $user->pessoas()->whereHas('perfis', function ($q) {
-            $q->where('perfil.id', 3);
-        })->exists();
+        $isResponsavel = $user->hasRole('responsavel');
 
         if ($isResponsavel && ! $user->hasRole('super_admin')) {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();

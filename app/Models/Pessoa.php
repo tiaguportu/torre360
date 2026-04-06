@@ -48,11 +48,6 @@ class Pessoa extends Model
         return $this->hasMany(Matricula::class, 'pessoa_id');
     }
 
-    public function perfis(): BelongsToMany
-    {
-        return $this->belongsToMany(Perfil::class, 'pessoa_perfil', 'pessoa_id', 'perfil_id');
-    }
-
     public function responsaveisFinanceiros(): HasMany
     {
         return $this->hasMany(ResponsavelFinanceiro::class, 'pessoa_id');

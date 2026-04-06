@@ -43,7 +43,7 @@ class AvaliacaoForm
                 ->preload(),
 
             Select::make('professor_id')
-                ->relationship('professor', 'nome', modifyQueryUsing: fn ($query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'Professor')))
+                ->relationship('professor', 'nome', modifyQueryUsing: fn ($query) => $query->whereHas('users', fn ($q) => $q->role('professor')))
                 ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? 'Sem Nome')
                 ->label('Professor')
                 ->required()

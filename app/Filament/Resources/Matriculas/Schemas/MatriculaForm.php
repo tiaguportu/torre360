@@ -25,7 +25,7 @@ class MatriculaForm
                     ->helperText('Formato: Ano + 6 dígitos (ex: 2026000001)')
                     ->maxLength(20),
                 Select::make('pessoa_id')
-                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Aluno%')))
+                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('users', fn ($q) => $q->role('aluno')))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->searchable(['nome', 'cpf'])
                     ->preload()

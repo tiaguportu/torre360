@@ -45,8 +45,8 @@ class AlunoResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->whereHas('perfis', function (Builder $query) {
-                $query->where('perfil.id', 2); // Aluno
+            ->whereHas('users', function (Builder $query) {
+                $query->role('aluno');
             });
 
         $user = auth()->user();

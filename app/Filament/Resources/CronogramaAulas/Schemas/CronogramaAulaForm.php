@@ -55,7 +55,7 @@ class CronogramaAulaForm
                     ->required(),
 
                 Select::make('pessoa_id')
-                    ->relationship('professor', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Professor%')))
+                    ->relationship('professor', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('users', fn ($q) => $q->role('professor')))
                     ->label('Professor')
                     ->searchable(['nome', 'cpf'])
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
