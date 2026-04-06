@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\CronogramaAula;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -17,7 +16,7 @@ class CronogramaAulaPolicy
         return $authUser->can('ViewAny:CronogramaAula');
     }
 
-    public function view(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function view(AuthUser $authUser, $cronogramaAula = null): bool
     {
         return $authUser->can('View:CronogramaAula');
     }
@@ -27,7 +26,7 @@ class CronogramaAulaPolicy
         return $authUser->can('Create:CronogramaAula');
     }
 
-    public function update(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function update(AuthUser $authUser, $cronogramaAula = null): bool
     {
         if ($authUser->hasRole('super_admin')) {
             return true;
@@ -36,7 +35,7 @@ class CronogramaAulaPolicy
         return $authUser->can('Update:CronogramaAula');
     }
 
-    public function delete(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function delete(AuthUser $authUser, $cronogramaAula = null): bool
     {
         return $authUser->can('Delete:CronogramaAula');
     }
@@ -46,12 +45,12 @@ class CronogramaAulaPolicy
         return $authUser->can('DeleteAny:CronogramaAula');
     }
 
-    public function restore(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function restore(AuthUser $authUser, $cronogramaAula = null): bool
     {
         return $authUser->can('Restore:CronogramaAula');
     }
 
-    public function forceDelete(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function forceDelete(AuthUser $authUser, $cronogramaAula = null): bool
     {
         return $authUser->can('ForceDelete:CronogramaAula');
     }
@@ -66,7 +65,7 @@ class CronogramaAulaPolicy
         return $authUser->can('RestoreAny:CronogramaAula');
     }
 
-    public function replicate(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function replicate(AuthUser $authUser, $cronogramaAula = null): bool
     {
         return $authUser->can('Replicate:CronogramaAula');
     }
@@ -76,7 +75,7 @@ class CronogramaAulaPolicy
         return $authUser->can('Reorder:CronogramaAula');
     }
 
-    public function lancarFrequencia(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function lancarFrequencia(AuthUser $authUser, $cronogramaAula = null): bool
     {
         if ($authUser->hasRole('super_admin')) {
             return true;
@@ -112,7 +111,7 @@ class CronogramaAulaPolicy
         return $authUser->can('VerificaConflitos:CronogramaAula');
     }
 
-    public function notificarProfessorManual(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function notificarProfessorManual(AuthUser $authUser, $cronogramaAula = null): bool
     {
         if ($authUser->hasRole('super_admin')) {
             return true;
