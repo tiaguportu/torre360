@@ -34,7 +34,7 @@ class FrequenciaPendenteNotification extends Notification
         $professor = $this->cronogramaAula->professor;
         $turma = $this->cronogramaAula->turma?->nome ?? 'N/A';
         $disciplina = $this->cronogramaAula->disciplina?->nome ?? 'N/A';
-        $data = $this->cronogramaAula->data?->format('d/m/Y') ?? 'N/A';
+        $data = optional($this->cronogramaAula->data)->format('d/m/Y') ?? 'N/A';
         $url = config('app.url')."/admin/cronograma-aulas/{$this->cronogramaAula->id}/frequencia";
 
         return (new MailMessage)
