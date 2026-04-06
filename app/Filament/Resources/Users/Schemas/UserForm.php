@@ -78,6 +78,12 @@ class UserForm
                     ->searchable()
                     ->required(),
 
+                Toggle::make('create_pessoa')
+                    ->label('Criar Pessoa automaticamente')
+                    ->helperText('Se marcado, uma nova Pessoa será criada com o mesmo nome e e-mail e vinculada a este usuário.')
+                    ->dehydrated(false)
+                    ->visible(fn (string $operation): bool => $operation === 'create'),
+
                 Select::make('pessoas')
                     ->label('Pessoas Vinculadas')
                     ->multiple()
