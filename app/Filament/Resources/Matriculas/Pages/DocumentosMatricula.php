@@ -15,16 +15,24 @@ use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use ZipArchive;
 
 class DocumentosMatricula extends Page implements HasTable
 {
     use InteractsWithRecord;
     use InteractsWithTable;
+    use WithFileUploads;
+
+    public $manualFileUpload;
 
     protected static string $resource = MatriculaResource::class;
 
@@ -115,6 +123,11 @@ class DocumentosMatricula extends Page implements HasTable
                         return $inserido?->created_at?->format('d/m/Y H:i');
                     })
                     ->placeholder('-'),
+
+                ViewColumn::make('dropzone')
+                    ->label('Upload Rápido')
+                    ->view('filament.resources.matriculas.columns.dropzone-documento')
+                    ->extraAttributes(['class' => 'w-48']),
             ])
             ->actions([
                 Action::make('visualizar_enviado')
@@ -212,5 +225,130 @@ class DocumentosMatricula extends Page implements HasTable
                     ->modalHeading(fn (TipoDocumento $record) => "Enviar Documento: {$record->nome}")
                     ->modalWidth('xl'),
             ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('exportarZip')
+                ->label('Exportar Todos (.zip)')
+                ->icon('heroicon-o-archive-box-arrow-down')
+                ->color('success')
+                ->action(fn () => $this->exportZip()),
+        ];
+    }
+
+    public function exportZip(): ?BinaryFileResponse
+    {
+        $documentos = $this->record->documentoInseridos()->with('tipoDocumento')->get();
+
+        if ($documentos->isEmpty()) {
+            Notification::make()
+                ->title('Nenhum documento encontrado')
+                ->warning()
+                ->send();
+
+            return null;
+        }
+
+        $zipName = "documentos_{$this->record->codigo}.zip";
+        $tempFile = tempnam(sys_get_temp_dir(), 'zip');
+
+        $zip = new ZipArchive;
+        if ($zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            foreach ($documentos as $doc) {
+                if (! $doc->arquivo_path) {
+                    continue;
+                }
+
+                $filePath = Storage::disk('public')->path($doc->arquivo_path);
+
+                if (file_exists($filePath)) {
+                    $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                    $studentName = $this->record->pessoa->nome;
+                    $typeName = $doc->tipoDocumento->nome;
+
+                    // Limpar caracteres inválidos para nomes de arquivos
+                    $safeStudentName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $studentName);
+                    $safeTypeName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $typeName);
+
+                    $newFileName = "{$this->record->codigo} - {$safeStudentName} - {$safeTypeName}.{$extension}";
+                    $zip->addFile($filePath, $newFileName);
+                }
+            }
+            $zip->close();
+        }
+
+        return response()->download($tempFile, $zipName)->deleteFileAfterSend(true);
+    }
+
+    public function processManualUpload(int $tipoDocumentoId, string $tmpPath, string $originalName): void
+    {
+        try {
+            $tipoDocumento = TipoDocumento::findOrFail($tipoDocumentoId);
+            $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
+
+            // Obter configurações do disco temporário do Livewire
+            $disk = config('livewire.temporary_file_upload.disk') ?: 'local';
+            $dir = config('livewire.temporary_file_upload.directory') ?: 'livewire-tmp';
+
+            $fullTmpPath = $dir.'/'.$tmpPath;
+
+            if (! Storage::disk($disk)->exists($fullTmpPath)) {
+                // Tenta sem o prefixo do disco se o disco já apontar para a pasta
+                if (! Storage::disk($disk)->exists($tmpPath)) {
+                    throw new \Exception("Arquivo temporário não encontrado no disco {$disk}. Tentado caminhos: {$fullTmpPath} e {$tmpPath}.");
+                }
+                $fullTmpPath = $tmpPath;
+            }
+
+            $fileContents = Storage::disk($disk)->get($fullTmpPath);
+            $hash = md5($fileContents);
+
+            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+            $idStr = uniqid();
+            $docSlug = Str::slug($tipoDocumento->nome);
+
+            $newName = "Doc-{$docSlug}-{$idStr}-{$hash}.{$extension}";
+            $finalPath = "documentos_alunos/{$newName}";
+
+            // Garantir que o diretório existe no disco público
+            if (! Storage::disk('public')->exists('documentos_alunos')) {
+                Storage::disk('public')->makeDirectory('documentos_alunos');
+            }
+
+            // Salvar no disco público
+            Storage::disk('public')->put($finalPath, $fileContents);
+
+            // Deletar o temporário para limpar
+            Storage::disk($disk)->delete($fullTmpPath);
+
+            DocumentoInserido::updateOrCreate(
+                [
+                    'matricula_id' => $this->record->id,
+                    'tipo_documento_id' => $tipoDocumentoId,
+                ],
+                [
+                    'arquivo_path' => $finalPath,
+                    'nome_arquivo_original' => $originalName,
+                    'hash_arquivo' => $hash,
+                    'situacao_documento_inserido_id' => $situacaoPendenteId,
+                    'updated_at' => now(),
+                ]
+            );
+
+            Notification::make()
+                ->title('Documento enviado')
+                ->body("O documento '{$tipoDocumento->nome}' foi enviado com sucesso via arrastar e soltar.")
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Erro no upload')
+                ->body('Ocorreu um erro ao processar o arquivo: '.$e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 }
