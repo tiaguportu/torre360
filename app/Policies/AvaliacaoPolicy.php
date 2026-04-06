@@ -76,4 +76,9 @@ class AvaliacaoPolicy
     {
         return $authUser->can('LancarNotas:Avaliacao');
     }
+
+    public function notificarProfessorManual(AuthUser $authUser, Avaliacao $avaliacao): bool
+    {
+        return $authUser->can('NotificarProfessorManual:Avaliacao');
+    }
 }

@@ -32,7 +32,9 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
             'delete',
             'delete_any',
             'lancarNotas',
+            'notificarProfessorManual',
         ];
+
     }
 
     protected static ?string $model = Avaliacao::class;

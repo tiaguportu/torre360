@@ -152,7 +152,8 @@ class AvaliacaosTable
                             ->send();
                     })
 
-                    ->visible(fn (Avaliacao $record): bool => ($record->data_prevista?->isPast() || $record->data_prevista?->isToday()) &&
+                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('notificarProfessorManual', $record) &&
+                        ($record->data_prevista?->isPast() || $record->data_prevista?->isToday()) &&
                         ($record->matriculas_count > $record->notas_count)
                     )
                     ->requiresConfirmation(),
@@ -245,7 +246,8 @@ class AvaliacaosTable
                             }
                         })
 
-                        ->requiresConfirmation(),
+                        ->requiresConfirmation()
+                        ->visible(fn () => auth()->user()->can('notificarProfessorManual:Avaliacao')),
                     DeleteBulkAction::make(),
 
                 ]),
