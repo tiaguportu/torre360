@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\DocumentosPendentesNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -121,5 +122,39 @@ class Matricula extends Model
     public function getMissingMandatoryDocumentsCount(): int
     {
         return $this->getMissingMandatoryDocuments()->count();
+    }
+
+    /**
+     * Envia notificação de documentos pendentes aos responsáveis financeiros associados ao contrato da matrícula.
+     *
+     * @return int Quantidade de notificações enviadas.
+     */
+    public function notifyMissingMandatoryDocuments(): int
+    {
+        /** @var Contrato $contrato */
+        $contrato = $this->contrato;
+
+        if (! $contrato) {
+            return 0;
+        }
+
+        $responsaveis = $contrato->responsaveisFinanceiros;
+        $countSent = 0;
+
+        foreach ($responsaveis as $resp) {
+            $pessoa = $resp->pessoa;
+            if (! $pessoa) {
+                continue;
+            }
+
+            foreach ($pessoa->users as $user) {
+                if ($user->email) {
+                    $user->notify(new DocumentosPendentesNotification($this));
+                    $countSent++;
+                }
+            }
+        }
+
+        return $countSent;
     }
 }
