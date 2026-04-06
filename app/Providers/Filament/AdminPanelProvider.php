@@ -54,6 +54,10 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn (): string => view('filament.hooks.git-pull-button')->render(),
+            )
+            ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): string => view('filament.hooks.register-link')->render(),
             )
