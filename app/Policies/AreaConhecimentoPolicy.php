@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\AreaConhecimento;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class AreaConhecimentoPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:AreaConhecimento');
@@ -71,4 +71,5 @@ class AreaConhecimentoPolicy
     {
         return $authUser->can('Reorder:AreaConhecimento');
     }
+
 }

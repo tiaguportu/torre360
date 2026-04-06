@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Avaliacao;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class AvaliacaoPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Avaliacao');
@@ -77,8 +77,4 @@ class AvaliacaoPolicy
         return $authUser->can('LancarNotas:Avaliacao');
     }
 
-    public function notificarProfessorManual(AuthUser $authUser, Avaliacao $avaliacao): bool
-    {
-        return $authUser->can('NotificarProfessorManual:Avaliacao');
-    }
 }
