@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Matriculas\Tables;
 
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
+use App\Models\Curso;
 use App\Models\Matricula;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -62,10 +63,17 @@ class MatriculasTable
             ])
             ->filters([
                 SelectFilter::make('curso')
-                    ->relationship('turma.serie.curso', 'nome')
-                    ->preload()
-                    ->searchable()
-                    ->label('Curso'),
+                    ->label('Curso')
+                    ->options(Curso::all()->pluck('nome_interno', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('turma.serie', function ($q) use ($data) {
+                            $q->where('curso_id', $data['value']);
+                        });
+                    }),
                 SelectFilter::make('turma')
                     ->relationship('turma', 'nome')
                     ->preload()
