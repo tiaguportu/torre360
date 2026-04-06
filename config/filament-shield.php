@@ -196,6 +196,8 @@ return [
             CronogramaAulaResource::class => [
                 'lancarFrequencia',
                 'verificaConflitos',
+                'clonar',
+                'notificarProfessorManual',
             ],
             MatriculaResource::class => [
                 'documentos',

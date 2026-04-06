@@ -73,8 +73,18 @@ class MatriculasTable
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPendencia', $record) && $record->hasMissingMandatoryDocuments())
+                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPendencia', $record))
                     ->action(function (Matricula $record) {
+                        if (! $record->hasMissingMandatoryDocuments()) {
+                            Notification::make()
+                                ->title('Sem pendências')
+                                ->body('Esta matrícula não possui documentos obrigatórios pendentes no momento.')
+                                ->info()
+                                ->send();
+
+                            return;
+                        }
+
                         $countSent = $record->notifyMissingMandatoryDocuments();
 
                         if ($countSent > 0) {
