@@ -8,7 +8,6 @@ use App\Filament\Resources\Alunos\Pages\EditAluno;
 use App\Filament\Resources\Alunos\Pages\ListAlunos;
 use App\Filament\Resources\Alunos\Schemas\AlunoForm;
 use App\Filament\Resources\Alunos\Tables\AlunosTable;
-
 use App\Filament\Resources\Pessoas\RelationManagers\MatriculasRelationManager;
 use App\Models\Aluno;
 use App\Models\Pessoa;
@@ -20,7 +19,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AlunoResource extends Resource
 {
-
     protected static ?string $model = Aluno::class;
 
     protected static ?string $modelLabel = 'Aluno';

@@ -15,7 +15,7 @@ class TitulosTable
         return $table
             ->columns([
                 TextColumn::make('contrato.nome')
-                    
+
                     ->sortable(),
                 TextColumn::make('vencimento')
                     ->date()

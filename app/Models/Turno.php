@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Turno extends Model
 {
     protected $table = 'turno';
+
     protected $guarded = [];
 
     public function turmas(): HasMany

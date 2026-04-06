@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'terms_accepted_at')) {
+        if (! Schema::hasColumn('users', 'terms_accepted_at')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->timestamp('terms_accepted_at')->nullable();
             });

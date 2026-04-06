@@ -37,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)
-            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
             ->colors([
@@ -55,11 +55,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn(): string => view('filament.hooks.register-link')->render(),
+                fn (): string => view('filament.hooks.register-link')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn(): string => '
+                fn (): string => '
                     <style>
                         .fi-simple-header-heading, 
                         .fi-simple-header-subheading, 
@@ -67,7 +67,7 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
-                    <link rel="stylesheet" href="' . asset('css/filament/admin/theme.css') . '">',
+                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">',
             )
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')

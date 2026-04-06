@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ResponsavelFinanceiro extends Model
 {
     protected $table = 'responsavel_financeiro';
+
     protected $guarded = [];
 
     public function contrato(): BelongsTo

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Titulo extends Model
 {
     protected $table = 'titulo';
+
     protected $guarded = [];
 
     public function contrato(): BelongsTo

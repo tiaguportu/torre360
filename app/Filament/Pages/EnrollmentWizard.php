@@ -44,7 +44,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
     protected static ?string $navigationLabel = 'Nova Matrícula (Wizard)';
 
     protected static ?string $title = 'Assistente de Matrícula';
-    
+
     public static function canAccess(): bool
     {
         return auth()->user()->can('View:EnrollmentWizard');

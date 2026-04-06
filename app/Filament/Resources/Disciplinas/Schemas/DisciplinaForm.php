@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Disciplinas\Schemas;
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -30,9 +31,9 @@ class DisciplinaForm
                     ->label('Carga Horária Semanal')
                     ->numeric()
                     ->default(0),
-                \Filament\Forms\Components\ColorPicker::make('cor')
+                ColorPicker::make('cor')
                     ->label('Cor da Disciplina')
-                    ->default(fn () => '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
+                    ->default(fn () => '#'.str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
             ]);
     }
 }

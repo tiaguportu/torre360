@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Coordenador extends Model
 {
     protected $table = 'coordenador';
+
     protected $guarded = [];
 
     public function curso(): BelongsTo

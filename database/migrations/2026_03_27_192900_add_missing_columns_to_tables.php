@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,26 +11,68 @@ return new class extends Migration
     {
         if (config('database.default') === 'sqlite') {
             // disciplinas
-            try { DB::statement("ALTER TABLE disciplinas ADD COLUMN area_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE disciplinas ADD COLUMN nome VARCHAR"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE disciplinas ADD COLUMN sigla VARCHAR"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE disciplinas ADD COLUMN flag_matricula_automatica BOOLEAN DEFAULT 1"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE disciplinas ADD COLUMN carga_horaria_semanal INTEGER DEFAULT 0"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE disciplinas ADD COLUMN area_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE disciplinas ADD COLUMN nome VARCHAR');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE disciplinas ADD COLUMN sigla VARCHAR');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE disciplinas ADD COLUMN flag_matricula_automatica BOOLEAN DEFAULT 1');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE disciplinas ADD COLUMN carga_horaria_semanal INTEGER DEFAULT 0');
+            } catch (Exception $e) {
+            }
 
             // area_conhecimentos
-            try { DB::statement("ALTER TABLE area_conhecimentos ADD COLUMN nome VARCHAR"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE area_conhecimentos ADD COLUMN nome VARCHAR');
+            } catch (Exception $e) {
+            }
 
             // situacao_matriculas
-            try { DB::statement("ALTER TABLE situacao_matriculas ADD COLUMN nome VARCHAR"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE situacao_matriculas ADD COLUMN nome VARCHAR');
+            } catch (Exception $e) {
+            }
 
             // cronograma_aulas
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN turma_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN disciplina_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN pessoa_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN data DATE"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN hora_inicio TIME"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN hora_fim TIME"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE cronograma_aulas ADD COLUMN conteudo_ministrado TEXT"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN turma_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN disciplina_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN pessoa_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN data DATE');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN hora_inicio TIME');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN hora_fim TIME');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE cronograma_aulas ADD COLUMN conteudo_ministrado TEXT');
+            } catch (Exception $e) {
+            }
         } else {
             // disciplinas
             Schema::table('disciplinas', function (Blueprint $table) {

@@ -6,6 +6,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -18,7 +19,7 @@ class DiaNaoLetivosTable
             ->columns([
                 TextColumn::make('periodoLetivo.nome')
                     ->searchable()
-                    ->hidden(fn ($livewire) => $livewire instanceof \Filament\Resources\RelationManagers\RelationManager),
+                    ->hidden(fn ($livewire) => $livewire instanceof RelationManager),
                 TextColumn::make('data')
                     ->date()
                     ->sortable(),

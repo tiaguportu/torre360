@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AreaConhecimento extends Model
 {
     protected $table = 'area_conhecimento';
+
     protected $guarded = [];
 
     public function disciplinas(): HasMany

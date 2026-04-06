@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\CorRaca;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CorRacaSeeder extends Seeder
@@ -19,7 +18,7 @@ class CorRacaSeeder extends Seeder
             'Parda',
             'Amarela',
             'Indígena',
-            'Não declarado'
+            'Não declarado',
         ];
 
         foreach ($corRacas as $nome) {

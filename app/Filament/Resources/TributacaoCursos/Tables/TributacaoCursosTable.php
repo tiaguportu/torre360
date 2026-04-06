@@ -15,7 +15,7 @@ class TributacaoCursosTable
         return $table
             ->columns([
                 TextColumn::make('curso.nome_interno')
-                    
+
                     ->sortable(),
                 TextColumn::make('cnae')
                     ->searchable(),

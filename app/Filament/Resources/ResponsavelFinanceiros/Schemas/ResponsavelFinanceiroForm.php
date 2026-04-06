@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\ResponsavelFinanceiros\Schemas;
 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class ResponsavelFinanceiroForm
 {
@@ -14,8 +16,8 @@ class ResponsavelFinanceiroForm
                 TextInput::make('contrato_id')
                     ->required()
                     ->numeric(),
-                \Filament\Forms\Components\Select::make('pessoa_id')
-                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Respons_vel%')->orWhere('nome', 'like', '%Responsavel%')))
+                Select::make('pessoa_id')
+                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('perfis', fn ($q) => $q->where('nome', 'like', '%Respons_vel%')->orWhere('nome', 'like', '%Responsavel%')))
                     ->searchable()
                     ->preload()
                     ->required()

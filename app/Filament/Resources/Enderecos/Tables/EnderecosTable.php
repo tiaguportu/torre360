@@ -15,7 +15,7 @@ class EnderecosTable
         return $table
             ->columns([
                 TextColumn::make('cidade.nome')
-                    
+
                     ->sortable(),
                 TextColumn::make('logradouro')
                     ->searchable(),

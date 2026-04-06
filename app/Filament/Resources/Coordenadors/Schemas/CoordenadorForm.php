@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Coordenadors\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Schema;
 
 class CoordenadorForm
@@ -22,7 +22,7 @@ class CoordenadorForm
                 Select::make('pessoa_id')
                     ->relationship('pessoa', 'nome')
                     ->searchable(['nome', 'cpf'])
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome . ($record->cpf ? " - {$record->cpf}" : ""))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->preload()
                     ->required(),
                 TextInput::make('cargo')

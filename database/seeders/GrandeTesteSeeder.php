@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Cidade;
 use App\Models\Contrato;
 use App\Models\CorRaca;
+use App\Models\CronogramaAula;
 use App\Models\Curso;
 use App\Models\Disciplina;
-use App\Models\Endereco;
 use App\Models\EtapaAvaliativa;
 use App\Models\Matricula;
 use App\Models\Pais;
@@ -21,15 +20,14 @@ use App\Models\SituacaoMatricula;
 use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
-use App\Models\CronogramaAula;
+use Faker\Factory;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class GrandeTesteSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = \Faker\Factory::create('pt_BR');
+        $faker = Factory::create('pt_BR');
 
         // 1. Dados Básicos
         $brasil = Pais::firstOrCreate(['nome' => 'Brasil'], ['sigla' => 'BR']);
@@ -100,12 +98,12 @@ class GrandeTesteSeeder extends Seeder
         $curso = Curso::updateOrCreate(['nome_interno' => 'Ensino Médio'], [
             'nome_externo' => 'Ensino Médio',
             'unidade_id' => $unidade->id,
-            'cor' => '#7c3aed'
+            'cor' => '#7c3aed',
         ]);
 
         $serie = Serie::firstOrCreate(['nome' => '1º Ano Médio'], [
             'curso_id' => $curso->id,
-            'sistema_avaliacao' => 'Bimestral'
+            'sistema_avaliacao' => 'Bimestral',
         ]);
 
         $turmas = [];
@@ -116,7 +114,7 @@ class GrandeTesteSeeder extends Seeder
                 'turno_id' => $turnoManha->id,
                 'periodo_letivo_id' => $periodoLetivo->id,
                 'vagas_maximas' => 30,
-                'cor' => $coresTurma[$i-1] ?? '#10b981'
+                'cor' => $coresTurma[$i - 1] ?? '#10b981',
             ]);
         }
 
@@ -173,14 +171,16 @@ class GrandeTesteSeeder extends Seeder
         // 8. Cronograma de Aulas (Segunda a Sexta)
         echo "Criando Cronograma de Aulas (Segunda a Sexta)...\n";
         $hoje = now();
-        
+
         foreach ($turmas as $turma) {
             // Para cada dia útil nos próximos 30 dias
             for ($d = 0; $d < 30; $d++) {
                 $dataAula = $hoje->copy()->addDays($d);
-                
+
                 // Pula finais de semana
-                if ($dataAula->isWeekend()) continue;
+                if ($dataAula->isWeekend()) {
+                    continue;
+                }
 
                 // Cria 3 aulas por dia para esta turma
                 $horarios = [
@@ -192,7 +192,7 @@ class GrandeTesteSeeder extends Seeder
                 foreach ($horarios as $hora) {
                     $disciplina = $disciplinaModels[array_rand($disciplinaModels)];
                     $professor = $professores[array_rand($professores)];
-                    
+
                     // Conteúdo baseado na disciplina
                     $possiveisConteudos = $disciplinasData[$disciplina->nome]['conteudos'] ?? ['Aula Presencial', 'Exercícios'];
                     $conteudo = $possiveisConteudos[array_rand($possiveisConteudos)];

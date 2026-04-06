@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Cursos\Schemas;
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -32,7 +33,7 @@ class CursoForm
                     ->maxValue(300)
                     ->suffix('min')
                     ->helperText('Duração padrão de cada aula/período. Usado para calcular a hora de fim automaticamente no Cronograma de Aulas.'),
-                \Filament\Forms\Components\ColorPicker::make('cor')
+                ColorPicker::make('cor')
                     ->label('Cor do Curso')
                     ->default('#3b82f6'),
             ]);

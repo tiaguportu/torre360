@@ -11,8 +11,10 @@ use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -24,13 +26,13 @@ class DocumentosRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                \Filament\Forms\Components\TextInput::make('nome')
+                TextInput::make('nome')
                     ->required()
                     ->maxLength(255),
-                \Filament\Forms\Components\Toggle::make('flag_obrigatorio')
+                Toggle::make('flag_obrigatorio')
                     ->label('Obrigatório')
                     ->default(true),
-                \Filament\Forms\Components\Toggle::make('flag_ativo')
+                Toggle::make('flag_ativo')
                     ->label('Ativo')
                     ->default(true),
             ]);
@@ -43,10 +45,10 @@ class DocumentosRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('nome')
                     ->searchable(),
-                \Filament\Tables\Columns\IconColumn::make('flag_obrigatorio')
+                IconColumn::make('flag_obrigatorio')
                     ->label('Obrigatório')
                     ->boolean(),
-                \Filament\Tables\Columns\IconColumn::make('flag_ativo')
+                IconColumn::make('flag_ativo')
                     ->label('Ativo')
                     ->boolean(),
             ])

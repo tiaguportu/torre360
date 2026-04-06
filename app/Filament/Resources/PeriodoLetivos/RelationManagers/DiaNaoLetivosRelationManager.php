@@ -4,14 +4,14 @@ namespace App\Filament\Resources\PeriodoLetivos\RelationManagers;
 
 use App\Filament\Resources\DiaNaoLetivos\Schemas\DiaNaoLetivoForm;
 use App\Filament\Resources\DiaNaoLetivos\Tables\DiaNaoLetivosTable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 
 class DiaNaoLetivosRelationManager extends RelationManager
 {

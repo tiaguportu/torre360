@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CronogramaAulas\Tables;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\CronogramaAula;
 use App\Models\Matricula;
+use App\Notifications\FrequenciaPendenteNotification;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -115,6 +116,33 @@ class CronogramaAulasTable
                     ')),
             ])
             ->actions([
+                Action::make('notificarProfessorManual')
+                    ->label('Notificar Professor')
+                    ->tooltip('Enviar e-mail de pendência para o Professor')
+                    ->icon('heroicon-o-envelope')
+                    ->color('warning')
+                    ->visible(fn ($record): bool => $record->data->isPast() || $record->data->isToday())
+                    ->action(function ($record) {
+                        $professor = $record->professor;
+                        $user = $professor?->users->first();
+
+                        if (! $user?->email) {
+                            Notification::make()
+                                ->title('Erro ao enviar e-mail')
+                                ->body('O professor associado não possui um usuário com e-mail cadastrado.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $user->notify(new FrequenciaPendenteNotification($record));
+
+                        Notification::make()
+                            ->title('E-mail enviado com sucesso!')
+                            ->success()
+                            ->send();
+                    }),
                 EditAction::make(),
                 Action::make('lancarFrequencia')
                     ->label('Frequência')
@@ -298,6 +326,53 @@ class CronogramaAulasTable
                         })
                         ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()->can('clonar', CronogramaAula::class)),
+                    BulkAction::make('bulkNotificarProfessores')
+                        ->label('Notificar Professores (Pendências)')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records): void {
+                            $enviados = 0;
+                            $falhas = 0;
+                            $ignorados = 0;
+
+                            foreach ($records as $record) {
+                                if ($record->data->isFuture()) {
+                                    $ignorados++;
+
+                                    continue;
+                                }
+
+                                $professor = $record->professor;
+                                $user = $professor?->users->first();
+
+                                if ($user?->email) {
+                                    $user->notify(new FrequenciaPendenteNotification($record));
+                                    $enviados++;
+                                } else {
+                                    $falhas++;
+                                }
+                            }
+
+                            $notification = Notification::make()
+                                ->title('Processamento concluído');
+
+                            $body = "{$enviados} e-mails enviados.";
+                            if ($falhas > 0) {
+                                $body .= " {$falhas} professores sem e-mail.";
+                            }
+                            if ($ignorados > 0) {
+                                $body .= " {$ignorados} aulas futuras ignoradas.";
+                            }
+
+                            if ($falhas > 0 || $ignorados > 0) {
+                                $notification->warning();
+                            } else {
+                                $notification->success();
+                            }
+
+                            $notification->body($body)->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -4,15 +4,15 @@ namespace App\Filament\Resources\Series\RelationManagers;
 
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Filament\Resources\Turnos\Schemas\TurnoForm;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Schemas\Schema;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -40,7 +40,7 @@ class TurmasRelationManager extends RelationManager
                 Select::make('professor_conselheiro_id')
                     ->relationship('professorConselheiro', 'nome')
                     ->searchable(['nome', 'cpf'])
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome . ($record->cpf ? " - {$record->cpf}" : ""))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->preload()
                     ->createOptionForm(fn (Schema $schema) => PessoaForm::configure($schema)->getComponents()),
                 TextInput::make('vagas_maximas')

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Disciplinas\Pages;
 
 use App\Filament\Resources\Disciplinas\DisciplinaResource;
+use App\Filament\Widgets\CronogramaCalendarWidget;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -20,7 +21,7 @@ class EditDisciplina extends EditRecord
     protected function getFooterWidgets(): array
     {
         return [
-            \App\Filament\Widgets\CronogramaCalendarWidget::make([
+            CronogramaCalendarWidget::make([
                 'fixedDisciplinaId' => $this->record->id,
             ]),
         ];

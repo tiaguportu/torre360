@@ -13,11 +13,26 @@ return new class extends Migration
     {
         if (config('database.default') === 'sqlite') {
             // SQL bruto para evitar inspeção de esquema (pragma_table_xinfo) no SQLite antigo
-            try { DB::statement("ALTER TABLE pessoas ADD COLUMN foto VARCHAR"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE pessoas ADD COLUMN telefone VARCHAR"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE pessoas ADD COLUMN email VARCHAR"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE pessoas ADD COLUMN sexo_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE pessoas ADD COLUMN cor_raca_id INTEGER"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE pessoas ADD COLUMN foto VARCHAR');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE pessoas ADD COLUMN telefone VARCHAR');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE pessoas ADD COLUMN email VARCHAR');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE pessoas ADD COLUMN sexo_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE pessoas ADD COLUMN cor_raca_id INTEGER');
+            } catch (Exception $e) {
+            }
         } else {
             Schema::table('pessoas', function (Blueprint $table) {
                 $table->string('foto')->nullable();

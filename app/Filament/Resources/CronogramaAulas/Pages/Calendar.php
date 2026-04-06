@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CronogramaAulas\Pages;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
-use App\Filament\Widgets\CronogramaCalendarWidget;
 use Filament\Resources\Pages\Page;
 
 class Calendar extends Page

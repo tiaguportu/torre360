@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -44,11 +44,14 @@ return new class extends Migration
 
         if (config('database.default') === 'sqlite') {
             foreach ($renames as $old => $new) {
-                try { DB::statement("ALTER TABLE $old RENAME TO $new"); } catch (\Exception $e) {}
+                try {
+                    DB::statement("ALTER TABLE $old RENAME TO $new");
+                } catch (Exception $e) {
+                }
             }
         } else {
             foreach ($renames as $old => $new) {
-                if (Schema::hasTable($old) && !Schema::hasTable($new)) {
+                if (Schema::hasTable($old) && ! Schema::hasTable($new)) {
                     Schema::rename($old, $new);
                 }
             }
@@ -63,7 +66,8 @@ return new class extends Migration
                     $table->string('nome');
                     $table->timestamps();
                 });
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             try {
                 Schema::create('pessoa_perfil', function (Blueprint $table) {
@@ -72,7 +76,8 @@ return new class extends Migration
                     $table->unsignedBigInteger('perfil_id');
                     $table->timestamps();
                 });
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             try {
                 Schema::create('periodo_letivo', function (Blueprint $table) {
@@ -82,7 +87,8 @@ return new class extends Migration
                     $table->date('data_fim');
                     $table->timestamps();
                 });
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             try {
                 Schema::create('dia_nao_letivo', function (Blueprint $table) {
@@ -94,7 +100,8 @@ return new class extends Migration
                     $table->boolean('flag_ativo')->default(true);
                     $table->timestamps();
                 });
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             try {
                 Schema::create('nota', function (Blueprint $table) {
@@ -104,14 +111,21 @@ return new class extends Migration
                     $table->decimal('valor', 5, 2);
                     $table->timestamps();
                 });
-            } catch (\Exception $e) {}
+            } catch (Exception $e) {
+            }
 
             // Campos estruturais em SQLite via SQL bruto
-            try { DB::statement("ALTER TABLE turma ADD COLUMN periodo_letivo_id INTEGER"); } catch (\Exception $e) {}
-            try { DB::statement("ALTER TABLE etapa_avaliativa ADD COLUMN periodo_letivo_id INTEGER"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE turma ADD COLUMN periodo_letivo_id INTEGER');
+            } catch (Exception $e) {
+            }
+            try {
+                DB::statement('ALTER TABLE etapa_avaliativa ADD COLUMN periodo_letivo_id INTEGER');
+            } catch (Exception $e) {
+            }
 
         } else {
-            if (!Schema::hasTable('perfil')) {
+            if (! Schema::hasTable('perfil')) {
                 Schema::create('perfil', function (Blueprint $table) {
                     $table->id();
                     $table->string('nome'); // Aluno, Professor, Responsável, Coordenador
@@ -119,7 +133,7 @@ return new class extends Migration
                 });
             }
 
-            if (!Schema::hasTable('pessoa_perfil')) {
+            if (! Schema::hasTable('pessoa_perfil')) {
                 Schema::create('pessoa_perfil', function (Blueprint $table) {
                     $table->id();
                     $table->foreignId('pessoa_id')->constrained('pessoa')->onDelete('cascade');
@@ -128,7 +142,7 @@ return new class extends Migration
                 });
             }
 
-            if (!Schema::hasTable('periodo_letivo')) {
+            if (! Schema::hasTable('periodo_letivo')) {
                 Schema::create('periodo_letivo', function (Blueprint $table) {
                     $table->id();
                     $table->string('nome');
@@ -138,7 +152,7 @@ return new class extends Migration
                 });
             }
 
-            if (!Schema::hasTable('dia_nao_letivo')) {
+            if (! Schema::hasTable('dia_nao_letivo')) {
                 Schema::create('dia_nao_letivo', function (Blueprint $table) {
                     $table->id();
                     $table->foreignId('periodo_letivo_id')->constrained('periodo_letivo')->onDelete('cascade');
@@ -150,7 +164,7 @@ return new class extends Migration
                 });
             }
 
-            if (!Schema::hasTable('nota')) {
+            if (! Schema::hasTable('nota')) {
                 Schema::create('nota', function (Blueprint $table) {
                     $table->id();
                     $table->foreignId('avaliacao_id')->constrained('avaliacao')->onDelete('cascade');
@@ -161,13 +175,13 @@ return new class extends Migration
             }
 
             // Adicionar campos estruturais faltantes
-            if (Schema::hasTable('turma') && !Schema::hasColumn('turma', 'periodo_letivo_id')) {
+            if (Schema::hasTable('turma') && ! Schema::hasColumn('turma', 'periodo_letivo_id')) {
                 Schema::table('turma', function (Blueprint $table) {
                     $table->foreignId('periodo_letivo_id')->nullable()->constrained('periodo_letivo')->onDelete('set null');
                 });
             }
 
-            if (Schema::hasTable('etapa_avaliativa') && !Schema::hasColumn('etapa_avaliativa', 'periodo_letivo_id')) {
+            if (Schema::hasTable('etapa_avaliativa') && ! Schema::hasColumn('etapa_avaliativa', 'periodo_letivo_id')) {
                 Schema::table('etapa_avaliativa', function (Blueprint $table) {
                     $table->foreignId('periodo_letivo_id')->nullable()->constrained('periodo_letivo')->onDelete('cascade');
                 });

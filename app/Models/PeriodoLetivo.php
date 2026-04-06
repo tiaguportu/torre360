@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PeriodoLetivo extends Model
 {
     protected $table = 'periodo_letivo';
+
     protected $guarded = [];
 
     public function turmas(): HasMany

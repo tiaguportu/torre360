@@ -15,7 +15,7 @@ class CursosTable
         return $table
             ->columns([
                 TextColumn::make('unidade.nome')
-                    
+
                     ->sortable(),
                 TextColumn::make('nome_externo')
                     ->searchable(),

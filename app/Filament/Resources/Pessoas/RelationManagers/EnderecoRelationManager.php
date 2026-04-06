@@ -3,15 +3,17 @@
 namespace App\Filament\Resources\Pessoas\RelationManagers;
 
 use App\Filament\Resources\Cidades\Schemas\CidadeForm;
+use App\Models\Endereco;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class EnderecoRelationManager extends RelationManager
 {
@@ -59,13 +61,13 @@ class EnderecoRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->using(function (array $data, \Filament\Resources\RelationManagers\RelationManager $livewire): \Illuminate\Database\Eloquent\Model {
-                        $endereco = \App\Models\Endereco::create($data);
-                        
+                    ->using(function (array $data, RelationManager $livewire): Model {
+                        $endereco = Endereco::create($data);
+
                         $pessoa = $livewire->getOwnerRecord();
                         $pessoa->endereco()->associate($endereco);
                         $pessoa->save();
-                        
+
                         return $endereco;
                     }),
             ])

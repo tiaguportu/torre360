@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\EtapaAvaliatiwas;
 
-
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\CreateEtapaAvaliativa;
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\EditEtapaAvaliativa;
 use App\Filament\Resources\EtapaAvaliatiwas\Pages\ListEtapaAvaliatiwas;
@@ -16,7 +15,6 @@ use Filament\Tables\Table;
 
 class EtapaAvaliativaResource extends Resource
 {
-
     protected static ?string $model = EtapaAvaliativa::class;
 
     protected static ?string $modelLabel = 'Etapa Avaliativa';

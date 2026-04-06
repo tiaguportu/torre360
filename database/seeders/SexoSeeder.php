@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Sexo;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SexoSeeder extends Seeder
@@ -16,7 +15,7 @@ class SexoSeeder extends Seeder
         $sexos = [
             'Feminino',
             'Masculino',
-            'Não declarado'
+            'Não declarado',
         ];
 
         foreach ($sexos as $nome) {

@@ -15,10 +15,10 @@ class ResponsavelFinanceirosTable
         return $table
             ->columns([
                 TextColumn::make('contrato.nome')
-                    
+
                     ->sortable(),
                 TextColumn::make('pessoa.nome')
-                    
+
                     ->sortable(),
                 TextColumn::make('percentual')
                     ->numeric()

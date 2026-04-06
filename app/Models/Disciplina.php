@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Disciplina extends Model
 {
     protected $table = 'disciplina';
+
     protected $guarded = [];
 
     public function areaConhecimento(): BelongsTo

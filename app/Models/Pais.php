@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Pais extends Model
 {
     protected $table = 'pais';
+
     protected $guarded = [];
 
     public function estados(): HasMany

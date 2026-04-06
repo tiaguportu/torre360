@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Serie extends Model
 {
     protected $table = 'serie';
+
     protected $guarded = [];
 
     public function curso(): BelongsTo

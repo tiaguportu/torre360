@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Nota extends Model
 {
     protected $table = 'nota';
+
     protected $guarded = [];
 
     public function avaliacao(): BelongsTo

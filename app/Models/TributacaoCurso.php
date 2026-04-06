@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TributacaoCurso extends Model
 {
     protected $table = 'tributacao_curso';
+
     protected $guarded = [];
 
     public function curso(): BelongsTo

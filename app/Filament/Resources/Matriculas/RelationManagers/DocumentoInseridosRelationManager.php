@@ -3,15 +3,15 @@
 namespace App\Filament\Resources\Matriculas\RelationManagers;
 
 use App\Filament\Resources\DocumentoInseridos\Schemas\DocumentoInseridoForm;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 
 class DocumentoInseridosRelationManager extends RelationManager
 {

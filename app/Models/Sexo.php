@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Sexo extends Model
 {
     protected $table = 'sexo';
+
     protected $guarded = [];
 
     public function pessoas(): HasMany

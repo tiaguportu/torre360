@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesSeeder extends Seeder
 {
@@ -14,16 +14,16 @@ class RolesSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $roles = [
-            'super_admin'  => 'Super Administrador',
-            'admin'        => 'Administrador',
-            'secretaria'   => 'Secretaria',
-            'professor'    => 'Professor',
-            'coordenador'  => 'Coordenador',
-            'responsavel'  => 'Responsável Financeiro',
-            'aluno'        => 'Aluno',
+            'super_admin' => 'Super Administrador',
+            'admin' => 'Administrador',
+            'secretaria' => 'Secretaria',
+            'professor' => 'Professor',
+            'coordenador' => 'Coordenador',
+            'responsavel' => 'Responsável Financeiro',
+            'aluno' => 'Aluno',
         ];
 
         foreach ($roles as $name => $display) {
@@ -33,6 +33,6 @@ class RolesSeeder extends Seeder
             );
         }
 
-        $this->command->info('Papéis criados com sucesso: ' . implode(', ', array_keys($roles)));
+        $this->command->info('Papéis criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

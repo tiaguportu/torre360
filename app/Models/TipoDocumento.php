@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class TipoDocumento extends Model
 {
     protected $table = 'tipo_documento';
+
     protected $guarded = [];
 
     protected function casts(): array

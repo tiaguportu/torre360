@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Unidade extends Model
 {
     protected $table = 'unidade';
+
     protected $guarded = [];
 
     public function cursos(): HasMany

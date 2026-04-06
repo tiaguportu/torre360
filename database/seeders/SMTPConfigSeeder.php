@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Configuracao;
 use Illuminate\Database\Seeder;
 
 class SMTPConfigSeeder extends Seeder
@@ -24,7 +24,7 @@ class SMTPConfigSeeder extends Seeder
         ];
 
         foreach ($configs as $config) {
-            \App\Models\Configuracao::updateOrCreate(
+            Configuracao::updateOrCreate(
                 ['campo' => $config['campo']],
                 $config
             );

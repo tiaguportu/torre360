@@ -71,21 +71,23 @@ class GeografiaSeeder extends Seeder
         $jsonPath = base_path('database/data/municipios.json');
         if (file_exists($jsonPath)) {
             $jsonContent = file_get_contents($jsonPath);
-            
+
             // Remover UTF-8 BOM se presente
             if (substr($jsonContent, 0, 3) === "\xef\xbb\xbf") {
                 $jsonContent = substr($jsonContent, 3);
             }
 
             $municipios = json_decode($jsonContent, true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
-                logger()->error('Falha ao decodificar JSON de cidades: ' . json_last_error_msg());
+                logger()->error('Falha ao decodificar JSON de cidades: '.json_last_error_msg());
+
                 return;
             }
 
-            if (!is_array($municipios)) {
+            if (! is_array($municipios)) {
                 logger()->error('JSON de cidades não é um array válido.');
+
                 return;
             }
 
@@ -94,7 +96,7 @@ class GeografiaSeeder extends Seeder
                 11 => 'RO', 12 => 'AC', 13 => 'AM', 14 => 'RR', 15 => 'PA', 16 => 'AP', 17 => 'TO',
                 21 => 'MA', 22 => 'PI', 23 => 'CE', 24 => 'RN', 25 => 'PB', 26 => 'PE', 27 => 'AL',
                 28 => 'SE', 29 => 'BA', 31 => 'MG', 32 => 'ES', 33 => 'RJ', 35 => 'SP', 41 => 'PR',
-                42 => 'SC', 43 => 'RS', 50 => 'MS', 51 => 'MT', 52 => 'GO', 53 => 'DF'
+                42 => 'SC', 43 => 'RS', 50 => 'MS', 51 => 'MT', 52 => 'GO', 53 => 'DF',
             ];
 
             // Buscar IDs dos estados para evitar múltiplas queries
@@ -120,7 +122,7 @@ class GeografiaSeeder extends Seeder
                 }
             }
 
-            if (!empty($cidadesParaInserir)) {
+            if (! empty($cidadesParaInserir)) {
                 DB::table('cidades')->insert($cidadesParaInserir);
             }
         }

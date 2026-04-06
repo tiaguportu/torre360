@@ -9,14 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class EtapaAvaliativa extends Model
 {
     protected $table = 'etapa_avaliativa';
+
     protected $guarded = [];
 
     public function periodoLetivo(): BelongsTo
     {
         return $this->belongsTo(PeriodoLetivo::class);
     }
-
-
 
     public function avaliacoes(): HasMany
     {

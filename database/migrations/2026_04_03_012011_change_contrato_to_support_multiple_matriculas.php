@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,7 +14,10 @@ return new class extends Migration
     {
         if (config('database.default') === 'sqlite') {
             // Adicionar coluna via SQL bruto no SQLite
-            try { DB::statement("ALTER TABLE matricula ADD COLUMN contrato_id INTEGER"); } catch (\Exception $e) {}
+            try {
+                DB::statement('ALTER TABLE matricula ADD COLUMN contrato_id INTEGER');
+            } catch (Exception $e) {
+            }
 
             // Migrar dados existentes de contrato para matricula
             // Tentamos rodar a migração de dados apenas se a coluna antiga existir
@@ -27,7 +30,7 @@ return new class extends Migration
                             ->update(['contrato_id' => $contrato->id]);
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Silenciamos se houver erro ao buscar a coluna antiga (ex: ela já foi dropada ou nunca existiu)
             }
         } else {
@@ -53,7 +56,7 @@ return new class extends Migration
                     Schema::table('contrato', function (Blueprint $table) {
                         $table->dropColumn('matricula_id');
                     });
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Se não conseguir dropar aqui, ignoramos para o migrate continuar
                 }
             }

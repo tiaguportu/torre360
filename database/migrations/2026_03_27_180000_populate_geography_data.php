@@ -1,8 +1,8 @@
 <?php
 
+use Database\Seeders\GeografiaSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Artisan;
-use Database\Seeders\GeografiaSeeder;
 
 return new class extends Migration
 {

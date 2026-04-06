@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
+use App\Models\User;
 use App\Notifications\WelcomeUserMail;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -15,7 +16,7 @@ class CreateUser extends CreateRecord
         $data = $this->data;
 
         if ($data['send_credentials'] ?? false) {
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = $this->record;
             $password = $data['password'];
 

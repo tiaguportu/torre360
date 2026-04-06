@@ -16,7 +16,7 @@ class SeriesTable
         return $table
             ->columns([
                 TextColumn::make('curso.nome_interno')
-                    
+
                     ->sortable(),
                 TextColumn::make('nome')
                     ->searchable(),

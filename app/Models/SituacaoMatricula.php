@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SituacaoMatricula extends Model
 {
     protected $table = 'situacao_matricula';
+
     protected $guarded = [];
 
     public function matriculas(): HasMany

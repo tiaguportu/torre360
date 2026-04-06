@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Endereco extends Model
 {
     protected $table = 'endereco';
+
     protected $guarded = [];
 
     public function cidade(): BelongsTo

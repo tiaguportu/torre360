@@ -16,7 +16,7 @@ class UnidadesTable
         return $table
             ->columns([
                 TextColumn::make('endereco.logradouro')
-                    
+
                     ->sortable(),
                 TextColumn::make('nome')
                     ->searchable(),

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Renomear se necessário
-        if (Schema::hasTable('documento_obrigatorio') && !Schema::hasTable('tipo_documento')) {
+        if (Schema::hasTable('documento_obrigatorio') && ! Schema::hasTable('tipo_documento')) {
             Schema::rename('documento_obrigatorio', 'tipo_documento');
         }
 
@@ -21,7 +21,7 @@ return new class extends Migration
             if (Schema::hasColumn('tipo_documento', 'flag_ativo')) {
                 $table->dropColumn('flag_ativo');
             }
-            if (!Schema::hasColumn('tipo_documento', 'flag_obrigatorio')) {
+            if (! Schema::hasColumn('tipo_documento', 'flag_obrigatorio')) {
                 $table->boolean('flag_obrigatorio')->default(true);
             }
         });
@@ -40,17 +40,18 @@ return new class extends Migration
                 ", [$dbname]);
 
                 foreach ($constraints as $constraint) {
-                    DB::statement("ALTER TABLE tipo_documento DROP FOREIGN KEY " . $constraint->CONSTRAINT_NAME);
+                    DB::statement('ALTER TABLE tipo_documento DROP FOREIGN KEY '.$constraint->CONSTRAINT_NAME);
                 }
-            } catch (\Exception $e) {}
-            
+            } catch (Exception $e) {
+            }
+
             Schema::table('tipo_documento', function (Blueprint $table) {
                 $table->dropColumn('curso_id');
             });
         }
 
         // 4. Criar pivôs
-        if (!Schema::hasTable('tipo_documento_curso')) {
+        if (! Schema::hasTable('tipo_documento_curso')) {
             Schema::create('tipo_documento_curso', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tipo_documento_id')->constrained('tipo_documento')->cascadeOnDelete();
@@ -59,7 +60,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('tipo_documento_turma')) {
+        if (! Schema::hasTable('tipo_documento_turma')) {
             Schema::create('tipo_documento_turma', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tipo_documento_id')->constrained('tipo_documento')->cascadeOnDelete();
@@ -68,7 +69,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('tipo_documento_matricula')) {
+        if (! Schema::hasTable('tipo_documento_matricula')) {
             Schema::create('tipo_documento_matricula', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tipo_documento_id')->constrained('tipo_documento')->cascadeOnDelete();
