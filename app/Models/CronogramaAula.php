@@ -43,4 +43,12 @@ class CronogramaAula extends Model
     {
         return $this->belongsTo(PeriodoLetivo::class);
     }
+
+    public function hasPendingFrequencies(): bool
+    {
+        $totalMatriculados = $this->turma->matriculas()->count();
+        $frequenciasLancadas = $this->frequencias()->whereNotNull('situacao')->count();
+
+        return ($totalMatriculados - $frequenciasLancadas) > 0;
+    }
 }

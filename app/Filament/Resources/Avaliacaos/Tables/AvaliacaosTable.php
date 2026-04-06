@@ -152,7 +152,9 @@ class AvaliacaosTable
                             ->send();
                     })
 
-                    ->visible(fn (Avaliacao $record): bool => $record->data_prevista?->isPast() || $record->data_prevista?->isToday())
+                    ->visible(fn (Avaliacao $record): bool => ($record->data_prevista?->isPast() || $record->data_prevista?->isToday()) &&
+                        ($record->matriculas_count > $record->notas_count)
+                    )
                     ->requiresConfirmation(),
                 Action::make('lancar_notas')
 
@@ -212,7 +214,6 @@ class AvaliacaosTable
 
                                 return;
                             }
-
 
                             $enviados = 0;
                             $falhas = 0;

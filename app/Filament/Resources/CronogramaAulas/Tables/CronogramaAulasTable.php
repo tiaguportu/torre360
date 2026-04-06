@@ -121,7 +121,7 @@ class CronogramaAulasTable
                     ->tooltip('Enviar e-mail de pendência para o Professor')
                     ->icon('heroicon-o-envelope')
                     ->color('warning')
-                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast())
+                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast() && $record->hasPendingFrequencies())
                     ->action(function ($record) {
                         $professor = $record->professor;
                         $user = $professor?->users->first();
@@ -334,10 +334,17 @@ class CronogramaAulasTable
                             $enviados = 0;
                             $falhas_email = 0;
                             $erros_futuro = 0;
+                            $erros_sem_pendencia = 0;
 
                             foreach ($records as $record) {
                                 if (! $record->data->isPast()) {
                                     $erros_futuro++;
+
+                                    continue;
+                                }
+
+                                if (! $record->hasPendingFrequencies()) {
+                                    $erros_sem_pendencia++;
 
                                     continue;
                                 }
@@ -361,10 +368,13 @@ class CronogramaAulasTable
                                     ->send();
                             }
 
-                            if ($erros_futuro > 0 || $falhas_email > 0) {
+                            if ($erros_futuro > 0 || $falhas_email > 0 || $erros_sem_pendencia > 0) {
                                 $errorBody = '';
                                 if ($erros_futuro > 0) {
                                     $errorBody .= "{$erros_futuro} aulas futuras não podem ser notificadas. ";
+                                }
+                                if ($erros_sem_pendencia > 0) {
+                                    $errorBody .= "{$erros_sem_pendencia} aulas sem pendência de frequência ignoradas. ";
                                 }
                                 if ($falhas_email > 0) {
                                     $errorBody .= "{$falhas_email} professores não possuem e-mail cadastrado.";
