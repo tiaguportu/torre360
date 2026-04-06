@@ -72,12 +72,12 @@ class PessoaPolicy
         return $authUser->can('Reorder:Pessoa');
     }
 
-    public function import(AuthUser $authUser): bool
+    public function import(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('Import:Pessoa');
     }
 
-    public function export(AuthUser $authUser): bool
+    public function export(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('Export:Pessoa');
     }

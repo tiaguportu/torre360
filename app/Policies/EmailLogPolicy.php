@@ -24,12 +24,12 @@ class EmailLogPolicy
 
     public function create(AuthUser $authUser): bool
     {
-        return false; // Logs are read-only
+        return $authUser->can('Create:EmailLog');
     }
 
     public function update(AuthUser $authUser, EmailLog $emailLog): bool
     {
-        return false; // Logs are read-only
+        return $authUser->can('Update:EmailLog');
     }
 
     public function delete(AuthUser $authUser, EmailLog $emailLog): bool
@@ -44,31 +44,31 @@ class EmailLogPolicy
 
     public function restore(AuthUser $authUser, EmailLog $emailLog): bool
     {
-        return false;
+        return $authUser->can('Restore:EmailLog');
     }
 
     public function forceDelete(AuthUser $authUser, EmailLog $emailLog): bool
     {
-        return false;
+        return $authUser->can('ForceDelete:EmailLog');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return false;
+        return $authUser->can('ForceDeleteAny:EmailLog');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return false;
+        return $authUser->can('RestoreAny:EmailLog');
     }
 
     public function replicate(AuthUser $authUser, EmailLog $emailLog): bool
     {
-        return false;
+        return $authUser->can('Replicate:EmailLog');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
-        return false;
+        return $authUser->can('Reorder:EmailLog');
     }
 }

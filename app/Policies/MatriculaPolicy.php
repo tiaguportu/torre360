@@ -74,10 +74,10 @@ class MatriculaPolicy
 
     public function documentos(AuthUser $authUser, Matricula $matricula): bool
     {
-        return $this->view($authUser, $matricula);
+        return $authUser->can('Documentos:Matricula');
     }
 
-    public function avisarPendencia(AuthUser $authUser, ?Matricula $matricula = null): bool
+    public function avisarPendencia(AuthUser $authUser, Matricula $matricula): bool
     {
         return $authUser->can('AvisarPendencia:Matricula');
     }
