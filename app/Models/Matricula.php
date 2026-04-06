@@ -163,22 +163,28 @@ class Matricula extends Model
     /**
      * Envia notificação de documentos pendentes aos destinatários identificados.
      *
-     * @return int Quantidade de notificações enviadas.
+     * @return array{enviados: int, falhas: array<string, string>}
      */
-    public function notifyMissingMandatoryDocuments(): int
+    public function notifyMissingMandatoryDocuments(): array
     {
         $destinatarios = $this->getNotificationRecipients();
         $countSent = 0;
+        $falhas = [];
 
         foreach ($destinatarios as $user) {
             try {
                 $user->notify(new DocumentosPendentesNotification($this));
                 $countSent++;
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("Erro ao enviar notificação de documentos pendentes para {$user->email} na matrícula {$this->id}: ".$e->getMessage());
+                $errorMessage = $e->getMessage();
+                $falhas[$user->email] = $errorMessage;
+                \Illuminate\Support\Facades\Log::error("Erro ao enviar notificação de documentos pendentes para {$user->email} na matrícula {$this->id}: ".$errorMessage);
             }
         }
 
-        return $countSent;
+        return [
+            'enviados' => $countSent,
+            'falhas' => $falhas,
+        ];
     }
 }

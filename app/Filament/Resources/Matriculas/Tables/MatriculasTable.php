@@ -162,7 +162,9 @@ class MatriculasTable
                             return;
                         }
 
-                        $countSent = $record->notifyMissingMandatoryDocuments();
+                        $result = $record->notifyMissingMandatoryDocuments();
+                        $countSent = $result['enviados'];
+                        $falhas = $result['falhas'];
 
                         if ($countSent > 0) {
                             Notification::make()
@@ -170,13 +172,17 @@ class MatriculasTable
                                 ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
                                 ->success()
                                 ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Falha no envio')
-                                ->body('O e-mail foi rejeitado pelo servidor do destinatário ou o endereço é inválido. Verifique os logs do sistema para mais detalhes.')
-                                ->danger()
-                                ->persistent()
-                                ->send();
+                        }
+
+                        if (! empty($falhas)) {
+                            foreach ($falhas as $email => $erro) {
+                                Notification::make()
+                                    ->title("Falha no envio: {$email}")
+                                    ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+                            }
                         }
                     }),
             ])
@@ -194,6 +200,7 @@ class MatriculasTable
                             $totalSent = 0;
                             $countMatriculasComPendencia = 0;
                             $countMatriculasSemEmail = 0;
+                            $todasFalhas = [];
 
                             foreach ($records as $record) {
                                 if ($record->hasMissingMandatoryDocuments()) {
@@ -205,8 +212,15 @@ class MatriculasTable
                                         continue;
                                     }
 
-                                    $totalSent += $record->notifyMissingMandatoryDocuments();
+                                    $result = $record->notifyMissingMandatoryDocuments();
+                                    $totalSent += $result['enviados'];
                                     $countMatriculasComPendencia++;
+
+                                    if (! empty($result['falhas'])) {
+                                        foreach ($result['falhas'] as $email => $erro) {
+                                            $todasFalhas[] = "Matrícula {$record->codigo} ({$email}): {$erro}";
+                                        }
+                                    }
                                 }
                             }
 
@@ -215,6 +229,15 @@ class MatriculasTable
                                     ->title('Avisos enviados!')
                                     ->body("Foram enviados {$totalSent} e-mails para os responsáveis de {$countMatriculasComPendencia} matrículas.")
                                     ->success()
+                                    ->send();
+                            }
+
+                            if (! empty($todasFalhas)) {
+                                Notification::make()
+                                    ->title('Alguns e-mails falharam')
+                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', $todasFalhas)))
+                                    ->danger()
+                                    ->persistent()
                                     ->send();
                             }
 
@@ -227,10 +250,10 @@ class MatriculasTable
                                     ->send();
                             }
 
-                            if ($totalSent === 0 && $countMatriculasSemEmail === 0) {
+                            if ($totalSent === 0 && $countMatriculasSemEmail === 0 && empty($todasFalhas)) {
                                 Notification::make()
                                     ->title('Nenhuma notificação enviada')
-                                    ->body('As matrículas selecionadas não possuem pendências de documentos obrigatórios ou todos os envios falharam. Verifique os logs se houver erros de e-mail.')
+                                    ->body('As matrículas selecionadas não possuem pendências de documentos obrigatórios.')
                                     ->info()
                                     ->send();
                             }
