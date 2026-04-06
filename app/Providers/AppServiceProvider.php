@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Gate::before(fn ($user, $ability) => $user->hasRole('super_admin') ? true : null);
+
         Event::listen(
             Verified::class,
             fn ($event) => $event->user->update(['is_active' => true])
