@@ -109,7 +109,7 @@ class MatriculasTable
                         ->icon(Heroicon::OutlinedEnvelope)
                         ->color('warning')
                         ->requiresConfirmation()
-                        ->visible(fn () => auth()->user()->can('avisarPendencia', Matricula::class))
+                        ->visible(fn () => auth()->user()->can('AvisarPendencia:Matricula'))
                         ->action(function (Collection $records) {
                             $totalSent = 0;
                             $countMatriculas = 0;

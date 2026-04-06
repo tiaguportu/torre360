@@ -15,25 +15,43 @@ class DocumentoInseridosTable
     {
         return $table
             ->columns([
-                TextColumn::make('documentoObrigatorio.id')
-                    ->searchable(),
-                TextColumn::make('matricula.id')
-                    ->searchable(),
-                TextColumn::make('situacao_documento_inserido_id')
-                    ->numeric()
+                TextColumn::make('tipoDocumento.nome')
+                    ->label('Documento')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('arquivo_path')
-                    ->searchable(),
+
+                TextColumn::make('matricula.codigo')
+                    ->label('Matrícula')
+                    ->description(fn ($record): string => $record->matricula?->pessoa?->nome ?? 'N/A')
+                    ->searchable(['matricula.codigo', 'matricula.pessoa.nome'])
+                    ->sortable(),
+
+                TextColumn::make('situacao.nome')
+                    ->label('Situação')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Pendente' => 'gray',
+                        'Em Análise' => 'info',
+                        'Aprovado' => 'success',
+                        'Rejeitado' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+
                 TextColumn::make('nome_arquivo_original')
-                    ->searchable(),
-                TextColumn::make('hash_arquivo')
-                    ->searchable(),
+                    ->label('Arquivo')
+                    ->searchable()
+                    ->toggleable(),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Data de Envio')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
+
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Última Atualização')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
