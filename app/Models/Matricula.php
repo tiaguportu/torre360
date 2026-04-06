@@ -125,34 +125,54 @@ class Matricula extends Model
     }
 
     /**
-     * Envia notificação de documentos pendentes aos responsáveis financeiros associados ao contrato da matrícula.
+     * Retorna a lista de usuários (destinatários) que devem receber notificações desta matrícula.
+     * Inclui o aluno e todos os responsáveis financeiros do contrato.
+     *
+     * @return Collection<User>
+     */
+    public function getNotificationRecipients(): Collection
+    {
+        $pessoasEnvolvidas = collect();
+
+        // 1. O Aluno
+        if ($this->pessoa) {
+            $pessoasEnvolvidas->push($this->pessoa);
+        }
+
+        // 2. Responsáveis Financeiros do Contrato
+        if ($this->contrato) {
+            foreach ($this->contrato->responsaveisFinanceiros as $resp) {
+                if ($resp->pessoa) {
+                    $pessoasEnvolvidas->push($resp->pessoa);
+                }
+            }
+        }
+
+        if ($pessoasEnvolvidas->isEmpty()) {
+            return collect();
+        }
+
+        // Pegar todos os usuários vinculados a essas pessoas que possuem e-mail
+        return User::query()
+            ->whereHas('pessoas', fn ($query) => $query->whereIn('pessoa.id', $pessoasEnvolvidas->pluck('id')->unique()))
+            ->whereNotNull('email')
+            ->get()
+            ->unique('id');
+    }
+
+    /**
+     * Envia notificação de documentos pendentes aos destinatários identificados.
      *
      * @return int Quantidade de notificações enviadas.
      */
     public function notifyMissingMandatoryDocuments(): int
     {
-        /** @var Contrato $contrato */
-        $contrato = $this->contrato;
-
-        if (! $contrato) {
-            return 0;
-        }
-
-        $responsaveis = $contrato->responsaveisFinanceiros;
+        $destinatarios = $this->getNotificationRecipients();
         $countSent = 0;
 
-        foreach ($responsaveis as $resp) {
-            $pessoa = $resp->pessoa;
-            if (! $pessoa) {
-                continue;
-            }
-
-            foreach ($pessoa->users as $user) {
-                if ($user->email) {
-                    $user->notify(new DocumentosPendentesNotification($this));
-                    $countSent++;
-                }
-            }
+        foreach ($destinatarios as $user) {
+            $user->notify(new DocumentosPendentesNotification($this));
+            $countSent++;
         }
 
         return $countSent;

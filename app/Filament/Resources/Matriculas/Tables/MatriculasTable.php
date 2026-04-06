@@ -14,6 +14,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 
 class MatriculasTable
 {
@@ -73,7 +74,17 @@ class MatriculasTable
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPendencia', $record))
+                    ->modalHeading('Confirmar Envio de Aviso')
+                    ->modalDescription(function (Matricula $record) {
+                        $emails = $record->getNotificationRecipients()->pluck('email');
+
+                        if ($emails->isEmpty()) {
+                            return new HtmlString('<span class="text-danger-600 font-bold">Erro: Nenhum e-mail encontrado para o aluno ou responsáveis desta matrícula.</span>');
+                        }
+
+                        return 'Os avisos de pendência serão enviados para os seguintes e-mails: '.$emails->join(', ');
+                    })
+                    ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula'))
                     ->action(function (Matricula $record) {
                         if (! $record->hasMissingMandatoryDocuments()) {
                             Notification::make()
@@ -85,21 +96,25 @@ class MatriculasTable
                             return;
                         }
 
+                        $destinatarios = $record->getNotificationRecipients();
+
+                        if ($destinatarios->isEmpty()) {
+                            Notification::make()
+                                ->title('Erro ao enviar')
+                                ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
                         $countSent = $record->notifyMissingMandatoryDocuments();
 
-                        if ($countSent > 0) {
-                            Notification::make()
-                                ->title('E-mail enviado!')
-                                ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Nenhum destinatário encontrado')
-                                ->body('Não foi possível localizar usuários com e-mail para os responsáveis do contrato.')
-                                ->warning()
-                                ->send();
-                        }
+                        Notification::make()
+                            ->title('E-mail enviado!')
+                            ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([
@@ -109,29 +124,51 @@ class MatriculasTable
                         ->icon(Heroicon::OutlinedEnvelope)
                         ->color('warning')
                         ->requiresConfirmation()
+                        ->modalHeading('Confirmar Envio em Lote')
+                        ->modalDescription('Esta ação enviará avisos de pendência para todas as matrículas selecionadas que possuam documentos obrigatórios pendentes e destinatários com e-mail cadastrado.')
                         ->visible(fn () => auth()->user()->can('AvisarPendencia:Matricula'))
                         ->action(function (Collection $records) {
                             $totalSent = 0;
-                            $countMatriculas = 0;
+                            $countMatriculasComPendencia = 0;
+                            $countMatriculasSemEmail = 0;
 
                             foreach ($records as $record) {
                                 if ($record->hasMissingMandatoryDocuments()) {
+                                    $destinatarios = $record->getNotificationRecipients();
+
+                                    if ($destinatarios->isEmpty()) {
+                                        $countMatriculasSemEmail++;
+
+                                        continue;
+                                    }
+
                                     $totalSent += $record->notifyMissingMandatoryDocuments();
-                                    $countMatriculas++;
+                                    $countMatriculasComPendencia++;
                                 }
                             }
 
                             if ($totalSent > 0) {
                                 Notification::make()
                                     ->title('Avisos enviados!')
-                                    ->body("Foram enviados {$totalSent} e-mails para os responsáveis de {$countMatriculas} matrículas.")
+                                    ->body("Foram enviados {$totalSent} e-mails para os responsáveis de {$countMatriculasComPendencia} matrículas.")
                                     ->success()
                                     ->send();
-                            } else {
+                            }
+
+                            if ($countMatriculasSemEmail > 0) {
+                                Notification::make()
+                                    ->title('Atenção')
+                                    ->body("{$countMatriculasSemEmail} matrícula(s) com pendência não puderam ser notificadas por falta de e-mail cadastrado.")
+                                    ->warning()
+                                    ->persistent()
+                                    ->send();
+                            }
+
+                            if ($totalSent === 0 && $countMatriculasSemEmail === 0) {
                                 Notification::make()
                                     ->title('Nenhuma pendência notificada')
-                                    ->body('As matrículas selecionadas não possuem pendências ou responsáveis com e-mail.')
-                                    ->warning()
+                                    ->body('As matrículas selecionadas não possuem pendências de documentos obrigatórios.')
+                                    ->info()
                                     ->send();
                             }
                         }),
