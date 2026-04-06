@@ -121,7 +121,7 @@ class CronogramaAulasTable
                     ->tooltip('Enviar e-mail de pendência para o Professor')
                     ->icon('heroicon-o-envelope')
                     ->color('warning')
-                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && ($record->data->isPast() || $record->data->isToday()))
+                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast())
                     ->action(function ($record) {
                         $professor = $record->professor;
                         $user = $professor?->users->first();
@@ -332,12 +332,12 @@ class CronogramaAulasTable
                         ->color('warning')
                         ->action(function (Collection $records): void {
                             $enviados = 0;
-                            $falhas = 0;
-                            $ignorados = 0;
+                            $falhas_email = 0;
+                            $erros_futuro = 0;
 
                             foreach ($records as $record) {
-                                if ($record->data->isFuture()) {
-                                    $ignorados++;
+                                if (! $record->data->isPast()) {
+                                    $erros_futuro++;
 
                                     continue;
                                 }
@@ -349,31 +349,37 @@ class CronogramaAulasTable
                                     $user->notify(new FrequenciaPendenteNotification($record));
                                     $enviados++;
                                 } else {
-                                    $falhas++;
+                                    $falhas_email++;
                                 }
                             }
 
-                            $notification = Notification::make()
-                                ->title('Processamento concluído');
-
-                            $body = "{$enviados} e-mails enviados.";
-                            if ($falhas > 0) {
-                                $body .= " {$falhas} professores sem e-mail.";
-                            }
-                            if ($ignorados > 0) {
-                                $body .= " {$ignorados} aulas futuras ignoradas.";
+                            if ($enviados > 0) {
+                                Notification::make()
+                                    ->title('Notificações enviadas')
+                                    ->body("{$enviados} e-mails enviados com sucesso.")
+                                    ->success()
+                                    ->send();
                             }
 
-                            if ($falhas > 0 || $ignorados > 0) {
-                                $notification->warning();
-                            } else {
-                                $notification->success();
-                            }
+                            if ($erros_futuro > 0 || $falhas_email > 0) {
+                                $errorBody = '';
+                                if ($erros_futuro > 0) {
+                                    $errorBody .= "{$erros_futuro} aulas futuras não podem ser notificadas. ";
+                                }
+                                if ($falhas_email > 0) {
+                                    $errorBody .= "{$falhas_email} professores não possuem e-mail cadastrado.";
+                                }
 
-                            $notification->body($body)->send();
+                                Notification::make()
+                                    ->title('Ocorreram pendências no processamento')
+                                    ->body($errorBody)
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+                            }
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn () => auth()->user()->can('notificarProfessorManual', CronogramaAula::class)),
+                        ->visible(fn () => auth()->user()->can('NotificarProfessorManual:CronogramaAula')),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Avaliacaos\Tables;
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Models\Avaliacao;
+use App\Notifications\AvaliacaoPendenteNotification;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -13,6 +14,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ReplicateAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -122,7 +124,38 @@ class AvaliacaosTable
                         ->icon('heroicon-o-document-duplicate'),
                     DeleteAction::make(),
                 ]),
+                Action::make('notificar_professor')
+                    ->label('Notificar Professor')
+                    ->tooltip('Enviar lembrete de lançamento de notas pendentes')
+                    ->icon('heroicon-o-envelope')
+                    ->color('warning')
+                    ->action(function (Avaliacao $record) {
+                        $professor = $record->professor;
+                        $user = $professor?->users->first();
+
+                        if (! $user?->email) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Erro ao enviar')
+                                ->body('O professor associado não possui um usuário com e-mail cadastrado.')
+                                ->send();
+
+                            return;
+                        }
+
+                        $user->notify(new AvaliacaoPendenteNotification($record));
+
+                        Notification::make()
+                            ->success()
+                            ->title('Notificação Enviada')
+                            ->body('O professor foi notificado com sucesso.')
+                            ->send();
+                    })
+
+                    ->visible(fn (Avaliacao $record): bool => $record->data_prevista?->isPast() || $record->data_prevista?->isToday())
+                    ->requiresConfirmation(),
                 Action::make('lancar_notas')
+
                     ->label('Notas')
                     ->tooltip('Lançar Notas')
                     ->icon('heroicon-o-academic-cap')
@@ -149,7 +182,57 @@ class AvaliacaosTable
                         ->action(function (Collection $records, array $data) {
                             $records->each->update(array_filter($data));
                         }),
+                    BulkAction::make('bulk_notificar_professor')
+                        ->label('Notificar Professores Selecionados')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            $futureAvaliacao = $records->first(fn (Avaliacao $record) => $record->data_prevista?->isFuture());
+
+                            if ($futureAvaliacao) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Operação Cancelada')
+                                    ->body("A avaliação '{$futureAvaliacao->categoria?->nome}' tem data prevista no futuro ({$futureAvaliacao->data_prevista?->format('d/m/Y')}) e não pode disparar notificação.")
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $enviados = 0;
+                            $falhas = 0;
+
+                            $records->each(function (Avaliacao $record) use (&$enviados, &$falhas) {
+                                $user = $record->professor?->users->first();
+                                if ($user?->email) {
+                                    $user->notify(new AvaliacaoPendenteNotification($record));
+                                    $enviados++;
+                                } else {
+                                    $falhas++;
+                                }
+                            });
+
+                            if ($enviados > 0) {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Notificações Enviadas')
+                                    ->body("{$enviados} professor(es) notificado(s) com sucesso.")
+                                    ->send();
+                            }
+
+                            if ($falhas > 0) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Alguns e-mails não enviados')
+                                    ->body("{$falhas} registro(s) sem usuário/e-mail vinculado.")
+                                    ->send();
+                            }
+                        })
+
+                        ->requiresConfirmation(),
                     DeleteBulkAction::make(),
+
                 ]),
             ]);
     }
