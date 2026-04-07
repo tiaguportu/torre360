@@ -99,7 +99,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         ? 'heroicon-m-exclamation-circle'
                         : null;
                 })
-                ->tooltip('oi' . $categoria->descricao);
+                ->tooltip($categoria->descricao);
         }
 
         return $table
@@ -109,7 +109,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             ->columns([
                 TextColumn::make('nome')
                     ->label('Disciplina')
-                    ->weight('bold'),
+                    ->weight('bold')->tooltip('teste'),
                 ...$dynamicColumns,
                 TextColumn::make('media_aluno')
                     ->label('Média Etapa')
