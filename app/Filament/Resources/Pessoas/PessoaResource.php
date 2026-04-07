@@ -69,7 +69,10 @@ class PessoaResource extends Resource
                     $pessoasIds = $user->pessoas->pluck('id')->toArray();
                     $query->orWhereHas('matriculas.contrato.responsaveisFinanceiros', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('pessoa_id', $pessoasIds);
-                    });
+                    })
+                        ->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
+                            $q->whereIn('responsavel_id', $pessoasIds);
+                        });
                 }
             });
         }

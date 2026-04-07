@@ -65,6 +65,7 @@ class AlunosRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->inverseRelationship('responsaveis')
                     ->preloadRecordSelect()
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
