@@ -53,6 +53,7 @@ class BoletimeGradesTable extends Component
     public function getLegendInfolist(): Schema
     {
         return Schema::make()
+            ->livewire($this->getLivewire())
             ->state([
                 'aprovado' => '≥ 7,0',
                 'recuperacao' => '5,0 – 6,9',
