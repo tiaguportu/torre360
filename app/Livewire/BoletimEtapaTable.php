@@ -55,6 +55,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         foreach ($categorias as $categoria) {
             $dynamicColumns[] = TextColumn::make("cat_{$categoria->id}")
                 ->label($categoria->nome)
+                ->headerTooltip($categoria->descricao)
                 ->alignCenter()
                 ->state(function (Disciplina $record) use ($categoria, $avaliacoes, $notasAluno) {
                     $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
@@ -98,8 +99,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     return $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)
                         ? 'heroicon-m-exclamation-circle'
                         : null;
-                })
-                ->tooltip($categoria->descricao);
+                });
         }
 
         return $table
@@ -109,7 +109,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             ->columns([
                 TextColumn::make('nome')
                     ->label('Disciplina')
-                    ->weight('bold')->tooltip('teste'),
+                    ->weight('bold'),
                 ...$dynamicColumns,
                 TextColumn::make('media_aluno')
                     ->label('Média Etapa')
