@@ -65,7 +65,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
                     return number_format($mediaCat, 1, ',', '.');
                 })
-                ->badge()
+                //->badge()
                 ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') {
                         return 'gray';
