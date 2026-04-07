@@ -8,6 +8,8 @@ use App\Models\Disciplina;
 use App\Models\Matricula;
 use App\Models\Nota;
 use App\Models\EtapaAvaliativa;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -17,10 +19,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 
-class BoletimEtapaTable extends Component implements HasForms, HasTable
+class BoletimEtapaTable extends Component implements HasForms, HasTable, HasActions
 {
     use InteractsWithForms;
     use InteractsWithTable;
+    use InteractsWithActions;
 
     public int $matriculaId;
     public int $etapaId;
