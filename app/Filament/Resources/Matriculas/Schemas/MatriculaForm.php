@@ -24,13 +24,13 @@ class MatriculaForm
                     ->placeholder('Gerado automaticamente se vazio')
                     ->helperText('Formato: Ano + 6 dígitos (ex: 2026000001)')
                     ->maxLength(20),
-                Select::make('pessoa_id')
+                Select::make('pessoa')
+                    ->label('Aluno')
                     ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('users', fn ($q) => $q->role('aluno')))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->searchable(['nome', 'cpf'])
                     ->preload()
                     ->required()
-                    ->label('Aluno')
                     ->createOptionForm([
                         TextInput::make('nome')
                             ->required()
@@ -41,16 +41,16 @@ class MatriculaForm
                         TextInput::make('email')
                             ->email()
                             ->maxLength(255),
-                        Select::make('sexo_id')
+                        Select::make('sexo')
                             ->relationship('sexo', 'nome', fn ($query) => $query->whereNotNull('nome'))
                             ->searchable()
                             ->preload(),
-                        Select::make('cor_raca_id')
+                        Select::make('corRaca')
                             ->relationship('corRaca', 'nome', fn ($query) => $query->whereNotNull('nome'))
                             ->searchable()
                             ->preload(),
                     ]),
-                Select::make('turma_id')
+                Select::make('turma')
                     ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? "Turma #{$record->id}")
                     ->searchable()
@@ -59,7 +59,7 @@ class MatriculaForm
                     ->required()
                     ->disabled(fn ($livewire) => $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma)
                     ->dehydrated(),
-                Select::make('situacao_matricula_id')
+                Select::make('situacaoMatricula')
                     ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->searchable()
                     ->preload()

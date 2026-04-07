@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\PeriodoLetivo;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PeriodoLetivoPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:PeriodoLetivo');
@@ -71,4 +71,5 @@ class PeriodoLetivoPolicy
     {
         return $authUser->can('Reorder:PeriodoLetivo');
     }
+
 }
