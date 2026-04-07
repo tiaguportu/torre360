@@ -1,5 +1,5 @@
 @php
-    $data = $component->getViewData();
+    $data = $schemaComponent->getViewData();
     $matricula = $data['matricula'];
     $avaliacoesPorDisciplina = $data['avaliacoesPorDisciplina'];
     $disciplinas = $data['disciplinas'];
@@ -9,8 +9,8 @@
     // Coleta todas as avaliações únicas (colunas da tabela), mantendo ordem por disciplina e etapa
     $todasAvaliacoes = $avaliacoesPorDisciplina->flatten(1)->sortBy(['disciplina_id', 'etapa_avaliativa_id', 'id']);
 
-    $mediaGeralAluno = $component->getMediaGeralAluno($avaliacoesPorDisciplina, $notasAluno);
-    $mediaGeralTurma = $component->getMediaGeralTurma($avaliacoesPorDisciplina, $notasTurma);
+    $mediaGeralAluno = $schemaComponent->getMediaGeralAluno($avaliacoesPorDisciplina, $notasAluno);
+    $mediaGeralTurma = $schemaComponent->getMediaGeralTurma($avaliacoesPorDisciplina, $notasTurma);
 @endphp
 
 <div class="mt-6 space-y-6">
@@ -103,8 +103,8 @@
                         @foreach ($disciplinas as $disciplina)
                             @php
                                 $avsDisciplina = $avaliacoesPorDisciplina->get($disciplina->id, collect())->sortBy('etapa_avaliativa_id');
-                                $mediaAluno = $component->getMediaAlunoPorDisciplina($disciplina->id, $notasAluno, $avaliacoesPorDisciplina);
-                                $mediaTurma = $component->getMediaTurmaPorDisciplina($disciplina->id, $notasTurma, $avaliacoesPorDisciplina);
+                                $mediaAluno = $schemaComponent->getMediaAlunoPorDisciplina($disciplina->id, $notasAluno, $avaliacoesPorDisciplina);
+                                $mediaTurma = $schemaComponent->getMediaTurmaPorDisciplina($disciplina->id, $notasTurma, $avaliacoesPorDisciplina);
                             @endphp
                             <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40">
                                 {{-- Nome da Disciplina --}}
@@ -121,7 +121,7 @@
                                                 $valor = $nota?->valor;
                                                 $notaMax = (float) ($avaliacao->nota_maxima ?? 10);
                                                 $percentual = $valor !== null ? ((float)$valor / $notaMax) * 100 : null;
-                                                $isIgnorada = $valor !== null && $component->isNotaIgnorada($avaliacao->id, $disciplina->id, $notasAluno, $avaliacoesPorDisciplina);
+                                                $isIgnorada = $valor !== null && $schemaComponent->isNotaIgnorada($avaliacao->id, $disciplina->id, $notasAluno, $avaliacoesPorDisciplina);
                                             @endphp
                                             <td class="border-r border-gray-100 px-3 py-3 text-center dark:border-gray-700/60">
                                                 @if ($valor !== null)
