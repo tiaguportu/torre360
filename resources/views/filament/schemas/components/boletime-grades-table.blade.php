@@ -15,7 +15,7 @@
     @else
         @foreach ($etapas as $etapa)
             <div class="fi-boletim-etapa-section">
-                @livewire(\App\Livewire\BoletimEtapaTable::class, ['matriculaId' => $matricula->id, 'etapaId' => $etapa->id], key: "etapa-{$etapa->id}-{$matricula->id}")
+                @livewire(\App\Livewire\BoletimEtapaTable::class, ['matriculaId' => $matricula->id, 'etapaId' => $etapa->id], key($etapa->id))
             </div>
         @endforeach
 
