@@ -130,17 +130,24 @@ class DocumentosMatricula extends Page implements HasTable
                     ->extraAttributes(['class' => 'w-48']),
             ])
             ->actions([
-                Action::make('visualizar_enviado')
-                    ->label('Ver Documento')
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->url(function (TipoDocumento $record) {
+                Action::make('baixar_enviado')
+                    ->label('Baixar Documento')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function (TipoDocumento $record) {
                         $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
                             ->where('tipo_documento_id', $record->id)
                             ->first();
 
-                        return $inserido?->arquivo_path ? asset('storage/'.$inserido->arquivo_path) : null;
-                    }, shouldOpenInNewTab: true)
+                        if ($inserido && $inserido->arquivo_path) {
+                            return Storage::disk('public')->download($inserido->arquivo_path);
+                        }
+
+                        Notification::make()
+                            ->title('Arquivo não encontrado')
+                            ->danger()
+                            ->send();
+                    })
                     ->visible(fn (TipoDocumento $record) => DocumentoInserido::where('matricula_id', $this->record->id)
                         ->where('tipo_documento_id', $record->id)
                         ->exists()),

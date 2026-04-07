@@ -95,6 +95,9 @@ class DocumentoInseridoForm
                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                     ->maxSize(2048)
                     ->directory('documentos_alunos')
+                    ->visibility('public')
+                    ->downloadable()
+                    ->openable()
                     ->storeFileNamesIn('nome_arquivo_original')
                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file, Get $get) {
                         $doc = TipoDocumento::find($get('tipo_documento_id'));

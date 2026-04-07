@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Matriculas\RelationManagers;
 
 use App\Filament\Resources\DocumentoInseridos\Schemas\DocumentoInseridoForm;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -12,6 +13,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentoInseridosRelationManager extends RelationManager
 {
@@ -56,6 +58,11 @@ class DocumentoInseridosRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
+                Action::make('download')
+                    ->label('Download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(fn ($record) => Storage::disk('public')->download($record->arquivo_path)),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
