@@ -304,24 +304,15 @@ class DocumentosMatricula extends Page implements HasTable
             $tipoDocumento = TipoDocumento::findOrFail($tipoDocumentoId);
             $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
 
-            // Obter configurações do disco temporário do Livewire
-            $disk = config('livewire.temporary_file_upload.disk') ?: 'local';
-            $dir = config('livewire.temporary_file_upload.directory') ?: 'livewire-tmp';
-
-            $fullTmpPath = $dir.'/'.$tmpPath;
-
-            if (! Storage::disk($disk)->exists($fullTmpPath)) {
-                // Tenta sem o prefixo do disco se o disco já apontar para a pasta
-                if (! Storage::disk($disk)->exists($tmpPath)) {
-                    throw new \Exception("Arquivo temporário não encontrado no disco {$disk}. Tentado caminhos: {$fullTmpPath} e {$tmpPath}.");
-                }
-                $fullTmpPath = $tmpPath;
+            if (! $this->manualFileUpload) {
+                throw new \Exception('Arquivo não recebido pelo servidor.');
             }
 
-            $fileContents = Storage::disk($disk)->get($fullTmpPath);
+            $file = $this->manualFileUpload;
+            $fileContents = $file->get();
             $hash = md5($fileContents);
 
-            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+            $extension = $file->getClientOriginalExtension() ?: pathinfo($originalName, PATHINFO_EXTENSION);
             $idStr = uniqid();
             $docSlug = Str::slug($tipoDocumento->nome);
 
@@ -336,8 +327,8 @@ class DocumentosMatricula extends Page implements HasTable
             // Salvar no disco público
             Storage::disk('public')->put($finalPath, $fileContents);
 
-            // Deletar o temporário para limpar
-            Storage::disk($disk)->delete($fullTmpPath);
+            // Limpar a propriedade de upload
+            $this->manualFileUpload = null;
 
             DocumentoInserido::updateOrCreate(
                 [
