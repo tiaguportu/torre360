@@ -31,6 +31,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
             'delete_any',
             'documentos',
             'avisarPendencia',
+            'boletim',
         ];
     }
     protected static ?string $model = Matricula::class;

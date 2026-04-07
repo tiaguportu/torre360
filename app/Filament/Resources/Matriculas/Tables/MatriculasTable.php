@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
+use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
 use App\Models\Curso;
 use App\Models\Matricula;
@@ -114,6 +115,13 @@ class MatriculasTable
             ])
             ->actions([
                 EditAction::make(),
+                Action::make('boletim')
+                    ->label('Boletim')
+                    ->tooltip('Ver Boletim Escolar')
+                    ->icon(Heroicon::OutlinedAcademicCap)
+                    ->color('info')
+                    ->url(fn (Matricula $record) => BoletimMatricula::getUrl(['record' => $record]))
+                    ->visible(fn (Matricula $record) => auth()->user()->can('boletim', $record)),
                 Action::make('inserir_documentos')
                     ->label('Documentos')
                     ->tooltip('Gerenciar Documentos Obrigatórios')
