@@ -67,10 +67,21 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
     public function table(Table $table): Table
     {
         $turma = $this->record->turma;
+        
         $avaliacoes = Avaliacao::query()
             ->where('turma_id', $turma->id)
             ->with(['categoria', 'etapaAvaliativa'])
             ->get();
+
+        // Identifica as Categorias de Avaliação ÚNICAS presentes na turma
+        $categorias = $avaliacoes->map(fn($av) => $av->categoria)
+            ->filter()
+            ->unique('id')
+            ->sortBy(function($cat) use ($avaliacoes) {
+                // Ordena as categorias pela primeira aparição de etapa avaliativa
+                $av = $avaliacoes->where('categoria_id', $cat->id)->first();
+                return [$av?->etapa_avaliativa_id ?? 0, $cat->id];
+            });
 
         $notasAluno = $this->record->notas()
             ->get()
@@ -84,23 +95,37 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
         $dynamicColumns = [];
 
-        foreach ($avaliacoes->sortBy(['etapa_avaliativa_id', 'id']) as $av) {
-            $dynamicColumns[] = TextColumn::make("av_{$av->id}")
-                ->label($av->categoria->nome ?? $av->etapaAvaliativa->nome ?? "Av. {$av->id}")
+        foreach ($categorias as $categoria) {
+            $dynamicColumns[] = TextColumn::make("cat_{$categoria->id}")
+                ->label($categoria->nome)
                 ->alignCenter()
-                ->state(function (Disciplina $record) use ($av, $notasAluno) {
-                    if ($av->disciplina_id != $record->id) {
+                ->state(function (Disciplina $record) use ($categoria, $avaliacoes, $notasAluno) {
+                    // Encontra a avaliação desta disciplina que pertence a esta categoria
+                    $av = $avaliacoes->where('disciplina_id', $record->id)
+                                    ->where('categoria_id', $categoria->id)
+                                    ->first();
+                    
+                    if (!$av) {
                         return '·';
                     }
+                    
                     $nota = $notasAluno->get($av->id);
 
                     return $nota ? number_format((float) $nota->valor, 1, ',', '.') : '—';
                 })
                 ->badge()
-                ->color(function (Disciplina $record, $state) use ($av, $notasAluno) {
+                ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') {
                         return 'gray';
                     }
+                    
+                    $av = $avaliacoes->where('disciplina_id', $record->id)
+                                    ->where('categoria_id', $categoria->id)
+                                    ->first();
+                    if (!$av) {
+                        return 'gray';
+                    }
+                    
                     $nota = $notasAluno->get($av->id);
                     if (! $nota) {
                         return 'gray';
@@ -115,10 +140,18 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
                     return $percentual >= 60 ? 'success' : 'danger';
                 })
-                ->extraAttributes(function (Disciplina $record, $state) use ($av, $notasAluno) {
-                    if ($state === '·' || $state === '—' || $av->disciplina_id != $record->id) {
+                ->extraAttributes(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                    if ($state === '·' || $state === '—') {
                         return [];
                     }
+                    
+                    $av = $avaliacoes->where('disciplina_id', $record->id)
+                                    ->where('categoria_id', $categoria->id)
+                                    ->first();
+                    if (!$av) {
+                        return [];
+                    }
+                    
                     $isIgnorada = $this->isNotaIgnorada($av->id, $record->id, $notasAluno, $av->turma_id);
                     if ($isIgnorada) {
                         return ['class' => 'line-through opacity-50'];
@@ -126,10 +159,18 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
                     return [];
                 })
-                ->icon(function (Disciplina $record, $state) use ($av, $notasAluno) {
-                    if ($state === '·' || $state === '—' || $av->disciplina_id != $record->id) {
+                ->icon(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                    if ($state === '·' || $state === '—') {
                         return null;
                     }
+                    
+                    $av = $avaliacoes->where('disciplina_id', $record->id)
+                                    ->where('categoria_id', $categoria->id)
+                                    ->first();
+                    if (!$av) {
+                        return null;
+                    }
+
                     $isIgnorada = $this->isNotaIgnorada($av->id, $record->id, $notasAluno, $av->turma_id);
 
                     return $isIgnorada ? 'heroicon-o-exclamation-circle' : null;
