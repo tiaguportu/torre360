@@ -61,6 +61,7 @@ class Pessoa extends Model
     public function alunos(): BelongsToMany
     {
         return $this->belongsToMany(Pessoa::class, 'aluno_responsavel', 'responsavel_id', 'aluno_id')
+            ->using(AlunoResponsavel::class)
             ->withPivot('tipo_vinculo_id', 'permissao_retirada', 'observacao')
             ->withTimestamps();
     }
@@ -68,6 +69,7 @@ class Pessoa extends Model
     public function responsaveis(): BelongsToMany
     {
         return $this->belongsToMany(Pessoa::class, 'aluno_responsavel', 'aluno_id', 'responsavel_id')
+            ->using(AlunoResponsavel::class)
             ->withPivot('tipo_vinculo_id', 'permissao_retirada', 'observacao')
             ->withTimestamps();
     }

@@ -5,8 +5,10 @@ namespace App\Filament\Resources\Pessoas;
 use App\Filament\Resources\Pessoas\Pages\CreatePessoa;
 use App\Filament\Resources\Pessoas\Pages\EditPessoa;
 use App\Filament\Resources\Pessoas\Pages\ListPessoas;
+use App\Filament\Resources\Pessoas\RelationManagers\AlunosRelationManager;
 use App\Filament\Resources\Pessoas\RelationManagers\EnderecoRelationManager;
 use App\Filament\Resources\Pessoas\RelationManagers\MatriculasRelationManager;
+use App\Filament\Resources\Pessoas\RelationManagers\ResponsaveisRelationManager;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Filament\Resources\Pessoas\Tables\PessoasTable;
 use App\Models\Pessoa;
@@ -41,6 +43,8 @@ class PessoaResource extends Resource
     public static function getRelations(): array
     {
         return [
+            ResponsaveisRelationManager::class,
+            AlunosRelationManager::class,
             EnderecoRelationManager::class,
             MatriculasRelationManager::class,
         ];
