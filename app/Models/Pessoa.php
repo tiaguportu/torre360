@@ -57,4 +57,18 @@ class Pessoa extends Model
     {
         return $this->hasMany(Coordenador::class, 'pessoa_id');
     }
+
+    public function alunos(): BelongsToMany
+    {
+        return $this->belongsToMany(Pessoa::class, 'aluno_responsavel', 'responsavel_id', 'aluno_id')
+            ->withPivot('tipo_vinculo_id', 'permissao_retirada', 'observacao')
+            ->withTimestamps();
+    }
+
+    public function responsaveis(): BelongsToMany
+    {
+        return $this->belongsToMany(Pessoa::class, 'aluno_responsavel', 'aluno_id', 'responsavel_id')
+            ->withPivot('tipo_vinculo_id', 'permissao_retirada', 'observacao')
+            ->withTimestamps();
+    }
 }

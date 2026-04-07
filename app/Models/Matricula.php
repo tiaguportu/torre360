@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class Matricula extends Model
 {
@@ -148,6 +149,13 @@ class Matricula extends Model
             }
         }
 
+        // 3. Responsáveis Gerais do Aluno
+        if ($this->pessoa) {
+            foreach ($this->pessoa->responsaveis as $resp) {
+                $pessoasEnvolvidas->push($resp);
+            }
+        }
+
         if ($pessoasEnvolvidas->isEmpty()) {
             return collect();
         }
@@ -178,7 +186,7 @@ class Matricula extends Model
             } catch (\Throwable $e) {
                 $errorMessage = $e->getMessage();
                 $falhas[$user->email] = $errorMessage;
-                \Illuminate\Support\Facades\Log::error("Erro ao enviar notificação de documentos pendentes para {$user->email} na matrícula {$this->id}: ".$errorMessage);
+                Log::error("Erro ao enviar notificação de documentos pendentes para {$user->email} na matrícula {$this->id}: ".$errorMessage);
             }
         }
 
