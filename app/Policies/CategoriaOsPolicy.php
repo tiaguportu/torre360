@@ -14,32 +14,32 @@ class CategoriaOsPolicy
     
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:CategoriaOs');
+        return $authUser->can('view_any_categoria::os');
     }
 
     public function view(AuthUser $authUser, CategoriaOs $categoriaOs): bool
     {
-        return $authUser->can('View:CategoriaOs');
+        return $authUser->can('view_categoria::os');
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:CategoriaOs');
+        return $authUser->can('create_categoria::os');
     }
 
     public function update(AuthUser $authUser, CategoriaOs $categoriaOs): bool
     {
-        return $authUser->can('Update:CategoriaOs');
+        return $authUser->can('update_categoria::os');
     }
 
     public function delete(AuthUser $authUser, CategoriaOs $categoriaOs): bool
     {
-        return $authUser->can('Delete:CategoriaOs');
+        return $authUser->can('delete_categoria::os');
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:CategoriaOs');
+        return $authUser->can('delete_any_categoria::os');
     }
 
     public function restore(AuthUser $authUser, CategoriaOs $categoriaOs): bool

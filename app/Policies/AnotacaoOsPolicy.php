@@ -1,66 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\AnotacaoOs;
-use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AnotacaoOsPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    use HandlesAuthorization;
+    
+    public function viewAny(AuthUser $authUser): bool
     {
-        return false;
+        return $authUser->can('view_any_anotacao::os');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, AnotacaoOs $anotacaoOs): bool
+    public function view(AuthUser $authUser, AnotacaoOs $anotacaoOs): bool
     {
-        return false;
+        return $authUser->can('view_anotacao::os');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(AuthUser $authUser): bool
     {
-        return false;
+        return $authUser->can('create_anotacao::os');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, AnotacaoOs $anotacaoOs): bool
+    public function update(AuthUser $authUser, AnotacaoOs $anotacaoOs): bool
     {
-        return false;
+        return $authUser->can('update_anotacao::os');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, AnotacaoOs $anotacaoOs): bool
+    public function delete(AuthUser $authUser, AnotacaoOs $anotacaoOs): bool
     {
-        return false;
+        return $authUser->can('delete_anotacao::os');
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, AnotacaoOs $anotacaoOs): bool
+    public function deleteAny(AuthUser $authUser): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, AnotacaoOs $anotacaoOs): bool
-    {
-        return false;
+        return $authUser->can('delete_any_anotacao::os');
     }
 }

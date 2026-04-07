@@ -14,32 +14,32 @@ class OrdemServicoPolicy
     
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:OrdemServico');
+        return $authUser->can('view_any_ordem::servico');
     }
 
     public function view(AuthUser $authUser, OrdemServico $ordemServico): bool
     {
-        return $authUser->can('View:OrdemServico');
+        return $authUser->can('view_ordem::servico');
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:OrdemServico');
+        return $authUser->can('create_ordem::servico');
     }
 
     public function update(AuthUser $authUser, OrdemServico $ordemServico): bool
     {
-        return $authUser->can('Update:OrdemServico');
+        return $authUser->can('update_ordem::servico');
     }
 
     public function delete(AuthUser $authUser, OrdemServico $ordemServico): bool
     {
-        return $authUser->can('Delete:OrdemServico');
+        return $authUser->can('delete_ordem::servico');
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:OrdemServico');
+        return $authUser->can('delete_any_ordem::servico');
     }
 
     public function restore(AuthUser $authUser, OrdemServico $ordemServico): bool
