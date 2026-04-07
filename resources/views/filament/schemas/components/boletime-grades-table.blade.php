@@ -21,25 +21,17 @@
         @endforeach
 
         {{-- Legenda Unificada --}}
-        <div class="flex flex-wrap items-center gap-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs dark:border-gray-700 dark:bg-gray-800/50">
-            <div class="flex items-center gap-2">
-                <div class="h-3 w-3 rounded-sm bg-success-500"></div>
-                <span class="text-gray-600 dark:text-gray-400 font-medium">Aprovado (≥ 7,0)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="h-3 w-3 rounded-sm bg-warning-500"></div>
-                <span class="text-gray-600 dark:text-gray-400 font-medium">Recuperação (5,0 – 6,9)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="h-3 w-3 rounded-sm bg-danger-500"></div>
-                <span class="text-gray-600 dark:text-gray-400 font-medium">Reprovado (< 5,0)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <x-heroicon-m-exclamation-circle class="h-4 w-4 text-gray-400" />
-                <span class="text-gray-600 dark:text-gray-400">As notas riscadas indicam avaliações substituídas por outras de maior valor.</span>
-            </div>
-            <div class="ml-auto text-gray-400 dark:text-gray-500 italic">
-                * Notas consolidadas por categoria de avaliação.
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+            {{ $schemaComponent->getLegendInfolist() }}
+
+            <div class="mt-4 flex flex-wrap items-center gap-6 border-t border-gray-100 pt-4 text-xs dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <x-heroicon-m-exclamation-circle class="h-4 w-4 text-gray-400" />
+                    <span class="text-gray-600 dark:text-gray-400">As notas riscadas indicam avaliações substituídas por outras de maior valor.</span>
+                </div>
+                <div class="ml-auto italic text-gray-400 dark:text-gray-500">
+                    * Notas consolidadas por categoria de avaliação.
+                </div>
             </div>
         </div>
     @endif
