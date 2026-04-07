@@ -140,7 +140,16 @@ class DocumentosMatricula extends Page implements HasTable
                             ->first();
 
                         if ($inserido && $inserido->arquivo_path) {
-                            return Storage::disk('public')->download($inserido->arquivo_path);
+                            $extension = pathinfo($inserido->arquivo_path, PATHINFO_EXTENSION);
+                            $studentName = $this->record->pessoa->nome;
+                            $typeName = $record->nome;
+
+                            $safeStudentName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $studentName);
+                            $safeTypeName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $typeName);
+
+                            $newFileName = "{$this->record->codigo} - {$safeStudentName} - {$safeTypeName}.{$extension}";
+
+                            return Storage::disk('public')->download($inserido->arquivo_path, $newFileName);
                         }
 
                         Notification::make()
