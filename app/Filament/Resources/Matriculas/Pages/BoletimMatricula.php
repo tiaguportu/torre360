@@ -30,21 +30,21 @@ class BoletimMatricula extends Page implements HasSchemas
                 Section::make('Informações da Matrícula')
                     ->icon('heroicon-o-identification')
                     ->schema([
-                        TextEntry::make('aluno_info')
+                        TextEntry::make('aluno')
                             ->label('Nome do Aluno(a)')
-                            ->state(fn (?Model $record): string => $record?->pessoa?->nome ?? '-'),
-                        TextEntry::make('codigo_info')
-                            ->label('Matrícula / RA')
-                            ->state(fn (?Model $record): string => $record?->codigo ?? '-'),
-                        TextEntry::make('turma_info')
+                            ->state(fn(?Model $record): string => $record?->pessoa?->nome ?? '-'),
+                        TextEntry::make('matricula')
+                            ->label('Matrícula')
+                            ->state(fn(?Model $record): string => $record?->codigo ?? '-'),
+                        TextEntry::make('Turma')
                             ->label('Turma Atual')
-                            ->state(fn (?Model $record): string => $record?->turma?->nome ?? '-'),
-                        TextEntry::make('curso_info')
-                            ->label('Curso / Nível de Ensino')
-                            ->state(fn (?Model $record): string => $record?->turma?->serie?->curso?->nome ?? '-'),
-                        TextEntry::make('ano_info')
-                            ->label('Ano Pedagógico')
-                            ->state(fn (?Model $record): string => $record?->turma?->periodoLetivo?->ano ?? now()->year),
+                            ->state(fn(?Model $record): string => $record?->turma?->nome ?? '-'),
+                        TextEntry::make('curso')
+                            ->label('Curso')
+                            ->state(fn(?Model $record): string => $record?->turma?->serie?->curso?->nome ?? '-'),
+                        TextEntry::make('periodo_letivo')
+                            ->label('Período Letivo')
+                            ->state(fn(?Model $record): string => $record?->turma?->periodoLetivo?->ano ?? now()->year),
                         TextEntry::make('emissao_info')
                             ->label('Data Emissão')
                             ->state(now()->format('d/m/Y')),
