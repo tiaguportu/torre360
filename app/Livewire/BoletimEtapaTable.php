@@ -25,15 +25,6 @@ class BoletimEtapaTable extends Component implements HasForms, HasTable
     public int $matriculaId;
     public int $etapaId;
 
-    public $tableFilters = null;
-    public $tableSearch = '';
-    public $tableColumnSearches = [];
-    public $tableSort = null;
-    public $tableRecordsPerPage = null;
-    public $tableGrouping = null;
-    public $mountedActions = [];
-    public $mountedActionsData = [];
-
     public function table(Table $table): Table
     {
         $matricula = Matricula::find($this->matriculaId);
