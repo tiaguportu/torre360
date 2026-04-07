@@ -105,7 +105,6 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         return $table
             ->query(Disciplina::query()->whereIn('id', $avaliacoes->pluck('disciplina_id')->unique()->toArray()))
             ->heading($etapa->nome)
-            ->description('Resultados acadêmicos referentes ao período')
             ->columns([
                 TextColumn::make('nome')
                     ->label('Disciplina')
