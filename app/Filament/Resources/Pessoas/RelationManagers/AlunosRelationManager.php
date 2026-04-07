@@ -65,7 +65,6 @@ class AlunosRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
-                    ->inverseRelationship('responsaveis')
                     ->preloadRecordSelect()
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
@@ -79,6 +78,7 @@ class AlunosRelationManager extends RelationManager
                             ->label('Observação'),
                     ]),
             ])
+            ->inverseRelationship('responsaveis')
             ->recordActions([
                 EditAction::make(),
                 DetachAction::make(),
