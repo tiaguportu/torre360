@@ -54,7 +54,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
         foreach ($categorias as $categoria) {
             $dynamicColumns[] = TextColumn::make("cat_{$categoria->id}")
-                ->label($categoria->nome)
+                ->label()
                 ->alignCenter()
                 ->state(function (Disciplina $record) use ($categoria, $avaliacoes, $notasAluno) {
                     $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
