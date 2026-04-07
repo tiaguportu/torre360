@@ -8,14 +8,18 @@ use App\Models\Disciplina;
 use App\Models\Matricula;
 use App\Models\Nota;
 use App\Models\EtapaAvaliativa;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Support\Contracts\TranslatableContentDriver;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 
-class BoletimEtapaTable extends Component implements HasTable
+class BoletimEtapaTable extends Component implements HasForms, HasTable
 {
+    use InteractsWithForms;
     use InteractsWithTable;
 
     public int $matriculaId;
@@ -207,6 +211,11 @@ class BoletimEtapaTable extends Component implements HasTable
             if ($media !== null) { $somaMediasAlunos += $media; $countAlunos++; }
         }
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
+    }
+
+    public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver
+    {
+        return null;
     }
 
     public function render()
