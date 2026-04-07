@@ -3,12 +3,12 @@
 namespace App\Filament\Schemas\Components;
 
 use App\Models\Avaliacao;
-use App\Models\Matricula;
 use App\Models\EtapaAvaliativa;
+use App\Models\Matricula;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Grid;
-use Filament\Infolists\Infolist;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
 
 class BoletimeGradesTable extends Component
@@ -26,6 +26,7 @@ class BoletimeGradesTable extends Component
         if ($record instanceof Matricula) {
             return $record;
         }
+
         return $record?->matriculas?->first();
     }
 
@@ -35,12 +36,13 @@ class BoletimeGradesTable extends Component
     public function getEtapasComNotas(): Collection
     {
         $matricula = $this->getMatricula();
-        if (!$matricula)
+        if (! $matricula) {
             return collect();
+        }
 
         // Pega os IDs das etapas vinculadas às notas do aluno
         $etapaIds = Avaliacao::query()
-            ->whereHas('notas', fn($q) => $q->where('matricula_id', $matricula->id)->whereNotNull('valor'))
+            ->whereHas('notas', fn ($q) => $q->where('matricula_id', $matricula->id)->whereNotNull('valor'))
             ->where('turma_id', $matricula->turma_id)
             ->pluck('etapa_avaliativa_id')
             ->unique();
@@ -48,9 +50,9 @@ class BoletimeGradesTable extends Component
         return EtapaAvaliativa::whereIn('id', $etapaIds)->orderBy('id')->get();
     }
 
-    public function getLegendInfolist(): Infolist
+    public function getLegendInfolist(): Schema
     {
-        return Infolist::make()
+        return Schema::make()
             ->state([
                 'aprovado' => '≥ 7,0',
                 'recuperacao' => '5,0 – 6,9',
@@ -71,7 +73,7 @@ class BoletimeGradesTable extends Component
                             ->label('Reprovado')
                             ->badge()
                             ->color('danger'),
-                    ])
+                    ]),
             ]);
     }
 }
