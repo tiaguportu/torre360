@@ -65,7 +65,6 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
                     return number_format($mediaCat, 1, ',', '.');
                 })
-                //->badge()
                 ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') {
                         return 'gray';
@@ -86,10 +85,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         return [];
                     }
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return [
-                            'class' => 'line-through opacity-50',
-                            'style' => 'text-decoration: line-through !important;',
-                        ];
+                        return ['class' => 'line-through opacity-50'];
                     }
 
                     return [];
@@ -117,14 +113,12 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->label('Média Etapa')
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->calcularMediaFinal($record->id, $avaliacoes, $notasAluno))
-                    ->badge()
                     ->color(fn($state) => $state >= 7 ? 'success' : ($state >= 5 ? 'warning' : 'danger'))
                     ->formatStateUsing(fn($state) => number_format((float) $state, 1, ',', '.')),
                 TextColumn::make('media_turma')
                     ->label('Média Turma')
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
-                    ->badge()
                     ->color('gray')
                     ->formatStateUsing(fn($state) => number_format((float) $state, 1, ',', '.')),
             ])
