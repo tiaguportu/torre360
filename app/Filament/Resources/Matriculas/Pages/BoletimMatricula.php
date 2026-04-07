@@ -77,13 +77,13 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
         // Isso garante que as notas do 1º Bimestre não se misturem com as do 2º Bimestre
         $gruposColunas = $avaliacoes->map(fn($av) => [
                 'etapa_id' => $av->etapa_avaliativa_id,
-                'categoria_id' => $av->categoria_id,
+                'categoria_avaliacao_id' => $av->categoria_avaliacao_id,
                 'nome_etapa' => $av->etapaAvaliativa->nome ?? '',
                 'nome_categoria' => $av->categoria->nome ?? '',
                 'substitui_id' => $av->categoria?->categoria_avaliacao_substituicao_id,
             ])
-            ->unique(fn($i) => $i['etapa_id'] . '-' . $i['categoria_id'])
-            ->sortBy(['etapa_id', 'categoria_id']);
+            ->unique(fn($i) => $i['etapa_id'] . '-' . $i['categoria_avaliacao_id'])
+            ->sortBy(['etapa_id', 'categoria_avaliacao_id']);
 
         $notasAluno = $this->record->notas()
             ->get()
@@ -98,7 +98,7 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
         $dynamicColumns = [];
 
         foreach ($gruposColunas as $grupo) {
-            $colKey = "et_{$grupo['etapa_id']}_cat_{$grupo['categoria_id']}";
+            $colKey = "et_{$grupo['etapa_id']}_cat_{$grupo['categoria_avaliacao_id']}";
             
             $dynamicColumns[] = TextColumn::make($colKey)
                 ->label($grupo['nome_categoria'])
@@ -107,7 +107,7 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
                 ->state(function (Disciplina $record) use ($grupo, $avaliacoes, $notasAluno) {
                     $avs = $avaliacoes->where('disciplina_id', $record->id)
                                     ->where('etapa_avaliativa_id', $grupo['etapa_id'])
-                                    ->where('categoria_id', $grupo['categoria_id']);
+                                    ->where('categoria_avaliacao_id', $grupo['categoria_avaliacao_id']);
                     
                     if ($avs->isEmpty()) return '·';
                     
@@ -183,7 +183,7 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
     {
         $avs = $avaliacoes->where('disciplina_id', $disciplinaId)
                          ->where('etapa_avaliativa_id', $grupo['etapa_id'])
-                         ->where('categoria_id', $grupo['categoria_id']);
+                         ->where('categoria_avaliacao_id', $grupo['categoria_avaliacao_id']);
         
         $soma = 0; $count = 0;
         foreach ($avs as $av) {
@@ -202,7 +202,7 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
         $grupoSubstituido = [
             'etapa_id' => $grupo['etapa_id'],
-            'categoria_id' => $grupo['substitui_id']
+            'categoria_avaliacao_id' => $grupo['substitui_id']
         ];
         
         $valorSubstituido = $this->getMediaGrupo($grupoSubstituido, $disciplinaId, $avaliacoes, $notasAluno);
@@ -217,13 +217,13 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
         // Checar se existe um grupo que SUBSTITUI este grupo e é superior
         $substituto = $avaliacoes->where('disciplina_id', $disciplinaId)
             ->where('etapa_avaliativa_id', $grupo['etapa_id'])
-            ->where('categoria.categoria_avaliacao_substituicao_id', $grupo['categoria_id'])
+            ->where('categoria.categoria_avaliacao_substituicao_id', $grupo['categoria_avaliacao_id'])
             ->first();
             
         if ($substituto) {
             $mediaSub = $this->getMediaGrupo([
                 'etapa_id' => $grupo['etapa_id'],
-                'categoria_id' => $substituto->categoria_id
+                'categoria_avaliacao_id' => $substituto->categoria_avaliacao_id
             ], $disciplinaId, $avaliacoes, $notasAluno);
             
             if ($mediaSub !== null && $mediaSub > $valorAtual) {
