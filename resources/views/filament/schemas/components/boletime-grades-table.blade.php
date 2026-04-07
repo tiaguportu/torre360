@@ -1,4 +1,5 @@
 @php
+    use Filament\Infolists\Components\TextEntry;
     $etapas = $schemaComponent->getEtapasComNotas();
     $matricula = $schemaComponent->getMatricula();
 @endphp
