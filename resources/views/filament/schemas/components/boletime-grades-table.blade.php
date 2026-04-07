@@ -1,11 +1,10 @@
 @php
-    $data = $getComponent()->getViewData();
+    $data = $component->getViewData();
     $matricula = $data['matricula'];
     $avaliacoesPorDisciplina = $data['avaliacoesPorDisciplina'];
     $disciplinas = $data['disciplinas'];
     $notasAluno = $data['notasAluno'];
     $notasTurma = $data['notasTurma'];
-    $component = $getComponent();
 
     // Coleta todas as avaliações únicas (colunas da tabela), mantendo ordem por disciplina e etapa
     $todasAvaliacoes = $avaliacoesPorDisciplina->flatten(1)->sortBy(['disciplina_id', 'etapa_avaliativa_id', 'id']);
