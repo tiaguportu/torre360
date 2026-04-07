@@ -73,13 +73,17 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
             ->with(['categoria', 'etapaAvaliativa'])
             ->get();
 
-        $categorias = $avaliacoes->map(fn($av) => $av->categoria)
-            ->filter()
-            ->unique('id')
-            ->sortBy(function($cat) use ($avaliacoes) {
-                $av = $avaliacoes->where('categoria_id', $cat->id)->first();
-                return [$av?->etapa_avaliativa_id ?? 0, $cat->id];
-            });
+        // Identifica as combinações ÚNICAS de Etapa + Categoria presentes na turma
+        // Isso garante que as notas do 1º Bimestre não se misturem com as do 2º Bimestre
+        $gruposColunas = $avaliacoes->map(fn($av) => [
+                'etapa_id' => $av->etapa_avaliativa_id,
+                'categoria_id' => $av->categoria_id,
+                'nome_etapa' => $av->etapaAvaliativa->nome ?? '',
+                'nome_categoria' => $av->categoria->nome ?? '',
+                'substitui_id' => $av->categoria?->categoria_avaliacao_substituicao_id,
+            ])
+            ->unique(fn($i) => $i['etapa_id'] . '-' . $i['categoria_id'])
+            ->sortBy(['etapa_id', 'categoria_id']);
 
         $notasAluno = $this->record->notas()
             ->get()
@@ -93,44 +97,57 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
         $dynamicColumns = [];
 
-        foreach ($categorias as $categoria) {
-            $dynamicColumns[] = TextColumn::make("cat_{$categoria->id}")
-                ->label($categoria->nome)
+        foreach ($gruposColunas as $grupo) {
+            $colKey = "et_{$grupo['etapa_id']}_cat_{$grupo['categoria_id']}";
+            
+            $dynamicColumns[] = TextColumn::make($colKey)
+                ->label($grupo['nome_categoria'])
+                ->description($grupo['nome_etapa'])
                 ->alignCenter()
-                ->state(function (Disciplina $record) use ($categoria, $avaliacoes, $notasAluno) {
-                    $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
+                ->state(function (Disciplina $record) use ($grupo, $avaliacoes, $notasAluno) {
+                    $avs = $avaliacoes->where('disciplina_id', $record->id)
+                                    ->where('etapa_avaliativa_id', $grupo['etapa_id'])
+                                    ->where('categoria_id', $grupo['categoria_id']);
                     
-                    if ($mediaCat === null) {
-                        return $avaliacoes->where('disciplina_id', $record->id)->where('categoria_id', $categoria->id)->isEmpty() ? '·' : '—';
+                    if ($avs->isEmpty()) return '·';
+                    
+                    $notas = [];
+                    foreach ($avs as $av) {
+                        $nota = $notasAluno->get($av->id);
+                        if ($nota) {
+                            $notas[] = number_format((float) $nota->valor, 1, ',', '.');
+                        }
                     }
-                    
-                    return number_format($mediaCat, 1, ',', '.');
+
+                    return empty($notas) ? '—' : implode(' | ', $notas);
                 })
                 ->badge()
-                ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                ->color(function (Disciplina $record, $state) use ($grupo, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') return 'gray';
                     
-                    $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
-                    if ($mediaCat === null) return 'gray';
+                    // Pega a média para decidir a cor
+                    $media = $this->getMediaGrupo($grupo, $record->id, $avaliacoes, $notasAluno);
+                    if ($media === null) return 'gray';
                     
-                    $isIgnorada = $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno);
+                    if ($this->isGrupoIgnorado($grupo, $record->id, $avaliacoes, $notasAluno)) {
+                        return 'gray';
+                    }
 
-                    if ($isIgnorada) return 'gray';
-                    return $mediaCat >= 6.0 ? 'success' : 'danger';
+                    return $media >= 6.0 ? 'success' : 'danger';
                 })
-                ->extraAttributes(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                ->extraAttributes(function (Disciplina $record, $state) use ($grupo, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') return [];
                     
-                    if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
+                    if ($this->isGrupoIgnorado($grupo, $record->id, $avaliacoes, $notasAluno)) {
                         return ['class' => 'line-through opacity-50'];
                     }
 
                     return [];
                 })
-                ->icon(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                ->icon(function (Disciplina $record, $state) use ($grupo, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') return null;
                     
-                    return $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno) 
+                    return $this->isGrupoIgnorado($grupo, $record->id, $avaliacoes, $notasAluno) 
                         ? 'heroicon-o-exclamation-circle' 
                         : null;
                 });
@@ -162,87 +179,118 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
             ->paginated(false);
     }
 
-    private function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): ?float
+    private function getMediaGrupo(array $grupo, int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): ?float
     {
         $avs = $avaliacoes->where('disciplina_id', $disciplinaId)
-                         ->where('categoria_id', $categoriaId);
+                         ->where('etapa_avaliativa_id', $grupo['etapa_id'])
+                         ->where('categoria_id', $grupo['categoria_id']);
         
-        if ($avs->isEmpty()) return null;
-        
-        $soma = 0;
-        $count = 0;
+        $soma = 0; $count = 0;
         foreach ($avs as $av) {
             $nota = $notasAluno->get($av->id);
-            if ($nota) {
-                $soma += (float) $nota->valor;
-                $count++;
-            }
+            if ($nota) { $soma += (float) $nota->valor; $count++; }
         }
-        
         return $count > 0 ? $soma / $count : null;
     }
 
-    private function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): bool
+    private function isGrupoIgnorado(array $grupo, int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): bool
     {
-        $categoriasDaDisciplina = $avaliacoes->where('disciplina_id', $disciplinaId)
-            ->map(fn($av) => $av->categoria)->filter()->unique('id');
+        if (!$grupo['substitui_id']) return false;
 
-        $dados = [];
-        foreach ($categoriasDaDisciplina as $cat) {
-            $dados[$cat->id] = [
-                'valor' => $this->getMediaConsolidadaCategoria($cat->id, $disciplinaId, $avaliacoes, $notasAluno),
-                'substitui_id' => $cat->categoria_avaliacao_substituicao_id,
-                'ignorar' => false,
-            ];
+        $valorAtual = $this->getMediaGrupo($grupo, $disciplinaId, $avaliacoes, $notasAluno);
+        if ($valorAtual === null) return false;
+
+        $grupoSubstituido = [
+            'etapa_id' => $grupo['etapa_id'],
+            'categoria_id' => $grupo['substitui_id']
+        ];
+        
+        $valorSubstituido = $this->getMediaGrupo($grupoSubstituido, $disciplinaId, $avaliacoes, $notasAluno);
+        
+        if ($valorSubstituido !== null && $valorAtual > $valorSubstituido) {
+            // Este grupo NÃO é ignorado, ele que ignora o outro.
+            // Mas o método pergunta "é ignorado?". 
+            // Precisamos checar se EXISTE um substituto superior para este grupo.
+            return false; 
         }
 
-        foreach ($dados as $id => &$item) {
-            if ($item['substitui_id'] && $item['valor'] !== null) {
-                if (isset($dados[$item['substitui_id']]) && $dados[$item['substitui_id']]['valor'] !== null) {
-                    if ($item['valor'] > $dados[$item['substitui_id']]['valor']) {
-                        $dados[$item['substitui_id']]['ignorar'] = true;
-                    } else {
-                        $item['ignorar'] = true;
-                    }
-                }
+        // Checar se existe um grupo que SUBSTITUI este grupo e é superior
+        $substituto = $avaliacoes->where('disciplina_id', $disciplinaId)
+            ->where('etapa_avaliativa_id', $grupo['etapa_id'])
+            ->where('categoria.categoria_avaliacao_substituicao_id', $grupo['categoria_id'])
+            ->first();
+            
+        if ($substituto) {
+            $mediaSub = $this->getMediaGrupo([
+                'etapa_id' => $grupo['etapa_id'],
+                'categoria_id' => $substituto->categoria_id
+            ], $disciplinaId, $avaliacoes, $notasAluno);
+            
+            if ($mediaSub !== null && $mediaSub > $valorAtual) {
+                return true;
             }
         }
 
-        return $dados[$categoriaId]['ignorar'] ?? false;
+        return false;
     }
 
     private function calcularMediaFinalDisciplina(int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): ?float
     {
-        $categoriasDaDisciplina = $avaliacoes->where('disciplina_id', $disciplinaId)
-            ->map(fn($av) => $av->categoria)->filter()->unique('id');
+        $avs = $avaliacoes->where('disciplina_id', $disciplinaId);
+        if ($avs->isEmpty()) return null;
 
-        $somasCategorias = [];
-        foreach ($categoriasDaDisciplina as $cat) {
-            $valor = $this->getMediaConsolidadaCategoria($cat->id, $disciplinaId, $avaliacoes, $notasAluno);
-            if ($valor !== null) {
-                $somasCategorias[$cat->id] = [
-                    'valor' => $valor,
-                    'substitui_id' => $cat->categoria_avaliacao_substituicao_id,
-                    'ignorar' => false
-                ];
+        $soma = 0; $count = 0;
+        // Agrupa por etapa pra calcular médias de bimestres se necessário? 
+        // Por enquanto, média simples de todas as avaliações válidas
+        
+        $totalPonderado = 0; $totalPeso = 0;
+        foreach ($avs as $av) {
+            $nota = $notasAluno->get($av->id);
+            if ($nota) {
+                $isIgnorada = $this->isAvaliacaoIgnorada($av, $disciplinaId, $avaliacoes, $notasAluno);
+                if (!$isIgnorada) {
+                    $peso = (float)($av->nota_maxima ?? 10);
+                    $totalPonderado += (float)$nota->valor * $peso;
+                    $totalPeso += $peso;
+                }
             }
         }
+        return $totalPeso > 0 ? $totalPonderado / $totalPeso : null;
+    }
 
-        foreach ($somasCategorias as $id => &$item) {
-            if ($item['substitui_id'] && isset($somasCategorias[$item['substitui_id']])) {
-                if ($item['valor'] > $somasCategorias[$item['substitui_id']]['valor']) {
-                    $somasCategorias[$item['substitui_id']]['ignorar'] = true;
-                } else {
-                    $item['ignorar'] = true;
+    private function isAvaliacaoIgnorada($av, int $disciplinaId, Collection $avaliacoes, Collection $notasAluno): bool
+    {
+        $notaAtual = $notasAluno->get($av->id);
+        if (!$notaAtual) return false;
+
+        // Se esta avaliação tem um substituto na mesma etapa/disciplina que é superior
+        $substituto = $avaliacoes->where('disciplina_id', $disciplinaId)
+            ->where('etapa_avaliativa_id', $av->etapa_avaliativa_id)
+            ->where('categoria.categoria_avaliacao_substituicao_id', $av->categoria_id)
+            ->first();
+
+        if ($substituto) {
+            $notaSub = $notasAluno->get($substituto->id);
+            if ($notaSub && (float)$notaSub->valor > (float)$notaAtual->valor) {
+                return true;
+            }
+        }
+        
+        // Se esta avaliação é a substituta, mas é inferior à original
+        if ($av->categoria?->categoria_avaliacao_substituicao_id) {
+            $original = $avaliacoes->where('disciplina_id', $disciplinaId)
+                ->where('etapa_avaliativa_id', $av->etapa_avaliativa_id)
+                ->where('categoria_id', $av->categoria->categoria_avaliacao_substituicao_id)
+                ->first();
+            if ($original) {
+                $notaOrig = $notasAluno->get($original->id);
+                if ($notaOrig && (float)$notaOrig->valor >= (float)$notaAtual->valor) {
+                    return true;
                 }
             }
         }
 
-        $validas = array_filter($somasCategorias, fn($i) => !$i['ignorar']);
-        
-        if (empty($validas)) return null;
-
-        return array_sum(array_column($validas, 'valor')) / count($validas);
+        return false;
     }
 
     private function calcularMediaTurmaDisciplina(int $disciplinaId, Collection $avaliacoes, Collection $notasTurma): ?float
@@ -256,23 +304,16 @@ class BoletimMatricula extends Page implements HasSchemas, HasTable
 
         if (empty($matriculaIds)) return null;
 
-        $somaMediasAlunos = 0;
-        $countAlunos = 0;
-
+        $somaMediasAlunos = 0; $countAlunos = 0;
         foreach (array_keys($matriculaIds) as $mId) {
             $notasDoAluno = collect();
             foreach ($avaliacoes->where('disciplina_id', $disciplinaId) as $av) {
                 $nota = $notasTurma->get($av->id, collect())->firstWhere('matricula_id', $mId);
                 if ($nota) $notasDoAluno->put($av->id, $nota);
             }
-
             $media = $this->calcularMediaFinalDisciplina($disciplinaId, $avaliacoes, $notasDoAluno);
-            if ($media !== null) {
-                $somaMediasAlunos += $media;
-                $countAlunos++;
-            }
+            if ($media !== null) { $somaMediasAlunos += $media; $countAlunos++; }
         }
-
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
     }
 
