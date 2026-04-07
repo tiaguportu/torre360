@@ -14,15 +14,31 @@ class CategoriaAvaliacaoForm
         return $schema
             ->components([
                 TextInput::make('nome')
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('descricao')
+                    ->label('Descrição')
+                    ->maxLength(255),
+                TextInput::make('ordem')
+                    ->label('Ordem')
+                    ->numeric()
+                    ->default(0)
                     ->required(),
+
                 Select::make('categoria_avaliacao_substituicao_id')
                     ->label('Substitui a categoria')
                     ->helperText('Quando há avaliações desta categoria, a nota da categoria substituída é ignorada no cálculo do boletim.')
-                    ->options(fn (?CategoriaAvaliacao $record) => CategoriaAvaliacao::query()
-                        ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
-                        ->pluck('nome', 'id'))
-                    ->searchable()
+                    ->relationship(
+                        'substituicao',
+                        'nome',
+                        modifyQueryUsing: fn ($query, ?CategoriaAvaliacao $record) => $query
+                            ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
+                            ->orderBy('ordem')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome} - {$record->descricao}")
+                    ->searchable(['nome', 'descricao'])
                     ->nullable()
+                    ->preload()
                     ->placeholder('Nenhuma (não substitui)'),
             ]);
     }

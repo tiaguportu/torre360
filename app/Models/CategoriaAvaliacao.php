@@ -17,6 +17,11 @@ class CategoriaAvaliacao extends Model
 
     protected $guarded = [];
 
+    public function getNomeComDescricaoAttribute(): string
+    {
+        return $this->descricao ? "{$this->nome} - {$this->descricao}" : $this->nome;
+    }
+
     public function avaliacoes(): HasMany
     {
         return $this->hasMany(Avaliacao::class, 'categoria_avaliacao_id');

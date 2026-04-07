@@ -15,7 +15,17 @@ class CategoriaAvaliacaosTable
         return $table
             ->columns([
                 TextColumn::make('nome')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('descricao')
+                    ->label('Descrição')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('ordem')
+                    ->label('Ordem')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('substituicao.nome')
                     ->label('Substitui')
                     ->placeholder('—')
@@ -40,6 +50,7 @@ class CategoriaAvaliacaosTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('ordem');
     }
 }

@@ -93,9 +93,14 @@ class AvaliacaosTable
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('categoria_avaliacao_id')
-                    ->relationship('categoria', 'nome')
+                    ->relationship(
+                        'categoria',
+                        'nome',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('ordem')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome} - {$record->descricao}")
                     ->label('Categoria')
-                    ->searchable()
+                    ->searchable(['nome', 'descricao'])
                     ->preload(),
                 SelectFilter::make('turma_id')
                     ->relationship('turma', 'nome')
