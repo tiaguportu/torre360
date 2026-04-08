@@ -31,16 +31,11 @@ class ListTransacaoBancarias extends ListRecords
                         ->required(),
                     FileUpload::make('arquivo')
                         ->label('Arquivo')
-                        ->acceptedFileTypes(['application/x-ofx', 'text/csv', 'text/plain'])
-                        ->mimeTypeMap([
-                            'ofx' => 'application/x-ofx',
-                        ])
                         ->required()
                         ->disk('local')
                         ->directory('imports/extratos'),
                 ])
                 ->action(function (array $data, ConciliacaoBancariaService $service) {
-                    dd($data['arquivo']);
                     $filePath = Storage::disk('local')->path($data['arquivo']);
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
                     $content = file_get_contents($filePath);
