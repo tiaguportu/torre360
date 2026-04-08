@@ -50,6 +50,12 @@ class MatriculaForm
                             ->searchable()
                             ->preload(),
                     ]),
+                Select::make('periodoLetivo')
+                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->label('Período Letivo'),
                 Select::make('turma')
                     ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? "Turma #{$record->id}")

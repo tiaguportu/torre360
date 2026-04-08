@@ -12,6 +12,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -267,6 +268,54 @@ class MatriculasTable
                             }
                         }),
                     DeleteBulkAction::make(),
+                    BulkAction::make('editar_lote')
+                        ->label('Editar em Lote')
+                        ->icon(Heroicon::OutlinedPencilSquare)
+                        ->form([
+                            Select::make('turma_id')
+                                ->label('Turma')
+                                ->relationship('turma', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('periodo_letivo_id')
+                                ->label('Período Letivo')
+                                ->relationship('periodoLetivo', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('situacao_matricula_id')
+                                ->label('Situação')
+                                ->relationship('situacaoMatricula', 'nome')
+                                ->searchable()
+                                ->preload(),
+                            DatePicker::make('data_matricula')
+                                ->label('Data de Matrícula'),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $updateData = array_filter($data);
+
+                            if (empty($updateData)) {
+                                Notification::make()
+                                    ->title('Nenhuma alteração selecionada')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $count = $records->count();
+
+                            $records->each(fn (Matricula $record) => $record->update($updateData));
+
+                            Notification::make()
+                                ->title("{$count} matrículas atualizadas com sucesso!")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Editar Matrículas em Lote')
+                        ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
+                        ->modalSubmitActionLabel('Atualizar Selecionadas'),
                 ]),
             ]);
     }
