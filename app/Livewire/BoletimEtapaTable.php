@@ -71,6 +71,13 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         $stateStr = '—';
                     }
 
+                    $isIgnorada = ($stateStr !== '·' && $stateStr !== '—') && $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno);
+
+                    $color = 'gray';
+                    if ($stateStr !== '·' && $stateStr !== '—' && $mediaCat !== null && ! $isIgnorada) {
+                        $color = $mediaCat >= 6.0 ? 'success' : 'danger';
+                    }
+
                     return [
                         'display' => $stateStr,
                         'media' => $mediaCat,
@@ -79,44 +86,10 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         'can_edit' => auth()->user()->can('ModificarNotaPorBoletim') && $avs->count() === 1,
                         'disciplina_id' => $record->id,
                         'categoria_id' => $categoria->id,
+                        'color' => $color,
+                        'icon' => $isIgnorada ? 'heroicon-m-exclamation-circle' : null,
+                        'is_ignorada' => $isIgnorada,
                     ];
-                })
-                ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state['display'] === '·' || $state['display'] === '—') {
-                        return 'gray';
-                    }
-                    $mediaCat = $state['media'];
-                    if ($mediaCat === null) {
-                        return 'gray';
-                    }
-                    $isIgnorada = $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno);
-                    if ($isIgnorada) {
-                        return 'gray';
-                    }
-
-                    return $mediaCat >= 6.0 ? 'success' : 'danger';
-                })
-                ->extraAttributes(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state['display'] === '·' || $state['display'] === '—') {
-                        return [];
-                    }
-                    if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return [
-                            'class' => 'line-through opacity-50',
-                            'style' => 'text-decoration: line-through !important',
-                        ];
-                    }
-
-                    return [];
-                })
-                ->icon(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state['display'] === '·' || $state['display'] === '—') {
-                        return null;
-                    }
-
-                    return $this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)
-                        ? 'heroicon-m-exclamation-circle'
-                        : null;
                 })
                 ->tooltip(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     $avs = $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id);
