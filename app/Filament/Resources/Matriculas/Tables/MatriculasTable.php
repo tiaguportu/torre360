@@ -121,7 +121,7 @@ class MatriculasTable
                     ->icon(Heroicon::OutlinedAcademicCap)
                     ->color('info')
                     ->url(fn (Matricula $record) => BoletimMatricula::getUrl(['record' => $record]))
-                    ->visible(fn (Matricula $record) => auth()->user()->can('boletim', $record)),
+                    ->visible(fn (Matricula $record) => auth()->user()->can('boletim', $record) && $record->notas()->whereNotNull('valor')->exists()),
                 Action::make('inserir_documentos')
                     ->label('Documentos')
                     ->tooltip('Gerenciar Documentos Obrigatórios')
