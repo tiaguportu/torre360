@@ -72,10 +72,9 @@ class FaturaForm
                             ->required()
                             ->live()
                             ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
-                        TextInput::make('valor_total_item')
+                        \Filament\Forms\Components\Placeholder::make('valor_total_item')
                             ->label('Total Item')
-                            ->readOnly()
-                            ->state(function (Get $get) {
+                            ->content(function (Get $get) {
                                 $vlr = (float) $get('valor_unitario');
                                 $qtd = (float) $get('quantidade');
                                 $desc = (float) $get('desconto');
@@ -89,7 +88,7 @@ class FaturaForm
                                     $total -= ($total * ($desc / 100));
                                 }
 
-                                return number_format($total, 2, '.', '');
+                                return 'R$ ' . number_format($total, 2, ',', '.');
                             }),
                     ])
                     ->columns(6)
