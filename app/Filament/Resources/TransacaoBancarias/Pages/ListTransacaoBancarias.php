@@ -47,11 +47,16 @@ class ListTransacaoBancarias extends ListRecords
                 ])
                 ->action(function (array $data, ConciliacaoBancariaService $service) {
                     $filePath = Storage::disk('local')->path($data['arquivo']);
+                    $mimeType = Storage::disk('local')->mimeType($data['arquivo']);
+                    
+                    // Comente a linha abaixo após descobrir o mimetype
+                    dd("Mimetype detectado: " . $mimeType);
+
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
                     $content = file_get_contents($filePath);
 
                     $importedCount = 0;
-                    
+
                     // Verifica se o conteúdo parece ser OFX (mesmo que a extensão seja outra)
                     if (str_contains($content, '<OFX>') || str_contains($content, 'OFXHEADER') || strtolower($extension) === 'ofx') {
                         $importedCount = $service->processarOfx($content, (int) $data['banco_id']);
