@@ -17,20 +17,23 @@ class FaturasTable
                 TextColumn::make('id')
                     ->label('Nº Fatura')
                     ->sortable(),
-                TextColumn::make('contrato_id')
+                TextColumn::make('contrato.id')
                     ->label('Contrato')
+                    ->formatStateUsing(fn ($state) => "#{$state}")
                     ->sortable(),
                 TextColumn::make('vencimento')
                     ->date()
                     ->sortable(),
                 TextColumn::make('valor')
-                    ->label('Valor')
-                    ->money('BRL')
-                    ->sortable(),
+                    ->label('Valor Total')
+                    ->money('BRL'),
                 TextColumn::make('valor_pago')
-                    ->label('Valor Pago')
+                    ->label('Total Pago')
+                    ->money('BRL'),
+                TextColumn::make('valor_restante')
+                    ->label('Saldo Devedor')
                     ->money('BRL')
-                    ->sortable(),
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

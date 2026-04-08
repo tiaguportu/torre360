@@ -4,12 +4,12 @@ namespace App\Filament\Resources\Faturas\Schemas;
 
 use App\Models\Contrato;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class FaturaForm
@@ -20,24 +20,39 @@ class FaturaForm
             ->components([
                 Select::make('contrato_id')
                     ->label('Contrato')
-                    ->relationship('contrato', 'id') // Por enquanto usando ID, mas vou melhorar
+                    ->relationship('contrato', 'id')
                     ->getOptionLabelFromRecordUsing(fn (Contrato $record) => "Contrato #{$record->id}")
                     ->searchable()
                     ->preload()
                     ->required(),
                 DatePicker::make('vencimento')
                     ->required(),
-                TextInput::make('valor')
-                    ->label('Valor Total')
-                    ->required()
-                    ->numeric()
-                    ->readOnly()
-                    ->helperText('O valor total é a soma dos itens.'),
-                TextInput::make('valor_pago')
-                    ->numeric(),
                 TextInput::make('status')
                     ->required()
                     ->default('pendente'),
+                
+                Placeholder::make('total_consolidado')
+                    ->label('Valor Total Consolidado')
+                    ->content(function (Get $get) {
+                        $itens = $get('itens') ?? [];
+                        $total = 0;
+                        foreach ($itens as $item) {
+                            $vlr = (float) ($item['valor_unitario'] ?? 0);
+                            $qtd = (float) ($item['quantidade'] ?? 0);
+                            $desc = (float) ($item['desconto'] ?? 0);
+                            $tipo = $item['tipo_desconto'] ?? 'absoluto';
+
+                            $totalItem = $vlr * $qtd;
+                            if ($tipo === 'absoluto') {
+                                $totalItem -= $desc;
+                            } else {
+                                $totalItem -= ($totalItem * ($desc / 100));
+                            }
+                            $total += $totalItem;
+                        }
+                        return 'R$ ' . number_format($total, 2, ',', '.');
+                    }),
+
                 Textarea::make('pix_copia_e_cola')
                     ->columnSpanFull(),
 
@@ -52,21 +67,18 @@ class FaturaForm
                             ->label('Vlr. Unitário')
                             ->numeric()
                             ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
+                            ->live(onBlur: true),
                         TextInput::make('quantidade')
                             ->label('Qtd.')
                             ->numeric()
                             ->default(1)
                             ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
+                            ->live(onBlur: true),
                         TextInput::make('desconto')
                             ->label('Desconto')
                             ->numeric()
                             ->default(0)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
+                            ->live(onBlur: true),
                         Select::make('tipo_desconto')
                             ->label('Tipo Desc.')
                             ->options([
@@ -75,9 +87,8 @@ class FaturaForm
                             ])
                             ->default('absoluto')
                             ->required()
-                            ->live()
-                            ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
-                        \Filament\Forms\Components\Placeholder::make('valor_total_item')
+                            ->live(),
+                        Placeholder::make('valor_total_item')
                             ->label('Total Item')
                             ->content(function (Get $get) {
                                 $vlr = (float) $get('valor_unitario');
@@ -99,32 +110,7 @@ class FaturaForm
                     ->columns(6)
                     ->columnSpanFull()
                     ->createItemButtonLabel('Adicionar Item')
-                    ->afterStateUpdated(fn ($get, $set) => self::updateTotal($get, $set)),
+                    ->live(),
             ]);
-    }
-
-    public static function updateTotal(Get $get, Set $set): void
-    {
-        $itens = $get('itens') ?? [];
-        $totalFatura = 0;
-
-        foreach ($itens as $item) {
-            $vlr = (float) ($item['valor_unitario'] ?? 0);
-            $qtd = (float) ($item['quantidade'] ?? 0);
-            $desc = (float) ($item['desconto'] ?? 0);
-            $tipo = $item['tipo_desconto'] ?? 'absoluto';
-
-            $totalItem = $vlr * $qtd;
-
-            if ($tipo === 'absoluto') {
-                $totalItem -= $desc;
-            } else {
-                $totalItem -= ($totalItem * ($desc / 100));
-            }
-
-            $totalFatura += $totalItem;
-        }
-
-        $set('valor', number_format($totalFatura, 2, '.', ''));
     }
 }
