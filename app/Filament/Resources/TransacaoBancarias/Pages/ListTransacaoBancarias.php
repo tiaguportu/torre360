@@ -31,7 +31,7 @@ class ListTransacaoBancarias extends ListRecords
                         ->required(),
                     FileUpload::make('arquivo')
                         ->label('Arquivo')
-                        ->acceptedFileTypes([
+                        /* ->acceptedFileTypes([
                             'application/x-ofx',
                             'application/ofx',
                             'text/ofx',
@@ -40,7 +40,7 @@ class ListTransacaoBancarias extends ListRecords
                             'application/xml',
                             'application/octet-stream',
                             'text/csv',
-                        ])
+                        ]) */
                         ->required()
                         ->disk('local')
                         ->directory('imports/extratos'),
@@ -48,7 +48,7 @@ class ListTransacaoBancarias extends ListRecords
                 ->action(function (array $data, ConciliacaoBancariaService $service) {
                     $filePath = Storage::disk('local')->path($data['arquivo']);
                     $mimeType = Storage::disk('local')->mimeType($data['arquivo']);
-                    
+
                     // Comente a linha abaixo após descobrir o mimetype
                     dd("Mimetype detectado: " . $mimeType);
 
