@@ -41,11 +41,11 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             ->with(['categoria'])
             ->get();
 
-        $categorias = $avaliacoes->map(fn($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id');
 
         $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
         $notasTurma = Nota::query()
-            ->whereHas('matricula', fn($q) => $q->where('turma_id', $turmaId))
+            ->whereHas('matricula', fn ($q) => $q->where('turma_id', $turmaId))
             ->whereNotNull('valor')
             ->get()
             ->groupBy('avaliacao_id');
@@ -122,15 +122,15 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                 TextColumn::make('media_aluno')
                     ->label('Média Etapa')
                     ->alignCenter()
-                    ->state(fn(Disciplina $record) => $this->calcularMediaFinal($record->id, $avaliacoes, $notasAluno))
-                    ->color(fn($state) => $state >= 7 ? 'success' : ($state >= 5 ? 'warning' : 'danger'))
-                    ->formatStateUsing(fn($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
+                    ->state(fn (Disciplina $record) => $this->calcularMediaFinal($record->id, $avaliacoes, $notasAluno))
+                    ->color(fn ($state) => $state >= 7 ? 'success' : ($state >= 5 ? 'warning' : 'danger'))
+                    ->formatStateUsing(fn ($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
                 TextColumn::make('media_turma')
                     ->label('Média Turma')
                     ->alignCenter()
-                    ->state(fn(Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
+                    ->state(fn (Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
                     ->color('gray')
-                    ->formatStateUsing(fn($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
+                    ->formatStateUsing(fn ($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
             ])
             ->paginated(false);
     }
@@ -142,7 +142,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             return null;
         }
 
-        $categorias = $avs->map(fn($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
 
         $somasCategorias = [];
         foreach ($categorias as $cat) {
@@ -150,6 +150,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             if ($valor !== null) {
                 $somasCategorias[$cat->id] = [
                     'valor' => $valor,
+                    'peso' => (float) ($cat->peso_etapa_avaliativa ?? 1),
                     'substitui_id' => $cat->categoria_avaliacao_substituicao_id,
                     'ignorar' => false,
                 ];
@@ -166,12 +167,19 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             }
         }
 
-        $validas = array_filter($somasCategorias, fn($i) => !$i['ignorar']);
+        $validas = array_filter($somasCategorias, fn ($i) => ! $i['ignorar']);
         if (empty($validas)) {
             return null;
         }
 
-        return array_sum(array_column($validas, 'valor')) / count($validas);
+        $somaProdutos = 0;
+        $somaPesos = 0;
+        foreach ($validas as $item) {
+            $somaProdutos += $item['valor'] * $item['peso'];
+            $somaPesos += $item['peso'];
+        }
+
+        return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
     private function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
@@ -197,7 +205,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
     private function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): bool
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId);
-        $categorias = $avs->map(fn($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
 
         $dados = [];
         foreach ($categorias as $cat) {
@@ -209,7 +217,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
         foreach ($dados as $id => $item) {
             if ($id == $categoriaId && $item['valor'] !== null) {
-                $substituto = $categorias->first(fn($c) => $c->categoria_avaliacao_substituicao_id == $id);
+                $substituto = $categorias->first(fn ($c) => $c->categoria_avaliacao_substituicao_id == $id);
                 if ($substituto) {
                     $vSub = $this->getMediaConsolidadaCategoria($substituto->id, $disciplinaId, $avaliacoesEtapa, $notasAluno);
                     if ($vSub !== null && $vSub > $item['valor']) {
