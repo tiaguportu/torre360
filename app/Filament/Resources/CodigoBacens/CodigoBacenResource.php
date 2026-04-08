@@ -23,7 +23,7 @@ class CodigoBacenResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
     protected static ?int $navigationSort = 10;
 
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedLibrary;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
 
     public static function form(Schema $schema): Schema
     {
