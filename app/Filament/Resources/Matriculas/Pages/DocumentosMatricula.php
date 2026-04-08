@@ -240,6 +240,32 @@ class DocumentosMatricula extends Page implements HasTable
                     })
                     ->modalHeading(fn (TipoDocumento $record) => "Enviar Documento: {$record->nome}")
                     ->modalWidth('xl'),
+
+                Action::make('excluir')
+                    ->label('Excluir')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (TipoDocumento $record) {
+                        $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
+                            ->where('tipo_documento_id', $record->id)
+                            ->first();
+
+                        if ($inserido) {
+                            if ($inserido->arquivo_path) {
+                                Storage::disk('public')->delete($inserido->arquivo_path);
+                            }
+                            $inserido->delete();
+
+                            Notification::make()
+                                ->title('Documento excluído')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn (TipoDocumento $record) => DocumentoInserido::where('matricula_id', $this->record->id)
+                        ->where('tipo_documento_id', $record->id)
+                        ->exists()),
             ]);
     }
 
