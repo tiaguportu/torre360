@@ -78,8 +78,21 @@ class Matricula extends Model
         return $this->getMissingMandatoryDocumentsCount() > 0;
     }
 
+    const SITUACAO_PENDENTE = 1;
+    const SITUACAO_ANALISE = 2;
+    const SITUACAO_APROVADO = 3;
+    const SITUACAO_REJEITADO = 4;
+
     /**
-     * Retorna a coleção de documentos obrigatórios que faltam para esta matrícula.
+     * Verifica se há pendências de documentos (faltando ou rejeitados).
+     */
+    public function hasPendingIssues(): bool
+    {
+        return $this->getMissingMandatoryDocuments()->isNotEmpty() || $this->getRejectedDocuments()->isNotEmpty();
+    }
+
+    /**
+     * Retorna a coleção de documentos obrigatórios que faltam ou foram rejeitados.
      * Considera documentos vinculados ao Curso, à Turma ou à Matrícula diretamente.
      *
      * @return Collection<TipoDocumento>
@@ -108,13 +121,26 @@ class Matricula extends Model
             return collect();
         }
 
+        // IDS dos documentos que já estão inseridos e NOT REJECTED
         $inseridosIds = $this->documentoInseridos()
+            ->where('situacao_documento_inserido_id', '!=', self::SITUACAO_REJEITADO)
             ->pluck('tipo_documento_id')
             ->toArray();
 
         return $obrigatorios->reject(function ($doc) use ($inseridosIds) {
             return in_array($doc->id, $inseridosIds);
         });
+    }
+
+    /**
+     * Retorna os documentos inseridos que foram rejeitados
+     */
+    public function getRejectedDocuments(): Collection
+    {
+        return $this->documentoInseridos()
+            ->where('situacao_documento_inserido_id', self::SITUACAO_REJEITADO)
+            ->with('tipoDocumento')
+            ->get();
     }
 
     /**

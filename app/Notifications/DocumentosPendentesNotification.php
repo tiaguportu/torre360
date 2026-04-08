@@ -25,24 +25,41 @@ class DocumentosPendentesNotification extends Notification
     {
         $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
         $codigo = $this->matricula->codigo;
-        $docs = $this->matricula->getMissingMandatoryDocuments()->pluck('nome')->toArray();
+        $faltantes = $this->matricula->getMissingMandatoryDocuments();
+        $rejeitados = $this->matricula->getRejectedDocuments();
 
         $mensagem = (new MailMessage)
             ->subject("Aviso de Documentos Pendentes - {$codigo}")
             ->greeting('Olá, '.$notifiable->name.'!')
-            ->line("Constatamos que existem documentos obrigatórios e ativos pendentes para a matrícula do(a) aluno(a) **{$alunoNome}**.")
-            ->line('Os documentos pendentes são:');
+            ->line("Constatamos que existem documentos obrigatórios que precisam ser regularizados para a matrícula do(a) aluno(a) **{$alunoNome}**.");
 
-        foreach ($docs as $doc) {
-            $mensagem->line("- {$doc}");
+        if ($faltantes->isNotEmpty()) {
+            $mensagem->line('**Documentos não enviados:**');
+            foreach ($faltantes as $doc) {
+                $mensagem->line("- {$doc->nome}");
+            }
+        }
+
+        if ($rejeitados->isNotEmpty()) {
+            if ($faltantes->isNotEmpty()) {
+                $mensagem->line(' ');
+            }
+            $mensagem->line('**Documentos que precisam ser reenviados (Rejeitados):**');
+            foreach ($rejeitados as $docInserido) {
+                $mensagem->line("- **{$docInserido->tipoDocumento->nome}**");
+                if ($docInserido->observacoes) {
+                    $mensagem->line("  - Motivo/Observação: *{$docInserido->observacoes}*");
+                }
+            }
         }
 
         $url = route('filament.admin.resources.matriculas.documentos', ['record' => $this->matricula->id]);
 
         return $mensagem
+            ->line(' ')
             ->line('A regularização desses documentos é essencial para a manutenção da matrícula.')
             ->action('Gerenciar Documentos', $url)
-            ->line('Se você já enviou os documentos, por favor, ignore este aviso.')
+            ->line('Se você já enviou os documentos recentes para análise, por favor, ignore este aviso.')
             ->salutation('Atenciosamente, '.config('app.name'));
     }
 

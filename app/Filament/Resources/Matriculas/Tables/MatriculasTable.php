@@ -146,9 +146,9 @@ class MatriculasTable
 
                         return 'Os avisos de pendência serão enviados para os seguintes e-mails: '.$emails->join(', ');
                     })
-                    ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula'))
+                    ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula') && $record->hasPendingIssues())
                     ->action(function (Matricula $record) {
-                        if (! $record->hasMissingMandatoryDocuments()) {
+                        if (! $record->hasPendingIssues()) {
                             Notification::make()
                                 ->title('Sem pendências')
                                 ->body('Esta matrícula não possui documentos obrigatórios pendentes no momento.')
@@ -211,7 +211,7 @@ class MatriculasTable
                             $todasFalhas = [];
 
                             foreach ($records as $record) {
-                                if ($record->hasMissingMandatoryDocuments()) {
+                                if ($record->hasPendingIssues()) {
                                     $destinatarios = $record->getNotificationRecipients();
 
                                     if ($destinatarios->isEmpty()) {
