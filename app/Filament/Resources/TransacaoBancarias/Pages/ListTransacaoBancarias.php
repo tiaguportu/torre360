@@ -37,15 +37,11 @@ class ListTransacaoBancarias extends ListRecords
                             'text/ofx',
                             'text/plain',
                             'text/xml',
-                            'application/xml'
+                            'application/xml',
+                            'application/octet-stream',
+                            'text/csv',
                         ])
-                        ->rules([
-                            'required',
-                            function ($attribute, $value, $fail) {
-                                // Isso vai parar a execução e mostrar o MIME type real detectado
-                                dd($value->getMimeType());
-                            }
-                        ])
+                        ->required()
                         ->disk('local')
                         ->directory('imports/extratos'),
                 ])
@@ -55,7 +51,9 @@ class ListTransacaoBancarias extends ListRecords
                     $content = file_get_contents($filePath);
 
                     $importedCount = 0;
-                    if (strtolower($extension) === 'ofx') {
+                    
+                    // Verifica se o conteúdo parece ser OFX (mesmo que a extensão seja outra)
+                    if (str_contains($content, '<OFX>') || str_contains($content, 'OFXHEADER') || strtolower($extension) === 'ofx') {
                         $importedCount = $service->processarOfx($content, (int) $data['banco_id']);
                     } else {
                         $importedCount = $service->processarCsv($filePath, (int) $data['banco_id']);
