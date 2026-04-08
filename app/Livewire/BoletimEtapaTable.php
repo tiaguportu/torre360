@@ -85,7 +85,10 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         return [];
                     }
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return ['class' => 'line-through opacity-50'];
+                        return [
++                            'class' => 'line-through opacity-50',
++                            'style' => 'text-decoration: line-through !important;',
++                        ];
                     }
 
                     return [];
