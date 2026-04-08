@@ -40,7 +40,7 @@ class ContratoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\TitulosRelationManager::class,
+            RelationManagers\FaturasRelationManager::class,
         ];
     }
 

@@ -28,9 +28,9 @@ class Contrato extends Model
         return $this->hasMany(Matricula::class);
     }
 
-    public function titulos(): HasMany
+    public function faturas(): HasMany
     {
-        return $this->hasMany(Titulo::class);
+        return $this->hasMany(Fatura::class);
     }
 
     public function responsaveisFinanceiros(): HasMany

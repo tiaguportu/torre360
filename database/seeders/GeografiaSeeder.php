@@ -27,10 +27,10 @@ class GeografiaSeeder extends Seeder
         ];
 
         foreach ($paises as $pais) {
-            DB::table('paises')->updateOrInsert(['sigla' => $pais['sigla']], $pais);
+            DB::table('pais')->updateOrInsert(['sigla' => $pais['sigla']], $pais);
         }
 
-        $brasilId = DB::table('paises')->where('sigla', 'br')->first()->id;
+        $brasilId = DB::table('pais')->where('sigla', 'br')->first()->id;
 
         // 2. Estados do Brasil
         $estados = [
@@ -64,7 +64,7 @@ class GeografiaSeeder extends Seeder
         ];
 
         foreach ($estados as $estado) {
-            DB::table('estados')->updateOrInsert(['sigla' => $estado['sigla'], 'pais_id' => $brasilId], $estado);
+            DB::table('estado')->updateOrInsert(['sigla' => $estado['sigla'], 'pais_id' => $brasilId], $estado);
         }
 
         // 3. Cidades (População via JSON IBGE)
@@ -100,7 +100,7 @@ class GeografiaSeeder extends Seeder
             ];
 
             // Buscar IDs dos estados para evitar múltiplas queries
-            $estadoIds = DB::table('estados')->pluck('id', 'sigla')->toArray();
+            $estadoIds = DB::table('estado')->pluck('id', 'sigla')->toArray();
 
             $cidadesParaInserir = [];
             foreach ($municipios as $m) {
@@ -115,15 +115,25 @@ class GeografiaSeeder extends Seeder
                     ];
                 }
 
-                // Inserir em lotes de 100 para evitar limites de memória/SQL do SQLite
+                // Inserir/Atualizar em lotes de 100 para evitar limites de memória/SQL
                 if (count($cidadesParaInserir) >= 100) {
-                    DB::table('cidades')->insert($cidadesParaInserir);
+                    foreach ($cidadesParaInserir as $cidade) {
+                        DB::table('cidade')->updateOrInsert(
+                            ['codigo_ibge' => $cidade['codigo_ibge']],
+                            $cidade
+                        );
+                    }
                     $cidadesParaInserir = [];
                 }
             }
 
             if (! empty($cidadesParaInserir)) {
-                DB::table('cidades')->insert($cidadesParaInserir);
+                foreach ($cidadesParaInserir as $cidade) {
+                    DB::table('cidade')->updateOrInsert(
+                        ['codigo_ibge' => $cidade['codigo_ibge']],
+                        $cidade
+                    );
+                }
             }
         }
     }
