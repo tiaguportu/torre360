@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Faturas\Schemas;
 
+use App\Models\Contrato;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -17,9 +18,13 @@ class FaturaForm
     {
         return $schema
             ->components([
-                TextInput::make('contrato_id')
-                    ->required()
-                    ->numeric(),
+                Select::make('contrato_id')
+                    ->label('Contrato')
+                    ->relationship('contrato', 'id') // Por enquanto usando ID, mas vou melhorar
+                    ->getOptionLabelFromRecordUsing(fn (Contrato $record) => "Contrato #{$record->id}")
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 DatePicker::make('vencimento')
                     ->required(),
                 TextInput::make('valor')
