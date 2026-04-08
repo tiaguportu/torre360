@@ -103,11 +103,14 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         : null;
                 })
                 ->tooltip(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
+                    $avs = $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id);
+                    $pesos = $avs->map(fn ($av) => 'Peso: '.number_format($av->peso_etapa_avaliativa ?? 1, 1, ',', '.'))->implode(', ');
+
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return 'Nota substituída por outra de maior valor em Avaliação substitutiva.';
+                        return 'Nota substituída por outra de maior valor em Avaliação substitutiva.'.($pesos ? " ({$pesos})" : '');
                     }
 
-                    return null;
+                    return $pesos ?: null;
                 });
         }
 
@@ -144,11 +147,11 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
         $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
 
-        $somasCategorias = [];
+        $dadosCategorias = [];
         foreach ($categorias as $cat) {
             $valor = $this->getMediaConsolidadaCategoria($cat->id, $disciplinaId, $avaliacoesEtapa, $notasAluno);
             if ($valor !== null) {
-                $somasCategorias[$cat->id] = [
+                $dadosCategorias[$cat->id] = [
                     'valor' => $valor,
                     'substitui_id' => $cat->categoria_avaliacao_substituicao_id,
                     'ignorar' => false,
@@ -156,22 +159,33 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             }
         }
 
-        foreach ($somasCategorias as $id => &$item) {
-            if ($item['substitui_id'] && isset($somasCategorias[$item['substitui_id']])) {
-                if ($item['valor'] > $somasCategorias[$item['substitui_id']]['valor']) {
-                    $somasCategorias[$item['substitui_id']]['ignorar'] = true;
+        foreach ($dadosCategorias as $id => &$item) {
+            if ($item['substitui_id'] && isset($dadosCategorias[$item['substitui_id']])) {
+                if ($item['valor'] > $dadosCategorias[$item['substitui_id']]['valor']) {
+                    $dadosCategorias[$item['substitui_id']]['ignorar'] = true;
                 } else {
                     $item['ignorar'] = true;
                 }
             }
         }
 
-        $validas = array_filter($somasCategorias, fn ($i) => ! $i['ignorar']);
-        if (empty($validas)) {
+        $categoriasValidasIds = array_keys(array_filter($dadosCategorias, fn ($i) => ! $i['ignorar']));
+        if (empty($categoriasValidasIds)) {
             return null;
         }
 
-        return array_sum(array_column($validas, 'valor')) / count($validas);
+        $somaProdutos = 0;
+        $somaPesos = 0;
+        foreach ($avaliacoesEtapa->where('disciplina_id', $disciplinaId)->whereIn('categoria_avaliacao_id', $categoriasValidasIds) as $av) {
+            $nota = $notasAluno->get($av->id);
+            if ($nota) {
+                $peso = (float) ($av->peso_etapa_avaliativa ?? 1);
+                $somaProdutos += (float) $nota->valor * $peso;
+                $somaPesos += $peso;
+            }
+        }
+
+        return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
     private function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
