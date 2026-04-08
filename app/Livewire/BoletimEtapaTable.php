@@ -11,8 +11,10 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
 use Filament\Support\Contracts\TranslatableContentDriver;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -53,23 +55,37 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         $dynamicColumns = [];
 
         foreach ($categorias as $categoria) {
-            $dynamicColumns[] = TextColumn::make("cat_{$categoria->id}")
+            $dynamicColumns[] = ViewColumn::make("cat_{$categoria->id}")
                 ->label($categoria->nome)
                 ->headerTooltip($categoria->descricao)
                 ->alignCenter()
+                ->view('livewire.boletim-nota-cell')
                 ->state(function (Disciplina $record) use ($categoria, $avaliacoes, $notasAluno) {
+                    $avs = $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id);
                     $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
-                    if ($mediaCat === null) {
-                        return $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id)->isEmpty() ? '·' : '—';
+
+                    $stateStr = '·';
+                    if ($mediaCat !== null) {
+                        $stateStr = number_format(ceil((float) $mediaCat * 10) / 10, 1, ',', '.');
+                    } elseif (! $avs->isEmpty()) {
+                        $stateStr = '—';
                     }
 
-                    return number_format(ceil((float) $mediaCat * 10) / 10, 1, ',', '.');
+                    return [
+                        'display' => $stateStr,
+                        'media' => $mediaCat,
+                        'avs_count' => $avs->count(),
+                        'avaliacao_id' => $avs->first()?->id,
+                        'can_edit' => auth()->user()->can('ModificarNotaPorBoletim') && $avs->count() === 1,
+                        'disciplina_id' => $record->id,
+                        'categoria_id' => $categoria->id,
+                    ];
                 })
                 ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state === '·' || $state === '—') {
+                    if ($state['display'] === '·' || $state['display'] === '—') {
                         return 'gray';
                     }
-                    $mediaCat = $this->getMediaConsolidadaCategoria($categoria->id, $record->id, $avaliacoes, $notasAluno);
+                    $mediaCat = $state['media'];
                     if ($mediaCat === null) {
                         return 'gray';
                     }
@@ -81,7 +97,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     return $mediaCat >= 6.0 ? 'success' : 'danger';
                 })
                 ->extraAttributes(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state === '·' || $state === '—') {
+                    if ($state['display'] === '·' || $state['display'] === '—') {
                         return [];
                     }
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
@@ -94,7 +110,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     return [];
                 })
                 ->icon(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
-                    if ($state === '·' || $state === '—') {
+                    if ($state['display'] === '·' || $state['display'] === '—') {
                         return null;
                     }
 
@@ -106,11 +122,20 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     $avs = $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id);
                     $pesos = $avs->map(fn ($av) => 'Peso: '.number_format($av->peso_etapa_avaliativa ?? 1, 1, ',', '.'))->implode(', ');
 
+                    $tooltip = '';
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return 'Nota substituída por outra de maior valor em Avaliação substitutiva.'.($pesos ? " ({$pesos})" : '');
+                        $tooltip = 'Nota substituída por outra de maior valor em Avaliação substitutiva.'.($pesos ? " ({$pesos})" : '');
+                    } else {
+                        $tooltip = $pesos ?: '';
                     }
 
-                    return $pesos ?: null;
+                    if ($state['can_edit'] && $state['avs_count'] === 1) {
+                        $tooltip .= ($tooltip ? "\n" : '').'Clique para editar esta nota.';
+                    } elseif (auth()->user()->can('ModificarNotaPorBoletim') && $state['avs_count'] > 1) {
+                        $tooltip .= ($tooltip ? "\n" : '').'Esta categoria possui múltiplas avaliações e não pode ser editada diretamente aqui.';
+                    }
+
+                    return $tooltip ?: null;
                 });
         }
 
@@ -276,6 +301,43 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         }
 
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
+    }
+
+    public function updateNota(?int $avaliacaoId, $valor): void
+    {
+        if (! auth()->user()->can('ModificarNotaPorBoletim')) {
+            Notification::make()->title('Sem permissão para modificar notas.')->danger()->send();
+
+            return;
+        }
+
+        if (! $avaliacaoId) {
+            Notification::make()->title('Avaliação não encontrada.')->danger()->send();
+
+            return;
+        }
+
+        // Converter vírgula para ponto se necessário
+        $valorStr = str_replace(',', '.', (string) $valor);
+        $valorFloat = $valorStr === '' ? null : (float) $valorStr;
+
+        if ($valorFloat !== null && ($valorFloat < 0 || $valorFloat > 10)) {
+            Notification::make()->title('A nota deve ser entre 0 e 10.')->warning()->send();
+
+            return;
+        }
+
+        $nota = Nota::updateOrCreate(
+            [
+                'avaliacao_id' => $avaliacaoId,
+                'matricula_id' => $this->matriculaId,
+            ],
+            [
+                'valor' => $valorFloat,
+            ]
+        );
+
+        Notification::make()->title('Nota atualizada com sucesso!')->success()->send();
     }
 
     public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver
