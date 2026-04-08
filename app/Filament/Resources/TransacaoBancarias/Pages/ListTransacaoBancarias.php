@@ -39,7 +39,13 @@ class ListTransacaoBancarias extends ListRecords
                             'text/xml',
                             'application/xml'
                         ])
-                        ->required()
+                        ->rules([
+                            'required',
+                            function ($attribute, $value, $fail) {
+                                // Isso vai parar a execução e mostrar o MIME type real detectado
+                                dd($value->getMimeType());
+                            }
+                        ])
                         ->disk('local')
                         ->directory('imports/extratos'),
                 ])
