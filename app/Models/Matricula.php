@@ -40,6 +40,11 @@ class Matricula extends Model
         return $this->belongsTo(Turma::class);
     }
 
+    public function periodoLetivo(): BelongsTo
+    {
+        return $this->belongsTo(PeriodoLetivo::class);
+    }
+
     public function situacaoMatricula(): BelongsTo
     {
         return $this->belongsTo(SituacaoMatricula::class);
@@ -79,8 +84,11 @@ class Matricula extends Model
     }
 
     const SITUACAO_PENDENTE = 1;
+
     const SITUACAO_ANALISE = 2;
+
     const SITUACAO_APROVADO = 3;
+
     const SITUACAO_REJEITADO = 4;
 
     /**

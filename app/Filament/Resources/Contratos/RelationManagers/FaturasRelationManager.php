@@ -65,11 +65,11 @@ class FaturasRelationManager extends RelationManager
                             return;
                         }
 
-                        // Buscar a maior data_fim dos períodos letivos das turmas das matrículas
+                        // Buscar a maior data_fim dos períodos letivos associados às matrículas
                         $dataFim = $contrato->matriculas()
-                            ->with('turma.periodoLetivo')
+                            ->with('periodoLetivo')
                             ->get()
-                            ->map(fn ($m) => $m->turma?->periodoLetivo?->data_fim)
+                            ->map(fn ($m) => $m->periodoLetivo?->data_fim)
                             ->filter()
                             ->max();
 
