@@ -25,7 +25,7 @@ class CentroCustoResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedPieChart;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedChartPie;
 
     public static function form(Schema $schema): Schema
     {
