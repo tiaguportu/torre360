@@ -127,13 +127,13 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->calcularMediaFinal($record->id, $avaliacoes, $notasAluno))
                     ->color(fn($state) => $state >= 7 ? 'success' : ($state >= 5 ? 'warning' : 'danger'))
-                    ->formatStateUsing(fn($state) => number_format(round((float) $state, 2), 2, ',', '.')),
+                    ->formatStateUsing(fn($state) => number_format(round((float) $state, 2), 1, ',', '.')),
                 TextColumn::make('media_turma')
                     ->label('Média Turma')
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
                     ->color('gray')
-                    ->formatStateUsing(fn($state) => number_format(round((float) $state, 2), 2, ',', '.')),
+                    ->formatStateUsing(fn($state) => number_format(round((float) $state, 2), 1, ',', '.')),
             ])
             ->paginated(false);
     }
