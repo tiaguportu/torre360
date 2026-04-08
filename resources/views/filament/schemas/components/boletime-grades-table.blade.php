@@ -24,13 +24,14 @@
 
         {{-- Legenda Unificada --}}
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-            {{ $schemaComponent->getLegendInfolist() }}
+            {{-- $schemaComponent->getLegendInfolist() --}}
 
             <div class="mt-4 flex flex-wrap items-center gap-6 border-t border-gray-100 pt-4 text-xs dark:border-gray-700">
-
-                <div class="ml-auto italic text-gray-400 dark:text-gray-500">
-                    * Notas consolidadas por categoria de avaliação.
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-600 dark:text-gray-400">As notas riscadas indicam avaliações substituídas por
+                        outras de maior valor.</span>
                 </div>
+
             </div>
         </div>
     @endif
