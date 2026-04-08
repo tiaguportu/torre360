@@ -40,7 +40,7 @@ class DocumentoInseridoResource extends Resource implements HasShieldPermissions
 
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
-    protected static ?string $recordTitleAttribute = '\n';
+    protected static ?string $recordTitleAttribute = null;
 
     public static function form(Schema $schema): Schema
     {
