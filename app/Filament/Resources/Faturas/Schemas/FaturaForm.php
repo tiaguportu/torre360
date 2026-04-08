@@ -7,6 +7,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class FaturaForm
@@ -72,9 +74,8 @@ class FaturaForm
                             ->afterStateUpdated(fn ($state, $get, $set) => self::updateTotal($get, $set)),
                         TextInput::make('valor_total_item')
                             ->label('Total Item')
-                            ->numeric()
                             ->readOnly()
-                            ->state(function ($get) {
+                            ->state(function (Get $get) {
                                 $vlr = (float) $get('valor_unitario');
                                 $qtd = (float) $get('quantidade');
                                 $desc = (float) $get('desconto');
@@ -98,7 +99,7 @@ class FaturaForm
             ]);
     }
 
-    public static function updateTotal($get, $set): void
+    public static function updateTotal(Get $get, Set $set): void
     {
         $itens = $get('itens') ?? [];
         $totalFatura = 0;
