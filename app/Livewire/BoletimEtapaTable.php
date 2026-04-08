@@ -63,7 +63,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         return $avaliacoes->where('disciplina_id', $record->id)->where('categoria_avaliacao_id', $categoria->id)->isEmpty() ? '·' : '—';
                     }
 
-                    return number_format($mediaCat, 1, ',', '.');
+                    return number_format(ceil((float) $mediaCat * 10) / 10, 1, ',', '.');
                 })
                 ->color(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     if ($state === '·' || $state === '—') {
@@ -104,7 +104,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                 })
                 ->tooltip(function (Disciplina $record, $state) use ($categoria, $avaliacoes, $notasAluno) {
                     if ($this->isCategoriaIgnorada($categoria->id, $record->id, $avaliacoes, $notasAluno)) {
-                        return "Nota substituída por outra de maior valor em Avaliação substitutiva.";
+                        return 'Nota substituída por outra de maior valor em Avaliação substitutiva.';
                     }
 
                     return null;
@@ -124,13 +124,13 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->calcularMediaFinal($record->id, $avaliacoes, $notasAluno))
                     ->color(fn($state) => $state >= 7 ? 'success' : ($state >= 5 ? 'warning' : 'danger'))
-                    ->formatStateUsing(fn($state) => number_format((float) $state, 1, ',', '.')),
+                    ->formatStateUsing(fn($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
                 TextColumn::make('media_turma')
                     ->label('Média Turma')
                     ->alignCenter()
                     ->state(fn(Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
                     ->color('gray')
-                    ->formatStateUsing(fn($state) => number_format((float) $state, 1, ',', '.')),
+                    ->formatStateUsing(fn($state) => number_format(ceil((float) $state * 10) / 10, 1, ',', '.')),
             ])
             ->paginated(false);
     }
