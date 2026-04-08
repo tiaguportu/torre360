@@ -41,8 +41,9 @@ class FaturasRelationManager extends RelationManager
                             ->minValue(1)
                             ->default(1),
                     ])
-                    ->action(function (Contrato $ownerRecord, array $data) {
-                        $contrato = $ownerRecord;
+                    ->action(function (RelationManager $livewire, array $data) {
+                        /** @var Contrato $contrato */
+                        $contrato = $livewire->getOwnerRecord();
 
                         if (! $contrato->data_aceite) {
                             Notification::make()
