@@ -136,7 +136,7 @@ class FaturasRelationManager extends RelationManager
                             ->success()
                             ->send();
                     })
-                    ->confirm(),
+                    ->requiresConfirmation(),
             ]);
     }
 }
