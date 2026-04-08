@@ -150,7 +150,6 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             if ($valor !== null) {
                 $somasCategorias[$cat->id] = [
                     'valor' => $valor,
-                    'peso' => (float) ($cat->peso_etapa_avaliativa ?? 1),
                     'substitui_id' => $cat->categoria_avaliacao_substituicao_id,
                     'ignorar' => false,
                 ];
@@ -172,14 +171,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             return null;
         }
 
-        $somaProdutos = 0;
-        $somaPesos = 0;
-        foreach ($validas as $item) {
-            $somaProdutos += $item['valor'] * $item['peso'];
-            $somaPesos += $item['peso'];
-        }
-
-        return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
+        return array_sum(array_column($validas, 'valor')) / count($validas);
     }
 
     private function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
@@ -189,17 +181,18 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             return null;
         }
 
-        $soma = 0;
-        $count = 0;
+        $somaProdutos = 0;
+        $somaPesos = 0;
         foreach ($avs as $av) {
             $nota = $notasAluno->get($av->id);
             if ($nota) {
-                $soma += (float) $nota->valor;
-                $count++;
+                $peso = (float) ($av->peso_etapa_avaliativa ?? 1);
+                $somaProdutos += (float) $nota->valor * $peso;
+                $somaPesos += $peso;
             }
         }
 
-        return $count > 0 ? $soma / $count : null;
+        return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
     private function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): bool
