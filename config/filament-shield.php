@@ -264,9 +264,7 @@ return [
     |
     */
 
-    'custom_permissions' => [
-        'ModificarNotaPorBoletim',
-    ],
+    'custom_permissions' => [],
 
     /*
     |--------------------------------------------------------------------------
