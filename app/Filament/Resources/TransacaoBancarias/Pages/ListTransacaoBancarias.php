@@ -40,6 +40,7 @@ class ListTransacaoBancarias extends ListRecords
                         ->directory('imports/extratos'),
                 ])
                 ->action(function (array $data, ConciliacaoBancariaService $service) {
+                    dd($data['arquivo']);
                     $filePath = Storage::disk('local')->path($data['arquivo']);
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
                     $content = file_get_contents($filePath);
