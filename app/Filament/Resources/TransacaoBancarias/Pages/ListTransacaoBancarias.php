@@ -31,7 +31,14 @@ class ListTransacaoBancarias extends ListRecords
                         ->required(),
                     FileUpload::make('arquivo')
                         ->label('Arquivo')
-                        ->acceptedFileTypes(['application/x-ofx', 'application/ofx', 'text/ofx', 'text/csv', 'text/plain'])
+                        ->acceptedFileTypes([
+                            'application/x-ofx',
+                            'application/ofx',
+                            'text/ofx',
+                            'text/plain',
+                            'text/xml',
+                            'application/xml'
+                        ])
                         ->required()
                         ->disk('local')
                         ->directory('imports/extratos'),
