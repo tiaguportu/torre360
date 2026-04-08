@@ -2,15 +2,12 @@
 
 namespace App\Filament\Resources\Pessoas\RelationManagers;
 
-use App\Filament\Resources\SituacaoMatriculas\Schemas\SituacaoMatriculaForm;
-use App\Filament\Resources\Turmas\Schemas\TurmaForm;
-use App\Models\SituacaoMatricula;
+use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -24,22 +21,7 @@ class MatriculasRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Select::make('turma_id')
-                    ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
-                    ->searchable()
-                    ->preload()
-                    ->createOptionForm(fn (Schema $schema) => TurmaForm::configure($schema)->getComponents())
-                    ->required(),
-                Select::make('situacao_matricula_id')
-                    ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
-                    ->default(fn () => SituacaoMatricula::where('nome', 'Ativa')->value('id'))
-                    ->searchable()
-                    ->preload()
-                    ->createOptionForm(fn (Schema $schema) => SituacaoMatriculaForm::configure($schema)->getComponents())
-                    ->required(),
-            ]);
+        return MatriculaForm::configure($schema);
     }
 
     public function table(Table $table): Table
