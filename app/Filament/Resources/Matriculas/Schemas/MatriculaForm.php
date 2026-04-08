@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Matriculas\Schemas;
 use App\Filament\Resources\SituacaoMatriculas\Schemas\SituacaoMatriculaForm;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
 use App\Models\Turma;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -72,8 +71,6 @@ class MatriculaForm
                     ->createOptionForm(fn (Schema $schema) => SituacaoMatriculaForm::configure($schema)->getComponents())
                     ->required()
                     ->label('Situação'),
-                DatePicker::make('data_matricula')
-                    ->required(),
             ]);
     }
 }

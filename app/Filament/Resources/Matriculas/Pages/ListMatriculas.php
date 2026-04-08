@@ -7,7 +7,6 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
 
@@ -52,10 +51,6 @@ class ListMatriculas extends ListRecords
                         ->required()
                         ->searchable()
                         ->preload(),
-                    DatePicker::make('data_matricula')
-                        ->label('Data da Matrícula')
-                        ->default(now())
-                        ->required(),
                 ])
                 ->action(function (array $data) {
                     foreach ($data['aluno_ids'] as $pessoaId) {
@@ -63,7 +58,6 @@ class ListMatriculas extends ListRecords
                             'pessoa_id' => $pessoaId,
                             'turma_id' => $data['turma_id'],
                             'situacao_matricula_id' => $data['situacao_matricula_id'],
-                            'data_matricula' => $data['data_matricula'],
                         ]);
                     }
                 })
