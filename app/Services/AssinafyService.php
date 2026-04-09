@@ -52,24 +52,58 @@ class AssinafyService
             $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
             $emailSignatario = $responsavel?->email ?? $aluno?->email;
 
-            // --- SE JÁ FOI ENVIADO: Apenas redireciona ---
-            if ($contrato->assinafy_id && in_array($contrato->assinafy_status, ['enviado', 'pending', 'sent'])) {
-                Notification::make()->title('Contrato já enviado. Obtendo link de assinatura...')->info()->send();
+            $nomeArquivoBase = "Contrato_Matricula_{$matricula->id}.pdf";
 
-                $responseGet = Http::withHeaders([
-                    'X-Api-Key' => $this->apiKey,
-                    'Accept' => 'application/json',
-                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$contrato->assinafy_id}");
+            // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API) ---
+            Notification::make()->title('Consultando Assinafy para evitar duplicidade de documento...')->info()->send();
+            
+            $documentId = $contrato->assinafy_id;
+            
+            // Busca por nome do arquivo via API
+            $responseSearchDoc = Http::withHeaders([
+                'X-Api-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents", [
+                'search' => $nomeArquivoBase
+            ]);
 
-                $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
-
-                if ($signingUrl) {
-                    return ['success' => true, 'redirect_url' => $signingUrl];
+            if ($responseSearchDoc->successful()) {
+                $documents = $responseSearchDoc->json('data') ?? [];
+                foreach ($documents as $doc) {
+                    if (($doc['name'] ?? '') === $nomeArquivoBase || ($doc['original_name'] ?? '') === $nomeArquivoBase) {
+                        $documentId = $doc['id'];
+                        break;
+                    }
                 }
             }
 
-            // --- SE É NOVO: Inicia Fluxo Completo ---
-            Notification::make()->title('Iniciando novo envio para Assinafy...')->info()->send();
+            // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
+            if ($documentId) {
+                $responseGet = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$documentId}");
+                
+                if ($responseGet->successful()) {
+                    $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
+                    
+                    if ($signingUrl) {
+                        Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
+                        
+                        if ($contrato->assinafy_id !== $documentId) {
+                            $contrato->update(['assinafy_id' => $documentId, 'assinafy_status' => 'enviado']);
+                        }
+                        return ['success' => true, 'redirect_url' => $signingUrl];
+                    }
+                }
+                
+                if ($contrato->assinafy_id) {
+                    Notification::make()->title('Atenção: Documento expirado ou link inválido no Assinafy. Gerando novo...')->warning()->send();
+                }
+            }
+
+            // --- SE NÃO ENCONTRADO: Inicia Fluxo Completo ---
+            Notification::make()->title('Novo documento detectado. Iniciando envio...')->info()->send();
 
             // 1. Gerar PDF
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
@@ -84,7 +118,7 @@ class AssinafyService
             ])->output();
 
             // --- PASSO 1: Upload do Documento ---
-            Notification::make()->title('Passo 1/3: Realizando upload do documento...')->info()->send();
+            Notification::make()->title('Passo 1/4: Realizando upload do documento...')->info()->send();
 
             $responseDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
@@ -101,8 +135,22 @@ class AssinafyService
 
             $documentId = $responseDoc->json('id') ?? $responseDoc->json('data.id');
 
-            // --- PASSO 2: Verificação/Criação de Signatário ---
-            Notification::make()->title('Passo 2/3: Configurando signatário...')->info()->send();
+            // --- NOVO: Preparar Documento (Sem campos manuais) ---
+            Notification::make()->title('Passo 2/4: Preparando documento para assinar...')->info()->send();
+            
+            $responsePrepare = Http::withHeaders([
+                'X-Api-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->post("{$this->apiUrl}/documents/{$documentId}/prepare", [
+                'status' => 'prepared'
+            ]);
+
+            if (!$responsePrepare->successful()) {
+                Log::warning('Aviso ao preparar: ' . $responsePrepare->body());
+            }
+
+            // --- ETAPA B: Verificar se o usuário (signer) já foi cadastrado no Assinafy ---
+            Notification::make()->title('Passo 3/4: Verificando signatário...')->info()->send();
 
             $signerId = null;
             $responseSearch = Http::withHeaders([
@@ -115,12 +163,15 @@ class AssinafyService
                 foreach ($signers as $s) {
                     if (isset($s['email']) && $s['email'] === $emailSignatario) {
                         $signerId = $s['id'];
+                        Notification::make()->title("Aviso: O usuário '{$nomeSignatario}' já existe no Assinafy. Reaproveitando cadastro.")->info()->send();
                         break;
                     }
                 }
             }
 
             if (!$signerId) {
+                Notification::make()->title("Cadastrando novo signatário: {$nomeSignatario}")->info()->send();
+                
                 $responseSigner = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
@@ -136,8 +187,8 @@ class AssinafyService
                 $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
             }
 
-            // --- PASSO 3: Solicitar Assinatura (Apenas para novos documentos) ---
-            Notification::make()->title('Passo 3/3: Vinculando assinatário e disparando e-mail...')->info()->send();
+            // --- PASSO 3 (Agora 4): Solicitar Assinatura ---
+            Notification::make()->title('Passo 4/4: Vinculando assinatário e disparando e-mail...')->info()->send();
 
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
