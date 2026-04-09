@@ -113,9 +113,13 @@ class AssinafyService
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
-                        'method' => 'virtual',
-                        'signerIds' => [$signerId],
-                    ]);
+                'signers' => [
+                    ['id' => $signerId]
+                ],
+                'method' => 'virtual',
+                // Mantivemos o expires_at do sistema ou um padrão
+                'expires_at' => now()->addDays(30)->format('Y-m-d'), 
+            ]);
 
             if ($responseAssign->successful()) {
                 $contrato->update([
@@ -133,7 +137,7 @@ class AssinafyService
 
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             Log::error('Erro Assinafy (Assignment): ' . $errorMsg);
-            dd($responseAssign);
+
             $contrato->update([
                 'assinafy_status' => 'erro_envio',
                 'assinafy_request_log' => $responseAssign->json() ?? ['error' => $errorMsg],
