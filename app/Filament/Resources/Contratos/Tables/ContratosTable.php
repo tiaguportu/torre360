@@ -75,34 +75,12 @@ class ContratosTable
             ])
             ->recordActions([
                 EditAction::make(),
-                Action::make('enviar_assinafy')
-                    ->label('Enviar Assinafy')
-                    ->icon('heroicon-o-document-check')
-                    ->color('warning')
-                    ->hidden(fn($record) => $record->assinafy_status === 'signed' || $record->assinafy_status === 'completed')
-                    ->requiresConfirmation()
-                    ->action(function ($record, Action $action) {
-                        $service = app(AssinafyService::class);
-                        $result = $service->enviarContrato($record);
-
-                        if ($result['success']) {
-                            Notification::make()
-                                ->title('Contrato processado com sucesso!')
-                                ->success()
-                                ->send();
-                            dd($result);
-                            if (isset($result['redirect_url'])) {
-                                $action->openUrlInNewTab($result['redirect_url']);
-                            }
-                        } else {
-                            Notification::make()
-                                ->title('Erro ao processar contrato')
-                                ->body($result['message'] ?? 'Erro desconhecido.')
-                                ->danger()
-                                ->persistent()
-                                ->send();
-                        }
-                    }),
+                Action::make('visualizar_contrato')
+                    ->label(fn ($record) => in_array($record->assinafy_status, ['signed', 'completed']) ? 'Ver Contrato Assinado' : 'Assinar Contrato')
+                    ->icon(fn ($record) => in_array($record->assinafy_status, ['signed', 'completed']) ? 'heroicon-o-document-magnifying-glass' : 'heroicon-o-document-check')
+                    ->color(fn ($record) => in_array($record->assinafy_status, ['signed', 'completed']) ? 'success' : 'warning')
+                    ->url(fn ($record) => route('contratos.visualizar', $record))
+                    ->openUrlInNewTab(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
