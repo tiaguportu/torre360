@@ -52,7 +52,7 @@ class AssinafyService
             $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
             $emailSignatario = $responsavel?->email ?? $aluno?->email;
 
-            $nomeArquivoBase = "Contrato_Matricula_{$matricula->id}.pdf";
+            $nomeArquivoBase = "Contrato_Matricula_{$matricula->id}-1.pdf";
 
             // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API) ---
             Notification::make()->title('Consultando Assinafy para evitar duplicidade de documento...')->info()->send();
