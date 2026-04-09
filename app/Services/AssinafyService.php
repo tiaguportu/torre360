@@ -77,7 +77,6 @@ class AssinafyService
                 }
             }
 
-            dd($responseSearchDoc->json('data'));
 
 
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
@@ -86,6 +85,7 @@ class AssinafyService
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
                 ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$documentId}");
+                dd($responseGet->json('data'));
 
                 if ($responseGet->successful()) {
                     $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
