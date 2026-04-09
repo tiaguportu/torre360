@@ -15,4 +15,9 @@ class Fornecedor extends Model
     {
         return $this->hasMany(TransacaoBancaria::class);
     }
+
+    public function getNomeCnpjAttribute(): string
+    {
+        return "{$this->razao_social} - {$this->cnpj}";
+    }
 }

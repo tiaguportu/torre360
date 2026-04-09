@@ -23,8 +23,9 @@ class TransacaoBancariasTable
                     ->searchable(),
                 TextColumn::make('centroCusto.id')
                     ->searchable(),
-                TextColumn::make('fornecedor.id')
-                    ->searchable(),
+                TextColumn::make('fornecedor.nome_cnpj')
+                    ->label('Fornecedor')
+                    ->searchable(['razao_social', 'cnpj']),
                 TextColumn::make('tipo')
                     ->badge(),
                 TextColumn::make('valor')

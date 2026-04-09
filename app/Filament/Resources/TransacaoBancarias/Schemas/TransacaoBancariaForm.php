@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TransacaoBancarias\Schemas;
 
 use App\Models\Fatura;
+use App\Models\Fornecedor;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -60,7 +61,8 @@ class TransacaoBancariaForm
                 Select::make('fornecedor_id')
                     ->label('Fornecedor')
                     ->relationship('fornecedor', 'razao_social')
-                    ->searchable()
+                    ->getOptionLabelFromRecordUsing(fn (Fornecedor $record) => $record->nome_cnpj)
+                    ->searchable(['razao_social', 'cnpj'])
                     ->createOptionForm([
                         TextInput::make('razao_social')
                             ->label('Razão Social')
