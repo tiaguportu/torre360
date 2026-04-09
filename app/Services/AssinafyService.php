@@ -76,7 +76,7 @@ class AssinafyService
                     }
                 }
             }
-            dd($documentId);
+
             dd($responseSearchDoc->json('data'));
 
 
