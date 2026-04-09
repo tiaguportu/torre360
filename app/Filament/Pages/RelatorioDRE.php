@@ -65,7 +65,7 @@ class RelatorioDRE extends Page implements HasForms
                 ])->action(fn () => $this->generateDRE()),
 
                 View::make('filament.pages.relatorio-d-r-e-results')
-                    ->state($this->dreData),
+                    ->viewData(fn () => ['dreData' => $this->dreData]),
             ])
             ->statePath('data');
     }
