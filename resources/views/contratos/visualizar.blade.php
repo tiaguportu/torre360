@@ -6,6 +6,7 @@
     <title>Visualizar Contrato #{{ $contrato->id }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @livewireStyles
+    @filamentStyles
     <style>
         @media print {
             .no-print { display: none; }
@@ -85,8 +86,9 @@
         });
     </script>
 
-    <x-filament-notifications />
+    @livewire('notifications')
 
     @livewireScripts
+    @filamentScripts
 </body>
 </html>
