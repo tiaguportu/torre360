@@ -6,6 +6,8 @@ use App\Services\DREService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -20,8 +22,6 @@ class RelatorioDRE extends Page implements HasForms
     use InteractsWithForms;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
-
-    protected string $view = 'filament.pages.relatorio-d-r-e';
 
     protected static UnitEnum|string|null $navigationGroup = 'Financeiro';
 
@@ -46,25 +46,29 @@ class RelatorioDRE extends Page implements HasForms
     {
         return $schema
             ->components([
-                Section::make('Filtros do Relatório')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                DatePicker::make('data_inicio')
-                                    ->label('Data Início')
-                                    ->required()
-                                    ->live(),
-                                DatePicker::make('data_fim')
-                                    ->label('Data Fim')
-                                    ->required()
-                                    ->live(),
-                            ]),
-                    ])
-                    ->compact(),
+                Form::make([
+                    Section::make('Filtros do Relatório')
+                        ->schema([
+                            Grid::make(3)
+                                ->schema([
+                                    DatePicker::make('data_inicio')
+                                        ->label('Data Início')
+                                        ->required()
+                                        ->live(),
+                                    DatePicker::make('data_fim')
+                                        ->label('Data Fim')
+                                        ->required()
+                                        ->live(),
+                                ]),
+                        ])
+                        ->compact(),
+                ])->action(fn () => $this->generateDRE()),
+
+                View::make('filament.pages.relatorio-d-r-e-results')
+                    ->state($this->dreData),
             ])
             ->statePath('data');
     }
-
 
     protected function getHeaderActions(): array
     {

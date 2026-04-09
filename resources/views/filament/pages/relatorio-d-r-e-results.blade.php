@@ -1,14 +1,3 @@
-<x-filament-panels::page>
-    <x-filament-panels::form wire:submit="generateDRE">
-        {{ $this->getSchema('content') }}
-
-        <div class="flex justify-end">
-            <x-filament::button type="submit" icon="heroicon-m-arrow-path">
-                Atualizar Relatório
-            </x-filament::button>
-        </div>
-    </x-filament-panels::form>
-
     @if($dreData)
         <div class="space-y-6 mt-8">
             {{-- Resumo --}}
@@ -97,4 +86,3 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">Selecione o período e clique em atualizar para visualizar o relatório.</p>
         </div>
     @endif
-</x-filament-panels::page>
