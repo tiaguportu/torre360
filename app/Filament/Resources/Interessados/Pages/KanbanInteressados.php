@@ -16,7 +16,7 @@ class KanbanInteressados extends Page
 
     protected string $view = 'filament.resources.interessados.pages.kanban-interessados';
 
-    protected ?string $title = 'Funil de Vendas (CRM)';
+    protected static ?string $title = 'Funil de Vendas (CRM)';
 
     protected static ?string $slug = 'kanban';
 
