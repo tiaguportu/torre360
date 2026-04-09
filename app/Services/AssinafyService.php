@@ -82,6 +82,7 @@ class AssinafyService
             if (!$documentId) {
                 throw new \Exception("ID do documento não retornado no upload.");
             }
+            dd($responseDoc);
 
             // --- PASSO 2: Criar Signatário ---
             Notification::make()->title('Passo 2/3: Configurando signatário...')->info()->send();
@@ -113,13 +114,13 @@ class AssinafyService
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
-                'signers' => [
-                    ['id' => $signerId]
-                ],
-                'method' => 'virtual',
-                // Mantivemos o expires_at do sistema ou um padrão
-                'expires_at' => now()->addDays(30)->format('Y-m-d'), 
-            ]);
+                        'signers' => [
+                            ['id' => $signerId]
+                        ],
+                        'method' => 'virtual',
+                        // Mantivemos o expires_at do sistema ou um padrão
+                        'expires_at' => now()->addDays(30)->format('Y-m-d'),
+                    ]);
 
             if ($responseAssign->successful()) {
                 $contrato->update([
