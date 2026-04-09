@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizar Contrato #{{ $contrato->id }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    @livewireStyles
     <style>
         @media print {
             .no-print { display: none; }
@@ -29,6 +30,18 @@
 
         <!-- Conteúdo do Contrato (Blade Reutilizada) -->
         <div class="p-8 sm:p-12 overflow-y-auto bg-white text-gray-900 border-b">
+            <!-- Mensagens de Erro/Sucesso da Sessão (Fallback) -->
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 no-print" role="alert">
+                    <span class="block sm:inline">{{ session('error') }}</span>
+                </div>
+            @endif
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6 no-print" role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
+            @endif
+
             @include('pdfs.contrato', [
                 'contrato' => $contrato,
                 'matricula' => $matricula,
@@ -63,7 +76,6 @@
         </div>
     </div>
 
-    <!-- Script para feedback de carregamento -->
     <script>
         document.querySelector('form')?.addEventListener('submit', function() {
             const btn = this.querySelector('button');
@@ -72,5 +84,9 @@
             btn.classList.add('opacity-50', 'cursor-not-allowed');
         });
     </script>
+
+    <x-filament-notifications />
+
+    @livewireScripts
 </body>
 </html>
