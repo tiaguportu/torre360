@@ -17,11 +17,11 @@ class RelatorioDRE extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
     protected static string $view = 'filament.pages.relatorio-d-r-e';
 
-    protected static ?string $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
 
     protected static ?string $title = 'Demonstrativo de Resultados (DRE)';
 
@@ -62,6 +62,7 @@ class RelatorioDRE extends Page implements HasForms
             ])
             ->statePath('data');
     }
+
 
     protected function getHeaderActions(): array
     {
