@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="flex gap-4 overflow-x-auto pb-4" x-data="{
+    <div class="flex gap-4 overflow-x-auto pb-4 items-start" x-data="{
         draggingRecordId: null,
         draggingOverStatusId: null,
         handleDrop(statusId) {
@@ -12,62 +12,79 @@
     }">
         @foreach($this->getStatuses() as $status)
             <div 
-                class="flex-shrink-0 w-80 bg-gray-100 dark:bg-white/5 rounded-xl flex flex-col h-[calc(100vh-250px)] transition-all duration-200"
-                :class="{ 'bg-primary-50/50 dark:bg-primary-500/10 ring-2 ring-primary-500': draggingOverStatusId === {{ $status->id }} }"
+                class="flex-shrink-0 w-80 h-full transition-all duration-200"
                 ondragover="event.preventDefault()"
                 @dragenter="draggingOverStatusId = {{ $status->id }}"
                 @dragleave="if (draggingOverStatusId === {{ $status->id }}) draggingOverStatusId = null"
                 @drop="handleDrop({{ $status->id }})"
             >
-                <div class="p-4 border-b dark:border-white/10 flex justify-between items-center">
-                    <h3 class="font-bold flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background-color: {{ $status->cor === 'info' ? '#3b82f6' : ($status->cor === 'warning' ? '#f59e0b' : ($status->cor === 'success' ? '#10b981' : ($status->cor === 'danger' ? '#ef4444' : '#6366f1'))) }}"></span>
-                        {{ $status->nome }}
-                    </h3>
-                    <span class="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded-full text-xs">
-                        {{ $this->getInteressados()->where('status_interessado_id', $status->id)->count() }}
-                    </span>
-                </div>
-
-                <div class="p-2 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
-                    @foreach($this->getInteressados()->where('status_interessado_id', $status->id) as $record)
-                        <div 
-                            draggable="true"
-                            @dragstart="draggingRecordId = {{ $record->id }}"
-                            @dragend="draggingRecordId = null; draggingOverStatusId = null"
-                            class="bg-white dark:bg-white/10 p-4 rounded-lg shadow-sm border dark:border-white/5 cursor-move hover:border-primary-500 transition-all duration-200"
-                            :class="{ 'opacity-50 grayscale': draggingRecordId === {{ $record->id }} }"
-                        >
-                            <div class="flex justify-between items-start">
-                                <div class="font-medium text-sm">{{ $record->pessoa->nome }}</div>
-                                <a href="{{ $this->getResource()::getUrl('edit', ['record' => $record]) }}" class="text-gray-400 hover:text-primary-500">
-                                    <x-filament::icon icon="heroicon-m-pencil-square" class="w-4 h-4" />
-                                </a>
-                            </div>
-                            
-                            <div class="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
-                                <x-filament::icon icon="heroicon-m-tag" class="w-3 h-3" />
-                                {{ $record->origem?->nome }}
-                            </div>
-
-                            <div class="flex items-center justify-between mt-4">
-                                <div class="flex -space-x-1">
-                                    <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-[10px] text-white border-2 border-white dark:border-gray-800" title="{{ $record->usuario?->name }}">
-                                        {{ substr($record->usuario?->name ?? '?', 0, 1) }}
-                                    </div>
-                                </div>
-                                <div class="flex gap-1">
-                                    @if($record->data_proximo_contato)
-                                        <span class="text-[10px] bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-400 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                            <x-filament::icon icon="heroicon-m-calendar-days" class="w-3 h-3" />
-                                            {{ \Carbon\Carbon::parse($record->data_proximo_contato)->format('d/m') }}
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
+                <x-filament::section 
+                    class="h-[calc(100vh-250px)] flex flex-col border-none shadow-none bg-gray-100/50 dark:bg-white/5"
+                    :class="{ 'ring-2 ring-primary-500 bg-primary-50/50 dark:bg-primary-500/10': draggingOverStatusId === {{ $status->id }} }"
+                >
+                    <x-slot name="heading">
+                        <div class="flex items-center gap-2">
+                             <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $status->cor === 'info' ? '#3b82f6' : ($status->cor === 'warning' ? '#f59e0b' : ($status->cor === 'success' ? '#10b981' : ($status->cor === 'danger' ? '#ef4444' : '#6366f1'))) }}"></div>
+                             <span class="text-sm font-bold tracking-tight">{{ $status->nome }}</span>
                         </div>
-                    @endforeach
-                </div>
+                    </x-slot>
+
+                    <x-slot name="headerEnd">
+                        <x-filament::badge color="gray" size="sm">
+                            {{ $this->getInteressados()->where('status_interessado_id', $status->id)->count() }}
+                        </x-filament::badge>
+                    </x-slot>
+
+                    <div class="space-y-4 -mx-4 -my-4 p-4 overflow-y-auto max-h-full custom-scrollbar flex-1">
+                        @foreach($this->getInteressados()->where('status_interessado_id', $status->id) as $record)
+                            <div 
+                                draggable="true"
+                                @dragstart="draggingRecordId = {{ $record->id }}"
+                                @dragend="draggingRecordId = null; draggingOverStatusId = null"
+                                class="cursor-move"
+                                :class="{ 'opacity-50 grayscale': draggingRecordId === {{ $record->id }} }"
+                            >
+                                <x-filament::section compact 
+                                    class="hover:border-primary-500 transition-all duration-200 shadow-sm border-gray-200 dark:border-white/10"
+                                >
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-sm font-semibold leading-tight text-gray-900 dark:text-white">
+                                            {{ $record->pessoa->nome }}
+                                        </span>
+                                        <x-filament::icon-button 
+                                            icon="heroicon-m-pencil-square" 
+                                            size="sm" 
+                                            color="gray"
+                                            :href="$this->getResource()::getUrl('edit', ['record' => $record])"
+                                            tag="a"
+                                        />
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 mb-4">
+                                        <x-filament::icon icon="heroicon-m-tag" class="w-3.5 h-3.5 text-gray-400" />
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                            {{ $record->origem?->nome }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-3 border-t dark:border-white/5">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center text-[10px] font-bold text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30" title="{{ $record->usuario?->name }}">
+                                                {{ substr($record->usuario?->name ?? '?', 0, 1) }}
+                                            </div>
+                                        </div>
+
+                                        @if($record->data_proximo_contato)
+                                            <x-filament::badge color="warning" size="sm" icon="heroicon-m-calendar-days">
+                                                {{ \Carbon\Carbon::parse($record->data_proximo_contato)->format('d/m') }}
+                                            </x-filament::badge>
+                                        @endif
+                                    </div>
+                                </x-filament::section>
+                            </div>
+                        @endforeach
+                    </div>
+                </x-filament::section>
             </div>
         @endforeach
     </div>
