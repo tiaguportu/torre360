@@ -243,9 +243,9 @@ class AssinafyService
     }
 
     /**
-     * Obtém a URL de download do documento assinado na Assinafy.
+     * Obtém o conteúdo do documento assinado na Assinafy.
      */
-    public function getDownloadUrl(Contrato $contrato): ?string
+    public function baixarDocumento(Contrato $contrato): ?\Illuminate\Http\Client\Response
     {
         try {
             if (!$contrato->assinafy_id) {
@@ -253,22 +253,18 @@ class AssinafyService
             }
 
             $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}");
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Accept' => 'application/pdf',
+            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
 
             if ($response->successful()) {
-                $docData = $response->json('data');
-                
-                // Na API V1 da Assinafy, o campo costuma ser download_url ou original_url dependendo do status
-                // Se estiver completado, usamos a url do documento assinado
-                return $docData['download_url'] ?? $docData['files']['signed'] ?? $docData['signed_url'] ?? null;
+                return $response;
             }
 
-            Log::warning("Erro ao buscar URL de download Assinafy para Contrato #{$contrato->id}: " . $response->body());
+            Log::warning("Erro ao baixar documento Assinafy para Contrato #{$contrato->id}: " . $response->body());
             return null;
         } catch (\Exception $e) {
-            Log::error("Exceção ao buscar URL de download Assinafy: " . $e->getMessage());
+            Log::error("Exceção ao baixar documento Assinafy: " . $e->getMessage());
             return null;
         }
     }

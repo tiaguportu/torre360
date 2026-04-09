@@ -12,18 +12,24 @@ class DownloadContratoController extends Controller
 {
     public function __invoke(Contrato $contrato, AssinafyService $assinafyService)
     {
-        $downloadUrl = $assinafyService->getDownloadUrl($contrato);
+        $response = $assinafyService->baixarDocumento($contrato);
 
-        if (!$downloadUrl) {
+        if (!$response) {
             Notification::make()
                 ->title('Erro ao obter download')
-                ->body('Não foi possível obter o link de download do contrato no Assinafy. O documento pode ainda não estar pronto ou o link expirou.')
+                ->body('Não foi possível obter o arquivo do contrato no Assinafy. O documento pode ainda não estar pronto ou o link expirou.')
                 ->danger()
                 ->send();
 
             return back();
         }
 
-        return redirect()->away($downloadUrl);
+        $nomeArquivo = "Contrato_Assinado_{$contrato->id}.pdf";
+
+        return response()->streamDownload(function () use ($response) {
+            echo $response->body();
+        }, $nomeArquivo, [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 }
