@@ -24,38 +24,55 @@ class ConciliacaoBancariaService
             // Formata data
             $dataTransacao = Carbon::createFromFormat('Ymd', substr($data, 0, 8));
 
-            // Verifica se já existe (evita duplicidade pelo FITID/external_id)
-            if (TransacaoBancaria::where('external_id', $fitid)->exists()) {
-                continue;
-            }
-
             // Busca fornecedor se for débito e tiver CNPJ no memo
             $fornecedorId = null;
-            if ($tipo === 'DEBIT' && $memo) {
-                // Regex para CNPJ: XX.XXX.XXX/XXXX-XX
-                if (preg_match('/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/', $memo, $cnpjMatches)) {
-                    $cnpj = $cnpjMatches[1];
+            $tipoUpper = strtoupper(trim($tipo ?? ''));
+
+            // Considera débito se o tipo for DEBIT ou se o valor for negativo
+            if (($tipoUpper === 'DEBIT' || $valor < 0) && $memo) {
+                // Regex para CNPJ brasileira: com ou sem máscara
+                if (preg_match('/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})|(\d{14})/', $memo, $cnpjMatches)) {
+                    $cnpj = ! empty($cnpjMatches[1]) ? $cnpjMatches[1] : $cnpjMatches[0];
 
                     // Tenta extrair o nome do fornecedor (o que vem antes do CNPJ)
-                    // No padrão do exemplo: "... - NOME - CNPJ"
-                    $nomeFornecedor = $memo;
+                    // No padrão comum observado: "... - NOME - CNPJ"
+                    $nomeFornecedor = null;
                     if (preg_match('/-\s*(.*?)\s*-\s*'.preg_quote($cnpj, '/').'/', $memo, $nameMatches)) {
                         $nomeFornecedor = trim($nameMatches[1]);
                     }
 
+                    // Se falhou na regex específica, tenta pegar a parte entre hífens
+                    if (! $nomeFornecedor) {
+                        $parts = explode('-', $memo);
+                        if (count($parts) >= 2) {
+                            $nomeFornecedor = trim($parts[count($parts) - 2]);
+                        }
+                    }
+
                     $fornecedor = Fornecedor::firstOrCreate(
                         ['cnpj' => $cnpj],
-                        ['razao_social' => $nomeFornecedor]
+                        ['razao_social' => $nomeFornecedor ?: $memo]
                     );
 
                     $fornecedorId = $fornecedor->id;
                 }
             }
 
+            // Verifica se já existe (evita duplicidade pelo FITID/external_id)
+            $transacaoExistente = TransacaoBancaria::where('external_id', $fitid)->first();
+            if ($transacaoExistente) {
+                // Se a transação já existe mas não tem fornecedor, e encontramos um agora, atualiza
+                if (! $transacaoExistente->fornecedor_id && $fornecedorId) {
+                    $transacaoExistente->update(['fornecedor_id' => $fornecedorId]);
+                }
+
+                continue;
+            }
+
             TransacaoBancaria::create([
                 'banco_id' => $bancoId,
                 'fornecedor_id' => $fornecedorId,
-                'tipo' => (str_contains(strtoupper($tipo), 'CREDIT') || $valor > 0) ? 'entrada' : 'saida',
+                'tipo' => (str_contains($tipoUpper, 'CREDIT') || $valor > 0) ? 'entrada' : 'saida',
                 'valor' => abs($valor),
                 'data_transacao' => $dataTransacao,
                 'descricao' => $memo,
