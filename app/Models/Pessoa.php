@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pessoa extends Model
 {
@@ -72,5 +73,10 @@ class Pessoa extends Model
             ->using(AlunoResponsavel::class)
             ->withPivot('tipo_vinculo_id', 'permissao_retirada', 'observacao')
             ->withTimestamps();
+    }
+
+    public function interessado(): HasOne
+    {
+        return $this->hasOne(Interessado::class, 'pessoa_id');
     }
 }
