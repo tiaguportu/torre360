@@ -7,7 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class InteressadoStatusChart extends ChartWidget
 {
-    protected static ?string $heading = 'Interessados por Status';
+    protected ?string $heading = 'Interessados por Status';
 
     protected function getData(): array
     {
