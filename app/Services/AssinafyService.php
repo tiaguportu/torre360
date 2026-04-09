@@ -211,11 +211,11 @@ class AssinafyService
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-            ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
+            ])->dd()->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
                     ]);
-            dd("{$this->apiUrl}/documents/{$documentId}/assignments");
+
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
 
