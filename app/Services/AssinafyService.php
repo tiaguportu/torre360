@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Contrato;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -19,9 +20,15 @@ class AssinafyService
         $this->apiKey = config('services.assinafy.key', env('ASSINAFY_API_KEY'));
         $this->accountId = config('services.assinafy.account_id', env('ASSINAFY_ACCOUNT_ID'));
         
-        // Garante que a URL tenha o /api/v1 se for a de sandbox padrão
-        if (!str_contains($this->apiUrl, '/api')) {
-             $this->apiUrl .= '/api';
+        // Ajuste Crítico: Para chamadas de API no Sandbox, a URL deve ser sandbox.assinafy.com.br
+        // O endereço .pages.dev é apenas o frontend e retorna 405 para POSTs.
+        if (str_contains($this->apiUrl, 'assinafy-app.pages.dev')) {
+            $this->apiUrl = 'https://sandbox.assinafy.com.br/v1';
+        }
+
+        // Garante que a URL tenha o sufixo /v1 se necessário (caso venha da config sem ele)
+        if (!str_contains($this->apiUrl, '/v1')) {
+             $this->apiUrl .= '/v1';
         }
     }
 
@@ -42,6 +49,8 @@ class AssinafyService
             $aluno = $matricula->pessoa;
             $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
 
+            Notification::make()->title('Gerando PDF do contrato...')->info()->send();
+
             // 1. Gerar PDF temporário
             $pdfContent = Pdf::loadView('pdfs.contrato', [
                 'contrato' => $contrato,
@@ -54,16 +63,17 @@ class AssinafyService
             ])->output();
 
             // --- PASSO 1: Upload do Documento (Multipart) ---
-            // Endpoint: POST /accounts/{account_id}/documents
+            Notification::make()->title('Passo 1/3: Realizando upload do documento...')->info()->send();
+            
             $responseDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->attach(
                 'file', $pdfContent, "Contrato_Matricula_{$matricula->id}.pdf"
-            )->post("{$this->apiUrl}/v1/accounts/{$this->accountId}/documents");
+            )->post("{$this->apiUrl}/accounts/{$this->accountId}/documents");
 
             if (!$responseDoc->successful()) {
-                throw new \Exception("Erro no Upload do Documento: " . $responseDoc->body());
+                throw new \Exception("Erro no Upload do Documento (Status {$responseDoc->status()}): " . ($responseDoc->json('message') ?? $responseDoc->body()));
             }
 
             $documentId = $responseDoc->json('id') ?? $responseDoc->json('data.id');
@@ -72,20 +82,21 @@ class AssinafyService
             }
 
             // --- PASSO 2: Criar Signatário ---
-            // Endpoint: POST /accounts/{account_id}/signers
+            Notification::make()->title('Passo 2/3: Configurando signatário...')->info()->send();
+            
             $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
             $emailSignatario = $responsavel?->email ?? $aluno?->email;
 
             $responseSigner = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-            ])->post("{$this->apiUrl}/v1/accounts/{$this->accountId}/signers", [
+            ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
                 'full_name' => $nomeSignatario,
                 'email' => $emailSignatario,
             ]);
 
             if (!$responseSigner->successful()) {
-                throw new \Exception("Erro ao criar signatário: " . $responseSigner->body());
+                throw new \Exception("Erro ao criar signatário: " . ($responseSigner->json('message') ?? $responseSigner->body()));
             }
 
             $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
@@ -94,11 +105,12 @@ class AssinafyService
             }
 
             // --- PASSO 3: Solicitar Assinatura (Assignment) ---
-            // Endpoint: POST /documents/{document_id}/assignments
+            Notification::make()->title('Passo 3/3: Enviando solicitação de assinatura...')->info()->send();
+            
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-            ])->post("{$this->apiUrl}/v1/documents/{$documentId}/assignments", [
+            ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                 'method' => 'virtual',
                 'signerIds' => [$signerId],
             ]);
@@ -117,7 +129,7 @@ class AssinafyService
                 return ['success' => true];
             }
 
-            $errorMsg = $responseAssign->body();
+            $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             Log::error('Erro Assinafy (Assignment): ' . $errorMsg);
 
             $contrato->update([
