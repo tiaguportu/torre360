@@ -130,10 +130,10 @@ class AssinafyService
 
                 return ['success' => true];
             }
-            dd($responseAssign);
+
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             Log::error('Erro Assinafy (Assignment): ' . $errorMsg);
-
+            dd($responseAssign);
             $contrato->update([
                 'assinafy_status' => 'erro_envio',
                 'assinafy_request_log' => $responseAssign->json() ?? ['error' => $errorMsg],
