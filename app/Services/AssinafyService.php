@@ -130,7 +130,7 @@ class AssinafyService
 
                 return ['success' => true];
             }
-            dd($responseDoc);
+            dd($responseAssign);
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             Log::error('Erro Assinafy (Assignment): ' . $errorMsg);
 
