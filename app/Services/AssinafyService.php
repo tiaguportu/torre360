@@ -92,7 +92,7 @@ class AssinafyService
 
                     // Busca o link específico do signatário atual na lista de signing_urls
                     $signingUrls = $docData['assignment']['signing_urls'] ?? [];
-                    
+
                     foreach ($signingUrls as $sUrl) {
                         // Tenta casar pelo e-mail se estiver na URL (conforme exemplo) ou pega o primeiro como fallback
                         if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
@@ -254,9 +254,9 @@ class AssinafyService
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-                'Accept' => 'application/pdf',
+                //'Accept' => 'application/pdf',
             ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
-
+            dd($response)
             if ($response->successful()) {
                 return $response;
             }
