@@ -1,17 +1,22 @@
 <x-filament-panels::page>
     <div class="flex gap-4 overflow-x-auto pb-4" x-data="{
         draggingRecordId: null,
+        draggingOverStatusId: null,
         handleDrop(statusId) {
             if (this.draggingRecordId) {
                 $wire.updateRecordStatus(this.draggingRecordId, statusId);
                 this.draggingRecordId = null;
+                this.draggingOverStatusId = null;
             }
         }
     }">
         @foreach($this->getStatuses() as $status)
             <div 
-                class="flex-shrink-0 w-80 bg-gray-100 dark:bg-white/5 rounded-xl flex flex-col h-[calc(100vh-250px)]"
+                class="flex-shrink-0 w-80 bg-gray-100 dark:bg-white/5 rounded-xl flex flex-col h-[calc(100vh-250px)] transition-all duration-200"
+                :class="{ 'bg-primary-50/50 dark:bg-primary-500/10 ring-2 ring-primary-500': draggingOverStatusId === {{ $status->id }} }"
                 ondragover="event.preventDefault()"
+                @dragenter="draggingOverStatusId = {{ $status->id }}"
+                @dragleave="if (draggingOverStatusId === {{ $status->id }}) draggingOverStatusId = null"
                 @drop="handleDrop({{ $status->id }})"
             >
                 <div class="p-4 border-b dark:border-white/10 flex justify-between items-center">
@@ -29,7 +34,9 @@
                         <div 
                             draggable="true"
                             @dragstart="draggingRecordId = {{ $record->id }}"
-                            class="bg-white dark:bg-white/10 p-4 rounded-lg shadow-sm border dark:border-white/5 cursor-move hover:border-primary-500 transition-colors"
+                            @dragend="draggingRecordId = null; draggingOverStatusId = null"
+                            class="bg-white dark:bg-white/10 p-4 rounded-lg shadow-sm border dark:border-white/5 cursor-move hover:border-primary-500 transition-all duration-200"
+                            :class="{ 'opacity-50 grayscale': draggingRecordId === {{ $record->id }} }"
                         >
                             <div class="flex justify-between items-start">
                                 <div class="font-medium text-sm">{{ $record->pessoa->nome }}</div>
