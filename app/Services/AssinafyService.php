@@ -215,7 +215,7 @@ class AssinafyService
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
                     ]);
-
+            dd($responseAssign);
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
 
