@@ -56,7 +56,7 @@ Estrutura de ensino e turmas.
 ## 5. Gestão Financeira
 ### `contrato`
 - Acordo comercial de prestação de serviço.
-- **Campos de Assinatura (Assinafy):** `assinafy_id`, `assinafy_status`, `assinafy_pdf_url`, `assinafy_request_log`.
+- **Campos de Assinatura (Assinafy):** `assinafy_id`, `assinafy_status`, `assinafy_request_log`.
 
 ### `faturas` e `item_faturas`
 - Cobranças geradas a partir de contratos.
