@@ -82,7 +82,7 @@ class AssinafyService
             if (!$documentId) {
                 throw new \Exception("ID do documento não retornado no upload.");
             }
-            dd($responseDoc);
+
             // --- PASSO 2: Criar Signatário ---
             Notification::make()->title('Passo 2/3: Configurando signatário...')->info()->send();
 
@@ -130,7 +130,7 @@ class AssinafyService
 
                 return ['success' => true];
             }
-
+            dd($responseDoc);
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             Log::error('Erro Assinafy (Assignment): ' . $errorMsg);
 
