@@ -35,7 +35,7 @@ class BoletimAluno extends Page implements HasSchemas
                             ->content(fn (?Model $record): string => $record?->nome ?? '-'),
                         Placeholder::make('codigo_info')
                             ->label('Matrícula / RA')
-                            ->content(fn (?Model $record): string => $record?->matriculas?->first()?->codigo ?? '-'),
+                            ->content(fn (?Model $record): string => $record?->matriculas?->first()?->turma?->nome ?? '-'),
                         Placeholder::make('turma_info')
                             ->label('Turma Atual')
                             ->content(fn (?Model $record): string => $record?->matriculas?->first()?->turma?->nome ?? '-'),

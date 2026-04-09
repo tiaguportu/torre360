@@ -35,7 +35,7 @@ class BoletimMatricula extends Page implements HasSchemas
                             ->state(fn(?Model $record): string => $record?->pessoa?->nome ?? '-'),
                         TextEntry::make('matricula')
                             ->label('Matrícula')
-                            ->state(fn(?Model $record): string => $record?->codigo ?? '-'),
+                            ->state(fn(?Model $record): string => $record?->turma?->nome ?? '-'),
                         TextEntry::make('Turma')
                             ->label('Turma Atual')
                             ->state(fn(?Model $record): string => $record?->turma?->nome ?? '-'),

@@ -40,8 +40,8 @@ class AlunosTable
                 TextColumn::make('cpf')
                     ->searchable(),
 
-                TextColumn::make('matriculas.codigo')
-                    ->label('Matrícula')
+                TextColumn::make('matriculas.turma.nome')
+                    ->label('Turmas')
                     ->badge()
                     ->searchable(),
 

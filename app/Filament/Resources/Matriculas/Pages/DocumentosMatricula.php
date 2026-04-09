@@ -53,9 +53,7 @@ class DocumentosMatricula extends Page implements HasTable
         $resource = static::getResource();
 
         return [
-            $resource::getUrl('index') => 'Matrículas',
-            $resource::getUrl('edit', ['record' => $this->record]) => "{$this->record->codigo} - {$this->record->pessoa->nome}",
-            '#' => 'Documentos',
+            $resource::getUrl('edit', ['record' => $this->record]) => ($this->record->turma?->nome ?? 'Sem Turma')." - {$this->record->pessoa->nome}",
         ];
     }
 
@@ -146,8 +144,9 @@ class DocumentosMatricula extends Page implements HasTable
 
                             $safeStudentName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $studentName);
                             $safeTypeName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $typeName);
+                            $safeTurmaName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', ($this->record->turma?->nome ?? 'Sem Turma'));
 
-                            $newFileName = "{$this->record->codigo} - {$safeStudentName} - {$safeTypeName}.{$extension}";
+                            $newFileName = "{$safeTurmaName} - {$safeStudentName} - {$safeTypeName}.{$extension}";
 
                             return Storage::disk('public')->download($inserido->arquivo_path, $newFileName);
                         }
@@ -293,7 +292,7 @@ class DocumentosMatricula extends Page implements HasTable
             return null;
         }
 
-        $zipName = "documentos_{$this->record->codigo}.zip";
+        $zipName = "documentos_" . Str::slug($this->record->pessoa->nome) . ".zip";
         $tempFile = tempnam(sys_get_temp_dir(), 'zip');
 
         $zip = new ZipArchive;
@@ -313,8 +312,9 @@ class DocumentosMatricula extends Page implements HasTable
                     // Limpar caracteres inválidos para nomes de arquivos
                     $safeStudentName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $studentName);
                     $safeTypeName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $typeName);
+                    $safeTurmaName = Str::replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', ($this->record->turma?->nome ?? 'Sem Turma'));
 
-                    $newFileName = "{$this->record->codigo} - {$safeStudentName} - {$safeTypeName}.{$extension}";
+                    $newFileName = "{$safeTurmaName} - {$safeStudentName} - {$safeTypeName}.{$extension}";
                     $zip->addFile($filePath, $newFileName);
                 }
             }
