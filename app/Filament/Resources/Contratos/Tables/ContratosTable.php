@@ -82,12 +82,7 @@ class ContratosTable
                     ->hidden(fn ($record) => $record->assinafy_status === 'signed' || $record->assinafy_status === 'completed')
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        Notification::make()->title('Iniciando envio para Assinafy...')->info()->send();
-
                         $service = app(AssinafyService::class);
-                        
-                        Notification::make()->title('Carregando dados e gerando PDF...')->info()->send();
-                        
                         $result = $service->enviarContrato($record);
 
                         if ($result['success']) {
