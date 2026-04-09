@@ -11,8 +11,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 class InteressadoForm
 {
@@ -31,17 +33,27 @@ class InteressadoForm
                                     ->preload()
                                     ->required()
                                     ->live()
+                                    ->afterStateUpdated(function (Set $set, $state) {
+                                        if ($state) {
+                                            $pessoa = Pessoa::find($state);
+                                            $set('pessoa_email', $pessoa?->email);
+                                            $set('pessoa_telefone', $pessoa?->telefone);
+                                        } else {
+                                            $set('pessoa_email', null);
+                                            $set('pessoa_telefone', null);
+                                        }
+                                    })
                                     ->createOptionForm(fn (Schema $schema) => PessoaForm::configure($schema)->getComponents()),
 
                                 TextInput::make('pessoa_email')
                                     ->label('E-mail')
-                                    ->state(fn ($get) => Pessoa::find($get('pessoa_id'))?->email)
+                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_email', Pessoa::find($get('pessoa_id'))?->email))
                                     ->disabled()
                                     ->dehydrated(false),
 
                                 TextInput::make('pessoa_telefone')
                                     ->label('Telefone')
-                                    ->state(fn ($get) => Pessoa::find($get('pessoa_id'))?->telefone)
+                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone))
                                     ->disabled()
                                     ->dehydrated(false),
 
