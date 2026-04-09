@@ -48,6 +48,24 @@ class AssinafyService
 
             $aluno = $matricula->pessoa;
             $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
+            
+            $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
+            $emailSignatario = $responsavel?->email ?? $aluno?->email;
+
+            // --- VERIFICAÇÃO PASSO 1: O contrato já foi enviado? ---
+            if ($contrato->assinafy_id && $contrato->assinafy_status === 'enviado') {
+                 // Busca a signing_url se o contrato já existir e estiver pendente
+                 $responseGet = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$contrato->assinafy_id}");
+                
+                $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
+                
+                if ($signingUrl) {
+                    return ['success' => true, 'redirect_url' => $signingUrl];
+                }
+            }
 
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
 
@@ -82,29 +100,47 @@ class AssinafyService
             if (!$documentId) {
                 throw new \Exception("ID do documento não retornado no upload.");
             }
-            dd($responseDoc);
 
-            // --- PASSO 2: Criar Signatário ---
-            Notification::make()->title('Passo 2/3: Configurando signatário...')->info()->send();
-
-            $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
-            $emailSignatario = $responsavel?->email ?? $aluno?->email;
-
-            $responseSigner = Http::withHeaders([
+            // --- VERIFICAÇÃO PASSO 2: O signatário já existe? ---
+            Notification::make()->title('Passo 2/3: Verificando signatário...')->info()->send();
+            
+            $signerId = null;
+            $responseSearch = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-            ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
-                        'full_name' => $nomeSignatario,
-                        'email' => $emailSignatario,
-                    ]);
+            ])->get("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
+                'search' => $emailSignatario
+            ]);
 
-            if (!$responseSigner->successful()) {
-                throw new \Exception("Erro ao criar signatário: " . ($responseSigner->json('message') ?? $responseSigner->body()));
+            if ($responseSearch->successful()) {
+                $signers = $responseSearch->json('data') ?? [];
+                foreach ($signers as $s) {
+                    if (isset($s['email']) && $s['email'] === $emailSignatario) {
+                        $signerId = $s['id'];
+                        break;
+                    }
+                }
             }
 
-            $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
             if (!$signerId) {
-                throw new \Exception("ID do signatário não retornado.");
+                // Se não existir, cria um novo
+                $responseSigner = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
+                            'full_name' => $nomeSignatario,
+                            'email' => $emailSignatario,
+                        ]);
+
+                if (!$responseSigner->successful()) {
+                    throw new \Exception("Erro ao criar signatário: " . ($responseSigner->json('message') ?? $responseSigner->body()));
+                }
+
+                $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
+            }
+
+            if (!$signerId) {
+                throw new \Exception("ID do signatário não obtido.");
             }
 
             // --- PASSO 3: Solicitar Assinatura (Assignment) ---
@@ -118,22 +154,28 @@ class AssinafyService
                             ['id' => $signerId]
                         ],
                         'method' => 'virtual',
-                        // Mantivemos o expires_at do sistema ou um padrão
                         'expires_at' => now()->addDays(30)->format('Y-m-d'),
                     ]);
 
             if ($responseAssign->successful()) {
+                // Obter a signing_url da resposta
+                $dataAssign = $responseAssign->json();
+                $signingUrl = $dataAssign['data']['signing_urls'][0]['url'] ?? $dataAssign['signing_urls'][0]['url'] ?? null;
+
                 $contrato->update([
                     'assinafy_id' => $documentId,
                     'assinafy_status' => 'enviado',
                     'assinafy_request_log' => [
                         'document' => $responseDoc->json(),
-                        'signer' => $responseSigner->json(),
-                        'assignment' => $responseAssign->json(),
+                        'signer_id' => $signerId,
+                        'assignment' => $dataAssign,
                     ],
                 ]);
 
-                return ['success' => true];
+                return [
+                    'success' => true,
+                    'redirect_url' => $signingUrl
+                ];
             }
 
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();

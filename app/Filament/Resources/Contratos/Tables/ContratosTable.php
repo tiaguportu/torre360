@@ -87,12 +87,16 @@ class ContratosTable
 
                         if ($result['success']) {
                             Notification::make()
-                                ->title('Contrato enviado com sucesso!')
+                                ->title('Contrato processado com sucesso!')
                                 ->success()
                                 ->send();
+
+                            if (isset($result['redirect_url'])) {
+                                echo "<script>window.open('{$result['redirect_url']}', '_blank');</script>";
+                            }
                         } else {
                             Notification::make()
-                                ->title('Erro ao finalizar o fluxo')
+                                ->title('Erro ao processar contrato')
                                 ->body($result['message'] ?? 'Erro desconhecido.')
                                 ->danger()
                                 ->persistent()
