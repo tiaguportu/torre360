@@ -20,13 +20,7 @@ class AssinafyService
         $this->apiKey = config('services.assinafy.key', env('ASSINAFY_API_KEY'));
         $this->accountId = config('services.assinafy.account_id', env('ASSINAFY_ACCOUNT_ID'));
         
-        // Ajuste Crítico: Para chamadas de API no Sandbox, a URL deve ser sandbox.assinafy.com.br
-        // O endereço .pages.dev é apenas o frontend e retorna 405 para POSTs.
-        if (str_contains($this->apiUrl, 'assinafy-app.pages.dev')) {
-            $this->apiUrl = 'https://sandbox.assinafy.com.br/v1';
-        }
-
-        // Garante que a URL tenha o sufixo /v1 se necessário (caso venha da config sem ele)
+        // Garante que a URL tenha o sufixo /v1
         if (!str_contains($this->apiUrl, '/v1')) {
              $this->apiUrl .= '/v1';
         }
@@ -102,6 +96,31 @@ class AssinafyService
             $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
             if (!$signerId) {
                 throw new \Exception("ID do signatário não retornado.");
+            }
+
+            // --- POLL STATUS: Aguardar processamento de metadados ---
+            Notification::make()->title('Aguardando processamento do documento...')->info()->send();
+            
+            $maxTentativas = 5;
+            $tentativa = 0;
+            $isReady = false;
+
+            while ($tentativa < $maxTentativas && !$isReady) {
+                sleep(2); // Aguarda 2 segundos por tentativa
+                
+                $responseCheck = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$documentId}");
+
+                if ($responseCheck->successful()) {
+                    $status = $responseCheck->json('status') ?? $responseCheck->json('data.status');
+                    // Status 'uploaded' ou 'metadata_ready' indicam que o processamento inicial terminou
+                    if ($status !== 'metadata_processing') {
+                        $isReady = true;
+                    }
+                }
+                $tentativa++;
             }
 
             // --- PASSO 3: Solicitar Assinatura (Assignment) ---
