@@ -20,7 +20,7 @@
             >
                 <x-filament::section 
                     class="h-[calc(100vh-250px)] flex flex-col border-none shadow-none bg-gray-100/50 dark:bg-white/5"
-                    :class="{ 'ring-2 ring-primary-500 bg-primary-50/50 dark:bg-primary-500/10': draggingOverStatusId === {{ $status->id }} }"
+                    x-bind:class="draggingOverStatusId === {{ $status->id }} ? 'ring-2 ring-primary-500 bg-primary-50/50 dark:bg-primary-500/10' : ''"
                 >
                     <x-slot name="heading">
                         <div class="flex items-center gap-2">
@@ -42,7 +42,7 @@
                                 @dragstart="draggingRecordId = {{ $record->id }}"
                                 @dragend="draggingRecordId = null; draggingOverStatusId = null"
                                 class="cursor-move"
-                                :class="{ 'opacity-50 grayscale': draggingRecordId === {{ $record->id }} }"
+                                x-bind:class="draggingRecordId === {{ $record->id }} ? 'opacity-50 grayscale' : ''"
                             >
                                 <x-filament::section compact 
                                     class="hover:border-primary-500 transition-all duration-200 shadow-sm border-gray-200 dark:border-white/10"
