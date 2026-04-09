@@ -215,7 +215,7 @@ class AssinafyService
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
                     ]);
-            dd($responseAssign);
+
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
 
@@ -245,7 +245,7 @@ class AssinafyService
 
                 return ['success' => true, 'redirect_url' => $signingUrl];
             }
-
+            dd($responseAssign);
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             throw new \Exception("Erro ao solicitar assinatura: " . $errorMsg);
 
