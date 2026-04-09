@@ -12,7 +12,7 @@ class DownloadContratoController extends Controller
 {
     public function __invoke(Contrato $contrato, AssinafyService $assinafyService)
     {
-        $response = $assinafyService->baixarDocumento($contrato);
+        $response = $assinafyService->baixarDocumentoAssinado($contrato);
 
         if (!$response) {
             Notification::make()

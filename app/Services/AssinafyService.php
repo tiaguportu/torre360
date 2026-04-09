@@ -244,7 +244,7 @@ class AssinafyService
     /**
      * Obtém o conteúdo do documento assinado na Assinafy.
      */
-    public function baixarDocumento(Contrato $contrato): ?\Illuminate\Http\Client\Response
+    public function baixarDocumentoAssinado(Contrato $contrato): ?\Illuminate\Http\Client\Response
     {
         try {
             if (!$contrato->assinafy_id) {
@@ -253,7 +253,7 @@ class AssinafyService
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
+            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/certificated");
 
             if ($response->successful()) {
                 return $response;
