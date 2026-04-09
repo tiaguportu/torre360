@@ -330,3 +330,22 @@ livewire(ListUsers::class)
 - **Never assume full-width layout.** `Grid`, `Section`, and `Fieldset` do not span all columns by default. Explicitly set column spans when needed.
 
 </laravel-boost-guidelines>
+
+=== database rules ===
+
+# Database Documentation (Torre360)
+
+Consult the file `GEMINI_DB.md` for a complete description of tables and relationships.
+
+## Summary of Modules
+- **Core & Security:** `users`, `audit_logs`, `configuracao`.
+- **People & Geography:** `pessoa`, `aluno_responsavel`, `endereco`, `cidade`.
+- **Academic Management:** `curso`, `serie`, `turma`, `matricula`, `disciplina`.
+- **Evaluation & Attendance:** `etapa_avaliativa`, `avaliacao`, `nota`, `cronograma_aula`.
+- **Finance:** `contrato`, `faturas`, `transacao_bancarias`, `plano_contas`.
+- **CRM:** `interessado`, `historico_contato`.
+- **Documentation:** `tipo_documento`, `documento_inserido`.
+- **Operations:** `ordem_servicos`.
+
+> [!TIP]
+> Always check for foreign keys and many-to-many relationships (like `endereco_pessoa`) when creating new resources.

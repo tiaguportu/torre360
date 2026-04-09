@@ -10,7 +10,8 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
 
-> **Atenção:** Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
+> [!NOTE]
+> Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
 
 ---
 
@@ -20,160 +21,113 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 | Grupo | O que você faz aqui |
 |---|---|
-| 🌍 **Geografia** | Configuração de Países, Estados e Cidades |
-| 📋 **Cadastros** | Pessoas, Unidades, Sexo, Cor/Raça e Perfis |
-| 🎓 **Acadêmico** | Cursos, Turmas, Períodos, Avaliações e Notas |
-| 📝 **Secretaria** | Matrículas, Contratos e Documentos |
-| 💰 **Financeiro** | Responsáveis financeiros, Títulos e Tributações |
-| ⚙️ **Configurações** | Usuários e Controle de Permissões (RBAC) |
-
-> **Dica:** O sistema suporta **Modo Escuro**. Ative-o clicando no ícone ☀️/🌙 no canto superior direito da tela.
-
----
-
-## 👥 3. Cadastros — O Ponto de Partida
-
-Antes de criar matrículas, configure os dados básicos de Pessoas e estruturas.
-
-### 3.1 Cadastrando uma Pessoa
-
-1. Vá em **Cadastros → Pessoas** e clique em **+ Nova Pessoa**.
-2. Preencha os dados obrigatórios:
-   - **Nome** e **CPF** (o CPF precisa ser único no sistema).
-   - **E-mail** e **Telefone**.
-   - **Sexo** e **Cor/Raça** — os valores vêm de listas pré-definidas: *Feminino, Masculino, Não declarado* e *Branca, Preta, Parda, Amarela, Indígena, Não declarado*.
-3. **Nacionalidade:** preenchida automaticamente como "Brasil". Se a Pessoa for estrangeira, troque o país.
-4. **Naturalidade:** aparece automaticamente ao selecionar "Brasil" como Nacionalidade, listando apenas cidades brasileiras.
-5. **Foto:** clique no campo Foto, selecione a imagem e use o editor para recortar no formato 3:4 (padrão para documentos).
-6. Clique em **Salvar**.
-
-> **Multi-perfil:** Uma Pessoa pode ser aluno, professor e responsável ao mesmo tempo. Os papéis são atribuídos na aba **Perfil** da pessoa.
-
-### 3.2 Cadastrando uma Unidade
-
-1. Vá em **Cadastros → Unidades** e clique em **+ Nova Unidade**.
-2. Preencha o nome e vincule um Endereço (crie o endereço previamente se necessário).
+| 🎯 **CRM** | Gestão de Interessados e Kanban de Matrícula |
+| 👥 **Pessoas** | Cadastro unificado de Alunos, Responsáveis e Fornecedores |
+| 🎓 **Acadêmico** | Cursos, Turmas, Avaliações, Notas e Frequência |
+| 📝 **Secretaria** | Matrículas, Contratos e Gestão de Documentos |
+| 💰 **Financeiro** | Faturas, Bancos, Conciliação, DRE e Plano de Contas |
+| 🛠️ **Operações** | Ordens de Serviço e Manutenção Interna |
+| 🌍 **Configurações** | Geografia (Países/Cidades), Configurações do Sistema e Segurança |
 
 ---
 
-## 🎓 4. Acadêmico — Estrutura de Ensino
+## 🎯 3. CRM — Gestão de Leads e Interessados
 
-Siga esta ordem ao configurar o sistema pela primeira vez:
+O módulo de CRM permite gerenciar o processo de captação de novos alunos antes mesmo da matrícula.
 
-### 4.1 Hierarquia Acadêmica
+### 3.1 Kanban de Interessados
+1. Vá em **CRM → Interessados**.
+2. Utilize a visualização em **Cards/Kanban** para arrastar interessados entre as etapas (ex: *Novo Contato*, *Agendamento*, *Visita Realizada*, *Matrícula em Andamento*).
+3. Clique em um card para ver o histórico de contatos e observações.
 
-```
-Período Letivo (ex: "1º Semestre 2025")
- ├── Dias Não Letivos (feriados/recessos)
- ├── Etapas Avaliativas (Bimestres/Trimestres)
- │    └── Avaliações (provas e trabalhos com nota máxima e peso)
- └── Turmas
-      ├── Cronograma de Aulas
-      └── Matrículas de Alunos
-```
-
-### 4.2 Configuração Passo a Passo
-
-1. **Área de Conhecimento** → Crie as grandes áreas (Linguagens, Exatas, Humanas...).
-2. **Cursos** → Ensino Fundamental, Ensino Médio, etc. Vincule a uma Unidade.
-3. **Séries** → Vincule ao curso (1º Ano, 2º Ano...).
-4. **Disciplinas** → Vinculadas a uma Área de Conhecimento.
-5. **Período Letivo** → Crie o ano/semestre letivo com data de início e fim.
-6. **Turmas** → Vincule a uma Série, Turno e Período Letivo.
-7. **Etapas Avaliativas** → Bimestres/trimestres dentro de um Período Letivo.
-8. **Avaliações** → Provas e trabalhos — defina Disciplina, Turma, Etapa, data prevista, nota máxima e peso.
-9. **Cronograma de Aulas** → Horários semanais de cada Turma com o Professor responsável.
-
-### 4.3 Dias Não Letivos
-
-1. Vá em **Acadêmico → Dias Não Letivos**.
-2. Vincule ao **Período Letivo** e informe a data e descrição do feriado ou recesso.
+### 3.2 Registro de Histórico de Contato
+1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contato**.
+2. Registre cada ligação, e-mail ou visita, definindo o tipo de contato e o relato do que foi conversado.
 
 ---
 
-## 📝 5. Secretaria — Matrículas
+## 👥 4. Cadastro Unificado de Pessoas
 
-### 5.1 Criando uma Matrícula
+Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos papéis (Aluno, Responsável Financeiro, Fornecedor).
 
-1. Vá em **Secretaria → Matrículas** e clique em **+ Nova Matrícula**.
-2. **Selecione o Aluno:** O campo exibe a lista de Pessoas cadastradas no formato **"Nome - CPF"**. Você pode buscar pelo nome ou CPF.
-   - Se o aluno **ainda não foi cadastrado**, clique no botão **＋** ao lado do campo. Um formulário rápido abrirá dentro da própria janela para cadastrar nome, CPF, e-mail, sexo e cor/raça sem sair da tela.
-3. **Selecione a Turma**.
-4. **Situação da Matrícula:** defina como *Ativo*, *Trancado*, *Evadido*, etc.
-5. **Data de Matrícula.**
-6. Clique em **Salvar**.
-
-### 5.2 Contratos
-
-1. Com a Matrícula criada, vá em **Secretaria → Contratos** e crie um contrato vinculado à matrícula.
-2. O Contrato é o vínculo formal e jurídico entre o aluno e a instituição para o período letivo.
+### 4.1 Cadastro de Pessoa
+1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento).
+2. **Endereços:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa (ex: Residencial, Comercial).
+3. **Foto:** Use o editor integrado para ajustar a foto de perfil.
 
 ---
 
-## 💰 6. Financeiro
+## 🎓 5. Acadêmico — Ensino e Avaliação
 
-### 6.1 Responsável Financeiro
+### 5.1 Lançamento de Notas
+1. Vá em **Acadêmico → Avaliações**.
+2. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+3. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 
-1. Vá em **Financeiro → Responsáveis Financeiros**.
-2. Vincule uma **Pessoa** e um **Contrato** — essa pessoa será a responsável pelos pagamentos.
+### 5.2 Frequência Escolar
+1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
+2. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
 
-### 6.2 Títulos (Cobranças)
-
-1. Acesse **Financeiro → Títulos**.
-2. Crie os títulos de cobrança vinculados ao contrato (parcelas mensais, taxas avulsas, etc.).
-
-### 6.3 Tributação de Cursos
-
-Registre a natureza fiscal de cada curso para fins de emissão de NFS-e junto à Secretaria de Finanças municipal.
+### 5.3 Boletim do Aluno
+1. Na visualização de **Matrículas**, use a ação **Boletim**.
+2. O sistema gera uma tabela dinâmica porEtapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
+3. Notas abaixo da média aparecem destacadas em vermelho.
 
 ---
 
-## ⚙️ 7. Configurações — Usuários e Permissões
+## 📝 6. Secretaria e Documentação
 
-### 7.1 Criando um Usuário
+### 6.1 Matrículas e Contratos
+1. Ao realizar uma matrícula, o sistema permite a criação automática de um **Contrato**.
+2. O contrato centraliza as obrigações financeiras e os responsáveis legais.
 
-1. Vá em **Configurações → Usuários** e clique em **+ Novo Usuário**.
-2. Preencha **Nome**, **E-mail** e **Senha** (mínimo 8 caracteres com confirmação).
-3. **Papéis (Roles):** selecione um ou mais papéis de acesso para o usuário.
-4. **Pessoa Vinculada (opcional):** vincule o usuário a uma Pessoa já cadastrada no sistema (exibido como "Nome - CPF").
-5. Clique em **Salvar**.
+### 6.2 Gestão de Documentos
+1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
+2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.
+3. O sistema permite validar se o documento foi recebido, se está pendente ou se foi recusado por algum motivo.
 
-### 7.2 Papéis de Acesso (RBAC)
+---
 
-O sistema usa um controle de permissões baseado em papéis. Cada papel define quais telas e ações o usuário pode executar:
+## 💰 7. Financeiro Avançado
 
-| Papel | Nível de Acesso |
-|---|---|
-| `super_admin` | Acesso irrestrito total |
-| `admin` | Administrador — acesso geral |
-| `secretaria` | Matrículas, alunos e contratos |
-| `professor` | Cronograma e avaliações |
-| `coordenador` | Cursos e turmas |
-| `responsavel` | Área financeira |
-| `aluno` | Perfil básico (uso futuro) |
+### 7.1 Faturas e Itens
+Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
+1. Uma fatura pode conter múltiplos itens (Mensalidade + Taxa de Material + Uniforme).
+2. As faturas podem ser geradas em lote a partir de contratos.
 
-### 7.3 Gestor de Permissões (Shield)
+### 7.2 Conciliação Bancária
+1. Vá em **Financeiro → Conciliação Bancária**.
+2. Faça o upload do arquivo **OFX** extraído do seu banco.
+3. O sistema tentará identificar automaticamente a qual fatura ou fornecedor o lançamento pertence.
+4. Para novos fornecedores detectados em débitos, o sistema abre um popup para cadastro rápido.
 
-1. Vá em **Configurações → Roles** (gerenciado pelo Filament Shield).
-2. Clique em um papel para editar quais recursos ele pode visualizar, criar, editar ou excluir.
-3. As permissões são geradas automaticamente para cada recurso do sistema (view, create, update, delete).
+### 7.3 Relatório DRE (Demonstrativo de Resultados)
+1. Acesse **Financeiro → Relatórios → DRE**.
+2. Filtre pelo mês ou período desejado.
+3. O sistema consolida todas as receitas (Faturas pagas) e despesas (Pagamentos a fornecedores) com base no **Plano de Contas**, mostrando o lucro ou prejuízo do período.
+
+---
+
+## 🛠️ 8. Operações — Ordens de Serviço (OS)
+
+Utilizado para gerir a manutenção da infraestrutura da escola.
+1. Crie uma **OS** descrevendo o problema (Ex: Ar condicionado quebrado).
+2. Defina **Prioridade** e **Categoria**.
+3. Adicione fotos do problema e anotações conforme o técnico realiza o serviço.
 
 ---
 
 ## 🆘 Dúvidas Frequentes
 
-**Q: O campo "Aluno" não encontra a pessoa que eu quero. O que fazer?**
-> A busca funciona tanto pelo **nome** quanto pelo **CPF**. Tente digitar o CPF do aluno. Se a pessoa não existir, clique em **＋** para cadastrá-la rapidamente.
+**Q: Como faço para um aluno aparecer no Boletim?**
+> R: Ele precisa ter uma **Matrícula Ativa** em um **Período Letivo** que possua disciplinas e avaliações cadastradas.
 
-**Q: Ao salvar, aparece um erro de validação. Por que?**
-> Campos marcados com **\*** são obrigatórios. Verifique todos e tente novamente. Erros de CPF duplicado indicam que a pessoa já está cadastrada — busque pelo CPF antes de criar.
+**Q: Qual a diferença entre Fatura e Transação?**
+> R: A **Fatura** é a intenção de cobrança/pagamento. A **Transação** é o movimento real de dinheiro na conta bancária (extrato). A conciliação une os dois.
 
-**Q: Não consigo acessar determinada tela. Por quê?**
-> Seu usuário pode não ter o papel necessário. Fale com o administrador do sistema para verificar suas permissões em **Configurações → Usuários**.
-
-**Q: Como altero minha senha?**
-> O administrador pode alterar a sua senha em **Configurações → Usuários → Editar**. Por segurança, deixe o campo vazio caso não queira alterá-la.
+**Q: Como altero as etapas avaliativas (ex: de Bimestre para Trimestre)?**
+> R: Vá em **Configurações → Etapas Avaliativas** e defina as datas de início e fim. O sistema ajustará o cálculo do boletim automaticamente.
 
 ---
 
-> **Torre360** — Desenvolvido para simplificar a gestão escolar com tecnologia de ponta. Para suporte técnico, acione o responsável pelo sistema da sua instituição.
+> **Torre360** — Gestão inteligente para instituições de ensino.

@@ -1,0 +1,1366 @@
+﻿{
+    "App\\Models\\Aluno": {
+        "table": "pessoa",
+        "columns": [
+            "id",
+            "endereco_id",
+            "naturalidade_id",
+            "nacionalidade_id",
+            "nome",
+            "cpf",
+            "raca_cor",
+            "created_at",
+            "updated_at",
+            "foto",
+            "telefone",
+            "email",
+            "sexo_id",
+            "cor_raca_id",
+            "user_id",
+            "data_nascimento"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\AlunoResponsavel": {
+        "table": "aluno_responsavel",
+        "columns": [
+            "id",
+            "aluno_id",
+            "responsavel_id",
+            "tipo_vinculo_id",
+            "permissao_retirada",
+            "observacao",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "tipoVinculo",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "aluno",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "responsavel",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\AnotacaoOs": {
+        "table": "anotacao_os",
+        "columns": [
+            "id",
+            "ordem_servico_id",
+            "user_id",
+            "texto",
+            "fotos",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "ordemServico",
+                "type": "belongsTo"
+            },
+            {
+                "name": "user",
+                "type": "belongsTo"
+            }
+        ]
+    },
+    "App\\Models\\AreaConhecimento": {
+        "table": "area_conhecimento",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "nome"
+        ],
+        "relationships": [
+            {
+                "name": "disciplinas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\AuditLog": {
+        "table": "audit_logs",
+        "columns": [
+            "id",
+            "user_id",
+            "event",
+            "url",
+            "ip_address",
+            "user_agent",
+            "auditable_type",
+            "auditable_id",
+            "old_values",
+            "new_values",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "user",
+                "type": "belongsTo"
+            },
+            {
+                "name": "auditable",
+                "type": "morphTo"
+            }
+        ]
+    },
+    "App\\Models\\Avaliacao": {
+        "table": "avaliacao",
+        "columns": [
+            "id",
+            "etapa_avaliativa_id",
+            "data_ocorrencia",
+            "data_limite_lancamento",
+            "created_at",
+            "updated_at",
+            "disciplina_id",
+            "turma_id",
+            "data_prevista",
+            "nota_maxima",
+            "peso_etapa_avaliativa",
+            "professor_id",
+            "categoria_avaliacao_id"
+        ],
+        "relationships": [
+            {
+                "name": "etapaAvaliativa",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "notas",
+                "type": "HasMany"
+            },
+            {
+                "name": "disciplina",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "turma",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "professor",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "categoria",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "matriculas",
+                "type": "HasManyThrough"
+            }
+        ]
+    },
+    "App\\Models\\Banco": {
+        "table": "bancos",
+        "columns": [
+            "id",
+            "nome",
+            "agencia",
+            "conta",
+            "pix_key",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "codigo_bacen_id"
+        ],
+        "relationships": [
+            {
+                "name": "transacoes",
+                "type": "HasMany"
+            },
+            {
+                "name": "codigoBacen",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\CategoriaAvaliacao": {
+        "table": "categoria_avaliacao",
+        "columns": [
+            "id",
+            "nome",
+            "descricao",
+            "ordem",
+            "created_at",
+            "updated_at",
+            "categoria_avaliacao_substituicao_id"
+        ],
+        "relationships": [
+            {
+                "name": "avaliacoes",
+                "type": "HasMany"
+            },
+            {
+                "name": "substituicao",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "substituidas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\CategoriaOs": {
+        "table": "categoria_os",
+        "columns": [
+            "id",
+            "nome",
+            "cor",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "ordemServicos",
+                "type": "belongsToMany"
+            }
+        ]
+    },
+    "App\\Models\\CentroCusto": {
+        "table": "centro_custos",
+        "columns": [
+            "id",
+            "nome",
+            "is_active",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "transacoes",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Cidade": {
+        "table": "cidade",
+        "columns": [
+            "id",
+            "estado_id",
+            "nome",
+            "codigo_ibge",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "estado",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "enderecos",
+                "type": "HasMany"
+            },
+            {
+                "name": "pessoas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\CodigoBacen": {
+        "table": "codigo_bacens",
+        "columns": [
+            "id",
+            "codigo",
+            "nome_extenso",
+            "nome_reduzido",
+            "ispb",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "bancos",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Configuracao": {
+        "table": "configuracao",
+        "columns": [
+            "id",
+            "campo",
+            "valor",
+            "grupo",
+            "ordem",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\Contrato": {
+        "table": "contrato",
+        "columns": [
+            "id",
+            "valor_total",
+            "data_aceite",
+            "log_assinatura",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "matriculas",
+                "type": "HasMany"
+            },
+            {
+                "name": "faturas",
+                "type": "HasMany"
+            },
+            {
+                "name": "responsaveisFinanceiros",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Coordenador": {
+        "table": "coordenador",
+        "columns": [
+            "id",
+            "curso_id",
+            "pessoa_id",
+            "cargo",
+            "data_inicio",
+            "flag_somente_leitura",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "curso",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "pessoa",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\CorRaca": {
+        "table": "cor_raca",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "pessoas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\CronogramaAula": {
+        "table": "cronograma_aula",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "turma_id",
+            "disciplina_id",
+            "pessoa_id",
+            "data",
+            "hora_inicio",
+            "hora_fim",
+            "conteudo_ministrado",
+            "periodo_letivo_id"
+        ],
+        "relationships": [
+            {
+                "name": "frequencias",
+                "type": "HasMany"
+            },
+            {
+                "name": "turma",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "disciplina",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "professor",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "periodoLetivo",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Curso": {
+        "table": "curso",
+        "columns": [
+            "id",
+            "unidade_id",
+            "nome_externo",
+            "nome_interno",
+            "portaria",
+            "data_final",
+            "minutos_por_periodo",
+            "cor",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "unidade",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "series",
+                "type": "HasMany"
+            },
+            {
+                "name": "documentos",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "coordenadores",
+                "type": "HasMany"
+            },
+            {
+                "name": "tributacao",
+                "type": "HasOne"
+            }
+        ]
+    },
+    "App\\Models\\DiaNaoLetivo": {
+        "table": "dia_nao_letivo",
+        "columns": [
+            "id",
+            "periodo_letivo_id",
+            "data",
+            "descricao",
+            "flag_ativo",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "periodoLetivo",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Disciplina": {
+        "table": "disciplina",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "area_id",
+            "nome",
+            "sigla",
+            "flag_matricula_automatica",
+            "carga_horaria_semanal",
+            "cor"
+        ],
+        "relationships": [
+            {
+                "name": "areaConhecimento",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "habilidades",
+                "type": "HasMany"
+            },
+            {
+                "name": "cronogramasAula",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\DocumentoInserido": {
+        "table": "documento_inserido",
+        "columns": [
+            "id",
+            "tipo_documento_id",
+            "matricula_id",
+            "situacao_documento_inserido_id",
+            "observacoes",
+            "arquivo_path",
+            "nome_arquivo_original",
+            "hash_arquivo",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "tipoDocumento",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "matricula",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "situacao",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\EmailLog": {
+        "table": "email_logs",
+        "columns": [
+            "id",
+            "user_id",
+            "to",
+            "cc",
+            "bcc",
+            "subject",
+            "body",
+            "sent_at",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "user",
+                "type": "belongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Endereco": {
+        "table": "endereco",
+        "columns": [
+            "id",
+            "cidade_id",
+            "logradouro",
+            "numero",
+            "bairro",
+            "cep",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "cidade",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "pessoas",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "unidades",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Estado": {
+        "table": "estado",
+        "columns": [
+            "id",
+            "pais_id",
+            "nome",
+            "sigla",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "pais",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "cidades",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\EtapaAvaliativa": {
+        "table": "etapa_avaliativa",
+        "columns": [
+            "id",
+            "nome",
+            "data_inicio",
+            "data_fim",
+            "created_at",
+            "updated_at",
+            "periodo_letivo_id"
+        ],
+        "relationships": [
+            {
+                "name": "periodoLetivo",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "avaliacoes",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Fatura": {
+        "table": "faturas",
+        "columns": [
+            "id",
+            "contrato_id",
+            "vencimento",
+            "status",
+            "pix_copia_e_cola",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "contrato",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "itens",
+                "type": "HasMany"
+            },
+            {
+                "name": "transacoes",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Fornecedor": {
+        "table": "fornecedors",
+        "columns": [
+            "id",
+            "razao_social",
+            "nome_fantasia",
+            "cnpj",
+            "email",
+            "telefone",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "transacoes",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\FrequenciaEscolar": {
+        "table": "frequencia_escolar",
+        "columns": [
+            "id",
+            "matricula_id",
+            "cronograma_aula_id",
+            "situacao",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "matricula",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "cronogramaAula",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Habilidade": {
+        "table": "habilidade",
+        "columns": [
+            "id",
+            "serie_id",
+            "disciplina_id",
+            "agrupamento",
+            "descricao",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "serie",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "disciplina",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\HistoricoContato": {
+        "table": "historico_contato",
+        "columns": [
+            "id",
+            "interessado_id",
+            "tipo_contato_interessado_id",
+            "relato",
+            "data_contato",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "interessado",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "tipoContato",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Interessado": {
+        "table": "interessado",
+        "columns": [
+            "id",
+            "pessoa_id",
+            "usuario_id",
+            "origem_interessado_id",
+            "status_interessado_id",
+            "data_proximo_contato",
+            "observacoes",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "pessoa",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "usuario",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "origem",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "status",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "dependentes",
+                "type": "HasMany"
+            },
+            {
+                "name": "historicos",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\InteressadoDependente": {
+        "table": "interessado_dependente",
+        "columns": [
+            "id",
+            "interessado_id",
+            "nome_crianca",
+            "serie_id",
+            "data_nascimento",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "interessado",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "serie",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\ItemFatura": {
+        "table": "item_faturas",
+        "columns": [
+            "id",
+            "fatura_id",
+            "descricao",
+            "valor_unitario",
+            "quantidade",
+            "desconto",
+            "tipo_desconto",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "fatura",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Matricula": {
+        "table": "matricula",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "pessoa_id",
+            "turma_id",
+            "situacao_matricula_id",
+            "contrato_id",
+            "periodo_letivo_id"
+        ],
+        "relationships": [
+            {
+                "name": "pessoa",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "turma",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "periodoLetivo",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "situacaoMatricula",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "contrato",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "notas",
+                "type": "HasMany"
+            },
+            {
+                "name": "documentoInseridos",
+                "type": "HasMany"
+            },
+            {
+                "name": "frequenciaEscolars",
+                "type": "HasMany"
+            },
+            {
+                "name": "tiposDocumentos",
+                "type": "BelongsToMany"
+            }
+        ]
+    },
+    "App\\Models\\Nota": {
+        "table": "nota",
+        "columns": [
+            "id",
+            "avaliacao_id",
+            "matricula_id",
+            "valor",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "avaliacao",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "matricula",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\OrdemServico": {
+        "table": "ordem_servicos",
+        "columns": [
+            "id",
+            "titulo",
+            "descricao",
+            "custo_estimado",
+            "percentual_conclusao",
+            "prazo_conclusao",
+            "prioridade",
+            "status",
+            "fotos",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "categorias",
+                "type": "belongsToMany"
+            },
+            {
+                "name": "anotacoes",
+                "type": "hasMany"
+            }
+        ]
+    },
+    "App\\Models\\OrigemInteressado": {
+        "table": "origem_interessado",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\Pais": {
+        "table": "pais",
+        "columns": [
+            "id",
+            "nome",
+            "sigla",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "estados",
+                "type": "HasMany"
+            },
+            {
+                "name": "pessoas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\PeriodoLetivo": {
+        "table": "periodo_letivo",
+        "columns": [
+            "id",
+            "nome",
+            "data_inicio",
+            "data_fim",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "turmas",
+                "type": "HasMany"
+            },
+            {
+                "name": "etapasAvaliativas",
+                "type": "HasMany"
+            },
+            {
+                "name": "diasNaoLetivos",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Pessoa": {
+        "table": "pessoa",
+        "columns": [
+            "id",
+            "endereco_id",
+            "naturalidade_id",
+            "nacionalidade_id",
+            "nome",
+            "cpf",
+            "raca_cor",
+            "created_at",
+            "updated_at",
+            "foto",
+            "telefone",
+            "email",
+            "sexo_id",
+            "cor_raca_id",
+            "user_id",
+            "data_nascimento"
+        ],
+        "relationships": [
+            {
+                "name": "users",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "enderecos",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "naturalidade",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "nacionalidade",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "sexo",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "corRaca",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "matriculas",
+                "type": "HasMany"
+            },
+            {
+                "name": "responsaveisFinanceiros",
+                "type": "HasMany"
+            },
+            {
+                "name": "coordenacoes",
+                "type": "HasMany"
+            },
+            {
+                "name": "alunos",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "responsaveis",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "interessado",
+                "type": "HasOne"
+            }
+        ]
+    },
+    "App\\Models\\PlanoConta": {
+        "table": "plano_contas",
+        "columns": [
+            "id",
+            "codigo",
+            "nome",
+            "tipo",
+            "pai_id",
+            "is_active",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "pai",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "filhos",
+                "type": "HasMany"
+            },
+            {
+                "name": "transacoes",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\ResponsavelFinanceiro": {
+        "table": "responsavel_financeiro",
+        "columns": [
+            "id",
+            "contrato_id",
+            "pessoa_id",
+            "percentual",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "contrato",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "pessoa",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Serie": {
+        "table": "serie",
+        "columns": [
+            "id",
+            "curso_id",
+            "nome",
+            "sistema_avaliacao",
+            "id_mec",
+            "idade_minima",
+            "emite_certificado",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "curso",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "turmas",
+                "type": "HasMany"
+            },
+            {
+                "name": "habilidades",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Sexo": {
+        "table": "sexo",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "pessoas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\SituacaoDocumentoInserido": {
+        "table": "situacao_documento_inserido",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\SituacaoMatricula": {
+        "table": "situacao_matricula",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "nome"
+        ],
+        "relationships": [
+            {
+                "name": "matriculas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\StatusInteressado": {
+        "table": "status_interessado",
+        "columns": [
+            "id",
+            "nome",
+            "cor",
+            "ordem",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\TipoContatoInteressado": {
+        "table": "tipo_contato_interessado",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\TipoDocumento": {
+        "table": "tipo_documento",
+        "columns": [
+            "id",
+            "nome",
+            "flag_obrigatorio",
+            "created_at",
+            "updated_at",
+            "modelo_arquivo",
+            "modelo_link"
+        ],
+        "relationships": [
+            {
+                "name": "cursos",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "turmas",
+                "type": "BelongsToMany"
+            },
+            {
+                "name": "matriculas",
+                "type": "BelongsToMany"
+            }
+        ]
+    },
+    "App\\Models\\TipoVinculo": {
+        "table": "tipo_vinculos",
+        "columns": [
+            "id",
+            "nome",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": []
+    },
+    "App\\Models\\TransacaoBancaria": {
+        "table": "transacao_bancarias",
+        "columns": [
+            "id",
+            "banco_id",
+            "fatura_id",
+            "plano_conta_id",
+            "centro_custo_id",
+            "fornecedor_id",
+            "tipo",
+            "valor",
+            "data_transacao",
+            "descricao",
+            "conciliado",
+            "external_id",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "banco",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "fatura",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "planoConta",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "centroCusto",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "fornecedor",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\TributacaoCurso": {
+        "table": "tributacao_curso",
+        "columns": [
+            "id",
+            "curso_id",
+            "cnae",
+            "iss",
+            "pis",
+            "cofins",
+            "item_servico",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "curso",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\Turma": {
+        "table": "turma",
+        "columns": [
+            "id",
+            "created_at",
+            "updated_at",
+            "serie_id",
+            "turno_id",
+            "codigo",
+            "professor_conselheiro_id",
+            "vagas_maximas",
+            "nome",
+            "periodo_letivo_id",
+            "cor"
+        ],
+        "relationships": [
+            {
+                "name": "serie",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "turno",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "professorConselheiro",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "periodoLetivo",
+                "type": "BelongsTo"
+            },
+            {
+                "name": "avaliacoes",
+                "type": "HasMany"
+            },
+            {
+                "name": "matriculas",
+                "type": "HasMany"
+            },
+            {
+                "name": "cronogramasAula",
+                "type": "HasMany"
+            },
+            {
+                "name": "tiposDocumentos",
+                "type": "BelongsToMany"
+            }
+        ]
+    },
+    "App\\Models\\Turno": {
+        "table": "turno",
+        "columns": [
+            "id",
+            "nome",
+            "hora_inicio",
+            "hora_fim",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "turmas",
+                "type": "HasMany"
+            }
+        ]
+    },
+    "App\\Models\\Unidade": {
+        "table": "unidade",
+        "columns": [
+            "id",
+            "endereco_id",
+            "nome",
+            "cnpj",
+            "flag_ativo",
+            "created_at",
+            "updated_at"
+        ],
+        "relationships": [
+            {
+                "name": "cursos",
+                "type": "HasMany"
+            },
+            {
+                "name": "endereco",
+                "type": "BelongsTo"
+            }
+        ]
+    },
+    "App\\Models\\User": {
+        "table": "users",
+        "columns": [
+            "id",
+            "name",
+            "email",
+            "email_verified_at",
+            "password",
+            "is_active",
+            "remember_token",
+            "created_at",
+            "updated_at",
+            "terms_accepted_at"
+        ],
+        "relationships": [
+            {
+                "name": "pessoas",
+                "type": "BelongsToMany"
+            }
+        ]
+    }
+}
