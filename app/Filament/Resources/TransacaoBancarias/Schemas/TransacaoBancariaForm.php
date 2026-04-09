@@ -60,7 +60,24 @@ class TransacaoBancariaForm
                 Select::make('fornecedor_id')
                     ->label('Fornecedor')
                     ->relationship('fornecedor', 'razao_social')
-                    ->searchable(),
+                    ->searchable()
+                    ->createOptionForm([
+                        TextInput::make('razao_social')
+                            ->label('Razão Social')
+                            ->required(),
+                        TextInput::make('nome_fantasia')
+                            ->label('Nome Fantasia'),
+                        TextInput::make('cnpj')
+                            ->label('CNPJ')
+                            ->mask('99.999.999/9999-99')
+                            ->unique('fornecedors', 'cnpj'),
+                        TextInput::make('email')
+                            ->label('E-mail')
+                            ->email(),
+                        TextInput::make('telefone')
+                            ->label('Telefone')
+                            ->tel(),
+                    ]),
 
                 Toggle::make('conciliado')
                     ->label('Conciliado?')

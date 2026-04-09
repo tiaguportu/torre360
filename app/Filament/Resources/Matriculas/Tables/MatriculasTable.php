@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
+use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
+use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Models\ResponsavelFinanceiro;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -162,6 +165,43 @@ class MatriculasTable
                                     ->send();
                             }
                         }
+                    }),
+                Action::make('gerarContrato')
+                    ->label('Gerar Contrato')
+                    ->tooltip('Gerar Contrato para esta Matrícula')
+                    ->icon(Heroicon::OutlinedDocumentPlus)
+                    ->color('success')
+                    ->visible(fn (Matricula $record) => ! $record->contrato_id && $record->pessoa->responsaveis()->exists())
+                    ->requiresConfirmation()
+                    ->modalHeading('Gerar Contrato?')
+                    ->modalDescription('As pessoas responsáveis pelo aluno serão vinculadas ao contrato com valor R$ 0,00.')
+                    ->modalSubmitActionLabel('Sim, gerar contrato')
+                    ->action(function (Matricula $record) {
+                        $contrato = Contrato::create([
+                            'valor_total' => 0,
+                            'data_aceite' => now(),
+                        ]);
+
+                        $record->contrato_id = $contrato->id;
+                        $record->save();
+
+                        $responsaveis = $record->pessoa->responsaveis;
+                        $count = $responsaveis->count();
+
+                        foreach ($responsaveis as $responsavel) {
+                            ResponsavelFinanceiro::create([
+                                'contrato_id' => $contrato->id,
+                                'pessoa_id' => $responsavel->id,
+                                'percentual' => 100 / $count,
+                            ]);
+                        }
+
+                        Notification::make()
+                            ->title('Contrato gerado com sucesso!')
+                            ->success()
+                            ->send();
+
+                        return redirect(ContratoResource::getUrl('edit', ['record' => $contrato->id]));
                     }),
             ])
             ->bulkActions([
