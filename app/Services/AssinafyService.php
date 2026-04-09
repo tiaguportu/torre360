@@ -91,18 +91,19 @@ class AssinafyService
                     $signingUrl = null;
 
                     // Busca o link específico do signatário atual na lista de signing_urls
-                    $signingUrls = $docData['assignment']['signing_urls'] ?? [];
+                    $signingUrls = $docData['assignment']['signing_urls'] ?? $docData['signing_urls'] ?? [];
+                    $signingUrl = null;
 
                     foreach ($signingUrls as $sUrl) {
-                        // Tenta casar pelo e-mail se estiver na URL (conforme exemplo) ou pega o primeiro como fallback
+                        // Tenta casar pelo e-mail na URL ou pelo signer_id se disponível
                         if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
                             $signingUrl = $sUrl['url'];
                             break;
                         }
                     }
 
-                    // Fallback para a primeira URL se não achou específica por e-mail
-                    $signingUrl = $signingUrl ?? ($signingUrls[0]['url'] ?? $docData['signing_url'] ?? null);
+                    // Fallback para a primeira URL se não achou específica
+                    $signingUrl = $signingUrl ?? $signingUrls[0]['url'] ?? $docData['signing_url'] ?? null;
 
                     if ($signingUrl) {
                         Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
@@ -217,7 +218,20 @@ class AssinafyService
 
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
-                $signingUrl = $dataAssign['data']['signing_urls'][0]['url'] ?? $dataAssign['signing_urls'][0]['url'] ?? null;
+                
+                // Extração robusta baseada no exemplo do usuário e possíveis variações de env
+                $signingUrls = $dataAssign['signing_urls'] ?? $dataAssign['data']['signing_urls'] ?? [];
+                $signingUrl = null;
+
+                foreach ($signingUrls as $sUrl) {
+                    if (isset($sUrl['signer_id']) && $sUrl['signer_id'] === $signerId) {
+                        $signingUrl = $sUrl['url'];
+                        break;
+                    }
+                }
+
+                // Fallback se não achou pelo signer_id ou se o ID for diferente
+                $signingUrl = $signingUrl ?? $signingUrls[0]['url'] ?? $dataAssign['data']['signing_url'] ?? $dataAssign['signing_url'] ?? null;
 
                 $contrato->update([
                     'assinafy_id' => $documentId,
