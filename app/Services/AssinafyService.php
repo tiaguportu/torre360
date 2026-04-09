@@ -253,7 +253,6 @@ class AssinafyService
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-                'Accept' => 'application/pdf',
             ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
 
             if ($response->successful()) {
