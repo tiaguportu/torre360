@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Endereco extends Model
@@ -17,9 +18,9 @@ class Endereco extends Model
         return $this->belongsTo(Cidade::class);
     }
 
-    public function pessoas(): HasMany
+    public function pessoas(): BelongsToMany
     {
-        return $this->hasMany(Pessoa::class);
+        return $this->belongsToMany(Pessoa::class, 'endereco_pessoa', 'endereco_id', 'pessoa_id');
     }
 
     public function unidades(): HasMany

@@ -69,8 +69,9 @@ class AlunoForm
                     ->searchable()
                     ->preload(),
 
-                Select::make('endereco_id')
-                    ->relationship('endereco', 'logradouro', fn ($query) => $query->whereNotNull('logradouro'))
+                Select::make('enderecos')
+                    ->relationship('enderecos', 'logradouro', fn ($query) => $query->whereNotNull('logradouro'))
+                    ->multiple()
                     ->searchable()
                     ->preload(),
             ]);

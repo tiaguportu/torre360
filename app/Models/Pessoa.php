@@ -19,9 +19,9 @@ class Pessoa extends Model
         return $this->belongsToMany(User::class, 'pessoa_user', 'pessoa_id', 'user_id');
     }
 
-    public function endereco(): BelongsTo
+    public function enderecos(): BelongsToMany
     {
-        return $this->belongsTo(Endereco::class);
+        return $this->belongsToMany(Endereco::class, 'endereco_pessoa', 'pessoa_id', 'endereco_id');
     }
 
     public function naturalidade(): BelongsTo

@@ -53,7 +53,7 @@ class PessoasTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('endereco.logradouro')
+                TextColumn::make('enderecos.logradouro')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 

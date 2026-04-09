@@ -3,21 +3,18 @@
 namespace App\Filament\Resources\Pessoas\RelationManagers;
 
 use App\Filament\Resources\Cidades\Schemas\CidadeForm;
-use App\Models\Endereco;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables\Actions\AttachAction;
+use Filament\Tables\Actions\DetachAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 
 class EnderecoRelationManager extends RelationManager
 {
-    protected static string $relationship = 'endereco';
+    protected static string $relationship = 'enderecos';
 
     protected static ?string $title = 'Endereço';
 
@@ -60,20 +57,13 @@ class EnderecoRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make()
-                    ->using(function (array $data, RelationManager $livewire): Model {
-                        $endereco = Endereco::create($data);
-
-                        $pessoa = $livewire->getOwnerRecord();
-                        $pessoa->endereco()->associate($endereco);
-                        $pessoa->save();
-
-                        return $endereco;
-                    }),
+                \Filament\Tables\Actions\CreateAction::make(),
+                AttachAction::make(),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                \Filament\Tables\Actions\EditAction::make(),
+                DetachAction::make(),
+                \Filament\Tables\Actions\DeleteAction::make(),
             ]);
     }
 }
