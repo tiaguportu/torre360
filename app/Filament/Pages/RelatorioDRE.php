@@ -23,7 +23,7 @@ class RelatorioDRE extends Page implements HasForms
 
     protected static string $view = 'filament.pages.relatorio-d-r-e';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static UnitEnum|string|null $navigationGroup = 'Financeiro';
 
     protected static ?string $title = 'Demonstrativo de Resultados (DRE)';
 
