@@ -86,6 +86,13 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.
 3. O sistema permite validar se o documento foi recebido, se está pendente ou se foi recusado por algum motivo.
 
+### 6.3 Assinatura Digital (Assinafy)
+O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
+1. Na lista de contratos, clique na ação **Assinar Contrato** para o documento pendente.
+2. Você será direcionado para uma página de visualização. Clique em **Iniciar Assinatura Digital** para ser enviado ao portal do Assinafy.
+3. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
+4. Para baixar o documento com as assinaturas digitais, acesse a visualização do contrato e clique em **Baixar Contrato Assinado**. O sistema buscará o arquivo original atualizado diretamente do Assinafy.
+
 ---
 
 ## 💰 7. Financeiro Avançado

@@ -46,7 +46,7 @@
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong class="font-bold">Este contrato já foi assinado digitalmente!</strong>
                 </div>
-                <a href="{{ $contrato->assinafy_pdf_url ?? '#' }}" target="_blank" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105">
+                <a href="{{ route('contratos.download', $contrato) }}" target="_blank" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105">
                     Baixar Contrato Assinado
                 </a>
             @else
