@@ -82,13 +82,27 @@ class AssinafyService
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
                 $responseGet = Http::withHeaders([
-                    'X-Api-Key' => $this->apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Accept' => 'application/json',
-                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$documentId}");
-                dd($responseGet->json('data'));
+                ])->get("{$this->apiUrl}/documents/{$documentId}");
 
                 if ($responseGet->successful()) {
-                    $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
+                    $docData = $responseGet->json('data');
+                    $signingUrl = null;
+
+                    // Busca o link específico do signatário atual na lista de signing_urls
+                    $signingUrls = $docData['assignment']['signing_urls'] ?? [];
+                    
+                    foreach ($signingUrls as $sUrl) {
+                        // Tenta casar pelo e-mail se estiver na URL (conforme exemplo) ou pega o primeiro como fallback
+                        if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
+                            $signingUrl = $sUrl['url'];
+                            break;
+                        }
+                    }
+
+                    // Fallback para a primeira URL se não achou específica por e-mail
+                    $signingUrl = $signingUrl ?? ($signingUrls[0]['url'] ?? $docData['signing_url'] ?? null);
 
                     if ($signingUrl) {
                         Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
