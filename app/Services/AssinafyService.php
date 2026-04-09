@@ -22,7 +22,7 @@ class AssinafyService
     /**
      * Envia um contrato para assinatura na Assinafy.
      */
-    public function enviarContrato(Contrato $contrato): bool
+    public function enviarContrato(Contrato $contrato): array
     {
         try {
             // 1. Carregar dados relacionados para a Blade
@@ -30,7 +30,7 @@ class AssinafyService
             $matricula = $contrato->matriculas->first();
 
             if (! $matricula) {
-                throw new \Exception("Contrato #{$contrato->id} não possui matrículas vinculadas.");
+                return ['success' => false, 'message' => "Contrato #{$contrato->id} não possui matrículas vinculadas."];
             }
 
             $aluno = $matricula->pessoa;
@@ -50,7 +50,6 @@ class AssinafyService
             $pdfContent = base64_encode($pdf->output());
 
             // 3. Preparar Payload para Assinafy
-            // Nota: Estrutura baseada em padrões de mercado enquanto aguardamos documentação técnica detalhada
             $payload = [
                 'file' => [
                     'base64' => $pdfContent,
@@ -83,22 +82,23 @@ class AssinafyService
                     'assinafy_request_log' => $data,
                 ]);
 
-                return true;
+                return ['success' => true];
             }
 
-            Log::error('Erro Assinafy (Envio): '.$response->body());
+            $errorMsg = $response->body();
+            Log::error('Erro Assinafy (Envio): '.$errorMsg);
 
             $contrato->update([
                 'assinafy_status' => 'erro_envio',
-                'assinafy_request_log' => $response->json() ?? ['error' => $response->body()],
+                'assinafy_request_log' => $response->json() ?? ['error' => $errorMsg],
             ]);
 
-            return false;
+            return ['success' => false, 'message' => $errorMsg];
 
         } catch (\Exception $e) {
             Log::error('Exceção AssinafyService: '.$e->getMessage());
 
-            return false;
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 

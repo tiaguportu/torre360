@@ -83,15 +83,19 @@ class ContratosTable
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $service = app(AssinafyService::class);
-                        if ($service->enviarContrato($record)) {
+                        $result = $service->enviarContrato($record);
+
+                        if ($result['success']) {
                             Notification::make()
                                 ->title('Contrato enviado com sucesso!')
                                 ->success()
                                 ->send();
                         } else {
                             Notification::make()
-                                ->title('Erro ao enviar contrato.')
+                                ->title('Erro ao enviar contrato')
+                                ->body($result['message'] ?? 'Erro desconhecido.')
                                 ->danger()
+                                ->persistent()
                                 ->send();
                         }
                     }),
