@@ -81,7 +81,7 @@ class ContratosTable
                     ->color('warning')
                     ->hidden(fn ($record) => $record->assinafy_status === 'signed' || $record->assinafy_status === 'completed')
                     ->requiresConfirmation()
-                    ->action(function ($record) {
+                    ->action(function ($record, Action $action) {
                         $service = app(AssinafyService::class);
                         $result = $service->enviarContrato($record);
 
@@ -92,7 +92,7 @@ class ContratosTable
                                 ->send();
 
                             if (isset($result['redirect_url'])) {
-                                echo "<script>window.open('{$result['redirect_url']}', '_blank');</script>";
+                                $action->openUrlInNewTab($result['redirect_url']);
                             }
                         } else {
                             Notification::make()
