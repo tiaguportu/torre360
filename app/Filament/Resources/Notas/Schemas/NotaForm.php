@@ -20,6 +20,9 @@ class NotaForm
                     ->live(),
                 Select::make('matricula_id')
                     ->relationship('matricula', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->periodoLetivo?->nome} - {$record->turma?->nome} - {$record->pessoa?->nome}")
+                    ->searchable()
+                    ->preload()
                     ->label('Matrícula')
                     ->required(),
                 TextInput::make('valor')

@@ -28,12 +28,6 @@ class MatriculasTable
         return $table
             ->recordClasses(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
-                TextColumn::make('codigo')
-                    ->label('Código')
-                    ->searchable()
-                    ->sortable()
-                    ->fontFamily('mono')
-                    ->copyable(),
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->searchable()
@@ -202,7 +196,7 @@ class MatriculasTable
 
                                     if (! empty($result['falhas'])) {
                                         foreach ($result['falhas'] as $email => $erro) {
-                                            $todasFalhas[] = "Matrícula {$record->codigo} ({$email}): {$erro}";
+                                            $todasFalhas[] = "Matrícula de {$record->pessoa->nome} ({$email}): {$erro}";
                                         }
                                     }
                                 }

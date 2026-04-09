@@ -17,12 +17,6 @@ class MatriculaForm
     {
         return $schema
             ->components([
-                TextInput::make('codigo')
-                    ->label('Código')
-                    ->unique(ignoreRecord: true)
-                    ->placeholder('Gerado automaticamente se vazio')
-                    ->helperText('Formato: Ano + 6 dígitos (ex: 2026000001)')
-                    ->maxLength(20),
                 Select::make('pessoa')
                     ->label('Aluno')
                     ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('users', fn ($q) => $q->role('aluno')))

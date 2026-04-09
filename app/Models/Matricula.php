@@ -16,20 +16,6 @@ class Matricula extends Model
 
     protected $guarded = [];
 
-    protected static function booted(): void
-    {
-        static::creating(function ($matricula) {
-            if (! $matricula->codigo) {
-                $anoCorrente = now()->year;
-                $ultimoNumero = static::where('codigo', 'like', $anoCorrente.'%')
-                    ->count();
-
-                $proximoNumero = $ultimoNumero + 1;
-                $matricula->codigo = $anoCorrente.str_pad($proximoNumero, 6, '0', STR_PAD_LEFT);
-            }
-        });
-    }
-
     public function pessoa(): BelongsTo
     {
         return $this->belongsTo(Pessoa::class);

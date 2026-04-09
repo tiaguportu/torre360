@@ -26,7 +26,7 @@ class DocumentoInseridoForm
             ->components([
                 Select::make('matricula_id')
                     ->relationship('matricula', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => ($record->pessoa?->nome ?? '').' - Turma '.($record->turma?->nome ?? ''))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->periodoLetivo?->nome} - {$record->turma?->nome} - {$record->pessoa?->nome}")
                     ->default(fn ($livewire) => $livewire instanceof RelationManager ? $livewire->getOwnerRecord()->id : null)
                     ->hidden(fn ($livewire) => $livewire instanceof RelationManager)
                     ->live()

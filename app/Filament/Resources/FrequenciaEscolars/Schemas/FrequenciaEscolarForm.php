@@ -16,8 +16,8 @@ class FrequenciaEscolarForm
                 Select::make('matricula_id')
                     ->label('Matrícula')
                     ->relationship('matricula', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->pessoa->nome} - {$record->codigo}")
-                    ->searchable(['codigo', 'pessoa.nome'])
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->periodoLetivo?->nome} - {$record->turma?->nome} - {$record->pessoa?->nome}")
+                    ->searchable()
                     ->required(),
                 Select::make('cronograma_aula_id')
                     ->label('Cronograma de Aula')

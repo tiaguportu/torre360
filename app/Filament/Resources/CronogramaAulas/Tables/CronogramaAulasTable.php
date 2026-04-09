@@ -229,7 +229,9 @@ class CronogramaAulasTable
                                     ->schema([
                                         Select::make('matricula_id')
                                             ->label('Aluno')
-                                            ->options($matriculas->mapWithKeys(fn ($m) => [$m->id => $m->pessoa?->nome ?? ("#{$m->id}")]))
+                                            ->options($matriculas->mapWithKeys(fn ($m) => [
+                                                $m->id => "{$m->periodoLetivo?->nome} - {$m->turma?->nome} - {$m->pessoa?->nome}",
+                                            ]))
                                             ->required()
                                             ->disabled()
                                             ->dehydrated(),
