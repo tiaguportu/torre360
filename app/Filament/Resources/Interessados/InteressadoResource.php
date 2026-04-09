@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class InteressadoResource extends Resource implements HasShieldPermissions
 {
@@ -33,7 +34,7 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationGroup = 'CRM';
+    protected static UnitEnum|string|null $navigationGroup = 'CRM';
 
     protected static ?string $modelLabel = 'Interessado';
 
