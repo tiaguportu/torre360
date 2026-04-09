@@ -21,7 +21,7 @@ class RelatorioDRE extends Page implements HasForms
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
-    protected static string $view = 'filament.pages.relatorio-d-r-e';
+    protected string $view = 'filament.pages.relatorio-d-r-e';
 
     protected static UnitEnum|string|null $navigationGroup = 'Financeiro';
 
