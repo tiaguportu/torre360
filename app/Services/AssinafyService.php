@@ -77,6 +77,7 @@ class AssinafyService
                 }
             }
             dd($responseSearchDoc->json('data'));
+            dd($documentId);
 
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
