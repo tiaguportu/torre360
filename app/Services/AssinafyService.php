@@ -209,7 +209,7 @@ class AssinafyService
             Notification::make()->title('Passo 4/4: Vinculando assinatário e disparando e-mail...')->info()->send();
 
             $responseAssign = Http::withHeaders([
-                //'X-Api-Key' => $this->apiKey,
+                'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                         'signers' => [['id' => $signerId]],
