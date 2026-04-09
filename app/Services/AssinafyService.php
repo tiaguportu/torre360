@@ -255,7 +255,7 @@ class AssinafyService
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Accept' => 'application/pdf',
             ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
-            dd($response);
+
             if ($response->successful()) {
                 return $response;
             }
