@@ -213,7 +213,6 @@ class AssinafyService
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
-                        'expires_at' => now()->addDays(30)->format('Y-m-d'),
                     ]);
 
             if ($responseAssign->successful()) {
@@ -254,7 +253,7 @@ class AssinafyService
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-                //'Accept' => 'application/pdf',
+                'Accept' => 'application/pdf',
             ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/original");
             dd($response);
             if ($response->successful()) {
