@@ -37,7 +37,7 @@ class AssinafyService
             $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
 
             // 2. Gerar PDF
-            $pdf = Pdf::loadView('pdfs.contrato', [
+            $pdfContent = Pdf::loadView('pdfs.contrato', [
                 'contrato' => $contrato,
                 'matricula' => $matricula,
                 'aluno' => $aluno,
@@ -45,14 +45,16 @@ class AssinafyService
                 'serie' => $matricula->turma?->serie,
                 'curso' => $matricula->turma?->serie?->curso,
                 'periodoLetivo' => $matricula->periodoLetivo,
-            ]);
+            ])->output();
 
-            $pdfContent = base64_encode($pdf->output());
+            \Filament\Notifications\Notification::make()->title('PDF gerado com sucesso!')->info()->send();
+            
+            $pdfBase64 = base64_encode($pdfContent);
 
             // 3. Preparar Payload para Assinafy
             $payload = [
                 'file' => [
-                    'base64' => $pdfContent,
+                    'base64' => $pdfBase64,
                     'name' => "Contrato_Matricula_{$matricula->id}.pdf",
                 ],
                 'signers' => [
@@ -68,10 +70,14 @@ class AssinafyService
             ];
 
             // 4. Enviar para API
+            \Filament\Notifications\Notification::make()->title('Enviando requisição para API Assinafy...')->info()->send();
+            
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/v1/documents", $payload);
+
+            \Filament\Notifications\Notification::make()->title('Resposta da API recebida: ' . $response->status())->info()->send();
 
             if ($response->successful()) {
                 $data = $response->json();
