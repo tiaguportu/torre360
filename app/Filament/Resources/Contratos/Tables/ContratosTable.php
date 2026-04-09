@@ -81,6 +81,12 @@ class ContratosTable
                     ->color(fn ($record) => in_array($record->assinafy_status, ['signed', 'completed']) ? 'success' : 'warning')
                     ->url(fn ($record) => route('contratos.visualizar', $record))
                     ->openUrlInNewTab(),
+                Action::make('download_contrato')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->url(fn ($record) => route('contratos.download', $record))
+                    ->visible(fn ($record) => $record->assinafy_id !== null),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
