@@ -56,16 +56,16 @@ class AssinafyService
 
             // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API) ---
             Notification::make()->title('Consultando Assinafy para evitar duplicidade de documento...')->info()->send();
-            
+
             $documentId = $contrato->assinafy_id;
-            
+
             // Busca por nome do arquivo via API
             $responseSearchDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents", [
-                'search' => $nomeArquivoBase
-            ]);
+                        'search' => $nomeArquivoBase
+                    ]);
 
             if ($responseSearchDoc->successful()) {
                 $documents = $responseSearchDoc->json('data') ?? [];
@@ -76,6 +76,7 @@ class AssinafyService
                     }
                 }
             }
+            dd($responseSearchDoc->json('data'));
 
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
@@ -83,20 +84,20 @@ class AssinafyService
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
                 ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents/{$documentId}");
-                
+
                 if ($responseGet->successful()) {
                     $signingUrl = $responseGet->json('data.assignment.signing_urls.0.url') ?? $responseGet->json('assignment.signing_urls.0.url');
-                    
+
                     if ($signingUrl) {
                         Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
-                        
+
                         if ($contrato->assinafy_id !== $documentId) {
                             $contrato->update(['assinafy_id' => $documentId, 'assinafy_status' => 'enviado']);
                         }
                         return ['success' => true, 'redirect_url' => $signingUrl];
                     }
                 }
-                
+
                 if ($contrato->assinafy_id) {
                     Notification::make()->title('Atenção: Documento expirado ou link inválido no Assinafy. Gerando novo...')->warning()->send();
                 }
@@ -124,10 +125,10 @@ class AssinafyService
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->attach(
-                'file',
-                $pdfContent,
-                "Contrato_Matricula_{$matricula->id}.pdf"
-            )->post("{$this->apiUrl}/accounts/{$this->accountId}/documents");
+                    'file',
+                    $pdfContent,
+                    "Contrato_Matricula_{$matricula->id}.pdf"
+                )->post("{$this->apiUrl}/accounts/{$this->accountId}/documents");
 
             if (!$responseDoc->successful()) {
                 throw new \Exception("Erro no Upload do Documento: " . ($responseDoc->json('message') ?? $responseDoc->body()));
@@ -137,13 +138,13 @@ class AssinafyService
 
             // --- NOVO: Preparar Documento (Sem campos manuais) ---
             Notification::make()->title('Passo 2/4: Preparando documento para assinar...')->info()->send();
-            
+
             $responsePrepare = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/prepare", [
-                'status' => 'prepared'
-            ]);
+                        'status' => 'prepared'
+                    ]);
 
             if (!$responsePrepare->successful()) {
                 Log::warning('Aviso ao preparar: ' . $responsePrepare->body());
@@ -171,14 +172,14 @@ class AssinafyService
 
             if (!$signerId) {
                 Notification::make()->title("Cadastrando novo signatário: {$nomeSignatario}")->info()->send();
-                
+
                 $responseSigner = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
                 ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
-                    'full_name' => $nomeSignatario,
-                    'email' => $emailSignatario,
-                ]);
+                            'full_name' => $nomeSignatario,
+                            'email' => $emailSignatario,
+                        ]);
 
                 if (!$responseSigner->successful()) {
                     throw new \Exception("Erro ao criar signatário: " . ($responseSigner->json('message') ?? $responseSigner->body()));
@@ -194,10 +195,10 @@ class AssinafyService
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
-                'signers' => [['id' => $signerId]],
-                'method' => 'virtual',
-                'expires_at' => now()->addDays(30)->format('Y-m-d'),
-            ]);
+                        'signers' => [['id' => $signerId]],
+                        'method' => 'virtual',
+                        'expires_at' => now()->addDays(30)->format('Y-m-d'),
+                    ]);
 
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
