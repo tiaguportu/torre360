@@ -215,7 +215,7 @@ class AssinafyService
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
                     ]);
-
+            dd("{$this->apiUrl}/documents/{$documentId}/assignments");
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
 
