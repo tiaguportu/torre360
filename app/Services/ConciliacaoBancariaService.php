@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Fornecedor;
 use App\Models\TransacaoBancaria;
 use Carbon\Carbon;
 
@@ -28,8 +29,32 @@ class ConciliacaoBancariaService
                 continue;
             }
 
+            // Busca fornecedor se for débito e tiver CNPJ no memo
+            $fornecedorId = null;
+            if ($tipo === 'DEBIT' && $memo) {
+                // Regex para CNPJ: XX.XXX.XXX/XXXX-XX
+                if (preg_match('/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/', $memo, $cnpjMatches)) {
+                    $cnpj = $cnpjMatches[1];
+
+                    // Tenta extrair o nome do fornecedor (o que vem antes do CNPJ)
+                    // No padrão do exemplo: "... - NOME - CNPJ"
+                    $nomeFornecedor = $memo;
+                    if (preg_match('/-\s*(.*?)\s*-\s*'.preg_quote($cnpj, '/').'/', $memo, $nameMatches)) {
+                        $nomeFornecedor = trim($nameMatches[1]);
+                    }
+
+                    $fornecedor = Fornecedor::firstOrCreate(
+                        ['cnpj' => $cnpj],
+                        ['razao_social' => $nomeFornecedor]
+                    );
+
+                    $fornecedorId = $fornecedor->id;
+                }
+            }
+
             TransacaoBancaria::create([
                 'banco_id' => $bancoId,
+                'fornecedor_id' => $fornecedorId,
                 'tipo' => (str_contains(strtoupper($tipo), 'CREDIT') || $valor > 0) ? 'entrada' : 'saida',
                 'valor' => abs($valor),
                 'data_transacao' => $dataTransacao,
