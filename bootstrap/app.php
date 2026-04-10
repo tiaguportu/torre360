@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : route('filament.admin.auth.login'));
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/assinafy',
-            'api/mobile/register-token',
+            'mobile/register-token',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
