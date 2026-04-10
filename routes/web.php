@@ -18,4 +18,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contratos/{contrato}/visualizar', VisualizarContratoController::class)->name('contratos.visualizar');
     Route::get('/contratos/{contrato}/download', DownloadContratoController::class)->name('contratos.download');
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
+
+    Route::post('/mobile/register-token', [\App\Http\Controllers\Api\MobileTokenController::class, 'store'])->name('mobile.register-token');
 });

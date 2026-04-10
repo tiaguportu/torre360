@@ -9,4 +9,3 @@ Route::get('/user', function (Request $request) {
 
 Route::match(['get', 'post'], '/webhooks/assinafy', \App\Http\Controllers\Webhooks\AssinafyWebhookController::class);
 
-Route::post('/mobile/register-token', [\App\Http\Controllers\Api\MobileTokenController::class, 'store']);

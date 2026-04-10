@@ -26,7 +26,7 @@ const registerPush = async () => {
             console.log('Token FCM recebido:', token.value);
             
             // Envia o token para o backend Laravel
-            fetch('/api/mobile/register-token', {
+            fetch('/mobile/register-token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
