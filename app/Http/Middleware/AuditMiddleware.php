@@ -19,7 +19,7 @@ class AuditMiddleware
         $response = $next($request);
 
         if (config('app.audit_enabled', true) && auth()->check()) {
-            if ($request->isMethod('GET') && ! $request->ajax()) {
+            if ($request->isMethod('GET') && !$request->ajax()) {
                 $user = auth()->user();
 
                 AuditLog::create([
@@ -42,7 +42,7 @@ class AuditMiddleware
                                 'method' => $request->method(),
                                 'ip' => $request->ip(),
                             ])
-                            ->log("Responsável visualizou recurso: {$resource} | IP: {$request->ip()} | URL: {$request->fullUrl()}");
+                            ->log("Responsável visualizou recurso: {$resource} | URL: {$request->fullUrl()}");
                     }
                 }
             }
