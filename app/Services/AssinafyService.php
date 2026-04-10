@@ -39,7 +39,12 @@ class AssinafyService
     {
         try {
             // 0. Carregar dados relacionados
-            $contrato->load(['matriculas.pessoa', 'matriculas.turma.serie.curso', 'matriculas.periodoLetivo']);
+            $contrato->load([
+                'matriculas.pessoa', 
+                'matriculas.turma.serie.curso', 
+                'matriculas.periodoLetivo',
+                'responsaveisFinanceiros.pessoa.user'
+            ]);
             $matricula = $contrato->matriculas->first();
 
             if (!$matricula) {
@@ -48,9 +53,10 @@ class AssinafyService
 
             $aluno = $matricula->pessoa;
             $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
+            $responsavelUser = $responsavel?->user;
 
-            $nomeSignatario = $responsavel?->nome ?? $aluno?->nome;
-            $emailSignatario = $responsavel?->email ?? $aluno?->email;
+            $nomeSignatario = $responsavel?->nome ?? $responsavelUser?->name ?? $aluno?->nome;
+            $emailSignatario = $responsavel?->email ?? $responsavelUser?->email ?? $aluno?->email;
 
             $nomeArquivoBase = "Contrato_Matricula_{$matricula->id}-1.pdf";
 
@@ -175,7 +181,7 @@ class AssinafyService
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])->get("{$this->apiUrl}/accounts/{$this->accountId}/signers", ['search' => $emailSignatario]);
-
+            
             if ($responseSearch->successful()) {
                 $signers = $responseSearch->json('data') ?? [];
                 foreach ($signers as $s) {
@@ -211,7 +217,7 @@ class AssinafyService
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-            ])->dd()->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
+            ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
                     ]);
@@ -245,7 +251,7 @@ class AssinafyService
 
                 return ['success' => true, 'redirect_url' => $signingUrl];
             }
-            dd($responseAssign);
+            
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             throw new \Exception("Erro ao solicitar assinatura: " . $errorMsg);
 
