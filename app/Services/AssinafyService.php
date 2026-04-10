@@ -43,7 +43,7 @@ class AssinafyService
                 'matriculas.pessoa', 
                 'matriculas.turma.serie.curso', 
                 'matriculas.periodoLetivo',
-                'responsaveisFinanceiros.pessoa.user'
+                'responsaveisFinanceiros.pessoa.users'
             ]);
             $matricula = $contrato->matriculas->first();
 
@@ -53,7 +53,7 @@ class AssinafyService
 
             $aluno = $matricula->pessoa;
             $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
-            $responsavelUser = $responsavel?->user;
+            $responsavelUser = $responsavel?->users->first();
 
             $nomeSignatario = $responsavel?->nome ?? $responsavelUser?->name ?? $aluno?->nome;
             $emailSignatario = $responsavel?->email ?? $responsavelUser?->email ?? $aluno?->email;
