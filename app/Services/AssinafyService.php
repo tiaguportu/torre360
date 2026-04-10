@@ -373,6 +373,7 @@ class AssinafyService
         // Conforme documentação: object['id'] contém o ID do documento
         $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
         $event = $payload['event'] ?? null;
+        $fileName = $payload['object']['name'] ?? null;
 
         // Mapeia eventos para status do contrato
         $status = match ($event) {
@@ -380,6 +381,7 @@ class AssinafyService
             'document_completed' => 'completed',
             'document_refused' => 'refused',
             'document_ready' => 'ready',
+            'document_uploaded' => 'enviado',
             default => $event ?? 'unknown'
         };
 
@@ -388,6 +390,14 @@ class AssinafyService
         }
 
         $contrato = Contrato::where('assinafy_id', $idAssinafy)->first();
+
+        // Fallback: se não achar pelo assinafy_id, tenta extrair ID do nome do arquivo (ex: contrato_136.pdf)
+        if (! $contrato && $fileName && preg_match('/contrato_(\d+)/', $fileName, $matches)) {
+            $contrato = Contrato::find($matches[1]);
+            if ($contrato && ! $contrato->assinafy_id) {
+                $contrato->update(['assinafy_id' => $idAssinafy]);
+            }
+        }
 
         if ($contrato) {
             $contrato->update([
