@@ -16,6 +16,8 @@ class MobileTokenController extends Controller
 
         $user = $request->user();
 
+        \Illuminate\Support\Facades\Log::info('Recebendo token FCM para o usuário ' . ($user->email ?? 'Anonimo') . ': ' . $request->token);
+
         if ($user) {
             $user->update([
                 'fcm_token' => $request->token,
