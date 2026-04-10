@@ -3,10 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Interessado;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 
 class InteressadoOrigemChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected ?string $heading = 'Origem dos Interessados';
 
     protected function getData(): array
