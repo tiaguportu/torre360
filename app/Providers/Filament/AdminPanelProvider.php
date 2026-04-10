@@ -58,6 +58,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => view('filament.hooks.git-pull-button')->render(),
             )
             ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => \Illuminate\Support\Facades\Blade::render("@vite('resources/js/app.js')"),
+            )
+            ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): string => view('filament.hooks.register-link')->render(),
             )
