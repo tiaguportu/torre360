@@ -6,9 +6,13 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
-use App\Http\Controllers\Contratos\VisualizarContratoController;
-use App\Http\Controllers\Contratos\GerarAssinaturaController;
+Route::get('/login', function () {
+    return redirect()->route('filament.admin.auth.login');
+})->name('login');
+
 use App\Http\Controllers\Contratos\DownloadContratoController;
+use App\Http\Controllers\Contratos\GerarAssinaturaController;
+use App\Http\Controllers\Contratos\VisualizarContratoController;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/contratos/{contrato}/visualizar', VisualizarContratoController::class)->name('contratos.visualizar');
