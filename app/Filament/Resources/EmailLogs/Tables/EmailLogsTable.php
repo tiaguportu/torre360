@@ -36,6 +36,7 @@ class EmailLogsTable
             ])
             ->toolbarActions([
                 // Read-only logs
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

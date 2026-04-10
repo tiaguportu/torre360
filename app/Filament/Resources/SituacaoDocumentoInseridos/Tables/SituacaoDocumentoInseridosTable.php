@@ -35,6 +35,7 @@ class SituacaoDocumentoInseridosTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

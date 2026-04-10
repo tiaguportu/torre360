@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources\Contratos\Tables;
 
-use App\Services\AssinafyService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -37,13 +35,13 @@ class ContratosTable
                 TextColumn::make('assinafy_status')
                     ->label('Assinatura')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'signed', 'completed' => 'success',
                         'enviado', 'pending' => 'warning',
                         'erro_envio', 'rejected', 'canceled' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'signed', 'completed' => 'Assinado',
                         'enviado', 'pending' => 'Pendente',
                         'erro_envio' => 'Erro no Envio',
@@ -92,6 +90,7 @@ class ContratosTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

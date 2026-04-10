@@ -394,6 +394,7 @@ class CronogramaAulasTable
                         ->visible(fn () => auth()->user()->can('NotificarProfessorManual:CronogramaAula')),
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

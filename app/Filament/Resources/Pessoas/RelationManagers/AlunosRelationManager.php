@@ -65,6 +65,7 @@ class AlunosRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->authorize('attachAluno')
                     ->preloadRecordSelect()
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
@@ -81,12 +82,14 @@ class AlunosRelationManager extends RelationManager
             ->inverseRelationship('responsaveis')
             ->recordActions([
                 EditAction::make(),
-                DetachAction::make(),
+                DetachAction::make()
+                    ->authorize('detachAluno'),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DetachBulkAction::make(),
+                    DetachBulkAction::make()
+                        ->authorize('detachAluno'),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -91,4 +91,24 @@ class PessoaPolicy
     {
         return $authUser->can('DetachEndereco:Pessoa');
     }
+
+    public function attachAluno(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('AttachAluno:Pessoa');
+    }
+
+    public function detachAluno(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('DetachAluno:Pessoa');
+    }
+
+    public function attachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('AttachResponsavel:Pessoa');
+    }
+
+    public function detachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('DetachResponsavel:Pessoa');
+    }
 }

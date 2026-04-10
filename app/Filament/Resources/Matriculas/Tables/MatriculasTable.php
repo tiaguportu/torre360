@@ -324,6 +324,7 @@ class MatriculasTable
                         ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
                         ->modalSubmitActionLabel('Atualizar Selecionadas'),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

@@ -175,6 +175,7 @@ O **Torre360** possui um aplicativo nativo para Android que facilita o acesso r�
 - **Acesso Direto:** Não precisa digitar a URL no navegador todas as vezes.
 - **Biometria (Opcional):** Dependendo da versão, permitesuporte a login rápido.
 - **Navegação Fluida:** Otimizado para telas menores, mantendo todas as funcionalidades do painel web.
+- **Tabelas Inteligentes:** Todas as tabelas do sistema se adaptam automaticamente a telas de celulares, transformando-se em blocos verticais (cards) para facilitar a leitura e interação em dispositivos móveis.
 
 ---
 

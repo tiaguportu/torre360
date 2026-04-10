@@ -256,6 +256,7 @@ class AvaliacaosTable
                     DeleteBulkAction::make(),
 
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

@@ -51,6 +51,7 @@ class CategoriaAvaliacaosTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('ordem');
+            ->defaultSort('ordem')
+            ->stackedOnMobile();
     }
 }

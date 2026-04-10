@@ -64,6 +64,7 @@ class ResponsaveisRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->authorize('attachResponsavel')
                     ->preloadRecordSelect()
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
@@ -80,12 +81,14 @@ class ResponsaveisRelationManager extends RelationManager
             ->inverseRelationship('alunos')
             ->recordActions([
                 EditAction::make(),
-                DetachAction::make(),
+                DetachAction::make()
+                    ->authorize('detachResponsavel'),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DetachBulkAction::make(),
+                    DetachBulkAction::make()
+                        ->authorize('detachResponsavel'),
                     DeleteBulkAction::make(),
                 ]),
             ]);
