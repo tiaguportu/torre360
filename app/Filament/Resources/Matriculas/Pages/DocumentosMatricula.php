@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
-use App\Models\AuditLog;
 use App\Models\DocumentoInserido;
 use App\Models\SituacaoDocumentoInserido;
 use App\Models\TipoDocumento;
@@ -43,7 +42,9 @@ class DocumentosMatricula extends Page implements HasTable
     {
         $this->record = $this->resolveRecord($record);
 
-        AuditLog::log('acessar_documentos_matricula', $this->record->getMorphClass(), $this->record->id);
+        activity()
+            ->performedOn($this->record)
+            ->log('Acessou os documentos da matrícula');
     }
 
     public function getTitle(): string
@@ -240,10 +241,13 @@ class DocumentosMatricula extends Page implements HasTable
                             ]
                         );
 
-                        AuditLog::log($event, $this->record->getMorphClass(), $this->record->id, null, [
-                            'tipo_documento' => $record->nome,
-                            'arquivo' => $data['nome_arquivo_original'] ?? 'arquivo_enviado',
-                        ]);
+                        activity()
+                            ->performedOn($this->record)
+                            ->withProperties([
+                                'tipo_documento' => $record->nome,
+                                'arquivo' => $data['nome_arquivo_original'] ?? 'arquivo_enviado',
+                            ])
+                            ->log($jaInserido ? 'Substituiu documento de matrícula' : 'Enviou documento de matrícula');
 
                         Notification::make()
                             ->title('Documento enviado')
@@ -271,9 +275,12 @@ class DocumentosMatricula extends Page implements HasTable
                             }
                             $inserido->delete();
 
-                            AuditLog::log('excluir_documento', $this->record->getMorphClass(), $this->record->id, [
-                                'tipo_documento' => $tipoNome,
-                            ]);
+                            activity()
+                                ->performedOn($this->record)
+                                ->withProperties([
+                                    'tipo_documento' => $tipoNome,
+                                ])
+                                ->log('Excluiu documento de matrícula');
 
                             Notification::make()
                                 ->title('Documento excluído')
@@ -389,10 +396,13 @@ class DocumentosMatricula extends Page implements HasTable
                 ]
             );
 
-            AuditLog::log('upload_documento_dropzone', $this->record->getMorphClass(), $this->record->id, null, [
-                'tipo_documento' => $tipoDocumento->nome,
-                'arquivo' => $originalName,
-            ]);
+            activity()
+                ->performedOn($this->record)
+                ->withProperties([
+                    'tipo_documento' => $tipoDocumento->nome,
+                    'arquivo' => $originalName,
+                ])
+                ->log('Enviou documento de matrícula via dropzone');
 
             Notification::make()
                 ->title('Documento enviado')

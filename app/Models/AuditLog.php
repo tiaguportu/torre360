@@ -32,23 +32,4 @@ class AuditLog extends Model
     {
         return $this->morphTo();
     }
-
-    public static function log(?string $event = null, ?string $auditableType = null, ?int $auditableId = null, ?array $oldValues = null, ?array $newValues = null): void
-    {
-        if (! auth()->check()) {
-            return;
-        }
-
-        self::create([
-            'user_id' => auth()->id(),
-            'event' => $event ?? 'view',
-            'url' => request()->fullUrl(),
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'auditable_type' => $auditableType,
-            'auditable_id' => $auditableId,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-        ]);
-    }
 }

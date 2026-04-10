@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
-use App\Models\AuditLog;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use Filament\Actions\Action;
@@ -17,7 +16,8 @@ class ListMatriculas extends ListRecords
     {
         parent::mount();
 
-        AuditLog::log('acessar_lista_matriculas');
+        activity()
+            ->log('Acessou a lista de matrículas');
     }
 
     protected static string $resource = MatriculaResource::class;
