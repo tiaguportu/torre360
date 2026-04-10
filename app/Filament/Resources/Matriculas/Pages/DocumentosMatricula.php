@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
+use App\Models\AuditLog;
 use App\Models\DocumentoInserido;
 use App\Models\SituacaoDocumentoInserido;
 use App\Models\TipoDocumento;
@@ -41,6 +42,8 @@ class DocumentosMatricula extends Page implements HasTable
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
+
+        AuditLog::log('acessar_documentos_matricula', $this->record->getMorphClass(), $this->record->id);
     }
 
     public function getTitle(): string
@@ -216,6 +219,12 @@ class DocumentosMatricula extends Page implements HasTable
                     ->action(function (array $data, TipoDocumento $record) {
                         $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
 
+                        $jaInserido = DocumentoInserido::where('matricula_id', $this->record->id)
+                            ->where('tipo_documento_id', $record->id)
+                            ->first();
+
+                        $event = $jaInserido ? 'substituir_documento' : 'upload_documento';
+
                         DocumentoInserido::updateOrCreate(
                             [
                                 'matricula_id' => $this->record->id,
@@ -230,6 +239,11 @@ class DocumentosMatricula extends Page implements HasTable
                                 'updated_at' => now(),
                             ]
                         );
+
+                        AuditLog::log($event, $this->record->getMorphClass(), $this->record->id, null, [
+                            'tipo_documento' => $record->nome,
+                            'arquivo' => $data['nome_arquivo_original'] ?? 'arquivo_enviado',
+                        ]);
 
                         Notification::make()
                             ->title('Documento enviado')
@@ -251,10 +265,15 @@ class DocumentosMatricula extends Page implements HasTable
                             ->first();
 
                         if ($inserido) {
+                            $tipoNome = $record->nome;
                             if ($inserido->arquivo_path) {
                                 Storage::disk('public')->delete($inserido->arquivo_path);
                             }
                             $inserido->delete();
+
+                            AuditLog::log('excluir_documento', $this->record->getMorphClass(), $this->record->id, [
+                                'tipo_documento' => $tipoNome,
+                            ]);
 
                             Notification::make()
                                 ->title('Documento excluído')
@@ -292,7 +311,7 @@ class DocumentosMatricula extends Page implements HasTable
             return null;
         }
 
-        $zipName = "documentos_" . Str::slug($this->record->pessoa->nome) . ".zip";
+        $zipName = 'documentos_'.Str::slug($this->record->pessoa->nome).'.zip';
         $tempFile = tempnam(sys_get_temp_dir(), 'zip');
 
         $zip = new ZipArchive;
@@ -369,6 +388,11 @@ class DocumentosMatricula extends Page implements HasTable
                     'updated_at' => now(),
                 ]
             );
+
+            AuditLog::log('upload_documento_dropzone', $this->record->getMorphClass(), $this->record->id, null, [
+                'tipo_documento' => $tipoDocumento->nome,
+                'arquivo' => $originalName,
+            ]);
 
             Notification::make()
                 ->title('Documento enviado')

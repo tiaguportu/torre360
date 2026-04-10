@@ -143,4 +143,11 @@ Utilizado para gerir a manutenção da infraestrutura da escola.
 
 ---
 
+## 🛡️ 9. Auditoria e Segurança
+Para garantir a integridade dos dados, o Torre360 registra ações críticas na Secretaria:
+- **Acessos:** O sistema loga quando usuários acessam a lista de Matrículas e a tela de Gerenciamento de Documentos.
+- **Ações em Documentos:** Uploads, substituições e exclusões de documentos de alunos são registrados com data, hora e o usuário responsável.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

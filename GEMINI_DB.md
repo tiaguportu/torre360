@@ -16,7 +16,13 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Principais Campos:** `name`, `email`, `password`, `is_active`.
 
 ### `audit_logs`
-- **Representa:** Registro de atividades realizadas no sistema.
+- **Representa:** Registro de atividades e acessos realizados no sistema.
+- **Campos Principais:** 
+    - `user_id`: Usuário que realizou a ação.
+    - `event`: Nome do evento (`view`, `upload_documento`, `excluir_documento`, etc).
+    - `url`, `ip_address`, `user_agent`: Dados técnicos da requisição.
+    - `auditable_type`, `auditable_id`: Vínculo polimórfico com o registro afetado (ex: `Matricula`).
+    - `old_values`, `new_values`: JSON contendo metadados ou alterações.
 - **Relacionamentos:** BelongsTo `users`, MorphTo `auditable`.
 
 ---
