@@ -26,7 +26,12 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
     - `description`: Descrição amigável do evento.
     - `subject_type`, `subject_id`: Registro afetado.
     - `causer_type`, `causer_id`: Usuário/Sistema que causou a ação.
-    - `properties`: JSON com metadados e alterações.
+- `properties`: JSON com metadados e alterações.
++
++### `roles`, `permissions`, `model_has_roles` (Spatie/Shield)
++- **Representa:** Sistema de controle de acesso baseado em papéis.
++- **Propósito:** Define permissões granulares para os recursos do painel administrativo (Resources, Pages e Widgets).
++- **Configuração:** Gerenciado via `filament-shield`.
 
 ---
 

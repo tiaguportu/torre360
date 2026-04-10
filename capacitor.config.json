@@ -5,13 +5,17 @@
   "server": {
     "url": "https://torre360.escolatorredemarfim.com.br/admin",
     "cleartext": false,
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "allowNavigation": [
+      "torre360.escolatorredemarfim.com.br"
+    ]
   },
   "android": {
     "allowMixedContent": false,
     "captureInput": true,
     "webContentsDebuggingEnabled": false,
-    "backgroundColor": "#1e1e2e"
+    "backgroundColor": "#1e1e2e",
+    "appendUserAgent": "Torre360App"
   },
   "ios": {
     "contentInset": "automatic",

@@ -143,10 +143,37 @@ Utilizado para gerir a manutenção da infraestrutura da escola.
 
 ---
 
-## 🛡️ 9. Auditoria e Segurança
-Para garantir a integridade dos dados, o Torre360 registra ações críticas na Secretaria:
-- **Acessos:** O sistema loga quando usuários acessam a lista de Matrículas e a tela de Gerenciamento de Documentos.
-- **Ações em Documentos:** Uploads, substituições e exclusões de documentos de alunos são registrados com data, hora e o usuário responsável.
+## 🛡️ 9. Controle de Acesso e Auditoria
+Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filament Shield** para gestão de permissões baseada em papéis (Roles).
+
+### 9.1 Permissões Configuráveis
+Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos:
+- **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
+- **Secretaria:** Matrículas e Documentos sensíveis.
+- **CRM:** Gestão de leads e histórico de contatos.
+
+### 9.2 Auditoria de Ações
+O sistema registra automaticamente ações críticas:
+- **Módulo de Matrícula:** O sistema loga acessos à lista de matrículas e à tela de documentos.
+- **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
+- **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.
+
+---
+
+## 📱 10. Aplicativo Mobile (Android)
+
+O **Torre360** possui um aplicativo nativo para Android que facilita o acesso rápido ao painel administrativo.
+
+### 10.1 Instalação e Acesso
+1. Obtenha o arquivo de instalação (APK) com o administrador do sistema.
+2. Após instalar, abra o aplicativo **Torre 360**.
+3. O aplicativo já vem pré-configurado para acessar o endereço: `https://torre360.escolatorredemarfim.com.br/admin`.
+4. Entre com suas credenciais normalmente.
+
+### 10.2 Diferenciais
+- **Acesso Direto:** Não precisa digitar a URL no navegador todas as vezes.
+- **Biometria (Opcional):** Dependendo da versão, permitesuporte a login rápido.
+- **Navegação Fluida:** Otimizado para telas menores, mantendo todas as funcionalidades do painel web.
 
 ---
 

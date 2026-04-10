@@ -18,7 +18,21 @@ class DocumentosPendentesNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', Channels\FcmChannel::class];
+    }
+
+    public function toPush(object $notifiable): array
+    {
+        $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
+
+        return [
+            'title' => 'Documentos Pendentes - Torre360',
+            'body' => "Existem pendências de documentos para o aluno(a) {$alunoNome}. Clique para regularizar.",
+            'data' => [
+                'matricula_id' => $this->matricula->id,
+                'type' => 'document_pending',
+            ],
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

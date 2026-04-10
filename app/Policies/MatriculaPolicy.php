@@ -82,9 +82,4 @@ class MatriculaPolicy
         return $authUser->can('AvisarPendencia:Matricula');
     }
 
-    public function boletim(AuthUser $authUser, Matricula $matricula): bool
-    {
-        return $authUser->can('Boletim:Matricula');
-    }
-
 }

@@ -3,10 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Interessado;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 
 class InteressadoStatusChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected ?string $heading = 'Interessados por Status';
 
     protected function getData(): array

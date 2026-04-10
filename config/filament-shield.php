@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
+use App\Filament\Resources\Bancos\BancoResource;
+use App\Filament\Resources\CentroCustos\CentroCustoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Filament\Resources\Fornecedores\FornecedorResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Pessoas\PessoaResource;
+use App\Filament\Resources\PlanoContas\PlanoContaResource;
+use App\Filament\Resources\TransacaoBancarias\TransacaoBancariaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -207,6 +212,11 @@ return [
                 'import',
                 'export',
             ],
+            BancoResource::class => [],
+            CentroCustoResource::class => [],
+            FornecedorResource::class => [],
+            PlanoContaResource::class => [],
+            TransacaoBancariaResource::class => [],
 
         ],
         'exclude' => [

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\DREService;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -20,6 +21,7 @@ use BackedEnum;
 class RelatorioDRE extends Page implements HasForms
 {
     use InteractsWithForms;
+    use HasPageShield;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 

@@ -8,3 +8,5 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::match(['get', 'post'], '/webhooks/assinafy', \App\Http\Controllers\Webhooks\AssinafyWebhookController::class);
+
+Route::middleware('auth')->post('/mobile/register-token', [\App\Http\Controllers\Api\MobileTokenController::class, 'store']);
