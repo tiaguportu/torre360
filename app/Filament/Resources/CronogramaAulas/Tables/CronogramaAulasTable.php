@@ -283,7 +283,7 @@ class CronogramaAulasTable
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn () => auth()->user()->can('checkLancarFrequenciaBulk', CronogramaAula::class)),
+                        ->visible(fn () => auth()->user()->can('lancarFrequencia', CronogramaAula::class)),
                     BulkAction::make('clonar')
                         ->label('Clonar Selecionadas')
                         ->icon('heroicon-o-document-duplicate')
