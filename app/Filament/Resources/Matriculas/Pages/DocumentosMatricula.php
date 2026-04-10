@@ -41,10 +41,6 @@ class DocumentosMatricula extends Page implements HasTable
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
-
-        activity()
-            ->performedOn($this->record)
-            ->log('Acessou os documentos da matrícula');
     }
 
     public function getTitle(): string

@@ -20,13 +20,31 @@ class AuditMiddleware
 
         if (config('app.audit_enabled', true) && auth()->check()) {
             if ($request->isMethod('GET') && ! $request->ajax()) {
+                $user = auth()->user();
+
                 AuditLog::create([
-                    'user_id' => auth()->id(),
+                    'user_id' => $user->id,
                     'event' => 'view',
                     'url' => $request->fullUrl(),
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
+
+                // Registro automático no Activity Log para usuários com role 'responsavel'
+                if ($user->hasRole('responsavel')) {
+                    $path = $request->path();
+                    $resource = str($path)->after('admin/')->before('/')->title();
+
+                    if ($resource->isNotEmpty() && $resource != 'Admin') {
+                        activity()
+                            ->withProperties([
+                                'url' => $request->fullUrl(),
+                                'method' => $request->method(),
+                                'ip' => $request->ip(),
+                            ])
+                            ->log("Responsável visualizou recurso: {$resource}");
+                    }
+                }
             }
         }
 

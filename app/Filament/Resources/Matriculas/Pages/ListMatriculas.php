@@ -12,14 +12,6 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListMatriculas extends ListRecords
 {
-    public function mount(): void
-    {
-        parent::mount();
-
-        activity()
-            ->log('Acessou a lista de matrículas');
-    }
-
     protected static string $resource = MatriculaResource::class;
 
     protected function getHeaderActions(): array
