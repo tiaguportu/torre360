@@ -148,8 +148,6 @@ class AssinafyService
 
             $responseDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
             ])->attach(
                     'file',
                     $pdfContent,
@@ -235,13 +233,13 @@ class AssinafyService
                 if ($responseCheck->successful()) {
                     $docDataCheck = $responseCheck->json('data') ?? $responseCheck->json();
                     $checkStatus = $docDataCheck['status'] ?? null;
-                    
+
                     if ($checkStatus !== 'metadata_processing') {
                         $processado = true;
                         break;
                     }
                 }
-                
+
                 $tentativa++;
                 if (!$processado) {
                     Notification::make()->title("Aguardando processamento do documento no Assinafy (Tentativa {$tentativa}/{$maxTentativas})...")->info()->send();
