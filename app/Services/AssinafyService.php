@@ -40,8 +40,8 @@ class AssinafyService
         try {
             // 0. Carregar dados relacionados
             $contrato->load([
-                'matriculas.pessoa', 
-                'matriculas.turma.serie.curso', 
+                'matriculas.pessoa',
+                'matriculas.turma.serie.curso',
                 'matriculas.periodoLetivo',
                 'responsaveisFinanceiros.pessoa.users'
             ]);
@@ -69,6 +69,7 @@ class AssinafyService
             $responseSearchDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents", [
                         'search' => $nomeArquivoBase
                     ]);
@@ -90,6 +91,7 @@ class AssinafyService
                 $responseGet = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
                 ])->get("{$this->apiUrl}/documents/{$documentId}");
 
                 if ($responseGet->successful()) {
@@ -147,6 +149,7 @@ class AssinafyService
             $responseDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ])->attach(
                     'file',
                     $pdfContent,
@@ -165,6 +168,7 @@ class AssinafyService
             $responsePrepare = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ])->post("{$this->apiUrl}/documents/{$documentId}/prepare", [
                         'status' => 'prepared'
                     ]);
@@ -180,8 +184,9 @@ class AssinafyService
             $responseSearch = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ])->get("{$this->apiUrl}/accounts/{$this->accountId}/signers", ['search' => $emailSignatario]);
-            
+
             if ($responseSearch->successful()) {
                 $signers = $responseSearch->json('data') ?? [];
                 foreach ($signers as $s) {
@@ -199,6 +204,7 @@ class AssinafyService
                 $responseSigner = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
                 ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
                             'full_name' => $nomeSignatario,
                             'email' => $emailSignatario,
@@ -214,9 +220,39 @@ class AssinafyService
             // --- PASSO 3 (Agora 4): Solicitar Assinatura ---
             Notification::make()->title('Passo 4/4: Vinculando assinatário e disparando e-mail...')->info()->send();
 
+            // --- ESPERA: Aguardar processamento de metadados se necessário ---
+            $maxTentativas = 5;
+            $tentativa = 0;
+            $processado = false;
+
+            while ($tentativa < $maxTentativas && !$processado) {
+                $responseCheck = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
+                ])->get("{$this->apiUrl}/documents/{$documentId}");
+
+                if ($responseCheck->successful()) {
+                    $docDataCheck = $responseCheck->json('data') ?? $responseCheck->json();
+                    $checkStatus = $docDataCheck['status'] ?? null;
+                    
+                    if ($checkStatus !== 'metadata_processing') {
+                        $processado = true;
+                        break;
+                    }
+                }
+                
+                $tentativa++;
+                if (!$processado) {
+                    Notification::make()->title("Aguardando processamento do documento no Assinafy (Tentativa {$tentativa}/{$maxTentativas})...")->info()->send();
+                    sleep(2); // Aguarda 2 segundos
+                }
+            }
+
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
                         'signers' => [['id' => $signerId]],
                         'method' => 'virtual',
@@ -251,7 +287,7 @@ class AssinafyService
 
                 return ['success' => true, 'redirect_url' => $signingUrl];
             }
-            
+
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
             throw new \Exception("Erro ao solicitar assinatura: " . $errorMsg);
 
