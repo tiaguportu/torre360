@@ -210,6 +210,14 @@ class Matricula extends Model
             }
         }
 
+        if ($countSent > 0) {
+            activity()
+                ->performedOn($this)
+                ->event('notificacao_pendencia')
+                ->withProperties(['destinatarios_count' => $countSent])
+                ->log("Enviada notificação (E-mail e Push) de pendência de documentos para {$countSent} destinatário(s)");
+        }
+
         return [
             'enviados' => $countSent,
             'falhas' => $falhas,
