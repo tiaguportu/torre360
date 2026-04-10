@@ -42,7 +42,7 @@ class AuditMiddleware
                                 'method' => $request->method(),
                                 'ip' => $request->ip(),
                             ])
-                            ->log("Responsável visualizou recurso: {$resource}");
+                            ->log("Responsável visualizou recurso: {$resource} | IP: {$request->ip()} | URL: {$request->fullUrl()}");
                     }
                 }
             }
