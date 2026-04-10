@@ -58,11 +58,13 @@ class EnderecoRelationManager extends RelationManager
             ])
             ->headerActions([
                 \Filament\Tables\Actions\CreateAction::make(),
-                AttachAction::make(),
+                AttachAction::make()
+                    ->authorize('attachEndereco'),
             ])
             ->actions([
                 \Filament\Tables\Actions\EditAction::make(),
-                DetachAction::make(),
+                DetachAction::make()
+                    ->authorize('detachEndereco'),
                 \Filament\Tables\Actions\DeleteAction::make(),
             ]);
     }

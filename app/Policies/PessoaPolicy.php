@@ -81,4 +81,14 @@ class PessoaPolicy
     {
         return $authUser->can('Export:Pessoa');
     }
+
+    public function attachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('AttachEndereco:Pessoa');
+    }
+
+    public function detachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
+    {
+        return $authUser->can('DetachEndereco:Pessoa');
+    }
 }

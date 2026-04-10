@@ -75,9 +75,9 @@ class PessoaForm
                     ->label('Usuários do Sistema')
                     ->relationship('users', 'name')
                     ->multiple()
-                    ->searchable()
-                    ->preload()
-                    ->helperText('Opcional: vincule esta pessoa a um ou mais usuários de acesso ao sistema.'),
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Este campo é apenas informativo. O vínculo de usuários deve ser gerenciado no recurso de Usuários.'),
             ]);
     }
 }

@@ -148,6 +148,7 @@ Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filame
 
 ### 9.1 Permissões Configuráveis
 Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos:
+- **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
 - **Secretaria:** Matrículas e Documentos sensíveis.
 - **CRM:** Gestão de leads e histórico de contatos.

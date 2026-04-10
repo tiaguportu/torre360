@@ -211,6 +211,8 @@ return [
             PessoaResource::class => [
                 'import',
                 'export',
+                'attachEndereco',
+                'detachEndereco',
             ],
             BancoResource::class => [],
             CentroCustoResource::class => [],
