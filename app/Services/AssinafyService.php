@@ -323,8 +323,18 @@ class AssinafyService
 
     public function handleWebhook(array $payload): bool
     {
-        $idAssinafy = $payload['document_id'] ?? $payload['id'] ?? null;
-        $status = $payload['status'] ?? null;
+        // Conforme documentação: object['id'] contém o ID do documento
+        $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
+        $event = $payload['event'] ?? null;
+        
+        // Mapeia eventos para status do contrato
+        $status = match($event) {
+            'document_signed' => 'signed',
+            'document_completed' => 'completed',
+            'document_refused' => 'refused',
+            'document_ready' => 'ready',
+            default => $event ?? 'unknown'
+        };
 
         if (!$idAssinafy || !$status) {
             return false;
