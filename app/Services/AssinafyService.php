@@ -370,11 +370,15 @@ class AssinafyService
 
     public function handleWebhook(array $payload): bool
     {
-        Log::warning('Payload: ' . json_encode($payload));
+        Log::info('Payload: ' . json_encode($payload));
         // Conforme documentação: object['id'] contém o ID do documento
         $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
         $event = $payload['event'] ?? null;
         $fileName = $payload['object']['name'] ?? null;
+        Log::info('idAssinafy: ' . $idAssinafy);
+        Log::info('event: ' . $event);
+        Log::info('fileName: ' . $fileName);
+
 
         // Mapeia eventos para status do contrato
         $status = match ($event) {
