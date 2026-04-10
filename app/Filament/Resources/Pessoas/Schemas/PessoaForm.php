@@ -71,12 +71,6 @@ class PessoaForm
                     ->searchable()
                     ->preload(),
 
-                Select::make('enderecos')
-                    ->relationship('enderecos', 'logradouro', fn ($query) => $query->whereNotNull('logradouro'))
-                    ->multiple()
-                    ->searchable()
-                    ->preload(),
-
                 Select::make('users')
                     ->label('Usuários do Sistema')
                     ->relationship('users', 'name')
