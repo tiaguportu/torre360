@@ -37,4 +37,12 @@ class Contrato extends Model
     {
         return $this->hasMany(ResponsavelFinanceiro::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'assinafy_request_log' => 'array',
+            'data_aceite' => 'datetime',
+        ];
+    }
 }

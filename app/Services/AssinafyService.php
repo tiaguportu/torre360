@@ -370,8 +370,6 @@ class AssinafyService
 
     public function handleWebhook(array $payload): bool
     {
-        print_r($payload);
-        exit();
         // Conforme documentação: object['id'] contém o ID do documento
         $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
         $event = $payload['event'] ?? null;
@@ -384,6 +382,7 @@ class AssinafyService
             'document_refused' => 'refused',
             'document_ready' => 'ready',
             'document_uploaded' => 'enviado',
+            'signature_requested' => 'enviado',
             default => $event ?? 'unknown'
         };
 

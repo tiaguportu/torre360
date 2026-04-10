@@ -20,7 +20,7 @@ class AssinafyWebhookController extends Controller
         if (empty($request->all())) {
             return response()->json(['message' => 'Webhook endpoint is active'], 200);
         }
-        return response()->json(['message' => $request->all()], 200);
+
         $success = $service->handleWebhook($request->all());
 
         if ($success) {
