@@ -5,13 +5,16 @@ namespace App\Services;
 use App\Models\Contrato;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AssinafyService
 {
     protected string $apiUrl;
+
     protected string $apiKey;
+
     protected string $accountId;
 
     public function __construct()
@@ -27,13 +30,14 @@ class AssinafyService
         }
 
         // Garante que a URL tenha o sufixo /v1 se necessário (caso venha da config sem ele)
-        if (!str_contains($this->apiUrl, '/v1')) {
+        if (! str_contains($this->apiUrl, '/v1')) {
             $this->apiUrl .= '/v1';
         }
     }
 
     /**
      * Envia um contrato para assinatura na Assinafy seguindo o fluxo de 3 passos da documentação v1.
+     * Suporta múltiplos signatários (todos os responsáveis financeiros com usuário vinculado).
      */
     public function enviarContrato(Contrato $contrato): array
     {
@@ -43,22 +47,51 @@ class AssinafyService
                 'matriculas.pessoa',
                 'matriculas.turma.serie.curso',
                 'matriculas.periodoLetivo',
-                'responsaveisFinanceiros.pessoa.users'
+                'responsaveisFinanceiros.pessoa.users',
             ]);
-            $matricula = $contrato->matriculas->first();
 
-            if (!$matricula) {
+            $matriculas = $contrato->matriculas;
+            $matricula = $matriculas->first();
+
+            if (! $matricula) {
                 return ['success' => false, 'message' => "Contrato #{$contrato->id} não possui matrículas vinculadas."];
             }
 
-            $aluno = $matricula->pessoa;
-            $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
-            $responsavelUser = $responsavel?->users->first();
+            // Coleta todos os signatários: usuários vinculados a cada responsável financeiro
+            $signatarios = collect();
+            foreach ($contrato->responsaveisFinanceiros as $resp) {
+                $pessoa = $resp->pessoa;
+                if (! $pessoa) {
+                    continue;
+                }
 
-            $nomeSignatario = $responsavel?->nome ?? $responsavelUser?->name ?? $aluno?->nome;
-            $emailSignatario = $responsavel?->email ?? $responsavelUser?->email ?? $aluno?->email;
+                foreach ($pessoa->users as $user) {
+                    if ($user->email) {
+                        $signatarios->push([
+                            'nome' => $user->name ?? $pessoa->nome,
+                            'email' => $user->email,
+                        ]);
+                    }
+                }
+            }
 
-            $nomeArquivoBase = "Contrato_Matricula_{$matricula->id}-1.pdf";
+            // Fallback: se não houver nenhum signatário via usuário, usa e-mail do aluno
+            if ($signatarios->isEmpty()) {
+                $aluno = $matricula->pessoa;
+                $signatarios->push([
+                    'nome' => $aluno?->nome ?? 'Aluno',
+                    'email' => $aluno?->email ?? '',
+                ]);
+            }
+
+            // Remove duplicados por e-mail
+            $signatarios = $signatarios->unique('email')->values();
+
+            // Para compatibilidade na busca do documento
+            $emailSignatario = $signatarios->first()['email'];
+            $nomeSignatario = $signatarios->first()['nome'];
+
+            $nomeArquivoBase = "contrato_{$contrato->id}.pdf";
 
             // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API) ---
             Notification::make()->title('Consultando Assinafy para evitar duplicidade de documento...')->info()->send();
@@ -69,10 +102,10 @@ class AssinafyService
             $responseSearchDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
             ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents", [
-                        'search' => $nomeArquivoBase
-                    ]);
+                'search' => $nomeArquivoBase,
+            ]);
 
             if ($responseSearchDoc->successful()) {
                 $documents = $responseSearchDoc->json('data') ?? [];
@@ -84,14 +117,12 @@ class AssinafyService
                 }
             }
 
-
-
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
                 $responseGet = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
-                    'Content-Type' => 'application/json'
+                    'Content-Type' => 'application/json',
                 ])->get("{$this->apiUrl}/documents/{$documentId}");
 
                 if ($responseGet->successful()) {
@@ -119,6 +150,7 @@ class AssinafyService
                         if ($contrato->assinafy_id !== $documentId) {
                             $contrato->update(['assinafy_id' => $documentId, 'assinafy_status' => 'enviado']);
                         }
+
                         return ['success' => true, 'redirect_url' => $signingUrl];
                     }
                 }
@@ -135,9 +167,9 @@ class AssinafyService
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
             $pdfContent = Pdf::loadView('pdfs.contrato', [
                 'contrato' => $contrato,
+                'matriculas' => $matriculas,
                 'matricula' => $matricula,
-                'aluno' => $aluno,
-                'responsavel' => $responsavel,
+                'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
                 'serie' => $matricula->turma?->serie,
                 'curso' => $matricula->turma?->serie?->curso,
                 'periodoLetivo' => $matricula->periodoLetivo,
@@ -149,13 +181,13 @@ class AssinafyService
             $responseDoc = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
             ])->attach(
-                    'file',
-                    $pdfContent,
-                    "Contrato_Matricula_{$matricula->id}.pdf"
-                )->post("{$this->apiUrl}/accounts/{$this->accountId}/documents");
+                'file',
+                $pdfContent,
+                $nomeArquivoBase
+            )->post("{$this->apiUrl}/accounts/{$this->accountId}/documents");
 
-            if (!$responseDoc->successful()) {
-                throw new \Exception("Erro no Upload do Documento: " . ($responseDoc->json('message') ?? $responseDoc->body()));
+            if (! $responseDoc->successful()) {
+                throw new \Exception('Erro no Upload do Documento: '.($responseDoc->json('message') ?? $responseDoc->body()));
             }
 
             $documentId = $responseDoc->json('id') ?? $responseDoc->json('data.id');
@@ -166,54 +198,64 @@ class AssinafyService
             $responsePrepare = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/prepare", [
-                        'status' => 'prepared'
-                    ]);
+                'status' => 'prepared',
+            ]);
 
-            if (!$responsePrepare->successful()) {
-                Log::warning('Aviso ao preparar: ' . $responsePrepare->body());
+            if (! $responsePrepare->successful()) {
+                Log::warning('Aviso ao preparar: '.$responsePrepare->body());
             }
 
-            // --- ETAPA B: Verificar se o usuário (signer) já foi cadastrado no Assinafy ---
-            Notification::make()->title('Passo 3/4: Verificando signatário...')->info()->send();
+            // --- ETAPA B: Verificar/cadastrar cada signatário no Assinafy ---
+            Notification::make()->title('Passo 3/4: Verificando signatários...')->info()->send();
 
-            $signerId = null;
-            $responseSearch = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
-            ])->get("{$this->apiUrl}/accounts/{$this->accountId}/signers", ['search' => $emailSignatario]);
+            $signerIds = [];
+            foreach ($signatarios as $signatario) {
+                $sigEmail = $signatario['email'];
+                $sigNome = $signatario['nome'];
+                $sigId = null;
 
-            if ($responseSearch->successful()) {
-                $signers = $responseSearch->json('data') ?? [];
-                foreach ($signers as $s) {
-                    if (isset($s['email']) && $s['email'] === $emailSignatario) {
-                        $signerId = $s['id'];
-                        Notification::make()->title("Aviso: O usuário '{$nomeSignatario}' já existe no Assinafy. Reaproveitando cadastro.")->info()->send();
-                        break;
-                    }
-                }
-            }
-
-            if (!$signerId) {
-                Notification::make()->title("Cadastrando novo signatário: {$nomeSignatario}")->info()->send();
-
-                $responseSigner = Http::withHeaders([
+                $responseSearch = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
-                    'Content-Type' => 'application/json'
-                ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
-                            'full_name' => $nomeSignatario,
-                            'email' => $emailSignatario,
-                        ]);
+                    'Content-Type' => 'application/json',
+                ])->get("{$this->apiUrl}/accounts/{$this->accountId}/signers", ['search' => $sigEmail]);
 
-                if (!$responseSigner->successful()) {
-                    throw new \Exception("Erro ao criar signatário: " . ($responseSigner->json('message') ?? $responseSigner->body()));
+                if ($responseSearch->successful()) {
+                    foreach ($responseSearch->json('data') ?? [] as $s) {
+                        if (isset($s['email']) && $s['email'] === $sigEmail) {
+                            $sigId = $s['id'];
+                            Notification::make()->title("Aviso: '{$sigNome}' já existe no Assinafy. Reaproveitando.")->info()->send();
+                            break;
+                        }
+                    }
                 }
 
-                $signerId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
+                if (! $sigId) {
+                    Notification::make()->title("Cadastrando signatário: {$sigNome}")->info()->send();
+
+                    $responseSigner = Http::withHeaders([
+                        'X-Api-Key' => $this->apiKey,
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])->post("{$this->apiUrl}/accounts/{$this->accountId}/signers", [
+                        'full_name' => $sigNome,
+                        'email' => $sigEmail,
+                    ]);
+
+                    if (! $responseSigner->successful()) {
+                        throw new \Exception("Erro ao criar signatário '{$sigNome}': ".($responseSigner->json('message') ?? $responseSigner->body()));
+                    }
+
+                    $sigId = $responseSigner->json('id') ?? $responseSigner->json('data.id');
+                }
+
+                $signerIds[] = $sigId;
             }
+
+            // Primeiro ID para fallback de URL de assinatura
+            $signerId = $signerIds[0] ?? null;
 
             // --- PASSO 3 (Agora 4): Solicitar Assinatura ---
             Notification::make()->title('Passo 4/4: Vinculando assinatário e disparando e-mail...')->info()->send();
@@ -223,11 +265,11 @@ class AssinafyService
             $tentativa = 0;
             $processado = false;
 
-            while ($tentativa < $maxTentativas && !$processado) {
+            while ($tentativa < $maxTentativas && ! $processado) {
                 $responseCheck = Http::withHeaders([
                     'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
-                    'Content-Type' => 'application/json'
+                    'Content-Type' => 'application/json',
                 ])->get("{$this->apiUrl}/documents/{$documentId}");
 
                 if ($responseCheck->successful()) {
@@ -241,20 +283,23 @@ class AssinafyService
                 }
 
                 $tentativa++;
-                if (!$processado) {
+                if (! $processado) {
                     Notification::make()->title("Aguardando processamento do documento no Assinafy (Tentativa {$tentativa}/{$maxTentativas})...")->info()->send();
                     sleep(2); // Aguarda 2 segundos
                 }
             }
 
+            // Monta payload com todos os signatários
+            $signersPayload = array_map(fn ($id) => ['id' => $id], $signerIds);
+
             $responseAssign = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
                 'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
             ])->post("{$this->apiUrl}/documents/{$documentId}/assignments", [
-                        'signers' => [['id' => $signerId]],
-                        'method' => 'virtual',
-                    ]);
+                'signers' => $signersPayload,
+                'method' => 'virtual',
+            ]);
 
             if ($responseAssign->successful()) {
                 $dataAssign = $responseAssign->json();
@@ -287,10 +332,10 @@ class AssinafyService
             }
 
             $errorMsg = $responseAssign->json('message') ?? $responseAssign->body();
-            throw new \Exception("Erro ao solicitar assinatura: " . $errorMsg);
-
+            throw new \Exception('Erro ao solicitar assinatura: '.$errorMsg);
         } catch (\Exception $e) {
-            Log::error('Exceção AssinafyService: ' . $e->getMessage());
+            Log::error('Exceção AssinafyService: '.$e->getMessage());
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -298,10 +343,10 @@ class AssinafyService
     /**
      * Obtém o conteúdo do documento assinado na Assinafy.
      */
-    public function baixarDocumentoAssinado(Contrato $contrato): ?\Illuminate\Http\Client\Response
+    public function baixarDocumentoAssinado(Contrato $contrato): ?Response
     {
         try {
-            if (!$contrato->assinafy_id) {
+            if (! $contrato->assinafy_id) {
                 return null;
             }
 
@@ -313,10 +358,12 @@ class AssinafyService
                 return $response;
             }
 
-            Log::warning("Erro ao baixar documento Assinafy para Contrato #{$contrato->id}: " . $response->body());
+            Log::warning("Erro ao baixar documento Assinafy para Contrato #{$contrato->id}: ".$response->body());
+
             return null;
         } catch (\Exception $e) {
-            Log::error("Exceção ao baixar documento Assinafy: " . $e->getMessage());
+            Log::error('Exceção ao baixar documento Assinafy: '.$e->getMessage());
+
             return null;
         }
     }
@@ -326,9 +373,9 @@ class AssinafyService
         // Conforme documentação: object['id'] contém o ID do documento
         $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
         $event = $payload['event'] ?? null;
-        
+
         // Mapeia eventos para status do contrato
-        $status = match($event) {
+        $status = match ($event) {
             'document_signed' => 'signed',
             'document_completed' => 'completed',
             'document_refused' => 'refused',
@@ -336,7 +383,7 @@ class AssinafyService
             default => $event ?? 'unknown'
         };
 
-        if (!$idAssinafy || !$status) {
+        if (! $idAssinafy || ! $status) {
             return false;
         }
 

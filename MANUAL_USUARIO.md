@@ -80,6 +80,7 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 ### 6.1 Matrículas e Contratos
 1. Ao realizar uma matrícula, o sistema permite a criação automática de um **Contrato**.
 2. O contrato centraliza as obrigações financeiras e os responsáveis legais.
+3. No cadastro do contrato, preencha o **Valor Total** e a **Quantidade de Parcelas** — essas informações aparecem no texto do contrato gerado.
 
 ### 6.2 Gestão de Documentos
 1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
@@ -90,8 +91,13 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
 1. Na lista de contratos, clique na ação **Assinar Contrato** para o documento pendente.
 2. Você será direcionado para uma página de visualização. Clique em **Iniciar Assinatura Digital** para ser enviado ao portal do Assinafy.
-3. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
-4. Para baixar o documento com as assinaturas digitais, acesse a visualização do contrato e clique em **Baixar Contrato Assinado**. O sistema buscará o arquivo original atualizado diretamente do Assinafy.
+3. **Múltiplos Signatários:** Se o contrato possuir mais de um Responsável Financeiro vinculado (com usuário cadastrado no sistema), **todos** receberão um convite de assinatura por e-mail automaticamente.
+4. O texto do contrato exibe automaticamente:
+   - **Todos os alunos** do contrato (nome e CPF).
+   - **Todos os responsáveis financeiros** como CONTRATANTE.
+   - O **valor total** e o **número de parcelas** com valor estimado por parcela.
+5. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
+6. Para baixar o documento com as assinaturas digitais, acesse a visualização do contrato e clique em **Baixar Contrato Assinado**.
 
 ---
 

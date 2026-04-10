@@ -50,6 +50,13 @@
             border-collapse: collapse;
             margin: 10px 0;
         }
+        .table-data th {
+            background: #f0f0f0;
+            font-weight: bold;
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
         .table-data td {
             padding: 5px;
             border: 1px solid #ddd;
@@ -69,27 +76,77 @@
     <div class="section">
         <span class="section-title">1. DAS PARTES</span>
         <p>
-            <strong>CONTRATADA:</strong> TORRE360 GESTAO ESCOLAR, inscrita no CNPJ sob o nº XX.XXX.XXX/XXXX-XX, com sede na Rua Exemplo, nº 123.<br>
-            <strong>CONTRATANTE:</strong> {{ $responsavel->nome ?? '________________________________' }}, 
-            CPF: {{ $responsavel->cpf ?? '________________' }}, 
-            residente em {{ $responsavel->endereco ?? '________________________________' }}.<br>
-            <strong>ALUNO(A):</strong> {{ $aluno->nome ?? '________________________________' }}, 
-            Matrícula: {{ $matricula->id ?? '____' }}.
+            <strong>CONTRATADA:</strong> TORRE360 GESTAO ESCOLAR, inscrita no CNPJ sob o nº XX.XXX.XXX/XXXX-XX, com sede na Rua Exemplo, nº 123.
         </p>
+
+        {{-- Responsáveis Financeiros --}}
+        @if(isset($responsaveisFinanceiros) && $responsaveisFinanceiros->isNotEmpty())
+            @foreach($responsaveisFinanceiros as $resp)
+                @php $p = $resp->pessoa; @endphp
+                <p>
+                    <strong>CONTRATANTE{{ $responsaveisFinanceiros->count() > 1 ? ' ' . ($loop->iteration) : '' }}:</strong>
+                    {{ $p?->nome ?? '________________________________' }},
+                    CPF: {{ $p?->cpf ? \Illuminate\Support\Str::mask($p->cpf, '*', 3, 6) : '________________' }}.
+                </p>
+            @endforeach
+        @elseif(isset($responsavel))
+            <p>
+                <strong>CONTRATANTE:</strong> {{ $responsavel->nome ?? '________________________________' }},
+                CPF: {{ $responsavel->cpf ?? '________________' }}.
+            </p>
+        @endif
+
+        {{-- Alunos --}}
+        <p><strong>ALUNO(S):</strong></p>
+        <table class="table-data">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Turma</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($matriculas) && $matriculas->isNotEmpty())
+                    @foreach($matriculas as $mat)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $mat->pessoa?->nome ?? '—' }}</td>
+                            <td>{{ $mat->pessoa?->cpf ?? '—' }}</td>
+                            <td>{{ $mat->turma?->nome ?? '—' }}</td>
+                        </tr>
+                    @endforeach
+                @elseif(isset($aluno))
+                    <tr>
+                        <td>1</td>
+                        <td>{{ $aluno->nome ?? '—' }}</td>
+                        <td>{{ $aluno->cpf ?? '—' }}</td>
+                        <td>{{ $matricula?->turma?->nome ?? '—' }}</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
     </div>
 
     <div class="section">
         <span class="section-title">2. DO OBJETO</span>
         <p>
-            O presente contrato tem por objeto a prestação de serviços educacionais para a série <strong>{{ $serie->nome ?? '________' }}</strong> 
-            no curso de <strong>{{ $curso->nome ?? '________' }}</strong>, referente ao período letivo de {{ $periodoLetivo->nome ?? '____' }}.
+            O presente contrato tem por objeto a prestação de serviços educacionais para a série <strong>{{ $serie?->nome ?? '________' }}</strong>
+            no curso de <strong>{{ $curso?->nome ?? '________' }}</strong>, referente ao período letivo de {{ $periodoLetivo?->nome ?? '____' }}.
         </p>
     </div>
 
     <div class="section">
         <span class="section-title">3. DO VALOR E FORMA DE PAGAMENTO</span>
         <p>
-            Pelo serviço objeto deste contrato, o CONTRATANTE pagará o valor total de <strong>R$ {{ number_format($contrato->valor_total ?? 0, 2, ',', '.') }}</strong>, 
+            Pelo serviço objeto deste contrato, o CONTRATANTE pagará o valor total de
+            <strong>R$ {{ number_format($contrato->valor_total ?? 0, 2, ',', '.') }}</strong>,
+            @if($contrato->quantidade_parcelas)
+                dividido em <strong>{{ $contrato->quantidade_parcelas }} {{ $contrato->quantidade_parcelas == 1 ? 'parcela' : 'parcelas' }}</strong>,
+                com valor estimado por parcela de
+                <strong>R$ {{ number_format(($contrato->valor_total ?? 0) / $contrato->quantidade_parcelas, 2, ',', '.') }}</strong>,
+            @endif
             conforme parcelas discriminadas no sistema financeiro da instituição.
         </p>
     </div>

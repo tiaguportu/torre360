@@ -47,6 +47,11 @@ class ContratoForm
                     ->numeric()
                     ->prefix('R$')
                     ->required(),
+                TextInput::make('quantidade_parcelas')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(1)
+                    ->label('Quantidade de Parcelas'),
                 DatePicker::make('data_aceite'),
                 Textarea::make('log_assinatura')
                     ->columnSpanFull(),
