@@ -88,7 +88,7 @@ class AssinafyService
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
                 $responseGet = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'X-Api-Key' => $this->apiKey,
                     'Accept' => 'application/json',
                 ])->get("{$this->apiUrl}/documents/{$documentId}");
 
@@ -272,7 +272,7 @@ class AssinafyService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'X-Api-Key' => $this->apiKey,
             ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/certificated");
 
             if ($response->successful()) {
