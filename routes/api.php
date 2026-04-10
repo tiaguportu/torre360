@@ -7,4 +7,4 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/webhooks/assinafy', \App\Http\Controllers\Webhooks\AssinafyWebhookController::class);
+Route::match(['get', 'post'], '/webhooks/assinafy', \App\Http\Controllers\Webhooks\AssinafyWebhookController::class);
