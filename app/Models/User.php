@@ -66,6 +66,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'is_active',
         'fcm_token',
         'device_type',
+        'email_verified_at',
     ];
 
     /**
