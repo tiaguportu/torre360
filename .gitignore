@@ -26,3 +26,6 @@ Thumbs.db
 # Capacitor - projetos nativos (gerados via `npx cap add`)
 /android
 /ios
+
+# Firebase
+/storage/app/firebase-credentials.json

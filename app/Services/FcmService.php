@@ -18,10 +18,15 @@ class FcmService
         if (! file_exists($credentialsPath)) {
             Log::warning('Arquivo de credenciais do Firebase não encontrado em: '.$credentialsPath);
 
-            return false;
+            return [
+                'success' => false,
+                'error' => 'Arquivo de credenciais não encontrado',
+            ];
         }
 
         try {
+            Log::info("Iniciando tentativa de envio de Push (FCM v1) para o token: {$token}");
+
             // Cria credenciais usando google/auth
             $credentials = new ServiceAccountCredentials(
                 ['https://www.googleapis.com/auth/firebase.messaging'],
@@ -34,7 +39,10 @@ class FcmService
             if (! isset($authToken['access_token'])) {
                 Log::error('Não foi possível obter o access_token do Firebase.');
 
-                return false;
+                return [
+                    'success' => false,
+                    'error' => 'Falha ao obter access_token',
+                ];
             }
 
             $accessToken = $authToken['access_token'];
@@ -71,17 +79,26 @@ class FcmService
                 ],
             ]);
 
+            $result = [
+                'success' => $response->successful(),
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ];
+
             if (! $response->successful()) {
                 Log::error('Erro ao enviar Push via FCM v1: '.$response->body());
-
-                return false;
+            } else {
+                Log::info('Push enviado com sucesso para o Firebase. Resposta: '.$response->body());
             }
 
-            return true;
+            return $result;
         } catch (\Exception $e) {
             Log::error('Exceção ao enviar Push via FCM v1: '.$e->getMessage());
 
-            return false;
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
         }
     }
 }

@@ -158,6 +158,7 @@ O sistema registra automaticamente ações críticas:
 - **Módulo de Matrícula:** O sistema loga acessos à lista de matrículas e à tela de documentos.
 - **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
 - **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.
+- **Notificações:** Tentativas de envio de mensagens Push (Firebase/FCM) e suas respectivas respostas do servidor são registradas no histórico da matrícula para depuração e acompanhamento técnico.
 
 ---
 
