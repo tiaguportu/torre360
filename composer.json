@@ -10,6 +10,7 @@
         "barryvdh/laravel-dompdf": "*",
         "bezhansalleh/filament-shield": "^4.2",
         "filament/filament": "^5.4",
+        "google/auth": "^1.50",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
