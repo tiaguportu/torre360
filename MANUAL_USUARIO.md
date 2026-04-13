@@ -21,13 +21,16 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 | Grupo | O que você faz aqui |
 |---|---|
-| 🎯 **CRM** | Gestão de Interessados e Kanban de Matrícula |
-| 👥 **Pessoas** | Cadastro unificado de Alunos, Responsáveis e Fornecedores |
-| 🎓 **Acadêmico** | Cursos, Turmas, Avaliações, Notas e Frequência |
-| 📝 **Secretaria** | Matrículas, Contratos e Gestão de Documentos |
-| 💰 **Financeiro** | Faturas, Bancos, Conciliação, DRE e Plano de Contas |
-| 🛠️ **Operações** | Ordens de Serviço e Manutenção Interna |
-| 🌍 **Configurações** | Geografia (Países/Cidades), Configurações do Sistema e Segurança |
+| 🎯 **CRM / Comercial** | Gestão de Interessados e Kanban de Prospecção |
+| 🎓 **Acadêmico** | Matrículas, Alunos, Turmas, Cursos e Séries |
+| ✅ **Avaliações** | Lançamento de Notas, Avaliações e Etapas Acadêmicas |
+| 📅 **Calendário e Horários** | Cronograma de Aulas, Horários e Dias não letivos |
+| 💰 **Financeiro** | Faturas, Contratos, Bancos, Conciliação e Plano de Contas |
+| 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
+| 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
+| 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
+| 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
+| 🛡️ **Sistema e Segurança** | Usuários, Perfis (Shield), Logs e Configurações Gerais |
 
 ---
 

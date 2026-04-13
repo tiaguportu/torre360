@@ -22,7 +22,7 @@ class PerfilResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Perfis';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sistema e Segurança';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 

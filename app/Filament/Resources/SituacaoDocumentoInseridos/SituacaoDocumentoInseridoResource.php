@@ -36,7 +36,7 @@ class SituacaoDocumentoInseridoResource extends Resource implements HasShieldPer
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-check';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Documentos';
 
     protected static ?string $recordTitleAttribute = 'nome';
 

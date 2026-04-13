@@ -21,6 +21,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -59,7 +60,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render("@vite('resources/js/app.js')"),
+                fn (): string => Blade::render("@vite('resources/js/app.js')"),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
@@ -102,12 +103,28 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Acadêmico'),
-                NavigationGroup::make('Secretaria'),
-                NavigationGroup::make('Financeiro'),
-                NavigationGroup::make('Configurações')
+                NavigationGroup::make('CRM / Comercial')
+                    ->icon('heroicon-o-presentation-chart-line'),
+                NavigationGroup::make('Acadêmico')
+                    ->icon('heroicon-o-academic-cap'),
+                NavigationGroup::make('Avaliações')
+                    ->icon('heroicon-o-clipboard-document-check'),
+                NavigationGroup::make('Calendário e Horários')
+                    ->icon('heroicon-o-calendar-days'),
+                NavigationGroup::make('Financeiro')
+                    ->icon('heroicon-o-banknotes'),
+                NavigationGroup::make('Pessoas')
+                    ->icon('heroicon-o-users'),
+                NavigationGroup::make('Documentos')
+                    ->icon('heroicon-o-document-duplicate'),
+                NavigationGroup::make('Operacional')
+                    ->icon('heroicon-o-wrench-screwdriver'),
+                NavigationGroup::make('Localização e Cadastros')
+                    ->icon('heroicon-o-map-pin')
                     ->collapsed(),
-                NavigationGroup::make('Cadastros'),
+                NavigationGroup::make('Sistema e Segurança')
+                    ->icon('heroicon-o-shield-check')
+                    ->collapsed(),
             ]);
 
     }

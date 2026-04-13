@@ -21,7 +21,7 @@ class SituacaoMatriculaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Situações das Matrículas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 
     protected static ?int $navigationSort = 2;
 

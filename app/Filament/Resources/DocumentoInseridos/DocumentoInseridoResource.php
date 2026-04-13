@@ -38,7 +38,7 @@ class DocumentoInseridoResource extends Resource implements HasShieldPermissions
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Documentos';
 
     protected static ?string $recordTitleAttribute = null;
 

@@ -1,4 +1,5 @@
 import { PushNotifications } from '@capacitor/push-notifications';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { Capacitor } from '@capacitor/core';
 
 const registerPush = async () => {
@@ -68,8 +69,13 @@ const registerPush = async () => {
     }
 };
 
-// Se o usuário estiver logado, tenta registrar o push
+// Se o usuário estiver logado, tenta registrar o push e remove a splash screen
 document.addEventListener('DOMContentLoaded', () => {
+    // Esconde a splash screen quando o esqueleto da página está pronto
+    if (Capacitor.getPlatform() !== 'web') {
+        SplashScreen.hide();
+    }
+
     // Verifica se existe o token CSRF (indício de que a página carregou e o usuário pode estar logado)
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {

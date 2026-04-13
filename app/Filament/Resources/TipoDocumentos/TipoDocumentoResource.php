@@ -21,7 +21,7 @@ class TipoDocumentoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Tipos de Documentos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Documentos';
 
     protected static ?int $navigationSort = 3;
 

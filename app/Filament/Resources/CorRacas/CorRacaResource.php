@@ -24,7 +24,7 @@ class CorRacaResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-swatch';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Localização e Cadastros';
 
     protected static ?string $recordTitleAttribute = 'nome';
 

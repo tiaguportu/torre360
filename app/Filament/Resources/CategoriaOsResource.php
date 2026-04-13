@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoriaOsResource\Pages;
 use App\Models\CategoriaOs;
-
 use Filament\Actions;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput;
@@ -20,7 +19,7 @@ class CategoriaOsResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-tag';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Manutenção';
+    protected static string|\UnitEnum|null $navigationGroup = 'Operacional';
 
     protected static ?string $modelLabel = 'Categoria de OS';
 

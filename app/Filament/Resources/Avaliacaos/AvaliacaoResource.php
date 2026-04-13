@@ -43,7 +43,7 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Avaliações';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico'; // Academic choice for exams
+    protected static string|\UnitEnum|null $navigationGroup = 'Avaliações'; // Academic choice for exams
 
     protected static ?int $navigationSort = 10;
 

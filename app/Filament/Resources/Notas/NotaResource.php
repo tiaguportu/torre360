@@ -22,7 +22,7 @@ class NotaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Notas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Avaliações';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-check-badge';
 

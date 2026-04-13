@@ -32,7 +32,7 @@ class UserResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = User::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sistema e Segurança';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 

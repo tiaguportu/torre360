@@ -6,7 +6,6 @@ use App\Filament\Resources\OrdemServicoResource\Pages;
 use App\Filament\Resources\OrdemServicoResource\RelationManagers;
 use App\Filament\Resources\OrdemServicoResource\Widgets;
 use App\Models\OrdemServico;
-
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
@@ -29,7 +28,7 @@ class OrdemServicoResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Manutenção';
+    protected static string|\UnitEnum|null $navigationGroup = 'Operacional';
 
     protected static ?string $modelLabel = 'Ordem de Serviço';
 

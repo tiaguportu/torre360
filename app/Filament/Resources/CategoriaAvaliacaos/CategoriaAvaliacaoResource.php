@@ -35,7 +35,7 @@ class CategoriaAvaliacaoResource extends Resource implements HasShieldPermission
 
     protected static ?string $pluralModelLabel = 'Categorias de Avaliação';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Avaliações';
 
     protected static ?int $navigationSort = 11;
 

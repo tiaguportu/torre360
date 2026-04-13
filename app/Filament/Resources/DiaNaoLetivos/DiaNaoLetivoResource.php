@@ -22,7 +22,7 @@ class DiaNaoLetivoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Dias Não Letivos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Calendário e Horários';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 

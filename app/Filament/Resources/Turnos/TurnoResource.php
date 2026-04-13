@@ -21,7 +21,7 @@ class TurnoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Turnos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Calendário e Horários';
 
     protected static ?int $navigationSort = 7;
 

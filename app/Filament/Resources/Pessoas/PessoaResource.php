@@ -26,7 +26,7 @@ class PessoaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Pessoas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pessoas';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 

@@ -39,7 +39,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Cronogramas de Aulas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Calendário e Horários';
 
     protected static ?int $navigationSort = 4;
 

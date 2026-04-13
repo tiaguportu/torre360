@@ -21,7 +21,7 @@ class EmailLogResource extends Resource
 {
     protected static ?string $model = EmailLog::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Auditoria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sistema e Segurança';
 
     protected static ?string $navigationLabel = 'E-mails Enviados';
 

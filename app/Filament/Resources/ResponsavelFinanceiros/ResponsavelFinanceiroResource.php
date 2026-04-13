@@ -21,7 +21,7 @@ class ResponsavelFinanceiroResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Responsáveis Financeiros';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pessoas';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
 

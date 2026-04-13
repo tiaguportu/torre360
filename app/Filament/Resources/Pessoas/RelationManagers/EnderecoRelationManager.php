@@ -3,12 +3,15 @@
 namespace App\Filament\Resources\Pessoas\RelationManagers;
 
 use App\Filament\Resources\Cidades\Schemas\CidadeForm;
+use Filament\Actions\AttachAction;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Actions\AttachAction;
-use Filament\Tables\Actions\DetachAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -57,15 +60,15 @@ class EnderecoRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                \Filament\Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
                 AttachAction::make()
                     ->authorize('attachEndereco'),
             ])
             ->actions([
-                \Filament\Tables\Actions\EditAction::make(),
+                EditAction::make(),
                 DetachAction::make()
                     ->authorize('detachEndereco'),
-                \Filament\Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ]);
     }
 }

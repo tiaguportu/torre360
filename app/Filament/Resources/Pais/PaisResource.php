@@ -21,7 +21,7 @@ class PaisResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Países';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Localização e Cadastros';
 
     protected static ?int $navigationSort = 1;
 

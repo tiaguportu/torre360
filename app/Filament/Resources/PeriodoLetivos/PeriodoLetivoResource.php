@@ -23,7 +23,7 @@ class PeriodoLetivoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Períodos Letivos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Calendário e Horários';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 

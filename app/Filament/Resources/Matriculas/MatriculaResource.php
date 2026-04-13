@@ -34,13 +34,14 @@ class MatriculaResource extends Resource implements HasShieldPermissions
             'boletim',
         ];
     }
+
     protected static ?string $model = Matricula::class;
 
     protected static ?string $modelLabel = 'Matrícula';
 
     protected static ?string $pluralModelLabel = 'Matrículas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
+    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
 
     protected static ?int $navigationSort = 1;
 

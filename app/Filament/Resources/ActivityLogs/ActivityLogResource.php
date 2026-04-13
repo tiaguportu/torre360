@@ -18,7 +18,7 @@ class ActivityLogResource extends Resource
         return auth()->user()?->hasRole('super_admin') ?? false;
     }
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sistema e Segurança';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedListBullet;
 

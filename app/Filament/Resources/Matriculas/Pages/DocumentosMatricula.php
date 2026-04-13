@@ -127,6 +127,7 @@ class DocumentosMatricula extends Page implements HasTable
                     ->view('filament.resources.matriculas.columns.dropzone-documento')
                     ->extraAttributes(['class' => 'w-48']),
             ])
+            ->stackedOnMobile()
             ->actions([
                 Action::make('baixar_enviado')
                     ->label('Baixar Documento')
