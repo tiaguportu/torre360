@@ -2,6 +2,8 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 
 const registerPush = async () => {
+    alert('Tentando registrar Push...');
+    
     // Só executa se estiver em ambiente nativo (Android/iOS)
     if (Capacitor.getPlatform() === 'web') {
         console.log('Ambiente Web: Notificações Push nativas não disponíveis.');
