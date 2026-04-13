@@ -67,6 +67,14 @@ const registerPush = async () => {
 
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
             console.log('Ação na notificação:', notification);
+
+            // A estrutura de dados do Capacitor varia, tentamos pegar de ambos os lugares comuns
+            const data = notification.notification.data || notification.notification.extras;
+
+            if (data && data.url) {
+                console.log('Redirecionando via Push para:', data.url);
+                window.location.href = data.url;
+            }
         });
 
     } catch (e) {

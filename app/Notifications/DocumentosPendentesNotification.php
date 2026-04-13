@@ -24,13 +24,15 @@ class DocumentosPendentesNotification extends Notification
     public function toPush(object $notifiable): array
     {
         $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
+        $url = route('filament.admin.resources.matriculas.documentos', ['record' => $this->matricula->id]);
 
         return [
             'title' => 'Documentos Pendentes - Torre360',
             'body' => "Existem pendências de documentos para o aluno(a) {$alunoNome}. Clique para regularizar.",
             'data' => [
-                'matricula_id' => $this->matricula->id,
+                'matricula_id' => (string) $this->matricula->id,
                 'type' => 'document_pending',
+                'url' => $url,
             ],
         ];
     }
