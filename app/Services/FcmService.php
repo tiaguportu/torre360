@@ -60,6 +60,8 @@ class FcmService
                 $stringData[(string) $key] = is_string($value) ? $value : json_encode($value);
             }
 
+            Log::info('Payload de dados (data) enviado para o FCM:', $stringData);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$accessToken,
                 'Content-Type' => 'application/json',

@@ -67,13 +67,18 @@ const registerPush = async () => {
 
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
             console.log('Ação na notificação:', notification);
+            
+            // Debug visual no celular
+            alert('Notificação clicada! Dados: ' + JSON.stringify(notification.notification.data || {}));
 
             // A estrutura de dados do Capacitor varia, tentamos pegar de ambos os lugares comuns
             const data = notification.notification.data || notification.notification.extras;
 
             if (data && data.url) {
-                console.log('Redirecionando via Push para:', data.url);
+                alert('Redirecionando para: ' + data.url);
                 window.location.href = data.url;
+            } else {
+                alert('Nenhuma URL encontrada nos dados da notificação.');
             }
         });
 
