@@ -177,6 +177,7 @@ O **Torre360** possui um aplicativo nativo para Android que facilita o acesso r�
 - **Biometria (Opcional):** Dependendo da versão, permitesuporte a login rápido.
 - **Navegação Fluida:** Otimizado para telas menores, mantendo todas as funcionalidades do painel web.
 - **Tabelas Inteligentes:** Todas as tabelas do sistema se adaptam automaticamente a telas de celulares, transformando-se em blocos verticais (cards) para facilitar a leitura e interação em dispositivos móveis.
+- **Notificações Push:** O aplicativo suporta notificações push em tempo real. Ao clicar em um aviso, como "Documentos Pendentes", o aplicativo abre automaticamente na página correta para que você possa regularizar a situação imediatamente.
 
 ---
 
