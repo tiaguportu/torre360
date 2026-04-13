@@ -19,7 +19,11 @@ class MatriculaForm
             ->components([
                 Select::make('pessoa_id')
                     ->label('Aluno')
-                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')->whereHas('users', fn ($q) => $q->role('aluno')))
+                    ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome')
+                        ->where(function ($q) {
+                            $q->whereDoesntHave('users')
+                                ->orWhereHas('users', fn ($q) => $q->role('aluno'));
+                        }))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->searchable(['nome', 'cpf'])
                     ->preload()
