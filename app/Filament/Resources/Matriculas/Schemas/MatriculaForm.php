@@ -47,13 +47,13 @@ class MatriculaForm
                             ->searchable()
                             ->preload(),
                     ]),
-                Select::make('periodoLetivo')
+                Select::make('periodo_letivo_id')
                     ->relationship('periodoLetivo', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->searchable()
                     ->preload()
                     ->required()
                     ->label('Período Letivo'),
-                Select::make('turma')
+                Select::make('turma_id')
                     ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? "Turma #{$record->id}")
                     ->searchable()
@@ -62,7 +62,7 @@ class MatriculaForm
                     ->required()
                     ->disabled(fn ($livewire) => $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma)
                     ->dehydrated(),
-                Select::make('situacaoMatricula')
+                Select::make('situacao_matricula_id')
                     ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->searchable()
                     ->preload()
