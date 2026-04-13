@@ -59,7 +59,10 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render("@vite('resources/js/app.js')"),
+                fn (): string => \Illuminate\Support\Facades\Blade::render("
+                    <script>alert('PHP DO SERVIDOR REMOTO ATUALIZADO!');</script>
+                    @vite('resources/js/app.js')
+                "),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
