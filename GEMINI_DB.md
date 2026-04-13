@@ -70,6 +70,11 @@ Estrutura de ensino e turmas.
 ---
 
 ## 4. Avaliação e Frequência
+### `categoria_avaliacao`
+- **Representa:** Categorias de avaliações (ex: Prova, Trabalho, Simulado).
+- **Campos Principais:** `nome`, `descricao`, `ordem_boletim`.
+- **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das categorias de avaliação no boletim.
+
 ### `avaliacao` e `nota`
 - Registro acadêmico de desempenho.
 

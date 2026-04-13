@@ -24,6 +24,11 @@ class CategoriaAvaliacaoForm
                     ->numeric()
                     ->default(0)
                     ->required(),
+                TextInput::make('ordem_boletim')
+                    ->label('Ordem no Boletim')
+                    ->numeric()
+                    ->helperText('Define a ordem de exibição desta categoria no boletim.')
+                    ->default(0),
 
                 Select::make('categoria_avaliacao_substituicao_id')
                     ->label('Substitui a categoria')

@@ -89,6 +89,12 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 3. **Funcionamento:** O sistema utiliza este número inteiro para ordenar as disciplinas de cima para baixo na visualização do boletim. Disciplinas com números menores (ex: 1, 2, 3) aparecem primeiro.
 4. Caso duas disciplinas tenham o mesmo número de ordem, elas serão exibidas por ordem alfabética de nome.
 
+### 5.6 Categorias de Avaliação e Ordenação das Colunas no Boletim
+1. Vá em **Avaliações → Categorias de Avaliação**.
+2. No cadastro de cada categoria (ex: Prova 1, Trabalho, Simulado), utilize o campo **Ordem no Boletim**.
+3. **Funcionamento:** Este campo define a ordem horizontal das colunas no boletim dentro de cada etapa avaliativa. Avaliações pertencentes a categorias com ordens menores aparecerão mais à esquerda na tabela do boletim.
+4. Se uma categoria possui uma **Substituta** configurada (como uma "Prova Substitutiva"), o sistema realizará o cálculo automático substituindo a nota da categoria original se a nota da substituta for maior ou conforme a regra configurada.
+
 ---
 
 ## 📝 6. Secretaria e Documentação

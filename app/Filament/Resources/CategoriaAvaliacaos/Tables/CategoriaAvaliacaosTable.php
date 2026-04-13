@@ -26,6 +26,11 @@ class CategoriaAvaliacaosTable
                     ->numeric()
                     ->sortable()
                     ->toggleable(),
+                TextColumn::make('ordem_boletim')
+                    ->label('Ordem Boletim')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('substituicao.nome')
                     ->label('Substitui')
                     ->placeholder('—')
