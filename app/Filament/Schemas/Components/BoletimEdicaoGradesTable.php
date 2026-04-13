@@ -3,6 +3,7 @@
 namespace App\Filament\Schemas\Components;
 
 use App\Models\Avaliacao;
+use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
 use App\Models\Matricula;
 use Filament\Schemas\Components\Component;
@@ -45,5 +46,21 @@ class BoletimEdicaoGradesTable extends Component
             ->unique();
 
         return EtapaAvaliativa::whereIn('id', $etapaIds)->orderBy('id')->get();
+    }
+
+    public function getDadosParaEtapa(int $etapaId): array
+    {
+        $matricula = $this->getMatricula();
+        $avaliacoes = Avaliacao::query()
+            ->where('turma_id', $matricula->turma_id)
+            ->where('etapa_avaliativa_id', $etapaId)
+            ->with(['categoria', 'disciplina'])
+            ->get();
+
+        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem');
+        $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique()->toArray();
+        $disciplinas = Disciplina::whereIn('id', $disciplinasIds)->orderBy('nome')->get();
+
+        return compact('avaliacoes', 'categorias', 'disciplinas');
     }
 }

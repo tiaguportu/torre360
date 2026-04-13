@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Schemas\Components\BoletimEdicaoGradesTable;
+use App\Models\Nota;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -21,6 +23,8 @@ class EditarBoletimMatricula extends Page implements HasSchemas
     protected static string $resource = MatriculaResource::class;
 
     protected string $view = 'filament.matriculas.editar-boletim';
+
+    public array $notas = [];
 
     public function schema(Schema $schema): Schema
     {
@@ -48,6 +52,39 @@ class EditarBoletimMatricula extends Page implements HasSchemas
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
+
+        // Carrega as notas atuais
+        $this->notas = Nota::where('matricula_id', $this->record->id)
+            ->pluck('valor', 'avaliacao_id')
+            ->toArray();
+    }
+
+    public function submit(): void
+    {
+        foreach ($this->notas as $avaliacaoId => $valor) {
+            $valorFormatado = ($valor === '' || $valor === null) ? null : (float) str_replace(',', '.', $valor);
+
+            if ($valorFormatado !== null && ($valorFormatado < 0 || $valorFormatado > 10)) {
+                continue;
+            }
+
+            Nota::updateOrCreate(
+                [
+                    'matricula_id' => $this->record->id,
+                    'avaliacao_id' => $avaliacaoId,
+                ],
+                [
+                    'valor' => $valorFormatado,
+                ]
+            );
+        }
+
+        Notification::make()
+            ->title('Notas salvas com sucesso!')
+            ->success()
+            ->send();
+
+        $this->redirect(MatriculaResource::getUrl('boletim', ['record' => $this->record]));
     }
 
     public function getBreadcrumbs(): array
