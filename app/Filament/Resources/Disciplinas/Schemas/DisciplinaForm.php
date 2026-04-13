@@ -34,9 +34,7 @@ class DisciplinaForm
                 TextInput::make('ordem_boletim')
                     ->label('Ordem no Boletim')
                     ->numeric()
-                    ->helperText('Define a posição sequencial desta disciplina no boletim.')
-                    ->default(0)
-                    ->dehydrated(true),
+                    ->helperText('Define a posição sequencial desta disciplina no boletim.'),
                 ColorPicker::make('cor')
                     ->label('Cor da Disciplina')
                     ->default(fn () => '#'.str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
