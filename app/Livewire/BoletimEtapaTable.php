@@ -41,7 +41,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             ->with(['categoria'])
             ->get();
 
-        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem_boletim');
 
         $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
         $notasTurma = Nota::query()

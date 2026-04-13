@@ -59,7 +59,7 @@ class BoletimEdicaoGradesTable extends Component
             ->with(['categoria', 'disciplina'])
             ->get();
 
-        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem');
+        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem_boletim');
         $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique()->toArray();
         $disciplinas = Disciplina::whereIn('id', $disciplinasIds)
             ->orderBy('ordem_boletim')

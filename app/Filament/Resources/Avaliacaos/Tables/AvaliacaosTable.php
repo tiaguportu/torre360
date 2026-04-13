@@ -98,7 +98,7 @@ class AvaliacaosTable
                     ->relationship(
                         'categoria',
                         'nome',
-                        modifyQueryUsing: fn ($query) => $query->orderBy('ordem')
+                        modifyQueryUsing: fn ($query) => $query->orderBy('ordem_boletim')
                     )
                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome} - {$record->descricao}")
                     ->label('Categoria')
