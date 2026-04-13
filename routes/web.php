@@ -10,6 +10,7 @@ Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
 
+use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
@@ -20,4 +21,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
 });
 
-Route::post('/mobile/register-token', [\App\Http\Controllers\Api\MobileTokenController::class, 'store'])->name('mobile.register-token');
+Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');

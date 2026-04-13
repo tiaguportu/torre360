@@ -17,7 +17,9 @@ use Filament\Actions\ReplicateAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class AvaliacaosTable
@@ -118,6 +120,16 @@ class AvaliacaosTable
                     ->searchable()
                     ->preload()
                     ->hidden(fn () => auth()->user()?->hasRole('professor')),
+                TernaryFilter::make('com_pendencia')
+                    ->label('Pendência de Lançamento')
+                    ->placeholder('Todas as Avaliações')
+                    ->trueLabel('Apenas com Pendência')
+                    ->falseLabel('Sem Pendência')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereRaw('(SELECT count(*) FROM matricula WHERE matricula.turma_id = avaliacao.turma_id AND matricula.deleted_at IS NULL) > (SELECT count(*) FROM nota WHERE nota.avaliacao_id = avaliacao.id AND nota.valor IS NOT NULL)'),
+                        false: fn (Builder $query) => $query->whereRaw('(SELECT count(*) FROM matricula WHERE matricula.turma_id = avaliacao.turma_id AND matricula.deleted_at IS NULL) <= (SELECT count(*) FROM nota WHERE nota.avaliacao_id = avaliacao.id AND nota.valor IS NOT NULL)'),
+                        blank: fn (Builder $query) => $query,
+                    ),
             ])
             ->actions([
                 ActionGroup::make([

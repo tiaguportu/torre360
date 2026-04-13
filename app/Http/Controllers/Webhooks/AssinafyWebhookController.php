@@ -13,7 +13,7 @@ class AssinafyWebhookController extends Controller
     {
         Log::info('Webhook Assinafy recebido', [
             'method' => $request->method(),
-            'payload' => $request->all()
+            'payload' => $request->all(),
         ]);
 
         // Responde 200 para requisições vazias ou pings de validação
@@ -27,9 +27,10 @@ class AssinafyWebhookController extends Controller
             return response()->json(['message' => 'Webhook processado com sucesso'], 200);
         }
 
-        // Em webhooks, é recomendável retornar 200 mesmo que não encontre o registro interno 
+        // Em webhooks, é recomendável retornar 200 mesmo que não encontre o registro interno
         // para que o serviço emissor não considere falha de rede/disponibilidade.
         Log::warning('Webhook Assinafy: Contrato não encontrado ou payload inconsistente', ['payload' => $request->all()]);
+
         return response()->json(['message' => 'Webhook recebido'], 200);
     }
 }

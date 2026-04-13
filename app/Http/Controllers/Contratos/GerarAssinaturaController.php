@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Contratos;
 use App\Http\Controllers\Controller;
 use App\Models\Contrato;
 use App\Services\AssinafyService;
-use Illuminate\Http\Request;
 
 class GerarAssinaturaController extends Controller
 {

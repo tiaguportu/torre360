@@ -37,13 +37,13 @@ class Fatura extends Model
             get: function () {
                 return $this->itens->reduce(function ($carry, $item) {
                     $totalItem = $item->valor_unitario * $item->quantidade;
-                    
+
                     if ($item->tipo_desconto === 'absoluto') {
                         $totalItem -= $item->desconto;
                     } else {
                         $totalItem -= ($totalItem * ($item->desconto / 100));
                     }
-                    
+
                     return $carry + $totalItem;
                 }, 0);
             }

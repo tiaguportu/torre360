@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Contrato;
 use App\Services\AssinafyService;
 use Filament\Notifications\Notification;
-use Illuminate\Http\Request;
 
 class DownloadContratoController extends Controller
 {
@@ -14,7 +13,7 @@ class DownloadContratoController extends Controller
     {
         $response = $assinafyService->baixarDocumentoAssinado($contrato);
 
-        if (!$response) {
+        if (! $response) {
             Notification::make()
                 ->title('Erro ao obter download')
                 ->body('Não foi possível obter o arquivo do contrato no Assinafy. O documento pode ainda não estar pronto ou o link expirou.')

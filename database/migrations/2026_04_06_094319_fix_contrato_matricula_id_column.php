@@ -17,7 +17,7 @@ return new class extends Migration
             DB::statement('ALTER TABLE contrato DROP FOREIGN KEY contratos_matricula_id_foreign');
             DB::statement('ALTER TABLE contrato DROP COLUMN matricula_id');
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Se falhar (ex: coluna já não existe), silenciamos para o migrate continuar
         }
     }

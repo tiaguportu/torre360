@@ -64,8 +64,9 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 
 ### 5.1 Lançamento de Notas
 1. Vá em **Acadêmico → Avaliações**.
-2. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
-3. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
+2. **Filtro de Pendências:** Utilize o filtro "Pendência de Lançamento" para localizar rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
+3. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+4. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
@@ -73,8 +74,9 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 
 ### 5.3 Boletim do Aluno
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
-2. O sistema gera uma tabela dinâmica porEtapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
+2. O sistema gera uma tabela dinâmica por Etapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
 3. Notas abaixo da média aparecem destacadas em vermelho.
+4. **Edição de Notas:** Caso possua a permissão necessária, você visualizará o botão **Editar Notas** no topo da página do boletim. Esta tela permite o preenchimento rápido de todas as notas da etapa em um layout idêntico ao de consulta.
 
 ---
 
@@ -156,7 +158,7 @@ Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filame
 Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos:
 - **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
-- **Secretaria:** Matrículas e Documentos sensíveis.
+- **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`).
 - **CRM:** Gestão de leads e histórico de contatos.
 
 ### 9.2 Auditoria de Ações

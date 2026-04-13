@@ -19,7 +19,7 @@ class AuditMiddleware
         $response = $next($request);
 
         if (config('app.audit_enabled', true) && auth()->check()) {
-            if ($request->isMethod('GET') && !$request->ajax()) {
+            if ($request->isMethod('GET') && ! $request->ajax()) {
                 $user = auth()->user();
 
                 AuditLog::create([

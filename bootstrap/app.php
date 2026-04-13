@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PersistentMobileSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
-            \App\Http\Middleware\PersistentMobileSession::class,
+            PersistentMobileSession::class,
         ]);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : route('filament.admin.auth.login'));
         $middleware->validateCsrfTokens(except: [

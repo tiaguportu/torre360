@@ -30,7 +30,7 @@ class FaturaForm
                 TextInput::make('status')
                     ->required()
                     ->default('pendente'),
-                
+
                 Placeholder::make('total_consolidado')
                     ->label('Valor Total Consolidado')
                     ->content(function (Get $get) {
@@ -50,7 +50,8 @@ class FaturaForm
                             }
                             $total += $totalItem;
                         }
-                        return 'R$ ' . number_format($total, 2, ',', '.');
+
+                        return 'R$ '.number_format($total, 2, ',', '.');
                     }),
 
                 Textarea::make('pix_copia_e_cola')
@@ -104,7 +105,7 @@ class FaturaForm
                                     $total -= ($total * ($desc / 100));
                                 }
 
-                                return 'R$ ' . number_format($total, 2, ',', '.');
+                                return 'R$ '.number_format($total, 2, ',', '.');
                             }),
                     ])
                     ->columns(6)

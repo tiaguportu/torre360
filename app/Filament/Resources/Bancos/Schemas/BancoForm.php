@@ -18,7 +18,7 @@ class BancoForm
                     ->label('Apelido da Conta / Banco')
                     ->placeholder('Ex: ITAU - CONTA CORRENTE')
                     ->required(),
-                
+
                 Select::make('codigo_bacen_id')
                     ->label('Banco (BACEN)')
                     ->relationship('codigoBacen', 'nome_extenso')

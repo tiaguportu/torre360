@@ -3,25 +3,24 @@
 namespace App\Filament\Pages;
 
 use App\Services\DREService;
+use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
-use Filament\Pages\Page;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Actions\Action;
-use Filament\Support\Icons\Heroicon;
 use UnitEnum;
-use BackedEnum;
 
 class RelatorioDRE extends Page implements HasForms
 {
-    use InteractsWithForms;
     use HasPageShield;
+    use InteractsWithForms;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
@@ -32,6 +31,7 @@ class RelatorioDRE extends Page implements HasForms
     protected static ?string $slug = 'financeiro/dre';
 
     public ?array $data = [];
+
     public ?array $dreData = null;
 
     public function mount(): void
@@ -85,7 +85,7 @@ class RelatorioDRE extends Page implements HasForms
     public function generateDRE(): void
     {
         $formData = $this->getSchema('content')->getState();
-        
+
         $service = app(DREService::class);
         $this->dreData = $service->generate($formData['data_inicio'], $formData['data_fim']);
     }

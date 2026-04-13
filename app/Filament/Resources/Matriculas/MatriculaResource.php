@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Matriculas;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\CreateMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
+use App\Filament\Resources\Matriculas\Pages\EditarBoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\EditMatricula;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Filament\Resources\Matriculas\RelationManagers\DocumentoInseridosRelationManager;
@@ -32,6 +33,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
             'documentos',
             'avisarPendencia',
             'boletim',
+            'boletim_editar',
         ];
     }
 
@@ -89,6 +91,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
             'documentos' => DocumentosMatricula::route('/{record}/documentos'),
             'edit' => EditMatricula::route('/{record}/edit'),
             'boletim' => BoletimMatricula::route('/{record}/boletim'),
+            'boletim.editar' => EditarBoletimMatricula::route('/{record}/boletim/editar'),
         ];
     }
 }
