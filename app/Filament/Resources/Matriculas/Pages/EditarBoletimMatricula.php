@@ -64,7 +64,15 @@ class EditarBoletimMatricula extends Page implements HasSchemas
         foreach ($this->notas as $avaliacaoId => $valor) {
             $valorFormatado = ($valor === '' || $valor === null) ? null : (float) str_replace(',', '.', $valor);
 
-            if ($valorFormatado !== null && ($valorFormatado < 0 || $valorFormatado > 10)) {
+            if ($valorFormatado === null) {
+                Nota::where('matricula_id', $this->record->id)
+                    ->where('avaliacao_id', $avaliacaoId)
+                    ->delete();
+
+                continue;
+            }
+
+            if ($valorFormatado < 0 || $valorFormatado > 10) {
                 continue;
             }
 
