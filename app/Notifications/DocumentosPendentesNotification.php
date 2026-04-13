@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Matricula;
+use Filament\Actions\Action as FilamentAction;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -18,7 +20,7 @@ class DocumentosPendentesNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail', Channels\FcmChannel::class];
+        return ['mail', 'database', Channels\FcmChannel::class];
     }
 
     public function toPush(object $notifiable): array
@@ -77,6 +79,24 @@ class DocumentosPendentesNotification extends Notification
             ->action('Gerenciar Documentos', $url)
             ->line('Se você já enviou os documentos recentes para análise, por favor, ignore este aviso.')
             ->salutation('Atenciosamente, '.config('app.name'));
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        $alunoNome = $this->matricula->pessoa?->nome ?? 'Aluno(a)';
+        $url = route('filament.admin.resources.matriculas.documentos', ['record' => $this->matricula->id]);
+
+        return FilamentNotification::make()
+            ->title('Documentos Pendentes - '.$this->matricula->codigo)
+            ->body("Existem pendências de documentos para o aluno(a) {$alunoNome}.")
+            ->warning()
+            ->actions([
+                FilamentAction::make('view')
+                    ->label('Ver Documentos')
+                    ->url($url)
+                    ->button(),
+            ])
+            ->getDatabaseMessage();
     }
 
     public function toArray(object $notifiable): array

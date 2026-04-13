@@ -19,6 +19,11 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Representa:** Registro técnico de acessos e auditoria legada.
 - **Relacionamentos:** BelongsTo `users`, MorphTo `auditable`.
 
+### `notifications`
+- **Representa:** Sistema de notificações internas do Laravel/Filament (Sininho).
+- **Propósito:** Armazena mensagens destinadas aos usuários que são exibidas no painel administrativo.
+- **Campos Principais:** `id` (UUID), `type`, `notifiable_type`, `notifiable_id`, `data` (JSON), `read_at`.
+
 ### `activity_log` (Spatie)
 - **Representa:** Registro de atividades de negócio e trilha de auditoria detalhada.
 - **Campos Principais:** 

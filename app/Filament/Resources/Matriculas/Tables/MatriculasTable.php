@@ -149,10 +149,11 @@ class MatriculasTable
 
                         if ($countSent > 0) {
                             Notification::make()
-                                ->title('E-mail enviado!')
-                                ->body("O aviso de pendência foi enviado para {$countSent} destinatário(s) relacionado(s) à matrícula de **{$record->pessoa->nome}**.")
+                                ->title('Aviso de Pendência Enviado')
+                                ->body("O aviso foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
                                 ->success()
-                                ->send();
+                                ->send()
+                                ->sendToDatabase(auth()->user());
                         }
 
                         if (! empty($falhas)) {
@@ -244,10 +245,11 @@ class MatriculasTable
 
                             if ($totalSent > 0) {
                                 Notification::make()
-                                    ->title('Avisos enviados!')
-                                    ->body("Foram enviados {$totalSent} e-mails para os responsáveis de {$countMatriculasComPendencia} matrículas.")
+                                    ->title('Avisos em Lote Enviados')
+                                    ->body("Foram enviados {$totalSent} avisos para os responsáveis de {$countMatriculasComPendencia} matrículas.")
                                     ->success()
-                                    ->send();
+                                    ->send()
+                                    ->sendToDatabase(auth()->user());
                             }
 
                             if (! empty($todasFalhas)) {

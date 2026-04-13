@@ -181,4 +181,19 @@ O **Torre360** possui um aplicativo nativo para Android que facilita o acesso r�
 
 ---
 
+## 🔔 11. Notificações Internas (Sininho)
+
+O Torre360 possui um sistema central de notificações em tempo real, representado pelo ícone de **Sinho** no topo do painel administrativo.
+
+### 11.1 Como Funciona
+- Sempre que houver uma ação que necessite sua atenção (ex: documentos pendentes em uma matrícula), um indicador numérico aparecerá sobre o sininho.
+- Clique no sininho para visualizar a lista de notificações recentes.
+- Cada notificação possui um botão de ação rápida (ex: **Ver Documentos**) que leva você diretamente à tela necessária.
+
+### 11.2 Notificações Importantes
+- **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado.
+- **Feedback de Envio de Avisos:** Quando um administrador dispara avisos de pendência (individual ou em lote), uma notificação de confirmação é enviada para o seu próprio sininho, servindo como registro persistente da ação.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
