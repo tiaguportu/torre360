@@ -84,6 +84,9 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 1. Ao realizar uma matrícula, o sistema permite a criação automática de um **Contrato**.
 2. O contrato centraliza as obrigações financeiras e os responsáveis legais.
 3. No cadastro do contrato, preencha o **Valor Total** e a **Quantidade de Parcelas** — essas informações aparecem no texto do contrato gerado.
+4. **Seleção de Alunos:** O campo de seleção de aluno permite buscar qualquer pessoa cadastrada. Para facilitar o cadastro de crianças, o sistema exibe tanto pessoas com o perfil de "aluno" quanto pessoas sem conta de usuário vinculada (sem perfil).
+5. **Busca Avançada:** Você pode buscar alunos pelo **Nome** ou **CPF** diretamente no campo de seleção.
+
 
 ### 6.2 Gestão de Documentos
 1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
