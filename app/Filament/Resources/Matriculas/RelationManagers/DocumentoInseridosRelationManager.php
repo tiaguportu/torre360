@@ -32,7 +32,7 @@ class DocumentoInseridosRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                Tables\Columns\TextColumn::make('documentoObrigatorio.nome')
+                Tables\Columns\TextColumn::make('tipoDocumento.nome')
                     ->label('Documento')
                     ->searchable()
                     ->sortable(),
