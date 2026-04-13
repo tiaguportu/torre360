@@ -1,14 +1,9 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 
-alert('ARQUIVO JS CARREGADO NO CELULAR!');
-
 const registerPush = async () => {
-    alert('Tentando registrar Push...');
-    
     // Só executa se estiver em ambiente nativo (Android/iOS)
     if (Capacitor.getPlatform() === 'web') {
-        console.log('Ambiente Web: Notificações Push nativas não disponíveis.');
         return;
     }
 
@@ -20,7 +15,6 @@ const registerPush = async () => {
         }
 
         if (permStatus.receive !== 'granted') {
-            console.warn('Permissão de notificação negada.');
             return;
         }
 
@@ -30,19 +24,16 @@ const registerPush = async () => {
                 id: 'default',
                 name: 'Notificações Padrão',
                 description: 'Canal para avisos e notificações gerais do sistema',
-                importance: 5, // Importância máxima
-                visibility: 1, // Visível na tela de bloqueio
+                importance: 5,
+                visibility: 1,
                 sound: 'default',
                 vibration: true,
             });
-            console.log('Canal de notificação configurado.');
         }
 
         await PushNotifications.register();
 
         PushNotifications.addListener('registration', (token) => {
-            console.log('Token FCM recebido:', token.value);
-            
             // Envia o token para o backend Laravel
             fetch('/mobile/register-token', {
                 method: 'POST',
@@ -56,13 +47,7 @@ const registerPush = async () => {
                     platform: Capacitor.getPlatform()
                 })
             })
-            .then(response => response.json())
-            .then(data => console.log('Registro no backend:', data.message))
             .catch(err => console.error('Erro ao registrar token no backend:', err));
-        });
-
-        PushNotifications.addListener('registrationError', (error) => {
-            console.error('Erro no registro do Push Capacitor:', error);
         });
 
         PushNotifications.addListener('pushNotificationReceived', (notification) => {
@@ -70,19 +55,11 @@ const registerPush = async () => {
         });
 
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-            console.log('Ação na notificação:', notification);
-            
-            // Debug visual no celular
-            alert('Notificação clicada! Dados: ' + JSON.stringify(notification.notification.data || {}));
-
             // A estrutura de dados do Capacitor varia, tentamos pegar de ambos os lugares comuns
             const data = notification.notification.data || notification.notification.extras;
 
             if (data && data.url) {
-                alert('Redirecionando para: ' + data.url);
                 window.location.href = data.url;
-            } else {
-                alert('Nenhuma URL encontrada nos dados da notificação.');
             }
         });
 
