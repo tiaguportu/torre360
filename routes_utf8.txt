@@ -1,9 +1,0 @@
-﻿
-  GET|HEAD       admin/cronograma-aulas filament.admin.resources.cronograma-aulas.index ÔÇ║ App\Filament\Resources\CronogramaAulas\Pages\ListCronÔÇª
-  GET|HEAD       admin/cronograma-aulas/calendar filament.admin.resources.cronograma-aulas.calendar ÔÇ║ App\Filament\Resources\CronogramaÔÇª
-  GET|HEAD       admin/cronograma-aulas/create filament.admin.resources.cronograma-aulas.create ÔÇ║ App\Filament\Resources\CronogramaAulas\Pages\CrÔÇª
-  GET|HEAD       admin/cronograma-aulas/verifica-conflitos filament.admin.resources.cronograma-aulas.verifica-conflitos ÔÇ║ App\Filament\Resources\CronogramÔÇª
-  GET|HEAD       admin/cronograma-aulas/{record}/edit filament.admin.resources.cronograma-aulas.edit ÔÇ║ App\Filament\Resources\CronogramaAulasÔÇª
-
-            Showing [5] routes
-
