@@ -58,6 +58,12 @@ Estrutura de ensino e turmas.
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
 
+### `disciplina`
+- **Representa:** Matérias ou componentes curriculares.
+- **Campos Principais:** `nome`, `slug`, `cor`, `ordem_boletim`.
+- **Relacionamentos:** HasMany `cronograma_aula`, HasMany `habilidades`.
+- **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das disciplinas na visualização e impressão de boletins.
+
 ### `matricula`
 - Vínculo do aluno com uma turma em um período letivo.
 

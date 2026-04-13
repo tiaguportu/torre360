@@ -115,7 +115,10 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         }
 
         return $table
-            ->query(Disciplina::query()->whereIn('id', $avaliacoes->pluck('disciplina_id')->unique()->toArray()))
+            ->query(Disciplina::query()
+                ->whereIn('id', $avaliacoes->pluck('disciplina_id')->unique()->toArray())
+                ->orderBy('ordem_boletim')
+                ->orderBy('nome'))
             ->heading($etapa->nome)
             ->columns([
                 TextColumn::make('nome')

@@ -61,7 +61,10 @@ class BoletimEdicaoGradesTable extends Component
 
         $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem');
         $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique()->toArray();
-        $disciplinas = Disciplina::whereIn('id', $disciplinasIds)->orderBy('nome')->get();
+        $disciplinas = Disciplina::whereIn('id', $disciplinasIds)
+            ->orderBy('ordem_boletim')
+            ->orderBy('nome')
+            ->get();
 
         $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
         $notasTurma = Nota::query()

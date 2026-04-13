@@ -31,6 +31,9 @@ class DisciplinasTable
                     ->label('CH Semanal')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('ordem_boletim')
+                    ->label('Ordem Boletim')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -51,6 +54,7 @@ class DisciplinasTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->defaultSort('ordem_boletim', 'asc')
             ->stackedOnMobile();
     }
 }

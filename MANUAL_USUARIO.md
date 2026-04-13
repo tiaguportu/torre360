@@ -83,6 +83,12 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Para facilitar a identificação, a coluna **Matrícula** segue o padrão: `Turma - Período Escolar - Nome do Aluno`.
 3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
 
+### 5.5 Configuração de Disciplinas e Ordenação no Boletim
+1. Vá em **Acadêmico → Disciplinas**.
+2. No cadastro da disciplina, utilize o campo **Ordem no Boletim**.
+3. **Funcionamento:** O sistema utiliza este número inteiro para ordenar as disciplinas de cima para baixo na visualização do boletim. Disciplinas com números menores (ex: 1, 2, 3) aparecem primeiro.
+4. Caso duas disciplinas tenham o mesmo número de ordem, elas serão exibidas por ordem alfabética de nome.
+
 ---
 
 ## 📝 6. Secretaria e Documentação

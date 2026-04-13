@@ -12,6 +12,13 @@ class Disciplina extends Model
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'ordem_boletim' => 'integer',
+        ];
+    }
+
     public function areaConhecimento(): BelongsTo
     {
         return $this->belongsTo(AreaConhecimento::class, 'area_id');
