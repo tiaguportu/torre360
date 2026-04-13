@@ -1,6 +1,8 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 
+alert('ARQUIVO JS CARREGADO NO CELULAR!');
+
 const registerPush = async () => {
     alert('Tentando registrar Push...');
     
