@@ -78,6 +78,11 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 3. Notas abaixo da média aparecem destacadas em vermelho.
 4. **Edição de Notas:** Caso possua a permissão necessária, você visualizará o botão **Editar Notas** no topo da página do boletim. Esta tela permite o preenchimento rápido de todas as notas da etapa em um layout idêntico ao de consulta.
 
+### 5.4 Gerenciamento de Notas
+1. No menu **Avaliações → Notas**, é possível visualizar o histórico completo de notas lançadas.
+2. Para facilitar a identificação, a coluna **Matrícula** segue o padrão: `Turma - Período Escolar - Nome do Aluno`.
+3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
+
 ---
 
 ## 📝 6. Secretaria e Documentação
