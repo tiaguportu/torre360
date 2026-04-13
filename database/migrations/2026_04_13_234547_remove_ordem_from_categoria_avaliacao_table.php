@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('categoria_avaliacao', function (Blueprint $table) {
-            //
+            $table->dropColumn('ordem');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('categoria_avaliacao', function (Blueprint $table) {
-            //
+            $table->integer('ordem')->default(0);
         });
     }
 };

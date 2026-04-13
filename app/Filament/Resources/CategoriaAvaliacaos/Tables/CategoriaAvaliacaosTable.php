@@ -21,11 +21,6 @@ class CategoriaAvaliacaosTable
                     ->label('Descrição')
                     ->searchable()
                     ->toggleable(),
-                TextColumn::make('ordem')
-                    ->label('Ordem')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(),
                 TextColumn::make('ordem_boletim')
                     ->label('Ordem Boletim')
                     ->numeric()
@@ -56,7 +51,7 @@ class CategoriaAvaliacaosTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('ordem')
+            ->defaultSort('ordem_boletim')
             ->stackedOnMobile();
     }
 }

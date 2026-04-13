@@ -19,11 +19,6 @@ class CategoriaAvaliacaoForm
                 TextInput::make('descricao')
                     ->label('Descrição')
                     ->maxLength(255),
-                TextInput::make('ordem')
-                    ->label('Ordem')
-                    ->numeric()
-                    ->default(0)
-                    ->required(),
                 TextInput::make('ordem_boletim')
                     ->label('Ordem no Boletim')
                     ->numeric()
@@ -38,7 +33,7 @@ class CategoriaAvaliacaoForm
                         'nome',
                         modifyQueryUsing: fn ($query, ?CategoriaAvaliacao $record) => $query
                             ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
-                            ->orderBy('ordem')
+                            ->orderBy('ordem_boletim')
                     )
                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome} - {$record->descricao}")
                     ->searchable(['nome', 'descricao'])
