@@ -103,27 +103,17 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->navigationGroups([
-                NavigationGroup::make('CRM / Comercial')
-                    ->icon('heroicon-o-presentation-chart-line'),
-                NavigationGroup::make('Acadêmico')
-                    ->icon('heroicon-o-academic-cap'),
-                NavigationGroup::make('Avaliações')
-                    ->icon('heroicon-o-clipboard-document-check'),
-                NavigationGroup::make('Calendário e Horários')
-                    ->icon('heroicon-o-calendar-days'),
-                NavigationGroup::make('Financeiro')
-                    ->icon('heroicon-o-banknotes'),
-                NavigationGroup::make('Pessoas')
-                    ->icon('heroicon-o-users'),
-                NavigationGroup::make('Documentos')
-                    ->icon('heroicon-o-document-duplicate'),
-                NavigationGroup::make('Operacional')
-                    ->icon('heroicon-o-wrench-screwdriver'),
+                NavigationGroup::make('CRM / Comercial'),
+                NavigationGroup::make('Acadêmico'),
+                NavigationGroup::make('Avaliações'),
+                NavigationGroup::make('Calendário e Horários'),
+                NavigationGroup::make('Financeiro'),
+                NavigationGroup::make('Pessoas'),
+                NavigationGroup::make('Documentos'),
+                NavigationGroup::make('Operacional'),
                 NavigationGroup::make('Localização e Cadastros')
-                    ->icon('heroicon-o-map-pin')
                     ->collapsed(),
                 NavigationGroup::make('Sistema e Segurança')
-                    ->icon('heroicon-o-shield-check')
                     ->collapsed(),
             ]);
 
