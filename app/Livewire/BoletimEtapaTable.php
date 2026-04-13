@@ -138,7 +138,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
             ->paginated(false);
     }
 
-    private function calcularMediaFinal(int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
+    public function calcularMediaFinal(int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId);
         if ($avs->isEmpty()) {
@@ -188,7 +188,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
-    private function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
+    public function getMediaConsolidadaCategoria(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): ?float
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId)->where('categoria_avaliacao_id', $categoriaId);
         if ($avs->isEmpty()) {
@@ -209,7 +209,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
-    private function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): bool
+    public function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): bool
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId);
         $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
@@ -244,7 +244,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         return false;
     }
 
-    private function getMediaTurmaEtapa(int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasTurma): ?float
+    public function getMediaTurmaEtapa(int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasTurma): ?float
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId);
         $matriculaIds = [];

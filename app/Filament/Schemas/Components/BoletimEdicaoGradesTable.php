@@ -2,10 +2,12 @@
 
 namespace App\Filament\Schemas\Components;
 
+use App\Livewire\BoletimEtapaTable;
 use App\Models\Avaliacao;
 use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
 use App\Models\Matricula;
+use App\Models\Nota;
 use Filament\Schemas\Components\Component;
 use Illuminate\Support\Collection;
 
@@ -61,6 +63,23 @@ class BoletimEdicaoGradesTable extends Component
         $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique()->toArray();
         $disciplinas = Disciplina::whereIn('id', $disciplinasIds)->orderBy('nome')->get();
 
-        return compact('avaliacoes', 'categorias', 'disciplinas');
+        $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
+        $notasTurma = Nota::query()
+            ->whereHas('matricula', fn ($q) => $q->where('turma_id', $matricula->turma_id))
+            ->whereNotNull('valor')
+            ->get()
+            ->groupBy('avaliacao_id');
+
+        $calc = new BoletimEtapaTable;
+
+        $mediasAluno = [];
+        $mediasTurma = [];
+
+        foreach ($disciplinas as $disciplina) {
+            $mediasAluno[$disciplina->id] = $calc->calcularMediaFinal($disciplina->id, $avaliacoes, $notasAluno);
+            $mediasTurma[$disciplina->id] = $calc->getMediaTurmaEtapa($disciplina->id, $avaliacoes, $notasTurma);
+        }
+
+        return compact('avaliacoes', 'categorias', 'disciplinas', 'mediasAluno', 'mediasTurma');
     }
 }
