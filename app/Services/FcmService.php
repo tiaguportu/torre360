@@ -72,8 +72,20 @@ class FcmService
                     ],
                     'data' => empty($stringData) ? null : $stringData,
                     'android' => [
+                        'priority' => 'high',
                         'notification' => [
                             'sound' => 'default',
+                            'channel_id' => 'default', // Canal padrão do Capacitor
+                            'notification_priority' => 'PRIORITY_MAX',
+                            'visibility' => 'public',
+                        ],
+                    ],
+                    'apns' => [
+                        'payload' => [
+                            'aps' => [
+                                'sound' => 'default',
+                                'badge' => 1,
+                            ],
                         ],
                     ],
                 ],

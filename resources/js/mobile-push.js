@@ -20,6 +20,20 @@ const registerPush = async () => {
             return;
         }
 
+        // Criar canal de notificação oficial (necessário para Android 8+)
+        if (Capacitor.getPlatform() === 'android') {
+            await PushNotifications.createChannel({
+                id: 'default',
+                name: 'Notificações Padrão',
+                description: 'Canal para avisos e notificações gerais do sistema',
+                importance: 5, // Importância máxima
+                visibility: 1, // Visível na tela de bloqueio
+                sound: 'default',
+                vibration: true,
+            });
+            console.log('Canal de notificação configurado.');
+        }
+
         await PushNotifications.register();
 
         PushNotifications.addListener('registration', (token) => {
