@@ -3,8 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Avaliacao;
+use App\Models\CronogramaAula;
 use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
+use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
 use App\Models\Nota;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -137,6 +139,17 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->state(fn (Disciplina $record) => $this->getMediaTurmaEtapa($record->id, $avaliacoes, $notasTurma))
                     ->color('gray')
                     ->formatStateUsing(fn ($state) => number_format(round((float) $state, 2), 1, ',', '.')),
+                TextColumn::make('frequencia')
+                    ->label('Frequência')
+                    ->alignCenter()
+                    ->state(fn (Disciplina $record) => $this->getFrequenciaDisciplinaEtapa($record->id, $matricula->id, $turmaId, $etapa))
+                    ->formatStateUsing(fn ($state) => $state !== null ? number_format($state, 1, ',', '.').'%' : '—')
+                    ->color(fn ($state) => match (true) {
+                        $state === null => 'gray',
+                        $state >= 75 => 'success',
+                        $state >= 50 => 'warning',
+                        default => 'danger',
+                    }),
             ])
             ->paginated(false);
     }
@@ -279,6 +292,33 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         }
 
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
+    }
+
+    /**
+     * Calcula o percentual de frequência do aluno em uma disciplina dentro do período da etapa.
+     * Considera todos os cronogramas de aula da disciplina/turma cuja data está entre
+     * data_inicio e data_fim da etapa (inclusive).
+     */
+    public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa): ?float
+    {
+        $cronogramas = CronogramaAula::query()
+            ->where('turma_id', $turmaId)
+            ->where('disciplina_id', $disciplinaId)
+            ->whereBetween('data', [$etapa->data_inicio, $etapa->data_fim])
+            ->pluck('id');
+
+        $total = $cronogramas->count();
+        if ($total === 0) {
+            return null;
+        }
+
+        $presencas = FrequenciaEscolar::query()
+            ->where('matricula_id', $matriculaId)
+            ->whereIn('cronograma_aula_id', $cronogramas)
+            ->where('situacao', 'presente')
+            ->count();
+
+        return ($presencas / $total) * 100;
     }
 
     public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver
