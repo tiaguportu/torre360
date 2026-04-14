@@ -16,9 +16,9 @@
 
     <style>
         :root {
-            --color-primary: #0F172A;
-            --color-accent: #FDE68A;
-            --color-secondary: #3B82F6;
+            --color-primary: #312783;
+            --color-accent: #ddaf00;
+            --color-secondary: #5594ad;
         }
 
         body {
