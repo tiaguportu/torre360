@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/admin');
-});
+use App\Http\Controllers\LandingPageController;
+
+Route::get('/', [LandingPageController::class, 'index'])->name('home');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
