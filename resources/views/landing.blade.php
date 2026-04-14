@@ -93,9 +93,9 @@
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-primary/80 backdrop-blur-md border-b border-white/10">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl font-bold tracking-tighter gradient-text">Torre360</span>
-        </div>
+        <a href="/" class="flex items-center gap-2 transition-transform hover:scale-105">
+            <img src="/logo-adaptative.svg" alt="Torre360 Logo" class="h-10 w-auto">
+        </a>
         <div class="hidden md:flex gap-8 text-sm font-medium text-white/70">
             <a href="#modulos" class="hover:text-accent transition-colors">Módulos</a>
             <a href="#mobile" class="hover:text-accent transition-colors">Mobile</a>
@@ -241,8 +241,8 @@
 
     <!-- Footer -->
     <footer class="py-20 px-6 border-t border-white/5 text-center">
-        <div class="container mx-auto space-y-8">
-            <span class="text-3xl font-bold gradient-text">Torre360</span>
+        <div class="container mx-auto space-y-8 flex flex-col items-center">
+            <img src="/logo-adaptative.svg" alt="Torre360 Logo" class="h-12 w-auto grayscale opacity-80 hover:grayscale-0 transition-all">
             <div class="flex justify-center gap-8 text-white/50 text-sm">
                 <a href="#" class="hover:text-white transition-colors">Termos</a>
                 <a href="#" class="hover:text-white transition-colors">Privacidade</a>
