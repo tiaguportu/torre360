@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class DocumentoInserido extends Model
 {
+    use LogsActivity;
+
     protected $table = 'documento_inserido';
 
     protected $fillable = [
@@ -18,6 +22,15 @@ class DocumentoInserido extends Model
         'nome_arquivo_original',
         'hash_arquivo',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['tipo_documento_id', 'matricula_id', 'situacao_documento_inserido_id', 'observacoes', 'nome_arquivo_original'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('documento_inserido');
+    }
 
     public function tipoDocumento(): BelongsTo
     {
