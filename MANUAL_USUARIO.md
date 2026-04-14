@@ -112,6 +112,11 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.
 3. O sistema permite validar se o documento foi recebido, se está pendente ou se foi recusado por algum motivo.
 
+### 6.4 Visualização e Prévia de Documentos
+1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.
+2. Esta funcionalidade permite conferir o conteúdo do arquivo rapidamente sem a necessidade de downloads manuais.
+3. Para PDFs, o navegador utiliza seu visualizador nativo integrado à página.
+
 ### 6.3 Assinatura Digital (Assinafy)
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
 1. Na lista de contratos, clique na ação **Assinar Contrato** para o documento pendente.

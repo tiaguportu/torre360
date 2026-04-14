@@ -10,6 +10,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Utilities\Get;
@@ -113,7 +114,16 @@ class DocumentoInseridoForm
 
                         return $file->store('documentos_alunos', 'public');
                     })
+                    ->live() // Garantir que a prévia atualize se o arquivo mudar
                     ->columnSpanFull(),
+
+                ViewField::make('arquivo_path_preview')
+                    ->label('Prévia do Documento')
+                    ->view('filament.forms.components.documento-preview')
+                    ->statePath('arquivo_path')
+                    ->columnSpanFull()
+                    ->hidden(fn (Get $get) => ! $get('arquivo_path'))
+                    ->dehydrated(false),
 
                 Textarea::make('observacoes')
                     ->label('Observações Adicionais')
