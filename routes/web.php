@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingPageController;
 
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
+Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->name('solicitar-acesso');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');

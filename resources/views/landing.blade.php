@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torre360 — Inteligência em Gestão Escolar</title>
-    <meta name="description" content="A evolução da gestão escolar. Centralize acadêmico, financeiro e CRM em uma única plataforma premium.">
+    <title>Torre360 — Sistema de Gestão Escolar de Elite</title>
+    <meta name="description" content="Gestão escolar moderna, eficiente e profissional. Torre360: A solução completa para instituições que buscam a excelência.">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,250 +18,306 @@
         :root {
             --color-primary: #312783;
             --color-accent: #ddaf00;
-            --color-secondary: #5594ad;
+            --color-bg: #f8fafc;
+            --color-text: #1e293b;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-primary);
-            color: white;
+            background-color: var(--color-bg);
+            color: var(--color-text);
             scroll-behavior: smooth;
-            overflow-x: hidden;
         }
 
         h1, h2, h3 {
             font-family: 'Outfit', sans-serif;
+            color: var(--color-primary);
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
+        .glass-light {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(49, 39, 131, 0.1);
+            border-radius: 32px;
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, #FFF 0%, var(--color-accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-glow {
-            position: absolute;
-            top: -10%;
-            right: -10%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-            z-index: -1;
-        }
-
-        .float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .btn-premium {
-            background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%);
-            color: #0F172A;
+        .btn-navy {
+            background-color: var(--color-primary);
+            color: white;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(252, 211, 77, 0.3);
         }
 
-        .btn-premium:hover {
+        .btn-navy:hover {
+            background-color: #251b66;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(252, 211, 77, 0.5);
+            box-shadow: 0 8px 20px rgba(49, 39, 131, 0.2);
         }
 
-        .card-hover:hover {
-            border-color: rgba(252, 211, 77, 0.4);
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateY(-5px);
+        .btn-gold {
+            background-color: var(--color-accent);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            background-color: #c49b00;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(221, 175, 0, 0.2);
+        }
+
+        .nav-link {
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: var(--color-accent);
+        }
+
+        .card-feature {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
             transition: all 0.4s ease;
+            border: 1px solid transparent;
+        }
+
+        .card-feature:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .img-mask {
+            border-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        }
+
+        section {
+            padding: 100px 20px;
+        }
+
+        input, textarea {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: white;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Hero Glow Background -->
-    <div class="hero-glow"></div>
-
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-primary/80 backdrop-blur-md border-b border-white/10">
-        <a href="/" class="flex items-center gap-2 transition-transform hover:scale-105">
-            <img src="/logo-adaptative.svg" alt="Torre360 Logo" class="h-10 w-auto">
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 px-8 py-5 flex justify-between items-center transition-all duration-300 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+        <a href="/" class="flex items-center gap-3 decoration-0">
+            <img src="/logo-adaptative.svg" alt="Torre360" class="h-10 w-auto">
+            <span class="text-2xl font-bold tracking-tight text-[#312783]">Torre360</span>
         </a>
-        <div class="hidden md:flex gap-8 text-sm font-medium text-white/70">
-            <a href="#modulos" class="hover:text-accent transition-colors">Módulos</a>
-            <a href="#mobile" class="hover:text-accent transition-colors">Mobile</a>
-            <a href="#seguranca" class="hover:text-accent transition-colors">Segurança</a>
+        <div class="hidden md:flex gap-10">
+            <a href="#solucao" class="nav-link text-slate-600">Solução</a>
+            <a href="#mobile" class="nav-link text-slate-600">Mobile</a>
+            <a href="#contato" class="nav-link text-slate-600">Contato</a>
         </div>
         <div>
-            <a href="/admin" class="px-5 py-2 rounded-full border border-accent/50 text-accent text-sm font-semibold hover:bg-accent hover:text-primary transition-all">
-                Área Administrativa
+            <a href="/admin" class="btn-navy px-6 py-2.5 rounded-full text-sm font-semibold">
+                Painel Administrativo
             </a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen pt-32 pb-20 px-6 flex items-center">
-        <div class="container mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-8">
-                <div class="inline-block px-4 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
-                    A Evolução da Gestão Escolar
+    <section class="min-h-screen flex items-center pt-20">
+        <div class="container mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div class="space-y-10">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-sm font-medium">
+                    <span class="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
+                    Gestão Escolar Elevada à Excelência
                 </div>
-                <h1 class="text-5xl md:text-7xl font-bold leading-tight">
-                    A inteligência que sua <span class="gradient-text">escola precisa</span>.
+                <h1 class="text-5xl md:text-7xl font-extrabold leading-[1.1] text-[#312783]">
+                    Sua escola sob uma <br><span class="text-[#ddaf00]">Nova Perspectiva.</span>
                 </h1>
-                <p class="text-lg text-white/60 max-w-lg leading-relaxed">
-                    Centralize o acadêmico, controle o financeiro e potencialize seu CRM. Uma visão 360 do seu negócio educacional em uma plataforma premium e intuitiva.
+                <p class="text-xl text-slate-500 max-w-xl leading-relaxed">
+                    Mais que um software, uma inteligência centralizada para transformar a rotina acadêmica, otimizar o financeiro e converter novos alunos com facilidade.
                 </p>
-                <div class="flex flex-wrap gap-4 pt-4">
-                    <a href="#contato" class="btn-premium px-8 py-4 rounded-xl font-bold text-lg">
-                        Solicitar Demonstração
+                <div class="flex flex-wrap gap-5">
+                    <a href="#contato" class="btn-gold px-10 py-4 rounded-2xl font-bold text-lg">
+                        Solicitar Acesso Grátis
                     </a>
-                    <a href="#modulos" class="px-8 py-4 rounded-xl border border-white/20 font-bold text-lg hover:bg-white/5 transition-colors">
-                        Conhecer Módulos
+                    <a href="#solucao" class="px-10 py-4 rounded-2xl border border-slate-300 font-bold text-lg text-slate-600 hover:bg-slate-50 transition-colors">
+                        Ver Recursos
                     </a>
                 </div>
             </div>
-            <div class="relative flex justify-center">
-                <div class="absolute inset-0 bg-blue-500/20 blur-[120px] rounded-full"></div>
-                <img src="/images/landing/hero.png" alt="Torre360 Dashboard" class="relative z-10 w-full max-w-2xl float rounded-2xl shadow-2xl">
+            <div class="relative">
+                <img src="/images/landing/hero.png" alt="Torre360 Workflow" class="img-mask w-full float shadow-none ring-1 ring-slate-200">
+                <div class="absolute -bottom-6 -left-6 glass-light p-6 shadow-xl hidden md:block">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold">✓</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800">Boletins Automatizados</p>
+                            <p class="text-xs text-slate-500">Pronto para o Período Letivo</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Modulos Section -->
-    <section id="modulos" class="py-24 px-6 bg-white/[0.02]">
+    <!-- Solucao Section -->
+    <section id="solucao" class="bg-slate-50 border-y border-slate-200">
         <div class="container mx-auto">
-            <div class="text-center max-w-3xl mx-auto mb-20">
-                <h2 class="text-4xl md:text-5xl font-bold mb-6">Gestão 360 do seu negócio</h2>
-                <p class="text-white/60">Tudo o que você precisa para gerenciar uma instituição de ensino moderna, do primeiro contato com o aluno à análise financeira de resultados.</p>
+            <div class="text-center max-w-3xl mx-auto mb-20 space-y-4">
+                <h2 class="text-4xl md:text-5xl font-bold">Tudo em um só lugar.</h2>
+                <p class="text-lg text-slate-500">Elimine a fragmentação. Integramos todos os pilares da sua instituição em um ecossistema fluido e amigável.</p>
             </div>
             
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Academico -->
-                <div class="glass p-8 card-hover">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <div class="grid md:grid-cols-3 gap-10">
+                <div class="card-feature">
+                    <div class="w-16 h-16 bg-[#312783]/10 rounded-2xl flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-[#312783]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">Acadêmico Elite</h3>
-                    <p class="text-white/50 leading-relaxed">Boletins inteligentes, controle de frequência, lançamento de notas simplificado e cronograma dinâmico de aulas.</p>
+                    <h3 class="text-2xl font-bold mb-5">Gestão Acadêmica</h3>
+                    <ul class="space-y-4 text-slate-500 font-medium">
+                        <li>• Boletins inteligentes por etapa</li>
+                        <li>• Lançamento rápido de notas</li>
+                        <li>• Cronogramas e Frequência</li>
+                        <li>• Edição facilitada de grades</li>
+                    </ul>
                 </div>
 
-                <!-- Financeiro -->
-                <div class="glass p-8 card-hover">
-                    <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="card-feature">
+                    <div class="w-16 h-16 bg-[#ddaf00]/10 rounded-2xl flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-[#ddaf00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">Poder Financeiro</h3>
-                    <p class="text-white/50 leading-relaxed">Conciliação bancária via OFX, emissão de faturas, relatórios DRE em tempo real e gestão de planos de contas.</p>
+                    <h3 class="text-2xl font-bold mb-5">Financeiro Blindado</h3>
+                    <ul class="space-y-4 text-slate-500 font-medium">
+                        <li>• Conciliação bancária automática</li>
+                        <li>• Geração de faturas e itens</li>
+                        <li>• Relatórios DRE automáticos</li>
+                        <li>• Gestão de planos de contas</li>
+                    </ul>
                 </div>
 
-                <!-- CRM -->
-                <div class="glass p-8 card-hover">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <div class="card-feature">
+                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
-                    <h3 class="text-2xl font-bold mb-4">CRM & Captação</h3>
-                    <p class="text-white/50 leading-relaxed">Kanban de interessados focado em conversão, histórico de prospecção e funil de vendas integrado à secretaria.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Mobile Section -->
-    <section id="mobile" class="py-24 px-6 relative overflow-hidden">
-        <div class="container mx-auto grid md:grid-cols-2 gap-16 items-center">
-            <div class="order-2 md:order-1 flex justify-center">
-                <img src="/images/landing/mobile.png" alt="Torre360 App" class="w-full max-w-sm drop-shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-            </div>
-            <div class="order-1 md:order-2 space-y-8">
-                <h2 class="text-4xl md:text-5xl font-bold">Experiência Mobile sem barreiras</h2>
-                <div class="space-y-6 text-white/60">
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
-                        </div>
-                        <p><strong class="text-white">Notificações Push:</strong> Avisos de documentos e faturas direto no celular.</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
-                        </div>
-                        <p><strong class="text-white">Acesso Biométrico:</strong> Segurança e velocidade no login administrativo.</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
-                        </div>
-                        <p><strong class="text-white">Tabelas Inteligentes:</strong> Experiência otimizada para telas pequenas.</p>
-                    </div>
-                </div>
-                <div class="pt-4">
-                    <button class="px-8 py-3 rounded-full border border-white/20 text-sm font-bold flex items-center gap-3 hover:bg-white/5">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414C17.7061 15.1118 17.8152 14.8252 17.8152 14.512C17.8152 13.9184 17.3888 13.4391 16.8288 13.3514C16.9205 13.1292 16.9698 12.8851 16.9698 12.6288C16.9698 11.5361 16.084 10.6503 14.9912 10.6503C14.7826 10.6503 14.5835 10.6826 14.3963 10.7424C14.2144 9.6953 13.3032 8.9058 12.2033 8.9058C11.6669 8.9058 11.1818 9.1171 10.8242 9.4601C10.4632 8.3563 9.4261 7.5613 8.2033 7.5613C6.7303 7.5613 5.5361 8.7554 5.5361 10.2285C5.5361 10.4285 5.5583 10.623 5.6006 10.8101C4.6644 11.2335 4.0203 12.181 4.0203 13.2848C4.0203 14.28 4.5458 15.1522 5.3315 15.6457L17.523 15.3414Z"></path></svg>
-                        Solicitar App Android
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Seguranca Section -->
-    <section id="seguranca" class="py-24 px-6">
-        <div class="container mx-auto">
-            <div class="glass p-12 relative overflow-hidden">
-                <div class="absolute right-0 bottom-0 opacity-10 translate-x-1/4 translate-y-1/4">
-                    <svg class="w-96 h-96" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 12.27c-2.53-.36-4.83-1.55-6.62-3.32.32-.23 1.1-.64 2-.95.84-.23 1.4-.2 1.83-.16 1.48.16 2.52.16 4 0 .43-.04.41.07 1.25.3 1.05.28 1.95.73 2.15.93-1.79 1.77-4.09 2.96-6.61 3.32v-.12z"></path></svg>
-                </div>
-                <div class="max-w-2xl space-y-6 relative z-10">
-                    <h2 class="text-4xl font-bold">Auditoria e Controle de Classe Mundial</h2>
-                    <p class="text-white/60 leading-relaxed">Não se preocupe com a quem tem acesso a quê. Através do sistema Shield, você define permissões cirúrgicas para cada membro da sua equipe.</p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                            <span class="text-white/80">Logs completos de todas as ações sensíveis.</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                            <span class="text-white/80">Gestão de permissões baseada em papéis (RBAC).</span>
-                        </li>
+                    <h3 class="text-2xl font-bold mb-5">CRM & Prospecção</h3>
+                    <ul class="space-y-4 text-slate-500 font-medium">
+                        <li>• Funil de leads customizável</li>
+                        <li>• Histórico completo de contatos</li>
+                        <li>• Captação integrada ao site</li>
+                        <li>• Gestão de documentos pendentes</li>
                     </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="py-20 px-6 border-t border-white/5 text-center">
-        <div class="container mx-auto space-y-8 flex flex-col items-center">
-            <img src="/logo-adaptative.svg" alt="Torre360 Logo" class="h-12 w-auto grayscale opacity-80 hover:grayscale-0 transition-all">
-            <div class="flex justify-center gap-8 text-white/50 text-sm">
-                <a href="#" class="hover:text-white transition-colors">Termos</a>
-                <a href="#" class="hover:text-white transition-colors">Privacidade</a>
-                <a href="#" class="hover:text-white transition-colors">Suporte</a>
+    <!-- Mobile Section -->
+    <section id="mobile">
+        <div class="container mx-auto grid md:grid-cols-2 gap-20 items-center">
+            <div class="order-2 md:order-1">
+                <img src="/images/landing/mobile.png" alt="Torre360 App Mobile" class="img-mask w-full max-w-md mx-auto">
             </div>
-            <p class="text-white/30 text-xs">Copyright © 2026 Torre360 — Todos os direitos reservados.</p>
+            <div class="order-1 md:order-2 space-y-10">
+                <h2 class="text-4xl md:text-5xl font-bold leading-tight">O controle na palma da sua mão.</h2>
+                <p class="text-lg text-slate-500">O sistema mobile do Torre360 não é redimensionado, ele é pensado para dispositivos móveis. Rapidez e praticidade para quem decide.</p>
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <p class="text-3xl font-bold text-[#ddaf00]">100%</p>
+                        <p class="font-semibold text-slate-700">Adaptativo</p>
+                        <p class="text-sm text-slate-500 small">Tabelas e gráficos que se transformam no seu celular.</p>
+                    </div>
+                    <div class="space-y-3">
+                        <p class="text-3xl font-bold text-[#312783]">Real-time</p>
+                        <p class="font-semibold text-slate-700">Push Notifications</p>
+                        <p class="text-sm text-slate-500 small">Fique por dentro de cada movimento financeiro ou acadêmico.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contato Section -->
+    <section id="contato" class="bg-[#312783] text-white">
+        <div class="container mx-auto">
+            <div class="grid md:grid-cols-2 gap-20">
+                <div class="space-y-10">
+                    <h2 class="text-4xl md:text-5xl font-bold text-white">Preparado para revolucionar sua gestão?</h2>
+                    <p class="text-xl text-blue-100/70">Preencha os dados e nosso time de especialistas entrará em contato para agendar uma demonstração exclusiva para sua escola.</p>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">📞</div>
+                            <p class="text-lg font-semibold">(11) 99999-9999</p>
+                        </div>
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">✉️</div>
+                            <p class="text-lg font-semibold">contato@escolatorredemarfim.com.br</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-10 rounded-[32px] text-slate-800 shadow-2xl">
+                    @if(session('success'))
+                        <div class="bg-green-100 border border-green-200 text-green-700 p-6 rounded-2xl mb-6 flex items-center gap-4">
+                            <span class="text-2xl">✅</span>
+                            <p class="font-bold">{{ session('success') }}</p>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('solicitar-acesso') }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Nome Completo</label>
+                                <input type="text" name="nome" placeholder="Como podemos te chamar?" required>
+                            </div>
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">E-mail Corporativo</label>
+                                <input type="email" name="email" placeholder="seuemail@escola.com.br" required>
+                            </div>
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">WhatsApp / Telefone</label>
+                                <input type="text" name="whatsapp" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Mensagem (Opcional)</label>
+                                <textarea name="mensagem" rows="3" placeholder="Conte um pouco sobre sua necessidade..."></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full btn-gold py-5 rounded-2xl font-bold text-lg uppercase tracking-wide">
+                            Solicitar Demonstração Grátis
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 bg-slate-100 border-t border-slate-200 px-8">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <img src="/logo-adaptative.svg" alt="Torre360 Logo" class="h-8 w-auto">
+                <span class="text-xl font-bold text-[#312783]">Torre360</span>
+            </div>
+            <p class="text-slate-500 text-sm">© 2026 Torre360 Gestão Escolar. Todos os direitos reservados.</p>
+            <div class="flex gap-6">
+                <!-- Adicionar links se houver -->
+            </div>
         </div>
     </footer>
 
-    <!-- Reveal on Scroll Script -->
-    <script>
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-    </script>
 </body>
 </html>
