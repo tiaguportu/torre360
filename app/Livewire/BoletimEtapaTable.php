@@ -301,10 +301,12 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
      */
     public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa): ?float
     {
+        $dataFimEfetiva = min($etapa->data_fim, now()->toDateString());
+
         $cronogramas = CronogramaAula::query()
             ->where('turma_id', $turmaId)
             ->where('disciplina_id', $disciplinaId)
-            ->whereBetween('data', [$etapa->data_inicio, $etapa->data_fim])
+            ->whereBetween('data', [$etapa->data_inicio, $dataFimEfetiva])
             ->pluck('id');
 
         $total = $cronogramas->count();
