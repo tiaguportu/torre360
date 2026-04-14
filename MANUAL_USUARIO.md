@@ -221,4 +221,16 @@ O Torre360 possui um sistema central de notificações em tempo real, representa
 
 ---
 
+## 📅 12. Calendário e Cronograma de Aulas
+
+O módulo de Cronograma permite a visualização e gestão das aulas planejadas para cada turma.
+
+### 12.1 Filtro por Período
+1. Vá em **Calendário e Horários → Cronogramas de Aulas**.
+2. No menu de filtros (ícone de funil), localize o filtro **Período**.
+3. Defina uma **Data Início** e/ou uma **Data Fim**.
+4. O sistema filtrará automaticamente todas as aulas cuja data esteja compreendida entre o intervalo selecionado, facilitando o planejamento semanal ou mensal.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

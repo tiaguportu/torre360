@@ -22,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 
@@ -81,14 +82,45 @@ class CronogramaAulasTable
                     ->searchable()
                     ->preload()
                     ->hidden(fn () => auth()->user()?->hasRole('professor')),
-                Filter::make('data')
+                Filter::make('periodo_data')
                     ->form([
-                        DatePicker::make('data')
-                            ->label('Data')
+                        DatePicker::make('data_inicio')
+                            ->label('Data Início')
+                            ->native(false)
+                            ->displayFormat('d/m/Y'),
+                        DatePicker::make('data_fim')
+                            ->label('Data Fim')
                             ->native(false)
                             ->displayFormat('d/m/Y'),
                     ])
-                    ->query(fn ($query, array $data) => $query->when($data['data'], fn ($q) => $q->whereDate('data', Carbon::parse($data['data'])->format('Y-m-d')))),
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['data_inicio'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '>=', $date),
+                            )
+                            ->when(
+                                $data['data_fim'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['data_inicio'] && ! $data['data_fim']) {
+                            return null;
+                        }
+
+                        $indicator = 'Período: ';
+
+                        if ($data['data_inicio']) {
+                            $indicator .= 'de '.Carbon::parse($data['data_inicio'])->format('d/m/Y');
+                        }
+
+                        if ($data['data_fim']) {
+                            $indicator .= ($data['data_inicio'] ? ' ' : '').'até '.Carbon::parse($data['data_fim'])->format('d/m/Y');
+                        }
+
+                        return $indicator;
+                    }),
                 Filter::make('hora_inicio')
                     ->form([
                         TimePicker::make('hora_inicio')

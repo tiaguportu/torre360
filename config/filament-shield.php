@@ -207,6 +207,8 @@ return [
             MatriculaResource::class => [
                 'documentos',
                 'avisarPendencia',
+                'boletim',
+                'boletim_editar',
             ],
             PessoaResource::class => [
                 'import',

@@ -24,6 +24,11 @@ class EditarBoletimMatricula extends Page implements HasSchemas
 
     protected string $view = 'filament.matriculas.editar-boletim';
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return auth()->user()->can('BoletimEditar:Matricula');
+    }
+
     public array $notas = [];
 
     public function schema(Schema $schema): Schema
