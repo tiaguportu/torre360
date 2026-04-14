@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torre360 — Sistema de Gestão Escolar de Elite</title>
     <meta name="description" content="Gestão escolar moderna, eficiente e profissional. Torre360: A solução completa para instituições que buscam a excelência.">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="Torre360 — Sistema de Gestão Escolar de Elite">
+    <meta property="og:description" content="Gestão escolar moderna, eficiente e profissional. Centralize tudo em uma plataforma robusta e intuitiva.">
+    <meta property="og:image" content="{{ asset('images/landing/hero.png') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="Torre360 — Sistema de Gestão Escolar de Elite">
+    <meta property="twitter:description" content="Gestão escolar moderna, eficiente e profissional. Centralize tudo em uma plataforma robusta e intuitiva.">
+    <meta property="twitter:image" content="{{ asset('images/landing/hero.png') }}">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
