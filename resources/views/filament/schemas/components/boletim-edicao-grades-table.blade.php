@@ -49,6 +49,9 @@
                                 <th class="fi-ta-header-cell px-3 py-3.5 text-center">
                                     <span class="text-sm font-semibold text-gray-950 dark:text-white">Média Turma</span>
                                 </th>
+                                <th class="fi-ta-header-cell px-3 py-3.5 text-center">
+                                    <span class="text-sm font-semibold text-gray-950 dark:text-white">Frequência</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-white/5">
@@ -115,6 +118,29 @@
                                     <td class="fi-ta-cell p-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
                                         @php $mTurma = $mediasTurma[$disciplina->id]; @endphp
                                         {{ $mTurma !== null ? number_format(round((float) $mTurma, 2), 1, ',', '.') : '—' }}
+                                    </td>
+
+                                    {{-- Frequencia --}}
+                                    <td class="fi-ta-cell p-3 text-center">
+                                        @php
+                                            $frequencia = $calc->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $matricula->turma_id, $etapa);
+                                        @endphp
+                                        @if ($frequencia !== null)
+                                            <div class="fi-ta-text grid w-full gap-y-1 px-3 py-3">
+                                                <div class="flex justify-center">
+                                                    <div @class([
+                                                        'fi-ta-text-item inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold leading-5',
+                                                        'bg-success-50 text-success-700 ring-1 ring-inset ring-success-600/20 dark:bg-success-500/10 dark:text-success-500 dark:ring-success-500/20' => $frequencia >= 75.0,
+                                                        'bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-600/20 dark:bg-warning-500/10 dark:text-warning-500 dark:ring-warning-500/20' => $frequencia >= 50.0 && $frequencia < 75.0,
+                                                        'bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-600/20 dark:bg-danger-500/10 dark:text-danger-500 dark:ring-danger-500/20' => $frequencia < 50.0,
+                                                    ])>
+                                                        {{ number_format($frequencia, 1, ',', '.') }}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400 font-bold">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

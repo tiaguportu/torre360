@@ -1,9 +1,21 @@
 @php
-    $path = $getState();
+    $state = $getState();
+    
+    // O fileupload component geralmente armazena array (ex: ['hash' => 'path']) quando single
+    $path = is_array($state) ? (count($state) > 0 ? array_values($state)[0] : null) : $state;
+    
     if (!$path) return;
     
-    $url = asset('storage/' . $path);
-    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    // Se for temporary uploaded file, o path não funciona direto no asset('storage')
+    // Precisaria de lógica pro TemporaryUploadedFile, mas como queremos resolver pelo menos os gravados:
+    if($path instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+        $url = $path->temporaryUrl();
+        $extension = strtolower($path->getClientOriginalExtension());
+    } else {
+        $url = asset('storage/' . $path);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    }
+
     $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
     $isPdf = $extension === 'pdf';
 @endphp
