@@ -138,6 +138,29 @@ Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
 1. Uma fatura pode conter múltiplos itens (Mensalidade + Taxa de Material + Uniforme).
 2. As faturas podem ser geradas em lote a partir de contratos.
 
+### 7.1.1 Gerar Faturas Automaticamente
+Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), utilize o botão **Gerar Faturas Automaticamente** para criar o parcelamento do contrato de forma rápida.
+
+> [!WARNING]
+> Ao acionar este botão, **todas as faturas existentes** do contrato serão removidas e substituídas pelas novas. Certifique-se de que o contrato possui uma **Data de Aceite** preenchida antes de prosseguir.
+
+**Campos do formulário:**
+
+| Campo | Descrição |
+|---|---|
+| **Quantidade de Parcelas** | Número de parcelas em que o valor restante (valor total menos entrada) será dividido. |
+| **Dia de Vencimento** | Dia do mês (entre 1 e 28) em que cada parcela vencerá. |
+| **Valor de Entrada** | Valor a ser cobrado como entrada. Informe `0` caso não haja entrada. |
+
+**Lógica de geração:**
+
+- **Fatura de Entrada** (se valor > 0): Criada com vencimento no dia escolhido do próprio mês da Data de Aceite.
+- **Parcelas mensais:** A **1ª parcela** vence no dia escolhido do **mês seguinte** à Data de Aceite; as demais são distribuídas mensalmente a partir daí.
+- **Valor de cada parcela:** `(Valor Total − Valor de Entrada) ÷ Quantidade de Parcelas`.
+- O campo **Valor por Parcela (prévia)** é atualizado em tempo real para que você confirme o valor antes de gerar.
+
+
+
 ### 7.2 Conciliação Bancária
 1. Vá em **Financeiro → Conciliação Bancária**.
 2. Faça o upload do arquivo **OFX** extraído do seu banco.
