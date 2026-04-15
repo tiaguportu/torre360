@@ -55,8 +55,8 @@ class EditContrato extends EditRecord
                         ->prefix('R$')
                         ->disabled()
                         ->dehydrated(false)
-                        ->state(function (Get $get): string {
-                            $total = (float) ($this->record->valor_total ?? 0);
+                        ->state(function (Get $get, \Filament\Resources\Pages\EditRecord $livewire): string {
+                            $total = (float) ($livewire->getRecord()->valor_total ?? 0);
                             $entrada = (float) ($get('valor_entrada') ?? 0);
                             $qtd = (int) ($get('quantidade_parcelas') ?? 0);
 
@@ -75,8 +75,8 @@ class EditContrato extends EditRecord
                 ])
                 ->modalHeading('Gerar Faturas Automaticamente')
                 ->modalSubmitActionLabel('Gerar Faturas')
-                ->action(function (array $data): void {
-                    $contrato = $this->record;
+                ->action(function (array $data, \Filament\Resources\Pages\EditRecord $livewire): void {
+                    $contrato = $livewire->getRecord();
 
                     if (! $contrato->data_aceite) {
                         Notification::make()
