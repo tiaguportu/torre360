@@ -11,7 +11,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Facades\DB;
 
 class EditContrato extends EditRecord
@@ -44,38 +43,15 @@ class EditContrato extends EditRecord
                         ->required(),
                     TextInput::make('valor_entrada')
                         ->label('Valor de Entrada (R$)')
-                        ->helperText('Informe 0 caso não haja entrada.')
+                        ->helperText('Informe 0 caso não haja entrada. O valor por parcela será: (Total − Entrada) ÷ Parcelas.')
                         ->numeric()
                         ->minValue(0)
                         ->prefix('R$')
-                        ->required()
-                        ->live(),
-                    TextInput::make('valor_parcela_preview')
-                        ->label('Valor por Parcela (prévia)')
-                        ->prefix('R$')
-                        ->disabled()
-                        ->dehydrated(false)
-                        ->state(function (Get $get, \Filament\Resources\Pages\EditRecord $livewire): string {
-                            $total = (float) ($livewire->getRecord()->valor_total ?? 0);
-                            $entrada = (float) ($get('valor_entrada') ?? 0);
-                            $qtd = (int) ($get('quantidade_parcelas') ?? 0);
-
-                            if ($qtd <= 0) {
-                                return 'Informe a quantidade de parcelas';
-                            }
-
-                            $restante = $total - $entrada;
-
-                            if ($restante < 0) {
-                                return 'Entrada maior que o valor do contrato';
-                            }
-
-                            return number_format($restante / $qtd, 2, ',', '.');
-                        }),
+                        ->required(),
                 ])
                 ->modalHeading('Gerar Faturas Automaticamente')
                 ->modalSubmitActionLabel('Gerar Faturas')
-                ->action(function (array $data, \Filament\Resources\Pages\EditRecord $livewire): void {
+                ->action(function (array $data, EditRecord $livewire): void {
                     $contrato = $livewire->getRecord();
 
                     if (! $contrato->data_aceite) {
