@@ -66,8 +66,8 @@ class MatriculaResource extends Resource implements HasShieldPermissions
 
         $user = auth()->user();
 
-        // Se NÃO for Super Admin e tiver uma Pessoa vinculada, filtra pelas matrículas vinculadas via contrato
-        if ($user && ! $user->hasRole('super_admin') && $user->pessoa) {
+        // Se NÃO for Super Admin, NÃO for Secretaria e tiver uma Pessoa vinculada, filtra pelas matrículas vinculadas via contrato
+        if ($user && ! $user->hasRole(['super_admin', 'secretaria']) && $user->pessoa) {
             $query->whereHas('contrato.responsaveisFinanceiros', function ($query) use ($user) {
                 $query->where('pessoa_id', $user->pessoa->id);
             });

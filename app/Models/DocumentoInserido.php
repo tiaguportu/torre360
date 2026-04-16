@@ -29,7 +29,18 @@ class DocumentoInserido extends Model
             ->logOnly(['tipo_documento_id', 'matricula_id', 'situacao_documento_inserido_id', 'observacoes', 'nome_arquivo_original'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->useLogName('documento_inserido');
+            ->useLogName('documento_inserido')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $tipoNome = $this->tipoDocumento?->nome ?? 'Tipo não identificado';
+                $alunoNome = $this->matricula?->pessoa?->nome ?? 'Matrícula não identificada';
+
+                return match ($eventName) {
+                    'created' => "O documento '{$tipoNome}' foi enviado para a matrícula de {$alunoNome}.",
+                    'updated' => "O documento '{$tipoNome}' da matrícula de {$alunoNome} foi atualizado.",
+                    'deleted' => "O documento '{$tipoNome}' da matrícula de {$alunoNome} foi excluído.",
+                    default => "Documento '{$tipoNome}': evento {$eventName}",
+                };
+            });
     }
 
     public function tipoDocumento(): BelongsTo

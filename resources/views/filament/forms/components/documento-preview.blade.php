@@ -1,13 +1,19 @@
 @php
     $state = $getState();
+    $record = $getRecord();
     
-    // O fileupload component geralmente armazena array (ex: ['hash' => 'path']) quando single
+    // Tratamento para TemporaryUploadedFile (novo upload)
     $path = is_array($state) ? (count($state) > 0 ? array_values($state)[0] : null) : $state;
     
-    if (!$path) return;
+    // Fallback: Tenta obter do model salvo caso o state venha nulo ou formato inesperado
+    if (!$path && $record && $record->arquivo_path) {
+        $path = $record->arquivo_path;
+    }
     
-    // Se for temporary uploaded file, o path não funciona direto no asset('storage')
-    // Precisaria de lógica pro TemporaryUploadedFile, mas como queremos resolver pelo menos os gravados:
+    if (!$path) {
+        return; // Retorna silenciosamente se realmente não houver path
+    }
+    
     if($path instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
         $url = $path->temporaryUrl();
         $extension = strtolower($path->getClientOriginalExtension());

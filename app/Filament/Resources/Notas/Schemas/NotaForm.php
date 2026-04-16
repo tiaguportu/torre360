@@ -15,6 +15,9 @@ class NotaForm
             ->components([
                 Select::make('avaliacao_id')
                     ->relationship('avaliacao', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->label_exibicao)
+                    ->searchable()
+                    ->preload()
                     ->label('Avaliação')
                     ->required()
                     ->live(),

@@ -55,4 +55,15 @@ class Avaliacao extends Model
     {
         return $this->hasManyThrough(Matricula::class, Turma::class, 'id', 'turma_id', 'turma_id', 'id');
     }
+
+    public function getLabelExibicaoAttribute(): string
+    {
+        return sprintf(
+            '%s - %s - %s - %s',
+            $this->categoria?->nome ?? 'Sem Categoria',
+            $this->turma?->nome ?? 'Sem Turma',
+            $this->disciplina?->nome ?? 'Sem Disciplina',
+            $this->etapaAvaliativa?->nome ?? 'Sem Etapa'
+        );
+    }
 }

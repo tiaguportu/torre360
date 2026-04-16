@@ -11,10 +11,10 @@ class NotaInfolist
     {
         return $schema
             ->components([
-                TextEntry::make('avaliacao.id')
-                    ->label('Avaliacao'),
-                TextEntry::make('matricula.id')
-                    ->label('Matricula'),
+                TextEntry::make('avaliacao.label_exibicao')
+                    ->label('Avaliação'),
+                TextEntry::make('matricula.label_exibicao')
+                    ->label('Matrícula'),
                 TextEntry::make('valor')
                     ->numeric(),
                 TextEntry::make('created_at')

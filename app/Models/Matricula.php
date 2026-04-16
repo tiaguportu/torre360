@@ -223,4 +223,14 @@ class Matricula extends Model
             'falhas' => $falhas,
         ];
     }
+
+    public function getLabelExibicaoAttribute(): string
+    {
+        return sprintf(
+            '%s - %s - %s',
+            $this->periodoLetivo?->nome ?? 'S/P',
+            $this->turma?->nome ?? 'S/T',
+            $this->pessoa?->nome ?? 'S/A'
+        );
+    }
 }

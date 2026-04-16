@@ -15,21 +15,24 @@ class NotasTable
     {
         return $table
             ->columns([
-                TextColumn::make('avaliacao.id')
+                TextColumn::make('avaliacao.label_exibicao')
+                    ->label('Avaliação')
                     ->searchable(),
                 TextColumn::make('matricula')
                     ->label('Matrícula')
                     ->formatStateUsing(function ($record): string {
                         $matricula = $record->matricula;
-                        if (!$matricula) return 'N/A';
-                        
+                        if (! $matricula) {
+                            return 'N/A';
+                        }
+
                         return "{$matricula->turma?->nome} - {$matricula->periodoLetivo?->nome} - {$matricula->pessoa?->nome}";
                     })
                     ->searchable(query: function ($query, string $search) {
                         $query->whereHas('matricula', function ($query) use ($search) {
-                            $query->whereHas('turma', fn($q) => $q->where('nome', 'like', "%{$search}%"))
-                                ->orWhereHas('periodoLetivo', fn($q) => $q->where('nome', 'like', "%{$search}%"))
-                                ->orWhereHas('pessoa', fn($q) => $q->where('nome', 'like', "%{$search}%"));
+                            $query->whereHas('turma', fn ($q) => $q->where('nome', 'like', "%{$search}%"))
+                                ->orWhereHas('periodoLetivo', fn ($q) => $q->where('nome', 'like', "%{$search}%"))
+                                ->orWhereHas('pessoa', fn ($q) => $q->where('nome', 'like', "%{$search}%"));
                         });
                     }),
                 TextColumn::make('valor')

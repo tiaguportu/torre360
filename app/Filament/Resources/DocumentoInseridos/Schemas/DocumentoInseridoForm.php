@@ -118,11 +118,10 @@ class DocumentoInseridoForm
                     ->columnSpanFull(),
 
                 ViewField::make('arquivo_path_preview')
-                    ->label('Prévia do Documento')
+                    ->hiddenLabel()
                     ->view('filament.forms.components.documento-preview')
                     ->statePath('arquivo_path')
                     ->columnSpanFull()
-                    ->hidden(fn (Get $get) => ! $get('arquivo_path'))
                     ->dehydrated(false),
 
                 Textarea::make('observacoes')

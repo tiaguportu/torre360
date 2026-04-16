@@ -76,7 +76,8 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
 2. O sistema gera uma tabela dinâmica por Etapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
 3. Notas abaixo da média aparecem destacadas em vermelho.
-4. **Edição de Notas:** Caso possua a permissão necessária, você visualizará o botão **Editar Notas** no topo da página do boletim. Esta tela permite o preenchimento rápido de todas as notas da etapa em um layout idêntico ao de consulta.
+4. **Frequência:** Ao lado das médias, o boletim exibe o percentual de presenças do aluno nas aulas daquela disciplina dentro do período da etapa avaliativa.
+5. **Edição de Notas:** Caso possua a permissão necessária, você visualizará o botão **Editar Notas** no topo da página do boletim. Esta tela permite o preenchimento rápido de todas as notas da etapa em um layout idêntico ao de consulta.
 
 ### 5.4 Gerenciamento de Notas
 1. No menu **Avaliações → Notas**, é possível visualizar o histórico completo de notas lançadas.
@@ -203,7 +204,7 @@ Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filame
 Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos:
 - **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
-- **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`).
+- **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
 - **CRM:** Gestão de leads e histórico de contatos.
 
 ### 9.2 Auditoria de Ações
