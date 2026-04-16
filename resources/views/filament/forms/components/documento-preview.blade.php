@@ -11,7 +11,14 @@
     }
     
     if (!$path) {
-        return; // Retorna silenciosamente se realmente não houver path
+        // Se realmente não encontrar nada, exibe esse bloco temporário de debug
+        echo '<div style="color:red; padding: 10px; border: 1px solid red; margin-top: 10px; border-radius: 8px;">
+            <b>DEBUG DO SISTEMA:</b><br>
+            Componente de prévia está renderizando, mas nenhum arquivo foi detectado nas variáveis.<br>
+            Estado do campo: ' . json_encode($state) . '<br>
+            Caminho do Banco: ' . ($record ? $record->arquivo_path : 'Registro nulo') . '
+        </div>';
+        return;
     }
     
     if($path instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
