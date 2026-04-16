@@ -66,7 +66,8 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 1. Vá em **Acadêmico → Avaliações**.
 2. **Filtro de Pendências:** Utilize o filtro "Pendência de Lançamento" para localizar rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
 3. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
-4. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
+4. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
+5. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
@@ -246,6 +247,7 @@ O Torre360 possui um sistema central de notificações em tempo real, representa
 
 ### 11.2 Notificações Importantes
 - **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado.
+- **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin', 'admin' ou 'secretaria' recebem notificações em tempo real sempre que um novo documento é inserido ou removido de uma matrícula, permitindo o acompanhamento imediato das alterações documentais.
 - **Feedback de Envio de Avisos:** Quando um administrador dispara avisos de pendência (individual ou em lote), uma notificação de confirmação é enviada para o seu próprio sininho, servindo como registro persistente da ação.
 
 ---
