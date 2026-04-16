@@ -17,6 +17,25 @@ class EditContrato extends EditRecord
 {
     protected static string $resource = ContratoResource::class;
 
+    /**
+     * Avança N dias úteis a partir de uma data, pulando sábados e domingos.
+     */
+    private function adicionarDiasUteis(Carbon $data, int $dias): Carbon
+    {
+        $resultado = $data->copy();
+        $adicionados = 0;
+
+        while ($adicionados < $dias) {
+            $resultado->addDay();
+
+            if (! $resultado->isWeekend()) {
+                $adicionados++;
+            }
+        }
+
+        return $resultado;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -33,14 +52,6 @@ class EditContrato extends EditRecord
                         ->integer()
                         ->minValue(1)
                         ->required(),
-                    TextInput::make('dia_vencimento')
-                        ->label('Dia de Vencimento')
-                        ->helperText('Dia do mês em que cada parcela vencerá (1 a 28).')
-                        ->numeric()
-                        ->integer()
-                        ->minValue(1)
-                        ->maxValue(28)
-                        ->required(),
                     TextInput::make('valor_entrada')
                         ->label('Valor de Entrada (R$)')
                         ->helperText('Informe 0 caso não haja entrada. O valor por parcela será: (Total − Entrada) ÷ Parcelas.')
@@ -50,6 +61,7 @@ class EditContrato extends EditRecord
                         ->required(),
                 ])
                 ->modalHeading('Gerar Faturas Automaticamente')
+                ->modalDescription('A 1ª parcela vencerá em 5 dias úteis a partir da data de aceite. As demais serão mensais a partir daí.')
                 ->modalSubmitActionLabel('Gerar Faturas')
                 ->action(function (array $data, EditRecord $livewire): void {
                     $contrato = $livewire->getRecord();
@@ -65,7 +77,6 @@ class EditContrato extends EditRecord
                     }
 
                     $qtdParcelas = (int) $data['quantidade_parcelas'];
-                    $diaVencimento = (int) $data['dia_vencimento'];
                     $valorEntrada = (float) $data['valor_entrada'];
                     $valorTotal = (float) $contrato->valor_total;
                     $valorRestante = $valorTotal - $valorEntrada;
@@ -82,23 +93,23 @@ class EditContrato extends EditRecord
 
                     $valorParcela = $qtdParcelas > 0 ? round($valorRestante / $qtdParcelas, 2) : 0;
 
-                    // Data base: mês seguinte ao data_aceite, no dia escolhido
+                    // 1ª parcela: 5 dias úteis a partir do data_aceite (pula fins de semana)
                     $dataAceite = Carbon::parse($contrato->data_aceite);
-                    $primeiroVencimento = $dataAceite->copy()->addMonth()->day($diaVencimento);
+                    $primeiroVencimento = $this->adicionarDiasUteis($dataAceite, 5);
 
-                    DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $qtdParcelas, $primeiroVencimento): void {
+                    DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $qtdParcelas, $dataAceite, $primeiroVencimento): void {
                         // Remove faturas existentes e seus itens
                         $contrato->faturas()->each(function (Fatura $fatura): void {
                             $fatura->itens()->delete();
                             $fatura->delete();
                         });
 
-                        // Fatura de entrada (mesmo que seja R$ 0,00, criamos para consistência)
+                        // Fatura de entrada: vencimento no próprio data_aceite
                         if ($valorEntrada > 0) {
                             /** @var Fatura $faturaEntrada */
                             $faturaEntrada = Fatura::create([
                                 'contrato_id' => $contrato->id,
-                                'vencimento' => $primeiroVencimento->copy()->subMonth(),
+                                'vencimento' => $dataAceite->toDateString(),
                                 'status' => 'pendente',
                             ]);
 
@@ -112,14 +123,14 @@ class EditContrato extends EditRecord
                             ]);
                         }
 
-                        // Parcelas mensais
+                        // Parcelas: 1ª = 5 dias úteis após aceite, demais = +1 mês cada
                         for ($i = 0; $i < $qtdParcelas; $i++) {
                             $vencimento = $primeiroVencimento->copy()->addMonths($i);
 
                             /** @var Fatura $fatura */
                             $fatura = Fatura::create([
                                 'contrato_id' => $contrato->id,
-                                'vencimento' => $vencimento,
+                                'vencimento' => $vencimento->toDateString(),
                                 'status' => 'pendente',
                             ]);
 
@@ -138,7 +149,7 @@ class EditContrato extends EditRecord
                         ->title('Faturas geradas com sucesso!')
                         ->body(
                             ($valorEntrada > 0 ? '1 fatura de entrada + ' : '').
-                            $qtdParcelas.' parcela(s) criada(s).'
+                            $qtdParcelas.' parcela(s) criada(s). 1ª parcela: '.$primeiroVencimento->format('d/m/Y').'.'
                         )
                         ->success()
                         ->send();
