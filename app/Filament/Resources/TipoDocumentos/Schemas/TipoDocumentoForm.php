@@ -32,8 +32,8 @@ class TipoDocumentoForm
                     ->searchable()
                     ->preload(),
                 Select::make('matriculas')
-                    ->relationship('matriculas', 'codigo', modifyQueryUsing: fn ($query) => $query->whereNotNull('codigo'))
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->codigo ?? "Matrícula #{$record->id}")
+                    ->relationship('matriculas', 'id')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => ($record->pessoa?->nome ?? 'Aluno Desconhecido')." (ID: {$record->id})")
                     ->multiple()
                     ->searchable()
                     ->preload(),
