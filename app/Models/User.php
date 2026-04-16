@@ -14,6 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
@@ -28,7 +29,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'is_active'])
+            ->logOnly(['name', 'email', 'activated_at', 'deactivated_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -36,12 +37,26 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function canAccessPanel(Panel $panel): bool
     {
         // Permitir acesso se o e-mail não estiver verificado (para ver o aviso de verificação)
-        // Se já estiver verificado, o acesso depende apenas da flag is_active.
+        // Se já estiver verificado, o acesso depende da validade da ativação.
         if ($this->hasVerifiedEmail()) {
-            return $this->is_active;
+            return (bool) $this->is_active;
         }
 
         return true;
+    }
+
+    /**
+     * @return Attribute<bool, never>
+     */
+    protected function isActive(): Attribute
+    {
+        return Attribute::get(function (): bool {
+            $now = now();
+
+            return $this->activated_at !== null &&
+                   $this->activated_at <= $now &&
+                   ($this->deactivated_at === null || $this->deactivated_at > $now);
+        });
     }
 
     public function pessoas(): BelongsToMany
@@ -63,7 +78,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'name',
         'email',
         'password',
-        'is_active',
+        'activated_at',
+        'deactivated_at',
         'fcm_token',
         'device_type',
         'email_verified_at',
@@ -88,8 +104,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'activated_at' => 'datetime',
+            'deactivated_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean',
         ];
     }
 }

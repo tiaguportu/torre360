@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cronograma_aula', function (Blueprint $table) {
+            $table->dropForeign(['periodo_letivo_id']);
             $table->dropColumn('periodo_letivo_id');
         });
     }

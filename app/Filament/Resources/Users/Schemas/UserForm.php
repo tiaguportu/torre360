@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -52,10 +53,14 @@ class UserForm
                     ->dehydrated(false)
                     ->required(fn (string $operation): bool => $operation === 'create'),
 
-                Toggle::make('is_active')
-                    ->label('Usuário Ativo')
-                    ->default(true)
-                    ->helperText('Habilita ou desabilita o acesso do usuário ao sistema.'),
+                DateTimePicker::make('activated_at')
+                    ->label('Ativar em')
+                    ->default(now())
+                    ->helperText('Data a partir da qual o usuário terá acesso ao sistema.'),
+
+                DateTimePicker::make('deactivated_at')
+                    ->label('Desativar em')
+                    ->helperText('Opcional. Data a partir da qual o acesso do usuário será bloqueado.'),
 
                 Toggle::make('email_verified_at')
                     ->label('E-mail Verificado')

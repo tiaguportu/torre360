@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(
             Verified::class,
-            fn ($event) => $event->user->update(['is_active' => true])
+            fn ($event) => $event->user->update(['activated_at' => now()])
         );
 
         Event::listen(
