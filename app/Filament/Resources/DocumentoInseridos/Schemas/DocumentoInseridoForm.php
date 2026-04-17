@@ -113,8 +113,8 @@ class DocumentoInseridoForm
                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                     ->maxSize(2048)
                     ->directory('documentos_alunos')
-                    ->disk('public')
-                    ->visibility('public')
+                    ->disk('local')
+                    ->visibility('private')
                     ->downloadable()
                     ->openable()
                     ->storeFileNamesIn('nome_arquivo_original')
@@ -130,7 +130,7 @@ class DocumentoInseridoForm
                         $hash = md5_file($file->getRealPath());
                         $set('hash_arquivo', $hash);
 
-                        return $file->store('documentos_alunos', 'public');
+                        return $file->store('documentos_alunos', 'local');
                     })
                     ->live() // Garantir que a prévia atualize se o arquivo mudar
                     ->columnSpanFull(),

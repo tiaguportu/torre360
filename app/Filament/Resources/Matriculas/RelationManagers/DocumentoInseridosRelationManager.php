@@ -67,7 +67,7 @@ class DocumentoInseridosRelationManager extends RelationManager
 
                         $newFileName = "{$codigo} - {$safeStudentName} - {$safeTypeName}.{$extension}";
 
-                        return Storage::disk('public')->download($record->arquivo_path, $newFileName);
+                        return Storage::disk('local')->download($record->arquivo_path, $newFileName);
                     }),
                 EditAction::make(),
                 DeleteAction::make(),

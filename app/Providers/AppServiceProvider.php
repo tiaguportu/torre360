@@ -29,8 +29,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::before(fn ($user, $ability) => $user->hasRole('super_admin') ? true : null);
 
-        // Permite visualizar arquivos servidos pelo Laravel se estiver autenticado
-        Gate::define('viewApi', fn ($user) => true);
+        // Permite visualizar arquivos servidos pelo Laravel APENAS se estiver autenticado
+        Gate::define('viewApi', fn ($user) => $user !== null);
 
         Event::listen(
             Verified::class,
