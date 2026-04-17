@@ -3,12 +3,12 @@
         @include('filament.pages.auth.terms-content')
     </div>
 
-    <x-filament-panels::form wire:submit="accept">
+    <x-filament-schemas::form wire:submit="accept">
         {{ $this->form }}
 
         <x-filament::actions
             :actions="$this->getFormActions()"
             alignment="end"
         />
-    </x-filament-panels::form>
+    </x-filament-schemas::form>
 </x-filament-panels::page.simple>
