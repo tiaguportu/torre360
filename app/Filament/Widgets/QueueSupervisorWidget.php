@@ -18,7 +18,7 @@ class QueueSupervisorWidget extends Widget implements HasActions
     use HasWidgetShield;
     use InteractsWithActions;
 
-    protected static string $view = 'filament.widgets.queue-supervisor-widget';
+    protected string $view = 'filament.widgets.queue-supervisor-widget';
 
     protected static ?int $sort = -5; // No topo do dashboard
 
