@@ -155,7 +155,7 @@
             @foreach($unidade->representantesLegais as $rep)
                 {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }} {{ $rep->nome }}@endforeach
         @else
-            seu Presidente Fumio Wellington Okuno
+            seu Presidente _______
         @endif, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
         <span class="bold">
             @if($principalRF)
