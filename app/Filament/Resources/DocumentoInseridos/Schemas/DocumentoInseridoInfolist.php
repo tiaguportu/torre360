@@ -15,8 +15,8 @@ class DocumentoInseridoInfolist
                     ->label('Documento obrigatorio'),
                 TextEntry::make('matricula.id')
                     ->label('Matricula'),
-                TextEntry::make('situacao_documento_inserido_id')
-                    ->numeric(),
+                TextEntry::make('status')
+                    ->badge(),
                 TextEntry::make('observacoes')
                     ->placeholder('-')
                     ->columnSpanFull(),

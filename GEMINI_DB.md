@@ -134,5 +134,18 @@ Estrutura de ensino e turmas.
 ---
 
 ## 7. Documentação
-### `tipo_documento` e `documento_inserido`
-- Gestão de documentos obrigatórios para matrícula.
+### `tipo_documento`
+- **Representa:** Definição dos tipos de documentos exigidos (ex: RG, CPF, Comprovante de Residência).
+- **Relacionamentos:** HasMany `documento_inserido`.
+
+### `documento_inserido`
+- **Representa:** Os arquivos enviados pelos alunos/responsáveis.
+- **Campos Principais:**
+    - `status`: Enum (`App\Enums\SituacaoDocumento`). Estados: `pendente`, `em_analise`, `aprovado`, `rejeitado`.
+    - `arquivo_path`: Caminho no storage.
+    - `hash_arquivo`: Integridade do arquivo.
+- **State Machine:** As transições de estado são validadas pelo Enum e controladas no modelo/formulário. Transições permitidas:
+    - Pendente -> Em Análise, Aprovado, Rejeitado.
+    - Em Análise -> Aprovado, Rejeitado.
+    - Aprovado -> Em Análise, Rejeitado.
+    - Rejeitado -> Pendente, Em Análise.

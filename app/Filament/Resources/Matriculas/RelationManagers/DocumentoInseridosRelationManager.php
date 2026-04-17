@@ -36,16 +36,9 @@ class DocumentoInseridosRelationManager extends RelationManager
                     ->label('Documento')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('situacao.nome')
+                Tables\Columns\TextColumn::make('status')
                     ->label('Situação')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Aprovado' => 'success',
-                        'Recusado' => 'danger',
-                        'Pendente' => 'warning',
-                        'Em Análise' => 'info',
-                        default => 'gray',
-                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Data de Envio')

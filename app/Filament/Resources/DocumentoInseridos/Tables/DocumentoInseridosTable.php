@@ -26,16 +26,9 @@ class DocumentoInseridosTable
                     ->searchable(['matricula.codigo', 'matricula.pessoa.nome'])
                     ->sortable(),
 
-                TextColumn::make('situacao.nome')
+                TextColumn::make('status')
                     ->label('Situação')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Pendente' => 'gray',
-                        'Em Análise' => 'info',
-                        'Aprovado' => 'success',
-                        'Rejeitado' => 'danger',
-                        default => 'gray',
-                    })
                     ->sortable(),
 
                 TextColumn::make('nome_arquivo_original')

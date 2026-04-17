@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DocumentoInseridos\Schemas;
 
+use App\Enums\SituacaoDocumento;
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Models\Matricula;
 use App\Models\TipoDocumento;
@@ -83,10 +84,26 @@ class DocumentoInseridoForm
                         }, shouldOpenInNewTab: true),
                 ]),
 
-                Select::make('situacao_documento_inserido_id')
+                Select::make('status')
                     ->label('Situação')
-                    ->relationship('situacao', 'nome')
-                    ->default(1) // Assumindo que 1 seja "Enviado" ou "Aguardando Análise"
+                    ->options(SituacaoDocumento::class)
+                    ->default(SituacaoDocumento::PENDENTE)
+                    ->rules([
+                        fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($record) {
+                            if (! $record || ! $record->exists) {
+                                return;
+                            }
+
+                            $target = SituacaoDocumento::tryFrom($value);
+                            if (! $target) {
+                                return;
+                            }
+
+                            if ($record->status !== $target && ! $record->status->canTransitionTo($target)) {
+                                $fail("A transição de '{$record->status->getLabel()}' para '{$target->getLabel()}' não é permitida.");
+                            }
+                        },
+                    ])
                     ->required(),
 
                 FileUpload::make('arquivo_path')

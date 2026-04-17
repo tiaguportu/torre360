@@ -114,7 +114,12 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 ### 6.2 Gestão de Documentos
 1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
 2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.
-3. O sistema permite validar se o documento foi recebido, se está pendente ou se foi recusado por algum motivo.
+3. O sistema utiliza uma **Máquina de Estados** para gerir a situação do documento:
+   - **Pendente:** Documento enviado mas ainda não revisado.
+   - **Em Análise:** Documento em processo de conferência pela secretaria.
+   - **Aprovado:** Documento validado e aceito.
+   - **Rejeitado:** Documento com problemas (ilegível, errado, etc).
+4. As transições de estado são controladas; por exemplo, um documento *Aprovado* não pode voltar para *Pendente* sem passar por uma revisão, garantindo a integridade do processo.
 
 ### 6.4 Visualização e Prévia de Documentos
 1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.

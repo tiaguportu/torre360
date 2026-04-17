@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SituacaoDocumento;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -16,17 +17,24 @@ class DocumentoInserido extends Model
     protected $fillable = [
         'tipo_documento_id',
         'matricula_id',
-        'situacao_documento_inserido_id',
+        'status',
         'observacoes',
         'arquivo_path',
         'nome_arquivo_original',
         'hash_arquivo',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'status' => SituacaoDocumento::class,
+        ];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['tipo_documento_id', 'matricula_id', 'situacao_documento_inserido_id', 'observacoes', 'nome_arquivo_original'])
+            ->logOnly(['tipo_documento_id', 'matricula_id', 'status', 'observacoes', 'nome_arquivo_original'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('documento_inserido')
@@ -48,13 +56,22 @@ class DocumentoInserido extends Model
         return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');
     }
 
+    public function transitionTo(SituacaoDocumento $target): void
+    {
+        if ($this->status === $target) {
+            return;
+        }
+
+        if (! $this->status->canTransitionTo($target)) {
+            throw new \RuntimeException("Transição de {$this->status->value} para {$target->value} não é permitida.");
+        }
+
+        $this->status = $target;
+        $this->save();
+    }
+
     public function matricula(): BelongsTo
     {
         return $this->belongsTo(Matricula::class, 'matricula_id');
-    }
-
-    public function situacao(): BelongsTo
-    {
-        return $this->belongsTo(SituacaoDocumentoInserido::class, 'situacao_documento_inserido_id');
     }
 }
