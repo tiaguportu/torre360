@@ -10,6 +10,8 @@ class InteressadoOrigemChart extends ChartWidget
 {
     use HasWidgetShield;
 
+    protected static ?int $sort = 4;
+
     protected ?string $heading = 'Origem dos Interessados';
 
     protected function getData(): array

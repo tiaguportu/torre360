@@ -10,6 +10,8 @@ class InteressadoStatusChart extends ChartWidget
 {
     use HasWidgetShield;
 
+    protected static ?int $sort = 3;
+
     protected ?string $heading = 'Interessados por Status';
 
     protected function getData(): array

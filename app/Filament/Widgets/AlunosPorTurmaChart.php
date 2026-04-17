@@ -10,6 +10,8 @@ class AlunosPorTurmaChart extends ChartWidget
 {
     use HasWidgetShield;
 
+    protected static ?int $sort = 2;
+
     protected ?string $heading = 'Alunos por Turma';
 
     protected function getData(): array

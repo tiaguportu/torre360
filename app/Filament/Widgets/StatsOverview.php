@@ -13,6 +13,8 @@ class StatsOverview extends BaseWidget
 {
     use HasWidgetShield;
 
+    protected static ?int $sort = 1;
+
     protected ?string $pollingInterval = '15s';
 
     protected function getStats(): array

@@ -27,6 +27,8 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
     protected string $view = 'filament.widgets.cronograma-calendar-widget';
 
+    protected static ?int $sort = 5;
+
     protected int|string|array $columnSpan = 'full';
 
     public ?array $data = [];

@@ -23,7 +23,9 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
 
     protected string $view = 'filament.widgets.queue-supervisor-widget';
 
-    protected static ?int $sort = -5;
+    protected static ?int $sort = 6;
+
+    protected int|string|array $columnSpan = 'full';
 
     protected static bool $isLazy = false;
 
