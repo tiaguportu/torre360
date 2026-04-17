@@ -32,32 +32,69 @@
     $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
     $isPdf = $extension === 'pdf';
 @endphp
-<div class="mt-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md shadow-lg overflow-hidden filament-documento-preview">
-    <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+<x-filament::section class="filament-documento-preview">
+    <x-slot name="heading">
+        <div class="flex items-center gap-2">
             @if($isImage)
-                <x-heroicon-o-photo class="w-5 h-5 text-primary-500" /> Prévia da Imagem
+                <x-filament::icon
+                    icon="heroicon-m-photo"
+                    class="h-5 w-5 text-primary-500"
+                />
+                <span>Prévia da Imagem</span>
             @elseif($isPdf)
-                <x-heroicon-o-document-text class="w-5 h-5 text-primary-500" /> Prévia do PDF
+                <x-filament::icon
+                    icon="heroicon-m-document-text"
+                    class="h-5 w-5 text-primary-500"
+                />
+                <span>Prévia do PDF</span>
             @else
-                <x-heroicon-o-document class="w-5 h-5 text-gray-500" /> Visualização do Documento
+                <x-filament::icon
+                    icon="heroicon-m-document"
+                    class="h-5 w-5 text-gray-500"
+                />
+                <span>Visualização do Documento</span>
             @endif
-        </h3>
-        <a href="{{ $url }}" target="_blank" class="text-xs px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors font-medium">
-            Abrir em nova aba
-        </a>
-    </div>
+        </div>
+    </x-slot>
 
-    <div class="flex justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <x-slot name="headerEnd">
+        <x-filament::button
+            color="gray"
+            icon="heroicon-m-arrow-top-right-on-square"
+            icon-position="after"
+            tag="a"
+            href="{{ $url }}"
+            target="_blank"
+            size="sm"
+            variant="ghost"
+        >
+            Abrir em nova aba
+        </x-filament::button>
+    </x-slot>
+
+    <div class="flex justify-center bg-gray-50 dark:bg-gray-900/50 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 p-2 min-h-[300px]">
         @if($isImage)
-            <img src="{{ $url }}" class="max-h-[600px] w-auto shadow-sm object-contain" alt="Prévia">
+            <img 
+                src="{{ $url }}" 
+                class="max-h-[600px] w-auto shadow-sm rounded-lg object-contain transition-transform hover:scale-[1.02]" 
+                alt="Prévia"
+            >
         @elseif($isPdf)
-            <iframe src="{{ $url }}#toolbar=0" width="100%" height="600px" class="rounded border-none"></iframe>
+            <iframe 
+                src="{{ $url }}#toolbar=0" 
+                width="100%" 
+                height="600px" 
+                class="rounded-lg border-none bg-white shadow-inner"
+            ></iframe>
         @else
             <div class="flex flex-col items-center justify-center p-12 text-gray-400">
-                <x-heroicon-o-eye-slash class="w-16 h-16 mb-2 opacity-50" />
-                <p class="text-sm">Prévia não disponível para arquivos .{{ $extension }}</p>
+                <x-filament::icon
+                    icon="heroicon-m-eye-slash"
+                    class="w-16 h-16 mb-4 opacity-50 text-gray-400"
+                />
+                <p class="text-base font-medium">Prévia não disponível para arquivos .{{ $extension }}</p>
+                <p class="text-sm">Clique no botão acima para tentar abrir o arquivo manualmente.</p>
             </div>
         @endif
     </div>
-</div>
+</x-filament::section>
