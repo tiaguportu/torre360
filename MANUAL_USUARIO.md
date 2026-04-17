@@ -76,6 +76,11 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 3. **Endereços:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa, definindo obrigatoriamente o **Tipo** (ex: Residencial ou Comercial).
 4. **Foto:** Use o editor integrado para ajustar a foto de perfil.
 
+### 4.2 Segurança e Privacidade das Fotos
+1. As fotos de perfil das pessoas são armazenadas de forma segura em um **disco privado**.
+2. O sistema garante que apenas usuários autenticados possam visualizar essas imagens, protegendo a privacidade de alunos e colaboradores.
+3. Caso realize o upload de uma nova foto, o sistema processará a imagem e a disponibilizará automaticamente para visualização interna segura.
+
 ---
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação

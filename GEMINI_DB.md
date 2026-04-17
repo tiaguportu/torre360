@@ -44,7 +44,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
-- **Representa:** Alunos, Responsáveis, Professores e Coordenadores.
+- **Principais Campos:** `nome`, `cpf`, `data_nascimento`, `foto` (armazenamento privado), `email`.
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
