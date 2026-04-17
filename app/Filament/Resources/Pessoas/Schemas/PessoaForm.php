@@ -57,6 +57,24 @@ class PessoaForm
                     ->email()
                     ->maxLength(255),
 
+                Select::make('estado_civil')
+                    ->options([
+                        'Solteiro(a)' => 'Solteiro(a)',
+                        'Casado(a)' => 'Casado(a)',
+                        'Divorciado(a)' => 'Divorciado(a)',
+                        'Viúvo(a)' => 'Viúvo(a)',
+                        'União Estável' => 'União Estável',
+                    ])
+                    ->searchable(),
+
+                TextInput::make('profissao')
+                    ->label('Profissão')
+                    ->maxLength(255),
+
+                TextInput::make('identidade')
+                    ->label('Identidade (RG)')
+                    ->maxLength(255),
+
                 TextInput::make('telefone')
                     ->tel()
                     ->maxLength(20),

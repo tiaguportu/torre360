@@ -10,6 +10,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ExportBulkAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -61,6 +62,20 @@ class PessoasTable
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('estado_civil')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('profissao')
+                    ->label('Profissão')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('identidade')
+                    ->label('Identidade (RG)')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -101,6 +116,20 @@ class PessoasTable
                                 ->relationship('nacionalidade', 'nome')
                                 ->preload()
                                 ->searchable(),
+                            Select::make('estado_civil')
+                                ->label('Estado Civil')
+                                ->options([
+                                    'Solteiro(a)' => 'Solteiro(a)',
+                                    'Casado(a)' => 'Casado(a)',
+                                    'Divorciado(a)' => 'Divorciado(a)',
+                                    'Viúvo(a)' => 'Viúvo(a)',
+                                    'União Estável' => 'União Estável',
+                                ])
+                                ->searchable(),
+                            TextInput::make('profissao')
+                                ->label('Profissão'),
+                            TextInput::make('identidade')
+                                ->label('Identidade (RG)'),
 
                         ])
                         ->action(function (Collection $records, array $data): void {
@@ -108,6 +137,9 @@ class PessoasTable
                                 'sexo_id' => $data['sexo_id'] ?? null,
                                 'cor_raca_id' => $data['cor_raca_id'] ?? null,
                                 'nacionalidade_id' => $data['nacionalidade_id'] ?? null,
+                                'estado_civil' => $data['estado_civil'] ?? null,
+                                'profissao' => $data['profissao'] ?? null,
+                                'identidade' => $data['identidade'] ?? null,
                             ], fn ($value) => filled($value));
 
                             try {
