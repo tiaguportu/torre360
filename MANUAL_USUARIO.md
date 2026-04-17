@@ -126,6 +126,9 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Esta funcionalidade permite conferir o conteúdo do arquivo rapidamente sem a necessidade de downloads manuais.
 3. Para PDFs, o navegador utiliza seu visualizador nativo integrado à página.
 
+> [!NOTE]
+> A prévia de documentos é protegida por segurança. Apenas usuários autenticados com as devidas permissões podem visualizar os arquivos, garantindo a privacidade dos dados dos alunos.
+
 ### 6.3 Assinatura Digital (Assinafy)
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
 1. Na lista de contratos, clique na ação **Assinar Contrato** para o documento pendente.

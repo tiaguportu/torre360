@@ -113,6 +113,7 @@ class DocumentoInseridoForm
                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                     ->maxSize(2048)
                     ->directory('documentos_alunos')
+                    ->disk('public')
                     ->visibility('public')
                     ->downloadable()
                     ->openable()

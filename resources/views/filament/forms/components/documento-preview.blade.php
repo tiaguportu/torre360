@@ -25,14 +25,13 @@
         $url = $path->temporaryUrl();
         $extension = strtolower($path->getClientOriginalExtension());
     } else {
-        $url = asset('storage/' . $path);
+        $url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     }
 
     $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
     $isPdf = $extension === 'pdf';
 @endphp
-
 <div class="mt-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md shadow-lg overflow-hidden filament-documento-preview">
     <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
