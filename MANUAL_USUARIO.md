@@ -56,6 +56,14 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contato**.
 2. Registre cada ligação, e-mail ou visita, definindo o tipo de contato e o relato do que foi conversado.
 
+### 3.3 Alertas de Acompanhamento (Follow-up)
+1. **Identificação Visual:** Quando um interessado precisa de contato urgente (atraso ou agendamento desatualizado), um botão vermelho e pulsante aparecerá no topo do formulário de edição.
+2. **Notificar Consultor:** Clique neste botão de alerta para disparar notificações automáticas.
+3. **Canais de Alerta:** O sistema enviará simultaneamente:
+   - Um **E-mail** detalhado para o Consultor Responsável com o link direto para o interessado.
+   - Uma **Notificação no Sininho** do sistema, que fica registrada no histórico do usuário.
+4. **Confirmação:** O sistema solicitará sua confirmação antes de enviar o alerta.
+
 ---
 
 ## 👥 4. Cadastro Unificado de Pessoas
@@ -267,7 +275,7 @@ O **Torre360** possui um aplicativo nativo para Android que facilita o acesso r�
 
 ## 🔔 11. Notificações Internas (Sininho)
 
-O Torre360 possui um sistema central de notificações em tempo real, representado pelo ícone de **Sinho** no topo do painel administrativo.
+O Torre360 possui um sistema central de notificações em tempo real, representado pelo ícone de **Sininho** no topo do painel administrativo.
 
 ### 11.1 Como Funciona
 - Sempre que houver uma ação que necessite sua atenção (ex: documentos pendentes em uma matrícula), um indicador numérico aparecerá sobre o sininho.
