@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
+use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
@@ -45,8 +46,9 @@ class MatriculasTable
                     ->label('Período Letivo')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('situacaoMatricula.nome')
+                TextColumn::make('situacao')
                     ->label('Situação')
+                    ->badge()
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -80,10 +82,8 @@ class MatriculasTable
                     ->preload()
                     ->searchable()
                     ->label('Período Letivo'),
-                SelectFilter::make('situacaoMatricula')
-                    ->relationship('situacaoMatricula', 'nome')
-                    ->preload()
-                    ->searchable()
+                SelectFilter::make('situacao')
+                    ->options(SituacaoMatricula::class)
                     ->label('Situação'),
             ])
             ->actions([
@@ -293,10 +293,9 @@ class MatriculasTable
                                 ->relationship('periodoLetivo', 'nome')
                                 ->searchable()
                                 ->preload(),
-                            Select::make('situacao_matricula_id')
+                            Select::make('situacao')
                                 ->label('Situação')
-                                ->relationship('situacaoMatricula', 'nome')
-                                ->searchable()
+                                ->options(SituacaoMatricula::class)
                                 ->preload(),
                         ])
                         ->action(function (Collection $records, array $data) {

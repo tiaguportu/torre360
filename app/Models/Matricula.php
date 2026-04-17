@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\SituacaoDocumento;
+use App\Enums\SituacaoMatricula;
 use App\Notifications\DocumentosPendentesNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +18,13 @@ class Matricula extends Model
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'situacao' => SituacaoMatricula::class,
+        ];
+    }
+
     public function pessoa(): BelongsTo
     {
         return $this->belongsTo(Pessoa::class);
@@ -29,11 +38,6 @@ class Matricula extends Model
     public function periodoLetivo(): BelongsTo
     {
         return $this->belongsTo(PeriodoLetivo::class);
-    }
-
-    public function situacaoMatricula(): BelongsTo
-    {
-        return $this->belongsTo(SituacaoMatricula::class);
     }
 
     public function contrato(): BelongsTo
@@ -68,14 +72,6 @@ class Matricula extends Model
     {
         return $this->getMissingMandatoryDocumentsCount() > 0;
     }
-
-    const SITUACAO_PENDENTE = 1;
-
-    const SITUACAO_ANALISE = 2;
-
-    const SITUACAO_APROVADO = 3;
-
-    const SITUACAO_REJEITADO = 4;
 
     /**
      * Verifica se há pendências de documentos (faltando ou rejeitados).
@@ -115,9 +111,9 @@ class Matricula extends Model
             return collect();
         }
 
-        // IDS dos documentos que já estão inseridos e NOT REJECTED
+        // IDS dos documentos que já estão inseridos e NÃO REJEITADOS
         $inseridosIds = $this->documentoInseridos()
-            ->where('situacao_documento_inserido_id', '!=', self::SITUACAO_REJEITADO)
+            ->where('status', '!=', SituacaoDocumento::REJEITADO)
             ->pluck('tipo_documento_id')
             ->toArray();
 
@@ -132,7 +128,7 @@ class Matricula extends Model
     public function getRejectedDocuments(): Collection
     {
         return $this->documentoInseridos()
-            ->where('situacao_documento_inserido_id', self::SITUACAO_REJEITADO)
+            ->where('status', SituacaoDocumento::REJEITADO)
             ->with('tipoDocumento')
             ->get();
     }

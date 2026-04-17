@@ -79,18 +79,21 @@
 
     <style>
         .kanban-container {
-            display: flex;
-            gap: 1rem;
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 1.25rem;
             overflow-x: auto;
-            padding-bottom: 1rem;
+            padding: 0.5rem 0.5rem 1.5rem 0.5rem;
             align-items: flex-start;
-            min-height: calc(100vh - 200px);
+            min-height: calc(100vh - 180px);
+            width: 100%;
         }
 
         .kanban-column {
-            flex-shrink: 0;
-            width: 300px;
-            height: 100%;
+            flex: 0 0 320px !important;
+            width: 320px !important;
+            max-width: 320px !important;
+            height: auto;
         }
 
         .kanban-column-content {
@@ -101,6 +104,7 @@
             max-height: calc(100vh - 200px);
             transition: all 0.2s ease;
             border: 2px solid transparent;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .dark .kanban-column-content {

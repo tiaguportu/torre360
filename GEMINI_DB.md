@@ -94,7 +94,12 @@ Estrutura de ensino e turmas.
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das disciplinas na visualização e impressão de boletins.
 
 ### `matricula`
-- Vínculo do aluno com uma turma em um período letivo.
+- **Representa:** Vínculo do aluno com uma turma em um período letivo.
+- **Campos Principais:**
+    - `situacao`: Enum (`App\Enums\SituacaoMatricula`). Estados: `ativa`, `pendente`, `trancada`, `cancelada`, `concluido`, `reserva`, `evasao`.
+    - `periodo_letivo_id`: BelongsTo `periodo_letivo`.
+    - `turma_id`: BelongsTo `turma`.
+    - `pessoa_id`: BelongsTo `pessoa` (Aluno).
 
 ---
 

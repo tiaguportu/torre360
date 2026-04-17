@@ -93,11 +93,21 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Para facilitar a identificação, a coluna **Matrícula** segue o padrão: `Turma - Período Escolar - Nome do Aluno`.
 3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
 
-### 5.5 Configuração de Disciplinas e Ordenação no Boletim
+### 5.6 Configuração de Disciplinas e Ordenação no Boletim
 1. Vá em **Acadêmico → Disciplinas**.
 2. No cadastro da disciplina, utilize o campo **Ordem no Boletim**.
 3. **Funcionamento:** O sistema utiliza este número inteiro para ordenar as disciplinas de cima para baixo na visualização do boletim. Disciplinas com números menores (ex: 1, 2, 3) aparecem primeiro.
 4. Caso duas disciplinas tenham o mesmo número de ordem, elas serão exibidas por ordem alfabética de nome.
+
+### 5.7 Situações de Matrícula (Padronização)
+As situações de matrícula no Torre360 são fixas e padronizadas para garantir a consistência dos relatórios. Cada estado possui uma cor e ícone específicos na listagem:
+- **Ativa (Verde):** Aluno regularmente matriculado e frequentando.
+- **Reserva (Cinza):** Vaga reservada (pré-matrícula) aguardando efetivação.
+- **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
+- **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.
+- **Cancelada (Vermelho):** Vínculo encerrado definitivamente.
+- **Concluída (Azul):** Aluno finalizou o curso/série com sucesso.
+- **Evasão (Cinza):** Aluno abandonou os estudos sem formalizar a saída.
 
 ### 5.6 Categorias de Avaliação e Ordenação das Colunas no Boletim
 1. Vá em **Avaliações → Categorias de Avaliação**.

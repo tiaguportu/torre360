@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas\Schemas;
 
-use App\Filament\Resources\SituacaoMatriculas\Schemas\SituacaoMatriculaForm;
+use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
 use App\Models\Turma;
 use Filament\Forms\Components\Select;
@@ -62,13 +62,13 @@ class MatriculaForm
                     ->required()
                     ->disabled(fn ($livewire) => $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma)
                     ->dehydrated(),
-                Select::make('situacao_matricula_id')
-                    ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
-                    ->searchable()
-                    ->preload()
-                    ->createOptionForm(fn (Schema $schema) => SituacaoMatriculaForm::configure($schema)->getComponents())
+                Select::make('situacao')
+                    ->label('Situação')
+                    ->options(SituacaoMatricula::class)
                     ->required()
-                    ->label('Situação'),
+                    ->native(false)
+                    ->preload()
+                    ->searchable(),
             ]);
     }
 }
