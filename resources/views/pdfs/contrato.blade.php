@@ -150,8 +150,13 @@
         <span class="bold">CONTRATADO:</span> ESCOLA TORRE DE MARFIM, pessoa jurídica de direito privado, sob forma de
         associação de caráter educativo, sem fins lucrativos e com fins não econômicos, tendo como entidade mantenedora
         a ASSOCIAÇÃO FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE, CNPJ 56.729.131/0001-69, localizado a Rua Gaspar Magalhães,
-        n.° 361, Jardim Guanabara, Ilha do Governador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
-        seu {{ $representanteUnidade->pivot->cargo ?? 'Presidente' }} {{ $representanteUnidade->nome ?? 'Fumio Wellington Okuno' }}, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
+        n.° 361, Jardim Guanabara, Ilha do Graduador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
+        @if($unidade && $unidade->representantesLegais->isNotEmpty())
+            @foreach($unidade->representantesLegais as $rep)
+                {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }} {{ $rep->nome }}@endforeach
+        @else
+            seu Presidente Fumio Wellington Okuno
+        @endif, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
         <span class="bold">
             @if($principalRF)
                 {{ $principalRF->nome }}, {{ $principalRF->nacionalidade?->nome ?? 'brasileiro(a)' }},
@@ -249,15 +254,15 @@
         // 1. Pai
         $assinaturas[] = [
             'titulo' => 'PAI / CONTRATANTE' . ($pai && $principalRF && $pai->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
-            'nome' => $pai?->nome ?? '________________________________',
-            'documento' => 'CPF: ' . ($pai?->cpf ?? '________________'),
+            'nome' => $pai?->nome ?? '_____________',
+            'documento' => 'CPF: ' . ($pai?->cpf ?? '_____________'),
         ];
 
         // 2. Mãe
         $assinaturas[] = [
             'titulo' => 'MÃE / CONTRATANTE' . ($mae && $principalRF && $mae->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
-            'nome' => $mae?->nome ?? '________________________________',
-            'documento' => 'CPF: ' . ($mae?->cpf ?? '________________'),
+            'nome' => $mae?->nome ?? '_____________',
+            'documento' => 'CPF: ' . ($mae?->cpf ?? '_____________'),
         ];
 
         // 3. Responsáveis Financeiros (Se houver Terceiros)
@@ -285,8 +290,8 @@
             // Fallback se não houver representante cadastrado
             $assinaturas[] = [
                 'titulo' => 'ESCOLA TORRE DE MARFIM',
-                'nome' => 'Fumio Wellington Okuno',
-                'documento' => 'Presidente',
+                'nome' => '_____________',
+                'documento' => '_____________',
             ];
         }
 
