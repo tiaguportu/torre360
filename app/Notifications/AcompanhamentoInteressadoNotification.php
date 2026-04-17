@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\Interessado;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -14,7 +14,7 @@ class AcompanhamentoInteressadoNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct(public \App\Models\Interessado $interessado)
+    public function __construct(public Interessado $interessado)
     {
         //
     }
@@ -26,7 +26,7 @@ class AcompanhamentoInteressadoNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     /**
@@ -36,10 +36,10 @@ class AcompanhamentoInteressadoNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Atenção: Acompanhamento de Interessado Pendente')
-            ->greeting('Olá, ' . $notifiable->name)
-            ->line('O interessado ' . $this->interessado->pessoa->nome . ' precisa de sua atenção.')
+            ->greeting('Olá, '.$notifiable->name)
+            ->line('O interessado '.$this->interessado->pessoa->nome.' precisa de sua atenção.')
             ->line('A data agendada para o próximo contato está desatualizada ou já passou.')
-            ->action('Ver Interessado', url('/admin/interessados/' . $this->interessado->id . '/edit'))
+            ->action('Ver Interessado', url('/admin/interessados/'.$this->interessado->id.'/edit'))
             ->line('Por favor, realize o contato e atualize o sistema.');
     }
 
@@ -53,8 +53,8 @@ class AcompanhamentoInteressadoNotification extends Notification
         return [
             'interessado_id' => $this->interessado->id,
             'interessado_nome' => $this->interessado->pessoa->nome,
-            'message' => 'O interessado ' . $this->interessado->pessoa->nome . ' precisa de acompanhamento urgente.',
-            'action_url' => '/admin/interessados/' . $this->interessado->id . '/edit',
+            'message' => 'O interessado '.$this->interessado->pessoa->nome.' precisa de acompanhamento urgente.',
+            'action_url' => '/admin/interessados/'.$this->interessado->id.'/edit',
         ];
     }
 }

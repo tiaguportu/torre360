@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\Schemas;
 
+use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Models\Interessado;
 use App\Models\Pessoa;
@@ -13,6 +14,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Tabs;
@@ -41,11 +43,26 @@ class InteressadoForm
                                             $consultor = $record->usuario;
 
                                             if ($consultor) {
+                                                // Notificação de E-mail
                                                 $consultor->notify(new AcompanhamentoInteressadoNotification($record));
+
+                                                // Notificação do SININHO (Filament Database)
+                                                FilamentNotification::make()
+                                                    ->title('Acompanhamento de Interessado Pendente')
+                                                    ->body("O interessado {$record->pessoa->nome} precisa de contato urgente.")
+                                                    ->icon('heroicon-o-exclamation-triangle')
+                                                    ->color('danger')
+                                                    ->actions([
+                                                        NotificationAction::make('view')
+                                                            ->label('Ver Interessado')
+                                                            ->url(InteressadoResource::getUrl('edit', ['record' => $record]))
+                                                            ->button(),
+                                                    ])
+                                                    ->sendToDatabase($consultor);
 
                                                 FilamentNotification::make()
                                                     ->title('Consultor Notificado!')
-                                                    ->body("O consultor {$consultor->name} recebeu um alerta por e-mail e no painel.")
+                                                    ->body("O consultor {$consultor->name} recebeu um alerta por e-mail e no sininho.")
                                                     ->success()
                                                     ->send();
                                             } else {
