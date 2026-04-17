@@ -6,9 +6,9 @@
     <x-filament-panels::form wire:submit="accept">
         {{ $this->form }}
 
-        <x-filament-actions::actions
+        <x-filament::actions
             :actions="$this->getFormActions()"
-            alignment="right"
+            alignment="end"
         />
     </x-filament-panels::form>
 </x-filament-panels::page.simple>
