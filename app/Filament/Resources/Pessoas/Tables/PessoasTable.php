@@ -29,10 +29,7 @@ class PessoasTable
                     ->label('')
                     ->width(40)
                     ->height(40)
-                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=Pessoa&color=7F9CF5&background=EBF4FF')
-                    ->getStateUsing(function ($record) {
-                        return $record->foto ?: null;
-                    }),
+                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=Pessoa&color=7F9CF5&background=EBF4FF'),
 
                 TextColumn::make('nome')
                     ->searchable()

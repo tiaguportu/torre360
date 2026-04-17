@@ -33,8 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'url' => '/private-storage',
-            'serve' => false,
+            'url' => '/visualizar-documento',
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],
