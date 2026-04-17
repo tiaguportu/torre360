@@ -30,7 +30,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
-| 🛡️ **Sistema e Segurança** | Usuários, Perfis (Shield), Logs e Configurações Gerais |
+| 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield), Logs e Configurações Gerais |
 
 ---
 
@@ -231,7 +231,7 @@ Utilizado para gerir a manutenção da infraestrutura da escola.
 Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filament Shield** para gestão de permissões baseada em papéis (Roles).
 
 ### 9.1 Permissões Configuráveis
-Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos:
+Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos através dos **Papéis e Permissões (Shield)**:
 - **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
 - **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
