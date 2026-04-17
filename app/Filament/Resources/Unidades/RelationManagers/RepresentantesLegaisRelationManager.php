@@ -29,6 +29,8 @@ class RepresentantesLegaisRelationManager extends RelationManager
                 TextInput::make('nome')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('cargo')
+                    ->maxLength(255),
             ]);
     }
 
@@ -39,13 +41,20 @@ class RepresentantesLegaisRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('nome')
                     ->searchable(),
+                TextColumn::make('cargo')
+                    ->searchable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 CreateAction::make(),
-                AttachAction::make(),
+                AttachAction::make()
+                    ->form(fn (AttachAction $action): array => [
+                        $action->getRecordSelect(),
+                        TextInput::make('cargo')
+                            ->maxLength(255),
+                    ]),
             ])
             ->recordActions([
                 EditAction::make(),
