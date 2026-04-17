@@ -49,6 +49,7 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
     - HasMany `matriculas`.
+    - BelongsToMany `unidade` (via `representante_unidade`) como Representante Legal.
 
 ### `endereco`
 - **Representa:** Localização física de pessoas ou unidades.
@@ -66,6 +67,17 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 ### `endereco_pessoa`
 - **Representa:** Tabela pivô entre pessoas e endereços.
 - **Campos:** `pessoa_id`, `endereco_id`.
+
+### `unidade`
+- **Representa:** Unidades físicas da instituição.
+- **Relacionamentos:**
+    - BelongsTo `endereco`.
+    - HasMany `curso`.
+    - BelongsToMany `pessoa` (via `representante_unidade`) para Representantes Legais.
+
+### `representante_unidade`
+- **Representa:** Tabela pivô entre unidades e seus representantes legais (pessoas).
+- **Campos:** `unidade_id`, `pessoa_id`.
 
 ---
 

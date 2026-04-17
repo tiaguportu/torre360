@@ -266,4 +266,16 @@ O módulo de Cronograma permite a visualização e gestão das aulas planejadas 
 
 ---
 
+## 📍 13. Gestão de Unidades e Representantes Legais
+
+As **Unidades** representam os locais físicos da instituição.
+
+### 13.1 Representantes Legais da Unidade
+1. Vá em **Localização e Cadastros → Unidades**.
+2. Na edição de uma Unidade, utilize a aba/relação de **Representantes Legais**.
+3. Aqui você pode vincular pessoas cadastradas no sistema que respondem legalmente por aquela unidade específica.
+4. Esta informação é vital para emissão de documentos oficiais e contratos que exigem a identificação da autoridade local.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

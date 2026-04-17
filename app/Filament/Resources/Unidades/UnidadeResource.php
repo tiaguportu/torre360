@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Unidades;
 use App\Filament\Resources\Unidades\Pages\CreateUnidade;
 use App\Filament\Resources\Unidades\Pages\EditUnidade;
 use App\Filament\Resources\Unidades\Pages\ListUnidades;
+use App\Filament\Resources\Unidades\RelationManagers\RepresentantesLegaisRelationManager;
 use App\Filament\Resources\Unidades\Schemas\UnidadeForm;
 use App\Filament\Resources\Unidades\Tables\UnidadesTable;
 use App\Models\Unidade;
@@ -40,7 +41,7 @@ class UnidadeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RepresentantesLegaisRelationManager::class,
         ];
     }
 

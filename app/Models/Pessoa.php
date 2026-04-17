@@ -79,4 +79,9 @@ class Pessoa extends Model
     {
         return $this->hasOne(Interessado::class, 'pessoa_id');
     }
+
+    public function unidadesRepresentadas(): BelongsToMany
+    {
+        return $this->belongsToMany(Unidade::class, 'representante_unidade', 'pessoa_id', 'unidade_id')->withTimestamps();
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Unidade extends Model
@@ -20,5 +21,10 @@ class Unidade extends Model
     public function endereco(): BelongsTo
     {
         return $this->belongsTo(Endereco::class);
+    }
+
+    public function representantesLegais(): BelongsToMany
+    {
+        return $this->belongsToMany(Pessoa::class, 'representante_unidade', 'unidade_id', 'pessoa_id')->withTimestamps();
     }
 }
