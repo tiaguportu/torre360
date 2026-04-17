@@ -272,11 +272,6 @@
                     <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
                     <div>{{ $principalRF->nome }}</div>
                     <div>CPF: {{ $principalRF->cpf }}</div>
-                @else
-                    <div class="line"></div>
-                    <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
-                    <div>________________________________</div>
-                    <div>CPF: ________________</div>
                 @endif
             </td>
             <td>
