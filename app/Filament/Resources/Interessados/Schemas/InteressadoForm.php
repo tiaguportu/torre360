@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Interessados\Schemas;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Models\Interessado;
 use App\Models\Pessoa;
+use App\Notifications\AcompanhamentoInteressadoNotification;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification as FilamentNotification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -31,12 +33,33 @@ class InteressadoForm
                             ->schema([
                                 Actions::make([
                                     Action::make('alerta_contato')
-                                        ->label('ATENÇÃO: Este interessado precisa de um novo contato! A data agendada é anterior ao último contato realizado.')
+                                        ->label('ATENÇÃO: Este interessado precisa de contato urgente! Clique aqui para alertar o consultor.')
                                         ->icon('heroicon-m-exclamation-triangle')
                                         ->color('danger')
                                         ->badge()
-                                        ->url(fn (Interessado $record) => '#') // Apenas visual ou scroll para histórico
-                                        ->disabled()
+                                        ->action(function (Interessado $record) {
+                                            $consultor = $record->usuario;
+
+                                            if ($consultor) {
+                                                $consultor->notify(new AcompanhamentoInteressadoNotification($record));
+
+                                                FilamentNotification::make()
+                                                    ->title('Consultor Notificado!')
+                                                    ->body("O consultor {$consultor->name} recebeu um alerta por e-mail e no painel.")
+                                                    ->success()
+                                                    ->send();
+                                            } else {
+                                                FilamentNotification::make()
+                                                    ->title('Falha ao Notificar')
+                                                    ->body('Não há um consultor responsável vinculado a este interessado.')
+                                                    ->danger()
+                                                    ->send();
+                                            }
+                                        })
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Enviar Alerta de Acompanhamento?')
+                                        ->modalDescription('Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.')
+                                        ->modalSubmitActionLabel('Sim, enviar alerta')
                                         ->extraAttributes([
                                             'class' => 'w-full justify-center py-4 text-lg font-bold animate-pulse',
                                         ]),
