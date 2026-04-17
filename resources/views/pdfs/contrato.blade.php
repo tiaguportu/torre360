@@ -243,47 +243,74 @@
         Rio de Janeiro, RJ, {{ date('d') }} de {{ \Carbon\Carbon::now()->translatedFormat('F') }} de {{ date('Y') }}.
     </div>
 
+    @php
+        $assinaturas = [];
+
+        // 1. Pai
+        $assinaturas[] = [
+            'titulo' => 'PAI / CONTRATANTE' . ($pai && $principalRF && $pai->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
+            'nome' => $pai?->nome ?? '________________________________',
+            'documento' => 'CPF: ' . ($pai?->cpf ?? '________________'),
+        ];
+
+        // 2. Mãe
+        $assinaturas[] = [
+            'titulo' => 'MÃE / CONTRATANTE' . ($mae && $principalRF && $mae->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
+            'nome' => $mae?->nome ?? '________________________________',
+            'documento' => 'CPF: ' . ($mae?->cpf ?? '________________'),
+        ];
+
+        // 3. Responsáveis Financeiros (Se houver Terceiros)
+        foreach ($contrato->responsaveisFinanceiros as $rf) {
+            $rfPessoa = $rf->pessoa;
+            if ($rfPessoa && (!$pai || $rfPessoa->id !== $pai->id) && (!$mae || $rfPessoa->id !== $mae->id)) {
+                $assinaturas[] = [
+                    'titulo' => 'RESPONSÁVEL FINANCEIRO (Terceiro)',
+                    'nome' => $rfPessoa->nome,
+                    'documento' => 'CPF: ' . $rfPessoa->cpf,
+                ];
+            }
+        }
+
+        // 4. Representantes Legais da Unidade
+        if ($unidade && $unidade->representantesLegais->isNotEmpty()) {
+            foreach ($unidade->representantesLegais as $rep) {
+                $assinaturas[] = [
+                    'titulo' => 'ESCOLA TORRE DE MARFIM',
+                    'nome' => $rep->nome,
+                    'documento' => $rep->pivot->cargo ?? 'Representante Legal',
+                ];
+            }
+        } else {
+            // Fallback se não houver representante cadastrado
+            $assinaturas[] = [
+                'titulo' => 'ESCOLA TORRE DE MARFIM',
+                'nome' => 'Fumio Wellington Okuno',
+                'documento' => 'Presidente',
+            ];
+        }
+
+        // Dividir as assinaturas em pares para a tabela
+        $chunks = array_chunk($assinaturas, 2);
+    @endphp
+
     <table class="signature-table">
-        <tr>
-            <td>
-                <div class="line"></div>
-                <div class="bold">
-                    PAI / CONTRATANTE
-                    @if($pai && $principalRF && $pai->id === $principalRF->id)
-                        <br>E RESPONSÁVEL FINANCEIRO
-                    @endif
-                </div>
-                <div>{{ $pai?->nome ?? '________________________________' }}</div>
-                <div>CPF: {{ $pai?->cpf ?? '________________' }}</div>
-            </td>
-            <td>
-                <div class="line"></div>
-                <div class="bold">
-                    MÃE / CONTRATANTE
-                    @if($mae && $principalRF && $mae->id === $principalRF->id)
-                        <br>E RESPONSÁVEL FINANCEIRO
-                    @endif
-                </div>
-                <div>{{ $mae?->nome ?? '________________________________' }}</div>
-                <div>CPF: {{ $mae?->cpf ?? '________________' }}</div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                @if($principalRF && (!$pai || $principalRF->id !== $pai->id) && (!$mae || $principalRF->id !== $mae->id))
-                    <div class="line"></div>
-                    <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
-                    <div>{{ $principalRF->nome }}</div>
-                    <div>CPF: {{ $principalRF->cpf }}</div>
+        @foreach($chunks as $chunk)
+            <tr>
+                @foreach($chunk as $assinatura)
+                    <td>
+                        <div class="line"></div>
+                        <div class="bold">{!! $assinatura['titulo'] !!}</div>
+                        <div>{{ $assinatura['nome'] }}</div>
+                        <div>{{ $assinatura['documento'] }}</div>
+                    </td>
+                @endforeach
+                {{-- Preencher com célula vazia se o par estiver incompleto --}}
+                @if(count($chunk) === 1)
+                    <td></td>
                 @endif
-            </td>
-            <td>
-                <div class="line"></div>
-                <div class="bold">ESCOLA TORRE DE MARFIM</div>
-                <div>{{ $representanteUnidade->nome ?? 'Fumio Wellington Okuno' }}</div>
-                <div>{{ $representanteUnidade->pivot->cargo ?? 'Presidente' }}</div>
-            </td>
-        </tr>
+            </tr>
+        @endforeach
     </table>
 
     <div class="footer">
