@@ -158,24 +158,22 @@
             seu Representante, _______
         @endif
         , doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
-        <span class="bold">
-            @if($principalRF)
-                {{ $principalRF->nome }}, {{ $principalRF->nacionalidade?->nome ?? 'brasileiro(a)' }},
-                {{ $principalRF->estado_civil ?? '________________' }}, {{ $principalRF->profissao ?? '________________' }},
-                Identidade: {{ $principalRF->identidade ?? '________________' }}, CPF: {{ $principalRF->cpf }}, residente em
-                @if($principalRF->enderecos->isNotEmpty())
-                    @php 
-                        $end = $principalRF->enderecos->where('tipo', 'residencial')->first() ?? $principalRF->enderecos->first(); 
-                    @endphp
-                    {{ $end->logradouro }}{{ $end->numero ? ', ' . $end->numero : '' }}{{ $end->bairro ? ' - ' . $end->bairro : '' }}
-                    - {{ $end->cidade?->nome }}/{{ $end->cidade?->estado?->sigla }}
-                @else
-                    _______
-                @endif
+        @if($principalRF)
+            {{ $principalRF->nome }}, {{ $principalRF->nacionalidade?->nome ?? 'brasileiro(a)' }},
+            {{ $principalRF->estado_civil ?? '________________' }}, {{ $principalRF->profissao ?? '________________' }},
+            Identidade: {{ $principalRF->identidade ?? '________________' }}, CPF: {{ $principalRF->cpf }}, residente em
+            @if($principalRF->enderecos->isNotEmpty())
+                @php 
+                    $end = $principalRF->enderecos->where('tipo', 'residencial')->first() ?? $principalRF->enderecos->first(); 
+                @endphp
+                {{ $end->logradouro }}{{ $end->numero ? ', ' . $end->numero : '' }}{{ $end->bairro ? ' - ' . $end->bairro : '' }}
+                - {{ $end->cidade?->nome }}/{{ $end->cidade?->estado?->sigla }}
             @else
-                ________
+                _______
             @endif
-        </span>
+        @else
+            ________
+        @endif
         doravante denominado(a) <span class="bold">CONTRATANTE</span>, têm entre si justo e contratado o seguinte:
     </div>
 
