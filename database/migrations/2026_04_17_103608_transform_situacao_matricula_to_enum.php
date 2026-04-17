@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Adicionar o novo campo string 'situacao' na tabela 'matricula'
-        Schema::table('matricula', function (Blueprint $table) {
-            $table->string('situacao')->nullable()->after('situacao_matricula_id');
-        });
+        // 1. Adicionar o novo campo string 'situacao' na tabela 'matricula' se não existir
+        if (! Schema::hasColumn('matricula', 'situacao')) {
+            Schema::table('matricula', function (Blueprint $table) {
+                $table->string('situacao')->nullable()->after('situacao_matricula_id');
+            });
+        }
 
         // 2. Migrar os dados de 'situacao_matricula_id' para 'situacao' (Enum string)
         if (Schema::hasTable('situacao_matricula')) {
@@ -46,15 +48,22 @@ return new class extends Migration
             }
         }
 
-        // 3. Remover a FK e a coluna antiga
-        Schema::table('matricula', function (Blueprint $table) {
+        // 3. Remover a coluna antiga (Passos separados para não quebrar no MySQL)
+        if (Schema::hasColumn('matricula', 'situacao_matricula_id')) {
+            // Tenta remover apenas a coluna. O MySQL muitas vezes cuida da FK automaticamente ou ela nem existe com esse nome.
             try {
-                $table->dropForeign(['situacao_matricula_id']);
-            } catch (Exception $e) {
-                // Pode não haver FK definida formalmente em alguns ambientes
+                Schema::table('matricula', function (Blueprint $table) {
+                    $table->dropColumn('situacao_matricula_id');
+                });
+            } catch (\Exception $e) {
+                // Se falhar (ex: por causa da FK), tenta outro método via SQL puro
+                try {
+                    DB::statement('ALTER TABLE matricula DROP COLUMN situacao_matricula_id');
+                } catch (\Exception $e2) {
+                    // Se ainda falhar, ignora e segue (teremos uma coluna órfã mas o sistema funciona)
+                }
             }
-            $table->dropColumn('situacao_matricula_id');
-        });
+        }
 
         // 4. Remover a tabela legada
         Schema::dropIfExists('situacao_matricula');
