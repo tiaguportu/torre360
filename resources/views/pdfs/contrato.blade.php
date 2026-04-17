@@ -245,23 +245,40 @@
         <tr>
             <td>
                 <div class="line"></div>
-                <div class="bold">PAI / CONTRATANTE</div>
+                <div class="bold">
+                    PAI / CONTRATANTE
+                    @if($pai && $principalRF && $pai->id === $principalRF->id)
+                        <br>E RESPONSÁVEL FINANCEIRO
+                    @endif
+                </div>
                 <div>{{ $pai?->nome ?? '________________________________' }}</div>
                 <div>CPF: {{ $pai?->cpf ?? '________________' }}</div>
             </td>
             <td>
                 <div class="line"></div>
-                <div class="bold">MÃE / CONTRATANTE</div>
+                <div class="bold">
+                    MÃE / CONTRATANTE
+                    @if($mae && $principalRF && $mae->id === $principalRF->id)
+                        <br>E RESPONSÁVEL FINANCEIRO
+                    @endif
+                </div>
                 <div>{{ $mae?->nome ?? '________________________________' }}</div>
                 <div>CPF: {{ $mae?->cpf ?? '________________' }}</div>
             </td>
         </tr>
         <tr>
             <td>
-                <div class="line"></div>
-                <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
-                <div>{{ $principalRF?->nome ?? '________________________________' }}</div>
-                <div>CPF: {{ $principalRF?->cpf ?? '________________' }}</div>
+                @if($principalRF && (!$pai || $principalRF->id !== $pai->id) && (!$mae || $principalRF->id !== $mae->id))
+                    <div class="line"></div>
+                    <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
+                    <div>{{ $principalRF->nome }}</div>
+                    <div>CPF: {{ $principalRF->cpf }}</div>
+                @else
+                    <div class="line"></div>
+                    <div class="bold">RESPONSÁVEL FINANCEIRO (Se Terceiro)</div>
+                    <div>________________________________</div>
+                    <div>CPF: ________________</div>
+                @endif
             </td>
             <td>
                 <div class="line"></div>
