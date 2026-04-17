@@ -313,4 +313,18 @@ As **Unidades** representam os locais físicos da instituição.
 
 ---
 
+## 🛠️ 14. Supervisor de Fila (Queue)
+
+Para garantir que notificações e processos em segundo plano funcionem corretamente, o sistema possui um supervisor no Dashboard principal.
+
+### 14.1 Monitoramento de Status
+- **Worker Ativo (Verde):** Indica que a fila foi processada recentemente (nos últimos 5 minutos).
+- **Worker Parado (Vermelho):** Indica que não houve atividade de fila ultimamente. Se houver "Jobs Pendentes", as notificações do sininho e e-mails podem estar atrasados.
+
+### 14.2 Ações Manuais
+- **Processar Fila Agora:** Caso o worker automático esteja parado, você pode clicar neste botão para forçar o processamento de todos os itens pendentes na hora.
+- **Limpar Fila:** Remove todos os itens pendentes (use apenas se houver erros persistentes ou acúmulo desnecessário).
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

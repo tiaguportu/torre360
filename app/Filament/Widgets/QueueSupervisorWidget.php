@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
+use Filament\Widgets\Widget;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
+class QueueSupervisorWidget extends Widget implements HasActions
+{
+    use HasWidgetShield;
+    use InteractsWithActions;
+
+    protected static string $view = 'filament.widgets.queue-supervisor-widget';
+
+    protected static ?int $sort = -5; // No topo do dashboard
+
+    protected static bool $isLazy = false;
+
+    public function getQueueStatus(): array
+    {
+        $pendingJobs = DB::table('jobs')->count();
+        $failedJobs = DB::table('failed_jobs')->count();
+        $lastRunAt = Cache::get('queue_last_run_at');
+
+        $isRunning = false;
+        if ($lastRunAt) {
+            $isRunning = Carbon::parse($lastRunAt)->diffInMinutes(now()) < 5;
+        }
+
+        return [
+            'pending' => $pendingJobs,
+            'failed' => $failedJobs,
+            'last_run' => $lastRunAt ? Carbon::parse($lastRunAt)->diffForHumans() : 'Nunca',
+            'is_running' => $isRunning,
+        ];
+    }
+
+    public function processQueueAction(): Action
+    {
+        return Action::make('processQueue')
+            ->label('Processar Fila Agora')
+            ->icon('heroicon-m-play')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading('Processar Fila')
+            ->modalDescription('O sistema tentará processar todos os jobs pendentes agora. Isso pode levar alguns segundos dependendo da quantidade.')
+            ->action(function () {
+                try {
+                    // Executa o worker até que a fila esteja vazia
+                    Artisan::call('queue:work', [
+                        '--stop-when-empty' => true,
+                    ]);
+
+                    // Atualiza o heartbeat
+                    Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
+
+                    Notification::make()
+                        ->title('Fila processada com sucesso!')
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    Notification::make()
+                        ->title('Erro ao processar fila')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public function clearQueueAction(): Action
+    {
+        return Action::make('clearQueue')
+            ->label('Limpar Fila')
+            ->icon('heroicon-m-trash')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Limpar todos os Jobs?')
+            ->modalDescription('Isso removerá todas as notificações e processos pendentes permanentemente.')
+            ->action(function () {
+                DB::table('jobs')->truncate();
+
+                Notification::make()
+                    ->title('Fila limpa com sucesso!')
+                    ->warning()
+                    ->send();
+            });
+    }
+}

@@ -8,8 +8,11 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -51,5 +54,9 @@ class AppServiceProvider extends ServiceProvider
             Logout::class,
             LogAuthenticationActivity::class
         );
+
+        Queue::after(function (JobProcessed $event) {
+            Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
+        });
     }
 }
