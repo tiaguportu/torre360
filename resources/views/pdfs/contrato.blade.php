@@ -153,10 +153,11 @@
         n.° 361, Jardim Guanabara, Ilha do Graduador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
         @if($unidade && $unidade->representantesLegais->isNotEmpty())
             @foreach($unidade->representantesLegais as $rep)
-                {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }} {{ $rep->nome }}@endforeach
+                {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }}, {{ $rep->nome }}@endforeach
         @else
-            seu Presidente _______
-        @endif, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
+            seu Representante, _______
+        @endif
+        , doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
         <span class="bold">
             @if($principalRF)
                 {{ $principalRF->nome }}, {{ $principalRF->nacionalidade?->nome ?? 'brasileiro(a)' }},
