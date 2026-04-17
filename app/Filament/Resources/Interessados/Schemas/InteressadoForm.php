@@ -3,7 +3,10 @@
 namespace App\Filament\Resources\Interessados\Schemas;
 
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
+use App\Models\Interessado;
 use App\Models\Pessoa;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -26,6 +29,21 @@ class InteressadoForm
                     ->tabs([
                         Tab::make('Dados do Negócio')
                             ->schema([
+                                Actions::make([
+                                    Action::make('alerta_contato')
+                                        ->label('ATENÇÃO: Este interessado precisa de um novo contato! A data agendada é anterior ao último contato realizado.')
+                                        ->icon('heroicon-m-exclamation-triangle')
+                                        ->color('danger')
+                                        ->badge()
+                                        ->url(fn (Interessado $record) => '#') // Apenas visual ou scroll para histórico
+                                        ->disabled()
+                                        ->extraAttributes([
+                                            'class' => 'w-full justify-center py-4 text-lg font-bold animate-pulse',
+                                        ]),
+                                ])
+                                    ->columnSpanFull()
+                                    ->visible(fn (?Interessado $record) => $record?->precisaDeContato() ?? false),
+
                                 Select::make('pessoa_id')
                                     ->label('Pessoa / Interessado')
                                     ->relationship('pessoa', 'nome')

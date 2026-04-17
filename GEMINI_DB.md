@@ -134,7 +134,21 @@ Estrutura de ensino e turmas.
 
 ## 6. CRM e Prospecção
 ### `interessado`
-- Leads para novos alunos.
+- **Representa:** Leads para novos alunos.
+- **Relacionamentos:** 
+    - BelongsTo `pessoa`.
+    - BelongsTo `status_interessado`.
+    - BelongsTo `origem_interessado`.
+    - HasMany `historico_contato`.
+    - HasOne `ultimoHistorico` (Latest of Many).
+
+### `historico_contato`
+- **Representa:** Registro de cada interação com o interessado (ligação, visita, etc).
+- **Campos Principais:** `relato`, `data_contato`.
+- **Relacionamentos:** BelongsTo `interessado`, BelongsTo `tipo_contato_interessado`.
+
+### `status_interessado` e `origem_interessado`
+- Tabelas de configuração para as etapas do funil e fontes de captação.
 
 ---
 

@@ -46,7 +46,9 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Indicadores Visuais:**
      - **Cores nas Colunas:** Cada etapa possui uma barra de destaque com a cor configurada (Ex: Azul para informativo, Vermelho para crítico).
      - **Contagem:** O topo de cada coluna mostra o número total de interessados naquela etapa.
-     - **Alertas de Data:** As datas de "Próximo Contato" mudam de cor automaticamente no card: **Vermelho** se estiverem atrasadas e **Amarelo** se forem para hoje.
+     - **Alertas de Data:** 
+      - As datas de "Próximo Contato" mudam de cor automaticamente no card: **Vermelho** se estiverem atrasadas (ou se a data agendada for anterior à data atual) e **Amarelo** se forem para hoje.
+      - **Acompanhamento (Follow-up):** Se a data do "Próximo Contato" estiver no passado (atraso) ou for anterior à data do último contato realizado (agendamento desatualizado), o card ganhará uma borda e fundo vermelhos de erro no Kanban, e um botão de alerta em destaque aparecerá na página de edição. O card também exibe no título (tooltip) o resumo do último contato realizado para consulta rápida.
    - **Acesso Rápido:** Clique no ícone de lápis no card para editar as informações completas ou ver o histórico de contatos.
 3. Clique em um card para ver o histórico de contatos e observações.
 

@@ -38,7 +38,7 @@
                                 class="kanban-card-wrapper"
                                 :class="draggingRecordId === {{ $record->id }} ? 'opacity-40' : ''"
                             >
-                                <div class="kanban-card" title="{{ $record->ultimoHistorico ? 'Último Contato (' . $record->ultimoHistorico->created_at->format('d/m/Y') . '): ' . $record->ultimoHistorico->relato : 'Sem histórico de contato registrado' }}">
+                                <div class="kanban-card {{ $record->precisaDeContato() ? 'kanban-card-error' : '' }}" title="{{ $record->ultimoHistorico ? 'Último Contato (' . $record->ultimoHistorico->created_at->format('d/m/Y') . '): ' . $record->ultimoHistorico->relato : 'Sem histórico de contato registrado' }}">
                                     <div class="flex justify-between items-start gap-2 mb-2">
                                         <h4 class="kanban-card-title">{{ $record->pessoa->nome }}</h4>
                                         <a href="{{ $this->getResource()::getUrl('edit', ['record' => $record]) }}" class="kanban-card-edit">
@@ -192,6 +192,16 @@
             background: #22272b;
             border-bottom: 1px solid #333;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .kanban-card-error {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+
+        .dark .kanban-card-error {
+            border-color: #ef4444 !important;
+            background-color: #2c1a1a !important;
         }
 
         .kanban-card:hover {
