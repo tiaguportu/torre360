@@ -38,7 +38,7 @@
                                 class="kanban-card-wrapper"
                                 :class="draggingRecordId === {{ $record->id }} ? 'opacity-40' : ''"
                             >
-                                <div class="kanban-card">
+                                <div class="kanban-card" title="{{ $record->ultimoHistorico ? 'Último Contato (' . $record->ultimoHistorico->created_at->format('d/m/Y') . '): ' . $record->ultimoHistorico->relato : 'Sem histórico de contato registrado' }}">
                                     <div class="flex justify-between items-start gap-2 mb-2">
                                         <h4 class="kanban-card-title">{{ $record->pessoa->nome }}</h4>
                                         <a href="{{ $this->getResource()::getUrl('edit', ['record' => $record]) }}" class="kanban-card-edit">
@@ -46,13 +46,23 @@
                                         </a>
                                     </div>
 
-                                    @if($record->origem)
-                                        <div class="flex items-center gap-1.5 mb-3">
+                                    @php
+                                        $dependentesPorSerie = $record->dependentes->groupBy('serie.nome');
+                                    @endphp
+
+                                    <div class="flex flex-wrap gap-1 mb-3">
+                                        @if($record->origem)
                                             <x-filament::badge color="info" size="sm" class="text-[10px] px-1.5 py-0">
                                                 {{ $record->origem->nome }}
                                             </x-filament::badge>
-                                        </div>
-                                    @endif
+                                        @endif
+
+                                        @foreach($dependentesPorSerie as $serieNome => $dependentes)
+                                            <x-filament::badge color="success" size="sm" class="text-[10px] px-1.5 py-0 border border-success-600/20">
+                                                {{ $dependentes->count() }}x {{ $serieNome ?? 'Série não def.' }}
+                                            </x-filament::badge>
+                                        @endforeach
+                                    </div>
 
                                     <div class="kanban-card-footer">
                                         <div class="flex items-center gap-2">

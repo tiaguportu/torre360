@@ -38,7 +38,7 @@ class KanbanInteressados extends Page
 
     public function getInteressados(): Collection
     {
-        return Interessado::with(['pessoa', 'status', 'origem'])->get();
+        return Interessado::with(['pessoa', 'status', 'origem', 'dependentes.serie', 'ultimoHistorico'])->get();
     }
 
     public function updateRecordStatus($recordId, $statusId): void

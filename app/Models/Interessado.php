@@ -41,4 +41,9 @@ class Interessado extends Model
     {
         return $this->hasMany(HistoricoContato::class);
     }
+
+    public function ultimoHistorico(): BelongsTo
+    {
+        return $this->belongsTo(HistoricoContato::class, 'id', 'interessado_id')->latestOfMany();
+    }
 }
