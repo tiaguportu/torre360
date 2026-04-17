@@ -113,6 +113,8 @@ class InteressadoForm
                                 Select::make('usuario_id')
                                     ->label('Consultor Responsável')
                                     ->relationship('usuario', 'name')
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
                                     ->native(false),
 
