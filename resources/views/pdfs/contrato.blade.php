@@ -118,11 +118,10 @@
                 // Tenta buscar nos 'responsaveis' (many-to-many com pivot tipo_vinculo_id)
                 if (method_exists($mat->pessoa, 'responsaveis')) {
                     foreach ($mat->pessoa->responsaveis as $resp) {
-                        if ($resp->pivot->tipo_vinculo_id == 1) { // 1 = Pai/Mãe (ajustar ID se necessário)
-                            if ($resp->sexo_id == 1 && !$pai)
-                                $pai = $resp;
-                            if ($resp->sexo_id == 2 && !$mae)
-                                $mae = $resp;
+                        if ($resp->pivot->tipo_vinculo_id == 1 && !$pai) {
+                            $pai = $resp;
+                        } elseif ($resp->pivot->tipo_vinculo_id == 2 && !$mae) {
+                            $mae = $resp;
                         }
                     }
                 }
