@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Matriculas\Pages;
 
+use App\Enums\SituacaoDocumento;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\DocumentoInserido;
-use App\Models\SituacaoDocumentoInserido;
 use App\Models\TipoDocumento;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -92,24 +92,16 @@ class DocumentosMatricula extends Page implements HasTable
                         return null;
                     }, shouldOpenInNewTab: true),
 
-                TextColumn::make('situacao')
+                TextColumn::make('status')
                     ->label('Situação')
-                    ->placeholder('Não enviado')
+                    ->placeholder('Pendente de Envio')
                     ->getStateUsing(function (TipoDocumento $record) {
-                        $inserido = DocumentoInserido::where('matricula_id', $this->record->id)
+                        return DocumentoInserido::where('matricula_id', $this->record->id)
                             ->where('tipo_documento_id', $record->id)
-                            ->first();
-
-                        return $inserido?->situacao?->nome ?? 'Pendente de Envio';
+                            ->first()
+                            ?->status;
                     })
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Aprovado' => 'success',
-                        'Recusado' => 'danger',
-                        'Pendente', 'Pendente de Envio' => 'warning',
-                        'Em Análise' => 'info',
-                        default => 'gray',
-                    }),
+                    ->badge(),
 
                 TextColumn::make('inserido_em')
                     ->label('Enviado em')
@@ -215,13 +207,9 @@ class DocumentosMatricula extends Page implements HasTable
                         ];
                     })
                     ->action(function (array $data, TipoDocumento $record) {
-                        $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
-
                         $jaInserido = DocumentoInserido::where('matricula_id', $this->record->id)
                             ->where('tipo_documento_id', $record->id)
                             ->first();
-
-                        $event = $jaInserido ? 'substituir_documento' : 'upload_documento';
 
                         DocumentoInserido::updateOrCreate(
                             [
@@ -232,7 +220,7 @@ class DocumentosMatricula extends Page implements HasTable
                                 'arquivo_path' => $data['arquivo_path'],
                                 'nome_arquivo_original' => $data['nome_arquivo_original'] ?? 'arquivo_enviado',
                                 'hash_arquivo' => $data['hash_arquivo'] ?? null,
-                                'situacao_documento_inserido_id' => $situacaoPendenteId,
+                                'status' => SituacaoDocumento::PENDENTE,
                                 'observacoes' => $data['observacoes'] ?? null,
                                 'updated_at' => now(),
                             ]
@@ -351,7 +339,6 @@ class DocumentosMatricula extends Page implements HasTable
     {
         try {
             $tipoDocumento = TipoDocumento::findOrFail($tipoDocumentoId);
-            $situacaoPendenteId = SituacaoDocumentoInserido::where('nome', 'Pendente')->first()?->id ?? 1;
 
             if (! $this->manualFileUpload) {
                 throw new \Exception('Arquivo não recebido pelo servidor.');
@@ -388,7 +375,7 @@ class DocumentosMatricula extends Page implements HasTable
                     'arquivo_path' => $finalPath,
                     'nome_arquivo_original' => $originalName,
                     'hash_arquivo' => $hash,
-                    'situacao_documento_inserido_id' => $situacaoPendenteId,
+                    'status' => SituacaoDocumento::PENDENTE,
                     'updated_at' => now(),
                 ]
             );
