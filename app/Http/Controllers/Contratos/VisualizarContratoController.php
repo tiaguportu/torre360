@@ -18,6 +18,7 @@ class VisualizarContratoController extends Controller
         return view('contratos.visualizar', [
             'contrato' => $contrato,
             'matricula' => $matricula,
+            'matriculas' => $contrato->matriculas,
             'aluno' => $aluno,
             'responsavel' => $responsavel,
             'serie' => $matricula?->turma?->serie,
