@@ -62,7 +62,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['turma.serie.curso.documentos', 'documentoInseridos', 'pessoa', 'situacaoMatricula']);
+            ->with(['turma.serie.curso.documentos', 'documentoInseridos', 'pessoa']);
 
         $user = auth()->user();
 
