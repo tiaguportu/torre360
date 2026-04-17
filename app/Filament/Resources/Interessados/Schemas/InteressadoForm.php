@@ -14,6 +14,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Tabs;
@@ -52,7 +53,7 @@ class InteressadoForm
                                                     ->icon('heroicon-o-exclamation-triangle')
                                                     ->color('danger')
                                                     ->actions([
-                                                        Action::make('view')
+                                                        NotificationAction::make('view')
                                                             ->label('Ver Interessado')
                                                             ->url(InteressadoResource::getUrl('edit', ['record' => $record]))
                                                             ->button(),
