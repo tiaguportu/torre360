@@ -26,7 +26,19 @@ class AlunosPorTurmaChart extends ChartWidget
                     ],
                 ],
             ],
-            'labels' => $data->pluck('nome')->toArray(),
+            'labels' => $data->map(fn (Turma $t) => "{$t->nome} ({$t->matriculas_count})")->toArray(),
+        ];
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => true,
+                    'position' => 'bottom',
+                ],
+            ],
         ];
     }
 
