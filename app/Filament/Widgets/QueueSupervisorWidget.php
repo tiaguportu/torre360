@@ -21,9 +21,9 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
     use InteractsWithActions;
     use InteractsWithForms;
 
-    protected ?int $sort = -5;
+    protected static ?int $sort = -5;
 
-    protected bool $isLazy = false;
+    protected static bool $isLazy = false;
 
     public function getView(): string
     {
