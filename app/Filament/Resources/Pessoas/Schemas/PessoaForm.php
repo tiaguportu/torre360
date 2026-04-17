@@ -11,6 +11,13 @@ use Filament\Schemas\Schema;
 
 class PessoaForm
 {
+    protected static ?int $brasilId = null;
+
+    protected static function getBrasilId(): ?int
+    {
+        return self::$brasilId ??= Pais::where('nome', 'Brasil')->value('id');
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -31,7 +38,7 @@ class PessoaForm
 
                 Select::make('nacionalidade_id')
                     ->relationship('nacionalidade', 'nome', fn ($query) => $query->whereNotNull('nome'))
-                    ->default(fn () => Pais::where('nome', 'Brasil')->value('id'))
+                    ->default(fn () => self::getBrasilId())
                     ->getOptionLabelFromRecordUsing(fn ($record) => ($record->sigla ? mb_convert_encoding('&#'.(127397 + ord(strtoupper($record->sigla[0]))).';&#'.(127397 + ord(strtoupper($record->sigla[1]))).';', 'UTF-8', 'HTML-ENTITIES').' ' : '').$record->nome
                     )
                     ->live()
@@ -44,7 +51,7 @@ class PessoaForm
                     ->searchable()
                     ->preload()
                     ->visible(fn ($get) => $get('nacionalidade_id') &&
-                        $get('nacionalidade_id') == Pais::where('nome', 'Brasil')->value('id')
+                        $get('nacionalidade_id') == self::getBrasilId()
                     ),
 
                 TextInput::make('cpf')
