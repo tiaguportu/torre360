@@ -20,6 +20,8 @@ class RepresentantesLegaisRelationManager extends RelationManager
 {
     protected static string $relationship = 'representantesLegais';
 
+    protected static ?string $inverseRelationship = 'unidadesRepresentadas';
+
     public function form(Schema $schema): Schema
     {
         return $schema
