@@ -6,6 +6,8 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
@@ -13,16 +15,20 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-class QueueSupervisorWidget extends Widget implements HasActions
+class QueueSupervisorWidget extends Widget implements HasActions, HasForms
 {
     use HasWidgetShield;
     use InteractsWithActions;
+    use InteractsWithForms;
 
-    protected string $view = 'filament.widgets.queue-supervisor-widget';
+    protected ?int $sort = -5;
 
-    protected static ?int $sort = -5; // No topo do dashboard
+    protected bool $isLazy = false;
 
-    protected static bool $isLazy = false;
+    public function getView(): string
+    {
+        return 'filament.widgets.queue-supervisor-widget';
+    }
 
     public function getQueueStatus(): array
     {
