@@ -9,7 +9,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
 
 class ContratoForm
 {
@@ -59,7 +58,7 @@ class ContratoForm
                     ->relationship('responsaveisFinanceiros')
                     ->schema([
                         Select::make('pessoa_id')
-                            ->relationship('pessoa', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereHas('users', fn ($q) => $q->role('responsavel')))
+                            ->relationship('pessoa', 'nome')
                             ->searchable()
                             ->preload()
                             ->required()
