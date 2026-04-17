@@ -38,9 +38,16 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 O módulo de CRM permite gerenciar o processo de captação de novos alunos antes mesmo da matrícula.
 
-### 3.1 Kanban de Interessados
+### 3.1 Kanban de Interessados (Estilo Trello)
 1. Vá em **CRM → Interessados**.
-2. Utilize a visualização em **Cards/Kanban** para arrastar interessados entre as etapas (ex: *Novo Contato*, *Agendamento*, *Visita Realizada*, *Matrícula em Andamento*).
+2. Utilize a visualização em **Funil de Vendas (CRM)**:
+   - **Interface:** O layout é inspirado no Trello, com colunas coloridas que facilitam a distinção visual entre as etapas do funil (ex: *Novo Contato*, *Agendamento*, *Matrícula*).
+   - **Drag & Drop:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real.
+   - **Indicadores Visuais:**
+     - **Cores nas Colunas:** Cada etapa possui uma barra de destaque com a cor configurada (Ex: Azul para informativo, Vermelho para crítico).
+     - **Contagem:** O topo de cada coluna mostra o número total de interessados naquela etapa.
+     - **Alertas de Data:** As datas de "Próximo Contato" mudam de cor automaticamente no card: **Vermelho** se estiverem atrasadas e **Amarelo** se forem para hoje.
+   - **Acesso Rápido:** Clique no ícone de lápis no card para editar as informações completas ou ver o histórico de contatos.
 3. Clique em um card para ver o histórico de contatos e observações.
 
 ### 3.2 Registro de Histórico de Contato
