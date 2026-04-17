@@ -14,8 +14,16 @@ class EnderecosTable
     {
         return $table
             ->columns([
+                TextColumn::make('tipo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'residencial' => 'info',
+                        'comercial' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
                 TextColumn::make('cidade.nome')
-
                     ->sortable(),
                 TextColumn::make('logradouro')
                     ->searchable(),

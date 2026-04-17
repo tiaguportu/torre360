@@ -25,6 +25,13 @@ class EnderecoRelationManager extends RelationManager
     {
         return $schema
             ->components([
+                Select::make('tipo')
+                    ->options([
+                        'residencial' => 'Residencial',
+                        'comercial' => 'Comercial',
+                    ])
+                    ->default('residencial')
+                    ->required(),
                 Select::make('cidade_id')
                     ->relationship('cidade', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->searchable()
@@ -48,6 +55,15 @@ class EnderecoRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('logradouro')
             ->columns([
+                TextColumn::make('tipo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'residencial' => 'info',
+                        'comercial' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
                 TextColumn::make('logradouro')
                     ->searchable(),
                 TextColumn::make('numero'),

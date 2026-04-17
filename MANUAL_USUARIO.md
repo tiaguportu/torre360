@@ -56,7 +56,7 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 ### 4.1 Cadastro de Pessoa
 1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento, **Identidade (RG)**, **Profissão** e **Estado Civil**).
 2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo.
-3. **Endereços:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa (ex: Residencial, Comercial).
+3. **Endereços:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa, definindo obrigatoriamente o **Tipo** (ex: Residencial ou Comercial).
 4. **Foto:** Use o editor integrado para ajustar a foto de perfil.
 
 ---

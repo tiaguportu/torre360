@@ -50,6 +50,23 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
     - HasMany `matriculas`.
 
+### `endereco`
+- **Representa:** Localização física de pessoas ou unidades.
+- **Campos Principais:**
+    - `tipo`: Enum ('residencial', 'comercial'). Define a natureza do endereço.
+    - `logradouro`: Nome da rua/avenida.
+    - `numero`: Número do imóvel.
+    - `bairro`: Bairro.
+    - `cidade_id`: BelongsTo `cidade`.
+    - `cep`: Código postal.
+- **Relacionamentos:**
+    - BelongsToMany `pessoa` (via `endereco_pessoa`).
+    - HasMany `unidade`.
+
+### `endereco_pessoa`
+- **Representa:** Tabela pivô entre pessoas e endereços.
+- **Campos:** `pessoa_id`, `endereco_id`.
+
 ---
 
 ## 3. Gestão Acadêmica
