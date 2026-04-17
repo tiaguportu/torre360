@@ -25,7 +25,7 @@
         $url = $path->temporaryUrl();
         $extension = strtolower($path->getClientOriginalExtension());
     } else {
-        $url = \Illuminate\Support\Facades\Storage::disk('local')->url($path);
+        $url = route('documentos.visualizar', ['path' => $path]);
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     }
 
