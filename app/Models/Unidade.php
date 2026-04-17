@@ -25,6 +25,6 @@ class Unidade extends Model
 
     public function representantesLegais(): BelongsToMany
     {
-        return $this->belongsToMany(Pessoa::class, 'representante_unidade', 'unidade_id', 'pessoa_id')->withTimestamps();
+        return $this->belongsToMany(Pessoa::class, 'representante_unidade', 'unidade_id', 'pessoa_id')->withPivot('cargo')->withTimestamps();
     }
 }
