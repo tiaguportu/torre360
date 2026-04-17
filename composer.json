@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "amidesfahani/filament-tinyeditor": "^4.0",
         "barryvdh/laravel-dompdf": "*",
         "bezhansalleh/filament-shield": "^4.2",
         "filament/filament": "^5.4",

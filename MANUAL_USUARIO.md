@@ -327,4 +327,21 @@ Para garantir que notificações e processos em segundo plano funcionem corretam
 
 ---
 
+## 📝 15. Editor de Texto (Estilo Office)
+
+O sistema agora conta com um editor de texto avançado em campos de observações e conteúdos longos, oferecendo uma experiência similar a processadores de texto como o **LibreOffice** ou **Word**.
+
+### 15.1 Recursos Disponíveis
+- **Barra de Menus:** No topo do editor, você encontra menus familiares (Arquivo, Editar, Inserir, Formatar, Tabela, Ferramentas).
+- **Formatação Completa:** Alteração de fontes (ex: Arial, Tahoma), tamanhos de letra, cores de texto e de fundo.
+- **Tabelas:** Inserção e edição detalhada de tabelas, bordas e células.
+- **Mídia:** Suporte para inserção de links, âncoras e imagens.
+- **Visualização:** Opções de tela cheia (Fullscreen) e pré-visualização do conteúdo.
+
+### 15.2 Dicas de Uso
+- Para liberar mais espaço, utilize o ícone de **Tela Cheia** na barra de ferramentas.
+- O editor salva o conteúdo automaticamente no formulário do sistema ao clicar em "Salvar" ou "Criar".
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

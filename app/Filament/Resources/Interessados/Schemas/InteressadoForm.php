@@ -12,7 +12,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
+use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification as FilamentNotification;
 use Filament\Schemas\Components\Actions;
@@ -138,8 +138,10 @@ class InteressadoForm
                                     ->label('Próximo Contato')
                                     ->native(false),
 
-                                Textarea::make('observacoes')
+                                TinyEditor::make('observacoes')
                                     ->label('Observações')
+                                    ->showMenuBar()
+                                    ->profile('full')
                                     ->columnSpanFull(),
                             ])->columns(2),
 
