@@ -12,7 +12,7 @@ use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Sexo;
-use App\Models\SituacaoMatricula;
+use App\Enums\SituacaoMatricula;
 use App\Models\Turma;
 use App\Models\Unidade;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -291,7 +291,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             $matricula = Matricula::create([
                 'pessoa_id' => $aluno->id,
                 'turma_id' => $raw['turma_id'],
-                'situacao_matricula_id' => SituacaoMatricula::first()->id ?? 1, // Ativa por padrão
+                'situacao' => SituacaoMatricula::ATIVA,
                 'data_matricula' => now(),
             ]);
 

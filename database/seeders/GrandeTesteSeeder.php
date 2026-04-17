@@ -16,7 +16,7 @@ use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Serie;
 use App\Models\Sexo;
-use App\Models\SituacaoMatricula;
+use App\Enums\SituacaoMatricula;
 use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
@@ -34,7 +34,6 @@ class GrandeTesteSeeder extends Seeder
         $sexoM = Sexo::firstOrCreate(['nome' => 'Masculino'], ['sigla' => 'M']);
         $sexoF = Sexo::firstOrCreate(['nome' => 'Feminino'], ['sigla' => 'F']);
         $corRaca = CorRaca::firstOrCreate(['nome' => 'Branca']);
-        $situacaoAtiva = SituacaoMatricula::firstOrCreate(['nome' => 'Ativa']);
         $turnoManha = Turno::firstOrCreate(['nome' => 'Manhã']);
         $unidade = Unidade::firstOrCreate(['nome' => 'Unidade Central']);
 
@@ -147,7 +146,7 @@ class GrandeTesteSeeder extends Seeder
                     $matricula = Matricula::create([
                         'pessoa_id' => $aluno->id,
                         'turma_id' => $turmaId,
-                        'situacao_matricula_id' => $situacaoAtiva->id,
+                        'situacao' => SituacaoMatricula::ATIVA,
                         'data_matricula' => now(),
                     ]);
 

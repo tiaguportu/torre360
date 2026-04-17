@@ -33,16 +33,9 @@ class MatriculasRelationManager extends RelationManager
                     ->label('Turma')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('situacaoMatricula.nome')
+                TextColumn::make('situacao')
                     ->label('Situação')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Ativa' => 'success',
-                        'Inativa' => 'danger',
-                        'Cancelada' => 'warning',
-                        'Trancada' => 'gray',
-                        default => 'gray',
-                    })
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Data Matrícula')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas\Pages;
 
+use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
 use App\Models\Pessoa;
@@ -45,9 +46,9 @@ class ListMatriculas extends ListRecords
                             ->toArray()
                         )
                         ->required(),
-                    Select::make('situacao_matricula_id')
+                    Select::make('situacao')
                         ->label('Situação')
-                        ->relationship('situacaoMatricula', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                        ->options(SituacaoMatricula::class)
                         ->required()
                         ->searchable()
                         ->preload(),
@@ -57,7 +58,7 @@ class ListMatriculas extends ListRecords
                         Matricula::create([
                             'pessoa_id' => $pessoaId,
                             'turma_id' => $data['turma_id'],
-                            'situacao_matricula_id' => $data['situacao_matricula_id'],
+                            'situacao' => $data['situacao'],
                         ]);
                     }
                 })
