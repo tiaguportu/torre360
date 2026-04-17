@@ -127,7 +127,7 @@ O sistema é integrado à plataforma **Assinafy** para assinatura digital de con
 3. **Múltiplos Signatários:** Se o contrato possuir mais de um Responsável Financeiro vinculado (com usuário cadastrado no sistema), **todos** receberão um convite de assinatura por e-mail automaticamente.
 4. O texto do contrato exibe automaticamente:
    - **Todos os alunos** do contrato (nome e CPF).
-   - **Todos os responsáveis financeiros** como CONTRATANTE.
+   - **Todos os responsáveis financeiros** como CONTRATANTE. Seu endereço residencial será exibido prioritariamente; caso não possua, o sistema utilizará o primeiro endereço comercial vinculado.
    - O **valor total** e o **número de parcelas** com valor estimado por parcela.
 5. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
 6. Para baixar o documento com as assinaturas digitais, acesse a visualização do contrato e clique em **Baixar Contrato Assinado**.

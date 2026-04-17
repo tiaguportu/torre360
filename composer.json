@@ -19,6 +19,7 @@
         "tapp/filament-progress-bar-column": "^1.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^4.2",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^2.4",
         "laravel/pail": "^1.2.2",
