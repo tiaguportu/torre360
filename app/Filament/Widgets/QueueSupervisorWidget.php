@@ -21,14 +21,11 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
     use InteractsWithActions;
     use InteractsWithForms;
 
+    protected string $view = 'filament.widgets.queue-supervisor-widget';
+
     protected static ?int $sort = -5;
 
     protected static bool $isLazy = false;
-
-    public function getView(): string
-    {
-        return 'filament.widgets.queue-supervisor-widget';
-    }
 
     public function getQueueStatus(): array
     {
