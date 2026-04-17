@@ -162,7 +162,7 @@
             @php $p = $rf->pessoa; @endphp
             @if($p)
                 {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}
-                <span class="bold">{{ $p->nome }}</span>, {{ $p->nacionalidade?->nome ?? 'brasileiro(a)' }},
+                {{ $p->nome }}, {{ $p->nacionalidade?->nome ?? 'brasileiro(a)' }},
                 {{ $p->estado_civil ?? '________________' }}, {{ $p->profissao ?? '________________' }},
                 Identidade: {{ $p->identidade ?? '________________' }}, CPF: {{ $p->cpf }}, residente em
                 @if($p->enderecos->isNotEmpty())

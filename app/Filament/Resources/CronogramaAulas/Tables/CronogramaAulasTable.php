@@ -32,10 +32,7 @@ class CronogramaAulasTable
     {
         return $table
             ->columns([
-                TextColumn::make('periodoLetivo.nome')
-                    ->label('Período Letivo')
-                    ->sortable()
-                    ->searchable(),
+
                 TextColumn::make('turma.nome')
                     ->label('Turma')
                     ->sortable(),
