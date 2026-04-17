@@ -130,6 +130,9 @@
 
         // Responsável Financeiro Principal
         $principalRF = $contrato->responsaveisFinanceiros->first()?->pessoa;
+
+        // Representante Legal da Unidade
+        $representanteUnidade = $unidade?->representantesLegais->first();
     @endphp
 
     <div class="header">
@@ -148,7 +151,7 @@
         associação de caráter educativo, sem fins lucrativos e com fins não econômicos, tendo como entidade mantenedora
         a ASSOCIAÇÃO FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE, CNPJ 56.729.131/0001-69, localizado a Rua Gaspar Magalhães,
         n.° 361, Jardim Guanabara, Ilha do Governador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
-        seu Presidente Fumio Wellington Okuno, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
+        seu {{ $representanteUnidade->pivot->cargo ?? 'Presidente' }} {{ $representanteUnidade->nome ?? 'Fumio Wellington Okuno' }}, doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
         <span class="bold">
             @if($principalRF)
                 {{ $principalRF->nome }}, {{ $principalRF->nacionalidade?->nome ?? 'brasileiro(a)' }},
@@ -277,8 +280,8 @@
             <td>
                 <div class="line"></div>
                 <div class="bold">ESCOLA TORRE DE MARFIM</div>
-                <div>Fumio Wellington Okuno</div>
-                <div>Presidente</div>
+                <div>{{ $representanteUnidade->nome ?? 'Fumio Wellington Okuno' }}</div>
+                <div>{{ $representanteUnidade->pivot->cargo ?? 'Presidente' }}</div>
             </td>
         </tr>
     </table>
