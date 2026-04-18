@@ -52,4 +52,9 @@ class Turma extends Model
     {
         return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_turma');
     }
+
+    public function habilidades(): BelongsToMany
+    {
+        return $this->belongsToMany(Habilidade::class, 'turma_habilidade');
+    }
 }

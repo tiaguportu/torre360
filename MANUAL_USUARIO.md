@@ -125,6 +125,16 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. Para facilitar a identificação, a coluna **Matrícula** segue o padrão: `Turma - Período Escolar - Nome do Aluno`.
 3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
 
+### 5.5 Avaliação de Habilidades (BNCC)
+O sistema permite avaliar competências e habilidades específicas para cada turma, em conformidade com a BNCC ou padrões institucionais.
+1. **Cadastro de Habilidades:** Vá em **Acadêmico → Habilidades**. Aqui você pode cadastrar o código (ex: EF01LP01), o nome e a descrição da habilidade.
+2. **Vinculando à Turma:** No cadastro de **Turmas**, acesse a aba **Habilidades**. Utilize o botão **Anexar** para escolher quais habilidades serão trabalhadas e avaliadas naquela turma específica.
+3. **Lançamento de Avaliações:** 
+   - Na listagem de **Turmas**, localize a turma desejada e clique na ação **Avaliar Habilidades** (ícone de estrela amarela). 
+   - No formulário que abrir, selecione a **Etapa Avaliativa** (ex: 1º Bimestre) e a **Habilidade**. 
+   - O sistema listará automaticamente todos os alunos ativos da turma. Basta selecionar o **Conceito** (Pleno, Básico, etc.) e adicionar observações se necessário.
+   - Clique em **Salvar Avaliações** para registrar o desempenho de todos os alunos de uma só vez.
+
 ### 5.6 Configuração de Disciplinas e Ordenação no Boletim
 1. Vá em **Acadêmico → Disciplinas**.
 2. No cadastro da disciplina, utilize o campo **Ordem no Boletim**.

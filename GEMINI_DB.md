@@ -110,7 +110,19 @@ Estrutura de ensino e turmas.
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das categorias de avaliação no boletim.
 
 ### `avaliacao` e `nota`
-- Registro acadêmico de desempenho.
+- Registro acadêmico de desempenho convencional (notas numéricas).
+
+### `habilidades`
+- **Representa:** Banco de competências e habilidades (BNCC ou Institucionais).
+- **Campos Principais:** `codigo` (BNCC), `nome`, `tipo` (Enum: BNCC, Institucional), `disciplina_id` (BelongsTo).
+
+### `turma_habilidade`
+- **Representa:** Tabela pivô que define quais habilidades serão avaliadas em uma turma específica.
+- **Campos:** `turma_id`, `habilidade_id`.
+
+### `avaliacao_habilidades`
+- **Representa:** Registro do desempenho do aluno em uma habilidade específica por etapa.
+- **Campos Principais:** `matricula_id`, `habilidade_id`, `etapa_avaliativa_id`, `conceito`, `observacao`.
 
 ### `cronograma_aula` e `frequencia_escolar`
 - Registro de aulas e presença.

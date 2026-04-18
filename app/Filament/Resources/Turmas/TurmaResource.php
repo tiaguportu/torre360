@@ -70,6 +70,7 @@ class TurmaResource extends Resource
     {
         return [
             MatriculasRelationManager::class,
+            HabilidadesRelationManager::class,
         ];
     }
 
