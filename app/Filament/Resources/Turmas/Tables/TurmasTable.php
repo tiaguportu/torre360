@@ -74,7 +74,12 @@ class TurmasTable
                                     ->afterStateUpdated(fn (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
                                 Select::make('habilidade_id')
                                     ->label('Habilidade')
-                                    ->options(fn (Turma $record) => $record->habilidades->pluck('nome', 'id'))
+                                    ->options(function (Turma $record) {
+                                        if (!Schema::hasTable('turma_habilidade')) {
+                                            return [];
+                                        }
+                                        return $record->habilidades->pluck('nome', 'id');
+                                    })
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(fn (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
