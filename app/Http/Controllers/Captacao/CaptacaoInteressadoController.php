@@ -10,8 +10,11 @@ use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
-use App\Models\Turma;
 use App\Models\Unidade;
+use App\Models\User;
+use App\Filament\Resources\Interessados\InteressadoResource;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -117,7 +120,38 @@ class CaptacaoInteressadoController extends Controller
         $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
         $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId ?? $validated['unidade_id'] ?? null);
 
+        // Notifica equipe interna
+        $this->notificarEquipeInterna($interessado, $pessoa);
+
         return redirect()->route('captacao.interessado.sucesso');
+    }
+
+    /**
+     * Notifica a equipe administrativa sobre o novo lead
+     */
+    private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa): void
+    {
+        // Busca usuários que devem receber a notificação (exceto perfis restritos)
+        $destinatarios = User::whereDoesntHave('roles', function ($query) {
+            $query->whereIn('name', ['professor', 'responsavel', 'aluno']);
+        })->get();
+
+        if ($destinatarios->isEmpty()) {
+            return;
+        }
+
+        Notification::make()
+            ->title('Novo Interessado Cadastrado!')
+            ->body("**{$pessoa->nome}** acaba de preencher o formulário de interesse via site.")
+            ->icon('heroicon-o-user-plus')
+            ->color('success')
+            ->actions([
+                Action::make('view')
+                    ->label('Ver Leads')
+                    ->url(InteressadoResource::getUrl('index'))
+                    ->button(),
+            ])
+            ->sendToDatabase($destinatarios);
     }
 
     /**
