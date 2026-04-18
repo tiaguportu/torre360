@@ -56,12 +56,27 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contato**.
 2. Registre cada ligação, e-mail ou visita, definindo o tipo de contato e o relato do que foi conversado.
 
-### 3.3 Alertas de Acompanhamento (Follow-up)
-1. **Identificação Visual:** Quando um interessado precisa de contato urgente (atraso ou agendamento desatualizado), um botão vermelho e pulsante aparecerá no topo do formulário de edição.
-2. **Notificar Consultor:** Clique neste botão de alerta para disparar notificações automáticas.
-3. **Canais de Alerta:** O sistema enviará simultaneamente:
-   - Um **E-mail** detalhado para o Consultor Responsável com o link direto para o interessado.
-   - Uma **Notificação no Sininho** do sistema, que fica registrada no histórico do usuário.
+### 3.3 Alertas e Notificações em Tempo Real
+1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos (exceto perfis de Professor ou Aluno/Responsável) recebem um alerta instantâneo no sininho do sistema.
+2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde dinâmico com a quantidade total de novos interessados que ainda não foram atendidos (status "Novo").
+3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para que você possa alertar o consultor responsável por e-mail e sistema.
+
+### 3.4 Registro de Vínculo
+O sistema permite registrar o grau de parentesco do interessado principal com o(s) aluno(s):
+- **Opções:** Pai, Mãe, Parente, Tutor ou Próprio Aluno.
+- **Flexibilidade:** Ao cadastrar múltiplos alunos para o mesmo interessado, você pode definir um vínculo específico para cada uma das crianças.
+- **Onde Ver:** Os vínculos são exibidos tanto nos dados do negócio quanto na aba de dependentes do cadastro do interessado.
+
+---
+
+## 📍 13. Gestão de Unidades e Canais Digitais
+
+### 13.1 Redes Sociais e Contato
+No cadastro de cada unidade (**Localização e Cadastros → Unidades**), é possível configurar canais de comunicação exclusivos:
+- **WhatsApp, Instagram, Facebook e YouTube:** Links diretos que serão utilizados na personalização do site e nos e-mails automáticos.
+- **Impacto:** Se uma unidade não possui redes sociais cadastradas, o sistema omite automaticamente essas informações nas comunicações para manter o layout limpo.
+
+### 13.2 Representantes Legais
 4. **Confirmação:** O sistema solicitará sua confirmação antes de enviar o alerta.
 
 ---
@@ -390,15 +405,23 @@ O Torre360 disponibiliza um formulário público que pode ser integrado ou divul
 - Ele possui um design moderno, dividido em etapas guiadas para preenchimento ágil.
 - O preenchimento está disponível para duas situações: o próprio aluno interessado, ou um responsável (pai/mãe/tutor) interessado em inscrever um aluno menor.
 
-### 17.2 Dados Coletados
+### 17.2 Preenchimento Ágil e Múltiplos Alunos
 1. **Dados de Contato:** Coleta dos dados primários (Nome, E-mail, WhatsApp, CPF) de quem está preenchendo o formulário.
-2. **Dados do Aluno:** Nome da criança/adolescente, data de nascimento e, no caso de responsáveis, o vínculo entre eles.
-3. **Preferências (Opcional):** O formulário lista dinamicamente as **Unidades ativas** e as **Turmas com vagas abertas**, permitindo ao usuário manifestar sua preferência de série, turno ou unidade.
-4. **Origem:** Salva automaticamente a resposta de "Como nos conheceu?" nas notas.
+2. **Repetidor de Alunos:** O formulário permite adicionar **vários alunos** na mesma inscrição. Basta clicar em **"+ Adicionar outro aluno"**. Isso é ideal para famílias com mais de um filho.
+3. **Dados Individuais:** Para cada aluno, é possível informar nome completo, data de nascimento, série/turma de interesse e unidade de preferência individualmente.
+4. **Vínculo por Aluno:** Informe se o interessado é pai, mãe, parente ou tutor de cada criança cadastrada.
+5. **Origem:** O sistema registra automaticamente como o usuário conheceu a escola com base na opção selecionada.
 
-### 17.3 Integração com CRM
-- As informações submetidas alimentam automaticamente a tela **CRM → Interessados** já entrando com o status `Novo`.
+### 17.3 Automação de E-mail de Agradecimento
+Após a finalização bem-sucedida, o sistema dispara um e-mail automático para o interessado:
+- **Personalização:** O assunto e o texto focam na **Unidade Escolhida** (ex: "Recebemos seu interesse - Unidade Centro").
+- **Canais Digitais:** O e-mail inclui links diretos para as redes sociais (Instagram, Facebook, YouTube) configuradas para aquela unidade.
+- **Auditória:** Cada e-mail enviado é registrado no sistema (**Sistema → E-mails Enviados**) para fins de conferência e auditoria.
+
+### 17.4 Integração com CRM
+- As informações submetidas alimentam automaticamente a tela **CRM → Interessados / Leads** já entrando com o status `Novo`.
 - O histórico e preferências ficam salvos no cadastro para facilitar a abordagem consultiva pela equipe de vendas.
+- Uma notificação via "Sininho" é disparada para todos os colaboradores administrativos do sistema informando a chegada do novo lead.
 
 ### 17.4 Proteção Contra Bot (reCAPTCHA)
 Para garantir que seu e-mail e painel não sejam inundados de SPAM, a página utiliza proteção invisível **Google reCAPTCHA v3**.
