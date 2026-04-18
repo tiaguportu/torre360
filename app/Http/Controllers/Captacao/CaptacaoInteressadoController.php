@@ -169,8 +169,15 @@ class CaptacaoInteressadoController extends Controller
         $token = $request->input('recaptcha_token');
 
         if (empty($token)) {
-            \Log::warning('reCAPTCHA falhou: Token ausente no request');
-            abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
+            // Se as chaves NÃO estão configuradas, apenas logamos e deixamos passar.
+            // Se as chaves ESTÃO configuradas e o token faltou, aí sim é um erro.
+            if (!empty($siteKey) && !empty($secret)) {
+                \Log::warning('reCAPTCHA falhou: Token ausente no request com chaves configuradas');
+                abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
+            }
+            
+            \Log::info('reCAPTCHA ignorado: Token ausente e chaves não configuradas');
+            return;
         }
 
         try {
