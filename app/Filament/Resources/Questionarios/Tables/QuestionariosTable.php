@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Questionarios\Tables;
 
+use App\Filament\Resources\Questionarios\QuestionarioResource;
+use App\Models\Questionario;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -47,6 +50,12 @@ class QuestionariosTable
                 //
             ])
             ->recordActions([
+                Action::make('responder')
+                    ->label('Responder')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('success')
+                    ->url(fn (Questionario $record): string => QuestionarioResource::getUrl('responder', ['record' => $record]))
+                    ->visible(fn (Questionario $record): bool => $record->is_ativo),
                 ViewAction::make(),
                 EditAction::make(),
             ])

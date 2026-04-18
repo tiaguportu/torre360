@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Questionarios;
 use App\Filament\Resources\Questionarios\Pages\CreateQuestionario;
 use App\Filament\Resources\Questionarios\Pages\EditQuestionario;
 use App\Filament\Resources\Questionarios\Pages\ListQuestionarios;
+use App\Filament\Resources\Questionarios\Pages\ResponderQuestionario;
 use App\Filament\Resources\Questionarios\Pages\ViewQuestionario;
 use App\Filament\Resources\Questionarios\Schemas\QuestionarioForm;
 use App\Filament\Resources\Questionarios\Schemas\QuestionarioInfolist;
@@ -77,6 +78,7 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
             'create' => CreateQuestionario::route('/create'),
             'view' => ViewQuestionario::route('/{record}'),
             'edit' => EditQuestionario::route('/{record}/edit'),
+            'responder' => ResponderQuestionario::route('/{record}/responder'),
         ];
     }
 }
