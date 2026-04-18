@@ -38,6 +38,18 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $modelLabel = 'Interessado';
 
+    protected static ?string $navigationLabel = 'Interessados / Leads';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('status_interessado_id', 1)->count() ?: null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'success';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return InteressadoForm::configure($schema);
