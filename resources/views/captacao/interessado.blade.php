@@ -3,8 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Manifeste seu interesse em matricular seu filho(a) em nossa escola. Preencha o formulário e nossa equipe entrará em contato.">
-    <title>Quero uma Vaga – Inscrição de Interesse</title>
+    <meta name="description" content="Manifeste seu interesse em matricular seu filho(a) no Torre360. Excelência em educação e gestão.">
+    
+    {{-- Open Graph / WhatsApp --}}
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="Torre360 - Quero uma Vaga">
+    <meta property="og:description" content="Manifeste seu interesse em matricular seu filho(a) em nossa escola. Preencha o formulário e nossa equipe entrará em contato.">
+    <meta property="og:image" content="{{ asset('img/hero-captacao.png') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <title>Quero uma Vaga – Inscrição de Interesse | Torre360</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,8 +60,10 @@
         /* ── HERO ── */
         .hero {
             width: 100%;
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
-            padding: 64px 24px 80px;
+            background: linear-gradient(rgba(79, 70, 229, 0.85), rgba(55, 48, 163, 0.9)), url('{{ asset("img/hero-captacao.png") }}');
+            background-size: cover;
+            background-position: center;
+            padding: 80px 24px 100px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -61,20 +73,15 @@
             content: '';
             position: absolute;
             inset: 0;
-            background:
-                radial-gradient(ellipse 900px 500px at 20% 10%, rgba(255,255,255,.15) 0%, transparent 70%),
-                radial-gradient(ellipse 600px 400px at 80% 80%, rgba(255,255,255,.1) 0%, transparent 70%);
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
         }
-        .hero-icon {
-            width: 72px; height: 72px;
-            background: #fff;
-            border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 36px;
-            box-shadow: 0 8px 32px rgba(0,0,0,.15);
+        .hero-logo {
+            max-width: 220px;
+            height: auto;
+            margin-bottom: 24px;
             position: relative;
-            animation: float 3s ease-in-out infinite;
+            z-index: 2;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
         }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 
@@ -397,7 +404,7 @@
 
     {{-- ── HERO ── --}}
     <header class="hero">
-        <div class="hero-icon">🎓</div>
+        <img src="{{ asset('logo-adaptative.svg') }}" alt="Torre360 Logo" class="hero-logo">
         <h1>Manifeste seu Interesse</h1>
         <p>Preencha o formulário e nossa equipe entrará em contato para agendar uma visita.</p>
     </header>
