@@ -8,10 +8,11 @@
     {{-- Open Graph / WhatsApp --}}
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="Torre360">
     <meta property="og:title" content="Torre360 - Quero uma Vaga">
     <meta property="og:description" content="Manifeste seu interesse em matricular seu filho(a) em nossa escola. Preencha o formulário e nossa equipe entrará em contato.">
-    <meta property="og:image" content="{{ asset('img/hero-captacao.png') }}?v=1.0.1">
-    <meta property="og:image:secure_url" content="{{ asset('img/hero-captacao.png') }}?v=1.0.1">
+    <meta property="og:image" content="{{ asset('img/preview.png') }}?v=2">
+    <meta property="og:image:secure_url" content="{{ asset('img/preview.png') }}?v=2">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -20,7 +21,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Torre360 - Quero uma Vaga">
     <meta name="twitter:description" content="Manifeste seu interesse em matricular seu filho(a).">
-    <meta name="twitter:image" content="{{ asset('img/hero-captacao.png') }}?v=1.0.1">
+    <meta name="twitter:image" content="{{ asset('img/preview.png') }}?v=2">
 
     <title>Quero uma Vaga – Inscrição de Interesse | Torre360</title>
 
@@ -68,7 +69,7 @@
         /* ── HERO ── */
         .hero {
             width: 100%;
-            background: linear-gradient(rgba(79, 70, 229, 0.85), rgba(55, 48, 163, 0.9)), url('{{ asset("img/hero-captacao.png") }}');
+            background: linear-gradient(rgba(79, 70, 229, 0.85), rgba(55, 48, 163, 0.9)), url('{{ asset("img/preview.png") }}');
             background-size: cover;
             background-position: center;
             padding: 80px 24px 100px;
