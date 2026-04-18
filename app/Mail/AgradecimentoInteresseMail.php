@@ -19,8 +19,7 @@ class AgradecimentoInteresseMail extends Mailable
      */
     public function __construct(
         public string $nomePessoa,
-        public string $nomeUnidade,
-        public ?string $redesSociais = null
+        public Unidade $unidade
     ) {
         //
     }
@@ -31,7 +30,7 @@ class AgradecimentoInteresseMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Recebemos seu interesse - {$this->nomeUnidade}",
+            subject: "Recebemos seu interesse - {$this->unidade->nome}",
         );
     }
 

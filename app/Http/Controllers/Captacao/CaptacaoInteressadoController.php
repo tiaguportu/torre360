@@ -109,18 +109,46 @@ class CaptacaoInteressadoController extends Controller
             ]
         );
 
-        // Vincula dependente (o aluno)
-        InteressadoDependente::create([
-            'interessado_id' => $interessado->id,
-            'nome_crianca' => $validated['aluno_nome'],
-            'data_nascimento' => $validated['aluno_data_nascimento'] ?? null,
-            'serie_id' => optional(Turma::find($validated['turma_id'] ?? null))->serie_id,
-        ]);
+        // Salva dependentes (múltiplos agora)
+        $this->salvarDependentes($interessado, $validated);
 
         // Envia E-mail de Agradecimento e Registra Log
-        $this->enviarEmailERegistrarLog($pessoa, $validated['unidade_id'] ?? null);
+        // Usa a unidade do primeiro aluno como referência principal para o e-mail
+        $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
+        $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId ?? $validated['unidade_id'] ?? null);
 
         return redirect()->route('captacao.interessado.sucesso');
+    }
+
+    /**
+     * Salva os dependentes vinculados ao interessado
+     */
+    private function salvarDependentes(Interessado $interessado, array $data): void
+    {
+        // Limpa dependentes anteriores se for uma atualização
+        $interessado->dependentes()->delete();
+
+        // Se houver múltiplos alunos, itera sobre eles, caso contrário usa o formato antigo
+        $alunos = $data['alunos'] ?? [[
+            'nome' => $data['aluno_nome'],
+            'data_nascimento' => $data['aluno_data_nascimento'] ?? null,
+            'turma_id' => $data['turma_id'] ?? null,
+            'vinculo' => 'Filho(a)'
+        ]];
+
+        foreach ($alunos as $alunoData) {
+            if (empty($alunoData['nome'])) continue;
+
+            $turma = !empty($alunoData['turma_id']) ? \App\Models\Turma::find($alunoData['turma_id']) : null;
+
+            InteressadoDependente::create([
+                'interessado_id'  => $interessado->id,
+                'nome_crianca'    => $alunoData['nome'],
+                'data_nascimento' => $alunoData['data_nascimento'] ?? null,
+                'vinculo'         => $alunoData['vinculo'] ?? 'Parente',
+                'serie_id'        => $turma?->serie_id,
+            ]);
+        }
     }
 
     /**
@@ -132,17 +160,16 @@ class CaptacaoInteressadoController extends Controller
             return;
         }
 
-        // Busca a unidade para personalizar o e-mail
-        $unidade = $unidadeId ? Unidade::find($unidadeId) : null;
-        $nomeUnidade = $unidade?->nome ?? 'Torre360';
-        
-        // Redes Sociais da Unidade
-        $redesSociais = $unidade?->instagram 
-            ?? $unidade?->facebook 
-            ?? $unidade?->youtube; 
+        // Busca a unidade para personalizar o e-mail (fallback para a primeira se não houver)
+        $unidade = ($unidadeId ? Unidade::find($unidadeId) : null) ?? Unidade::first();
+
+        // Se realmente não houver nenhuma unidade no banco (raro), criamos uma temporária para não quebrar o e-mail
+        if (! $unidade) {
+            $unidade = new Unidade(['nome' => 'Torre360']);
+        }
 
         try {
-            $mailable = new AgradecimentoInteresseMail($pessoa->nome, $nomeUnidade, $redesSociais);
+            $mailable = new AgradecimentoInteresseMail($pessoa->nome, $unidade);
             
             // Envia o e-mail
             Mail::to($pessoa->email)->send($mailable);
@@ -150,7 +177,7 @@ class CaptacaoInteressadoController extends Controller
             // Registra no Log
             EmailLog::create([
                 'to'      => [$pessoa->email],
-                'subject' => "Recebemos seu interesse - {$nomeUnidade}",
+                'subject' => "Recebemos seu interesse - {$unidade->nome}",
                 'body'    => (string) $mailable->render(),
                 'sent_at' => now(),
             ]);

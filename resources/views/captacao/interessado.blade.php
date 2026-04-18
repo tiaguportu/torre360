@@ -440,11 +440,11 @@
             </div>
             <div class="step-item" id="step-indicator-3">
                 <div class="step-circle">3</div>
-                <div class="step-label">Dados do Aluno</div>
+                <div class="step-label">Dados do(s) Aluno(s)</div>
             </div>
             <div class="step-item" id="step-indicator-4">
                 <div class="step-circle">4</div>
-                <div class="step-label">Unidade & Turma</div>
+                <div class="step-label">Observações</div>
             </div>
             <div class="step-item" id="step-indicator-5">
                 <div class="step-circle">5</div>
@@ -573,101 +573,77 @@
                  ETAPA 3 — Dados do Aluno
             ════════════════════════════════════════ --}}
             <div class="step-panel" id="panel-3">
-                <h2>Dados do Aluno</h2>
-                <p class="subtitle">Informe os dados de quem irá estudar conosco.</p>
-
-                <div class="form-grid">
-                    <div class="field span-2">
-                        <label for="aluno_nome">Nome completo do aluno <span class="req">*</span></label>
-                        <input type="text" id="aluno_nome" name="aluno_nome"
-                               value="{{ old('aluno_nome') }}"
-                               placeholder="Nome completo">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <h2>Dados do Aluno</h2>
+                        <p class="subtitle" style="margin-bottom: 0;">Informe os dados de quem irá estudar conosco.</p>
                     </div>
+                    <button type="button" class="btn btn-ghost" onclick="adicionarAluno()" style="padding: 10px 16px; font-size: 13px;">
+                        + Adicionar outro aluno
+                    </button>
+                </div>
 
-                    <div class="field">
-                        <label for="aluno_data_nascimento">Data de nascimento</label>
-                        <input type="date" id="aluno_data_nascimento" name="aluno_data_nascimento"
-                               value="{{ old('aluno_data_nascimento') }}"
-                               max="{{ now()->toDateString() }}">
-                    </div>
+                <div id="alunos-container">
+                    {{-- O primeiro aluno já vem fixo --}}
+                    <div class="aluno-item" id="aluno-0" style="background: rgba(79,70,229,0.03); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 20px; position: relative;">
+                        <div style="font-size: 12px; font-weight: 800; color: var(--primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Aluno #1</div>
+                        
+                        <div class="form-grid">
+                            <div class="field span-2">
+                                <label>Nome completo do aluno <span class="req">*</span></label>
+                                <input type="text" name="alunos[0][nome]" placeholder="Nome completo" required>
+                            </div>
 
-                    <div class="field">
-                        <label for="turno_preferencia">Turno de preferência</label>
-                        <select id="turno_preferencia" name="turno_preferencia">
-                            <option value="">Sem preferência</option>
-                            <option value="Matutino"  {{ old('turno_preferencia') === 'Matutino'  ? 'selected' : '' }}>Matutino</option>
-                            <option value="Vespertino" {{ old('turno_preferencia') === 'Vespertino' ? 'selected' : '' }}>Vespertino</option>
-                            <option value="Integral"  {{ old('turno_preferencia') === 'Integral'  ? 'selected' : '' }}>Integral</option>
-                            <option value="Noturno"   {{ old('turno_preferencia') === 'Noturno'   ? 'selected' : '' }}>Noturno</option>
-                        </select>
+                            <div class="field">
+                                <label>Data de nascimento</label>
+                                <input type="date" name="alunos[0][data_nascimento]" max="{{ now()->toDateString() }}">
+                            </div>
+
+                            <div class="field">
+                                <label>Vínculo com o responsável <span class="req">*</span></label>
+                                <select name="alunos[0][vinculo]" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Pai">Filho(a) - Sou o Pai</option>
+                                    <option value="Mãe">Filho(a) - Sou a Mãe</option>
+                                    <option value="Parente">Parente</option>
+                                    <option value="Tutor">Tutor(a)</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label>Unidade de interesse</label>
+                                <select name="alunos[0][unidade_id]">
+                                    <option value="">Sem preferência</option>
+                                    @foreach($unidades as $u)
+                                        <option value="{{ $u->id }}">{{ $u->nome }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label>Turma/Série de interesse</label>
+                                <select name="alunos[0][turma_id]">
+                                    <option value="">Sem preferência</option>
+                                    @foreach($turmas as $turma)
+                                        <option value="{{ $turma->id }}">{{ $turma->nome }} ({{ $turma->serie?->nome }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {{-- ════════════════════════════════════════
-                 ETAPA 4 — Unidade & Turma
+                 ETAPA 4 — Observações Finais
             ════════════════════════════════════════ --}}
             <div class="step-panel" id="panel-4">
-                <h2>Unidade & Turma</h2>
-                <p class="subtitle">Escolha onde e em qual turma deseja estudar. Esses campos são opcionais.</p>
+                <h2>Observações Finais</h2>
+                <p class="subtitle">Alguma informação adicional que gostaria de nos contar?</p>
 
-                @if($unidades->count() > 1)
-                    <div class="form-grid col-1" style="margin-bottom:28px">
-                        <div class="field">
-                            <label for="unidade_id">Unidade de interesse</label>
-                            <select id="unidade_id" name="unidade_id">
-                                <option value="">Todas / Sem preferência</option>
-                                @foreach($unidades as $u)
-                                    <option value="{{ $u->id }}" {{ old('unidade_id') == $u->id ? 'selected' : '' }}>
-                                        {{ $u->nome }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                @else
-                    @if($unidades->count() === 1)
-                        <input type="hidden" name="unidade_id" value="{{ $unidades->first()->id }}">
-                        <div style="margin-bottom:20px;">
-                            <div style="font-size:13px; color:var(--muted);">📍 Unidade: <strong style="color:var(--text)">{{ $unidades->first()->nome }}</strong></div>
-                        </div>
-                    @endif
-                @endif
-
-                <div style="margin-bottom:16px">
-                    <label style="color:var(--text); font-size:15px; font-weight:600;">Turma de interesse</label>
-                    <p style="font-size:13px; color:var(--muted); margin-top:4px">Selecione a turma desejada ou deixe em branco.</p>
-                </div>
-
-                @if($turmas->count() > 0)
-                    <div class="turma-grid">
-                        <label class="turma-card selected" id="turma-card-none">
-                            <div class="check-badge">✓</div>
-                            <div class="turma-nome" style="color:var(--muted)">Sem preferência</div>
-                            <div class="turma-serie">Deixar em aberto</div>
-                            <input type="radio" name="turma_id" value="" checked>
-                        </label>
-
-                        @foreach($turmas as $turma)
-                            <label class="turma-card {{ old('turma_id') == $turma->id ? 'selected' : '' }}" id="turma-card-{{ $turma->id }}">
-                                <div class="check-badge">✓</div>
-                                @if($turma->cor)
-                                    <span class="turma-color-dot" style="background:{{ $turma->cor }}"></span>
-                                @endif
-                                <div class="turma-nome">{{ $turma->nome }}</div>
-                                <div class="turma-serie">{{ $turma->serie?->nome }}</div>
-                                <div class="turma-turno">{{ $turma->turno?->nome }}</div>
-                                <input type="radio" name="turma_id" value="{{ $turma->id }}" {{ old('turma_id') == $turma->id ? 'checked' : '' }}>
-                            </label>
-                        @endforeach
-                    </div>
-                @else
-                    <p class="no-turma">Nenhuma turma disponível no momento. Envie o formulário assim mesmo e entraremos em contato.</p>
-                @endif
-
-                <div class="form-grid col-1" style="margin-top:28px">
+                <div class="form-grid col-1">
                     <div class="field">
-                        <label for="observacoes">Observações adicionais</label>
+                        <label for="observacoes">Suas observações</label>
                         <textarea id="observacoes" name="observacoes"
                                   placeholder="Alguma necessidade especial, dúvida ou informação adicional?">{{ old('observacoes') }}</textarea>
                     </div>
@@ -800,54 +776,61 @@
                 return true;
             }
 
-            return true; // etapas 4 e 5 são opcionais
-        }
-
-        // ── Navegação ────────────────────────────────
-        window.avancarEtapa = function () {
-            if (!validarEtapa(etapaAtual)) return;
-            if (etapaAtual < totalEtapas) {
-                etapaAtual++;
-                mostrarEtapa(etapaAtual);
-            }
+        // ── Repeater Alunos ──────────────────────────
+        let alunoIdx = 1;
+        window.adicionarAluno = function() {
+            const container = $('#alunos-container');
+            const html = `
+                <div class="aluno-item" id="aluno-${alunoIdx}" style="background: rgba(79,70,229,0.03); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 20px; position: relative; animation: fadeIn .3s ease;">
+                    <button type="button" onclick="removerAluno(${alunoIdx})" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase;">Remover</button>
+                    <div style="font-size: 12px; font-weight: 800; color: var(--primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Aluno #${alunoIdx + 1}</div>
+                    <div class="form-grid">
+                        <div class="field span-2">
+                            <label>Nome completo do aluno <span class="req">*</span></label>
+                            <input type="text" name="alunos[${alunoIdx}][nome]" placeholder="Nome completo" required>
+                        </div>
+                        <div class="field">
+                            <label>Data de nascimento</label>
+                            <input type="date" name="alunos[${alunoIdx}][data_nascimento]" max="{{ now()->toDateString() }}">
+                        </div>
+                        <div class="field">
+                            <label>Vínculo com o responsável <span class="req">*</span></label>
+                            <select name="alunos[${alunoIdx}][vinculo]" required>
+                                <option value="">Selecione...</option>
+                                <option value="Pai">Filho(a) - Sou o Pai</option>
+                                <option value="Mãe">Filho(a) - Sou a Mãe</option>
+                                <option value="Parente">Parente</option>
+                                <option value="Tutor">Tutor(a)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Unidade de interesse</label>
+                            <select name="alunos[${alunoIdx}][unidade_id]">
+                                <option value="">Sem preferência</option>
+                                @foreach($unidades as $u)
+                                    <option value="{{ $u->id }}">{{ $u->nome }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Turma/Série de interesse</label>
+                            <select name="alunos[${alunoIdx}][turma_id]">
+                                <option value="">Sem preferência</option>
+                                @foreach($turmas as $turma)
+                                    <option value="{{ $turma->id }}">{{ $turma->nome }} ({{ $turma->serie?->nome }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            alunoIdx++;
         };
 
-        window.voltarEtapa = function () {
-            if (etapaAtual > 1) {
-                etapaAtual--;
-                mostrarEtapa(etapaAtual);
-            }
+        window.removerAluno = function(idx) {
+            $(`#aluno-${idx}`).remove();
         };
-
-        // ── Choice cards (Etapa 1) ───────────────────
-        function syncChoiceCards() {
-            const tipo = getTipo();
-            $('#card-proprio').classList.toggle('selected', tipo === 'proprio');
-            $('#card-responsavel').classList.toggle('selected', tipo === 'responsavel');
-
-            const blocoResp = $('#bloco-responsavel');
-            const subtitulo = $('#subtitle-contato');
-
-            if (tipo === 'proprio') {
-                blocoResp.style.display = 'none';
-                subtitulo.textContent   = 'Informe seus dados de contato.';
-            } else {
-                blocoResp.style.display = '';
-                subtitulo.textContent   = 'Informe seus dados para que possamos entrar em contato.';
-            }
-        }
-
-        $$('input[name="tipo_preenchimento"]').forEach(r => {
-            r.addEventListener('change', syncChoiceCards);
-        });
-
-        // ── Turma cards ──────────────────────────────
-        $$('.turma-card').forEach(card => {
-            card.addEventListener('click', () => {
-                $$('.turma-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-            });
-        });
 
         // ── Resumo (Etapa 5) ─────────────────────────
         function val(id) {
@@ -865,42 +848,27 @@
 
             if (tipo === 'responsavel') {
                 linhas.push(`<strong>Responsável:</strong> ${val('responsavel_nome') || '–'}`);
-                linhas.push(`<strong>Vínculo:</strong> ${selText('responsavel_vinculo') || '–'}`);
+                linhas.push(`<strong>Vínculo geral:</strong> ${selText('responsavel_vinculo') || '–'}`);
             }
 
             linhas.push(`<strong>Telefone:</strong> ${val('responsavel_telefone') || '–'}`);
             linhas.push(`<strong>E-mail:</strong> ${val('responsavel_email') || '–'}`);
             linhas.push(`<hr style="border-color:var(--card-border);margin:10px 0">`);
-            linhas.push(`<strong>Aluno:</strong> ${val('aluno_nome') || '–'}`);
 
-            const nasc = val('aluno_data_nascimento');
-            if (nasc) {
-                const [y,m,d] = nasc.split('-');
-                linhas.push(`<strong>Nascimento:</strong> ${d}/${m}/${y}`);
-            }
-
-            const turnoText = selText('turno_preferencia');
-            if (turnoText && turnoText !== 'Sem preferência') {
-                linhas.push(`<strong>Turno preferido:</strong> ${turnoText}`);
-            }
-
-            linhas.push(`<hr style="border-color:var(--card-border);margin:10px 0">`);
-
-            const turmaEl = document.querySelector('.turma-card.selected .turma-nome');
-            const turmaVal = document.querySelector('input[name="turma_id"]:checked')?.value;
-            if (turmaVal) {
-                linhas.push(`<strong>Turma:</strong> ${turmaEl?.textContent?.trim() || '–'}`);
-            } else {
-                linhas.push(`<strong>Turma:</strong> Sem preferência`);
-            }
-
-            const unidadeText = selText('unidade_id');
-            if (unidadeText && unidadeText !== 'Todas / Sem preferência') {
-                linhas.push(`<strong>Unidade:</strong> ${unidadeText}`);
-            }
+            const alunos = document.querySelectorAll('.aluno-item');
+            linhas.push(`<strong>Alunos inscritos (${alunos.length}):</strong><br>`);
+            
+            alunos.forEach((item, index) => {
+                const nome = item.querySelector('input[name*="[nome]"]').value;
+                const vinculo = item.querySelector('select[name*="[vinculo]"] option:checked').text;
+                linhas.push(`<div style="margin-bottom:8px">• ${nome} (${vinculo})</div>`);
+            });
 
             const obs = val('observacoes');
-            if (obs) linhas.push(`<strong>Observações:</strong> ${obs}`);
+            if (obs) {
+                linhas.push(`<hr style="border-color:var(--card-border);margin:10px 0">`);
+                linhas.push(`<strong>Observações:</strong> ${obs}`);
+            }
 
             $('#resumo').innerHTML = linhas.join('<br>');
         }
