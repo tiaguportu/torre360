@@ -136,10 +136,10 @@ class CaptacaoInteressadoController extends Controller
         $unidade = $unidadeId ? Unidade::find($unidadeId) : null;
         $nomeUnidade = $unidade?->nome ?? 'Torre360';
         
-        // Redes Sociais da Unidade ou Fallback
+        // Redes Sociais da Unidade
         $redesSociais = $unidade?->instagram 
             ?? $unidade?->facebook 
-            ?? 'https://www.instagram.com/torre360'; 
+            ?? $unidade?->youtube; 
 
         try {
             $mailable = new AgradecimentoInteresseMail($pessoa->nome, $nomeUnidade, $redesSociais);
