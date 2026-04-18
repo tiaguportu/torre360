@@ -95,13 +95,13 @@ class CaptacaoInteressadoController extends Controller
         );
 
         // Origem
-        $origemId = $request->como_conheceu ?? null;
+        $origemId = $request->como_conheceu ?? $origemSite->id;
 
         // Cria ou atualiza o Interessado (Lead)
         $interessado = Interessado::updateOrCreate(
             ['pessoa_id' => $pessoa->id],
             [
-                'status_interessado_id' => $statusNovo?->id,
+                'status_interessado_id' => $statusNovo?->id ?? 1,
                 'origem_interessado_id' => $origemId,
                 'observacoes' => $this->montarObservacoes($validated),
             ]
