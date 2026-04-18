@@ -381,4 +381,30 @@ Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura,
 
 ---
 
+## 🚀 17. Captação Pública de Interessados
+
+O Torre360 disponibiliza um formulário público que pode ser integrado ou divulgado no site da sua escola para captar o interesse de novos alunos de forma automática e integrada ao funil do CRM.
+
+### 17.1 Como Funciona
+- O formulário público é acessado através do endereço: `https://seu-dominio.com/quero-uma-vaga`.
+- Ele possui um design moderno, dividido em etapas guiadas para preenchimento ágil.
+- O preenchimento está disponível para duas situações: o próprio aluno interessado, ou um responsável (pai/mãe/tutor) interessado em inscrever um aluno menor.
+
+### 17.2 Dados Coletados
+1. **Dados de Contato:** Coleta dos dados primários (Nome, E-mail, WhatsApp, CPF) de quem está preenchendo o formulário.
+2. **Dados do Aluno:** Nome da criança/adolescente, data de nascimento e, no caso de responsáveis, o vínculo entre eles.
+3. **Preferências (Opcional):** O formulário lista dinamicamente as **Unidades ativas** e as **Turmas com vagas abertas**, permitindo ao usuário manifestar sua preferência de série, turno ou unidade.
+4. **Origem:** Salva automaticamente a resposta de "Como nos conheceu?" nas notas.
+
+### 17.3 Integração com CRM
+- As informações submetidas alimentam automaticamente a tela **CRM → Interessados** já entrando com o status `Novo`.
+- O histórico e preferências ficam salvos no cadastro para facilitar a abordagem consultiva pela equipe de vendas.
+
+### 17.4 Proteção Contra Bot (reCAPTCHA)
+Para garantir que seu e-mail e painel não sejam inundados de SPAM, a página utiliza proteção invisível **Google reCAPTCHA v3**.
+- Ao longo da inscrição, o sistema analisa o comportamento de navegação. Sem pedir cliques adicionais em "Semáforos", ele julga se é um preenchimento humano válido.
+- Se configurado pelos administradores, scripts automatizados que tentarem disparar cadastros serão prontamente bloqueados pelo sistema de forma invisível.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

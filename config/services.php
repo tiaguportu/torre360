@@ -40,4 +40,9 @@ return [
         'url' => env('FCM_SERVER_URL', 'https://fcm.googleapis.com/fcm/send'),
     ],
 
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
 ];
