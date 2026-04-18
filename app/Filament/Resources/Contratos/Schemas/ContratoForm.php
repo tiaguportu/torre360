@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contratos\Schemas;
 
 use App\Models\Matricula;
+use App\Models\TemplateContrato;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -16,6 +17,14 @@ class ContratoForm
     {
         return $schema
             ->components([
+                Select::make('template_contrato_id')
+                    ->label('Template do Contrato')
+                    ->relationship('templateContrato', 'nome')
+                    ->default(fn () => TemplateContrato::where('is_padrao', true)->first()?->id)
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
                 Select::make('matriculas')
                     ->relationship('matriculas', 'id')
                     ->getOptionLabelFromRecordUsing(fn ($record) => ($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome'))

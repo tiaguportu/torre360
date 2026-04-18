@@ -146,107 +146,113 @@
         </div>
     </div>
 
-    <div class="clause-body">
-        <span class="bold">CONTRATADO:</span> ESCOLA TORRE DE MARFIM, pessoa jurídica de direito privado, sob forma de
-        associação de caráter educativo, sem fins lucrativos e com fins não econômicos, tendo como entidade mantenedora
-        a ASSOCIAÇÃO FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE, CNPJ 56.729.131/0001-69, localizado a Rua Gaspar Magalhães,
-        n.° 361, Jardim Guanabara, Ilha do Graduador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
-        @if($unidade && $unidade->representantesLegais->isNotEmpty())
-            @foreach($unidade->representantesLegais as $rep)
-                {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }}, {{ $rep->nome }}@endforeach
-        @else
-            seu Representante, _______
-        @endif
-        , doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
-        @foreach($contrato->responsaveisFinanceiros as $rf)
-            @php $p = $rf->pessoa; @endphp
-            @if($p)
-                {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}
-                {{ $p->nome }}, {{ $p->nacionalidade?->nome ?? 'brasileiro(a)' }},
-                {{ $p->estado_civil ?? '________________' }}, {{ $p->profissao ?? '________________' }},
-                Identidade: {{ $p->identidade ?? '________________' }}, CPF: {{ $p->cpf }}, residente em
-                @if($p->enderecos->isNotEmpty())
-                    @php 
-                        $end = $p->enderecos->where('tipo', 'residencial')->first() ?? $p->enderecos->first(); 
-                    @endphp
-                    {{ $end->logradouro }}{{ $end->numero ? ', ' . $end->numero : '' }}{{ $end->bairro ? ' - ' . $end->bairro : '' }}
-                    - {{ $end->cidade?->nome }}/{{ $end->cidade?->estado?->sigla }}
-                @else
-                    _______
-                @endif
+    @if(isset($conteudo_template) && $conteudo_template)
+        <div class="template-content">
+            {!! $conteudo_template !!}
+        </div>
+    @else
+        <div class="clause-body">
+            <span class="bold">CONTRATADO:</span> ESCOLA TORRE DE MARFIM, pessoa jurídica de direito privado, sob forma de
+            associação de caráter educativo, sem fins lucrativos e com fins não econômicos, tendo como entidade mantenedora
+            a ASSOCIAÇÃO FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE, CNPJ 56.729.131/0001-69, localizado a Rua Gaspar Magalhães,
+            n.° 361, Jardim Guanabara, Ilha do Graduador, Rio de Janeiro, RJ, CEP 21940-120, neste ato, representada por
+            @if($unidade && $unidade->representantesLegais->isNotEmpty())
+                @foreach($unidade->representantesLegais as $rep)
+                    {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}seu {{ $rep->pivot->cargo ?? 'Representante' }}, {{ $rep->nome }}@endforeach
+            @else
+                seu Representante, _______
             @endif
-        @endforeach
-        @if($contrato->responsaveisFinanceiros->isEmpty())
-            ________
-        @endif
-        doravante denominado(a) <span class="bold">CONTRATANTE</span>, têm entre si justo e contratado o seguinte:
-    </div>
+            , doravante denominado <span class="bold">CONTRATADA</span>, e o Sr(a)
+            @foreach($contrato->responsaveisFinanceiros as $rf)
+                @php $p = $rf->pessoa; @endphp
+                @if($p)
+                    {{ $loop->first ? '' : ($loop->last ? ' e ' : ', ') }}
+                    {{ $p->nome }}, {{ $p->nacionalidade?->nome ?? 'brasileiro(a)' }},
+                    {{ $p->estado_civil ?? '________________' }}, {{ $p->profissao ?? '________________' }},
+                    Identidade: {{ $p->identidade ?? '________________' }}, CPF: {{ $p->cpf }}, residente em
+                    @if($p->enderecos->isNotEmpty())
+                        @php 
+                            $end = $p->enderecos->where('tipo', 'residencial')->first() ?? $p->enderecos->first(); 
+                        @endphp
+                        {{ $end->logradouro }}{{ $end->numero ? ', ' . $end->numero : '' }}{{ $end->bairro ? ' - ' . $end->bairro : '' }}
+                        - {{ $end->cidade?->nome }}/{{ $end->cidade?->estado?->sigla }}
+                    @else
+                        _______
+                    @endif
+                @endif
+            @endforeach
+            @if($contrato->responsaveisFinanceiros->isEmpty())
+                ________
+            @endif
+            doravante denominado(a) <span class="bold">CONTRATANTE</span>, têm entre si justo e contratado o seguinte:
+        </div>
 
-    <div class="clause-title">CLÁUSULA 1ª - ADESÃO PLENA. FICHA DE MATRÍCULA.</div>
-    <div class="clause-body">
-        As partes, aqui qualificadas, celebram o presente Contrato de Adesão de Prestação de Serviços Educacionais, sob
-        a égide dos artigos da Constituição Federal, Código Civil, Código de Defesa do Consumidor e LDB.
-        § 1º. O CONTRATANTE (ADERENTE) declara ter conhecimento pleno das cláusulas do contrato, às quais adere
-        integralmente ao preencher a Ficha de Matrícula.
-    </div>
+        <div class="clause-title">CLÁUSULA 1ª - ADESÃO PLENA. FICHA DE MATRÍCULA.</div>
+        <div class="clause-body">
+            As partes, aqui qualificadas, celebram o presente Contrato de Adesão de Prestação de Serviços Educacionais, sob
+            a égide dos artigos da Constituição Federal, Código Civil, Código de Defesa do Consumidor e LDB.
+            § 1º. O CONTRATANTE (ADERENTE) declara ter conhecimento pleno das cláusulas do contrato, às quais adere
+            integralmente ao preencher a Ficha de Matrícula.
+        </div>
 
-    <div class="clause-title">CLÁUSULA 2ª - OBJETO E PRAZO.</div>
-    <div class="clause-body">
-        A CONTRATADA compromete-se a prestar os serviços educacionais ao estudante na Turma aqui designada, em
-        conformidade com a legislação especial vigente, durante o ano letivo de {{ $periodo?->nome ?? '2026' }}.
-        <br><br>
-        <span class="bold">ALUNO(S) BENEFICIÁRIO(S):</span>
-        <table class="alunos">
-            <thead>
-                <tr>
-                    <th>Nome do Aluno</th>
-                    <th>Turma</th>
-                    <th>Série/Ano</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($matriculas as $mat)
+        <div class="clause-title">CLÁUSULA 2ª - OBJETO E PRAZO.</div>
+        <div class="clause-body">
+            A CONTRATADA compromete-se a prestar os serviços educacionais ao estudante na Turma aqui designada, em
+            conformidade com a legislação especial vigente, durante o ano letivo de {{ $periodo?->nome ?? '2026' }}.
+            <br><br>
+            <span class="bold">ALUNO(S) BENEFICIÁRIO(S):</span>
+            <table class="alunos">
+                <thead>
                     <tr>
-                        <td>{{ $mat->pessoa?->nome }}</td>
-                        <td>{{ $mat->turma?->nome }}</td>
-                        <td>{{ $mat->turma?->serie?->nome }}</td>
+                        <th>Nome do Aluno</th>
+                        <th>Turma</th>
+                        <th>Série/Ano</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @foreach($matriculas as $mat)
+                        <tr>
+                            <td>{{ $mat->pessoa?->nome }}</td>
+                            <td>{{ $mat->turma?->nome }}</td>
+                            <td>{{ $mat->turma?->serie?->nome }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
-    <div class="clause-title">CLÁUSULA 3ª - DA PROTEÇÃO DE DADOS PESSOAIS (LGPD)</div>
-    <div class="clause-body">
-        Em cumprimento à Lei nº 13.709/2018 (LGPD), o CONTRATANTE autoriza o tratamento dos dados pessoais necessários à
-        execução do presente contrato.
-    </div>
+        <div class="clause-title">CLÁUSULA 3ª - DA PROTEÇÃO DE DADOS PESSOAIS (LGPD)</div>
+        <div class="clause-body">
+            Em cumprimento à Lei nº 13.709/2018 (LGPD), o CONTRATANTE autoriza o tratamento dos dados pessoais necessários à
+            execução do presente contrato.
+        </div>
 
-    <div class="clause-title">CLÁUSULA 4ª - DOS VALORES E PAGAMENTOS</div>
-    <div class="clause-body">
-        Pela prestação dos serviços educacionais, o CONTRATANTE pagará os valores estabelecidos na tabela financeira
-        vigente para o período de {{ $periodo?->nome ?? '2026' }}.
-        O valor total deste contrato é de <span class="bold">R$
-            {{ number_format($contrato->valor_total, 2, ',', '.') }}</span>.
-    </div>
+        <div class="clause-title">CLÁUSULA 4ª - DOS VALORES E PAGAMENTOS</div>
+        <div class="clause-body">
+            Pela prestação dos serviços educacionais, o CONTRATANTE pagará os valores estabelecidos na tabela financeira
+            vigente para o período de {{ $periodo?->nome ?? '2026' }}.
+            O valor total deste contrato é de <span class="bold">R$
+                {{ number_format($contrato->valor_total, 2, ',', '.') }}</span>.
+        </div>
 
-    {{-- Texto resumido para brevidade, mas respeitando a estrutura do DOCX --}}
-    <div class="clause-body">
-        (...) O contrato segue as normas do Regimento Interno da Escola, Proposta Pedagógica e legislações vigentes
-        citadas no preâmbulo.
-    </div>
+        {{-- Texto resumido para brevidade, mas respeitando a estrutura do DOCX --}}
+        <div class="clause-body">
+            (...) O contrato segue as normas do Regimento Interno da Escola, Proposta Pedagógica e legislações vigentes
+            citadas no preâmbulo.
+        </div>
 
-    <div class="clause-title">CLÁUSULA 24 - DIREITO DE IMAGEM. CESSÃO.</div>
-    <div class="clause-body">
-        O (A) aluno(a), com a devida anuência do CONTRATANTE, autoriza a CONTRATADA a usar gratuitamente sua imagem e
-        nome para fins institucionais e pedagógicos.
-    </div>
+        <div class="clause-title">CLÁUSULA 24 - DIREITO DE IMAGEM. CESSÃO.</div>
+        <div class="clause-body">
+            O (A) aluno(a), com a devida anuência do CONTRATANTE, autoriza a CONTRATADA a usar gratuitamente sua imagem e
+            nome para fins institucionais e pedagógicos.
+        </div>
 
-    <div class="clause-title">CLÁUSULA 28 - FÓRUM.</div>
-    <div class="clause-body">
-        Fica eleito o foro regional da Ilha do Governador da Comarca da Capital do Estado do Rio de Janeiro para
-        solucionar qualquer litígio.
-    </div>
+        <div class="clause-title">CLÁUSULA 28 - FÓRUM.</div>
+        <div class="clause-body">
+            Fica eleito o foro regional da Ilha do Governador da Comarca da Capital do Estado do Rio de Janeiro para
+            solucionar qualquer litígio.
+        </div>
+    @endif
 
     <div class="center" style="margin-top: 30px;">
         Rio de Janeiro, RJ, {{ date('d') }} de {{ \Carbon\Carbon::now()->translatedFormat('F') }} de {{ date('Y') }}.

@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pessoa', function (Blueprint $table) {
-            $table->string('sexo')->nullable()->after('sexo_id');
-            $table->string('cor_raca')->nullable()->after('cor_raca_id');
+            if (! Schema::hasColumn('pessoa', 'sexo')) {
+                $table->string('sexo')->nullable()->after('sexo_id');
+            }
+            if (! Schema::hasColumn('pessoa', 'cor_raca')) {
+                $table->string('cor_raca')->nullable()->after('cor_raca_id');
+            }
         });
 
         // Migrar dados de Sexo

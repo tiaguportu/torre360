@@ -178,7 +178,7 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 > [!NOTE]
 > A prévia de documentos é protegida por segurança. Apenas usuários autenticados com as devidas permissões podem visualizar os arquivos, garantindo a privacidade dos dados dos alunos.
 
-### 6.3 Assinatura Digital (Assinafy)
+6.3 Assinatura Digital (Assinafy)
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
 1. Na lista de contratos, clique na ação **Assinar Contrato** para o documento pendente.
 2. Você será direcionado para uma página de visualização. Clique em **Iniciar Assinatura Digital** para ser enviado ao portal do Assinafy.
@@ -189,6 +189,22 @@ O sistema é integrado à plataforma **Assinafy** para assinatura digital de con
    - O **valor total** e o **número de parcelas** com valor estimado por parcela.
 5. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
 6. Para baixar o documento com as assinaturas digitais, acesse a visualização do contrato e clique em **Baixar Contrato Assinado**.
+
+### 6.4 Templates Dinâmicos de Contrato
+O sistema permite a criação de modelos de contrato customizáveis com substituição automática de informações (macros).
+1. Vá em **Financeiro → Templates de Contrato**.
+2. **Criação:** Você pode criar múltiplos modelos (ex: Contrato Infantil, Contrato Fundamental, Aditivo).
+3. **Editor Rico:** Utilize o editor estilo Office para formatar o texto, inserir tabelas, imagens e logotipos.
+4. **Macros:** Utilize os códigos abaixo entre chaves duplas para que o sistema preencha os dados reais no momento da geração:
+   - `{{CONTRATO_ID}}`: Número identificador do contrato.
+   - `{{CONTRATO_VALOR}}`: Valor total do contrato formatado (R$).
+   - `{{CONTRATO_DATA}}`: Cidade e Data atual por extenso.
+   - `{{UNIDADE_NOME}}` e `{{UNIDADE_CNPJ}}`: Dados da unidade escolar.
+   - `{{ALUNOS_TABELA}}`: Gera automaticamente uma tabela com os alunos, turmas e séries/anos.
+   - `{{RESPONSAVEIS_INFO}}`: Gera o texto qualificando os responsáveis financeiros.
+   - `{{FATURAS_TABELA}}`: Gera uma tabela com o cronograma de parcelas e vencimentos.
+5. **Template Padrão:** Marque a opção "Template Padrão" em um dos modelos para que ele seja selecionado automaticamente ao criar novos contratos.
+6. **Seleção no Contrato:** No formulário de **Contratos**, você pode escolher qual template deseja utilizar para aquele contrato específico.
 
 ---
 

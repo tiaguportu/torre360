@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -36,6 +37,11 @@ class Contrato extends Model
     public function responsaveisFinanceiros(): HasMany
     {
         return $this->hasMany(ResponsavelFinanceiro::class);
+    }
+
+    public function templateContrato(): BelongsTo
+    {
+        return $this->belongsTo(TemplateContrato::class);
     }
 
     protected function casts(): array
