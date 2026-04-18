@@ -742,16 +742,15 @@
 
             if (n === totalEtapas) construirResumo();
             atualizarIndicadores();
-            const anchor = $('#form-anchor');
-            if (anchor) {
-                const headerOffset = n === 1 ? 0 : 70; // Ajuste para não colar no topo absoluto se não for o início
-                const elementPosition = anchor.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - (n === 1 ? 0 : 350); // Move para o início do form (pula o hero)
 
-                window.scrollTo({
-                    top: n === 1 ? 0 : offsetPosition,
-                    behavior: 'smooth'
-                });
+            // Rola para a barra de progresso (início do form) suavemente
+            if (n > 1) {
+                const progressWrap = document.querySelector('.progress-wrap');
+                if (progressWrap) {
+                    progressWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
