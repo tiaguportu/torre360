@@ -20,46 +20,63 @@ return new class extends Migration
             }
         });
 
-        // Migrar dados de Sexo
-        DB::table('pessoa')->get()->each(function ($p) {
-            $sexo = match ($p->sexo_id) {
-                1 => 'feminino',
-                2 => 'masculino',
-                3 => 'nao_declarado',
-                default => null,
-            };
+        // Migrar dados de Sexo e Cor/Raça usando SQL direto para performance
+        DB::statement("
+            UPDATE pessoa SET 
+                sexo = CASE 
+                    WHEN sexo_id = 1 THEN 'feminino'
+                    WHEN sexo_id = 2 THEN 'masculino'
+                    WHEN sexo_id = 3 THEN 'nao_declarado'
+                    ELSE NULL 
+                END,
+                cor_raca = CASE 
+                    WHEN cor_raca_id = 1 THEN 'branca'
+                    WHEN cor_raca_id = 2 THEN 'preta'
+                    WHEN cor_raca_id = 3 THEN 'parda'
+                    WHEN cor_raca_id = 4 THEN 'amarela'
+                    WHEN cor_raca_id = 5 THEN 'indigena'
+                    WHEN cor_raca_id = 6 THEN 'nao_declarado'
+                    ELSE NULL 
+                END
+        ");
 
-            $cor_raca = match ($p->cor_raca_id) {
-                1 => 'branca',
-                2 => 'preta',
-                3 => 'parda',
-                4 => 'amarela',
-                5 => 'indigena',
-                6 => 'nao_declarado',
-                default => null,
-            };
+        // Remover chaves estrangeiras de forma segura
+        try {
+            Schema::table('pessoa', function (Blueprint $table) {
+                $table->dropForeign(['sexo_id']);
+            });
+        } catch (\Exception $e) {}
 
-            DB::table('pessoa')->where('id', $p->id)->update([
-                'sexo' => $sexo,
-                'cor_raca' => $cor_raca,
-            ]);
-        });
+        try {
+            Schema::table('pessoa', function (Blueprint $table) {
+                $table->dropColumn('sexo_id');
+            });
+        } catch (\Exception $e) {}
 
-        Schema::table('pessoa', function (Blueprint $table) {
-            $table->dropForeign(['sexo_id']);
-            $table->dropColumn('sexo_id');
-            $table->dropForeign(['cor_raca_id']);
-            $table->dropColumn('cor_raca_id');
+        try {
+            Schema::table('pessoa', function (Blueprint $table) {
+                $table->dropForeign(['cor_raca_id']);
+            });
+        } catch (\Exception $e) {}
 
-            // Remove a coluna raca_cor que parecia redundante no dump
-            if (Schema::hasColumn('pessoa', 'raca_cor')) {
+        try {
+            Schema::table('pessoa', function (Blueprint $table) {
+                $table->dropColumn('cor_raca_id');
+            });
+        } catch (\Exception $e) {}
+
+        // Remove a coluna raca_cor que parecia redundante no dump
+        if (Schema::hasColumn('pessoa', 'raca_cor')) {
+            Schema::table('pessoa', function (Blueprint $table) {
                 $table->dropColumn('raca_cor');
-            }
-        });
+            });
+        }
 
-        // Opcional: Remover as tabelas que agora são enums
+        // Opcional: Remover as tabelas que agora são enums de forma segura
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('sexo');
         Schema::dropIfExists('cor_raca');
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
