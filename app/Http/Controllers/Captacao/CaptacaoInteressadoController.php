@@ -118,7 +118,7 @@ class CaptacaoInteressadoController extends Controller
         ]);
 
         // Envia E-mail de Agradecimento e Registra Log
-        $this->enviarEmailERegistrarLog($pessoa);
+        $this->enviarEmailERegistrarLog($pessoa, $validated['unidade_id'] ?? null);
 
         return redirect()->route('captacao.interessado.sucesso');
     }
@@ -126,14 +126,21 @@ class CaptacaoInteressadoController extends Controller
     /**
      * Envia e-mail de agradecimento e registra no log
      */
-    private function enviarEmailERegistrarLog(Pessoa $pessoa): void
+    private function enviarEmailERegistrarLog(Pessoa $pessoa, ?int $unidadeId = null): void
     {
         if (! $pessoa->email) {
             return;
         }
 
+        // Busca a unidade para personalizar o e-mail
+        $unidade = $unidadeId ? Unidade::find($unidadeId) : null;
+        $nomeUnidade = $unidade?->nome ?? 'Torre360';
+        
+        // Link social fixo (já que não temos no banco ainda)
+        $redesSociais = 'https://www.instagram.com/torre360'; 
+
         try {
-            $mailable = new AgradecimentoInteresseMail($pessoa->nome);
+            $mailable = new AgradecimentoInteresseMail($pessoa->nome, $nomeUnidade, $redesSociais);
             
             // Envia o e-mail
             Mail::to($pessoa->email)->send($mailable);
@@ -141,7 +148,7 @@ class CaptacaoInteressadoController extends Controller
             // Registra no Log
             EmailLog::create([
                 'to'      => [$pessoa->email],
-                'subject' => 'Recebemos seu interesse - Torre360',
+                'subject' => "Recebemos seu interesse - {$nomeUnidade}",
                 'body'    => (string) $mailable->render(),
                 'sent_at' => now(),
             ]);

@@ -1,12 +1,14 @@
 <x-mail::message>
 # Olá, {{ $nomePessoa }}! 👋
 
-Agradecemos o seu interesse no **Torre360**. Ficamos muito felizes em saber que você deseja conhecer melhor nossa proposta educacional.
+Agradecemos o seu interesse em **{{ $nomeUnidade }}**. Ficamos muito felizes em saber que você deseja conhecer melhor nosso projeto educacional.
 
-Recebemos seus dados com sucesso. Nossa equipe de admissões irá analisar as informações e entrará em contato em breve para tirar suas dúvidas e, se desejar, agendar uma visita à nossa unidade.
+Nossa equipe de admissões irá analisar as informações e entrará em contato em breve para tirar suas dúvidas e, se desejar, agendar uma visita.
 
-Enquanto isso, sinta-se à vontade para nos acompanhar em nossas redes sociais.
+@if($redesSociais)
+Enquanto isso, sinta-se à vontade para nos acompanhar em nossa rede social: [{{ $redesSociais }}]({{ $redesSociais }})
+@endif
 
 Atenciosamente,<br>
-**Equipe Torre360**
+**Equipe {{ $nomeUnidade }}**
 </x-mail::message>
