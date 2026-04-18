@@ -29,6 +29,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    {{-- Icons --}}
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     {{-- reCAPTCHA v3 --}}
     @if(config('services.recaptcha.site_key'))
         <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
@@ -223,7 +226,13 @@
             background: rgba(79,70,229,.12);
             box-shadow: 0 0 0 4px rgba(79,70,229,.15);
         }
-        .choice-card .icon { font-size: 36px; margin-bottom: 12px; }
+        .choice-card .icon { 
+            color: var(--primary);
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .choice-card .label { font-size: 15px; font-weight: 600; }
         .choice-card .desc  { font-size: 12px; color: var(--muted); margin-top: 4px; }
         .choice-card input  { display: none; }
@@ -471,19 +480,19 @@
                  ETAPA 1 — Quem está preenchendo?
             ════════════════════════════════════════ --}}
             <div class="step-panel active" id="panel-1">
-                <h2>Olá! Bem-vindo(a) 👋</h2>
+                <h2>Olá! Bem-vindo(a)</h2>
                 <p class="subtitle">Para começar, nos diga: quem está preenchendo este formulário?</p>
-
+ 
                 <div class="choice-grid">
                     <label class="choice-card" id="card-proprio" for="tipo_proprio">
-                        <div class="icon">🧑‍🎓</div>
+                        <div class="icon"><i data-lucide="graduation-cap" style="width: 40px; height: 40px;"></i></div>
                         <div class="label">Sou o próprio aluno</div>
                         <div class="desc">Estou me inscrevendo por conta própria</div>
                         <input type="radio" id="tipo_proprio" name="tipo_preenchimento" value="proprio" {{ old('tipo_preenchimento') === 'proprio' ? 'checked' : '' }}>
                     </label>
 
                     <label class="choice-card" id="card-responsavel" for="tipo_responsavel">
-                        <div class="icon">👨‍👩‍👧</div>
+                        <div class="icon"><i data-lucide="users" style="width: 40px; height: 40px;"></i></div>
                         <div class="label">Sou pai, mãe ou responsável</div>
                         <div class="desc">Estou inscrevendo meu filho(a)</div>
                         <input type="radio" id="tipo_responsavel" name="tipo_preenchimento" value="responsavel" {{ old('tipo_preenchimento', 'responsavel') === 'responsavel' ? 'checked' : '' }}>
@@ -946,7 +955,8 @@
         });
 
         // ── Inicialização ────────────────────────────
-        syncChoiceCards();
+        // Inicializa ícones Lucide
+        lucide.createIcons();
 
         // Se houve erros de validação, tenta ir para a etapa correta
         @if($errors->any())
