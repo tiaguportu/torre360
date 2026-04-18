@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Models\Pessoa;
+use App\Models\Unidade;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -18,8 +20,8 @@ class AgradecimentoInteresseMail extends Mailable
      * Create a new message instance.
      */
     public function __construct(
-        public string $nomePessoa,
-        public Unidade $unidade
+        public Pessoa $pessoa,
+        public ?Unidade $unidade = null
     ) {
         //
     }
@@ -29,8 +31,10 @@ class AgradecimentoInteresseMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $nomeUnidade = $this->unidade ? $this->unidade->nome : 'Torre360';
+
         return new Envelope(
-            subject: "Recebemos seu interesse - {$this->unidade->nome}",
+            subject: "Recebemos seu interesse - {$nomeUnidade}",
         );
     }
 
