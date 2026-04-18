@@ -50,17 +50,17 @@ class EnderecoForm
                             }
                         }
                     }),
+                TextInput::make('logradouro')
+                    ->required(),
+                TextInput::make('numero'),
+                TextInput::make('complemento'),
+                TextInput::make('bairro'),
                 Select::make('cidade_id')
                     ->relationship('cidade', 'nome')
                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome}-{$record->estado?->sigla}")
                     ->searchable()
                     ->preload()
                     ->required(),
-                TextInput::make('logradouro')
-                    ->required(),
-                TextInput::make('numero'),
-                TextInput::make('complemento'),
-                TextInput::make('bairro'),
             ]);
     }
 }
