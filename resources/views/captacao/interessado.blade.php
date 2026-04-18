@@ -403,7 +403,7 @@
 <body>
 
     {{-- ── HERO ── --}}
-    <header class="hero">
+    <header class="hero" id="form-anchor">
         <img src="{{ asset('logo-adaptative.svg') }}" alt="Torre360 Logo" class="hero-logo">
         <h1>Manifeste seu Interesse</h1>
         <p>Preencha o formulário e nossa equipe entrará em contato para agendar uma visita.</p>
@@ -742,7 +742,17 @@
 
             if (n === totalEtapas) construirResumo();
             atualizarIndicadores();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const anchor = $('#form-anchor');
+            if (anchor) {
+                const headerOffset = n === 1 ? 0 : 70; // Ajuste para não colar no topo absoluto se não for o início
+                const elementPosition = anchor.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - (n === 1 ? 0 : 350); // Move para o início do form (pula o hero)
+
+                window.scrollTo({
+                    top: n === 1 ? 0 : offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
         }
 
         // ── Validação antes de avançar ───────────────
