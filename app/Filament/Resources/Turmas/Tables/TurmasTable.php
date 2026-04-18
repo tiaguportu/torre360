@@ -19,7 +19,7 @@ use Filament\Forms\Schema;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
