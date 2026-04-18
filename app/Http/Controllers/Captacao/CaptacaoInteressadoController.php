@@ -91,18 +91,9 @@ class CaptacaoInteressadoController extends Controller
         $origemId = $validated['como_conheceu'] ?? $origemSite->id;
 
         // Mapeia o vínculo para o enum do banco
-        $vinculoEnum = null;
-        if ($validated['tipo_preenchimento'] === 'proprio') {
-            $vinculoEnum = 'Próprio Aluno';
-        } else {
-            $vinculoEnum = match ($validated['responsavel_vinculo']) {
-                'Pai' => 'Pai',
-                'Mãe' => 'Mãe',
-                'Avô/Avó', 'Outro' => 'Parente',
-                'Tutor Legal' => 'Tutor',
-                default => 'Parente',
-            };
-        }
+        $vinculoEnum = $validated['tipo_preenchimento'] === 'proprio' 
+            ? 'Próprio Aluno' 
+            : $validated['responsavel_vinculo'];
 
         // Cria ou atualiza o interessado
         $interessado = Interessado::updateOrCreate(

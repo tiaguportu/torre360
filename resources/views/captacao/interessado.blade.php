@@ -528,11 +528,10 @@
                             <label for="responsavel_vinculo">Vínculo com o aluno <span class="req">*</span></label>
                             <select id="responsavel_vinculo" name="responsavel_vinculo">
                                 <option value="">Selecione…</option>
-                                <option value="Pai"         {{ old('responsavel_vinculo') === 'Pai'             ? 'selected' : '' }}>Pai</option>
-                                <option value="Mãe"         {{ old('responsavel_vinculo') === 'Mãe'             ? 'selected' : '' }}>Mãe</option>
-                                <option value="Avô/Avó"     {{ old('responsavel_vinculo') === 'Avô/Avó'         ? 'selected' : '' }}>Avô / Avó</option>
-                                <option value="Tutor Legal"  {{ old('responsavel_vinculo') === 'Tutor Legal'     ? 'selected' : '' }}>Tutor Legal</option>
-                                <option value="Outro"       {{ old('responsavel_vinculo') === 'Outro'           ? 'selected' : '' }}>Outro</option>
+                                <option value="Pai"     {{ old('responsavel_vinculo') === 'Pai'     ? 'selected' : '' }}>Pai</option>
+                                <option value="Mãe"     {{ old('responsavel_vinculo') === 'Mãe'     ? 'selected' : '' }}>Mãe</option>
+                                <option value="Parente" {{ old('responsavel_vinculo') === 'Parente' ? 'selected' : '' }}>Parente</option>
+                                <option value="Tutor"   {{ old('responsavel_vinculo') === 'Tutor'   ? 'selected' : '' }}>Tutor</option>
                             </select>
                         </div>
                     </div>
