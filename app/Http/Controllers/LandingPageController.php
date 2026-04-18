@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LandingLead;
 use Illuminate\Http\Request;
 
 class LandingPageController extends Controller
@@ -20,7 +21,7 @@ class LandingPageController extends Controller
             'mensagem' => 'nullable|string',
         ]);
 
-        \App\Models\LandingLead::create($data);
+        LandingLead::create($data);
 
         return back()->with('success', 'Sua solicitação foi enviada com sucesso! Em breve entraremos em contato.');
     }

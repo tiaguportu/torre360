@@ -44,7 +44,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
-- **Principais Campos:** `nome`, `cpf`, `data_nascimento`, `foto` (armazenamento privado), `email`.
+- **Campos Principais:** `nome`, `cpf`, `data_nascimento`, `foto` (armazenamento privado), `email`, `sexo` (Enum), `cor_raca` (Enum).
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
@@ -135,7 +135,7 @@ Estrutura de ensino e turmas.
 ## 6. CRM e Prospecção
 ### `interessado`
 - **Representa:** Leads para novos alunos.
-- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `vinculo` (Pai, Mãe, Parente, Tutor, Próprio Aluno), `usuario_id` (opcional/nullable), `observacoes`.
+- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `usuario_id` (opcional/nullable), `observacoes`.
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
     - BelongsTo `status_interessado`.

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Pessoas\Tables;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
 use Filament\Actions\BulkAction;
@@ -55,8 +57,17 @@ class PessoasTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('raca_cor')
+                TextColumn::make('sexo')
+                    ->badge()
                     ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('cor_raca')
+                    ->label('Cor / Raça')
+                    ->badge()
+                    ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('estado_civil')
@@ -98,14 +109,14 @@ class PessoasTable
                         ->label('Editar em Lote')
                         ->icon('heroicon-o-pencil-square')
                         ->form([
-                            Select::make('sexo_id')
+                            Select::make('sexo')
                                 ->label('Sexo')
-                                ->relationship('sexo', 'nome')
+                                ->options(Sexo::class)
                                 ->preload()
                                 ->searchable(),
-                            Select::make('cor_raca_id')
+                            Select::make('cor_raca')
                                 ->label('Cor / Raça')
-                                ->relationship('corRaca', 'nome')
+                                ->options(CorRaca::class)
                                 ->preload()
                                 ->searchable(),
                             Select::make('nacionalidade_id')
@@ -131,8 +142,8 @@ class PessoasTable
                         ])
                         ->action(function (Collection $records, array $data): void {
                             $updateData = array_filter([
-                                'sexo_id' => $data['sexo_id'] ?? null,
-                                'cor_raca_id' => $data['cor_raca_id'] ?? null,
+                                'sexo' => $data['sexo'] ?? null,
+                                'cor_raca' => $data['cor_raca'] ?? null,
                                 'nacionalidade_id' => $data['nacionalidade_id'] ?? null,
                                 'estado_civil' => $data['estado_civil'] ?? null,
                                 'profissao' => $data['profissao'] ?? null,

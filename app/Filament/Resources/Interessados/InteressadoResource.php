@@ -8,6 +8,7 @@ use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Filament\Resources\Interessados\Schemas\InteressadoForm;
 use App\Filament\Resources\Interessados\Tables\InteressadosTable;
 use App\Models\Interessado;
+use App\Models\StatusInteressado;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
@@ -42,8 +43,8 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        /** @var \App\Models\StatusInteressado $status */
-        $status = \App\Models\StatusInteressado::where('nome', 'Novo')->first();
+        /** @var StatusInteressado $status */
+        $status = StatusInteressado::where('nome', 'Novo')->first();
 
         if (! $status) {
             return null;

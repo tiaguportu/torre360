@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Captacao;
 
+use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Http\Controllers\Controller;
 use App\Mail\AgradecimentoInteresseMail;
 use App\Models\EmailLog;
@@ -13,7 +14,6 @@ use App\Models\StatusInteressado;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
-use App\Filament\Resources\Interessados\InteressadoResource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
@@ -49,7 +49,6 @@ class CaptacaoInteressadoController extends Controller
             'responsavel_cpf' => ['nullable', 'string', 'max:20'],
             'responsavel_telefone' => ['required', 'string', 'max:30'],
             'responsavel_email' => ['required', 'email', 'max:255'],
-            'responsavel_vinculo' => ['required_if:tipo_preenchimento,responsavel', 'nullable', 'string', 'max:100'],
 
             // Múltiplos alunos
             'alunos' => ['required', 'array', 'min:1'],
@@ -68,7 +67,6 @@ class CaptacaoInteressadoController extends Controller
             'responsavel_telefone.required' => 'O telefone para contato é obrigatório.',
             'responsavel_email.required' => 'O e-mail para contato é obrigatório.',
             'responsavel_email.email' => 'Informe um e-mail válido.',
-            'responsavel_vinculo.required_if' => 'Informe o vínculo com o aluno.',
             'alunos.required' => 'Informe os dados de ao menos um aluno.',
             'alunos.*.nome.required' => 'Informe o nome completo do aluno.',
         ]);
@@ -97,15 +95,7 @@ class CaptacaoInteressadoController extends Controller
         );
 
         // Origem
-        $origemId = $validated['como_conheceu'] ?? null;
-        $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
-
-        // Vínculo do interessado principal com o(s) aluno(s)
-        // Se for "proprio", o vínculo é "Próprio Aluno". 
-        // Se for "responsavel", pegamos o vínculo informado pelo responsável para o primeiro aluno.
-        $vinculoEnum = $validated['tipo_preenchimento'] === 'proprio' 
-            ? 'Próprio Aluno' 
-            : ($validated['responsavel_vinculo'] ?? $validated['alunos'][0]['vinculo'] ?? 'Parente');
+        $origemId = $request->como_conheceu ?? null;
 
         // Cria ou atualiza o Interessado (Lead)
         $interessado = Interessado::updateOrCreate(
@@ -113,7 +103,6 @@ class CaptacaoInteressadoController extends Controller
             [
                 'status_interessado_id' => $statusNovo?->id,
                 'origem_interessado_id' => $origemId,
-                'vinculo' => $vinculoEnum,
                 'observacoes' => $this->montarObservacoes($validated),
             ]
         );
@@ -173,20 +162,22 @@ class CaptacaoInteressadoController extends Controller
             'nome' => $data['aluno_nome'],
             'data_nascimento' => $data['aluno_data_nascimento'] ?? null,
             'turma_id' => $data['turma_id'] ?? null,
-            'vinculo' => 'Filho(a)'
+            'vinculo' => 'Filho(a)',
         ]];
 
         foreach ($alunos as $alunoData) {
-            if (empty($alunoData['nome'])) continue;
+            if (empty($alunoData['nome'])) {
+                continue;
+            }
 
-            $turma = !empty($alunoData['turma_id']) ? \App\Models\Turma::find($alunoData['turma_id']) : null;
+            $turma = ! empty($alunoData['turma_id']) ? Turma::find($alunoData['turma_id']) : null;
 
             InteressadoDependente::create([
-                'interessado_id'  => $interessado->id,
-                'nome_crianca'    => $alunoData['nome'],
+                'interessado_id' => $interessado->id,
+                'nome_crianca' => $alunoData['nome'],
                 'data_nascimento' => $alunoData['data_nascimento'] ?? null,
-                'vinculo'         => $alunoData['vinculo'] ?? 'Parente',
-                'serie_id'        => $turma?->serie_id,
+                'vinculo' => $alunoData['vinculo'] ?? 'Parente',
+                'serie_id' => $turma?->serie_id,
             ]);
         }
     }
@@ -210,20 +201,20 @@ class CaptacaoInteressadoController extends Controller
 
         try {
             $mailable = new AgradecimentoInteresseMail($pessoa, $unidade);
-            
+
             // Envia o e-mail
             Mail::to($pessoa->email)->send($mailable);
 
             // Registra no Log
             EmailLog::create([
-                'to'      => [$pessoa->email],
+                'to' => [$pessoa->email],
                 'subject' => "Recebemos seu interesse - {$unidade->nome}",
-                'body'    => (string) $mailable->render(),
+                'body' => (string) $mailable->render(),
                 'sent_at' => now(),
             ]);
         } catch (\Exception $e) {
             // Log do erro no sistema para auditoria, sem travar o usuário
-            \Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: " . $e->getMessage());
+            \Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: ".$e->getMessage());
         }
     }
 
@@ -240,10 +231,6 @@ class CaptacaoInteressadoController extends Controller
     private function montarObservacoes(array $data): string
     {
         $obs = [];
-
-        if ($data['tipo_preenchimento'] === 'responsavel') {
-            $obs[] = 'Vínculo com o aluno: '.($data['responsavel_vinculo'] ?? '-');
-        }
 
         if (! empty($data['unidade_id'])) {
             $unidade = Unidade::find($data['unidade_id']);
@@ -279,6 +266,7 @@ class CaptacaoInteressadoController extends Controller
         // Se as chaves não estiverem configuradas, pula a verificação (ambiente de teste/local)
         if (empty($siteKey) || empty($secret)) {
             \Log::info('reCAPTCHA ignorado: Chaves não configuradas no .env');
+
             return;
         }
 
@@ -287,12 +275,13 @@ class CaptacaoInteressadoController extends Controller
         if (empty($token)) {
             // Se as chaves NÃO estão configuradas, apenas logamos e deixamos passar.
             // Se as chaves ESTÃO configuradas e o token faltou, aí sim é um erro.
-            if (!empty($siteKey) && !empty($secret)) {
+            if (! empty($siteKey) && ! empty($secret)) {
                 \Log::warning('reCAPTCHA falhou: Token ausente no request com chaves configuradas');
                 abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
             }
-            
+
             \Log::info('reCAPTCHA ignorado: Token ausente e chaves não configuradas');
+
             return;
         }
 
@@ -310,7 +299,7 @@ class CaptacaoInteressadoController extends Controller
                 abort(422, 'O sistema detectou uma atividade suspeita. Por favor, tente preencher o formulário novamente.');
             }
         } catch (\Exception $e) {
-            \Log::error('Erro ao conectar com API do reCAPTCHA: ' . $e->getMessage());
+            \Log::error('Erro ao conectar com API do reCAPTCHA: '.$e->getMessage());
             // Em caso de erro de conexão com o Google, deixamos passar para não travar o site
         }
     }

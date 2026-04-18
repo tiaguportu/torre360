@@ -134,17 +134,6 @@ class InteressadoForm
                                     ->required()
                                     ->native(false),
 
-                                Select::make('vinculo')
-                                    ->label('Vínculo com Aluno(s)')
-                                    ->options([
-                                        'Pai' => 'Pai',
-                                        'Mãe' => 'Mãe',
-                                        'Parente' => 'Parente',
-                                        'Tutor' => 'Tutor',
-                                        'Próprio Aluno' => 'Próprio Aluno',
-                                    ])
-                                    ->native(false),
-
                                 DateTimePicker::make('data_proximo_contato')
                                     ->label('Próximo Contato')
                                     ->native(false),

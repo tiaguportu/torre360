@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SituacaoMatricula;
 use App\Models\Contrato;
 use App\Models\CorRaca;
 use App\Models\CronogramaAula;
@@ -16,7 +17,6 @@ use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Serie;
 use App\Models\Sexo;
-use App\Enums\SituacaoMatricula;
 use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;

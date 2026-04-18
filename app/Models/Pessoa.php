@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -34,14 +36,12 @@ class Pessoa extends Model
         return $this->belongsTo(Pais::class, 'nacionalidade_id');
     }
 
-    public function sexo(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Sexo::class);
-    }
-
-    public function corRaca(): BelongsTo
-    {
-        return $this->belongsTo(CorRaca::class);
+        return [
+            'sexo' => Sexo::class,
+            'cor_raca' => CorRaca::class,
+        ];
     }
 
     public function matriculas(): HasMany

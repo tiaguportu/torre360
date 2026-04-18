@@ -2,10 +2,10 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Filament\Auth\Pages\Login as BaseLogin;
-use Filament\Auth\Http\Responses\Contracts\LoginResponse;
-use Illuminate\Validation\ValidationException;
 use App\Models\User;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Auth\Pages\Login as BaseLogin;
+use Illuminate\Validation\ValidationException;
 
 class CustomLogin extends BaseLogin
 {

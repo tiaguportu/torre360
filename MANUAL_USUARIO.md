@@ -62,10 +62,10 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para que você possa alertar o consultor responsável por e-mail e sistema.
 
 ### 3.4 Registro de Vínculo
-O sistema permite registrar o grau de parentesco do interessado principal com o(s) aluno(s):
-- **Opções:** Pai, Mãe, Parente, Tutor ou Próprio Aluno.
-- **Flexibilidade:** Ao cadastrar múltiplos alunos para o mesmo interessado, você pode definir um vínculo específico para cada uma das crianças.
-- **Onde Ver:** Os vínculos são exibidos tanto nos dados do negócio quanto na aba de dependentes do cadastro do interessado.
+O sistema permite registrar o grau de parentesco do interessado principal com cada aluno vinculado:
+- **Opções:** Pai, Mãe, Parente ou Tutor.
+- **Flexibilidade:** Ao cadastrar múltiplos alunos para o mesmo interessado, você deve definir um vínculo específico para cada uma das crianças.
+- **Onde Ver:** Os vínculos são exibidos dentro de cada registro na aba de **Dependentes** do cadastro do interessado.
 
 ---
 
@@ -87,7 +87,7 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 
 ### 4.1 Cadastro de Pessoa
 1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento, **Identidade (RG)**, **Profissão** e **Estado Civil**).
-2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo.
+2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo. Os campos de **Sexo** e **Cor / Raça** agora utilizam indicadores visuais (badges) coloridos para facilitar a identificação rápida na tabela.
 3. **Endereços e Automação via CEP:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa.
    - **Agilidade no Preenchimento:** Comece digitando o **CEP**. Ao sair do campo (ou pressionar TAB), o sistema consulta automaticamente a base do **ViaCEP** e preenche para você o **Logradouro**, **Bairro** e a **Cidade/Estado**.
    - **Tipos de Endereço:** Escolha o **Tipo** (ex: Residencial ou Comercial) e complete com o **Número** e **Complemento** (apartamento, bloco, etc).
@@ -409,7 +409,7 @@ O Torre360 disponibiliza um formulário público que pode ser integrado ou divul
 1. **Dados de Contato:** Coleta dos dados primários (Nome, E-mail, WhatsApp, CPF) de quem está preenchendo o formulário.
 2. **Repetidor de Alunos:** O formulário permite adicionar **vários alunos** na mesma inscrição. Basta clicar em **"+ Adicionar outro aluno"**. Isso é ideal para famílias com mais de um filho.
 3. **Dados Individuais:** Para cada aluno, é possível informar nome completo, data de nascimento, série/turma de interesse e unidade de preferência individualmente.
-4. **Vínculo por Aluno:** Informe se o interessado é pai, mãe, parente ou tutor de cada criança cadastrada.
+4. **Vínculo por Aluno:** Informe se o interessado é pai, mãe, parente ou tutor de cada criança cadastrada diretamente na lista de alunos.
 5. **Origem:** O sistema registra automaticamente como o usuário conheceu a escola com base na opção selecionada.
 
 ### 17.3 Automação de E-mail de Agradecimento

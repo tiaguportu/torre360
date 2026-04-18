@@ -15,7 +15,7 @@ class VisualizarDocumentoController extends Controller
     public function __invoke(Request $request, string $path): BinaryFileResponse
     {
         // O middleware 'auth' na rota já garante que o usuário está logado.
-        
+
         $disk = Storage::disk('local');
 
         if (! $disk->exists($path)) {

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Pessoas\Schemas;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use App\Models\Pais;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -86,13 +88,14 @@ class PessoaForm
                     ->tel()
                     ->maxLength(20),
 
-                Select::make('sexo_id')
-                    ->relationship('sexo', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                Select::make('sexo')
+                    ->options(Sexo::class)
                     ->searchable()
                     ->preload(),
 
-                Select::make('cor_raca_id')
-                    ->relationship('corRaca', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                Select::make('cor_raca')
+                    ->label('Cor / Raça')
+                    ->options(CorRaca::class)
                     ->searchable()
                     ->preload(),
 

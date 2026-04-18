@@ -55,11 +55,11 @@ return new class extends Migration
                 Schema::table('matricula', function (Blueprint $table) {
                     $table->dropColumn('situacao_matricula_id');
                 });
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Se falhar (ex: por causa da FK), tenta outro método via SQL puro
                 try {
                     DB::statement('ALTER TABLE matricula DROP COLUMN situacao_matricula_id');
-                } catch (\Exception $e2) {
+                } catch (Exception $e2) {
                     // Se ainda falhar, ignora e segue (teremos uma coluna órfã mas o sistema funciona)
                 }
             }
