@@ -349,4 +349,34 @@ O sistema agora conta com um editor de texto avançado em campos de observaçõe
 
 ---
 
+## 📊 16. Questionários e Avaliação Institucional
+
+O módulo de **Questionários** permite criar formulários personalizados para coletar feedbacks de alunos, professores e colaboradores, funcionando de forma similar ao *Google Forms*, mas integrado ao ecossistema da escola.
+
+### 16.1 Criando um Questionário
+1. Vá em **Acadêmico → Questionários**.
+2. **Geral:** Defina o título, descrição e o período em que o questionário ficará disponível para preenchimento.
+3. **Privacidade:** Marque a opção **Respostas Anônimas** caso deseje que a identidade do respondente seja preservada nos relatórios.
+4. **Público-Alvo:** Utilize a aba de público para restringir quem deve responder. Você pode filtrar por:
+   - Uma **Unidade** específica.
+   - Um **Curso**, **Série** ou **Turma**.
+   - Por **Perfil/Role** (ex: apenas Professores ou apenas Alunos).
+   - Por **Usuário** individual.
+
+### 16.2 Estrutura de Perguntas
+Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura, Qualidade de Ensino, Gestão).
+1. Adicione um Bloco e, dentro dele, adicione as **Perguntas**.
+2. **Tipos de Perguntas:**
+   - **Discursiva:** Campo de texto livre.
+   - **Objetiva:** Seleção de uma única opção.
+   - **Múltipla Escolha:** Permite marcar várias opções.
+   - **Escala Likert:** Escala de satisfação de 1 a 5 (ou conforme configurado).
+
+### 16.3 Acompanhamento de Resultados
+1. Na lista de questionários, você verá a contagem de **Respostas** em tempo real.
+2. Ao clicar em **Visualizar** um questionário, o sistema exibe um **Dashboard de Estatísticas** com gráficos de pizza/donuts mostrando o status das respostas e o engajamento do público.
+3. No menu **Respostas de Questionários**, você pode consultar individualmente cada envio realizado, o tempo de preenchimento e o perfil institucional do respondente.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
