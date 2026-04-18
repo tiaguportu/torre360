@@ -14,7 +14,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Filament\Resources\Interessados\InteressadoResource;
-use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
