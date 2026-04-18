@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Manifeste seu interesse em matricular seu filho(a) no Torre360. Excelência em educação e gestão.">
     
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icon.png') }}">
+    
     {{-- Open Graph / WhatsApp --}}
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
@@ -524,16 +528,6 @@
                                    placeholder="000.000.000-00" maxlength="14">
                         </div>
 
-                        <div class="field">
-                            <label for="responsavel_vinculo">Vínculo com o aluno <span class="req">*</span></label>
-                            <select id="responsavel_vinculo" name="responsavel_vinculo">
-                                <option value="">Selecione…</option>
-                                <option value="Pai"     {{ old('responsavel_vinculo') === 'Pai'     ? 'selected' : '' }}>Pai</option>
-                                <option value="Mãe"     {{ old('responsavel_vinculo') === 'Mãe'     ? 'selected' : '' }}>Mãe</option>
-                                <option value="Parente" {{ old('responsavel_vinculo') === 'Parente' ? 'selected' : '' }}>Parente</option>
-                                <option value="Tutor"   {{ old('responsavel_vinculo') === 'Tutor'   ? 'selected' : '' }}>Tutor</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
 
@@ -761,9 +755,7 @@
             if (n === 2) {
                 if (tipo === 'responsavel') {
                     const nome = $('#responsavel_nome').value.trim();
-                    const vinc = $('#responsavel_vinculo').value;
                     if (!nome) { $('#responsavel_nome').focus(); alert('Informe seu nome completo.'); return false; }
-                    if (!vinc) { alert('Selecione seu vínculo com o aluno.'); return false; }
                 }
                 const tel   = $('#responsavel_telefone').value.trim();
                 const email = $('#responsavel_email').value.trim();
@@ -921,7 +913,6 @@
 
             if (tipo === 'responsavel') {
                 linhas.push(`<strong>Responsável:</strong> ${val('responsavel_nome') || '–'}`);
-                linhas.push(`<strong>Vínculo geral:</strong> ${selText('responsavel_vinculo') || '–'}`);
             }
 
             linhas.push(`<strong>Telefone:</strong> ${val('responsavel_telefone') || '–'}`);
@@ -1036,7 +1027,7 @@
             // Vai para a etapa com erro (2 ou 3)
             @if($errors->has('tipo_preenchimento'))
                 etapaAtual = 1;
-            @elseif($errors->hasAny(['responsavel_nome', 'responsavel_email', 'responsavel_telefone', 'responsavel_vinculo']))
+            @elseif($errors->hasAny(['responsavel_nome', 'responsavel_email', 'responsavel_telefone']))
                 etapaAtual = 2;
             @elseif($errors->has('aluno_nome'))
                 etapaAtual = 3;
