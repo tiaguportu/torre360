@@ -612,20 +612,22 @@
 
                             <div class="field">
                                 <label>Unidade de interesse</label>
-                                <select name="alunos[0][unidade_id]">
-                                    <option value="">Sem preferência</option>
+                                <select name="alunos[0][unidade_id]" class="unidade-select" onchange="filtrarTurmas(this)">
+                                    <option value="">Selecione a Unidade...</option>
                                     @foreach($unidades as $u)
-                                        <option value="{{ $u->id }}">{{ $u->nome }}</option>
+                                        <option value="{{ $u->id }}" {{ $unidades->count() === 1 ? 'selected' : '' }}>{{ $u->nome }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="field">
                                 <label>Turma/Série de interesse</label>
-                                <select name="alunos[0][turma_id]">
-                                    <option value="">Sem preferência</option>
+                                <select name="alunos[0][turma_id]" class="turma-select" disabled>
+                                    <option value="">Selecione primeiro a unidade...</option>
                                     @foreach($turmas as $turma)
-                                        <option value="{{ $turma->id }}">{{ $turma->nome }} ({{ $turma->serie?->nome }})</option>
+                                        <option value="{{ $turma->id }}" data-unidade="{{ $turma->serie?->curso?->unidade_id }}" style="display:none">
+                                            {{ $turma->nome }} ({{ $turma->serie?->nome }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -828,19 +830,21 @@
                         </div>
                         <div class="field">
                             <label>Unidade de interesse</label>
-                            <select name="alunos[${alunoIdx}][unidade_id]">
-                                <option value="">Sem preferência</option>
+                            <select name="alunos[${alunoIdx}][unidade_id]" class="unidade-select" onchange="filtrarTurmas(this)">
+                                <option value="">Selecione a Unidade...</option>
                                 @foreach($unidades as $u)
-                                    <option value="{{ $u->id }}">{{ $u->nome }}</option>
+                                    <option value="{{ $u->id }}" {{ $unidades->count() === 1 ? 'selected' : '' }}>{{ $u->nome }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="field">
                             <label>Turma/Série de interesse</label>
-                            <select name="alunos[${alunoIdx}][turma_id]">
-                                <option value="">Sem preferência</option>
+                            <select name="alunos[${alunoIdx}][turma_id]" class="turma-select" disabled>
+                                <option value="">Selecione primeiro a unidade...</option>
                                 @foreach($turmas as $turma)
-                                    <option value="{{ $turma->id }}">{{ $turma->nome }} ({{ $turma->serie?->nome }})</option>
+                                    <option value="{{ $turma->id }}" data-unidade="{{ $turma->serie?->curso?->unidade_id }}" style="display:none">
+                                        {{ $turma->nome }} ({{ $turma->serie?->nome }})
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -848,7 +852,53 @@
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
+
+            // Se for unidade única, já dispara o filtro para o novo aluno
+            const novoSelectUnidade = document.querySelector(`#aluno-${alunoIdx} .unidade-select`);
+            if (novoSelectUnidade && novoSelectUnidade.value) {
+                filtrarTurmas(novoSelectUnidade);
+            }
+
             alunoIdx++;
+        };
+
+        window.filtrarTurmas = function(selectUnidade) {
+            const unidadeId = selectUnidade.value;
+            const alunoItem = selectUnidade.closest('.aluno-item');
+            const selectTurma = alunoItem.querySelector('.turma-select');
+
+            // Limpa o select de turmas
+            selectTurma.innerHTML = '<option value="">Sem preferência</option>';
+            
+            if (!unidadeId) {
+                selectTurma.disabled = true;
+                selectTurma.innerHTML = '<option value="">Selecione primeiro a unidade...</option>';
+                return;
+            }
+
+            const totalTurmas = [
+                @foreach($turmas as $turma)
+                { id: "{{ $turma->id }}", nome: "{{ $turma->nome }} ({{ $turma->serie?->nome }})", unidade_id: "{{ $turma->serie?->curso?->unidade_id }}" },
+                @endforeach
+            ];
+
+            const turmasFiltradas = totalTurmas.filter(t => t.unidade_id === unidadeId);
+
+            if (turmasFiltradas.length > 0) {
+                turmasFiltradas.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.nome;
+                    selectTurma.appendChild(opt);
+                });
+                selectTurma.disabled = false;
+            } else {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "Nenhuma turma disponível nesta unidade";
+                selectTurma.appendChild(opt);
+                selectTurma.disabled = true;
+            }
         };
 
         window.removerAluno = function(idx) {
@@ -972,6 +1022,12 @@
         // ── Inicialização ────────────────────────────
         syncChoiceCards();
         mostrarEtapa(etapaAtual);
+
+        // Dispara filtro inicial se houver unidade única
+        const firstUnidadeSelect = document.querySelector('.unidade-select');
+        if (firstUnidadeSelect && firstUnidadeSelect.value) {
+            filtrarTurmas(firstUnidadeSelect);
+        }
         // Inicializa ícones Lucide
         lucide.createIcons();
 
