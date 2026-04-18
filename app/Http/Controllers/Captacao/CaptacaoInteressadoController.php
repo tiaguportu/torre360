@@ -10,6 +10,7 @@ use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
+use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Filament\Resources\Interessados\InteressadoResource;
