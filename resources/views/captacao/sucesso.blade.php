@@ -11,8 +11,8 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', sans-serif;
-            background: #0f0f1a;
-            color: #e2e8f0;
+            background: #f8fafc;
+            color: #1e293b;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -20,14 +20,14 @@
             padding: 24px;
         }
         .card {
-            background: #16162a;
-            border: 1px solid rgba(255,255,255,.08);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
             padding: 56px 48px;
             max-width: 540px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 25px 60px rgba(0,0,0,.5);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
         .icon-wrap {
             width: 88px; height: 88px;
@@ -36,7 +36,8 @@
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 28px;
             font-size: 42px;
-            box-shadow: 0 8px 32px rgba(16,185,129,.4);
+            box-shadow: 0 8px 24px rgba(16,185,129,0.25);
+            color: #fff;
             animation: pop .5s cubic-bezier(.36,.07,.19,.97);
         }
         @keyframes pop {
@@ -47,22 +48,20 @@
         h1 {
             font-size: 28px; font-weight: 800;
             margin-bottom: 12px;
-            background: linear-gradient(135deg, #fff, #a5b4fc);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #1e293b;
         }
         p {
-            font-size: 16px; color: #94a3b8;
+            font-size: 16px; color: #64748b;
             line-height: 1.7;
             margin-bottom: 16px;
         }
         .highlight {
-            background: rgba(79,70,229,.15);
-            border: 1px solid rgba(99,102,241,.3);
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 16px 20px;
             font-size: 14px;
-            color: #a5b4fc;
+            color: #475569;
             margin: 20px 0 32px;
         }
         .btn {

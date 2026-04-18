@@ -157,24 +157,38 @@ class CaptacaoInteressadoController extends Controller
      */
     private function verificarRecaptcha(Request $request): void
     {
+        $siteKey = config('services.recaptcha.site_key');
         $secret = config('services.recaptcha.secret');
 
-        if (empty($secret)) {
-            return; // Pula verificação se não configurado
+        // Se as chaves não estiverem configuradas, pula a verificação (ambiente de teste/local)
+        if (empty($siteKey) || empty($secret)) {
+            \Log::info('reCAPTCHA ignorado: Chaves não configuradas no .env');
+            return;
         }
 
         $token = $request->input('recaptcha_token');
 
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => $secret,
-            'response' => $token,
-            'remoteip' => $request->ip(),
-        ]);
+        if (empty($token)) {
+            \Log::warning('reCAPTCHA falhou: Token ausente no request');
+            abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
+        }
 
-        $result = $response->json();
+        try {
+            $response = Http::asForm()->timeout(5)->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => $secret,
+                'response' => $token,
+                'remoteip' => $request->ip(),
+            ]);
 
-        if (! ($result['success'] ?? false) || ($result['score'] ?? 0) < 0.5) {
-            abort(422, 'Verificação de segurança falhou. Por favor, tente novamente.');
+            $result = $response->json();
+
+            if (! ($result['success'] ?? false) || ($result['score'] ?? 0) < 0.3) {
+                \Log::warning('reCAPTCHA falhou: Score baixo ou erro na API', ['result' => $result]);
+                abort(422, 'O sistema detectou uma atividade suspeita. Por favor, tente preencher o formulário novamente.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Erro ao conectar com API do reCAPTCHA: ' . $e->getMessage());
+            // Em caso de erro de conexão com o Google, deixamos passar para não travar o site
         }
     }
 }

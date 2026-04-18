@@ -21,20 +21,20 @@
         :root {
             --primary:     #4f46e5;
             --primary-dk:  #3730a3;
-            --primary-lt:  #818cf8;
-            --accent:      #06b6d4;
+            --primary-lt:  #6366f1;
+            --accent:      #0ea5e9;
             --success:     #10b981;
             --danger:      #ef4444;
             --warning:     #f59e0b;
-            --bg:          #0f0f1a;
-            --card:        #16162a;
-            --card-border: rgba(255,255,255,.08);
-            --text:        #e2e8f0;
-            --muted:       #94a3b8;
-            --input-bg:    #1e1e38;
-            --input-bd:    rgba(99,102,241,.35);
-            --radius:      14px;
-            --shadow:      0 25px 60px rgba(0,0,0,.5);
+            --bg:          #f8fafc;
+            --card:        #ffffff;
+            --card-border: #e2e8f0;
+            --text:        #1e293b;
+            --muted:       #64748b;
+            --input-bg:    #ffffff;
+            --input-bd:    #cbd5e1;
+            --radius:      12px;
+            --shadow:      0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
 
         body {
@@ -50,28 +50,29 @@
         /* ── HERO ── */
         .hero {
             width: 100%;
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #164e63 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             padding: 64px 24px 80px;
             text-align: center;
             position: relative;
             overflow: hidden;
+            color: #fff;
         }
         .hero::before {
             content: '';
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 900px 500px at 20% 10%, rgba(99,102,241,.25) 0%, transparent 70%),
-                radial-gradient(ellipse 600px 400px at 80% 80%, rgba(6,182,212,.18) 0%, transparent 70%);
+                radial-gradient(ellipse 900px 500px at 20% 10%, rgba(255,255,255,.15) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 400px at 80% 80%, rgba(255,255,255,.1) 0%, transparent 70%);
         }
         .hero-icon {
             width: 72px; height: 72px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: #fff;
             border-radius: 20px;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 24px;
             font-size: 36px;
-            box-shadow: 0 8px 32px rgba(79,70,229,.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,.15);
             position: relative;
             animation: float 3s ease-in-out infinite;
         }
@@ -83,15 +84,12 @@
             line-height: 1.15;
             letter-spacing: -.02em;
             position: relative;
-            background: linear-gradient(135deg, #fff 0%, var(--primary-lt) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
         }
         .hero p {
             margin-top: 12px;
             font-size: 18px;
-            color: rgba(255,255,255,.65);
+            color: rgba(255,255,255,.8);
             position: relative;
         }
 
@@ -254,7 +252,7 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(79,70,229,.25);
         }
-        select option { background: #1e1e38; }
+        select option { background: #ffffff; }
         textarea { resize: vertical; min-height: 100px; }
 
         /* ── TURMA CARDS ── */
@@ -660,7 +658,7 @@
                 <p class="subtitle">Confirme os dados antes de enviar. Nossa equipe entrará em contato em breve.</p>
 
                 <div id="resumo" style="
-                    background: var(--input-bg);
+                    background: #f1f5f9;
                     border: 1px solid var(--card-border);
                     border-radius: 12px;
                     padding: 24px;
