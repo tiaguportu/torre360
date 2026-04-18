@@ -209,7 +209,7 @@ class CaptacaoInteressadoController extends Controller
         }
 
         try {
-            $mailable = new AgradecimentoInteresseMail($pessoa->nome, $unidade);
+            $mailable = new AgradecimentoInteresseMail($pessoa, $unidade);
             
             // Envia o e-mail
             Mail::to($pessoa->email)->send($mailable);

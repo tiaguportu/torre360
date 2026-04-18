@@ -1,5 +1,5 @@
 <x-mail::message>
-# Olá, {{ $nomePessoa }}! 👋
+# Olá, {{ $pessoa->nome }}! 👋
 
 Agradecemos o seu interesse em **{{ $unidade->nome }}**. Ficamos muito felizes em saber que você deseja conhecer melhor nosso projeto educacional.
 
