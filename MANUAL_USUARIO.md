@@ -74,9 +74,8 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento, **Identidade (RG)**, **Profissão** e **Estado Civil**).
 2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo.
 3. **Endereços e Automação via CEP:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa.
-   - **Busca Automática:** Ao digitar um **CEP** válido e sair do campo, o sistema consulta automaticamente a base do **ViaCEP** e preenche os campos de **Logradouro**, **Bairro** e **Cidade/Estado**.
-   - **Tipos de Endereço:** Defina obrigatoriamente o **Tipo** (ex: Residencial ou Comercial). 
-   - **Complemento:** O sistema permite o preenchimento detalhado incluindo o campo **Complemento** para apartamentos, blocos ou referências.
+   - **Agilidade no Preenchimento:** Comece digitando o **CEP**. Ao sair do campo (ou pressionar TAB), o sistema consulta automaticamente a base do **ViaCEP** e preenche para você o **Logradouro**, **Bairro** e a **Cidade/Estado**.
+   - **Tipos de Endereço:** Escolha o **Tipo** (ex: Residencial ou Comercial) e complete com o **Número** e **Complemento** (apartamento, bloco, etc).
 4. **Foto:** Use o editor integrado para ajustar a foto de perfil.
 
 ### 4.2 Segurança e Privacidade das Fotos
