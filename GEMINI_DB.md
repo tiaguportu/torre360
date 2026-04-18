@@ -70,10 +70,9 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 - **Campos:** `pessoa_id`, `endereco_id`.
 
 ### `unidade`
-- **Representa:** Unidades físicas da instituição.
-- **Relacionamentos:**
-    - BelongsTo `endereco`.
-    - HasMany `curso`.
+- **Representa:** Uma unidade escolar ou administrativa.
+- **Campos Principais:** `nome`, `cnpj`, `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
+- **Relacionamentos:** BelongsTo `endereco`, HasMany `curso`.
     - BelongsToMany `pessoa` (via `representante_unidade`) para Representantes Legais.
 
 ### `representante_unidade`
