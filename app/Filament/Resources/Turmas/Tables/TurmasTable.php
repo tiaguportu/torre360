@@ -75,7 +75,7 @@ class TurmasTable
                                 Select::make('habilidade_id')
                                     ->label('Habilidade')
                                     ->options(function (Turma $record) {
-                                        if (!Schema::hasTable('turma_habilidade')) {
+                                        if (!\Illuminate\Support\Facades\Schema::hasTable('turma_habilidade')) {
                                             return [];
                                         }
                                         return $record->habilidades->pluck('nome', 'id');
