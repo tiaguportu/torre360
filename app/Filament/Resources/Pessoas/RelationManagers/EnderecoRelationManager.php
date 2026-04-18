@@ -43,6 +43,8 @@ class EnderecoRelationManager extends RelationManager
                     ->maxLength(255),
                 TextInput::make('numero')
                     ->maxLength(10),
+                TextInput::make('complemento')
+                    ->maxLength(255),
                 TextInput::make('bairro')
                     ->maxLength(255),
                 TextInput::make('cep')
@@ -67,6 +69,7 @@ class EnderecoRelationManager extends RelationManager
                 TextColumn::make('logradouro')
                     ->searchable(),
                 TextColumn::make('numero'),
+                TextColumn::make('complemento'),
                 TextColumn::make('bairro'),
                 TextColumn::make('cidade.nome')
                     ->label('Cidade'),

@@ -57,6 +57,7 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - `tipo`: Enum ('residencial', 'comercial'). Define a natureza do endereço.
     - `logradouro`: Nome da rua/avenida.
     - `numero`: Número do imóvel.
+    - `complemento`: Complemento do endereço (ex: Apto 101, Bloco B).
     - `bairro`: Bairro.
     - `cidade_id`: BelongsTo `cidade`.
     - `cep`: Código postal.

@@ -29,6 +29,8 @@ class EnderecosTable
                     ->searchable(),
                 TextColumn::make('numero')
                     ->searchable(),
+                TextColumn::make('complemento')
+                    ->searchable(),
                 TextColumn::make('bairro')
                     ->searchable(),
                 TextColumn::make('cep')

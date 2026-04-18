@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\SituacaoMatricula;
 use App\Models\Cidade;
 use App\Models\Contrato;
 use App\Models\CorRaca;
@@ -12,7 +13,6 @@ use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\Sexo;
-use App\Enums\SituacaoMatricula;
 use App\Models\Turma;
 use App\Models\Unidade;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -173,6 +173,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             TextInput::make('cep')->label('CEP'),
             TextInput::make('logradouro')->label('Logradouro'),
             TextInput::make('numero')->label('Número'),
+            TextInput::make('complemento')->label('Complemento'),
             TextInput::make('bairro')->label('Bairro'),
         ];
 
@@ -267,6 +268,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     'cidade_id' => $alunoData['cidade_id'] ?? null,
                     'logradouro' => $alunoData['logradouro'] ?? null,
                     'numero' => $alunoData['numero'] ?? null,
+                    'complemento' => $alunoData['complemento'] ?? null,
                     'bairro' => $alunoData['bairro'] ?? null,
                     'cep' => $alunoData['cep'] ?? null,
                 ]);
@@ -313,6 +315,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'cidade_id' => $respData['cidade_id'] ?? null,
                         'logradouro' => $respData['logradouro'] ?? null,
                         'numero' => $respData['numero'] ?? null,
+                        'complemento' => $respData['complemento'] ?? null,
                         'bairro' => $respData['bairro'] ?? null,
                         'cep' => $respData['cep'] ?? null,
                     ]);
