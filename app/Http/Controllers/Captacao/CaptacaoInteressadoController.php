@@ -51,14 +51,15 @@ class CaptacaoInteressadoController extends Controller
             'responsavel_email' => ['required', 'email', 'max:255'],
             'responsavel_vinculo' => ['required_if:tipo_preenchimento,responsavel', 'nullable', 'string', 'max:100'],
 
-            // Dados do aluno
-            'aluno_nome' => ['required', 'string', 'max:255'],
-            'aluno_data_nascimento' => ['nullable', 'date'],
+            // Múltiplos alunos
+            'alunos' => ['required', 'array', 'min:1'],
+            'alunos.*.nome' => ['required', 'string', 'max:255'],
+            'alunos.*.data_nascimento' => ['nullable', 'date'],
+            'alunos.*.vinculo' => ['nullable', 'string', 'max:100'],
+            'alunos.*.unidade_id' => ['nullable', 'exists:unidade,id'],
+            'alunos.*.turma_id' => ['nullable', 'exists:turma,id'],
 
-            // Interesse
-            'unidade_id' => ['nullable', 'exists:unidade,id'],
-            'turma_id' => ['nullable', 'exists:turma,id'],
-            'turno_preferencia' => ['nullable', 'string', 'max:100'],
+            // Interesse Geral / Extras
             'observacoes' => ['nullable', 'string', 'max:2000'],
             'como_conheceu' => ['nullable', 'exists:origem_interessado,id'],
         ], [
@@ -68,13 +69,15 @@ class CaptacaoInteressadoController extends Controller
             'responsavel_email.required' => 'O e-mail para contato é obrigatório.',
             'responsavel_email.email' => 'Informe um e-mail válido.',
             'responsavel_vinculo.required_if' => 'Informe o vínculo com o aluno.',
-            'aluno_nome.required' => 'Informe o nome do aluno.',
+            'alunos.required' => 'Informe os dados de ao menos um aluno.',
+            'alunos.*.nome.required' => 'Informe o nome completo do aluno.',
         ]);
 
-        // Determina nome e contato do interessado (pessoa que preeche o form)
+        // Determina nome do interessado (pessoa principal que preenche o form)
+        // Se for "proprio", o nome vem do primeiro aluno da lista
         $nomeInteressado = $validated['tipo_preenchimento'] === 'responsavel'
             ? $validated['responsavel_nome']
-            : $validated['aluno_nome'];
+            : $validated['alunos'][0]['nome'];
 
         // Cria ou localiza a pessoa pelo e-mail
         $pessoa = Pessoa::firstOrCreate(
@@ -88,21 +91,23 @@ class CaptacaoInteressadoController extends Controller
 
         // Status padrão "Novo"
         $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
-
         // Origem: site público (cria se não existir)
         $origemSite = OrigemInteressado::firstOrCreate(
             ['nome' => 'Site'],
         );
 
-        // Origem escolhida pelo usuário (se informada)
-        $origemId = $validated['como_conheceu'] ?? $origemSite->id;
+        // Origem
+        $origemId = $validated['como_conheceu'] ?? null;
+        $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
 
-        // Mapeia o vínculo para o enum do banco
+        // Vínculo do interessado principal com o(s) aluno(s)
+        // Se for "proprio", o vínculo é "Próprio Aluno". 
+        // Se for "responsavel", pegamos o vínculo informado pelo responsável para o primeiro aluno.
         $vinculoEnum = $validated['tipo_preenchimento'] === 'proprio' 
             ? 'Próprio Aluno' 
-            : $validated['responsavel_vinculo'];
+            : ($validated['responsavel_vinculo'] ?? $validated['alunos'][0]['vinculo'] ?? 'Parente');
 
-        // Cria ou atualiza o interessado
+        // Cria ou atualiza o Interessado (Lead)
         $interessado = Interessado::updateOrCreate(
             ['pessoa_id' => $pessoa->id],
             [
