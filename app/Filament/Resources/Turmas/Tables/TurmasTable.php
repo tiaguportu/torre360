@@ -17,7 +17,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Schema;
 use Filament\Notifications\Notification;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Support\Icons\Heroicon;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -141,7 +140,7 @@ class TurmasTable
                             ->success()
                             ->send();
                     })
-                    ->modalWidth(MaxWidth::ExtraLarge)
+                    ->modalWidth('7xl')
                     ->modalSubmitActionLabel('Salvar Avaliações'),
             ])
             ->toolbarActions([
