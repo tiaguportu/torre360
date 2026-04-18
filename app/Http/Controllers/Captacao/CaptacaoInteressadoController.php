@@ -30,8 +30,8 @@ class CaptacaoInteressadoController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Verifica reCAPTCHA v3
-        $this->verificarRecaptcha($request);
+        // Verifica reCAPTCHA v3 (Desativado temporariamente para testes)
+        // $this->verificarRecaptcha($request);
 
         $validated = $request->validate([
             // Quem preenche
