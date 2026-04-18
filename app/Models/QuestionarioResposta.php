@@ -32,8 +32,8 @@ class QuestionarioResposta extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function respostas(): HasMany
+    public function perguntaRespostas(): HasMany
     {
-        return $this->hasMany(QuestionarioPerguntaResposta::class);
+        return $this->hasMany(QuestionarioPerguntaResposta::class, 'questionario_resposta_id');
     }
 }
