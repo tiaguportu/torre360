@@ -134,6 +134,17 @@ class InteressadoForm
                                     ->required()
                                     ->native(false),
 
+                                Select::make('vinculo')
+                                    ->label('Vínculo com Aluno(s)')
+                                    ->options([
+                                        'Pai' => 'Pai',
+                                        'Mãe' => 'Mãe',
+                                        'Parente' => 'Parente',
+                                        'Tutor' => 'Tutor',
+                                        'Próprio Aluno' => 'Próprio Aluno',
+                                    ])
+                                    ->native(false),
+
                                 DateTimePicker::make('data_proximo_contato')
                                     ->label('Próximo Contato')
                                     ->native(false),
@@ -158,8 +169,17 @@ class InteressadoForm
                                         DatePicker::make('data_nascimento')
                                             ->label('Data de Nascimento')
                                             ->native(false),
+                                        Select::make('vinculo')
+                                            ->label('Vínculo')
+                                            ->options([
+                                                'Pai' => 'Pai',
+                                                'Mãe' => 'Mãe',
+                                                'Parente' => 'Parente',
+                                                'Tutor' => 'Tutor',
+                                            ])
+                                            ->native(false),
                                     ])
-                                    ->columns(3)
+                                    ->columns(2)
                                     ->columnSpanFull()
                                     ->itemLabel(fn (array $state): ?string => $state['nome_crianca'] ?? null),
                             ]),

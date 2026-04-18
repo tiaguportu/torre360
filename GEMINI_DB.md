@@ -142,8 +142,13 @@ Estrutura de ensino e turmas.
     - BelongsTo `status_interessado`.
     - BelongsTo `origem_interessado`.
     - BelongsTo `users` (Consultor Responsável).
+    - HasMany `dependentes` (InteressadoDependente).
     - HasMany `historico_contato`.
     - HasOne `ultimoHistorico` (Latest of Many).
+
+### `interessado_dependente` (Alunos Vinculados)
+- **Representa:** Os potenciais alunos vinculados a um interessado principal.
+- **Campos Principais:** `interessado_id`, `nome_crianca`, `serie_id`, `vinculo` (Pai, Mãe, Parente, Tutor), `data_nascimento`.
 
 ### `historico_contato`
 - **Representa:** Registro de cada interação com o interessado (ligação, visita, etc).
