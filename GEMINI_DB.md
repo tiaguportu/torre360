@@ -180,3 +180,30 @@ Estrutura de ensino e turmas.
     - Em Análise -> Aprovado, Rejeitado.
     - Aprovado -> Em Análise, Rejeitado.
     - Rejeitado -> Pendente, Em Análise.
+
+---
+
+## 8. Questionários e Avaliação Institucional
+### `questionarios`
+- **Representa:** O cabeçalho do questionário/formulário.
+- **Campos Principais:** `titulo`, `inicio_aplicacao`, `fim_aplicacao`, `is_anonimo`, `is_ativo`.
+- **Relacionamentos:** HasMany `blocos`, HasMany `alvos`, HasMany `respostas`.
+
+### `questionario_blocos`
+- **Representa:** Agrupamentos de perguntas (seções).
+- **Relacionamentos:** BelongsTo `questionarios`, HasMany `perguntas`.
+
+### `questionario_perguntas`
+- **Representa:** As perguntas individuais.
+- **Campos Principais:** `enunciado`, `tipo` (discursiva, objetiva, multipla_escolha, likert), `opcoes` (JSON).
+- **Relacionamentos:** BelongsTo `questionario_blocos`.
+
+### `questionario_alvos`
+- **Representa:** Definição do público-alvo para o questionário.
+- **Campos Principais:** 
+    - `alvo_type`: Tipo de alvo (Unidade, Curso, Serie, Turma, Role, User).
+    - `alvo_id`: ID da entidade correspondente.
+- **Propósito:** Controla a visibilidade e permissão de resposta baseada no perfil ou identificação do usuário.
+
+### `questionario_respostas` e `questionario_pergunta_respostas`
+- Registro das submissões e respostas individuais dos usuários.

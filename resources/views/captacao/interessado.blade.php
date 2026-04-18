@@ -620,7 +620,7 @@
                                     <option value="">Selecione primeiro a unidade...</option>
                                     @foreach($turmas as $turma)
                                         <option value="{{ $turma->id }}" data-unidade="{{ $turma->serie?->curso?->unidade_id }}" style="display:none">
-                                            {{ $turma->nome }} ({{ $turma->serie?->nome }})
+                                            {{ $turma->serie?->nome }} (idade mínima {{ $turma->serie?->idade_minima ?? '–' }} anos)
                                         </option>
                                     @endforeach
                                 </select>
@@ -835,7 +835,7 @@
                                 <option value="">Selecione primeiro a unidade...</option>
                                 @foreach($turmas as $turma)
                                     <option value="{{ $turma->id }}" data-unidade="{{ $turma->serie?->curso?->unidade_id }}" style="display:none">
-                                        {{ $turma->nome }} ({{ $turma->serie?->nome }})
+                                        {{ $turma->serie?->nome }} (idade mínima {{ $turma->serie?->idade_minima ?? '–' }} anos)
                                     </option>
                                 @endforeach
                             </select>
@@ -870,7 +870,7 @@
 
             const totalTurmas = [
                 @foreach($turmas as $turma)
-                { id: "{{ $turma->id }}", nome: "{{ $turma->nome }} ({{ $turma->serie?->nome }})", unidade_id: "{{ $turma->serie?->curso?->unidade_id }}" },
+                { id: "{{ $turma->id }}", nome: "{{ $turma->serie?->nome }} (idade mínima {{ $turma->serie?->idade_minima ?? '–' }} anos)", unidade_id: "{{ $turma->serie?->curso?->unidade_id }}" },
                 @endforeach
             ];
 

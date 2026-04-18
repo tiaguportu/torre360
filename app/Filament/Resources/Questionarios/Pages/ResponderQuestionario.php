@@ -30,6 +30,18 @@ class ResponderQuestionario extends Page
     {
         $this->record = $record;
 
+        // Verificar se o usuário faz parte do público-alvo ou se o questionário é visível
+        if (! $this->record->podeSerRespondidoPor(Auth::user())) {
+            Notification::make()
+                ->title('Você não tem permissão para responder este questionário ou ele não está disponível.')
+                ->danger()
+                ->send();
+
+            $this->redirect($this->getResource()::getUrl('index'));
+
+            return;
+        }
+
         // Verificar se usuário já respondeu (se não for anônimo)
         if (! $this->record->is_anonimo && Auth::check()) {
             $jaRespondeu = QuestionarioResposta::where('questionario_id', $this->record->id)

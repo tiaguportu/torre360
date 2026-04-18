@@ -55,7 +55,7 @@ class QuestionariosTable
                     ->icon('heroicon-o-pencil-square')
                     ->color('success')
                     ->url(fn (Questionario $record): string => QuestionarioResource::getUrl('responder', ['record' => $record]))
-                    ->visible(fn (Questionario $record): bool => $record->is_ativo),
+                    ->visible(fn (Questionario $record): bool => $record->podeSerRespondidoPor(auth()->user())),
                 ViewAction::make(),
                 EditAction::make(),
             ])

@@ -395,6 +395,10 @@ O módulo de **Questionários** permite criar formulários personalizados para c
    - Um **Curso**, **Série** ou **Turma**.
    - Por **Perfil/Role** (ex: apenas Professores ou apenas Alunos).
    - Por **Usuário** individual.
+4. **Visibilidade Inteligente:** O sistema gerencia automaticamente quem pode visualizar e responder cada formulário:
+   - Se você definir um **Perfil/Role**, todos os usuários com esse papel terão o questionário habilitado.
+   - Se definir um **Usuário Específico**, apenas esse indivíduo poderá ver e responder, garantindo privacidade para avaliações individuais ou feedbacks direcionados.
+   - O questionário respeita as datas de início e fim da aplicação, ocultando-se automaticamente fora do período configurado.
 
 ### 16.2 Estrutura de Perguntas
 Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura, Qualidade de Ensino, Gestão).
