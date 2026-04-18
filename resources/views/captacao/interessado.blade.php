@@ -771,10 +771,33 @@
             }
 
             if (n === 3) {
-                const nome = $('#aluno_nome').value.trim();
-                if (!nome) { $('#aluno_nome').focus(); alert('Informe o nome do aluno.'); return false; }
+                const primeiroNome = document.querySelector('input[name="alunos[0][nome]"]');
+                if (!primeiroNome || !primeiroNome.value.trim()) { 
+                    if(primeiroNome) primeiroNome.focus();
+                    alert('Informe ao menos o nome do primeiro aluno.'); 
+                    return false; 
+                }
                 return true;
             }
+
+            return true;
+        }
+
+        // ── Navegação ────────────────────────────────
+        window.avancarEtapa = function () {
+            if (!validarEtapa(etapaAtual)) return;
+            if (etapaAtual < totalEtapas) {
+                etapaAtual++;
+                mostrarEtapa(etapaAtual);
+            }
+        };
+
+        window.voltarEtapa = function () {
+            if (etapaAtual > 1) {
+                etapaAtual--;
+                mostrarEtapa(etapaAtual);
+            }
+        };
 
         // ── Repeater Alunos ──────────────────────────
         let alunoIdx = 1;
@@ -921,7 +944,34 @@
             this.value = v;
         });
 
+        // ── Choice cards (Etapa 1) ───────────────────
+        function syncChoiceCards() {
+            const tipo = getTipo();
+            const cardProprio = $('#card-proprio');
+            const cardResponsavel = $('#card-responsavel');
+            
+            if(cardProprio) cardProprio.classList.toggle('selected', tipo === 'proprio');
+            if(cardResponsavel) cardResponsavel.classList.toggle('selected', tipo === 'responsavel');
+
+            const blocoResp = $('#bloco-responsavel');
+            const subtitulo = $('#subtitle-contato');
+
+            if (tipo === 'proprio') {
+                if(blocoResp) blocoResp.style.display = 'none';
+                if(subtitulo) subtitulo.textContent   = 'Informe seus dados de contato.';
+            } else {
+                if(blocoResp) blocoResp.style.display = '';
+                if(subtitulo) subtitulo.textContent   = 'Informe seus dados para que possamos entrar em contato.';
+            }
+        }
+
+        $$('input[name="tipo_preenchimento"]').forEach(r => {
+            r.addEventListener('change', syncChoiceCards);
+        });
+
         // ── Inicialização ────────────────────────────
+        syncChoiceCards();
+        mostrarEtapa(etapaAtual);
         // Inicializa ícones Lucide
         lucide.createIcons();
 
