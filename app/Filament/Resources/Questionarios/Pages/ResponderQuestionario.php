@@ -20,7 +20,7 @@ class ResponderQuestionario extends Page
 {
     protected static string $resource = QuestionarioResource::class;
 
-    protected static string $view = 'filament.resources.questionarios.pages.responder-questionario';
+    protected string $view = 'filament.resources.questionarios.pages.responder-questionario';
 
     public ?Questionario $record = null;
 
