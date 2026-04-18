@@ -96,6 +96,7 @@ class CaptacaoInteressadoController extends Controller
             [
                 'status_interessado_id' => $statusNovo?->id,
                 'origem_interessado_id' => $origemId,
+                'usuario_id' => 1, // Atribui ao administrador padrão (ID 1)
                 'observacoes' => $this->montarObservacoes($validated),
             ]
         );
