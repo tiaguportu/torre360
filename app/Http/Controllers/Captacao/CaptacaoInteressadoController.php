@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Captacao;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AgradecimentoInteresseMail;
+use App\Models\EmailLog;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
@@ -13,6 +15,7 @@ use App\Models\Unidade;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class CaptacaoInteressadoController extends Controller
@@ -114,7 +117,38 @@ class CaptacaoInteressadoController extends Controller
             'serie_id' => optional(Turma::find($validated['turma_id'] ?? null))->serie_id,
         ]);
 
+        // Envia E-mail de Agradecimento e Registra Log
+        $this->enviarEmailERegistrarLog($pessoa);
+
         return redirect()->route('captacao.interessado.sucesso');
+    }
+
+    /**
+     * Envia e-mail de agradecimento e registra no log
+     */
+    private function enviarEmailERegistrarLog(Pessoa $pessoa): void
+    {
+        if (! $pessoa->email) {
+            return;
+        }
+
+        try {
+            $mailable = new AgradecimentoInteresseMail($pessoa->nome);
+            
+            // Envia o e-mail
+            Mail::to($pessoa->email)->send($mailable);
+
+            // Registra no Log
+            EmailLog::create([
+                'to'      => [$pessoa->email],
+                'subject' => 'Recebemos seu interesse - Torre360',
+                'body'    => (string) $mailable->render(),
+                'sent_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log do erro no sistema para auditoria, sem travar o usuário
+            \Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: " . $e->getMessage());
+        }
     }
 
     public function sucesso(): View
