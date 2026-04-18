@@ -42,7 +42,16 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status_interessado_id', 1)->count() ?: null;
+        /** @var \App\Models\StatusInteressado $status */
+        $status = \App\Models\StatusInteressado::where('nome', 'Novo')->first();
+
+        if (! $status) {
+            return null;
+        }
+
+        $count = static::getModel()::where('status_interessado_id', $status->id)->count();
+
+        return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
