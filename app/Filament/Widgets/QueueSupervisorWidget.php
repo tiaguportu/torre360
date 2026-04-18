@@ -23,6 +23,14 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
 
     protected string $view = 'filament.widgets.queue-supervisor-widget';
 
+    protected function getActions(): array
+    {
+        return [
+            $this->processQueueAction(),
+            $this->clearQueueAction(),
+        ];
+    }
+
     protected static ?int $sort = 6;
 
     protected int|string|array $columnSpan = 'full';
@@ -59,7 +67,10 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
             ->modalDescription('O sistema tentará processar todos os jobs pendentes agora. Isso pode levar alguns segundos dependendo da quantidade.')
             ->action(function () {
                 try {
-                    // Executa o worker até que a fila esteja vazia
+                    set_time_limit(300); // Aumenta timeout para 5 min se permitido
+
+                    // No Windows/XAMPP, queue:work pode bloquear a requisição.
+                    // Usamos --stop-when-empty para processar o que está lá e sair.
                     Artisan::call('queue:work', [
                         '--stop-when-empty' => true,
                     ]);
