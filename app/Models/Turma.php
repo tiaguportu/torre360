@@ -28,6 +28,11 @@ class Turma extends Model
         return $this->belongsTo(Pessoa::class, 'professor_conselheiro_id');
     }
 
+    public function etapaAvaliativa(): BelongsTo
+    {
+        return $this->belongsTo(EtapaAvaliativa::class);
+    }
+
     public function periodoLetivo(): BelongsTo
     {
         return $this->belongsTo(PeriodoLetivo::class);
@@ -56,5 +61,17 @@ class Turma extends Model
     public function habilidades(): BelongsToMany
     {
         return $this->belongsToMany(Habilidade::class, 'turma_habilidade');
+    }
+
+    public function disciplinas(): BelongsToMany
+    {
+        return $this->belongsToMany(Disciplina::class, 'turma_disciplina');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'tipo_avaliacao' => 'string',
+        ];
     }
 }

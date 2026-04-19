@@ -38,19 +38,41 @@ class TemplateContratoForm
 
                         Placeholder::make('macros_disponiveis')
                             ->label('Macros Disponíveis')
+                            ->columnSpanFull()
                             ->content(function () {
-                                return new HtmlString('
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <div><strong>{{CONTRATO_ID}}</strong>: ID do contrato</div>
-                                        <div><strong>{{CONTRATO_VALOR}}</strong>: Valor total</div>
-                                        <div><strong>{{CONTRATO_DATA}}</strong>: Data atual formatada</div>
-                                        <div><strong>{{UNIDADE_NOME}}</strong>: Nome da unidade</div>
-                                        <div><strong>{{UNIDADE_CNPJ}}</strong>: CNPJ da unidade</div>
-                                        <div><strong>{{ALUNOS_TABELA}}</strong>: Tabela de alunos/turmas</div>
-                                        <div><strong>{{RESPONSAVEIS_INFO}}</strong>: Texto dos responsáveis</div>
-                                        <div><strong>{{FATURAS_TABELA}}</strong>: Tabela de parcelas</div>
-                                    </div>
-                                ');
+                                $macros = [
+                                    'CONTRATO_ID' => ['desc' => 'Identificador único do contrato.', 'ex' => '123'],
+                                    'CONTRATO_VALOR' => ['desc' => 'Valor total do contrato.', 'ex' => 'R$ 1.500,00'],
+                                    'CONTRATO_DATA' => ['desc' => 'Cidade e data atual por extenso.', 'ex' => 'Rio de Janeiro, 19 de Abril de 2026'],
+                                    'UNIDADE_NOME' => ['desc' => 'Nome da unidade escolar.', 'ex' => 'Unidade Centro'],
+                                    'UNIDADE_CNPJ' => ['desc' => 'CNPJ da unidade.', 'ex' => '00.000.000/0001-00'],
+                                    'ALUNOS_TABELA' => ['desc' => 'Tabela com Nome, CPF e Série de todos os alunos.', 'ex' => '[Tabela Gerada]'],
+                                    'RESPONSAVEIS_INFO' => ['desc' => 'Texto qualificando os responsáveis financeiros.', 'ex' => 'João da Silva, CPF 000..., residente em...'],
+                                    'FATURAS_TABELA' => ['desc' => 'Cronograma de parcelas e vencimentos.', 'ex' => '[Tabela Gerada]'],
+                                ];
+
+                                $html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">';
+                                foreach ($macros as $macro => $info) {
+                                    $html .= '
+                                        <div x-data="{ open: false }" class="border-b border-gray-100 dark:border-gray-800 pb-1">
+                                            <div class="flex items-center justify-between py-1">
+                                                <div class="flex items-center space-x-2">
+                                                    <code class="text-primary-600 dark:text-primary-400 font-bold">{{'.$macro.'}}</code>
+                                                    <span class="text-gray-600 dark:text-gray-400 text-xs truncate max-w-[150px]">'.$info['desc'].'</span>
+                                                </div>
+                                                <button type="button" @click="open = !open" class="text-gray-400 hover:text-primary-500 transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                </button>
+                                            </div>
+                                            <div x-show="open" x-collapse x-cloak class="mt-1 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs text-gray-500">
+                                                <p><strong>Descrição:</strong> '.$info['desc'].'</p>
+                                                <p class="mt-1 italic"><strong>Exemplo:</strong> '.$info['ex'].'</p>
+                                            </div>
+                                        </div>';
+                                }
+                                $html .= '</div>';
+
+                                return new HtmlString($html);
                             }),
                     ])->columnSpanFull(),
             ]);

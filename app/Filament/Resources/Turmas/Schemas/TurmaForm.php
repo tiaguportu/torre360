@@ -37,6 +37,14 @@ class TurmaForm
                 ColorPicker::make('cor')
                     ->label('Cor da Turma')
                     ->default(fn () => '#'.str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
+                Select::make('tipo_avaliacao')
+                    ->options([
+                        'notas' => 'Notas',
+                        'habilidades' => 'Habilidades',
+                        'hibrido' => 'Híbrido',
+                    ])
+                    ->required()
+                    ->default('notas'),
             ]);
     }
 }

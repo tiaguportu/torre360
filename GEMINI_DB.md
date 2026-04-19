@@ -86,12 +86,17 @@ Estrutura de ensino e turmas.
 
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
+- **Turma - Campos Faltantes:** `tipo_avaliacao` (Enum: notas, habilidades, hibrido). Define quais recursos de avaliação estarão disponíveis para a turma.
 
 ### `disciplina`
 - **Representa:** Matérias ou componentes curriculares.
 - **Campos Principais:** `nome`, `slug`, `cor`, `ordem_boletim`.
-- **Relacionamentos:** HasMany `cronograma_aula`, HasMany `habilidades`.
+- **Relacionamentos:** HasMany `cronograma_aula`, HasMany `habilidades`, BelongsToMany `turma` (via `turma_disciplina`).
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das disciplinas na visualização e impressão de boletins.
+
+### `turma_disciplina`
+- **Representa:** Tabela pivô que define a grade curricular (disciplinas) de uma turma específica.
+- **Campos:** `turma_id`, `disciplina_id`.
 
 ### `matricula`
 - **Representa:** Vínculo do aluno com uma turma em um período letivo.
@@ -128,6 +133,7 @@ Estrutura de ensino e turmas.
 ### `avaliacao_habilidades`
 - **Representa:** Registro do desempenho do aluno em uma habilidade específica por etapa.
 - **Campos Principais:** `matricula_id`, `habilidade_id`, `etapa_avaliativa_id`, `conceito`, `observacao`.
+- **Conceito (Enum):** `realiza_bem`, `em_desenvolvimento`, `nao_realiza`, `nao_observado`.
 
 ### `cronograma_aula` e `frequencia_escolar`
 - Registro de aulas e presença.

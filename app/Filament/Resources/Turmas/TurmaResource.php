@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Turmas;
 use App\Filament\Resources\Turmas\Pages\CreateTurma;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
+use App\Filament\Resources\Turmas\RelationManagers\DisciplinasRelationManager;
+use App\Filament\Resources\Turmas\RelationManagers\HabilidadesRelationManager;
 use App\Filament\Resources\Turmas\RelationManagers\MatriculasRelationManager;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
 use App\Filament\Resources\Turmas\Tables\TurmasTable;
@@ -70,6 +72,7 @@ class TurmaResource extends Resource
     {
         return [
             MatriculasRelationManager::class,
+            DisciplinasRelationManager::class,
             HabilidadesRelationManager::class,
         ];
     }

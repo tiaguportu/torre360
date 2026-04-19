@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ConceitoHabilidade;
 use Database\Factories\AvaliacaoHabilidadeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,5 +36,12 @@ class AvaliacaoHabilidade extends Model
     public function etapaAvaliativa(): BelongsTo
     {
         return $this->belongsTo(EtapaAvaliativa::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'conceito' => ConceitoHabilidade::class,
+        ];
     }
 }

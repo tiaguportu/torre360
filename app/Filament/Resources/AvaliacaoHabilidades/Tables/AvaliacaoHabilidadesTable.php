@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\Avaliacaos\Tables;
+namespace App\Filament\Resources\AvaliacaoHabilidades\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Table;
 
-class AvaliacaosTable
+class AvaliacaoHabilidadesTable
 {
     public static function configure(Table $table): Table
     {

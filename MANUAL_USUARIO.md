@@ -129,13 +129,23 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 O sistema permite avaliar competências e habilidades específicas organizadas por **Campos de Experiência**, em total conformidade com a BNCC para a Educação Infantil.
 1. **Campos de Experiência:** Vá em **Currículo (BNCC) → Campos de Experiência**. Aqui você define as categorias principais (ex: "O eu, o outro e o nós", "Corpo, gestos e movimentos"). Cada campo possui uma descrição pedagógica que orienta os professores.
 2. **Cadastro de Habilidades:** Vá em **Currículo (BNCC) → Habilidades**. Cada habilidade (ex: EI01EO01) deve ser vinculada a um Campo de Experiência. Você pode cadastrar o código, o nome e a descrição da habilidade.
-3. **Vinculando à Turma:** No cadastro de **Turmas**, acesse a aba **Habilidades**. Utilize o botão **Anexar** para escolher quais competências serão trabalhadas e avaliadas naquela turma específica.
-4. **Lançamento de Avaliações:** 
-   - Na listagem de **Turmas**, localize a turma desejada e clique na ação **Avaliar Habilidades** (ícone de estrela amarela). 
-   - No formulário, selecione a **Etapa Avaliativa** (ex: 1º Bimestre) e a **Habilidade**. 
-   - O sistema filtrará as habilidades disponíveis para a turma. Ao selecionar uma habilidade, o professor visualiza a descrição completa para auxiliar no julgamento pedagógico.
-   - O sistema listará automaticamente todos os alunos ativos da turma. Basta selecionar o **Conceito** (Pleno, Básico, etc.) e adicionar observações se necessário.
-   - Clique em **Salvar Avaliações** para registrar o desempenho.
+3. **Gerenciamento de Grade na Turma:** No cadastro de **Turmas**, você deve configurar o que será avaliado:
+   - **Tipo de Avaliação:** Escolha entre `Notas` (Ensino Fundamental/Médio), `Habilidades` (Infantil) ou `Híbrido`.
+   - **Disciplinas:** Na aba **Disciplinas**, anexe as matérias que a turma possui. Isso habilita o lançamento de notas para essas matérias.
+   - **Habilidades:** Na aba **Habilidades**, anexe as competências que serão avaliadas. Isso habilita o lançamento de conceitos pedagógicos.
+4. **Lançamento de Avaliações por Notas:**
+   - Vá em **Avaliações → Avaliações por Disciplina**.
+   - Crie uma nova avaliação selecionando a **Turma**, a **Disciplina** (filtrada pelas que você anexou à turma) e a **Etapa**.
+   - Utilize o repetidor de notas para lançar os valores numéricos de todos os alunos de uma vez.
+5. **Lançamento de Avaliações por Habilidades:**
+   - Vá em **Avaliações → Avaliações por Habilidades**.
+   - Selecione a **Turma**, a **Habilidade** e o **Aluno**.
+   - Escolha o **Conceito** pedagógico baseado na escala: 
+     - **Realiza bem** (Verde)
+     - **Em desenvolvimento** (Amarelo)
+     - **Não realiza** (Vermelho)
+     - **Não observado** (Cinza)
+   - Adicione observações pedagógicas detalhadas se necessário.
 
 ### 5.6 Configuração de Disciplinas e Ordenação no Boletim
 1. Vá em **Acadêmico → Disciplinas**.
