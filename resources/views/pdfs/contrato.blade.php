@@ -135,22 +135,22 @@
         $representanteUnidade = $unidade?->representantesLegais->first();
     @endphp
 
-    <div class="header">
-        <div class="center bold uppercase">
-            ESCOLA TORRE DE MARFIM<br>
-            FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE
-        </div>
-        <div class="center bold">
-            CONTRATO DE ADESÃO DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS PARA {{ $periodo?->nome ?? '2026' }}.<br>
-            EDUCAÇÃO INFANTIL E ENSINO FUNDAMENTAL I.
-        </div>
-    </div>
-
     @if(isset($conteudo_template) && $conteudo_template)
         <div class="template-content">
             {!! $conteudo_template !!}
         </div>
     @else
+        <div class="header">
+            <div class="center bold uppercase">
+                ESCOLA TORRE DE MARFIM<br>
+                FAMÍLIAS INSULANAS ASSOCIADAS DA TORRE
+            </div>
+            <div class="center bold">
+                CONTRATO DE ADESÃO DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS PARA {{ $periodo?->nome ?? '2026' }}.<br>
+                EDUCAÇÃO INFANTIL E ENSINO FUNDAMENTAL I.
+            </div>
+        </div>
+
         <div class="clause-body">
             <span class="bold">CONTRATADO:</span> ESCOLA TORRE DE MARFIM, pessoa jurídica de direito privado, sob forma de
             associação de caráter educativo, sem fins lucrativos e com fins não econômicos, tendo como entidade mantenedora
@@ -334,4 +334,4 @@
 
 </body>
 
-</html>
+</html> 
