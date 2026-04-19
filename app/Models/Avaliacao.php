@@ -78,7 +78,8 @@ class Avaliacao extends Model
         }, '>', function ($query) {
             $query->selectRaw('count(*)')
                 ->from('nota')
-                ->whereColumn('avaliacao_id', 'avaliacao.id');
+                ->whereColumn('avaliacao_id', 'avaliacao.id')
+                ->whereNotNull('valor');
         });
     }
 
@@ -88,7 +89,7 @@ class Avaliacao extends Model
     public function getTemPendenciaAttribute(): bool
     {
         $totalAlunos = $this->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
-        $totalNotas = $this->notas()->count();
+        $totalNotas = $this->notas()->whereNotNull('valor')->count();
 
         return $totalNotas < $totalAlunos;
     }
