@@ -27,11 +27,6 @@ class Habilidade extends Model
         return $this->belongsTo(CampoExperiencia::class);
     }
 
-    public function turmas(): BelongsToMany
-    {
-        return $this->belongsToMany(Turma::class, 'turma_habilidade');
-    }
-
     public function avaliacoes(): HasMany
     {
         return $this->hasMany(AvaliacaoHabilidade::class);
