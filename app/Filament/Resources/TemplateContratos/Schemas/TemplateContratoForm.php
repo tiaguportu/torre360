@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\TemplateContratos\Schemas;
 
-use Amidesfahani\FilamentTinyEditor\TinyEditor;
+use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;

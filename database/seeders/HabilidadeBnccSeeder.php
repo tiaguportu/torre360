@@ -13,6 +13,13 @@ class HabilidadeBnccSeeder extends Seeder
      */
     public function run(): void
     {
+        // Limpar dados anteriores para evitar duplicidade ou lixo
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        \App\Models\Habilidade::truncate();
+        \App\Models\CampoExperiencia::truncate();
+        \Illuminate\Support\Facades\DB::table('turma_habilidade')->truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
         // 1. Criar Campos de Experiência (BNCC Educação Infantil)
         $campos = [
             [
