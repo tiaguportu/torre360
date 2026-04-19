@@ -80,7 +80,6 @@ class AvaliacaoForm
                                 TextInput::make('valor')
                                     ->label('Nota')
                                     ->numeric()
-                                    ->required()
                                     ->minValue(0)
                                     ->maxValue(fn (callable $get) => $get('../../nota_maxima') ?? 10),
                             ])
