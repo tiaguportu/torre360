@@ -95,7 +95,7 @@ class AvaliacaosTable
                             ->success()
                             ->send();
                     })
-                    ->confirm()
+                    ->requiresConfirmation()
                     ->modalHeading('Notificar Professor')
                     ->modalDescription('Deseja enviar um aviso de pendência para o professor desta avaliação?')
                     ->modalSubmitActionLabel('Sim, notificar'),
