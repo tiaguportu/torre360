@@ -18,7 +18,9 @@ class AvaliacaoHabilidadeResource extends Resource
 {
     protected static ?string $model = AvaliacaoHabilidade::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckCircle;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Avaliações';
 
     public static function form(Schema $schema): Schema
     {

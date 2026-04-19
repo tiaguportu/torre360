@@ -36,7 +36,7 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Gestão Acadêmica';
+    protected static UnitEnum|string|null $navigationGroup = 'Acadêmico';
 
     protected static ?string $modelLabel = 'Questionário';
 

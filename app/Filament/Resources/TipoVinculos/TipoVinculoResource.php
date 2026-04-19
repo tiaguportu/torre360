@@ -24,7 +24,7 @@ class TipoVinculoResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Localização e Cadastros';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLink;
 
     public static function form(Schema $schema): Schema
     {

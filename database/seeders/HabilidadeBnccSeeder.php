@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\CampoExperiencia;
 use App\Models\Habilidade;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class HabilidadeBnccSeeder extends Seeder
 {
@@ -14,11 +16,11 @@ class HabilidadeBnccSeeder extends Seeder
     public function run(): void
     {
         // Limpar dados anteriores para evitar duplicidade ou lixo
-        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
-        \App\Models\Habilidade::truncate();
-        \App\Models\CampoExperiencia::truncate();
-        \Illuminate\Support\Facades\DB::table('turma_habilidade')->truncate();
-        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+        Schema::disableForeignKeyConstraints();
+        Habilidade::truncate();
+        CampoExperiencia::truncate();
+        DB::table('turma_habilidade')->truncate();
+        Schema::enableForeignKeyConstraints();
 
         // 1. Criar Campos de Experiência (BNCC Educação Infantil)
         $campos = [
@@ -53,9 +55,9 @@ class HabilidadeBnccSeeder extends Seeder
             $camposIds[$campo['nome']] = $created->id;
         }
 
-        $publicoBebes = "Público-alvo: Bebês (zero a 1 ano e 6 meses)";
-        $publicoBemPequenas = "Público-alvo: Crianças bem pequenas (1 ano e 7 meses a 3 anos e 11 meses)";
-        $publicoPequenas = "Público-alvo: Crianças pequenas (4 anos a 5 anos e 11 meses)";
+        $publicoBebes = 'Público-alvo: Bebês (zero a 1 ano e 6 meses)';
+        $publicoBemPequenas = 'Público-alvo: Crianças bem pequenas (1 ano e 7 meses a 3 anos e 11 meses)';
+        $publicoPequenas = 'Público-alvo: Crianças pequenas (4 anos a 5 anos e 11 meses)';
 
         // 2. Criar Habilidades vinculadas aos Campos
         $habilidades = [

@@ -6,19 +6,20 @@ use App\Enums\SituacaoMatricula;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\Turma;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\StaticAction;
-use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -71,18 +72,19 @@ class TurmasTable
                                     ->options(EtapaAvaliativa::pluck('nome', 'id'))
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(fn (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
                                 Select::make('habilidade_id')
                                     ->label('Habilidade')
                                     ->options(function (Turma $record) {
-                                        if (!\Illuminate\Support\Facades\Schema::hasTable('turma_habilidade')) {
+                                        if (! \Illuminate\Support\Facades\Schema::hasTable('turma_habilidade')) {
                                             return [];
                                         }
+
                                         return $record->habilidades->pluck('nome', 'id');
                                     })
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(fn (\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
                             ]),
                         Repeater::make('avaliacoes')
                             ->label('Avaliação dos Alunos')
@@ -156,7 +158,7 @@ class TurmasTable
             ->stackedOnMobile();
     }
 
-    protected static function updateAvaliacoesState(\Filament\Schemas\Components\Utilities\Set $set, \Filament\Schemas\Components\Utilities\Get $get, Turma $record): void
+    protected static function updateAvaliacoesState(Set $set, Get $get, Turma $record): void
     {
         $etapaId = $get('etapa_avaliativa_id');
         $habilidadeId = $get('habilidade_id');

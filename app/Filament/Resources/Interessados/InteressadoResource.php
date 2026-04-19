@@ -33,7 +33,7 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $model = Interessado::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
     protected static UnitEnum|string|null $navigationGroup = 'CRM / Comercial';
 

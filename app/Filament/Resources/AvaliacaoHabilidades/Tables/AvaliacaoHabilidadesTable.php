@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\AvaliacaoHabilidades\Tables;
 
-use App\Enums\ConceitoHabilidade;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;

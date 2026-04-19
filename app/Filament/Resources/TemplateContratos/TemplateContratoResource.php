@@ -18,7 +18,11 @@ class TemplateContratoResource extends Resource
 {
     protected static ?string $model = TemplateContrato::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentDuplicate;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $recordTitleAttribute = 'nome';
 

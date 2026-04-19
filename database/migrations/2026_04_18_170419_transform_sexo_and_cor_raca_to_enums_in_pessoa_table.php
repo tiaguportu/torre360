@@ -45,25 +45,29 @@ return new class extends Migration
             Schema::table('pessoa', function (Blueprint $table) {
                 $table->dropForeign(['sexo_id']);
             });
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         try {
             Schema::table('pessoa', function (Blueprint $table) {
                 $table->dropColumn('sexo_id');
             });
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         try {
             Schema::table('pessoa', function (Blueprint $table) {
                 $table->dropForeign(['cor_raca_id']);
             });
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         try {
             Schema::table('pessoa', function (Blueprint $table) {
                 $table->dropColumn('cor_raca_id');
             });
-        } catch (\Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         // Remove a coluna raca_cor que parecia redundante no dump
         if (Schema::hasColumn('pessoa', 'raca_cor')) {

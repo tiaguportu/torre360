@@ -28,6 +28,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 💰 **Financeiro** | Faturas, Contratos, Bancos, Conciliação e Plano de Contas |
 | 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
 | 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
+| 📖 **Currículo (BNCC)** | Áreas de Conhecimento, Campos de Experiência e Habilidades |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
 | 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield), Logs e Configurações Gerais |

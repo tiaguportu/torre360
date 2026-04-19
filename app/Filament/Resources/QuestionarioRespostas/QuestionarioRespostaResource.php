@@ -35,7 +35,7 @@ class QuestionarioRespostaResource extends Resource implements HasShieldPermissi
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Gestão Acadêmica';
+    protected static UnitEnum|string|null $navigationGroup = 'Acadêmico';
 
     protected static ?string $modelLabel = 'Resposta de Questionário';
 

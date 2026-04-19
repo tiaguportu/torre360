@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('habilidades')) {
+        if (! Schema::hasTable('habilidades')) {
             Schema::create('habilidades', function (Blueprint $table) {
                 $table->id();
                 $table->string('codigo')->nullable()->index(); // BNCC code
@@ -23,7 +23,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('turma_habilidade')) {
+        if (! Schema::hasTable('turma_habilidade')) {
             Schema::create('turma_habilidade', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('turma_id')->constrained('turma')->onDelete('cascade');
@@ -32,7 +32,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('avaliacao_habilidades')) {
+        if (! Schema::hasTable('avaliacao_habilidades')) {
             Schema::create('avaliacao_habilidades', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('matricula_id')->constrained('matricula')->onDelete('cascade');
