@@ -46,6 +46,7 @@ class TemplateContratoForm
                                     'CONTRATO_DATA' => ['desc' => 'Cidade e data atual por extenso.', 'ex' => 'Rio de Janeiro, 19 de Abril de 2026'],
                                     'UNIDADE_NOME' => ['desc' => 'Nome da unidade escolar.', 'ex' => 'Unidade Centro'],
                                     'UNIDADE_CNPJ' => ['desc' => 'CNPJ da unidade.', 'ex' => '00.000.000/0001-00'],
+                                    'UNIDADE_REPRESENTANTES' => ['desc' => 'Qualificação dos representantes legais da unidade.', 'ex' => 'seu Diretor(a), João da Silva'],
                                     'ALUNOS_TABELA' => ['desc' => 'Tabela com Nome, CPF e Série de todos os alunos.', 'ex' => '[Tabela Gerada]'],
                                     'RESPONSAVEIS_INFO' => ['desc' => 'Texto qualificando os responsáveis financeiros.', 'ex' => 'João da Silva, CPF 000..., residente em...'],
                                     'FATURAS_TABELA' => ['desc' => 'Cronograma de parcelas e vencimentos.', 'ex' => '[Tabela Gerada]'],
