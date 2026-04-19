@@ -112,9 +112,14 @@ Estrutura de ensino e turmas.
 ### `avaliacao` e `nota`
 - Registro acadêmico de desempenho convencional (notas numéricas).
 
+### `campo_experiencias`
+- **Representa:** Categorias da BNCC para Educação Infantil (ex: "O eu, o outro e o nós").
+- **Campos Principais:** `nome`, `descricao`.
+- **Relacionamentos:** HasMany `habilidades`.
+
 ### `habilidades`
 - **Representa:** Banco de competências e habilidades (BNCC ou Institucionais).
-- **Campos Principais:** `codigo` (BNCC), `nome`, `tipo` (Enum: BNCC, Institucional), `disciplina_id` (BelongsTo).
+- **Campos Principais:** `codigo` (BNCC), `nome`, `tipo` (Enum: BNCC, Institucional), `campo_experiencia_id` (BelongsTo).
 
 ### `turma_habilidade`
 - **Representa:** Tabela pivô que define quais habilidades serão avaliadas em uma turma específica.

@@ -29,9 +29,9 @@ class HabilidadeForm
                             ])
                             ->required()
                             ->default('BNCC'),
-                        Select::make('disciplina_id')
-                            ->relationship('disciplina', 'nome')
-                            ->label('Disciplina Relacionada')
+                        Select::make('campo_experiencia_id')
+                            ->relationship('campoExperiencia', 'nome')
+                            ->label('Campo de Experiência')
                             ->searchable()
                             ->preload(),
                         Textarea::make('descricao')

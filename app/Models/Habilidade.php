@@ -18,13 +18,13 @@ class Habilidade extends Model
         'codigo',
         'nome',
         'descricao',
-        'disciplina_id',
+        'campo_experiencia_id',
         'tipo',
     ];
 
-    public function disciplina(): BelongsTo
+    public function campoExperiencia(): BelongsTo
     {
-        return $this->belongsTo(Disciplina::class);
+        return $this->belongsTo(CampoExperiencia::class);
     }
 
     public function turmas(): BelongsToMany

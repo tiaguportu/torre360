@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CampoExperiencia;
 use App\Models\Habilidade;
 use Illuminate\Database\Seeder;
 
@@ -12,77 +13,109 @@ class HabilidadeBnccSeeder extends Seeder
      */
     public function run(): void
     {
+        // 1. Criar Campos de Experiência (BNCC Educação Infantil)
+        $campos = [
+            [
+                'nome' => 'O eu, o outro e o nós',
+                'descricao' => 'É na interação com os pares e com adultos que as crianças vão constituindo um modo próprio de agir, sentir e pensar.',
+            ],
+            [
+                'nome' => 'Corpo, gestos e movimentos',
+                'descricao' => 'Com o corpo, as crianças exploram o mundo, o espaço e os objetos, estabelecem relações e se expressam.',
+            ],
+            [
+                'nome' => 'Traços, sons, cores e formas',
+                'descricao' => 'Conviver com diferentes manifestações artísticas, culturais e científicas, locais e universais.',
+            ],
+            [
+                'nome' => 'Escuta, fala, pensamento e imaginação',
+                'descricao' => 'Desde o nascimento, as crianças participam de situações comunicativas cotidianas com as pessoas com as quais interagem.',
+            ],
+            [
+                'nome' => 'Espaços, tempos, quantidades, relações e transformações',
+                'descricao' => 'As crianças vivem inseridas em espaços e tempos de diferentes naturezas, repletos de objetos e fenômenos.',
+            ],
+        ];
+
+        $camposIds = [];
+        foreach ($campos as $campo) {
+            $created = CampoExperiencia::updateOrCreate(
+                ['nome' => $campo['nome']],
+                $campo
+            );
+            $camposIds[$campo['nome']] = $created->id;
+        }
+
+        // 2. Criar Habilidades vinculadas aos Campos
         $habilidades = [
-            // Língua Portuguesa (ID 1)
+            // O eu, o outro e o nós
             [
-                'codigo' => 'EF01LP01',
-                'nome' => 'Reconhecer que textos são lidos e escritos da esquerda para a direita e de cima para baixo.',
+                'codigo' => 'EI01EO01',
+                'nome' => 'Perceber que suas ações têm efeitos nas outras crianças e nos adultos.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 1,
+                'campo_experiencia_id' => $camposIds['O eu, o outro e o nós'],
             ],
             [
-                'codigo' => 'EF01LP02',
-                'nome' => 'Escrever, espontaneamente ou por ditado, palavras e frases de forma alfabética.',
+                'codigo' => 'EI02EO03',
+                'nome' => 'Compartilhar os objetos e os espaços com crianças da mesma faixa etária e adultos.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 1,
-            ],
-            [
-                'codigo' => 'EF15LP01',
-                'nome' => 'Identificar a função social de textos que circulam em campos da vida social cotidiana.',
-                'tipo' => 'BNCC',
-                'disciplina_id' => 1,
+                'campo_experiencia_id' => $camposIds['O eu, o outro e o nós'],
             ],
 
-            // Matemática (ID 2)
+            // Corpo, gestos e movimentos
             [
-                'codigo' => 'EF01MA01',
-                'nome' => 'Utilizar números naturais como indicador de quantidade ou de ordem em diferentes situações.',
+                'codigo' => 'EI01CG01',
+                'nome' => 'Movimentar as partes do corpo para exprimir corporalmente emoções, necessidades e desejos.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 2,
+                'campo_experiencia_id' => $camposIds['Corpo, gestos e movimentos'],
             ],
             [
-                'codigo' => 'EF01MA02',
-                'nome' => 'Contar de maneira exata ou aproximada, utilizando diferentes estratégias.',
+                'codigo' => 'EI02CG02',
+                'nome' => 'Deslocar seu corpo no espaço, orientando-se por noções como em frente, atrás, no alto, embaixo.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 2,
-            ],
-
-            // Ciências (ID 4)
-            [
-                'codigo' => 'EF01CI01',
-                'nome' => 'Comparar características de diferentes materiais de objetos de uso cotidiano.',
-                'tipo' => 'BNCC',
-                'disciplina_id' => 4,
-            ],
-            [
-                'codigo' => 'EF01CI02',
-                'nome' => 'Localizar, nomear e representar graficamente partes do corpo humano e suas funções.',
-                'tipo' => 'BNCC',
-                'disciplina_id' => 4,
+                'campo_experiencia_id' => $camposIds['Corpo, gestos e movimentos'],
             ],
 
-            // Artes (ID 9)
+            // Traços, sons, cores e formas
             [
-                'codigo' => 'EF01AR01',
-                'nome' => 'Identificar e apreciar formas distintas das artes visuais tradicionais e contemporâneas.',
+                'codigo' => 'EI01TS01',
+                'nome' => 'Explorar sons produzidos com o próprio corpo e com objetos do cotidiano.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 9,
+                'campo_experiencia_id' => $camposIds['Traços, sons, cores e formas'],
+            ],
+            [
+                'codigo' => 'EI03TS02',
+                'nome' => 'Expressar-se livremente por meio de desenho, pintura, colagem, dobradura e escultura.',
+                'tipo' => 'BNCC',
+                'campo_experiencia_id' => $camposIds['Traços, sons, cores e formas'],
             ],
 
-            // Educação Física (ID 6)
+            // Escuta, fala, pensamento e imaginação
             [
-                'codigo' => 'EF01EF01',
-                'nome' => 'Experimentar, fruir e recriar diferentes brincadeiras e jogos da cultura popular.',
+                'codigo' => 'EI01EF03',
+                'nome' => 'Demonstrar interesse ao ouvir leituras de poemas e a apresentação de músicas.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 6,
+                'campo_experiencia_id' => $camposIds['Escuta, fala, pensamento e imaginação'],
+            ],
+            [
+                'codigo' => 'EI02EF01',
+                'nome' => 'Dialogar com crianças e adultos, expressando seus desejos, necessidades, sentimentos e opiniões.',
+                'tipo' => 'BNCC',
+                'campo_experiencia_id' => $camposIds['Escuta, fala, pensamento e imaginação'],
             ],
 
-            // Inglês (ID 3)
+            // Espaços, tempos, quantidades...
             [
-                'codigo' => 'EF06LI01',
-                'nome' => 'Interagir em situações de intercâmbio oral, demonstrando iniciativa para utilizar a língua inglesa.',
+                'codigo' => 'EI01ET01',
+                'nome' => 'Explorar e descobrir as propriedades de objetos e materiais.',
                 'tipo' => 'BNCC',
-                'disciplina_id' => 3,
+                'campo_experiencia_id' => $camposIds['Espaços, tempos, quantidades, relações e transformações'],
+            ],
+            [
+                'codigo' => 'EI03ET07',
+                'nome' => 'Relacionar números às suas respectivas quantidades.',
+                'tipo' => 'BNCC',
+                'campo_experiencia_id' => $camposIds['Espaços, tempos, quantidades, relações e transformações'],
             ],
         ];
 
