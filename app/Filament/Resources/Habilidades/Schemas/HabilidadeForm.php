@@ -15,6 +15,7 @@ class HabilidadeForm
         return $schema
             ->components([
                 Section::make('Informações da Habilidade')
+                    ->columnSpanFull()
                     ->schema([
                         TextInput::make('codigo')
                             ->label('Código BNCC')
@@ -37,7 +38,7 @@ class HabilidadeForm
                         Textarea::make('descricao')
                             ->label('Descrição')
                             ->columnSpanFull(),
-                    ])->columns(2),
+                    ]),
             ]);
     }
 }
