@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contrato;
+use App\Models\Unidade;
 use Carbon\Carbon;
 
 class ContractTemplateService
@@ -12,7 +13,7 @@ class ContractTemplateService
         // Carrega relações necessárias caso não estejam presentes
         $contrato->loadMissing([
             'matriculas.pessoa',
-            'matriculas.turma.serie.curso.unidade',
+            'matriculas.turma.serie.curso.unidade.representantesLegais',
             'responsaveisFinanceiros.pessoa.enderecos',
             'faturas',
         ]);
@@ -26,6 +27,7 @@ class ContractTemplateService
 
             '{{UNIDADE_NOME}}' => $unidade?->nome ?? '',
             '{{UNIDADE_CNPJ}}' => $unidade?->cnpj ?? '',
+            '{{UNIDADE_REPRESENTANTES}}' => $this->generateRepresentantesUnidade($unidade),
 
             '{{ALUNOS_TABELA}}' => $this->generateAlunosTable($contrato),
             '{{RESPONSAVEIS_INFO}}' => $this->generateResponsaveisInfo($contrato),
@@ -33,6 +35,28 @@ class ContractTemplateService
         ];
 
         return str_replace(array_keys($macros), array_values($macros), $html);
+    }
+
+    protected function generateRepresentantesUnidade(?Unidade $unidade): string
+    {
+        if (! $unidade || $unidade->representantesLegais->isEmpty()) {
+            return '_______';
+        }
+
+        $representantes = [];
+        foreach ($unidade->representantesLegais as $rep) {
+            $cargo = $rep->pivot->cargo ?? 'Representante Legal';
+            $representantes[] = "seu {$cargo}, {$rep->nome}";
+        }
+
+        // Formatação gramatical (item1, item2 e item3)
+        if (count($representantes) === 1) {
+            return $representantes[0];
+        }
+
+        $ultimo = array_pop($representantes);
+
+        return implode(', ', $representantes).' e '.$ultimo;
     }
 
     protected function generateAlunosTable(Contrato $contrato): string
