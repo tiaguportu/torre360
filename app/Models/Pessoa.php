@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CorRaca;
 use App\Enums\Sexo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pessoa extends Model
 {
+    use HasFactory;
+
     protected $table = 'pessoa';
 
     protected $guarded = [];

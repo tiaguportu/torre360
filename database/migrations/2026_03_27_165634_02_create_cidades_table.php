@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cidades', function (Blueprint $table) {
+        Schema::create('cidade', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('estado_id')->constrained('estados')->onDelete('cascade');
+            $table->foreignId('estado_id')->constrained('estado')->onDelete('cascade');
             $table->string('nome');
             $table->string('codigo_ibge', 7)->nullable();
             $table->timestamps();
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cidades');
+        Schema::dropIfExists('cidade');
     }
 };

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Notifications\DocumentosPendentesNotification;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class Matricula extends Model
 {
+    use HasFactory;
+
     protected $table = 'matricula';
 
     protected $guarded = [];

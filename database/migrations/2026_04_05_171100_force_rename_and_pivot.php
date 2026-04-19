@@ -28,21 +28,23 @@ return new class extends Migration
 
         // 3. Remover curso_id de forma forçada
         if (Schema::hasColumn('tipo_documento', 'curso_id')) {
-            try {
-                $dbname = DB::connection()->getDatabaseName();
-                $constraints = DB::select("
-                    SELECT CONSTRAINT_NAME
-                    FROM information_schema.KEY_COLUMN_USAGE
-                    WHERE TABLE_SCHEMA = ?
-                    AND TABLE_NAME = 'tipo_documento'
-                    AND COLUMN_NAME = 'curso_id'
-                    AND REFERENCED_TABLE_NAME IS NOT NULL
-                ", [$dbname]);
+            if (config('database.default') !== 'sqlite') {
+                try {
+                    $dbname = DB::connection()->getDatabaseName();
+                    $constraints = DB::select("
+                        SELECT CONSTRAINT_NAME
+                        FROM information_schema.KEY_COLUMN_USAGE
+                        WHERE TABLE_SCHEMA = ?
+                        AND TABLE_NAME = 'tipo_documento'
+                        AND COLUMN_NAME = 'curso_id'
+                        AND REFERENCED_TABLE_NAME IS NOT NULL
+                    ", [$dbname]);
 
-                foreach ($constraints as $constraint) {
-                    DB::statement('ALTER TABLE tipo_documento DROP FOREIGN KEY '.$constraint->CONSTRAINT_NAME);
+                    foreach ($constraints as $constraint) {
+                        DB::statement('ALTER TABLE tipo_documento DROP FOREIGN KEY '.$constraint->CONSTRAINT_NAME);
+                    }
+                } catch (Exception $e) {
                 }
-            } catch (Exception $e) {
             }
 
             Schema::table('tipo_documento', function (Blueprint $table) {

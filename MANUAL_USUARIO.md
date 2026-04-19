@@ -333,19 +333,30 @@ O **Torre360** possui um aplicativo nativo para Android que facilita o acesso r�
 
 ---
 
-## 🔔 11. Notificações Internas (Sininho)
+## 🔔 11. Notificações Unificadas (Painel, E-mail e Push)
 
-O Torre360 possui um sistema central de notificações em tempo real, representado pelo ícone de **Sininho** no topo do painel administrativo.
+O Torre360 possui um sistema central de notificações em tempo real que garante que você nunca perca uma ação importante. Dependendo da configuração, os alertas chegam por três canais simultâneos:
+
+1.  **Painel Administrativo (Sininho):** Alertas instantâneos no topo da tela com som e indicadores visuais.
+2.  **E-mail Acadêmico:** Mensagens detalhadas enviadas para o e-mail cadastrado no seu perfil de usuário.
+3.  **Notificações Push (Celular/Web):** Alertas diretos no seu dispositivo móvel ou navegador, permitindo acesso rápido à ação necessária mesmo com o sistema fechado.
 
 ### 11.1 Como Funciona
 - Sempre que houver uma ação que necessite sua atenção (ex: documentos pendentes em uma matrícula), um indicador numérico aparecerá sobre o sininho.
 - Clique no sininho para visualizar a lista de notificações recentes.
-- Cada notificação possui um botão de ação rápida (ex: **Ver Documentos**) que leva você diretamente à tela necessária.
+- Cada notificação possui um botão de ação rápida (ex: **Ver Documentos** ou **Lançar Frequência**) que leva você diretamente à tela necessária.
 
-### 11.2 Notificações Importantes
-- **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado.
-- **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin', 'admin' ou 'secretaria' recebem notificações em tempo real sempre que um novo documento é inserido ou removido de uma matrícula, permitindo o acompanhamento imediato das alterações documentais.
-- **Feedback de Envio de Avisos:** Quando um administrador dispara avisos de pendência (individual ou em lote), uma notificação de confirmação é enviada para o seu próprio sininho, servindo como registro persistente da ação.
+### 11.2 Principais Notificações
+- **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado. Chega por e-mail e push para os alunos e seus responsáveis financeiros.
+- **Lançamento de Frequência Pendente:** Alerta enviado aos professores quando uma aula em seu cronograma ainda não teve a frequência lançada. Agora também disponível via Push e Sininho.
+- **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin' ou 'secretaria' recebem notificações sempre que um novo documento é inserido ou removido.
+- **Avisos do Sistema:** Notificações genéricas enviadas pela administração sobre manutenções, comunicados e atualizações.
+
+### 11.3 Configuração de Push
+Para receber notificações Push no seu celular:
+1. Acesse o sistema através do aplicativo oficial **Torre 360** para Android.
+2. Ao fazer o primeiro login, o sistema registrará seu dispositivo automaticamente.
+3. Certifique-se de que a permissão de notificações está ativada nas configurações do seu celular.
 
 ---
 

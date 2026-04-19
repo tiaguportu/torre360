@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -65,5 +66,30 @@ class Avaliacao extends Model
             $this->disciplina?->nome ?? 'Sem Disciplina',
             $this->etapaAvaliativa?->nome ?? 'Sem Etapa'
         );
+    }
+
+    /**
+     * Escopo para filtrar avaliações onde faltam notas de alunos ativos.
+     */
+    public function scopePendentes(Builder $query): Builder
+    {
+        return $query->whereHas('turma.matriculas', function ($q) {
+            $q->where('situacao', 'ativa');
+        }, '>', function ($query) {
+            $query->selectRaw('count(*)')
+                ->from('nota')
+                ->whereColumn('avaliacao_id', 'avaliacao.id');
+        });
+    }
+
+    /**
+     * Verifica se há pendência de lançamento para esta avaliação.
+     */
+    public function getTemPendenciaAttribute(): bool
+    {
+        $totalAlunos = $this->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
+        $totalNotas = $this->notas()->count();
+
+        return $totalNotas < $totalAlunos;
     }
 }

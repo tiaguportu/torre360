@@ -20,9 +20,10 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Relacionamentos:** BelongsTo `users`, MorphTo `auditable`.
 
 ### `notifications`
-- **Representa:** Sistema de notificações internas do Laravel/Filament (Sininho).
-- **Propósito:** Armazena mensagens destinadas aos usuários que são exibidas no painel administrativo.
+- **Representa:** Sistema de notificações unificado do Laravel/Filament (Sininho, E-mail e Push).
+- **Propósito:** Armazena mensagens destinadas aos usuários. Suporta canais de Banco de Dados, E-mail e Push (via `FcmChannel`).
 - **Campos Principais:** `id` (UUID), `type`, `notifiable_type`, `notifiable_id`, `data` (JSON), `read_at`.
+- **Integração:** Utilizada pelo `NotificationService` para gerenciar disparos multicanal.
 
 ### `activity_log` (Spatie)
 - **Representa:** Registro de atividades de negócio e trilha de auditoria detalhada.
