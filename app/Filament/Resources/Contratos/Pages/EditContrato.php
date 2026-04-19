@@ -136,7 +136,7 @@ class EditContrato extends EditRecord
 
                             ItemFatura::create([
                                 'fatura_id' => $fatura->id,
-                                'descricao' => 'Parcela '.($i + 1).' de '.$qtdParcelas,
+                                'descricao' => 'Parcela ' . ($i + 1) . ' de ' . $qtdParcelas,
                                 'valor_unitario' => $valorParcela,
                                 'quantidade' => 1,
                                 'desconto' => 0,
@@ -148,8 +148,8 @@ class EditContrato extends EditRecord
                     Notification::make()
                         ->title('Faturas geradas com sucesso!')
                         ->body(
-                            ($valorEntrada > 0 ? '1 fatura de entrada + ' : '').
-                            $qtdParcelas.' parcela(s) criada(s). 1ª parcela: '.$primeiroVencimento->format('d/m/Y').'.'
+                            ($valorEntrada > 0 ? '1 fatura de entrada + ' : '') .
+                                $qtdParcelas . ' parcela(s) criada(s). 1ª parcela: ' . $primeiroVencimento->format('d/m/Y') . '.'
                         )
                         ->success()
                         ->send();
@@ -166,5 +166,3 @@ class EditContrato extends EditRecord
         ];
     }
 }
-
-// toque
