@@ -26,7 +26,8 @@ class TemplateContratoForm
                             ->label('Template Padrão')
                             ->helperText('Se marcado, este template será usado automaticamente para novos contratos.')
                             ->default(false),
-                    ])->columns(2),
+                    ])->columns(2)
+                    ->columnSpanFull(),
 
                 Section::make('Conteúdo e Macros')
                     ->schema([
@@ -51,7 +52,7 @@ class TemplateContratoForm
                                     </div>
                                 ');
                             }),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 }

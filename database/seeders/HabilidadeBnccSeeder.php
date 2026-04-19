@@ -53,18 +53,31 @@ class HabilidadeBnccSeeder extends Seeder
             $camposIds[$campo['nome']] = $created->id;
         }
 
+        $publicoBebes = "Público-alvo: Bebês (zero a 1 ano e 6 meses)";
+        $publicoBemPequenas = "Público-alvo: Crianças bem pequenas (1 ano e 7 meses a 3 anos e 11 meses)";
+        $publicoPequenas = "Público-alvo: Crianças pequenas (4 anos a 5 anos e 11 meses)";
+
         // 2. Criar Habilidades vinculadas aos Campos
         $habilidades = [
             // O eu, o outro e o nós
             [
                 'codigo' => 'EI01EO01',
                 'nome' => 'Perceber que suas ações têm efeitos nas outras crianças e nos adultos.',
+                'descricao' => $publicoBebes,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['O eu, o outro e o nós'],
             ],
             [
                 'codigo' => 'EI02EO03',
                 'nome' => 'Compartilhar os objetos e os espaços com crianças da mesma faixa etária e adultos.',
+                'descricao' => $publicoBemPequenas,
+                'tipo' => 'BNCC',
+                'campo_experiencia_id' => $camposIds['O eu, o outro e o nós'],
+            ],
+            [
+                'codigo' => 'EI03EO02',
+                'nome' => 'Agir de maneira independente, com confiança em suas capacidades.',
+                'descricao' => $publicoPequenas,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['O eu, o outro e o nós'],
             ],
@@ -73,12 +86,14 @@ class HabilidadeBnccSeeder extends Seeder
             [
                 'codigo' => 'EI01CG01',
                 'nome' => 'Movimentar as partes do corpo para exprimir corporalmente emoções, necessidades e desejos.',
+                'descricao' => $publicoBebes,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Corpo, gestos e movimentos'],
             ],
             [
                 'codigo' => 'EI02CG02',
                 'nome' => 'Deslocar seu corpo no espaço, orientando-se por noções como em frente, atrás, no alto, embaixo.',
+                'descricao' => $publicoBemPequenas,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Corpo, gestos e movimentos'],
             ],
@@ -87,12 +102,14 @@ class HabilidadeBnccSeeder extends Seeder
             [
                 'codigo' => 'EI01TS01',
                 'nome' => 'Explorar sons produzidos com o próprio corpo e com objetos do cotidiano.',
+                'descricao' => $publicoBebes,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Traços, sons, cores e formas'],
             ],
             [
                 'codigo' => 'EI03TS02',
                 'nome' => 'Expressar-se livremente por meio de desenho, pintura, colagem, dobradura e escultura.',
+                'descricao' => $publicoPequenas,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Traços, sons, cores e formas'],
             ],
@@ -101,12 +118,14 @@ class HabilidadeBnccSeeder extends Seeder
             [
                 'codigo' => 'EI01EF03',
                 'nome' => 'Demonstrar interesse ao ouvir leituras de poemas e a apresentação de músicas.',
+                'descricao' => $publicoBebes,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Escuta, fala, pensamento e imaginação'],
             ],
             [
                 'codigo' => 'EI02EF01',
                 'nome' => 'Dialogar com crianças e adultos, expressando seus desejos, necessidades, sentimentos e opiniões.',
+                'descricao' => $publicoBemPequenas,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Escuta, fala, pensamento e imaginação'],
             ],
@@ -115,12 +134,14 @@ class HabilidadeBnccSeeder extends Seeder
             [
                 'codigo' => 'EI01ET01',
                 'nome' => 'Explorar e descobrir as propriedades de objetos e materiais.',
+                'descricao' => $publicoBebes,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Espaços, tempos, quantidades, relações e transformações'],
             ],
             [
                 'codigo' => 'EI03ET07',
                 'nome' => 'Relacionar números às suas respectivas quantidades.',
+                'descricao' => $publicoPequenas,
                 'tipo' => 'BNCC',
                 'campo_experiencia_id' => $camposIds['Espaços, tempos, quantidades, relações e transformações'],
             ],
