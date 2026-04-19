@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\Avaliacaos\Schemas;
 
 use App\Models\Turma;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\DatePicker;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Repeater;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Select;
+use Filament\Schemas\Components\TextInput;
 use Filament\Schemas\Schema;
 
 class AvaliacaoForm
