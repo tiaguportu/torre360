@@ -97,8 +97,16 @@ class AvaliacaosTable
                     })
                     ->requiresConfirmation()
                     ->modalHeading('Notificar Professor')
-                    ->modalDescription('Deseja enviar um aviso de pendência para o professor desta avaliação?')
-                    ->modalSubmitActionLabel('Sim, notificar'),
+                    ->modalDescription(function (Avaliacao $record) {
+                        $professor = $record->professor;
+                        if (!$professor) return 'Deseja notificar o professor?';
+
+                        $user = User::whereHas('pessoas', fn($q) => $q->where('pessoa.id', $professor->id))->first();
+                        $email = $user?->email ?? 'E-mail não cadastrado';
+
+                        return "Confirmar envio de notificação de pendência para o professor {$professor->nome} ({$email})?";
+                    })
+                    ->modalSubmitActionLabel('Sim, enviar aviso'),
                 EditAction::make(),
             ])
             ->toolbarActions([
