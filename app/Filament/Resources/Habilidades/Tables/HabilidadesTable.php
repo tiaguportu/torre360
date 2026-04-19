@@ -28,8 +28,8 @@ class HabilidadesTable
                         'BNCC' => 'success',
                         'Institucional' => 'info',
                     }),
-                TextColumn::make('disciplina.nome')
-                    ->label('Disciplina')
+                TextColumn::make('campoExperiencia.nome')
+                    ->label('Campo de Experiência')
                     ->toggleable()
                     ->searchable(),
             ])
