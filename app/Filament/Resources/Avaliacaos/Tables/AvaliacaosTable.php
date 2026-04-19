@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Avaliacaos\Tables;
 
 use App\Models\Avaliacao;
+use App\Models\Pessoa;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use Filament\Actions\BulkActionGroup;
@@ -59,7 +60,14 @@ class AvaliacaosTable
                     ->color('warning')
                     ->visible(fn (Avaliacao $record) => $record->tem_pendencia)
                     ->action(function (Avaliacao $record) {
-                        $professor = $record->professor;
+                        // Busca o professor específico da Disciplina nesta Turma (Pivot)
+                        $professorPivot = $record->turma?->disciplinas()
+                            ->where('disciplina.id', $record->disciplina_id)
+                            ->first()?->pivot?->professor_id;
+
+                        // Fallback para o professor vinculado na Avaliação ou Regente da Turma
+                        $professorId = $professorPivot ?? $record->professor_id ?? $record->turma?->professor_conselheiro_id;
+                        $professor = Pessoa::find($professorId);
                         
                         if (!$professor) {
                             FilamentUINotification::make()
@@ -98,8 +106,15 @@ class AvaliacaosTable
                     ->requiresConfirmation()
                     ->modalHeading('Notificar Professor')
                     ->modalDescription(function (Avaliacao $record) {
-                        $professor = $record->professor;
-                        if (!$professor) return 'Deseja notificar o professor?';
+                        // Mesma lógica de busca para o modal
+                        $professorPivot = $record->turma?->disciplinas()
+                            ->where('disciplina.id', $record->disciplina_id)
+                            ->first()?->pivot?->professor_id;
+                        
+                        $professorId = $professorPivot ?? $record->professor_id ?? $record->turma?->professor_conselheiro_id;
+                        $professor = Pessoa::find($professorId);
+
+                        if (!$professor) return 'Deseja notificar o professor regente?';
 
                         $user = User::whereHas('pessoas', fn($q) => $q->where('pessoa.id', $professor->id))->first();
                         $email = $user?->email ?? 'E-mail não cadastrado';

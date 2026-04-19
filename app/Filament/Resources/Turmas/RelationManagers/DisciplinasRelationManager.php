@@ -10,6 +10,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Actions\EditAction;
+use App\Models\Pessoa;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -27,6 +29,11 @@ class DisciplinasRelationManager extends RelationManager
                 TextInput::make('nome')
                     ->required()
                     ->maxLength(255),
+                Select::make('professor_id')
+                    ->label('Professor Responsável')
+                    ->options(Pessoa::all()->pluck('nome', 'id'))
+                    ->searchable()
+                    ->preload(),
             ]);
     }
 
@@ -37,13 +44,25 @@ class DisciplinasRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('nome')
                     ->searchable(),
+                TextColumn::make('professor.nome')
+                    ->label('Professor Responsável')
+                    ->placeholder('Regente da Turma')
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 CreateAction::make(),
-                AttachAction::make(),
+                AttachAction::make()
+                    ->form(fn (AttachAction $action): array => [
+                        $action->getRecordSelect(),
+                        Select::make('professor_id')
+                            ->label('Professor Responsável')
+                            ->options(Pessoa::all()->pluck('nome', 'id'))
+                            ->searchable()
+                            ->preload(),
+                    ]),
             ])
             ->recordActions([
                 EditAction::make(),

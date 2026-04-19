@@ -6,6 +6,8 @@ use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
+use App\Models\Pessoa;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -52,13 +54,25 @@ class HabilidadesRelationManager extends RelationManager
                         'BNCC' => 'success',
                         'Institucional' => 'info',
                     }),
+                TextColumn::make('professor.nome')
+                    ->label('Professor Responsável')
+                    ->placeholder('Regente da Turma')
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 AttachAction::make()
-                    ->preloadRecordSelect(),
+                    ->preloadRecordSelect()
+                    ->form(fn (AttachAction $action): array => [
+                        $action->getRecordSelect(),
+                        Select::make('professor_id')
+                            ->label('Professor Responsável')
+                            ->options(Pessoa::all()->pluck('nome', 'id'))
+                            ->searchable()
+                            ->preload(),
+                    ]),
             ])
             ->recordActions([
                 DetachAction::make(),
