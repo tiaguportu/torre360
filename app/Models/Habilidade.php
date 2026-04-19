@@ -36,4 +36,14 @@ class Habilidade extends Model
     {
         return $this->hasMany(AvaliacaoHabilidade::class);
     }
+
+    public function turmas(): BelongsToMany
+    {
+        return $this->belongsToMany(Turma::class, 'turma_habilidade')->withPivot('professor_id')->withTimestamps();
+    }
+
+    public function professor(): BelongsTo
+    {
+        return $this->belongsTo(Pessoa::class, 'professor_id');
+    }
 }

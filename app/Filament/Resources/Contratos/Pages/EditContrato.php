@@ -155,6 +155,13 @@ class EditContrato extends EditRecord
                         ->send();
                 }),
 
+            Action::make('visualizarContrato')
+                ->label('Visualizar Contrato')
+                ->icon('heroicon-o-document-magnifying-glass')
+                ->color('info')
+                ->url(fn ($record) => route('contratos.visualizar', $record))
+                ->openUrlInNewTab(),
+
             DeleteAction::make(),
         ];
     }

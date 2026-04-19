@@ -9,11 +9,21 @@ class VisualizarContratoController extends Controller
 {
     public function __invoke(Contrato $contrato)
     {
-        $contrato->load(['matriculas.pessoa', 'matriculas.turma.serie.curso', 'matriculas.periodoLetivo', 'responsaveisFinanceiros.pessoa']);
+        $contrato->load(['matriculas.pessoa', 'matriculas.turma.serie.curso', 'matriculas.periodoLetivo', 'responsaveisFinanceiros.pessoa', 'templateContrato']);
 
         $matricula = $contrato->matriculas->first();
         $aluno = $matricula?->pessoa;
         $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
+
+        // Lógica de Template Dinâmico
+        $template = $contrato->templateContrato
+            ?? \App\Models\TemplateContrato::where('is_padrao', true)->first();
+
+        $conteudoTemplate = null;
+        if ($template) {
+            $templateService = app(\App\Services\ContractTemplateService::class);
+            $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
+        }
 
         return view('contratos.visualizar', [
             'contrato' => $contrato,
@@ -24,6 +34,7 @@ class VisualizarContratoController extends Controller
             'serie' => $matricula?->turma?->serie,
             'curso' => $matricula?->turma?->serie?->curso,
             'periodoLetivo' => $matricula?->periodoLetivo,
+            'conteudo_template' => $conteudoTemplate,
         ]);
     }
 }
