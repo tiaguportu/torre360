@@ -206,7 +206,10 @@ class Matricula extends Model
         $lastActivity = Activity::query()
             ->where('subject_type', $this->getMorphClass())
             ->where('subject_id', $this->getKey())
-            ->where('event', 'notificacao_pendencia')
+            ->where(function ($query) {
+                $query->where('event', 'notificacao_pendencia')
+                    ->orWhere('description', 'like', 'Enviada notifica%pendência%');
+            })
             ->latest()
             ->first();
 
