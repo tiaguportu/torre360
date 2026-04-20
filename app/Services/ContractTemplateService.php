@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contrato;
+use App\Models\Pessoa;
 use App\Models\Unidade;
 use Carbon\Carbon;
 
@@ -12,29 +13,86 @@ class ContractTemplateService
     {
         // Carrega relações necessárias caso não estejam presentes
         $contrato->loadMissing([
-            'matriculas.pessoa',
+            'matriculas.pessoa.responsaveis.tipoVinculo',
             'matriculas.turma.serie.curso.unidade.representantesLegais',
             'responsaveisFinanceiros.pessoa.enderecos',
             'faturas',
         ]);
 
         $unidade = $contrato->matriculas->first()?->turma?->serie?->curso?->unidade;
+        $aluno = $contrato->matriculas->first()?->pessoa;
 
         $macros = [
-            '{{CONTRATO_ID}}' => $contrato->id,
-            '{{CONTRATO_VALOR}}' => 'R$ '.number_format($contrato->valor_total, 2, ',', '.'),
-            '{{CONTRATO_DATA}}' => Carbon::now()->translatedFormat('d \d\e F \d\e Y'),
+            '{{CONTRATO.ID}}' => $contrato->id,
+            '{{CONTRATO.VALOR}}' => 'R$ '.number_format($contrato->valor_total, 2, ',', '.'),
+            '{{CONTRATO.DATA}}' => Carbon::now()->translatedFormat('d \d\e F \d\e Y'),
 
-            '{{UNIDADE_NOME}}' => $unidade?->nome ?? '',
-            '{{UNIDADE_CNPJ}}' => $unidade?->cnpj ?? '',
-            '{{UNIDADE_REPRESENTANTES}}' => $this->generateRepresentantesUnidade($unidade),
+            '{{UNIDADE.NOME}}' => $unidade?->nome ?? '',
+            '{{UNIDADE.CNPJ}}' => $unidade?->cnpj ?? '',
+            '{{UNIDADE.REPRESENTANTES}}' => $this->generateRepresentantesUnidade($unidade),
 
-            '{{ALUNOS_TABELA}}' => $this->generateAlunosTable($contrato),
-            '{{RESPONSAVEIS_INFO}}' => $this->generateResponsaveisInfo($contrato),
-            '{{FATURAS_TABELA}}' => $this->generateFaturasTable($contrato),
+            '{{ALUNOS.TABELA}}' => $this->generateAlunosTable($contrato),
+            '{{RESPONSAVEIS.INFO}}' => $this->generateResponsaveisInfo($contrato),
+            '{{FATURAS.TABELA}}' => $this->generateFaturasTable($contrato),
+
+            '{{ASSINATURA.REPRESENTANTES}}' => $this->generateAssinaturasUnidade($unidade),
+            '{{ASSINATURA.RESPONSAVEIS}}' => $this->generateAssinaturasResponsaveis($contrato),
+            '{{ASSINATURA.PAI}}' => $this->generateAssinaturaParente($aluno, 'Pai'),
+            '{{ASSINATURA.MAE}}' => $this->generateAssinaturaParente($aluno, 'Mãe'),
         ];
 
         return str_replace(array_keys($macros), array_values($macros), $html);
+    }
+
+    protected function generateAssinaturaBlock(string $titulo, ?string $extra = null): string
+    {
+        $extraFormatado = $extra ? " ({$extra})" : '';
+
+        return '<div style="margin-top: 50px; margin-bottom: 30px;">'
+            .'_______________________________________________<br>'
+            .$titulo.$extraFormatado.'<br><br>'
+            .'CPF nº ___________________________'
+            .'</div>';
+    }
+
+    protected function generateAssinaturasUnidade(?Unidade $unidade): string
+    {
+        if (! $unidade || $unidade->representantesLegais->isEmpty()) {
+            return $this->generateAssinaturaBlock('CONTRATADA', 'Escola Torre de Marfim');
+        }
+
+        $html = '';
+        foreach ($unidade->representantesLegais as $rep) {
+            $cargo = $rep->pivot->cargo ?? 'Representante Legal';
+            $html .= $this->generateAssinaturaBlock('CONTRATADA', "{$rep->nome} - {$cargo}");
+        }
+
+        return $html;
+    }
+
+    protected function generateAssinaturasResponsaveis(Contrato $contrato): string
+    {
+        $html = '';
+        foreach ($contrato->responsaveisFinanceiros as $rf) {
+            if ($rf->pessoa) {
+                $html .= $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $rf->pessoa->nome);
+            }
+        }
+
+        return $html;
+    }
+
+    protected function generateAssinaturaParente(?Pessoa $aluno, string $vinculoNome): string
+    {
+        if (! $aluno) {
+            return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $vinculoNome);
+        }
+
+        $parente = $aluno->responsaveis->first(function ($resp) use ($vinculoNome) {
+            return $resp->pivot->tipoVinculo?->nome === $vinculoNome;
+        });
+
+        return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $parente ? "{$parente->nome} - {$vinculoNome}" : $vinculoNome);
     }
 
     protected function generateRepresentantesUnidade(?Unidade $unidade): string

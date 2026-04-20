@@ -41,15 +41,19 @@ class TemplateContratoForm
                             ->columnSpanFull()
                             ->content(function () {
                                 $macros = [
-                                    'CONTRATO_ID' => ['desc' => 'Identificador único do contrato.', 'ex' => '123'],
-                                    'CONTRATO_VALOR' => ['desc' => 'Valor total do contrato.', 'ex' => 'R$ 1.500,00'],
-                                    'CONTRATO_DATA' => ['desc' => 'Cidade e data atual por extenso.', 'ex' => 'Rio de Janeiro, 19 de Abril de 2026'],
-                                    'UNIDADE_NOME' => ['desc' => 'Nome da unidade escolar.', 'ex' => 'Unidade Centro'],
-                                    'UNIDADE_CNPJ' => ['desc' => 'CNPJ da unidade.', 'ex' => '00.000.000/0001-00'],
-                                    'UNIDADE_REPRESENTANTES' => ['desc' => 'Qualificação dos representantes legais da unidade conforme vínculo.', 'ex' => 'seu Diretor(a), João da Silva'],
-                                    'ALUNOS_TABELA' => ['desc' => 'Tabela com Nome do Aluno, Turma e Série/Ano.', 'ex' => '[Tabela Gerada]'],
-                                    'RESPONSAVEIS_INFO' => ['desc' => 'Texto qualificando os responsáveis financeiros.', 'ex' => 'João da Silva, CPF 000..., residente em...'],
-                                    'FATURAS_TABELA' => ['desc' => 'Tabela com Parcela, Vencimento, Valor Original e Valor com Desconto.', 'ex' => '[Tabela Gerada]'],
+                                    'CONTRATO.ID' => ['desc' => 'Identificador único do contrato.', 'ex' => '123'],
+                                    'CONTRATO.VALOR' => ['desc' => 'Valor total do contrato.', 'ex' => 'R$ 1.500,00'],
+                                    'CONTRATO.DATA' => ['desc' => 'Cidade e data atual por extenso.', 'ex' => 'Rio de Janeiro, 19 de Abril de 2026'],
+                                    'UNIDADE.NOME' => ['desc' => 'Nome da unidade escolar.', 'ex' => 'Unidade Centro'],
+                                    'UNIDADE.CNPJ' => ['desc' => 'CNPJ da unidade.', 'ex' => '00.000.000/0001-00'],
+                                    'UNIDADE.REPRESENTANTES' => ['desc' => 'Qualificação dos representantes legais da unidade conforme vínculo.', 'ex' => 'seu Diretor(a), João da Silva'],
+                                    'ALUNOS.TABELA' => ['desc' => 'Tabela com Nome do Aluno, Turma e Série/Ano.', 'ex' => '[Tabela Gerada]'],
+                                    'RESPONSAVEIS.INFO' => ['desc' => 'Texto qualificando os responsáveis financeiros.', 'ex' => 'João da Silva, CPF 000..., residente em...'],
+                                    'FATURAS.TABELA' => ['desc' => 'Tabela com Parcela, Vencimento, Valor Original e Valor com Desconto.', 'ex' => '[Tabela Gerada]'],
+                                    'ASSINATURA.REPRESENTANTES' => ['desc' => 'Blocos de assinatura dos representantes legais da escola.', 'ex' => '[Blocos Gerados]'],
+                                    'ASSINATURA.RESPONSAVEIS' => ['desc' => 'Blocos de assinatura dos responsáveis financeiros do contrato.', 'ex' => '[Blocos Gerados]'],
+                                    'ASSINATURA.PAI' => ['desc' => 'Bloco de assinatura específico do Pai.', 'ex' => '[Bloco Gerado]'],
+                                    'ASSINATURA.MAE' => ['desc' => 'Bloco de assinatura específico da Mãe.', 'ex' => '[Bloco Gerado]'],
                                 ];
 
                                 $html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">';
