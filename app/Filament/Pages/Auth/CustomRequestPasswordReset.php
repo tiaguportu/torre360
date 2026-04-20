@@ -4,14 +4,26 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use App\Notifications\UserNewPasswordNotification;
+use Ddr\FilamentCaptcha\Forms\Components\Captcha;
 use Exception;
 use Filament\Auth\Pages\PasswordReset\RequestPasswordReset;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class CustomRequestPasswordReset extends RequestPasswordReset
 {
+    public function form(Form $form): Form
+    {
+        return $form->schema([
+            $this->getEmailFormComponent(),
+            Captcha::make('captcha')
+                ->label('reCAPTCHA')
+                ->hiddenLabel(),
+        ]);
+    }
+
     public function request(): void
     {
         $data = $this->form->getState();

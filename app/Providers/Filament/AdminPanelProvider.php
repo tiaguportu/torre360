@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
+use App\Filament\Pages\Auth\Register;
 use App\Http\Middleware\AuditMiddleware;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -35,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Torre360 Gestão Escolar')
             ->login(CustomLogin::class)
-            ->registration()
+            ->registration(Register::class)
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)

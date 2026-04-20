@@ -10,6 +10,7 @@
         "amidesfahani/filament-tinyeditor": "^4.0",
         "barryvdh/laravel-dompdf": "*",
         "bezhansalleh/filament-shield": "^4.2",
+        "ddr/filament-captcha": "^1.1",
         "filament/filament": "^5.4",
         "google/auth": "^1.50",
         "laravel/framework": "^12.0",

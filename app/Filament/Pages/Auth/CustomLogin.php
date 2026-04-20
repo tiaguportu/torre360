@@ -3,12 +3,26 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
+use Ddr\FilamentCaptcha\Forms\Components\Captcha;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
+use Filament\Forms\Form;
 use Illuminate\Validation\ValidationException;
 
 class CustomLogin extends BaseLogin
 {
+    public function form(Form $form): Form
+    {
+        return $form->schema([
+            $this->getEmailFormComponent(),
+            $this->getPasswordFormComponent(),
+            $this->getRememberFormComponent(),
+            Captcha::make('captcha')
+                ->label('reCAPTCHA')
+                ->hiddenLabel(),
+        ]);
+    }
+
     /**
      * @throws ValidationException
      */
