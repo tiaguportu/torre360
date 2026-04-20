@@ -126,10 +126,13 @@ class CaptacaoInteressadoController extends Controller
      */
     private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa): void
     {
-        // Busca usuários que devem receber a notificação (exceto perfis restritos)
-        $destinatarios = User::whereDoesntHave('roles', function ($query) {
-            $query->whereIn('name', ['professor', 'responsavel', 'aluno']);
-        })->get();
+        // Busca usuários que possuem permissão para ver interessados ou são administradores
+        // Evita enviar para perfis como portaria, alunos, etc.
+        $destinatarios = User::permission('View:Interessado')->get();
+
+        if ($destinatarios->isEmpty()) {
+            $destinatarios = User::role(['admin', 'super_admin'])->get();
+        }
 
         if ($destinatarios->isEmpty()) {
             return;
