@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Pessoa;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PessoaPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Pessoa');
@@ -72,43 +72,44 @@ class PessoaPolicy
         return $authUser->can('Reorder:Pessoa');
     }
 
-    public function import(AuthUser $authUser): bool
+    public function import(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('Import:Pessoa');
     }
 
-    public function export(AuthUser $authUser): bool
+    public function export(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('Export:Pessoa');
     }
 
-    public function attachEndereco(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function attachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('AttachEndereco:Pessoa');
     }
 
-    public function detachEndereco(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function detachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('DetachEndereco:Pessoa');
     }
 
-    public function attachAluno(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function attachAluno(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('AttachAluno:Pessoa');
     }
 
-    public function detachAluno(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function detachAluno(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('DetachAluno:Pessoa');
     }
 
-    public function attachResponsavel(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function attachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('AttachResponsavel:Pessoa');
     }
 
-    public function detachResponsavel(AuthUser $authUser, ?Pessoa $pessoa = null): bool
+    public function detachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
     {
         return $authUser->can('DetachResponsavel:Pessoa');
     }
+
 }
