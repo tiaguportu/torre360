@@ -141,7 +141,17 @@ class DocumentosMatricula extends Page implements HasTable
 
                             $newFileName = "{$safeTurmaName} - {$safeStudentName} - {$safeTypeName}.{$extension}";
 
-                            return Storage::disk('public')->download($inserido->arquivo_path, $newFileName);
+                            if (! Storage::disk('local')->exists($inserido->arquivo_path)) {
+                                Notification::make()
+                                    ->title('Arquivo físico não encontrado')
+                                    ->body('O registro existe no banco, mas o arquivo sumiu do servidor.')
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
+                            return Storage::disk('local')->download($inserido->arquivo_path, $newFileName);
                         }
 
                         Notification::make()
@@ -187,7 +197,7 @@ class DocumentosMatricula extends Page implements HasTable
                                 $hash = md5_file($file->getRealPath());
                                 $set('hash_arquivo', $hash);
 
-                                return $file->store('documentos_alunos', 'public');
+                                return $file->store('documentos_alunos', 'local');
                             })
                             ->columnSpanFull(),
 
@@ -256,7 +266,7 @@ class DocumentosMatricula extends Page implements HasTable
                         if ($inserido) {
                             $tipoNome = $record->nome;
                             if ($inserido->arquivo_path) {
-                                Storage::disk('public')->delete($inserido->arquivo_path);
+                                Storage::disk('local')->delete($inserido->arquivo_path);
                             }
                             $inserido->delete();
 
@@ -313,7 +323,7 @@ class DocumentosMatricula extends Page implements HasTable
                     continue;
                 }
 
-                $filePath = Storage::disk('public')->path($doc->arquivo_path);
+                $filePath = Storage::disk('local')->path($doc->arquivo_path);
 
                 if (file_exists($filePath)) {
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
@@ -355,13 +365,13 @@ class DocumentosMatricula extends Page implements HasTable
             $newName = "Doc-{$docSlug}-{$idStr}-{$hash}.{$extension}";
             $finalPath = "documentos_alunos/{$newName}";
 
-            // Garantir que o diretório existe no disco público
-            if (! Storage::disk('public')->exists('documentos_alunos')) {
-                Storage::disk('public')->makeDirectory('documentos_alunos');
+            // Garantir que o diretório existe no disco privado
+            if (! Storage::disk('local')->exists('documentos_alunos')) {
+                Storage::disk('local')->makeDirectory('documentos_alunos');
             }
 
-            // Salvar no disco público
-            Storage::disk('public')->put($finalPath, $fileContents);
+            // Salvar no disco privado
+            Storage::disk('local')->put($finalPath, $fileContents);
 
             // Limpar a propriedade de upload
             $this->manualFileUpload = null;
