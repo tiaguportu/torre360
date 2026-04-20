@@ -76,7 +76,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
                     $query->where('pessoa_id', $pessoaId);
                 })
                     ->orWhereHas('pessoa.responsaveis', function (Builder $query) use ($pessoaId) {
-                        $query->where('pessoa.id', $pessoaId);
+                        $query->whereKey($pessoaId);
                     });
             });
         }
