@@ -9,13 +9,26 @@ use App\Filament\Resources\Habilidades\Schemas\HabilidadeForm;
 use App\Filament\Resources\Habilidades\Tables\HabilidadesTable;
 use App\Models\Habilidade;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class HabilidadeResource extends Resource
+class HabilidadeResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = Habilidade::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;

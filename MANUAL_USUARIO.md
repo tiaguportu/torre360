@@ -302,9 +302,11 @@ Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filame
 ### 9.1 Permissões Configuráveis
 Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos através dos **Papéis e Permissões (Shield)**:
 - **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
-- **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas e Bancos.
+- **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas, Bancos e **Templates de Contrato**.
 - **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
 - **CRM:** Gestão de leads e histórico de contatos.
+- **Acadêmico:** **Questionários**, **Respostas de Questionários**, **Avaliações de Habilidades** (BNCC), **Campos de Experiência** e **Habilidades**.
+
 
 ### 9.2 Auditoria de Ações
 O sistema registra automaticamente ações críticas:

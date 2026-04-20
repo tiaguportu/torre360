@@ -9,13 +9,26 @@ use App\Filament\Resources\AvaliacaoHabilidades\Schemas\AvaliacaoHabilidadeForm;
 use App\Filament\Resources\AvaliacaoHabilidades\Tables\AvaliacaoHabilidadesTable;
 use App\Models\AvaliacaoHabilidade;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class AvaliacaoHabilidadeResource extends Resource
+class AvaliacaoHabilidadeResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = AvaliacaoHabilidade::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckCircle;

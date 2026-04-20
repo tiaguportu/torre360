@@ -6,13 +6,26 @@ use App\Filament\Resources\CampoExperiencias\Pages\ManageCampoExperiencias;
 use App\Filament\Resources\CampoExperiencias\Schemas\CampoExperienciaForm;
 use App\Filament\Resources\CampoExperiencias\Tables\CampoExperienciasTable;
 use App\Models\CampoExperiencia;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class CampoExperienciaResource extends Resource
+class CampoExperienciaResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = CampoExperiencia::class;
 
     protected static ?string $modelLabel = 'Campo de Experiência';
