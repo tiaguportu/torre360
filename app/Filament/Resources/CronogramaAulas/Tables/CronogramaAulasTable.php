@@ -239,7 +239,7 @@ class CronogramaAulasTable
                             $records->each(fn ($record) => $record->update($updateData));
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn () => auth()->user()->can('update', CronogramaAula::class)),
+                        ->visible(fn () => auth()->user()->can('Update:CronogramaAula')),
                     BulkAction::make('bulkLancarFrequencia')
                         ->label('Lançar Frequência em Lote')
                         ->icon('heroicon-o-check-circle')
@@ -312,7 +312,7 @@ class CronogramaAulasTable
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn () => auth()->user()->can('lancarFrequencia', CronogramaAula::class)),
+                        ->visible(fn () => auth()->user()->can('LancarFrequencia:CronogramaAula')),
                     BulkAction::make('clonar')
                         ->label('Clonar Selecionadas')
                         ->icon('heroicon-o-document-duplicate')
@@ -356,7 +356,7 @@ class CronogramaAulasTable
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn () => auth()->user()->can('clonar', CronogramaAula::class)),
+                        ->visible(fn () => auth()->user()->can('Clonar:CronogramaAula')),
                     BulkAction::make('bulkNotificarProfessores')
                         ->label('Notificar Professores (Pendências)')
                         ->icon('heroicon-o-envelope')
