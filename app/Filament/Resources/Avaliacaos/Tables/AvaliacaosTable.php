@@ -6,15 +6,15 @@ use App\Models\Avaliacao;
 use App\Models\Pessoa;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Table;
-use Filament\Notifications\Notification as FilamentUINotification;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class AvaliacaosTable
@@ -48,6 +48,60 @@ class AvaliacaosTable
                     ->falseColor('success'),
             ])
             ->filters([
+                SelectFilter::make('categoria_avaliacao_id')
+                    ->relationship('categoria', 'nome')
+                    ->label('Categoria')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('turma_id')
+                    ->relationship('turma', 'nome')
+                    ->label('Turma')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('disciplina_id')
+                    ->relationship('disciplina', 'nome')
+                    ->label('Disciplina')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('etapa_avaliativa_id')
+                    ->relationship('etapaAvaliativa', 'nome')
+                    ->label('Etapa')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('professor_id')
+                    ->relationship('professor', 'nome')
+                    ->label('Professor')
+                    ->searchable()
+                    ->preload(),
+                Filter::make('data_prevista')
+                    ->form([
+                        DatePicker::make('de')
+                            ->label('Data Inicial'),
+                        DatePicker::make('ate')
+                            ->label('Data Final'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['de'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data_prevista', '>=', $date),
+                            )
+                            ->when(
+                                $data['ate'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data_prevista', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['de'] ?? null) {
+                            $indicators[] = 'Desde '.Carbon::parse($data['de'])->format('d/m/Y');
+                        }
+                        if ($data['ate'] ?? null) {
+                            $indicators[] = 'Até '.Carbon::parse($data['ate'])->format('d/m/Y');
+                        }
+
+                        return $indicators;
+                    }),
                 Filter::make('pendentes')
                     ->label('Pendência de Lançamento')
                     ->query(fn (Builder $query) => $query->pendentes())
@@ -68,24 +122,26 @@ class AvaliacaosTable
                         // Fallback para o professor vinculado na Avaliação ou Regente da Turma
                         $professorId = $professorPivot ?? $record->professor_id ?? $record->turma?->professor_conselheiro_id;
                         $professor = Pessoa::find($professorId);
-                        
-                        if (!$professor) {
+
+                        if (! $professor) {
                             FilamentUINotification::make()
                                 ->title('Erro')
                                 ->body('Esta avaliação não possui um professor vinculado.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
-                        $user = User::whereHas('pessoas', fn($q) => $q->where('pessoa.id', $professor->id))->first();
+                        $user = User::whereHas('pessoas', fn ($q) => $q->where('pessoa.id', $professor->id))->first();
 
-                        if (!$user) {
+                        if (! $user) {
                             FilamentUINotification::make()
                                 ->title('Erro')
                                 ->body('O professor não possui um usuário cadastrado no sistema.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -110,13 +166,15 @@ class AvaliacaosTable
                         $professorPivot = $record->turma?->disciplinas()
                             ->where('disciplina.id', $record->disciplina_id)
                             ->first()?->pivot?->professor_id;
-                        
+
                         $professorId = $professorPivot ?? $record->professor_id ?? $record->turma?->professor_conselheiro_id;
                         $professor = Pessoa::find($professorId);
 
-                        if (!$professor) return 'Deseja notificar o professor regente?';
+                        if (! $professor) {
+                            return 'Deseja notificar o professor regente?';
+                        }
 
-                        $user = User::whereHas('pessoas', fn($q) => $q->where('pessoa.id', $professor->id))->first();
+                        $user = User::whereHas('pessoas', fn ($q) => $q->where('pessoa.id', $professor->id))->first();
                         $email = $user?->email ?? 'E-mail não cadastrado';
 
                         return "Confirmar envio de notificação de pendência para o professor {$professor->nome} ({$email})?";
