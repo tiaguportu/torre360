@@ -101,7 +101,7 @@ class ContractTemplateService
 
     protected function generateFaturasTable(Contrato $contrato): string
     {
-        $faturas = $contrato->faturas->sortBy('data_vencimento');
+        $faturas = $contrato->faturas->sortBy('vencimento');
 
         if ($faturas->isEmpty()) {
             return 'Nenhuma fatura encontrada.';
@@ -111,15 +111,15 @@ class ContractTemplateService
         $html .= '<thead><tr style="background-color: #f2f2f2;">';
         $html .= '<th style="border: 1px solid black; padding: 5px;">Parcela</th>';
         $html .= '<th style="border: 1px solid black; padding: 5px;">Vencimento</th>';
-        $html .= '<th style="border: 1px solid black; padding: 5px;">Valor</th>';
+        $html .= '<th style="border: 1px solid black; padding: 5px;">Valor Total da Parcela</th>';
         $html .= '</tr></thead><tbody>';
 
         $i = 1;
         foreach ($faturas as $fatura) {
             $html .= '<tr>';
             $html .= '<td style="border: 1px solid black; padding: 5px; text-align: center;">'.$i++.'</td>';
-            $html .= '<td style="border: 1px solid black; padding: 5px; text-align: center;">'.Carbon::parse($fatura->data_vencimento)->format('d/m/Y').'</td>';
-            $html .= '<td style="border: 1px solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor_total, 2, ',', '.').'</td>';
+            $html .= '<td style="border: 1px solid black; padding: 5px; text-align: center;">'.Carbon::parse($fatura->vencimento)->format('d/m/Y').'</td>';
+            $html .= '<td style="border: 1px solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor, 2, ',', '.').'</td>';
             $html .= '</tr>';
         }
 
