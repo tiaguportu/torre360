@@ -32,7 +32,7 @@ class CategoriaAvaliacaoForm
                         'substituidas',
                         'nome',
                         modifyQueryUsing: fn ($query, ?CategoriaAvaliacao $record) => $query
-                            ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
+                            ->when($record, fn ($q) => $q->where('categoria_avaliacao.id', '!=', $record->id))
                             ->orderBy('ordem_boletim')
                     )
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome_com_descricao)
