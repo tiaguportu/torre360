@@ -176,11 +176,29 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
         }
 
         foreach ($dadosCategorias as $id => &$item) {
-            if ($item['substitui_id'] && isset($dadosCategorias[$item['substitui_id']])) {
-                if ($item['valor'] > $dadosCategorias[$item['substitui_id']]['valor']) {
-                    $dadosCategorias[$item['substitui_id']]['ignorar'] = true;
-                } else {
-                    $item['ignorar'] = true;
+            $cat = $categorias->firstWhere('id', $id);
+            $substituidasIds = $cat->substituidas->pluck('id')->toArray();
+
+            if (! empty($substituidasIds)) {
+                // Encontrar quais das categorias substituídas estão presentes nestes dados
+                $candidatasSubstituicao = [];
+                foreach ($substituidasIds as $subId) {
+                    if (isset($dadosCategorias[$subId]) && ! $dadosCategorias[$subId]['ignorar']) {
+                        $candidatasSubstituicao[$subId] = $dadosCategorias[$subId]['valor'];
+                    }
+                }
+
+                if (! empty($candidatasSubstituicao)) {
+                    // Pegar a de menor valor
+                    asort($candidatasSubstituicao);
+                    $menorNotaId = array_key_first($candidatasSubstituicao);
+                    $menorNotaValor = $candidatasSubstituicao[$menorNotaId];
+
+                    if ($item['valor'] > $menorNotaValor) {
+                        $dadosCategorias[$menorNotaId]['ignorar'] = true;
+                    } else {
+                        $item['ignorar'] = true;
+                    }
                 }
             }
         }
@@ -240,18 +258,55 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
 
         foreach ($dados as $id => $item) {
             if ($id == $categoriaId && $item['valor'] !== null) {
-                $substituto = $categorias->first(fn ($c) => $c->categoria_avaliacao_substituicao_id == $id);
-                if ($substituto) {
-                    $vSub = $this->getMediaConsolidadaCategoria($substituto->id, $disciplinaId, $avaliacoesEtapa, $notasAluno);
-                    if ($vSub !== null && $vSub > $item['valor']) {
-                        return true;
+                // Caso 1: Esta categoria é substituída por alguma outra?
+                // Verificamos se alguma das categorias presentes no boletim tem esta categoria na sua lista de 'substituidas'
+                foreach ($categorias as $outraCat) {
+                    if ($outraCat->id == $id) {
+                        continue;
+                    }
+
+                    $substituidasPelaOutra = $outraCat->substituidas->pluck('id')->toArray();
+                    if (in_array($id, $substituidasPelaOutra)) {
+                        $vSub = $this->getMediaConsolidadaCategoria($outraCat->id, $disciplinaId, $avaliacoesEtapa, $notasAluno);
+                        if ($vSub !== null) {
+                            // Mas só substitui se esta for a MENOR nota entre as que a outraCat substitui
+                            $candidatas = [];
+                            foreach ($substituidasPelaOutra as $sId) {
+                                $vC = $this->getMediaConsolidadaCategoria($sId, $disciplinaId, $avaliacoesEtapa, $notasAluno);
+                                if ($vC !== null) {
+                                    $candidatas[$sId] = $vC;
+                                }
+                            }
+
+                            if (! empty($candidatas)) {
+                                asort($candidatas);
+                                $menorId = array_key_first($candidatas);
+                                if ($id == $menorId && $vSub > $item['valor']) {
+                                    return true;
+                                }
+                            }
+                        }
                     }
                 }
 
-                if ($item['substitui_id'] && isset($dados[$item['substitui_id']])) {
-                    $vOrig = $dados[$item['substitui_id']]['valor'];
-                    if ($vOrig !== null && $item['valor'] <= $vOrig) {
-                        return true;
+                // Caso 2: Esta categoria é uma substitutiva?
+                $catAtual = $categorias->firstWhere('id', $id);
+                $substituidasPelaAtual = $catAtual->substituidas->pluck('id')->toArray();
+                if (! empty($substituidasPelaAtual)) {
+                    $candidatas = [];
+                    foreach ($substituidasPelaAtual as $sId) {
+                        $vC = $this->getMediaConsolidadaCategoria($sId, $disciplinaId, $avaliacoesEtapa, $notasAluno);
+                        if ($vC !== null) {
+                            $candidatas[$sId] = $vC;
+                        }
+                    }
+
+                    if (! empty($candidatas)) {
+                        asort($candidatas);
+                        $menorValor = reset($candidatas);
+                        if ($item['valor'] <= $menorValor) {
+                            return true;
+                        }
                     }
                 }
             }
