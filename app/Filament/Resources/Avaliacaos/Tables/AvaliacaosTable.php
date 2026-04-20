@@ -8,10 +8,11 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use Carbon\Carbon;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification as FilamentUINotification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -19,6 +20,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class AvaliacaosTable
 {
@@ -192,6 +194,37 @@ class AvaliacaosTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('bulkEdit')
+                        ->label('Editar em Lote')
+                        ->icon('heroicon-o-pencil-square')
+                        ->form([
+                            Select::make('categoria_avaliacao_id')
+                                ->relationship('categoria', 'nome')
+                                ->label('Categoria'),
+                            Select::make('etapa_avaliativa_id')
+                                ->relationship('etapaAvaliativa', 'nome')
+                                ->label('Etapa'),
+                            DatePicker::make('data_prevista')
+                                ->label('Data Prevista'),
+                            TextInput::make('nota_maxima')
+                                ->label('Nota Máxima')
+                                ->numeric(),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $updateData = array_filter($data);
+                            if (empty($updateData)) {
+                                return;
+                            }
+
+                            $records->each(fn ($record) => $record->update($updateData));
+
+                            FilamentUINotification::make()
+                                ->title('Sucesso')
+                                ->body(count($records).' avaliações foram atualizadas.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
