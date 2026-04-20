@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Contrato;
 use App\Models\Pessoa;
+use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class ContractTemplateService
 {
@@ -13,7 +15,7 @@ class ContractTemplateService
     {
         // Carrega relações necessárias caso não estejam presentes
         $contrato->loadMissing([
-            'matriculas.pessoa.responsaveis.tipoVinculo',
+            'matriculas.pessoa.responsaveis',
             'matriculas.turma.serie.curso.unidade.representantesLegais',
             'responsaveisFinanceiros.pessoa.enderecos',
             'faturas',
@@ -21,6 +23,9 @@ class ContractTemplateService
 
         $unidade = $contrato->matriculas->first()?->turma?->serie?->curso?->unidade;
         $aluno = $contrato->matriculas->first()?->pessoa;
+
+        // Mapa de nomes de vínculos para busca rápida no pivô
+        $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
 
         $macros = [
             '{{CONTRATO.ID}}' => $contrato->id,
@@ -37,8 +42,8 @@ class ContractTemplateService
 
             '{{ASSINATURA.REPRESENTANTES}}' => $this->generateAssinaturasUnidade($unidade),
             '{{ASSINATURA.RESPONSAVEIS}}' => $this->generateAssinaturasResponsaveis($contrato),
-            '{{ASSINATURA.PAI}}' => $this->generateAssinaturaParente($aluno, 'Pai'),
-            '{{ASSINATURA.MAE}}' => $this->generateAssinaturaParente($aluno, 'Mãe'),
+            '{{ASSINATURA.PAI}}' => $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo),
+            '{{ASSINATURA.MAE}}' => $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo),
         ];
 
         return str_replace(array_keys($macros), array_values($macros), $html);
@@ -82,14 +87,14 @@ class ContractTemplateService
         return $html;
     }
 
-    protected function generateAssinaturaParente(?Pessoa $aluno, string $vinculoNome): string
+    protected function generateAssinaturaParente(?Pessoa $aluno, string $vinculoNome, Collection $tiposVinculo): string
     {
         if (! $aluno) {
             return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $vinculoNome);
         }
 
-        $parente = $aluno->responsaveis->first(function ($resp) use ($vinculoNome) {
-            return $resp->pivot->tipoVinculo?->nome === $vinculoNome;
+        $parente = $aluno->responsaveis->first(function ($resp) use ($vinculoNome, $tiposVinculo) {
+            return $tiposVinculo->get($resp->pivot->tipo_vinculo_id) === $vinculoNome;
         });
 
         return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $parente ? "{$parente->nome} - {$vinculoNome}" : $vinculoNome);
