@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Models\Activity;
 
 class Matricula extends Model
 {
@@ -186,6 +188,21 @@ class Matricula extends Model
             ->whereNotNull('email')
             ->get()
             ->unique('id');
+    }
+
+    /**
+     * Retorna a data da última notificação de pendência enviada.
+     */
+    public function getLastPendingNotificationDate(): ?Carbon
+    {
+        $lastActivity = Activity::query()
+            ->where('subject_type', $this->getMorphClass())
+            ->where('subject_id', $this->getKey())
+            ->where('event', 'notificacao_pendencia')
+            ->latest()
+            ->first();
+
+        return $lastActivity?->created_at;
     }
 
     /**

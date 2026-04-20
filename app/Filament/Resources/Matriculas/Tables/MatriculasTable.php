@@ -105,7 +105,9 @@ class MatriculasTable
                     ->url(fn (Matricula $record) => DocumentosMatricula::getUrl(['record' => $record])),
                 Action::make('enviar_email_pendencia')
                     ->label('Avisar Pendência')
-                    ->tooltip('Enviar e-mail de aviso de documentos pendentes ao Responsável')
+                    ->tooltip(fn (Matricula $record) => $record->getLastPendingNotificationDate()
+                        ? 'Último envio: '.$record->getLastPendingNotificationDate()->format('d/m/Y H:i').' - Clique para enviar novamente.'
+                        : 'Enviar e-mail de aviso de documentos pendentes ao Responsável (Nenhum envio anterior)')
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
                     ->requiresConfirmation()
