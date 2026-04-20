@@ -54,26 +54,31 @@ class AvaliacaosTable
                 SelectFilter::make('categoria_avaliacao_id')
                     ->relationship('categoria', 'nome')
                     ->label('Categoria')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('turma_id')
                     ->relationship('turma', 'nome')
                     ->label('Turma')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('disciplina_id')
                     ->relationship('disciplina', 'nome')
                     ->label('Disciplina')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('etapa_avaliativa_id')
                     ->relationship('etapaAvaliativa', 'nome')
                     ->label('Etapa')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('professor_id')
                     ->relationship('professor', 'nome')
                     ->label('Professor')
+                    ->multiple()
                     ->searchable()
                     ->preload(),
                 Filter::make('data_prevista')
