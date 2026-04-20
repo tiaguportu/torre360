@@ -373,6 +373,11 @@ O módulo de Cronograma permite a visualização e gestão das aulas planejadas 
 3. Defina uma **Data Início** e/ou uma **Data Fim**.
 4. O sistema filtrará automaticamente todas as aulas cuja data esteja compreendida entre o intervalo selecionado, facilitando o planejamento semanal ou mensal.
 
+### 12.2 Visibilidade para Responsáveis
+1. Usuários com o papel de **Responsável** possuem acesso restrito ao módulo de cronogramas.
+2. Eles visualizam apenas as aulas das turmas onde seus alunos (dependentes) possuem matrícula ativa ou contrato vinculado sob sua responsabilidade financeira.
+3. Isso garante a privacidade das informações e foca apenas nos horários de interesse da família.
+
 ---
 
 ## 📍 13. Gestão de Unidades e Representantes Legais

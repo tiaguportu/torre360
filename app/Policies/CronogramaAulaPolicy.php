@@ -27,7 +27,7 @@ class CronogramaAulaPolicy
         return $authUser->can('Create:CronogramaAula');
     }
 
-    public function update(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function update(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
     {
         return $authUser->can('Update:CronogramaAula');
     }
@@ -72,22 +72,22 @@ class CronogramaAulaPolicy
         return $authUser->can('Reorder:CronogramaAula');
     }
 
-    public function lancarFrequencia(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function lancarFrequencia(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
     {
         return $authUser->can('LancarFrequencia:CronogramaAula');
     }
 
-    public function verificaConflitos(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function verificaConflitos(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
     {
         return $authUser->can('VerificaConflitos:CronogramaAula');
     }
 
-    public function clonar(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function clonar(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
     {
         return $authUser->can('Clonar:CronogramaAula');
     }
 
-    public function notificarProfessorManual(AuthUser $authUser, ?CronogramaAula $cronogramaAula = null): bool
+    public function notificarProfessorManual(AuthUser $authUser, CronogramaAula $cronogramaAula): bool
     {
         return $authUser->can('NotificarProfessorManual:CronogramaAula');
     }

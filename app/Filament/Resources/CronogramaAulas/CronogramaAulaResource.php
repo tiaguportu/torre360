@@ -134,8 +134,18 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
 
         if ($isResponsavel && ! $user->hasRole('super_admin')) {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();
-            $query->whereHas('turma.matriculas.contrato.responsaveisFinanceiros', function ($q) use ($pessoasIds) {
-                $q->whereIn('pessoa_id', $pessoasIds);
+
+            $query->whereHas('turma.matriculas', function ($q) use ($pessoasIds) {
+                $q->where(function ($q2) use ($pessoasIds) {
+                    // Responsável Financeiro do Contrato
+                    $q2->whereHas('contrato.responsaveisFinanceiros', function ($q3) use ($pessoasIds) {
+                        $q3->whereIn('pessoa_id', $pessoasIds);
+                    })
+                    // Responsável do Aluno (aluno_responsavel)
+                        ->orWhereHas('pessoa.responsaveis', function ($q3) use ($pessoasIds) {
+                            $q3->whereIn('responsavel_id', $pessoasIds);
+                        });
+                });
             });
         }
 
