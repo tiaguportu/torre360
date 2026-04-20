@@ -220,10 +220,17 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             return [];
         }
 
+        // 1. Matrículas onde é Responsável Financeiro (via Contrato)
         $contratosIds = ResponsavelFinanceiro::whereIn('pessoa_id', $pessoaIds)->pluck('contrato_id');
+        $queryMatriculas = Matricula::query()
+            ->whereIn('contrato_id', $contratosIds);
 
-        return Matricula::whereIn('contrato_id', $contratosIds)
-            ->pluck('turma_id')
+        // 2. Matrículas onde é Responsável pelo Aluno (via aluno_responsavel)
+        $queryMatriculas->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoaIds) {
+            $q->whereIn('responsavel_id', $pessoaIds);
+        });
+
+        return $queryMatriculas->pluck('turma_id')
             ->unique()
             ->toArray();
     }
