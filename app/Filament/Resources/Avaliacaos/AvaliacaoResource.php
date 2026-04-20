@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Avaliacaos;
 use App\Filament\Resources\Avaliacaos\Pages\CreateAvaliacao;
 use App\Filament\Resources\Avaliacaos\Pages\EditAvaliacao;
 use App\Filament\Resources\Avaliacaos\Pages\ListAvaliacaos;
+use App\Filament\Resources\Avaliacaos\Pages\ViewAvaliacao;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Filament\Resources\Avaliacaos\Tables\AvaliacaosTable;
 use App\Models\Avaliacao;
@@ -44,6 +45,7 @@ class AvaliacaoResource extends Resource
         return [
             'index' => ListAvaliacaos::route('/'),
             'create' => CreateAvaliacao::route('/create'),
+            'view' => ViewAvaliacao::route('/{record}'),
             'edit' => EditAvaliacao::route('/{record}/edit'),
         ];
     }
