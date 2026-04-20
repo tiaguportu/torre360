@@ -49,14 +49,15 @@ class ContractTemplateService
         return str_replace(array_keys($macros), array_values($macros), $html);
     }
 
-    protected function generateAssinaturaBlock(string $titulo, ?string $extra = null): string
+    protected function generateAssinaturaBlock(string $titulo, ?string $extra = null, ?string $cpf = null): string
     {
         $extraFormatado = $extra ? " ({$extra})" : '';
+        $cpfValor = $cpf ?: '___________________________';
 
         return '<div style="margin-top: 50px; margin-bottom: 30px;">'
             .'_______________________________________________<br>'
             .$titulo.$extraFormatado.'<br><br>'
-            .'CPF nº ___________________________'
+            ."CPF nº {$cpfValor}"
             .'</div>';
     }
 
@@ -69,7 +70,7 @@ class ContractTemplateService
         $html = '';
         foreach ($unidade->representantesLegais as $rep) {
             $cargo = $rep->pivot->cargo ?? 'Representante Legal';
-            $html .= $this->generateAssinaturaBlock('CONTRATADA', "{$rep->nome} - {$cargo}");
+            $html .= $this->generateAssinaturaBlock('CONTRATADA', "{$rep->nome} - {$cargo}", $rep->cpf);
         }
 
         return $html;
@@ -80,7 +81,7 @@ class ContractTemplateService
         $html = '';
         foreach ($contrato->responsaveisFinanceiros as $rf) {
             if ($rf->pessoa) {
-                $html .= $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $rf->pessoa->nome);
+                $html .= $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $rf->pessoa->nome, $rf->pessoa->cpf);
             }
         }
 
@@ -97,7 +98,11 @@ class ContractTemplateService
             return $tiposVinculo->get($resp->pivot->tipo_vinculo_id) === $vinculoNome;
         });
 
-        return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $parente ? "{$parente->nome} - {$vinculoNome}" : $vinculoNome);
+        return $this->generateAssinaturaBlock(
+            'CONTRATANTE-ADERENTE',
+            $parente ? "{$parente->nome} - {$vinculoNome}" : $vinculoNome,
+            $parente?->cpf
+        );
     }
 
     protected function generateRepresentantesUnidade(?Unidade $unidade): string
