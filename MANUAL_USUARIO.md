@@ -99,6 +99,13 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 2. O sistema garante que apenas usuários autenticados possam visualizar essas imagens, protegendo a privacidade de alunos e colaboradores.
 3. Caso realize o upload de uma nova foto, o sistema processará a imagem e a disponibilizará automaticamente para visualização interna segura.
 
+### 4.3 Visibilidade Restrita
+Para garantir a privacidade e segurança dos dados, a visualização da lista de pessoas é filtrada conforme o papel do usuário:
+- **Responsáveis:** Visualizam seus próprios dados acadêmicos/cadastrais e de todos os seus dependentes (filhos/alunos) vinculados legal ou financeiramente (via contrato).
+- **Alunos:** Visualizam seus próprios dados e os dados de seus responsáveis legais e financeiros.
+- **Professores:** Visualizam seus próprios dados e os dados de pessoas vinculadas aos seus usuários.
+- **Administradores/Secretaria:** Possuem visibilidade total de todas as pessoas cadastradas.
+
 ---
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação

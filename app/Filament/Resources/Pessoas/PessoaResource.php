@@ -59,19 +59,29 @@ class PessoaResource extends Resource
             return $query;
         }
 
-        if ($user->hasAnyRole(['professor', 'responsavel'])) {
+        if ($user->hasAnyRole(['professor', 'responsavel', 'aluno'])) {
             $query->where(function (Builder $query) use ($user) {
                 // Pessoa diretamente vinculada ao usuário
                 $query->whereHas('users', fn (Builder $q) => $q->where('users.id', $user->id));
 
-                // Se for responsável, também vê as pessoas (alunos) vinculadas financeiramente
-                if ($user->hasRole('responsavel')) {
-                    $pessoasIds = $user->pessoas->pluck('id')->toArray();
+                $pessoasIds = $user->pessoas->pluck('id')->toArray();
+
+                // Se for responsável ou aluno, também vê as pessoas vinculadas
+                if ($user->hasAnyRole(['responsavel', 'aluno'])) {
+                    // Ver alunos (se for responsável) ou responsáveis (se for aluno) via tabela aluno_responsavel
+                    $query->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
+                        $q->whereIn('responsavel_id', $pessoasIds);
+                    })
+                        ->orWhereHas('responsaveis', function (Builder $q) use ($pessoasIds) {
+                            $q->whereIn('aluno_id', $pessoasIds);
+                        });
+
+                    // Ver pessoas vinculadas financeiramente via contrato -> matricula
                     $query->orWhereHas('matriculas.contrato.responsaveisFinanceiros', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('pessoa_id', $pessoasIds);
                     })
-                        ->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
-                            $q->whereIn('responsavel_id', $pessoasIds);
+                        ->orWhereHas('responsaveisFinanceiros.contrato.matriculas', function (Builder $q) use ($pessoasIds) {
+                            $q->whereIn('pessoa_id', $pessoasIds);
                         });
                 }
             });
