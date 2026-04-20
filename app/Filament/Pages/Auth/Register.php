@@ -4,13 +4,13 @@ namespace App\Filament\Pages\Auth;
 
 use Ddr\FilamentCaptcha\Forms\Components\Captcha;
 use Filament\Auth\Pages\Register as BaseRegister;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 
 class Register extends BaseRegister
 {
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             $this->getNameFormComponent(),
             $this->getEmailFormComponent(),
             $this->getPasswordFormComponent(),
