@@ -5,7 +5,7 @@ namespace App\Models;
 use Database\Factories\CategoriaAvaliacaoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CategoriaAvaliacao extends Model
@@ -28,19 +28,30 @@ class CategoriaAvaliacao extends Model
     }
 
     /**
-     * A categoria que esta categoria substitui.
-     * Ex: "Prova Substitutiva" substitui "Prova 1".
+     * Categorias que SÃO SUBSTITUÍDAS por esta categoria.
+     * Ex: "Prova Substitutiva" substitui ["Prova 1", "Prova 2"].
      */
-    public function substituicao(): BelongsTo
+    public function substituidas(): BelongsToMany
     {
-        return $this->belongsTo(CategoriaAvaliacao::class, 'categoria_avaliacao_substituicao_id');
+        return $this->belongsToMany(
+            CategoriaAvaliacao::class,
+            'categoria_avaliacao_substituicao',
+            'categoria_id',
+            'substituida_id'
+        )->withTimestamps();
     }
 
     /**
-     * Categorias que são substituídas por esta categoria.
+     * Categorias que SUBSTITUEM esta categoria.
+     * Ex: "Prova 1" é substituída por ["Prova Substitutiva"].
      */
-    public function substituidas(): HasMany
+    public function substitutas(): BelongsToMany
     {
-        return $this->hasMany(CategoriaAvaliacao::class, 'categoria_avaliacao_substituicao_id');
+        return $this->belongsToMany(
+            CategoriaAvaliacao::class,
+            'categoria_avaliacao_substituicao',
+            'substituida_id',
+            'categoria_id'
+        )->withTimestamps();
     }
 }

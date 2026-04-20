@@ -25,19 +25,19 @@ class CategoriaAvaliacaoForm
                     ->helperText('Define a ordem de exibição desta categoria no boletim.')
                     ->default(0),
 
-                Select::make('categoria_avaliacao_substituicao_id')
-                    ->label('Substitui a categoria')
-                    ->helperText('Quando há avaliações desta categoria, a nota da categoria substituída é ignorada no cálculo do boletim.')
+                Select::make('substituidas')
+                    ->label('Substitui quais categorias?')
+                    ->helperText('Uma nota nesta categoria substituirá a menor nota entre as categorias selecionadas acima.')
                     ->relationship(
-                        'substituicao',
+                        'substituidas',
                         'nome',
                         modifyQueryUsing: fn ($query, ?CategoriaAvaliacao $record) => $query
                             ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
                             ->orderBy('ordem_boletim')
                     )
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nome} - {$record->descricao}")
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome_com_descricao)
                     ->searchable(['nome', 'descricao'])
-                    ->nullable()
+                    ->multiple()
                     ->preload()
                     ->placeholder('Nenhuma (não substitui)'),
             ]);
