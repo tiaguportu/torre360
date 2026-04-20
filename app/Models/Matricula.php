@@ -126,12 +126,13 @@ class Matricula extends Model
     }
 
     /**
-     * Retorna os documentos inseridos que foram rejeitados
+     * Retorna os documentos inseridos que foram rejeitados (apenas se forem obrigatórios)
      */
     public function getRejectedDocuments(): Collection
     {
         return $this->documentoInseridos()
             ->where('status', SituacaoDocumento::REJEITADO)
+            ->whereHas('tipoDocumento', fn ($query) => $query->where('flag_obrigatorio', true))
             ->with('tipoDocumento')
             ->get();
     }

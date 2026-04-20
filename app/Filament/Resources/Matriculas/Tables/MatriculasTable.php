@@ -112,12 +112,37 @@ class MatriculasTable
                     ->modalHeading('Confirmar Envio de Aviso')
                     ->modalDescription(function (Matricula $record) {
                         $emails = $record->getNotificationRecipients()->pluck('email');
+                        $faltantes = $record->getMissingMandatoryDocuments();
+                        $rejeitados = $record->getRejectedDocuments();
 
                         if ($emails->isEmpty()) {
                             return new HtmlString('<span class="text-danger-600 font-bold">Erro: Nenhum e-mail encontrado para o aluno ou responsáveis desta matrícula.</span>');
                         }
 
-                        return 'Os avisos de pendência serão enviados para os seguintes e-mails: '.$emails->join(', ');
+                        $html = '<div class="space-y-4">';
+                        $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
+
+                        if ($faltantes->isNotEmpty()) {
+                            $html .= '<div><strong class="text-danger-600">Documentos Faltantes:</strong><ul class="list-disc list-inside text-sm text-gray-500">';
+                            foreach ($faltantes as $doc) {
+                                $html .= "<li>{$doc->nome}</li>";
+                            }
+                            $html .= '</ul></div>';
+                        }
+
+                        if ($rejeitados->isNotEmpty()) {
+                            $html .= '<div><strong class="text-warning-600">Documentos Rejeitados (necessário reenvio):</strong><ul class="list-disc list-inside text-sm text-gray-500">';
+                            foreach ($rejeitados as $docInserido) {
+                                $docNome = $docInserido->tipoDocumento->nome;
+                                $obs = $docInserido->observacoes ? " (<span class='italic'>Motivo: {$docInserido->observacoes}</span>)" : '';
+                                $html .= "<li>{$docNome}{$obs}</li>";
+                            }
+                            $html .= '</ul></div>';
+                        }
+
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
                     })
                     ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula') && $record->hasPendingIssues())
                     ->action(function (Matricula $record) {

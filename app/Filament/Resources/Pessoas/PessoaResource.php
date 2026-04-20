@@ -66,23 +66,30 @@ class PessoaResource extends Resource
 
                 $pessoasIds = $user->pessoas->pluck('id')->toArray();
 
-                // Se for responsável ou aluno, também vê as pessoas vinculadas
-                if ($user->hasAnyRole(['responsavel', 'aluno'])) {
-                    // Ver alunos (se for responsável) ou responsáveis (se for aluno) via tabela aluno_responsavel
-                    $query->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
+                // Se for responsável, vê as pessoas vinculadas a ele como alunos ou via financeiro
+                if ($user->hasRole('responsavel')) {
+                    // Ver alunos onde ele é o responsável (tabela aluno_responsavel)
+                    $query->orWhereHas('responsaveis', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('responsavel_id', $pessoasIds);
-                    })
-                        ->orWhereHas('responsaveis', function (Builder $q) use ($pessoasIds) {
-                            $q->whereIn('aluno_id', $pessoasIds);
-                        });
+                    });
 
-                    // Ver pessoas vinculadas financeiramente via contrato -> matricula
+                    // Ver alunos onde ele é o responsável financeiro (via contrato)
                     $query->orWhereHas('matriculas.contrato.responsaveisFinanceiros', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('pessoa_id', $pessoasIds);
-                    })
-                        ->orWhereHas('responsaveisFinanceiros.contrato.matriculas', function (Builder $q) use ($pessoasIds) {
-                            $q->whereIn('pessoa_id', $pessoasIds);
-                        });
+                    });
+                }
+
+                // Se for aluno, vê seus responsáveis (tabela aluno_responsavel e financeiro)
+                if ($user->hasRole('aluno')) {
+                    // Ver seus responsáveis diretos
+                    $query->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
+                        $q->whereIn('aluno_id', $pessoasIds);
+                    });
+
+                    // Ver quem paga suas contas (responsáveis financeiros do seu contrato)
+                    $query->orWhereHas('responsaveisFinanceiros.contrato.matriculas', function (Builder $q) use ($pessoasIds) {
+                        $q->whereIn('pessoa_id', $pessoasIds);
+                    });
                 }
             });
         }
