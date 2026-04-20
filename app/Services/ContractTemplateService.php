@@ -111,7 +111,8 @@ class ContractTemplateService
         $html .= '<thead><tr style="background-color: #f2f2f2;">';
         $html .= '<th style="border: 1px solid black; padding: 5px;">Parcela</th>';
         $html .= '<th style="border: 1px solid black; padding: 5px;">Vencimento</th>';
-        $html .= '<th style="border: 1px solid black; padding: 5px;">Valor Total da Parcela</th>';
+        $html .= '<th style="border: 1px solid black; padding: 5px;">Valor Original</th>';
+        $html .= '<th style="border: 1px solid black; padding: 5px;">Valor com Desconto</th>';
         $html .= '</tr></thead><tbody>';
 
         $i = 1;
@@ -119,6 +120,7 @@ class ContractTemplateService
             $html .= '<tr>';
             $html .= '<td style="border: 1px solid black; padding: 5px; text-align: center;">'.$i++.'</td>';
             $html .= '<td style="border: 1px solid black; padding: 5px; text-align: center;">'.Carbon::parse($fatura->vencimento)->format('d/m/Y').'</td>';
+            $html .= '<td style="border: 1px solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor_bruto, 2, ',', '.').'</td>';
             $html .= '<td style="border: 1px solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor, 2, ',', '.').'</td>';
             $html .= '</tr>';
         }

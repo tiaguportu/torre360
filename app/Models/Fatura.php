@@ -29,6 +29,16 @@ class Fatura extends Model
     }
 
     /**
+     * Valor total bruto da fatura (soma dos itens sem descontos)
+     */
+    protected function valorBruto(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->itens->sum(fn ($item) => $item->valor_unitario * $item->quantidade)
+        );
+    }
+
+    /**
      * Valor total bruto da fatura (soma dos itens com seus respectivos descontos)
      */
     protected function valor(): Attribute
