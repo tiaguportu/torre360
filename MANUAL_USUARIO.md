@@ -111,12 +111,16 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação
 
-### 5.1 Lançamento de Notas
-1. Vá em **Acadêmico → Avaliações**.
-2. **Filtro de Pendências:** Utilize o filtro "Pendência de Lançamento" para localizar rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
-3. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
-4. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
-5. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
+### 5.1 Filtros e Gestão de Avaliações
+1. Vá em **Avaliações → Avaliações**.
+2. **Filtros Avançados:** Utilize a barra de filtros para localizar registros com precisão:
+   - **Múltipla Seleção:** Os filtros de Categoria, Turma, Disciplina, Etapa e Professor permitem selecionar **várias opções simultaneamente**.
+   - **Filtro de Período:** Use o filtro de **Data Prevista** para definir um intervalo (Data Inicial e Final) e visualizar apenas as avaliações agendadas para aquele período.
+   - **Pendência de Lançamento:** Localize rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
+3. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
+4. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+5. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
+6. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
@@ -176,7 +180,9 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 1. Vá em **Avaliações → Categorias de Avaliação**.
 2. No cadastro de cada categoria (ex: Prova 1, Trabalho, Simulado), utilize o campo **Ordem no Boletim**.
 3. **Funcionamento:** Este campo define a ordem horizontal das colunas no boletim dentro de cada etapa avaliativa. Avaliações pertencentes a categorias com ordens menores aparecerão mais à esquerda na tabela do boletim.
-4. Se uma categoria possui uma **Substituta** configurada (como uma "Prova Substitutiva"), o sistema realizará o cálculo automático substituindo a nota da categoria original se a nota da substituta for maior ou conforme a regra configurada.
+4. **Substituição de Notas (Recuperação):** O sistema permite que uma categoria (ex: "Recuperação Bimestral") substitua **múltiplas categorias** originais (ex: "Prova 1" e "Trabalho 1").
+   - No cálculo do boletim, o sistema identificará qual das categorias vinculadas possui a **menor nota** e a substituirá pela nota da categoria substitutiva (caso esta seja maior).
+   - Visualmente, a nota que foi substituída aparecerá riscada no boletim para facilitar a conferência pedagógica.
 
 ---
 
