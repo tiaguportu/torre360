@@ -24,7 +24,7 @@ class ListCronogramaAulas extends ListRecords
                 ->color('danger')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->url(fn (): string => CronogramaAulaResource::getUrl('verifica-conflitos'))
-                ->visible(fn () => auth()->user()->can('verificaConflitos', CronogramaAula::class)),
+                ->visible(fn () => auth()->user()->can('VerificaConflitos:CronogramaAula')),
             CreateAction::make(),
         ];
     }
