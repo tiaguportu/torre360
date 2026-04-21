@@ -17,9 +17,7 @@
                 $avaliacoes = $dados['avaliacoes'];
                 $mediasAluno = $dados['mediasAluno'];
                 $mediasTurma = $dados['mediasTurma'];
-                $calc = new \App\Livewire\BoletimEtapaTable();
-                $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
-            @endphp
+@endphp
 
             <div class="fi-ta-ctn divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
                 {{-- Header da Tabela (Igual ao do Filament) --}}
@@ -55,7 +53,10 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-white/5">
-                            @foreach ($disciplinas as $disciplina)
+                            @foreach ($linhas as $linha)
+                                @php
+                                    $disciplina = $linha['disciplina'];
+                                @endphp
                                 <tr class="fi-ta-row [@media(hover:hover)]:hover:bg-gray-50 dark:[@media(hover:hover)]:hover:bg-white/5">
                                     <td class="fi-ta-cell p-3 sm:first-of-type:ps-6 whitespace-nowrap">
                                         <div class="fi-ta-text grid w-full gap-y-1 px-3 py-3">
@@ -71,7 +72,7 @@
                                     @foreach ($categorias as $categoria)
                                         @php
                                             $avaliacao = $avaliacoes->where('disciplina_id', $disciplina->id)->where('categoria_avaliacao_id', $categoria->id)->first();
-                                            $isIgnorada = $calc->isCategoriaIgnorada($categoria->id, $disciplina->id, $avaliacoes, $notasAluno);
+                                            $isIgnorada = $linha['categorias'][$categoria->id]['is_ignorada'] ?? false;
                                         @endphp
                                         <td class="fi-ta-cell p-3 text-center">
                                             @if ($avaliacao)
@@ -96,7 +97,7 @@
 
                                     {{-- Média Aluno --}}
                                     <td class="fi-ta-cell p-3 text-center">
-                                        @php $mAluno = $mediasAluno[$disciplina->id]; @endphp
+                                        @php $mAluno = $linha['media_final']; @endphp
                                         @if ($mAluno !== null)
                                             <div class="fi-ta-text grid w-full gap-y-1 px-3 py-3">
                                                 <div class="flex justify-center">
@@ -116,14 +117,14 @@
 
                                     {{-- Média Turma --}}
                                     <td class="fi-ta-cell p-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        @php $mTurma = $mediasTurma[$disciplina->id]; @endphp
+                                        @php $mTurma = $linha['media_turma']; @endphp
                                         {{ $mTurma !== null ? number_format(round((float) $mTurma, 2), 1, ',', '.') : '—' }}
                                     </td>
 
                                     {{-- Frequencia --}}
                                     <td class="fi-ta-cell p-3 text-center">
                                         @php
-                                            $frequencia = $calc->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $matricula->turma_id, $etapa);
+                                            $frequencia = $linha['frequencia'];
                                         @endphp
                                         @if ($frequencia !== null)
                                             <div class="fi-ta-text grid w-full gap-y-1 px-3 py-3">

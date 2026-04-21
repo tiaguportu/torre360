@@ -78,12 +78,8 @@ class BoletimEdicaoGradesTable extends Component
         $mediasAluno = [];
         $mediasTurma = [];
 
-        foreach ($dadosEtapa['linhas'] as $linha) {
-            $disciplinaId = $linha['disciplina']->id;
-            $mediasAluno[$disciplinaId] = $linha['media_final'];
-            $mediasTurma[$disciplinaId] = $linha['media_turma'];
-        }
+        $linhas = $dadosEtapa['linhas'];
 
-        return compact('avaliacoes', 'categorias', 'disciplinas', 'mediasAluno', 'mediasTurma');
+        return compact('avaliacoes', 'categorias', 'disciplinas', 'mediasAluno', 'mediasTurma', 'linhas');
     }
 }
