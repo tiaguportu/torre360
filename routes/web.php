@@ -17,6 +17,7 @@ Route::get('/login', function () {
 })->name('login');
 
 use App\Http\Controllers\Api\MobileTokenController;
+use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
@@ -31,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
         ->where('path', '.*')
         ->name('documentos.visualizar');
+
+    Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');

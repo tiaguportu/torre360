@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Schemas\Components\BoletimeGradesTable;
+use App\Models\EtapaAvaliativa;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -66,6 +68,36 @@ class BoletimMatricula extends Page implements HasSchemas
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('imprimir_pdf')
+                ->label('Imprimir PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->modalHeading('Imprimir Boletim')
+                ->modalDescription('Selecione se deseja imprimir uma etapa específica ou o boletim completo.')
+                ->modalSubmitActionLabel('Baixar PDF')
+                ->form([
+                    Select::make('etapa_id')
+                        ->label('Etapa Avaliativa')
+                        ->options(function () {
+                            $etapas = EtapaAvaliativa::query()
+                                ->whereHas('avaliacoes.notas', fn ($q) => $q->where('matricula_id', $this->record->id)->whereNotNull('valor'))
+                                ->orderBy('id')
+                                ->pluck('nome', 'id')
+                                ->toArray();
+
+                            return [0 => 'Todas as Etapas que já ocorreram'] + $etapas;
+                        })
+                        ->default(0)
+                        ->required(),
+                ])
+                ->action(function (array $data) {
+                    $params = ['record' => $this->record];
+                    if ($data['etapa_id'] > 0) {
+                        $params['etapa_id'] = $data['etapa_id'];
+                    }
+
+                    return redirect()->route('matriculas.boletim.download', $params);
+                }),
+
             Action::make('editar_notas')
                 ->label('Editar Notas')
                 ->icon('heroicon-o-pencil-square')
