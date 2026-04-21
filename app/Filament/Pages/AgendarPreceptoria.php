@@ -6,6 +6,7 @@ use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
@@ -18,9 +19,16 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
 
-class AgendarPreceptoria extends Page implements HasForms
+class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
 {
     use InteractsWithForms;
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-date-range';
 

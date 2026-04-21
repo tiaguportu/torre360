@@ -5,7 +5,7 @@ namespace App\Filament\Resources\RelatorioPreceptorias\Schemas;
 use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Models\Preceptoria;
 use App\Models\TemplateRelatorioPreceptoria;
-use Filament\Forms\Components\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
