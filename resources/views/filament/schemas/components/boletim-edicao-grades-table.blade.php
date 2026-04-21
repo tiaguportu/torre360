@@ -17,6 +17,7 @@
                 $avaliacoes = $dados['avaliacoes'];
                 $mediasAluno = $dados['mediasAluno'];
                 $mediasTurma = $dados['mediasTurma'];
+                $linhas = $dados['linhas'];
 @endphp
 
             <div class="fi-ta-ctn divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
