@@ -7,9 +7,7 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -165,7 +163,6 @@ class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
                                 $matriculaId = $get('matricula_id');
 
                                 if ($isAdminOrSecretaria && ! $matriculaId) {
-                                    // Admins podem ver todos
                                     return Pessoa::orderBy('nome')->pluck('nome', 'id');
                                 }
 
@@ -178,30 +175,38 @@ class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
                             })
                             ->searchable()
                             ->required()
-                            ->disabled(fn (Get $get) => ! $get('matricula_id')),
+                            ->live()
+                            ->disabled(fn (Get $get) => ! $get('matricula_id'))
+                            ->afterStateUpdated(fn ($set) => $set('preceptoria_id', null)),
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Data e Horário')
+                Section::make('Horários Disponíveis')
                     ->schema([
-                        DatePicker::make('data')
-                            ->label('Data')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->minDate(now()->toDateString()),
+                        Select::make('preceptoria_id')
+                            ->label('Horário Disponível')
+                            ->options(function (Get $get) {
+                                $professorId = $get('professor_id');
 
-                        TimePicker::make('hora_inicio')
-                            ->label('Hora Início')
-                            ->required()
-                            ->seconds(false),
+                                if (! $professorId) {
+                                    return [];
+                                }
 
-                        TimePicker::make('hora_fim')
-                            ->label('Hora Fim (Opcional)')
-                            ->seconds(false)
-                            ->nullable(),
+                                return Preceptoria::query()
+                                    ->where('professor_id', $professorId)
+                                    ->whereNull('matricula_id')
+                                    ->where('data', '>=', now()->toDateString())
+                                    ->orderBy('data')
+                                    ->orderBy('hora_inicio')
+                                    ->get()
+                                    ->mapWithKeys(fn (Preceptoria $p) => [
+                                        $p->id => "{$p->data->format('d/m/Y')} às {$p->hora_inicio->format('H:i')}".($p->hora_fim ? " - {$p->hora_fim->format('H:i')}" : ''),
+                                    ]);
+                            })
+                            ->searchable()
+                            ->required()
+                            ->disabled(fn (Get $get) => ! $get('professor_id')),
                     ])
-                    ->columns(3)
                     ->columnSpanFull(),
             ])
             ->statePath('data');
@@ -212,11 +217,9 @@ class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
         $raw = $this->form->getState();
 
         try {
-            Preceptoria::create([
-                'data' => $raw['data'],
-                'hora_inicio' => $raw['hora_inicio'],
-                'hora_fim' => $raw['hora_fim'] ?? null,
-                'professor_id' => $raw['professor_id'],
+            $preceptoria = Preceptoria::findOrFail($raw['preceptoria_id']);
+
+            $preceptoria->update([
                 'matricula_id' => $raw['matricula_id'],
             ]);
 

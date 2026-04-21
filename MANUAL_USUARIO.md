@@ -564,18 +564,18 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
 
 ### 18.5 Agendar Preceptoria (Responsáveis e Alunos)
 
-Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pelo painel, sem depender da secretaria.
+Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pelo painel, escolhendo entre os horários disponibilizados pelos professores.
 
 1. Vá em **Preceptoria → Agendar Preceptoria**.
 2. **Seleção da Matrícula:**
    - Se você for um **Aluno**, suas matrículas serão exibidas automaticamente.
    - Se você for um **Responsável**, verá as matrículas de todos os alunos aos quais está vinculado.
-3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido apenas com os professores vinculados àquela turma (via Cronograma de Aulas ou Professor Conselheiro). Isso evita agendamentos com professores não relacionados ao aluno.
-4. Preencha a **Data**, a **Hora Início** e opcionalmente a **Hora Fim**.
-5. Clique em **Confirmar Agendamento**.
+3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido com os professores vinculados àquela turma.
+4. **Horário Disponível:** O sistema exibirá uma lista de horários (dia e hora) que o professor selecionado cadastrou e que ainda estão vagos (sem aluno).
+5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
 
 > [!TIP]
-> O sistema filtra automaticamente os professores disponíveis com base nos cronogramas de aula e na configuração de professor conselheiro da turma do aluno, facilitando a escolha correta.
+> Caso o professor desejado não apareça com horários disponíveis, entre em contato com a secretaria para que novos "slots" de preceptoria sejam criados no sistema.
 
 ---
 
