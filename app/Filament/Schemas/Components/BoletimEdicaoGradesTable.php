@@ -2,12 +2,10 @@
 
 namespace App\Filament\Schemas\Components;
 
-use App\Livewire\BoletimEtapaTable;
 use App\Models\Avaliacao;
-use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
 use App\Models\Matricula;
-use App\Models\Nota;
+use App\Services\BoletimService;
 use Filament\Schemas\Components\Component;
 use Illuminate\Support\Collection;
 
@@ -53,34 +51,37 @@ class BoletimEdicaoGradesTable extends Component
     public function getDadosParaEtapa(int $etapaId): array
     {
         $matricula = $this->getMatricula();
+        $boletimService = app(BoletimService::class);
+
+        $dados = $boletimService->getDadosBoletim($matricula, $etapaId);
+        $dadosEtapa = $dados['etapas'][0] ?? null;
+
+        if (! $dadosEtapa) {
+            return [
+                'avaliacoes' => collect(),
+                'categorias' => collect(),
+                'disciplinas' => collect(),
+                'mediasAluno' => [],
+                'mediasTurma' => [],
+            ];
+        }
+
         $avaliacoes = Avaliacao::query()
             ->where('turma_id', $matricula->turma_id)
             ->where('etapa_avaliativa_id', $etapaId)
             ->with(['categoria', 'disciplina'])
             ->get();
 
-        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id')->sortBy('ordem_boletim');
-        $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique()->toArray();
-        $disciplinas = Disciplina::whereIn('id', $disciplinasIds)
-            ->orderBy('ordem_boletim')
-            ->orderBy('nome')
-            ->get();
-
-        $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
-        $notasTurma = Nota::query()
-            ->whereHas('matricula', fn ($q) => $q->where('turma_id', $matricula->turma_id))
-            ->whereNotNull('valor')
-            ->get()
-            ->groupBy('avaliacao_id');
-
-        $calc = new BoletimEtapaTable;
+        $categorias = $dadosEtapa['categorias'];
+        $disciplinas = collect($dadosEtapa['linhas'])->pluck('disciplina');
 
         $mediasAluno = [];
         $mediasTurma = [];
 
-        foreach ($disciplinas as $disciplina) {
-            $mediasAluno[$disciplina->id] = $calc->calcularMediaFinal($disciplina->id, $avaliacoes, $notasAluno);
-            $mediasTurma[$disciplina->id] = $calc->getMediaTurmaEtapa($disciplina->id, $avaliacoes, $notasTurma);
+        foreach ($dadosEtapa['linhas'] as $linha) {
+            $disciplinaId = $linha['disciplina']->id;
+            $mediasAluno[$disciplinaId] = $linha['media_final'];
+            $mediasTurma[$disciplinaId] = $linha['media_turma'];
         }
 
         return compact('avaliacoes', 'categorias', 'disciplinas', 'mediasAluno', 'mediasTurma');
