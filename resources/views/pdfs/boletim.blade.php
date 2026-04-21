@@ -104,21 +104,21 @@
     <table class="info-table">
         <tr>
             <td class="info-label">Aluno:</td>
-            <td>{{ $matricula->pessoa->nome }}</td>
+            <td>{{ $matricula->pessoa?->nome ?? '-' }}</td>
             <td class="info-label">Matrícula:</td>
             <td>{{ $matricula->id }}</td>
         </tr>
         <tr>
             <td class="info-label">Curso:</td>
-            <td>{{ $matricula->turma->serie->curso->nome }}</td>
+            <td>{{ $matricula->turma?->serie?->curso?->nome ?? '-' }}</td>
             <td class="info-label">Série:</td>
-            <td>{{ $matricula->turma->serie->nome }}</td>
+            <td>{{ $matricula->turma?->serie?->nome ?? '-' }}</td>
         </tr>
         <tr>
             <td class="info-label">Turma:</td>
-            <td>{{ $matricula->turma->nome }}</td>
+            <td>{{ $matricula->turma?->nome ?? '-' }}</td>
             <td class="info-label">Período Letivo:</td>
-            <td>{{ $matricula->turma->periodoLetivo->ano }}</td>
+            <td>{{ $matricula->periodoLetivo?->ano ?? $matricula->turma?->periodoLetivo?->ano ?? now()->year }}</td>
         </tr>
         <tr>
             <td class="info-label">Data de Emissão:</td>
