@@ -96,7 +96,7 @@
 <body>
 
 <div class="header">
-    <h1>Torre360 - Sistema de Gestão Escolar</h1>
+    <h1>{{ $matricula->turma?->serie?->curso?->unidade?->nome ?? 'Torre360 - Sistema de Gestão Escolar' }}</h1>
     <p>Boletim Escolar Oficial</p>
 </div>
 
@@ -119,10 +119,6 @@
             <td>{{ $matricula->turma?->nome ?? '-' }}</td>
             <td class="info-label">Período Letivo:</td>
             <td>{{ $matricula->periodoLetivo?->ano ?? $matricula->turma?->periodoLetivo?->ano ?? now()->year }}</td>
-        </tr>
-        <tr>
-            <td class="info-label">Data de Emissão:</td>
-            <td colspan="3">{{ now()->format('d/m/Y H:i') }}</td>
         </tr>
     </table>
 </div>
@@ -207,6 +203,10 @@
         <div class="signature-box">
             Direção / Coordenação
         </div>
+    </div>
+
+    <div style="margin-top: 30px; text-align: right; font-size: 8px; color: #666; border-top: 1px solid #eee; padding-top: 5px;">
+        Documento gerado em {{ now()->format('d/m/Y H:i:s') }} - Torre360
     </div>
 </div>
 
