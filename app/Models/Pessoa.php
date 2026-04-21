@@ -87,4 +87,9 @@ class Pessoa extends Model
     {
         return $this->belongsToMany(Unidade::class, 'representante_unidade', 'pessoa_id', 'unidade_id')->withTimestamps();
     }
+
+    public function preceptoriasComoProfesor(): HasMany
+    {
+        return $this->hasMany(Preceptoria::class, 'professor_id');
+    }
 }

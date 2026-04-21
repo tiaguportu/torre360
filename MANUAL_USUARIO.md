@@ -508,4 +508,75 @@ Para garantir que seu e-mail e painel não sejam inundados de SPAM, a página ut
 
 ---
 
+## 🧑‍🏫 18. Módulo de Preceptoria
+
+O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas individuais entre um professor e um aluno (matriculado), além de manter relatórios dessas sessões com um editor de texto rico e suporte a modelos reutilizáveis.
+
+### 18.1 Conceitos
+
+| Conceito | Descrição |
+|---|---|
+| **Preceptoria** | O agendamento em si: data, hora início, hora fim (opcional), professor e matrícula do aluno. |
+| **Relatório de Preceptoria** | Documento gerado após a sessão, contendo observações e registros. Um relatório está vinculado a exatamente uma Preceptoria. |
+| **Template de Relatório** | Modelo de texto reutilizável que pode ser carregado em qualquer relatório como ponto de partida. |
+
+---
+
+### 18.2 Gerenciar Preceptorias
+
+1. Vá em **Preceptoria → Preceptorias**.
+2. Clique em **Nova Preceptoria** para criar um agendamento.
+3. Preencha:
+   - **Data** (obrigatório).
+   - **Hora Início** (obrigatório).
+   - **Hora Fim** (opcional).
+   - **Professor(a)** — qualquer Pessoa cadastrada no sistema (obrigatório).
+   - **Matrícula (Aluno)** — busca pela matrícula com formato `Período - Turma - Aluno` (opcional).
+4. Na listagem, a coluna **Relatório** indica (com ícone verde) se já existe um relatório associado àquela preceptoria.
+5. O filtro **Sem Relatório** permite localizar rapidamente preceptorias que ainda não têm relatório criado.
+
+---
+
+### 18.3 Criar Templates de Relatório
+
+1. Vá em **Preceptoria → Templates de Relatório**.
+2. Crie um template com **Nome** e **Corpo** (editor de texto completo estilo Office).
+3. Os templates são reutilizáveis em qualquer Relatório de Preceptoria.
+
+---
+
+### 18.4 Criar e Editar Relatórios de Preceptoria
+
+1. Vá em **Preceptoria → Relatórios de Preceptoria**.
+2. Clique em **Novo Relatório**.
+3. Selecione a **Preceptoria** à qual este relatório pertence (cada preceptoria pode ter no máximo 1 relatório).
+4. Para iniciar com um modelo pronto:
+   - No campo **Carregar Template**, selecione um template da lista.
+   - Clique no botão **Aplicar Template** (ícone de seta).
+   - Confirme na janela de diálogo — o conteúdo do template preencherá o campo **Corpo** automaticamente.
+5. Edite o **Corpo** com o editor de texto rico conforme as observações da sessão.
+6. Clique em **Salvar**.
+
+> [!NOTE]
+> Ao aplicar um template, o conteúdo atual do campo Corpo é **substituído** pelo conteúdo do template selecionado. Certifique-se de não ter texto importante não salvo antes de confirmar a ação.
+
+---
+
+### 18.5 Agendar Preceptoria (Responsáveis e Alunos)
+
+Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pelo painel, sem depender da secretaria.
+
+1. Vá em **Preceptoria → Agendar Preceptoria**.
+2. **Seleção da Matrícula:**
+   - Se você for um **Aluno**, suas matrículas serão exibidas automaticamente.
+   - Se você for um **Responsável**, verá as matrículas de todos os alunos aos quais está vinculado.
+3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido apenas com os professores vinculados àquela turma (via Cronograma de Aulas ou Professor Conselheiro). Isso evita agendamentos com professores não relacionados ao aluno.
+4. Preencha a **Data**, a **Hora Início** e opcionalmente a **Hora Fim**.
+5. Clique em **Confirmar Agendamento**.
+
+> [!TIP]
+> O sistema filtra automaticamente os professores disponíveis com base nos cronogramas de aula e na configuração de professor conselheiro da turma do aluno, facilitando a escolha correta.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

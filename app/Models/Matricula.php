@@ -66,6 +66,11 @@ class Matricula extends Model
         return $this->hasMany(FrequenciaEscolar::class);
     }
 
+    public function preceptorias(): HasMany
+    {
+        return $this->hasMany(Preceptoria::class);
+    }
+
     public function tiposDocumentos(): BelongsToMany
     {
         return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_matricula');

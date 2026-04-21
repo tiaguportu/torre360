@@ -231,3 +231,33 @@ Estrutura de ensino e turmas.
 
 ### `questionario_respostas` e `questionario_pergunta_respostas`
 - Registro das submissões e respostas individuais dos usuários.
+
+---
+
+## 9. Módulo de Preceptoria
+
+### `template_relatorio_preceptoria`
+- **Representa:** Modelos reutilizáveis para preencher relatórios de preceptoria.
+- **Campos Principais:** `nome` (string), `corpo` (longText HTML).
+- **Uso:** Pode ser carregado em qualquer `RelatorioPreceptoria`, substituindo o campo `corpo`.
+
+### `preceptoria`
+- **Representa:** Agendamento de uma sessão de preceptoria entre um professor e um aluno.
+- **Campos Principais:**
+  - `data` (date) — obrigatório.
+  - `hora_inicio` (time) — obrigatório.
+  - `hora_fim` (time) — nullable.
+  - `professor_id` — FK → `pessoa.id` (RestrictOnDelete). Obrigatório.
+  - `matricula_id` — FK → `matricula.id` (NullOnDelete). Nullable.
+- **Relacionamentos:**
+  - BelongsTo `Pessoa` (professor).
+  - BelongsTo `Matricula` (nullable).
+  - HasOne `RelatorioPreceptoria`.
+
+### `relatorio_preceptoria`
+- **Representa:** Relatório de uma sessão de preceptoria (1-para-1 com Preceptoria).
+- **Campos Principais:**
+  - `preceptoria_id` — FK única → `preceptoria.id` (CascadeOnDelete).
+  - `corpo` (longText HTML) — editado com TinyEditor.
+- **Relacionamentos:** BelongsTo `Preceptoria`.
+
