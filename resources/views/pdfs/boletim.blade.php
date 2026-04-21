@@ -110,7 +110,7 @@
         </tr>
         <tr>
             <td class="info-label">Curso:</td>
-            <td>{{ $matricula->turma?->serie?->curso?->nome ?? '-' }}</td>
+            <td>{{ $matricula->turma?->serie?->curso?->nome_externo ?? $matricula->turma?->serie?->curso?->nome_interno ?? '-' }}</td>
             <td class="info-label">Série:</td>
             <td>{{ $matricula->turma?->serie?->nome ?? '-' }}</td>
         </tr>

@@ -44,7 +44,7 @@ class BoletimMatricula extends Page implements HasSchemas
                             ->state(fn (?Model $record): string => $record?->turma?->nome ?? '-'),
                         TextEntry::make('curso')
                             ->label('Curso')
-                            ->state(fn (?Model $record): string => $record?->turma?->serie?->curso?->nome ?? '-'),
+                            ->state(fn (?Model $record): string => $record?->turma?->serie?->curso?->nome_externo ?? $record?->turma?->serie?->curso?->nome_interno ?? '-'),
                         TextEntry::make('periodo_letivo')
                             ->label('Período Letivo')
                             ->state(fn (?Model $record): string => $record?->turma?->periodoLetivo?->ano ?? now()->year),
