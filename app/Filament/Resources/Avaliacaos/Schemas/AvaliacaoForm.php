@@ -29,16 +29,17 @@ class AvaliacaoForm
                                     ->searchable()
                                     ->preload(),
                                 Select::make('disciplina_id')
-                                    ->relationship('disciplina', 'nome')
+                                    ->label('Disciplina')
                                     ->required()
-                                    ->preload()
                                     ->options(function (callable $get) {
                                         $turmaId = $get('turma_id');
                                         if (! $turmaId) {
                                             return [];
                                         }
 
-                                        return Turma::find($turmaId)?->disciplinas?->pluck('nome', 'id') ?? [];
+                                        $turma = Turma::with('disciplinas')->find($turmaId);
+
+                                        return $turma?->disciplinas->pluck('nome', 'id')->toArray() ?? [];
                                     }),
                                 Select::make('etapa_avaliativa_id')
                                     ->relationship('etapaAvaliativa', 'nome')
