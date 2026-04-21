@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 
 class AvaliacaoForm
 {
@@ -30,7 +31,6 @@ class AvaliacaoForm
                                 Select::make('disciplina_id')
                                     ->relationship('disciplina', 'nome')
                                     ->required()
-                                    ->searchable()
                                     ->preload()
                                     ->options(function (callable $get) {
                                         $turmaId = $get('turma_id');
@@ -50,10 +50,27 @@ class AvaliacaoForm
                                     ->relationship('categoria', 'nome')
                                     ->required(),
                                 DatePicker::make('data_prevista')
-                                    ->default(now()),
+                                    ->default(now())
+                                    ->required()
+                                    ->live(),
+                                DatePicker::make('data_limite_lancamento')
+                                    ->default(fn (callable $get) => $get('data_prevista') ? Carbon::parse($get('data_prevista'))->addDays(15) : now()->addDays(15))
+                                    ->required(),
+                            ]),
+                        Grid::make(3)
+                            ->schema([
                                 TextInput::make('nota_maxima')
                                     ->numeric()
-                                    ->default(10.00),
+                                    ->default(10.00)
+                                    ->required(),
+                                TextInput::make('peso_etapa_avaliativa')
+                                    ->numeric()
+                                    ->default(1.00)
+                                    ->required(),
+                                Select::make('professor_id')
+                                    ->relationship('professor', 'nome')
+                                    ->searchable()
+                                    ->preload(),
                             ]),
                     ]),
                 Section::make('Lançamento de Notas')
