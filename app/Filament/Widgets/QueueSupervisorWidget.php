@@ -69,11 +69,10 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
                 try {
                     set_time_limit(300); // Aumenta timeout para 5 min se permitido
 
-                    // No Windows/XAMPP, queue:work pode bloquear a requisição.
-                    // Usamos --stop-when-empty para processar o que está lá e sair.
-                    Artisan::call('queue:work', [
-                        '--stop-when-empty' => true,
-                    ]);
+                    // No Windows/XAMPP, Artisan::call('queue:work') bloqueia a requisição se não tiver timeout.
+                    // Para deixar rodando em background, usamos powershell no Windows.
+                    $command = 'powershell -Command "Start-Process php -ArgumentList \'artisan\', \'queue:work\' -WindowStyle Hidden"';
+                    shell_exec($command);
 
                     // Atualiza o heartbeat
                     Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
