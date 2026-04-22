@@ -11,7 +11,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -77,7 +76,7 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
                     Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
 
                     Notification::make()
-                        ->title('Fila processada com sucesso!')
+                        ->title('Fila em processamento!')
                         ->success()
                         ->send();
                 } catch (\Exception $e) {
