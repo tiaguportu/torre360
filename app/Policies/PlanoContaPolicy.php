@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\PlanoConta;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PlanoContaPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:PlanoConta');
@@ -71,4 +71,5 @@ class PlanoContaPolicy
     {
         return $authUser->can('Reorder:PlanoConta');
     }
+
 }

@@ -4,19 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Preceptoria;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PreceptoriaPolicy
 {
     use HandlesAuthorization;
-
-    public function agendar(AuthUser $authUser): bool
-    {
-        return $authUser->can('Agendar:Preceptoria');
-    }
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Preceptoria');
@@ -76,4 +71,10 @@ class PreceptoriaPolicy
     {
         return $authUser->can('Reorder:Preceptoria');
     }
+
+    public function agendar(AuthUser $authUser, Preceptoria $preceptoria): bool
+    {
+        return $authUser->can('Agendar:Preceptoria');
+    }
+
 }

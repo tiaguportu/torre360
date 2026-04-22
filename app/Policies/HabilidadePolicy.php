@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Habilidade;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class HabilidadePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Habilidade');
@@ -71,4 +71,5 @@ class HabilidadePolicy
     {
         return $authUser->can('Reorder:Habilidade');
     }
+
 }
