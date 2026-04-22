@@ -43,20 +43,11 @@ class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
     public ?array $data = [];
 
     /**
-     * Apenas pessoas vinculadas (aluno ou responsável) ou admins podem ver esta página.
+     * Acesso configurável via Filament Shield.
      */
     public static function canAccess(): bool
     {
-        $user = auth()->user();
-        if (! $user) {
-            return false;
-        }
-
-        if ($user->hasRole(['super_admin', 'admin', 'secretaria'])) {
-            return true;
-        }
-
-        return (bool) $user->pessoa;
+        return auth()->user()->can('page_AgendarPreceptoria');
     }
 
     public function mount(): void
