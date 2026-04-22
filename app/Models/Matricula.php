@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Notifications\DocumentosPendentesNotification;
-use App\Notifications\Preceptorias\PossibilityPreceptoriaNotification;
+use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -292,7 +292,7 @@ class Matricula extends Model
 
         foreach ($destinatarios as $user) {
             try {
-                $user->notify(new PossibilityPreceptoriaNotification($this));
+                $user->notify(new PossibilidadePreceptoriaNotification($this));
                 $countSent++;
             } catch (\Throwable $e) {
                 $errorMessage = $e->getMessage();
