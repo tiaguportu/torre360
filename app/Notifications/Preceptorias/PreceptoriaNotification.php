@@ -56,8 +56,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
                 ->line("Professor: {$professor}")
                 ->line("Data: {$dataF}")
                 ->line("Horário: {$horaF}")
-                ->action('Ver Preceptorias', url('/admin/preceptorias'))
-                ->line('Obrigado por utilizar nosso sistema!');
+                ->action('Ver Preceptorias', url('/admin/preceptorias'));
         }
 
         $intro = $this->paraSolicitante
@@ -72,8 +71,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
             ->line("Professor: {$professor}")
             ->line("Data: {$dataF}")
             ->line("Horário: {$horaF}")
-            ->action('Ver Disponibilidade', url('/admin/preceptorias'))
-            ->line('Obrigado por utilizar nosso sistema!');
+            ->action('Ver Disponibilidade', url('/admin/preceptorias'));
     }
 
     /**
