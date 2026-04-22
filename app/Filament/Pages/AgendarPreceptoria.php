@@ -155,57 +155,37 @@ class AgendarPreceptoria extends Page implements HasForms, HasShieldPermissions
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Selecionar Professor(a)')
+                Section::make('Horários Disponíveis')
                     ->schema([
-                        Select::make('professor_id')
-                            ->label('Professor(a)')
+                        Select::make('preceptoria_id')
+                            ->label('Horário Disponível')
                             ->options(function (Get $get) use ($isAdminOrSecretaria) {
                                 $matriculaId = $get('matricula_id');
-
-                                if ($isAdminOrSecretaria && ! $matriculaId) {
-                                    return Pessoa::orderBy('nome')->pluck('nome', 'id');
-                                }
 
                                 if (! $matriculaId) {
                                     return [];
                                 }
 
-                                return $this->getProfessoresDaMatricula((int) $matriculaId)
-                                    ->pluck('nome', 'id');
-                            })
-                            ->searchable()
-                            ->required()
-                            ->live()
-                            ->disabled(fn (Get $get) => ! $get('matricula_id'))
-                            ->afterStateUpdated(fn ($set) => $set('preceptoria_id', null)),
-                    ])
-                    ->columnSpanFull(),
-
-                Section::make('Horários Disponíveis')
-                    ->schema([
-                        Select::make('preceptoria_id')
-                            ->label('Horário Disponível')
-                            ->options(function (Get $get) {
-                                $professorId = $get('professor_id');
-
-                                if (! $professorId) {
-                                    return [];
-                                }
-
-                                return Preceptoria::query()
-                                    ->where('professor_id', $professorId)
+                                $query = Preceptoria::query()
                                     ->whereNull('matricula_id')
                                     ->where('data', '>=', now()->toDateString())
-                                    ->orderBy('data')
+                                    ->with('professor');
+
+                                if (! $isAdminOrSecretaria) {
+                                    $professoresIds = $this->getProfessoresDaMatricula((int) $matriculaId)->pluck('id');
+                                    $query->whereIn('professor_id', $professoresIds);
+                                }
+
+                                return $query->orderBy('data')
                                     ->orderBy('hora_inicio')
                                     ->get()
                                     ->mapWithKeys(fn (Preceptoria $p) => [
-                                        $p->id => "{$p->data->format('d/m/Y')} às {$p->hora_inicio->format('H:i')}".($p->hora_fim ? " - {$p->hora_fim->format('H:i')}" : ''),
+                                        $p->id => "{$p->professor?->nome} - {$p->data->format('d/m/Y')} às {$p->hora_inicio->format('H:i')}".($p->hora_fim ? " - {$p->hora_fim->format('H:i')}" : ''),
                                     ]);
                             })
                             ->searchable()
                             ->required()
-                            ->disabled(fn (Get $get) => ! $get('professor_id')),
+                            ->disabled(fn (Get $get) => ! $get('matricula_id')),
                     ])
                     ->columnSpanFull(),
             ])
