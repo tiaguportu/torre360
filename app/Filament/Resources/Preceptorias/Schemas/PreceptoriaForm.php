@@ -44,8 +44,16 @@ class PreceptoriaForm
                             ->relationship(
                                 'professor',
                                 'nome',
-                                fn (Builder $query) => $query->orderBy('nome')
+                                fn (Builder $query) => $query
+                                    ->when(
+                                        auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                                        fn ($q) => $q->where('id', auth()->user()?->pessoa?->id)
+                                    )
+                                    ->orderBy('nome')
                             )
+                            ->default(fn () => auth()->user()?->hasRole('professor') ? auth()->user()?->pessoa?->id : null)
+                            ->disabled(fn () => auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']))
+                            ->dehydrated()
                             ->searchable()
                             ->preload()
                             ->required(),
