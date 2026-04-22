@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AvaliacaoResource extends Resource
 {
@@ -22,6 +23,18 @@ class AvaliacaoResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Avaliações';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && $user->hasRole('professor')) {
+            $query->whereIn('professor_id', $user->pessoas()->pluck('id'));
+        }
+
+        return $query;
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Avaliacaos\Schemas;
 
+use App\Models\Pessoa;
 use App\Models\Turma;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -71,7 +72,34 @@ class AvaliacaoForm
                                 Select::make('professor_id')
                                     ->relationship('professor', 'nome')
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->default(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            $pessoas = $user->pessoas;
+                                            if ($pessoas->count() === 1) {
+                                                return $pessoas->first()->id;
+                                            }
+                                        }
+
+                                        return null;
+                                    })
+                                    ->disabled(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            return $user->pessoas->count() === 1;
+                                        }
+
+                                        return false;
+                                    })
+                                    ->options(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            return $user->pessoas->pluck('nome', 'id');
+                                        }
+
+                                        return Pessoa::all()->pluck('nome', 'id');
+                                    }),
                             ]),
                     ]),
                 Section::make('Lançamento de Notas')

@@ -85,7 +85,7 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
     {
         return $schema
             ->components([
-                Section::make('Filtros')
+                Section::make('📅 Calendário de Preceptorias')
                     ->components([
                         Grid::make(2)
                             ->components([

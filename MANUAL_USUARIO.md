@@ -117,10 +117,11 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
    - **Múltipla Seleção:** Os filtros de Categoria, Turma, Disciplina, Etapa e Professor permitem selecionar **várias opções simultaneamente**.
    - **Filtro de Período:** Use o filtro de **Data Prevista** para definir um intervalo (Data Inicial e Final) e visualizar apenas as avaliações agendadas para aquele período.
    - **Pendência de Lançamento:** Localize rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
-3. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
-4. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
-5. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
-6. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
+3. **Visibilidade Restrita:** Para garantir a organização e o foco pedagógico, usuários com o papel de **Professor** visualizam apenas as avaliações que estão vinculadas diretamente a eles. Administradores e secretaria continuam com acesso total.
+4. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
+5. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+6. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
+7. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
