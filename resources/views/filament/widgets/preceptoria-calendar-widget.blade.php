@@ -44,6 +44,8 @@
                     },
                     events: this.allEvents,
                     eventDisplay: 'block',
+                    contentHeight: 'auto',
+                    aspectRatio: 2.5,
                     dayMaxEvents: true,
                     eventContent: (info) => {
                         const p = info.event.extendedProps;
@@ -115,7 +117,7 @@
         {{ $this->form }}
 
         <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-4" style="position: relative;">
-            <div x-ref="calendar" wire:ignore style="min-height: 500px;"></div>
+            <div x-ref="calendar" wire:ignore style="min-height: 350px;"></div>
 
             <!-- Custom Tooltip Vanilla CSS -->
             <div 
