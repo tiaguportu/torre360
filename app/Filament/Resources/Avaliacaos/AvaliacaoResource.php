@@ -30,7 +30,7 @@ class AvaliacaoResource extends Resource
         $user = auth()->user();
 
         if ($user && $user->hasRole('professor')) {
-            $query->whereIn('professor_id', $user->pessoas()->pluck('id'));
+            $query->whereIn('professor_id', $user->pessoas()->pluck('pessoa.id'));
         }
 
         return $query;
