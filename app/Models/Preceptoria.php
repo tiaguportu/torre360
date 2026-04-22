@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,10 +45,13 @@ class Preceptoria extends Model
      */
     public function getLabelExibicaoAttribute(): string
     {
+        $data = $this->data ? Carbon::parse($this->data)->format('d/m/Y') : '';
+        $inicio = $this->hora_inicio ? Carbon::parse($this->hora_inicio)->format('H:i') : '';
+
         return sprintf(
             '%s %s – %s',
-            $this->data?->format('d/m/Y') ?? '',
-            $this->hora_inicio ?? '',
+            $data,
+            $inicio,
             $this->professor?->nome ?? 'S/P'
         );
     }

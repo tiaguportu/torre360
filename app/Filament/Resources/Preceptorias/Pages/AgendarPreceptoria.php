@@ -7,6 +7,7 @@ use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use Carbon\Carbon;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -130,9 +131,15 @@ class AgendarPreceptoria extends Page implements HasForms
                                 return $query->orderBy('data')
                                     ->orderBy('hora_inicio')
                                     ->get()
-                                    ->mapWithKeys(fn (Preceptoria $p) => [
-                                        $p->id => "{$p->professor?->nome} - {$p->data?->format('d/m/Y')} às {$p->hora_inicio?->format('H:i')}".($p->hora_fim ? " - {$p->hora_fim?->format('H:i')}" : ''),
-                                    ]);
+                                    ->mapWithKeys(function (Preceptoria $p) {
+                                        $data = $p->data ? Carbon::parse($p->data)->format('d/m/Y') : '';
+                                        $inicio = $p->hora_inicio ? Carbon::parse($p->hora_inicio)->format('H:i') : '';
+                                        $fim = $p->hora_fim ? ' - '.Carbon::parse($p->hora_fim)->format('H:i') : '';
+
+                                        return [
+                                            $p->id => "{$p->professor?->nome} - {$data} às {$inicio}{$fim}",
+                                        ];
+                                    });
                             })
                             ->searchable()
                             ->required()
