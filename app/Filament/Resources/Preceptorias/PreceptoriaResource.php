@@ -10,6 +10,7 @@ use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaForm;
 use App\Filament\Resources\Preceptorias\Tables\PreceptoriasTable;
 use App\Models\Preceptoria;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -18,6 +19,21 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PreceptoriaResource extends Resource implements HasShieldPermissions
 {
+    public static function getNavigationItems(): array
+    {
+        return [
+            ...parent::getNavigationItems(),
+            NavigationItem::make('Agendar Preceptoria')
+                ->group(static::getNavigationGroup())
+                ->icon('heroicon-o-calendar-days')
+                ->activeIcon('heroicon-s-calendar-days')
+                ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.agendar'))
+                ->sort(static::getNavigationSort() + 1)
+                ->url(static::getUrl('agendar'))
+                ->visible(fn () => auth()->user()?->can('Agendar:Preceptoria')),
+        ];
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
