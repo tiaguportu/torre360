@@ -8,15 +8,18 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use Carbon\Carbon;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\Placeholder;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 
 class AgendarPreceptoria extends Page implements HasForms
 {
@@ -86,6 +89,18 @@ class AgendarPreceptoria extends Page implements HasForms
         return $professores->unique('id');
     }
 
+    public function liberarHorario(int $id): void
+    {
+        Preceptoria::where('id', $id)->update(['matricula_id' => null]);
+
+        Notification::make()
+            ->title('Agendamento cancelado com sucesso!')
+            ->success()
+            ->send();
+
+        $this->form->fill(['matricula_id' => $this->data['matricula_id'] ?? null]);
+    }
+
     public function form(Schema $schema): Schema
     {
         $user = auth()->user();
@@ -103,11 +118,74 @@ class AgendarPreceptoria extends Page implements HasForms
                             })
                             ->searchable()
                             ->required()
-                            ->live(),
+                            ->live()
+                            ->afterStateUpdated(fn () => $this->data['preceptoria_id'] = null),
+
+                        Placeholder::make('agendamento_vigente')
+                            ->label('Agendamento Vigente')
+                            ->visible(function (Get $get) {
+                                $mid = $get('matricula_id');
+                                if (! $mid) {
+                                    return false;
+                                }
+
+                                return Preceptoria::where('matricula_id', $mid)
+                                    ->where('data', '>=', now()->toDateString())
+                                    ->exists();
+                            })
+                            ->content(function (Get $get) {
+                                $mid = $get('matricula_id');
+                                $p = Preceptoria::where('matricula_id', $mid)
+                                    ->where('data', '>=', now()->toDateString())
+                                    ->with('professor')
+                                    ->first();
+
+                                if (! $p) {
+                                    return '';
+                                }
+
+                                $dataF = Carbon::parse($p->data)->format('d/m/Y');
+                                $horaF = Carbon::parse($p->hora_inicio)->format('H:i');
+
+                                return new HtmlString("
+                                    <div class='p-3 bg-primary-50 border border-primary-200 rounded-lg dark:bg-primary-900/10 dark:border-primary-800'>
+                                        <p class='text-sm text-primary-700 dark:text-primary-400'>
+                                            Este aluno já possui uma preceptoria agendada para <strong>{$dataF} às {$horaF}</strong> com o professor <strong>{$p->professor?->nome}</strong>.
+                                        </p>
+                                    </div>
+                                ");
+                            })
+                            ->hintAction(
+                                Action::make('cancelar_agendamento')
+                                    ->label('Desagendar / Liberar Horário')
+                                    ->icon('heroicon-m-x-circle')
+                                    ->color('danger')
+                                    ->requiresConfirmation()
+                                    ->action(function (Get $get) {
+                                        $mid = $get('matricula_id');
+                                        $p = Preceptoria::where('matricula_id', $mid)
+                                            ->where('data', '>=', now()->toDateString())
+                                            ->first();
+
+                                        if ($p) {
+                                            $this->liberarHorario($p->id);
+                                        }
+                                    })
+                            ),
                     ])
                     ->columnSpanFull(),
 
                 Section::make('Horários Disponíveis')
+                    ->hidden(function (Get $get) {
+                        $mid = $get('matricula_id');
+                        if (! $mid) {
+                            return false;
+                        }
+
+                        return Preceptoria::where('matricula_id', $mid)
+                            ->where('data', '>=', now()->toDateString())
+                            ->exists();
+                    })
                     ->schema([
                         Select::make('preceptoria_id')
                             ->label('Horário Disponível')
@@ -147,6 +225,7 @@ class AgendarPreceptoria extends Page implements HasForms
                     ])
                     ->columnSpanFull(),
             ])
+
             ->statePath('data');
     }
 
