@@ -200,6 +200,14 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
    - **Administradores/Secretaria:** Visualizam todas as matrículas do sistema.
    - **Responsáveis:** Visualizam apenas as matrículas onde são os responsáveis financeiros (no contrato) OU onde possuem vínculo legal direto com o aluno (vínculo pai/mãe registrado no sistema).
 
+### 6.5 Alerta de Preceptoria Disponível
+Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
+1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
+   - A matrícula do aluno não possuir nenhuma preceptoria agendada para o futuro.
+   - Existirem horários vagos (janelas) cadastrados por professores no sistema.
+2. Ao clicar no botão, o sistema solicitará confirmação e listará os e-mails do aluno e responsáveis que receberão o alerta.
+3. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.
+
 ### 6.2 Gestão de Documentos
 1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
 2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.

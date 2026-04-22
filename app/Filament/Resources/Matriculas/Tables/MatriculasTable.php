@@ -188,6 +188,66 @@ class MatriculasTable
                                 Notification::make()
                                     ->title("Falha no envio: {$email}")
                                     ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
+                                    ->send();
+                            }
+                        }
+                    }),
+                Action::make('avisar_possibilidade_preceptoria')
+                    ->label('Avisar Preceptoria')
+                    ->tooltip('Avisar sobre disponibilidade de horários de preceptoria')
+                    ->icon(Heroicon::OutlinedCalendarDays)
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Confirmar Envio de Aviso de Preceptoria')
+                    ->modalDescription(function (Matricula $record) {
+                        $emails = $record->getNotificationRecipients()->pluck('email');
+
+                        if ($emails->isEmpty()) {
+                            return new HtmlString('<span class="text-danger-600 font-bold">Erro: Nenhum e-mail encontrado para o aluno ou responsáveis desta matrícula.</span>');
+                        }
+
+                        $html = '<div class="space-y-4">';
+                        $html .= '<div>Gostaria de enviar um aviso de que existem <strong>horários disponíveis</strong> para agendamento de preceptoria?</div>';
+                        $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
+                    })
+                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPossibilidadePreceptoria:Matricula')
+                        && ! $record->hasActivePreceptoria()
+                        && $record->hasAvailablePreceptoriaWindows()
+                    )
+                    ->action(function (Matricula $record) {
+                        $destinatarios = $record->getNotificationRecipients();
+
+                        if ($destinatarios->isEmpty()) {
+                            Notification::make()
+                                ->title('Erro ao enviar')
+                                ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $result = $record->notifyPossibilityPreceptoria();
+                        $countSent = $result['enviados'];
+                        $falhas = $result['falhas'];
+
+                        if ($countSent > 0) {
+                            Notification::make()
+                                ->title('Aviso de Preceptoria Enviado')
+                                ->body("O aviso de possibilidade de agendamento foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
+                                ->success()
+                                ->send()
+                                ->sendToDatabase(auth()->user());
+                        }
+
+                        if (! empty($falhas)) {
+                            foreach ($falhas as $email => $erro) {
+                                Notification::make()
+                                    ->title("Falha no envio: {$email}")
+                                    ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
                                     ->danger()
                                     ->persistent()
                                     ->send();

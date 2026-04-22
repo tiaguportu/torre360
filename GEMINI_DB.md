@@ -106,6 +106,10 @@ Estrutura de ensino e turmas.
     - `periodo_letivo_id`: BelongsTo `periodo_letivo`.
     - `turma_id`: BelongsTo `turma`.
     - `pessoa_id`: BelongsTo `pessoa` (Aluno).
+- **Lógica de Negócio (Modelo):**
+    - `hasActivePreceptoria()`: verifica existência de sessões futuras agendadas.
+    - `hasAvailablePreceptoriaWindows()`: verifica existência de horários livres no sistema.
+    - `notifyPossibilityPreceptoria()`: dispara notificações multicanal (E-mail, Push, Banco) registradas em log.
 
 ---
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Notifications\DocumentosPendentesNotification;
+use App\Notifications\Preceptorias\PossibilityPreceptoriaNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -69,6 +70,27 @@ class Matricula extends Model
     public function preceptorias(): HasMany
     {
         return $this->hasMany(Preceptoria::class);
+    }
+
+    /**
+     * Verifica se a matrícula possui uma preceptoria agendada para o futuro.
+     */
+    public function hasActivePreceptoria(): bool
+    {
+        return $this->preceptorias()
+            ->where('data', '>=', now()->toDateString())
+            ->exists();
+    }
+
+    /**
+     * Verifica se existem janelas de preceptoria disponíveis para agendamento.
+     */
+    public function hasAvailablePreceptoriaWindows(): bool
+    {
+        return Preceptoria::query()
+            ->whereNull('matricula_id')
+            ->where('data', '>=', now()->toDateString())
+            ->exists();
     }
 
     public function tiposDocumentos(): BelongsToMany
@@ -249,6 +271,42 @@ class Matricula extends Model
                 ->event('notificacao_pendencia')
                 ->withProperties(['destinatarios_count' => $countSent])
                 ->log("Enviada notificação (E-mail e Push) de pendência de documentos para {$countSent} destinatário(s)");
+        }
+
+        return [
+            'enviados' => $countSent,
+            'falhas' => $falhas,
+        ];
+    }
+
+    /**
+     * Envia notificação de possibilidade de agendamento de preceptoria.
+     *
+     * @return array{enviados: int, falhas: array<string, string>}
+     */
+    public function notifyPossibilityPreceptoria(): array
+    {
+        $destinatarios = $this->getNotificationRecipients();
+        $countSent = 0;
+        $falhas = [];
+
+        foreach ($destinatarios as $user) {
+            try {
+                $user->notify(new PossibilityPreceptoriaNotification($this));
+                $countSent++;
+            } catch (\Throwable $e) {
+                $errorMessage = $e->getMessage();
+                $falhas[$user->email] = $errorMessage;
+                Log::error("Erro ao enviar notificação de possibilidade de preceptoria para {$user->email} na matrícula {$this->id}: ".$errorMessage);
+            }
+        }
+
+        if ($countSent > 0) {
+            activity()
+                ->performedOn($this)
+                ->event('notificacao_preceptoria_disponivel')
+                ->withProperties(['destinatarios_count' => $countSent])
+                ->log("Enviada notificação de possibilidade de agendamento de preceptoria para {$countSent} destinatário(s)");
         }
 
         return [
