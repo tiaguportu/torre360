@@ -60,7 +60,7 @@ class FcmService
                 $stringData[(string) $key] = is_string($value) ? $value : json_encode($value);
             }
 
-            $response = Http::withHeaders([
+            $response = Http::timeout(10)->withHeaders([
                 'Authorization' => 'Bearer '.$accessToken,
                 'Content-Type' => 'application/json',
             ])->post($fcmUrl, [
