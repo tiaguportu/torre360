@@ -44,7 +44,7 @@ class PossibilidadePreceptoriaNotification extends Notification implements Shoul
             ->greeting("Olá, {$notifiable->name}!")
             ->line("Gostaríamos de informar que existem horários disponíveis para agendamento de preceptoria para a matrícula de **{$aluno}**.")
             ->line('A preceptoria é um momento importante para o acompanhamento pedagógico e desenvolvimento do aluno.')
-            ->action('Agendar Agora', url('/admin/preceptorias'))
+            ->action('Agendar Agora', url('/admin/preceptorias/agendar'))
             ->line('Acesse o painel para escolher o melhor horário disponível.');
     }
 
