@@ -19,6 +19,11 @@ class RelatorioPreceptoriasTable
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('tipo')
+                    ->label('Tipo')
+                    ->badge()
+                    ->sortable(),
+
                 TextColumn::make('preceptoria.data')
                     ->label('Data da Preceptoria')
                     ->date('d/m/Y')

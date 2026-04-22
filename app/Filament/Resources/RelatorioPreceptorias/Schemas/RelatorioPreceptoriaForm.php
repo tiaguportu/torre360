@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\RelatorioPreceptorias\Schemas;
 
 use AmidEsfahani\FilamentTinyEditor\TinyEditor;
+use App\Enums\TipoRelatorioPreceptoria;
 use App\Models\Preceptoria;
 use App\Models\TemplateRelatorioPreceptoria;
 use Filament\Actions\Action;
@@ -34,6 +35,12 @@ class RelatorioPreceptoriaForm
                             ->preload()
                             ->required(),
 
+                        Select::make('tipo')
+                            ->label('Tipo de Relatório')
+                            ->options(TipoRelatorioPreceptoria::class)
+                            ->required()
+                            ->native(false)
+                            ->default(TipoRelatorioPreceptoria::AnaliseGeral),
                     ])
                     ->columnSpanFull(),
 

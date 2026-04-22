@@ -258,7 +258,9 @@ Estrutura de ensino e turmas.
 - **Representa:** Relatório de uma sessão de preceptoria.
 - **Campos Principais:**
   - `preceptoria_id` — FK → `preceptoria.id` (CascadeOnDelete).
+  - `tipo` (string/enum) — Tipo do relatório (Análise Geral, Plano Pessoal, etc).
   - `corpo` (longText HTML) — editado com TinyEditor.
+
   - `publico` (boolean) — define se o relatório é visível para o aluno e seus responsáveis.
 - **Relacionamentos:** BelongsTo `Preceptoria`.
 
