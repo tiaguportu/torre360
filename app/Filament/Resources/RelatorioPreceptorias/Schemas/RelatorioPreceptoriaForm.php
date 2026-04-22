@@ -7,6 +7,7 @@ use App\Models\Preceptoria;
 use App\Models\TemplateRelatorioPreceptoria;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -63,6 +64,11 @@ class RelatorioPreceptoriaForm
                                     ->modalHeading('Substituir conteúdo do relatório?')
                                     ->modalDescription('O conteúdo atual do campo "Corpo" será substituído pelo conteúdo do template selecionado. Deseja continuar?')
                             ),
+
+                        Toggle::make('publico')
+                            ->label('Visível para Aluno/Responsável')
+                            ->helperText('Se ativado, o aluno e seus responsáveis poderão visualizar este relatório.')
+                            ->default(false),
 
                         TinyEditor::make('corpo')
                             ->label('Corpo do Relatório')

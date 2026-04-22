@@ -14,6 +14,13 @@ class RelatorioPreceptoria extends Model
 
     protected $guarded = [];
 
+    public function casts(): array
+    {
+        return [
+            'publico' => 'boolean',
+        ];
+    }
+
     public function preceptoria(): BelongsTo
     {
         return $this->belongsTo(Preceptoria::class);

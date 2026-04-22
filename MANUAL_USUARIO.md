@@ -555,7 +555,8 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
    - Clique no botão **Aplicar Template** (ícone de seta).
    - Confirme na janela de diálogo — o conteúdo do template preencherá o campo **Corpo** automaticamente.
 5. Edite o **Corpo** com o editor de texto rico conforme as observações da sessão.
-6. Clique em **Salvar**.
+6. **Visibilidade:** Utilize a opção **Visível para Aluno/Responsável** para definir se este relatório poderá ser consultado pela família. Se estiver desativado (padrão), apenas professores e secretaria visualizam o conteúdo.
+7. Clique em **Salvar**.
 
 > [!NOTE]
 > Ao aplicar um template, o conteúdo atual do campo Corpo é **substituído** pelo conteúdo do template selecionado. Certifique-se de não ter texto importante não salvo antes de confirmar a ação.

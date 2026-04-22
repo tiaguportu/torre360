@@ -259,5 +259,6 @@ Estrutura de ensino e turmas.
 - **Campos Principais:**
   - `preceptoria_id` — FK única → `preceptoria.id` (CascadeOnDelete).
   - `corpo` (longText HTML) — editado com TinyEditor.
+  - `publico` (boolean) — define se o relatório é visível para o aluno e seus responsáveis.
 - **Relacionamentos:** BelongsTo `Preceptoria`.
 

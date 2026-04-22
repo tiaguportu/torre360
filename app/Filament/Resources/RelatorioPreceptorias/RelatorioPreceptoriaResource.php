@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class RelatorioPreceptoriaResource extends Resource implements HasShieldPermissions
 {
@@ -53,6 +54,42 @@ class RelatorioPreceptoriaResource extends Resource implements HasShieldPermissi
     public static function getRelations(): array
     {
         return [];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->hasRole(['super_admin', 'admin', 'secretaria'])) {
+            return $query;
+        }
+
+        $pessoa = $user->pessoa;
+        if (! $pessoa) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('preceptoria', function (Builder $q) use ($pessoa) {
+            // Professor vê seus relatórios (mesmo os não públicos)
+            $q->where('professor_id', $pessoa->id)
+                ->orWhere(function (Builder $sub) use ($pessoa) {
+                    // Outros usuários (Alunos/Responsáveis) só veem se for PÚBLICO
+                    $sub->whereHas('relatorio', fn ($qr) => $qr->where('publico', true));
+
+                    // E se for da matrícula deles/filhos
+                    $sub->where(function (Builder $inner) use ($pessoa) {
+                        $inner->whereHas('matricula', function (Builder $m) use ($pessoa) {
+                            $m->where('pessoa_id', $pessoa->id) // O próprio aluno
+                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id')); // Ou dependentes do responsável
+                        });
+                    });
+                });
+        });
     }
 
     public static function getPages(): array
