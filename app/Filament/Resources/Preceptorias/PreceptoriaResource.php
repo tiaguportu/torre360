@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Preceptorias;
 
+use App\Filament\Resources\Preceptorias\Pages\AgendarPreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\CreatePreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\EditPreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\ListPreceptorias;
@@ -25,6 +26,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'agendar',
         ];
     }
 
@@ -61,6 +63,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             'index' => ListPreceptorias::route('/'),
             'create' => CreatePreceptoria::route('/create'),
             'edit' => EditPreceptoria::route('/{record}/edit'),
+            'agendar' => AgendarPreceptoria::route('/agendar'),
         ];
     }
 }
