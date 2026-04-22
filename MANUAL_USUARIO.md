@@ -583,4 +583,12 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 
 ---
 
+### 18.6 Visibilidade e Acesso Restrito
+Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
+- **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.
+- **Responsáveis e Alunos:** Visualizam apenas os agendamentos já realizados vinculados à sua própria matrícula ou de seus dependentes. Além disso, na tela de agendamento, podem visualizar slots vagos de professores para escolha.
+- **Administradores/Secretaria:** Possuem visibilidade total de todos os agendamentos e registros do sistema.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

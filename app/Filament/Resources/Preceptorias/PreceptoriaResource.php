@@ -43,7 +43,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             return $query->whereRaw('1 = 0');
         }
 
-        if ($user->hasRole(['super_admin', 'admin', 'secretaria'])) {
+        if ($user->hasAnyRole(['super_admin', 'admin', 'secretaria'])) {
             return $query;
         }
 
@@ -52,18 +52,31 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where(function (Builder $q) use ($pessoa) {
+        return $query->where(function (Builder $q) use ($user, $pessoa) {
+            $hasFilter = false;
+
             // 1. Professor vê suas preceptorias
-            $q->where('professor_id', $pessoa->id)
-                // 2. Aluno/Responsável vê slots vagos OU seus agendamentos
-                ->orWhere(function (Builder $sub) use ($pessoa) {
+            if ($user->hasRole('professor')) {
+                $q->where('professor_id', $pessoa->id);
+                $hasFilter = true;
+            }
+
+            // 2. Aluno/Responsável vê slots vagos OU seus agendamentos
+            if ($user->hasAnyRole(['aluno', 'responsavel'])) {
+                $method = $hasFilter ? 'orWhere' : 'where';
+                $q->$method(function (Builder $sub) use ($pessoa) {
                     $sub->whereNull('matricula_id')
                         ->orWhereHas('matricula', function (Builder $mq) use ($pessoa) {
                             $mq->where('pessoa_id', $pessoa->id)
                                 ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
                         });
-
                 });
+                $hasFilter = true;
+            }
+
+            if (! $hasFilter) {
+                $q->whereRaw('1 = 0');
+            }
         });
     }
 
