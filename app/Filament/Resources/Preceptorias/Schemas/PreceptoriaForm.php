@@ -47,12 +47,19 @@ class PreceptoriaForm
                                 fn (Builder $query) => $query
                                     ->when(
                                         auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
-                                        fn ($q) => $q->where('id', auth()->user()?->pessoa?->id)
+                                        fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
                                     )
                                     ->orderBy('nome')
                             )
-                            ->default(fn () => auth()->user()?->hasRole('professor') ? auth()->user()?->pessoa?->id : null)
-                            ->disabled(fn () => auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']))
+                            ->default(function () {
+                                $user = auth()->user();
+                                if ($user?->hasRole('professor') && $user?->pessoas->count() === 1) {
+                                    return $user?->pessoas->first()?->id;
+                                }
+
+                                return null;
+                            })
+                            ->disabled(fn () => auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']) && auth()->user()?->pessoas->count() === 1)
                             ->dehydrated()
                             ->searchable()
                             ->preload()

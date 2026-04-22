@@ -530,7 +530,7 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
    - **Data** (obrigatório).
    - **Hora Início** (obrigatório).
    - **Hora Fim** (opcional).
-   - **Professor(a)** — qualquer Pessoa cadastrada no sistema (obrigatório). Para usuários com o papel de **Professor**, este campo já virá pré-preenchido com seu próprio nome e desabilitado para alteração.
+   - **Professor(a)** — qualquer Pessoa cadastrada no sistema (obrigatório). Para usuários com o papel de **Professor**, este campo exibirá apenas as pessoas associadas ao seu usuário. Caso possua **apenas um vínculo**, o campo será pré-preenchido e bloqueado; caso possua múltiplos, permitirá a escolha entre eles.
    - **Matrícula (Aluno)** — busca pela matrícula com formato `Período - Turma - Aluno` (opcional).
 4. Na listagem, a coluna **Relatório** indica (com ícone verde) se já existe um relatório associado àquela preceptoria.
 5. O filtro **Sem Relatório** permite localizar rapidamente preceptorias que ainda não têm relatório criado.
