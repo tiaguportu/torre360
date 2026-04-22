@@ -52,7 +52,7 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
                     : 'Disponível',
                 'start' => $start,
                 'end' => $end,
-                'url' => PreceptoriaResource::getUrl('view', ['record' => $record]),
+                'url' => PreceptoriaResource::getUrl('edit', ['record' => $record]),
                 'professor_id' => (string) $record->professor_id,
                 'professor_nome' => $record->professor?->nome ?? 'Sem Professor',
                 'matricula_id' => $record->matricula_id ? (string) $record->matricula_id : null,
