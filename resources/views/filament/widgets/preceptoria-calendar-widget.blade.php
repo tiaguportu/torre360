@@ -60,7 +60,7 @@
                                         ${p.is_agendado ? 'AGENDADO' : 'DISPONÍVEL'}
                                     </div>
                                     <div style='color: #1f2937; padding: 1px 4px; font-size: 9px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
-                                        ${p.is_agendado ? p.aluno_nome : 'Feriado/Livre'}
+                                        ${p.is_agendado ? p.aluno_nome : ''}
                                     </div>
                                     <div style='background: #9ca3af; color: white; padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>
                                         ${p.professor_nome}
