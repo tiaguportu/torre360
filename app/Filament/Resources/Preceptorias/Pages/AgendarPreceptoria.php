@@ -92,13 +92,11 @@ class AgendarPreceptoria extends Page implements HasForms
 
     public function liberarHorario(int $id): void
     {
-        $preceptoria = Preceptoria::with(['professor', 'matricula.pessoa'])->findOrFail($id);
+        $preceptoria = Preceptoria::with(['professor.users', 'matricula.pessoa.responsaveis.users'])->findOrFail($id);
 
-        $this->notificarSolicitante($preceptoria, 'liberacao');
+        $this->enviarNotificacoes($preceptoria, 'liberacao');
 
         $preceptoria->update(['matricula_id' => null]);
-
-        $this->notificarProfessor($preceptoria, 'liberacao');
 
         Notification::make()
             ->title('Agendamento cancelado com sucesso!')
@@ -108,21 +106,42 @@ class AgendarPreceptoria extends Page implements HasForms
         $this->form->fill(['matricula_id' => $this->data['matricula_id'] ?? null]);
     }
 
-    protected function notificarProfessor(Preceptoria $preceptoria, string $tipo): void
+    protected function enviarNotificacoes(Preceptoria $preceptoria, string $tipo): void
     {
-        $professor = $preceptoria->professor;
-        if ($professor) {
-            $professor->users->each(function ($user) use ($preceptoria, $tipo) {
-                $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+        // 1) Usuário que realizou o agendamento (Solicitante)
+        $solicitante = auth()->user();
+        if ($solicitante) {
+            $solicitante->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true));
+        }
+
+        // 2) Usuários relacionados com Pessoa Professor configurado para a Preceptoria escolhida
+        if ($preceptoria->professor) {
+            $preceptoria->professor->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+                if ($user->id !== $solicitante?->id) {
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                }
             });
         }
-    }
 
-    protected function notificarSolicitante(Preceptoria $preceptoria, string $tipo): void
-    {
-        $user = auth()->user();
-        if ($user) {
-            $user->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true));
+        // 3) Usuários vinculados a Pessoa Responsável e a Pessoa Aluno relacionados com a Matricula que foi configurada
+        if ($preceptoria->matricula?->pessoa) {
+            $alunoPessoa = $preceptoria->matricula->pessoa;
+
+            // Notificar Usuários do Aluno (se houver)
+            $alunoPessoa->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+                if ($user->id !== $solicitante?->id) {
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                }
+            });
+
+            // Notificar Usuários dos Responsáveis
+            $alunoPessoa->responsaveis->each(function ($responsavel) use ($preceptoria, $tipo, $solicitante) {
+                $responsavel->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+                    if ($user->id !== $solicitante?->id) {
+                        $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                    }
+                });
+            });
         }
     }
 
@@ -201,15 +220,18 @@ class AgendarPreceptoria extends Page implements HasForms
                     ->columnSpanFull(),
 
                 Section::make('Horários Disponíveis')
-                    ->hidden(function (Get $get) {
+                    ->visible(function (Get $get) {
                         $mid = $get('matricula_id');
                         if (! $mid) {
-                            return false;
+                            return false; // Esconde se não tiver matrícula
                         }
 
-                        return Preceptoria::where('matricula_id', $mid)
+                        // Esconde se já houver agendamento
+                        $temAgendamento = Preceptoria::where('matricula_id', $mid)
                             ->where('data', '>=', now()->toDateString())
                             ->exists();
+
+                        return ! $temAgendamento;
                     })
                     ->schema([
                         Select::make('preceptoria_id')
@@ -265,10 +287,9 @@ class AgendarPreceptoria extends Page implements HasForms
                 'matricula_id' => $raw['matricula_id'],
             ]);
 
-            $preceptoria = $preceptoria->fresh(['professor', 'matricula.pessoa']);
+            $preceptoria = $preceptoria->fresh(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users']);
 
-            $this->notificarProfessor($preceptoria, 'agendamento');
-            $this->notificarSolicitante($preceptoria, 'agendamento');
+            $this->enviarNotificacoes($preceptoria, 'agendamento');
 
             Notification::make()
                 ->title('Preceptoria agendada com sucesso!')
@@ -284,5 +305,19 @@ class AgendarPreceptoria extends Page implements HasForms
                 ->danger()
                 ->send();
         }
+    }
+
+    public function mostrarBotaoAgendar(): bool
+    {
+        $mid = $this->data['matricula_id'] ?? null;
+        if (! $mid) {
+            return false;
+        }
+
+        $temAgendamento = Preceptoria::where('matricula_id', $mid)
+            ->where('data', '>=', now()->toDateString())
+            ->exists();
+
+        return ! $temAgendamento;
     }
 }

@@ -369,6 +369,7 @@ O Torre360 possui um sistema central de notificações em tempo real que garante
 ### 11.2 Principais Notificações
 - **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado. Chega por e-mail e push para os alunos e seus responsáveis financeiros.
 - **Lançamento de Frequência Pendente:** Alerta enviado aos professores quando uma aula em seu cronograma ainda não teve a frequência lançada. Agora também disponível via Push e Sininho.
+- **Agendamento de Preceptoria:** Notificação multicanal disparada sempre que uma nova preceptoria é marcada ou cancelada. São notificados o solicitante, o professor, o aluno e seus responsáveis legais.
 - **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin' ou 'secretaria' recebem notificações sempre que um novo documento é inserido ou removido.
 - **Avisos do Sistema:** Notificações genéricas enviadas pela administração sobre manutenções, comunicados e atualizações.
 
@@ -577,7 +578,11 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido com os professores vinculados àquela turma.
 4. **Horário Disponível:** O sistema exibirá uma lista de horários (dia e hora) que o professor selecionado cadastrou e que ainda estão vagos (sem aluno).
 5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
-6. **Notificação Automática:** Assim que o agendamento é confirmado (ou cancelado através de uma liberação de horário), o Professor vinculado e o usuário que realizou a ação recebem automaticamente uma notificação detalhada por **E-mail**, no **Sininho do Painel** e via **Push no Celular**, informando o nome do aluno, o professor, a data e o horário.
+6. **Interface Dinâmica:** Para evitar confusão, se o aluno selecionado já possuir um agendamento futuro em aberto, o sistema ocultará a seção de "Horários Disponíveis" e o botão de confirmação, exibindo em destaque os detalhes do agendamento atual e uma opção para cancelá-lo caso necessário.
+7. **Notificações Ampliadas:** Assim que o agendamento é confirmado (ou cancelado), uma notificação automática é enviada simultaneamente por **E-mail**, **Push (Celular)** e **Sininho do Painel** para:
+   - O usuário que realizou a operação (Solicitante);
+   - O Professor vinculado à preceptoria;
+   - O Aluno e seus Responsáveis Legais vinculados à matrícula.
 
 > [!TIP]
 > Caso o professor desejado não apareça com horários disponíveis, entre em contato com a secretaria para que novos "slots" de preceptoria sejam criados no sistema.
