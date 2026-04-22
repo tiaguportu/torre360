@@ -114,6 +114,17 @@
         @mousemove.window="if(tooltip.show) { tooltip.x = $event.clientX; tooltip.y = $event.clientY; }"
         class="space-y-6"
     >
+        <div class="flex items-center gap-x-3 py-2">
+            <div class="flex-1">
+                <h2 class="text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                    📅 Calendário de Preceptorias
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Visualize e filtre os agendamentos realizados e os horários disponíveis para novos encontros.
+                </p>
+            </div>
+        </div>
+
         {{ $this->form }}
 
         <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-4" style="position: relative;">
