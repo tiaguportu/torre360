@@ -4,6 +4,7 @@ namespace App\Notifications\Preceptorias;
 
 use App\Models\Preceptoria;
 use App\Notifications\Channels\FcmChannel;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -99,6 +100,12 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
         return FilamentNotification::make()
             ->title($title)
             ->body($body)
+            ->actions([
+                Action::make('view')
+                    ->label($this->tipo === 'agendamento' ? 'Ver Preceptorias' : 'Ver Horários')
+                    ->url('/admin/preceptorias')
+                    ->button(),
+            ])
             ->getDatabaseMessage();
     }
 
