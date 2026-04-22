@@ -74,7 +74,13 @@ class PreceptoriasTable
             ->filters([
                 SelectFilter::make('professor_id')
                     ->label('Professor(a)')
-                    ->relationship('professor', 'nome')
+                    ->relationship('professor', 'nome', fn (Builder $query) => $query
+                        ->when(
+                            auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                            fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
+                        )
+                        ->orderBy('nome')
+                    )
                     ->searchable()
                     ->preload(),
 
@@ -157,7 +163,13 @@ class PreceptoriasTable
                             Select::make('professor_id')
                                 ->label('Novo Professor(a) (Opcional)')
                                 ->placeholder('Manter professor original')
-                                ->relationship('professor', 'nome')
+                                ->relationship('professor', 'nome', fn (Builder $query) => $query
+                                    ->when(
+                                        auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                                        fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
+                                    )
+                                    ->orderBy('nome')
+                                )
                                 ->searchable()
                                 ->preload(),
                         ])
@@ -204,7 +216,13 @@ class PreceptoriasTable
                                 ->seconds(false),
                             Select::make('professor_id')
                                 ->label('Professor(a)')
-                                ->relationship('professor', 'nome')
+                                ->relationship('professor', 'nome', fn (Builder $query) => $query
+                                    ->when(
+                                        auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                                        fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
+                                    )
+                                    ->orderBy('nome')
+                                )
                                 ->searchable()
                                 ->preload(),
                         ])
