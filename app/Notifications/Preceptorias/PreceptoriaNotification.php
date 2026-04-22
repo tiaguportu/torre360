@@ -17,7 +17,8 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
      */
     public function __construct(
         public Preceptoria $preceptoria,
-        public string $tipo // 'agendamento' ou 'liberacao'
+        public string $tipo, // 'agendamento' ou 'liberacao'
+        public bool $paraSolicitante = false
     ) {}
 
     /**
@@ -38,24 +39,35 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
         $dataF = $this->preceptoria->data ? $this->preceptoria->data->format('d/m/Y') : 'N/D';
         $horaF = $this->preceptoria->hora_inicio ? $this->preceptoria->hora_inicio->format('H:i') : 'N/D';
         $aluno = $this->preceptoria->matricula?->pessoa?->nome ?? 'N/D';
+        $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
         if ($this->tipo === 'agendamento') {
+            $intro = $this->paraSolicitante
+                ? 'Você agendou com sucesso uma preceptoria.'
+                : 'Uma nova preceptoria foi agendada para você.';
+
             return (new MailMessage)
-                ->subject('Novo Agendamento de Preceptoria')
+                ->subject('Agendamento de Preceptoria')
                 ->greeting("Olá, {$notifiable->name}!")
-                ->line('Uma nova preceptoria foi agendada para você.')
+                ->line($intro)
                 ->line("Aluno: {$aluno}")
+                ->line("Professor: {$professor}")
                 ->line("Data: {$dataF}")
                 ->line("Horário: {$horaF}")
                 ->action('Ver Preceptorias', url('/admin/preceptorias'))
                 ->line('Obrigado por utilizar nosso sistema!');
         }
 
+        $intro = $this->paraSolicitante
+            ? 'Você cancelou/liberou um horário de preceptoria.'
+            : 'Um horário de preceptoria anteriormente agendado foi liberado.';
+
         return (new MailMessage)
             ->subject('Preceptoria Cancelada/Liberada')
             ->greeting("Olá, {$notifiable->name}!")
-            ->line('Um horário de preceptoria anteriormente agendado foi liberado.')
+            ->line($intro)
             ->line("Aluno (era): {$aluno}")
+            ->line("Professor: {$professor}")
             ->line("Data: {$dataF}")
             ->line("Horário: {$horaF}")
             ->action('Ver Disponibilidade', url('/admin/preceptorias'))
@@ -72,21 +84,32 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
         $dataF = $this->preceptoria->data ? $this->preceptoria->data->format('d/m/Y') : 'N/D';
         $horaF = $this->preceptoria->hora_inicio ? $this->preceptoria->hora_inicio->format('H:i') : 'N/D';
         $aluno = $this->preceptoria->matricula?->pessoa?->nome ?? 'N/A';
+        $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
         if ($this->tipo === 'agendamento') {
+            $title = $this->paraSolicitante ? 'Preceptoria Agendada' : 'Nova Preceptoria Agendada';
+            $msg = $this->paraSolicitante
+                ? "Você agendou uma preceptoria com {$professor} para {$dataF} às {$horaF}."
+                : "Preceptoria agendada com {$aluno} para {$dataF} às {$horaF}.";
+
             return [
                 'type' => 'preceptoria_agendada',
-                'title' => 'Nova Preceptoria Agendada',
-                'message' => "Preceptoria agendada com {$aluno} para {$dataF} às {$horaF}.",
+                'title' => $title,
+                'message' => $msg,
                 'preceptoria_id' => $this->preceptoria->id,
                 'url' => '/admin/preceptorias',
             ];
         }
 
+        $title = $this->paraSolicitante ? 'Horário Liberado' : 'Preceptoria Liberada';
+        $msg = $this->paraSolicitante
+            ? "Você liberou o horário de {$dataF} às {$horaF}."
+            : "O horário de {$dataF} às {$horaF} foi liberado.";
+
         return [
             'type' => 'preceptoria_liberada',
-            'title' => 'Preceptoria Liberada',
-            'message' => "O horário de {$dataF} às {$horaF} foi liberado.",
+            'title' => $title,
+            'message' => $msg,
             'preceptoria_id' => $this->preceptoria->id,
             'url' => '/admin/preceptorias',
         ];

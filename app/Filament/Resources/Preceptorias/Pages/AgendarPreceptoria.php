@@ -94,6 +94,8 @@ class AgendarPreceptoria extends Page implements HasForms
     {
         $preceptoria = Preceptoria::with(['professor', 'matricula.pessoa'])->findOrFail($id);
 
+        $this->notificarSolicitante($preceptoria, 'liberacao');
+
         $preceptoria->update(['matricula_id' => null]);
 
         $this->notificarProfessor($preceptoria, 'liberacao');
@@ -113,6 +115,14 @@ class AgendarPreceptoria extends Page implements HasForms
             $professor->users->each(function ($user) use ($preceptoria, $tipo) {
                 $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
             });
+        }
+    }
+
+    protected function notificarSolicitante(Preceptoria $preceptoria, string $tipo): void
+    {
+        $user = auth()->user();
+        if ($user) {
+            $user->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true));
         }
     }
 
@@ -258,6 +268,7 @@ class AgendarPreceptoria extends Page implements HasForms
             $preceptoria->load(['professor', 'matricula.pessoa']);
 
             $this->notificarProfessor($preceptoria, 'agendamento');
+            $this->notificarSolicitante($preceptoria, 'agendamento');
 
             Notification::make()
                 ->title('Preceptoria agendada com sucesso!')
