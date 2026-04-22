@@ -58,8 +58,8 @@ class RelatorioPreceptoriaResource extends Resource implements HasShieldPermissi
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
         $user = auth()->user();
+        $query = parent::getEloquentQuery();
 
         if (! $user) {
             return $query->whereRaw('1 = 0');
@@ -74,20 +74,16 @@ class RelatorioPreceptoriaResource extends Resource implements HasShieldPermissi
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->whereHas('preceptoria', function (Builder $q) use ($pessoa) {
-            // Professor vê seus relatórios (mesmo os não públicos)
-            $q->where('professor_id', $pessoa->id)
+        return $query->where(function (Builder $q) use ($pessoa) {
+            // 1. Professor vê todos os relatórios das SUAS preceptorias
+            $q->whereHas('preceptoria', fn ($pq) => $pq->where('professor_id', $pessoa->id))
+                // 2. Outros usuários (Aluno/Responsável)
                 ->orWhere(function (Builder $sub) use ($pessoa) {
-                    // Outros usuários (Alunos/Responsáveis) só veem se for PÚBLICO
-                    $sub->whereHas('relatorio', fn ($qr) => $qr->where('publico', true));
-
-                    // E se for da matrícula deles/filhos
-                    $sub->where(function (Builder $inner) use ($pessoa) {
-                        $inner->whereHas('matricula', function (Builder $m) use ($pessoa) {
-                            $m->where('pessoa_id', $pessoa->id) // O próprio aluno
-                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id')); // Ou dependentes do responsável
+                    $sub->where('publico', true)
+                        ->whereHas('preceptoria.matricula', function (Builder $mq) use ($pessoa) {
+                            $mq->where('pessoa_id', $pessoa->id)
+                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
                         });
-                    });
                 });
         });
     }

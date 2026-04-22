@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Preceptoria extends Model
 {
@@ -19,6 +19,8 @@ class Preceptoria extends Model
     {
         return [
             'data' => 'date',
+            'hora_inicio' => 'datetime',
+            'hora_fim' => 'datetime',
         ];
     }
 
@@ -32,9 +34,9 @@ class Preceptoria extends Model
         return $this->belongsTo(Matricula::class);
     }
 
-    public function relatorio(): HasOne
+    public function relatorios(): HasMany
     {
-        return $this->hasOne(RelatorioPreceptoria::class);
+        return $this->hasMany(RelatorioPreceptoria::class);
     }
 
     /**

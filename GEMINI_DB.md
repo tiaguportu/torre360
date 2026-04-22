@@ -249,15 +249,15 @@ Estrutura de ensino e turmas.
   - `hora_fim` (time) — nullable.
   - `professor_id` — FK → `pessoa.id` (RestrictOnDelete). Obrigatório.
   - `matricula_id` — FK → `matricula.id` (NullOnDelete). Nullable.
-- **Relacionamentos:**
-  - BelongsTo `Pessoa` (professor).
-  - BelongsTo `Matricula` (nullable).
-  - HasOne `RelatorioPreceptoria`.
+- **Relacionamentos:** 
+  - BelongsTo `Pessoa` (Professor).
+  - BelongsTo `Matricula`.
+  - HasMany `RelatorioPreceptoria`.
 
 ### `relatorio_preceptoria`
-- **Representa:** Relatório de uma sessão de preceptoria (1-para-1 com Preceptoria).
+- **Representa:** Relatório de uma sessão de preceptoria.
 - **Campos Principais:**
-  - `preceptoria_id` — FK única → `preceptoria.id` (CascadeOnDelete).
+  - `preceptoria_id` — FK → `preceptoria.id` (CascadeOnDelete).
   - `corpo` (longText HTML) — editado com TinyEditor.
   - `publico` (boolean) — define se o relatório é visível para o aluno e seus responsáveis.
 - **Relacionamentos:** BelongsTo `Preceptoria`.

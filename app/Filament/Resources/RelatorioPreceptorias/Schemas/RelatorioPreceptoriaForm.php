@@ -25,17 +25,15 @@ class RelatorioPreceptoriaForm
                             ->relationship(
                                 'preceptoria',
                                 'id',
-                                fn ($query, $record) => $query
-                                    ->when(! $record, fn ($q) => $q->whereDoesntHave('relatorio'))
-                                    ->with(['professor', 'matricula.pessoa'])
+                                fn ($query) => $query->with(['professor', 'matricula.pessoa'])
                             )
                             ->getOptionLabelFromRecordUsing(
                                 fn (Preceptoria $record) => $record->label_exibicao
                             )
                             ->searchable()
                             ->preload()
-                            ->required()
-                            ->unique('relatorio_preceptoria', 'preceptoria_id', ignoreRecord: true),
+                            ->required(),
+
                     ])
                     ->columnSpanFull(),
 
