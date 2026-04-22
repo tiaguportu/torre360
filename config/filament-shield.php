@@ -9,6 +9,7 @@ use App\Filament\Resources\Fornecedores\FornecedorResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Filament\Resources\PlanoContas\PlanoContaResource;
+use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\TransacaoBancarias\TransacaoBancariaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
@@ -220,7 +221,11 @@ return [
                 'attachResponsavel',
                 'detachResponsavel',
             ],
+            PreceptoriaResource::class => [
+                'agendar',
+            ],
             BancoResource::class => [],
+
             CentroCustoResource::class => [],
             FornecedorResource::class => [],
             PlanoContaResource::class => [],
