@@ -81,16 +81,36 @@ class PreceptoriasTable
                         ->label('Clonar em Lote')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->color('info')
-                        ->requiresConfirmation()
-                        ->modalHeading('Clonar Preceptorias em Lote')
-                        ->modalDescription('Esta ação criará cópias das preceptorias selecionadas. Os agendamentos de alunos (matrículas) NÃO serão copiados, criando novos slots disponíveis.')
-                        ->action(function (Collection $records) {
+                        ->form([
+                            DatePicker::make('data')
+                                ->label('Nova Data (Opcional)')
+                                ->placeholder('Manter data original')
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
+                            Select::make('professor_id')
+                                ->label('Novo Professor(a) (Opcional)')
+                                ->placeholder('Manter professor original')
+                                ->relationship('professor', 'nome')
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
                             $count = $records->count();
+                            $updateData = array_filter($data);
 
-                            $records->each(function (Preceptoria $record) {
+                            $records->each(function (Preceptoria $record) use ($updateData) {
                                 $newRecord = $record->replicate([
                                     'matricula_id', // Não copiar o aluno
                                 ]);
+
+                                if (isset($updateData['data'])) {
+                                    $newRecord->data = $updateData['data'];
+                                }
+
+                                if (isset($updateData['professor_id'])) {
+                                    $newRecord->professor_id = $updateData['professor_id'];
+                                }
+
                                 $newRecord->save();
                             });
 
