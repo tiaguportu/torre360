@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CronogramaAulas\Tables;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
-use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Notifications\FrequenciaPendenteNotification;
 use Filament\Actions\Action;

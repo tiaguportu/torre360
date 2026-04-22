@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('turma_disciplina', function (Blueprint $table) {
-            if (!Schema::hasColumn('turma_disciplina', 'professor_id')) {
+            if (! Schema::hasColumn('turma_disciplina', 'professor_id')) {
                 $table->foreignId('professor_id')->nullable()->constrained('pessoa')->onDelete('set null');
             }
         });
 
         Schema::table('turma_habilidade', function (Blueprint $table) {
-            if (!Schema::hasColumn('turma_habilidade', 'professor_id')) {
+            if (! Schema::hasColumn('turma_habilidade', 'professor_id')) {
                 $table->foreignId('professor_id')->nullable()->constrained('pessoa')->onDelete('set null');
             }
         });

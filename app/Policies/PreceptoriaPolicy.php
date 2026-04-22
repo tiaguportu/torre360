@@ -18,7 +18,6 @@ class PreceptoriaPolicy
     }
 
     public function viewAny(AuthUser $authUser): bool
-
     {
         return $authUser->can('ViewAny:Preceptoria');
     }

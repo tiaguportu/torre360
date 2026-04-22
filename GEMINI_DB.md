@@ -253,6 +253,7 @@ Estrutura de ensino e turmas.
   - BelongsTo `Pessoa` (Professor).
   - BelongsTo `Matricula`.
   - HasMany `RelatorioPreceptoria`.
+- **Notificações:** O sistema envia notificações automáticas (via canais configurados na tabela `notifications`) para os usuários vinculados ao Professor sempre que houver um novo agendamento ou liberação de horário.
 
 ### `relatorio_preceptoria`
 - **Representa:** Relatório de uma sessão de preceptoria.

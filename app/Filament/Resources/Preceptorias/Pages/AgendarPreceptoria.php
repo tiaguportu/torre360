@@ -7,6 +7,7 @@ use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use App\Notifications\Preceptorias\PreceptoriaNotification;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
@@ -91,7 +92,11 @@ class AgendarPreceptoria extends Page implements HasForms
 
     public function liberarHorario(int $id): void
     {
-        Preceptoria::where('id', $id)->update(['matricula_id' => null]);
+        $preceptoria = Preceptoria::with(['professor', 'matricula.pessoa'])->findOrFail($id);
+
+        $preceptoria->update(['matricula_id' => null]);
+
+        $this->notificarProfessor($preceptoria, 'liberacao');
 
         Notification::make()
             ->title('Agendamento cancelado com sucesso!')
@@ -99,6 +104,16 @@ class AgendarPreceptoria extends Page implements HasForms
             ->send();
 
         $this->form->fill(['matricula_id' => $this->data['matricula_id'] ?? null]);
+    }
+
+    protected function notificarProfessor(Preceptoria $preceptoria, string $tipo): void
+    {
+        $professor = $preceptoria->professor;
+        if ($professor) {
+            $professor->users->each(function ($user) use ($preceptoria, $tipo) {
+                $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+            });
+        }
     }
 
     public function form(Schema $schema): Schema
@@ -239,6 +254,10 @@ class AgendarPreceptoria extends Page implements HasForms
             $preceptoria->update([
                 'matricula_id' => $raw['matricula_id'],
             ]);
+
+            $preceptoria->load(['professor', 'matricula.pessoa']);
+
+            $this->notificarProfessor($preceptoria, 'agendamento');
 
             Notification::make()
                 ->title('Preceptoria agendada com sucesso!')

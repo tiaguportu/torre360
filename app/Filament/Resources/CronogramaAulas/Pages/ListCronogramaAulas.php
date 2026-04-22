@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CronogramaAulas\Pages;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
-use App\Models\CronogramaAula;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;

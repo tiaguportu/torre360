@@ -577,6 +577,7 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido com os professores vinculados àquela turma.
 4. **Horário Disponível:** O sistema exibirá uma lista de horários (dia e hora) que o professor selecionado cadastrou e que ainda estão vagos (sem aluno).
 5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
+6. **Notificação Automática:** Assim que o agendamento é confirmado (ou cancelado através de uma liberação de horário), o Professor vinculado recebe automaticamente uma notificação detalhada por **E-mail**, no **Sininho do Painel** e via **Push no Celular**, informando o nome do aluno, a data e o horário.
 
 > [!TIP]
 > Caso o professor desejado não apareça com horários disponíveis, entre em contato com a secretaria para que novos "slots" de preceptoria sejam criados no sistema.
