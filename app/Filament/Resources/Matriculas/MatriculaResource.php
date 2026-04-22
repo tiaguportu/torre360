@@ -32,6 +32,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
             'delete_any',
             'documentos',
             'avisarPendencia',
+            'avisarPossibilidadePreceptoria',
             'boletim',
             'boletim_editar',
         ];
