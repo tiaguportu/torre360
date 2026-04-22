@@ -265,7 +265,7 @@ class AgendarPreceptoria extends Page implements HasForms
                 'matricula_id' => $raw['matricula_id'],
             ]);
 
-            $preceptoria->load(['professor', 'matricula.pessoa']);
+            $preceptoria = $preceptoria->fresh(['professor', 'matricula.pessoa']);
 
             $this->notificarProfessor($preceptoria, 'agendamento');
             $this->notificarSolicitante($preceptoria, 'agendamento');
