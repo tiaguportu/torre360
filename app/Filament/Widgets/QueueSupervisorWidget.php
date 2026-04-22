@@ -69,9 +69,14 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
                 try {
                     set_time_limit(300); // Aumenta timeout para 5 min se permitido
 
-                    // No Windows/XAMPP, Artisan::call('queue:work') bloqueia a requisição se não tiver timeout.
-                    // Para deixar rodando em background, usamos powershell no Windows.
-                    $command = 'powershell -Command "Start-Process php -ArgumentList \'artisan\', \'queue:work\' -WindowStyle Hidden"';
+                    // No Windows/XAMPP, usamos powershell para não bloquear.
+                    // No Linux, usamos o operador & para rodar em background.
+                    if (PHP_OS_FAMILY === 'Windows') {
+                        $command = 'powershell -Command "Start-Process php -ArgumentList \'artisan\', \'queue:work\' -WindowStyle Hidden"';
+                    } else {
+                        $command = 'php artisan queue:work > /dev/null 2>&1 &';
+                    }
+
                     shell_exec($command);
 
                     // Atualiza o heartbeat
