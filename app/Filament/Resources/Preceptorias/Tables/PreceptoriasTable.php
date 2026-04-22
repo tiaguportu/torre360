@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Preceptorias\Tables;
 
 use App\Models\Preceptoria;
+use Carbon\Carbon;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -15,6 +16,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -53,7 +56,7 @@ class PreceptoriasTable
 
                 IconColumn::make('relatorio_exists')
                     ->label('Relatório')
-                    ->state(fn ($record) => $record->relatorio !== null)
+                    ->state(fn ($record) => $record->relatorios()->exists())
                     ->boolean()
                     ->trueIcon('heroicon-o-document-text')
                     ->falseIcon('heroicon-o-minus-circle')
@@ -66,12 +69,76 @@ class PreceptoriasTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+
             ->defaultSort('data', 'desc')
             ->filters([
-                Filter::make('sem_relatorio')
-                    ->label('Sem Relatório')
-                    ->query(fn (Builder $query) => $query->doesntHave('relatorio')),
+                SelectFilter::make('professor_id')
+                    ->label('Professor(a)')
+                    ->relationship('professor', 'nome')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('turma_id')
+                    ->label('Turma')
+                    ->relationship('matricula.turma', 'nome')
+                    ->searchable()
+                    ->preload(),
+
+                TernaryFilter::make('situacao')
+                    ->label('Situação')
+                    ->placeholder('Todas')
+                    ->trueLabel('Agendadas (C/ Aluno)')
+                    ->falseLabel('Livres (S/ Aluno)')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('matricula_id'),
+                        false: fn (Builder $query) => $query->whereNull('matricula_id'),
+                    ),
+
+                TernaryFilter::make('tem_relatorio')
+                    ->label('Relatório')
+                    ->placeholder('Todos')
+                    ->trueLabel('Com Relatório')
+                    ->falseLabel('Sem Relatório')
+                    ->queries(
+                        true: fn (Builder $query) => $query->has('relatorios'),
+                        false: fn (Builder $query) => $query->doesntHave('relatorios'),
+                    ),
+
+                Filter::make('data')
+                    ->form([
+                        DatePicker::make('desde')
+                            ->label('Desde')
+                            ->native(false)
+                            ->displayFormat('d/m/Y'),
+                        DatePicker::make('ate')
+                            ->label('Até')
+                            ->native(false)
+                            ->displayFormat('d/m/Y'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['desde'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '>=', $date),
+                            )
+                            ->when(
+                                $data['ate'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['desde'] ?? null) {
+                            $indicators[] = 'Desde '.Carbon::parse($data['desde'])->format('d/m/Y');
+                        }
+                        if ($data['ate'] ?? null) {
+                            $indicators[] = 'Até '.Carbon::parse($data['ate'])->format('d/m/Y');
+                        }
+
+                        return $indicators;
+                    }),
             ])
+
             ->recordActions([
                 EditAction::make(),
             ])
