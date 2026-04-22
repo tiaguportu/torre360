@@ -3,6 +3,8 @@
 namespace App\Notifications\Preceptorias;
 
 use App\Models\Preceptoria;
+use App\Notifications\Channels\FcmChannel;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,7 +30,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', FcmChannel::class];
     }
 
     /**
@@ -75,43 +77,74 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
+     * Get the database representation of the notification (Filament).
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase(object $notifiable): array
     {
         $dataF = $this->preceptoria->data ? $this->preceptoria->data->format('d/m/Y') : 'N/D';
         $horaF = $this->preceptoria->hora_inicio ? $this->preceptoria->hora_inicio->format('H:i') : 'N/D';
         $aluno = $this->preceptoria->matricula?->pessoa?->nome ?? 'N/A';
         $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
-        if ($this->tipo === 'agendamento') {
-            $title = $this->paraSolicitante ? 'Preceptoria Agendada' : 'Nova Preceptoria Agendada';
-            $msg = $this->paraSolicitante
-                ? "Você agendou uma preceptoria com {$professor} para {$dataF} às {$horaF}."
-                : "Preceptoria agendada com {$aluno} para {$dataF} às {$horaF}.";
+        $title = $this->tipo === 'agendamento'
+            ? ($this->paraSolicitante ? 'Preceptoria Agendada' : 'Nova Preceptoria Agendada')
+            : ($this->paraSolicitante ? 'Horário Liberado' : 'Preceptoria Liberada');
 
-            return [
-                'type' => 'preceptoria_agendada',
-                'title' => $title,
-                'message' => $msg,
-                'preceptoria_id' => $this->preceptoria->id,
-                'url' => '/admin/preceptorias',
-            ];
-        }
+        $body = $this->tipo === 'agendamento'
+            ? ($this->paraSolicitante
+                ? "Você agendou com {$professor} para {$dataF} às {$horaF}."
+                : "Preceptoria agendada com {$aluno} para {$dataF} às {$horaF}.")
+            : ($this->paraSolicitante
+                ? "Você liberou o horário de {$dataF} às {$horaF}."
+                : "O horário de {$dataF} às {$horaF} foi liberado.");
 
-        $title = $this->paraSolicitante ? 'Horário Liberado' : 'Preceptoria Liberada';
-        $msg = $this->paraSolicitante
-            ? "Você liberou o horário de {$dataF} às {$horaF}."
-            : "O horário de {$dataF} às {$horaF} foi liberado.";
+        return FilamentNotification::make()
+            ->title($title)
+            ->body($body)
+            ->getDatabaseMessage();
+    }
+
+    /**
+     * Get the push representation of the notification (FCM).
+     */
+    public function toPush(object $notifiable): array
+    {
+        $dataF = $this->preceptoria->data ? $this->preceptoria->data->format('d/m/Y') : 'N/D';
+        $horaF = $this->preceptoria->hora_inicio ? $this->preceptoria->hora_inicio->format('H:i') : 'N/D';
+        $aluno = $this->preceptoria->matricula?->pessoa?->nome ?? 'N/A';
+        $professor = $this->preceptoria->professor?->nome ?? 'N/D';
+
+        $title = $this->tipo === 'agendamento'
+            ? ($this->paraSolicitante ? 'Preceptoria Agendada' : 'Nova Preceptoria Agendada')
+            : ($this->paraSolicitante ? 'Horário Liberado' : 'Preceptoria Liberada');
+
+        $body = $this->tipo === 'agendamento'
+            ? ($this->paraSolicitante
+                ? "Você agendou com {$professor} para {$dataF} às {$horaF}."
+                : "Preceptoria agendada com {$aluno} para {$dataF} às {$horaF}.")
+            : ($this->paraSolicitante
+                ? "Você liberou o horário de {$dataF} às {$horaF}."
+                : "O horário de {$dataF} às {$horaF} foi liberado.");
 
         return [
-            'type' => 'preceptoria_liberada',
             'title' => $title,
-            'message' => $msg,
+            'body' => $body,
+            'data' => [
+                'url' => '/admin/preceptorias',
+                'preceptoria_id' => $this->preceptoria->id,
+            ],
+        ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
             'preceptoria_id' => $this->preceptoria->id,
-            'url' => '/admin/preceptorias',
+            'tipo' => $this->tipo,
+            'para_solicitante' => $this->paraSolicitante,
         ];
     }
 }
