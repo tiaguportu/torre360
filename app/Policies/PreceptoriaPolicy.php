@@ -12,7 +12,13 @@ class PreceptoriaPolicy
 {
     use HandlesAuthorization;
 
+    public function agendar(AuthUser $authUser): bool
+    {
+        return $authUser->can('Agendar:Preceptoria');
+    }
+
     public function viewAny(AuthUser $authUser): bool
+
     {
         return $authUser->can('ViewAny:Preceptoria');
     }

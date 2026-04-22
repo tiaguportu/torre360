@@ -2,14 +2,22 @@
 
 namespace App\Filament\Resources\Preceptorias\Tables;
 
+use App\Models\Preceptoria;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TimePicker;
+use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class PreceptoriasTable
 {
@@ -67,8 +75,78 @@ class PreceptoriasTable
             ->recordActions([
                 EditAction::make(),
             ])
-            ->toolbarActions([
+            ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('clone')
+                        ->label('Clonar em Lote')
+                        ->icon(Heroicon::OutlinedDocumentDuplicate)
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Clonar Preceptorias em Lote')
+                        ->modalDescription('Esta ação criará cópias das preceptorias selecionadas. Os agendamentos de alunos (matrículas) NÃO serão copiados, criando novos slots disponíveis.')
+                        ->action(function (Collection $records) {
+                            $count = $records->count();
+
+                            $records->each(function (Preceptoria $record) {
+                                $newRecord = $record->replicate([
+                                    'matricula_id', // Não copiar o aluno
+                                ]);
+                                $newRecord->save();
+                            });
+
+                            Notification::make()
+                                ->title("{$count} preceptorias clonadas com sucesso!")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('editar_lote')
+                        ->label('Editar em Lote')
+                        ->icon(Heroicon::OutlinedPencilSquare)
+                        ->form([
+                            DatePicker::make('data')
+                                ->label('Data')
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
+                            TimePicker::make('hora_inicio')
+                                ->label('Hora Início')
+                                ->seconds(false),
+                            TimePicker::make('hora_fim')
+                                ->label('Hora Fim')
+                                ->seconds(false),
+                            Select::make('professor_id')
+                                ->label('Professor(a)')
+                                ->relationship('professor', 'nome')
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $updateData = array_filter($data);
+
+                            if (empty($updateData)) {
+                                Notification::make()
+                                    ->title('Nenhuma alteração selecionada')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $count = $records->count();
+                            $records->each(fn (Preceptoria $record) => $record->update($updateData));
+
+                            Notification::make()
+                                ->title("{$count} preceptorias atualizadas com sucesso!")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Editar Preceptorias em Lote')
+                        ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
+                        ->modalSubmitActionLabel('Atualizar Selecionadas'),
+
                     DeleteBulkAction::make(),
                 ]),
             ]);
