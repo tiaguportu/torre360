@@ -44,7 +44,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
                     $sub->whereNull('matricula_id')
                         ->orWhereHas('matricula', function (Builder $mq) use ($pessoa) {
                             $mq->where('pessoa_id', $pessoa->id)
-                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('id'));
+                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
                         });
 
                 });

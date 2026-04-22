@@ -82,7 +82,7 @@ class RelatorioPreceptoriaResource extends Resource implements HasShieldPermissi
                     $sub->where('publico', true)
                         ->whereHas('preceptoria.matricula', function (Builder $mq) use ($pessoa) {
                             $mq->where('pessoa_id', $pessoa->id)
-                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('id'));
+                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
 
                         });
                 });

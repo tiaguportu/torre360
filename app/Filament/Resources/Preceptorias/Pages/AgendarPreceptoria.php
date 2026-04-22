@@ -55,7 +55,7 @@ class AgendarPreceptoria extends Page implements HasForms
 
         $condicoes = Matricula::query()->where('pessoa_id', $pessoa->id);
 
-        $alunosIds = $pessoa->alunos()->pluck('id');
+        $alunosIds = $pessoa->alunos()->pluck('pessoa.id');
         if ($alunosIds->isNotEmpty()) {
             $condicoes->orWhereIn('pessoa_id', $alunosIds);
         }
