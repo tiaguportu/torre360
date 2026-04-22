@@ -61,14 +61,25 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
                 $hasFilter = true;
             }
 
-            // 2. Aluno/Responsável vê slots vagos OU seus agendamentos
-            if ($user->hasAnyRole(['aluno', 'responsavel'])) {
+            // 2. Aluno vê slots vagos OU seus próprios agendamentos
+            if ($user->hasRole('aluno')) {
                 $method = $hasFilter ? 'orWhere' : 'where';
                 $q->$method(function (Builder $sub) use ($pessoa) {
                     $sub->whereNull('matricula_id')
                         ->orWhereHas('matricula', function (Builder $mq) use ($pessoa) {
-                            $mq->where('pessoa_id', $pessoa->id)
-                                ->orWhereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
+                            $mq->where('pessoa_id', $pessoa->id);
+                        });
+                });
+                $hasFilter = true;
+            }
+
+            // 3. Responsável vê slots vagos OU agendamentos de seus filhos
+            if ($user->hasRole('responsavel')) {
+                $method = $hasFilter ? 'orWhere' : 'where';
+                $q->$method(function (Builder $sub) use ($pessoa) {
+                    $sub->whereNull('matricula_id')
+                        ->orWhereHas('matricula', function (Builder $mq) use ($pessoa) {
+                            $mq->whereIn('pessoa_id', $pessoa->alunos()->pluck('pessoa.id'));
                         });
                 });
                 $hasFilter = true;
