@@ -19,7 +19,7 @@ class ListPreceptorias extends ListRecords
                 ->color('info')
                 ->icon('heroicon-o-calendar-date-range')
                 ->url(fn () => $this->getResource()::getUrl('agendar'))
-                ->visible(fn () => auth()->user()->can('agendar_Preceptoria')),
+                ->visible(fn () => auth()->user()->can('Agendar:Preceptoria')),
 
             CreateAction::make(),
         ];
