@@ -9,6 +9,7 @@ use App\Models\EtapaAvaliativa;
 use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
 use App\Models\Nota;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class BoletimService
@@ -75,12 +76,15 @@ class BoletimService
                     ];
                 }
 
+                $freqDados = $this->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $turmaId, $etapa);
+
                 $linhas[] = [
                     'disciplina' => $disciplina,
                     'categorias' => $categsDados,
                     'media_final' => $this->calcularMediaFinal($disciplina->id, $avaliacoes, $notasAluno),
                     'media_turma' => $this->getMediaTurmaEtapa($disciplina->id, $avaliacoes, $notasTurma),
-                    'frequencia' => $this->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $turmaId, $etapa),
+                    'frequencia' => $freqDados['frequencia'],
+                    'faltas_datas' => $freqDados['faltas_datas'],
                 ];
             }
 
@@ -286,7 +290,7 @@ class BoletimService
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
     }
 
-    public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa): ?float
+    public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa): array
     {
         $dataFimEfetiva = min($etapa->data_fim, now()->toDateString());
 
@@ -294,19 +298,33 @@ class BoletimService
             ->where('turma_id', $turmaId)
             ->where('disciplina_id', $disciplinaId)
             ->whereBetween('data', [$etapa->data_inicio, $dataFimEfetiva])
-            ->pluck('id');
+            ->get(['id', 'data']);
 
         $total = $cronogramas->count();
         if ($total === 0) {
-            return null;
+            return [
+                'frequencia' => null,
+                'faltas_datas' => [],
+            ];
         }
 
-        $presencas = FrequenciaEscolar::query()
+        $frequencias = FrequenciaEscolar::query()
             ->where('matricula_id', $matriculaId)
-            ->whereIn('cronograma_aula_id', $cronogramas)
-            ->where('situacao', 'presente')
-            ->count();
+            ->whereIn('cronograma_aula_id', $cronogramas->pluck('id'))
+            ->get(['cronograma_aula_id', 'situacao']);
 
-        return ($presencas / $total) * 100;
+        $presencas = $frequencias->where('situacao', 'presente')->count();
+
+        $faltasIds = $frequencias->where('situacao', 'ausente')->pluck('cronograma_aula_id')->toArray();
+        $faltasDatas = $cronogramas->whereIn('id', $faltasIds)
+            ->pluck('data')
+            ->map(fn ($d) => Carbon::parse($d)->format('d/m'))
+            ->values()
+            ->toArray();
+
+        return [
+            'frequencia' => ($presencas / $total) * 100,
+            'faltas_datas' => $faltasDatas,
+        ];
     }
 }
