@@ -146,13 +146,18 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         default => 'danger',
                     })
                     ->tooltip(function (Disciplina $record) use ($linhas) {
-                        $faltas = $linhas->firstWhere('disciplina.id', $record->id)['faltas_datas'] ?? [];
+                        $dados = $linhas->firstWhere('disciplina.id', $record->id);
+                        $faltas = $dados['faltas_datas'] ?? [];
+                        $presencas = $dados['presencas_count'] ?? 0;
+                        $total = $dados['total_aulas'] ?? 0;
 
-                        if (empty($faltas)) {
-                            return null;
+                        $tooltip = "Aulas: {$presencas}/{$total}";
+
+                        if (! empty($faltas)) {
+                            $tooltip .= ' | Faltas: '.implode(', ', $faltas);
                         }
 
-                        return 'Faltas: '.implode(', ', $faltas);
+                        return $tooltip;
                     }),
             ])
             ->paginated(false);

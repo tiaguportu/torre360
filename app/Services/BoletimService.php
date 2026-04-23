@@ -85,6 +85,8 @@ class BoletimService
                     'media_turma' => $this->getMediaTurmaEtapa($disciplina->id, $avaliacoes, $notasTurma),
                     'frequencia' => $freqDados['frequencia'],
                     'faltas_datas' => $freqDados['faltas_datas'],
+                    'presencas_count' => $freqDados['presencas_count'],
+                    'total_aulas' => $freqDados['total_aulas'],
                 ];
             }
 
@@ -325,6 +327,8 @@ class BoletimService
         return [
             'frequencia' => ($presencas / $total) * 100,
             'faltas_datas' => $faltasDatas,
+            'presencas_count' => $presencas,
+            'total_aulas' => $total,
         ];
     }
 }
