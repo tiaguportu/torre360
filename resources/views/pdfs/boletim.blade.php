@@ -129,10 +129,22 @@
 
     @php
         $instituicao = $matricula->turma?->serie?->curso?->unidade?->instituicaoEnsino;
-        $logoPath = $instituicao?->logo ? storage_path('app/public/' . $instituicao->logo) : null;
         $logoBase64 = null;
-        if ($logoPath && file_exists($logoPath)) {
-            $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($logoPath));
+        if ($instituicao?->logo) {
+            try {
+                $disk = config('filament.default_filesystem_disk', 'local');
+                if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($instituicao->logo)) {
+                    $logoContent = \Illuminate\Support\Facades\Storage::disk($disk)->get($instituicao->logo);
+                    $mimeType = \Illuminate\Support\Facades\Storage::disk($disk)->mimeType($instituicao->logo);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+                } else if (\Illuminate\Support\Facades\Storage::disk('public')->exists($instituicao->logo)) {
+                    $logoContent = \Illuminate\Support\Facades\Storage::disk('public')->get($instituicao->logo);
+                    $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($instituicao->logo);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+                }
+            } catch (\Exception $e) {
+                // Erro ao carregar logo
+            }
         }
     @endphp
 
