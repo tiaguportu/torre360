@@ -1,16 +1,17 @@
-# To prevent access to .env and other files
-<Files .*>
-# Apache 2.2
-<IfModule !mod_authz_core.c>
-Order deny,allow
-Deny from all
-</IfModule>
-# Apache 2.4
-<IfModule mod_authz_core.c>
-Require all denied
-</IfModule>
-</Files>
+<IfModule mod_rewrite.c>
+    RewriteEngine on
 
-<IfModule mod_alias.c>
-RedirectMatch 301 ^/$ https://torre360.escolatorredemarfim.com.br/public
+    # Bloqueia acesso direto a arquivos e pastas sensíveis
+    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^composer\.(json|lock)$ - [F,L]
+    RewriteRule ^package(-lock)?\.json$ - [F,L]
+    
+    # Redireciona todas as requisições para a pasta /public de forma transparente
+    # Isso mantém a URL limpa (sem aparecer /public no navegador)
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+
+# Impede a listagem de arquivos em pastas que não tenham index
+Options -Indexes
