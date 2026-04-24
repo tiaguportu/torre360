@@ -70,7 +70,28 @@ class PreceptoriaForm
                             ->relationship(
                                 'matricula',
                                 'id',
-                                fn (Builder $query) => $query->with(['pessoa', 'turma', 'periodoLetivo'])
+                                function (Builder $query) {
+                                    $query->with(['pessoa', 'turma', 'periodoLetivo']);
+
+                                    $user = auth()->user();
+                                    if ($user?->hasRole('professor') && ! $user?->hasAnyRole(['super_admin', 'admin', 'secretaria'])) {
+                                        $pessoaIds = $user->pessoas->pluck('id')->toArray();
+
+                                        $query->where(function (Builder $q) use ($pessoaIds) {
+                                            // 1. Turmas onde é conselheiro
+                                            $q->whereHas('turma', function (Builder $tq) use ($pessoaIds) {
+                                                $tq->whereIn('professor_conselheiro_id', $pessoaIds);
+                                            });
+
+                                            // 2. Turmas onde tem cronograma aula
+                                            $q->orWhereHas('turma.cronogramasAula', function (Builder $caq) use ($pessoaIds) {
+                                                $caq->whereIn('pessoa_id', $pessoaIds);
+                                            });
+                                        });
+                                    }
+
+                                    return $query;
+                                }
                             )
                             ->getOptionLabelFromRecordUsing(
                                 fn (Matricula $record) => $record->label_exibicao
