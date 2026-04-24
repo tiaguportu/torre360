@@ -235,7 +235,7 @@
                                     $valor = $d['valor'];
                                     $isIgnorada = $d['is_ignorada'];
                                     $ausente = $d['ausente'];
-                                    $cor = ($valor !== null && !$isIgnorada) ? ($valor > 6.95 ? '' : 'text-danger') : 'text-gray';
+                                    $cor = ($valor !== null && !$isIgnorada) ? (round($valor, 1) >= 7.0 ? '' : 'text-danger') : 'text-gray';
                                 @endphp
                                 <td class="{{ $cor }} {{ $isIgnorada ? 'line-through' : '' }}">
                                     @if ($valor !== null)
@@ -248,7 +248,7 @@
 
                             @php
                                 $mf = $linha['media_final'];
-                                $corMf = $mf > 6.95 ? '' : 'text-danger';
+                                $corMf = round($mf, 1) >= 7.0 ? '' : 'text-danger';
                             @endphp
                             <td class="{{ $corMf }}" style="font-weight: bold;">
                                 {{ $mf !== null ? number_format($mf, 1, ',', '.') : '—' }}
