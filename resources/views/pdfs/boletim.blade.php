@@ -28,7 +28,6 @@
             color: #666;
             border-top: 1px solid #eee;
             padding-top: 5px;
-            text-transform: lowercase;
         }
 
         .header {
