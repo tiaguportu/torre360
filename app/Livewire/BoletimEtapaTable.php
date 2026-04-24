@@ -75,7 +75,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                         return 'gray';
                     }
 
-                    return $mediaCat >= 7.0 ? 'success' : 'danger';
+                    return round((float) $mediaCat, 1) >= 7.0 ? null : 'danger';
                 })
                 ->extraAttributes(function (Disciplina $record, $state) use ($categoria, $linhas) {
                     if ($state === '·' || $state === '—') {
@@ -126,7 +126,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->label('Média Etapa')
                     ->alignCenter()
                     ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['media_final'] ?? null)
-                    ->color(fn ($state) => $state >= 7 ? 'success' : 'danger')
+                    ->color(fn ($state) => round((float) $state, 1) >= 7.0 ? null : 'danger')
                     ->formatStateUsing(fn ($state) => $state !== null ? number_format(round((float) $state, 2), 1, ',', '.') : '—'),
                 TextColumn::make('media_turma')
                     ->label('Média Turma')
@@ -141,8 +141,7 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                     ->formatStateUsing(fn ($state) => $state !== null ? number_format($state, 1, ',', '.').'%' : '—')
                     ->color(fn ($state) => match (true) {
                         $state === null => 'gray',
-                        $state >= 75 => 'success',
-                        $state >= 50 => 'warning',
+                        $state >= 75 => null,
                         default => 'danger',
                     })
                     ->tooltip(function (Disciplina $record) use ($linhas) {
