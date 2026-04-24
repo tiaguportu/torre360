@@ -55,7 +55,8 @@ class BoletimService
             $categorias = $avaliacoes->map(fn ($av) => $av->categoria)
                 ->filter()
                 ->unique('id')
-                ->sortBy('ordem_boletim');
+                ->sortBy('ordem_boletim')
+                ->values();
 
             $disciplinasIds = $avaliacoes->pluck('disciplina_id')->unique();
             $disciplinas = Disciplina::query()

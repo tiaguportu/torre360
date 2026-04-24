@@ -184,11 +184,13 @@
             </tbody>
         </table>
 
-        <div style="margin-top: 5px; font-size: 10px; color: #555;">
+        <div style="margin-top: 10px; font-size: 11px; color: #000; clear: both; display: block;">
             <strong>Legenda das Avaliações:</strong>
-            @foreach ($item['categorias'] as $index => $cat)
+            @forelse ($item['categorias'] as $cat)
                 <span>{{ $cat->nome }}{{ $cat->descricao ? ': '.$cat->descricao : '' }}</span>{{ !$loop->last ? ' | ' : '' }}
-            @endforeach
+            @empty
+                <span style="color: #999;">(Sem categorias registradas nesta etapa)</span>
+            @endforelse
         </div>
 
         @if(!empty($item['faltas_datas']))
