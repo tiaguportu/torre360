@@ -307,10 +307,10 @@
             <li>Frequência mínima exigida: 75%.</li>
         </ul>
 
-        <div style="margin-top: 60px; width: 60%; text-align: left;">
+        <div style="margin-top: 60px; width: 60%; margin-left: auto; margin-right: auto; text-align: center;">
             <div>Declaro ter recebido o Boletim Escolar</div>
             <div
-                style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
+                style="margin-top: 60px; border-top: 1px solid #000; width: 100%; text-align: center; padding-top: 5px;">
                 Responsável
             </div>
         </div>
