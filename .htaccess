@@ -1,1 +1,21 @@
-# .htaccess vazio para limpar configurações do servidor
+# Ignora a autenticação herdada do diretório pai (Satisfy Any)
+Satisfy Any
+Allow from all
+
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+
+    # Bloqueia acesso direto a arquivos e pastas sensíveis
+    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^composer\.(json|lock)$ - [F,L]
+    RewriteRule ^package(-lock)?\.json$ - [F,L]
+    
+    # Redireciona todas as requisições para a pasta /public de forma transparente
+    # Isso mantém a URL limpa (sem aparecer /public no navegador)
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Impede a listagem de arquivos em pastas que não tenham index
+Options -Indexes
