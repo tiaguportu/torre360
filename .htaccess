@@ -5,6 +5,10 @@ Allow from all
 <IfModule mod_rewrite.c>
     RewriteEngine on
 
+    # Força HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Bloqueia acesso direto a arquivos e pastas sensíveis
     RewriteRule ^\.env$ - [F,L]
     RewriteRule ^\.git - [F,L]
