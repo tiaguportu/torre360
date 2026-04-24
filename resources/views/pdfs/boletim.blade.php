@@ -292,15 +292,15 @@
             <li>Riscado: Avaliação substituída por outra de maior valor.</li>
             <li>(·): Não se aplica ou componente sem avaliações nesta categoria.</li>
             <li>(—): Nota não lançada.</li>
-            <li>Média da Etapa = 35%TB + 35%PB + 30%AQI), sem a nota de recuperação. </li>
+            <li>Média da Etapa = 35%TB + 35%PB + 30%AQI, sem a nota de recuperação. </li>
             <li>Frequência mínima exigida: 75%.</li>
         </ul>
 
-        <div style="margin-top: 60px; width: 60%; text-align: left; padding-top: 5px;">
+        <div style="margin-top: 60px; width: 60%; text-align: left;">
             Declaro ter recebido o Boletim Escolar
             <div
                 style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
-                _________________ Responsável
+                Responsável
             </div>
         </div>
 
