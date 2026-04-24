@@ -7,6 +7,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -63,6 +64,7 @@ class PreceptoriaForm
                             ->dehydrated()
                             ->searchable()
                             ->preload()
+                            ->live()
                             ->required(),
 
                         Select::make('matricula_id')
@@ -70,22 +72,21 @@ class PreceptoriaForm
                             ->relationship(
                                 'matricula',
                                 'id',
-                                function (Builder $query) {
+                                function (Builder $query, Get $get) {
                                     $query->with(['pessoa', 'turma', 'periodoLetivo']);
 
-                                    $user = auth()->user();
-                                    if ($user?->hasRole('professor') && ! $user?->hasAnyRole(['super_admin', 'admin', 'secretaria'])) {
-                                        $pessoaIds = $user->pessoas->pluck('id')->toArray();
+                                    $professorId = $get('professor_id');
 
-                                        $query->where(function (Builder $q) use ($pessoaIds) {
-                                            // 1. Turmas onde é conselheiro
-                                            $q->whereHas('turma', function (Builder $tq) use ($pessoaIds) {
-                                                $tq->whereIn('professor_conselheiro_id', $pessoaIds);
+                                    if ($professorId) {
+                                        $query->where(function (Builder $q) use ($professorId) {
+                                            // 1. Turmas onde o professor selecionado é conselheiro
+                                            $q->whereHas('turma', function (Builder $tq) use ($professorId) {
+                                                $tq->where('professor_conselheiro_id', $professorId);
                                             });
 
-                                            // 2. Turmas onde tem cronograma aula
-                                            $q->orWhereHas('turma.cronogramasAula', function (Builder $caq) use ($pessoaIds) {
-                                                $caq->whereIn('pessoa_id', $pessoaIds);
+                                            // 2. Turmas onde o professor selecionado tem cronograma aula
+                                            $q->orWhereHas('turma.cronogramasAula', function (Builder $caq) use ($professorId) {
+                                                $caq->where('pessoa_id', $professorId);
                                             });
                                         });
                                     }
