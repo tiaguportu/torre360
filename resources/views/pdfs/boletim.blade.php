@@ -124,10 +124,6 @@
             display: inline-block;
         }
 
-        .text-success {
-            color: #15803d;
-        }
-
         .text-danger {
             color: #b91c1c;
         }
@@ -241,7 +237,7 @@
                                     $valor = $d['valor'];
                                     $isIgnorada = $d['is_ignorada'];
                                     $ausente = $d['ausente'];
-                                    $cor = ($valor !== null && !$isIgnorada) ? ($valor >= 7 ? 'text-success' : 'text-danger') : 'text-gray';
+                                    $cor = ($valor !== null && !$isIgnorada) ? ($valor >= 7 ? '' : 'text-danger') : 'text-gray';
                                 @endphp
                                 <td class="{{ $cor }} {{ $isIgnorada ? 'line-through' : '' }}">
                                     @if ($valor !== null)
@@ -254,7 +250,7 @@
 
                             @php
                                 $mf = $linha['media_final'];
-                                $corMf = $mf >= 7 ? 'text-success' : 'text-danger';
+                                $corMf = $mf >= 7 ? '' : 'text-danger';
                             @endphp
                             <td class="{{ $corMf }}" style="font-weight: bold;">
                                 {{ $mf !== null ? number_format($mf, 1, ',', '.') : '—' }}
@@ -320,9 +316,9 @@
             </div>
         </div>
 
-    <div class="page-footer">
-        Emissão em {{ now()->format('d/m/Y H:i:s') }}
-    </div>
+        <div class="page-footer">
+            Emissão em {{ now()->format('d/m/Y H:i:s') }}
+        </div>
     </div>
 
 </body>
