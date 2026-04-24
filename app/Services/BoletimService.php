@@ -85,15 +85,26 @@ class BoletimService
                     'media_turma' => $this->getMediaTurmaEtapa($disciplina->id, $avaliacoes, $notasTurma),
                     'frequencia' => $freqDados['frequencia'],
                     'faltas_datas' => $freqDados['faltas_datas'],
+                    'faltas_cruas' => $freqDados['faltas_cruas'] ?? [],
                     'presencas_count' => $freqDados['presencas_count'],
                     'total_aulas' => $freqDados['total_aulas'],
                 ];
             }
 
+            $todasFaltas = collect($linhas)
+                ->pluck('faltas_cruas')
+                ->flatten()
+                ->unique()
+                ->sort()
+                ->map(fn ($d) => \Carbon\Carbon::parse($d)->format('d/m'))
+                ->values()
+                ->toArray();
+
             $resultado[] = [
                 'etapa' => $etapa,
                 'categorias' => $categorias,
                 'linhas' => $linhas,
+                'faltas_datas' => $todasFaltas,
             ];
         }
 
@@ -327,6 +338,7 @@ class BoletimService
         return [
             'frequencia' => ($presencas / $total) * 100,
             'faltas_datas' => $faltasDatas,
+            'faltas_cruas' => $cronogramas->whereIn('id', $faltasIds)->pluck('data')->values()->toArray(),
             'presencas_count' => $presencas,
             'total_aulas' => $total,
         ];

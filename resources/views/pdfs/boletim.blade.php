@@ -183,6 +183,20 @@
                 @endforeach
             </tbody>
         </table>
+
+        <div style="margin-top: 5px; font-size: 10px; color: #555;">
+            <strong>Legenda das Avaliações:</strong>
+            @foreach ($item['categorias'] as $index => $cat)
+                <span>{{ $cat->nome }}{{ $cat->descricao ? ': '.$cat->descricao : '' }}</span>{{ !$loop->last ? ' | ' : '' }}
+            @endforeach
+        </div>
+
+        @if(!empty($item['faltas_datas']))
+            <div style="margin-top: 5px; font-size: 10px; color: #b91c1c;">
+                <strong>Dias de Falta:</strong>
+                {{ implode(', ', $item['faltas_datas']) }}
+            </div>
+        @endif
     </div>
 @endforeach
 
@@ -195,18 +209,12 @@
         <li>Frequência mínima exigida: 75%.</li>
     </ul>
 
-    <div class="signatures">
-        <div class="signature-box">
-            Secretaria Escolar
-        </div>
-        <div class="spacer"></div>
-        <div class="signature-box">
-            Direção / Coordenação
-        </div>
+    <div style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
+        Declaro ter recebido o Boletim Escolar _________________ Responsável
     </div>
 
-    <div style="margin-top: 30px; text-align: right; font-size: 8px; color: #666; border-top: 1px solid #eee; padding-top: 5px;">
-        Documento gerado em {{ now()->format('d/m/Y H:i:s') }} - Torre360
+    <div style="margin-top: 30px; text-align: right; font-size: 8px; color: #666; border-top: 1px solid #eee; padding-top: 5px; text-transform: lowercase;">
+        emissão em {{ now()->format('d/m/Y H:i:s') }} - torre360
     </div>
 </div>
 

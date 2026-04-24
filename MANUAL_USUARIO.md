@@ -130,7 +130,7 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
 
 ### 5.3 Boletim do Aluno
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
-2. **Impressão de Boletim:** Na visualização do boletim de uma matrícula, agora é possível exportar o documento em PDF. Você pode escolher imprimir uma etapa específica (ex: 1º Bimestre) ou todas as etapas que já possuem notas registradas.
+2. **Impressão de Boletim:** Na visualização do boletim de uma matrícula, agora é possível exportar o documento em PDF. Você pode escolher imprimir uma etapa específica (ex: 1º Bimestre) ou todas as etapas que já possuem notas registradas. O PDF gerado inclui uma **legenda detalhada das avaliações** (explicando o significado de cada coluna/categoria) e, logo abaixo, a **lista de datas das faltas** consolidadas daquela etapa para conferência da família.
 3. O sistema gera uma tabela dinâmica por Etapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
 4. Notas abaixo da média aparecem destacadas em vermelho.
 5. **Frequência:** Ao lado das médias, o boletim exibe o percentual de presenças do aluno nas aulas daquela disciplina dentro do período da etapa avaliativa. Ao passar o mouse sobre a porcentagem, agora é exibido um informativo com as datas exatas das faltas (DD/MM).
