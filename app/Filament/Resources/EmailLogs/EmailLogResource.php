@@ -89,6 +89,7 @@ class EmailLogResource extends Resource
                     ->dateTime()
                     ->sortable(),
             ])
+            ->defaultSort('sent_at', 'desc')
             ->filters([])
             ->recordActions([
                 ViewAction::make(),
