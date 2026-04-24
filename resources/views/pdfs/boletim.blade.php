@@ -127,9 +127,32 @@
 
 <body>
 
+    @php
+        $instituicao = $matricula->turma?->serie?->curso?->unidade?->instituicaoEnsino;
+        $logoPath = $instituicao?->logo ? storage_path('app/public/' . $instituicao->logo) : null;
+        $logoBase64 = null;
+        if ($logoPath && file_exists($logoPath)) {
+            $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+    @endphp
+
     <div class="header">
-        <h1>{{ $matricula->turma?->serie?->curso?->unidade?->nome ?? 'Torre360 - Sistema de Gestão Escolar' }}</h1>
-        <p>Boletim Escolar Oficial</p>
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 80px; border: none; vertical-align: middle;">
+                    @if ($logoBase64)
+                        <img src="{{ $logoBase64 }}" style="width: 80px; height: auto;">
+                    @else
+                        <div style="width: 80px; height: 80px; background-color: #eee; border-radius: 5px; text-align: center; line-height: 80px; color: #999;">T360</div>
+                    @endif
+                </td>
+                <td style="border: none; vertical-align: middle; padding-left: 20px; text-align: left;">
+                    <h1 style="margin: 0; font-size: 20px;">{{ $instituicao?->nome ?? $matricula->turma?->serie?->curso?->unidade?->nome ?? 'Torre360' }}</h1>
+                    <p style="margin: 3px 0; font-size: 11px;">Unidade: {{ $matricula->turma?->serie?->curso?->unidade?->nome ?? '-' }}</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #666;">Boletim Escolar Oficial</p>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="info-section">

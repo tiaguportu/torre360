@@ -110,7 +110,7 @@ class BoletimService
         }
 
         return [
-            'matricula' => $matricula->load(['pessoa', 'turma.serie.curso.unidade', 'turma.periodoLetivo', 'periodoLetivo']),
+            'matricula' => $matricula->load(['pessoa', 'turma.serie.curso.unidade.instituicaoEnsino', 'turma.periodoLetivo', 'periodoLetivo']),
             'etapas' => $resultado,
         ];
     }

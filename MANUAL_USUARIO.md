@@ -415,7 +415,7 @@ O sistema gerencia a estrutura da escola de forma hierárquica, permitindo que u
 ### 13.1 Instituição de Ensino
 1. Vá em **Localização e Cadastros → Instituições de Ensino**.
 2. **Cadastro:** Informe o nome da instituição, CNPJ e dados de contato.
-3. **Logo e Identidade:** É possível fazer o upload da logo oficial da instituição. Esta imagem será utilizada em cabeçalhos de relatórios e documentos oficiais no futuro.
+3. **Logo e Identidade:** É possível fazer o upload da logo oficial da instituição. Esta imagem é utilizada no cabeçalho do **Boletim Escolar** e em outros relatórios oficiais.
 4. **Redes Sociais:** Configure os perfis globais da instituição para redirecionamentos digitais.
  
 ### 13.2 Unidades
