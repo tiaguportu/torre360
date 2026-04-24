@@ -9,7 +9,7 @@
     
     # Redireciona todas as requisições para a pasta /public de forma transparente
     # Isso mantém a URL limpa (sem aparecer /public no navegador)
-    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_URI} !^public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
