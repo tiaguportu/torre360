@@ -309,7 +309,7 @@
         </ul>
 
         <div style="margin-top: 60px; width: 60%; text-align: left;">
-            Declaro ter recebido o Boletim Escolar
+            <div>Declaro ter recebido o Boletim Escolar</div>
             <div
                 style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
                 Responsável
