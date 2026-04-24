@@ -13,6 +13,11 @@ class Unidade extends Model
 
     protected $guarded = [];
 
+    public function instituicaoEnsino(): BelongsTo
+    {
+        return $this->belongsTo(InstituicaoEnsino::class);
+    }
+
     public function cursos(): HasMany
     {
         return $this->hasMany(Curso::class);
