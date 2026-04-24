@@ -13,6 +13,24 @@
             padding: 0;
         }
 
+        @page {
+            margin: 30px 30px 60px 30px;
+        }
+
+        .page-footer {
+            position: fixed;
+            bottom: -40px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            text-align: right;
+            font-size: 8px;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+            text-transform: lowercase;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -302,10 +320,9 @@
             </div>
         </div>
 
-        <div
-            style="margin-top: 30px; text-align: right; font-size: 8px; color: #666; border-top: 1px solid #eee; padding-top: 5px; text-transform: lowercase;">
-            emissão em {{ now()->format('d/m/Y H:i:s') }} - torre360
-        </div>
+    <div class="page-footer">
+        Emissão em {{ now()->format('d/m/Y H:i:s') }}
+    </div>
     </div>
 
 </body>
