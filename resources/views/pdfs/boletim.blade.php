@@ -196,7 +196,9 @@
             </tr>
             <tr>
                 <td class="info-label">Curso:</td>
-                <td colspan="3">{{ $matricula->turma?->serie?->curso?->nome_externo ?? $matricula->turma?->serie?->curso?->nome_interno ?? '-' }}</td>
+                <td colspan="3">
+                    {{ $matricula->turma?->serie?->curso?->nome_externo ?? $matricula->turma?->serie?->curso?->nome_interno ?? '-' }}
+                </td>
             </tr>
             <tr>
                 <td class="info-label">Turma / Série:</td>
@@ -233,7 +235,7 @@
                                     $valor = $d['valor'];
                                     $isIgnorada = $d['is_ignorada'];
                                     $ausente = $d['ausente'];
-                                    $cor = ($valor !== null && !$isIgnorada) ? ($valor >= 7 ? '' : 'text-danger') : 'text-gray';
+                                    $cor = ($valor !== null && !$isIgnorada) ? ($valor > 6.95 ? '' : 'text-danger') : 'text-gray';
                                 @endphp
                                 <td class="{{ $cor }} {{ $isIgnorada ? 'line-through' : '' }}">
                                     @if ($valor !== null)
@@ -246,7 +248,7 @@
 
                             @php
                                 $mf = $linha['media_final'];
-                                $corMf = $mf >= 7 ? '' : 'text-danger';
+                                $corMf = $mf > 6.95 ? '' : 'text-danger';
                             @endphp
                             <td class="{{ $corMf }}" style="font-weight: bold;">
                                 {{ $mf !== null ? number_format($mf, 1, ',', '.') : '—' }}
