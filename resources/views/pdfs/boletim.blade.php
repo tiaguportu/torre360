@@ -155,13 +155,19 @@
                     @if ($logoBase64)
                         <img src="{{ $logoBase64 }}" style="width: 80px; height: auto;">
                     @else
-                        <div style="width: 80px; height: 80px; background-color: #eee; border-radius: 5px; text-align: center; line-height: 80px; color: #999;">T360</div>
+                        <div
+                            style="width: 80px; height: 80px; background-color: #eee; border-radius: 5px; text-align: center; line-height: 80px; color: #999;">
+                            T360</div>
                     @endif
                 </td>
                 <td style="border: none; vertical-align: middle; padding-left: 20px; text-align: left;">
-                    <h1 style="margin: 0; font-size: 20px;">{{ $instituicao?->nome ?? $matricula->turma?->serie?->curso?->unidade?->nome ?? 'Torre360' }}</h1>
-                    <p style="margin: 3px 0; font-size: 11px;">Unidade: {{ $matricula->turma?->serie?->curso?->unidade?->nome ?? '-' }}</p>
-                    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #666;">Boletim Escolar Oficial</p>
+                    <h1 style="margin: 0; font-size: 20px;">
+                        {{ $instituicao?->nome ?? $matricula->turma?->serie?->curso?->unidade?->nome ?? 'Torre360' }}
+                    </h1>
+                    <p style="margin: 3px 0; font-size: 11px;">Unidade:
+                        {{ $matricula->turma?->serie?->curso?->unidade?->nome ?? '-' }}
+                    </p>
+                    <p style="margin: 0; font-size: 13px; font-weight: bold; color: #666;">Boletim Escolar</p>
                 </td>
             </tr>
         </table>
@@ -290,8 +296,12 @@
             <li>Frequência mínima exigida: 75%.</li>
         </ul>
 
-        <div style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
-            Declaro ter recebido o Boletim Escolar _________________ Responsável
+        <div style="margin-top: 60px; width: 60%; text-align: left; padding-top: 5px;">
+            Declaro ter recebido o Boletim Escolar
+            <div
+                style="margin-top: 60px; border-top: 1px solid #000; width: 60%; text-align: center; padding-top: 5px;">
+                _________________ Responsável
+            </div>
         </div>
 
         <div
