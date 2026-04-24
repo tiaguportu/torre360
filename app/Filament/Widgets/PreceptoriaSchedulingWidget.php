@@ -21,7 +21,7 @@ class PreceptoriaSchedulingWidget extends BaseWidget
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return [];
         }
 
@@ -55,20 +55,20 @@ class PreceptoriaSchedulingWidget extends BaseWidget
                 ->where('data', '>=', now()->toDateString())
                 ->exists();
 
-            if (! $temAgendamentoFuturo) {
+            if (!$temAgendamentoFuturo) {
                 // Verificar se existem horários disponíveis no sistema
                 $temJanelasDisponiveis = Preceptoria::whereNull('matricula_id')
                     ->where('data', '>=', now()->toDateString())
                     ->exists();
 
                 if ($temJanelasDisponiveis) {
-                    $stats[] = Stat::make('Preceptoria Disponível', $matricula->pessoa->nome)
+                    $stats[] = Stat::make($matricula->pessoa->nome, 'Preceptoria Disponível')
                         ->description('Você pode agendar uma nova preceptoria.')
                         ->descriptionIcon('heroicon-m-calendar-days')
                         ->color('warning')
                         ->extraAttributes([
                             'class' => 'cursor-pointer',
-                            'onclick' => "window.location.href='".route('filament.admin.resources.preceptorias.agendar')."?matricula_id={$matricula->id}'",
+                            'onclick' => "window.location.href='" . route('filament.admin.resources.preceptorias.agendar') . "?matricula_id={$matricula->id}'",
                         ]);
                 }
             }
