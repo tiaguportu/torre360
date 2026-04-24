@@ -168,6 +168,7 @@
                             <th>{{ $cat->nome }}</th>
                         @endforeach
                         <th>Média Etapa</th>
+                        <th>Média Turma</th>
                         <th>Frequência</th>
                     </tr>
                 </thead>
@@ -198,6 +199,13 @@
                             @endphp
                             <td class="{{ $corMf }}" style="font-weight: bold;">
                                 {{ $mf !== null ? number_format($mf, 1, ',', '.') : '—' }}
+                            </td>
+                            
+                            @php
+                                $mt = $linha['media_turma'];
+                            @endphp
+                            <td class="text-gray">
+                                {{ $mt !== null ? number_format($mt, 1, ',', '.') : '—' }}
                             </td>
 
                             @php
