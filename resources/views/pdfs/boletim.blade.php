@@ -254,9 +254,7 @@
                                 $corFreq = 'text-gray';
                                 if ($freq !== null) {
                                     if ($freq >= 75)
-                                        $corFreq = 'text-success';
-                                    elseif ($freq >= 50)
-                                        $corFreq = 'warning';
+                                        $corFreq = '';
                                     else
                                         $corFreq = 'text-danger';
                                 }
@@ -270,8 +268,8 @@
             </table>
 
             @if(!empty($item['faltas_datas']))
-                <div style="margin-top: 5px; font-size: 10px; color: #b91c1c;">
-                    <strong>Dias de Falta:</strong>
+                <div style="margin-top: 5px; font-size: 10px;">
+                    <strong>Dias com falta:</strong>
                     {{ implode(', ', $item['faltas_datas']) }}
                 </div>
             @endif
