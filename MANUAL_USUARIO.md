@@ -408,11 +408,22 @@ O módulo de Cronograma permite a visualização e gestão das aulas planejadas 
 
 ---
 
-## 📍 13. Gestão de Unidades e Representantes Legais
-
-As **Unidades** representam os locais físicos da instituição.
-
-### 13.1 Representantes Legais da Unidade
+## 📍 13. Gestão de Instituições e Unidades
+ 
+O sistema gerencia a estrutura da escola de forma hierárquica, permitindo que uma Instituição de Ensino possua múltiplas Unidades.
+ 
+### 13.1 Instituição de Ensino
+1. Vá em **Localização e Cadastros → Instituições de Ensino**.
+2. **Cadastro:** Informe o nome da instituição, CNPJ e dados de contato.
+3. **Logo e Identidade:** É possível fazer o upload da logo oficial da instituição. Esta imagem será utilizada em cabeçalhos de relatórios e documentos oficiais no futuro.
+4. **Redes Sociais:** Configure os perfis globais da instituição para redirecionamentos digitais.
+ 
+### 13.2 Unidades
+1. Vá em **Localização e Cadastros → Unidades**.
+2. **Vínculo:** Ao cadastrar ou editar uma unidade, você deve associá-la a uma **Instituição de Ensino** cadastrada.
+3. **Dados Específicos:** Configure o CNPJ, endereço e canais de contato exclusivos daquela unidade física.
+ 
+### 13.3 Representantes Legais da Unidade
 1. Vá em **Localização e Cadastros → Unidades**.
 2. Na edição de uma Unidade, utilize a aba/relação de **Representantes Legais**.
 3. Aqui você pode vincular pessoas cadastradas no sistema que respondem legalmente por aquela unidade específica.

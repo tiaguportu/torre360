@@ -70,10 +70,18 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 - **Representa:** Tabela pivô entre pessoas e endereços.
 - **Campos:** `pessoa_id`, `endereco_id`.
 
+### `instituicao_ensinos`
+- **Representa:** Uma instituição de ensino que pode possuir várias unidades.
+- **Campos Principais:** `nome`, `cnpj`, `logo` (caminho da imagem), `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
+- **Relacionamentos:** BelongsTo `endereco`, HasMany `unidade`.
+
 ### `unidade`
-- **Representa:** Uma unidade escolar ou administrativa.
-- **Campos Principais:** `nome`, `cnpj`, `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
-- **Relacionamentos:** BelongsTo `endereco`, HasMany `curso`.
+- **Representa:** Uma unidade escolar ou administrativa pertencente a uma instituição.
+- **Campos Principais:** `instituicao_ensino_id`, `nome`, `cnpj`, `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
+- **Relacionamentos:** 
+    - BelongsTo `instituicao_ensino`.
+    - BelongsTo `endereco`.
+    - HasMany `curso`.
     - BelongsToMany `pessoa` (via `representante_unidade`) para Representantes Legais.
 
 ### `representante_unidade`
