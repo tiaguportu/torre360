@@ -9,6 +9,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
+4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, que informa se você ou seus dependentes possuem horários disponíveis para agendamento.
 
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
@@ -598,7 +599,20 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 
 ---
 
+### 18.7 Widget de Agendamento (Dashboard)
+
+Para facilitar o acesso à agenda pedagógica, o sistema exibe um widget informativo no **Dashboard** principal para usuários com os papéis de **Aluno** ou **Responsável**.
+
+- **Alerta de Disponibilidade:** O widget aparecerá automaticamente se:
+    1. O usuário (ou um de seus dependentes) tiver uma matrícula ativa.
+    2. Não houver nenhuma preceptoria agendada para o futuro para essa matrícula.
+    3. Existirem horários vagos (slots) cadastrados por professores no sistema.
+- **Ação Rápida:** O widget exibe o nome do aluno e uma mensagem informando que é possível realizar um agendamento. Ao clicar no widget (ou no botão de ação), você será redirecionado diretamente para a tela de **Agendar Preceptoria** com a matrícula já pré-selecionada.
+
+---
+
 ### 18.6 Visibilidade e Acesso Restrito
+
 Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
 - **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.
 - **Responsáveis e Alunos:** Visualizam apenas os agendamentos já realizados vinculados à sua própria matrícula ou de seus dependentes. Além disso, na tela de agendamento, podem visualizar slots vagos de professores para escolha.
