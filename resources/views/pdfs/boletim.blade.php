@@ -196,14 +196,11 @@
             </tr>
             <tr>
                 <td class="info-label">Curso:</td>
-                <td>{{ $matricula->turma?->serie?->curso?->nome_externo ?? $matricula->turma?->serie?->curso?->nome_interno ?? '-' }}
-                </td>
-                <td class="info-label">Série:</td>
-                <td>{{ $matricula->turma?->serie?->nome ?? '-' }}</td>
+                <td colspan="3">{{ $matricula->turma?->serie?->curso?->nome_externo ?? $matricula->turma?->serie?->curso?->nome_interno ?? '-' }}</td>
             </tr>
             <tr>
-                <td class="info-label">Turma:</td>
-                <td>{{ $matricula->turma?->nome ?? '-' }}</td>
+                <td class="info-label">Turma / Série:</td>
+                <td>{{ $matricula->turma?->nome ?? '-' }} / {{ $matricula->turma?->serie?->nome ?? '-' }}</td>
                 <td class="info-label">Período Letivo:</td>
                 <td>{{ $matricula->periodoLetivo?->ano ?? $matricula->turma?->periodoLetivo?->ano ?? now()->year }}</td>
             </tr>
