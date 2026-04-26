@@ -39,10 +39,6 @@ class AgendarPreceptoria extends Page implements HasForms
         $this->form->fill();
     }
 
-    protected function getPessoaDoUsuario(): ?Pessoa
-    {
-        return auth()->user()?->pessoa;
-    }
 
     protected function getMatriculasAcessiveis(): Collection
     {
@@ -52,19 +48,29 @@ class AgendarPreceptoria extends Page implements HasForms
             return Matricula::with(['pessoa', 'turma', 'periodoLetivo'])->get();
         }
 
-        $pessoa = $this->getPessoaDoUsuario();
-        if (! $pessoa) {
+        $pessoasIds = $user->pessoas()->pluck('pessoa.id')->toArray();
+        if (empty($pessoasIds)) {
             return collect();
         }
 
-        $condicoes = Matricula::query()->where('pessoa_id', $pessoa->id);
+        $query = Matricula::query()->whereIn('pessoa_id', $pessoasIds);
 
-        $alunosIds = $pessoa->alunos()->pluck('pessoa.id');
-        if ($alunosIds->isNotEmpty()) {
-            $condicoes->orWhereIn('pessoa_id', $alunosIds);
+        // Se o usuário for responsável, buscar também as matrículas dos alunos vinculados a ele
+        if ($user->hasRole('responsavel')) {
+            $query->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoasIds) {
+                $q->whereIn('responsavel_id', $pessoasIds);
+            });
         }
 
-        return $condicoes->with(['pessoa', 'turma', 'periodoLetivo'])->get();
+        // Também mantemos a lógica de alunos() vinculados diretamente às pessoas do usuário
+        foreach ($user->pessoas as $pessoa) {
+            $alunosIds = $pessoa->alunos()->pluck('pessoa.id')->toArray();
+            if (! empty($alunosIds)) {
+                $query->orWhereIn('pessoa_id', $alunosIds);
+            }
+        }
+
+        return $query->with(['pessoa', 'turma', 'periodoLetivo'])->get();
     }
 
     protected function getProfessoresDaMatricula(int $matriculaId): Collection
