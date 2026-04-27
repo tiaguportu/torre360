@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nome');
             $table->date('data_inicio')->nullable();
             $table->date('data_fim')->nullable();
-            $table->foreignId('periodo_letivo_id')->nullable()->constrained('periodo_letivos')->nullOnDelete();
+            $table->foreignId('periodo_letivo_id')->nullable()->constrained('periodo_letivo')->nullOnDelete();
             $table->timestamps();
         });
     }
