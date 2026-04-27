@@ -645,4 +645,15 @@ Para garantir a privacidade e o foco pedagógico, a visualização das preceptor
 
 ---
 
+## 👤 19. Perfil e Menu de Usuário
+
+No canto superior direito da tela, ao clicar no seu nome ou avatar, você acessa o **Menu de Usuário**.
+
+### 19.1 Informações de Perfil
+Além de opções como **Alterar Senha** e **Sair**, o menu exibe informações úteis sobre o seu contexto no sistema:
+- **Roles:** Lista todos os níveis de acesso atribuídos a você (ex: Professor, Responsável, Admin).
+- **Pessoa:** Exibe o nome completo da entidade "Pessoa" que está associada ao seu usuário, confirmando o vínculo com seus dados cadastrais. Se não houver vínculo de pessoa, esta informação será ocultada.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

@@ -45,13 +45,11 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 MenuItem::make()
                     ->label(fn () => 'Roles: '.auth()->user()->roles->pluck('name')->join(', '))
-                    ->icon('heroicon-o-shield-check')
-                    ->disabled(),
+                    ->icon('heroicon-o-shield-check'),
                 MenuItem::make()
                     ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
                     ->icon('heroicon-o-user-circle')
-                    ->visible(fn () => auth()->user()->pessoa !== null)
-                    ->disabled(),
+                    ->visible(fn () => auth()->user()->pessoa !== null),
             ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
