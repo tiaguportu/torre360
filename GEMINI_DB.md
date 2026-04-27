@@ -248,6 +248,11 @@ Estrutura de ensino e turmas.
 
 ## 9. Módulo de Preceptoria
 
+### `ciclo_preceptorias`
+- **Representa:** Divisões temporais ou acadêmicas para realização de preceptorias (ex: Trimestres).
+- **Campos Principais:** `uuid`, `nome`, `data_inicio`, `data_fim`, `periodo_letivo_id` (BelongsTo).
+- **Relacionamentos:** HasMany `preceptoria`.
+
 ### `template_relatorio_preceptoria`
 - **Representa:** Modelos reutilizáveis para preencher relatórios de preceptoria.
 - **Campos Principais:** `nome` (string), `corpo` (longText HTML).
@@ -256,12 +261,14 @@ Estrutura de ensino e turmas.
 ### `preceptoria`
 - **Representa:** Agendamento de uma sessão de preceptoria entre um professor e um aluno.
 - **Campos Principais:**
+  - `ciclo_preceptoria_id` — FK → `ciclo_preceptorias.id` (NullOnDelete). Obrigatório.
   - `data` (date) — obrigatório.
   - `hora_inicio` (time) — obrigatório.
   - `hora_fim` (time) — nullable.
   - `professor_id` — FK → `pessoa.id` (RestrictOnDelete). Obrigatório.
   - `matricula_id` — FK → `matricula.id` (NullOnDelete). Nullable.
 - **Relacionamentos:** 
+  - BelongsTo `CicloPreceptoria`.
   - BelongsTo `Pessoa` (Professor).
   - BelongsTo `Matricula`.
   - HasMany `RelatorioPreceptoria`.

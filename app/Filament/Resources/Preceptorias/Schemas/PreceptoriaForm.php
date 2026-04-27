@@ -19,6 +19,13 @@ class PreceptoriaForm
             ->components([
                 Section::make('Dados da Preceptoria')
                     ->schema([
+                        Select::make('ciclo_preceptoria_id')
+                            ->relationship('cicloPreceptoria', 'nome')
+                            ->label('Ciclo de Preceptoria')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+
                         DatePicker::make('data')
                             ->label('Data')
                             ->required()

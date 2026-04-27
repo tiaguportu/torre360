@@ -538,17 +538,28 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
 
 | Conceito | Descrição |
 |---|---|
-| **Preceptoria** | O agendamento em si: data, hora início, hora fim (opcional), professor e matrícula do aluno. |
+| **Ciclo de Preceptoria** | Divisão temporal ou acadêmica (ex: 1º Trimestre) para organizar os agendamentos. |
+| **Preceptoria** | O agendamento em si: data, hora início, hora fim (opcional), professor, matrícula do aluno e o ciclo ao qual pertence. |
 | **Relatório de Preceptoria** | Documento gerado após a sessão, contendo observações e registros. Um relatório está vinculado a exatamente uma Preceptoria. |
 | **Template de Relatório** | Modelo de texto reutilizável que pode ser carregado em qualquer relatório como ponto de partida. |
 
 ---
 
-### 18.2 Gerenciar Preceptorias
+### 18.2 Gerenciar Ciclos de Preceptoria
+
+Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: Trimestres).
+
+1. Vá em **Preceptoria → Ciclos de Preceptoria**.
+2. Clique em **Novo Ciclo de Preceptoria**.
+3. Informe o **Nome**, o **Período Letivo** e o intervalo de datas (**Início** e **Fim**).
+4. Clique em **Salvar**.
+
+### 18.3 Gerenciar Preceptorias
 
 1. Vá em **Preceptoria → Preceptorias**.
 2. Clique em **Nova Preceptoria** para criar um agendamento.
 3. Preencha:
+   - **Ciclo de Preceptoria** (obrigatório).
    - **Data** (obrigatório).
    - **Hora Início** (obrigatório).
    - **Hora Fim** (opcional).
@@ -562,7 +573,7 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
 
 ---
 
-### 18.3 Criar Templates de Relatório
+### 18.4 Criar Templates de Relatório
 
 1. Vá em **Preceptoria → Templates de Relatório**.
 2. Crie um template com **Nome** e **Corpo** (editor de texto completo estilo Office).
@@ -570,7 +581,7 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
 
 ---
 
-### 18.4 Criar e Editar Relatórios de Preceptoria
+### 18.5 Criar e Editar Relatórios de Preceptoria
 
 1. Vá em **Preceptoria → Relatórios de Preceptoria**.
 2. Clique em **Novo Relatório**.
@@ -588,7 +599,7 @@ O módulo de **Preceptoria** permite agendar e registrar reuniões pedagógicas 
 
 ---
 
-### 18.5 Agendar Preceptoria (Responsáveis e Alunos)
+### 18.6 Agendar Preceptoria (Responsáveis e Alunos)
 
 Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pelo painel, escolhendo entre os horários disponibilizados pelos professores.
 
@@ -625,7 +636,7 @@ Para facilitar o acesso à agenda pedagógica, o sistema exibe um widget informa
 
 ---
 
-### 18.6 Visibilidade e Acesso Restrito
+### 18.8 Visibilidade e Acesso Restrito
 
 Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
 - **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.

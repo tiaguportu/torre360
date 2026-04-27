@@ -40,6 +40,11 @@ class Preceptoria extends Model
         return $this->hasMany(RelatorioPreceptoria::class);
     }
 
+    public function cicloPreceptoria(): BelongsTo
+    {
+        return $this->belongsTo(CicloPreceptoria::class);
+    }
+
     /**
      * Label de exibição amigável.
      */
