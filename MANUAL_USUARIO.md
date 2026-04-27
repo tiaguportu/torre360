@@ -640,7 +640,7 @@ Para facilitar o acesso à agenda pedagógica, o sistema exibe um widget informa
 
 Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
 - **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.
-- **Responsáveis e Alunos:** Visualizam apenas os agendamentos já realizados vinculados à sua própria matrícula ou de seus dependentes. Além disso, na tela de agendamento, podem visualizar slots vagos de professores para escolha.
+- **Responsáveis e Alunos:** Visualizam agendamentos vinculados à sua própria matrícula ou de seus dependentes. No caso de **Responsáveis**, a visualização de horários (disponíveis ou agendados) é restrita apenas aos professores que possuem vínculo acadêmico direto com seus filhos (Professor Conselheiro da Turma ou professores que ministram aulas constantes no Cronograma de Aula da turma do aluno). Além disso, na tela de agendamento, podem visualizar slots vagos apenas desses professores vinculados para escolha.
 - **Administradores/Secretaria:** Possuem visibilidade total de todos os agendamentos e registros do sistema.
 
 ---
