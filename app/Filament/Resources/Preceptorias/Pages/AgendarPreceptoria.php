@@ -39,7 +39,6 @@ class AgendarPreceptoria extends Page implements HasForms
         $this->form->fill();
     }
 
-
     protected function getMatriculasAcessiveis(): Collection
     {
         $user = auth()->user();
@@ -242,16 +241,20 @@ class AgendarPreceptoria extends Page implements HasForms
                     ->schema([
                         Select::make('preceptoria_id')
                             ->label('Horário Disponível')
-                            ->options(function (Get $get) use ($isAdminOrSecretaria) {
+                            ->options(function (Get $get) use ($user, $isAdminOrSecretaria) {
                                 $matriculaId = $get('matricula_id');
 
                                 if (! $matriculaId) {
                                     return [];
                                 }
 
+                                $roles = $user?->getRoleNames() ?? collect();
+                                $isRestricted = $roles->isNotEmpty() && $roles->every(fn ($role) => in_array($role, ['responsavel', 'aluno']));
+                                $minDate = $isRestricted ? now()->addDays(2)->toDateString() : now()->toDateString();
+
                                 $query = Preceptoria::query()
                                     ->whereNull('matricula_id')
-                                    ->where('data', '>=', now()->toDateString())
+                                    ->where('data', '>=', $minDate)
                                     ->with('professor');
 
                                 if (! $isAdminOrSecretaria) {

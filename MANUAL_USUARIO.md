@@ -599,6 +599,9 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido com os professores vinculados àquela turma.
 4. **Horário Disponível:** O sistema exibirá uma lista de horários (dia e hora) que o professor selecionado cadastrou e que ainda estão vagos (sem aluno).
 5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
+
+> [!IMPORTANT]
+> Para usuários com o papel exclusivo de **Aluno** ou **Responsável**, os horários de preceptoria só ficam disponíveis para agendamento com pelo menos **2 dias de antecedência** (D+2) da data atual. Administradores e secretaria não possuem essa restrição.
 6. **Interface Dinâmica:** Para evitar confusão, se o aluno selecionado já possuir um agendamento futuro em aberto, o sistema ocultará a seção de "Horários Disponíveis" e o botão de confirmação, exibindo em destaque os detalhes do agendamento atual e uma opção para cancelá-lo caso necessário.
 7. **Notificações Ampliadas:** Assim que o agendamento é confirmado (ou cancelado), uma notificação automática é enviada simultaneamente por **E-mail**, **Push (Celular)** e **Sininho do Painel** para:
    - O usuário que realizou a operação (Solicitante);
