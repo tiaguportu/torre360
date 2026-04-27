@@ -22,7 +22,7 @@ class PreceptoriaSchedulingWidget extends BaseWidget
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return [];
         }
 
@@ -64,7 +64,7 @@ class PreceptoriaSchedulingWidget extends BaseWidget
                 $prof = current(explode(' ', $agendamentoFuturo->professor?->nome ?? 'S/P'));
 
                 $stats[] = Stat::make($matricula->pessoa->nome, 'Preceptoria Agendada')
-                    ->description("{$data} às {$hora} | Prof. {$prof}")
+                    ->description("{$data} às {$hora}<br>Prof. {$prof}")
                     ->descriptionIcon('heroicon-m-check-circle')
                     ->color('success');
             } else {
@@ -86,7 +86,7 @@ class PreceptoriaSchedulingWidget extends BaseWidget
                         ->color('warning')
                         ->extraAttributes([
                             'class' => 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition',
-                            'onclick' => "window.location.href='".route('filament.admin.resources.preceptorias.agendar')."?matricula_id={$matricula->id}'",
+                            'onclick' => "window.location.href='" . route('filament.admin.resources.preceptorias.agendar') . "?matricula_id={$matricula->id}'",
                         ]);
                 }
             }

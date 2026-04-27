@@ -12,6 +12,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
@@ -41,6 +42,17 @@ class AdminPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile(ChangePassword::class)
             ->brandLogo(fn () => view('filament.logo'))
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(fn () => 'Roles: '.auth()->user()->roles->pluck('name')->join(', '))
+                    ->icon('heroicon-o-shield-check')
+                    ->disabled(),
+                MenuItem::make()
+                    ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
+                    ->icon('heroicon-o-user-circle')
+                    ->visible(fn () => auth()->user()->pessoa !== null)
+                    ->disabled(),
+            ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
             ->colors([
