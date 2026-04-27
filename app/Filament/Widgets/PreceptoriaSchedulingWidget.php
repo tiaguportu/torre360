@@ -6,6 +6,7 @@ use App\Models\Matricula;
 use App\Models\Preceptoria;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,7 @@ class PreceptoriaSchedulingWidget extends BaseWidget
         /** @var User $user */
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
@@ -51,14 +52,31 @@ class PreceptoriaSchedulingWidget extends BaseWidget
 
         foreach ($todasMatriculas as $matricula) {
             // Verificar se já tem preceptoria agendada futura
-            $temAgendamentoFuturo = Preceptoria::where('matricula_id', $matricula->id)
+            $agendamentoFuturo = Preceptoria::where('matricula_id', $matricula->id)
                 ->where('data', '>=', now()->toDateString())
-                ->exists();
+                ->orderBy('data', 'asc')
+                ->orderBy('hora_inicio', 'asc')
+                ->first();
 
-            if (!$temAgendamentoFuturo) {
-                // Verificar se existem horários disponíveis no sistema
+            if ($agendamentoFuturo) {
+                $data = $agendamentoFuturo->data ? Carbon::parse($agendamentoFuturo->data)->format('d/m/Y') : '';
+                $hora = $agendamentoFuturo->hora_inicio ? Carbon::parse($agendamentoFuturo->hora_inicio)->format('H:i') : '';
+                $prof = current(explode(' ', $agendamentoFuturo->professor?->nome ?? 'S/P'));
+
+                $stats[] = Stat::make($matricula->pessoa->nome, 'Preceptoria Agendada')
+                    ->description("{$data} às {$hora} | Prof. {$prof}")
+                    ->descriptionIcon('heroicon-m-check-circle')
+                    ->color('success');
+            } else {
+                // IDs dos ciclos de preceptoria em que o aluno JÁ tem agendamento (passado ou futuro)
+                $ciclosAgendadosQuery = Preceptoria::where('matricula_id', $matricula->id)
+                    ->whereNotNull('ciclo_preceptoria_id')
+                    ->select('ciclo_preceptoria_id');
+
+                // Verificar se existem horários disponíveis no sistema em um ciclo que o aluno AINDA NÃO agendou
                 $temJanelasDisponiveis = Preceptoria::whereNull('matricula_id')
                     ->where('data', '>=', now()->toDateString())
+                    ->whereNotIn('ciclo_preceptoria_id', $ciclosAgendadosQuery)
                     ->exists();
 
                 if ($temJanelasDisponiveis) {
@@ -67,8 +85,8 @@ class PreceptoriaSchedulingWidget extends BaseWidget
                         ->descriptionIcon('heroicon-m-calendar-days')
                         ->color('warning')
                         ->extraAttributes([
-                            'class' => 'cursor-pointer',
-                            'onclick' => "window.location.href='" . route('filament.admin.resources.preceptorias.agendar') . "?matricula_id={$matricula->id}'",
+                            'class' => 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition',
+                            'onclick' => "window.location.href='".route('filament.admin.resources.preceptorias.agendar')."?matricula_id={$matricula->id}'",
                         ]);
                 }
             }
