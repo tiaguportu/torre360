@@ -22,7 +22,7 @@ class CicloPreceptoriaResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Ciclos de Preceptoria';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Preceptoria';
+    protected static \UnitEnum|string|null $navigationGroup = 'Preceptoria';
 
     protected static ?int $navigationSort = 0;
 
