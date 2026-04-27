@@ -160,6 +160,12 @@ class PreceptoriasTable
                                 ->placeholder('Manter data original')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),
+                            Select::make('ciclo_preceptoria_id')
+                                ->label('Novo Ciclo de Preceptoria (Opcional)')
+                                ->placeholder('Manter ciclo original')
+                                ->relationship('cicloPreceptoria', 'nome')
+                                ->searchable()
+                                ->preload(),
                             Select::make('professor_id')
                                 ->label('Novo Professor(a) (Opcional)')
                                 ->placeholder('Manter professor original')
@@ -190,6 +196,10 @@ class PreceptoriasTable
                                     $newRecord->professor_id = $updateData['professor_id'];
                                 }
 
+                                if (isset($updateData['ciclo_preceptoria_id'])) {
+                                    $newRecord->ciclo_preceptoria_id = $updateData['ciclo_preceptoria_id'];
+                                }
+
                                 $newRecord->save();
                             });
 
@@ -208,6 +218,11 @@ class PreceptoriasTable
                                 ->label('Data')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),
+                            Select::make('ciclo_preceptoria_id')
+                                ->label('Ciclo de Preceptoria')
+                                ->relationship('cicloPreceptoria', 'nome')
+                                ->searchable()
+                                ->preload(),
                             TimePicker::make('hora_inicio')
                                 ->label('Hora Início')
                                 ->seconds(false),
