@@ -10,7 +10,7 @@ class CicloPreceptoriaSeeder extends Seeder
 {
     public function run(): void
     {
-        $periodo = PeriodoLetivo::where('ano', 2026)->first() ?: PeriodoLetivo::first();
+        $periodo = PeriodoLetivo::where('nome', 'like', '%2026%')->first() ?: PeriodoLetivo::first();
 
         $ciclos = [
             [
