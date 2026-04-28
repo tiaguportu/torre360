@@ -645,6 +645,24 @@ Para garantir a privacidade e o foco pedagógico, a visualização das preceptor
 
 ---
 
+### 18.9 Calendário de Preceptorias
+
+O sistema disponibiliza uma visão visual e interativa de todos os horários através da tela **Preceptoria → Calendário**.
+
+1. **Visão Mensal/Semanal:** Visualize os horários de preceptoria distribuídos no calendário.
+2. **Cores Indicativas:**
+   - **Verde:** Horários que já possuem uma matrícula (aluno) vinculada.
+   - **Cinza:** Horários disponíveis para agendamento.
+3. **Filtros Avançados:** Você pode filtrar a visualização por:
+   - **Status:** Ver apenas horários "Agendados" ou apenas "Disponíveis".
+   - **Professores:** Selecione um ou mais professores para visualizar especificamente as janelas de atendimento deles.
+4. **Segurança e Visibilidade:**
+   - **Super Admin e Secretaria:** Possuem visão total de todos os agendamentos de todos os professores da instituição.
+   - **Responsáveis:** Visualizam apenas os agendamentos de seus próprios filhos ou horários disponíveis dos professores vinculados academicamente aos seus filhos.
+   - **Professores:** Visualizam automaticamente apenas os seus próprios horários e agendamentos.
+
+---
+
 ## 👤 19. Perfil e Menu de Usuário
 
 No canto superior direito da tela, ao clicar no seu nome ou avatar, você acessa o **Menu de Usuário**.
