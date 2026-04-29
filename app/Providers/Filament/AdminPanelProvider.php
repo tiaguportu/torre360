@@ -134,7 +134,6 @@ class AdminPanelProvider extends PanelProvider
                         $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
                         if ($matriculaAtiva) {
                             $navGroups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
-                                ->icon('heroicon-o-academic-cap')
                                 ->items([
                                     NavigationItem::make('Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
