@@ -144,7 +144,19 @@ class AdminPanelProvider extends PanelProvider
                         }
                     }
 
-                    return $builder->groups($navGroups);
+                    return $builder->groups([
+                        ...$navGroups,
+                        NavigationGroup::make('CRM / Comercial'),
+                        NavigationGroup::make('Acadêmico'),
+                        NavigationGroup::make('Avaliações'),
+                        NavigationGroup::make('Calendário e Horários'),
+                        NavigationGroup::make('Financeiro'),
+                        NavigationGroup::make('Pessoas'),
+                        NavigationGroup::make('Documentos'),
+                        NavigationGroup::make('Operacional'),
+                        NavigationGroup::make('Localização e Cadastros')->collapsed(),
+                        NavigationGroup::make('Sistema e Segurança')->collapsed(),
+                    ]);
                 }
 
                 // Lógica para demais usuários: Mantém a estrutura de grupos automática
