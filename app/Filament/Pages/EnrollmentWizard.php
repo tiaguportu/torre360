@@ -31,6 +31,7 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 {
@@ -166,6 +167,41 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         };
 
         $enderecoFields = [
+            TextInput::make('cep')
+                ->label('CEP')
+                ->mask('99999-999')
+                ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, $set) {
+                    if (empty($state)) {
+                        return;
+                    }
+
+                    $cep = preg_replace('/\D/', '', $state);
+                    if (strlen($cep) !== 8) {
+                        return;
+                    }
+
+                    try {
+                        $response = Http::get("https://viacep.com.br/ws/{$cep}/json/")->json();
+
+                        if (isset($response['erro'])) {
+                            return;
+                        }
+
+                        $set('logradouro', $response['logradouro'] ?? '');
+                        $set('bairro', $response['bairro'] ?? '');
+                        $set('complemento', $response['complemento'] ?? '');
+
+                        if (isset($response['ibge'])) {
+                            $cidade = Cidade::where('codigo_ibge', $response['ibge'])->first();
+                            if ($cidade) {
+                                $set('cidade_id', (string) $cidade->id);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Silently fail if API is down
+                    }
+                }),
             Select::make('cidade_id')
                 ->label('Cidade')
                 ->searchable()
@@ -177,7 +213,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->mapWithKeys(fn ($cidade) => [$cidade->id => "{$cidade->nome} - ".($cidade->estado?->sigla ?? '')])
                     ->toArray())
                 ->getOptionLabelUsing(fn ($value): ?string => ($c = Cidade::with('estado')->find($value)) ? "{$c->nome} - ".($c->estado?->sigla ?? '') : null),
-            TextInput::make('cep')->label('CEP'),
             TextInput::make('logradouro')->label('Logradouro'),
             TextInput::make('numero')->label('Número'),
             TextInput::make('complemento')->label('Complemento'),
