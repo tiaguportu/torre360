@@ -6,6 +6,7 @@ use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
 use App\Filament\Pages\Auth\Register;
+use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Http\Middleware\AuditMiddleware;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -14,6 +15,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -41,15 +43,15 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)
-            ->brandLogo(fn () => view('filament.logo'))
+            ->brandLogo(fn() => view('filament.logo'))
             ->userMenuItems([
                 MenuItem::make()
-                    ->label(fn () => 'Roles: '.auth()->user()->roles->pluck('name')->join(', '))
+                    ->label(fn() => 'Roles: ' . auth()->user()->roles->pluck('name')->join(', '))
                     ->icon('heroicon-o-shield-check'),
                 MenuItem::make()
-                    ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
+                    ->label(fn() => 'Pessoa: ' . (auth()->user()->pessoa?->nome ?? 'Não vinculada'))
                     ->icon('heroicon-o-user-circle')
-                    ->visible(fn () => auth()->user()->pessoa !== null),
+                    ->visible(fn() => auth()->user()->pessoa !== null),
             ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
@@ -68,19 +70,19 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
-                fn (): string => view('filament.hooks.git-pull-button')->render(),
+                fn(): string => view('filament.hooks.git-pull-button')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render("@vite('resources/js/app.js')"),
+                fn(): string => Blade::render("@vite('resources/js/app.js')"),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn (): string => view('filament.hooks.register-link')->render(),
+                fn(): string => view('filament.hooks.register-link')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => '
+                fn(): string => '
                     <style>
                         .fi-simple-header-heading, 
                         .fi-simple-header-subheading, 
@@ -88,7 +90,7 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
-                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">',
+                    <link rel="stylesheet" href="' . asset('css/filament/admin/theme.css') . '">',
             )
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
@@ -123,11 +125,35 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Pessoas'),
                 NavigationGroup::make('Documentos'),
                 NavigationGroup::make('Operacional'),
-                NavigationGroup::make('Localização e Cadastros')
-                    ->collapsed(),
-                NavigationGroup::make('Sistema e Segurança')
-                    ->collapsed(),
-            ]);
+                NavigationGroup::make('Localização e Cadastros'),
+                NavigationGroup::make('Sistema e Segurança'),
+            ])
+            ->navigationItems(function () {
+                $user = auth()->user();
+                if (!$user?->hasRole('responsavel')) {
+                    return [];
+                }
+
+                $items = [];
+                $pessoa = $user->pessoa;
+                $alunos = $pessoa?->alunos ?? collect();
+
+                foreach ($alunos as $aluno) {
+                    $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
+
+                    if ($matriculaAtiva) {
+                        $items[] = NavigationItem::make('Preceptorias')
+                            ->group("Aluno: {$aluno->nome}")
+                            ->icon('heroicon-o-calendar-days')
+                            ->url(fn() => PreceptoriaResource::getUrl('index', [
+                                'tableFilters[matricula][value]' => $matriculaAtiva->id,
+                            ]))
+                            ->sort(1);
+                    }
+                }
+
+                return $items;
+            });
 
     }
 }
