@@ -118,7 +118,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigation(function (\Filament\Navigation\NavigationBuilder $builder): \Filament\Navigation\NavigationBuilder {
                 $user = auth()->user();
-
+                $navGroups = [];
                 // Lógica para Responsável: Grupos por Aluno
                 if ($user?->hasRole('responsavel')) {
                     $pessoa = $user->pessoa;
