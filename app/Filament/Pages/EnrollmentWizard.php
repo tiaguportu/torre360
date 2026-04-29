@@ -2,17 +2,17 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use App\Enums\SituacaoMatricula;
 use App\Models\Cidade;
 use App\Models\Contrato;
-use App\Models\CorRaca;
 use App\Models\Curso;
 use App\Models\Endereco;
 use App\Models\Matricula;
 use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
-use App\Models\Sexo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -103,8 +103,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                 "{$prefix}telefone" => $pessoa->telefone,
                                 "{$prefix}nacionalidade_id" => (string) $pessoa->nacionalidade_id,
                                 "{$prefix}naturalidade_id" => (string) $pessoa->naturalidade_id,
-                                "{$prefix}sexo_id" => (string) $pessoa->sexo_id,
-                                "{$prefix}cor_raca_id" => (string) $pessoa->cor_raca_id,
+                                "{$prefix}sexo" => $pessoa->sexo?->value,
+                                "{$prefix}cor_raca" => $pessoa->cor_raca?->value,
                             ];
 
                             if ($pessoa->endereco) {
@@ -148,13 +148,13 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->getSearchResultsUsing(fn (string $search): array => Cidade::where('nome', 'like', "%{$search}%")->limit(20)->pluck('nome', 'id')->toArray())
                     ->getOptionLabelUsing(fn ($value): ?string => Cidade::find($value)?->nome)
                     ->visible(fn ($get) => $get('nacionalidade_id') == Pais::where('nome', 'Brasil')->value('id')),
-                Select::make('sexo_id')
+                Select::make('sexo')
                     ->label('Sexo')
-                    ->options(Sexo::pluck('nome', 'id'))
+                    ->options(Sexo::class)
                     ->searchable(),
-                Select::make('cor_raca_id')
+                Select::make('cor_raca')
                     ->label('Cor/Raça')
-                    ->options(CorRaca::pluck('nome', 'id'))
+                    ->options(CorRaca::class)
                     ->searchable(),
             ];
         };
@@ -280,12 +280,12 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 'nome' => $alunoData['nome'],
                 'cpf' => $alunoData['cpf'] ?? null,
                 'data_nascimento' => $alunoData['data_nascimento'] ?? null,
-                'sexo_id' => $alunoData['sexo_id'] ?? null,
+                'sexo' => $alunoData['sexo'] ?? null,
                 'email' => $alunoData['email'] ?? null,
                 'telefone' => $alunoData['telefone'] ?? null,
                 'nacionalidade_id' => $alunoData['nacionalidade_id'] ?? null,
                 'naturalidade_id' => $alunoData['naturalidade_id'] ?? null,
-                'cor_raca_id' => $alunoData['cor_raca_id'] ?? null,
+                'cor_raca' => $alunoData['cor_raca'] ?? null,
                 'endereco_id' => $alunoEnderecoId,
             ]);
 
@@ -336,12 +336,12 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'nome' => $respData['nome'],
                         'cpf' => $respData['cpf'] ?? null,
                         'data_nascimento' => $respData['data_nascimento'] ?? null,
-                        'sexo_id' => $respData['sexo_id'] ?? null,
+                        'sexo' => $respData['sexo'] ?? null,
                         'email' => $respData['email'] ?? null,
                         'telefone' => $respData['telefone'] ?? null,
                         'nacionalidade_id' => $respData['nacionalidade_id'] ?? null,
                         'naturalidade_id' => $respData['naturalidade_id'] ?? null,
-                        'cor_raca_id' => $respData['cor_raca_id'] ?? null,
+                        'cor_raca' => $respData['cor_raca'] ?? null,
                         'endereco_id' => $respEnderecoId,
                     ]);
                 }
