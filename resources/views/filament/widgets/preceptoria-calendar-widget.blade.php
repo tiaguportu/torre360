@@ -35,7 +35,7 @@
             },
             setupCalendar() {
                 this.calendar = new FullCalendar.Calendar(this.$refs.calendar, {
-                    initialView: 'dayGridMonth',
+                    initialView: 'listMonth',
                     locale: 'pt-br',
                     headerToolbar: {
                         left: 'prev,next today',
