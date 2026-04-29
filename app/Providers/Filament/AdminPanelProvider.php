@@ -43,15 +43,15 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)
-            ->brandLogo(fn () => view('filament.logo'))
+            ->brandLogo(fn() => view('filament.logo'))
             ->userMenuItems([
                 MenuItem::make()
-                    ->label(fn () => 'Roles: '.auth()->user()->roles->pluck('name')->join(', '))
+                    ->label(fn() => 'Roles: ' . auth()->user()->roles->pluck('name')->join(', '))
                     ->icon('heroicon-o-shield-check'),
                 MenuItem::make()
-                    ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
+                    ->label(fn() => 'Pessoa: ' . (auth()->user()->pessoa?->nome ?? 'Não vinculada'))
                     ->icon('heroicon-o-user-circle')
-                    ->visible(fn () => auth()->user()->pessoa !== null),
+                    ->visible(fn() => auth()->user()->pessoa !== null),
             ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
@@ -70,19 +70,19 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
-                fn (): string => view('filament.hooks.git-pull-button')->render(),
+                fn(): string => view('filament.hooks.git-pull-button')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render("@vite('resources/js/app.js')"),
+                fn(): string => Blade::render("@vite('resources/js/app.js')"),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn (): string => view('filament.hooks.register-link')->render(),
+                fn(): string => view('filament.hooks.register-link')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => '
+                fn(): string => '
                     <style>
                         .fi-simple-header-heading, 
                         .fi-simple-header-subheading, 
@@ -90,7 +90,7 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
-                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">',
+                    <link rel="stylesheet" href="' . asset('css/filament/admin/theme.css') . '">',
             )
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
@@ -116,7 +116,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+            ->navigation(function (\Filament\Navigation\NavigationBuilder $builder): \Filament\Navigation\NavigationBuilder {
                 $user = auth()->user();
 
                 // Lógica para Responsável: Grupos por Aluno
@@ -138,7 +138,7 @@ class AdminPanelProvider extends PanelProvider
                                 ->items([
                                     NavigationItem::make('Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
-                                        ->url(fn () => PreceptoriaResource::getUrl('index', [
+                                        ->url(fn() => PreceptoriaResource::getUrl('index', [
                                             'tableFilters[matricula][value]' => $matriculaAtiva->id,
                                         ])),
                                 ]);
