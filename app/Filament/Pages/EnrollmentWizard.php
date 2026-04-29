@@ -145,8 +145,14 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 Select::make('naturalidade_id')
                     ->label('Naturalidade')
                     ->searchable()
-                    ->getSearchResultsUsing(fn (string $search): array => Cidade::where('nome', 'like', "%{$search}%")->limit(20)->pluck('nome', 'id')->toArray())
-                    ->getOptionLabelUsing(fn ($value): ?string => Cidade::find($value)?->nome)
+                    ->getSearchResultsUsing(fn (string $search): array => Cidade::query()
+                        ->with('estado')
+                        ->where('nome', 'like', "%{$search}%")
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn ($cidade) => [$cidade->id => "{$cidade->nome} - ".($cidade->estado?->sigla ?? '')])
+                        ->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => ($c = Cidade::with('estado')->find($value)) ? "{$c->nome} - ".($c->estado?->sigla ?? '') : null)
                     ->visible(fn ($get) => $get('nacionalidade_id') == Pais::where('nome', 'Brasil')->value('id')),
                 Select::make('sexo')
                     ->label('Sexo')
@@ -163,13 +169,14 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             Select::make('cidade_id')
                 ->label('Cidade')
                 ->searchable()
-                ->getSearchResultsUsing(fn (string $search): array => Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
+                ->getSearchResultsUsing(fn (string $search): array => Cidade::query()
+                    ->with('estado')
                     ->where('nome', 'like', "%{$search}%")
                     ->limit(20)
-                    ->pluck('full_nome', 'id')
+                    ->get()
+                    ->mapWithKeys(fn ($cidade) => [$cidade->id => "{$cidade->nome} - ".($cidade->estado?->sigla ?? '')])
                     ->toArray())
-                ->getOptionLabelUsing(fn ($value): ?string => Cidade::selectRaw("id, nome || ' - ' || (SELECT sigla FROM estado WHERE estado.id = cidade.estado_id) as full_nome")
-                    ->find($value)?->full_nome),
+                ->getOptionLabelUsing(fn ($value): ?string => ($c = Cidade::with('estado')->find($value)) ? "{$c->nome} - ".($c->estado?->sigla ?? '') : null),
             TextInput::make('cep')->label('CEP'),
             TextInput::make('logradouro')->label('Logradouro'),
             TextInput::make('numero')->label('Número'),
