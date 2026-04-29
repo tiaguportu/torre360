@@ -347,8 +347,11 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 'nacionalidade_id' => $alunoData['nacionalidade_id'] ?? null,
                 'naturalidade_id' => $alunoData['naturalidade_id'] ?? null,
                 'cor_raca' => $alunoData['cor_raca'] ?? null,
-                'endereco_id' => $alunoEnderecoId,
             ]);
+
+            if ($alunoEnderecoId) {
+                $aluno->enderecos()->attach($alunoEnderecoId);
+            }
 
             // 3. Criar Matrícula
             $matricula = Matricula::create([
@@ -403,8 +406,11 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'nacionalidade_id' => $respData['nacionalidade_id'] ?? null,
                         'naturalidade_id' => $respData['naturalidade_id'] ?? null,
                         'cor_raca' => $respData['cor_raca'] ?? null,
-                        'endereco_id' => $respEnderecoId,
                     ]);
+
+                    if ($respEnderecoId) {
+                        $responsavelPessoa->enderecos()->attach($respEnderecoId);
+                    }
                 }
 
                 // 5. Criar Vinculo Aluno-Responsável
