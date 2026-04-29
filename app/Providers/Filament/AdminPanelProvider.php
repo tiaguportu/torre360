@@ -112,59 +112,59 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
-
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+            ]);
+
+        if (auth()->check() && auth()->user()->hasRole('responsavel') && ! auth()->user()->hasRole('super_admin')) {
+            $panel->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
+                $pessoa = $user->pessoa;
+                $alunos = $pessoa?->alunos ?? collect();
 
-                if ($user?->hasRole('responsavel')) {
-                    $pessoa = $user->pessoa;
-                    $alunos = $pessoa?->alunos ?? collect();
+                $groups = [
+                    NavigationGroup::make('Principal')
+                        ->items([
+                            ...Dashboard::getNavigationItems(),
+                        ]),
+                ];
 
-                    $groups = [
-                        NavigationGroup::make('Principal')
+                foreach ($alunos as $aluno) {
+                    $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
+
+                    if ($matriculaAtiva) {
+                        $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
+                            ->icon('heroicon-o-academic-cap')
                             ->items([
-                                ...Dashboard::getNavigationItems(),
-                            ]),
-                    ];
-
-                    foreach ($alunos as $aluno) {
-                        $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
-
-                        if ($matriculaAtiva) {
-                            $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
-                                ->icon('heroicon-o-academic-cap')
-                                ->items([
-                                    NavigationItem::make('Minhas Preceptorias')
-                                        ->icon('heroicon-o-calendar-days')
-                                        ->url(fn () => PreceptoriaResource::getUrl('index', [
-                                            'tableFilters[matricula][value]' => $matriculaAtiva->id,
-                                        ])),
-                                ]);
-                        }
+                                NavigationItem::make('Minhas Preceptorias')
+                                    ->icon('heroicon-o-calendar-days')
+                                    ->url(fn () => PreceptoriaResource::getUrl('index', [
+                                        'tableFilters[matricula][value]' => $matriculaAtiva->id,
+                                    ])),
+                            ]);
                     }
-
-                    return $builder->groups($groups);
                 }
 
-                return $builder->groups([
-                    NavigationGroup::make('CRM / Comercial'),
-                    NavigationGroup::make('Acadêmico'),
-                    NavigationGroup::make('Avaliações'),
-                    NavigationGroup::make('Calendário e Horários'),
-                    NavigationGroup::make('Financeiro'),
-                    NavigationGroup::make('Pessoas'),
-                    NavigationGroup::make('Documentos'),
-                    NavigationGroup::make('Operacional'),
-                    NavigationGroup::make('Localização e Cadastros')
-                        ->collapsed(),
-                    NavigationGroup::make('Sistema e Segurança')
-                        ->collapsed(),
-                ]);
+                return $builder->groups($groups);
             });
+        } else {
+            $panel->navigationGroups([
+                'CRM / Comercial',
+                'Acadêmico',
+                'Avaliações',
+                'Calendário e Horários',
+                'Financeiro',
+                'Pessoas',
+                'Documentos',
+                'Operacional',
+                NavigationGroup::make('Localização e Cadastros')
+                    ->collapsed(),
+                NavigationGroup::make('Sistema e Segurança')
+                    ->collapsed(),
+            ]);
+        }
 
+        return $panel;
     }
 }
