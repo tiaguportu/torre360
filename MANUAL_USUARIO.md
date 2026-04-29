@@ -35,6 +35,14 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
 | 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield), Logs e Configurações Gerais |
 
+### 2.1 Barra Lateral Dinâmica (Perfil Responsável)
+
+Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automaticamente a barra lateral quando detecta que você possui este perfil:
+
+- **Grupos por Aluno:** Em vez de uma lista genérica de recursos, o sistema cria grupos específicos com o nome de cada um de seus filhos vinculados (ex: *Aluno: João Silva*).
+- **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará atalhos diretos para as informações dele, como **Minhas Preceptorias**, já com os filtros aplicados para aquele dependente específico.
+- **Grupo Principal:** O Dashboard e as funções gerais do sistema continuam disponíveis no grupo "Principal".
+
 ---
 
 ## 🎯 3. CRM — Gestão de Leads e Interessados
