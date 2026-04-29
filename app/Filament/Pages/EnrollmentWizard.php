@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\CorRaca;
 use App\Enums\Sexo;
 use App\Enums\SituacaoMatricula;
+use App\Models\AlunoResponsavel;
 use App\Models\Cidade;
 use App\Models\Contrato;
 use App\Models\Curso;
@@ -13,12 +14,15 @@ use App\Models\Matricula;
 use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
+use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -235,17 +239,32 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                 ->statePath('aluno')
                                 ->schema($enderecoFields),
                         ]),
-                    Step::make('Responsável Financeiro')
-                        ->description('Quem pagará as mensalidades')
-                        ->icon('heroicon-m-credit-card')
+                    Step::make('Pais / Responsáveis')
+                        ->description('Vínculos familiares e financeiros')
+                        ->icon('heroicon-m-users')
                         ->components([
                             Repeater::make('responsaveis')
-                                ->label('Responsáveis Financeiros')
+                                ->label('Responsáveis')
                                 ->addActionLabel('Adicionar Responsável')
                                 ->minItems(1)
                                 ->schema([
-                                    TextInput::make('parentesco')->label('Vínculo com o Aluno (Ex: Pai, Mãe)')->required()->columnSpanFull(),
-                                    TextInput::make('percentual')->label('Percentual de Responsabilidade (%)')->numeric()->default(100)->required()->columnSpanFull(),
+                                    Grid::make(3)
+                                        ->schema([
+                                            Select::make('tipo_vinculo_id')
+                                                ->label('Vínculo')
+                                                ->options(TipoVinculo::pluck('nome', 'id'))
+                                                ->required(),
+                                            Checkbox::make('is_financeiro')
+                                                ->label('Responsável Financeiro?')
+                                                ->live()
+                                                ->default(true),
+                                            TextInput::make('percentual')
+                                                ->label('Percentual (%)')
+                                                ->numeric()
+                                                ->default(100)
+                                                ->visible(fn ($get) => $get('is_financeiro'))
+                                                ->required(fn ($get) => $get('is_financeiro')),
+                                        ]),
                                     Section::make('Identificação do Responsável')
                                         ->columns(2)
                                         ->schema($getPessoaFields(null)),
@@ -388,12 +407,21 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ]);
                 }
 
-                // 5. Criar Vinculo Responsável Financeiro
-                ResponsavelFinanceiro::create([
-                    'pessoa_id' => $responsavelPessoa->id,
-                    'contrato_id' => $contrato->id,
-                    'percentual' => $respData['percentual'] ?? 100,
+                // 5. Criar Vinculo Aluno-Responsável
+                AlunoResponsavel::create([
+                    'aluno_id' => $aluno->id,
+                    'responsavel_id' => $responsavelPessoa->id,
+                    'tipo_vinculo_id' => $respData['tipo_vinculo_id'],
                 ]);
+
+                // 6. Criar Vinculo Responsável Financeiro (se marcado)
+                if ($respData['is_financeiro'] ?? false) {
+                    ResponsavelFinanceiro::create([
+                        'pessoa_id' => $responsavelPessoa->id,
+                        'contrato_id' => $contrato->id,
+                        'percentual' => $respData['percentual'] ?? 100,
+                    ]);
+                }
             }
 
             DB::commit();
