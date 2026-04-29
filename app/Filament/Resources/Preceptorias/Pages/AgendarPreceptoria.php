@@ -74,25 +74,29 @@ class AgendarPreceptoria extends Page implements HasForms
 
     protected function getProfessoresDaMatricula(int $matriculaId): Collection
     {
-        $matricula = Matricula::with(['turma.professorConselheiro', 'turma.cronogramasAula.professor'])->find($matriculaId);
+        $matricula = Matricula::with(['turma'])->find($matriculaId);
 
         if (! $matricula || ! $matricula->turma) {
             return collect();
         }
 
-        $professores = collect();
+        $professoresIds = collect();
 
-        if ($matricula->turma->professorConselheiro) {
-            $professores->push($matricula->turma->professorConselheiro);
+        if ($matricula->turma->professor_conselheiro_id) {
+            $professoresIds->push($matricula->turma->professor_conselheiro_id);
         }
 
-        CronogramaAula::where('turma_id', $matricula->turma_id)
+        $cronogramaProfessoresIds = CronogramaAula::where('turma_id', $matricula->turma_id)
             ->whereNotNull('pessoa_id')
-            ->with('professor')
-            ->get()
-            ->each(fn ($ca) => $ca->professor && $professores->push($ca->professor));
+            ->pluck('pessoa_id');
 
-        return $professores->unique('id');
+        $professoresIds = $professoresIds->concat($cronogramaProfessoresIds)->unique();
+
+        if ($professoresIds->isEmpty()) {
+            return collect();
+        }
+
+        return Pessoa::whereIn('id', $professoresIds)->get();
     }
 
     public function liberarHorario(int $id): void
@@ -153,7 +157,6 @@ class AgendarPreceptoria extends Page implements HasForms
     public function form(Schema $schema): Schema
     {
         $user = auth()->user();
-        $isAdminOrSecretaria = $user?->hasRole(['super_admin', 'admin', 'secretaria']);
 
         return $schema
             ->components([
@@ -241,7 +244,7 @@ class AgendarPreceptoria extends Page implements HasForms
                     ->schema([
                         Select::make('preceptoria_id')
                             ->label('Horário Disponível')
-                            ->options(function (Get $get) use ($user, $isAdminOrSecretaria) {
+                            ->options(function (Get $get) use ($user) {
                                 $matriculaId = $get('matricula_id');
 
                                 if (! $matriculaId) {
@@ -257,10 +260,8 @@ class AgendarPreceptoria extends Page implements HasForms
                                     ->where('data', '>=', $minDate)
                                     ->with('professor');
 
-                                if (! $isAdminOrSecretaria) {
-                                    $professoresIds = $this->getProfessoresDaMatricula((int) $matriculaId)->pluck('id');
-                                    $query->whereIn('professor_id', $professoresIds);
-                                }
+                                $professoresIds = $this->getProfessoresDaMatricula((int) $matriculaId)->pluck('id');
+                                $query->whereIn('professor_id', $professoresIds);
 
                                 return $query->orderBy('data')
                                     ->orderBy('hora_inicio')

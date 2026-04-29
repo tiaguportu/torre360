@@ -607,8 +607,11 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 2. **Seleção da Matrícula:**
    - Se você for um **Aluno**, suas matrículas serão exibidas automaticamente.
    - Se você for um **Responsável**, verá as matrículas de todos os alunos aos quais está vinculado.
-3. **Seleção do Professor:** Após escolher a matrícula, o campo de professor é preenchido com os professores vinculados àquela turma.
-4. **Horário Disponível:** O sistema exibirá uma lista de horários (dia e hora) que o professor selecionado cadastrou e que ainda estão vagos (sem aluno).
+3. **Seleção do Horário:** Após escolher a matrícula, o sistema filtra automaticamente os horários disponíveis apenas de professores que possuem vínculo acadêmico direto com o aluno selecionado:
+   - **Professor Regente (Conselheiro):** O professor responsável pela turma do aluno.
+   - **Professores da Grade:** Professores que ministram disciplinas registradas no **Cronograma de Aula** daquela turma.
+   - **Independente do Usuário:** Esta regra de filtragem se aplica a todos, garantindo que mesmo agendamentos feitos pela secretaria respeitem a relação pedagógica aluno-professor.
+4. **Horário Disponível:** O sistema exibirá a lista de horários (dia e hora) que os professores vinculados cadastraram e que ainda estão vagos (sem aluno).
 5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
 
 > [!IMPORTANT]
@@ -640,8 +643,9 @@ Para facilitar o acesso à agenda pedagógica, o sistema exibe um widget informa
 
 Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
 - **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.
-- **Responsáveis e Alunos:** Visualizam agendamentos vinculados à sua própria matrícula ou de seus dependentes. No caso de **Responsáveis**, a visualização de horários (disponíveis ou agendados) é restrita apenas aos professores que possuem vínculo acadêmico direto com seus filhos (Professor Conselheiro da Turma ou professores que ministram aulas constantes no Cronograma de Aula da turma do aluno). Além disso, na tela de agendamento, podem visualizar slots vagos apenas desses professores vinculados para escolha.
-- **Administradores/Secretaria:** Possuem visibilidade total de todos os agendamentos e registros do sistema.
+- **Responsáveis e Alunos:** Visualizam agendamentos vinculados à sua própria matrícula ou de seus dependentes.
+- **Regras de Agendamento (Todos os Usuários):** Na tela de agendamento, independente do papel (mesmo para Administradores), a visualização de horários disponíveis é restrita apenas aos professores que possuem vínculo acadêmico direto com o aluno (Professor Conselheiro da Turma ou professores que ministram aulas constantes no Cronograma de Aula da turma do aluno).
+- **Administradores/Secretaria:** Possuem visibilidade total de todos os agendamentos e registros já realizados no sistema, embora o agendamento de novos horários siga as restrições de vínculo descritas acima.
 
 ---
 
