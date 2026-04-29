@@ -6,10 +6,6 @@ use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
 use App\Filament\Pages\Auth\Register;
-use App\Filament\Resources\Faturas\FaturaResource;
-use App\Filament\Resources\FrequenciaEscolars\FrequenciaEscolarResource;
-use App\Filament\Resources\Notas\NotaResource;
-use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Http\Middleware\AuditMiddleware;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -17,9 +13,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
-use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -133,109 +127,7 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsed(),
                 NavigationGroup::make('Sistema e Segurança')
                     ->collapsed(),
-            ])
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
-                $user = auth()->user();
-
-                if (! $user) {
-                    return $builder;
-                }
-
-                // Dashboard sempre presente no topo
-                $builder->items([
-                    ...Dashboard::getNavigationItems(),
-                ]);
-
-                // 1. Contexto de Responsável: Adiciona grupos para cada dependente
-                if ($user->hasRole('responsavel')) {
-                    $pessoa = $user->pessoa;
-                    $alunos = $pessoa?->alunos ?? collect();
-                    foreach ($alunos as $aluno) {
-                        // Buscamos a matrícula ativa ou pendente mais recente
-                        $matricula = $aluno->matriculas()
-                            ->whereIn('situacao', ['ativa', 'pendente'])
-                            ->latest()
-                            ->first();
-
-                        if ($matricula) {
-                            $builder->group("Aluno: {$aluno->nome}", [
-                                NavigationItem::make('Notas')
-                                    ->icon('heroicon-o-presentation-chart-line')
-                                    ->url(fn () => NotaResource::getUrl('index', [
-                                        'tableFilters[matricula][value]' => $matricula->id,
-                                    ])),
-                                NavigationItem::make('Frequência')
-                                    ->icon('heroicon-o-check-badge')
-                                    ->url(fn () => FrequenciaEscolarResource::getUrl('index', [
-                                        'tableFilters[matricula][value]' => $matricula->id,
-                                    ])),
-                                NavigationItem::make('Financeiro')
-                                    ->icon('heroicon-o-banknotes')
-                                    ->url(fn () => FaturaResource::getUrl('index', [
-                                        'tableFilters[matricula][value]' => $matricula->id,
-                                    ])),
-                                NavigationItem::make('Preceptorias')
-                                    ->icon('heroicon-o-chat-bubble-left-right')
-                                    ->url(fn () => PreceptoriaResource::getUrl('index', [
-                                        'tableFilters[matricula][value]' => $matricula->id,
-                                    ])),
-                            ]);
-                        }
-                    }
-                }
-
-                // 2. Contexto de Aluno: Adiciona grupos para as próprias matrículas
-                if ($user->hasRole('aluno')) {
-                    $pessoa = $user->pessoa;
-                    $matriculas = $pessoa?->matriculas()
-                        ->whereIn('situacao', ['ativa', 'pendente'])
-                        ->get() ?? collect();
-
-                    foreach ($matriculas as $matricula) {
-                        $label = $matriculas->count() > 1
-                            ? "Matrícula: {$matricula->turma?->nome}"
-                            : 'Minha Vida Escolar';
-
-                        $builder->group($label, [
-                            NavigationItem::make('Minhas Notas')
-                                ->icon('heroicon-o-presentation-chart-line')
-                                ->url(fn () => NotaResource::getUrl('index', [
-                                    'tableFilters[matricula][value]' => $matricula->id,
-                                ])),
-                            NavigationItem::make('Minha Frequência')
-                                ->icon('heroicon-o-check-badge')
-                                ->url(fn () => FrequenciaEscolarResource::getUrl('index', [
-                                    'tableFilters[matricula][value]' => $matricula->id,
-                                ])),
-                            NavigationItem::make('Minhas Preceptorias')
-                                ->icon('heroicon-o-chat-bubble-left-right')
-                                ->url(fn () => PreceptoriaResource::getUrl('index', [
-                                    'tableFilters[matricula][value]' => $matricula->id,
-                                ])),
-                        ]);
-                    }
-                }
-
-                // 3. Contexto Administrativo (Staff): Adiciona os grupos padrão
-                // Se o usuário tiver papéis administrativos, mostramos os grupos de gestão.
-                // O Filament Shield cuidará de ocultar os recursos específicos dentro de cada grupo.
-                if ($user->hasAnyRole(['admin', 'super_admin', 'secretaria', 'coordenador', 'professor'])) {
-                    $builder->groups([
-                        NavigationGroup::make('CRM / Comercial'),
-                        NavigationGroup::make('Acadêmico'),
-                        NavigationGroup::make('Avaliações'),
-                        NavigationGroup::make('Calendário e Horários'),
-                        NavigationGroup::make('Financeiro'),
-                        NavigationGroup::make('Pessoas'),
-                        NavigationGroup::make('Documentos'),
-                        NavigationGroup::make('Operacional'),
-                        NavigationGroup::make('Localização e Cadastros')->collapsed(),
-                        NavigationGroup::make('Sistema e Segurança')->collapsed(),
-                    ]);
-                }
-
-                return $builder;
-            });
+            ]);
 
     }
 }

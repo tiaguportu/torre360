@@ -17,27 +17,9 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 
 ---
 
-## 📌 2. Painel de Navegação Dinâmico
+## 📌 2. Painel de Navegação
 
-A barra lateral esquerda do Torre360 adapta-se automaticamente conforme o seu papel (role) e contexto no sistema, garantindo que as informações mais importantes estejam sempre à mão.
-
-### 2.1 Navegação para Responsáveis (Pais e Tutores)
-Para usuários com o papel de **Responsável**, a barra lateral organiza-se dinamicamente para cada dependente:
-- **Agrupamento por Aluno:** O sistema cria um grupo exclusivo para cada filho/aluno vinculado a você (ex: `Aluno: João Silva`).
-- **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará links diretos que já carregam os dados filtrados para aquele dependente:
-    - **Notas:** Visualização de avaliações e desempenho escolar.
-    - **Frequência:** Histórico de presenças e faltas.
-    - **Financeiro:** Faturas e boletos relacionados exclusivamente àquele dependente.
-    - **Preceptorias:** Agenda de reuniões pedagógicas.
-- **Vantagem:** Você não precisa selecionar o aluno manualmente dentro de cada tela; o menu já faz o filtro automático para você.
-
-### 2.2 Navegação para Alunos
-Para usuários com o papel de **Aluno**, a barra lateral foca na sua própria jornada acadêmica:
-- **Minha Vida Escolar:** Um grupo centralizado com seus itens de Notas, Frequência e Preceptorias.
-- **Múltiplas Matrículas:** Caso você possua matrículas em cursos diferentes simultaneamente, o sistema criará grupos separados para cada uma delas, facilitando a organização.
-
-### 2.3 Navegação Administrativa (Staff)
-Para administradores, secretarias, coordenadores e professores, a barra lateral segue uma organização modular para facilitar a gestão global:
+A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 | Grupo | O que você faz aqui |
 |---|---|
@@ -47,7 +29,7 @@ Para administradores, secretarias, coordenadores e professores, a barra lateral 
 | 📅 **Calendário e Horários** | Cronograma de Aulas, Horários e Dias não letivos |
 | 💰 **Financeiro** | Faturas, Contratos, Bancos, Conciliação e Plano de Contas |
 | 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
-| 📄 **Documentos** | Gestão de Documentos enviados e Tipos de Documentos |
+| 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
 | 📖 **Currículo (BNCC)** | Áreas de Conhecimento, Campos de Experiência e Habilidades |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
