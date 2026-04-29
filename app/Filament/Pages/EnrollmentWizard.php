@@ -353,12 +353,14 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 $aluno->enderecos()->attach($alunoEnderecoId);
             }
 
+            $turma = Turma::find($raw['turma_id']);
+
             // 3. Criar Matrícula
             $matricula = Matricula::create([
                 'pessoa_id' => $aluno->id,
                 'turma_id' => $raw['turma_id'],
                 'situacao' => SituacaoMatricula::ATIVA,
-                'data_matricula' => now(),
+                'periodo_letivo_id' => $turma?->periodo_letivo_id,
             ]);
 
             // 4. Criar Contrato para a Matrícula
