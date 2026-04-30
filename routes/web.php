@@ -26,15 +26,15 @@ use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 
+// Rota de visualização de documentos privados (autenticação tratada no controller para evitar 403 do middleware)
+Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
+    ->where('path', '.*')
+    ->name('documentos.visualizar');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/contratos/{contrato}/visualizar', VisualizarContratoController::class)->name('contratos.visualizar');
     Route::get('/contratos/{contrato}/download', DownloadContratoController::class)->name('contratos.download');
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
-
-    // Rota de visualização de documentos privados
-    Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
-        ->where('path', '.*')
-        ->name('documentos.visualizar');
 
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
 });
