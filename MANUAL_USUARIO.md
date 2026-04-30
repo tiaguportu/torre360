@@ -40,7 +40,10 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automaticamente a barra lateral quando detecta que você possui este perfil:
 
 - **Grupos por Aluno:** Em vez de uma lista genérica de recursos, o sistema cria grupos específicos com o nome de cada um de seus filhos vinculados (ex: *Aluno: João Silva*).
-- **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará atalhos diretos para as informações dele, como **Minhas Preceptorias**, já com os filtros aplicados para aquele dependente específico.
+- **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará atalhos diretos para as informações dele:
+    - **Boletim Escolar:** Acesso rápido às notas, médias e frequências do aluno.
+    - **Minhas Preceptorias:** Visualização e agendamento de reuniões pedagógicas (já com filtros aplicados).
+    - **Documentos:** Consulta e envio de documentos obrigatórios, exibindo um **indicador numérico (badge)** em vermelho sempre que houver documentos pendentes de envio ou regularização.
 - **Grupo Principal:** O Dashboard e as funções gerais do sistema continuam disponíveis no grupo "Principal".
 
 ---

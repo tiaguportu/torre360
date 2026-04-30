@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use Closure;
 use Filament\Facades\Filament;
@@ -67,11 +68,21 @@ class EnsureActiveRole
                         if ($matriculaAtiva) {
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
                                 ->items([
+                                    NavigationItem::make('Boletim Escolar')
+                                        ->icon('heroicon-o-academic-cap')
+                                        ->url(fn () => MatriculaResource::getUrl('boletim', ['record' => $matriculaAtiva->id])),
+
                                     NavigationItem::make('Minhas Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
                                         ->url(fn () => PreceptoriaResource::getUrl('index', [
                                             'tableFilters[matricula][value]' => $matriculaAtiva->id,
                                         ])),
+
+                                    NavigationItem::make('Documentos')
+                                        ->icon('heroicon-o-document-text')
+                                        ->url(fn () => MatriculaResource::getUrl('documentos', ['record' => $matriculaAtiva->id]))
+                                        ->badge(fn () => $matriculaAtiva->getMissingMandatoryDocumentsCount() ?: null)
+                                        ->badgeColor('danger'),
                                 ]);
                         }
                     }
