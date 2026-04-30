@@ -44,7 +44,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Matrículas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
     protected static ?int $navigationSort = 1;
 

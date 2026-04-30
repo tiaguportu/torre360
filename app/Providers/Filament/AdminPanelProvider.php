@@ -45,14 +45,13 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.logo'))
             ->navigationGroups([
                 NavigationGroup::make('CRM / Comercial'),
+                NavigationGroup::make('Secretaria'),
                 NavigationGroup::make('Acadêmico'),
                 NavigationGroup::make('Avaliações'),
                 NavigationGroup::make('Currículo (BNCC)'),
                 NavigationGroup::make('Preceptoria'),
                 NavigationGroup::make('Calendário e Horários'),
                 NavigationGroup::make('Financeiro'),
-                NavigationGroup::make('Pessoas'),
-                NavigationGroup::make('Documentos'),
                 NavigationGroup::make('Operacional'),
                 NavigationGroup::make('Localização e Cadastros')
                     ->collapsed(),

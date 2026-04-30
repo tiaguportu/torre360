@@ -25,7 +25,7 @@ class AlunoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Alunos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 

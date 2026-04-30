@@ -21,7 +21,7 @@ class CoordenadorResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Coordenadores';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Pessoas';
+    protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
     protected static ?int $navigationSort = 3;
 
