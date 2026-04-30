@@ -8,6 +8,7 @@ use App\Filament\Pages\Auth\CustomRequestPasswordReset;
 use App\Filament\Pages\Auth\Register;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Http\Middleware\AuditMiddleware;
+use App\Http\Middleware\EnsureActiveRole;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -47,8 +48,15 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.logo'))
             ->userMenuItems([
                 MenuItem::make()
-                    ->label(fn () => 'Roles: '.auth()->user()->roles->pluck('name')->join(', '))
-                    ->icon('heroicon-o-shield-check'),
+                    ->label(fn () => 'Role Ativo: '.auth()->user()->active_role)
+                    ->icon('heroicon-o-shield-check')
+                    ->color('primary'),
+                ...auth()->user()->roles->map(fn ($role) => MenuItem::make()
+                    ->label("Atuar como: {$role->name}")
+                    ->icon($role->name === auth()->user()->active_role ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
+                    ->url(fn () => route('switch-role', ['role' => $role->name]))
+                    ->visible(fn () => $role->name !== auth()->user()->active_role)
+                )->toArray(),
                 MenuItem::make()
                     ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
                     ->icon('heroicon-o-user-circle')
@@ -109,6 +117,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 AuditMiddleware::class,
+                EnsureActiveRole::class,
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
@@ -117,7 +126,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
 
-        if (auth()->check() && auth()->user()->hasRole('responsavel') && ! auth()->user()->hasRole('super_admin')) {
+        if (auth()->check() && auth()->user()->hasActiveRole('responsavel') && ! auth()->user()->hasActiveRole('super_admin')) {
             $panel->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
                 $pessoa = $user->pessoa;

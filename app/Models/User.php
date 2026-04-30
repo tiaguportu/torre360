@@ -69,6 +69,29 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->pessoas->first();
     }
 
+    public function getActiveRoleAttribute(): ?string
+    {
+        if (! session()->has('active_role')) {
+            $role = $this->roles->first()?->name;
+            if ($role) {
+                session(['active_role' => $role]);
+            }
+        }
+
+        return session('active_role');
+    }
+
+    public function hasActiveRole(string|array $role): bool
+    {
+        $activeRole = $this->active_role;
+
+        if (is_array($role)) {
+            return in_array($activeRole, $role);
+        }
+
+        return $activeRole === $role;
+    }
+
     /**
      * The attributes that are mass assignable.
      *

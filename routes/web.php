@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('switch-role')->middleware('auth');
 
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
 Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->name('solicitar-acesso');

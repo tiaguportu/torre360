@@ -679,10 +679,13 @@ O sistema disponibiliza uma visão visual e interativa de todos os horários atr
 
 No canto superior direito da tela, ao clicar no seu nome ou avatar, você acessa o **Menu de Usuário**.
 
-### 19.1 Informações de Perfil
-Além de opções como **Alterar Senha** e **Sair**, o menu exibe informações úteis sobre o seu contexto no sistema:
-- **Roles:** Lista todos os níveis de acesso atribuídos a você (ex: Professor, Responsável, Admin).
-- **Pessoa:** Exibe o nome completo da entidade "Pessoa" que está associada ao seu usuário, confirmando o vínculo com seus dados cadastrais. Se não houver vínculo de pessoa, esta informação será ocultada.
+### 19.1 Gestão de Papéis (Roles) e Alternância de Contexto
+O Torre360 permite que um usuário possua múltiplos papéis (ex: Professor e Responsável). Para garantir a segurança e facilitar o uso, você utiliza apenas **um papel por vez**.
+
+1. **Role Ativo:** O menu exibe qual papel você está exercendo no momento (ex: `Role Ativo: professor`).
+2. **Alternar Contexto:** Se você tiver outros papéis disponíveis, eles aparecerão como opções (ex: `Atuar como: responsavel`). 
+3. **Como Trocar:** Clique na opção desejada. O sistema atualizará seu Dashboard, menu lateral e permissões instantaneamente para o novo contexto.
+4. **Pessoa:** Exibe o nome completo da entidade "Pessoa" associada ao seu usuário.
 
 ---
 
