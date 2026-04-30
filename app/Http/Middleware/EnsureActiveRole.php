@@ -34,16 +34,14 @@ class EnsureActiveRole
             }
 
             // Registra os itens de menu dinamicamente
-            Filament::serving(function () use ($user, $activeRole) {
-                Filament::registerUserMenuItems(
-                    $user->roles->map(fn ($role) => MenuItem::make()
-                        ->label("Atuar como: {$role->name}")
-                        ->icon($role->name === $activeRole ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
-                        ->url(route('switch-role', ['role' => $role->name]))
-                        ->visible(fn () => $role->name !== session('active_role'))
-                    )->toArray()
-                );
-            });
+            Filament::registerUserMenuItems(
+                $user->roles->map(fn ($role) => MenuItem::make()
+                    ->label("Atuar como: {$role->name}")
+                    ->icon($role->name === $activeRole ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
+                    ->url(route('switch-role', ['role' => $role->name]))
+                    ->visible(fn () => $role->name !== session('active_role'))
+                )->toArray()
+            );
         }
 
         return $next($request);

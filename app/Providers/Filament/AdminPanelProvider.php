@@ -110,9 +110,9 @@ class AdminPanelProvider extends PanelProvider
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
+                EnsureActiveRole::class,
                 DispatchServingFilamentEvent::class,
                 AuditMiddleware::class,
-                EnsureActiveRole::class,
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
