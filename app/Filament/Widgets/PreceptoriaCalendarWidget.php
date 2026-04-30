@@ -43,8 +43,8 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
             $inicioStr = $record->hora_inicio ? $record->hora_inicio->format('H:i:s') : '00:00:00';
             $fimStr = $record->hora_fim ? $record->hora_fim->format('H:i:s') : '23:59:59';
 
-            $start = $dataStr . 'T' . $inicioStr;
-            $end = $dataStr . 'T' . $fimStr;
+            $start = $dataStr.'T'.$inicioStr;
+            $end = $dataStr.'T'.$fimStr;
 
             $isAgendado = $record->matricula_id !== null;
             $cor = $isAgendado ? '#10b981' : '#6b7280'; // Verde se agendado, Cinza se disponível
@@ -52,7 +52,7 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
             return [
                 'id' => (string) $record->id,
                 'title' => $isAgendado
-                    ? 'Agendado: ' . ($record->matricula?->pessoa?->nome ?? 'Aluno')
+                    ? 'Agendado: '.($record->matricula?->pessoa?->nome ?? 'Aluno')
                     : 'Disponível',
                 'start' => $start,
                 'end' => $end,
@@ -75,12 +75,12 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
     private function applyQueryFilters(Builder $query): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
         // Filtros da Interface (se houver dados preenchidos no formulário)
-        if (!empty($this->data['status'])) {
+        if (! empty($this->data['status'])) {
             if ($this->data['status'] === 'agendado') {
                 $query->whereNotNull('matricula_id');
             } elseif ($this->data['status'] === 'disponivel') {
@@ -88,21 +88,23 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
             }
         }
 
-        if (!empty($this->data['professores'])) {
+        if (! empty($this->data['professores'])) {
             $query->whereIn('professor_id', $this->data['professores']);
         }
 
         // Filtros de Segurança por Role
-        if ($user->hasRole('super_admin') || $user->hasRole('secretaria')) {
+        $activeRole = session('active_role');
+
+        if ($activeRole === 'super_admin' || $activeRole === 'secretaria') {
             return;
         }
 
-        if ($user->hasRole('professor')) {
+        if ($activeRole === 'professor') {
             $pessoaIds = $user->pessoas->pluck('id')->toArray();
             $query->whereIn('professor_id', $pessoaIds);
         }
 
-        if ($user->hasRole('responsavel')) {
+        if ($activeRole === 'responsavel') {
             $filterData = $this->getFilteredData();
             $matriculaIds = $filterData['matriculaIds'];
             $todosProfessoresIds = $filterData['professorIds'];
@@ -124,7 +126,7 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
     private function getFilteredData(): array
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return ['matriculaIds' => [], 'professorIds' => []];
         }
 
@@ -180,10 +182,10 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
                                     ->label('Professores')
                                     ->multiple()
                                     ->options(function () {
-                                        $query = Pessoa::whereHas('users', fn($q) => $q->role('professor'))
+                                        $query = Pessoa::whereHas('users', fn ($q) => $q->role('professor'))
                                             ->whereNotNull('nome');
 
-                                        if (auth()->user()?->hasRole('responsavel')) {
+                                        if (session('active_role') === 'responsavel') {
                                             $data = $this->getFilteredData();
                                             $query->whereIn('id', $data['professorIds']);
                                         }
@@ -192,7 +194,7 @@ class PreceptoriaCalendarWidget extends Widget implements HasForms
                                     })
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn() => auth()->user()?->hasRole('professor')),
+                                    ->hidden(fn () => session('active_role') === 'professor'),
 
                                 Select::make('status')
                                     ->label('Status de Agendamento')
