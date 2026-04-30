@@ -2,9 +2,14 @@
 
 namespace App\Http\Middleware;
 
+use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use Closure;
 use Filament\Facades\Filament;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Dashboard;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -42,6 +47,39 @@ class EnsureActiveRole
                     ->visible(fn () => $role->name !== session('active_role'))
                 )->toArray()
             );
+
+            // Sobrescreve a navegação se o role ativo for 'responsavel'
+            if ($activeRole === 'responsavel' && ! $user->hasRole('super_admin')) {
+                Filament::getCurrentPanel()->navigation(function (NavigationBuilder $builder) use ($user): NavigationBuilder {
+                    $pessoa = $user->pessoa;
+                    $alunos = $pessoa?->alunos ?? collect();
+
+                    $groups = [
+                        NavigationGroup::make('Principal')
+                            ->items([
+                                ...Dashboard::getNavigationItems(),
+                            ]),
+                    ];
+
+                    foreach ($alunos as $aluno) {
+                        $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
+
+                        if ($matriculaAtiva) {
+                            $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
+                                ->icon('heroicon-o-academic-cap')
+                                ->items([
+                                    NavigationItem::make('Minhas Preceptorias')
+                                        ->icon('heroicon-o-calendar-days')
+                                        ->url(fn () => PreceptoriaResource::getUrl('index', [
+                                            'tableFilters[matricula][value]' => $matriculaAtiva->id,
+                                        ])),
+                                ]);
+                        }
+                    }
+
+                    return $builder->groups($groups);
+                });
+            }
         }
 
         return $next($request);

@@ -6,7 +6,6 @@ use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
 use App\Filament\Pages\Auth\Register;
-use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Http\Middleware\AuditMiddleware;
 use App\Http\Middleware\EnsureActiveRole;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -15,9 +14,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
-use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -121,53 +118,20 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
 
-        if (auth()->check() && auth()->user()->hasActiveRole('responsavel') && ! auth()->user()->hasActiveRole('super_admin')) {
-            $panel->navigation(function (NavigationBuilder $builder): NavigationBuilder {
-                $user = auth()->user();
-                $pessoa = $user->pessoa;
-                $alunos = $pessoa?->alunos ?? collect();
-
-                $groups = [
-                    NavigationGroup::make('Principal')
-                        ->items([
-                            ...Dashboard::getNavigationItems(),
-                        ]),
-                ];
-
-                foreach ($alunos as $aluno) {
-                    $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
-
-                    if ($matriculaAtiva) {
-                        $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
-                            ->icon('heroicon-o-academic-cap')
-                            ->items([
-                                NavigationItem::make('Minhas Preceptorias')
-                                    ->icon('heroicon-o-calendar-days')
-                                    ->url(fn () => PreceptoriaResource::getUrl('index', [
-                                        'tableFilters[matricula][value]' => $matriculaAtiva->id,
-                                    ])),
-                            ]);
-                    }
-                }
-
-                return $builder->groups($groups);
-            });
-        } else {
-            $panel->navigationGroups([
-                'CRM / Comercial',
-                'Acadêmico',
-                'Avaliações',
-                'Calendário e Horários',
-                'Financeiro',
-                'Pessoas',
-                'Documentos',
-                'Operacional',
-                NavigationGroup::make('Localização e Cadastros')
-                    ->collapsed(),
-                NavigationGroup::make('Sistema e Segurança')
-                    ->collapsed(),
-            ]);
-        }
+        $panel->navigationGroups([
+            'CRM / Comercial',
+            'Acadêmico',
+            'Avaliações',
+            'Calendário e Horários',
+            'Financeiro',
+            'Pessoas',
+            'Documentos',
+            'Operacional',
+            NavigationGroup::make('Localização e Cadastros')
+                ->collapsed(),
+            NavigationGroup::make('Sistema e Segurança')
+                ->collapsed(),
+        ]);
 
         return $panel;
     }
