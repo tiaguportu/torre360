@@ -61,16 +61,17 @@ class EnsureActiveRole
                             ->items([
                                 ...Dashboard::getNavigationItems(),
                             ]),
-                    ];
-
-                    foreach ($alunos as $aluno) {
-                        $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
-                        $groups[] = NavigationGroup::make('Preceptoria')
+                        NavigationGroup::make('Preceptoria')
                             ->items([
                                 NavigationItem::make('Agendar preceptoria')
                                     ->icon('heroicon-o-calendar-days')
                                     ->url(fn () => PreceptoriaResource::getUrl('agendar')),
-                            ]);
+                            ]),
+                    ];
+
+                    foreach ($alunos as $aluno) {
+                        $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
+
                         if ($matriculaAtiva) {
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
                                 ->items([
