@@ -66,7 +66,6 @@ class EnsureActiveRole
 
                         if ($matriculaAtiva) {
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
-                                ->icon('heroicon-o-academic-cap')
                                 ->items([
                                     NavigationItem::make('Minhas Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
