@@ -25,6 +25,11 @@ class EnsureActiveRole
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Não processa lógica de navegação em rotas de visualização de documentos ou fora do admin
+        if ($request->is('visualizar-documento/*') || ! str($request->path())->startsWith('admin')) {
+            return $next($request);
+        }
+
         if (auth()->check()) {
             $user = auth()->user();
             $roles = $user->roles->pluck('name')->toArray();
