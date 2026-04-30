@@ -43,6 +43,26 @@ class AdminPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile(ChangePassword::class)
             ->brandLogo(fn () => view('filament.logo'))
+            ->navigationGroups([
+                NavigationGroup::make('CRM / Comercial'),
+                NavigationGroup::make('Acadêmico'),
+                NavigationGroup::make('Avaliações'),
+                NavigationGroup::make('Currículo (BNCC)'),
+                NavigationGroup::make('Preceptoria'),
+                NavigationGroup::make('Calendário e Horários'),
+                NavigationGroup::make('Financeiro'),
+                NavigationGroup::make('Pessoas'),
+                NavigationGroup::make('Documentos'),
+                NavigationGroup::make('Operacional'),
+                NavigationGroup::make('Localização e Cadastros')
+                    ->collapsed(),
+                NavigationGroup::make('Configurações')
+                    ->collapsed(),
+                NavigationGroup::make('Sistema e Segurança')
+                    ->collapsed(),
+                NavigationGroup::make('Filament Shield')
+                    ->collapsed(),
+            ])
             ->userMenuItems([
                 MenuItem::make()
                     ->label(fn () => 'Role Ativo: '.(auth()->user()?->active_role ?? 'Nenhum'))
@@ -117,21 +137,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
-
-        $panel->navigationGroups([
-            'CRM / Comercial',
-            'Acadêmico',
-            'Avaliações',
-            'Calendário e Horários',
-            'Financeiro',
-            'Pessoas',
-            'Documentos',
-            'Operacional',
-            NavigationGroup::make('Localização e Cadastros')
-                ->collapsed(),
-            NavigationGroup::make('Sistema e Segurança')
-                ->collapsed(),
-        ]);
 
         return $panel;
     }
