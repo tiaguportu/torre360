@@ -70,7 +70,8 @@ class EnsureActiveRole
                                 ->items([
                                     NavigationItem::make('Boletim Escolar')
                                         ->icon('heroicon-o-academic-cap')
-                                        ->url(fn () => MatriculaResource::getUrl('boletim', ['record' => $matriculaAtiva->id])),
+                                        ->url(fn () => MatriculaResource::getUrl('boletim', ['record' => $matriculaAtiva->id]))
+                                        ->visible(fn () => $matriculaAtiva->notas()->exists()),
 
                                     NavigationItem::make('Minhas Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
