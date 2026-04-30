@@ -41,11 +41,12 @@ class EnsureActiveRole
 
             // Registra os itens de menu dinamicamente
             Filament::registerUserMenuItems(
-                $user->roles->map(fn ($role) => MenuItem::make()
-                    ->label("Atuar como: {$role->name}")
-                    ->icon($role->name === $activeRole ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
-                    ->url(route('switch-role', ['role' => $role->name]))
-                    ->visible(fn () => $role->name !== session('active_role'))
+                $user->roles->map(
+                    fn ($role) => MenuItem::make()
+                        ->label("Atuar como: {$role->name}")
+                        ->icon($role->name === $activeRole ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
+                        ->url(route('switch-role', ['role' => $role->name]))
+                        ->visible(fn () => $role->name !== session('active_role'))
                 )->toArray()
             );
 
@@ -64,7 +65,12 @@ class EnsureActiveRole
 
                     foreach ($alunos as $aluno) {
                         $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
-
+                        $groups[] = NavigationGroup::make('Preceptoria')
+                            ->items([
+                                NavigationItem::make('Agendar preceptoria')
+                                    ->icon('heroicon-o-calendar-days')
+                                    ->url(fn () => PreceptoriaResource::getUrl('agendar')),
+                            ]);
                         if ($matriculaAtiva) {
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
                                 ->items([
@@ -73,7 +79,7 @@ class EnsureActiveRole
                                         ->url(fn () => MatriculaResource::getUrl('boletim', ['record' => $matriculaAtiva->id]))
                                         ->visible(fn () => $matriculaAtiva->notas()->exists()),
 
-                                    NavigationItem::make('Minhas Preceptorias')
+                                    NavigationItem::make('Preceptorias')
                                         ->icon('heroicon-o-calendar-days')
                                         ->url(fn () => PreceptoriaResource::getUrl('index', [
                                             'tableFilters[matricula][value]' => $matriculaAtiva->id,
