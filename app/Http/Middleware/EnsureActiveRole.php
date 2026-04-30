@@ -81,8 +81,12 @@ class EnsureActiveRole
                                 ? Storage::url($aluno->foto)
                                 : 'https://ui-avatars.com/api/?name='.urlencode($aluno->nome).'&color=7F9CF5&background=EBF4FF';
 
-                            $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
-                                ->icon(new HtmlString('<img src="'.$avatarUrl.'" class="w-7 h-7 rounded-full shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10" style="object-fit: cover;">'))
+                            $groups[] = NavigationGroup::make(new HtmlString('
+                                <div class="flex items-center gap-x-3">
+                                    <img src="'.$avatarUrl.'" class="w-7 h-7 rounded-full shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10" style="object-fit: cover;">
+                                    <span class="truncate">Aluno: '.$aluno->nome.'</span>
+                                </div>
+                            '))
                                 ->items([
                                     NavigationItem::make('Boletim Escolar')
                                         ->icon('heroicon-o-academic-cap')
