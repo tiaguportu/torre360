@@ -83,7 +83,7 @@ class EnsureActiveRole
 
                         if ($matriculaAtiva) {
                             $avatarUrl = $aluno->foto
-                                ? Storage::url($aluno->foto)
+                                ? Storage::disk('local')->temporaryUrl($aluno->foto, now()->addHours(2))
                                 : 'https://ui-avatars.com/api/?name='.urlencode($aluno->nome).'&color=7F9CF5&background=EBF4FF';
 
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
