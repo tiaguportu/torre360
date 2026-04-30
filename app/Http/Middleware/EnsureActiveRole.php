@@ -12,6 +12,8 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureActiveRole
@@ -51,10 +53,12 @@ class EnsureActiveRole
             );
 
             // Sobrescreve a navegação se o role ativo for 'responsavel'
-            if ($activeRole === 'responsavel' && ! $user->hasRole('super_admin')) {
-                Filament::getCurrentPanel()->navigation(function (NavigationBuilder $builder) use ($user): NavigationBuilder {
+            if (in_array($activeRole, ['responsavel', 'aluno']) && ! $user->hasRole('super_admin')) {
+                Filament::getCurrentPanel()->navigation(function (NavigationBuilder $builder) use ($user, $activeRole): NavigationBuilder {
                     $pessoa = $user->pessoa;
-                    $alunos = $pessoa?->alunos ?? collect();
+                    $alunos = $activeRole === 'responsavel'
+                        ? ($pessoa?->alunos ?? collect())
+                        : collect([$pessoa])->filter();
 
                     $groups = [
                         NavigationGroup::make('Principal')
@@ -73,7 +77,12 @@ class EnsureActiveRole
                         $matriculaAtiva = $aluno->matriculas()->where('situacao', 'ativa')->first();
 
                         if ($matriculaAtiva) {
+                            $avatarUrl = $aluno->foto
+                                ? Storage::url($aluno->foto)
+                                : 'https://ui-avatars.com/api/?name='.urlencode($aluno->nome).'&color=7F9CF5&background=EBF4FF';
+
                             $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
+                                ->icon(new HtmlString('<img src="'.$avatarUrl.'" class="w-7 h-7 rounded-full shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10" style="object-fit: cover;">'))
                                 ->items([
                                     NavigationItem::make('Boletim Escolar')
                                         ->icon('heroicon-o-academic-cap')
