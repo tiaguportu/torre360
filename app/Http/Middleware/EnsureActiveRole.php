@@ -81,8 +81,7 @@ class EnsureActiveRole
                                     NavigationItem::make('Documentos')
                                         ->icon('heroicon-o-document-text')
                                         ->url(fn () => MatriculaResource::getUrl('documentos', ['record' => $matriculaAtiva->id]))
-                                        ->badge(fn () => $matriculaAtiva->getMissingMandatoryDocumentsCount() ?: null)
-                                        ->badgeColor('danger'),
+                                        ->badge(fn () => $matriculaAtiva->getMissingMandatoryDocumentsCount() ?: null, color: 'danger'),
                                 ]);
                         }
                     }
