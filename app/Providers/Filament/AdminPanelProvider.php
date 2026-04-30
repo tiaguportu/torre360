@@ -48,19 +48,14 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.logo'))
             ->userMenuItems([
                 MenuItem::make()
-                    ->label(fn () => 'Role Ativo: '.auth()->user()->active_role)
+                    ->label(fn () => 'Role Ativo: '.(auth()->user()?->active_role ?? 'Nenhum'))
                     ->icon('heroicon-o-shield-check')
-                    ->color('primary'),
-                ...auth()->user()->roles->map(fn ($role) => MenuItem::make()
-                    ->label("Atuar como: {$role->name}")
-                    ->icon($role->name === auth()->user()->active_role ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
-                    ->url(fn () => route('switch-role', ['role' => $role->name]))
-                    ->visible(fn () => $role->name !== auth()->user()->active_role)
-                )->toArray(),
+                    ->color('primary')
+                    ->visible(fn () => auth()->check()),
                 MenuItem::make()
-                    ->label(fn () => 'Pessoa: '.(auth()->user()->pessoa?->nome ?? 'Não vinculada'))
+                    ->label(fn () => 'Pessoa: '.(auth()->user()?->pessoa?->nome ?? 'Não vinculada'))
                     ->icon('heroicon-o-user-circle')
-                    ->visible(fn () => auth()->user()->pessoa !== null),
+                    ->visible(fn () => auth()->check() && auth()->user()?->pessoa !== null),
             ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()

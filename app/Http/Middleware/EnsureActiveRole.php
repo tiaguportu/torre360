@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Filament\Facades\Filament;
+use Filament\Navigation\MenuItem;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -24,10 +26,24 @@ class EnsureActiveRole
             if (! $activeRole || ! in_array($activeRole, $roles)) {
                 if (! empty($roles)) {
                     session(['active_role' => $roles[0]]);
+                    $activeRole = $roles[0];
                 } else {
                     session()->forget('active_role');
+                    $activeRole = null;
                 }
             }
+
+            // Registra os itens de menu dinamicamente
+            Filament::serving(function () use ($user, $activeRole) {
+                Filament::registerUserMenuItems(
+                    $user->roles->map(fn ($role) => MenuItem::make()
+                        ->label("Atuar como: {$role->name}")
+                        ->icon($role->name === $activeRole ? 'heroicon-s-check-circle' : 'heroicon-o-arrow-path')
+                        ->url(route('switch-role', ['role' => $role->name]))
+                        ->visible(fn () => $role->name !== session('active_role'))
+                    )->toArray()
+                );
+            });
         }
 
         return $next($request);
