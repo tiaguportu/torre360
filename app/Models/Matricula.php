@@ -244,6 +244,21 @@ class Matricula extends Model
     }
 
     /**
+     * Retorna a data da última notificação de possibilidade de preceptoria enviada.
+     */
+    public function getLastPreceptoriaNotificationDate(): ?Carbon
+    {
+        $lastActivity = Activity::query()
+            ->where('subject_type', $this->getMorphClass())
+            ->where('subject_id', $this->getKey())
+            ->where('event', 'notificacao_preceptoria_disponivel')
+            ->latest()
+            ->first();
+
+        return $lastActivity?->created_at;
+    }
+
+    /**
      * Envia notificação de documentos pendentes aos destinatários identificados.
      *
      * @return array{enviados: int, falhas: array<string, string>}

@@ -194,7 +194,9 @@ class MatriculasTable
                     }),
                 Action::make('avisar_possibilidade_preceptoria')
                     ->label('Avisar Preceptoria')
-                    ->tooltip('Avisar sobre disponibilidade de horários de preceptoria')
+                    ->tooltip(fn (Matricula $record) => $record->getLastPreceptoriaNotificationDate()
+                        ? 'Último envio: '.$record->getLastPreceptoriaNotificationDate()->format('d/m/Y H:i').' - Clique para enviar novamente.'
+                        : 'Avisar sobre disponibilidade de horários de preceptoria (Nenhum envio anterior)')
                     ->icon(Heroicon::OutlinedCalendarDays)
                     ->color('success')
                     ->requiresConfirmation()
