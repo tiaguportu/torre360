@@ -86,7 +86,7 @@ class EnsureActiveRole
                                 ? Storage::disk('local')->temporaryUrl($aluno->foto, now()->addHours(2))
                                 : 'https://ui-avatars.com/api/?name='.urlencode($aluno->nome).'&color=7F9CF5&background=EBF4FF';
 
-                            $groups[] = NavigationGroup::make("Aluno: {$aluno->nome}")
+                            $groups[] = NavigationGroup::make($aluno->nome)
                                 ->icon(new HtmlString('
                                     <div style="width: 2.25rem; height: 2.25rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" class="shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10">
                                         <img src="'.$avatarUrl.'" style="width: 100%; height: 100%; object-fit: cover;">
