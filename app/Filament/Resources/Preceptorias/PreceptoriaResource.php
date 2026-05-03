@@ -6,6 +6,7 @@ use App\Filament\Resources\Preceptorias\Pages\AgendarPreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\CreatePreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\EditPreceptoria;
 use App\Filament\Resources\Preceptorias\Pages\ListPreceptorias;
+use App\Filament\Resources\Preceptorias\Pages\ViewPreceptoria;
 use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaForm;
 use App\Filament\Resources\Preceptorias\Tables\PreceptoriasTable;
 use App\Models\Preceptoria;
@@ -160,6 +161,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
         return [
             'index' => ListPreceptorias::route('/'),
             'create' => CreatePreceptoria::route('/create'),
+            'view' => ViewPreceptoria::route('/{record}'),
             'edit' => EditPreceptoria::route('/{record}/edit'),
             'agendar' => AgendarPreceptoria::route('/agendar'),
         ];

@@ -27,6 +27,14 @@ class PreceptoriaSchedulingWidget extends BaseWidget
             return [];
         }
 
+        $activeRole = $user->active_role;
+
+        // O widget de agendamento só faz sentido para quem agenda (Responsável ou Aluno)
+        // Super Admin também vê para fins de teste/suporte
+        if (! in_array($activeRole, ['responsavel', 'aluno', 'super_admin'])) {
+            return [];
+        }
+
         // Buscar todas as pessoas vinculadas ao usuário
         $pessoasIds = $user->pessoas()->pluck('pessoa.id')->toArray();
 
@@ -34,20 +42,27 @@ class PreceptoriaSchedulingWidget extends BaseWidget
             return [];
         }
 
-        // Buscar matrículas ativas vinculadas a essas pessoas (seja como aluno ou através de dependentes)
-        // 1. Matrículas onde o usuário é o próprio aluno
-        $matriculasProprias = Matricula::whereIn('pessoa_id', $pessoasIds)
-            ->where('situacao', 'ativa')
-            ->get();
+        $todasMatriculas = collect();
 
-        // 2. Matrículas onde o usuário é responsável por um aluno
-        $matriculasDependentes = Matricula::whereHas('pessoa.responsaveis', function ($query) use ($pessoasIds) {
-            $query->whereIn('responsavel_id', $pessoasIds);
-        })
-            ->where('situacao', 'ativa')
-            ->get();
+        // 1. Matrículas onde o usuário é o próprio aluno (Role: Aluno ou Super Admin)
+        if (in_array($activeRole, ['aluno', 'super_admin'])) {
+            $matriculasProprias = Matricula::whereIn('pessoa_id', $pessoasIds)
+                ->where('situacao', 'ativa')
+                ->get();
+            $todasMatriculas = $todasMatriculas->concat($matriculasProprias);
+        }
 
-        $todasMatriculas = $matriculasProprias->concat($matriculasDependentes)->unique('id');
+        // 2. Matrículas onde o usuário é responsável por um aluno (Role: Responsável ou Super Admin)
+        if (in_array($activeRole, ['responsavel', 'super_admin'])) {
+            $matriculasDependentes = Matricula::whereHas('pessoa.responsaveis', function ($query) use ($pessoasIds) {
+                $query->whereIn('responsavel_id', $pessoasIds);
+            })
+                ->where('situacao', 'ativa')
+                ->get();
+            $todasMatriculas = $todasMatriculas->concat($matriculasDependentes);
+        }
+
+        $todasMatriculas = $todasMatriculas->unique('id');
 
         $stats = [];
 
