@@ -19,7 +19,11 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable;
+    use HasFactory, LogsActivity, Notifiable;
+
+    use HasRoles {
+        hasPermissionTo as traitHasPermissionTo;
+    }
 
     public function sendEmailVerificationNotification(): void
     {
@@ -94,16 +98,25 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function hasPermissionInActiveRole(string $permission): bool
     {
-        $activeRole = $this->active_role;
+        return $this->hasPermissionTo($permission);
+    }
 
-        if ($activeRole === 'super_admin') {
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        if ($this->hasRole('super_admin')) {
             return true;
         }
 
-        return $this->roles()
-            ->where('name', $activeRole)
-            ->whereHas('permissions', fn ($q) => $q->where('name', $permission))
-            ->exists();
+        $activeRole = session('active_role');
+
+        if ($activeRole) {
+            return $this->roles()
+                ->where('name', $activeRole)
+                ->whereHas('permissions', fn ($q) => $q->where('name', (string) $permission))
+                ->exists();
+        }
+
+        return $this->traitHasPermissionTo($permission, $guardName);
     }
 
     /**
