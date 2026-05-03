@@ -18,6 +18,25 @@ class PreceptoriaSchedulingWidget extends BaseWidget
 
     protected static ?int $sort = 2;
 
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $activeRole = $user->active_role;
+
+        // O widget de agendamento só deve ser visível se o role ativo for um dos permitidos
+        if (! in_array($activeRole, ['responsavel', 'aluno', 'super_admin'])) {
+            return false;
+        }
+
+        // Respeita também as permissões do Shield (através da trait HasWidgetShield)
+        return true;
+    }
+
     protected function getStats(): array
     {
         /** @var User $user */
@@ -28,12 +47,6 @@ class PreceptoriaSchedulingWidget extends BaseWidget
         }
 
         $activeRole = $user->active_role;
-
-        // O widget de agendamento só faz sentido para quem agenda (Responsável ou Aluno)
-        // Super Admin também vê para fins de teste/suporte
-        if (! in_array($activeRole, ['responsavel', 'aluno', 'super_admin'])) {
-            return [];
-        }
 
         // Buscar todas as pessoas vinculadas ao usuário
         $pessoasIds = $user->pessoas()->pluck('pessoa.id')->toArray();
