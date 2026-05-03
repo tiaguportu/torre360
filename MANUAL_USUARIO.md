@@ -582,6 +582,7 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
 6. **Ações em Lote:** Para facilitar a gestão de múltiplos horários, você pode selecionar várias preceptorias na tabela e utilizar:
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
    - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
+7. **Visualização de Detalhes:** Clique em qualquer linha da tabela de preceptorias ou no botão de visualização (ícone de olho) para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
 
 ---
 
