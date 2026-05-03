@@ -44,26 +44,31 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             return $query->whereRaw('1 = 0');
         }
 
-        if ($user->hasAnyRole(['super_admin', 'admin', 'secretaria'])) {
+        $activeRole = session('active_role');
+
+        // Se o usuário tem papel de gestão e NÃO está atuando como um papel restritivo, vê tudo.
+        // Se o active_role for de gestão, vê tudo.
+        if (in_array($activeRole, ['super_admin', 'admin', 'secretaria'])) {
             return $query;
         }
 
         $pessoa = $user->pessoa;
         if (! $pessoa) {
+            // Se não tem pessoa vinculada e não é papel de gestão, não vê nada.
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where(function (Builder $q) use ($user, $pessoa) {
+        return $query->where(function (Builder $q) use ($pessoa, $activeRole) {
             $hasFilter = false;
 
             // 1. Professor vê suas preceptorias
-            if ($user->hasRole('professor')) {
+            if ($activeRole === 'professor') {
                 $q->where('professor_id', $pessoa->id);
                 $hasFilter = true;
             }
 
             // 2. Aluno vê slots vagos OU seus próprios agendamentos
-            if ($user->hasRole('aluno')) {
+            if ($activeRole === 'aluno') {
                 $method = $hasFilter ? 'orWhere' : 'where';
                 $q->$method(function (Builder $sub) use ($pessoa) {
                     $sub->whereNull('matricula_id')
@@ -75,7 +80,7 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
             }
 
             // 3. Responsável vê slots vagos OU agendamentos de seus filhos
-            if ($user->hasRole('responsavel')) {
+            if ($activeRole === 'responsavel') {
                 $method = $hasFilter ? 'orWhere' : 'where';
                 $q->$method(function (Builder $sub) use ($pessoa) {
                     $alunoIds = $pessoa->alunos()->pluck('aluno_id')->toArray();

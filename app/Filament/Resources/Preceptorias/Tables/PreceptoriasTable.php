@@ -77,7 +77,7 @@ class PreceptoriasTable
                     ->label('Professor(a)')
                     ->relationship('professor', 'nome', fn (Builder $query) => $query
                         ->when(
-                            auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                            session('active_role') === 'professor' && ! in_array(session('active_role'), ['super_admin', 'admin', 'secretaria']),
                             fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
                         )
                         ->orderBy('nome')
@@ -174,7 +174,7 @@ class PreceptoriasTable
                                 ->placeholder('Manter professor original')
                                 ->relationship('professor', 'nome', fn (Builder $query) => $query
                                     ->when(
-                                        auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                                        session('active_role') === 'professor' && ! in_array(session('active_role'), ['super_admin', 'admin', 'secretaria']),
                                         fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
                                     )
                                     ->orderBy('nome')
@@ -236,7 +236,7 @@ class PreceptoriasTable
                                 ->label('Professor(a)')
                                 ->relationship('professor', 'nome', fn (Builder $query) => $query
                                     ->when(
-                                        auth()->user()?->hasRole('professor') && ! auth()->user()?->hasAnyRole(['super_admin', 'admin', 'secretaria']),
+                                        session('active_role') === 'professor' && ! in_array(session('active_role'), ['super_admin', 'admin', 'secretaria']),
                                         fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
                                     )
                                     ->orderBy('nome')
