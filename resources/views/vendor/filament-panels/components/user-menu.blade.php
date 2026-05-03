@@ -34,6 +34,7 @@
 
 <x-filament::dropdown
     :placement="($position === UserMenuPosition::Topbar) ? 'bottom-end' : 'top-end'"
+    :flip="false"
     :teleport="$position === UserMenuPosition::Topbar"
     :attributes="
         \Filament\Support\prepare_inherited_attributes($attributes)
