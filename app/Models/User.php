@@ -103,6 +103,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function hasPermissionTo($permission, $guardName = null): bool
     {
+        // Se for super_admin, sempre tem permissão
         if ($this->hasRole('super_admin')) {
             return true;
         }
@@ -110,10 +111,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         $activeRole = session('active_role');
 
         if ($activeRole) {
-            return $this->roles()
-                ->where('name', $activeRole)
-                ->whereHas('permissions', fn ($q) => $q->where('name', (string) $permission))
-                ->exists();
+            $role = $this->roles->where('name', $activeRole)->first();
+
+            return $role ? $role->hasPermissionTo($permission, $guardName) : false;
         }
 
         return $this->traitHasPermissionTo($permission, $guardName);
