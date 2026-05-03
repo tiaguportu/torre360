@@ -166,9 +166,9 @@ class PreceptoriaResource extends Resource implements HasShieldPermissions
         return [
             'index' => ListPreceptorias::route('/'),
             'create' => CreatePreceptoria::route('/create'),
+            'agendar' => AgendarPreceptoria::route('/agendar'),
             'view' => ViewPreceptoria::route('/{record}'),
             'edit' => EditPreceptoria::route('/{record}/edit'),
-            'agendar' => AgendarPreceptoria::route('/agendar'),
         ];
     }
 }
