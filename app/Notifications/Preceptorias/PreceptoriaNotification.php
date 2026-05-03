@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Preceptorias;
 
+use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Models\Preceptoria;
 use App\Notifications\Channels\FcmChannel;
 use Filament\Actions\Action;
@@ -57,7 +58,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
                 ->line("Professor: {$professor}")
                 ->line("Data: {$dataF}")
                 ->line("Horário: {$horaF}")
-                ->action('Ver Preceptorias', url('/admin/preceptorias'));
+                ->action('Ver Preceptoria', PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria]));
         }
 
         $intro = $this->paraSolicitante
@@ -102,8 +103,10 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
             ->body($body)
             ->actions([
                 Action::make('view')
-                    ->label($this->tipo === 'agendamento' ? 'Ver Preceptorias' : 'Ver Horários')
-                    ->url('/admin/preceptorias')
+                    ->label($this->tipo === 'agendamento' ? 'Ver Preceptoria' : 'Ver Horários')
+                    ->url($this->tipo === 'agendamento'
+                        ? PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria])
+                        : '/admin/preceptorias')
                     ->button(),
             ])
             ->getDatabaseMessage();
@@ -135,7 +138,9 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
             'title' => $title,
             'body' => $body,
             'data' => [
-                'url' => '/admin/preceptorias',
+                'url' => $this->tipo === 'agendamento'
+                    ? PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], absolute: false)
+                    : '/admin/preceptorias',
                 'preceptoria_id' => $this->preceptoria->id,
             ],
         ];

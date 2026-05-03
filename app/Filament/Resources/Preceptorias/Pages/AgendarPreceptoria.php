@@ -306,7 +306,7 @@ class AgendarPreceptoria extends Page implements HasForms
                 ->success()
                 ->send();
 
-            $this->redirect(PreceptoriaResource::getUrl('view', ['record' => $preceptoria]));
+            $this->form->fill();
 
         } catch (\Throwable $e) {
             Notification::make()

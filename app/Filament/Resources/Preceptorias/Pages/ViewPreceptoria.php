@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Preceptorias\Pages;
 
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
-use Filament\Actions\EditAction;
+use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewPreceptoria extends ViewRecord
@@ -13,7 +13,7 @@ class ViewPreceptoria extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            Actions\EditAction::make(),
         ];
     }
 }
