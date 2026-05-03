@@ -92,6 +92,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $activeRole === $role;
     }
 
+    public function hasPermissionInActiveRole(string $permission): bool
+    {
+        $activeRole = $this->active_role;
+
+        if ($activeRole === 'super_admin') {
+            return true;
+        }
+
+        return $this->roles()
+            ->where('name', $activeRole)
+            ->whereHas('permissions', fn ($q) => $q->where('name', $permission))
+            ->exists();
+    }
+
     /**
      * The attributes that are mass assignable.
      *
