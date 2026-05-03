@@ -76,57 +76,60 @@ class ListMatriculas extends ListRecords
                     ViewField::make('help_content')
                         ->view('filament.components.help-content')
                         ->viewData([
-                            'content' => function () {
-                                $user = auth()->user();
-                                $activeRole = session('active_role');
-                                
-                                $canCreate = $user->can('create_matricula');
-                                $canUpdate = $user->can('update_matricula');
-                                $canDocumentos = $user->can('documentos_matricula');
-                                $canAvisarPendencia = $user->can('avisarPendencia_matricula');
-                                $canAvisarPreceptoria = $user->can('avisarPossibilidadePreceptoria_matricula');
-                                $canBoletim = $user->can('boletim_matricula');
-
-                                $html = '<p>Esta página permite gerenciar as matrículas dos alunos no sistema. Aqui você pode visualizar, filtrar e realizar ações em massa.</p>';
-                                $html .= '<h3>O que você pode fazer aqui?</h3>';
-                                $html .= '<ul>';
-                                $html .= '<li><strong>Listagem e Busca:</strong> Visualize todos os alunos matriculados. Use a barra de busca para encontrar alunos por nome ou os filtros para filtrar por Curso, Turma, Período Letivo ou Situação.</li>';
-                                
-                                if ($canCreate) {
-                                    $html .= '<li><strong>Matrícula em Lote:</strong> Use o botão "Matrícula em Lote" para matricular vários alunos de uma vez em uma turma específica.</li>';
-                                }
-
-                                $html .= '<li><strong>Ações Individuais:</strong><ul>';
-                                if ($canUpdate) {
-                                    $html .= '<li><strong>Editar:</strong> Altere dados da matrícula (turma, situação, etc).</li>';
-                                }
-                                if ($canBoletim) {
-                                    $html .= '<li><strong>Boletim:</strong> Visualiza o boletim escolar do aluno (disponível apenas se houver notas).</li>';
-                                }
-                                if ($canDocumentos) {
-                                    $html .= '<li><strong>Documentos:</strong> Gerencia o envio de documentos obrigatórios. O ícone fica vermelho se houver pendências.</li>';
-                                }
-                                if ($canAvisarPendencia) {
-                                    $html .= '<li><strong>Avisar Pendência:</strong> Envia um e-mail automático aos responsáveis listando os documentos que faltam.</li>';
-                                }
-                                if ($canAvisarPreceptoria) {
-                                    $html .= '<li><strong>Avisar Preceptoria:</strong> Envia um convite para agendamento de preceptoria quando houver disponibilidade.</li>';
-                                }
-                                $html .= '</ul></li>';
-
-                                if ($canUpdate || $canAvisarPendencia) {
-                                    $html .= '<li><strong>Ações em Lote:</strong> Selecione vários registros para realizar ações coletivas.</li>';
-                                }
-                                $html .= '</ul>';
-                                
-                                if ($canDocumentos) {
-                                    $html .= '<p><small>Dica: Linhas com fundo avermelhado indicam alunos com documentos obrigatórios pendentes.</small></p>';
-                                }
-
-                                return $html;
-                            },
+                            'content' => $this->getHelpContent(),
                         ]),
                 ]),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+        $activeRole = session('active_role');
+
+        $canCreate = $user->can('create_matricula');
+        $canUpdate = $user->can('update_matricula');
+        $canDocumentos = $user->can('documentos_matricula');
+        $canAvisarPendencia = $user->can('avisarPendencia_matricula');
+        $canAvisarPreceptoria = $user->can('avisarPossibilidadePreceptoria_matricula');
+        $canBoletim = $user->can('boletim_matricula');
+
+        $html = '<p>Esta página permite gerenciar as matrículas dos alunos no sistema. Aqui você pode visualizar, filtrar e realizar ações em massa.</p>';
+        $html .= '<h3>O que você pode fazer aqui?</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Listagem e Busca:</strong> Visualize todos os alunos matriculados. Use a barra de busca para encontrar alunos por nome ou os filtros para filtrar por Curso, Turma, Período Letivo ou Situação.</li>';
+
+        if ($canCreate) {
+            $html .= '<li><strong>Matrícula em Lote:</strong> Use o botão "Matrícula em Lote" para matricular vários alunos de uma vez em uma turma específica.</li>';
+        }
+
+        $html .= '<li><strong>Ações Individuais:</strong><ul>';
+        if ($canUpdate) {
+            $html .= '<li><strong>Editar:</strong> Altere dados da matrícula (turma, situação, etc).</li>';
+        }
+        if ($canBoletim) {
+            $html .= '<li><strong>Boletim:</strong> Visualiza o boletim escolar do aluno (disponível apenas se houver notas).</li>';
+        }
+        if ($canDocumentos) {
+            $html .= '<li><strong>Documentos:</strong> Gerencia o envio de documentos obrigatórios. O ícone fica vermelho se houver pendências.</li>';
+        }
+        if ($canAvisarPendencia) {
+            $html .= '<li><strong>Avisar Pendência:</strong> Envia um e-mail automático aos responsáveis listando os documentos que faltam.</li>';
+        }
+        if ($canAvisarPreceptoria) {
+            $html .= '<li><strong>Avisar Preceptoria:</strong> Envia um convite para agendamento de preceptoria quando houver disponibilidade.</li>';
+        }
+        $html .= '</ul></li>';
+
+        if ($canUpdate || $canAvisarPendencia) {
+            $html .= '<li><strong>Ações em Lote:</strong> Selecione vários registros para realizar ações coletivas.</li>';
+        }
+        $html .= '</ul>';
+
+        if ($canDocumentos) {
+            $html .= '<p><small>Dica: Linhas com fundo avermelhado indicam alunos com documentos obrigatórios pendentes.</small></p>';
+        }
+
+        return $html;
     }
 }
