@@ -212,6 +212,7 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 7. **Visibilidade Restrita:** Para garantir a privacidade, a visualização das matrículas é filtrada conforme o papel do usuário:
    - **Administradores/Secretaria:** Visualizam todas as matrículas do sistema.
    - **Responsáveis:** Visualizam apenas as matrículas onde são os responsáveis financeiros (no contrato) OU onde possuem vínculo legal direto com o aluno (vínculo pai/mãe registrado no sistema).
+8. **Filtro Padrão:** Para facilitar o dia a dia, a listagem de matrículas exibe por padrão apenas os alunos com **Situação: Ativa**. Caso precise consultar alunos em outras situações (como Trancado ou Cancelado), utilize a barra de filtros da tabela.
 
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.

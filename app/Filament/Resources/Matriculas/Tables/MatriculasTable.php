@@ -84,7 +84,8 @@ class MatriculasTable
                     ->label('Período Letivo'),
                 SelectFilter::make('situacao')
                     ->options(SituacaoMatricula::class)
-                    ->label('Situação'),
+                    ->label('Situação')
+                    ->default(SituacaoMatricula::ATIVA->value),
             ])
             ->actions([
                 EditAction::make(),
