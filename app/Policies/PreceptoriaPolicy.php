@@ -14,66 +14,66 @@ class PreceptoriaPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('ViewAny:Preceptoria');
+        return $authUser->can('ViewAny:Preceptoria');
     }
 
     public function view(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('View:Preceptoria');
+        return $authUser->can('View:Preceptoria');
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('Create:Preceptoria');
+        return $authUser->can('Create:Preceptoria');
     }
 
     public function update(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('Update:Preceptoria');
+        return $authUser->can('Update:Preceptoria');
     }
 
     public function delete(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('Delete:Preceptoria');
+        return $authUser->can('Delete:Preceptoria');
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('DeleteAny:Preceptoria');
+        return $authUser->can('DeleteAny:Preceptoria');
     }
 
     public function restore(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('Restore:Preceptoria');
+        return $authUser->can('Restore:Preceptoria');
     }
 
     public function forceDelete(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('ForceDelete:Preceptoria');
+        return $authUser->can('ForceDelete:Preceptoria');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('ForceDeleteAny:Preceptoria');
+        return $authUser->can('ForceDeleteAny:Preceptoria');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('RestoreAny:Preceptoria');
+        return $authUser->can('RestoreAny:Preceptoria');
     }
 
     public function replicate(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('Replicate:Preceptoria');
+        return $authUser->can('Replicate:Preceptoria');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
-        return $authUser->hasPermissionInActiveRole('Reorder:Preceptoria');
+        return $authUser->can('Reorder:Preceptoria');
     }
 
     public function agendar(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->hasPermissionInActiveRole('Agendar:Preceptoria');
+        return $authUser->can('Agendar:Preceptoria');
     }
 }

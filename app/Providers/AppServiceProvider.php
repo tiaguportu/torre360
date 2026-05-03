@@ -30,7 +30,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(fn ($user, $ability) => $user->hasRole('super_admin') ? true : null);
+        Gate::before(function ($user, $ability) {
+            if ($user->hasRole('super_admin')) {
+                return true;
+            }
+
+            $activeRole = session('active_role');
+
+            if ($activeRole && str_contains((string) $ability, ':')) {
+                return $user->roles()
+                    ->where('name', $activeRole)
+                    ->whereHas('permissions', fn ($q) => $q->where('name', $ability))
+                    ->exists();
+            }
+
+            return null;
+        });
 
         // Permite visualizar arquivos servidos pelo Laravel APENAS se estiver autenticado
         Gate::define('viewApi', fn ($user) => $user !== null);
