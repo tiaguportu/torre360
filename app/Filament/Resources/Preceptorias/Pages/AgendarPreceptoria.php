@@ -42,8 +42,9 @@ class AgendarPreceptoria extends Page implements HasForms
     protected function getMatriculasAcessiveis(): Collection
     {
         $user = auth()->user();
+        $activeRole = session('active_role');
 
-        if ($user->hasRole(['super_admin', 'admin', 'secretaria'])) {
+        if (in_array($activeRole, ['super_admin', 'admin', 'secretaria'])) {
             return Matricula::with(['pessoa', 'turma', 'periodoLetivo'])->get();
         }
 
@@ -55,7 +56,7 @@ class AgendarPreceptoria extends Page implements HasForms
         $query = Matricula::query()->whereIn('pessoa_id', $pessoasIds);
 
         // Se o usuário for responsável, buscar também as matrículas dos alunos vinculados a ele
-        if ($user->hasRole('responsavel')) {
+        if ($activeRole === 'responsavel') {
             $query->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoasIds) {
                 $q->whereIn('responsavel_id', $pessoasIds);
             });
