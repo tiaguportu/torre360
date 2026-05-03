@@ -157,6 +157,7 @@ class PreceptoriasTable
                         ->label('Clonar em Lote')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->color('info')
+                        ->visible(fn () => auth()->user()?->can('Create:Preceptoria'))
                         ->form([
                             DatePicker::make('data')
                                 ->label('Nova Data (Opcional)')
@@ -216,6 +217,7 @@ class PreceptoriasTable
                     BulkAction::make('editar_lote')
                         ->label('Editar em Lote')
                         ->icon(Heroicon::OutlinedPencilSquare)
+                        ->visible(fn () => auth()->user()?->can('Update:Preceptoria'))
                         ->form([
                             DatePicker::make('data')
                                 ->label('Data')
