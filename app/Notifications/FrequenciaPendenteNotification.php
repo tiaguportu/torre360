@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\CronogramaAula;
 use App\Notifications\Channels\FcmChannel;
-use Filament\Notifications\Actions\Action as FilamentAction;
+use Filament\Actions\Action as FilamentAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
