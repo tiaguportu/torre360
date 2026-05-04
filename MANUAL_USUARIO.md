@@ -422,10 +422,16 @@ O módulo de Cronograma permite a visualização e gestão das aulas planejadas 
 3. Defina uma **Data Início** e/ou uma **Data Fim**.
 4. O sistema filtrará automaticamente todas as aulas cuja data esteja compreendida entre o intervalo selecionado, facilitando o planejamento semanal ou mensal.
 
-### 12.2 Visibilidade para Responsáveis
-1. Usuários com o papel de **Responsável** possuem acesso restrito ao módulo de cronogramas.
-2. Eles visualizam apenas as aulas das turmas onde seus alunos (dependentes) possuem matrícula ativa ou contrato vinculado sob sua responsabilidade financeira.
-3. Isso garante a privacidade das informações e foca apenas nos horários de interesse da família.
+### 12.2 Visibilidade Dinâmica por Perfil (Role)
+Para garantir a privacidade e organização, a visualização das aulas e avaliações no calendário se adapta automaticamente ao seu papel (role) ativo:
+- **Professores:** Visualizam apenas as suas próprias aulas e avaliações agendadas, facilitando a gestão do seu dia a dia pedagógico.
+- **Responsáveis:** Visualizam apenas o cronograma de aulas e avaliações das turmas onde seus dependentes (filhos) possuem matrícula ativa ou vínculo legal/financeiro.
+- **Administradores/Secretaria:** Possuem visão global de todas as turmas, professores e disciplinas cadastradas.
+
+### 12.3 Filtro por Período e Turma
+1. Vá em **Calendário e Horários → Calendário de Aulas**.
+2. Além do filtro de **Período** (Data Início/Fim), você pode utilizar os seletores de **Turmas**, **Disciplinas** e **Professores** no topo da página para refinar a visualização.
+3. Clique em qualquer evento no calendário para abrir os detalhes completos da aula ou avaliação.
 
 ---
 

@@ -142,12 +142,12 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             $query->where($professorField, $this->fixedProfessorId);
         }
 
-        if (auth()->user()?->hasRole('professor')) {
+        if (session('active_role') === 'professor') {
             $pessoaIds = auth()->user()->pessoas->pluck('id')->toArray();
             $query->whereIn($professorField, $pessoaIds);
         }
 
-        if (auth()->user()?->hasRole('responsavel')) {
+        if (session('active_role') === 'responsavel') {
             $turmasIds = $this->getTurmasPermitidasIds();
             $query->whereIn('turma_id', $turmasIds);
         }
@@ -172,7 +172,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                     ->options(function () {
                                         $query = Turma::whereNotNull('nome')->orderBy('nome');
 
-                                        if (auth()->user()?->hasRole('responsavel')) {
+                                        if (session('active_role') === 'responsavel') {
                                             $query->whereIn('id', $this->getTurmasPermitidasIds());
                                         }
 
@@ -199,7 +199,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                         ->pluck('nome', 'id'))
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn () => $this->fixedProfessorId !== null || auth()->user()?->hasRole('professor')),
+                                    ->hidden(fn () => $this->fixedProfessorId !== null || session('active_role') === 'professor'),
                             ]),
                     ])
                     ->collapsible()
