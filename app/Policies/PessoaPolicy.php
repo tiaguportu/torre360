@@ -82,32 +82,32 @@ class PessoaPolicy
         return $authUser->can('Export:Pessoa');
     }
 
-    public function attachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
+    public function attachEndereco(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('AttachEndereco:Pessoa');
     }
 
-    public function detachEndereco(AuthUser $authUser, Pessoa $pessoa): bool
+    public function detachEndereco(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('DetachEndereco:Pessoa');
     }
 
-    public function attachAluno(AuthUser $authUser, Pessoa $pessoa): bool
+    public function attachAluno(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('AttachAluno:Pessoa');
     }
 
-    public function detachAluno(AuthUser $authUser, Pessoa $pessoa): bool
+    public function detachAluno(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('DetachAluno:Pessoa');
     }
 
-    public function attachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
+    public function attachResponsavel(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('AttachResponsavel:Pessoa');
     }
 
-    public function detachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
+    public function detachResponsavel(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('DetachResponsavel:Pessoa');
     }
