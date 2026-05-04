@@ -231,7 +231,7 @@ class DocumentosMatricula extends Page implements HasTable
                                 'arquivo_path' => $data['arquivo_path'],
                                 'nome_arquivo_original' => $data['nome_arquivo_original'] ?? 'arquivo_enviado',
                                 'hash_arquivo' => $data['hash_arquivo'] ?? null,
-                                'status' => SituacaoDocumento::PENDENTE,
+                                'status' => SituacaoDocumento::EM_ANALISE,
                                 'observacoes' => $data['observacoes'] ?? null,
                                 'updated_at' => now(),
                             ]
@@ -320,12 +320,12 @@ class DocumentosMatricula extends Page implements HasTable
         $user = auth()->user();
 
         $canExport = $user->can('Documentos:Matricula'); // Usando a permissão base de documentos
-        
+
         $html = '<p>Esta página é dedicada ao controle dos documentos obrigatórios e opcionais do aluno para esta matrícula específica.</p>';
         $html .= '<h3>Funcionalidades:</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Lista de Documentos:</strong> Veja quais documentos são exigidos com base no Curso e Turma do aluno.</li>';
-        $html .= '<li><strong>Status:</strong> Acompanhe se o documento está "Pendente", "Validado" ou "Rejeitado".</li>';
+        $html .= '<li><strong>Status:</strong> Acompanhe se o documento está "Em Análise", "Verificado" ou "Rejeitado".</li>';
         $html .= '<li><strong>Envio de Arquivos:</strong>
             <ul>
                 <li><strong>Upload Rápido:</strong> Arraste e solte arquivos diretamente na coluna "Upload Rápido".</li>
@@ -333,7 +333,7 @@ class DocumentosMatricula extends Page implements HasTable
             </ul>
         </li>';
         $html .= '<li><strong>Modelos:</strong> Se a escola disponibilizou um modelo (PDF ou Link), você pode baixá-lo na coluna "Modelo".</li>';
-        
+
         if ($canExport) {
             $html .= '<li><strong>Exportar ZIP:</strong> Baixe todos os documentos já enviados em um único arquivo compactado.</li>';
         }
@@ -429,7 +429,7 @@ class DocumentosMatricula extends Page implements HasTable
                     'arquivo_path' => $finalPath,
                     'nome_arquivo_original' => $originalName,
                     'hash_arquivo' => $hash,
-                    'status' => SituacaoDocumento::PENDENTE,
+                    'status' => SituacaoDocumento::EM_ANALISE,
                     'updated_at' => now(),
                 ]
             );

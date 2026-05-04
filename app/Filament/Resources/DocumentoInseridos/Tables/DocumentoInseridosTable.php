@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\DocumentoInseridos\Tables;
 
+use App\Enums\SituacaoDocumento;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class DocumentoInseridosTable
 {
@@ -57,6 +61,17 @@ class DocumentoInseridosTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('editarStatus')
+                        ->label('Editar Situação em Lote')
+                        ->icon('heroicon-o-pencil-square')
+                        ->form([
+                            Select::make('status')
+                                ->label('Nova Situação')
+                                ->options(SituacaoDocumento::class)
+                                ->required(),
+                        ])
+                        ->action(fn (Collection $records, array $data) => $records->each->update($data))
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ])

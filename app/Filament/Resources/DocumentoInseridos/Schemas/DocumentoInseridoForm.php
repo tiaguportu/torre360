@@ -87,7 +87,7 @@ class DocumentoInseridoForm
                 Select::make('status')
                     ->label('Situação')
                     ->options(SituacaoDocumento::class)
-                    ->default(SituacaoDocumento::PENDENTE)
+                    ->default(SituacaoDocumento::EM_ANALISE)
                     ->rules([
                         fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($record) {
                             if (! $record || ! $record->exists) {
