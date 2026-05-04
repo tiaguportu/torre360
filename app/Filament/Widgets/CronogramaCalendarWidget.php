@@ -49,8 +49,8 @@ class CronogramaCalendarWidget extends Widget implements HasForms
         $this->applyQueryFilters($queryCronograma, 'pessoa_id');
 
         $eventsCronograma = $queryCronograma->get()->map(function (CronogramaAula $record) {
-            $start = $record->data.'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
-            $end = $record->data.'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
+            $start = $record->data->format('Y-m-d').'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
+            $end = $record->data->format('Y-m-d').'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
 
             $turmaCor = $record->turma?->cor ?? '#10b981';
             $disciplinaCor = $record->disciplina?->cor ?? '#f59e0b';
