@@ -93,6 +93,10 @@ class EnsureActiveRole
                                     </div>
                                 '))
                                 ->items([
+                                    NavigationItem::make('Dados Cadastrais')
+                                        ->icon('heroicon-o-user')
+                                        ->url(fn () => PessoaResource::getUrl('edit', ['record' => $aluno->id])),
+
                                     NavigationItem::make('Boletim Escolar')
                                         ->url(fn () => MatriculaResource::getUrl('boletim', ['record' => $matriculaAtiva->id]))
                                         ->visible(fn () => $matriculaAtiva->notas()->exists()),

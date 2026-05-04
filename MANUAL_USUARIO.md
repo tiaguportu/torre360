@@ -41,6 +41,7 @@ Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automati
 
 - **Grupos por Aluno:** Em vez de uma lista genérica de recursos, o sistema cria grupos específicos com o nome de cada um de seus filhos vinculados (ex: *Aluno: João Silva*).
 - **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará atalhos diretos para as informações dele:
+    - **Dados Cadastrais:** Atalho para consultar e atualizar as informações básicas do aluno (pessoa).
     - **Boletim Escolar:** Acesso rápido às notas, médias e frequências do aluno.
     - **Minhas Preceptorias:** Visualização e agendamento de reuniões pedagógicas (já com filtros aplicados).
     - **Documentos:** Consulta e envio de documentos obrigatórios, exibindo um **indicador numérico (badge)** em vermelho sempre que houver documentos pendentes de envio ou regularização.
