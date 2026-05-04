@@ -142,12 +142,23 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             $query->where($professorField, $this->fixedProfessorId);
         }
 
-        if (session('active_role') === 'professor') {
-            $pessoaIds = auth()->user()->pessoas->pluck('id')->toArray();
+        $user = auth()->user();
+        if (! $user) {
+            return;
+        }
+
+        $activeRole = $user->active_role;
+
+        if (in_array($activeRole, ['super_admin', 'secretaria'])) {
+            return;
+        }
+
+        if ($activeRole === 'professor') {
+            $pessoaIds = $user->pessoas->pluck('id')->toArray();
             $query->whereIn($professorField, $pessoaIds);
         }
 
-        if (session('active_role') === 'responsavel') {
+        if ($activeRole === 'responsavel') {
             $turmasIds = $this->getTurmasPermitidasIds();
             $query->whereIn('turma_id', $turmasIds);
         }
@@ -172,7 +183,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                     ->options(function () {
                                         $query = Turma::whereNotNull('nome')->orderBy('nome');
 
-                                        if (session('active_role') === 'responsavel') {
+                                        if (auth()->user()?->active_role === 'responsavel') {
                                             $query->whereIn('id', $this->getTurmasPermitidasIds());
                                         }
 
@@ -199,7 +210,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                         ->pluck('nome', 'id'))
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn () => $this->fixedProfessorId !== null || session('active_role') === 'professor'),
+                                    ->hidden(fn () => $this->fixedProfessorId !== null || auth()->user()?->active_role === 'professor'),
                             ]),
                     ])
                     ->collapsible()
