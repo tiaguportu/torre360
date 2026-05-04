@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Filament\Resources\Matriculas\MatriculaResource;
+use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use Closure;
 use Filament\Facades\Filament;
