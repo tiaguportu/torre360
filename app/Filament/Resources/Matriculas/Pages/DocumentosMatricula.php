@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -297,7 +298,50 @@ class DocumentosMatricula extends Page implements HasTable
                 ->icon('heroicon-o-archive-box-arrow-down')
                 ->color('success')
                 ->action(fn () => $this->exportZip()),
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Gerenciar Documentos')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+
+        $canExport = $user->can('Documentos:Matricula'); // Usando a permissão base de documentos
+        
+        $html = '<p>Esta página é dedicada ao controle dos documentos obrigatórios e opcionais do aluno para esta matrícula específica.</p>';
+        $html .= '<h3>Funcionalidades:</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Lista de Documentos:</strong> Veja quais documentos são exigidos com base no Curso e Turma do aluno.</li>';
+        $html .= '<li><strong>Status:</strong> Acompanhe se o documento está "Pendente", "Validado" ou "Rejeitado".</li>';
+        $html .= '<li><strong>Envio de Arquivos:</strong>
+            <ul>
+                <li><strong>Upload Rápido:</strong> Arraste e solte arquivos diretamente na coluna "Upload Rápido".</li>
+                <li><strong>Botão Enviar:</strong> Use o botão "Enviar" para selecionar um arquivo manualmente e adicionar observações.</li>
+            </ul>
+        </li>';
+        $html .= '<li><strong>Modelos:</strong> Se a escola disponibilizou um modelo (PDF ou Link), você pode baixá-lo na coluna "Modelo".</li>';
+        
+        if ($canExport) {
+            $html .= '<li><strong>Exportar ZIP:</strong> Baixe todos os documentos já enviados em um único arquivo compactado.</li>';
+        }
+
+        $html .= '</ul>';
+        $html .= '<p><small>Dica: Certifique-se de que os documentos estejam legíveis para evitar rejeições pela secretaria.</small></p>';
+
+        return $html;
     }
 
     public function exportZip(): ?BinaryFileResponse
