@@ -79,7 +79,7 @@ class CronogramaAulasTable
                     ->relationship('professor', 'nome')
                     ->searchable()
                     ->preload()
-                    ->hidden(fn() => auth()->user()?->hasRole('professor')),
+                    ->hidden(fn () => auth()->user()?->hasRole('professor')),
                 Filter::make('periodo_data')
                     ->form([
                         DatePicker::make('data_inicio')
@@ -95,26 +95,26 @@ class CronogramaAulasTable
                         return $query
                             ->when(
                                 $data['data_inicio'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('data', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '>=', $date),
                             )
                             ->when(
                                 $data['data_fim'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('data', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('data', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): ?string {
-                        if (!$data['data_inicio'] && !$data['data_fim']) {
+                        if (! $data['data_inicio'] && ! $data['data_fim']) {
                             return null;
                         }
 
                         $indicator = 'Período: ';
 
                         if ($data['data_inicio']) {
-                            $indicator .= 'de ' . Carbon::parse($data['data_inicio'])->format('d/m/Y');
+                            $indicator .= 'de '.Carbon::parse($data['data_inicio'])->format('d/m/Y');
                         }
 
                         if ($data['data_fim']) {
-                            $indicator .= ($data['data_inicio'] ? ' ' : '') . 'até ' . Carbon::parse($data['data_fim'])->format('d/m/Y');
+                            $indicator .= ($data['data_inicio'] ? ' ' : '').'até '.Carbon::parse($data['data_fim'])->format('d/m/Y');
                         }
 
                         return $indicator;
@@ -126,7 +126,7 @@ class CronogramaAulasTable
                             ->native(false)
                             ->seconds(false),
                     ])
-                    ->query(fn($query, array $data) => $query->when($data['hora_inicio'], fn($q) => $q->where('hora_inicio', 'like', Carbon::parse($data['hora_inicio'])->format('H:i') . '%'))),
+                    ->query(fn ($query, array $data) => $query->when($data['hora_inicio'], fn ($q) => $q->where('hora_inicio', 'like', Carbon::parse($data['hora_inicio'])->format('H:i').'%'))),
                 Filter::make('hora_fim')
                     ->form([
                         TimePicker::make('hora_fim')
@@ -134,12 +134,12 @@ class CronogramaAulasTable
                             ->native(false)
                             ->seconds(false),
                     ])
-                    ->query(fn($query, array $data) => $query->when($data['hora_fim'], fn($q) => $q->where('hora_fim', 'like', Carbon::parse($data['hora_fim'])->format('H:i') . '%'))),
+                    ->query(fn ($query, array $data) => $query->when($data['hora_fim'], fn ($q) => $q->where('hora_fim', 'like', Carbon::parse($data['hora_fim'])->format('H:i').'%'))),
 
                 Filter::make('frequencias_pendentes')
                     ->label('Frequência Pendente')
                     ->indicator('Apenas Pendentes')
-                    ->query(fn($query) => $query->whereRaw('
+                    ->query(fn ($query) => $query->whereRaw('
                         (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ')),
@@ -147,10 +147,19 @@ class CronogramaAulasTable
             ->actions([
                 Action::make('notificarProfessorManual')
                     ->label('Notificar Professor')
-                    ->tooltip('Enviar e-mail de pendência para o Professor')
+                    ->tooltip(function ($record) {
+                        $lastNotification = DatabaseNotification::where('type', FrequenciaPendenteNotification::class)
+                            ->where('data->cronograma_aula_id', $record->id)
+                            ->latest()
+                            ->first();
+
+                        return $lastNotification
+                            ? 'Último aviso: '.$lastNotification->created_at->format('d/m/Y H:i')
+                            : 'Enviar e-mail de pendência para o Professor';
+                    })
                     ->icon('heroicon-o-envelope')
                     ->color('warning')
-                    ->visible(fn($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast() && $record->hasPendingFrequencies())
+                    ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast() && $record->hasPendingFrequencies())
                     ->requiresConfirmation()
                     ->modalHeading('Confirmar Notificação de Pendência')
                     ->modalDescription(function ($record) {
@@ -176,7 +185,7 @@ class CronogramaAulasTable
                         $professor = $record->professor;
                         $user = $professor?->users->first();
 
-                        if (!$user?->email) {
+                        if (! $user?->email) {
                             Notification::make()
                                 ->title('Erro ao enviar e-mail')
                                 ->body('O professor associado não possui um usuário com e-mail cadastrado.')
@@ -199,8 +208,8 @@ class CronogramaAulasTable
                     ->tooltip('Lançar Frequência')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->url(fn($record): string => CronogramaAulaResource::getUrl('lancar-frequencia', ['record' => $record]))
-                    ->visible(fn($record): bool => auth()->user()->can('lancarFrequencia', $record))
+                    ->url(fn ($record): string => CronogramaAulaResource::getUrl('lancar-frequencia', ['record' => $record]))
+                    ->visible(fn ($record): bool => auth()->user()->can('lancarFrequencia', $record))
                     ->badge(function ($record) {
                         $totalMatriculados = $record->turma->matriculas()->count();
                         $frequenciasLancadas = $record->frequencias()->whereNotNull('situacao')->count();
@@ -236,7 +245,7 @@ class CronogramaAulasTable
                                 ->relationship('professor', 'nome')
                                 ->searchable()
                                 ->preload()
-                                ->hidden(fn() => auth()->user()?->hasRole('professor')),
+                                ->hidden(fn () => auth()->user()?->hasRole('professor')),
                             DatePicker::make('data')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),
@@ -253,14 +262,14 @@ class CronogramaAulasTable
                                 ->rows(3),
                         ])
                         ->action(function (Collection $records, array $data): void {
-                            $updateData = array_filter($data, fn($value) => filled($value));
+                            $updateData = array_filter($data, fn ($value) => filled($value));
                             if (empty($updateData)) {
                                 return;
                             }
-                            $records->each(fn($record) => $record->update($updateData));
+                            $records->each(fn ($record) => $record->update($updateData));
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn() => auth()->user()->can('Update:CronogramaAula')),
+                        ->visible(fn () => auth()->user()->can('Update:CronogramaAula')),
                     BulkAction::make('bulkLancarFrequencia')
                         ->label('Lançar Frequência em Lote')
                         ->icon('heroicon-o-check-circle')
@@ -279,7 +288,7 @@ class CronogramaAulasTable
                                     ->schema([
                                         Select::make('matricula_id')
                                             ->label('Aluno')
-                                            ->options($matriculas->mapWithKeys(fn($m) => [
+                                            ->options($matriculas->mapWithKeys(fn ($m) => [
                                                 $m->id => "{$m->periodoLetivo?->nome} - {$m->turma?->nome} - {$m->pessoa?->nome}",
                                             ]))
                                             ->required()
@@ -306,7 +315,7 @@ class CronogramaAulasTable
                                     ->addable(false)
                                     ->deletable(false)
                                     ->reorderable(false)
-                                    ->default($matriculas->map(fn($m) => [
+                                    ->default($matriculas->map(fn ($m) => [
                                         'matricula_id' => $m->id,
                                         'situacao' => 'presente',
                                     ])->toArray()),
@@ -328,12 +337,12 @@ class CronogramaAulasTable
                             }
 
                             Notification::make()
-                                ->title('Frequências lançadas com sucesso para ' . $records->count() . ' aulas!')
+                                ->title('Frequências lançadas com sucesso para '.$records->count().' aulas!')
                                 ->success()
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn() => auth()->user()->can('LancarFrequencia:CronogramaAula')),
+                        ->visible(fn () => auth()->user()->can('LancarFrequencia:CronogramaAula')),
                     BulkAction::make('clonar')
                         ->label('Clonar Selecionadas')
                         ->icon('heroicon-o-document-duplicate')
@@ -364,7 +373,7 @@ class CronogramaAulasTable
                                 ->preload(),
                         ])
                         ->action(function (Collection $records, array $data): void {
-                            $clonedData = array_filter($data, fn($value) => filled($value));
+                            $clonedData = array_filter($data, fn ($value) => filled($value));
                             foreach ($records as $record) {
                                 $clone = $record->replicate();
                                 $clone->fill($clonedData);
@@ -372,12 +381,12 @@ class CronogramaAulasTable
                             }
 
                             Notification::make()
-                                ->title($records->count() . ' aulas clonadas com sucesso!')
+                                ->title($records->count().' aulas clonadas com sucesso!')
                                 ->success()
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn() => auth()->user()->can('Clonar:CronogramaAula')),
+                        ->visible(fn () => auth()->user()->can('Clonar:CronogramaAula')),
                     BulkAction::make('bulkNotificarProfessores')
                         ->label('Notificar Professores (Pendências)')
                         ->icon('heroicon-o-envelope')
@@ -389,13 +398,13 @@ class CronogramaAulasTable
                             $erros_sem_pendencia = 0;
 
                             foreach ($records as $record) {
-                                if (!$record->data->isPast()) {
+                                if (! $record->data->isPast()) {
                                     $erros_futuro++;
 
                                     continue;
                                 }
 
-                                if (!$record->hasPendingFrequencies()) {
+                                if (! $record->hasPendingFrequencies()) {
                                     $erros_sem_pendencia++;
 
                                     continue;
@@ -441,7 +450,7 @@ class CronogramaAulasTable
                             }
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn() => auth()->user()->can('NotificarProfessorManual:CronogramaAula')),
+                        ->visible(fn () => auth()->user()->can('NotificarProfessorManual:CronogramaAula')),
                     DeleteBulkAction::make(),
                 ]),
             ])
