@@ -7,6 +7,7 @@ use App\Filament\Schemas\Components\BoletimeGradesTable;
 use App\Models\EtapaAvaliativa;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ViewField;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -103,8 +104,40 @@ class BoletimMatricula extends Page implements HasSchemas
                 ->icon('heroicon-o-pencil-square')
                 ->color('warning')
                 ->url(fn (): string => MatriculaResource::getUrl('boletim.editar', ['record' => $this->record]))
-                ->visible(fn (): bool => auth()->user()->can('boletim_editar_matricula')),
+                ->visible(fn (): bool => auth()->user()->can('boletimEditar', $this->record)),
+
+            Action::make('ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda - Boletim Escolar')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData(['content' => $this->getHelpContent()]),
+                ]),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+        $content = "<div class='space-y-4'>";
+        $content .= '<p>Esta página permite a visualização do boletim escolar do aluno selecionado.</p>';
+
+        $content .= "<h3 class='font-bold'>Funcionalidades:</h3>";
+        $content .= "<ul class='list-disc ml-4'>";
+        $content .= '<li><strong>Imprimir PDF:</strong> Gera um documento PDF do boletim, podendo filtrar por uma etapa específica ou o boletim completo.</li>';
+
+        if ($user->can('BoletimEditar:Matricula')) {
+            $content .= '<li><strong>Editar Notas:</strong> Permite acessar a tela de lançamento e alteração de notas deste boletim.</li>';
+        }
+
+        $content .= '</ul>';
+        $content .= '</div>';
+
+        return $content;
     }
 
     public function getBreadcrumbs(): array
