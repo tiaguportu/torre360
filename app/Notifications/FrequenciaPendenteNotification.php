@@ -62,7 +62,7 @@ class FrequenciaPendenteNotification extends Notification
         $data = optional($this->cronogramaAula->data)->format('d/m/Y') ?? 'N/A';
         $url = CronogramaAulaResource::getUrl('lancar-frequencia', ['record' => $this->cronogramaAula]);
 
-        return FilamentNotification::make()
+        $notification = FilamentNotification::make()
             ->title('Pendência de Frequência - '.$turma)
             ->body("Lançamento pendente para {$disciplina} em {$data}.")
             ->warning()
@@ -71,8 +71,12 @@ class FrequenciaPendenteNotification extends Notification
                     ->label('Lançar Agora')
                     ->url($url)
                     ->button(),
-            ])
-            ->getDatabaseMessage();
+            ]);
+
+        $data = $notification->getDatabaseMessage();
+        $data['cronograma_aula_id'] = $this->cronogramaAula->id;
+
+        return $data;
     }
 
     /**
