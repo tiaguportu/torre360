@@ -123,6 +123,14 @@ class MatriculasTable
                         }
 
                         $html = '<div class="space-y-4">';
+
+                        $lastNotification = $record->getLastPendingNotificationDate();
+                        if ($lastNotification) {
+                            $html .= '<div class="p-2 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 text-sm italic">';
+                            $html .= '<strong>Última notificação enviada em:</strong> '.$lastNotification->format('d/m/Y H:i');
+                            $html .= '</div>';
+                        }
+
                         $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
 
                         if ($faltantes->isNotEmpty()) {
@@ -210,6 +218,14 @@ class MatriculasTable
                         }
 
                         $html = '<div class="space-y-4">';
+
+                        $lastNotification = $record->getLastPreceptoriaNotificationDate();
+                        if ($lastNotification) {
+                            $html .= '<div class="p-2 bg-success-500/10 border border-success-500/20 rounded-lg text-success-700 text-sm italic">';
+                            $html .= '<strong>Última notificação enviada em:</strong> '.$lastNotification->format('d/m/Y H:i');
+                            $html .= '</div>';
+                        }
+
                         $html .= '<div>Gostaria de enviar um aviso de que existem <strong>horários disponíveis</strong> para agendamento de preceptoria?</div>';
                         $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
                         $html .= '</div>';

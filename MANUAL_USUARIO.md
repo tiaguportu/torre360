@@ -219,7 +219,7 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
    - A matrícula do aluno não possuir nenhuma preceptoria agendada para o futuro.
    - Existirem horários vagos (janelas) cadastrados por professores no sistema.
-2. Ao clicar no botão, o sistema solicitará confirmação e listará os e-mails do aluno e responsáveis que receberão o alerta.
+2. Ao clicar no botão, o sistema solicitará confirmação, exibirá a **data e hora do último envio realizado** (se houver) e listará os e-mails do aluno e responsáveis que receberão o alerta.
 3. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.
 
 ### 6.2 Gestão de Documentos
@@ -231,6 +231,14 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
    - **Aprovado:** Documento validado e aceito.
    - **Rejeitado:** Documento com problemas (ilegível, errado, etc).
 4. As transições de estado são controladas; por exemplo, um documento *Aprovado* não pode voltar para *Pendente* sem passar por uma revisão, garantindo a integridade do processo.
+
+### 6.3 Aviso de Pendência de Documentos
+1. Na lista de **Matrículas**, caso o aluno possua documentos obrigatórios pendentes ou rejeitados, você verá o botão **Avisar Pendência** (ícone de envelope amarelo).
+2. Ao clicar no botão, um modal de confirmação exibirá:
+   - A **data e hora do último envio** de aviso realizado (se houver).
+   - A lista de e-mails dos destinatários.
+   - A lista detalhada de quais documentos estão faltando e quais foram rejeitados (com o respectivo motivo da rejeição).
+3. Esta funcionalidade permite manter a família informada sobre a necessidade de regularização documental para efetivação da matrícula.
 
 ### 6.4 Visualização e Prévia de Documentos
 1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.
