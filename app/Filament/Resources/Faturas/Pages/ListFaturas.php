@@ -11,6 +11,7 @@ use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 
@@ -117,6 +118,46 @@ class ListFaturas extends ListRecords
                         ->send();
                 }),
             CreateAction::make(),
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Gestão Financeira (Faturas)')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+        
+        $canCreate = $user->can('Create:Fatura');
+        $canUpdate = $user->can('Update:Fatura');
+
+        $html = '<p>Nesta página você gerencia a cobrança dos contratos através das faturas.</p>';
+        $html .= '<h3>O que você pode fazer?</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Criação em Lote:</strong> Ferramenta para gerar rapidamente todas as parcelas de um contrato de uma só vez.</li>';
+        
+        if ($canCreate) {
+            $html .= '<li><strong>Nova Fatura:</strong> Crie uma cobrança avulsa ou manual vinculada a um contrato.</li>';
+        }
+
+        if ($canUpdate) {
+            $html .= '<li><strong>Status e Pagamento:</strong> Marque faturas como pagas, pendentes ou canceladas.</li>';
+        }
+
+        $html .= '<li><strong>Vencimentos:</strong> Acompanhe as faturas que estão vencidas ou próximas do vencimento através dos filtros.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 }

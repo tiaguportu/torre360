@@ -29,3 +29,5 @@ Segurança (Shield): Dentro desse método, use $user->can('Ação:Recurso') para
 Contexto: Considere o papel ativo através de session('active_role') para personalizar o texto se necessário.
 UI: Utilize o ViewField no formulário da Action, apontando para a view filament.components.help-content e passando o HTML gerado pelo método privado através do viewData(['content' => $this->getHelpContent()]).
 Conteúdo: O texto deve descrever de forma clara o propósito da página e listar apenas as funcionalidades (filtros, botões, ações de tabela) que o usuário logado realmente pode acessar."
+
+Sempre que criar ou modificar uma tabela de recurso no Filament (seja no método table() do Resource ou em classes separadas de configuração de tabela como *Table.php), obrigatoriamente aplique o método ->stackedOnMobile() ao final da configuração do objeto $table. Isso garante que as tabelas sejam exibidas em formato de lista (cards) em dispositivos móveis, melhorando a responsividade. Verifique sempre se a definição da tabela termina com ->stackedOnMobile(); antes de finalizar a tarefa.
