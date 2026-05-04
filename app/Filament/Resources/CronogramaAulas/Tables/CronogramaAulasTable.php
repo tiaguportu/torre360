@@ -23,7 +23,9 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\HtmlString;
 
 class CronogramaAulasTable
 {
@@ -149,6 +151,28 @@ class CronogramaAulasTable
                     ->icon('heroicon-o-envelope')
                     ->color('warning')
                     ->visible(fn ($record): bool => auth()->user()->can('notificarProfessorManual', $record) && $record->data->isPast() && $record->hasPendingFrequencies())
+                    ->requiresConfirmation()
+                    ->modalHeading('Confirmar Notificação de Pendência')
+                    ->modalDescription(function ($record) {
+                        $emails = $record->professor?->users->pluck('email')->filter();
+                        $emailList = $emails->isNotEmpty() ? $emails->join(', ') : 'Nenhum e-mail encontrado';
+
+                        $lastNotification = DatabaseNotification::where('type', FrequenciaPendenteNotification::class)
+                            ->where('data->cronograma_aula_id', $record->id)
+                            ->latest()
+                            ->first();
+
+                        $lastDate = $lastNotification ? $lastNotification->created_at->format('d/m/Y H:i') : 'Nunca notificado';
+
+                        return new HtmlString("
+                            <div class='space-y-2'>
+                                <p>Deseja enviar a notificação de pendência para este professor?</p>
+                                <p><strong>E-mails de destino:</strong> {$emailList}</p>
+                                <p><strong>Último aviso enviado:</strong> {$lastDate}</p>
+                                <p class='text-xs text-gray-500 italic'>* A notificação inclui E-mail, Push e Alerta no Sistema.</p>
+                            </div>
+                        ");
+                    })
                     ->action(function ($record) {
                         $professor = $record->professor;
                         $user = $professor?->users->first();
