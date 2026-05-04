@@ -59,15 +59,22 @@ class PessoaResource extends Resource
             return $query;
         }
 
-        if ($user->hasAnyRole(['professor', 'responsavel', 'aluno'])) {
-            $query->where(function (Builder $query) use ($user) {
-                // Pessoa diretamente vinculada ao usuário
+        $activeRole = session('active_role');
+
+        // Se estiver atuando como admin ou secretaria, vê tudo
+        if (in_array($activeRole, ['admin', 'secretaria'])) {
+            return $query;
+        }
+
+        if (in_array($activeRole, ['professor', 'responsavel', 'aluno'])) {
+            $query->where(function (Builder $query) use ($user, $activeRole) {
+                // Pessoa diretamente vinculada ao usuário (ele mesmo)
                 $query->whereHas('users', fn (Builder $q) => $q->where('users.id', $user->id));
 
                 $pessoasIds = $user->pessoas->pluck('id')->toArray();
 
-                // Se for responsável, vê as pessoas vinculadas a ele como alunos ou via financeiro
-                if ($user->hasRole('responsavel')) {
+                // Se estiver atuando como responsável, vê as pessoas vinculadas a ele como alunos ou via financeiro
+                if ($activeRole === 'responsavel') {
                     // Ver alunos onde ele é o responsável (tabela aluno_responsavel)
                     $query->orWhereHas('responsaveis', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('responsavel_id', $pessoasIds);
@@ -79,8 +86,8 @@ class PessoaResource extends Resource
                     });
                 }
 
-                // Se for aluno, vê seus responsáveis (tabela aluno_responsavel e financeiro)
-                if ($user->hasRole('aluno')) {
+                // Se estiver atuando como aluno, vê seus responsáveis (tabela aluno_responsavel e financeiro)
+                if ($activeRole === 'aluno') {
                     // Ver seus responsáveis diretos
                     $query->orWhereHas('alunos', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('aluno_id', $pessoasIds);
@@ -88,6 +95,19 @@ class PessoaResource extends Resource
 
                     // Ver quem paga suas contas (responsáveis financeiros do seu contrato)
                     $query->orWhereHas('responsaveisFinanceiros.contrato.matriculas', function (Builder $q) use ($pessoasIds) {
+                        $q->whereIn('pessoa_id', $pessoasIds);
+                    });
+                }
+
+                // Se estiver atuando como professor, vê seus alunos
+                if ($activeRole === 'professor') {
+                    // Ver alunos de turmas onde ele é o conselheiro
+                    $query->orWhereHas('matriculas.turma', function (Builder $q) use ($pessoasIds) {
+                        $q->whereIn('professor_conselheiro_id', $pessoasIds);
+                    });
+
+                    // Ver alunos de turmas onde ele leciona (cronograma)
+                    $query->orWhereHas('matriculas.turma.cronogramasAula', function (Builder $q) use ($pessoasIds) {
                         $q->whereIn('pessoa_id', $pessoasIds);
                     });
                 }
