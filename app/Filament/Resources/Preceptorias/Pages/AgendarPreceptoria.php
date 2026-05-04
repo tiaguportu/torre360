@@ -14,6 +14,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -285,6 +286,63 @@ class AgendarPreceptoria extends Page implements HasForms
             ])
 
             ->statePath('data');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Agendamento de Preceptoria')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+        $activeRole = session('active_role');
+        
+        $html = '<p>Nesta página você realiza o agendamento de uma preceptoria com um dos professores disponíveis.</p>';
+        $html .= '<h3>Passo a Passo:</h3>';
+        $html .= '<ol>';
+        $html .= '<li><strong>Selecionar Matrícula:</strong> Escolha o aluno para o qual deseja agendar. ';
+        
+        if ($activeRole === 'responsavel') {
+            $html .= 'Você verá apenas os seus dependentes.';
+        } elseif ($activeRole === 'secretaria') {
+            $html .= 'Você tem acesso a todos os alunos da instituição.';
+        }
+        
+        $html .= '</li>';
+        $html .= '<li><strong>Verificar Agendamento Vigente:</strong> Se o aluno já tiver uma preceptoria futura agendada, o sistema avisará e não permitirá um novo agendamento até que o atual seja realizado ou cancelado.</li>';
+        $html .= '<li><strong>Escolher Horário:</strong> Selecione um dos horários disponíveis na lista. ';
+        
+        if ($activeRole === 'responsavel' || $activeRole === 'aluno') {
+            $html .= '<br><em>Nota: Por regra de antecedência, você só pode agendar horários com no mínimo 2 dias de antecedência.</em>';
+        }
+        
+        $html .= '</li>';
+        $html .= '<li><strong>Confirmar:</strong> Clique no botão "Agendar Preceptoria" ao final da página para concluir.</li>';
+        $html .= '</ol>';
+        
+        $html .= '<h3>Dúvidas Frequentes:</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Não vejo horários para meu filho:</strong> Os horários só aparecem se os professores vinculados à turma (Professor Regente ou Professores do Cronograma) tiverem liberado agendas futuras no sistema.</li>';
+        $html .= '<li><strong>Como cancelar?</strong> Se houver um agendamento vigente, aparecerá um botão vermelho "Desagendar / Liberar Horário" logo abaixo da seleção do aluno.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 
     public function agendar(): void
