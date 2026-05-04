@@ -122,17 +122,15 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             return $query;
         }
 
-        $isProfessor = $user->hasRole('professor');
+        $activeRole = session('active_role');
 
-        if ($isProfessor) {
+        if ($activeRole === 'professor') {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();
             // Filtra o cronograma pelas pessoas do usuário que são professores
             $query->whereIn('pessoa_id', $pessoasIds);
         }
 
-        $isResponsavel = $user->hasRole('responsavel');
-
-        if ($isResponsavel && ! $user->hasRole('super_admin')) {
+        if ($activeRole === 'responsavel') {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();
 
             $query->whereHas('turma.matriculas', function ($q) use ($pessoasIds) {

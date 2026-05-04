@@ -137,7 +137,6 @@ class CronogramaAulasTable
                 Filter::make('frequencias_pendentes')
                     ->label('Frequência Pendente')
                     ->indicator('Apenas Pendentes')
-                    ->default()
                     ->query(fn ($query) => $query->whereRaw('
                         (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
