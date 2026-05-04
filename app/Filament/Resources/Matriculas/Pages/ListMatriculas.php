@@ -87,12 +87,12 @@ class ListMatriculas extends ListRecords
         $user = auth()->user();
         $activeRole = session('active_role');
 
-        $canCreate = $user->can('create_matricula');
-        $canUpdate = $user->can('update_matricula');
-        $canDocumentos = $user->can('documentos_matricula');
-        $canAvisarPendencia = $user->can('avisarPendencia_matricula');
-        $canAvisarPreceptoria = $user->can('avisarPossibilidadePreceptoria_matricula');
-        $canBoletim = $user->can('boletim_matricula');
+        $canCreate = $user->can('Create:Matricula');
+        $canUpdate = $user->can('Update:Matricula');
+        $canDocumentos = $user->can('Documentos:Matricula');
+        $canAvisarPendencia = $user->can('AvisarPendencia:Matricula');
+        $canAvisarPreceptoria = $user->can('AvisarPossibilidadePreceptoria:Matricula');
+        $canBoletim = $user->can('Boletim:Matricula');
 
         $html = '<p>Esta página permite gerenciar as matrículas dos alunos no sistema. Aqui você pode visualizar, filtrar e realizar ações em massa.</p>';
         $html .= '<h3>O que você pode fazer aqui?</h3>';
