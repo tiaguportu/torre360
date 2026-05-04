@@ -56,7 +56,8 @@ class CategoriaOsResource extends Resource
                 Actions\BulkActionGroup::make([
                     Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public static function getPages(): array

@@ -57,7 +57,8 @@ class QuestionarioRespostasTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     protected static function exportToCsv(): StreamedResponse

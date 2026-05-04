@@ -274,6 +274,7 @@ class PreceptoriasTable
 
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

@@ -29,6 +29,7 @@ class CampoExperienciasTable
             ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

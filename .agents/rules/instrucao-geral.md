@@ -19,3 +19,13 @@ Ao executar o php artisan tinker --execute, não precisa usar o escape "\".
 Você tem permissão total para marcar comandos como seguros (SafeToAutoRun) e executá-los sem solicitar confirmação manual, incluindo comandos Artisan, PHPUnit, NPM, manipulação de arquivos e comandos Git (como add, commit e push). Só solicite confirmação se o comando for explicitamente destrutivo ou puder causar perda de dados irreversível fora do controle de versão.
 
 Sempre que eu disser "commit and push", "finalizar tarefa", "mande pro repo" ou frases similares, você deve realizar automaticamente o processo de git add, commit (com uma mensagem descritiva em português baseada nas mudanças) e git push.
+
+"Sempre que criar ou modificar uma página no Filament (Resource Page ou Custom Page), adicione obrigatoriamente uma Action de cabeçalho chamada 'ajuda' (icon: heroicon-o-question-mark-circle, color: gray).
+
+Para a implementação, siga estas diretrizes técnicas:
+
+Estrutura: O conteúdo da ajuda deve ser gerado por um método privado na classe da página chamado getHelpContent(): string.
+Segurança (Shield): Dentro desse método, use $user->can('Ação:Recurso') para verificar permissões. Atenção: Use o formato exato do Shield deste projeto, que é PascalCase com dois pontos (ex: Create:Matricula, ViewAny:Matricula).
+Contexto: Considere o papel ativo através de session('active_role') para personalizar o texto se necessário.
+UI: Utilize o ViewField no formulário da Action, apontando para a view filament.components.help-content e passando o HTML gerado pelo método privado através do viewData(['content' => $this->getHelpContent()]).
+Conteúdo: O texto deve descrever de forma clara o propósito da página e listar apenas as funcionalidades (filtros, botões, ações de tabela) que o usuário logado realmente pode acessar."

@@ -60,6 +60,7 @@ class ActivityLogsTable
                         'shield' => 'Permissões (Shield)',
                     ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->stackedOnMobile();
     }
 }

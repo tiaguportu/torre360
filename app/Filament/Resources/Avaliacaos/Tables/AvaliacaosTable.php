@@ -229,6 +229,7 @@ class AvaliacaosTable
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

@@ -179,7 +179,8 @@ class OrdemServicoResource extends Resource
                         })
                         ->deselectRecordsAfterCompletion(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public static function getRelations(): array

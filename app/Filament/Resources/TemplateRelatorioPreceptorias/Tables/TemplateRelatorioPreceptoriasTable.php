@@ -39,6 +39,7 @@ class TemplateRelatorioPreceptoriasTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }
