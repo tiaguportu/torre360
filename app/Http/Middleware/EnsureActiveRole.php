@@ -13,7 +13,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -84,7 +83,7 @@ class EnsureActiveRole
 
                         if ($matriculaAtiva) {
                             $avatarUrl = $aluno->foto
-                                ? Storage::disk('local')->temporaryUrl($aluno->foto, now()->addHours(2))
+                                ? route('documentos.visualizar', ['path' => $aluno->foto])
                                 : 'https://ui-avatars.com/api/?name='.urlencode($aluno->nome).'&color=7F9CF5&background=EBF4FF';
 
                             $groups[] = NavigationGroup::make($aluno->nome)
