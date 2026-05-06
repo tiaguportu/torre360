@@ -4,6 +4,7 @@ namespace App\Notifications\Preceptorias;
 
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Models\Preceptoria;
+use App\Models\User;
 use App\Notifications\Channels\FcmChannel;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
@@ -30,7 +31,15 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', FcmChannel::class];
+        $channels = ['mail'];
+
+        // Sininho (database) e Push (FCM) apenas para usuários
+        if ($notifiable instanceof User) {
+            $channels[] = 'database';
+            $channels[] = FcmChannel::class;
+        }
+
+        return $channels;
     }
 
     /**
@@ -43,9 +52,11 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
         $aluno = $this->preceptoria->matricula?->pessoa?->nome ?? 'N/D';
         $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
+        $nome = $notifiable instanceof User ? $notifiable->name : $notifiable->nome;
+
         return (new MailMessage)
             ->subject('Lembrete de Agendamento de Preceptoria')
-            ->greeting("Olá, {$notifiable->name}!")
+            ->greeting("Olá, {$nome}!")
             ->line('Este é um lembrete de que você possui uma preceptoria agendada.')
             ->line("Aluno: {$aluno}")
             ->line("Professor: {$professor}")

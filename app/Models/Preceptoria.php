@@ -90,24 +90,47 @@ class Preceptoria extends Model
      */
     public function getNotificationRecipients(): Collection
     {
-        $pessoasEnvolvidas = collect();
+        $destinatarios = collect();
+
+        // Lista de pessoas que devem ser notificadas
+        $pessoas = collect();
 
         // 1. O Professor
         if ($this->professor) {
-            $pessoasEnvolvidas->push($this->professor);
+            $pessoas->push($this->professor);
         }
 
         // 2. O Aluno e seus responsáveis (via Matrícula)
-        if ($this->matricula) {
-            $pessoasEnvolvidas = $pessoasEnvolvidas->concat($this->matricula->getNotificationRecipients());
+        if ($this->matricula && $this->matricula->pessoa) {
+            $aluno = $this->matricula->pessoa;
+            $pessoas->push($aluno);
+
+            // Responsáveis do aluno
+            foreach ($aluno->responsaveis as $resp) {
+                $pessoas->push($resp);
+            }
         }
 
-        // Se a matrícula não retornar usuários (o que é raro no método dela), garantimos que pegamos pelo menos os usuários das pessoas
-        return User::query()
-            ->whereHas('pessoas', fn ($query) => $query->whereIn('pessoa.id', $pessoasEnvolvidas->pluck('id')->unique()))
-            ->whereNotNull('email')
-            ->get()
-            ->unique('id');
+        $pessoas = $pessoas->unique('id');
+
+        foreach ($pessoas as $pessoa) {
+            // Adicionar a própria pessoa se tiver e-mail (notificável via e-mail)
+            if ($pessoa->email) {
+                $destinatarios->push($pessoa);
+            }
+
+            // Adicionar todos os usuários vinculados (notificáveis via e-mail, push e sininho)
+            foreach ($pessoa->users as $user) {
+                if ($user->email) {
+                    $destinatarios->push($user);
+                }
+            }
+        }
+
+        // Retorna coleção única baseada na classe e ID para evitar duplicatas se a pessoa e o user tiverem o mesmo ID (raro)
+        return $destinatarios->unique(function ($item) {
+            return get_class($item).':'.$item->id;
+        });
     }
 
     /**
