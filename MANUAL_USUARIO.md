@@ -218,7 +218,7 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
 1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
-   - A matrícula do aluno não possuir nenhuma preceptoria agendada para o futuro.
+   - A matrícula do aluno não possuir nenhuma preceptoria agendada dentro dos **ciclos de preceptoria vigentes** (aqueles cuja data atual esteja entre o início e o fim do ciclo).
    - Existirem horários vagos (janelas) cadastrados por professores no sistema.
 2. Ao clicar no botão, o sistema solicitará confirmação, exibirá a **data e hora do último envio realizado** (se houver) e listará os e-mails do aluno e responsáveis que receberão o alerta.
 3. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.

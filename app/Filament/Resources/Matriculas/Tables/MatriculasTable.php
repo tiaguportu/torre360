@@ -233,7 +233,7 @@ class MatriculasTable
                         return new HtmlString($html);
                     })
                     ->visible(fn (Matricula $record) => auth()->user()->can('avisarPossibilidadePreceptoria:Matricula')
-                        && ! $record->hasActivePreceptoria()
+                        && ! $record->hasPreceptoriaInActiveCycles()
                         && $record->hasAvailablePreceptoriaWindows()
                     )
                     ->action(function (Matricula $record) {

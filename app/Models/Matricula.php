@@ -83,6 +83,16 @@ class Matricula extends Model
     }
 
     /**
+     * Verifica se a matrícula possui alguma preceptoria vinculada a ciclos vigentes.
+     */
+    public function hasPreceptoriaInActiveCycles(): bool
+    {
+        return $this->preceptorias()
+            ->whereHas('cicloPreceptoria', fn ($query) => $query->vigentes())
+            ->exists();
+    }
+
+    /**
      * Verifica se existem janelas de preceptoria disponíveis para agendamento.
      */
     public function hasAvailablePreceptoriaWindows(): bool

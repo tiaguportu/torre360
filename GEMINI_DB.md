@@ -116,6 +116,7 @@ Estrutura de ensino e turmas.
     - `pessoa_id`: BelongsTo `pessoa` (Aluno).
 - **Lógica de Negócio (Modelo):**
     - `hasActivePreceptoria()`: verifica existência de sessões futuras agendadas.
+    - `hasPreceptoriaInActiveCycles()`: verifica existência de sessões (passadas ou futuras) vinculadas a ciclos vigentes.
     - `hasAvailablePreceptoriaWindows()`: verifica existência de horários livres no sistema.
     - `notifyPossibilityPreceptoria()`: dispara notificações multicanal (E-mail, Push, Banco) registradas em log.
 

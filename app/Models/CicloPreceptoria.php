@@ -43,4 +43,12 @@ class CicloPreceptoria extends Model
     {
         return $this->hasMany(Preceptoria::class);
     }
+
+    public function scopeVigentes($query)
+    {
+        $today = now()->toDateString();
+
+        return $query->where('data_inicio', '<=', $today)
+            ->where('data_fim', '>=', $today);
+    }
 }
