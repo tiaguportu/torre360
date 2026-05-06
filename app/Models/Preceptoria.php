@@ -127,10 +127,11 @@ class Preceptoria extends Model
             }
         }
 
-        // Retorna coleção única baseada na classe e ID para evitar duplicatas se a pessoa e o user tiverem o mesmo ID (raro)
-        return $destinatarios->unique(function ($item) {
-            return get_class($item).':'.$item->id;
-        });
+        // Retorna coleção única baseada no e-mail para evitar duplicatas.
+        // Se houver uma Pessoa e um User com o mesmo e-mail, priorizamos o User para garantir o envio via Push/Sininho.
+        return $destinatarios->groupBy('email')->map(function ($group) {
+            return $group->first(fn ($item) => $item instanceof User) ?? $group->first();
+        })->values();
     }
 
     /**
