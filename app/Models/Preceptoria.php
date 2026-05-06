@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Models\Activity;
 
 class Preceptoria extends Model
 {
@@ -141,6 +142,21 @@ class Preceptoria extends Model
             'enviados' => $countSent,
             'falhas' => $falhas,
         ];
+    }
+
+    /**
+     * Retorna a data da última notificação de lembrete enviada.
+     */
+    public function getLastLembreteNotificationDate(): ?Carbon
+    {
+        $lastActivity = Activity::query()
+            ->where('subject_type', $this->getMorphClass())
+            ->where('subject_id', $this->getKey())
+            ->where('event', 'notificacao_lembrete_preceptoria')
+            ->latest()
+            ->first();
+
+        return $lastActivity?->created_at;
     }
 
     public function getLabelExibicaoAttribute(): string

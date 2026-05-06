@@ -23,6 +23,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 
 class PreceptoriasTable
 {
@@ -155,13 +156,38 @@ class PreceptoriasTable
                 EditAction::make(),
                 Action::make('relembrar')
                     ->label('Relembrar')
-                    ->tooltip('Enviar lembrete de agendamento por e-mail e notificação')
+                    ->tooltip(fn (Preceptoria $record) => $record->getLastLembreteNotificationDate()
+                        ? 'Último envio: '.$record->getLastLembreteNotificationDate()->format('d/m/Y H:i').' - Clique para enviar novamente.'
+                        : 'Enviar lembrete de agendamento por e-mail e notificação (Nenhum envio anterior)')
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
                     ->visible(fn (Preceptoria $record) => $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo())
                     ->requiresConfirmation()
                     ->modalHeading('Confirmar Envio de Lembrete')
-                    ->modalDescription('Deseja enviar um lembrete deste agendamento para o professor, aluno e seus responsáveis?')
+                    ->modalDescription(function (Preceptoria $record) {
+                        $emails = $record->getNotificationRecipients()->pluck('email');
+                        $lastNotification = $record->getLastLembreteNotificationDate();
+
+                        $html = '<div class="space-y-4">';
+
+                        if ($lastNotification) {
+                            $html .= '<div class="p-2 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 text-sm italic">';
+                            $html .= '<strong>Última notificação enviada em:</strong> '.$lastNotification->format('d/m/Y H:i');
+                            $html .= '</div>';
+                        }
+
+                        $html .= '<div>Deseja enviar um lembrete deste agendamento?</div>';
+
+                        if ($emails->isNotEmpty()) {
+                            $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
+                        } else {
+                            $html .= '<div class="text-danger-600 font-bold">Atenção: Nenhum destinatário com e-mail encontrado!</div>';
+                        }
+
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
+                    })
                     ->modalSubmitActionLabel('Sim, enviar lembrete')
                     ->action(function (Preceptoria $record) {
                         $result = $record->relembrarAgendamento();
