@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Preceptorias\Tables;
 
 use App\Models\Preceptoria;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -32,7 +33,10 @@ class PreceptoriasTable
                 TextColumn::make('data')
                     ->label('Data')
                     ->date('d/m/Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn (Preceptoria $record) => $record->isAgendamentoNoDiaSeguinte() ? 'danger' : null)
+                    ->icon(fn (Preceptoria $record) => $record->isAgendamentoNoDiaSeguinte() ? Heroicon::OutlinedExclamationTriangle : null)
+                    ->tooltip(fn (Preceptoria $record) => $record->isAgendamentoNoDiaSeguinte() ? 'Agendamento para amanhã!' : null),
 
                 TextColumn::make('hora_inicio')
                     ->label('Início')
@@ -149,6 +153,47 @@ class PreceptoriasTable
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('relembrar')
+                    ->label('Relembrar')
+                    ->tooltip('Enviar lembrete de agendamento por e-mail e notificação')
+                    ->icon(Heroicon::OutlinedEnvelope)
+                    ->color('warning')
+                    ->visible(fn (Preceptoria $record) => $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo())
+                    ->requiresConfirmation()
+                    ->modalHeading('Confirmar Envio de Lembrete')
+                    ->modalDescription('Deseja enviar um lembrete deste agendamento para o professor, aluno e seus responsáveis?')
+                    ->modalSubmitActionLabel('Sim, enviar lembrete')
+                    ->action(function (Preceptoria $record) {
+                        $result = $record->relembrarAgendamento();
+                        $countSent = $result['enviados'];
+                        $falhas = $result['falhas'];
+
+                        if ($countSent > 0) {
+                            Notification::make()
+                                ->title('Lembrete Enviado')
+                                ->body("O lembrete foi enviado para {$countSent} destinatário(s).")
+                                ->success()
+                                ->send();
+                        }
+
+                        if (! empty($falhas)) {
+                            foreach ($falhas as $email => $erro) {
+                                Notification::make()
+                                    ->title("Falha no envio: {$email}")
+                                    ->body("Erro: {$erro}")
+                                    ->danger()
+                                    ->send();
+                            }
+                        }
+
+                        if ($countSent === 0 && empty($falhas)) {
+                            Notification::make()
+                                ->title('Nenhum destinatário')
+                                ->body('Não foram encontrados usuários com e-mail para receber este lembrete.')
+                                ->warning()
+                                ->send();
+                        }
+                    }),
             ])
             ->recordAction(ViewAction::class)
             ->bulkActions([

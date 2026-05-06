@@ -598,6 +598,9 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
    - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
 7. **Visualização de Detalhes:** Clique em qualquer linha da tabela de preceptorias ou no botão de visualização (ícone de olho) para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
+8. **Alertas e Lembretes:**
+   - **Badge de Alerta:** Na listagem de preceptorias, a data de agendamentos previstos para **amanhã** aparecerá destacada em vermelho com um ícone de alerta, facilitando a identificação de compromissos imediatos.
+   - **Botão Relembrar:** Para cada preceptoria completamente agendada (com data, horário, professor e aluno) que ocorrerá no futuro, o botão **Relembrar** (ícone de envelope amarelo) estará disponível. Ao acioná-lo, o sistema enviará um lembrete automático por e-mail, push e sininho para o professor, para o aluno e para os responsáveis vinculados.
 
 ---
 
@@ -635,12 +638,18 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 2. **Seleção da Matrícula:**
    - Se você for um **Aluno**, suas matrículas serão exibidas automaticamente.
    - Se você for um **Responsável**, verá as matrículas de todos os alunos aos quais está vinculado.
-3. **Seleção do Horário:** Após escolher a matrícula, o sistema filtra automaticamente os horários disponíveis apenas de professores que possuem vínculo acadêmico direto com o aluno selecionado:
-   - **Professor Regente (Conselheiro):** O professor responsável pela turma do aluno.
-   - **Professores da Grade:** Professores que ministram disciplinas registradas no **Cronograma de Aula** daquela turma.
-   - **Independente do Usuário:** Esta regra de filtragem se aplica a todos, garantindo que mesmo agendamentos feitos pela secretaria respeitem a relação pedagógica aluno-professor.
-4. **Horário Disponível:** O sistema exibirá a lista de horários (dia e hora) que os professores vinculados cadastraram e que ainda estão vagos (sem aluno).
-5. Selecione o horário desejado e clique em **Confirmar Agendamento**.
+3. **Seleção do Horário:** Após escolher a matrícula, o sistema filtra automaticamente os horários disponíveis apenas de professores que possuem vínculo acadêmico direto com o aluno.
+- **Relacionamentos:** 
+  - BelongsTo `CicloPreceptoria`.
+  - BelongsTo `Pessoa` (Professor).
+  - BelongsTo `Matricula`.
+  - HasMany `RelatorioPreceptoria`.
+- **Lógica de Negócio (Modelo):**
+  - `isCompletamenteAgendada()`: Verifica se todos os campos necessários para o agendamento estão preenchidos.
+  - `isAgendamentoNoDiaSeguinte()`: Identifica se a sessão ocorre amanhã para alertas visuais.
+  - `relembrarAgendamento()`: Dispara notificações de lembrete multicanal (E-mail, Push, Banco) para todos os envolvidos, registrando o evento `notificacao_lembrete_preceptoria` no log de atividades.
+- **Notificações:** O sistema envia notificações automáticas (via canais configurados na tabela `notifications`) para os usuários vinculados ao Professor sempre que houver um novo agendamento ou liberação de horário.
+ desejado e clique em **Confirmar Agendamento**.
 
 > [!IMPORTANT]
 > Para usuários com o papel exclusivo de **Aluno** ou **Responsável**, os horários de preceptoria só ficam disponíveis para agendamento com pelo menos **2 dias de antecedência** (D+2) da data atual. Administradores e secretaria não possuem essa restrição.

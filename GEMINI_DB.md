@@ -273,6 +273,10 @@ Estrutura de ensino e turmas.
   - BelongsTo `Pessoa` (Professor).
   - BelongsTo `Matricula`.
   - HasMany `RelatorioPreceptoria`.
+- **Lógica de Negócio (Modelo):**
+  - `isCompletamenteAgendada()`: Verifica se todos os campos necessários para o agendamento estão preenchidos.
+  - `isAgendamentoNoDiaSeguinte()`: Identifica se a sessão ocorre amanhã para alertas visuais.
+  - `relembrarAgendamento()`: Dispara notificações de lembrete multicanal (E-mail, Push, Banco) para todos os envolvidos, registrando o evento `notificacao_lembrete_preceptoria` no log de atividades.
 - **Notificações:** O sistema envia notificações automáticas (via canais configurados na tabela `notifications`) para os usuários vinculados ao Professor sempre que houver um novo agendamento ou liberação de horário.
 
 ### `relatorio_preceptoria`
