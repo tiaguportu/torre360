@@ -17,6 +17,8 @@ use App\Models\ResponsavelFinanceiro;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
+use App\Models\User;
+use App\Notifications\WelcomeUserMail;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
@@ -31,11 +33,14 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 {
@@ -72,7 +77,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
     public function form(Schema $schema): Schema
     {
-        $getPessoaFields = function ($statePath) {
+        $getPessoaFields = function (string $statePath) {
             return [
                 FileUpload::make('foto')
                     ->image()
@@ -139,7 +144,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     }),
                 TextInput::make('nome')->required()->maxLength(255),
                 DatePicker::make('data_nascimento')->label('Data de Nascimento'),
-                TextInput::make('email')->email()->maxLength(255),
+                TextInput::make('email')->email()->maxLength(255)->live(),
                 TextInput::make('telefone')->tel()->maxLength(20),
                 Select::make('nacionalidade_id')
                     ->label('Nacionalidade')
@@ -167,6 +172,13 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->label('Cor/Raça')
                     ->options(CorRaca::class)
                     ->searchable(),
+                Checkbox::make('criar_usuario')
+                    ->label('Criar conta de acesso para esta pessoa?')
+                    ->helperText('Será enviado um e-mail com a senha para o endereço informado acima.')
+                    ->live()
+                    ->default(false)
+                    ->columnSpanFull()
+                    ->visible(fn (Get $get) => ! empty($get('email'))),
             ];
         };
 
@@ -226,18 +238,24 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         return $schema
             ->components([
                 Wizard::make([
-                    Step::make('Dados do Aluno')
-                        ->description('Identificação básica do estudante')
+                    Step::make('Dados do(s) Aluno(s)')
+                        ->description('Identificação básica do(s) estudante(s)')
                         ->icon('heroicon-m-user')
                         ->components([
-                            Section::make('Identificação')
-                                ->columns(2)
-                                ->statePath('aluno')
-                                ->schema($getPessoaFields('aluno')),
-                            Section::make('Endereço')
-                                ->columns(2)
-                                ->statePath('aluno')
-                                ->schema($enderecoFields),
+                            Repeater::make('alunos')
+                                ->label('Alunos')
+                                ->addActionLabel('Adicionar Aluno')
+                                ->minItems(1)
+                                ->schema([
+                                    Section::make('Identificação do Aluno')
+                                        ->columns(2)
+                                        ->schema($getPessoaFields('')),
+                                    Section::make('Endereço do Aluno')
+                                        ->columns(2)
+                                        ->schema($enderecoFields),
+                                ])
+                                ->collapsible()
+                                ->cloneable(),
                         ]),
                     Step::make('Pais / Responsáveis')
                         ->description('Vínculos familiares e financeiros')
@@ -267,7 +285,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                         ]),
                                     Section::make('Identificação do Responsável')
                                         ->columns(2)
-                                        ->schema($getPessoaFields(null)),
+                                        ->schema($getPessoaFields('')),
                                     Section::make('Endereço do Responsável')
                                         ->columns(2)
                                         ->schema($enderecoFields),
@@ -320,61 +338,70 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         try {
             DB::beginTransaction();
 
-            $alunoData = $raw['aluno'];
-
-            // Criar Endereco do Aluno, se preenchido
-            $alunoEnderecoId = null;
-            if (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id'])) {
-                $endereco = Endereco::create([
-                    'cidade_id' => $alunoData['cidade_id'] ?? null,
-                    'logradouro' => $alunoData['logradouro'] ?? null,
-                    'numero' => $alunoData['numero'] ?? null,
-                    'complemento' => $alunoData['complemento'] ?? null,
-                    'bairro' => $alunoData['bairro'] ?? null,
-                    'cep' => $alunoData['cep'] ?? null,
-                ]);
-                $alunoEnderecoId = $endereco->id;
-            }
-
-            // 1. Criar Pessoa Aluno
-            $aluno = Pessoa::create([
-                'nome' => $alunoData['nome'],
-                'cpf' => $alunoData['cpf'] ?? null,
-                'data_nascimento' => $alunoData['data_nascimento'] ?? null,
-                'sexo' => $alunoData['sexo'] ?? null,
-                'email' => $alunoData['email'] ?? null,
-                'telefone' => $alunoData['telefone'] ?? null,
-                'nacionalidade_id' => $alunoData['nacionalidade_id'] ?? null,
-                'naturalidade_id' => $alunoData['naturalidade_id'] ?? null,
-                'cor_raca' => $alunoData['cor_raca'] ?? null,
-            ]);
-
-            if ($alunoEnderecoId) {
-                $aluno->enderecos()->attach($alunoEnderecoId);
-            }
-
             $turma = Turma::find($raw['turma_id']);
 
-            // 3. Criar Matrícula
-            $matricula = Matricula::create([
-                'pessoa_id' => $aluno->id,
-                'turma_id' => $raw['turma_id'],
-                'situacao' => SituacaoMatricula::ATIVA,
-                'periodo_letivo_id' => $turma?->periodo_letivo_id,
-            ]);
+            /** @var list<Pessoa> $alunosPessoa */
+            $alunosPessoa = [];
 
-            // 4. Criar Contrato para a Matrícula
-            $contrato = Contrato::create([
-                'valor_total' => 0, // Valor padrão inicial, pode ser alterado posteriormente
-                'data_aceite' => now(),
-                'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula',
-            ]);
+            foreach ($raw['alunos'] as $alunoData) {
+                // Criar Endereço do Aluno, se preenchido
+                $alunoEnderecoId = null;
+                if (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id'])) {
+                    $endereco = Endereco::create([
+                        'cidade_id' => $alunoData['cidade_id'] ?? null,
+                        'logradouro' => $alunoData['logradouro'] ?? null,
+                        'numero' => $alunoData['numero'] ?? null,
+                        'complemento' => $alunoData['complemento'] ?? null,
+                        'bairro' => $alunoData['bairro'] ?? null,
+                        'cep' => $alunoData['cep'] ?? null,
+                    ]);
+                    $alunoEnderecoId = $endereco->id;
+                }
 
-            // Vincular contrato à matrícula
-            $matricula->update(['contrato_id' => $contrato->id]);
+                // 1. Criar Pessoa Aluno
+                $aluno = Pessoa::create([
+                    'nome' => $alunoData['nome'],
+                    'cpf' => $alunoData['cpf'] ?? null,
+                    'data_nascimento' => $alunoData['data_nascimento'] ?? null,
+                    'sexo' => $alunoData['sexo'] ?? null,
+                    'email' => $alunoData['email'] ?? null,
+                    'telefone' => $alunoData['telefone'] ?? null,
+                    'nacionalidade_id' => $alunoData['nacionalidade_id'] ?? null,
+                    'naturalidade_id' => $alunoData['naturalidade_id'] ?? null,
+                    'cor_raca' => $alunoData['cor_raca'] ?? null,
+                ]);
+
+                if ($alunoEnderecoId) {
+                    $aluno->enderecos()->attach($alunoEnderecoId);
+                }
+
+                // 2. Criar usuário para o aluno, se solicitado
+                if (! empty($alunoData['criar_usuario']) && ! empty($alunoData['email'])) {
+                    $this->criarUsuarioParaPessoa($aluno, $alunoData['email'], 'aluno');
+                }
+
+                // 3. Criar Matrícula
+                $matricula = Matricula::create([
+                    'pessoa_id' => $aluno->id,
+                    'turma_id' => $raw['turma_id'],
+                    'situacao' => SituacaoMatricula::ATIVA,
+                    'periodo_letivo_id' => $turma?->periodo_letivo_id,
+                ]);
+
+                // 4. Criar Contrato para a Matrícula
+                $contrato = Contrato::create([
+                    'valor_total' => 0,
+                    'data_aceite' => now(),
+                    'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula',
+                ]);
+
+                $matricula->update(['contrato_id' => $contrato->id]);
+
+                $alunosPessoa[] = ['aluno' => $aluno, 'contrato' => $contrato];
+            }
 
             foreach ($raw['responsaveis'] as $respData) {
-                // Criar endereco do responsavel
+                // Criar endereço do responsável
                 $respEnderecoId = null;
                 if (! empty($respData['logradouro']) || ! empty($respData['cidade_id'])) {
                     $enderecoResp = Endereco::create([
@@ -388,7 +415,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     $respEnderecoId = $enderecoResp->id;
                 }
 
-                // Criar ou buscar pessoa responsável
+                // Criar ou buscar Pessoa Responsável
                 $q = Pessoa::query();
                 if (! empty($respData['cpf'])) {
                     $q->where('cpf', $respData['cpf']);
@@ -415,27 +442,38 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     }
                 }
 
-                // 5. Criar Vinculo Aluno-Responsável
-                AlunoResponsavel::create([
-                    'aluno_id' => $aluno->id,
-                    'responsavel_id' => $responsavelPessoa->id,
-                    'tipo_vinculo_id' => $respData['tipo_vinculo_id'],
-                ]);
+                // Criar usuário para o responsável, se solicitado
+                if (! empty($respData['criar_usuario']) && ! empty($respData['email'])) {
+                    $this->criarUsuarioParaPessoa($responsavelPessoa, $respData['email'], 'responsavel');
+                }
 
-                // 6. Criar Vinculo Responsável Financeiro (se marcado)
-                if ($respData['is_financeiro'] ?? false) {
-                    ResponsavelFinanceiro::create([
-                        'pessoa_id' => $responsavelPessoa->id,
-                        'contrato_id' => $contrato->id,
-                        'percentual' => $respData['percentual'] ?? 100,
+                // Vincular responsável a todos os alunos cadastrados
+                foreach ($alunosPessoa as $entry) {
+                    $alunoObj = $entry['aluno'];
+                    $contratoObj = $entry['contrato'];
+
+                    AlunoResponsavel::create([
+                        'aluno_id' => $alunoObj->id,
+                        'responsavel_id' => $responsavelPessoa->id,
+                        'tipo_vinculo_id' => $respData['tipo_vinculo_id'],
                     ]);
+
+                    if ($respData['is_financeiro'] ?? false) {
+                        ResponsavelFinanceiro::create([
+                            'pessoa_id' => $responsavelPessoa->id,
+                            'contrato_id' => $contratoObj->id,
+                            'percentual' => $respData['percentual'] ?? 100,
+                        ]);
+                    }
                 }
             }
 
             DB::commit();
 
+            $count = count($alunosPessoa);
             Notification::make()
                 ->title('Matrícula realizada com sucesso!')
+                ->body($count > 1 ? "{$count} alunos matriculados com sucesso." : 'Aluno matriculado com sucesso.')
                 ->success()
                 ->send();
 
@@ -449,5 +487,43 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 ->danger()
                 ->send();
         }
+    }
+
+    /**
+     * Cria um novo usuário vinculado à Pessoa, atribui o role e envia e-mail de boas-vindas.
+     */
+    private function criarUsuarioParaPessoa(Pessoa $pessoa, string $email, string $role): void
+    {
+        // Verificar se já existe usuário com este e-mail
+        $userExistente = User::where('email', $email)->first();
+
+        if ($userExistente) {
+            // Apenas vincular a pessoa ao usuário existente, se ainda não estiver vinculado
+            if (! $userExistente->pessoas()->where('pessoa_id', $pessoa->id)->exists()) {
+                $userExistente->pessoas()->attach($pessoa->id);
+            }
+
+            // Garantir que o role seja atribuído
+            if (! $userExistente->hasRole($role)) {
+                $userExistente->assignRole($role);
+            }
+
+            return;
+        }
+
+        $senha = Str::password(12, true, true, false);
+
+        $usuario = User::create([
+            'name' => $pessoa->nome,
+            'email' => $email,
+            'password' => Hash::make($senha),
+            'activated_at' => now(),
+            'email_verified_at' => now(),
+        ]);
+
+        $usuario->assignRole($role);
+        $usuario->pessoas()->attach($pessoa->id);
+
+        $usuario->notify(new WelcomeUserMail($senha));
     }
 }

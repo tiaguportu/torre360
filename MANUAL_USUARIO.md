@@ -203,6 +203,30 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 
 ## 📝 6. Secretaria e Documentação
 
+### 6.0 Assistente de Matrícula (Wizard)
+O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a forma mais rápida e guiada de registrar um ou mais alunos com todos os seus vínculos familiares em um único fluxo de 3 etapas.
+
+#### Etapa 1 — Dados do(s) Aluno(s)
+- Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada.
+- O formulário permite cadastrar **múltiplos alunos** na mesma matrícula (irmãos, por exemplo) clicando em **"Adicionar Aluno"**. Todos compartilharão os mesmos responsáveis.
+- **Criar conta de acesso:** Ao preencher o campo **E-mail**, aparecerá um checkbox **"Criar conta de acesso para esta pessoa?"**. Se marcado, o sistema criará automaticamente um usuário com o papel **`aluno`** e enviará um e-mail de boas-vindas com a senha gerada para o endereço informado.
+
+> [!NOTE]
+> Se já existir um usuário cadastrado com o e-mail informado, o sistema apenas vinculará a Pessoa a esse usuário e garantirá que o papel `aluno` esteja atribuído.
+
+#### Etapa 2 — Pais / Responsáveis
+- Adicione um ou mais responsáveis e defina o **vínculo** (Pai, Mãe, Tutor etc.) e se é **Responsável Financeiro** (e o percentual correspondente).
+- Os responsáveis cadastrados serão vinculados a **todos os alunos** adicionados na Etapa 1.
+- **Criar conta de acesso:** Igualmente ao aluno, se o responsável possuir e-mail e o checkbox estiver marcado, será criado um usuário com o papel **`responsavel`**.
+
+#### Etapa 3 — Plano e Matrícula
+- Selecione a **Unidade**, o **Curso** e a **Turma** em que os alunos serão matriculados.
+- Ao clicar em **"Finalizar Matrícula"**, o sistema criará automaticamente:
+  - As Pessoas (Aluno e Responsáveis).
+  - Uma Matrícula por aluno.
+  - Um Contrato vinculado a cada matrícula.
+  - Os usuários de acesso (se solicitado), com envio de e-mail de boas-vindas.
+
 ### 6.1 Matrículas e Contratos
 1. Ao realizar uma matrícula, o sistema permite a criação automática de um **Contrato**.
 2. O contrato centraliza as obrigações financeiras e os responsáveis legais.
