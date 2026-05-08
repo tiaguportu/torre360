@@ -144,7 +144,23 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     }),
                 TextInput::make('nome')->required()->maxLength(255),
                 DatePicker::make('data_nascimento')->label('Data de Nascimento'),
-                TextInput::make('email')->email()->maxLength(255)->live(),
+                TextInput::make('email')
+                    ->email()
+                    ->maxLength(255)
+                    ->live()
+                    ->afterStateUpdated(function ($set, $get, $state) {
+                        if (empty($state) || ! $get('criar_usuario')) {
+                            return;
+                        }
+
+                        if (User::where('email', $state)->exists()) {
+                            Notification::make()
+                                ->title('Atenção')
+                                ->body('Este e-mail já está em uso por outro usuário. Se prosseguir, a pessoa será vinculada ao usuário existente.')
+                                ->warning()
+                                ->send();
+                        }
+                    }),
                 TextInput::make('telefone')->tel()->maxLength(20),
                 Select::make('nacionalidade_id')
                     ->label('Nacionalidade')
@@ -176,6 +192,24 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->label('Criar conta de acesso para esta pessoa?')
                     ->helperText('Será enviado um e-mail com a senha para o endereço informado acima.')
                     ->live()
+                    ->afterStateUpdated(function ($get, $state) {
+                        if (! $state) {
+                            return;
+                        }
+
+                        $email = $get('email');
+                        if (empty($email)) {
+                            return;
+                        }
+
+                        if (User::where('email', $email)->exists()) {
+                            Notification::make()
+                                ->title('Atenção')
+                                ->body('Este e-mail já está em uso por outro usuário. Se prosseguir, a pessoa será vinculada ao usuário existente.')
+                                ->warning()
+                                ->send();
+                        }
+                    })
                     ->default(false)
                     ->columnSpanFull()
                     ->visible(fn (Get $get) => ! empty($get('email'))),
