@@ -123,9 +123,10 @@ class QuestionarioForm
                                                 Repeater::make('perguntas')
                                                     ->relationship('perguntas')
                                                     ->schema([
-                                                        TextInput::make('enunciado')
+                                                        \Filament\Forms\Components\RichEditor::make('enunciado')
                                                             ->label('Pergunta')
-                                                            ->required(),
+                                                            ->required()
+                                                            ->columnSpanFull(),
                                                         Select::make('tipo')
                                                             ->label('Tipo de Pergunta')
                                                             ->options([
@@ -163,7 +164,7 @@ class QuestionarioForm
                                                     ->collapsible()
                                                     ->collapsed()
                                                     ->addActionLabel('Adicionar Pergunta')
-                                                    ->itemLabel(fn (array $state): ?string => $state['enunciado'] ?? null),
+                                                    ->itemLabel(fn (array $state): ?string => isset($state['enunciado']) ? strip_tags($state['enunciado']) : null),
                                             ])
                                             ->reorderable('ordem')
                                             ->collapsible()
