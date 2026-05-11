@@ -4,11 +4,11 @@ namespace App\Filament\Resources\Questionarios\Tables;
 
 use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\Questionario;
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -50,18 +50,18 @@ class QuestionariosTable
                 //
             ])
             ->actions([
-                \Filament\Tables\Actions\Action::make('responder')
+                Action::make('responder')
                     ->label('Responder')
                     ->icon('heroicon-o-pencil-square')
                     ->color('success')
                     ->url(fn (Questionario $record): string => QuestionarioResource::getUrl('responder', ['record' => $record]))
                     ->visible(fn (Questionario $record): bool => $record->podeSerRespondidoPor(auth()->user())),
-                \Filament\Tables\Actions\ViewAction::make(),
-                \Filament\Tables\Actions\EditAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                \Filament\Tables\Actions\BulkActionGroup::make([
-                    \Filament\Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->stackedOnMobile();
