@@ -72,4 +72,35 @@ class QuestionarioRespostaResource extends Resource implements HasShieldPermissi
             'edit' => EditQuestionarioResposta::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            if ($user) {
+                // Minhas próprias respostas
+                $q->where('user_id', $user->id);
+
+                // Ou de questionários nos quais eu sou dono/observador
+                $q->orWhereHas('questionario.responsaveis', function ($sq) use ($user) {
+                    $sq->where(function ($ssq) use ($user) {
+                        $ssq->where('responsavel_type', 'User')
+                            ->where('responsavel_id', $user->id);
+                    })->orWhere(function ($ssq) use ($user) {
+                        $ssq->where('responsavel_type', 'Role')
+                            ->whereIn('responsavel_id', $user->roles->pluck('id'));
+                    });
+                });
+            } else {
+                $q->whereRaw('1 = 0');
+            }
+        });
+    }
 }

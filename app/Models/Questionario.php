@@ -127,4 +127,55 @@ class Questionario extends Model
     {
         return $this->hasMany(QuestionarioResposta::class);
     }
+
+    public function responsaveis(): HasMany
+    {
+        return $this->hasMany(QuestionarioResponsavel::class);
+    }
+
+    public function donos(): HasMany
+    {
+        return $this->responsaveis()->where('nivel', 'dono');
+    }
+
+    public function observadores(): HasMany
+    {
+        return $this->responsaveis()->where('nivel', 'observador');
+    }
+
+    public function ehDono(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+        return $this->donos()
+            ->where(function ($query) use ($user) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('responsavel_type', 'User')->where('responsavel_id', $user->id);
+                })->orWhere(function ($q) use ($user) {
+                    $q->where('responsavel_type', 'Role')->whereIn('responsavel_id', $user->roles->pluck('id'));
+                });
+            })->exists();
+    }
+
+    public function ehObservador(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+        return $this->observadores()
+            ->where(function ($query) use ($user) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('responsavel_type', 'User')->where('responsavel_id', $user->id);
+                })->orWhere(function ($q) use ($user) {
+                    $q->where('responsavel_type', 'Role')->whereIn('responsavel_id', $user->roles->pluck('id'));
+                });
+            })->exists();
+    }
 }

@@ -81,4 +81,42 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
             'responder' => ResponderQuestionario::route('/{record}/responder'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        
+        $user = auth()->user();
+        
+        if ($user && $user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            if ($user) {
+                // É dono ou observador
+                $q->whereHas('responsaveis', function ($sq) use ($user) {
+                    $sq->where(function ($ssq) use ($user) {
+                        $ssq->where('responsavel_type', 'User')
+                            ->where('responsavel_id', $user->id);
+                    })->orWhere(function ($ssq) use ($user) {
+                        $ssq->where('responsavel_type', 'Role')
+                            ->whereIn('responsavel_id', $user->roles->pluck('id'));
+                    });
+                });
+
+                // Ou pode responder (baseado no escopo visivelPara)
+                $q->orWhere(function($sq) use ($user) {
+                    // Nós recriamos o visivelPara usando a variável $user
+                    // Não dá pra só chamar ->visivelPara($user) porque o scope já usa
+                    // a mesma query root ($sq). Mas podemos passar para o scope.
+                    // O Laravel permite misturar orWhere com Scopes!
+                    $sq->visivelPara($user);
+                });
+            } else {
+                // Visitante anônimo
+                $q->visivelPara(null);
+            }
+        });
+    }
 }

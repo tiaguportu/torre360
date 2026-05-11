@@ -235,6 +235,14 @@ Estrutura de ensino e turmas.
 - **Campos Principais:** `enunciado`, `tipo` (discursiva, objetiva, multipla_escolha, likert), `opcoes` (JSON).
 - **Relacionamentos:** BelongsTo `questionario_blocos`.
 
+### `questionario_responsaveis`
+- **Representa:** Gestores (Donos) e visualizadores (Observadores) autorizados do questionário.
+- **Campos Principais:**
+    - `responsavel_type`: Tipo de responsavel (Role, User).
+    - `responsavel_id`: ID da entidade correspondente.
+    - `nivel`: Enum (`dono`, `observador`).
+- **Propósito:** Controla quem pode editar e visualizar as respostas de forma granular por questionário, além do super_admin.
+
 ### `questionario_alvos`
 - **Representa:** Definição do público-alvo para o questionário.
 - **Campos Principais:** 

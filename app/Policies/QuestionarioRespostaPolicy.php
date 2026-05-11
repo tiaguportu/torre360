@@ -12,6 +12,16 @@ class QuestionarioRespostaPolicy
 {
     use HandlesAuthorization;
     
+    public function before(AuthUser $authUser, string $ability): ?bool
+    {
+        /** @var \App\Models\User $authUser */
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
+        return null;
+    }
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:QuestionarioResposta');
@@ -19,6 +29,11 @@ class QuestionarioRespostaPolicy
 
     public function view(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionarioResposta->questionario->ehDono($authUser) || $questionarioResposta->questionario->ehObservador($authUser) || $questionarioResposta->user_id === $authUser->id) {
+            return true;
+        }
+
         return $authUser->can('View:QuestionarioResposta');
     }
 
@@ -29,11 +44,21 @@ class QuestionarioRespostaPolicy
 
     public function update(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionarioResposta->questionario->ehDono($authUser)) {
+            return true;
+        }
+
         return $authUser->can('Update:QuestionarioResposta');
     }
 
     public function delete(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionarioResposta->questionario->ehDono($authUser)) {
+            return true;
+        }
+
         return $authUser->can('Delete:QuestionarioResposta');
     }
 

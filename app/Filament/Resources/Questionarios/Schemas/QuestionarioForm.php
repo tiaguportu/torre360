@@ -97,6 +97,49 @@ class QuestionarioForm
                                     ]),
                             ]),
 
+                        Tabs\Tab::make('Permissões e Acesso')
+                            ->icon(Heroicon::OutlinedShieldCheck)
+                            ->schema([
+                                Section::make('Donos e Observadores')
+                                    ->description('Defina quem gerencia (Dono) e quem apenas acompanha os resultados (Observador).')
+                                    ->schema([
+                                        Repeater::make('responsaveis')
+                                            ->relationship('responsaveis')
+                                            ->schema([
+                                                Select::make('nivel')
+                                                    ->label('Nível de Acesso')
+                                                    ->options([
+                                                        'dono' => 'Dono (Edita, Visualiza, Exclui)',
+                                                        'observador' => 'Observador (Apenas Visualiza)',
+                                                    ])
+                                                    ->required(),
+                                                Select::make('responsavel_type')
+                                                    ->label('Tipo de Vínculo')
+                                                    ->options([
+                                                        'Role' => 'Perfil/Role',
+                                                        'User' => 'Usuário Específico',
+                                                    ])
+                                                    ->required()
+                                                    ->live(),
+                                                Select::make('responsavel_id')
+                                                    ->label('Vínculo')
+                                                    ->options(function (callable $get) {
+                                                        $type = $get('responsavel_type');
+
+                                                        return match ($type) {
+                                                            'Role' => Role::all()->pluck('name', 'id'),
+                                                            'User' => User::all()->pluck('name', 'id'),
+                                                            default => [],
+                                                        };
+                                                    })
+                                                    ->required()
+                                                    ->searchable(),
+                                            ])
+                                            ->columns(3)
+                                            ->addActionLabel('Adicionar Responsável'),
+                                    ]),
+                            ]),
+
                         Tabs\Tab::make('Estrutura e Perguntas')
                             ->icon(Heroicon::OutlinedQuestionMarkCircle)
                             ->schema([

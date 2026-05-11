@@ -12,6 +12,16 @@ class QuestionarioPolicy
 {
     use HandlesAuthorization;
     
+    public function before(AuthUser $authUser, string $ability): ?bool
+    {
+        /** @var \App\Models\User $authUser */
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
+        return null;
+    }
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Questionario');
@@ -19,6 +29,11 @@ class QuestionarioPolicy
 
     public function view(AuthUser $authUser, Questionario $questionario): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionario->ehDono($authUser) || $questionario->ehObservador($authUser) || $questionario->podeSerRespondidoPor($authUser)) {
+            return true;
+        }
+
         return $authUser->can('View:Questionario');
     }
 
@@ -29,11 +44,21 @@ class QuestionarioPolicy
 
     public function update(AuthUser $authUser, Questionario $questionario): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionario->ehDono($authUser)) {
+            return true;
+        }
+
         return $authUser->can('Update:Questionario');
     }
 
     public function delete(AuthUser $authUser, Questionario $questionario): bool
     {
+        /** @var \App\Models\User $authUser */
+        if ($questionario->ehDono($authUser)) {
+            return true;
+        }
+
         return $authUser->can('Delete:Questionario');
     }
 
