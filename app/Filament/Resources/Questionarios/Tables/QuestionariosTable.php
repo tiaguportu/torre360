@@ -49,15 +49,15 @@ class QuestionariosTable
             ->filters([
                 //
             ])
-            ->recordActions([
-                Action::make('responder')
+            ->actions([
+                \Filament\Tables\Actions\Action::make('responder')
                     ->label('Responder')
                     ->icon('heroicon-o-pencil-square')
                     ->color('success')
                     ->url(fn (Questionario $record): string => QuestionarioResource::getUrl('responder', ['record' => $record]))
                     ->visible(fn (Questionario $record): bool => $record->podeSerRespondidoPor(auth()->user())),
-                ViewAction::make(),
-                EditAction::make(),
+                \Filament\Tables\Actions\ViewAction::make(),
+                \Filament\Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
