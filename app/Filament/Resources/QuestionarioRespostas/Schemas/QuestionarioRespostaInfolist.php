@@ -44,7 +44,8 @@ class QuestionarioRespostaInfolist
                             ->schema([
                                 TextEntry::make('pergunta.enunciado')
                                     ->label('Pergunta')
-                                    ->weight('bold'),
+                                    ->weight('bold')
+                                    ->html(),
                                 TextEntry::make('resposta_texto')
                                     ->label('Resposta')
                                     ->visible(fn ($record) => ! empty($record->resposta_texto)),
