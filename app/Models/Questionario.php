@@ -83,6 +83,11 @@ class Questionario extends Model
             return false;
         }
 
+        // Se for super_admin, sempre pode responder (útil para testes e administração)
+        if ($user && $user->hasRole('super_admin')) {
+            return true;
+        }
+
         // Se não houver alvos, qualquer usuário logado pode responder
         if ($this->alvos()->count() === 0) {
             return $user !== null || $this->is_anonimo;
