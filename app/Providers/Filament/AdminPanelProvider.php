@@ -94,7 +94,16 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render("@vite('resources/js/app.js')"),
+                fn (): string => Blade::render("
+                    @vite('resources/js/app.js')
+                    <script>
+                        if ('serviceWorker' in navigator) {
+                            window.addEventListener('load', () => {
+                                navigator.serviceWorker.register('/sw.js');
+                            });
+                        }
+                    </script>
+                "),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
@@ -110,7 +119,14 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
-                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">',
+                    <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">
+                    <link rel="manifest" href="/manifest.json">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <meta name="apple-mobile-web-app-title" content="Torre360">
+                    <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
+                    <meta name="theme-color" content="#243468">
+                ',
             )
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')

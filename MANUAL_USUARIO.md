@@ -742,4 +742,38 @@ O Torre360 permite que um usuário possua múltiplos papéis (ex: Professor e Re
 
 ---
 
+---
+
+## 📱 20. Aplicativo Móvel e PWA
+
+O **Torre360** oferece duas formas de acesso mobile para garantir que você esteja sempre conectado, seja você um administrador, professor ou responsável.
+
+### 20.1 Aplicativo Nativo (Android)
+O aplicativo nativo oferece a experiência mais completa e integrada com o hardware do seu dispositivo.
+
+1.  **Instalação:** Obtenha o link de download ou o arquivo APK diretamente com a secretaria da escola.
+2.  **Ícones e Identidade:** O aplicativo possui ícone personalizado e tela de abertura (Splash Screen) exclusiva da **Torre 360**.
+3.  **Vantagens do App Nativo:**
+    - **Notificações Push Reais:** Receba alertas mesmo com o aplicativo fechado.
+    - **Desempenho Otimizado:** Carregamento mais rápido das interfaces.
+    - **Integração com Câmera:** Facilidade para tirar fotos de documentos e fazer o upload diretamente para o sistema.
+    - **User-Agent Exclusivo:** O sistema reconhece que você está acessando via aplicativo para oferecer ajustes de layout específicos.
+
+### 20.2 Instalação via PWA (Android e iOS)
+Se você prefere não instalar um aplicativo da loja ou utiliza iOS (iPhone), você pode "instalar" o Torre360 diretamente do seu navegador através da tecnologia **PWA (Progressive Web App)**.
+
+1.  **Como Instalar (Android/Chrome):**
+    - Acesse o site do sistema pelo Chrome.
+    - Clique nos três pontinhos (menu) e selecione **"Instalar aplicativo"** ou **"Adicionar à tela inicial"**.
+2.  **Como Instalar (iOS/Safari):**
+    - Acesse o site pelo Safari.
+    - Clique no ícone de **Compartilhar** (quadrado com seta para cima).
+    - Role para baixo e selecione **"Adicionar à Tela de Início"**.
+3.  **Vantagens do PWA:**
+    - Não ocupa espaço significativo na memória.
+    - Atualizações automáticas (sempre que o site for atualizado, o "app" também será).
+    - Funciona em tela cheia (Standalone), removendo as barras do navegador.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
