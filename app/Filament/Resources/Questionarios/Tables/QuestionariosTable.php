@@ -60,8 +60,8 @@ class QuestionariosTable
                 \Filament\Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                \Filament\Tables\Actions\BulkActionGroup::make([
+                    \Filament\Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->stackedOnMobile();
