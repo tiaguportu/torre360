@@ -114,7 +114,8 @@ class QuestionarioForm
                                                         TextInput::make('ordem')
                                                             ->label('Ordem')
                                                             ->numeric()
-                                                            ->default(0),
+                                                            ->default(0)
+                                                            ->hidden(),
                                                         Textarea::make('descricao')
                                                             ->label('Descrição do Bloco')
                                                             ->columnSpanFull(),
@@ -141,7 +142,8 @@ class QuestionarioForm
                                                         TextInput::make('ordem')
                                                             ->label('Ordem')
                                                             ->numeric()
-                                                            ->default(0),
+                                                            ->default(0)
+                                                            ->hidden(),
                                                         Grid::make(1)
                                                             ->visible(fn ($get) => in_array($get('tipo'), ['objetiva', 'multipla_escolha']))
                                                             ->schema([
@@ -152,13 +154,20 @@ class QuestionarioForm
                                                                             ->label('Rótulo da Opção')
                                                                             ->required(),
                                                                     ])
+                                                                    ->reorderableWithButtons()
                                                                     ->addActionLabel('Adicionar Opção'),
                                                             ]),
                                                     ])
                                                     ->columns(2)
+                                                    ->reorderable('ordem')
+                                                    ->collapsible()
+                                                    ->collapsed()
                                                     ->addActionLabel('Adicionar Pergunta')
                                                     ->itemLabel(fn (array $state): ?string => $state['enunciado'] ?? null),
                                             ])
+                                            ->reorderable('ordem')
+                                            ->collapsible()
+                                            ->collapsed()
                                             ->addActionLabel('Adicionar Bloco Temático')
                                             ->itemLabel(fn (array $state): ?string => $state['titulo'] ?? null),
                                     ]),

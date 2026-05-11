@@ -93,4 +93,46 @@ class Pessoa extends Model
     {
         return $this->hasMany(Preceptoria::class, 'professor_id');
     }
+
+    /**
+     * Retorna uma lista de motivos (vínculos) que impedem a exclusão da pessoa.
+     */
+    public function getInviabilityReasons(): array
+    {
+        $reasons = [];
+
+        if ($this->matriculas()->exists()) {
+            $reasons[] = 'Possui matrículas vinculadas';
+        }
+
+        if ($this->interessado()->exists()) {
+            $reasons[] = 'Possui cadastro no CRM (Interessado)';
+        }
+
+        if ($this->responsaveisFinanceiros()->exists()) {
+            $reasons[] = 'É responsável financeiro em algum contrato';
+        }
+
+        if ($this->preceptoriasComoProfesor()->exists()) {
+            $reasons[] = 'Possui preceptorias agendadas como professor';
+        }
+
+        if ($this->alunos()->exists()) {
+            $reasons[] = 'Possui alunos vinculados (é responsável)';
+        }
+
+        if ($this->responsaveis()->exists()) {
+            $reasons[] = 'Possui responsáveis vinculados (é aluno)';
+        }
+
+        if ($this->unidadesRepresentadas()->exists()) {
+            $reasons[] = 'É representante legal de uma unidade';
+        }
+
+        if ($this->users()->exists()) {
+            $reasons[] = 'Possui usuário de acesso ao sistema vinculado';
+        }
+
+        return $reasons;
+    }
 }

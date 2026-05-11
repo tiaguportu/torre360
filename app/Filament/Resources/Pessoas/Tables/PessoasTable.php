@@ -8,6 +8,7 @@ use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ExportBulkAction;
@@ -98,6 +99,21 @@ class PessoasTable
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make()
+                    ->before(function (DeleteAction $action, Pessoa $record) {
+                        $reasons = $record->getInviabilityReasons();
+
+                        if (! empty($reasons)) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Não é possível excluir esta pessoa')
+                                ->body('Existem vínculos ativos que impedem a exclusão: '.implode(', ', $reasons))
+                                ->persistent()
+                                ->send();
+
+                            $action->cancel();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -173,7 +189,40 @@ class PessoasTable
                             }
                         })
                         ->deselectRecordsAfterCompletion(),
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->before(function (DeleteBulkAction $action, Collection $records) {
+                            $totalInviabilized = 0;
+                            $messages = [];
+
+                            foreach ($records as $record) {
+                                $reasons = $record->getInviabilityReasons();
+                                if (! empty($reasons)) {
+                                    $totalInviabilized++;
+                                    $messages[] = "{$record->nome}: ".implode(', ', $reasons);
+                                }
+                            }
+
+                            if ($totalInviabilized > 0) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Algumas pessoas não puderam ser excluídas')
+                                    ->body('Os seguintes registros possuem vínculos impeditivos: '.implode(' | ', $messages))
+                                    ->persistent()
+                                    ->send();
+
+                                // Se todos estiverem inviabilizados, cancela a ação total
+                                if ($totalInviabilized === $records->count()) {
+                                    $action->cancel();
+                                } else {
+                                    // Aqui é mais complexo, o Filament DeleteBulkAction não permite remover itens da coleção no before de forma fácil para continuar com o resto.
+                                    // Uma abordagem comum é filtrar a coleção se o Filament permitir ou usar uma ação customizada.
+                                    // Mas por segurança e para atender o pedido de "exibir o motivo", vamos cancelar a operação em lote se houver qualquer impedimento, ou informar.
+
+                                    // Vou cancelar tudo para garantir integridade e clareza.
+                                    $action->cancel();
+                                }
+                            }
+                        }),
                 ]),
             ])
             ->stackedOnMobile();
