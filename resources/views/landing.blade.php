@@ -262,6 +262,24 @@
                         <p class="text-sm text-slate-500 small">Fique por dentro de cada movimento financeiro ou acadêmico.</p>
                     </div>
                 </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                    <a href="/downloads/app-torre360.apk" class="btn-navy flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-bold">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414C18.1068 15.3414 18.5804 14.8678 18.5804 14.284C18.5804 13.7001 18.1068 13.2266 17.523 13.2266C16.9391 13.2266 16.4656 13.7001 16.4656 14.284C16.4656 14.8678 16.9391 15.3414 17.523 15.3414ZM6.47702 15.3414C7.06085 15.3414 7.53444 14.8678 7.53444 14.284C7.53444 13.7001 7.06085 13.2266 6.47702 13.2266C5.89319 13.2266 5.41959 13.7001 5.41959 14.284C5.41959 14.8678 5.89319 15.3414 6.47702 15.3414ZM17.8931 10.3228L19.7852 7.04562C19.8909 6.86064 19.8275 6.62283 19.6425 6.51713C19.4575 6.41144 19.2197 6.47486 19.114 6.65984L17.185 10.0003C15.6847 9.31326 13.9197 8.94238 12 8.94238C10.0803 8.94238 8.31527 9.31326 6.81498 10.0003L4.88602 6.65984C4.78033 6.47486 4.54252 6.41144 4.35753 6.51713C4.17255 6.62283 4.10913 6.86064 4.21483 7.04562L6.1069 10.3228C3.1209 11.961 1.05737 15.0211 1.05737 18.5804H22.9426C22.9426 15.0211 20.8791 11.961 17.8931 10.3228Z"/></svg>
+                        Download para Android
+                    </a>
+                    <div class="flex items-center gap-3 px-6 py-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white shadow-sm">
+                                <svg class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>
+                            </div>
+                        </div>
+                        <div class="text-xs">
+                            <p class="font-bold text-slate-800">PWA Disponível</p>
+                            <p class="text-slate-500">Instale via Safari ou Chrome</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

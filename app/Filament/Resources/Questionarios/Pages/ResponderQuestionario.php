@@ -15,6 +15,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class ResponderQuestionario extends Page
 {
@@ -68,22 +69,24 @@ class ResponderQuestionario extends Page
             $perguntasSchema = [];
 
             foreach ($bloco->perguntas as $pergunta) {
+                $labelHtml = new HtmlString($pergunta->enunciado);
+
                 $field = match ($pergunta->tipo) {
                     'discursiva' => Textarea::make("pergunta_{$pergunta->id}")
-                        ->label($pergunta->enunciado)
+                        ->label($labelHtml)
                         ->required($pergunta->is_obrigatoria),
 
                     'objetiva', 'likert' => Radio::make("pergunta_{$pergunta->id}")
-                        ->label($pergunta->enunciado)
+                        ->label($labelHtml)
                         ->options($this->formatOptions($pergunta))
                         ->required($pergunta->is_obrigatoria),
 
                     'multipla_escolha' => CheckboxList::make("pergunta_{$pergunta->id}")
-                        ->label($pergunta->enunciado)
+                        ->label($labelHtml)
                         ->options($this->formatOptions($pergunta))
                         ->required($pergunta->is_obrigatoria),
 
-                    default => TextInput::make("pergunta_{$pergunta->id}")->label($pergunta->enunciado),
+                    default => TextInput::make("pergunta_{$pergunta->id}")->label($labelHtml),
                 };
 
                 $perguntasSchema[] = $field;
