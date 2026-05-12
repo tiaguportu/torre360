@@ -10,6 +10,7 @@ class QuestionarioBloco extends Model
 {
     protected $fillable = [
         'questionario_id',
+        'identificador',
         'titulo',
         'descricao',
         'ordem',

@@ -3,11 +3,16 @@
 namespace App\Filament\Resources\Questionarios\Pages;
 
 use App\Filament\Resources\Questionarios\QuestionarioResource;
+use App\Services\QuestionarioService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EditQuestionario extends EditRecord
 {
@@ -18,6 +23,54 @@ class EditQuestionario extends EditRecord
         return [
             ViewAction::make(),
             DeleteAction::make(),
+            Action::make('exportar_csv')
+                ->label('Exportar CSV')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('info')
+                ->action(function (QuestionarioService $service) {
+                    $csv = $service->exportToCsv($this->record);
+                    $filename = 'questionario_'.Str::slug($this->record->titulo).'_'.date('YmdHis').'.csv';
+
+                    return response()->streamDownload(function () use ($csv) {
+                        echo "\xEF\xBB\xBF"; // UTF-8 BOM para Excel
+                        echo $csv;
+                    }, $filename, [
+                        'Content-Type' => 'text/csv; charset=utf-8',
+                    ]);
+                }),
+            Action::make('importar_csv')
+                ->label('Importar CSV')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('warning')
+                ->form([
+                    FileUpload::make('arquivo_csv')
+                        ->label('Arquivo CSV')
+                        ->required()
+                        ->disk('local')
+                        ->directory('temp_imports')
+                        ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'text/plain']),
+                ])
+                ->action(function (array $data, QuestionarioService $service) {
+                    $path = storage_path('app/'.$data['arquivo_csv']);
+
+                    try {
+                        $service->importFromCsv($this->record, $path);
+
+                        Notification::make()
+                            ->title('Estrutura importada com sucesso!')
+                            ->success()
+                            ->send();
+
+                        $this->redirect($this->getResource()::getUrl('edit', ['record' => $this->record]));
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Erro ao importar CSV: '.$e->getMessage())
+                            ->danger()
+                            ->send();
+                    } finally {
+                        Storage::disk('local')->delete($data['arquivo_csv']);
+                    }
+                }),
             Action::make('ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')

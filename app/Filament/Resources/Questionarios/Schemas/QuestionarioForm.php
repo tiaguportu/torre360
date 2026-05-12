@@ -9,7 +9,6 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -165,6 +164,10 @@ class QuestionarioForm
                                                         Textarea::make('descricao')
                                                             ->label('Descrição do Bloco')
                                                             ->columnSpanFull(),
+                                                        TextInput::make('identificador')
+                                                            ->label('ID Textual (Importação/Exportação)')
+                                                            ->placeholder('ex: bloco_01')
+                                                            ->columnSpanFull(),
                                                     ]),
                                                 Repeater::make('perguntas')
                                                     ->relationship('perguntas')
@@ -191,6 +194,10 @@ class QuestionarioForm
                                                             ->numeric()
                                                             ->default(0)
                                                             ->hidden(),
+                                                        TextInput::make('identificador')
+                                                            ->label('ID Textual (Importação/Exportação)')
+                                                            ->placeholder('ex: perg_01')
+                                                            ->columnSpanFull(),
                                                         Grid::make(1)
                                                             ->visible(fn ($get) => in_array($get('tipo'), ['objetiva', 'multipla_escolha']))
                                                             ->schema([

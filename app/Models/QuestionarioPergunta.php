@@ -9,6 +9,7 @@ class QuestionarioPergunta extends Model
 {
     protected $fillable = [
         'questionario_bloco_id',
+        'identificador',
         'enunciado',
         'tipo',
         'opcoes',
