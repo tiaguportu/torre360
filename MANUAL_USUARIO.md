@@ -545,6 +545,33 @@ Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura,
    - **Múltipla Escolha:** Permite marcar várias opções.
    - **Escala Likert:** Escala de satisfação de 1 a 5 (ou conforme configurado).
 
+### 16.2.1 Exibição Condicional de Perguntas
+
+Cada pergunta pode ter uma **Condição de Exibição** que a torna visível apenas quando a resposta de outra pergunta do mesmo questionário satisfaz uma lógica configurada. Isso permite criar questionários dinâmicos e ramificados.
+
+**Como configurar:**
+1. Dentro de uma pergunta, expanda a seção **Condição de Exibição** (clique no cabeçalho recolhido).
+2. Selecione a **Pergunta de Referência** — a pergunta cujo valor será avaliado.
+   - Deixe vazio para que a pergunta seja **sempre exibida**.
+3. Escolha o **Operador / Condição**:
+   | Operador | Significado |
+   |---|---|
+   | É igual a | A resposta é idêntica ao valor informado |
+   | É diferente de | A resposta é diferente do valor informado |
+   | Contém | A resposta contém o trecho/valor informado |
+   | Não contém | A resposta não contém o trecho/valor informado |
+   | Foi preenchida (qualquer valor) | O respondente respondeu algo (qualquer coisa) |
+   | Não foi preenchida | O respondente deixou em branco |
+4. Informe o **Valor Esperado** — o texto que a resposta deve conter ou ser igual.
+   - Para perguntas de **Múltipla Escolha**, o valor deve ser exatamente igual ao rótulo da opção (ex: `Sim`, `Não`, `3`).
+   - Os operadores `Foi preenchida` e `Não foi preenchida` dispensam o preenchimento deste campo.
+
+> [!TIP]
+> **Exemplo prático:** Crie a pergunta "Você tem filhos?" (Objetiva: Sim / Não). Depois crie a pergunta "Quantos filhos?" com a condição: *Pergunta de Referência = "Você tem filhos?"*, *Operador = "É igual a"*, *Valor = "Sim"*. Assim, a segunda pergunta só aparecerá se o respondente escolher "Sim".
+
+> [!NOTE]
+> As perguntas com condições não satisfeitas também não são salvas no banco de dados, garantindo a integridade dos dados de resposta.
+
 ### 16.3 Acompanhamento de Resultados
 1. Na lista de questionários, você verá a contagem de **Respostas** em tempo real.
 2. Ao clicar em **Visualizar** um questionário, o sistema exibe um **Dashboard de Estatísticas** com gráficos de pizza/donuts mostrando o status das respostas e o engajamento do público.

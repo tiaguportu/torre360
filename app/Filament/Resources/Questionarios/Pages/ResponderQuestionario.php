@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Questionarios\Pages;
 
 use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\Questionario;
+use App\Models\QuestionarioPergunta;
 use App\Models\QuestionarioPerguntaResposta;
 use App\Models\QuestionarioResposta;
 use Filament\Forms\Components\CheckboxList;
@@ -70,6 +71,7 @@ class ResponderQuestionario extends Page
 
             foreach ($bloco->perguntas as $pergunta) {
                 $labelHtml = new HtmlString($pergunta->enunciado);
+                $condicao = $pergunta->condicao_exibicao;
 
                 $field = match ($pergunta->tipo) {
                     'discursiva' => Textarea::make("pergunta_{$pergunta->id}")
@@ -89,6 +91,11 @@ class ResponderQuestionario extends Page
                     default => TextInput::make("pergunta_{$pergunta->id}")->label($labelHtml),
                 };
 
+                // Aplicar visibilidade condicional quando houver uma condição definida
+                if (! empty($condicao) && ! empty($condicao['pergunta_id'])) {
+                    $field = $this->aplicarCondicaoVisibilidade($field, $pergunta);
+                }
+
                 $perguntasSchema[] = $field;
             }
 
@@ -101,6 +108,38 @@ class ResponderQuestionario extends Page
             Wizard::make($steps)
                 ->submitAction(view('filament.resources.questionarios.pages.responder-questionario-submit-button')),
         ])->statePath('data');
+    }
+
+    /**
+     * Aplica a lógica de visibilidade condicional ao campo Filament com base na condição da pergunta.
+     *
+     * @param  mixed  $field  O componente Filament
+     */
+    protected function aplicarCondicaoVisibilidade(mixed $field, QuestionarioPergunta $pergunta): mixed
+    {
+        $condicao = $pergunta->condicao_exibicao;
+        $perguntaRefId = $condicao['pergunta_id'] ?? null;
+        $operador = $condicao['operador'] ?? 'igual';
+        $valorEsperado = $condicao['valor'] ?? null;
+        $chaveRef = "pergunta_{$perguntaRefId}";
+
+        return $field->visible(function ($get) use ($chaveRef, $operador, $valorEsperado): bool {
+            $valorRespondido = $get($chaveRef);
+
+            return match ($operador) {
+                'igual' => $valorRespondido == $valorEsperado,
+                'diferente' => $valorRespondido != $valorEsperado,
+                'contem' => is_array($valorRespondido)
+                    ? in_array($valorEsperado, $valorRespondido)
+                    : str_contains((string) $valorRespondido, (string) $valorEsperado),
+                'nao_contem' => is_array($valorRespondido)
+                    ? ! in_array($valorEsperado, $valorRespondido)
+                    : ! str_contains((string) $valorRespondido, (string) $valorEsperado),
+                'preenchido' => ! empty($valorRespondido),
+                'nao_preenchido' => empty($valorRespondido),
+                default => true,
+            };
+        });
     }
 
     protected function formatOptions($pergunta): array
@@ -129,22 +168,42 @@ class ResponderQuestionario extends Page
     {
         $data = $this->form->getState();
 
+        // Coletar todas as respostas submetidas para verificar condições
+        $respostasSubmetidas = [];
+        foreach ($data as $key => $valor) {
+            if (str_starts_with($key, 'pergunta_')) {
+                $respostasSubmetidas[$key] = $valor;
+            }
+        }
+
         $respostaPrincipal = QuestionarioResposta::create([
             'questionario_id' => $this->record->id,
             'user_id' => $this->record->is_anonimo ? null : Auth::id(),
             'perfil_institucional' => Auth::user()?->roles()->first()?->name ?? 'visitante',
-            'inicio_preenchimento' => now(), // Idealmente capturar no mount
+            'inicio_preenchimento' => now(),
             'fim_preenchimento' => now(),
             'status' => 'enviado',
         ]);
 
-        foreach ($data as $key => $valor) {
-            if (str_starts_with($key, 'pergunta_')) {
-                $perguntaId = str_replace('pergunta_', '', $key);
+        // Salvar apenas respostas de perguntas que deveriam estar visíveis (condição satisfeita)
+        foreach ($this->record->blocos as $bloco) {
+            foreach ($bloco->perguntas as $pergunta) {
+                $chave = "pergunta_{$pergunta->id}";
+
+                // Só persiste se a pergunta deveria estar visível
+                if (! $pergunta->deveSerExibida($respostasSubmetidas)) {
+                    continue;
+                }
+
+                if (! array_key_exists($chave, $respostasSubmetidas)) {
+                    continue;
+                }
+
+                $valor = $respostasSubmetidas[$chave];
 
                 QuestionarioPerguntaResposta::create([
                     'questionario_resposta_id' => $respostaPrincipal->id,
-                    'questionario_pergunta_id' => $perguntaId,
+                    'questionario_pergunta_id' => $pergunta->id,
                     'resposta_texto' => is_string($valor) ? $valor : null,
                     'resposta_json' => is_array($valor) ? $valor : null,
                 ]);

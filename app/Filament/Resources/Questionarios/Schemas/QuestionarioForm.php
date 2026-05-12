@@ -3,12 +3,15 @@
 namespace App\Filament\Resources\Questionarios\Schemas;
 
 use App\Models\Curso;
+use App\Models\QuestionarioPergunta;
 use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -166,7 +169,7 @@ class QuestionarioForm
                                                 Repeater::make('perguntas')
                                                     ->relationship('perguntas')
                                                     ->schema([
-                                                        \Filament\Forms\Components\RichEditor::make('enunciado')
+                                                        RichEditor::make('enunciado')
                                                             ->label('Pergunta')
                                                             ->required()
                                                             ->columnSpanFull(),
@@ -200,6 +203,63 @@ class QuestionarioForm
                                                                     ])
                                                                     ->reorderableWithButtons()
                                                                     ->addActionLabel('Adicionar Opção'),
+                                                            ]),
+
+                                                        // ───── Condição de Exibição ─────
+                                                        Section::make('Condição de Exibição')
+                                                            ->description('Configure quando esta pergunta deve aparecer ao respondente, com base na resposta de outra pergunta.')
+                                                            ->icon(Heroicon::OutlinedEye)
+                                                            ->collapsed()
+                                                            ->collapsible()
+                                                            ->columnSpanFull()
+                                                            ->schema([
+                                                                Placeholder::make('ajuda_condicao')
+                                                                    ->label('')
+                                                                    ->content('Deixe "Pergunta de Referência" vazio para exibir sempre. Quando preenchida, esta pergunta só aparecerá se a condição for satisfeita.')
+                                                                    ->columnSpanFull(),
+                                                                Select::make('condicao_exibicao.pergunta_id')
+                                                                    ->label('Pergunta de Referência')
+                                                                    ->placeholder('Nenhuma (sempre exibida)')
+                                                                    ->options(function ($record) {
+                                                                        if (! $record) {
+                                                                            return [];
+                                                                        }
+                                                                        // Carrega todas as perguntas do mesmo questionário (exceto a atual)
+                                                                        $bloco = $record->bloco;
+                                                                        if (! $bloco) {
+                                                                            return [];
+                                                                        }
+
+                                                                        return QuestionarioPergunta::whereHas('bloco', function ($q) use ($bloco) {
+                                                                            $q->where('questionario_id', $bloco->questionario_id);
+                                                                        })
+                                                                            ->where('id', '!=', $record->id)
+                                                                            ->orderBy('ordem')
+                                                                            ->get()
+                                                                            ->mapWithKeys(fn ($p) => [$p->id => strip_tags($p->enunciado)])
+                                                                            ->toArray();
+                                                                    })
+                                                                    ->searchable()
+                                                                    ->live()
+                                                                    ->nullable(),
+                                                                Select::make('condicao_exibicao.operador')
+                                                                    ->label('Operador / Condição')
+                                                                    ->options([
+                                                                        'igual' => 'É igual a',
+                                                                        'diferente' => 'É diferente de',
+                                                                        'contem' => 'Contém',
+                                                                        'nao_contem' => 'Não contém',
+                                                                        'preenchido' => 'Foi preenchida (qualquer valor)',
+                                                                        'nao_preenchido' => 'Não foi preenchida',
+                                                                    ])
+                                                                    ->default('igual')
+                                                                    ->live()
+                                                                    ->visible(fn ($get) => ! empty($get('condicao_exibicao.pergunta_id'))),
+                                                                TextInput::make('condicao_exibicao.valor')
+                                                                    ->label('Valor Esperado')
+                                                                    ->placeholder('Ex: Sim, Não, 3...')
+                                                                    ->helperText('Para perguntas de múltipla escolha, digite exatamente o rótulo da opção.')
+                                                                    ->visible(fn ($get) => ! empty($get('condicao_exibicao.pergunta_id')) && ! in_array($get('condicao_exibicao.operador'), ['preenchido', 'nao_preenchido'])),
                                                             ]),
                                                     ])
                                                     ->columns(2)

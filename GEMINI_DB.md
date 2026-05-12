@@ -232,8 +232,11 @@ Estrutura de ensino e turmas.
 
 ### `questionario_perguntas`
 - **Representa:** As perguntas individuais.
-- **Campos Principais:** `enunciado`, `tipo` (discursiva, objetiva, multipla_escolha, likert), `opcoes` (JSON).
+- **Campos Principais:** `enunciado`, `tipo` (discursiva, objetiva, multipla_escolha, likert), `opcoes` (JSON), `condicao_exibicao` (JSON).
+- **Campo `condicao_exibicao`:** JSON nullable que define a lógica de visibilidade condicional da pergunta. Estrutura: `{"pergunta_id": <id>, "operador": "igual|diferente|contem|nao_contem|preenchido|nao_preenchido", "valor": "<valor>"}`. Quando nulo, a pergunta é sempre exibida.
 - **Relacionamentos:** BelongsTo `questionario_blocos`.
+- **Lógica de Negócio (Modelo):** `deveSerExibida(array $respostas)`: avalia se a pergunta deve ser exibida com base na condição configurada e nas respostas fornecidas.
+
 
 ### `questionario_responsaveis`
 - **Representa:** Gestores (Donos) e visualizadores (Observadores) autorizados do questionário.
