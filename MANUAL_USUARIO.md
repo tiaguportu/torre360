@@ -547,30 +547,105 @@ Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura,
 
 ### 16.2.1 Exibição Condicional de Perguntas
 
-Cada pergunta pode ter uma **Condição de Exibição** que a torna visível apenas quando a resposta de outra pergunta do mesmo questionário satisfaz uma lógica configurada. Isso permite criar questionários dinâmicos e ramificados.
+Cada pergunta pode ter uma **Condição de Exibição** que a torna visível apenas quando a resposta de outra pergunta do mesmo questionário satisfaz uma lógica configurada. Isso permite criar questionários **dinâmicos e ramificados**, exibindo apenas o que é relevante para cada respondente.
 
 **Como configurar:**
 1. Dentro de uma pergunta, expanda a seção **Condição de Exibição** (clique no cabeçalho recolhido).
-2. Selecione a **Pergunta de Referência** — a pergunta cujo valor será avaliado.
-   - Deixe vazio para que a pergunta seja **sempre exibida**.
-3. Escolha o **Operador / Condição**:
-   | Operador | Significado |
-   |---|---|
-   | É igual a | A resposta é idêntica ao valor informado |
-   | É diferente de | A resposta é diferente do valor informado |
-   | Contém | A resposta contém o trecho/valor informado |
-   | Não contém | A resposta não contém o trecho/valor informado |
-   | Foi preenchida (qualquer valor) | O respondente respondeu algo (qualquer coisa) |
-   | Não foi preenchida | O respondente deixou em branco |
-4. Informe o **Valor Esperado** — o texto que a resposta deve conter ou ser igual.
-   - Para perguntas de **Múltipla Escolha**, o valor deve ser exatamente igual ao rótulo da opção (ex: `Sim`, `Não`, `3`).
-   - Os operadores `Foi preenchida` e `Não foi preenchida` dispensam o preenchimento deste campo.
+2. Selecione a **Pergunta de Referência** — a pergunta cujo valor será avaliado. Deixe vazio para que a pergunta seja **sempre exibida**.
+3. Escolha o **Operador / Condição** (veja tabela abaixo).
+4. Informe o **Valor Esperado** quando o operador exigir.
 
-> [!TIP]
-> **Exemplo prático:** Crie a pergunta "Você tem filhos?" (Objetiva: Sim / Não). Depois crie a pergunta "Quantos filhos?" com a condição: *Pergunta de Referência = "Você tem filhos?"*, *Operador = "É igual a"*, *Valor = "Sim"*. Assim, a segunda pergunta só aparecerá se o respondente escolher "Sim".
+**Tabela de Operadores:**
+
+| Operador | A pergunta aparece quando… | Exige "Valor Esperado"? |
+|---|---|:---:|
+| **É igual a** | A resposta for exatamente igual ao valor informado. | ✅ Sim |
+| **É diferente de** | A resposta for diferente do valor informado. | ✅ Sim |
+| **Contém** | A resposta contiver o trecho ou opção informada. | ✅ Sim |
+| **Não contém** | A resposta não contiver o trecho ou opção informada. | ✅ Sim |
+| **Foi preenchida (qualquer valor)** | O respondente preencher qualquer coisa (não deixar em branco). | ❌ Não |
+| **Não foi preenchida** | O respondente deixar o campo em branco / sem resposta. | ❌ Não |
 
 > [!NOTE]
-> As perguntas com condições não satisfeitas também não são salvas no banco de dados, garantindo a integridade dos dados de resposta.
+> Para perguntas de **Múltipla Escolha**, o "Valor Esperado" deve ser exatamente igual ao **rótulo da opção** cadastrada (ex: `Sim`, `Não`, `Esportes`). O sistema verificará se aquela opção foi marcada.
+
+---
+
+**📋 Exemplos Práticos — Um para cada operador:**
+
+#### Exemplo 1 — Operador "É igual a"
+> **Cenário:** Mostrar "Quantos filhos você tem?" **somente se** a resposta de "Você tem filhos?" for *Sim*.
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Você tem filhos?" *(Objetiva: Sim / Não)* |
+| Operador | É igual a |
+| Valor Esperado | `Sim` |
+
+---
+
+#### Exemplo 2 — Operador "É diferente de"
+> **Cenário:** Mostrar "Qual outro meio de transporte você usa?" **somente se** a resposta de "Como você vai à escola?" *não for* "A pé".
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Como você vai à escola?" *(Objetiva)* |
+| Operador | É diferente de |
+| Valor Esperado | `A pé` |
+
+---
+
+#### Exemplo 3 — Operador "Contém"
+> **Cenário:** Mostrar "Qual atividade esportiva você pratica?" **somente se** em "Quais suas preferências de lazer?" o respondente tiver marcado *Esportes* (mesmo que tenha marcado outras opções também).
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Quais suas preferências de lazer?" *(Múltipla Escolha)* |
+| Operador | Contém |
+| Valor Esperado | `Esportes` |
+
+---
+
+#### Exemplo 4 — Operador "Não contém"
+> **Cenário:** Mostrar "Gostaria de receber informações sobre natação?" **somente se** a resposta de "Quais esportes você já pratica?" *não incluir* "Natação".
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Quais esportes você já pratica?" *(Múltipla Escolha)* |
+| Operador | Não contém |
+| Valor Esperado | `Natação` |
+
+---
+
+#### Exemplo 5 — Operador "Foi preenchida (qualquer valor)"
+> **Cenário:** Mostrar "Você gostaria de dar mais detalhes sobre sua sugestão?" **somente se** o respondente tiver digitado *qualquer coisa* no campo "Deixe sua sugestão" (ou seja, não deixou em branco).
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Deixe sua sugestão" *(Discursiva)* |
+| Operador | Foi preenchida (qualquer valor) |
+| Valor Esperado | *(não necessário)* |
+
+---
+
+#### Exemplo 6 — Operador "Não foi preenchida"
+> **Cenário:** Mostrar "Por que você não tem e-mail?" **somente se** o respondente deixou em branco o campo "Informe seu e-mail".
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Informe seu e-mail" *(Discursiva)* |
+| Operador | Não foi preenchida |
+| Valor Esperado | *(não necessário)* |
+
+---
+
+> [!TIP]
+> As perguntas com condição não satisfeita são **ocultadas em tempo real** durante o preenchimento — o respondente não precisa fazer nada. Além disso, as respostas dessas perguntas ocultas **não são salvas** no banco de dados, garantindo a integridade dos relatórios.
+
+> [!NOTE]
+> A condição de exibição funciona com perguntas de **qualquer bloco** do mesmo questionário, não apenas do bloco atual.
+
+
 
 ### 16.3 Acompanhamento de Resultados
 1. Na lista de questionários, você verá a contagem de **Respostas** em tempo real.
