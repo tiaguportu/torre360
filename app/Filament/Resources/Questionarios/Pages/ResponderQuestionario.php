@@ -76,19 +76,24 @@ class ResponderQuestionario extends Page
                 $field = match ($pergunta->tipo) {
                     'discursiva' => Textarea::make("pergunta_{$pergunta->id}")
                         ->label($labelHtml)
-                        ->required($pergunta->is_obrigatoria),
+                        ->required($pergunta->is_obrigatoria)
+                        ->live(onBlur: true),
 
                     'objetiva', 'likert' => Radio::make("pergunta_{$pergunta->id}")
                         ->label($labelHtml)
                         ->options($this->formatOptions($pergunta))
-                        ->required($pergunta->is_obrigatoria),
+                        ->required($pergunta->is_obrigatoria)
+                        ->live(),
 
                     'multipla_escolha' => CheckboxList::make("pergunta_{$pergunta->id}")
                         ->label($labelHtml)
                         ->options($this->formatOptions($pergunta))
-                        ->required($pergunta->is_obrigatoria),
+                        ->required($pergunta->is_obrigatoria)
+                        ->live(),
 
-                    default => TextInput::make("pergunta_{$pergunta->id}")->label($labelHtml),
+                    default => TextInput::make("pergunta_{$pergunta->id}")
+                        ->label($labelHtml)
+                        ->live(onBlur: true),
                 };
 
                 // Aplicar visibilidade condicional quando houver uma condição definida
