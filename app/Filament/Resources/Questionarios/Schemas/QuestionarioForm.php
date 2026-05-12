@@ -213,27 +213,25 @@ class QuestionarioForm
                                                             ->collapsible()
                                                             ->columnSpanFull()
                                                             ->schema([
-                                                                Placeholder::make('ajuda_condicao')
-                                                                    ->label('')
-                                                                    ->content('Deixe "Pergunta de Referência" vazio para exibir sempre. Quando preenchida, esta pergunta só aparecerá se a condição for satisfeita.')
-                                                                    ->columnSpanFull(),
                                                                 Select::make('condicao_exibicao.pergunta_id')
                                                                     ->label('Pergunta de Referência')
                                                                     ->placeholder('Nenhuma (sempre exibida)')
-                                                                    ->options(function ($record) {
-                                                                        if (! $record) {
-                                                                            return [];
-                                                                        }
-                                                                        // Carrega todas as perguntas do mesmo questionário (exceto a atual)
-                                                                        $bloco = $record->bloco;
-                                                                        if (! $bloco) {
+                                                                    ->options(function (callable $get) {
+                                                                        // Busca o ID do questionário a partir do estado (Tabs -> Tab -> Section -> Repeater Blocos -> Repeater Perguntas)
+                                                                        // O ID do questionário está no nível raiz do form de edição.
+                                                                        $questionarioId = $get('../../../id');
+
+                                                                        if (! $questionarioId) {
                                                                             return [];
                                                                         }
 
-                                                                        return QuestionarioPergunta::whereHas('bloco', function ($q) use ($bloco) {
-                                                                            $q->where('questionario_id', $bloco->questionario_id);
+                                                                        // Pegar o ID da pergunta atual para evitar auto-referência
+                                                                        $currentId = $get('id');
+
+                                                                        return QuestionarioPergunta::whereHas('bloco', function ($q) use ($questionarioId) {
+                                                                            $q->where('questionario_id', $questionarioId);
                                                                         })
-                                                                            ->where('id', '!=', $record->id)
+                                                                            ->when($currentId, fn ($q) => $q->where('id', '!=', $currentId))
                                                                             ->orderBy('ordem')
                                                                             ->get()
                                                                             ->mapWithKeys(fn ($p) => [$p->id => strip_tags($p->enunciado)])
