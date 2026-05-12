@@ -51,7 +51,7 @@ class EditQuestionario extends EditRecord
                         ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'text/plain']),
                 ])
                 ->action(function (array $data, QuestionarioService $service) {
-                    $path = storage_path('app/'.$data['arquivo_csv']);
+                    $path = Storage::disk('local')->path($data['arquivo_csv']);
 
                     try {
                         $service->importFromCsv($this->record, $path);

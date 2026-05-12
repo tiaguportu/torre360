@@ -86,13 +86,34 @@ class QuestionarioService
      */
     public function importFromCsv(Questionario $questionario, string $filePath): void
     {
+        if (! file_exists($filePath)) {
+            throw new \Exception('Arquivo não encontrado no caminho: '.$filePath);
+        }
+
         $rows = [];
         if (($handle = fopen($filePath, 'r')) !== false) {
-            $header = fgetcsv($handle, 1000, ';');
-            while (($data = fgetcsv($handle, 1000, ';')) !== false) {
-                $rows[] = array_combine($header, $data);
+            // Tentar detectar o separador (ler primeira linha)
+            $firstLine = fgets($handle);
+            $delimiter = str_contains($firstLine, ';') ? ';' : ',';
+            rewind($handle);
+
+            $header = fgetcsv($handle, 1000, $delimiter);
+
+            if (! $header) {
+                fclose($handle);
+                throw new \Exception('Arquivo CSV vazio ou inválido.');
+            }
+
+            while (($data = fgetcsv($handle, 1000, $delimiter)) !== false) {
+                if (count($header) === count($data)) {
+                    $rows[] = array_combine($header, $data);
+                }
             }
             fclose($handle);
+        }
+
+        if (empty($rows)) {
+            throw new \Exception('Nenhum dado válido encontrado no arquivo CSV (verifique o cabeçalho e o delimitador).');
         }
 
         DB::transaction(function () use ($questionario, $rows) {
