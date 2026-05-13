@@ -257,7 +257,8 @@ class QuestionarioForm
                                                                     })
                                                                     ->searchable()
                                                                     ->live()
-                                                                    ->nullable(),
+                                                                    ->nullable()
+                                                                    ->exists('questionario_perguntas', 'id'),
                                                                 Select::make('condicao_exibicao.operador')
                                                                     ->label('Operador / Condição')
                                                                     ->options([
