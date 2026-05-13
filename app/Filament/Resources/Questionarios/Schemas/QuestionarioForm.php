@@ -224,9 +224,13 @@ class QuestionarioForm
                                                                     ->label('Pergunta de Referência')
                                                                     ->placeholder('Nenhuma (sempre exibida)')
                                                                     ->options(function (callable $get) {
-                                                                        // Busca o ID do questionário a partir do estado (Tabs -> Tab -> Section -> Repeater Blocos -> Repeater Perguntas)
-                                                                        // O ID do questionário está no nível raiz do form de edição.
-                                                                        $questionarioId = $get('../../../id');
+                                                                        // Tenta pegar o ID do questionário do bloco pai
+                                                                        $questionarioId = $get('../../questionario_id');
+
+                                                                        // Se não encontrou no bloco (pode ser novo), tenta subir mais níveis até o form principal
+                                                                        if (! $questionarioId) {
+                                                                            $questionarioId = $get('../../../../id');
+                                                                        }
 
                                                                         if (! $questionarioId) {
                                                                             return [];
@@ -241,7 +245,14 @@ class QuestionarioForm
                                                                             ->when($currentId, fn ($q) => $q->where('id', '!=', $currentId))
                                                                             ->orderBy('ordem')
                                                                             ->get()
-                                                                            ->mapWithKeys(fn ($p) => [$p->id => strip_tags($p->enunciado)])
+                                                                            ->mapWithKeys(function ($p) {
+                                                                                $label = strip_tags($p->enunciado);
+                                                                                if ($p->identificador) {
+                                                                                    $label = "[{$p->identificador}] {$label}";
+                                                                                }
+
+                                                                                return [$p->id => $label];
+                                                                            })
                                                                             ->toArray();
                                                                     })
                                                                     ->searchable()
