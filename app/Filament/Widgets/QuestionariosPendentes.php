@@ -14,7 +14,7 @@ class QuestionariosPendentes extends Widget
 
     protected static ?int $sort = -5;
 
-    protected static string $view = 'filament.widgets.questionarios-pendentes';
+    protected string $view = 'filament.widgets.questionarios-pendentes';
 
     protected int|string|array $columnSpan = 'full';
 
