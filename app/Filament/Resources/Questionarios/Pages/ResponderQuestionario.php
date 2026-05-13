@@ -142,6 +142,8 @@ class ResponderQuestionario extends Page
                     : ! str_contains((string) $valorRespondido, (string) $valorEsperado),
                 'preenchido' => ! empty($valorRespondido),
                 'nao_preenchido' => empty($valorRespondido),
+                'maior_que' => (float) $valorRespondido > (float) $valorEsperado,
+                'menor_que' => (float) $valorRespondido < (float) $valorEsperado,
                 default => true,
             };
         });
