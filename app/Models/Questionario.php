@@ -190,7 +190,8 @@ class Questionario extends Model
     {
         return DB::transaction(function () {
             // 1. Clonar o questionário principal
-            $novoQuestionario = $this->replicate();
+            // Removemos atributos virtuais (como respostas_count) que o Filament pode ter injetado na model
+            $novoQuestionario = $this->replicate(['respostas_count']);
             $novoQuestionario->titulo = $this->titulo.' (Cópia)';
             $novoQuestionario->save();
 
