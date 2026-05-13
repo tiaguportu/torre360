@@ -535,6 +535,7 @@ O módulo de **Questionários** permite criar formulários personalizados para c
    - **Observadores:** Podem apenas visualizar o questionário e o dashboard de respostas, sem permissão de alteração.
    - **Lista de Questionários:** Se você não for o Público-Alvo, Dono, Observador ou *Super Admin*, o questionário nem sequer aparecerá na sua listagem.
    - O *Super Admin* sempre possui permissão total.
+7. **Clonagem em Lote:** Para agilizar a criação de novos formulários baseados em modelos existentes, o sistema permite a clonagem em lote. Selecione os questionários na tabela e utilize a ação **Clonar Selecionados**. O sistema duplicará toda a estrutura (blocos, perguntas, opções e lógica condicional), o público-alvo e os responsáveis, mas manterá o novo questionário sem nenhuma resposta vinculada.
 
 ### 16.2 Estrutura de Perguntas
 Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura, Qualidade de Ensino, Gestão).

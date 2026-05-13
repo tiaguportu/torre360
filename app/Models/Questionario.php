@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Questionario extends Model
 {
@@ -151,6 +152,7 @@ class Questionario extends Model
         if ($user->hasRole('super_admin')) {
             return true;
         }
+
         return $this->donos()
             ->where(function ($query) use ($user) {
                 $query->where(function ($q) use ($user) {
@@ -169,6 +171,7 @@ class Questionario extends Model
         if ($user->hasRole('super_admin')) {
             return true;
         }
+
         return $this->observadores()
             ->where(function ($query) use ($user) {
                 $query->where(function ($q) use ($user) {
@@ -177,5 +180,68 @@ class Questionario extends Model
                     $q->where('responsavel_type', 'Role')->whereIn('responsavel_id', $user->roles->pluck('id'));
                 });
             })->exists();
+    }
+
+    /**
+     * Clona o questionário com todos os seus blocos, perguntas, alvos e responsáveis.
+     * As respostas não são clonadas.
+     */
+    public function clonar(): self
+    {
+        return DB::transaction(function () {
+            // 1. Clonar o questionário principal
+            $novoQuestionario = $this->replicate();
+            $novoQuestionario->titulo = $this->titulo.' (Cópia)';
+            $novoQuestionario->save();
+
+            // 2. Clonar alvos
+            foreach ($this->alvos as $alvo) {
+                $novoAlvo = $alvo->replicate();
+                $novoAlvo->questionario_id = $novoQuestionario->id;
+                $novoAlvo->save();
+            }
+
+            // 3. Clonar responsáveis
+            foreach ($this->responsaveis as $responsavel) {
+                $novoResponsavel = $responsavel->replicate();
+                $novoResponsavel->questionario_id = $novoQuestionario->id;
+                $novoResponsavel->save();
+            }
+
+            // 4. Clonar blocos e perguntas
+            $mapaPerguntas = []; // [ID antigo => ID novo]
+
+            foreach ($this->blocos as $bloco) {
+                $novoBloco = $bloco->replicate();
+                $novoBloco->questionario_id = $novoQuestionario->id;
+                $novoBloco->save();
+
+                foreach ($bloco->perguntas as $pergunta) {
+                    $novaPergunta = $pergunta->replicate();
+                    $novaPergunta->questionario_bloco_id = $novoBloco->id;
+                    $novaPergunta->save();
+
+                    $mapaPerguntas[$pergunta->id] = $novaPergunta->id;
+                }
+            }
+
+            // 5. Atualizar condições de exibição das novas perguntas
+            foreach ($novoQuestionario->blocos as $novoBloco) {
+                foreach ($novoBloco->perguntas as $novaPergunta) {
+                    if (! empty($novaPergunta->condicao_exibicao)) {
+                        $condicao = $novaPergunta->condicao_exibicao;
+                        $perguntaReferenciadaId = $condicao['pergunta_id'] ?? null;
+
+                        if ($perguntaReferenciadaId && isset($mapaPerguntas[$perguntaReferenciadaId])) {
+                            $condicao['pergunta_id'] = $mapaPerguntas[$perguntaReferenciadaId];
+                            $novaPergunta->condicao_exibicao = $condicao;
+                            $novaPergunta->save();
+                        }
+                    }
+                }
+            }
+
+            return $novoQuestionario;
+        });
     }
 }
