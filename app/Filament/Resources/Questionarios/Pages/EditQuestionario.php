@@ -136,6 +136,8 @@ class EditQuestionario extends EditRecord
             ['Não contém', 'A resposta não contiver o trecho ou opção informada.', 'Sim'],
             ['Foi preenchida (qualquer valor)', 'O respondente preencher qualquer coisa (não deixar em branco).', 'Não'],
             ['Não foi preenchida', 'O respondente deixar o campo em branco / sem resposta.', 'Não'],
+            ['É maior que', 'A resposta for um número maior que o valor informado.', 'Sim'],
+            ['É menor que', 'A resposta for um número menor que o valor informado.', 'Sim'],
         ];
 
         foreach ($operadores as $i => [$nome, $desc, $exige]) {
@@ -205,6 +207,15 @@ class EditQuestionario extends EditRecord
                     'Pergunta de Referência' => '"Informe seu e-mail" (Discursiva)',
                     'Operador' => 'Não foi preenchida',
                     'Valor Esperado' => '(não necessário)',
+                ],
+            ],
+            [
+                'titulo' => 'Exemplo 7 — "É maior que" (numérico)',
+                'desc' => 'Mostrar "Quais foram as dificuldades?" somente quando a nota atribuída em "Avalie de 1 a 10" for maior que 7.',
+                'config' => [
+                    'Pergunta de Referência' => '"Avalie de 1 a 10" (Discursiva/Numérica)',
+                    'Operador' => 'É maior que',
+                    'Valor Esperado' => '7',
                 ],
             ],
         ];

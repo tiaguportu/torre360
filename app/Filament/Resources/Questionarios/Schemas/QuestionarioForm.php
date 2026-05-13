@@ -267,6 +267,8 @@ class QuestionarioForm
                                                                         'nao_contem' => 'Não contém',
                                                                         'preenchido' => 'Foi preenchida (qualquer valor)',
                                                                         'nao_preenchido' => 'Não foi preenchida',
+                                                                        'maior_que' => 'É maior que',
+                                                                        'menor_que' => 'É menor que',
                                                                     ])
                                                                     ->default('igual')
                                                                     ->live()

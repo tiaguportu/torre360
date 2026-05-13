@@ -565,6 +565,8 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 | **Não contém** | A resposta não contiver o trecho ou opção informada. | ✅ Sim |
 | **Foi preenchida (qualquer valor)** | O respondente preencher qualquer coisa (não deixar em branco). | ❌ Não |
 | **Não foi preenchida** | O respondente deixar o campo em branco / sem resposta. | ❌ Não |
+| **É maior que** | A resposta for um número maior que o valor informado. | ✅ Sim |
+| **É menor que** | A resposta for um número menor que o valor informado. | ✅ Sim |
 
 > [!NOTE]
 > Para perguntas de **Múltipla Escolha**, o "Valor Esperado" deve ser exatamente igual ao **rótulo da opção** cadastrada (ex: `Sim`, `Não`, `Esportes`). O sistema verificará se aquela opção foi marcada.
@@ -636,6 +638,17 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 | Pergunta de Referência | "Informe seu e-mail" *(Discursiva)* |
 | Operador | Não foi preenchida |
 | Valor Esperado | *(não necessário)* |
+
+---
+
+#### Exemplo 7 — Operador "É maior que" (Numérico)
+> **Cenário:** Mostrar "Quais foram as dificuldades?" **somente se** a nota atribuída em "Avalie de 1 a 10" for maior que 7.
+
+| Campo | Valor |
+|---|---|
+| Pergunta de Referência | "Avalie de 1 a 10" *(Discursiva/Numérica)* |
+| Operador | É maior que |
+| Valor Esperado | `7` |
 
 ---
 
