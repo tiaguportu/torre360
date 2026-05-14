@@ -17,6 +17,7 @@
         // Obter todas as perguntas únicas com base no identificador (ou fallback para ID)
         $perguntasRow = [];
         $perguntasLabels = [];
+        $ordemPerguntas = [];
         
         foreach ($respostas as $resposta) {
             foreach ($resposta->perguntaRespostas as $pr) {
@@ -30,6 +31,7 @@
                 if (!isset($perguntasRow[$key])) {
                     $perguntasRow[$key] = [];
                     $perguntasLabels[$key] = $label;
+                    $ordemPerguntas[$key] = $pergunta->ordem ?? 0;
                 }
                 
                 $valorResposta = $pr->resposta_texto;
@@ -40,6 +42,11 @@
                 $perguntasRow[$key][$resposta->id] = $valorResposta;
             }
         }
+
+        // Ordenar as chaves de perguntasRow com base no array de ordens
+        uksort($perguntasRow, function ($a, $b) use ($ordemPerguntas) {
+            return ($ordemPerguntas[$a] ?? 0) <=> ($ordemPerguntas[$b] ?? 0);
+        });
     @endphp
 
     <div class="fi-ta">
