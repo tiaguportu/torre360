@@ -1,4 +1,5 @@
-<div class="overflow-x-auto">
+<x-filament-panels::page>
+<div class="overflow-x-auto bg-white dark:bg-gray-900 shadow-sm rounded-xl border border-gray-200 dark:border-white/10">
     @php
         // Garantir que as relações estão carregadas para não haver N+1
         $respostas = $records->load(['questionario', 'user', 'perguntaRespostas.pergunta']);
@@ -75,7 +76,7 @@
             @foreach ($perguntasRow as $key => $valores)
                 <tr>
                     <td class="px-4 py-3 font-medium text-gray-950 dark:text-white min-w-[250px] align-top bg-gray-50/50 dark:bg-white/5">
-                        {{ $perguntasLabels[$key] }}
+                        <div class="prose dark:prose-invert max-w-none text-sm">{!! $perguntasLabels[$key] !!}</div>
                         @if(!str_starts_with($key, 'pergunta_'))
                             <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {{ $key }}</div>
                         @endif
@@ -83,7 +84,11 @@
                     @foreach ($respostas as $resposta)
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-400 align-top">
                             @if(isset($valores[$resposta->id]))
-                                {{ empty($valores[$resposta->id]) ? '(Vazio)' : $valores[$resposta->id] }}
+                                @if(empty($valores[$resposta->id]))
+                                    (Vazio)
+                                @else
+                                    <div class="prose dark:prose-invert max-w-none text-sm">{!! $valores[$resposta->id] !!}</div>
+                                @endif
                             @else
                                 <span class="text-gray-300 dark:text-gray-600">-</span>
                             @endif
@@ -102,3 +107,4 @@
         </tbody>
     </table>
 </div>
+</x-filament-panels::page>

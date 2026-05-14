@@ -60,13 +60,7 @@ class QuestionarioRespostasTable
                     BulkAction::make('comparar_respostas')
                         ->label('Comparar Respostas')
                         ->icon('heroicon-o-arrows-right-left')
-                        ->modalHeading('Comparação de Respostas')
-                        ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Fechar')
-                        ->modalWidth('7xl')
-                        ->modalContent(fn (Collection $records) => view('filament.resources.questionario-respostas.comparacao', [
-                            'records' => $records,
-                        ]))
+                        ->action(fn (Collection $records) => redirect(\App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource::getUrl('comparar', ['ids' => $records->pluck('id')->toArray()])))
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),

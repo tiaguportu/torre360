@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas;
 
+use App\Filament\Resources\QuestionarioRespostas\Pages\CompararQuestionarioRespostas;
 use App\Filament\Resources\QuestionarioRespostas\Pages\CreateQuestionarioResposta;
 use App\Filament\Resources\QuestionarioRespostas\Pages\EditQuestionarioResposta;
 use App\Filament\Resources\QuestionarioRespostas\Pages\ListQuestionarioRespostas;
@@ -68,6 +69,7 @@ class QuestionarioRespostaResource extends Resource implements HasShieldPermissi
         return [
             'index' => ListQuestionarioRespostas::route('/'),
             'create' => CreateQuestionarioResposta::route('/create'),
+            'comparar' => CompararQuestionarioRespostas::route('/comparar'),
             'view' => ViewQuestionarioResposta::route('/{record}'),
             'edit' => EditQuestionarioResposta::route('/{record}/edit'),
         ];
