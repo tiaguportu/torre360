@@ -93,6 +93,7 @@ class QuestionarioRespostaInfolist
                                     ->compact(),
                             ]),
                     ]),
-            ]);
+            ])
+            ->columns(1);
     }
 }
