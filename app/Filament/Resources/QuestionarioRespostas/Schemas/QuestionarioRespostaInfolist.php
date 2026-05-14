@@ -39,16 +39,20 @@ class QuestionarioRespostaInfolist
                     ]),
 
                 Section::make('Perguntas e Respostas')
+                    ->columns(1)
                     ->schema([
                         RepeatableEntry::make('questionario_blocos')
                             ->hiddenLabel()
+                            ->columns(1)
                             ->state(fn ($record) => $record->questionario->blocos()->orderBy('ordem')->get())
                             ->schema([
                                 Section::make(fn ($record) => $record->titulo)
                                     ->description(fn ($record) => $record->descricao)
+                                    ->columns(1)
                                     ->schema([
                                         RepeatableEntry::make('bloco_perguntas')
                                             ->hiddenLabel()
+                                            ->columns(1)
                                             ->state(fn ($record) => $record->perguntas()->orderBy('ordem')->get())
                                             ->schema([
                                                 TextEntry::make('enunciado')
