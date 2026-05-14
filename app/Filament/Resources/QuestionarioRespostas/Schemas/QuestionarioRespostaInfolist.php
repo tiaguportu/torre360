@@ -38,17 +38,17 @@ class QuestionarioRespostaInfolist
                             ->dateTime('d/m/Y H:i'),
                     ]),
 
-                Section::make('Estrutura de Blocos e Respostas')
+                Section::make('Perguntas e Respostas')
                     ->schema([
                         RepeatableEntry::make('questionario_blocos')
-                            ->label('')
+                            ->hiddenLabel()
                             ->state(fn ($record) => $record->questionario->blocos()->orderBy('ordem')->get())
                             ->schema([
                                 Section::make(fn ($record) => $record->titulo)
                                     ->description(fn ($record) => $record->descricao)
                                     ->schema([
                                         RepeatableEntry::make('bloco_perguntas')
-                                            ->label('')
+                                            ->hiddenLabel()
                                             ->state(fn ($record) => $record->perguntas()->orderBy('ordem')->get())
                                             ->schema([
                                                 TextEntry::make('enunciado')
