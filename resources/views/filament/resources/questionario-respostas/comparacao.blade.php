@@ -43,16 +43,17 @@
     @endphp
 
     <div class="fi-ta">
-        <div class="fi-ta-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-            <div class="fi-ta-main overflow-x-auto">
-                <table class="fi-ta-table w-full text-left divide-y table-auto divide-gray-200 dark:divide-white/5">
+        <div class="fi-ta-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
+            <div class="fi-ta-main">
+                <div class="fi-ta-content overflow-x-auto">
+                    <table class="fi-ta-table w-full text-left divide-y table-auto divide-gray-200 dark:divide-white/5">
                     <thead class="bg-gray-50 dark:bg-white/5">
                         <tr class="fi-ta-row">
                             <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-semibold text-sm text-gray-950 dark:text-white">
                                 Campo / Pergunta
                             </th>
                             @foreach ($respostas as $resposta)
-                                <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-semibold text-sm text-gray-950 dark:text-white">
+                                <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-semibold text-sm text-gray-950 dark:text-white min-w-[300px]">
                                     Resposta #{{ $resposta->id }}
                                 </th>
                             @endforeach
@@ -116,6 +117,7 @@
                         @endif
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>
