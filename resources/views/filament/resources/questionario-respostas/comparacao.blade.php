@@ -49,7 +49,7 @@
                     <table class="fi-ta-table w-full text-left divide-y table-auto divide-gray-200 dark:divide-white/5">
                     <thead class="bg-gray-50 dark:bg-white/5">
                         <tr class="fi-ta-row">
-                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-semibold text-sm text-gray-950 dark:text-white">
+                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-semibold text-sm text-gray-950 dark:text-white w-[300px] min-w-[250px] max-w-[350px]">
                                 Campo / Pergunta
                             </th>
                             @foreach ($respostas as $resposta)
@@ -63,7 +63,7 @@
                         <!-- Campos Comuns -->
                         @foreach (['Questionário', 'Respondente', 'Perfil', 'Data Envio'] as $campo)
                             <tr class="fi-ta-row transition duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
-                                <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-medium text-sm text-gray-950 dark:text-white bg-gray-50/50 dark:bg-white/5">
+                                <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-medium text-sm text-gray-950 dark:text-white bg-gray-50/50 dark:bg-white/5 w-[300px] min-w-[250px] max-w-[350px]">
                                     {{ $campo }}
                                 </td>
                                 @foreach ($respostas as $resposta)
@@ -84,8 +84,8 @@
                         <!-- Perguntas -->
                         @foreach ($perguntasRow as $key => $valores)
                             <tr class="fi-ta-row transition duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
-                                <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 align-top bg-gray-50/50 dark:bg-white/5 min-w-[250px]">
-                                    <div class="prose dark:prose-invert max-w-none text-sm">{!! $perguntasLabels[$key] !!}</div>
+                                <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 align-top bg-gray-50/50 dark:bg-white/5 w-[300px] min-w-[250px] max-w-[350px]">
+                                    <div class="prose dark:prose-invert max-w-full break-words text-sm">{!! $perguntasLabels[$key] !!}</div>
                                     @if(!str_starts_with($key, 'pergunta_'))
                                         <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {{ $key }}</div>
                                     @endif
