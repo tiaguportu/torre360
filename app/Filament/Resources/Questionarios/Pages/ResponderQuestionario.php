@@ -212,7 +212,7 @@ class ResponderQuestionario extends Page
                 QuestionarioPerguntaResposta::create([
                     'questionario_resposta_id' => $respostaPrincipal->id,
                     'questionario_pergunta_id' => $pergunta->id,
-                    'resposta_texto' => is_string($valor) ? $valor : null,
+                    'resposta_texto' => ! is_array($valor) ? (string) $valor : null,
                     'resposta_json' => is_array($valor) ? $valor : null,
                 ]);
             }

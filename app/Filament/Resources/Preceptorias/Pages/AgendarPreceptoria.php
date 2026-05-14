@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Preceptorias\Pages;
 
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
+use App\Models\CicloPreceptoria;
 use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
@@ -12,9 +13,9 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -183,14 +184,22 @@ class AgendarPreceptoria extends Page implements HasForms
                                     return false;
                                 }
 
+                                // Considerar agendamento vigente se houver uma preceptoria agendada no ciclo atual
+                                $cicloAtual = CicloPreceptoria::vigentes()->first();
+                                if (! $cicloAtual) {
+                                    return false;
+                                }
+
                                 return Preceptoria::where('matricula_id', $mid)
-                                    ->where('data', '>=', now()->toDateString())
+                                    ->where('ciclo_preceptoria_id', $cicloAtual->id)
                                     ->exists();
                             })
                             ->content(function (Get $get) {
                                 $mid = $get('matricula_id');
+                                $cicloAtual = CicloPreceptoria::vigentes()->first();
+
                                 $p = Preceptoria::where('matricula_id', $mid)
-                                    ->where('data', '>=', now()->toDateString())
+                                    ->where('ciclo_preceptoria_id', $cicloAtual->id)
                                     ->with('professor')
                                     ->first();
 
@@ -217,8 +226,10 @@ class AgendarPreceptoria extends Page implements HasForms
                                     ->requiresConfirmation()
                                     ->action(function (Get $get) {
                                         $mid = $get('matricula_id');
+                                        $cicloAtual = CicloPreceptoria::vigentes()->first();
+
                                         $p = Preceptoria::where('matricula_id', $mid)
-                                            ->where('data', '>=', now()->toDateString())
+                                            ->where('ciclo_preceptoria_id', $cicloAtual?->id)
                                             ->first();
 
                                         if ($p) {
@@ -236,9 +247,14 @@ class AgendarPreceptoria extends Page implements HasForms
                             return false; // Esconde se não tiver matrícula
                         }
 
-                        // Esconde se já houver agendamento
+                        // Esconde se já houver agendamento no ciclo atual
+                        $cicloAtual = CicloPreceptoria::vigentes()->first();
+                        if (! $cicloAtual) {
+                            return true; // Se não houver ciclo vigente, permite visualizar (embora dificilmente haverá horários)
+                        }
+
                         $temAgendamento = Preceptoria::where('matricula_id', $mid)
-                            ->where('data', '>=', now()->toDateString())
+                            ->where('ciclo_preceptoria_id', $cicloAtual->id)
                             ->exists();
 
                         return ! $temAgendamento;
@@ -312,30 +328,30 @@ class AgendarPreceptoria extends Page implements HasForms
     {
         $user = auth()->user();
         $activeRole = session('active_role');
-        
+
         $html = '<p>Nesta página você realiza o agendamento de uma preceptoria com um dos professores disponíveis.</p>';
         $html .= '<h3>Passo a Passo:</h3>';
         $html .= '<ol>';
         $html .= '<li><strong>Selecionar Matrícula:</strong> Escolha o aluno para o qual deseja agendar. ';
-        
+
         if ($activeRole === 'responsavel') {
             $html .= 'Você verá apenas os seus dependentes.';
         } elseif ($activeRole === 'secretaria') {
             $html .= 'Você tem acesso a todos os alunos da instituição.';
         }
-        
+
         $html .= '</li>';
-        $html .= '<li><strong>Verificar Agendamento Vigente:</strong> Se o aluno já tiver uma preceptoria futura agendada, o sistema avisará e não permitirá um novo agendamento até que o atual seja realizado ou cancelado.</li>';
+        $html .= '<li><strong>Verificar Agendamento Vigente:</strong> Se o aluno já tiver uma preceptoria agendada para o ciclo atual, o sistema avisará e não permitirá um novo agendamento até que o atual seja realizado ou cancelado.</li>';
         $html .= '<li><strong>Escolher Horário:</strong> Selecione um dos horários disponíveis na lista. ';
-        
+
         if ($activeRole === 'responsavel' || $activeRole === 'aluno') {
             $html .= '<br><em>Nota: Por regra de antecedência, você só pode agendar horários com no mínimo 2 dias de antecedência.</em>';
         }
-        
+
         $html .= '</li>';
         $html .= '<li><strong>Confirmar:</strong> Clique no botão "Agendar Preceptoria" ao final da página para concluir.</li>';
         $html .= '</ol>';
-        
+
         $html .= '<h3>Dúvidas Frequentes:</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Não vejo horários para meu filho:</strong> Os horários só aparecem se os professores vinculados à turma (Professor Regente ou Professores do Cronograma) tiverem liberado agendas futuras no sistema.</li>';
@@ -383,8 +399,13 @@ class AgendarPreceptoria extends Page implements HasForms
             return false;
         }
 
+        $cicloAtual = CicloPreceptoria::vigentes()->first();
+        if (! $cicloAtual) {
+            return true;
+        }
+
         $temAgendamento = Preceptoria::where('matricula_id', $mid)
-            ->where('data', '>=', now()->toDateString())
+            ->where('ciclo_preceptoria_id', $cicloAtual->id)
             ->exists();
 
         return ! $temAgendamento;

@@ -48,7 +48,7 @@ class QuestionarioRespostaInfolist
                                     ->html(),
                                 TextEntry::make('resposta_texto')
                                     ->label('Resposta')
-                                    ->visible(fn ($record) => ! empty($record->resposta_texto)),
+                                    ->visible(fn ($record) => $record->resposta_texto !== null && $record->resposta_texto !== ''),
                                 TextEntry::make('resposta_json')
                                     ->label('Opções Selecionadas')
                                     ->listWithLineBreaks()
