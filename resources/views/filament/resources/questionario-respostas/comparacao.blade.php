@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-<div class="overflow-x-auto bg-white dark:bg-gray-900 shadow-sm rounded-xl border border-gray-200 dark:border-white/10">
     @php
         // Garantir que as relações estão carregadas para não haver N+1
         $respostas = $records->load(['questionario', 'user', 'perguntaRespostas.pergunta']);
@@ -43,68 +42,84 @@
         }
     @endphp
 
-    <table class="w-full text-left divide-y table-auto divide-gray-200 dark:divide-white/5">
-        <thead>
-            <tr>
-                <th class="px-4 py-3 bg-gray-50 dark:bg-white/5 font-medium text-sm text-gray-950 dark:text-white">Campo / Pergunta</th>
-                @foreach ($respostas as $resposta)
-                    <th class="px-4 py-3 bg-gray-50 dark:bg-white/5 font-medium text-sm text-gray-950 dark:text-white">Resposta #{{ $resposta->id }}</th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-white/5 text-sm">
+    <x-filament-tables::container>
+        <x-filament-tables::table>
+            <x-slot name="header">
+                <x-filament-tables::row>
+                    <x-filament-tables::header-cell>
+                        Campo / Pergunta
+                    </x-filament-tables::header-cell>
+                    @foreach ($respostas as $resposta)
+                        <x-filament-tables::header-cell>
+                            Resposta #{{ $resposta->id }}
+                        </x-filament-tables::header-cell>
+                    @endforeach
+                </x-filament-tables::row>
+            </x-slot>
+
             <!-- Campos Comuns -->
             @foreach (['Questionário', 'Respondente', 'Perfil', 'Data Envio'] as $campo)
-                <tr>
-                    <td class="px-4 py-3 font-medium text-gray-950 dark:text-white bg-gray-50/50 dark:bg-white/5 whitespace-nowrap">{{ $campo }}</td>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell class="bg-gray-50/50 dark:bg-white/5">
+                        <span class="font-medium px-4 py-3 block text-sm">{{ $campo }}</span>
+                    </x-filament-tables::cell>
                     @foreach ($respostas as $resposta)
-                        <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
-                            {{ $colunas[$resposta->id][$campo] }}
-                        </td>
+                        <x-filament-tables::cell>
+                            <span class="px-4 py-3 block text-sm text-gray-600 dark:text-gray-400">
+                                {{ $colunas[$resposta->id][$campo] }}
+                            </span>
+                        </x-filament-tables::cell>
                     @endforeach
-                </tr>
+                </x-filament-tables::row>
             @endforeach
             
             <!-- Separador -->
-            <tr>
-                <td colspan="{{ count($respostas) + 1 }}" class="px-4 py-2 bg-gray-100 dark:bg-white/10 font-bold text-gray-950 dark:text-white uppercase text-xs tracking-wider">
-                    Perguntas e Respostas
-                </td>
-            </tr>
+            <x-filament-tables::row>
+                <x-filament-tables::cell colspan="{{ count($respostas) + 1 }}" class="bg-gray-100 dark:bg-white/10">
+                    <span class="px-4 py-2 block font-bold text-gray-950 dark:text-white uppercase text-xs tracking-wider">
+                        Perguntas e Respostas
+                    </span>
+                </x-filament-tables::cell>
+            </x-filament-tables::row>
             
             <!-- Perguntas -->
             @foreach ($perguntasRow as $key => $valores)
-                <tr>
-                    <td class="px-4 py-3 font-medium text-gray-950 dark:text-white min-w-[250px] align-top bg-gray-50/50 dark:bg-white/5">
-                        <div class="prose dark:prose-invert max-w-none text-sm">{!! $perguntasLabels[$key] !!}</div>
-                        @if(!str_starts_with($key, 'pergunta_'))
-                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {{ $key }}</div>
-                        @endif
-                    </td>
-                    @foreach ($respostas as $resposta)
-                        <td class="px-4 py-3 text-gray-600 dark:text-gray-400 align-top">
-                            @if(isset($valores[$resposta->id]))
-                                @if(empty($valores[$resposta->id]))
-                                    (Vazio)
-                                @else
-                                    <div class="prose dark:prose-invert max-w-none text-sm">{!! $valores[$resposta->id] !!}</div>
-                                @endif
-                            @else
-                                <span class="text-gray-300 dark:text-gray-600">-</span>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell class="align-top bg-gray-50/50 dark:bg-white/5 min-w-[250px]">
+                        <div class="px-4 py-3">
+                            <div class="prose dark:prose-invert max-w-none text-sm">{!! $perguntasLabels[$key] !!}</div>
+                            @if(!str_starts_with($key, 'pergunta_'))
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {{ $key }}</div>
                             @endif
-                        </td>
+                        </div>
+                    </x-filament-tables::cell>
+                    @foreach ($respostas as $resposta)
+                        <x-filament-tables::cell class="align-top">
+                            <div class="px-4 py-3">
+                                @if(isset($valores[$resposta->id]))
+                                    @if(empty($valores[$resposta->id]))
+                                        (Vazio)
+                                    @else
+                                        <div class="prose dark:prose-invert max-w-none text-sm text-gray-600 dark:text-gray-400">{!! $valores[$resposta->id] !!}</div>
+                                    @endif
+                                @else
+                                    <span class="text-gray-300 dark:text-gray-600">-</span>
+                                @endif
+                            </div>
+                        </x-filament-tables::cell>
                     @endforeach
-                </tr>
+                </x-filament-tables::row>
             @endforeach
 
             @if(empty($perguntasRow))
-                <tr>
-                    <td colspan="{{ count($respostas) + 1 }}" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                        Nenhuma resposta encontrada para as perguntas destes questionários.
-                    </td>
-                </tr>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell colspan="{{ count($respostas) + 1 }}">
+                        <div class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                            Nenhuma resposta encontrada para as perguntas destes questionários.
+                        </div>
+                    </x-filament-tables::cell>
+                </x-filament-tables::row>
             @endif
-        </tbody>
-    </table>
-</div>
+        </x-filament-tables::table>
+    </x-filament-tables::container>
 </x-filament-panels::page>
