@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas\Schemas;
 
+use App\Models\QuestionarioPerguntaResposta;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -37,25 +38,56 @@ class QuestionarioRespostaInfolist
                             ->dateTime('d/m/Y H:i'),
                     ]),
 
-                Section::make('Respostas Detalhadas')
+                Section::make('Estrutura de Blocos e Respostas')
                     ->schema([
-                        RepeatableEntry::make('perguntaRespostas')
+                        RepeatableEntry::make('questionario.blocos')
                             ->label('')
+                            ->modifyQueryUsing(fn ($query) => $query->orderBy('ordem'))
                             ->schema([
-                                TextEntry::make('pergunta.enunciado')
-                                    ->label('Pergunta')
-                                    ->weight('bold')
-                                    ->html(),
-                                TextEntry::make('resposta_texto')
-                                    ->label('Resposta')
-                                    ->visible(fn ($record) => $record->resposta_texto !== null && $record->resposta_texto !== ''),
-                                TextEntry::make('resposta_json')
-                                    ->label('Opções Selecionadas')
-                                    ->listWithLineBreaks()
-                                    ->bulleted()
-                                    ->visible(fn ($record) => ! empty($record->resposta_json)),
-                            ])
-                            ->columns(1),
+                                Section::make(fn ($record) => $record->titulo)
+                                    ->description(fn ($record) => $record->descricao)
+                                    ->schema([
+                                        RepeatableEntry::make('perguntas')
+                                            ->label('')
+                                            ->modifyQueryUsing(fn ($query) => $query->orderBy('ordem'))
+                                            ->schema([
+                                                TextEntry::make('enunciado')
+                                                    ->label('Pergunta')
+                                                    ->weight('bold')
+                                                    ->html(),
+                                                TextEntry::make('valor_resposta')
+                                                    ->label('Resposta')
+                                                    ->state(function ($record, $component) {
+                                                        // $record é QuestionarioPergunta
+                                                        $questionarioResposta = $component->getLivewire()->record;
+
+                                                        if (! $questionarioResposta) {
+                                                            return '---';
+                                                        }
+
+                                                        $pr = QuestionarioPerguntaResposta::where('questionario_resposta_id', $questionarioResposta->id)
+                                                            ->where('questionario_pergunta_id', $record->id)
+                                                            ->first();
+
+                                                        if (! $pr) {
+                                                            return 'Não respondida';
+                                                        }
+
+                                                        if ($pr->resposta_texto !== null && $pr->resposta_texto !== '') {
+                                                            return $pr->resposta_texto;
+                                                        }
+
+                                                        if (! empty($pr->resposta_json)) {
+                                                            return is_array($pr->resposta_json) ? implode(', ', $pr->resposta_json) : $pr->resposta_json;
+                                                        }
+
+                                                        return '---';
+                                                    }),
+                                            ])
+                                            ->columns(1),
+                                    ])
+                                    ->compact(),
+                            ]),
                     ]),
             ]);
     }
