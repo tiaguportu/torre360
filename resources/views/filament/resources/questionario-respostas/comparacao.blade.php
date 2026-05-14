@@ -67,7 +67,7 @@
                                     {{ $campo }}
                                 </td>
                                 @foreach ($respostas as $resposta)
-                                    <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-sm text-gray-600 dark:text-gray-400">
+                                    <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-sm text-gray-600 dark:text-gray-400 whitespace-normal break-words">
                                         {{ $colunas[$resposta->id][$campo] }}
                                     </td>
                                 @endforeach
@@ -91,12 +91,12 @@
                                     @endif
                                 </td>
                                 @foreach ($respostas as $resposta)
-                                    <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 align-top">
+                                    <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 align-top whitespace-normal break-words">
                                         @if(isset($valores[$resposta->id]))
                                             @if(empty($valores[$resposta->id]))
                                                 (Vazio)
                                             @else
-                                                <div class="prose dark:prose-invert max-w-none text-sm text-gray-600 dark:text-gray-400">{!! $valores[$resposta->id] !!}</div>
+                                                <div class="prose dark:prose-invert max-w-full break-words text-sm text-gray-600 dark:text-gray-400">{!! $valores[$resposta->id] !!}</div>
                                             @endif
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">-</span>
