@@ -665,6 +665,7 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 1. Na lista de questionários, você verá a contagem de **Respostas** em tempo real.
 2. Ao clicar em **Visualizar** um questionário, o sistema exibe um **Dashboard de Estatísticas** com gráficos de pizza/donuts mostrando o status das respostas e o engajamento do público.
 3. No menu **Respostas de Questionários**, você pode consultar individualmente cada envio realizado, o tempo de preenchimento e o perfil institucional do respondente.
+4. **Comparação de Respostas:** No menu **Respostas de Questionários**, você pode selecionar múltiplas respostas na tabela e utilizar a Ação em Lote (Bulk Action) **Comparar Respostas**. O sistema abrirá uma janela com uma tabela comparativa lado a lado, mostrando os campos comuns (Nome do Questionário, Respondente, Perfil e Data) e agrupando as perguntas correspondentes que possuam o mesmo ID de Pergunta (identificador), facilitando a visualização e análise de respostas, mesmo de questionários diferentes.
 
 ---
 

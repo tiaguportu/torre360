@@ -7,8 +7,10 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionarioRespostasTable
@@ -55,6 +57,17 @@ class QuestionarioRespostasTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('comparar_respostas')
+                        ->label('Comparar Respostas')
+                        ->icon('heroicon-o-arrows-right-left')
+                        ->modalHeading('Comparação de Respostas')
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Fechar')
+                        ->modalWidth('7xl')
+                        ->modalContent(fn (Collection $records) => view('filament.resources.questionario-respostas.comparacao', [
+                            'records' => $records,
+                        ]))
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ])
