@@ -40,16 +40,16 @@ class QuestionarioRespostaInfolist
 
                 Section::make('Estrutura de Blocos e Respostas')
                     ->schema([
-                        RepeatableEntry::make('questionario.blocos')
+                        RepeatableEntry::make('questionario_blocos')
                             ->label('')
-                            ->modifyQueryUsing(fn ($query) => $query->orderBy('ordem'))
+                            ->state(fn ($record) => $record->questionario->blocos()->orderBy('ordem')->get())
                             ->schema([
                                 Section::make(fn ($record) => $record->titulo)
                                     ->description(fn ($record) => $record->descricao)
                                     ->schema([
-                                        RepeatableEntry::make('perguntas')
+                                        RepeatableEntry::make('bloco_perguntas')
                                             ->label('')
-                                            ->modifyQueryUsing(fn ($query) => $query->orderBy('ordem'))
+                                            ->state(fn ($record) => $record->perguntas()->orderBy('ordem')->get())
                                             ->schema([
                                                 TextEntry::make('enunciado')
                                                     ->label('Pergunta')
