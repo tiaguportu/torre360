@@ -10,7 +10,7 @@ class CompararQuestionarioRespostas extends Page
 {
     protected static string $resource = QuestionarioRespostaResource::class;
 
-    protected static string $view = 'filament.resources.questionario-respostas.comparacao';
+    protected string $view = 'filament.resources.questionario-respostas.comparacao';
 
     public Collection $records;
 
