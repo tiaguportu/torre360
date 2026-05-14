@@ -14,9 +14,9 @@ class CompararQuestionarioRespostas extends Page
 
     public Collection $records;
 
-    public function getMaxContentWidth(): \Filament\Support\Enums\MaxWidth|string|null
+    public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null
     {
-        return \Filament\Support\Enums\MaxWidth::Full;
+        return \Filament\Support\Enums\Width::Full;
     }
 
     public function mount()
