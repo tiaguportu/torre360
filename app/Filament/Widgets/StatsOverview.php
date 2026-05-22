@@ -8,10 +8,32 @@ use App\Models\Turma;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Spatie\Permission\Models\Role;
 
 class StatsOverview extends BaseWidget
 {
     use HasWidgetShield;
+
+    public static function canView(): bool
+    {
+        $activeRole = session('active_role');
+
+        if (! $activeRole) {
+            return false;
+        }
+
+        if ($activeRole === 'super_admin') {
+            return true;
+        }
+
+        try {
+            $role = Role::findByName($activeRole, 'web');
+
+            return $role->hasPermissionTo(static::getPermissionName());
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 
     protected static ?int $sort = 1;
 
