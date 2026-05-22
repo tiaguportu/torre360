@@ -221,7 +221,6 @@ class PreceptoriasTable
                         }
                     }),
             ])
-            ->recordAction(ViewAction::class)
             ->bulkActions([
                 BulkActionGroup::make([
                     BulkAction::make('clone')

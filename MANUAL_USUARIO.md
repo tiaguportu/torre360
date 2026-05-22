@@ -743,7 +743,7 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
 6. **Ações em Lote:** Para facilitar a gestão de múltiplos horários, você pode selecionar várias preceptorias na tabela e utilizar:
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
    - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
-7. **Visualização de Detalhes:** Clique em qualquer linha da tabela de preceptorias ou no botão de visualização (ícone de olho) para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
+7. **Visualização de Detalhes:** Clique no botão de visualização (ícone de olho) na coluna de ações da tabela de preceptorias para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
 8. **Alertas e Lembretes:**
    - **Badge de Alerta:** Na listagem de preceptorias, a data de agendamentos previstos para **amanhã** aparecerá destacada em vermelho com um ícone de alerta, facilitando a identificação de compromissos imediatos.
    - **Botão Relembrar:** Para cada preceptoria completamente agendada (com data, horário, professor e aluno) que ocorrerá no futuro, o botão **Relembrar** (ícone de envelope amarelo) estará disponível. Ao acioná-lo, o sistema enviará um lembrete automático por e-mail, push e sininho para o professor, para o aluno e para os responsáveis vinculados.

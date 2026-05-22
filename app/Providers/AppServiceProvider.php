@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
+use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Verified;
@@ -30,6 +31,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Table::configureUsing(function (Table $table): void {
+            $table
+                ->recordUrl(null)
+                ->recordAction(null);
+        });
+
         Gate::before(function ($user, $ability) {
             $activeRole = session('active_role');
 
