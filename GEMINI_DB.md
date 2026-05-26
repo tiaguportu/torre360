@@ -104,8 +104,9 @@ Estrutura de ensino e turmas.
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das disciplinas na visualização e impressão de boletins.
 
 ### `turma_disciplina`
-- **Representa:** Tabela pivô que define a grade curricular (disciplinas) de uma turma específica.
-- **Campos:** `turma_id`, `disciplina_id`.
+- **Representa:** Tabela pivô que define a grade curricular (disciplinas) de uma turma específica e seu respectivo professor responsável.
+- **Campos:** `turma_id`, `disciplina_id`, `professor_id` (FK para `pessoa`).
+- **Modelo Pivot:** `App\Models\TurmaDisciplina`
 
 ### `matricula`
 - **Representa:** Vínculo do aluno com uma turma em um período letivo.

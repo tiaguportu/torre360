@@ -200,6 +200,13 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
    - No cálculo do boletim, o sistema identificará qual das categorias vinculadas possui a **menor nota** e a substituirá pela nota da categoria substitutiva (caso esta seja maior).
    - Visualmente, a nota que foi substituída aparecerá riscada no boletim para facilitar a conferência pedagógica.
 
+### 5.8 Gestão de Turmas e Grade de Disciplinas
+1. Vá em **Acadêmico → Turmas** e clique em **Editar** na turma desejada.
+2. Na aba/relação de **Disciplinas**, você poderá visualizar toda a grade curricular daquela turma.
+3. **Vincular Disciplina Existente (Anexar):** Clique no botão "Vincular" no cabeçalho da tabela, escolha a disciplina na listagem e selecione o **Professor Responsável** por ministrar essa matéria nesta turma específica.
+4. **Criar Nova Disciplina:** Clique no botão "Criar" no cabeçalho da tabela, informe o nome da nova disciplina e o seu respectivo **Professor Responsável** nesta turma.
+5. **Alterar Professor Responsável:** Caso precise alterar quem leciona a matéria nesta turma, utilize a ação de **Editar** na linha da disciplina correspondente e selecione o novo professor. Essa alteração é salva na tabela pivô da turma e não altera as definições globais da disciplina.
+
 ---
 
 ## 📝 6. Secretaria e Documentação
