@@ -68,10 +68,7 @@ class Turma extends Model
 
     public function disciplinas(): BelongsToMany
     {
-        return $this->belongsToMany(Disciplina::class, 'turma_disciplina')
-            ->using(TurmaDisciplina::class)
-            ->withPivot('professor_id')
-            ->withTimestamps();
+        return $this->belongsToMany(Disciplina::class, 'turma_disciplina')->withPivot('professor_id')->withTimestamps();
     }
 
     protected function casts(): array

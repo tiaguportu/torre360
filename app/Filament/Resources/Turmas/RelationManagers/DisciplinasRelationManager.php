@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Turmas\RelationManagers;
 
-use App\Models\Disciplina;
 use App\Models\Pessoa;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
@@ -30,6 +29,11 @@ class DisciplinasRelationManager extends RelationManager
                 TextInput::make('nome')
                     ->required()
                     ->maxLength(255),
+                Select::make('professor_id')
+                    ->label('Professor Responsável')
+                    ->options(Pessoa::all()->pluck('nome', 'id'))
+                    ->searchable()
+                    ->preload(),
             ]);
     }
 
@@ -40,7 +44,7 @@ class DisciplinasRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('nome')
                     ->searchable(),
-                TextColumn::make('pivot.professor.nome')
+                TextColumn::make('professor.nome')
                     ->label('Professor Responsável')
                     ->placeholder('Regente da Turma')
                     ->sortable(),
@@ -49,24 +53,9 @@ class DisciplinasRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make()
-                    ->schema([
-                        TextInput::make('nome')
-                            ->required()
-                            ->maxLength(255),
-                        Select::make('professor_id')
-                            ->label('Professor Responsável')
-                            ->options(Pessoa::all()->pluck('nome', 'id'))
-                            ->searchable()
-                            ->preload(),
-                    ])
-                    ->after(function (Disciplina $record, array $data): void {
-                        $this->getOwnerRecord()->disciplinas()->updateExistingPivot($record->id, [
-                            'professor_id' => $data['professor_id'] ?? null,
-                        ]);
-                    }),
+                CreateAction::make(),
                 AttachAction::make()
-                    ->schema(fn (AttachAction $action): array => [
+                    ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
                         Select::make('professor_id')
                             ->label('Professor Responsável')
@@ -76,24 +65,7 @@ class DisciplinasRelationManager extends RelationManager
                     ]),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->schema([
-                        Select::make('professor_id')
-                            ->label('Professor Responsável')
-                            ->options(Pessoa::all()->pluck('nome', 'id'))
-                            ->searchable()
-                            ->preload(),
-                    ])
-                    ->mutateRecordDataUsing(function (array $data, Disciplina $record): array {
-                        $data['professor_id'] = $record->pivot?->professor_id;
-
-                        return $data;
-                    })
-                    ->action(function (Disciplina $record, array $data): void {
-                        $this->getOwnerRecord()->disciplinas()->updateExistingPivot($record->id, [
-                            'professor_id' => $data['professor_id'] ?? null,
-                        ]);
-                    }),
+                EditAction::make(),
                 DetachAction::make(),
                 DeleteAction::make(),
             ])
@@ -102,7 +74,6 @@ class DisciplinasRelationManager extends RelationManager
                     DetachBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
-            ])
-            ->stackedOnMobile();
+            ]);
     }
 }
