@@ -50,7 +50,7 @@ class DisciplinasRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->form([
+                    ->schema([
                         TextInput::make('nome')
                             ->required()
                             ->maxLength(255),
@@ -66,7 +66,7 @@ class DisciplinasRelationManager extends RelationManager
                         ]);
                     }),
                 AttachAction::make()
-                    ->form(fn (AttachAction $action): array => [
+                    ->schema(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
                         Select::make('professor_id')
                             ->label('Professor Responsável')
@@ -77,7 +77,7 @@ class DisciplinasRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
-                    ->form([
+                    ->schema([
                         Select::make('professor_id')
                             ->label('Professor Responsável')
                             ->options(Pessoa::all()->pluck('nome', 'id'))
