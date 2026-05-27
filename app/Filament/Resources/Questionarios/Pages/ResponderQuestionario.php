@@ -99,6 +99,10 @@ class ResponderQuestionario extends Page
                         ->live(),
                 };
 
+                $field->validationMessages([
+                    'required' => 'Esta pergunta é obrigatória.',
+                ]);
+
                 // Aplicar visibilidade condicional quando houver uma condição definida
                 if (! empty($condicao) && ! empty($condicao['pergunta_id'])) {
                     $field = $this->aplicarCondicaoVisibilidade($field, $pergunta);
