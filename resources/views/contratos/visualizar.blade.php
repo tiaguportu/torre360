@@ -9,7 +9,30 @@
     @filamentStyles
     <style>
         @media print {
-            .no-print { display: none; }
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .max-w-4xl {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .overflow-y-auto {
+                overflow: visible !important;
+                padding: 0 !important;
+            }
+            .border-b {
+                border-bottom: none !important;
+            }
         }
     </style>
 </head>
