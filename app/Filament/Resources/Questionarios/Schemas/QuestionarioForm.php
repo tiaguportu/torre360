@@ -2,24 +2,33 @@
 
 namespace App\Filament\Resources\Questionarios\Schemas;
 
+use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\Curso;
+use App\Models\Questionario;
 use App\Models\QuestionarioPergunta;
 use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\QuestionarioService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class QuestionarioForm
@@ -145,6 +154,59 @@ class QuestionarioForm
                         Tabs\Tab::make('Estrutura e Perguntas')
                             ->icon(Heroicon::OutlinedQuestionMarkCircle)
                             ->schema([
+                                Actions::make([
+                                    Action::make('exportar_csv')
+                                        ->label('Exportar CSV')
+                                        ->icon('heroicon-o-arrow-down-tray')
+                                        ->color('info')
+                                        ->action(function (Questionario $record, QuestionarioService $service) {
+                                            $csv = $service->exportToCsv($record);
+                                            $filename = 'questionario_'.Str::slug($record->titulo).'_'.date('YmdHis').'.csv';
+
+                                            return response()->streamDownload(function () use ($csv) {
+                                                echo "\xEF\xBB\xBF"; // UTF-8 BOM para Excel
+                                                echo $csv;
+                                            }, $filename, [
+                                                'Content-Type' => 'text/csv; charset=utf-8',
+                                            ]);
+                                        }),
+                                    Action::make('importar_csv')
+                                        ->label('Importar CSV')
+                                        ->icon('heroicon-o-arrow-up-tray')
+                                        ->color('warning')
+                                        ->form([
+                                            FileUpload::make('arquivo_csv')
+                                                ->label('Arquivo CSV')
+                                                ->required()
+                                                ->disk('local')
+                                                ->directory('temp_imports')
+                                                ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'text/plain']),
+                                        ])
+                                        ->action(function (array $data, Questionario $record, QuestionarioService $service, $livewire) {
+                                            $path = Storage::disk('local')->path($data['arquivo_csv']);
+
+                                            try {
+                                                $service->importFromCsv($record, $path);
+
+                                                Notification::make()
+                                                    ->title('Estrutura importada com sucesso!')
+                                                    ->success()
+                                                    ->send();
+
+                                                $livewire->redirect(QuestionarioResource::getUrl('edit', ['record' => $record]));
+                                            } catch (\Exception $e) {
+                                                Notification::make()
+                                                    ->title('Erro ao importar CSV: '.$e->getMessage())
+                                                    ->danger()
+                                                    ->send();
+                                            } finally {
+                                                Storage::disk('local')->delete($data['arquivo_csv']);
+                                            }
+                                        }),
+                                ])
+                                    ->columnSpanFull()
+                                    ->visible(fn (?Questionario $record) => $record !== null && $record->exists),
+
                                 Section::make('Blocos e Perguntas')
                                     ->description('Organize seu questionário em blocos temáticos.')
                                     ->schema([
