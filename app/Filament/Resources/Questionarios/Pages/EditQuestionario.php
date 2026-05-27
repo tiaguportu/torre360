@@ -18,6 +18,12 @@ class EditQuestionario extends EditRecord
         return [
             ViewAction::make(),
             DeleteAction::make(),
+            Action::make('responder')
+                ->label('Responder Questionário')
+                ->icon('heroicon-o-pencil-square')
+                ->color('success')
+                ->url(fn () => QuestionarioResource::getUrl('responder', ['record' => $this->record]))
+                ->openUrlInNewTab(),
             Action::make('ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
