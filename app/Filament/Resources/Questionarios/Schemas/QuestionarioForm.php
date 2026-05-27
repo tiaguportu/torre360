@@ -61,6 +61,13 @@ class QuestionarioForm
                                         Toggle::make('is_ativo')
                                             ->label('Ativo')
                                             ->default(true),
+                                        TextInput::make('max_respostas_por_usuario')
+                                            ->label('Máximo de Respostas por Usuário')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->default(1)
+                                            ->placeholder('Sem limite (infinito)')
+                                            ->helperText('Deixe em branco para permitir respostas ilimitadas (infinito).'),
                                     ]),
                             ]),
 

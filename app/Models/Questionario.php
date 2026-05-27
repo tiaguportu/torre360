@@ -18,6 +18,7 @@ class Questionario extends Model
         'fim_aplicacao',
         'is_anonimo',
         'is_ativo',
+        'max_respostas_por_usuario',
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class Questionario extends Model
         'fim_aplicacao' => 'datetime',
         'is_anonimo' => 'boolean',
         'is_ativo' => 'boolean',
+        'max_respostas_por_usuario' => 'integer',
     ];
 
     /**

@@ -520,8 +520,8 @@ O módulo de **Questionários** permite criar formulários personalizados para c
 
 ### 16.1 Criando um Questionário
 1. Vá em **Acadêmico → Questionários**.
-2. **Geral:** Defina o título, descrição e o período em que o questionário ficará disponível para preenchimento.
-3. **Privacidade:** Marque a opção **Respostas Anônimas** caso deseje que a identidade do respondente seja preservada nos relatórios.
+2. **Geral:** Defina o título, descrição, o período em que o questionário ficará disponível para preenchimento, e o **Máximo de Respostas por Usuário** (por padrão é 1. Deixe em branco para permitir respostas ilimitadas/infinitas).
+3. **Privacidade:** Marque a opção **Respostas Anônimas** caso deseje que a identidade do respondente seja preservada nos relatórios. Observação: para questionários anônimos, a limitação de número de respostas por usuário logado não se aplica.
 4. **Público-Alvo:** Utilize a aba de público para restringir quem deve responder. Você pode filtrar por:
    - Uma **Unidade** específica.
    - Um **Curso**, **Série** ou **Turma**.

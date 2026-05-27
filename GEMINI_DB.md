@@ -223,7 +223,8 @@ Estrutura de ensino e turmas.
 ## 8. Questionários e Avaliação Institucional
 ### `questionarios`
 - **Representa:** O cabeçalho do questionário/formulário.
-- **Campos Principais:** `titulo`, `inicio_aplicacao`, `fim_aplicacao`, `is_anonimo`, `is_ativo`.
+- **Campos Principais:** `titulo`, `inicio_aplicacao`, `fim_aplicacao`, `is_anonimo`, `is_ativo`, `max_respostas_por_usuario`.
+- **Campo `max_respostas_por_usuario`:** Limite de respostas por usuário logado. Nulo representa sem limite (infinito).
 - **Relacionamentos:** HasMany `blocos`, HasMany `alvos`, HasMany `respostas`.
 
 ### `questionario_blocos`

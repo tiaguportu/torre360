@@ -44,20 +44,22 @@ class ResponderQuestionario extends Page
             return;
         }
 
-        // Verificar se usuário já respondeu (se não for anônimo)
-        if (! $this->record->is_anonimo && Auth::check()) {
-            $jaRespondeu = QuestionarioResposta::where('questionario_id', $this->record->id)
+        // Verificar se usuário já respondeu (se não for anônimo) e se atingiu o limite configurado
+        if (! $this->record->is_anonimo && Auth::check() && $this->record->max_respostas_por_usuario !== null) {
+            $totalRespostas = QuestionarioResposta::where('questionario_id', $this->record->id)
                 ->where('user_id', Auth::id())
                 ->where('status', 'enviado')
-                ->exists();
+                ->count();
 
-            if ($jaRespondeu) {
+            if ($totalRespostas >= $this->record->max_respostas_por_usuario) {
                 Notification::make()
-                    ->title('Você já respondeu este questionário.')
+                    ->title("Você atingiu o limite máximo de {$this->record->max_respostas_por_usuario} resposta(s) para este questionário.")
                     ->warning()
                     ->send();
 
                 $this->redirect($this->getResource()::getUrl('index'));
+
+                return;
             }
         }
     }
@@ -174,6 +176,24 @@ class ResponderQuestionario extends Page
 
     public function submit(): void
     {
+        if (! $this->record->is_anonimo && Auth::check() && $this->record->max_respostas_por_usuario !== null) {
+            $totalRespostas = QuestionarioResposta::where('questionario_id', $this->record->id)
+                ->where('user_id', Auth::id())
+                ->where('status', 'enviado')
+                ->count();
+
+            if ($totalRespostas >= $this->record->max_respostas_por_usuario) {
+                Notification::make()
+                    ->title("Você atingiu o limite máximo de {$this->record->max_respostas_por_usuario} resposta(s) para este questionário.")
+                    ->danger()
+                    ->send();
+
+                $this->redirect($this->getResource()::getUrl('index'));
+
+                return;
+            }
+        }
+
         $data = $this->form->getState();
 
         // Coletar todas as respostas submetidas para verificar condições
