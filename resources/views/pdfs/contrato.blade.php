@@ -252,85 +252,85 @@
             Fica eleito o foro regional da Ilha do Governador da Comarca da Capital do Estado do Rio de Janeiro para
             solucionar qualquer litígio.
         </div>
-    @endif
 
-    <div class="center" style="margin-top: 30px;">
-        Rio de Janeiro, RJ, {{ date('d') }} de {{ \Carbon\Carbon::now()->translatedFormat('F') }} de {{ date('Y') }}.
-    </div>
+        <div class="center" style="margin-top: 30px;">
+            Rio de Janeiro, RJ, {{ date('d') }} de {{ \Carbon\Carbon::now()->translatedFormat('F') }} de {{ date('Y') }}.
+        </div>
 
-    @php
-        $assinaturas = [];
+        @php
+            $assinaturas = [];
 
-        // 1. Pai
-        $assinaturas[] = [
-            'titulo' => 'PAI / CONTRATANTE' . ($pai && $principalRF && $pai->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
-            'nome' => $pai?->nome ?? '_____________',
-            'documento' => 'CPF: ' . ($pai?->cpf ?? '_____________'),
-        ];
+            // 1. Pai
+            $assinaturas[] = [
+                'titulo' => 'PAI / CONTRATANTE' . ($pai && $principalRF && $pai->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
+                'nome' => $pai?->nome ?? '_____________',
+                'documento' => 'CPF: ' . ($pai?->cpf ?? '_____________'),
+            ];
 
-        // 2. Mãe
-        $assinaturas[] = [
-            'titulo' => 'MÃE / CONTRATANTE' . ($mae && $principalRF && $mae->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
-            'nome' => $mae?->nome ?? '_____________',
-            'documento' => 'CPF: ' . ($mae?->cpf ?? '_____________'),
-        ];
+            // 2. Mãe
+            $assinaturas[] = [
+                'titulo' => 'MÃE / CONTRATANTE' . ($mae && $principalRF && $mae->id === $principalRF->id ? '<br>E RESPONSÁVEL FINANCEIRO' : ''),
+                'nome' => $mae?->nome ?? '_____________',
+                'documento' => 'CPF: ' . ($mae?->cpf ?? '_____________'),
+            ];
 
-        // 3. Responsáveis Financeiros (Se houver Terceiros)
-        foreach ($contrato->responsaveisFinanceiros as $rf) {
-            $rfPessoa = $rf->pessoa;
-            if ($rfPessoa && (!$pai || $rfPessoa->id !== $pai->id) && (!$mae || $rfPessoa->id !== $mae->id)) {
-                $assinaturas[] = [
-                    'titulo' => 'RESPONSÁVEL FINANCEIRO (Terceiro)',
-                    'nome' => $rfPessoa->nome,
-                    'documento' => 'CPF: ' . $rfPessoa->cpf,
-                ];
+            // 3. Responsáveis Financeiros (Se houver Terceiros)
+            foreach ($contrato->responsaveisFinanceiros as $rf) {
+                $rfPessoa = $rf->pessoa;
+                if ($rfPessoa && (!$pai || $rfPessoa->id !== $pai->id) && (!$mae || $rfPessoa->id !== $mae->id)) {
+                    $assinaturas[] = [
+                        'titulo' => 'RESPONSÁVEL FINANCEIRO (Terceiro)',
+                        'nome' => $rfPessoa->nome,
+                        'documento' => 'CPF: ' . $rfPessoa->cpf,
+                    ];
+                }
             }
-        }
 
-        // 4. Representantes Legais da Unidade
-        if ($unidade && $unidade->representantesLegais->isNotEmpty()) {
-            foreach ($unidade->representantesLegais as $rep) {
+            // 4. Representantes Legais da Unidade
+            if ($unidade && $unidade->representantesLegais->isNotEmpty()) {
+                foreach ($unidade->representantesLegais as $rep) {
+                    $assinaturas[] = [
+                        'titulo' => 'ESCOLA TORRE DE MARFIM',
+                        'nome' => $rep->nome,
+                        'documento' => $rep->pivot->cargo ?? 'Representante Legal',
+                    ];
+                }
+            } else {
+                // Fallback se não houver representante cadastrado
                 $assinaturas[] = [
                     'titulo' => 'ESCOLA TORRE DE MARFIM',
-                    'nome' => $rep->nome,
-                    'documento' => $rep->pivot->cargo ?? 'Representante Legal',
+                    'nome' => '_____________',
+                    'documento' => '_____________',
                 ];
             }
-        } else {
-            // Fallback se não houver representante cadastrado
-            $assinaturas[] = [
-                'titulo' => 'ESCOLA TORRE DE MARFIM',
-                'nome' => '_____________',
-                'documento' => '_____________',
-            ];
-        }
 
-        // Dividir as assinaturas em pares para a tabela
-        $chunks = array_chunk($assinaturas, 2);
-    @endphp
+            // Dividir as assinaturas em pares para a tabela
+            $chunks = array_chunk($assinaturas, 2);
+        @endphp
 
-    <table class="signature-table">
-        @foreach($chunks as $chunk)
-            <tr>
-                @foreach($chunk as $assinatura)
-                    <td>
-                        <div class="line"></div>
-                        <div class="bold">{!! $assinatura['titulo'] !!}</div>
-                        <div>{{ $assinatura['nome'] }}</div>
-                        <div>{{ $assinatura['documento'] }}</div>
-                    </td>
-                @endforeach
-                {{-- Preencher com célula vazia se o par estiver incompleto --}}
-                @if(count($chunk) === 1)
-                    <td></td>
-                @endif
-            </tr>
-        @endforeach
-    </table>
+        <table class="signature-table">
+            @foreach($chunks as $chunk)
+                <tr>
+                    @foreach($chunk as $assinatura)
+                        <td>
+                            <div class="line"></div>
+                            <div class="bold">{!! $assinatura['titulo'] !!}</div>
+                            <div>{{ $assinatura['nome'] }}</div>
+                            <div>{{ $assinatura['documento'] }}</div>
+                        </td>
+                    @endforeach
+                    {{-- Preencher com célula vazia se o par estiver incompleto --}}
+                    @if(count($chunk) === 1)
+                        <td></td>
+                    @endif
+                </tr>
+            @endforeach
+        </table>
 
-    <div class="footer">
-        Documento gerado em {{ date('d/m/Y H:i:s') }} - ID: {{ $contrato->id }}
-    </div>
+        <div class="footer">
+            Documento gerado em {{ date('d/m/Y H:i:s') }} - ID: {{ $contrato->id }}
+        </div>
+    @endif
 
 </body>
 
