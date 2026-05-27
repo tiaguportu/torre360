@@ -358,7 +358,60 @@ class QuestionarioForm
                                                     ->collapsible()
                                                     ->collapsed()
                                                     ->addActionLabel('Adicionar Pergunta')
-                                                    ->itemLabel(fn (array $state): ?string => isset($state['enunciado']) ? strip_tags($state['enunciado']) : null),
+                                                    ->itemLabel(fn (array $state): ?string => isset($state['enunciado']) ? strip_tags($state['enunciado']) : null)
+                                                    ->extraItemActions([
+                                                        Action::make('mover_bloco')
+                                                            ->label('Mover de Bloco')
+                                                            ->icon('heroicon-o-arrows-right-left')
+                                                            ->color('warning')
+                                                            ->form([
+                                                                Select::make('novo_bloco_index')
+                                                                    ->label('Escolha o Bloco de Destino')
+                                                                    ->options(function ($get, $livewire) {
+                                                                        $blocos = $livewire->data['blocos'] ?? [];
+                                                                        $options = [];
+                                                                        foreach ($blocos as $idx => $bloco) {
+                                                                            $options[$idx] = $bloco['titulo'] ?? 'Bloco '.($idx + 1);
+                                                                        }
+
+                                                                        return $options;
+                                                                    })
+                                                                    ->required(),
+                                                            ])
+                                                            ->action(function (array $data, $component, $livewire) {
+                                                                $itemPath = $component->getContainer()->getStatePath();
+
+                                                                if (preg_match('/(?:data\.)?blocos\.(\d+)\.perguntas\.(\d+)/', $itemPath, $matches)) {
+                                                                    $blocoOrigemIdx = (int) $matches[1];
+                                                                    $perguntaOrigemIdx = (int) $matches[2];
+                                                                    $blocoDestinoIdx = (int) $data['novo_bloco_index'];
+
+                                                                    if ($blocoOrigemIdx !== $blocoDestinoIdx) {
+                                                                        $formData = $livewire->data;
+
+                                                                        $pergunta = $formData['blocos'][$blocoOrigemIdx]['perguntas'][$perguntaOrigemIdx];
+
+                                                                        // Remover do bloco de origem
+                                                                        unset($formData['blocos'][$blocoOrigemIdx]['perguntas'][$perguntaOrigemIdx]);
+                                                                        $formData['blocos'][$blocoOrigemIdx]['perguntas'] = array_values($formData['blocos'][$blocoOrigemIdx]['perguntas']);
+
+                                                                        // Adicionar no bloco de destino
+                                                                        if (! isset($formData['blocos'][$blocoDestinoIdx]['perguntas'])) {
+                                                                            $formData['blocos'][$blocoDestinoIdx]['perguntas'] = [];
+                                                                        }
+                                                                        $formData['blocos'][$blocoDestinoIdx]['perguntas'][] = $pergunta;
+
+                                                                        // Atualizar dados no Livewire
+                                                                        $livewire->data = $formData;
+
+                                                                        Notification::make()
+                                                                            ->title('Pergunta movida de bloco com sucesso!')
+                                                                            ->success()
+                                                                            ->send();
+                                                                    }
+                                                                }
+                                                            }),
+                                                    ]),
                                             ])
                                             ->reorderable('ordem')
                                             ->collapsible()
