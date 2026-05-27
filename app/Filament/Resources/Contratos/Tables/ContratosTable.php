@@ -18,13 +18,11 @@ class ContratosTable
             ->columns([
                 TextColumn::make('matriculas.pessoa.nome')
                     ->label('Alunos / Matrículas')
-                    ->badge()
-                    ->separator(',')
+                    ->listWithLineBreaks()
                     ->searchable(),
                 TextColumn::make('responsaveisFinanceiros.pessoa.nome')
                     ->label('Responsáveis Financeiros')
-                    ->badge()
-                    ->separator(',')
+                    ->listWithLineBreaks()
                     ->searchable(),
                 TextColumn::make('valor_total')
                     ->numeric()

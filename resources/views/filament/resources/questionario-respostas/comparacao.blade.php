@@ -31,7 +31,11 @@
                 if (!isset($perguntasRow[$key])) {
                     $perguntasRow[$key] = [];
                     $perguntasLabels[$key] = $label;
-                    $ordemPerguntas[$key] = $pergunta->ordem ?? 0;
+                    $ordemPerguntas[$key] = [
+                        'bloco_ordem' => $pergunta->bloco->ordem ?? 0,
+                        'pergunta_ordem' => $pergunta->ordem ?? 0,
+                        'pergunta_id' => $pergunta->id
+                    ];
                 }
                 
                 $valorResposta = $pr->valor_exibicao;
@@ -40,9 +44,20 @@
             }
         }
 
-        // Ordenar as chaves de perguntasRow com base no array de ordens
+        // Ordenar as chaves de perguntasRow com base no array de ordens (Bloco primeiro, depois Pergunta)
         uksort($perguntasRow, function ($a, $b) use ($ordemPerguntas) {
-            return ($ordemPerguntas[$a] ?? 0) <=> ($ordemPerguntas[$b] ?? 0);
+            $ordemA = $ordemPerguntas[$a] ?? ['bloco_ordem' => 0, 'pergunta_ordem' => 0, 'pergunta_id' => 0];
+            $ordemB = $ordemPerguntas[$b] ?? ['bloco_ordem' => 0, 'pergunta_ordem' => 0, 'pergunta_id' => 0];
+            
+            if ($ordemA['bloco_ordem'] !== $ordemB['bloco_ordem']) {
+                return $ordemA['bloco_ordem'] <=> $ordemB['bloco_ordem'];
+            }
+            
+            if ($ordemA['pergunta_ordem'] !== $ordemB['pergunta_ordem']) {
+                return $ordemA['pergunta_ordem'] <=> $ordemB['pergunta_ordem'];
+            }
+            
+            return $ordemA['pergunta_id'] <=> $ordemB['pergunta_id'];
         });
     @endphp
 

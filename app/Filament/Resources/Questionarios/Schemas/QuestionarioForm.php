@@ -311,11 +311,13 @@ class QuestionarioForm
                                                                         // Pegar o ID da pergunta atual para evitar auto-referência
                                                                         $currentId = $get('id');
 
-                                                                        return QuestionarioPergunta::whereHas('bloco', function ($q) use ($questionarioId) {
-                                                                            $q->where('questionario_id', $questionarioId);
-                                                                        })
-                                                                            ->when($currentId, fn ($q) => $q->where('id', '!=', $currentId))
-                                                                            ->orderBy('ordem')
+                                                                        return QuestionarioPergunta::query()
+                                                                            ->select('questionario_perguntas.*')
+                                                                            ->join('questionario_blocos', 'questionario_perguntas.questionario_bloco_id', '=', 'questionario_blocos.id')
+                                                                            ->where('questionario_blocos.questionario_id', $questionarioId)
+                                                                            ->when($currentId, fn ($q) => $q->where('questionario_perguntas.id', '!=', $currentId))
+                                                                            ->orderBy('questionario_blocos.ordem')
+                                                                            ->orderBy('questionario_perguntas.ordem')
                                                                             ->get()
                                                                             ->mapWithKeys(function ($p) {
                                                                                 $label = strip_tags($p->enunciado);
