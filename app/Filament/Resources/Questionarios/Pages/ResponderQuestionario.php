@@ -68,6 +68,15 @@ class ResponderQuestionario extends Page
                 return;
             }
         }
+
+        $defaultData = [];
+        foreach ($this->record->blocos as $bloco) {
+            foreach ($bloco->perguntas as $pergunta) {
+                $defaultData["pergunta_{$pergunta->id}"] = null;
+            }
+        }
+
+        $this->form->fill($defaultData);
     }
 
     public function form(Schema $schema): Schema
