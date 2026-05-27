@@ -3,12 +3,17 @@
 namespace App\Filament\Resources\Questionarios\Pages;
 
 use App\Filament\Resources\Questionarios\QuestionarioResource;
+use App\Models\Matricula;
+use App\Models\Pessoa;
 use App\Models\Questionario;
 use App\Models\QuestionarioPergunta;
 use App\Models\QuestionarioPerguntaResposta;
 use App\Models\QuestionarioResposta;
+use App\Models\Turma;
+use App\Models\User;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -16,6 +21,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 class ResponderQuestionario extends Page
@@ -76,6 +82,27 @@ class ResponderQuestionario extends Page
                 $condicao = $pergunta->condicao_exibicao;
 
                 $field = match ($pergunta->tipo) {
+                    'usuarios' => Select::make("pergunta_{$pergunta->id}")
+                        ->label($labelHtml)
+                        ->options(fn () => User::all()->pluck('name', 'id'))
+                        ->required(fn () => $pergunta->is_obrigatoria)
+                        ->searchable()
+                        ->live(),
+
+                    'alunos_turma' => Select::make("pergunta_{$pergunta->id}")
+                        ->label($labelHtml)
+                        ->options(fn () => $this->getAlunosTurmaOptions())
+                        ->required(fn () => $pergunta->is_obrigatoria)
+                        ->searchable()
+                        ->live(),
+
+                    'pessoas' => Select::make("pergunta_{$pergunta->id}")
+                        ->label($labelHtml)
+                        ->options(fn () => Pessoa::all()->pluck('nome', 'id'))
+                        ->required(fn () => $pergunta->is_obrigatoria)
+                        ->searchable()
+                        ->live(),
+
                     'discursiva' => Textarea::make("pergunta_{$pergunta->id}")
                         ->label($labelHtml)
                         ->required(fn () => $pergunta->is_obrigatoria)
@@ -248,6 +275,71 @@ class ResponderQuestionario extends Page
             ->send();
 
         $this->redirect($this->getResource()::getUrl('index'));
+    }
+
+    protected function getAlunosTurmaOptions(): array
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return [];
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return Matricula::where('situacao', 'ativa')
+                ->with(['pessoa', 'turma'])
+                ->get()
+                ->mapWithKeys(function ($m) {
+                    $nome = $m->pessoa?->nome ?? 'Sem Nome';
+                    $turma = $m->turma?->nome ?? 'Sem Turma';
+
+                    return [$m->pessoa_id => "{$nome} ({$turma})"];
+                })->toArray();
+        }
+
+        $pessoa = $user->pessoa;
+        if (! $pessoa) {
+            return [];
+        }
+
+        $turmaIds = Matricula::where('pessoa_id', $pessoa->id)->pluck('turma_id')->toArray();
+
+        $alunoIds = DB::table('aluno_responsavel')->where('responsavel_id', $pessoa->id)->pluck('aluno_id')->toArray();
+        if (! empty($alunoIds)) {
+            $turmaIds = array_merge($turmaIds, Matricula::whereIn('pessoa_id', $alunoIds)->pluck('turma_id')->toArray());
+        }
+
+        $professorTurmaIds = Turma::where('professor_conselheiro_id', $pessoa->id)
+            ->orWhereHas('disciplinas', function ($q) use ($pessoa) {
+                $q->where('professor_id', $pessoa->id);
+            })->pluck('id')->toArray();
+        if (! empty($professorTurmaIds)) {
+            $turmaIds = array_merge($turmaIds, $professorTurmaIds);
+        }
+
+        $turmaIds = array_unique(array_filter($turmaIds));
+
+        if (empty($turmaIds)) {
+            return Matricula::where('situacao', 'ativa')
+                ->with(['pessoa', 'turma'])
+                ->get()
+                ->mapWithKeys(function ($m) {
+                    $nome = $m->pessoa?->nome ?? 'Sem Nome';
+                    $turma = $m->turma?->nome ?? 'Sem Turma';
+
+                    return [$m->pessoa_id => "{$nome} ({$turma})"];
+                })->toArray();
+        }
+
+        return Matricula::whereIn('turma_id', $turmaIds)
+            ->where('situacao', 'ativa')
+            ->with(['pessoa', 'turma'])
+            ->get()
+            ->mapWithKeys(function ($m) {
+                $nome = $m->pessoa?->nome ?? 'Sem Nome';
+                $turma = $m->turma?->nome ?? 'Sem Turma';
+
+                return [$m->pessoa_id => "{$nome} ({$turma})"];
+            })->toArray();
     }
 
     public function getTitle(): string

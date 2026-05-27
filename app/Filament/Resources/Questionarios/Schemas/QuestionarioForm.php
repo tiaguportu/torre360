@@ -252,6 +252,9 @@ class QuestionarioForm
                                                                 'objetiva' => 'Objetiva (Única Escolha)',
                                                                 'multipla_escolha' => 'Múltipla Escolha',
                                                                 'likert' => 'Escala Likert (1-5)',
+                                                                'usuarios' => 'Lista de Usuários do Sistema',
+                                                                'alunos_turma' => 'Lista de Alunos de uma Turma',
+                                                                'pessoas' => 'Lista de Pessoas Cadastradas',
                                                             ])
                                                             ->required()
                                                             ->live(),

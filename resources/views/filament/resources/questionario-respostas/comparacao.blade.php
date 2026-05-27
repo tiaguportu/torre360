@@ -34,10 +34,7 @@
                     $ordemPerguntas[$key] = $pergunta->ordem ?? 0;
                 }
                 
-                $valorResposta = $pr->resposta_texto;
-                if (is_array($pr->resposta_json)) {
-                    $valorResposta = implode(', ', $pr->resposta_json);
-                }
+                $valorResposta = $pr->valor_exibicao;
                 
                 $perguntasRow[$key][$resposta->id] = $valorResposta;
             }

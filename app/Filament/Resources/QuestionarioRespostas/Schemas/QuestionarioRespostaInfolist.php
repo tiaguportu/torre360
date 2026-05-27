@@ -77,15 +77,7 @@ class QuestionarioRespostaInfolist
                                                             return 'Não respondida';
                                                         }
 
-                                                        if ($pr->resposta_texto !== null && $pr->resposta_texto !== '') {
-                                                            return $pr->resposta_texto;
-                                                        }
-
-                                                        if (! empty($pr->resposta_json)) {
-                                                            return is_array($pr->resposta_json) ? implode(', ', $pr->resposta_json) : $pr->resposta_json;
-                                                        }
-
-                                                        return '---';
+                                                        return $pr->valor_exibicao;
                                                     }),
                                             ])
                                             ->columns(1),

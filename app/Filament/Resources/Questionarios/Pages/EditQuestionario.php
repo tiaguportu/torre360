@@ -52,7 +52,7 @@ class EditQuestionario extends EditRecord
         $html .= '<ul class="list-disc ml-6 space-y-1">';
         $html .= '<li><strong>Drag-and-Drop:</strong> Arraste os blocos ou perguntas pelos ícones de ordenação para reorganizá-los.</li>';
         $html .= '<li><strong>Colapso:</strong> Clique no cabeçalho de um bloco ou pergunta para expandir ou recolher o conteúdo.</li>';
-        $html .= '<li><strong>Tipos de Pergunta:</strong> Discursiva (texto livre), Objetiva (única escolha), Múltipla Escolha e Escala Likert (1–5).</li>';
+        $html .= '<li><strong>Tipos de Pergunta:</strong> Discursiva (texto livre), Objetiva (única escolha), Múltipla Escolha, Escala Likert (1–5), Lista de Usuários do Sistema, Lista de Alunos de uma Turma e Lista de Pessoas Cadastradas.</li>';
 
         if ($user->can('Update:Questionario')) {
             $html .= '<li>✅ Você tem permissão para editar todas as informações deste questionário.</li>';
