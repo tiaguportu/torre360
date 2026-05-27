@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contrato;
+use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Client\Response;
@@ -166,7 +167,9 @@ class AssinafyService
             // 1. Gerar PDF
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
 
-            $template = $contrato->templateContrato;
+            // Lógica de Template Dinâmico
+            $template = $contrato->templateContrato
+                ?? TemplateContrato::where('is_padrao', true)->first();
 
             $conteudoTemplate = null;
             if ($template) {

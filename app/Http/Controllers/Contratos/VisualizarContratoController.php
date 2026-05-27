@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Contratos;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contrato;
+use App\Models\TemplateContrato;
 use App\Services\ContractTemplateService;
 
 class VisualizarContratoController extends Controller
@@ -16,7 +17,9 @@ class VisualizarContratoController extends Controller
         $aluno = $matricula?->pessoa;
         $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
 
-        $template = $contrato->templateContrato;
+        // Lógica de Template Dinâmico
+        $template = $contrato->templateContrato
+            ?? TemplateContrato::where('is_padrao', true)->first();
 
         $conteudoTemplate = null;
         if ($template) {
