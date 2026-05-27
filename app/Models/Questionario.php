@@ -72,6 +72,11 @@ class Questionario extends Model
      */
     public function podeSerRespondidoPor(?User $user): bool
     {
+        // Se for super_admin ou dono do questionário, sempre pode responder/testar
+        if ($user && ($user->hasRole('super_admin') || $this->ehDono($user))) {
+            return true;
+        }
+
         if (! $this->is_ativo) {
             return false;
         }
@@ -82,11 +87,6 @@ class Questionario extends Model
         }
         if ($this->fim_aplicacao && $hoje->gt($this->fim_aplicacao)) {
             return false;
-        }
-
-        // Se for super_admin, sempre pode responder (útil para testes e administração)
-        if ($user && $user->hasRole('super_admin')) {
-            return true;
         }
 
         // Se não houver alvos, qualquer usuário logado pode responder
