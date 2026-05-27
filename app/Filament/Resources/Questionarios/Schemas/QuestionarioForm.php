@@ -381,25 +381,26 @@ class QuestionarioForm
                                                             ->action(function (array $data, $component, $livewire) {
                                                                 $itemPath = $component->getContainer()->getStatePath();
 
-                                                                if (preg_match('/(?:data\.)?blocos\.(\d+)\.perguntas\.(\d+)/', $itemPath, $matches)) {
-                                                                    $blocoOrigemIdx = (int) $matches[1];
-                                                                    $perguntaOrigemIdx = (int) $matches[2];
-                                                                    $blocoDestinoIdx = (int) $data['novo_bloco_index'];
+                                                                if (preg_match('/(?:data\.)?blocos\.([\w\-]+)\.perguntas\.([\w\-]+)/', $itemPath, $matches)) {
+                                                                    $blocoOrigemKey = $matches[1];
+                                                                    $perguntaOrigemKey = $matches[2];
+                                                                    $blocoDestinoKey = $data['novo_bloco_index'];
 
-                                                                    if ($blocoOrigemIdx !== $blocoDestinoIdx) {
+                                                                    if ($blocoOrigemKey !== $blocoDestinoKey) {
                                                                         $formData = $livewire->data;
 
-                                                                        $pergunta = $formData['blocos'][$blocoOrigemIdx]['perguntas'][$perguntaOrigemIdx];
+                                                                        $pergunta = $formData['blocos'][$blocoOrigemKey]['perguntas'][$perguntaOrigemKey];
 
-                                                                        // Remover do bloco de origem
-                                                                        unset($formData['blocos'][$blocoOrigemIdx]['perguntas'][$perguntaOrigemIdx]);
-                                                                        $formData['blocos'][$blocoOrigemIdx]['perguntas'] = array_values($formData['blocos'][$blocoOrigemIdx]['perguntas']);
+                                                                        // Remover do bloco de origem mantendo as chaves de string/UUIDs intactas
+                                                                        unset($formData['blocos'][$blocoOrigemKey]['perguntas'][$perguntaOrigemKey]);
 
                                                                         // Adicionar no bloco de destino
-                                                                        if (! isset($formData['blocos'][$blocoDestinoIdx]['perguntas'])) {
-                                                                            $formData['blocos'][$blocoDestinoIdx]['perguntas'] = [];
+                                                                        if (! isset($formData['blocos'][$blocoDestinoKey]['perguntas'])) {
+                                                                            $formData['blocos'][$blocoDestinoKey]['perguntas'] = [];
                                                                         }
-                                                                        $formData['blocos'][$blocoDestinoIdx]['perguntas'][] = $pergunta;
+
+                                                                        // Preservar o UUID original da pergunta para manter o rastreamento do componente pelo Livewire
+                                                                        $formData['blocos'][$blocoDestinoKey]['perguntas'][$perguntaOrigemKey] = $pergunta;
 
                                                                         // Atualizar dados no Livewire
                                                                         $livewire->data = $formData;
