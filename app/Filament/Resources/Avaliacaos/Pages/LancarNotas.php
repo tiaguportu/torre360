@@ -9,6 +9,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section;
@@ -35,6 +36,20 @@ class LancarNotas extends EditRecord
                 ->label('Salvar Notas')
                 ->action('saveNotas')
                 ->color('primary'),
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Lançamento de Notas')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
         ];
     }
 
@@ -188,5 +203,26 @@ class LancarNotas extends EditRecord
     protected function getFormActions(): array
     {
         return [];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+
+        $canLancar = $user->can('LancarNotas:Avaliacao');
+
+        $html = '<p>Esta página é destinada ao lançamento de notas para os alunos matriculados na turma desta avaliação.</p>';
+        $html .= '<h3>Instruções e Funcionalidades:</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Planilha de Notas:</strong> Insira a nota de cada aluno no campo correspondente. O valor deve respeitar o limite máximo estabelecido para a avaliação.</li>';
+
+        if ($canLancar) {
+            $html .= '<li><strong>Salvar Notas:</strong> Clique no botão "Salvar Notas" no topo para consolidar as notas no sistema.</li>';
+        }
+
+        $html .= '<li><strong>Validação:</strong> Notas maiores que a pontuação máxima definida para esta avaliação não serão permitidas.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 }

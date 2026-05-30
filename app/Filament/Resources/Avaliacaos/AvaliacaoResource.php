@@ -4,20 +4,35 @@ namespace App\Filament\Resources\Avaliacaos;
 
 use App\Filament\Resources\Avaliacaos\Pages\CreateAvaliacao;
 use App\Filament\Resources\Avaliacaos\Pages\EditAvaliacao;
+use App\Filament\Resources\Avaliacaos\Pages\LancarNotas;
 use App\Filament\Resources\Avaliacaos\Pages\ListAvaliacaos;
 use App\Filament\Resources\Avaliacaos\Pages\ViewAvaliacao;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Filament\Resources\Avaliacaos\Tables\AvaliacaosTable;
 use App\Models\Avaliacao;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class AvaliacaoResource extends Resource
+class AvaliacaoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'lancarNotas',
+        ];
+    }
+
     protected static ?string $model = Avaliacao::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
@@ -60,6 +75,7 @@ class AvaliacaoResource extends Resource
             'create' => CreateAvaliacao::route('/create'),
             'view' => ViewAvaliacao::route('/{record}'),
             'edit' => EditAvaliacao::route('/{record}/edit'),
+            'lancar-notas' => LancarNotas::route('/{record}/lancar-notas'),
         ];
     }
 }

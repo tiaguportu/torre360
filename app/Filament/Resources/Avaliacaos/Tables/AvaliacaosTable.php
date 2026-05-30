@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Avaliacaos\Tables;
 
+use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Models\Avaliacao;
 use App\Models\Pessoa;
 use App\Models\User;
@@ -119,7 +120,7 @@ class AvaliacaosTable
                     ->query(fn (Builder $query) => $query->pendentes())
                     ->toggle(),
             ])
-            ->recordActions([
+            ->actions([
                 Action::make('notificar')
                     ->label('Avisar Professor')
                     ->icon('heroicon-o-paper-airplane')
@@ -193,6 +194,12 @@ class AvaliacaosTable
                     })
                     ->modalSubmitActionLabel('Sim, enviar aviso'),
                 EditAction::make(),
+                Action::make('lancarNotas')
+                    ->label('Lançar Notas')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('success')
+                    ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('lancar-notas', ['record' => $record]))
+                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

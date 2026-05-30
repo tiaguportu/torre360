@@ -135,7 +135,7 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
 5. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
 6. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
 7. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
-8. **Botão de Ajuda nas Telas de Cadastro e Edição:** Ao criar ou editar uma avaliação, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas para preenchimento dos campos ou ações que seu usuário tem permissão para realizar (como salvar, alterar ou excluir a avaliação).
+8. **Botão de Ajuda nas Telas de Cadastro, Edição e Lançamento de Notas:** Ao criar, editar uma avaliação ou lançar notas, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas ou ações que seu usuário tem permissão para realizar.
 
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
