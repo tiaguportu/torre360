@@ -13,7 +13,6 @@ class DisciplinaFactory extends Factory
     {
         return [
             'nome' => 'Disciplina Teste '.$this->faker->unique()->word,
-            'slug' => $this->faker->unique()->slug,
         ];
     }
 }

@@ -128,8 +128,14 @@ Estrutura de ensino e turmas.
 - **Campos Principais:** `nome`, `descricao`, `ordem_boletim`.
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das categorias de avaliação no boletim.
 
-### `avaliacao` e `nota`
-- Registro acadêmico de desempenho convencional (notas numéricas).
+### `avaliacao`
+- **Representa:** Atividades avaliativas aplicadas às turmas.
+- **Campos Principais:** `turma_id`, `disciplina_id`, `etapa_avaliativa_id`, `categoria_avaliacao_id`, `professor_id` (nullable), `data_prevista`, `data_limite_lancamento`, `nota_maxima`, `peso_etapa_avaliativa`.
+- **Restrição de Unicidade:** Possui um índice composto exclusivo (`avaliacao_composite_unique`) que impede a existência de duas avaliações com a mesma combinação de: **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**.
+
+### `nota`
+- **Representa:** Notas individuais dos alunos em cada avaliação.
+- **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula` (Aluno).
 
 ### `campo_experiencias`
 - **Representa:** Categorias da BNCC para Educação Infantil (ex: "O eu, o outro e o nós").

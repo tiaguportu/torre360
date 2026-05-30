@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Validation\ValidationException;
 
 class Avaliacao extends Model
 {
@@ -21,6 +22,32 @@ class Avaliacao extends Model
         'nota_maxima' => 'decimal:2',
         'peso_etapa_avaliativa' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Avaliacao $avaliacao) {
+            $query = static::where('turma_id', $avaliacao->turma_id)
+                ->where('disciplina_id', $avaliacao->disciplina_id)
+                ->where('etapa_avaliativa_id', $avaliacao->etapa_avaliativa_id)
+                ->where('categoria_avaliacao_id', $avaliacao->categoria_avaliacao_id);
+
+            if (is_null($avaliacao->professor_id)) {
+                $query->whereNull('professor_id');
+            } else {
+                $query->where('professor_id', $avaliacao->professor_id);
+            }
+
+            if ($avaliacao->exists) {
+                $query->where('id', '!=', $avaliacao->id);
+            }
+
+            if ($query->exists()) {
+                throw ValidationException::withMessages([
+                    'turma_id' => 'Já existe uma avaliação cadastrada com esta mesma combinação de Turma, Disciplina, Etapa Avaliativa, Categoria e Professor.',
+                ]);
+            }
+        });
+    }
 
     public function etapaAvaliativa(): BelongsTo
     {

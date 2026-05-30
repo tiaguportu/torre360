@@ -13,7 +13,6 @@ class TurmaFactory extends Factory
     {
         return [
             'nome' => 'Turma Teste '.$this->faker->unique()->word,
-            'slug' => $this->faker->unique()->slug,
         ];
     }
 }
