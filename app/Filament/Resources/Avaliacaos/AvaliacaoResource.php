@@ -30,6 +30,7 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
             'delete',
             'delete_any',
             'lancarNotas',
+            'notificarProfessor',
         ];
     }
 

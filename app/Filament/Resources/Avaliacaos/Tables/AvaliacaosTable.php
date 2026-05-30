@@ -125,7 +125,7 @@ class AvaliacaosTable
                     ->label('Avisar Professor')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('warning')
-                    ->visible(fn (Avaliacao $record) => $record->tem_pendencia)
+                    ->visible(fn (Avaliacao $record) => $record->tem_pendencia && auth()->user()->can('notificarProfessor', $record))
                     ->action(function (Avaliacao $record) {
                         // Busca o professor específico da Disciplina nesta Turma (Pivot)
                         $professorPivot = $record->turma?->disciplinas()

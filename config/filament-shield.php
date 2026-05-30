@@ -198,6 +198,7 @@ return [
             ],
             AvaliacaoResource::class => [
                 'lancarNotas',
+                'notificarProfessor',
             ],
             CronogramaAulaResource::class => [
                 'lancarFrequencia',
