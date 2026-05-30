@@ -93,4 +93,15 @@ class Avaliacao extends Model
 
         return $totalNotas < $totalAlunos;
     }
+
+    /**
+     * Retorna a quantidade de notas pendentes.
+     */
+    public function getNotasPendentesCountAttribute(): int
+    {
+        $totalAlunos = $this->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
+        $totalNotas = $this->notas()->whereNotNull('valor')->count();
+
+        return max(0, $totalAlunos - $totalNotas);
+    }
 }

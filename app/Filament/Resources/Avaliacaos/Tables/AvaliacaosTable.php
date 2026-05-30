@@ -199,7 +199,9 @@ class AvaliacaosTable
                     ->icon('heroicon-o-pencil-square')
                     ->color('success')
                     ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('lancar-notas', ['record' => $record]))
-                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record)),
+                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record))
+                    ->badge(fn (Avaliacao $record): ?int => $record->notas_pendentes_count > 0 ? $record->notas_pendentes_count : null)
+                    ->badgeColor('danger'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
