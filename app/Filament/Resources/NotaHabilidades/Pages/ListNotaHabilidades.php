@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\AvaliacaoHabilidades\Pages;
+namespace App\Filament\Resources\NotaHabilidades\Pages;
 
-use App\Filament\Resources\AvaliacaoHabilidades\AvaliacaoHabilidadeResource;
+use App\Filament\Resources\NotaHabilidades\NotaHabilidadeResource;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
 
-class ListAvaliacaoHabilidades extends ListRecords
+class ListNotaHabilidades extends ListRecords
 {
-    protected static string $resource = AvaliacaoHabilidadeResource::class;
+    protected static string $resource = NotaHabilidadeResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -20,7 +20,7 @@ class ListAvaliacaoHabilidades extends ListRecords
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
-                ->modalHeading('Ajuda: Avaliações de Habilidades')
+                ->modalHeading('Ajuda: Notas de Habilidades')
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar')
                 ->form([
@@ -36,14 +36,14 @@ class ListAvaliacaoHabilidades extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        $html = '<p>Esta página apresenta a lista de Avaliações de Habilidades cadastradas no sistema.</p>';
+        $html = '<p>Esta página apresenta a lista de Notas de Habilidades lançadas para os alunos.</p>';
         $html .= '<h3>Funcionalidades:</h3>';
         $html .= '<ul>';
-        if ($user->can('Create:AvaliacaoHabilidade')) {
-            $html .= '<li><strong>Criar Avaliação:</strong> Permite cadastrar um novo cabeçalho de avaliação para vincular Turma, Habilidade, Etapa e Professor.</li>';
+        if ($user->can('Create:NotaHabilidade')) {
+            $html .= '<li><strong>Lançar Nota:</strong> Permite cadastrar o conceito obtido por um aluno em uma avaliação de habilidade específica.</li>';
         }
-        if ($user->can('Update:AvaliacaoHabilidade')) {
-            $html .= '<li><strong>Editar:</strong> Permite modificar os dados de uma avaliação existente.</li>';
+        if ($user->can('Update:NotaHabilidade')) {
+            $html .= '<li><strong>Editar:</strong> Permite modificar o conceito e as observações de uma nota lançada.</li>';
         }
         $html .= '</ul>';
 

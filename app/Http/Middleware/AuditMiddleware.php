@@ -30,8 +30,29 @@ class AuditMiddleware
                     'user_agent' => $request->userAgent(),
                 ]);
 
-                // Registro automático no Activity Log para usuários com role 'responsavel'
-                if ($user->hasRole('responsavel')) {
+                // Registro automático no Activity Log para usuários com certas roles (responsavel, professor, secretaria)
+                $activeRole = session('active_role');
+                $roleToLog = null;
+
+                if ($activeRole && in_array($activeRole, ['responsavel', 'professor', 'secretaria'])) {
+                    $roleToLog = $activeRole;
+                } else {
+                    if ($user->hasRole('responsavel')) {
+                        $roleToLog = 'responsavel';
+                    } elseif ($user->hasRole('professor')) {
+                        $roleToLog = 'professor';
+                    } elseif ($user->hasRole('secretaria')) {
+                        $roleToLog = 'secretaria';
+                    }
+                }
+
+                if ($roleToLog) {
+                    $roleLabel = match ($roleToLog) {
+                        'responsavel' => 'Responsável',
+                        'professor' => 'Professor',
+                        'secretaria' => 'Secretaria',
+                    };
+
                     $path = $request->path();
                     $resource = str($path)->after('admin/')->before('/')->title();
 
@@ -42,7 +63,7 @@ class AuditMiddleware
                                 'method' => $request->method(),
                                 'ip' => $request->ip(),
                             ])
-                            ->log("Responsável visualizou recurso: {$resource} | URL: {$request->fullUrl()}");
+                            ->log("{$roleLabel} visualizou recurso: {$resource} | URL: {$request->fullUrl()}");
                     }
                 }
             }

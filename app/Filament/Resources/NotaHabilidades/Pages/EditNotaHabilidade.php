@@ -1,24 +1,26 @@
 <?php
 
-namespace App\Filament\Resources\AvaliacaoHabilidades\Pages;
+namespace App\Filament\Resources\NotaHabilidades\Pages;
 
-use App\Filament\Resources\AvaliacaoHabilidades\AvaliacaoHabilidadeResource;
+use App\Filament\Resources\NotaHabilidades\NotaHabilidadeResource;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
-use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\EditRecord;
 
-class CreateAvaliacaoHabilidade extends CreateRecord
+class EditNotaHabilidade extends EditRecord
 {
-    protected static string $resource = AvaliacaoHabilidadeResource::class;
+    protected static string $resource = NotaHabilidadeResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            DeleteAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
-                ->modalHeading('Ajuda: Criar Avaliação de Habilidade')
+                ->modalHeading('Ajuda: Editar Nota de Habilidade')
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar')
                 ->form([
@@ -34,12 +36,13 @@ class CreateAvaliacaoHabilidade extends CreateRecord
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        $html = '<p>Esta página é destinada ao cadastro de uma nova Avaliação de Habilidade.</p>';
-        $html .= '<h3>Instruções:</h3>';
+        $html = '<p>Esta página permite editar o lançamento da nota de habilidade de um aluno.</p>';
+        $html .= '<h3>Opções:</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Turma:</strong> Selecione a turma que será avaliada.</li>';
-        $html .= '<li><strong>Habilidade:</strong> Selecione a habilidade correspondente (filtrada conforme a turma).</li>';
-        $html .= '<li><strong>Etapa Avaliativa e Professor:</strong> Preencha a etapa e o professor responsável pelo lançamento.</li>';
+        $html .= '<li>Modifique o conceito ou a observação nos campos fornecidos.</li>';
+        if ($user->can('Delete:NotaHabilidade')) {
+            $html .= '<li><strong>Excluir:</strong> Exclui permanentemente este lançamento.</li>';
+        }
         $html .= '</ul>';
 
         return $html;

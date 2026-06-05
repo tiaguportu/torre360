@@ -167,15 +167,17 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
    - Vá em **Avaliações → Avaliações por Disciplina**.
    - Crie uma nova avaliação selecionando a **Turma**, a **Disciplina** (filtrada pelas que você anexou à turma) e a **Etapa**.
    - Utilize o repetidor de notas para lançar os valores numéricos de todos os alunos de uma vez.
-5. **Lançamento de Avaliações por Habilidades:**
-   - Vá em **Avaliações → Avaliações por Habilidades**.
-   - Selecione a **Turma**, a **Habilidade** e o **Aluno**.
-   - Escolha o **Conceito** pedagógico baseado na escala: 
-     - **Realiza bem** (Verde)
-     - **Em desenvolvimento** (Amarelo)
-     - **Não realiza** (Vermelho)
-     - **Não observado** (Cinza)
-   - Adicione observações pedagógicas detalhadas se necessário.
+5. **Avaliações de Habilidades (Segregado):**
+   - **Avaliações de Habilidades:** Vá em **Avaliações → Avaliações por Habilidades** para criar o cabeçalho de avaliação, onde se vincula a **Turma**, a **Habilidade**, a **Etapa Avaliativa** e o **Professor**.
+   - **Notas de Habilidades:** Vá em **Avaliações → Notas de Habilidades** para realizar o lançamento dos conceitos dos alunos na avaliação criada:
+     - Selecione a **Avaliação de Habilidade**.
+     - Selecione o **Aluno** (filtrado automaticamente apenas para a turma vinculada à avaliação selecionada).
+     - Defina o **Conceito** pedagógico baseado na escala:
+       - **Realiza bem** (Verde)
+       - **Em desenvolvimento** (Amarelo)
+       - **Não realiza** (Vermelho)
+       - **Não observado** (Cinza)
+     - Adicione observações pedagógicas detalhadas se necessário.
 
 ### 5.6 Configuração de Disciplinas e Ordenação no Boletim
 1. Vá em **Acadêmico → Disciplinas**.
@@ -379,11 +381,12 @@ Os administradores podem definir precisamente quem pode ver, criar, editar ou ex
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas, Bancos e **Templates de Contrato**.
 - **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
 - **CRM:** Gestão de leads e histórico de contatos.
-- **Acadêmico:** **Questionários**, **Respostas de Questionários**, **Avaliações de Habilidades** (BNCC), **Campos de Experiência** e **Habilidades**.
+- **Acadêmico:** **Questionários**, **Respostas de Questionários**, **Avaliações de Habilidades** (BNCC), **Notas de Habilidades**, **Campos de Experiência** e **Habilidades**.
 
 
 ### 9.2 Auditoria de Ações
-O sistema registra automaticamente ações críticas:
+O sistema registra automaticamente ações críticas e navegações:
+- **Navegações no Painel:** As visualizações de recursos realizadas por usuários com papéis de **Responsável**, **Professor** ou **Secretaria** são registradas automaticamente no Log de Atividades (`admin/activity-logs`) para controle de acessos.
 - **Módulo de Matrícula:** O sistema loga acessos à lista de matrículas e à tela de documentos.
 - **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
 - **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.

@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use App\Enums\ConceitoHabilidade;
 use Database\Factories\AvaliacaoHabilidadeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AvaliacaoHabilidade extends Model
 {
@@ -16,16 +16,15 @@ class AvaliacaoHabilidade extends Model
     protected $table = 'avaliacao_habilidades';
 
     protected $fillable = [
-        'matricula_id',
+        'turma_id',
         'habilidade_id',
         'etapa_avaliativa_id',
-        'conceito',
-        'observacao',
+        'professor_id',
     ];
 
-    public function matricula(): BelongsTo
+    public function turma(): BelongsTo
     {
-        return $this->belongsTo(Matricula::class);
+        return $this->belongsTo(Turma::class);
     }
 
     public function habilidade(): BelongsTo
@@ -35,13 +34,16 @@ class AvaliacaoHabilidade extends Model
 
     public function etapaAvaliativa(): BelongsTo
     {
-        return $this->belongsTo(EtapaAvaliativa::class);
+        return $this->belongsTo(EtapaAvaliativa::class, 'etapa_avaliativa_id');
     }
 
-    protected function casts(): array
+    public function professor(): BelongsTo
     {
-        return [
-            'conceito' => ConceitoHabilidade::class,
-        ];
+        return $this->belongsTo(Pessoa::class, 'professor_id');
+    }
+
+    public function notas(): HasMany
+    {
+        return $this->hasMany(NotaHabilidade::class, 'avaliacao_habilidade_id');
     }
 }

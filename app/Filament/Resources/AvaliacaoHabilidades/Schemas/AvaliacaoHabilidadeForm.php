@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\AvaliacaoHabilidades\Schemas;
 
-use App\Enums\ConceitoHabilidade;
+use App\Models\Pessoa;
 use App\Models\Turma;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -16,16 +15,15 @@ class AvaliacaoHabilidadeForm
     {
         return $schema
             ->components([
-                Section::make('Identificação da Avaliação')
+                Section::make('Identificação da Avaliação de Habilidade')
                     ->schema([
                         Grid::make(2)
                             ->schema([
                                 Select::make('turma_id')
                                     ->label('Turma')
-                                    ->options(Turma::all()->pluck('nome', 'id'))
+                                    ->relationship('turma', 'nome')
                                     ->required()
                                     ->live()
-                                    ->dehydrated(false) // Apenas para contexto de busca
                                     ->afterStateUpdated(fn ($set) => $set('habilidade_id', null))
                                     ->searchable()
                                     ->preload(),
@@ -45,33 +43,43 @@ class AvaliacaoHabilidadeForm
                             ]),
                         Grid::make(2)
                             ->schema([
-                                Select::make('matricula_id')
-                                    ->label('Aluno')
-                                    ->required()
-                                    ->options(function (callable $get) {
-                                        $turmaId = $get('turma_id');
-                                        if (! $turmaId) {
-                                            return [];
-                                        }
-
-                                        return Turma::with('matriculas.pessoa')->find($turmaId)
-                                            ?->matriculas->mapWithKeys(fn ($m) => [$m->id => $m->pessoa->nome]) ?? [];
-                                    })
-                                    ->searchable(),
                                 Select::make('etapa_avaliativa_id')
                                     ->relationship('etapaAvaliativa', 'nome')
+                                    ->label('Etapa Avaliativa')
                                     ->required(),
+                                Select::make('professor_id')
+                                    ->label('Professor')
+                                    ->relationship('professor', 'nome')
+                                    ->searchable()
+                                    ->preload()
+                                    ->default(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            $pessoas = $user->pessoas;
+                                            if ($pessoas->count() === 1) {
+                                                return $pessoas->first()->id;
+                                            }
+                                        }
+
+                                        return null;
+                                    })
+                                    ->disabled(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            return $user->pessoas->count() === 1;
+                                        }
+
+                                        return false;
+                                    })
+                                    ->options(function () {
+                                        $user = auth()->user();
+                                        if ($user && $user->hasRole('professor')) {
+                                            return $user->pessoas->pluck('nome', 'id');
+                                        }
+
+                                        return Pessoa::all()->pluck('nome', 'id');
+                                    }),
                             ]),
-                    ]),
-                Section::make('Resultado')
-                    ->schema([
-                        Select::make('conceito')
-                            ->options(ConceitoHabilidade::class)
-                            ->required(),
-                        Textarea::make('observacao')
-                            ->label('Observações')
-                            ->rows(3)
-                            ->columnSpanFull(),
                     ]),
             ]);
     }

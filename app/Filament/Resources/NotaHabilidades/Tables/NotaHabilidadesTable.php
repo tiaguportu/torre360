@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\AvaliacaoHabilidades\Tables;
+namespace App\Filament\Resources\NotaHabilidades\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -8,31 +8,32 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class AvaliacaoHabilidadesTable
+class NotaHabilidadesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('turma.nome')
+                TextColumn::make('matricula.pessoa.nome')
+                    ->label('Aluno')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('avaliacaoHabilidade.turma.nome')
                     ->label('Turma')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('habilidade.nome')
-                    ->label('Habilidade')
-                    ->limit(50)
-                    ->tooltip(fn ($record) => $record->habilidade?->nome)
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('etapaAvaliativa.nome')
-                    ->label('Etapa')
                     ->sortable(),
-                TextColumn::make('professor.nome')
-                    ->label('Professor')
+                TextColumn::make('avaliacaoHabilidade.habilidade.nome')
+                    ->label('Habilidade')
+                    ->limit(40)
+                    ->tooltip(fn ($record) => $record->avaliacaoHabilidade?->habilidade?->nome)
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('avaliacaoHabilidade.etapaAvaliativa.nome')
+                    ->label('Etapa'),
+                TextColumn::make('conceito')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('updated_at')
-                    ->label('Última Atualização')
+                    ->label('Último Lançamento')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
