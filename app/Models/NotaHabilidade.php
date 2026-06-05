@@ -13,7 +13,6 @@ class NotaHabilidade extends Model
     protected $fillable = [
         'avaliacao_habilidade_id',
         'matricula_id',
-        'habilidade_id',
         'conceito',
         'observacao',
     ];
@@ -26,11 +25,6 @@ class NotaHabilidade extends Model
     public function matricula(): BelongsTo
     {
         return $this->belongsTo(Matricula::class);
-    }
-
-    public function habilidade(): BelongsTo
-    {
-        return $this->belongsTo(Habilidade::class);
     }
 
     protected function casts(): array

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AvaliacaoHabilidades\Schemas;
 
 use App\Models\Pessoa;
+use App\Models\Turma;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -15,16 +16,41 @@ class AvaliacaoHabilidadeForm
         return $schema
             ->components([
                 Section::make('Identificação da Avaliação de Habilidade')
-                    ->columnSpanFull()
                     ->schema([
-                        Grid::make(3)
+                        Grid::make(2)
                             ->schema([
                                 Select::make('turma_id')
                                     ->label('Turma')
                                     ->relationship('turma', 'nome')
                                     ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn ($set) => $set('habilidade_id', null))
                                     ->searchable()
                                     ->preload(),
+                                Select::make('habilidade_id')
+                                    ->label('Habilidade')
+                                    ->required()
+                                    ->options(function (callable $get) {
+                                        $turmaId = $get('turma_id');
+                                        if (! $turmaId) {
+                                            return [];
+                                        }
+
+                                        return Turma::find($turmaId)?->habilidades?->pluck('nome', 'id') ?? [];
+                                    })
+                                    ->helperText(function (callable $get) {
+                                        $turmaId = $get('turma_id');
+                                        if ($turmaId && Turma::find($turmaId)?->habilidades()->count() === 0) {
+                                            return 'Atenção: Esta turma não possui habilidades vinculadas. Vincule-as no cadastro da turma.';
+                                        }
+
+                                        return null;
+                                    })
+                                    ->searchable()
+                                    ->preload(),
+                            ]),
+                        Grid::make(2)
+                            ->schema([
                                 Select::make('etapa_avaliativa_id')
                                     ->relationship('etapaAvaliativa', 'nome')
                                     ->label('Etapa Avaliativa')
