@@ -21,10 +21,10 @@ class NotaHabilidadesTable
                 TextColumn::make('avaliacaoHabilidade.turma.nome')
                     ->label('Turma')
                     ->sortable(),
-                TextColumn::make('avaliacaoHabilidade.habilidade.nome')
+                TextColumn::make('habilidade.nome')
                     ->label('Habilidade')
                     ->limit(40)
-                    ->tooltip(fn ($record) => $record->avaliacaoHabilidade?->habilidade?->nome)
+                    ->tooltip(fn ($record) => $record->habilidade?->nome)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('avaliacaoHabilidade.etapaAvaliativa.nome')

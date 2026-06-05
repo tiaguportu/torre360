@@ -18,12 +18,6 @@ class AvaliacaoHabilidadesTable
                     ->label('Turma')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('habilidade.nome')
-                    ->label('Habilidade')
-                    ->limit(50)
-                    ->tooltip(fn ($record) => $record->habilidade?->nome)
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('etapaAvaliativa.nome')
                     ->label('Etapa')
                     ->sortable(),
