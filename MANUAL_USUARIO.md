@@ -170,8 +170,8 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
 5. **Avaliações de Habilidades (Segregado):**
    - **Avaliações de Habilidades:** Vá em **Avaliações → Avaliações por Habilidades** para criar o cabeçalho de avaliação, onde se vincula apenas a **Turma**, a **Etapa Avaliativa** e o **Professor**.
    - **Lançar Notas (Lançamento em Lote):** Na lista de **Avaliações de Habilidades**, clique no botão **Lançar Notas** na linha da avaliação. Na tela que se abre:
-     - Selecione a **Habilidade** a ser avaliada no topo. A lista de alunos será carregada automaticamente.
-     - Defina o **Conceito** de cada aluno e adicione observações pedagógicas. Clique em "Salvar Notas" ao terminar.
+      - O sistema apresentará seções colapsadas para cada aluno matriculado na turma da avaliação. Clique na seção correspondente ao aluno para expandir.
+      - Dentro da seção do aluno, são exibidas todas as habilidades vinculadas à turma. Defina o **Conceito** para cada habilidade e, opcionalmente, insira uma **Observação Pedagógica**.
    - **Notas de Habilidades:** Para gerenciar ou cadastrar notas individuais, vá em **Avaliações → Notas de Habilidades**:
      - Selecione a **Avaliação de Habilidade**.
      - Selecione a **Habilidade**.
