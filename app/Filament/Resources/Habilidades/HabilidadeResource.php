@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Habilidades;
 use App\Filament\Resources\Habilidades\Pages\CreateHabilidade;
 use App\Filament\Resources\Habilidades\Pages\EditHabilidade;
 use App\Filament\Resources\Habilidades\Pages\ListHabilidades;
+use App\Filament\Resources\Habilidades\RelationManagers\TurmasRelationManager;
 use App\Filament\Resources\Habilidades\Schemas\HabilidadeForm;
 use App\Filament\Resources\Habilidades\Tables\HabilidadesTable;
 use App\Models\Habilidade;
@@ -50,7 +51,7 @@ class HabilidadeResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            //
+            TurmasRelationManager::class,
         ];
     }
 

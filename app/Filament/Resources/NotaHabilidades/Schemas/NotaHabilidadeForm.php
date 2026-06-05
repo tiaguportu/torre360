@@ -19,6 +19,7 @@ class NotaHabilidadeForm
         return $schema
             ->components([
                 Section::make('Informações da Nota de Habilidade')
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(3)
                             ->schema([

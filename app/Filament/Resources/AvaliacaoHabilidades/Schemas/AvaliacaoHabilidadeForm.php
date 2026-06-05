@@ -15,6 +15,7 @@ class AvaliacaoHabilidadeForm
         return $schema
             ->components([
                 Section::make('Identificação da Avaliação de Habilidade')
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(3)
                             ->schema([
