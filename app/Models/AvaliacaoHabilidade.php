@@ -17,7 +17,6 @@ class AvaliacaoHabilidade extends Model
 
     protected $fillable = [
         'turma_id',
-        'habilidade_id',
         'etapa_avaliativa_id',
         'professor_id',
     ];
@@ -25,11 +24,6 @@ class AvaliacaoHabilidade extends Model
     public function turma(): BelongsTo
     {
         return $this->belongsTo(Turma::class);
-    }
-
-    public function habilidade(): BelongsTo
-    {
-        return $this->belongsTo(Habilidade::class);
     }
 
     public function etapaAvaliativa(): BelongsTo

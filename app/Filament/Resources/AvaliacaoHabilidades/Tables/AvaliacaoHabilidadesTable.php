@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\AvaliacaoHabilidades\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+use App\Filament\Resources\AvaliacaoHabilidades\AvaliacaoHabilidadeResource;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -16,12 +18,6 @@ class AvaliacaoHabilidadesTable
             ->columns([
                 TextColumn::make('turma.nome')
                     ->label('Turma')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('habilidade.nome')
-                    ->label('Habilidade')
-                    ->limit(50)
-                    ->tooltip(fn ($record) => $record->habilidade?->nome)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('etapaAvaliativa.nome')
@@ -40,8 +36,14 @@ class AvaliacaoHabilidadesTable
             ->filters([
                 //
             ])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
+                Action::make('lancarNotas')
+                    ->label('Lançar Notas')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('success')
+                    ->url(fn ($record): string => AvaliacaoHabilidadeResource::getUrl('lancar-notas', ['record' => $record->id]))
+                    ->visible(fn ($record): bool => auth()->user()->can('Update:AvaliacaoHabilidade', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

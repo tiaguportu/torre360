@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AvaliacaoHabilidades;
 
 use App\Filament\Resources\AvaliacaoHabilidades\Pages\CreateAvaliacaoHabilidade;
 use App\Filament\Resources\AvaliacaoHabilidades\Pages\EditAvaliacaoHabilidade;
+use App\Filament\Resources\AvaliacaoHabilidades\Pages\LancarNotaHabilidade;
 use App\Filament\Resources\AvaliacaoHabilidades\Pages\ListAvaliacaoHabilidades;
 use App\Filament\Resources\AvaliacaoHabilidades\Schemas\AvaliacaoHabilidadeForm;
 use App\Filament\Resources\AvaliacaoHabilidades\Tables\AvaliacaoHabilidadesTable;
@@ -58,6 +59,7 @@ class AvaliacaoHabilidadeResource extends Resource implements HasShieldPermissio
             'index' => ListAvaliacaoHabilidades::route('/'),
             'create' => CreateAvaliacaoHabilidade::route('/create'),
             'edit' => EditAvaliacaoHabilidade::route('/{record}/edit'),
+            'lancar-notas' => LancarNotaHabilidade::route('/{record}/lancar-notas'),
         ];
     }
 }

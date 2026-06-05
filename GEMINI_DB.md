@@ -151,12 +151,12 @@ Estrutura de ensino e turmas.
 - **Campos:** `turma_id`, `habilidade_id`.
 
 ### `avaliacao_habilidades`
-- **Representa:** Registro do cabeçalho da avaliação de uma habilidade em uma determinada turma e etapa.
-- **Campos Principais:** `turma_id`, `habilidade_id`, `etapa_avaliativa_id`, `professor_id` (nullable).
+- **Representa:** Registro do cabeçalho da avaliação de habilidades em uma determinada turma e etapa.
+- **Campos Principais:** `turma_id`, `etapa_avaliativa_id`, `professor_id` (nullable).
 
 ### `nota_habilidades`
 - **Representa:** Registro do desempenho de um aluno em uma habilidade específica, associado a uma avaliação de habilidade.
-- **Campos Principais:** `avaliacao_habilidade_id`, `matricula_id`, `conceito`, `observacao` (nullable).
+- **Campos Principais:** `avaliacao_habilidade_id`, `matricula_id`, `habilidade_id`, `conceito`, `observacao` (nullable).
 - **Conceito (Enum):** `realiza_bem`, `em_desenvolvimento`, `nao_realiza`, `nao_observado`.
 
 ### `cronograma_aula` e `frequencia_escolar`

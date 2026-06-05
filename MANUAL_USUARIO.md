@@ -168,16 +168,15 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
    - Crie uma nova avaliação selecionando a **Turma**, a **Disciplina** (filtrada pelas que você anexou à turma) e a **Etapa**.
    - Utilize o repetidor de notas para lançar os valores numéricos de todos os alunos de uma vez.
 5. **Avaliações de Habilidades (Segregado):**
-   - **Avaliações de Habilidades:** Vá em **Avaliações → Avaliações por Habilidades** para criar o cabeçalho de avaliação, onde se vincula a **Turma**, a **Habilidade**, a **Etapa Avaliativa** e o **Professor**.
-   - **Notas de Habilidades:** Vá em **Avaliações → Notas de Habilidades** para realizar o lançamento dos conceitos dos alunos na avaliação criada:
+   - **Avaliações de Habilidades:** Vá em **Avaliações → Avaliações por Habilidades** para criar o cabeçalho de avaliação, onde se vincula apenas a **Turma**, a **Etapa Avaliativa** e o **Professor**.
+   - **Lançar Notas (Lançamento em Lote):** Na lista de **Avaliações de Habilidades**, clique no botão **Lançar Notas** na linha da avaliação. Na tela que se abre:
+     - Selecione a **Habilidade** a ser avaliada no topo. A lista de alunos será carregada automaticamente.
+     - Defina o **Conceito** de cada aluno e adicione observações pedagógicas. Clique em "Salvar Notas" ao terminar.
+   - **Notas de Habilidades:** Para gerenciar ou cadastrar notas individuais, vá em **Avaliações → Notas de Habilidades**:
      - Selecione a **Avaliação de Habilidade**.
-     - Selecione o **Aluno** (filtrado automaticamente apenas para a turma vinculada à avaliação selecionada).
-     - Defina o **Conceito** pedagógico baseado na escala:
-       - **Realiza bem** (Verde)
-       - **Em desenvolvimento** (Amarelo)
-       - **Não realiza** (Vermelho)
-       - **Não observado** (Cinza)
-     - Adicione observações pedagógicas detalhadas se necessário.
+     - Selecione a **Habilidade**.
+     - Selecione o **Aluno** (filtrado para a turma da avaliação).
+     - Defina o **Conceito** e as observações pedagógicas.
 
 ### 5.6 Configuração de Disciplinas e Ordenação no Boletim
 1. Vá em **Acadêmico → Disciplinas**.
