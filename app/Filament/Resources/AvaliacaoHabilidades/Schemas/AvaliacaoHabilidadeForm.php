@@ -38,6 +38,14 @@ class AvaliacaoHabilidadeForm
 
                                         return Turma::find($turmaId)?->habilidades?->pluck('nome', 'id') ?? [];
                                     })
+                                    ->helperText(function (callable $get) {
+                                        $turmaId = $get('turma_id');
+                                        if ($turmaId && Turma::find($turmaId)?->habilidades()->count() === 0) {
+                                            return 'Atenção: Esta turma não possui habilidades vinculadas. Vincule-as no cadastro da turma.';
+                                        }
+
+                                        return null;
+                                    })
                                     ->searchable()
                                     ->preload(),
                             ]),
