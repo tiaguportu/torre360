@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\QuestionarioResposta;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class QuestionarioRespostaPolicy
 {
     use HandlesAuthorization;
-    
+
     public function before(AuthUser $authUser, string $ability): ?bool
     {
-        /** @var \App\Models\User $authUser */
+        /** @var User $authUser */
         if ($authUser->hasRole('super_admin')) {
             return true;
         }
@@ -29,7 +30,7 @@ class QuestionarioRespostaPolicy
 
     public function view(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
-        /** @var \App\Models\User $authUser */
+        /** @var User $authUser */
         if ($questionarioResposta->questionario->ehDono($authUser) || $questionarioResposta->questionario->ehObservador($authUser) || $questionarioResposta->user_id === $authUser->id) {
             return true;
         }
@@ -44,7 +45,7 @@ class QuestionarioRespostaPolicy
 
     public function update(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
-        /** @var \App\Models\User $authUser */
+        /** @var User $authUser */
         if ($questionarioResposta->questionario->ehDono($authUser)) {
             return true;
         }
@@ -54,7 +55,7 @@ class QuestionarioRespostaPolicy
 
     public function delete(AuthUser $authUser, QuestionarioResposta $questionarioResposta): bool
     {
-        /** @var \App\Models\User $authUser */
+        /** @var User $authUser */
         if ($questionarioResposta->questionario->ehDono($authUser)) {
             return true;
         }
@@ -96,5 +97,4 @@ class QuestionarioRespostaPolicy
     {
         return $authUser->can('Reorder:QuestionarioResposta');
     }
-
 }

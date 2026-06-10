@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class QuestionariosPendentes extends Widget
 {
-
     protected static ?int $sort = -5;
 
     protected string $view = 'filament.widgets.questionarios-pendentes';
@@ -58,4 +57,3 @@ class QuestionariosPendentes extends Widget
         return (new static)->getQuestionarios()->isNotEmpty();
     }
 }
- 

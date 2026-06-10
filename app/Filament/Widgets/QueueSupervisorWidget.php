@@ -67,7 +67,7 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
             ->action(function () {
                 try {
                     set_time_limit(300); // Aumenta timeout para 5 min se permitido
-    
+
                     // Executa o worker em segundo plano (Linux) redirecionando a saída para o limbo
                     // para não bloquear a requisição do usuário.
                     shell_exec('php artisan queue:work --stop-when-empty > /dev/null 2>&1 &');

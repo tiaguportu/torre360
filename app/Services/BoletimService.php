@@ -97,7 +97,7 @@ class BoletimService
                 ->flatten()
                 ->unique()
                 ->sort()
-                ->map(fn ($d) => \Carbon\Carbon::parse($d)->format('d/m'))
+                ->map(fn ($d) => Carbon::parse($d)->format('d/m'))
                 ->values()
                 ->toArray();
 
