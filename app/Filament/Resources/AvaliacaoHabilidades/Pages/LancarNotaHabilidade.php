@@ -16,6 +16,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class LancarNotaHabilidade extends EditRecord
 {
@@ -118,7 +120,18 @@ class LancarNotaHabilidade extends EditRecord
                             ]);
                     }
 
-                    $components[] = Section::make($matricula->pessoa?->nome ?? 'Sem Nome')
+                    $nomeAluno = $matricula->pessoa?->nome ?? 'Sem Nome';
+                    $foto = $matricula->pessoa?->foto;
+                    $fotoUrl = $foto ? Storage::url($foto) : 'https://ui-avatars.com/api/?name='.urlencode($nomeAluno).'&color=7F9CF5&background=EBF4FF';
+
+                    $heading = new HtmlString(
+                        '<div class="flex items-center gap-3">'.
+                        '<img src="'.$fotoUrl.'" class="w-8 h-8 rounded-full object-cover shadow-sm ring-1 ring-gray-900/10 dark:ring-gray-100/10" alt="'.e($nomeAluno).'">'.
+                        '<span class="font-medium">'.e($nomeAluno).'</span>'.
+                        '</div>'
+                    );
+
+                    $components[] = Section::make($heading)
                         ->schema($habilidadeFields)
                         ->collapsed();
                 }
