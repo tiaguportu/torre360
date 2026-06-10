@@ -25,12 +25,8 @@ class QuestionarioPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        /** @var User $authUser */
-        if ($authUser->can('ViewAny:Questionario')) {
-            return true;
-        }
-
-        return Questionario::query()
+        $hasPermission = $authUser->can('ViewAny:Questionario');
+        $hasElegible = Questionario::query()
             ->where('is_ativo', true)
             ->where(function ($q) {
                 $q->whereNull('inicio_aplicacao')->orWhere('inicio_aplicacao', '<=', now());
@@ -41,6 +37,8 @@ class QuestionarioPolicy
             ->get()
             ->filter(fn ($q) => $q->podeSerRespondidoPor($authUser))
             ->isNotEmpty();
+
+        return $hasPermission || $hasElegible;
     }
 
     public function view(AuthUser $authUser, Questionario $questionario): bool

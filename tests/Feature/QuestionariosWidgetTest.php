@@ -108,7 +108,9 @@ class QuestionariosWidgetTest extends TestCase
     /** @test */
     public function usuario_elegivel_deve_conseguir_acessar_a_rota_de_responder()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'activated_at' => now(),
+        ]);
         $this->actingAs($user);
 
         $questionario = Questionario::create([
