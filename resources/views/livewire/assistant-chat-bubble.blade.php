@@ -143,7 +143,7 @@ class="fixed bottom-6 right-6 z-[9999] font-sans"
         <!-- Formulário de Input (Fixo embaixo) -->
         <div class="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0">
             <form 
-                wire:submit.prevent="sendMessage(window.location.href)" 
+                wire:submit.prevent="sendMessage" 
                 class="flex gap-2 items-center"
             >
                 <input 

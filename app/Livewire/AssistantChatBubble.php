@@ -70,7 +70,7 @@ class AssistantChatBubble extends Component
     /**
      * Envia a mensagem do usuário para o serviço de IA e adiciona a resposta no histórico.
      */
-    public function sendMessage(string $url): void
+    public function sendMessage(?string $url = null): void
     {
         $this->userInput = trim($this->userInput);
 
@@ -80,7 +80,7 @@ class AssistantChatBubble extends Component
 
         $messageText = $this->userInput;
         $this->userInput = '';
-        $this->currentUrl = $url;
+        $this->currentUrl = $url ?? request()->header('referer') ?? url('/');
 
         // Adiciona a mensagem do usuário ao histórico local e da sessão
         $this->messages[] = [

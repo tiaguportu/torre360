@@ -13,14 +13,19 @@ class CustomLogin extends BaseLogin
 {
     public function form(Schema $schema): Schema
     {
-        return $schema->components([
+        $components = [
             $this->getEmailFormComponent(),
             $this->getPasswordFormComponent(),
             $this->getRememberFormComponent(),
-            Captcha::make('captcha')
+        ];
+
+        if (! app()->environment('local', 'testing')) {
+            $components[] = Captcha::make('captcha')
                 ->label('reCAPTCHA')
-                ->hiddenLabel(),
-        ]);
+                ->hiddenLabel();
+        }
+
+        return $schema->components($components);
     }
 
     /**
