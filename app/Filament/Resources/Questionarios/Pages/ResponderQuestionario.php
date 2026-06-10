@@ -34,7 +34,7 @@ class ResponderQuestionario extends Page
     {
         $user = Auth::user();
         if (! $user) {
-            return false;
+            return true;
         }
 
         $record = $parameters['record'] ?? null;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Filament\Widgets\QuestionariosPendentes;
 use App\Models\Questionario;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -31,7 +30,17 @@ class QuestionarioPolicy
             return true;
         }
 
-        return (new QuestionariosPendentes)->getQuestionarios()->isNotEmpty();
+        return Questionario::query()
+            ->where('is_ativo', true)
+            ->where(function ($q) {
+                $q->whereNull('inicio_aplicacao')->orWhere('inicio_aplicacao', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('fim_aplicacao')->orWhere('fim_aplicacao', '>=', now());
+            })
+            ->get()
+            ->filter(fn ($q) => $q->podeSerRespondidoPor($authUser))
+            ->isNotEmpty();
     }
 
     public function view(AuthUser $authUser, Questionario $questionario): bool
