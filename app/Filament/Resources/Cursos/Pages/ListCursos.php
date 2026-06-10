@@ -36,7 +36,7 @@ class ListCursos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Curso');
         $canUpdate = $user->can('Update:Curso');
 
@@ -44,7 +44,7 @@ class ListCursos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Listagem:</strong> Visualize todos os cursos, seus nomes internos e externos.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Curso:</strong> Cadastre um novo curso no sistema.</li>';
         }

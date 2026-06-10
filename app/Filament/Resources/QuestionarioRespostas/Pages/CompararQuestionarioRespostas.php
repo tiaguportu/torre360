@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\QuestionarioRespostas\Pages;
 
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
+use App\Models\QuestionarioResposta;
 use Filament\Resources\Pages\Page;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Collection;
 
 class CompararQuestionarioRespostas extends Page
@@ -14,19 +16,19 @@ class CompararQuestionarioRespostas extends Page
 
     public Collection $records;
 
-    public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null
+    public function getMaxContentWidth(): Width|string|null
     {
-        return \Filament\Support\Enums\Width::Full;
+        return Width::Full;
     }
 
     public function mount()
     {
         $ids = request()->query('ids');
-        if (empty($ids) || !is_array($ids)) {
+        if (empty($ids) || ! is_array($ids)) {
             abort(404, 'Nenhum questionário selecionado.');
         }
 
-        $this->records = \App\Models\QuestionarioResposta::whereIn('id', $ids)->get();
+        $this->records = QuestionarioResposta::whereIn('id', $ids)->get();
 
         if ($this->records->isEmpty()) {
             abort(404, 'Nenhum questionário selecionado.');

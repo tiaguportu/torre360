@@ -44,7 +44,7 @@ class ListPreceptorias extends ListRecords
     {
         $user = auth()->user();
         $activeRole = session('active_role');
-        
+
         $canCreate = $user->can('Create:Preceptoria');
         $canAgendar = $user->can('Agendar:Preceptoria');
 
@@ -52,7 +52,7 @@ class ListPreceptorias extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Visualizar Atendimentos:</strong> Veja a lista de preceptorias, datas, professores e alunos vinculados.</li>';
-        
+
         if ($canAgendar) {
             $html .= '<li><strong>Agendar Preceptoria:</strong> Clique no botão azul para abrir a tela de agendamento simplificado.</li>';
         }

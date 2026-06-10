@@ -36,7 +36,7 @@ class ListSeries extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Serie');
         $canUpdate = $user->can('Update:Serie');
 
@@ -44,7 +44,7 @@ class ListSeries extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Organização:</strong> Visualize as séries vinculadas a cada curso (ex: 1º Ano, 2º Ano).</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Nova Série:</strong> Adicione uma nova etapa/série a um curso existente.</li>';
         }

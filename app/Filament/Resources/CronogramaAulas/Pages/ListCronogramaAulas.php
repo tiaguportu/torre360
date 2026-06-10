@@ -47,7 +47,7 @@ class ListCronogramaAulas extends ListRecords
     {
         $user = auth()->user();
         $activeRole = session('active_role');
-        
+
         $canCreate = $user->can('Create:CronogramaAula');
         $canConflitos = $user->can('VerificaConflitos:CronogramaAula');
 
@@ -55,7 +55,7 @@ class ListCronogramaAulas extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Visualizar Grade:</strong> Acompanhe o horário de cada disciplina, professor e turma.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Horário:</strong> Registre um novo horário de aula definindo o dia da semana, turno e período.</li>';
         }

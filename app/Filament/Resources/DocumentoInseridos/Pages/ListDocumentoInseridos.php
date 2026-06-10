@@ -36,7 +36,7 @@ class ListDocumentoInseridos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:DocumentoInserido');
         $canUpdate = $user->can('Update:DocumentoInserido');
 
@@ -44,7 +44,7 @@ class ListDocumentoInseridos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Auditoria:</strong> Visualize o arquivo enviado e verifique se as informações estão corretas.</li>';
-        
+
         if ($canUpdate) {
             $html .= '<li><strong>Validar/Rejeitar:</strong> Altere o status do documento. Se rejeitar, insira uma observação para que o responsável saiba o motivo.</li>';
         }

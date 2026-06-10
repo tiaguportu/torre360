@@ -36,7 +36,7 @@ class ListTipoDocumentos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:TipoDocumento');
         $canUpdate = $user->can('Update:TipoDocumento');
 
@@ -44,7 +44,7 @@ class ListTipoDocumentos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Definição de Regras:</strong> Configure se um documento é obrigatório, se gera pendência de matrícula e para quais cursos/turmas ele se aplica.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Tipo:</strong> Crie uma nova categoria de documento (ex: RG, CPF, Histórico Escolar).</li>';
         }

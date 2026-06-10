@@ -36,7 +36,7 @@ class ListTurmas extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Turma');
         $canUpdate = $user->can('Update:Turma');
 
@@ -44,7 +44,7 @@ class ListTurmas extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Listagem:</strong> Visualize todas as turmas ativas e seus respectivos cursos/séries.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Nova Turma:</strong> Crie uma nova turma definindo o nome, turno e capacidade.</li>';
         }

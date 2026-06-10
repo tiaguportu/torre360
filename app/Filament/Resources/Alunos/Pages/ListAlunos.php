@@ -36,7 +36,7 @@ class ListAlunos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Aluno');
         $canUpdate = $user->can('Update:Aluno');
         $canView = $user->can('View:Aluno');
@@ -46,7 +46,7 @@ class ListAlunos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Visualizar:</strong> Veja a lista de todos os alunos cadastrados e utilize a busca para encontrar nomes específicos.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Aluno:</strong> Cadastre um novo aluno no sistema.</li>';
         }

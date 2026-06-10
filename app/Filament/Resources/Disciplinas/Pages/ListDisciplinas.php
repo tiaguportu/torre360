@@ -36,7 +36,7 @@ class ListDisciplinas extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Disciplina');
         $canUpdate = $user->can('Update:Disciplina');
 
@@ -44,7 +44,7 @@ class ListDisciplinas extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Catálogo:</strong> Visualize todas as disciplinas cadastradas e suas áreas de conhecimento.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Nova Disciplina:</strong> Cadastre uma nova disciplina (ex: Matemática, Português).</li>';
         }

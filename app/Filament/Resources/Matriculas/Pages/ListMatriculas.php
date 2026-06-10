@@ -8,8 +8,8 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\ViewField;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
 
 class ListMatriculas extends ListRecords

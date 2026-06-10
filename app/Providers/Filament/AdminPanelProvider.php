@@ -25,7 +25,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -94,19 +93,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render("
-                    @if(auth()->check() && auth()->user()->can('use_assistant'))
-                        @livewire('assistant-chat-bubble')
-                    @endif
-                    @vite('resources/js/app.js')
-                    <script>
-                        if ('serviceWorker' in navigator) {
-                            window.addEventListener('load', () => {
-                                navigator.serviceWorker.register('/sw.js');
-                            });
-                        }
-                    </script>
-                "),
+                fn (): string => view('filament.hooks.assistant-chat')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,

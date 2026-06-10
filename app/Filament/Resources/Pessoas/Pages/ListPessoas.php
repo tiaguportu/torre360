@@ -42,7 +42,7 @@ class ListPessoas extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Pessoa');
         $canUpdate = $user->can('Update:Pessoa');
 
@@ -50,13 +50,13 @@ class ListPessoas extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Busca Centralizada:</strong> Localize qualquer pessoa cadastrada por nome, CPF ou e-mail.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Cadastro:</strong> Adicione uma nova pessoa ao banco de dados.</li>';
         }
 
         $html .= '<li><strong>Gestão de Perfis:</strong> Dentro da edição, você pode atribuir papéis (ex: tornar uma pessoa um Professor ou Responsável).</li>';
-        
+
         if ($canUpdate) {
             $html .= '<li><strong>Editar:</strong> Altere endereços, contatos e documentos pessoais.</li>';
         }

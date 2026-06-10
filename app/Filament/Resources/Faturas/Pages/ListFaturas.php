@@ -138,7 +138,7 @@ class ListFaturas extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Fatura');
         $canUpdate = $user->can('Update:Fatura');
 
@@ -146,7 +146,7 @@ class ListFaturas extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Criação em Lote:</strong> Ferramenta para gerar rapidamente todas as parcelas de um contrato de uma só vez.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Nova Fatura:</strong> Crie uma cobrança avulsa ou manual vinculada a um contrato.</li>';
         }

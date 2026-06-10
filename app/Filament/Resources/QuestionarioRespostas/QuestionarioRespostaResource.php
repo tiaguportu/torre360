@@ -16,6 +16,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class QuestionarioRespostaResource extends Resource implements HasShieldPermissions
@@ -75,12 +76,12 @@ class QuestionarioRespostaResource extends Resource implements HasShieldPermissi
         ];
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
         $user = auth()->user();
-        
+
         if ($user && $user->hasRole('super_admin')) {
             return $query;
         }

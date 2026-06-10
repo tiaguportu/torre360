@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas\Tables;
 
+use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use App\Models\QuestionarioResposta;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -60,7 +61,7 @@ class QuestionarioRespostasTable
                     BulkAction::make('comparar_respostas')
                         ->label('Comparar Respostas')
                         ->icon('heroicon-o-arrows-right-left')
-                        ->action(fn (Collection $records) => redirect(\App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource::getUrl('comparar', ['ids' => $records->pluck('id')->toArray()])))
+                        ->action(fn (Collection $records) => redirect(QuestionarioRespostaResource::getUrl('comparar', ['ids' => $records->pluck('id')->toArray()])))
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),

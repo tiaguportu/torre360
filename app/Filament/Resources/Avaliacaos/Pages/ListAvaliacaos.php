@@ -36,7 +36,7 @@ class ListAvaliacaos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Avaliacao');
         $canUpdate = $user->can('Update:Avaliacao');
         $canLancarNotas = $user->can('LancarNotas:Avaliacao');
@@ -45,7 +45,7 @@ class ListAvaliacaos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Calendário de Provas:</strong> Visualize todas as avaliações agendadas, seus pesos e datas.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Nova Avaliação:</strong> Cadastre uma nova atividade avaliativa definindo a etapa (bimestre/trimestre), o tipo e a pontuação máxima.</li>';
         }

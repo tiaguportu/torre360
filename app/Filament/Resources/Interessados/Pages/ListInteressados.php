@@ -41,7 +41,7 @@ class ListInteressados extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Interessado');
         $canUpdate = $user->can('Update:Interessado');
 
@@ -49,7 +49,7 @@ class ListInteressados extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Prospecção:</strong> Visualize a lista de pessoas que entraram em contato demonstrando interesse.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Interessado:</strong> Registre um novo contato vindo do site ou presencial.</li>';
         }

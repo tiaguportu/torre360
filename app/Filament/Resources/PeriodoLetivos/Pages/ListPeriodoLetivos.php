@@ -36,7 +36,7 @@ class ListPeriodoLetivos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:PeriodoLetivo');
         $canUpdate = $user->can('Update:PeriodoLetivo');
 
@@ -44,7 +44,7 @@ class ListPeriodoLetivos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Calendário:</strong> Visualize as datas de início e fim de cada período letivo.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Novo Período:</strong> Crie um novo ano letivo definindo as datas vigentes.</li>';
         }

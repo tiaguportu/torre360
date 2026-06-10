@@ -36,7 +36,7 @@ class ListContratos extends ListRecords
     private function getHelpContent(): string
     {
         $user = auth()->user();
-        
+
         $canCreate = $user->can('Create:Contrato');
         $canUpdate = $user->can('Update:Contrato');
 
@@ -44,7 +44,7 @@ class ListContratos extends ListRecords
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Visualizar:</strong> Acompanhe o status de assinatura e valores totais dos contratos.</li>';
-        
+
         if ($canCreate) {
             $html .= '<li><strong>Gerar Contrato:</strong> Normalmente os contratos são gerados a partir da matrícula, mas podem ser criados manualmente aqui se necessário.</li>';
         }

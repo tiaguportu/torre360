@@ -16,6 +16,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class QuestionarioResource extends Resource implements HasShieldPermissions
@@ -82,12 +83,12 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
         ];
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
         $user = auth()->user();
-        
+
         if ($user && $user->hasRole('super_admin')) {
             return $query;
         }
@@ -106,7 +107,7 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
                 });
 
                 // Ou pode responder (baseado no escopo visivelPara)
-                $q->orWhere(function($sq) use ($user) {
+                $q->orWhere(function ($sq) use ($user) {
                     // Nós recriamos o visivelPara usando a variável $user
                     // Não dá pra só chamar ->visivelPara($user) porque o scope já usa
                     // a mesma query root ($sq). Mas podemos passar para o scope.
