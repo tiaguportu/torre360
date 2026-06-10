@@ -129,4 +129,56 @@ class QuestionariosWidgetTest extends TestCase
         $response = $this->get("/admin/questionarios/{$questionario->id}/responder");
         $response->assertStatus(200);
     }
+
+    /** @test */
+    public function usuario_elegivel_deve_receber_403_ao_tentar_acessar_a_listagem_sem_permissao_shield()
+    {
+        $user = User::factory()->create([
+            'activated_at' => now(),
+        ]);
+        $this->actingAs($user);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário Alvo',
+            'descricao' => 'Teste com alvo',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        QuestionarioAlvo::create([
+            'questionario_id' => $questionario->id,
+            'alvo_type' => 'User',
+            'alvo_id' => $user->id,
+        ]);
+
+        // Usuário não tem permissão ViewAny:Questionario do Shield, deve dar 403 no index do resource
+        $response = $this->get('/admin/questionarios');
+        $response->assertStatus(403);
+    }
+
+    /** @test */
+    public function usuario_elegivel_deve_receber_403_ao_tentar_acessar_a_visualizacao_sem_permissao_shield()
+    {
+        $user = User::factory()->create([
+            'activated_at' => now(),
+        ]);
+        $this->actingAs($user);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário Alvo',
+            'descricao' => 'Teste com alvo',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        QuestionarioAlvo::create([
+            'questionario_id' => $questionario->id,
+            'alvo_type' => 'User',
+            'alvo_id' => $user->id,
+        ]);
+
+        // Usuário não tem permissão View:Questionario do Shield, deve dar 403 na página de detalhes administrativa do resource
+        $response = $this->get("/admin/questionarios/{$questionario->id}");
+        $response->assertStatus(403);
+    }
 }
