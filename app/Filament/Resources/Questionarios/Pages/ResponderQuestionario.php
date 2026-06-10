@@ -30,6 +30,27 @@ class ResponderQuestionario extends Page
 
     protected string $view = 'filament.resources.questionarios.pages.responder-questionario';
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        $record = $parameters['record'] ?? null;
+        if ($record) {
+            if (! $record instanceof Questionario) {
+                $record = Questionario::find($record);
+            }
+
+            if ($record) {
+                return $record->podeSerRespondidoPor($user);
+            }
+        }
+
+        return true;
+    }
+
     public ?Questionario $record = null;
 
     public $data = [];

@@ -1,0 +1,108 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Filament\Resources\Questionarios\Pages\ResponderQuestionario;
+use App\Filament\Widgets\QuestionariosPendentes;
+use App\Models\Questionario;
+use App\Models\QuestionarioAlvo;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Tests\TestCase;
+
+class QuestionariosWidgetTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function widget_nao_deve_exibir_se_nao_houver_questionarios_pendentes()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Sem questionários na base, canView deve retornar false
+        $this->assertFalse(QuestionariosPendentes::canView());
+    }
+
+    /** @test */
+    public function widget_deve_exibir_se_houver_questionario_elegivel()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Criar questionário ativo sem restrição de alvos
+        Questionario::create([
+            'titulo' => 'Questionário Geral',
+            'descricao' => 'Teste geral',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        $this->assertTrue(QuestionariosPendentes::canView());
+    }
+
+    /** @test */
+    public function widget_nao_deve_exibir_se_questionario_estiver_inativo()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Criar questionário inativo
+        Questionario::create([
+            'titulo' => 'Questionário Geral',
+            'descricao' => 'Teste geral',
+            'is_ativo' => false,
+            'is_anonimo' => false,
+        ]);
+
+        $this->assertFalse(QuestionariosPendentes::canView());
+    }
+
+    /** @test */
+    public function can_access_deve_permitir_acesso_se_usuario_for_do_publico_alvo()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário Alvo',
+            'descricao' => 'Teste com alvo',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        // Vincular ao usuário
+        QuestionarioAlvo::create([
+            'questionario_id' => $questionario->id,
+            'alvo_type' => 'User',
+            'alvo_id' => $user->id,
+        ]);
+
+        $this->assertTrue(ResponderQuestionario::canAccess(['record' => $questionario]));
+    }
+
+    /** @test */
+    public function can_access_deve_negar_acesso_se_usuario_nao_for_do_publico_alvo()
+    {
+        $user = User::factory()->create();
+        $outroUser = User::factory()->create();
+        $this->actingAs($user);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário Alvo Outro',
+            'descricao' => 'Teste com outro alvo',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        // Vincular ao outro usuário
+        QuestionarioAlvo::create([
+            'questionario_id' => $questionario->id,
+            'alvo_type' => 'User',
+            'alvo_id' => $outroUser->id,
+        ]);
+
+        $this->assertFalse(ResponderQuestionario::canAccess(['record' => $questionario]));
+    }
+}

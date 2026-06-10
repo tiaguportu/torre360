@@ -909,4 +909,26 @@ Se você prefere não instalar um aplicativo da loja ou utiliza iOS (iPhone), vo
 
 ---
 
+## 🤖 21. Assistente de IA (Chat Flutuante)
+
+O Torre360 conta com um **Assistente de IA integrado**, projetado para responder a dúvidas e guiar os usuários de forma interativa através de um chat flutuante disponível no canto inferior direito de todas as telas do painel.
+
+### 21.1 Como Acessar
+1. O botão flutuante de chat (ícone de balão de fala) aparecerá no canto inferior direito se o seu usuário possuir a permissão necessária.
+2. Clique no botão para abrir o painel de chat. Para minimizá-lo, clique no botão de fechar (X) ou no botão flutuante novamente.
+
+### 21.2 Principais Recursos e Inteligência
+- **Base de Conhecimento Local:** A IA responde às suas perguntas com base exclusiva nos documentos oficiais do sistema, incluindo o próprio **Manual do Usuário** e a **Estrutura de Banco de Dados** (facilitando suporte operacional e técnico).
+- **Contexto da Página Atual:** O assistente identifica a página exata em que você está navegando. Se você estiver na tela de Lançamento de Notas e perguntar *"o que devo fazer aqui?"*, ele responderá de forma direcionada àquele processo.
+- **Navegação SPA Inteligente:** Em suas respostas, o assistente pode sugerir atalhos (ex: *"Acesse a tela de [Matrículas](/admin/matriculas) para conferir os dados"*). Ao clicar nesses links, a navegação ocorre de forma instantânea dentro do painel, sem recarregar o navegador.
+- **Persistência da Conversa:** Como o histórico é gerenciado na sessão do navegador, você pode clicar nos links sugeridos, mudar de página ou até mesmo atualizar a tela, e a sua conversa com o assistente continuará exatamente de onde parou.
+- **Limpeza de Histórico:** Se desejar iniciar uma nova conversa do zero, basta clicar no ícone de **Lixeira** localizado no cabeçalho do chat.
+
+### 21.3 Controle de Acesso (Segurança)
+O acesso ao assistente é gerenciado pelo **Filament Shield**:
+- O administrador do sistema deve conceder a permissão customizada `use_assistant` para os papéis (roles) que necessitam utilizar a funcionalidade.
+- Sem essa permissão configurada, o botão do chat não será exibido ou carregado no painel do usuário.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AvaliacaoHabilidades\Pages;
 
 use App\Enums\ConceitoHabilidade;
+use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\AvaliacaoHabilidades\AvaliacaoHabilidadeResource;
 use App\Models\NotaHabilidade;
 use Filament\Actions\Action;
@@ -77,6 +78,7 @@ class LancarNotaHabilidade extends EditRecord
         if ($turma) {
             $matriculas = $turma->matriculas()
                 ->join('pessoa', 'matricula.pessoa_id', '=', 'pessoa.id')
+                ->where('matricula.situacao', '!=', SituacaoMatricula::CANCELADA)
                 ->select('matricula.*', 'pessoa.nome as aluno_nome')
                 ->orderBy('pessoa.nome')
                 ->with(['pessoa'])

@@ -95,6 +95,9 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): string => Blade::render("
+                    @if(auth()->check() && auth()->user()->can('use_assistant'))
+                        @livewire('assistant-chat-bubble')
+                    @endif
                     @vite('resources/js/app.js')
                     <script>
                         if ('serviceWorker' in navigator) {

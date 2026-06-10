@@ -4,13 +4,11 @@ namespace App\Filament\Widgets;
 
 use App\Models\Questionario;
 use App\Models\QuestionarioResposta;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
 class QuestionariosPendentes extends Widget
 {
-    use HasWidgetShield;
 
     protected static ?int $sort = -5;
 
@@ -51,11 +49,6 @@ class QuestionariosPendentes extends Widget
 
     public static function canView(): bool
     {
-        // 1. Verificar permissão do Shield (widget_QuestionariosPendentes)
-        if (method_exists(static::class, 'hasWidgetShield') && ! static::hasWidgetShield()) {
-            return false;
-        }
-
         $user = Auth::user();
         if (! $user) {
             return false;
