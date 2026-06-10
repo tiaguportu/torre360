@@ -104,4 +104,27 @@ class QuestionariosWidgetTest extends TestCase
 
         $this->assertFalse(ResponderQuestionario::canAccess(['record' => $questionario]));
     }
+
+    /** @test */
+    public function usuario_elegivel_deve_conseguir_acessar_a_rota_de_responder()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário Alvo',
+            'descricao' => 'Teste com alvo',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+        ]);
+
+        QuestionarioAlvo::create([
+            'questionario_id' => $questionario->id,
+            'alvo_type' => 'User',
+            'alvo_id' => $user->id,
+        ]);
+
+        $response = $this->get("/admin/questionarios/{$questionario->id}/responder");
+        $response->assertStatus(200);
+    }
 }

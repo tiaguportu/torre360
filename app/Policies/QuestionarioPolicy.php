@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Filament\Widgets\QuestionariosPendentes;
 use App\Models\Questionario;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -25,7 +26,12 @@ class QuestionarioPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:Questionario');
+        /** @var User $authUser */
+        if ($authUser->can('ViewAny:Questionario')) {
+            return true;
+        }
+
+        return (new QuestionariosPendentes)->getQuestionarios()->isNotEmpty();
     }
 
     public function view(AuthUser $authUser, Questionario $questionario): bool
