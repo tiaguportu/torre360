@@ -125,8 +125,8 @@ class LancarNotaHabilidade extends EditRecord
                     $fotoUrl = $foto ? Storage::url($foto) : 'https://ui-avatars.com/api/?name='.urlencode($nomeAluno).'&color=7F9CF5&background=EBF4FF';
 
                     $heading = new HtmlString(
-                        '<div class="flex items-center gap-3">'.
-                        '<img src="'.$fotoUrl.'" class="w-8 h-8 rounded-full object-cover shadow-sm ring-1 ring-gray-900/10 dark:ring-gray-100/10" alt="'.e($nomeAluno).'">'.
+                        '<div class="flex items-center gap-3" style="display: flex; align-items: center; gap: 0.75rem;">'.
+                        '<img src="'.$fotoUrl.'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" class="shadow-sm ring-1 ring-gray-900/10 dark:ring-gray-100/10" alt="'.e($nomeAluno).'">'.
                         '<span class="font-medium">'.e($nomeAluno).'</span>'.
                         '</div>'
                     );
