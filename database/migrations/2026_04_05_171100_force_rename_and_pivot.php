@@ -47,9 +47,11 @@ return new class extends Migration
                 }
             }
 
-            Schema::table('tipo_documento', function (Blueprint $table) {
-                $table->dropColumn('curso_id');
-            });
+            if (config('database.default') !== 'sqlite') {
+                Schema::table('tipo_documento', function (Blueprint $table) {
+                    $table->dropColumn('curso_id');
+                });
+            }
         }
 
         // 4. Criar pivôs

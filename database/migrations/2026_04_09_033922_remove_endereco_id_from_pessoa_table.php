@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pessoa', function (Blueprint $table) {
-            $table->dropForeign('pessoas_endereco_id_foreign');
-            $table->dropColumn('endereco_id');
-        });
+        if (config('database.default') !== 'sqlite') {
+            Schema::table('pessoa', function (Blueprint $table) {
+                $table->dropForeign('pessoas_endereco_id_foreign');
+                $table->dropColumn('endereco_id');
+            });
+        }
     }
 
     /**
