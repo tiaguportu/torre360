@@ -6,11 +6,14 @@ namespace Tests\Feature;
 
 use App\Livewire\AssistantChatBubble;
 use App\Services\GeminiAgentService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class AssistantChatTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Testa se o componente do chat flutuante carrega corretamente na montagem inicial.
      */
@@ -109,4 +112,24 @@ class AssistantChatTest extends TestCase
             ->call('sendMessage', 'http://localhost/admin')
             ->assertCount('messages', 1); // Mantém apenas a de boas-vindas
     }
+
+    /**
+     * Testa se o componente do chat flutuante é renderizado no painel administrativo para usuários autorizados.
+     */
+    public function test_chat_bubble_is_rendered_in_admin_panel_for_authorized_users(): void
+    {
+        // Cria a role super_admin se não existir
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        
+        $user = \App\Models\User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'email_verified_at' => now(),
+        ]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)
+            ->get('/admin')
+            ->assertSeeLivewire(AssistantChatBubble::class);
+    }
 }
+
