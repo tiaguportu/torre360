@@ -92,16 +92,22 @@ class Questionario extends Model
         }
 
         // Se não houver alvos, qualquer usuário logado pode responder
-        if ($this->alvos()->count() === 0) {
+        $totalAlvos = $this->relationLoaded('alvos') ? $this->alvos->count() : $this->alvos()->count();
+        if ($totalAlvos === 0) {
             return $user !== null || $this->is_anonimo;
         }
 
         if (! $user) {
+            if ($this->relationLoaded('alvos')) {
+                return $this->is_anonimo && $this->alvos->where('alvo_type', 'User')->isEmpty();
+            }
+
             return $this->is_anonimo && $this->alvos()->where('alvo_type', 'User')->exists() === false;
         }
 
         // Verifica matches nos alvos
-        foreach ($this->alvos as $alvo) {
+        $alvos = $this->relationLoaded('alvos') ? $this->alvos : $this->alvos()->get();
+        foreach ($alvos as $alvo) {
             if ($alvo->alvo_type === 'User' && $alvo->alvo_id == $user->id) {
                 return true;
             }
@@ -109,8 +115,6 @@ class Questionario extends Model
             if ($alvo->alvo_type === 'Role' && $user->hasRole($alvo->alvo_id)) {
                 return true;
             }
-
-            // Implementação futura para Unidade, Curso, Serie, Turma se houver pessoa vinculada
         }
 
         return false;
@@ -155,6 +159,21 @@ class Questionario extends Model
             return true;
         }
 
+        if ($this->relationLoaded('responsaveis')) {
+            return $this->responsaveis
+                ->where('nivel', 'dono')
+                ->contains(function ($responsavel) use ($user) {
+                    if ($responsavel->responsavel_type === 'User') {
+                        return $responsavel->responsavel_id == $user->id;
+                    }
+                    if ($responsavel->responsavel_type === 'Role') {
+                        return $user->roles->pluck('id')->contains($responsavel->responsavel_id);
+                    }
+
+                    return false;
+                });
+        }
+
         return $this->donos()
             ->where(function ($query) use ($user) {
                 $query->where(function ($q) use ($user) {
@@ -172,6 +191,21 @@ class Questionario extends Model
         }
         if ($user->hasRole('super_admin')) {
             return true;
+        }
+
+        if ($this->relationLoaded('responsaveis')) {
+            return $this->responsaveis
+                ->where('nivel', 'observador')
+                ->contains(function ($responsavel) use ($user) {
+                    if ($responsavel->responsavel_type === 'User') {
+                        return $responsavel->responsavel_id == $user->id;
+                    }
+                    if ($responsavel->responsavel_type === 'Role') {
+                        return $user->roles->pluck('id')->contains($responsavel->responsavel_id);
+                    }
+
+                    return false;
+                });
         }
 
         return $this->observadores()

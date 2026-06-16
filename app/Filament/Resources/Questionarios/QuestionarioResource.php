@@ -85,7 +85,16 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with([
+            'alvos',
+            'responsaveis',
+        ]);
+
+        if (request()->routeIs('*.edit', '*.view', '*.responder')) {
+            $query->with([
+                'blocos.perguntas.opcoes',
+            ]);
+        }
 
         $user = auth()->user();
 
