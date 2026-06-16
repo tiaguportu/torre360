@@ -92,7 +92,7 @@ class QuestionarioResource extends Resource implements HasShieldPermissions
 
         if (request()->routeIs('*.edit', '*.view', '*.responder')) {
             $query->with([
-                'blocos.perguntas.opcoes',
+                'blocos.perguntas',
             ]);
         }
 
