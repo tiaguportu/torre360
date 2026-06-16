@@ -555,7 +555,7 @@ Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura,
    - **Discursiva:** Campo de texto livre.
    - **Objetiva:** Seleção de uma única opção.
    - **Múltipla Escolha:** Permite marcar várias opções.
-   - **Escala Likert:** Escala de satisfação de 1 a 5 (ou conforme configurado).
+   - **Escala Likert:** Escala de concordância de 1 a 5 (de 'Discordo totalmente' a 'Concordo totalmente').
    - **Lista de Usuários do Sistema:** Seleção dinâmica com os usuários cadastrados no sistema.
    - **Lista de Alunos de uma Turma:** Seleção dinâmica com alunos vinculados ao contexto de turmas do respondente (ou todos os alunos ativos do sistema).
    - **Lista de Pessoas Cadastradas:** Seleção dinâmica com todas as pessoas cadastradas no sistema.

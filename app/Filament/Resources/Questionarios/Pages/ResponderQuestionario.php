@@ -217,11 +217,11 @@ class ResponderQuestionario extends Page
     {
         if ($pergunta->tipo === 'likert') {
             return [
-                '1' => '1 - Muito Insatisfeito',
-                '2' => '2 - Insatisfeito',
-                '3' => '3 - Neutro',
-                '4' => '4 - Satisfeito',
-                '5' => '5 - Muito Satisfeito',
+                '5' => '5 – Concordo totalmente',
+                '4' => '4 – Concordo parcialmente',
+                '3' => '3 – Nem concordo nem discordo',
+                '2' => '2 – Discordo parcialmente',
+                '1' => '1 – Discordo totalmente',
             ];
         }
 
