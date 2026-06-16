@@ -545,10 +545,13 @@ O módulo de **Questionários** permite criar formulários personalizados para c
 ### 16.2 Estrutura de Perguntas
 Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura, Qualidade de Ensino, Gestão).
 1. Adicione um Bloco e, dentro dele, adicione as **Perguntas**.
-2. **Reorganização e Movimentação:**
-   - **Reordenar:** Arraste as perguntas para cima/baixo pelos ícones de ordenação para reorganizá-las dentro de um mesmo bloco.
+2. **Clonagem e Duplicação:**
+   - **Clonar Bloco:** Cada bloco de perguntas possui um botão de ação **"Clonar Bloco"** (ícone de duas folhas). Ao clicar nele, o bloco inteiro e todas as perguntas nele contidas serão duplicados no final do formulário.
+   - **Clonar Pergunta:** Cada pergunta possui um botão de ação **"Clonar Pergunta"** (ícone de duas folhas). Ao clicar nele, a pergunta (com seu enunciado, tipo, opções e configurações de condição de exibição) será duplicada dentro do mesmo bloco.
+3. **Reorganização e Movimentação:**
+   - **Reordenar:** Arraste os blocos ou perguntas para cima/baixo pelos ícones de ordenação para reorganizá-los.
    - **Mover de Bloco:** Cada pergunta possui uma ação rápida chamada **"Mover de Bloco"** (ícone de setas bidirecionais). Clique nela, escolha o bloco de destino e a pergunta será movida imediatamente para lá.
-3. **Tipos de Perguntas:**
+4. **Tipos de Perguntas:**
    - **Discursiva:** Campo de texto livre.
    - **Objetiva:** Seleção de uma única opção.
    - **Múltipla Escolha:** Permite marcar várias opções.

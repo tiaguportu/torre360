@@ -219,6 +219,8 @@ class QuestionarioForm
                                     ->schema([
                                         Repeater::make('blocos')
                                             ->relationship('blocos')
+                                            ->cloneable()
+                                            ->cloneActionLabel('Clonar Bloco')
                                             ->schema([
                                                 Grid::make(2)
                                                     ->schema([
@@ -240,6 +242,8 @@ class QuestionarioForm
                                                     ]),
                                                 Repeater::make('perguntas')
                                                     ->relationship('perguntas')
+                                                    ->cloneable()
+                                                    ->cloneActionLabel('Clonar Pergunta')
                                                     ->schema([
                                                         RichEditor::make('enunciado')
                                                             ->label('Pergunta')
