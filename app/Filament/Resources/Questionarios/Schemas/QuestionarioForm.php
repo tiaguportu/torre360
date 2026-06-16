@@ -312,26 +312,36 @@ class QuestionarioForm
                                                                             return [];
                                                                         }
 
+                                                                        // Cache estático por questionarioId na mesma request
+                                                                        static $perguntasCache = [];
+                                                                        if (! isset($perguntasCache[$questionarioId])) {
+                                                                            $perguntasCache[$questionarioId] = QuestionarioPergunta::query()
+                                                                                ->select('questionario_perguntas.*')
+                                                                                ->join('questionario_blocos', 'questionario_perguntas.questionario_bloco_id', '=', 'questionario_blocos.id')
+                                                                                ->where('questionario_blocos.questionario_id', $questionarioId)
+                                                                                ->orderBy('questionario_blocos.ordem')
+                                                                                ->orderBy('questionario_perguntas.ordem')
+                                                                                ->get()
+                                                                                ->toArray();
+                                                                        }
+
                                                                         // Pegar o ID da pergunta atual para evitar auto-referência
                                                                         $currentId = $get('id');
 
-                                                                        return QuestionarioPergunta::query()
-                                                                            ->select('questionario_perguntas.*')
-                                                                            ->join('questionario_blocos', 'questionario_perguntas.questionario_bloco_id', '=', 'questionario_blocos.id')
-                                                                            ->where('questionario_blocos.questionario_id', $questionarioId)
-                                                                            ->when($currentId, fn ($q) => $q->where('questionario_perguntas.id', '!=', $currentId))
-                                                                            ->orderBy('questionario_blocos.ordem')
-                                                                            ->orderBy('questionario_perguntas.ordem')
-                                                                            ->get()
-                                                                            ->mapWithKeys(function ($p) {
-                                                                                $label = strip_tags($p->enunciado);
-                                                                                if ($p->identificador) {
-                                                                                    $label = "[{$p->identificador}] {$label}";
-                                                                                }
+                                                                        $options = [];
+                                                                        foreach ($perguntasCache[$questionarioId] as $pData) {
+                                                                            if ($currentId && $pData['id'] == $currentId) {
+                                                                                continue;
+                                                                            }
 
-                                                                                return [$p->id => $label];
-                                                                            })
-                                                                            ->toArray();
+                                                                            $label = strip_tags($pData['enunciado']);
+                                                                            if ($pData['identificador']) {
+                                                                                $label = "[{$pData['identificador']}] {$label}";
+                                                                            }
+                                                                            $options[$pData['id']] = $label;
+                                                                        }
+
+                                                                        return $options;
                                                                     })
                                                                     ->searchable()
                                                                     ->live()
