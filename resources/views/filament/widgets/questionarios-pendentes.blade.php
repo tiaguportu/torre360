@@ -20,13 +20,16 @@
                         </div>
                         
                         <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
-                            {{ strip_tags($questionario->descricao) ?: 'Nenhuma descrição fornecida.' }}
+                            {{ strip_tags($questionario->descricao) }}
                         </p>
                     </div>
 
                     <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
                         <div class="text-xs text-gray-500 dark:text-gray-500">
                             @if ($questionario->fim_aplicacao)
+                                @if (now()->diffInDays($questionario->fim_aplicacao, false) <= 7)
+                                    ⚠️
+                                @endif
                                 Expira em: {{ $questionario->fim_aplicacao->format('d/m/Y') }}
                             @else
                                 Sem prazo definido
