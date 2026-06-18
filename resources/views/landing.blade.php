@@ -11,18 +11,16 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="Torre360 — Sistema de Gestão Escolar de Elite">
     <meta property="og:description" content="Gestão escolar moderna, eficiente e profissional. Centralize tudo em uma plataforma robusta e intuitiva.">
-    <meta property="og:image" content="{{ asset('images/landing/hero.png') }}?v=1.1">
-    <meta property="og:image:secure_url" content="{{ asset('images/landing/hero.png') }}?v=1.1">
+    <meta property="og:image" content="{{ asset('logo-login.png') }}">
+    <meta property="og:image:secure_url" content="{{ asset('logo-login.png') }}">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
     <meta property="twitter:title" content="Torre360 — Sistema de Gestão Escolar de Elite">
     <meta property="twitter:description" content="Gestão escolar moderna, eficiente e profissional. Centralize tudo em uma plataforma robusta e intuitiva.">
-    <meta property="twitter:image" content="{{ asset('images/landing/hero.png') }}?v=1.1">
+    <meta property="twitter:image" content="{{ asset('logo-login.png') }}">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

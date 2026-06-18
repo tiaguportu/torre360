@@ -19,6 +19,7 @@ class Questionario extends Model
         'is_anonimo',
         'is_ativo',
         'max_respostas_por_usuario',
+        'ultimo_envio_aviso',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class Questionario extends Model
         'is_anonimo' => 'boolean',
         'is_ativo' => 'boolean',
         'max_respostas_por_usuario' => 'integer',
+        'ultimo_envio_aviso' => 'datetime',
     ];
 
     /**
@@ -216,6 +218,67 @@ class Questionario extends Model
                     $q->where('responsavel_type', 'Role')->whereIn('responsavel_id', $user->roles->pluck('id'));
                 });
             })->exists();
+    }
+
+    /**
+     * Obtém a lista de e-mails dos possíveis respondedores do questionário.
+     *
+     * @return array<string>
+     */
+    public function obterEmailsRespondedores(): array
+    {
+        $query = User::query()
+            ->whereNotNull('activated_at')
+            ->where('activated_at', '<=', now())
+            ->where(function ($q) {
+                $q->whereNull('deactivated_at')
+                    ->orWhere('deactivated_at', '>', now());
+            });
+
+        $alvos = $this->alvos;
+
+        if ($alvos->isNotEmpty()) {
+            $query->where(function ($q) use ($alvos) {
+                foreach ($alvos as $index => $alvo) {
+                    $clause = $index === 0 ? 'where' : 'orWhere';
+
+                    if ($alvo->alvo_type === 'User') {
+                        $q->{$clause}('id', $alvo->alvo_id);
+                    } elseif ($alvo->alvo_type === 'Role') {
+                        $q->{$clause.'Has'}('roles', fn ($sq) => $sq->where('id', $alvo->alvo_id));
+                    } elseif ($alvo->alvo_type === 'Turma') {
+                        $q->{$clause.'Has'}('pessoas.matriculas', fn ($sq) => $sq->where('turma_id', $alvo->alvo_id));
+                    } elseif ($alvo->alvo_type === 'Serie') {
+                        $q->{$clause.'Has'}('pessoas.matriculas.turma', fn ($sq) => $sq->where('serie_id', $alvo->alvo_id));
+                    } elseif ($alvo->alvo_type === 'Curso') {
+                        $q->{$clause.'Has'}('pessoas.matriculas.turma.serie', fn ($sq) => $sq->where('curso_id', $alvo->alvo_id));
+                    } elseif ($alvo->alvo_type === 'Unidade') {
+                        $q->{$clause.'Has'}('pessoas.matriculas.turma.serie.curso', fn ($sq) => $sq->where('unidade_id', $alvo->alvo_id));
+                    }
+                }
+            });
+        }
+
+        // Se houver limite de respostas por usuário, exclui os que já atingiram o limite
+        if ($this->max_respostas_por_usuario !== null && ! $this->is_anonimo) {
+            $respostasPorUsuario = QuestionarioResposta::where('questionario_id', $this->id)
+                ->where('status', 'enviado')
+                ->whereNotNull('user_id')
+                ->groupBy('user_id')
+                ->select('user_id', DB::raw('count(*) as total'))
+                ->pluck('total', 'user_id');
+
+            $excluirUserIds = $respostasPorUsuario
+                ->filter(fn ($total) => $total >= $this->max_respostas_por_usuario)
+                ->keys()
+                ->toArray();
+
+            if (! empty($excluirUserIds)) {
+                $query->whereNotIn('id', $excluirUserIds);
+            }
+        }
+
+        return $query->pluck('email')->filter()->unique()->toArray();
     }
 
     /**

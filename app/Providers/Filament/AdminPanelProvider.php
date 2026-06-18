@@ -116,6 +116,13 @@ class AdminPanelProvider extends PanelProvider
                     <meta name="apple-mobile-web-app-title" content="Torre360">
                     <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
                     <meta name="theme-color" content="#243468">
+                    <meta property="og:type" content="website">
+                    <meta property="og:title" content="Torre360 Gestão Escolar">
+                    <meta property="og:description" content="Sistema de Gestão Escolar Torre360.">
+                    <meta property="og:image" content="'.asset('logo-login.png').'">
+                    <meta property="og:image:secure_url" content="'.asset('logo-login.png').'">
+                    <meta property="twitter:card" content="summary_large_image">
+                    <meta property="twitter:image" content="'.asset('logo-login.png').'">
                 ',
             )
 

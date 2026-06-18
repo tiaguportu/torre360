@@ -541,6 +541,11 @@ O módulo de **Questionários** permite criar formulários personalizados para c
    - O *Super Admin* sempre possui permissão total.
 7. **Clonagem em Lote:** Para agilizar a criação de novos formulários baseados em modelos existentes, o sistema permite a clonagem em lote. Selecione os questionários na tabela e utilize a ação **Clonar Selecionados**. O sistema duplicará toda a estrutura (blocos, perguntas, opções e lógica condicional), o público-alvo e os responsáveis, mas manterá o novo questionário sem nenhuma resposta vinculada.
 8. **Responder na Edição:** Na tela de edição do questionário, os administradores e donos podem clicar no botão **Responder Questionário** no topo da página. Esse botão abrirá o formulário de resposta em uma nova aba, facilitando o teste e o preenchimento direto.
+9. **Avisar Respondedores (Notificação por E-mail):** Na listagem de questionários, é possível enviar um aviso por e-mail para todos os possíveis respondedores de um questionário ativo.
+   - **Como acessar:** Localize o questionário na tabela e clique no botão **Avisar Respondedores** (ícone de envelope amarelo).
+   - **Confirmação e Histórico:** O sistema exibirá uma confirmação contendo a data e hora do último envio realizado (esta informação também aparece no tooltip ao passar o mouse sobre o botão na tabela).
+   - **Destinatários (Carregamento Lazy):** O modal de confirmação possui uma seção colapsada contendo a opção para carregar a lista de destinatários. Como a lista pode ser muito grande, ela é carregada sob demanda apenas quando você marcar a opção para carregar os e-mails, economizando processamento.
+   - **Disparo:** Ao confirmar, as notificações de aviso serão enviadas em segundo plano para todos os e-mails qualificados (que ainda não atingiram o limite máximo de respostas configurado).
 
 ### 16.2 Estrutura de Perguntas
 Os questionários são organizados em **Blocos Temáticos** (ex: Infraestrutura, Qualidade de Ensino, Gestão).

@@ -11,11 +11,13 @@ use App\Models\QuestionarioPerguntaResposta;
 use App\Models\QuestionarioResposta;
 use App\Models\Turma;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Wizard;
@@ -29,6 +31,42 @@ class ResponderQuestionario extends Page
     protected static string $resource = QuestionarioResource::class;
 
     protected string $view = 'filament.resources.questionarios.pages.responder-questionario';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->form([
+                    ViewField::make('help')
+                        ->view('filament.components.help-content')
+                        ->viewData(['content' => $this->getHelpContent()]),
+                ])
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar'),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<h3>Ajuda - Preenchimento do Questionário</h3>';
+        $html .= '<p>Esta página é dedicada a responder ao questionário ativo.</p>';
+        $html .= '<h4>Passos para responder:</h4><ol>';
+        $html .= '<li>Leia atentamente as perguntas de cada etapa.</li>';
+        $html .= '<li>Perguntas com um asterisco vermelho (*) são obrigatórias e devem ser preenchidas para prosseguir.</li>';
+        $html .= '<li>Algumas perguntas podem aparecer dinamicamente dependendo das suas respostas anteriores (regras condicionais).</li>';
+        $html .= '<li>Ao finalizar todas as etapas, clique em <strong>Enviar</strong> para gravar as suas respostas.</li>';
+        $html .= '</ol>';
+
+        if ($this->record && $this->record->is_anonimo) {
+            $html .= '<p><strong>Respostas Anônimas:</strong> As respostas deste questionário são <em>anônimas</em>. Suas informações de login não serão vinculadas às respostas salvas no banco de dados.</p>';
+        } else {
+            $html .= '<p><strong>Identificação:</strong> Suas respostas serão vinculadas ao seu usuário de acesso.</p>';
+        }
+
+        return $html;
+    }
 
     public static function canAccess(array $parameters = []): bool
     {
