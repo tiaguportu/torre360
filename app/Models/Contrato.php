@@ -54,7 +54,7 @@ class Contrato extends Model
     }
 
     /**
-     * Retorna a lista de signatários (Pai, Mãe e Responsável Financeiro) para assinatura do contrato.
+     * Retorna a lista de signatários (Pai, Mãe, Responsável Financeiro e Representante Legal) para assinatura do contrato.
      */
     public function getSignatarios(): Collection
     {
@@ -92,6 +92,23 @@ class Contrato extends Model
                         if ($user->email) {
                             $signatarios->push([
                                 'nome' => $user->name ?? $resp->nome,
+                                'email' => $user->email,
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Representantes Legais das unidades dos alunos vinculados
+        foreach ($this->matriculas as $mat) {
+            $unidade = $mat->turma?->serie?->curso?->unidade;
+            if ($unidade) {
+                foreach ($unidade->representantesLegais as $rep) {
+                    foreach ($rep->users as $user) {
+                        if ($user->email) {
+                            $signatarios->push([
+                                'nome' => $user->name ?? $rep->nome,
                                 'email' => $user->email,
                             ]);
                         }

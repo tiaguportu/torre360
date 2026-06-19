@@ -46,7 +46,7 @@ class AssinafyService
             // 0. Carregar dados relacionados
             $contrato->load([
                 'matriculas.pessoa.responsaveis.users',
-                'matriculas.turma.serie.curso',
+                'matriculas.turma.serie.curso.unidade.representantesLegais.users',
                 'matriculas.periodoLetivo',
                 'responsaveisFinanceiros.pessoa.users',
             ]);
@@ -60,9 +60,19 @@ class AssinafyService
 
             $signatarios = $contrato->getSignatarios();
 
-            // Para compatibilidade na busca do documento
-            $emailSignatario = $signatarios->first()['email'] ?? '';
-            $nomeSignatario = $signatarios->first()['nome'] ?? '';
+            // Determina qual signatário é o "alvo" para o redirecionamento (preferencialmente o usuário logado atual)
+            $emailUsuarioLogado = auth()->user()?->email;
+            $signatarioAlvo = null;
+
+            if ($emailUsuarioLogado) {
+                $signatarioAlvo = $signatarios->first(fn ($s) => $s['email'] === $emailUsuarioLogado);
+            }
+
+            // Se o usuário logado não for um dos signatários, usa o primeiro como fallback
+            $signatarioAlvo = $signatarioAlvo ?? $signatarios->first();
+
+            $emailSignatario = $signatarioAlvo['email'] ?? '';
+            $nomeSignatario = $signatarioAlvo['nome'] ?? '';
 
             $nomeArquivoBase = "contrato_{$contrato->id}.pdf";
 
@@ -196,6 +206,7 @@ class AssinafyService
             Notification::make()->title('Passo 3/4: Verificando signatários...')->info()->send();
 
             $signerIds = [];
+            $emailToSignerIdMap = [];
             foreach ($signatarios as $signatario) {
                 $sigEmail = $signatario['email'];
                 $sigNome = $signatario['nome'];
@@ -237,10 +248,11 @@ class AssinafyService
                 }
 
                 $signerIds[] = $sigId;
+                $emailToSignerIdMap[$sigEmail] = $sigId;
             }
 
-            // Primeiro ID para fallback de URL de assinatura
-            $signerId = $signerIds[0] ?? null;
+            // Define o signerId do signatário alvo para redirecionamento
+            $signerIdAlvo = $emailToSignerIdMap[$emailSignatario] ?? ($signerIds[0] ?? null);
 
             // --- PASSO 3 (Agora 4): Solicitar Assinatura ---
             Notification::make()->title('Passo 4/4: Vinculando assinatário e disparando e-mail...')->info()->send();
@@ -294,7 +306,11 @@ class AssinafyService
                 $signingUrl = null;
 
                 foreach ($signingUrls as $sUrl) {
-                    if (isset($sUrl['signer_id']) && $sUrl['signer_id'] === $signerId) {
+                    if (isset($sUrl['signer_id']) && $sUrl['signer_id'] === $signerIdAlvo) {
+                        $signingUrl = $sUrl['url'];
+                        break;
+                    }
+                    if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
                         $signingUrl = $sUrl['url'];
                         break;
                     }
@@ -308,7 +324,7 @@ class AssinafyService
                     'assinafy_status' => 'enviado',
                     'assinafy_request_log' => [
                         'document' => $responseDoc->json(),
-                        'signer_id' => $signerId,
+                        'signer_id' => $signerIdAlvo,
                         'assignment' => $dataAssign,
                     ],
                 ]);
