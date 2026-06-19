@@ -316,8 +316,8 @@ Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
 ### 7.1.1 Gerar Faturas Automaticamente
 Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), utilize o botão **Gerar Faturas Automaticamente** para criar o parcelamento do contrato de forma rápida.
 
-> [!WARNING]
-> Ao acionar este botão, **todas as faturas existentes** do contrato serão removidas e substituídas pelas novas. Certifique-se de que o contrato possui uma **Data de Aceite** preenchida antes de prosseguir.
+> [!NOTE]
+> Esta funcionalidade só ficará visível e disponível para uso se o contrato **não possuir nenhuma fatura associada** no momento. Além disso, certifique-se de que o contrato possui uma **Data de Aceite** preenchida antes de prosseguir.
 
 **Campos do formulário:**
 
