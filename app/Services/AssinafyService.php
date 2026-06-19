@@ -118,7 +118,7 @@ class AssinafyService
 
                     foreach ($signingUrls as $sUrl) {
                         // Tenta casar pelo e-mail na URL ou pelo signer_id se disponível
-                        if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
+                        if (str_contains(strtolower($sUrl['url'] ?? ''), strtolower($emailSignatario))) {
                             $signingUrl = $sUrl['url'];
                             break;
                         }
@@ -186,21 +186,6 @@ class AssinafyService
             }
 
             $documentId = $responseDoc->json('id') ?? $responseDoc->json('data.id');
-
-            // --- NOVO: Preparar Documento (Sem campos manuais) ---
-            Notification::make()->title('Passo 2/4: Preparando documento para assinar...')->info()->send();
-
-            $responsePrepare = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->post("{$this->apiUrl}/documents/{$documentId}/prepare", [
-                'status' => 'prepared',
-            ]);
-
-            if (! $responsePrepare->successful()) {
-                Log::warning('Aviso ao preparar: '.$responsePrepare->body());
-            }
 
             // --- ETAPA B: Verificar/cadastrar cada signatário no Assinafy ---
             Notification::make()->title('Passo 3/4: Verificando signatários...')->info()->send();
@@ -310,7 +295,7 @@ class AssinafyService
                         $signingUrl = $sUrl['url'];
                         break;
                     }
-                    if (str_contains($sUrl['url'] ?? '', $emailSignatario)) {
+                    if (str_contains(strtolower($sUrl['url'] ?? ''), strtolower($emailSignatario))) {
                         $signingUrl = $sUrl['url'];
                         break;
                     }

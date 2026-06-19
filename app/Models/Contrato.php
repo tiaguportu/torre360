@@ -71,7 +71,7 @@ class Contrato extends Model
                 if ($user->email) {
                     $signatarios->push([
                         'nome' => $user->name ?? $pessoa->nome,
-                        'email' => $user->email,
+                        'email' => strtolower(trim($user->email)),
                     ]);
                 }
             }
@@ -92,7 +92,7 @@ class Contrato extends Model
                         if ($user->email) {
                             $signatarios->push([
                                 'nome' => $user->name ?? $resp->nome,
-                                'email' => $user->email,
+                                'email' => strtolower(trim($user->email)),
                             ]);
                         }
                     }
@@ -109,7 +109,7 @@ class Contrato extends Model
                         if ($user->email) {
                             $signatarios->push([
                                 'nome' => $user->name ?? $rep->nome,
-                                'email' => $user->email,
+                                'email' => strtolower(trim($user->email)),
                             ]);
                         }
                     }
@@ -123,7 +123,7 @@ class Contrato extends Model
             if ($aluno) {
                 $signatarios->push([
                     'nome' => $aluno->nome,
-                    'email' => $aluno->email ?? '',
+                    'email' => strtolower(trim($aluno->email ?? '')),
                 ]);
             }
         }
