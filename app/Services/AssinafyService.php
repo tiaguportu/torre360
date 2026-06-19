@@ -45,7 +45,7 @@ class AssinafyService
         try {
             // 0. Carregar dados relacionados
             $contrato->load([
-                'matriculas.pessoa',
+                'matriculas.pessoa.responsaveis.users',
                 'matriculas.turma.serie.curso',
                 'matriculas.periodoLetivo',
                 'responsaveisFinanceiros.pessoa.users',
@@ -58,39 +58,11 @@ class AssinafyService
                 return ['success' => false, 'message' => "Contrato #{$contrato->id} não possui matrículas vinculadas."];
             }
 
-            // Coleta todos os signatários: usuários vinculados a cada responsável financeiro
-            $signatarios = collect();
-            foreach ($contrato->responsaveisFinanceiros as $resp) {
-                $pessoa = $resp->pessoa;
-                if (! $pessoa) {
-                    continue;
-                }
-
-                foreach ($pessoa->users as $user) {
-                    if ($user->email) {
-                        $signatarios->push([
-                            'nome' => $user->name ?? $pessoa->nome,
-                            'email' => $user->email,
-                        ]);
-                    }
-                }
-            }
-
-            // Fallback: se não houver nenhum signatário via usuário, usa e-mail do aluno
-            if ($signatarios->isEmpty()) {
-                $aluno = $matricula->pessoa;
-                $signatarios->push([
-                    'nome' => $aluno?->nome ?? 'Aluno',
-                    'email' => $aluno?->email ?? '',
-                ]);
-            }
-
-            // Remove duplicados por e-mail
-            $signatarios = $signatarios->unique('email')->values();
+            $signatarios = $contrato->getSignatarios();
 
             // Para compatibilidade na busca do documento
-            $emailSignatario = $signatarios->first()['email'];
-            $nomeSignatario = $signatarios->first()['nome'];
+            $emailSignatario = $signatarios->first()['email'] ?? '';
+            $nomeSignatario = $signatarios->first()['nome'] ?? '';
 
             $nomeArquivoBase = "contrato_{$contrato->id}.pdf";
 

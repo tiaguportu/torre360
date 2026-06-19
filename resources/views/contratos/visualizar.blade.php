@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 @php
-    $emailsSignatarios = collect();
-    foreach ($contrato->responsaveisFinanceiros as $resp) {
-        if ($resp->pessoa) {
-            foreach ($resp->pessoa->users as $user) {
-                if ($user->email) {
-                    $emailsSignatarios->push($user->email);
-                }
-            }
-        }
-    }
-    if ($emailsSignatarios->isEmpty() && $matricula?->pessoa?->email) {
-        $emailsSignatarios->push($matricula->pessoa->email);
-    }
-    $emailsSignatarios = $emailsSignatarios->unique()->values();
+    $emailsSignatarios = $contrato->getSignatarios()->pluck('email');
 @endphp
 <html lang="pt-br">
 <head>
