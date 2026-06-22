@@ -39,6 +39,7 @@ class ActivityLogsTable
                 TextColumn::make('created_at')
                     ->label('Data/Hora')
                     ->dateTime('d/m/Y H:i')
+                    ->timezone(config('app.display_timezone', 'America/Sao_Paulo'))
                     ->sortable(),
             ])
             ->actions([
