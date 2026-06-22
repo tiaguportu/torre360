@@ -15,7 +15,6 @@ class MatriculaFactory extends Factory
     public function definition(): array
     {
         return [
-            'codigo' => $this->faker->unique()->bothify('MAT-####'),
             'pessoa_id' => Pessoa::factory(),
             'turma_id' => Turma::factory(),
             'periodo_letivo_id' => PeriodoLetivo::factory(),

@@ -141,6 +141,7 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
 ### 5.2 Frequência Escolar
 1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
 2. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
+3. **Auditoria e Segurança:** Toda ação de lançamento, alteração ou exclusão de frequência escolar (presença/ausência) é automaticamente auditada e registrada no log de atividades para controle e rastreabilidade dos lançamentos feitos por professores e administradores.
 
 ### 5.3 Boletim do Aluno
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
@@ -386,6 +387,7 @@ Os administradores podem definir precisamente quem pode ver, criar, editar ou ex
 ### 9.2 Auditoria de Ações
 O sistema registra automaticamente ações críticas e navegações:
 - **Navegações no Painel:** As visualizações de recursos realizadas por usuários com papéis de **Responsável**, **Professor** ou **Secretaria** são registradas automaticamente no Log de Atividades (`admin/activity-logs`) para controle de acessos.
+- **Frequência Escolar:** Lançamentos, atualizações e exclusões de registros de presença e ausência de alunos são auditados detalhadamente, identificando o aluno, a aula, a disciplina e a situação atribuída (presente/ausente), com rastreamento das alterações e do usuário responsável pelo lançamento.
 - **Módulo de Matrícula:** O sistema loga acessos à lista de matrículas e à tela de documentos.
 - **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
 - **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.

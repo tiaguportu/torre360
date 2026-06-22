@@ -13,9 +13,8 @@ class PeriodoLetivoFactory extends Factory
     {
         return [
             'nome' => '2026',
-            'ano' => 2026,
-            'inicio' => '2026-01-01',
-            'fim' => '2026-12-31',
+            'data_inicio' => '2026-01-01',
+            'data_fim' => '2026-12-31',
         ];
     }
 }

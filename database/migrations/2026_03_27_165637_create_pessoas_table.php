@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('pessoas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('endereco_id')->nullable()->constrained('enderecos')->onDelete('set null');
-            $table->foreignId('naturalidade_id')->nullable()->constrained('cidades')->onDelete('set null');
-            $table->foreignId('nacionalidade_id')->nullable()->constrained('paises')->onDelete('set null');
+            $table->foreignId('naturalidade_id')->nullable()->constrained('cidade')->onDelete('set null');
+            $table->foreignId('nacionalidade_id')->nullable()->constrained('pais')->onDelete('set null');
             $table->string('nome');
             $table->string('cpf', 14)->unique()->nullable();
             $table->string('raca_cor')->nullable();

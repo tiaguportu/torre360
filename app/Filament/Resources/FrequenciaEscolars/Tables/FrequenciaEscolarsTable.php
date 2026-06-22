@@ -17,8 +17,8 @@ class FrequenciaEscolarsTable
             ->columns([
                 TextColumn::make('matricula')
                     ->label('Aluno')
-                    ->state(fn ($record) => "{$record->matricula->pessoa->nome} - {$record->matricula->codigo}")
-                    ->searchable(['matricula.codigo', 'matricula.pessoa.nome']),
+                    ->state(fn ($record) => "{$record->matricula->pessoa->nome} - #{$record->matricula->id}")
+                    ->searchable(['matricula.id', 'matricula.pessoa.nome']),
                 TextColumn::make('cronogramaAula')
                     ->label('Aula')
                     ->state(function ($record) {

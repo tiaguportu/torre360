@@ -24,10 +24,10 @@ class DocumentoInseridosTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('matricula.codigo')
+                TextColumn::make('matricula.id')
                     ->label('Matrícula')
                     ->description(fn ($record): string => $record->matricula?->pessoa?->nome ?? 'N/A')
-                    ->searchable(['matricula.codigo', 'matricula.pessoa.nome'])
+                    ->searchable(['matricula.id', 'matricula.pessoa.nome'])
                     ->sortable(),
 
                 TextColumn::make('status')

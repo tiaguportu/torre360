@@ -28,11 +28,11 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 ### `activity_log` (Spatie)
 - **Representa:** Registro de atividades de negócio e trilha de auditoria detalhada.
 - **Campos Principais:** 
-    - `log_name`: Canal do log (ex: `default`, `auth`).
+    - `log_name`: Canal do log (ex: `default`, `auth`, `frequencia_escolar`).
     - `description`: Descrição amigável do evento.
     - `subject_type`, `subject_id`: Registro afetado.
     - `causer_type`, `causer_id`: Usuário/Sistema que causou a ação.
-- `properties`: JSON com metadados e alterações. Registra também tentativas e respostas de disparos de notificações (e-mail/push).
+- `properties`: JSON com metadados e alterações (valores antigos e novos). Registra também tentativas e respostas de disparos de notificações (e-mail/push).
 +
 +### `roles`, `permissions`, `model_has_roles` (Spatie/Shield)
 +- **Representa:** Sistema de controle de acesso baseado em papéis.
@@ -159,8 +159,16 @@ Estrutura de ensino e turmas.
 - **Campos Principais:** `avaliacao_habilidade_id`, `matricula_id`, `habilidade_id`, `conceito`, `observacao` (nullable).
 - **Conceito (Enum):** `realiza_bem`, `em_desenvolvimento`, `nao_realiza`, `nao_observado`.
 
-### `cronograma_aula` e `frequencia_escolar`
-- Registro de aulas e presença.
+### `cronograma_aula`
+- **Representa:** Planejamento e agendamento de aulas.
+- **Relacionamentos:** BelongsTo `turma`, BelongsTo `disciplina`, BelongsTo `pessoa` (Professor), HasMany `frequencias`.
+- **Campos Principais:** `turma_id`, `disciplina_id`, `pessoa_id`, `data`, `hora_inicio`, `hora_fim`, `conteudo_ministrado`.
+
+### `frequencia_escolar`
+- **Representa:** Presença ou falta dos alunos em uma aula do cronograma.
+- **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronograma_aula`.
+- **Campos Principais:** `matricula_id`, `cronograma_aula_id`, `situacao` (Enum/String: 'presente', 'ausente').
+- **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: frequencia_escolar`), gravando ações de criação, alteração e exclusão das frequências com a identificação do aluno, aula e situação atribuída.
 
 ---
 

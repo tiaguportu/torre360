@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Livewire\AssistantChatBubble;
+use App\Models\User;
 use App\Services\GeminiAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AssistantChatTest extends TestCase
@@ -119,9 +121,9 @@ class AssistantChatTest extends TestCase
     public function test_chat_bubble_is_rendered_in_admin_panel_for_authorized_users(): void
     {
         // Cria a role super_admin se não existir
-        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        
-        $user = \App\Models\User::factory()->create([
+        $role = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+
+        $user = User::factory()->create([
             'activated_at' => now()->subDay(),
             'email_verified_at' => now(),
         ]);
@@ -132,4 +134,3 @@ class AssistantChatTest extends TestCase
             ->assertSeeLivewire(AssistantChatBubble::class);
     }
 }
-
