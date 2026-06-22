@@ -31,18 +31,20 @@ class AuditMiddleware
                 ]);
 
                 // Registro automático no Activity Log para usuários com certas roles (responsavel, professor, secretaria)
-                $activeRole = session('active_role');
-                $roleToLog = null;
+                $activeRole = session('active_role') ?? $user->active_role;
+                $roleToLog = $activeRole;
 
-                if ($activeRole && in_array($activeRole, ['responsavel', 'professor', 'secretaria'])) {
-                    $roleToLog = $activeRole;
-                } else {
-                    if ($user->hasRole('responsavel')) {
+                if (! $roleToLog) {
+                    if ($user->hasRole('super_admin')) {
+                        $roleToLog = 'super_admin';
+                    } elseif ($user->hasRole('responsavel')) {
                         $roleToLog = 'responsavel';
                     } elseif ($user->hasRole('professor')) {
                         $roleToLog = 'professor';
                     } elseif ($user->hasRole('secretaria')) {
                         $roleToLog = 'secretaria';
+                    } else {
+                        $roleToLog = $user->roles->first()?->name ?? 'usuario';
                     }
                 }
 
@@ -51,6 +53,9 @@ class AuditMiddleware
                         'responsavel' => 'Responsável',
                         'professor' => 'Professor',
                         'secretaria' => 'Secretaria',
+                        'super_admin' => 'Super Admin',
+                        'admin' => 'Administrador',
+                        default => str($roleToLog)->replace('_', ' ')->title()->toString(),
                     };
 
                     $path = $request->path();
