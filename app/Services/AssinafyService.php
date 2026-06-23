@@ -65,7 +65,8 @@ class AssinafyService
             $signatarioAlvo = null;
 
             if ($emailUsuarioLogado) {
-                $signatarioAlvo = $signatarios->first(fn ($s) => $s['email'] === $emailUsuarioLogado);
+                $emailUsuarioLogadoClean = strtolower(trim($emailUsuarioLogado));
+                $signatarioAlvo = $signatarios->first(fn ($s) => $s['email'] === $emailUsuarioLogadoClean);
             }
 
             // Se o usuário logado não for um dos signatários, usa o primeiro como fallback
@@ -118,14 +119,14 @@ class AssinafyService
 
                     foreach ($signingUrls as $sUrl) {
                         // Tenta casar pelo e-mail na URL ou pelo signer_id se disponível
-                        if (str_contains(strtolower($sUrl['url'] ?? ''), strtolower($emailSignatario))) {
+                        if (str_contains(strtolower(urldecode($sUrl['url'] ?? '')), strtolower($emailSignatario))) {
                             $signingUrl = $sUrl['url'];
                             break;
                         }
                     }
 
-                    // Fallback para a primeira URL se não achou específica
-                    $signingUrl = $signingUrl ?? $signingUrls[0]['url'] ?? $docData['signing_url'] ?? null;
+                    // Sem fallback cego aqui. Se o signatário alvo não tiver URL de assinatura correspondente cadastrada no Assinafy,
+                    // deixamos nulo para que o fluxo siga e gere um novo documento com o conjunto completo de signatários corretos.
 
                     if ($signingUrl) {
                         Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
@@ -205,7 +206,7 @@ class AssinafyService
 
                 if ($responseSearch->successful()) {
                     foreach ($responseSearch->json('data') ?? [] as $s) {
-                        if (isset($s['email']) && $s['email'] === $sigEmail) {
+                        if (isset($s['email']) && strtolower(trim($s['email'])) === strtolower(trim($sigEmail))) {
                             $sigId = $s['id'];
                             Notification::make()->title("Aviso: '{$sigNome}' já existe no Assinafy. Reaproveitando.")->info()->send();
                             break;
@@ -295,7 +296,7 @@ class AssinafyService
                         $signingUrl = $sUrl['url'];
                         break;
                     }
-                    if (str_contains(strtolower($sUrl['url'] ?? ''), strtolower($emailSignatario))) {
+                    if (str_contains(strtolower(urldecode($sUrl['url'] ?? '')), strtolower($emailSignatario))) {
                         $signingUrl = $sUrl['url'];
                         break;
                     }
