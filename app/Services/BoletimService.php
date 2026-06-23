@@ -312,12 +312,11 @@ class BoletimService
     public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa, bool $acumulada = false): array
     {
         $dataFimEfetiva = min($etapa->data_fim, now()->toDateString());
-        $dataInicio = $etapa->data_inicio;
 
-        if ($acumulada) {
-            $dataInicio = EtapaAvaliativa::where('periodo_letivo_id', $etapa->periodo_letivo_id)
-                ->min('data_inicio') ?? $etapa->data_inicio;
-        }
+        // A frequência deve ser sempre acumulada desde o começo do período letivo
+        // até a data fim efetiva da etapa em questão.
+        $dataInicio = EtapaAvaliativa::where('periodo_letivo_id', $etapa->periodo_letivo_id)
+            ->min('data_inicio') ?? $etapa->data_inicio;
 
         $cronogramas = CronogramaAula::query()
             ->where('turma_id', $turmaId)
