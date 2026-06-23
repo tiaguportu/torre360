@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -47,9 +48,9 @@ class Matricula extends Model
         return $this->belongsTo(PeriodoLetivo::class);
     }
 
-    public function contrato(): BelongsTo
+    public function contrato(): HasOne
     {
-        return $this->belongsTo(Contrato::class);
+        return $this->hasOne(Contrato::class);
     }
 
     public function notas(): HasMany

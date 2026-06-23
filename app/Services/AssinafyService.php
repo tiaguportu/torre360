@@ -45,17 +45,16 @@ class AssinafyService
         try {
             // 0. Carregar dados relacionados
             $contrato->load([
-                'matriculas.pessoa.responsaveis.users',
-                'matriculas.turma.serie.curso.unidade.representantesLegais.users',
-                'matriculas.periodoLetivo',
+                'matricula.pessoa.responsaveis.users',
+                'matricula.turma.serie.curso.unidade.representantesLegais.users',
+                'matricula.periodoLetivo',
                 'responsaveisFinanceiros.pessoa.users',
             ]);
 
-            $matriculas = $contrato->matriculas;
-            $matricula = $matriculas->first();
+            $matricula = $contrato->matricula;
 
             if (! $matricula) {
-                return ['success' => false, 'message' => "Contrato #{$contrato->id} não possui matrículas vinculadas."];
+                return ['success' => false, 'message' => "Contrato #{$contrato->id} não possui matrícula vinculada."];
             }
 
             $signatarios = $contrato->getSignatarios();
@@ -162,7 +161,6 @@ class AssinafyService
 
             $pdfContent = Pdf::loadView('pdfs.contrato', [
                 'contrato' => $contrato,
-                'matriculas' => $matriculas,
                 'matricula' => $matricula,
                 'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
                 'serie' => $matricula->turma?->serie,

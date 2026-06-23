@@ -16,9 +16,8 @@ class ContratosTable
     {
         return $table
             ->columns([
-                TextColumn::make('matriculas.pessoa.nome')
-                    ->label('Alunos / Matrículas')
-                    ->listWithLineBreaks()
+                TextColumn::make('matricula.pessoa.nome')
+                    ->label('Aluno / Matrícula')
                     ->searchable(),
                 TextColumn::make('responsaveisFinanceiros.pessoa.nome')
                     ->label('Responsáveis Financeiros')
@@ -59,7 +58,7 @@ class ContratosTable
             ])
             ->filters([
                 SelectFilter::make('aluno')
-                    ->relationship('matriculas.pessoa', 'nome')
+                    ->relationship('matricula.pessoa', 'nome')
                     ->multiple()
                     ->label('Filtrar por Aluno')
                     ->searchable(),

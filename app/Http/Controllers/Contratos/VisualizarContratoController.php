@@ -11,9 +11,9 @@ class VisualizarContratoController extends Controller
 {
     public function __invoke(Contrato $contrato)
     {
-        $contrato->load(['matriculas.pessoa', 'matriculas.turma.serie.curso', 'matriculas.periodoLetivo', 'responsaveisFinanceiros.pessoa', 'templateContrato']);
+        $contrato->load(['matricula.pessoa', 'matricula.turma.serie.curso', 'matricula.periodoLetivo', 'responsaveisFinanceiros.pessoa', 'templateContrato']);
 
-        $matricula = $contrato->matriculas->first();
+        $matricula = $contrato->matricula;
         $aluno = $matricula?->pessoa;
         $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
 
@@ -30,7 +30,7 @@ class VisualizarContratoController extends Controller
         return view('contratos.visualizar', [
             'contrato' => $contrato,
             'matricula' => $matricula,
-            'matriculas' => $contrato->matriculas,
+            'matriculas' => $matricula ? collect([$matricula]) : collect(),
             'aluno' => $aluno,
             'responsavel' => $responsavel,
             'serie' => $matricula?->turma?->serie,

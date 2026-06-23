@@ -107,22 +107,20 @@
 <body>
 
     @php
-        $unidade = $matriculas->first()?->turma?->serie?->curso?->unidade;
-        $periodo = $matriculas->first()?->periodoLetivo;
-
-        // Buscar Pai e Mãe nos vínculos de qualquer aluno do contrato
+        $unidade = $matricula?->turma?->serie?->curso?->unidade;
+        $periodo = $matricula?->periodoLetivo;
+ 
+        // Buscar Pai e Mãe nos vínculos do aluno do contrato
         $pai = null;
         $mae = null;
-        foreach ($matriculas as $mat) {
-            if ($mat->pessoa) {
-                // Tenta buscar nos 'responsaveis' (many-to-many com pivot tipo_vinculo_id)
-                if (method_exists($mat->pessoa, 'responsaveis')) {
-                    foreach ($mat->pessoa->responsaveis as $resp) {
-                        if ($resp->pivot->tipo_vinculo_id == 1 && !$pai) {
-                            $pai = $resp;
-                        } elseif ($resp->pivot->tipo_vinculo_id == 2 && !$mae) {
-                            $mae = $resp;
-                        }
+        if ($matricula && $matricula->pessoa) {
+            // Tenta buscar nos 'responsaveis' (many-to-many com pivot tipo_vinculo_id)
+            if (method_exists($matricula->pessoa, 'responsaveis')) {
+                foreach ($matricula->pessoa->responsaveis as $resp) {
+                    if ($resp->pivot->tipo_vinculo_id == 1 && !$pai) {
+                        $pai = $resp;
+                    } elseif ($resp->pivot->tipo_vinculo_id == 2 && !$mae) {
+                        $mae = $resp;
                     }
                 }
             }
@@ -200,24 +198,28 @@
             A CONTRATADA compromete-se a prestar os serviços educacionais ao estudante na Turma aqui designada, em
             conformidade com a legislação especial vigente, durante o ano letivo de {{ $periodo?->nome ?? '2026' }}.
             <br><br>
-            <span class="bold">ALUNO(S) BENEFICIÁRIO(S):</span>
-            <table class="alunos">
-                <thead>
-                    <tr>
-                        <th>Nome do Aluno</th>
-                        <th>Turma</th>
-                        <th>Série/Ano</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($matriculas as $mat)
-                        <tr>
-                            <td>{{ $mat->pessoa?->nome }}</td>
-                            <td>{{ $mat->turma?->nome }}</td>
-                            <td>{{ $mat->turma?->serie?->nome }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
+            <span class="bold">ALUNO BENEFICIÁRIO:</span>
+            <table class="alunos" style="width: 100%; border-collapse: collapse; border: 1pt solid black; margin: 10px 0;">
+                <tr>
+                    <td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2; width: 30%;">Nome Completo</td>
+                    <td style="border: 1pt solid black; padding: 5px;">{{ $matricula->pessoa?->nome ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Data de Nascimento</td>
+                    <td style="border: 1pt solid black; padding: 5px;">{{ $matricula->pessoa?->data_nascimento ? \Carbon\Carbon::parse($matricula->pessoa->data_nascimento)->format('d/m/Y') : '-' }}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">CPF</td>
+                    <td style="border: 1pt solid black; padding: 5px;">{{ $matricula->pessoa?->cpf ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Turma</td>
+                    <td style="border: 1pt solid black; padding: 5px;">{{ $matricula->turma?->nome ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Série/Ano</td>
+                    <td style="border: 1pt solid black; padding: 5px;">{{ $matricula->turma?->serie?->nome ?? '-' }}</td>
+                </tr>
             </table>
         </div>
 

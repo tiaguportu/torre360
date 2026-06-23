@@ -25,8 +25,8 @@ class ContratoForm
                     ->searchable()
                     ->preload()
                     ->columnSpanFull(),
-                Select::make('matriculas')
-                    ->relationship('matriculas', 'id')
+                Select::make('matricula_id')
+                    ->relationship('matricula', 'id')
                     ->getOptionLabelFromRecordUsing(fn ($record) => ($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome'))
                     ->getSearchResultsUsing(function (string $search) {
                         return Matricula::query()
@@ -46,11 +46,10 @@ class ContratoForm
                             ->mapWithKeys(fn ($record) => [$record->id => ($record->turma?->nome ?? 'Sem Turma').' - '.($record->pessoa?->nome ?? 'Sem nome')])
                             ->toArray();
                     })
-                    ->multiple()
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->label('Alunos (Matrículas)'),
+                    ->label('Aluno (Matrícula)'),
                 TextInput::make('valor_total')
                     ->numeric()
                     ->prefix('R$')

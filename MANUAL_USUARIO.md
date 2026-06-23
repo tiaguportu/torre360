@@ -283,7 +283,7 @@ O sistema é integrado à plataforma **Assinafy** para assinatura digital de con
 2. Você será direcionado para uma página de visualização. Clique em **Iniciar Assinatura Digital** para ser enviado ao portal do Assinafy.
 3. **Múltiplos Signatários:** Se o contrato possuir mais de um Responsável Financeiro vinculado (com usuário cadastrado no sistema), **todos** receberão um convite de assinatura por e-mail automaticamente.
 4. O texto do contrato exibe automaticamente:
-   - **Todos os alunos** do contrato (nome e CPF).
+   - **O aluno** do contrato (nome completo, data de nascimento, CPF, turma e série/ano).
    - **Todos os responsáveis financeiros** como CONTRATANTE. Seu endereço residencial será exibido prioritariamente; caso não possua, o sistema utilizará o primeiro endereço comercial vinculado.
    - O **valor total** e o **número de parcelas** com valor estimado por parcela.
 5. Quando o contrato for assinado por todos os responsáveis, o status no sistema mudará automaticamente para **Assinado**.
@@ -299,7 +299,7 @@ O sistema permite a criação de modelos de contrato customizáveis com substitu
    - `{{CONTRATO_VALOR}}`: Valor total do contrato formatado (R$).
    - `{{CONTRATO_DATA}}`: Cidade e Data atual por extenso.
    - `{{UNIDADE_NOME}}` e `{{UNIDADE_CNPJ}}`: Dados da unidade escolar.
-   - `{{ALUNOS_TABELA}}`: Gera automaticamente uma tabela com os alunos, turmas e séries/anos.
+   - `{{ALUNO.TABELA}}`: Gera automaticamente a tabela com os dados do aluno (nome completo, data de nascimento, CPF, turma e série/ano) em formato vertical.
    - `{{RESPONSAVEIS_INFO}}`: Gera o texto qualificando os responsáveis financeiros.
    - `{{FATURAS_TABELA}}`: Gera uma tabela com o cronograma de parcelas e vencimentos.
 5. **Template Padrão:** Marque a opção "Template Padrão" em um dos modelos para que ele seja selecionado automaticamente ao criar novos contratos.

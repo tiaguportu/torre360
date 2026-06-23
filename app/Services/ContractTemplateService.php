@@ -15,14 +15,14 @@ class ContractTemplateService
     {
         // Carrega relações necessárias caso não estejam presentes
         $contrato->loadMissing([
-            'matriculas.pessoa.responsaveis',
-            'matriculas.turma.serie.curso.unidade.representantesLegais',
+            'matricula.pessoa.responsaveis',
+            'matricula.turma.serie.curso.unidade.representantesLegais',
             'responsaveisFinanceiros.pessoa.enderecos',
             'faturas',
         ]);
 
-        $unidade = $contrato->matriculas->first()?->turma?->serie?->curso?->unidade;
-        $aluno = $contrato->matriculas->first()?->pessoa;
+        $unidade = $contrato->matricula?->turma?->serie?->curso?->unidade;
+        $aluno = $contrato->matricula?->pessoa;
 
         // Mapa de nomes de vínculos para busca rápida no pivô
         $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
@@ -36,7 +36,7 @@ class ContractTemplateService
             '{{UNIDADE.CNPJ}}' => $unidade?->cnpj ?? '',
             '{{UNIDADE.REPRESENTANTES}}' => $this->generateRepresentantesUnidade($unidade),
 
-            '{{ALUNOS.TABELA}}' => $this->generateAlunosTable($contrato),
+            '{{ALUNO.TABELA}}' => $this->generateAlunoTable($contrato),
             '{{RESPONSAVEIS.INFO}}' => $this->generateResponsaveisInfo($contrato),
             '{{FATURAS.TABELA}}' => $this->generateFaturasTable($contrato),
 
@@ -127,24 +127,42 @@ class ContractTemplateService
         return implode(', ', $representantes).' e '.$ultimo;
     }
 
-    protected function generateAlunosTable(Contrato $contrato): string
+    protected function generateAlunoTable(Contrato $contrato): string
     {
-        $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black;">';
-        $html .= '<thead><tr style="background-color: #f2f2f2;">';
-        $html .= '<th style="border: 1pt solid black; padding: 5px;">Nome do Aluno</th>';
-        $html .= '<th style="border: 1pt solid black; padding: 5px;">Turma</th>';
-        $html .= '<th style="border: 1pt solid black; padding: 5px;">Série/Ano</th>';
-        $html .= '</tr></thead><tbody>';
-
-        foreach ($contrato->matriculas as $mat) {
-            $html .= '<tr>';
-            $html .= '<td style="border: 1pt solid black; padding: 5px;">'.($mat->pessoa?->nome ?? '-').'</td>';
-            $html .= '<td style="border: 1pt solid black; padding: 5px;">'.($mat->turma?->nome ?? '-').'</td>';
-            $html .= '<td style="border: 1pt solid black; padding: 5px;">'.($mat->turma?->serie?->nome ?? '-').'</td>';
-            $html .= '</tr>';
+        $mat = $contrato->matricula;
+        if (! $mat) {
+            return 'Nenhum aluno vinculado a este contrato.';
         }
 
-        $html .= '</tbody></table>';
+        $aluno = $mat->pessoa;
+        $nome = $aluno?->nome ?? '-';
+        $nascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
+        $cpf = $aluno?->cpf ?? '-';
+        $turma = $mat->turma?->nome ?? '-';
+        $serie = $mat->turma?->serie?->nome ?? '-';
+
+        $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black; margin: 10px 0;">';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2; width: 30%;">Nome Completo</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$nome.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Data de Nascimento</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$nascimento.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">CPF</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$cpf.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Turma</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$turma.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Série/Ano</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$serie.'</td>';
+        $html .= '</tr>';
+        $html .= '</table>';
 
         return $html;
     }

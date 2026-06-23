@@ -25,9 +25,9 @@ class Contrato extends Model
 
     protected $guarded = [];
 
-    public function matriculas(): HasMany
+    public function matricula(): BelongsTo
     {
-        return $this->hasMany(Matricula::class);
+        return $this->belongsTo(Matricula::class);
     }
 
     public function faturas(): HasMany
@@ -77,31 +77,28 @@ class Contrato extends Model
             }
         }
 
-        // 2. Pai e Mãe dos alunos vinculados
+        // 2. Pai e Mãe do aluno vinculado
         $vinculosInteresse = TipoVinculo::whereIn('nome', ['Pai', 'Mãe'])->pluck('id')->toArray();
 
-        foreach ($this->matriculas as $mat) {
+        $mat = $this->matricula;
+        if ($mat) {
             $aluno = $mat->pessoa;
-            if (! $aluno) {
-                continue;
-            }
-
-            foreach ($aluno->responsaveis as $resp) {
-                if (in_array($resp->pivot->tipo_vinculo_id, $vinculosInteresse)) {
-                    foreach ($resp->users as $user) {
-                        if ($user->email) {
-                            $signatarios->push([
-                                'nome' => $user->name ?? $resp->nome,
-                                'email' => strtolower(trim($user->email)),
-                            ]);
+            if ($aluno) {
+                foreach ($aluno->responsaveis as $resp) {
+                    if (in_array($resp->pivot->tipo_vinculo_id, $vinculosInteresse)) {
+                        foreach ($resp->users as $user) {
+                            if ($user->email) {
+                                $signatarios->push([
+                                    'nome' => $user->name ?? $resp->nome,
+                                    'email' => strtolower(trim($user->email)),
+                                ]);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // 3. Representantes Legais das unidades dos alunos vinculados
-        foreach ($this->matriculas as $mat) {
+            // 3. Representantes Legais da unidade do aluno vinculado
             $unidade = $mat->turma?->serie?->curso?->unidade;
             if ($unidade) {
                 foreach ($unidade->representantesLegais as $rep) {
@@ -117,9 +114,9 @@ class Contrato extends Model
             }
         }
 
-        // Fallback: se não houver nenhum signatário via usuário, usa e-mail do primeiro aluno
-        if ($signatarios->isEmpty()) {
-            $aluno = $this->matriculas->first()?->pessoa;
+        // Fallback: se não houver nenhum signatário via usuário, usa e-mail do aluno
+        if ($signatarios->isEmpty() && $mat) {
+            $aluno = $mat->pessoa;
             if ($aluno) {
                 $signatarios->push([
                     'nome' => $aluno->nome,
