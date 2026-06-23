@@ -222,7 +222,9 @@
                         @endforeach
                         <th>Média da etapa</th>
                         <th>Média da turma</th>
-                        <th>Frequência</th>
+                        @if ($item['is_ultima_etapa'])
+                            <th>Frequência</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -261,25 +263,27 @@
                                 {{ $mt !== null ? number_format($mt, 1, ',', '.') : '—' }}
                             </td>
 
-                            @php
-                                $freq = $linha['frequencia'];
-                                $corFreq = 'text-gray';
-                                if ($freq !== null) {
-                                    if ($freq >= 75)
-                                        $corFreq = '';
-                                    else
-                                        $corFreq = 'text-danger';
-                                }
-                            @endphp
-                            <td class="{{ $corFreq }}">
-                                {{ $freq !== null ? number_format($freq, 1, ',', '.') . '%' : '—' }}
-                            </td>
+                            @if ($item['is_ultima_etapa'])
+                                @php
+                                    $freq = $linha['frequencia'];
+                                    $corFreq = 'text-gray';
+                                    if ($freq !== null) {
+                                        if ($freq >= 75)
+                                            $corFreq = '';
+                                        else
+                                            $corFreq = 'text-danger';
+                                    }
+                                @endphp
+                                <td class="{{ $corFreq }}">
+                                    {{ $freq !== null ? number_format($freq, 1, ',', '.') . '%' : '—' }}
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
             </table>
 
-            @if(!empty($item['faltas_datas']))
+            @if($item['is_ultima_etapa'] && !empty($item['faltas_datas']))
                 <div style="margin-top: 5px; font-size: 10px;">
                     <strong>Dias com falta:</strong>
                     {{ implode(', ', $item['faltas_datas']) }}

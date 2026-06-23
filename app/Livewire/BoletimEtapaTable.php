@@ -111,55 +111,65 @@ class BoletimEtapaTable extends Component implements HasActions, HasForms, HasTa
                 });
         }
 
+        $isUltimaEtapa = ! EtapaAvaliativa::where('periodo_letivo_id', $etapa->periodo_letivo_id)
+            ->where('id', '>', $etapa->id)
+            ->exists();
+
+        $columns = [
+            TextColumn::make('nome')
+                ->label('Disciplina')
+                ->weight('bold'),
+            ...$dynamicColumns,
+            TextColumn::make('media_aluno')
+                ->label('Média Etapa')
+                ->alignCenter()
+                ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['media_final'] ?? null)
+                ->color(fn ($state) => round((float) $state, 1) >= 7.0 ? null : 'danger')
+                ->formatStateUsing(fn ($state) => $state !== null ? number_format(round((float) $state, 2), 1, ',', '.') : '—'),
+            TextColumn::make('media_turma')
+                ->label('Média Turma')
+                ->alignCenter()
+                ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['media_turma'] ?? null)
+                ->color('gray')
+                ->formatStateUsing(fn ($state) => $state !== null ? number_format(round((float) $state, 2), 1, ',', '.') : '—'),
+        ];
+
+        if ($isUltimaEtapa) {
+            $columns[] = TextColumn::make('frequencia')
+                ->label('Frequência')
+                ->alignCenter()
+                ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['frequencia'] ?? null)
+                ->formatStateUsing(fn ($state) => $state !== null ? number_format($state, 1, ',', '.').'%' : '—')
+                ->color(fn ($state) => match (true) {
+                    $state === null => 'gray',
+                    $state >= 75 => null,
+                    default => 'danger',
+                })
+                ->tooltip(function (Disciplina $record) use ($linhas) {
+                    $dados = $linhas->firstWhere('disciplina.id', $record->id);
+                    $faltas = $dados['faltas_datas'] ?? [];
+                    $presencas = $dados['presencas_count'] ?? 0;
+                    $total = $dados['total_aulas'] ?? 0;
+
+                    $tooltip = "Aulas: {$presencas}/{$total}";
+
+                    if (! empty($faltas)) {
+                        $tooltip .= ' | Faltas: '.implode(', ', $faltas);
+                    }
+
+                    return $tooltip;
+                });
+        }
+
         return $table
             ->query(Disciplina::query()
                 ->whereIn('id', $disciplinasIds)
                 ->orderBy('ordem_boletim')
                 ->orderBy('nome'))
             ->heading($etapa->nome)
-            ->columns([
-                TextColumn::make('nome')
-                    ->label('Disciplina')
-                    ->weight('bold'),
-                ...$dynamicColumns,
-                TextColumn::make('media_aluno')
-                    ->label('Média Etapa')
-                    ->alignCenter()
-                    ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['media_final'] ?? null)
-                    ->color(fn ($state) => round((float) $state, 1) >= 7.0 ? null : 'danger')
-                    ->formatStateUsing(fn ($state) => $state !== null ? number_format(round((float) $state, 2), 1, ',', '.') : '—'),
-                TextColumn::make('media_turma')
-                    ->label('Média Turma')
-                    ->alignCenter()
-                    ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['media_turma'] ?? null)
-                    ->color('gray')
-                    ->formatStateUsing(fn ($state) => $state !== null ? number_format(round((float) $state, 2), 1, ',', '.') : '—'),
-                TextColumn::make('frequencia')
-                    ->label('Frequência')
-                    ->alignCenter()
-                    ->state(fn (Disciplina $record) => $linhas->firstWhere('disciplina.id', $record->id)['frequencia'] ?? null)
-                    ->formatStateUsing(fn ($state) => $state !== null ? number_format($state, 1, ',', '.').'%' : '—')
-                    ->color(fn ($state) => match (true) {
-                        $state === null => 'gray',
-                        $state >= 75 => null,
-                        default => 'danger',
-                    })
-                    ->tooltip(function (Disciplina $record) use ($linhas) {
-                        $dados = $linhas->firstWhere('disciplina.id', $record->id);
-                        $faltas = $dados['faltas_datas'] ?? [];
-                        $presencas = $dados['presencas_count'] ?? 0;
-                        $total = $dados['total_aulas'] ?? 0;
-
-                        $tooltip = "Aulas: {$presencas}/{$total}";
-
-                        if (! empty($faltas)) {
-                            $tooltip .= ' | Faltas: '.implode(', ', $faltas);
-                        }
-
-                        return $tooltip;
-                    }),
-            ])
-            ->paginated(false);
+            ->columns($columns)
+            ->paginated(false)
+            ->stackedOnMobile();
     }
 
     public function makeFilamentTranslatableContentDriver(): ?TranslatableContentDriver

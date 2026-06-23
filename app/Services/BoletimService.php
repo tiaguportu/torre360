@@ -46,6 +46,10 @@ class BoletimService
             ->groupBy('avaliacao_id');
 
         foreach ($etapas as $etapa) {
+            $isUltimaEtapa = ! EtapaAvaliativa::where('periodo_letivo_id', $etapa->periodo_letivo_id)
+                ->where('id', '>', $etapa->id)
+                ->exists();
+
             $avaliacoes = Avaliacao::query()
                 ->where('turma_id', $turmaId)
                 ->where('etapa_avaliativa_id', $etapa->id)
@@ -77,7 +81,7 @@ class BoletimService
                     ];
                 }
 
-                $freqDados = $this->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $turmaId, $etapa);
+                $freqDados = $this->getFrequenciaDisciplinaEtapa($disciplina->id, $matricula->id, $turmaId, $etapa, $isUltimaEtapa);
 
                 $linhas[] = [
                     'disciplina' => $disciplina,
@@ -106,6 +110,7 @@ class BoletimService
                 'categorias' => $categorias,
                 'linhas' => $linhas,
                 'faltas_datas' => $todasFaltas,
+                'is_ultima_etapa' => $isUltimaEtapa,
             ];
         }
 
@@ -304,14 +309,20 @@ class BoletimService
         return $countAlunos > 0 ? $somaMediasAlunos / $countAlunos : null;
     }
 
-    public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa): array
+    public function getFrequenciaDisciplinaEtapa(int $disciplinaId, int $matriculaId, int $turmaId, EtapaAvaliativa $etapa, bool $acumulada = false): array
     {
         $dataFimEfetiva = min($etapa->data_fim, now()->toDateString());
+        $dataInicio = $etapa->data_inicio;
+
+        if ($acumulada) {
+            $dataInicio = EtapaAvaliativa::where('periodo_letivo_id', $etapa->periodo_letivo_id)
+                ->min('data_inicio') ?? $etapa->data_inicio;
+        }
 
         $cronogramas = CronogramaAula::query()
             ->where('turma_id', $turmaId)
             ->where('disciplina_id', $disciplinaId)
-            ->whereBetween('data', [$etapa->data_inicio, $dataFimEfetiva])
+            ->whereBetween('data', [$dataInicio, $dataFimEfetiva])
             ->get(['id', 'data']);
 
         $total = $cronogramas->count();
