@@ -293,6 +293,23 @@
     @endforeach
 
     <div class="footer">
+        @php
+            $ultimaEtapaDisponivel = end($etapas);
+            $frequenciasStr = [];
+            if ($ultimaEtapaDisponivel) {
+                foreach ($ultimaEtapaDisponivel['linhas'] as $linha) {
+                    $freq = $linha['frequencia'] !== null ? number_format($linha['frequencia'], 1, ',', '.') . '%' : '—';
+                    $frequenciasStr[] = $linha['disciplina']->nome . '=' . $freq;
+                }
+            }
+        @endphp
+
+        @if (!empty($frequenciasStr))
+            <div style="margin-bottom: 15px; font-size: 11px;">
+                <strong>Frequências acumuladas:</strong> {{ implode('; ', $frequenciasStr) }}.
+            </div>
+        @endif
+
         <p><strong>Legenda:</strong></p>
         @php
             $todasCategorias = collect($etapas)->pluck('categorias')->flatten()->unique('id')->sortBy('ordem_boletim');

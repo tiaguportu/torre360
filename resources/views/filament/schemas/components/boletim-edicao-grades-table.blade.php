@@ -157,9 +157,26 @@
             </div>
         @endforeach
         
+        @php
+            $ultimaEtapaDisponivel = $etapas->last();
+            $frequenciasStr = [];
+            if ($ultimaEtapaDisponivel) {
+                $dadosUltima = $schemaComponent->getDadosParaEtapa($ultimaEtapaDisponivel->id);
+                foreach ($dadosUltima['linhas'] as $linha) {
+                    $freq = $linha['frequencia'] !== null ? number_format($linha['frequencia'], 1, ',', '.') . '%' : '—';
+                    $frequenciasStr[] = $linha['disciplina']->nome . '=' . $freq;
+                }
+            }
+        @endphp
+        
         {{-- Legenda Unificada (Mantendo a paridade com o boletime-grades-table) --}}
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-            <div class="flex flex-wrap items-center gap-6 text-xs text-gray-600 dark:text-gray-400">
+            @if(!empty($frequenciasStr))
+                <div class="mb-4 text-xs text-gray-700 dark:text-gray-300">
+                    <span class="font-semibold text-gray-900 dark:text-white">Frequências acumuladas:</span> {{ implode('; ', $frequenciasStr) }}.
+                </div>
+            @endif
+            <div class="flex flex-wrap items-center gap-6 text-xs text-gray-600 dark:text-gray-400 @if(!empty($frequenciasStr)) border-t border-gray-200 pt-4 dark:border-gray-700 @endif">
                 <div class="flex items-center gap-2">
                     <span class="font-semibold italic text-primary-600">Dica:</span>
                     <span>As notas riscadas indicam avaliações substituídas por outras de maior valor. Clique em "Salvar" no rodapé para processar todas as alterações.</span>
