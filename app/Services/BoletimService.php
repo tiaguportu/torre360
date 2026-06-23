@@ -325,18 +325,21 @@ class BoletimService
             ->whereBetween('data', [$dataInicio, $dataFimEfetiva])
             ->get(['id', 'data']);
 
-        $total = $cronogramas->count();
-        if ($total === 0) {
-            return [
-                'frequencia' => null,
-                'faltas_datas' => [],
-            ];
-        }
-
         $frequencias = FrequenciaEscolar::query()
             ->where('matricula_id', $matriculaId)
             ->whereIn('cronograma_aula_id', $cronogramas->pluck('id'))
             ->get(['cronograma_aula_id', 'situacao']);
+
+        $totalRegistrado = $frequencias->count();
+        if ($totalRegistrado === 0) {
+            return [
+                'frequencia' => null,
+                'faltas_datas' => [],
+                'faltas_cruas' => [],
+                'presencas_count' => 0,
+                'total_aulas' => 0,
+            ];
+        }
 
         $presencas = $frequencias->where('situacao', 'presente')->count();
 
@@ -348,11 +351,11 @@ class BoletimService
             ->toArray();
 
         return [
-            'frequencia' => ($presencas / $total) * 100,
+            'frequencia' => ($presencas / $totalRegistrado) * 100,
             'faltas_datas' => $faltasDatas,
             'faltas_cruas' => $cronogramas->whereIn('id', $faltasIds)->pluck('data')->values()->toArray(),
             'presencas_count' => $presencas,
-            'total_aulas' => $total,
+            'total_aulas' => $totalRegistrado,
         ];
     }
 }
