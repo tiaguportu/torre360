@@ -25,6 +25,7 @@ use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
+use App\Http\Controllers\QuestionarioRespostaPDFController;
 
 // Rota de visualização de documentos privados (autenticação tratada no controller para evitar 403 do middleware)
 Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
@@ -37,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
 
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
+    Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');
