@@ -169,11 +169,48 @@
 
         $totalRespostas = count($respostas);
         $colWidth = floor(60 / $totalRespostas); // Divide o espaço restante igualmente
+
+        $instituicao = \App\Models\InstituicaoEnsino::first();
+        $logoBase64 = null;
+        if ($instituicao?->logo) {
+            try {
+                $disk = config('filament.default_filesystem_disk', 'local');
+                if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($instituicao->logo)) {
+                    $logoContent = \Illuminate\Support\Facades\Storage::disk($disk)->get($instituicao->logo);
+                    $mimeType = \Illuminate\Support\Facades\Storage::disk($disk)->mimeType($instituicao->logo);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+                } else if (\Illuminate\Support\Facades\Storage::disk('public')->exists($instituicao->logo)) {
+                    $logoContent = \Illuminate\Support\Facades\Storage::disk('public')->get($instituicao->logo);
+                    $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($instituicao->logo);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+                }
+            } catch (\Exception $e) {
+                // Erro ao carregar logo
+            }
+        }
     @endphp
 
     <div class="header">
-        <h1>Comparação de Respostas de Questionários</h1>
-        <p>Documento gerado em: {{ now()->format('d/m/Y H:i:s') }}</p>
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 80px; border: none; vertical-align: middle;">
+                    @if ($logoBase64)
+                        <img src="{{ $logoBase64 }}" style="width: 80px; height: auto;">
+                    @else
+                        <div style="width: 80px; height: 80px; background-color: #eee; border-radius: 5px; text-align: center; line-height: 80px; color: #999; font-size: 16px; font-weight: bold;">
+                            T360
+                        </div>
+                    @endif
+                </td>
+                <td style="border: none; vertical-align: middle; padding-left: 20px; text-align: left;">
+                    <h1 style="margin: 0; font-size: 16px; text-transform: uppercase; color: #111;">Comparação de Respostas de Questionários</h1>
+                    <p style="margin: 3px 0 0 0; font-size: 10px; color: #666;">Documento gerado em: {{ now()->format('d/m/Y H:i:s') }}</p>
+                    @if($instituicao)
+                        <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold; color: #333;">{{ $instituicao->nome }}</p>
+                    @endif
+                </td>
+            </tr>
+        </table>
     </div>
 
     <table class="comparison-table">
