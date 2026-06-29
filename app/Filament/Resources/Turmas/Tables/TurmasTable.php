@@ -149,10 +149,70 @@ class TurmasTable
                     })
                     ->modalWidth('7xl')
                     ->modalSubmitActionLabel('Salvar Avaliações'),
+                Action::make('imprimirBoletins')
+                    ->label('Imprimir Boletins')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->modalHeading('Imprimir Boletins da Turma')
+                    ->modalDescription('Selecione a etapa avaliativa para os boletins desta turma.')
+                    ->modalSubmitActionLabel('Baixar PDF')
+                    ->form([
+                        Select::make('etapa_id')
+                            ->label('Etapa Avaliativa')
+                            ->options(function () {
+                                $etapas = EtapaAvaliativa::query()
+                                    ->orderBy('id')
+                                    ->pluck('nome', 'id')
+                                    ->toArray();
+                                return [0 => 'Todas as Etapas'] + $etapas;
+                            })
+                            ->default(0)
+                            ->required(),
+                    ])
+                    ->action(function (Turma $record, array $data) {
+                        $params = [
+                            'turma_ids' => [$record->id],
+                        ];
+                        if ($data['etapa_id'] > 0) {
+                            $params['etapa_id'] = $data['etapa_id'];
+                        }
+                        return redirect()->route('turmas.boletins.download', $params);
+                    })
+                    ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    BulkAction::make('imprimirBoletinsLote')
+                        ->label('Imprimir Boletins em Lote')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->modalHeading('Imprimir Boletins das Turmas')
+                        ->modalDescription('Selecione a etapa avaliativa para os boletins das turmas selecionadas.')
+                        ->modalSubmitActionLabel('Baixar PDF')
+                        ->form([
+                            Select::make('etapa_id')
+                                ->label('Etapa Avaliativa')
+                                ->options(function () {
+                                    $etapas = EtapaAvaliativa::query()
+                                        ->orderBy('id')
+                                        ->pluck('nome', 'id')
+                                        ->toArray();
+                                    return [0 => 'Todas as Etapas'] + $etapas;
+                                })
+                                ->default(0)
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Support\Collection $records, array $data) {
+                            $params = [
+                                'turma_ids' => $records->pluck('id')->toArray(),
+                            ];
+                            if ($data['etapa_id'] > 0) {
+                                $params['etapa_id'] = $data['etapa_id'];
+                            }
+                            return redirect()->route('turmas.boletins.download', $params);
+                        })
+                        ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
                 ]),
             ])
             ->stackedOnMobile();

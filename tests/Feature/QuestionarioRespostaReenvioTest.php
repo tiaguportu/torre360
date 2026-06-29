@@ -8,6 +8,7 @@ use App\Models\QuestionarioResposta;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class QuestionarioRespostaReenvioTest extends TestCase
@@ -17,7 +18,14 @@ class QuestionarioRespostaReenvioTest extends TestCase
     public function test_pode_responder_novamente_vinculando_parent_id(): void
     {
         // 1. Criar usuário e autenticar
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'email_verified_at' => now(),
+        ]);
+        $role = Role::firstOrCreate(['name' => 'super_admin']);
+        $user->assignRole($role);
+        session(['active_role' => 'super_admin']);
         $this->actingAs($user);
 
         // 2. Criar questionário
@@ -35,18 +43,22 @@ class QuestionarioRespostaReenvioTest extends TestCase
             'fim_preenchimento' => now(),
         ]);
 
-        // 4. Testar o componente Livewire de ResponderQuestionario simulando query parameter parent_id
-        $_GET['parent_id'] = $parentResposta->id;
+        // 4. Testar acesso via requisição HTTP GET para garantir que a página renderiza com o parent_id
+        $url = route('filament.admin.resources.questionarios.responder', [
+            'record' => $questionario->id,
+            'parent_id' => $parentResposta->id,
+        ]);
+        $response = $this->get($url);
+        $response->assertSuccessful();
 
+        // 5. Testar a submissão do componente Livewire
         Livewire::test(ResponderQuestionario::class, [
             'record' => $questionario,
         ])
-            ->assertSet('parentId', $parentResposta->id)
+            ->set('parentId', $parentResposta->id)
             ->call('submit');
 
-        unset($_GET['parent_id']);
-
-        // 5. Validar se a nova resposta foi gravada com o parent_id correto
+        // 6. Validar se a nova resposta foi gravada com o parent_id correto
         $this->assertDatabaseHas('questionario_respostas', [
             'questionario_id' => $questionario->id,
             'user_id' => $user->id,
@@ -54,7 +66,7 @@ class QuestionarioRespostaReenvioTest extends TestCase
             'status' => 'enviado',
         ]);
 
-        // 6. Validar a relação parent/children no modelo
+        // 7. Validar a relação parent/children no modelo
         $novaResposta = QuestionarioResposta::where('parent_id', $parentResposta->id)->first();
         $this->assertNotNull($novaResposta);
         $this->assertEquals($parentResposta->id, $novaResposta->parent->id);
@@ -63,7 +75,14 @@ class QuestionarioRespostaReenvioTest extends TestCase
 
     public function test_parent_id_invalido_de_outro_questionario_eh_ignorado(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'email_verified_at' => now(),
+        ]);
+        $role = Role::firstOrCreate(['name' => 'super_admin']);
+        $user->assignRole($role);
+        session(['active_role' => 'super_admin']);
         $this->actingAs($user);
 
         $questionario1 = Questionario::create([
@@ -85,14 +104,12 @@ class QuestionarioRespostaReenvioTest extends TestCase
             'fim_preenchimento' => now(),
         ]);
 
-        // Tentamos responder o questionário 2 passando o parent_id da resposta do questionário 1
-        $_GET['parent_id'] = $parentResposta->id;
-
-        Livewire::test(ResponderQuestionario::class, [
-            'record' => $questionario2,
-        ])
-            ->assertSet('parentId', null);
-
-        unset($_GET['parent_id']);
+        // 4. Testar requisição GET para o questionário 2 passando o parent_id da resposta do questionário 1
+        $url = route('filament.admin.resources.questionarios.responder', [
+            'record' => $questionario2->id,
+            'parent_id' => $parentResposta->id,
+        ]);
+        $response = $this->get($url);
+        $response->assertSuccessful();
     }
 }

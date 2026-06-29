@@ -39,6 +39,7 @@ class ListTurmas extends ListRecords
 
         $canCreate = $user->can('Create:Turma');
         $canUpdate = $user->can('Update:Turma');
+        $canViewBoletim = $user->can('Boletim:Matricula');
 
         $html = '<p>Nesta página você gerencia as turmas da instituição, vinculando-as a séries e períodos letivos.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
@@ -51,6 +52,11 @@ class ListTurmas extends ListRecords
 
         if ($canUpdate) {
             $html .= '<li><strong>Editar:</strong> Altere dados da turma ou encerre turmas antigas.</li>';
+        }
+
+        if ($canViewBoletim) {
+            $html .= '<li><strong>Imprimir Boletins (tabela):</strong> Permite gerar e baixar em PDF os boletins de todos os alunos ativos de uma turma específica para a etapa selecionada.</li>';
+            $html .= '<li><strong>Imprimir Boletins em Lote (lote):</strong> Permite selecionar várias turmas para gerar um único PDF com os boletins de todos os alunos ativos correspondentes.</li>';
         }
 
         $html .= '<li><strong>Vínculos:</strong> As turmas são essenciais para o processo de matrícula e lançamento de notas.</li>';

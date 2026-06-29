@@ -38,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
 
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
+    Route::get('/turmas/boletins/download', [BoletimPDFController::class, 'downloadTurmas'])->name('turmas.boletins.download');
     Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
 });
 
