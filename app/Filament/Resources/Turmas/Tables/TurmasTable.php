@@ -61,7 +61,7 @@ class TurmasTable
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make(),
                 Action::make('avaliarHabilidades')
                     ->label('Avaliar Habilidades')
@@ -187,9 +187,6 @@ class TurmasTable
                         $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
                         NotaHabilidade::whereIn('matricula_id', $record->matriculas()->pluck('id'))->exists()
                     )),
-            ])
-            ->recordActions([
-                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
