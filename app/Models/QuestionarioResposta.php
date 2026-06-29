@@ -11,6 +11,7 @@ class QuestionarioResposta extends Model
     protected $fillable = [
         'questionario_id',
         'user_id',
+        'parent_id',
         'perfil_institucional',
         'inicio_preenchimento',
         'fim_preenchimento',
@@ -30,6 +31,16 @@ class QuestionarioResposta extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(QuestionarioResposta::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(QuestionarioResposta::class, 'parent_id');
     }
 
     public function perguntaRespostas(): HasMany

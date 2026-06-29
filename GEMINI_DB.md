@@ -273,8 +273,20 @@ Estrutura de ensino e turmas.
     - `alvo_id`: ID da entidade correspondente.
 - **Propósito:** Controla a visibilidade e permissão de resposta baseada no perfil ou identificação do usuário.
 
-### `questionario_respostas` e `questionario_pergunta_respostas`
-- Registro das submissões e respostas individuais dos usuários.
+### `questionario_respostas`
+- **Representa:** Submissão de respostas de um questionário.
+- **Campos Principais:**
+    - `questionario_id`: ID do questionário correspondente.
+    - `user_id`: ID do usuário respondente (nullable para anônimos).
+    - `parent_id`: ID da resposta original (caso seja um reenvio/responder novamente).
+    - `perfil_institucional`: Perfil de acesso do usuário no envio.
+    - `status`: Estado do envio (pendente, enviado).
+- **Relacionamentos:** BelongsTo `questionarios`, BelongsTo `users`, BelongsTo `parent` (`questionario_respostas`), HasMany `children` (`questionario_respostas`), HasMany `perguntaRespostas`.
+
+### `questionario_pergunta_respostas`
+- **Representa:** Respostas individuais para cada pergunta de uma submissão de questionário.
+- **Campos Principais:** `questionario_resposta_id`, `questionario_pergunta_id`, `resposta_texto`, `resposta_json`.
+- **Relacionamentos:** BelongsTo `questionario_respostas`, BelongsTo `questionario_perguntas`.
 
 ---
 

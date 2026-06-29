@@ -25,6 +25,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use Livewire\Attributes\Url;
 
 class ResponderQuestionario extends Page
 {
@@ -93,9 +94,22 @@ class ResponderQuestionario extends Page
 
     public $data = [];
 
+    public ?int $parentId = null;
+
     public function mount(Questionario $record): void
     {
         $this->record = $record;
+
+        $this->parentId = request()->query('parent_id') ? (int) request()->query('parent_id') : null;
+
+        if ($this->parentId) {
+            $parentResposta = QuestionarioResposta::where('id', $this->parentId)
+                ->where('questionario_id', $this->record->id)
+                ->first();
+            if (! $parentResposta) {
+                $this->parentId = null;
+            }
+        }
 
         // Verificar se o usuário faz parte do público-alvo ou se o questionário é visível
         if (! $this->record->podeSerRespondidoPor(Auth::user())) {
@@ -306,6 +320,7 @@ class ResponderQuestionario extends Page
         $respostaPrincipal = QuestionarioResposta::create([
             'questionario_id' => $this->record->id,
             'user_id' => $this->record->is_anonimo ? null : Auth::id(),
+            'parent_id' => $this->parentId,
             'perfil_institucional' => Auth::user()?->roles()->first()?->name ?? 'visitante',
             'inicio_preenchimento' => now(),
             'fim_preenchimento' => now(),

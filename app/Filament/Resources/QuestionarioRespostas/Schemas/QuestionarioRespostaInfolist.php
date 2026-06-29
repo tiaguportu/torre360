@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas\Schemas;
 
+use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use App\Models\QuestionarioPerguntaResposta;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -37,6 +38,32 @@ class QuestionarioRespostaInfolist
                             ->label('Data de Envio')
                             ->dateTime('d/m/Y H:i'),
                     ]),
+
+                Section::make('Respostas Relacionadas')
+                    ->description('Vínculos desta resposta com outras submissões do mesmo questionário.')
+                    ->schema([
+                        TextEntry::make('parent')
+                            ->label('Resposta Original (Origem)')
+                            ->state(fn ($record) => $record->parent_id ? "Visualizar Resposta Original (#{$record->parent_id}) - Enviada em ".$record->parent?->fim_preenchimento?->format('d/m/Y H:i') : null)
+                            ->url(fn ($record) => $record->parent_id ? QuestionarioRespostaResource::getUrl('view', ['record' => $record->parent_id]) : null)
+                            ->color('primary')
+                            ->underline()
+                            ->visible(fn ($record) => $record->parent_id !== null),
+
+                        RepeatableEntry::make('children')
+                            ->label('Respostas Filhas (Reenvios)')
+                            ->schema([
+                                TextEntry::make('id')
+                                    ->hiddenLabel()
+                                    ->state(fn ($record) => "Resposta #{$record->id} - Enviada por ".($record->user?->name ?? 'Anônimo').' em '.$record->fim_preenchimento?->format('d/m/Y H:i'))
+                                    ->url(fn ($record) => QuestionarioRespostaResource::getUrl('view', ['record' => $record->id]))
+                                    ->color('primary')
+                                    ->underline(),
+                            ])
+                            ->visible(fn ($record) => $record->children()->exists())
+                            ->columns(1),
+                    ])
+                    ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
 
                 Section::make('Perguntas e Respostas')
                     ->columns(1)
