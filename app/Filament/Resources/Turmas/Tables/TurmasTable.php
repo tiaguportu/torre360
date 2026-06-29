@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Turmas\Tables;
 use App\Enums\SituacaoMatricula;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
+use App\Models\NotaHabilidade;
 use App\Models\Turma;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -60,7 +61,7 @@ class TurmasTable
             ->filters([
                 //
             ])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
                 Action::make('avaliarHabilidades')
                     ->label('Avaliar Habilidades')
@@ -182,7 +183,13 @@ class TurmasTable
 
                         return redirect()->route('turmas.boletins.download', $params);
                     })
-                    ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
+                    ->visible(fn (Turma $record) => auth()->user()->can('Boletim:Matricula') && (
+                        $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
+                        NotaHabilidade::whereIn('matricula_id', $record->matriculas()->pluck('id'))->exists()
+                    )),
+            ])
+            ->recordActions([
+                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

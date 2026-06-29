@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
+use App\Models\Avaliacao;
+use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
 use App\Models\Matricula;
+use App\Models\Nota;
 use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Models\User;
@@ -117,13 +120,39 @@ class ImprimirBoletinsTurmaTest extends TestCase
         $response->assertRedirect(route('filament.admin.auth.login'));
     }
 
-    public function test_tela_de_listagem_de_turmas_carrega_com_as_acoes(): void
+    public function test_tela_de_listagem_de_turmas_exibe_botao_imprimir_apenas_se_houver_notas(): void
     {
         $this->actingAs($this->adminUser);
 
+        // 1. Criar turma que possui notas
+        $turmaComNotas = Turma::factory()->create([
+            'periodo_letivo_id' => $this->etapa->periodo_letivo_id,
+        ]);
+        $matricula = Matricula::factory()->create([
+            'turma_id' => $turmaComNotas->id,
+            'situacao' => 'ativa',
+        ]);
+        $avaliacao = Avaliacao::create([
+            'turma_id' => $turmaComNotas->id,
+            'disciplina_id' => Disciplina::factory()->create()->id,
+            'etapa_avaliativa_id' => $this->etapa->id,
+            'peso_etapa_avaliativa' => 1.0,
+            'nota_maxima' => 10.0,
+            'data_ocorrencia' => now()->toDateString(),
+            'data_limite_lancamento' => now()->addDays(5)->toDateString(),
+        ]);
+        Nota::create([
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => $matricula->id,
+            'valor' => 8.5,
+        ]);
+
+        // 2. Testar no Livewire que o botão imprimirBoletins está visível na turma com notas
+        // e oculto na turma que não possui notas ($this->turma)
         Livewire::test(ListTurmas::class)
             ->assertStatus(200)
-            ->assertTableActionExists('imprimirBoletins')
+            ->assertTableActionVisible('imprimirBoletins', $turmaComNotas)
+            ->assertTableActionHidden('imprimirBoletins', $this->turma)
             ->assertTableBulkActionExists('imprimirBoletinsLote');
     }
 }
