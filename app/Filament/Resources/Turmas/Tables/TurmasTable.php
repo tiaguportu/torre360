@@ -7,6 +7,7 @@ use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\Turma;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -22,6 +23,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 class TurmasTable
 {
@@ -164,6 +166,7 @@ class TurmasTable
                                     ->orderBy('id')
                                     ->pluck('nome', 'id')
                                     ->toArray();
+
                                 return [0 => 'Todas as Etapas'] + $etapas;
                             })
                             ->default(0)
@@ -176,6 +179,7 @@ class TurmasTable
                         if ($data['etapa_id'] > 0) {
                             $params['etapa_id'] = $data['etapa_id'];
                         }
+
                         return redirect()->route('turmas.boletins.download', $params);
                     })
                     ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
@@ -198,18 +202,20 @@ class TurmasTable
                                         ->orderBy('id')
                                         ->pluck('nome', 'id')
                                         ->toArray();
+
                                     return [0 => 'Todas as Etapas'] + $etapas;
                                 })
                                 ->default(0)
                                 ->required(),
                         ])
-                        ->action(function (\Illuminate\Support\Collection $records, array $data) {
+                        ->action(function (Collection $records, array $data) {
                             $params = [
                                 'turma_ids' => $records->pluck('id')->toArray(),
                             ];
                             if ($data['etapa_id'] > 0) {
                                 $params['etapa_id'] = $data['etapa_id'];
                             }
+
                             return redirect()->route('turmas.boletins.download', $params);
                         })
                         ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
