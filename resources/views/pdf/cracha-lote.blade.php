@@ -99,6 +99,23 @@
                         <img class="photo-element" src="{{ $fotoUrl }}" />
                     </div>
                 
+                @elseif (($obj['type'] ?? '') === 'image' && !str_starts_with($obj['id'] ?? '', 'foto'))
+                    {{-- É uma imagem inserida livremente pelo usuário (Editável) --}}
+                    @php
+                        $imgSrc = $obj['src'] ?? '';
+                    @endphp
+                    @if ($imgSrc)
+                    <div class="element-wrapper" style="
+                        left: {{ $left }}pt;
+                        top: {{ $top }}pt;
+                        width: {{ $width }}pt;
+                        height: {{ $height }}pt;
+                        z-index: {{ $zIndex }};
+                    ">
+                        <img class="photo-element" src="{{ $imgSrc }}" />
+                    </div>
+                    @endif
+                
                 @elseif (($obj['type'] ?? '') === 'text' || ($obj['type'] ?? '') === 'i-text')
                     {{-- É um elemento de texto --}}
                     @php

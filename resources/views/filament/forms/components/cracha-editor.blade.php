@@ -207,30 +207,37 @@
             e.dataTransfer.effectAllowed = 'copy';
         },
         
-        setBackground(e) {
-            let file = e.target.files[0];
+        addImage(event) {
+            let file = event.target.files[0];
             if (!file) return;
             
             let reader = new FileReader();
             reader.onload = (f) => {
                 let data = f.target.result;
                 fabric.Image.fromURL(data, (img) => {
+                    // Redimensiona se for maior que o canvas
+                    if (img.width > this.canvas.width) {
+                        img.scaleToWidth(this.canvas.width - 40);
+                    }
+                    if (img.height > this.canvas.height) {
+                        img.scaleToHeight(this.canvas.height - 40);
+                    }
+                    
                     img.set({
-                        scaleX: this.canvas.width / img.width,
-                        scaleY: this.canvas.height / img.height
+                        left: (this.canvas.width / 2) - (img.getScaledWidth() / 2),
+                        top: (this.canvas.height / 2) - (img.getScaledHeight() / 2)
                     });
-                    this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
+                    
+                    this.canvas.add(img);
+                    this.canvas.setActiveObject(img);
                     this.canvas.renderAll();
                     this.updateState();
+                    
+                    // Reseta o input
+                    event.target.value = '';
                 });
             };
             reader.readAsDataURL(file);
-        },
-        
-        removeBackground() {
-            this.canvas.setBackgroundImage(null, this.canvas.renderAll.bind(this.canvas));
-            this.canvas.renderAll();
-            this.updateState();
         },
         
         handleSelection(obj) {
@@ -417,17 +424,14 @@
                 </div>
             </div>
 
-            <!-- Imagem de Fundo -->
+            <!-- Inserir Imagem -->
             <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-                <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Fundo do Crachá</h3>
+                <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Imagens</h3>
                 <div class="flex space-x-2">
                     <label class="flex-1 inline-flex justify-center items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-750 dark:text-gray-200 text-sm font-semibold rounded-lg cursor-pointer transition select-none">
-                        <span>Carregar Fundo</span>
-                        <input type="file" accept="image/*" @change="setBackground($event)" class="hidden">
+                        <span>Carregar Imagem (Editável)</span>
+                        <input type="file" accept="image/*" @change="addImage($event)" class="hidden">
                     </label>
-                    <button type="button" @click="removeBackground()" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-650 dark:bg-red-950/20 dark:hover:bg-red-900/30 dark:text-red-400 text-sm font-semibold rounded-lg transition select-none">
-                        Limpar
-                    </button>
                 </div>
             </div>
 
