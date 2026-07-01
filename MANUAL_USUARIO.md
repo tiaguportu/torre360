@@ -962,7 +962,8 @@ O módulo de crachás do Torre360 permite criar modelos de crachás com um edito
    - **Adicionar Texto Livre:** Insira uma caixa de texto customizada clicando em "Inserir Texto Livre".
    - **Inserir Campos de Pessoas (Variáveis):** Clique nas opções como "Nome Completo", "Profissão" ou "CPF" para inserir caixas de texto cujos conteúdos serão substituídos automaticamente pelos dados reais da pessoa no momento da impressão.
    - **Plano de Fundo:** Carregue uma imagem do seu computador usando a opção "Carregar Fundo" para definir a imagem de fundo do crachá.
-   - **Controles de Formatação:** Ao clicar sobre qualquer texto no crachá, você poderá alterar o tamanho da fonte, a cor do texto, aplicar estilos (negrito/itálico), mudar o alinhamento ou excluir o elemento selecionado.
+   - **Controles de Formatação:** Ao clicar sobre qualquer texto no crachá, você poderá alterar a família da fonte (Arial, Times New Roman, Georgia, etc.), o tamanho, a cor, aplicar estilos (negrito/itálico), mudar o alinhamento do texto ou excluir o elemento selecionado.
+   - **Alinhamento & Profundidade:** Utilize os botões rápidos de alinhamento e profundidade para centralizar elementos horizontalmente ou definir quais objetos ficam por cima dos outros (Trazer para Frente / Enviar para Trás).
    - **Arraste e Redimensionamento:** Use o mouse para mover ou alterar as dimensões dos elementos na tela.
 5. Clique em **Salvar** para registrar as alterações de layout.
 

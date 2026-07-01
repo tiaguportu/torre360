@@ -11,6 +11,7 @@
         isBold: false,
         isItalic: false,
         textAlign: 'left',
+        fontFamily: 'sans-serif',
         
         init() {
             // Garante que o Fabric.js esteja carregado
@@ -211,6 +212,7 @@
                 this.isBold = obj.fontWeight === 'bold';
                 this.isItalic = obj.fontStyle === 'italic';
                 this.textAlign = obj.textAlign;
+                this.fontFamily = obj.fontFamily || 'sans-serif';
             }
         },
         
@@ -234,6 +236,7 @@
                 if (property === 'fill') this.textColor = value;
                 if (property === 'fontSize') this.fontSize = parseInt(value);
                 if (property === 'textAlign') this.textAlign = value;
+                if (property === 'fontFamily') this.fontFamily = value;
             }
             
             this.canvas.renderAll();
@@ -369,6 +372,21 @@
                                 <input type="number" :value="fontSize" min="8" max="72" @input="updateSelectedStyle('fontSize', $event.target.value)"
                                        class="w-full h-9 px-2 rounded border border-gray-250 dark:border-gray-700 bg-transparent text-sm dark:text-white">
                             </div>
+                        </div>
+
+                        <!-- Família da Fonte -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Família da Fonte</label>
+                            <select :value="fontFamily" @change="updateSelectedStyle('fontFamily', $event.target.value)"
+                                    class="w-full h-9 px-2 rounded border border-gray-255 dark:border-gray-700 bg-transparent text-sm dark:text-white dark:bg-gray-900">
+                                <option value="sans-serif">Sans-Serif (Padrão)</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Impact">Impact</option>
+                            </select>
                         </div>
 
                         <!-- Estilos Rápidos -->

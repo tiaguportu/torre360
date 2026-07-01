@@ -125,6 +125,7 @@
                         $fontStyle = ($obj['fontStyle'] ?? 'normal') === 'italic' ? 'italic' : 'normal';
                         $textAlign = $obj['textAlign'] ?? 'left';
                         $lineHeight = $obj['lineHeight'] ?? 1.16;
+                        $fontFamily = $obj['fontFamily'] ?? 'sans-serif';
                     @endphp
                     <div class="element-wrapper text-element" style="
                         left: {{ $left }}pt;
@@ -135,6 +136,7 @@
                         color: {{ $color }};
                         font-weight: {{ $fontWeight }};
                         font-style: {{ $fontStyle }};
+                        font-family: {{ $fontFamily }};
                         text-align: {{ $textAlign }};
                         line-height: {{ $lineHeight }};
                         z-index: {{ $zIndex }};
