@@ -38,7 +38,7 @@
             // Limpa o contêiner DOM e recria a tag canvas limpa antes de instanciar o Fabric
             const wrapper = document.getElementById('canvas-container-wrapper');
             if (wrapper) {
-                wrapper.innerHTML = '<canvas id="cracha-fabric-canvas"></canvas>';
+                wrapper.innerHTML = '<canvas id=\'cracha-fabric-canvas\'></canvas>';
             }
             
             this.canvas = new fabric.Canvas('cracha-fabric-canvas', {
