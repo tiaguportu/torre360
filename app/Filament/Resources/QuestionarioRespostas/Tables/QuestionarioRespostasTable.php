@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\QuestionarioRespostas\Tables;
 
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
+use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\QuestionarioResposta;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
