@@ -1,3 +1,14 @@
+<style>
+    /* Impede que o Tailwind e CSS global do Filament apliquem max-width ou redimensionamento inadequado nos canvas do Fabric.js */
+    #canvas-container-wrapper canvas {
+        max-width: none !important;
+        max-height: none !important;
+        width: auto !important;
+        height: auto !important;
+        display: inline-block !important;
+    }
+</style>
+
 <div class="space-y-4" wire:ignore
      x-data="{
         canvas: null,
@@ -6,6 +17,7 @@
         altura: $wire.entangle('data.altura'),
         hasSelection: false,
         selectedType: null,
+        isTextSelected: false,
         textColor: '#000000',
         fontSize: 16,
         isBold: false,
@@ -53,6 +65,8 @@
                 let layoutData = typeof this.state === 'string' ? JSON.parse(this.state) : this.state;
                 if (layoutData && typeof layoutData === 'object') {
                     this.canvas.loadFromJSON(layoutData, () => {
+                        // Força todos os objetos a recalcularem suas coordenadas de alça de controle após o carregamento
+                        this.canvas.getObjects().forEach(obj => obj.setCoords());
                         this.canvas.renderAll();
                     });
                 }
@@ -131,6 +145,7 @@
             let text = new fabric.IText(textStr, options);
             this.canvas.add(text);
             this.canvas.setActiveObject(text);
+            text.setCoords();
             this.canvas.renderAll();
         },
 
@@ -168,6 +183,7 @@
 
             this.canvas.add(group);
             this.canvas.setActiveObject(group);
+            group.setCoords();
             this.canvas.renderAll();
         },
         
@@ -206,7 +222,14 @@
             this.hasSelection = true;
             this.selectedType = obj.type;
             
-            if (obj.type === 'text' || obj.type === 'i-text') {
+            const isText = obj.type === 'text' || 
+                           obj.type === 'i-text' || 
+                           obj.type === 'textbox' || 
+                           (obj && typeof obj.text === 'string');
+            
+            this.isTextSelected = isText;
+            
+            if (isText) {
                 this.textColor = obj.fill;
                 this.fontSize = obj.fontSize;
                 this.isBold = obj.fontWeight === 'bold';
@@ -219,6 +242,7 @@
         clearSelection() {
             this.hasSelection = false;
             this.selectedType = null;
+            this.isTextSelected = false;
         },
         
         updateSelectedStyle(property, value) {
@@ -356,7 +380,7 @@
             <div x-show="hasSelection" x-transition class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-sm font-bold text-gray-750 dark:text-gray-200 uppercase tracking-wider">Objeto Selecionado</h3>
                 
-                <div x-show="selectedType === 'text' || selectedType === 'i-text'">
+                <div x-show="isTextSelected">
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Cor do Texto -->
