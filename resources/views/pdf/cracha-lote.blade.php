@@ -35,11 +35,17 @@
             height: {{ $altura }}pt;
             z-index: 1;
         }
-        .text-element {
+        .element-wrapper {
             position: absolute;
-            z-index: 2;
             box-sizing: border-box;
+        }
+        .text-element {
             word-wrap: break-word;
+        }
+        .photo-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -50,8 +56,45 @@
                 <img class="background-image" src="{{ $backgroundImage }}" />
             @endif
             
-            @foreach ($objects as $obj)
-                @if (($obj['type'] ?? '') === 'text' || ($obj['type'] ?? '') === 'i-text')
+            @foreach ($objects as $index => $obj)
+                @php
+                    // Z-index calculation (background is 1, so elements start at 2 + index)
+                    $zIndex = 2 + $index;
+                    
+                    // Conversion of pixels (Fabric.js) to points (DomPDF)
+                    $scaleX = $obj['scaleX'] ?? 1;
+                    $scaleY = $obj['scaleY'] ?? 1;
+                    
+                    $left = ($obj['left'] ?? 0) * 0.75;
+                    $top = ($obj['top'] ?? 0) * 0.75;
+                    $width = ($obj['width'] ?? 200) * $scaleX * 0.75;
+                    $height = ($obj['height'] ?? 30) * $scaleY * 0.75;
+                @endphp
+                
+                @if (isset($obj['id']) && str_starts_with($obj['id'], 'foto'))
+                    {{-- É um elemento de foto --}}
+                    @php
+                        // Em DomPDF, o src pode ser uma URL externa, ou podemos usar fallback se a foto estiver vazia
+                        $fotoUrl = $pessoa->foto ? \Illuminate\Support\Facades\Storage::url($pessoa->foto) : 'https://ui-avatars.com/api/?name=' . urlencode($pessoa->nome) . '&color=7F9CF5&background=EBF4FF';
+                        
+                        // Se estiver usando public disk e o storage::url não retornar absoluto, precisamos de path absoluto pro DOMPDF
+                        if ($pessoa->foto && !str_starts_with($fotoUrl, 'http')) {
+                            // Converte url local em path absoluto para o dompdf
+                            $fotoUrl = public_path(\Illuminate\Support\Facades\Storage::url($pessoa->foto));
+                        }
+                    @endphp
+                    <div class="element-wrapper" style="
+                        left: {{ $left }}pt;
+                        top: {{ $top }}pt;
+                        width: {{ $width }}pt;
+                        height: {{ $height }}pt;
+                        z-index: {{ $zIndex }};
+                    ">
+                        <img class="photo-element" src="{{ $fotoUrl }}" />
+                    </div>
+                
+                @elseif (($obj['type'] ?? '') === 'text' || ($obj['type'] ?? '') === 'i-text')
+                    {{-- É um elemento de texto --}}
                     @php
                         // Substitui as variáveis dinamicamente na string
                         $textoSubstituido = str_replace([
@@ -76,23 +119,14 @@
                             $pessoa->cor_raca?->value ?? $pessoa->cor_raca ?? '',
                         ], $obj['text'] ?? '');
                         
-                        // Conversão de pixels (Fabric.js) para pontos (DomPDF)
-                        $scaleX = $obj['scaleX'] ?? 1;
-                        $scaleY = $obj['scaleY'] ?? 1;
-                        
-                        $left = ($obj['left'] ?? 0) * 0.75;
-                        $top = ($obj['top'] ?? 0) * 0.75;
-                        $width = ($obj['width'] ?? 200) * $scaleX * 0.75;
-                        $height = ($obj['height'] ?? 30) * $scaleY * 0.75;
                         $fontSize = ($obj['fontSize'] ?? 16) * $scaleY * 0.75;
-                        
                         $color = $obj['fill'] ?? '#000000';
                         $fontWeight = ($obj['fontWeight'] ?? 'normal') === 'bold' ? 'bold' : 'normal';
                         $fontStyle = ($obj['fontStyle'] ?? 'normal') === 'italic' ? 'italic' : 'normal';
                         $textAlign = $obj['textAlign'] ?? 'left';
                         $lineHeight = $obj['lineHeight'] ?? 1.16;
                     @endphp
-                    <div class="text-element" style="
+                    <div class="element-wrapper text-element" style="
                         left: {{ $left }}pt;
                         top: {{ $top }}pt;
                         width: {{ $width }}pt;
@@ -103,6 +137,7 @@
                         font-style: {{ $fontStyle }};
                         text-align: {{ $textAlign }};
                         line-height: {{ $lineHeight }};
+                        z-index: {{ $zIndex }};
                     ">
                         {{ $textoSubstituido }}
                     </div>
