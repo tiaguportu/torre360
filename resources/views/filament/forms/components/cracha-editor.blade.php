@@ -123,14 +123,19 @@
             this.canvas.on('object:modified', updateState);
             this.canvas.on('object:removed', updateState);
             
-            // Eventos de seleção
-            this.canvas.on('selection:created', (e) => this.handleSelection(e.target));
-            this.canvas.on('selection:updated', (e) => this.handleSelection(e.target));
+            // Eventos de seleção (usa e.selected[0] como fallback para Fabric.js v5)
+            const getSelectedObj = (e) => e.target || (e.selected && e.selected[0]) || this.canvas.getActiveObject();
+            
+            this.canvas.on('selection:created', (e) => this.handleSelection(getSelectedObj(e)));
+            this.canvas.on('selection:updated', (e) => this.handleSelection(getSelectedObj(e)));
             this.canvas.on('selection:cleared', () => this.clearSelection());
             
             // Eventos de movimento e redimensionamento para atualizar painel numérico
             this.canvas.on('object:moving', (e) => this.updateGeometryPanel(e.target));
             this.canvas.on('object:scaling', (e) => this.updateGeometryPanel(e.target));
+            this.canvas.on('object:modified', (e) => {
+                if (e.target) this.handleSelection(e.target);
+            });
             
             // Ouvintes de drag and drop diretamente no upperCanvasEl do Fabric.js
             const upperCanvas = this.canvas.upperCanvasEl;
@@ -271,30 +276,40 @@
             reader.readAsDataURL(file);
         },
         
-        handleSelection(obj) {
+        handleSelection(eventObj) {
+            // Usa getActiveObject como fonte mais confiável
+            let obj = eventObj || this.canvas.getActiveObject();
+            if (!obj) {
+                console.warn('[Crachá Editor] handleSelection: nenhum objeto encontrado');
+                return;
+            }
+            
+            console.log('[Crachá Editor] Objeto selecionado:', obj.type, obj);
+            
             this.hasSelection = true;
-            this.selectedType = obj.type;
+            this.selectedType = obj.type || 'unknown';
             
             const isText = obj.type === 'text' || 
                            obj.type === 'i-text' || 
                            obj.type === 'textbox' || 
-                           (obj && typeof obj.text === 'string');
+                           (typeof obj.text === 'string');
             
             this.isTextSelected = isText;
+            console.log('[Crachá Editor] isTextSelected:', isText, '| tipo:', obj.type);
             
             if (isText) {
-                this.textColor = obj.fill;
-                this.fontSize = obj.fontSize;
+                this.textColor = obj.fill || '#000000';
+                this.fontSize = obj.fontSize || 16;
                 this.isBold = obj.fontWeight === 'bold';
                 this.isItalic = obj.fontStyle === 'italic';
-                this.textAlign = obj.textAlign;
+                this.textAlign = obj.textAlign || 'left';
                 this.fontFamily = obj.fontFamily || 'sans-serif';
             }
             
             try {
                 this.updateGeometryPanel(obj);
             } catch (e) {
-                console.warn('Erro ao atualizar geometria:', e);
+                console.warn('[Crachá Editor] Erro ao atualizar geometria:', e);
             }
         },
         
