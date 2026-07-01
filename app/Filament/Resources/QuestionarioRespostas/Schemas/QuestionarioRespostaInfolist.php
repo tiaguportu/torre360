@@ -47,7 +47,6 @@ class QuestionarioRespostaInfolist
                             ->state(fn ($record) => $record->parent_id ? "Visualizar Resposta Original (#{$record->parent_id}) - Enviada em ".$record->parent?->fim_preenchimento?->format('d/m/Y H:i') : null)
                             ->url(fn ($record) => $record->parent_id ? QuestionarioRespostaResource::getUrl('view', ['record' => $record->parent_id]) : null)
                             ->color('primary')
-                            ->underline()
                             ->visible(fn ($record) => $record->parent_id !== null),
 
                         RepeatableEntry::make('children')
@@ -57,8 +56,7 @@ class QuestionarioRespostaInfolist
                                     ->hiddenLabel()
                                     ->state(fn ($record) => "Resposta #{$record->id} - Enviada por ".($record->user?->name ?? 'Anônimo').' em '.$record->fim_preenchimento?->format('d/m/Y H:i'))
                                     ->url(fn ($record) => QuestionarioRespostaResource::getUrl('view', ['record' => $record->id]))
-                                    ->color('primary')
-                                    ->underline(),
+                                    ->color('primary'),
                             ])
                             ->visible(fn ($record) => $record->children()->exists())
                             ->columns(1),
