@@ -134,24 +134,13 @@
             // Eventos de movimento e redimensionamento para atualizar painel numérico
             this.canvas.on('object:moving', (e) => this.updateGeometryPanel(e.target));
             this.canvas.on('object:scaling', (e) => {
-                let obj = e.target;
-                if (obj && obj.type === 'textbox') {
-                    // Converte scale em width/height reais para o texto refluir
-                    let newWidth = Math.round(obj.width * obj.scaleX);
-                    let newHeight = Math.round(obj.height * obj.scaleY);
-                    obj.set({
-                        width: newWidth,
-                        height: newHeight,
-                        scaleX: 1,
-                        scaleY: 1,
-                    });
-                }
-                this.updateGeometryPanel(obj);
+                this.updateGeometryPanel(e.target);
             });
             this.canvas.on('object:modified', (e) => {
                 let obj = e.target;
                 if (!obj) return;
-                // Garante que Textbox sempre tenha scale 1 (tamanho real)
+                // Para Textbox, converte o scale em width real e reseta scale para 1
+                // Nunca define height — o Textbox auto-calcula com base no conteúdo e fontSize
                 if (obj.type === 'textbox') {
                     let newWidth = Math.round(obj.width * obj.scaleX);
                     obj.set({
@@ -160,8 +149,10 @@
                         scaleY: 1,
                     });
                     obj.setCoords();
+                    this.canvas.renderAll();
                 }
                 this.handleSelection(obj);
+                this.updateState();
             });
             
             // Ouvintes de drag and drop diretamente no upperCanvasEl do Fabric.js

@@ -162,7 +162,10 @@
                                                 $pessoa->cor_raca?->value ?? $pessoa->cor_raca ?? '',
                                             ], $obj['text'] ?? '');
 
-                                            $fontSize = ($obj['fontSize'] ?? 16) * $scaleY * 0.75;
+                                            // Para textbox, scaleX/scaleY são 1 (normalizados no editor)
+                                            // Para i-text legado, ainda pode ter scale != 1
+                                            $isTextbox = ($obj['type'] ?? '') === 'textbox';
+                                            $fontSize = ($obj['fontSize'] ?? 16) * ($isTextbox ? 1 : $scaleY) * 0.75;
                                             $color = $obj['fill'] ?? '#000000';
                                             $fontWeight = ($obj['fontWeight'] ?? 'normal') === 'bold' ? 'bold' : 'normal';
                                             $fontStyle = ($obj['fontStyle'] ?? 'normal') === 'italic' ? 'italic' : 'normal';
@@ -174,7 +177,7 @@
                                             left: {{ $elLeft }}pt;
                                             top: {{ $elTop }}pt;
                                             width: {{ $elWidth }}pt;
-                                            height: {{ $elHeight }}pt;
+                                            overflow: hidden;
                                             font-size: {{ $fontSize }}pt;
                                             color: {{ $color }};
                                             font-weight: {{ $fontWeight }};
