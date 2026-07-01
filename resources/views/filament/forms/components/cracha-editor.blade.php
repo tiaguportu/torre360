@@ -133,9 +133,35 @@
             
             // Eventos de movimento e redimensionamento para atualizar painel numérico
             this.canvas.on('object:moving', (e) => this.updateGeometryPanel(e.target));
-            this.canvas.on('object:scaling', (e) => this.updateGeometryPanel(e.target));
+            this.canvas.on('object:scaling', (e) => {
+                let obj = e.target;
+                if (obj && obj.type === 'textbox') {
+                    // Converte scale em width/height reais para o texto refluir
+                    let newWidth = Math.round(obj.width * obj.scaleX);
+                    let newHeight = Math.round(obj.height * obj.scaleY);
+                    obj.set({
+                        width: newWidth,
+                        height: newHeight,
+                        scaleX: 1,
+                        scaleY: 1,
+                    });
+                }
+                this.updateGeometryPanel(obj);
+            });
             this.canvas.on('object:modified', (e) => {
-                if (e.target) this.handleSelection(e.target);
+                let obj = e.target;
+                if (!obj) return;
+                // Garante que Textbox sempre tenha scale 1 (tamanho real)
+                if (obj.type === 'textbox') {
+                    let newWidth = Math.round(obj.width * obj.scaleX);
+                    obj.set({
+                        width: newWidth,
+                        scaleX: 1,
+                        scaleY: 1,
+                    });
+                    obj.setCoords();
+                }
+                this.handleSelection(obj);
             });
             
             // Ouvintes de drag and drop diretamente no upperCanvasEl do Fabric.js
@@ -192,9 +218,13 @@
                 textAlign: 'left',
                 splitByGrapheme: false,
                 // Borda visual para representar a caixa de texto
-                backgroundColor: 'rgba(219, 234, 254, 0.3)',
+                backgroundColor: 'rgba(219, 234, 254, 0.15)',
+                stroke: '#93c5fd',
+                strokeWidth: 1,
                 // Impede a edição direta no canvas — fontes devem ser editadas pelo painel
                 editable: false,
+                // Impede flip ao redimensionar
+                lockScalingFlip: true,
             });
             this.ensureControls(text);
             this.canvas.add(text);
