@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas\Schemas;
 
+use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use App\Models\QuestionarioPerguntaResposta;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
