@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\QuestionarioRespostas\Schemas;
 
-use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use App\Models\QuestionarioPerguntaResposta;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -39,29 +38,29 @@ class QuestionarioRespostaInfolist
                             ->dateTime('d/m/Y H:i'),
                     ]),
 
-                Section::make('Respostas Relacionadas')
-                    ->description('Vínculos desta resposta com outras submissões do mesmo questionário.')
+                Section::make('Feedbacks / Pareceres Avaliativos')
+                    ->description('Pareceres e feedbacks registrados por gestores/avaliadores para esta resposta.')
                     ->schema([
-                        TextEntry::make('parent')
-                            ->label('Resposta Original (Origem)')
-                            ->state(fn ($record) => $record->parent_id ? "Visualizar Resposta Original (#{$record->parent_id}) - Enviada em ".$record->parent?->fim_preenchimento?->format('d/m/Y H:i') : null)
-                            ->url(fn ($record) => $record->parent_id ? QuestionarioRespostaResource::getUrl('view', ['record' => $record->parent_id]) : null)
-                            ->color('primary')
-                            ->visible(fn ($record) => $record->parent_id !== null),
-
-                        RepeatableEntry::make('children')
-                            ->label('Respostas Filhas (Reenvios)')
+                        RepeatableEntry::make('feedbacks')
+                            ->hiddenLabel()
                             ->schema([
-                                TextEntry::make('id')
+                                TextEntry::make('texto')
                                     ->hiddenLabel()
-                                    ->state(fn ($record) => "Resposta #{$record->id} - Enviada por ".($record->user?->name ?? 'Anônimo').' em '.$record->fim_preenchimento?->format('d/m/Y H:i'))
-                                    ->url(fn ($record) => QuestionarioRespostaResource::getUrl('view', ['record' => $record->id]))
-                                    ->color('primary'),
+                                    ->prose()
+                                    ->columnSpanFull(),
+                                TextEntry::make('user.name')
+                                    ->label('Registrado por')
+                                    ->placeholder('Sistema / Anônimo')
+                                    ->inlineLabel(),
+                                TextEntry::make('created_at')
+                                    ->label('Em')
+                                    ->dateTime('d/m/Y H:i')
+                                    ->inlineLabel(),
                             ])
-                            ->visible(fn ($record) => $record->children()->exists())
-                            ->columns(1),
+                            ->columns(2)
+                            ->placeholder('Nenhum feedback registrado até o momento.'),
                     ])
-                    ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
+                    ->visible(fn ($record) => $record->feedbacks()->exists() || auth()->user()?->can('Create:QuestionarioResposta')),
 
                 Section::make('Perguntas e Respostas')
                     ->columns(1)

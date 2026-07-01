@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\QuestionarioRespostas\Tables;
 
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
-use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\QuestionarioResposta;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -52,11 +51,6 @@ class QuestionarioRespostasTable
             ])
             ->actions([
                 ViewAction::make(),
-                Action::make('responder_novamente')
-                    ->label('Responder Novamente')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('primary')
-                    ->url(fn (QuestionarioResposta $record) => QuestionarioResource::getUrl('responder', ['record' => $record->questionario_id]).'?parent_id='.$record->id),
             ])
             ->headerActions([
                 Action::make('export_csv')

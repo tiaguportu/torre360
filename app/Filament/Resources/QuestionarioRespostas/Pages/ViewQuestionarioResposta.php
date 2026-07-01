@@ -5,7 +5,9 @@ namespace App\Filament\Resources\QuestionarioRespostas\Pages;
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewQuestionarioResposta extends ViewRecord
@@ -16,20 +18,29 @@ class ViewQuestionarioResposta extends ViewRecord
     {
         return [
             EditAction::make(),
-            Action::make('comparar_relacionadas')
-                ->label('Comparar Relacionadas')
-                ->icon('heroicon-o-arrows-right-left')
-                ->color('success')
-                ->url(function ($record) {
-                    $ids = collect([$record->id])
-                        ->merge($record->parent_id ? [$record->parent_id] : [])
-                        ->merge($record->children()->pluck('id'))
-                        ->unique()
-                        ->toArray();
+            Action::make('adicionar_feedback')
+                ->label('Adicionar Feedback')
+                ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                ->color('primary')
+                ->form([
+                    Textarea::make('texto')
+                        ->label('Conteúdo do Feedback')
+                        ->required()
+                        ->rows(5)
+                        ->placeholder('Escreva aqui o seu feedback avaliativo, observações ou pareceres...'),
+                ])
+                ->action(function ($record, array $data) {
+                    $record->feedbacks()->create([
+                        'user_id' => auth()->id(),
+                        'texto' => $data['texto'],
+                    ]);
 
-                    return QuestionarioRespostaResource::getUrl('comparar', ['ids' => $ids]);
+                    Notification::make()
+                        ->title('Feedback registrado com sucesso!')
+                        ->success()
+                        ->send();
                 })
-                ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
+                ->visible(fn () => auth()->user()?->can('Create:QuestionarioResposta')),
             Action::make('ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
@@ -48,7 +59,7 @@ class ViewQuestionarioResposta extends ViewRecord
         $user = auth()->user();
 
         $html = '<h3>Ajuda - Visualização de Resposta</h3>';
-        $html .= '<p>Esta página apresenta em detalhes as respostas fornecidas por um respondente a um questionário específico, além do histórico de reenvios relacionados.</p>';
+        $html .= '<p>Esta página apresenta em detalhes as respostas fornecidas por um respondente a um questionário específico, além do histórico de feedbacks avaliativos.</p>';
 
         $html .= '<h4>Ações disponíveis nesta página:</h4><ul>';
 
@@ -56,8 +67,11 @@ class ViewQuestionarioResposta extends ViewRecord
             $html .= '<li><strong>Editar:</strong> Permite alterar metadados do envio da resposta (como status e datas).</li>';
         }
 
-        $html .= '<li><strong>Respostas Relacionadas:</strong> Caso esta resposta seja um reenvio ou possua submissões filhas, você verá links diretos para navegar entre elas.</li>';
-        $html .= '<li><strong>Comparar Relacionadas:</strong> Abre uma visualização comparativa lado a lado com todas as respostas vinculadas a esta (original e reenvios).</li>';
+        if ($user->can('Create:QuestionarioResposta')) {
+            $html .= '<li><strong>Adicionar Feedback:</strong> Abre um formulário em modal para registrar observações, comentários ou pareceres avaliativos sobre esta resposta.</li>';
+        }
+
+        $html .= '<li><strong>Feedbacks Registrados:</strong> Caso existam feedbacks vinculados a este envio, você os visualizará listados cronologicamente na seção inferior.</li>';
 
         $html .= '</ul>';
 

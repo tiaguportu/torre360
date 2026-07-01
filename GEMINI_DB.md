@@ -278,10 +278,17 @@ Estrutura de ensino e turmas.
 - **Campos Principais:**
     - `questionario_id`: ID do questionário correspondente.
     - `user_id`: ID do usuário respondente (nullable para anônimos).
-    - `parent_id`: ID da resposta original (caso seja um reenvio/responder novamente).
     - `perfil_institucional`: Perfil de acesso do usuário no envio.
     - `status`: Estado do envio (pendente, enviado).
-- **Relacionamentos:** BelongsTo `questionarios`, BelongsTo `users`, BelongsTo `parent` (`questionario_respostas`), HasMany `children` (`questionario_respostas`), HasMany `perguntaRespostas`.
+- **Relacionamentos:** BelongsTo `questionarios`, BelongsTo `users`, HasMany `perguntaRespostas`, HasMany `feedbacks` (`questionario_resposta_feedbacks`).
+
+### `questionario_resposta_feedbacks`
+- **Representa:** Feedbacks, comentários e pareceres avaliativos cadastrados por gestores/avaliadores sobre uma submissão de questionário específica.
+- **Campos Principais:**
+    - `questionario_resposta_id`: FK para `questionario_respostas` (deleção em cascata).
+    - `user_id`: FK para `users` que gerou o feedback (deleção nula).
+    - `texto`: Parecer descritivo e anotações.
+- **Relacionamentos:** BelongsTo `resposta` (`questionario_respostas`), BelongsTo `user` (`users`).
 
 ### `questionario_pergunta_respostas`
 - **Representa:** Respostas individuais para cada pergunta de uma submissão de questionário.
