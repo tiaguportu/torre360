@@ -74,13 +74,19 @@
                 @if (isset($obj['id']) && str_starts_with($obj['id'], 'foto'))
                     {{-- É um elemento de foto --}}
                     @php
-                        // Em DomPDF, o src pode ser uma URL externa, ou podemos usar fallback se a foto estiver vazia
-                        $fotoUrl = $pessoa->foto ? \Illuminate\Support\Facades\Storage::url($pessoa->foto) : 'https://ui-avatars.com/api/?name=' . urlencode($pessoa->nome) . '&color=7F9CF5&background=EBF4FF';
+                        $fotoUrl = null;
+                        if ($pessoa->foto && \Illuminate\Support\Facades\Storage::exists($pessoa->foto)) {
+                            try {
+                                $mimeType = \Illuminate\Support\Facades\Storage::mimeType($pessoa->foto) ?? 'image/jpeg';
+                                $fileContent = \Illuminate\Support\Facades\Storage::get($pessoa->foto);
+                                $fotoUrl = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
+                            } catch (\Exception $e) {
+                                // Fallback
+                            }
+                        }
                         
-                        // Se estiver usando public disk e o storage::url não retornar absoluto, precisamos de path absoluto pro DOMPDF
-                        if ($pessoa->foto && !str_starts_with($fotoUrl, 'http')) {
-                            // Converte url local em path absoluto para o dompdf
-                            $fotoUrl = public_path(\Illuminate\Support\Facades\Storage::url($pessoa->foto));
+                        if (!$fotoUrl) {
+                            $fotoUrl = 'https://ui-avatars.com/api/?name=' . urlencode($pessoa->nome) . '&color=7F9CF5&background=EBF4FF';
                         }
                     @endphp
                     <div class="element-wrapper" style="
