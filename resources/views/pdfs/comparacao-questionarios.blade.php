@@ -224,7 +224,7 @@
         </thead>
         <tbody>
             <!-- Campos Comuns -->
-            @foreach (['Questionário', 'Respondente', 'Perfil', 'Data Envio'] as $campo)
+            @foreach (['Questionário', 'Respondente', 'Data Envio'] as $campo)
                 <tr>
                     <td class="field-label">{{ $campo }}</td>
                     @foreach ($respostas as $resposta)

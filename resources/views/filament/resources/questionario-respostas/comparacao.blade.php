@@ -80,7 +80,7 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-gray-900">
                         <!-- Campos Comuns -->
-                        @foreach (['Questionário', 'Respondente', 'Perfil', 'Data Envio'] as $campo)
+                        @foreach (['Questionário', 'Respondente', 'Data Envio'] as $campo)
                             <tr class="fi-ta-row transition duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 font-medium text-sm text-gray-950 dark:text-white bg-gray-50/50 dark:bg-white/5" style="width: 60%; max-width: 60%; word-break: break-word; white-space: normal;">
                                     {{ $campo }}
