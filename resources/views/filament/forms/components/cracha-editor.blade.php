@@ -356,7 +356,7 @@
             <div x-show="hasSelection" x-transition class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-sm font-bold text-gray-750 dark:text-gray-200 uppercase tracking-wider">Objeto Selecionado</h3>
                 
-                <template x-if="selectedType === 'text' || selectedType === 'i-text'">
+                <div x-show="selectedType === 'text' || selectedType === 'i-text'">
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Cor do Texto -->
@@ -430,7 +430,7 @@
                             </div>
                         </div>
                     </div>
-                </template>
+                </div>
 
                 <!-- Posição e Profundidade (Para qualquer objeto) -->
                 <div>
