@@ -15,6 +15,7 @@
         altura: $wire.entangle('data.altura'),
         hasSelection: false,
         selectedType: null,
+        selectedObj: null,
         isTextSelected: false,
         objLeft: 0,
         objTop: 0,
@@ -288,6 +289,7 @@
             
             this.hasSelection = true;
             this.selectedType = obj.type || 'unknown';
+            this.selectedObj = obj;
             
             const isText = obj.type === 'text' || 
                            obj.type === 'i-text' || 
@@ -316,6 +318,7 @@
         clearSelection() {
             this.hasSelection = false;
             this.selectedType = null;
+            this.selectedObj = null;
             this.isTextSelected = false;
             this.objLeft = 0;
             this.objTop = 0;
@@ -332,7 +335,7 @@
         },
         
         applyGeometry(property, value) {
-            let obj = this.canvas.getActiveObject();
+            let obj = this.canvas.getActiveObject() || this.selectedObj;
             if (!obj) return;
             
             let val = parseInt(value);
@@ -354,7 +357,7 @@
         },
         
         updateSelectedStyle(property, value) {
-            let obj = this.canvas.getActiveObject();
+            let obj = this.canvas.getActiveObject() || this.selectedObj;
             if (!obj) return;
             
             if (property === 'bold') {
