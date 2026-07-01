@@ -1,4 +1,4 @@
-<div class="space-y-4" 
+<div class="space-y-4" wire:ignore
      x-data="{
         canvas: null,
         state: $wire.entangle('{{ $getStatePath() }}'),
@@ -55,6 +55,31 @@
             this.canvas.on('selection:created', (e) => this.handleSelection(e.target));
             this.canvas.on('selection:updated', (e) => this.handleSelection(e.target));
             this.canvas.on('selection:cleared', () => this.clearSelection());
+            
+            // Ouvintes de drag and drop diretamente no upperCanvasEl do Fabric.js
+            const upperCanvas = this.canvas.upperCanvasEl;
+            if (upperCanvas) {
+                upperCanvas.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                });
+
+                upperCanvas.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    let itemType = e.dataTransfer.getData('text/plain');
+                    if (!itemType) return;
+                    
+                    let rect = upperCanvas.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    let y = e.clientY - rect.top;
+                    
+                    if (itemType === '{foto}') {
+                        this.addPhotoPlaceholder(x, y);
+                    } else {
+                        this.addText(itemType, itemType.startsWith('{'), x, y);
+                    }
+                });
+            }
             
             // Watchers para largura/altura
             this.$watch('largura', (val) => {
@@ -130,21 +155,6 @@
         dragStart(e, itemType) {
             e.dataTransfer.setData('text/plain', itemType);
             e.dataTransfer.effectAllowed = 'copy';
-        },
-        
-        drop(e) {
-            let itemType = e.dataTransfer.getData('text/plain');
-            if (!itemType) return;
-            
-            let rect = e.target.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
-            
-            if (itemType === '{foto}') {
-                this.addPhotoPlaceholder(x, y);
-            } else {
-                this.addText(itemType, itemType.startsWith('{'), x, y);
-            }
         },
         
         setBackground(e) {
@@ -263,47 +273,47 @@
             <!-- Adicionar Elementos -->
             <div class="space-y-3">
                 <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Adicionar Elementos</h3>
-                <button type="button" draggable="true" @dragstart="dragStart($event, 'Texto Customizado')" @click="addText('Texto Customizado')"
-                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm transition shadow-sm cursor-grab active:cursor-grabbing">
+                <div role="button" draggable="true" @dragstart="dragStart($event, 'Texto Customizado')" @click="addText('Texto Customizado')"
+                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm transition shadow-sm cursor-grab active:cursor-grabbing select-none text-center font-semibold">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Inserir Texto Livre
-                </button>
+                </div>
             </div>
 
             <!-- Variáveis de Pessoa -->
             <div class="space-y-2">
                 <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Variáveis de Pessoa</h3>
                 <div class="grid grid-cols-2 gap-2">
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600">
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
                         🖼️ Foto da Pessoa
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{nome}')" @click="addText('{nome}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{nome}')" @click="addText('{nome}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         🏷️ Nome Completo
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{profissao}')" @click="addText('{profissao}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{profissao}')" @click="addText('{profissao}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         💼 Profissão
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{cpf}')" @click="addText('{cpf}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{cpf}')" @click="addText('{cpf}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         📄 CPF
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{identidade}')" @click="addText('{identidade}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{identidade}')" @click="addText('{identidade}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         🆔 Identidade (RG)
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{email}')" @click="addText('{email}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{email}')" @click="addText('{email}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         ✉️ E-mail
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{telefone}')" @click="addText('{telefone}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{telefone}')" @click="addText('{telefone}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         📞 Telefone
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{data_nascimento}')" @click="addText('{data_nascimento}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{data_nascimento}')" @click="addText('{data_nascimento}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         📅 Nascimento
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{sexo}')" @click="addText('{sexo}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{sexo}')" @click="addText('{sexo}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
                         🚻 Sexo
-                    </button>
-                    <button type="button" draggable="true" @dragstart="dragStart($event, '{cor_raca}')" @click="addText('{cor_raca}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2">
+                    </div>
+                    <div role="button" draggable="true" @dragstart="dragStart($event, '{cor_raca}')" @click="addText('{cor_raca}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 select-none">
                         🎨 Cor / Raça
-                    </button>
+                    </div>
                 </div>
             </div>
 
@@ -311,11 +321,11 @@
             <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Fundo do Crachá</h3>
                 <div class="flex space-x-2">
-                    <label class="flex-1 inline-flex justify-center items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-750 dark:text-gray-200 text-sm font-semibold rounded-lg cursor-pointer transition">
+                    <label class="flex-1 inline-flex justify-center items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-750 dark:text-gray-200 text-sm font-semibold rounded-lg cursor-pointer transition select-none">
                         <span>Carregar Fundo</span>
                         <input type="file" accept="image/*" @change="setBackground($event)" class="hidden">
                     </label>
-                    <button type="button" @click="removeBackground()" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-650 dark:bg-red-950/20 dark:hover:bg-red-900/30 dark:text-red-400 text-sm font-semibold rounded-lg transition">
+                    <button type="button" @click="removeBackground()" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-650 dark:bg-red-950/20 dark:hover:bg-red-900/30 dark:text-red-400 text-sm font-semibold rounded-lg transition select-none">
                         Limpar
                     </button>
                 </div>
@@ -368,17 +378,17 @@
                             <div class="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded p-1">
                                 <button type="button" @click="updateSelectedStyle('textAlign', 'left')"
                                         :class="textAlign === 'left' ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-xs' : 'text-gray-500 dark:text-gray-400'"
-                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center">
+                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center select-none">
                                     Esq.
                                 </button>
                                 <button type="button" @click="updateSelectedStyle('textAlign', 'center')"
                                         :class="textAlign === 'center' ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-xs' : 'text-gray-500 dark:text-gray-400'"
-                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center">
+                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center select-none">
                                     Centro
                                 </button>
                                 <button type="button" @click="updateSelectedStyle('textAlign', 'right')"
                                         :class="textAlign === 'right' ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-xs' : 'text-gray-500 dark:text-gray-400'"
-                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center">
+                                        class="flex-1 py-1 text-xs font-semibold rounded transition text-center select-none">
                                     Dir.
                                 </button>
                             </div>
@@ -390,13 +400,13 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 mb-2">Alinhamento & Profundidade</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" @click="bringToFront()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition">
+                        <button type="button" @click="bringToFront()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition select-none">
                             ⬆️ Trazer p/ Frente
                         </button>
-                        <button type="button" @click="sendToBack()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition">
+                        <button type="button" @click="sendToBack()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition select-none">
                             ⬇️ Enviar p/ Trás
                         </button>
-                        <button type="button" @click="centerHorizontally()" class="col-span-2 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition">
+                        <button type="button" @click="centerHorizontally()" class="col-span-2 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition select-none">
                             ↔️ Centralizar Horizontalmente
                         </button>
                     </div>
@@ -404,7 +414,7 @@
 
                 <!-- Excluir Elemento -->
                 <button type="button" @click="deleteSelected()" 
-                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-sm transition shadow-sm mt-4">
+                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-sm transition shadow-sm mt-4 select-none">
                     🗑️ Excluir Selecionado
                 </button>
             </div>
@@ -413,12 +423,10 @@
         <!-- Área de Edição (Canvas) -->
         <div class="lg:col-span-2 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-gray-50 dark:bg-gray-950 shadow-inner min-h-[520px]">
             <div class="relative shadow-2xl border border-gray-300 dark:border-gray-700 rounded overflow-hidden" 
-                 style="background-image: radial-gradient(circle, #cbcbcb 10%, transparent 11%), radial-gradient(circle, #cbcbcb 10%, #ffffff 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;"
-                 @dragover.prevent
-                 @drop="drop($event)">
+                 style="background-image: radial-gradient(circle, #cbcbcb 10%, transparent 11%), radial-gradient(circle, #cbcbcb 10%, #ffffff 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;">
                 <canvas id="cracha-fabric-canvas"></canvas>
             </div>
-            <p class="text-xs text-gray-455 mt-4 text-center">Arraste e solte os botões no crachá ou clique neles para adicioná-los. Use as bordas dos objetos para redimensionar ou mover.</p>
+            <p class="text-xs text-gray-455 mt-4 text-center select-none">Arraste e solte os botões no crachá ou clique neles para adicioná-los. Use as bordas dos objetos para redimensionar ou mover.</p>
         </div>
     </div>
 </div>
