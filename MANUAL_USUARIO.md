@@ -693,7 +693,7 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 5. **Responder Novamente (Reenvio Vinculado):** No menu **Respostas de Questionários**, na tabela de listagem de respostas, está disponível a ação de linha **Responder Novamente**. Ao clicar nesta ação:
    - Você será redirecionado para a tela de preenchimento do questionário correspondente.
    - O preenchimento gerará uma nova resposta que ficará automaticamente vinculada como filha (child) da resposta original de origem (parent).
-   - Ao visualizar os detalhes da resposta (tela de visualização), o sistema apresentará uma seção chamada **Respostas Relacionadas**, onde é possível ver o link direto para a Resposta Original (se for uma resposta filha) ou a lista de todas as Respostas Filhas enviadas posteriormente (se for a resposta original).
+   - Ao visualizar os detalhes da resposta (tela de visualização), o sistema apresentará uma seção chamada **Respostas Relacionadas**, onde é possível ver o link direto para a Resposta Original (se for uma resposta filha) ou a lista de todas as Respostas Filhas enviadas posteriormente (se for a resposta original). Adicionalmente, um botão chamado **Comparar Relacionadas** estará disponível no topo direito da tela para abrir rapidamente a visualização comparativa lado a lado de todas essas respostas vinculadas.
 
 ---
 

@@ -16,6 +16,20 @@ class ViewQuestionarioResposta extends ViewRecord
     {
         return [
             EditAction::make(),
+            Action::make('comparar_relacionadas')
+                ->label('Comparar Relacionadas')
+                ->icon('heroicon-o-arrows-right-left')
+                ->color('success')
+                ->url(function ($record) {
+                    $ids = collect([$record->id])
+                        ->merge($record->parent_id ? [$record->parent_id] : [])
+                        ->merge($record->children()->pluck('id'))
+                        ->unique()
+                        ->toArray();
+
+                    return QuestionarioRespostaResource::getUrl('comparar', ['ids' => $ids]);
+                })
+                ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
             Action::make('ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
@@ -43,6 +57,7 @@ class ViewQuestionarioResposta extends ViewRecord
         }
 
         $html .= '<li><strong>Respostas Relacionadas:</strong> Caso esta resposta seja um reenvio ou possua submissões filhas, você verá links diretos para navegar entre elas.</li>';
+        $html .= '<li><strong>Comparar Relacionadas:</strong> Abre uma visualização comparativa lado a lado com todas as respostas vinculadas a esta (original e reenvios).</li>';
 
         $html .= '</ul>';
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\QuestionarioRespostas\Pages\ViewQuestionarioResposta;
 use App\Filament\Resources\Questionarios\Pages\ResponderQuestionario;
 use App\Models\Questionario;
 use App\Models\QuestionarioResposta;
@@ -71,6 +72,12 @@ class QuestionarioRespostaReenvioTest extends TestCase
         $this->assertNotNull($novaResposta);
         $this->assertEquals($parentResposta->id, $novaResposta->parent->id);
         $this->assertTrue($parentResposta->children->contains($novaResposta));
+
+        // 8. Validar que o botão de comparação rápida está disponível na tela de detalhes
+        Livewire::test(ViewQuestionarioResposta::class, [
+            'record' => $parentResposta->id,
+        ])
+            ->assertActionExists('comparar_relacionadas');
     }
 
     public function test_parent_id_invalido_de_outro_questionario_eh_ignorado(): void
