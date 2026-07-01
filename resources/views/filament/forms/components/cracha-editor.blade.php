@@ -237,8 +237,6 @@
             this.hasSelection = true;
             this.selectedType = obj.type;
             
-            this.updateGeometryPanel(obj);
-            
             const isText = obj.type === 'text' || 
                            obj.type === 'i-text' || 
                            obj.type === 'textbox' || 
@@ -254,6 +252,12 @@
                 this.textAlign = obj.textAlign;
                 this.fontFamily = obj.fontFamily || 'sans-serif';
             }
+            
+            try {
+                this.updateGeometryPanel(obj);
+            } catch (e) {
+                console.warn('Erro ao atualizar geometria:', e);
+            }
         },
         
         clearSelection() {
@@ -268,10 +272,10 @@
         
         updateGeometryPanel(obj) {
             if (!obj) return;
-            this.objLeft = Math.round(obj.left);
-            this.objTop = Math.round(obj.top);
-            this.objWidth = Math.round(obj.getScaledWidth());
-            this.objHeight = Math.round(obj.getScaledHeight());
+            this.objLeft = Math.round(obj.left || 0);
+            this.objTop = Math.round(obj.top || 0);
+            this.objWidth = Math.round((obj.width || 0) * (obj.scaleX || 1));
+            this.objHeight = Math.round((obj.height || 0) * (obj.scaleY || 1));
         },
         
         applyGeometry(property, value) {
@@ -454,7 +458,7 @@
                     </div>
                 </div>
                 
-                <div x-show="isTextSelected">
+                <div x-show="isTextSelected || selectedType === 'text' || selectedType === 'i-text' || selectedType === 'textbox'">
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Cor do Texto -->
