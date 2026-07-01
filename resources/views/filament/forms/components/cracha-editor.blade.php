@@ -16,6 +16,10 @@
         hasSelection: false,
         selectedType: null,
         isTextSelected: false,
+        objLeft: 0,
+        objTop: 0,
+        objWidth: 0,
+        objHeight: 0,
         textColor: '#000000',
         fontSize: 16,
         isBold: false,
@@ -93,6 +97,10 @@
             this.canvas.on('selection:created', (e) => this.handleSelection(e.target));
             this.canvas.on('selection:updated', (e) => this.handleSelection(e.target));
             this.canvas.on('selection:cleared', () => this.clearSelection());
+            
+            // Eventos de movimento e redimensionamento para atualizar painel numérico
+            this.canvas.on('object:moving', (e) => this.updateGeometryPanel(e.target));
+            this.canvas.on('object:scaling', (e) => this.updateGeometryPanel(e.target));
             
             // Ouvintes de drag and drop diretamente no upperCanvasEl do Fabric.js
             const upperCanvas = this.canvas.upperCanvasEl;
@@ -229,6 +237,8 @@
             this.hasSelection = true;
             this.selectedType = obj.type;
             
+            this.updateGeometryPanel(obj);
+            
             const isText = obj.type === 'text' || 
                            obj.type === 'i-text' || 
                            obj.type === 'textbox' || 
@@ -250,6 +260,40 @@
             this.hasSelection = false;
             this.selectedType = null;
             this.isTextSelected = false;
+            this.objLeft = 0;
+            this.objTop = 0;
+            this.objWidth = 0;
+            this.objHeight = 0;
+        },
+        
+        updateGeometryPanel(obj) {
+            if (!obj) return;
+            this.objLeft = Math.round(obj.left);
+            this.objTop = Math.round(obj.top);
+            this.objWidth = Math.round(obj.getScaledWidth());
+            this.objHeight = Math.round(obj.getScaledHeight());
+        },
+        
+        applyGeometry(property, value) {
+            let obj = this.canvas.getActiveObject();
+            if (!obj) return;
+            
+            let val = parseInt(value);
+            if (isNaN(val)) return;
+            
+            if (property === 'left' || property === 'top') {
+                obj.set(property, val);
+            } else if (property === 'width') {
+                let scaleX = val / (obj.width || 1);
+                obj.set('scaleX', scaleX);
+            } else if (property === 'height') {
+                let scaleY = val / (obj.height || 1);
+                obj.set('scaleY', scaleY);
+            }
+            
+            obj.setCoords();
+            this.canvas.renderAll();
+            this.updateState();
         },
         
         updateSelectedStyle(property, value) {
@@ -386,6 +430,29 @@
             <!-- Formatação do Elemento Selecionado -->
             <div x-show="hasSelection" x-transition class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-sm font-bold text-gray-750 dark:text-gray-200 uppercase tracking-wider">Objeto Selecionado</h3>
+                
+                <!-- Dimensões Numéricas (Para qualquer objeto) -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-2">Posição & Dimensões (Geometria)</label>
+                    <div class="grid grid-cols-4 gap-2 border-b border-gray-100 dark:border-gray-800 pb-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">X (px)</label>
+                            <input type="number" x-model="objLeft" @change="applyGeometry('left', $event.target.value)" class="w-full h-8 px-2 rounded border border-gray-250 text-xs text-center dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Y (px)</label>
+                            <input type="number" x-model="objTop" @change="applyGeometry('top', $event.target.value)" class="w-full h-8 px-2 rounded border border-gray-250 text-xs text-center dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Largura</label>
+                            <input type="number" x-model="objWidth" @change="applyGeometry('width', $event.target.value)" class="w-full h-8 px-2 rounded border border-gray-250 text-xs text-center dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Altura</label>
+                            <input type="number" x-model="objHeight" @change="applyGeometry('height', $event.target.value)" class="w-full h-8 px-2 rounded border border-gray-250 text-xs text-center dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                        </div>
+                    </div>
+                </div>
                 
                 <div x-show="isTextSelected">
                     <div class="space-y-4">
