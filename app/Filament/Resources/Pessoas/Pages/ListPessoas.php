@@ -60,6 +60,7 @@ class ListPessoas extends ListRecords
         if ($canUpdate) {
             $html .= '<li><strong>Editar:</strong> Altere endereços, contatos e documentos pessoais.</li>';
         }
+        $html .= '<li><strong>Impressão de Crachás:</strong> Selecione uma ou mais pessoas na tabela e use a ação em lote "Imprimir Crachá" para gerar os crachás em PDF de forma automatizada.</li>';
         $html .= '</ul>';
 
         return $html;

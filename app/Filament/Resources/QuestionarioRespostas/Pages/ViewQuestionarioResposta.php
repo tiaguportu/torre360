@@ -5,9 +5,7 @@ namespace App\Filament\Resources\QuestionarioRespostas\Pages;
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ViewField;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewQuestionarioResposta extends ViewRecord
@@ -18,29 +16,20 @@ class ViewQuestionarioResposta extends ViewRecord
     {
         return [
             EditAction::make(),
-            Action::make('adicionar_feedback')
-                ->label('Adicionar Feedback')
-                ->icon('heroicon-o-chat-bubble-bottom-center-text')
-                ->color('primary')
-                ->form([
-                    Textarea::make('texto')
-                        ->label('Conteúdo do Feedback')
-                        ->required()
-                        ->rows(5)
-                        ->placeholder('Escreva aqui o seu feedback avaliativo, observações ou pareceres...'),
-                ])
-                ->action(function ($record, array $data) {
-                    $record->feedbacks()->create([
-                        'user_id' => auth()->id(),
-                        'texto' => $data['texto'],
-                    ]);
+            Action::make('comparar_feedbacks')
+                ->label('Comparar Feedbacks')
+                ->icon('heroicon-o-arrows-right-left')
+                ->color('success')
+                ->url(function ($record) {
+                    $ids = collect([$record->id])
+                        ->merge($record->parent_id ? [$record->parent_id] : [])
+                        ->merge($record->children()->pluck('id'))
+                        ->unique()
+                        ->toArray();
 
-                    Notification::make()
-                        ->title('Feedback registrado com sucesso!')
-                        ->success()
-                        ->send();
+                    return QuestionarioRespostaResource::getUrl('comparar', ['ids' => $ids]);
                 })
-                ->visible(fn () => auth()->user()?->can('Create:QuestionarioResposta')),
+                ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
             Action::make('ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
@@ -59,7 +48,7 @@ class ViewQuestionarioResposta extends ViewRecord
         $user = auth()->user();
 
         $html = '<h3>Ajuda - Visualização de Resposta</h3>';
-        $html .= '<p>Esta página apresenta em detalhes as respostas fornecidas por um respondente a um questionário específico, além do histórico de feedbacks avaliativos.</p>';
+        $html .= '<p>Esta página apresenta em detalhes as respostas fornecidas por um respondente a um questionário específico, além do histórico de feedbacks vinculados.</p>';
 
         $html .= '<h4>Ações disponíveis nesta página:</h4><ul>';
 
@@ -67,11 +56,8 @@ class ViewQuestionarioResposta extends ViewRecord
             $html .= '<li><strong>Editar:</strong> Permite alterar metadados do envio da resposta (como status e datas).</li>';
         }
 
-        if ($user->can('Create:QuestionarioResposta')) {
-            $html .= '<li><strong>Adicionar Feedback:</strong> Abre um formulário em modal para registrar observações, comentários ou pareceres avaliativos sobre esta resposta.</li>';
-        }
-
-        $html .= '<li><strong>Feedbacks Registrados:</strong> Caso existam feedbacks vinculados a este envio, você os visualizará listados cronologicamente na seção inferior.</li>';
+        $html .= '<li><strong>Feedbacks Relacionados:</strong> Caso esta resposta possua feedbacks vinculados (seja um feedback de origem ou reenvios posteriores), você verá os links diretos para visualização e navegação na seção inferior.</li>';
+        $html .= '<li><strong>Comparar Feedbacks:</strong> Permite comparar lado a lado de forma rápida a resposta original e todas as respostas de feedbacks enviadas posteriormente.</li>';
 
         $html .= '</ul>';
 

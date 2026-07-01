@@ -84,9 +84,14 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - HasMany `curso`.
     - BelongsToMany `pessoa` (via `representante_unidade`) para Representantes Legais.
 
-### `representante_unidade`
-- **Representa:** Tabela pivô entre unidades e seus representantes legais (pessoas).
-- **Campos:** `unidade_id`, `pessoa_id`.
+### `template_crachas`
+- **Representa:** Modelos de layout de crachás para pessoas.
+- **Campos Principais:**
+    - `nome`: Identificação amigável do template.
+    - `largura`: Largura do crachá em pixels (default 300).
+    - `altura`: Altura do crachá em pixels (default 480).
+    - `imagem_fundo`: Caminho da imagem de fundo.
+    - `dados_layout`: JSON contendo os elementos de texto, estilos e imagens do canvas Fabric.js.
 
 ---
 

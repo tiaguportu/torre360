@@ -6,6 +6,8 @@ use App\Enums\CorRaca;
 use App\Enums\Sexo;
 use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
+use App\Models\TemplateCracha;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -121,6 +123,50 @@ class PessoasTable
                         ->exporter(PessoaExporter::class)
                         ->label('Exportar Selecionados')
                         ->visible(fn (): bool => auth()->user()->can('export', Pessoa::class)),
+                    BulkAction::make('imprimirCrachas')
+                        ->label('Imprimir Crachá')
+                        ->icon('heroicon-o-identification')
+                        ->form([
+                            Select::make('template_cracha_id')
+                                ->label('Selecione o Modelo de Crachá')
+                                ->options(fn () => TemplateCracha::pluck('nome', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $template = TemplateCracha::find($data['template_cracha_id']);
+                            if (! $template) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Template não encontrado')
+                                    ->send();
+
+                                return;
+                            }
+
+                            $layout = $template->dados_layout;
+                            $objects = $layout['objects'] ?? [];
+                            $backgroundImage = $layout['backgroundImage']['src'] ?? null;
+
+                            $larguraPt = $template->largura * 0.75;
+                            $alturaPt = $template->altura * 0.75;
+
+                            $pdf = Pdf::loadView('pdf.cracha-lote', [
+                                'pessoas' => $records,
+                                'objects' => $objects,
+                                'backgroundImage' => $backgroundImage,
+                                'largura' => $larguraPt,
+                                'altura' => $alturaPt,
+                            ]);
+
+                            return response()->streamDownload(
+                                fn () => print ($pdf->output()),
+                                'crachas.pdf',
+                                ['Content-Type' => 'application/pdf']
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('editarLote')
                         ->label('Editar em Lote')
                         ->icon('heroicon-o-pencil-square')

@@ -948,4 +948,31 @@ O acesso ao assistente é gerenciado pelo **Filament Shield**:
 
 ---
 
+## 🆔 22. Módulo de Crachás para Pessoas
+
+O módulo de crachás do Torre360 permite criar modelos de crachás com um editor gráfico interativo e realizar a impressão em lote dos crachás em PDF.
+
+### 22.1 Gerenciar Modelos (Templates)
+1. Acesse o menu **Secretaria → Templates de Crachá**.
+2. Clique em **Criar** para criar um novo modelo.
+3. Configure as opções básicas:
+   - **Nome do Template:** Identificação amigável (ex: "Crachá de Funcionário").
+   - **Largura e Altura:** Dimensões da área útil do crachá em pixels (padrão sugerido: 300px por 480px).
+4. No **Editor de Layout**:
+   - **Adicionar Texto Livre:** Insira uma caixa de texto customizada clicando em "Inserir Texto Livre".
+   - **Inserir Campos de Pessoas (Variáveis):** Clique nas opções como "Nome Completo", "Profissão" ou "CPF" para inserir caixas de texto cujos conteúdos serão substituídos automaticamente pelos dados reais da pessoa no momento da impressão.
+   - **Plano de Fundo:** Carregue uma imagem do seu computador usando a opção "Carregar Fundo" para definir a imagem de fundo do crachá.
+   - **Controles de Formatação:** Ao clicar sobre qualquer texto no crachá, você poderá alterar o tamanho da fonte, a cor do texto, aplicar estilos (negrito/itálico), mudar o alinhamento ou excluir o elemento selecionado.
+   - **Arraste e Redimensionamento:** Use o mouse para mover ou alterar as dimensões dos elementos na tela.
+5. Clique em **Salvar** para registrar as alterações de layout.
+
+### 22.2 Impressão de Crachás em Lote
+1. Acesse o menu **Secretaria → Pessoas**.
+2. Marque a caixa de seleção ao lado do nome das pessoas para quem deseja gerar os crachás.
+3. No topo da tabela, acesse o menu de ações em lote e clique em **Imprimir Crachá**.
+4. No formulário do modal, selecione qual **Modelo de Crachá** deseja aplicar.
+5. Confirme a operação. O sistema gerará e iniciará automaticamente o download de um arquivo PDF contendo um crachá por página, já ajustado com a imagem de fundo e as informações substituídas.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

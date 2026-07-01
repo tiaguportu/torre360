@@ -38,29 +38,29 @@ class QuestionarioRespostaInfolist
                             ->dateTime('d/m/Y H:i'),
                     ]),
 
-                Section::make('Feedbacks / Pareceres Avaliativos')
-                    ->description('Pareceres e feedbacks registrados por gestores/avaliadores para esta resposta.')
+                Section::make('Feedbacks Vinculados')
+                    ->description('Vínculos desta resposta com outras submissões de feedback para o mesmo questionário.')
                     ->schema([
-                        RepeatableEntry::make('feedbacks')
-                            ->hiddenLabel()
+                        TextEntry::make('parent')
+                            ->label('Resposta Original de Origem')
+                            ->state(fn ($record) => $record->parent_id ? "Visualizar Resposta Original (#{$record->parent_id}) - Enviada em ".$record->parent?->fim_preenchimento?->format('d/m/Y H:i') : null)
+                            ->url(fn ($record) => $record->parent_id ? QuestionarioRespostaResource::getUrl('view', ['record' => $record->parent_id]) : null)
+                            ->color('primary')
+                            ->visible(fn ($record) => $record->parent_id !== null),
+
+                        RepeatableEntry::make('children')
+                            ->label('Feedbacks / Evoluções Recebidas')
                             ->schema([
-                                TextEntry::make('texto')
+                                TextEntry::make('id')
                                     ->hiddenLabel()
-                                    ->prose()
-                                    ->columnSpanFull(),
-                                TextEntry::make('user.name')
-                                    ->label('Registrado por')
-                                    ->placeholder('Sistema / Anônimo')
-                                    ->inlineLabel(),
-                                TextEntry::make('created_at')
-                                    ->label('Em')
-                                    ->dateTime('d/m/Y H:i')
-                                    ->inlineLabel(),
+                                    ->state(fn ($record) => "Resposta #{$record->id} - Enviada por ".($record->user?->name ?? 'Anônimo').' em '.$record->fim_preenchimento?->format('d/m/Y H:i'))
+                                    ->url(fn ($record) => QuestionarioRespostaResource::getUrl('view', ['record' => $record->id]))
+                                    ->color('primary'),
                             ])
-                            ->columns(2)
-                            ->placeholder('Nenhum feedback registrado até o momento.'),
+                            ->visible(fn ($record) => $record->children()->exists())
+                            ->columns(1),
                     ])
-                    ->visible(fn ($record) => $record->feedbacks()->exists() || auth()->user()?->can('Create:QuestionarioResposta')),
+                    ->visible(fn ($record) => $record->parent_id !== null || $record->children()->exists()),
 
                 Section::make('Perguntas e Respostas')
                     ->columns(1)

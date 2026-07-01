@@ -51,6 +51,11 @@ class QuestionarioRespostasTable
             ])
             ->actions([
                 ViewAction::make(),
+                Action::make('dar_feedback')
+                    ->label('Dar Feedback')
+                    ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                    ->color('primary')
+                    ->url(fn (QuestionarioResposta $record) => QuestionarioResource::getUrl('responder', ['record' => $record->questionario_id]).'?parent_id='.$record->id),
             ])
             ->headerActions([
                 Action::make('export_csv')
