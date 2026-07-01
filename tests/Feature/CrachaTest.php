@@ -94,8 +94,8 @@ class CrachaTest extends TestCase
             'pessoas' => $records,
             'objects' => $objects,
             'backgroundImage' => $backgroundImage,
-            'largura' => $template->largura * 0.75,
-            'altura' => $template->altura * 0.75,
+            'crachaLargura' => $template->largura * 0.75,
+            'crachaAltura' => $template->altura * 0.75,
         ])->render();
 
         // Verifica se os dados dinâmicos foram inseridos no HTML que é mandado ao DomPDF

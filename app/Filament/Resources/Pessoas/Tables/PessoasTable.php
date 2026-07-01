@@ -149,16 +149,17 @@ class PessoasTable
                             $objects = $layout['objects'] ?? [];
                             $backgroundImage = $layout['backgroundImage']['src'] ?? null;
 
-                            $larguraPt = $template->largura * 0.75;
-                            $alturaPt = $template->altura * 0.75;
+                            // Dimensões do crachá em pontos (pixels * 0.75)
+                            $crachaLargura = $template->largura * 0.75;
+                            $crachaAltura = $template->altura * 0.75;
 
                             $pdf = Pdf::loadView('pdf.cracha-lote', [
                                 'pessoas' => $records,
                                 'objects' => $objects,
                                 'backgroundImage' => $backgroundImage,
-                                'largura' => $larguraPt,
-                                'altura' => $alturaPt,
-                            ]);
+                                'crachaLargura' => $crachaLargura,
+                                'crachaAltura' => $crachaAltura,
+                            ])->setPaper('a4', 'portrait');
 
                             return response()->streamDownload(
                                 fn () => print ($pdf->output()),
