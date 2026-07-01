@@ -137,7 +137,7 @@
                                         </div>
                                         @endif
 
-                                    @elseif (($obj['type'] ?? '') === 'text' || ($obj['type'] ?? '') === 'i-text')
+                                    @elseif (in_array($obj['type'] ?? '', ['text', 'i-text', 'textbox']))
                                         {{-- Texto --}}
                                         @php
                                             $textoSubstituido = str_replace([

@@ -180,20 +180,22 @@
         },
         
         addText(textStr, isVariable = false, x = 50, y = 50) {
-            let options = {
+            let text = new fabric.Textbox(textStr, {
                 left: x,
                 top: y,
+                width: 200,
                 fontFamily: 'sans-serif',
                 fontSize: isVariable ? 18 : 16,
                 fill: isVariable ? '#1e3a8a' : '#000000',
                 fontWeight: isVariable ? 'bold' : 'normal',
                 fontStyle: 'normal',
                 textAlign: 'left',
-                width: 200,
-                splitByGrapheme: false
-            };
-            
-            let text = new fabric.IText(textStr, options);
+                splitByGrapheme: false,
+                // Borda visual para representar a caixa de texto
+                backgroundColor: 'rgba(219, 234, 254, 0.3)',
+                // Impede a edição direta no canvas — fontes devem ser editadas pelo painel
+                editable: false,
+            });
             this.ensureControls(text);
             this.canvas.add(text);
             this.canvas.setActiveObject(text);
