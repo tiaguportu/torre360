@@ -5,6 +5,7 @@ namespace App\Filament\Resources\TemplateCrachas\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class TemplateCrachaForm
@@ -26,7 +27,8 @@ class TemplateCrachaForm
                             ->default(300)
                             ->minValue(100)
                             ->maxValue(1000)
-                            ->live(),
+                            ->live()
+                            ->helperText(fn (Get $get) => 'Equivale a aproximadamente '.round(($get('largura') ?: 0) / 3.7795, 1).' mm no PDF físico (A4).'),
                         TextInput::make('altura')
                             ->label('Altura (px)')
                             ->required()
@@ -34,7 +36,8 @@ class TemplateCrachaForm
                             ->default(480)
                             ->minValue(100)
                             ->maxValue(1000)
-                            ->live(),
+                            ->live()
+                            ->helperText(fn (Get $get) => 'Equivale a aproximadamente '.round(($get('altura') ?: 0) / 3.7795, 1).' mm no PDF físico (A4).'),
                     ])->columns(3)
                     ->columnSpanFull(),
 

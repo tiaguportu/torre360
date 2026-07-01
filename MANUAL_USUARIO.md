@@ -919,7 +919,7 @@ Se você prefere não instalar um aplicativo da loja ou utiliza iOS (iPhone), vo
     - Acesse o site pelo Safari.
     - Clique no ícone de **Compartilhar** (quadrado com seta para cima).
     - Role para baixo e selecione **"Adicionar à Tela de Início"**.
-3.  **Vantagens do PWA:**
+3. **Vantagens do PWA:**
     - Não ocupa espaço significativo na memória.
     - Atualizações automáticas (sempre que o site for atualizado, o "app" também será).
     - Funciona em tela cheia (Standalone), removendo as barras do navegador.
@@ -957,22 +957,31 @@ O módulo de crachás do Torre360 permite criar modelos de crachás com um edito
 2. Clique em **Criar** para criar um novo modelo.
 3. Configure as opções básicas:
    - **Nome do Template:** Identificação amigável (ex: "Crachá de Funcionário").
-   - **Largura e Altura:** Dimensões da área útil do crachá em pixels (padrão sugerido: 300px por 480px).
+   - **Largura e Altura:** Dimensões da área útil do crachá em pixels (px).
+   
+   > [!TIP]
+   > **Conversão de Pixels (px) para Milímetros (mm) na Impressão:**
+   > Os crachás são gerados em um papel **A4 físico**. Para obter as dimensões exatas na régua ao imprimir, multiplique o tamanho em milímetros por **3.7795** para descobrir o valor em pixels a configurar:
+   > - **Crachá Padrão de Mercado (54 mm x 86 mm):** Configure como **204 px** de largura e **325 px** de altura.
+   > - **Crachá Médio (80 mm x 110 mm):** Configure como **302 px** de largura e **416 px** de altura.
+   > - **Crachá Grande (90 mm x 130 mm):** Configure como **340 px** de largura e **491 px** de altura.
+
 4. No **Editor de Layout**:
-   - **Adicionar Texto Livre:** Insira uma caixa de texto customizada clicando em "Inserir Texto Livre".
+   - **Adicionar Texto Livre / Variáveis:** Os textos no editor funcionam como **Caixas de Texto (Textbox)**. Eles delimitam o retângulo azul semi-transparente que conterá o texto. Ao redimensionar a caixa puxando as alças laterais, o texto **se reorganiza e quebra linhas automaticamente** para caber dentro da largura definida, em vez de se esticar.
+   - **Tamanho da Fonte:** A edição do texto no canvas é bloqueada para evitar desalinhamento. O tamanho da fonte, cores, negrito, itálico, alinhamento e família da fonte devem ser editados exclusivamente através do **Painel de Configuração Lateral** que aparece quando o texto está selecionado.
    - **Inserir Campos de Pessoas (Variáveis):** Clique nas opções como "Nome Completo", "Profissão" ou "CPF" para inserir caixas de texto cujos conteúdos serão substituídos automaticamente pelos dados reais da pessoa no momento da impressão.
-   - **Plano de Fundo:** Carregue uma imagem do seu computador usando a opção "Carregar Fundo" para definir a imagem de fundo do crachá.
-   - **Controles de Formatação:** Ao clicar sobre qualquer texto no crachá, você poderá alterar a família da fonte (Arial, Times New Roman, Georgia, etc.), o tamanho, a cor, aplicar estilos (negrito/itálico), mudar o alinhamento do texto ou excluir o elemento selecionado.
+   - **Foto do Aluno/Colaborador:** Adicione o espaço reservado para a foto da pessoa clicando em "Inserir Foto (Placeholder)".
+   - **Imagens Customizadas (Editáveis):** Você pode inserir logotipos, ícones ou qualquer imagem do seu computador clicando em "Carregar Imagem (Editável)". Ela se tornará um objeto livre que pode ser movido, rotacionado ou redimensionado no crachá.
    - **Alinhamento & Profundidade:** Utilize os botões rápidos de alinhamento e profundidade para centralizar elementos horizontalmente ou definir quais objetos ficam por cima dos outros (Trazer para Frente / Enviar para Trás).
-   - **Arraste e Redimensionamento:** Use o mouse para mover ou alterar as dimensões dos elementos na tela.
 5. Clique em **Salvar** para registrar as alterações de layout.
 
-### 22.2 Impressão de Crachás em Lote
+### 22.2 Impressão de Crachás em Grade (Papel A4)
 1. Acesse o menu **Secretaria → Pessoas**.
 2. Marque a caixa de seleção ao lado do nome das pessoas para quem deseja gerar os crachás.
 3. No topo da tabela, acesse o menu de ações em lote e clique em **Imprimir Crachá**.
 4. No formulário do modal, selecione qual **Modelo de Crachá** deseja aplicar.
-5. Confirme a operação. O sistema gerará e iniciará automaticamente o download de um arquivo PDF contendo um crachá por página, já ajustado com a imagem de fundo e as informações substituídas.
+5. Confirme a operação. O sistema calculará automaticamente quantos crachás cabem por folha A4 com base nas dimensões configuradas no template e os organizará lado a lado em uma **grade perfeitamente distribuída e centralizada** na página.
+6. Se a quantidade de crachás selecionados exceder a capacidade de uma única folha A4, o sistema realizará a quebra de página automaticamente no PDF para as folhas seguintes.
 
 ---
 
