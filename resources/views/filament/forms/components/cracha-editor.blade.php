@@ -25,6 +25,22 @@
         },
         
         setupCanvas() {
+            // Se já existir uma instância do canvas, limpa tudo de forma limpa para evitar vazamento de memória e elementos fantasma
+            if (this.canvas) {
+                try {
+                    this.canvas.dispose();
+                } catch (e) {
+                    console.error('Erro ao destruir canvas antigo:', e);
+                }
+                this.canvas = null;
+            }
+
+            // Limpa o contêiner DOM e recria a tag canvas limpa antes de instanciar o Fabric
+            const wrapper = document.getElementById('canvas-container-wrapper');
+            if (wrapper) {
+                wrapper.innerHTML = '<canvas id="cracha-fabric-canvas"></canvas>';
+            }
+            
             this.canvas = new fabric.Canvas('cracha-fabric-canvas', {
                 width: parseInt(this.largura) || 300,
                 height: parseInt(this.altura) || 480,
@@ -119,15 +135,14 @@
 
         addPhotoPlaceholder(x = 50, y = 50) {
             let placeholder = new fabric.Rect({
-                left: x,
-                top: y,
+                left: 0,
+                top: 0,
                 width: 100,
                 height: 100,
                 fill: '#e5e7eb',
                 stroke: '#9ca3af',
                 strokeWidth: 2,
-                strokeDashArray: [5, 5],
-                id: 'foto'
+                strokeDashArray: [5, 5]
             });
             
             // Texto para indicar que é uma foto no editor
@@ -137,8 +152,8 @@
                 fontWeight: 'bold',
                 originX: 'center',
                 originY: 'center',
-                left: x + 50,
-                top: y + 50
+                left: 50,
+                top: 50
             });
             
             let group = new fabric.Group([placeholder, label], {
@@ -146,6 +161,9 @@
                 top: y,
                 id: 'foto_group'
             });
+
+            // Adiciona propriedade customizada id no grupo principal para ser detectado no render do PDF
+            group.id = 'foto';
 
             this.canvas.add(group);
             this.canvas.setActiveObject(group);
@@ -422,7 +440,7 @@
 
         <!-- Área de Edição (Canvas) -->
         <div class="lg:col-span-2 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-800 rounded-xl p-6 bg-gray-50 dark:bg-gray-950 shadow-inner min-h-[520px]">
-            <div class="relative shadow-2xl border border-gray-300 dark:border-gray-700 rounded overflow-hidden" 
+            <div id="canvas-container-wrapper" wire:ignore class="relative shadow-2xl border border-gray-300 dark:border-gray-700 rounded overflow-hidden" 
                  style="background-image: radial-gradient(circle, #cbcbcb 10%, transparent 11%), radial-gradient(circle, #cbcbcb 10%, #ffffff 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;">
                 <canvas id="cracha-fabric-canvas"></canvas>
             </div>
