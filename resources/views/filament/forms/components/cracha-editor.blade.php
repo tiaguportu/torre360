@@ -1,11 +1,9 @@
 <style>
     /* Impede que o Tailwind e CSS global do Filament apliquem max-width ou redimensionamento inadequado nos canvas do Fabric.js */
+    #canvas-container-wrapper .canvas-container,
     #canvas-container-wrapper canvas {
         max-width: none !important;
         max-height: none !important;
-        width: auto !important;
-        height: auto !important;
-        display: inline-block !important;
     }
 </style>
 
@@ -59,6 +57,15 @@
                 height: parseInt(this.altura) || 480,
                 backgroundColor: '#ffffff'
             });
+            
+            // Força a visibilidade dos controles de seleção e redimensionamento do Fabric
+            fabric.Object.prototype.transparentCorners = false;
+            fabric.Object.prototype.cornerColor = '#3b82f6';
+            fabric.Object.prototype.borderColor = '#3b82f6';
+            fabric.Object.prototype.cornerSize = 12;
+            fabric.Object.prototype.padding = 6;
+            fabric.Object.prototype.cornerStyle = 'circle';
+            fabric.Object.prototype.hasControls = true;
             
             // Carrega layout existente se houver
             if (this.state) {
