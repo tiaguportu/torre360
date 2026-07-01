@@ -56,13 +56,8 @@
                 wrapper.innerHTML = '<canvas id=\'cracha-fabric-canvas\'></canvas>';
             }
             
-            this.canvas = new fabric.Canvas('cracha-fabric-canvas', {
-                width: parseInt(this.largura) || 300,
-                height: parseInt(this.altura) || 480,
-                backgroundColor: '#ffffff'
-            });
-            
-            // Força a visibilidade dos controles de seleção e redimensionamento do Fabric
+            // IMPORTANTE: Configurar protótipos ANTES de instanciar o canvas
+            // para que todos os objetos (inclusive os restaurados via loadFromJSON) herdem os controles
             fabric.Object.prototype.transparentCorners = false;
             fabric.Object.prototype.cornerColor = '#3b82f6';
             fabric.Object.prototype.borderColor = '#3b82f6';
@@ -70,22 +65,57 @@
             fabric.Object.prototype.padding = 6;
             fabric.Object.prototype.cornerStyle = 'circle';
             fabric.Object.prototype.hasControls = true;
+            fabric.Object.prototype.hasRotatingPoint = true;
+            fabric.Object.prototype.lockScalingFlip = true;
+            
+            this.canvas = new fabric.Canvas('cracha-fabric-canvas', {
+                width: parseInt(this.largura) || 300,
+                height: parseInt(this.altura) || 480,
+                backgroundColor: '#ffffff',
+                selection: true,
+                preserveObjectStacking: true
+            });
+            
+            // Método auxiliar para garantir controles em um objeto
+            const ensureControls = (obj) => {
+                obj.set({
+                    hasControls: true,
+                    hasBorders: true,
+                    selectable: true,
+                    evented: true,
+                    transparentCorners: false,
+                    cornerColor: '#3b82f6',
+                    borderColor: '#3b82f6',
+                    cornerSize: 12,
+                    padding: 6,
+                    cornerStyle: 'circle',
+                    hasRotatingPoint: true
+                });
+                obj.setCoords();
+            };
+            this.ensureControls = ensureControls;
             
             // Carrega layout existente se houver
             if (this.state) {
                 let layoutData = typeof this.state === 'string' ? JSON.parse(this.state) : this.state;
                 if (layoutData && typeof layoutData === 'object') {
                     this.canvas.loadFromJSON(layoutData, () => {
-                        // Força todos os objetos a recalcularem suas coordenadas de alça de controle após o carregamento
-                        this.canvas.getObjects().forEach(obj => obj.setCoords());
+                        // Reaplica controles explicitamente em CADA objeto restaurado
+                        this.canvas.getObjects().forEach(obj => {
+                            ensureControls(obj);
+                            // Se for grupo (ex: foto placeholder), reaplica nos filhos
+                            if (obj.type === 'group' && obj._objects) {
+                                obj._objects.forEach(child => ensureControls(child));
+                            }
+                        });
                         this.canvas.renderAll();
                     });
                 }
             }
             
-            // Eventos de alteração
+            // Eventos de alteração — inclui 'id' e 'src' para persistir imagens
             const updateState = () => {
-                this.state = this.canvas.toJSON(['id']);
+                this.state = this.canvas.toJSON(['id', 'src']);
             };
             this.updateState = updateState;
             
@@ -158,9 +188,9 @@
             };
             
             let text = new fabric.IText(textStr, options);
+            this.ensureControls(text);
             this.canvas.add(text);
             this.canvas.setActiveObject(text);
-            text.setCoords();
             this.canvas.renderAll();
         },
 
@@ -196,9 +226,9 @@
             // Adiciona propriedade customizada id no grupo principal para ser detectado no render do PDF
             group.id = 'foto';
 
+            this.ensureControls(group);
             this.canvas.add(group);
             this.canvas.setActiveObject(group);
-            group.setCoords();
             this.canvas.renderAll();
         },
         
@@ -228,6 +258,7 @@
                         top: (this.canvas.height / 2) - (img.getScaledHeight() / 2)
                     });
                     
+                    this.ensureControls(img);
                     this.canvas.add(img);
                     this.canvas.setActiveObject(img);
                     this.canvas.renderAll();
