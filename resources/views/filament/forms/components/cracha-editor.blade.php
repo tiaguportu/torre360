@@ -13,6 +13,7 @@
         state: $wire.entangle('{{ $getStatePath() }}'),
         largura: $wire.entangle('data.largura'),
         altura: $wire.entangle('data.altura'),
+        tipoEntidade: $wire.entangle('data.tipo_entidade'),
         hasSelection: false,
         selectedType: null,
         selectedObj: null,
@@ -460,22 +461,26 @@
             </div>
 
             <!-- Variáveis Dinâmicas -->
-            @foreach($variaveis as $grupo => $campos)
-                <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                    <h3 class="text-xs font-semibold text-gray-550 dark:text-gray-400 uppercase tracking-wider">{{ $grupo }}</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        @foreach($campos as $tag => $label)
-                            @if($tag === '{foto}')
-                                <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
-                                    🖼️ {{ $label }}
-                                </div>
-                            @else
-                                <div role="button" draggable="true" @dragstart="dragStart($event, '{{ $tag }}')" @click="addText('{{ $tag }}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                                    🏷️ {{ $label }}
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
+            @foreach($todasVariaveis as $entidadeKey => $grupos)
+                <div x-show="tipoEntidade === '{{ $entidadeKey }}'" x-transition class="space-y-4">
+                    @foreach($grupos as $grupo => $campos)
+                        <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <h3 class="text-xs font-semibold text-gray-550 dark:text-gray-400 uppercase tracking-wider">{{ $grupo }}</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                @foreach($campos as $tag => $label)
+                                    @if($tag === '{foto}')
+                                        <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
+                                            🖼️ {{ $label }}
+                                        </div>
+                                    @else
+                                        <div role="button" draggable="true" @dragstart="dragStart($event, '{{ $tag }}')" @click="addText('{{ $tag }}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
+                                            🏷️ {{ $label }}
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             @endforeach
 

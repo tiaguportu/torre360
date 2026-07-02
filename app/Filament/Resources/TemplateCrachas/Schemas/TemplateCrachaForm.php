@@ -56,11 +56,10 @@ class TemplateCrachaForm
                             ->label('')
                             ->view('filament.forms.components.cracha-editor')
                             ->viewData(fn (Get $get) => [
-                                'variaveis' => TemplateCrachaService::getVariaveisPorEntidade(
-                                    $get('tipo_entidade') instanceof TemplateCrachaEntidade
-                                        ? $get('tipo_entidade')
-                                        : (TemplateCrachaEntidade::tryFrom($get('tipo_entidade')) ?? TemplateCrachaEntidade::PESSOA)
-                                ),
+                                'todasVariaveis' => [
+                                    'pessoa' => TemplateCrachaService::getVariaveisPorEntidade(TemplateCrachaEntidade::PESSOA),
+                                    'turma' => TemplateCrachaService::getVariaveisPorEntidade(TemplateCrachaEntidade::TURMA),
+                                ],
                             ])
                             ->columnSpanFull(),
                     ])->columnSpanFull(),
