@@ -478,8 +478,6 @@
                     </div>
                 </div>
             @endforeach
-                </div>
-            </div>
 
             <!-- Inserir Imagem -->
             <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
