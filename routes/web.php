@@ -19,6 +19,7 @@ Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
 
+use App\Http\Controllers\Admin\TemplateCrachaV2Controller;
 use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
@@ -40,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
     Route::get('/turmas/boletins/download', [BoletimPDFController::class, 'downloadTurmas'])->name('turmas.boletins.download');
     Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
+
+    // Editor de Crachás V2 (SVG-Edit)
+    Route::get('/admin/template-crachas-v2/{templateCrachaV2}/editor', [TemplateCrachaV2Controller::class, 'editor'])->name('template-crachas-v2.editor');
+    Route::post('/admin/template-crachas-v2/{templateCrachaV2}/save', [TemplateCrachaV2Controller::class, 'save'])->name('template-crachas-v2.save');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');

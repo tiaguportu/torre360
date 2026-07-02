@@ -308,6 +308,22 @@ O sistema permite a criação de modelos de contrato customizáveis com substitu
 5. **Template Padrão:** Marque a opção "Template Padrão" em um dos modelos para que ele seja selecionado automaticamente ao criar novos contratos.
 6. **Seleção no Contrato:** No formulário de **Contratos**, você pode escolher qual template deseja utilizar para aquele contrato específico.
 
+### 6.7 Templates de Crachá V2 (Editor SVG)
+O sistema conta com um novo módulo de criação de crachás versão 2 (V2), utilizando o editor vetorial SVG-Edit, permitindo maior flexibilidade e controle visual do desenho.
+1. Vá em **Secretaria → Templates de Crachá V2**.
+2. **Criação:** Defina o nome, tipo de entidade (Pessoa ou Turma) e as dimensões em pixels (Largura e Altura).
+3. **Editor Canvas:** Após salvar o registro, clique na ação de linha **Editar Canvas** (ou no botão do formulário de edição) para abrir o editor gráfico do SVG-Edit em uma nova aba do navegador.
+4. **Inserção de Campos Dinâmicos:** Na barra lateral do editor gráfico, utilize os botões rápidos para injetar tags especiais no centro do desenho, como:
+   - `{nome}`, `{cpf}`, `{email}`, etc.
+   - **Foto da Pessoa ({foto}):** Insere uma caixa de imagem que servirá como área reservada. No momento da impressão, o sistema substituirá a área pela foto real do aluno ou pessoa cadastrada.
+5. **Ajuste e Salvamento:** Mova, rotacione ou altere cores dos elementos utilizando as ferramentas do SVG-Edit. Ao finalizar, clique no botão **Salvar Template** no cabeçalho superior.
+
+### 6.8 Impressão de Crachás V2
+A nova versão de impressão permite gerar crachás vetoriais baseados em SVG de forma rápida e com alta fidelidade visual.
+1. Acesse as listagens de **Pessoas** ou de **Turmas**.
+2. Selecione os registros desejados e utilize a ação em lote **Imprimir Crachá V2 (SVG)**.
+3. Escolha o template V2 correspondente e clique para efetuar o download. O PDF resultante será gerado posicionando os crachás na grade do papel A4 de acordo com as dimensões especificadas no template.
+
 ---
 
 ## 💰 7. Financeiro Avançado
