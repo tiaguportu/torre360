@@ -152,6 +152,21 @@
                                         </div>
                                         @endif
 
+                                    @elseif (isset($obj['id']) && $obj['id'] === 'cor_turma')
+                                        {{-- Cor da Turma (polígono retangular) --}}
+                                        @php
+                                            $corTurma = $turma->cor ?? '#3b82f6';
+                                        @endphp
+                                        <div class="element-wrapper" style="
+                                            left: {{ $elLeft }}pt;
+                                            top: {{ $elTop }}pt;
+                                            width: {{ $elWidth }}pt;
+                                            height: {{ $elHeight }}pt;
+                                            background-color: {{ $corTurma }};
+                                            z-index: {{ $zIndex }};
+                                        ">
+                                        </div>
+
                                     @elseif (in_array($obj['type'] ?? '', ['text', 'i-text', 'textbox']))
                                         {{-- Texto --}}
                                         @php

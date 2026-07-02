@@ -142,12 +142,23 @@ class CrachaTest extends TestCase
                         'type' => 'textbox',
                         'text' => 'Nome: {nome} - Turma: {turma_nome}',
                     ],
+                    [
+                        'type' => 'rect',
+                        'id' => 'cor_turma',
+                        'left' => 10,
+                        'top' => 100,
+                        'width' => 150,
+                        'height' => 20,
+                    ],
                 ],
             ],
         ]);
 
         $pessoa = Pessoa::factory()->create(['nome' => 'João Vítor']);
-        $turma = Turma::factory()->create(['nome' => 'Primeiro Ano B']);
+        $turma = Turma::factory()->create([
+            'nome' => 'Primeiro Ano B',
+            'cor' => '#ff5522',
+        ]);
 
         $pessoasComTurma = collect([
             (object) [
@@ -166,5 +177,6 @@ class CrachaTest extends TestCase
 
         $this->assertStringContainsString('João Vítor', $html);
         $this->assertStringContainsString('Primeiro Ano B', $html);
+        $this->assertStringContainsString('background-color: #ff5522', $html);
     }
 }

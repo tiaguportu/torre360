@@ -970,7 +970,7 @@ O módulo de crachás do Torre360 permite criar modelos de crachás com um edito
 4. No **Editor de Layout**:
    - **Variáveis Dinâmicas baseadas no Tipo de Entidade:** Ao mudar o tipo de entidade no formulário, a barra lateral recarrega automaticamente as variáveis correspondentes:
      - **Pessoa:** Disponibiliza campos da pessoa como `{nome}`, `{cpf}`, `{email}`, `{telefone}`, `{profissao}`, etc.
-     - **Turma:** Além de todos os campos da pessoa (que representam o aluno), disponibiliza campos da turma como `{turma_nome}`, `{turma_periodo}`, `{turma_serie}` e `{turma_curso}`.
+     - **Turma:** Além de todos os campos da pessoa (que representam o aluno), disponibiliza campos de texto da turma (como `{turma_nome}`, `{turma_periodo}`, `{turma_serie}` e `{turma_curso}`) e o elemento dinâmico retangular **Cor da Turma** (que é inserido no crachá como um polígono retangular colorido, preenchido automaticamente com a respectiva cor cadastrada na Turma no momento da impressão).
    - **Adicionar Texto Livre / Variáveis:** Os textos no editor funcionam como **Caixas de Texto (Textbox)**. Eles delimitam o retângulo azul semi-transparente que conterá o texto. Ao redimensionar a caixa puxando as alças laterais, o texto **se reorganiza e quebra linhas automaticamente** para caber dentro da largura definida, em vez de se esticar.
    - **Tamanho da Fonte:** A edição do texto no canvas é bloqueada para evitar desalinhamento. O tamanho da fonte, cores, negrito, itálico, alinhamento e família da fonte devem ser editados exclusivamente através do **Painel de Configuração Lateral** que aparece quando o texto está selecionado.
    - **Foto do Aluno/Colaborador:** Adicione o espaço reservado para a foto da pessoa clicando em "Inserir Foto (Placeholder)".

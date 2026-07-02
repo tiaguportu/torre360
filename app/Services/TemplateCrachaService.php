@@ -38,6 +38,7 @@ class TemplateCrachaService
                     '{turma_periodo}' => 'Período Escolar',
                     '{turma_serie}' => 'Série / Ano',
                     '{turma_curso}' => 'Curso',
+                    '{turma_cor}' => 'Cor da Turma',
                 ],
                 'Variáveis do Aluno (Pessoa)' => $variaveisPessoa,
             ],

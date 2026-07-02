@@ -175,6 +175,8 @@
                     
                     if (itemType === '{foto}') {
                         this.addPhotoPlaceholder(x, y);
+                    } else if (itemType === '{turma_cor}') {
+                        this.addTurmaColorPlaceholder(x, y);
                     } else {
                         this.addText(itemType, itemType.startsWith('{'), x, y);
                     }
@@ -259,6 +261,23 @@
             this.ensureControls(group);
             this.canvas.add(group);
             this.canvas.setActiveObject(group);
+            this.canvas.renderAll();
+        },
+
+        addTurmaColorPlaceholder(x = 50, y = 50) {
+            let rect = new fabric.Rect({
+                left: x,
+                top: y,
+                width: 200,
+                height: 30,
+                fill: '#3b82f6', // cor padrão temporária no editor
+                stroke: '#2563eb',
+                strokeWidth: 1,
+                id: 'cor_turma'
+            });
+            this.ensureControls(rect);
+            this.canvas.add(rect);
+            this.canvas.setActiveObject(rect);
             this.canvas.renderAll();
         },
         
@@ -471,6 +490,10 @@
                                     @if($tag === '{foto}')
                                         <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
                                             🖼️ {{ $label }}
+                                        </div>
+                                    @elseif($tag === '{turma_cor}')
+                                        <div role="button" draggable="true" @dragstart="dragStart($event, '{turma_cor}')" @click="addTurmaColorPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
+                                            🎨 {{ $label }} (Polígono)
                                         </div>
                                     @else
                                         <div role="button" draggable="true" @dragstart="dragStart($event, '{{ $tag }}')" @click="addText('{{ $tag }}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
