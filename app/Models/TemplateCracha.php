@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TemplateCrachaEntidade;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,7 @@ class TemplateCracha extends Model
     {
         return [
             'dados_layout' => 'array',
+            'tipo_entidade' => TemplateCrachaEntidade::class,
         ];
     }
 }

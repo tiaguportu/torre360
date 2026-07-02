@@ -85,9 +85,10 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - BelongsToMany `pessoa` (via `representante_unidade`) para Representantes Legais.
 
 ### `template_crachas`
-- **Representa:** Modelos de layout de crachás para pessoas.
+- **Representa:** Modelos de layout de crachás para pessoas ou turmas.
 - **Campos Principais:**
     - `nome`: Identificação amigável do template.
+    - `tipo_entidade`: Enum/String ('pessoa', 'turma'). Define o contexto do crachá e os campos variáveis disponíveis.
     - `largura`: Largura do crachá em pixels (default 300).
     - `altura`: Altura do crachá em pixels (default 480).
     - `imagem_fundo`: Caminho da imagem de fundo.

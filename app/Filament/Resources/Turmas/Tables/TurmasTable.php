@@ -6,7 +6,9 @@ use App\Enums\SituacaoMatricula;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\NotaHabilidade;
+use App\Models\TemplateCracha;
 use App\Models\Turma;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -223,6 +225,79 @@ class TurmasTable
                             return redirect()->route('turmas.boletins.download', $params);
                         })
                         ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
+                    BulkAction::make('imprimirCrachasLote')
+                        ->label('Imprimir Crachá dos Alunos')
+                        ->icon('heroicon-o-identification')
+                        ->color('success')
+                        ->form([
+                            Select::make('template_cracha_id')
+                                ->label('Selecione o Modelo de Crachá')
+                                ->options(fn () => TemplateCracha::pluck('nome', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $template = TemplateCracha::find($data['template_cracha_id']);
+                            if (! $template) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Template não encontrado')
+                                    ->send();
+
+                                return;
+                            }
+
+                            // Busca as matrículas ativas de todas as turmas selecionadas
+                            $pessoasComTurma = collect();
+                            foreach ($records as $turma) {
+                                $matriculas = $turma->matriculas()
+                                    ->where('situacao', SituacaoMatricula::ATIVA)
+                                    ->with('pessoa')
+                                    ->get();
+
+                                foreach ($matriculas as $m) {
+                                    if ($m->pessoa) {
+                                        $pessoasComTurma->push((object) [
+                                            'pessoa' => $m->pessoa,
+                                            'turma' => $turma,
+                                        ]);
+                                    }
+                                }
+                            }
+
+                            if ($pessoasComTurma->isEmpty()) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Nenhum aluno ativo encontrado nas turmas selecionadas')
+                                    ->send();
+
+                                return null;
+                            }
+
+                            $layout = $template->dados_layout;
+                            $objects = $layout['objects'] ?? [];
+                            $backgroundImage = $layout['backgroundImage']['src'] ?? null;
+
+                            // Dimensões do crachá em pontos (pixels * 0.75)
+                            $crachaLargura = $template->largura * 0.75;
+                            $crachaAltura = $template->altura * 0.75;
+
+                            $pdf = Pdf::loadView('pdf.cracha-lote', [
+                                'pessoasComTurma' => $pessoasComTurma,
+                                'objects' => $objects,
+                                'backgroundImage' => $backgroundImage,
+                                'crachaLargura' => $crachaLargura,
+                                'crachaAltura' => $crachaAltura,
+                            ])->setPaper('a4', 'portrait');
+
+                            return response()->streamDownload(
+                                fn () => print ($pdf->output()),
+                                'crachas_turmas.pdf',
+                                ['Content-Type' => 'application/pdf']
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ])
             ->stackedOnMobile();

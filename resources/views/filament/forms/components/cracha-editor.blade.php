@@ -459,40 +459,25 @@
                 </div>
             </div>
 
-            <!-- Variáveis de Pessoa -->
-            <div class="space-y-2">
-                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Variáveis de Pessoa</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
-                        🖼️ Foto da Pessoa
+            <!-- Variáveis Dinâmicas -->
+            @foreach($variaveis as $grupo => $campos)
+                <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <h3 class="text-xs font-semibold text-gray-550 dark:text-gray-400 uppercase tracking-wider">{{ $grupo }}</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        @foreach($campos as $tag => $label)
+                            @if($tag === '{foto}')
+                                <div role="button" draggable="true" @dragstart="dragStart($event, '{foto}')" @click="addPhotoPlaceholder()" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 border border-dashed border-gray-300 dark:border-gray-600 select-none">
+                                    🖼️ {{ $label }}
+                                </div>
+                            @else
+                                <div role="button" draggable="true" @dragstart="dragStart($event, '{{ $tag }}')" @click="addText('{{ $tag }}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
+                                    🏷️ {{ $label }}
+                                </div>
+                            @endif
+                        @endforeach
                     </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{nome}')" @click="addText('{nome}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        🏷️ Nome Completo
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{profissao}')" @click="addText('{profissao}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        💼 Profissão
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{cpf}')" @click="addText('{cpf}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        📄 CPF
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{identidade}')" @click="addText('{identidade}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        🆔 Identidade (RG)
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{email}')" @click="addText('{email}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        ✉️ E-mail
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{telefone}')" @click="addText('{telefone}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        📞 Telefone
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{data_nascimento}')" @click="addText('{data_nascimento}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        📅 Nascimento
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{sexo}')" @click="addText('{sexo}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab select-none">
-                        🚻 Sexo
-                    </div>
-                    <div role="button" draggable="true" @dragstart="dragStart($event, '{cor_raca}')" @click="addText('{cor_raca}', true)" class="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded transition text-left truncate cursor-grab col-span-2 select-none">
-                        🎨 Cor / Raça
-                    </div>
+                </div>
+            @endforeach
                 </div>
             </div>
 

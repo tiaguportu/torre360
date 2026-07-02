@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\TemplateCrachas\Schemas;
 
+use App\Enums\TemplateCrachaEntidade;
+use App\Services\TemplateCrachaService;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
@@ -20,6 +23,12 @@ class TemplateCrachaForm
                             ->label('Nome do Template')
                             ->required()
                             ->maxLength(255),
+                        Select::make('tipo_entidade')
+                            ->label('Tipo de Entidade')
+                            ->options(TemplateCrachaEntidade::class)
+                            ->required()
+                            ->default(TemplateCrachaEntidade::PESSOA)
+                            ->live(),
                         TextInput::make('largura')
                             ->label('Largura (px)')
                             ->required()
@@ -38,7 +47,7 @@ class TemplateCrachaForm
                             ->maxValue(1000)
                             ->live()
                             ->helperText(fn (Get $get) => 'Equivale a aproximadamente '.round(($get('altura') ?: 0) / 3.7795, 1).' mm no PDF físico (A4).'),
-                    ])->columns(3)
+                    ])->columns(4)
                     ->columnSpanFull(),
 
                 Section::make('Editor de Layout')
@@ -46,6 +55,13 @@ class TemplateCrachaForm
                         ViewField::make('dados_layout')
                             ->label('')
                             ->view('filament.forms.components.cracha-editor')
+                            ->viewData(fn (Get $get) => [
+                                'variaveis' => TemplateCrachaService::getVariaveisPorEntidade(
+                                    $get('tipo_entidade') instanceof TemplateCrachaEntidade
+                                        ? $get('tipo_entidade')
+                                        : (TemplateCrachaEntidade::tryFrom($get('tipo_entidade')) ?? TemplateCrachaEntidade::PESSOA)
+                                ),
+                            ])
                             ->columnSpanFull(),
                     ])->columnSpanFull(),
             ]);

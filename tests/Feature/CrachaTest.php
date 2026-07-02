@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Pessoa;
 use App\Models\TemplateCracha;
+use App\Models\Turma;
+use App\Services\TemplateCrachaService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -109,5 +111,60 @@ class CrachaTest extends TestCase
         $output = $pdf->output();
 
         $this->assertNotEmpty($output);
+    }
+
+    public function test_template_cracha_servico_substitui_variaveis_de_turma(): void
+    {
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Maria Eduarda',
+            'cpf' => '12345678901',
+        ]);
+
+        $turma = Turma::factory()->create([
+            'nome' => 'Terceiro Ano A',
+        ]);
+
+        $texto = 'Aluno: {nome} | Turma: {turma_nome}';
+        $substituido = TemplateCrachaService::substituirVariaveis($texto, $pessoa, $turma);
+
+        $this->assertEquals('Aluno: Maria Eduarda | Turma: Terceiro Ano A', $substituido);
+    }
+
+    public function test_geracao_de_pdf_de_crachas_com_dados_de_turma(): void
+    {
+        $template = TemplateCracha::factory()->create([
+            'nome' => 'Template Turma',
+            'largura' => 300,
+            'altura' => 500,
+            'dados_layout' => [
+                'objects' => [
+                    [
+                        'type' => 'textbox',
+                        'text' => 'Nome: {nome} - Turma: {turma_nome}',
+                    ],
+                ],
+            ],
+        ]);
+
+        $pessoa = Pessoa::factory()->create(['nome' => 'João Vítor']);
+        $turma = Turma::factory()->create(['nome' => 'Primeiro Ano B']);
+
+        $pessoasComTurma = collect([
+            (object) [
+                'pessoa' => $pessoa,
+                'turma' => $turma,
+            ],
+        ]);
+
+        $html = view('pdf.cracha-lote', [
+            'pessoasComTurma' => $pessoasComTurma,
+            'objects' => $template->dados_layout['objects'],
+            'backgroundImage' => null,
+            'crachaLargura' => $template->largura * 0.75,
+            'crachaAltura' => $template->altura * 0.75,
+        ])->render();
+
+        $this->assertStringContainsString('João Vítor', $html);
+        $this->assertStringContainsString('Primeiro Ano B', $html);
     }
 }

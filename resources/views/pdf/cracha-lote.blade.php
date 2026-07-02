@@ -53,6 +53,17 @@
 </head>
 <body>
     @php
+        // Normaliza para sempre trabalhar com $pessoasComTurma
+        if (isset($pessoas) && !isset($pessoasComTurma)) {
+            $pessoasComTurma = collect();
+            foreach ($pessoas as $p) {
+                $pessoasComTurma->push((object)[
+                    'pessoa' => $p,
+                    'turma' => null,
+                ]);
+            }
+        }
+
         // Área útil do A4 em pontos (595pt - 30pt margens = 565pt)
         $pageWidth = 565;
         $pageHeight = 812; // 842pt - 30pt margens
@@ -63,7 +74,7 @@
         $perPage = $cols * $rows;
 
         // Divide as pessoas em páginas
-        $pages = $pessoas->chunk($perPage);
+        $pages = $pessoasComTurma->chunk($perPage);
     @endphp
 
     @foreach ($pages as $pageIndex => $pagePessoas)
@@ -75,7 +86,11 @@
         <table class="grid">
             @foreach ($rowChunks as $rowPessoas)
                 <tr>
-                    @foreach ($rowPessoas as $pessoa)
+                    @foreach ($rowPessoas as $item)
+                        @php
+                            $pessoa = $item->pessoa;
+                            $turma = $item->turma;
+                        @endphp
                         <td>
                             <div class="badge-container" style="width: {{ $crachaLargura }}pt; height: {{ $crachaAltura }}pt;">
                                 @if ($backgroundImage)
@@ -140,27 +155,11 @@
                                     @elseif (in_array($obj['type'] ?? '', ['text', 'i-text', 'textbox']))
                                         {{-- Texto --}}
                                         @php
-                                            $textoSubstituido = str_replace([
-                                                '{nome}',
-                                                '{cpf}',
-                                                '{email}',
-                                                '{telefone}',
-                                                '{profissao}',
-                                                '{identidade}',
-                                                '{data_nascimento}',
-                                                '{sexo}',
-                                                '{cor_raca}',
-                                            ], [
-                                                $pessoa->nome ?? '',
-                                                $pessoa->cpf ?? '',
-                                                $pessoa->email ?? '',
-                                                $pessoa->telefone ?? '',
-                                                $pessoa->profissao ?? '',
-                                                $pessoa->identidade ?? '',
-                                                $pessoa->data_nascimento ? \Carbon\Carbon::parse($pessoa->data_nascimento)->format('d/m/Y') : '',
-                                                $pessoa->sexo?->value ?? $pessoa->sexo ?? '',
-                                                $pessoa->cor_raca?->value ?? $pessoa->cor_raca ?? '',
-                                            ], $obj['text'] ?? '');
+                                            $textoSubstituido = \App\Services\TemplateCrachaService::substituirVariaveis(
+                                                $obj['text'] ?? '',
+                                                $pessoa,
+                                                $turma
+                                            );
 
                                             // Para textbox, scaleX/scaleY são 1 (normalizados no editor)
                                             // Para i-text legado, ainda pode ter scale != 1

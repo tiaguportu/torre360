@@ -948,15 +948,16 @@ O acesso ao assistente é gerenciado pelo **Filament Shield**:
 
 ---
 
-## 🆔 22. Módulo de Crachás para Pessoas
+## 🆔 22. Módulo de Crachás para Pessoas e Turmas
 
-O módulo de crachás do Torre360 permite criar modelos de crachás com um editor gráfico interativo e realizar a impressão em lote dos crachás em PDF.
+O módulo de crachás do Torre360 permite criar modelos de crachás com um editor gráfico interativo e realizar a impressão em lote dos crachás em PDF. Os templates podem ser vinculados a **Pessoas** ou a **Turmas**.
 
 ### 22.1 Gerenciar Modelos (Templates)
 1. Acesse o menu **Secretaria → Templates de Crachá**.
 2. Clique em **Criar** para criar um novo modelo.
 3. Configure as opções básicas:
    - **Nome do Template:** Identificação amigável (ex: "Crachá de Funcionário").
+   - **Tipo de Entidade:** Defina se o template é do tipo **Pessoa** (apenas dados da pessoa) ou **Turma** (dados da turma e da pessoa vinculados por matrícula).
    - **Largura e Altura:** Dimensões da área útil do crachá em pixels (px).
    
    > [!TIP]
@@ -967,21 +968,31 @@ O módulo de crachás do Torre360 permite criar modelos de crachás com um edito
    > - **Crachá Grande (90 mm x 130 mm):** Configure como **340 px** de largura e **491 px** de altura.
 
 4. No **Editor de Layout**:
+   - **Variáveis Dinâmicas baseadas no Tipo de Entidade:** Ao mudar o tipo de entidade no formulário, a barra lateral recarrega automaticamente as variáveis correspondentes:
+     - **Pessoa:** Disponibiliza campos da pessoa como `{nome}`, `{cpf}`, `{email}`, `{telefone}`, `{profissao}`, etc.
+     - **Turma:** Além de todos os campos da pessoa (que representam o aluno), disponibiliza campos da turma como `{turma_nome}`, `{turma_periodo}`, `{turma_serie}` e `{turma_curso}`.
    - **Adicionar Texto Livre / Variáveis:** Os textos no editor funcionam como **Caixas de Texto (Textbox)**. Eles delimitam o retângulo azul semi-transparente que conterá o texto. Ao redimensionar a caixa puxando as alças laterais, o texto **se reorganiza e quebra linhas automaticamente** para caber dentro da largura definida, em vez de se esticar.
    - **Tamanho da Fonte:** A edição do texto no canvas é bloqueada para evitar desalinhamento. O tamanho da fonte, cores, negrito, itálico, alinhamento e família da fonte devem ser editados exclusivamente através do **Painel de Configuração Lateral** que aparece quando o texto está selecionado.
-   - **Inserir Campos de Pessoas (Variáveis):** Clique nas opções como "Nome Completo", "Profissão" ou "CPF" para inserir caixas de texto cujos conteúdos serão substituídos automaticamente pelos dados reais da pessoa no momento da impressão.
    - **Foto do Aluno/Colaborador:** Adicione o espaço reservado para a foto da pessoa clicando em "Inserir Foto (Placeholder)".
    - **Imagens Customizadas (Editáveis):** Você pode inserir logotipos, ícones ou qualquer imagem do seu computador clicando em "Carregar Imagem (Editável)". Ela se tornará um objeto livre que pode ser movido, rotacionado ou redimensionado no crachá.
-   - **Alinhamento & Profundidade:** Utilize os botões rápidos de alinhamento e profundidade para centralizar elementos horizontalmente ou definir quais objetos ficam por cima dos outros (Trazer para Frente / Enviar para Trás).
+   - **Alinhamento & Profundidade:** Utilize os botões rápidos de alinhamento e profundidade para centralizar elements horizontalmente ou definir quais objetos ficam por cima dos outros (Trazer para Frente / Enviar para Trás).
 5. Clique em **Salvar** para registrar as alterações de layout.
 
 ### 22.2 Impressão de Crachás em Grade (Papel A4)
+O sistema calcula automaticamente quantos crachás cabem por folha A4 com base nas dimensões configuradas no template e os organiza lado a lado em uma **grade perfeitamente distribuída e centralizada** na página. Há duas formas de realizar a impressão em lote:
+
+#### A. A partir da listagem de Pessoas (Alunos/Funcionários)
 1. Acesse o menu **Secretaria → Pessoas**.
 2. Marque a caixa de seleção ao lado do nome das pessoas para quem deseja gerar os crachás.
 3. No topo da tabela, acesse o menu de ações em lote e clique em **Imprimir Crachá**.
-4. No formulário do modal, selecione qual **Modelo de Crachá** deseja aplicar.
-5. Confirme a operação. O sistema calculará automaticamente quantos crachás cabem por folha A4 com base nas dimensões configuradas no template e os organizará lado a lado em uma **grade perfeitamente distribuída e centralizada** na página.
-6. Se a quantidade de crachás selecionados exceder a capacidade de uma única folha A4, o sistema realizará a quebra de página automaticamente no PDF para as folhas seguintes.
+4. No formulário do modal, selecione qual **Modelo de Crachá** deseja aplicar. Se selecionar um modelo do tipo **Turma**, o sistema buscará automaticamente a matrícula ativa de cada pessoa para obter as informações da turma (caso ela não possua turma ativa, os campos de turma ficarão em branco).
+5. Confirme a operação para baixar o arquivo PDF.
+
+#### B. A partir da listagem de Turmas (Todos os Alunos Ativos)
+1. Acesse o menu **Acadêmico → Turmas**.
+2. Selecione as turmas desejadas e clique em **Imprimir Crachá dos Alunos** nas ações em lote.
+3. Selecione o modelo de crachá e confirme. O sistema buscará todos os alunos com matrícula ativa nas turmas e gerará o PDF unificado com os crachás já preenchidos.
+4. Se a quantidade de crachás selecionados exceder a capacidade de uma única folha A4, o sistema realizará a quebra de página automaticamente no PDF para as folhas seguintes.
 
 ---
 
