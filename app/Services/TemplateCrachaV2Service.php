@@ -114,6 +114,56 @@ class TemplateCrachaV2Service
     }
 
     /**
+     * Extrai as regras de estilo das tags <style> do SVG e as aplica diretamente como atributos inline
+     * nos elementos correspondentes, garantindo compatibilidade de cores e bordas com o DomPDF.
+     */
+    public static function inlineSvgStyles(\DOMDocument $dom): void
+    {
+        $styles = $dom->getElementsByTagName('style');
+        $rules = [];
+
+        foreach ($styles as $style) {
+            $cssText = $style->nodeValue;
+
+            // Captura seletores de classe e seus blocos de propriedades (ex: .cls-7 { fill: #24346e; })
+            preg_match_all('/\.([a-zA-Z0-9_-]+)\s*\{([^}]+)\}/', $cssText, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                $className = $match[1];
+                $propertiesBlock = $match[2];
+
+                $props = [];
+                preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*([^;]+);?/', $propertiesBlock, $propMatches, PREG_SET_ORDER);
+                foreach ($propMatches as $pMatch) {
+                    $props[trim($pMatch[1])] = trim($pMatch[2]);
+                }
+
+                $rules[$className] = $props;
+            }
+        }
+
+        if (! empty($rules)) {
+            $xpath = new \DOMXPath($dom);
+            $elements = $xpath->query('//*[@class]');
+
+            foreach ($elements as $el) {
+                $classAttr = $el->getAttribute('class');
+                $classes = array_map('trim', explode(' ', $classAttr));
+
+                foreach ($classes as $c) {
+                    if (isset($rules[$c])) {
+                        foreach ($rules[$c] as $propName => $propValue) {
+                            if (! $el->hasAttribute($propName)) {
+                                $el->setAttribute($propName, $propValue);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Processa o SVG do template substituindo as variáveis de texto e injetando a foto em base64 da Pessoa.
      */
     public static function processarSvg(string $svgContent, Pessoa $pessoa, ?Turma $turma = null): string
@@ -140,6 +190,9 @@ class TemplateCrachaV2Service
 
         // Resolve os <use> clonando os símbolos para compatibilidade com o DomPDF
         self::flatteningSvgUse($dom);
+
+        // Converte estilos CSS do SVG em atributos inline
+        self::inlineSvgStyles($dom);
 
         // 1. Processar os textos que contêm classes mapeadas (text e tspan)
         $textTags = ['text', 'tspan'];

@@ -161,6 +161,25 @@ class TemplateCrachaV2Test extends TestCase
         $this->assertStringContainsString('<rect width="50" height="50" fill="blue"/>', $svgProcessado);
     }
 
+    public function test_service_v2_converte_css_em_atributos_inline_do_svg(): void
+    {
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Carlos Magno',
+        ]);
+
+        // SVG contendo folha de estilo e elementos de classe
+        $svgOriginal = '<svg><style>.cls-azul { fill: #0000ff; stroke-width: 2px; } .cls-borda { stroke: #ff0000; }</style><rect class="cls-azul" width="50" height="50" /><circle class="cls-borda" r="25" /></svg>';
+
+        // Processa
+        $svgProcessado = TemplateCrachaV2Service::processarSvg($svgOriginal, $pessoa);
+
+        // O rect deve ter recebido as propriedades fill e stroke-width do CSS diretamente como atributos
+        $this->assertStringContainsString('fill="#0000ff"', $svgProcessado);
+        $this->assertStringContainsString('stroke-width="2px"', $svgProcessado);
+        // O circle deve ter recebido stroke do CSS
+        $this->assertStringContainsString('stroke="#ff0000"', $svgProcessado);
+    }
+
     public function test_geracao_de_pdf_de_crachas_v2(): void
     {
         $template = TemplateCrachaV2::create([
