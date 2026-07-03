@@ -248,6 +248,9 @@
                         } else if (typeof canvasAPI.selectOnly === 'function') {
                             canvasAPI.selectOnly([el], true);
                         }
+                        if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
+                            canvasAPI.recalculateAllSelectedDimensions();
+                        }
                     }
                 } else {
                     const svgDoc = iframeWindow.document;
@@ -270,6 +273,9 @@
                                 canvasAPI.select([el]);
                             } else if (typeof canvasAPI.selectOnly === 'function') {
                                 canvasAPI.selectOnly([el], true);
+                            }
+                            if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
+                                canvasAPI.recalculateAllSelectedDimensions();
                             }
                         }
                     }
@@ -326,6 +332,9 @@
                         } else if (typeof canvasAPI.selectOnly === 'function') {
                             canvasAPI.selectOnly([el], true);
                         }
+                        if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
+                            canvasAPI.recalculateAllSelectedDimensions();
+                        }
                     }
                 } else {
                     const svgDoc = iframeWindow.document;
@@ -353,6 +362,9 @@
                                 canvasAPI.select([el]);
                             } else if (typeof canvasAPI.selectOnly === 'function') {
                                 canvasAPI.selectOnly([el], true);
+                            }
+                            if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
+                                canvasAPI.recalculateAllSelectedDimensions();
                             }
                         }
                     }
