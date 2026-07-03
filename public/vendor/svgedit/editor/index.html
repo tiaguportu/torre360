@@ -41,7 +41,7 @@
   svgEditor.init()
   window.svgEditor = svgEditor;
   Object.defineProperty(window, 'svgCanvas', {
-    get: function() { return svgEditor ? svgEditor.canvas : null; },
+    get: function() { return svgEditor ? svgEditor.svgCanvas : null; },
     configurable: true
   });
   if (typeof XDOMAIN !== 'undefined' && XDOMAIN) {

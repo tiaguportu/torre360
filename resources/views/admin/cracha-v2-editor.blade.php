@@ -170,8 +170,8 @@
             try {
                 if (iframe && iframe.contentWindow) {
                     const win = iframe.contentWindow;
-                    // SVG-Edit 7 expõe svgCanvas na window. Fallback para svgEditor.canvas se necessário.
-                    const api = win.svgCanvas || (win.svgEditor ? win.svgEditor.canvas : null);
+                    // SVG-Edit 7 expõe svgCanvas na window. Fallback para svgEditor.svgCanvas ou svgEditor.canvas se necessário.
+                    const api = win.svgCanvas || (win.svgEditor ? (win.svgEditor.svgCanvas || win.svgEditor.canvas) : null);
                     
                     if (api) {
                         iframeWindow = win;
