@@ -1049,8 +1049,6 @@ Para comparar os modelos vetoriais V2 ou realizar a emissão definitiva:
 
 ---
 
-> **Torre360** — Gestão inteligente para instituições de ensino.
-
 ### 6.9 Templates de Crachá V3 (Editor Moveable — HTML Interativo)
 O sistema conta com um terceiro módulo de crachás (V3) utilizando o editor **Moveable**, baseado em elementos HTML interativos que podem ser arrastados, redimensionados e rotacionados livremente na tela. Existe para comparação e uso em paralelo com os módulos V1 (básico) e V2 (SVG-Edit).
 
@@ -1079,6 +1077,7 @@ Ao selecionar um elemento no canvas, a aba Propriedades exibe:
 - **Rotação:** Slider de -180° a +180°.
 - **Texto:** Conteúdo, tamanho de fonte, peso, alinhamento e cor do texto.
 - **Fundo e Borda:** Cor de fundo (com opção de transparência), cor e espessura da borda, arredondamento.
+- **Formato da Foto** (somente para o elemento `{foto}`): Opção para selecionar o corte da foto entre **Retângulo**, **Canto Arredondado** e **Círculo / Elipse**.
 - **Ações:** Duplicar e Deletar elemento.
 
 **Canvas Central:**
@@ -1089,8 +1088,12 @@ Ao selecionar um elemento no canvas, a aba Propriedades exibe:
 
 4. **Salvamento:** O layout é salvo como **JSON estruturado** no banco de dados, preservando posição, tamanho, rotação, estilos e o tipo de cada elemento (dinâmico ou estático).
 
-> [!NOTE]
-> Os crachás V3 utilizam marcadores dinâmicos como `{nome}`, `{foto}` e `{turma_nome}` que serão substituídos pelos dados reais no momento da impressão em lote. A geração de PDF a partir do formato V3 será disponibilizada em versão futura.
+#### 5. Impressão de Crachás V3 em Lote:
+Para gerar e imprimir os crachás dos alunos no novo modelo V3:
+1. Vá em **Cadastro → Pessoas**.
+2. Selecione as pessoas desejadas na tabela.
+3. No botão de ações em lote, selecione **Imprimir Crachá V3 (Moveable)**.
+4. Escolha o modelo de crachá V3 desejado e confirme. O sistema gerará um arquivo PDF contendo os crachás diagramados na folha A4 com substituição automática de dados e fotos.
 
 ---
 

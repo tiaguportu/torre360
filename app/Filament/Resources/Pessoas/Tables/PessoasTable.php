@@ -8,7 +8,9 @@ use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
 use App\Models\TemplateCracha;
 use App\Models\TemplateCrachaV2;
+use App\Models\TemplateCrachaV3;
 use App\Services\TemplateCrachaV2Service;
+use App\Services\TemplateCrachaV3Service;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -206,6 +208,46 @@ class PessoasTable
                             return response()->streamDownload(
                                 fn () => print ($pdf->output()),
                                 'crachas_v2.pdf',
+                                ['Content-Type' => 'application/pdf']
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('imprimirCrachasV3')
+                        ->label('Imprimir Crachá V3 (Moveable)')
+                        ->icon('heroicon-o-identification')
+                        ->color('warning')
+                        ->form([
+                            Select::make('template_cracha_v3_id')
+                                ->label('Selecione o Modelo de Crachá V3')
+                                ->options(fn () => TemplateCrachaV3::pluck('nome', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $template = TemplateCrachaV3::find($data['template_cracha_v3_id']);
+                            if (! $template) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Template V3 não encontrado')
+                                    ->send();
+
+                                return;
+                            }
+
+                            $pessoasComTurma = collect();
+                            foreach ($records as $p) {
+                                $pessoasComTurma->push((object) [
+                                    'pessoa' => $p,
+                                    'turma' => null,
+                                ]);
+                            }
+
+                            $pdf = TemplateCrachaV3Service::gerarPdf($template, $pessoasComTurma);
+
+                            return response()->streamDownload(
+                                fn () => print ($pdf->output()),
+                                'crachas_v3.pdf',
                                 ['Content-Type' => 'application/pdf']
                             );
                         })

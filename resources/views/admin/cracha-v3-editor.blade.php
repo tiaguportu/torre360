@@ -306,6 +306,16 @@
                         <p id="prop-variavel-label" class="text-[10px] text-slate-400 hidden"></p>
                     </div>
 
+                    <!-- Formato Foto -->
+                    <div id="grupo-foto-formato" class="hidden">
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">Formato da Foto</p>
+                        <select id="prop-foto-formato" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none" onchange="aplicarFormatoFoto(this.value)">
+                            <option value="retangulo">Retângulo</option>
+                            <option value="arredondado">Canto Arredondado</option>
+                            <option value="circulo">Círculo / Elipse</option>
+                        </select>
+                    </div>
+
                     <!-- Posição/Tamanho -->
                     <div>
                         <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-2">Posição e Tamanho</p>
@@ -719,6 +729,15 @@
         if (tipo === 'circulo') {
             dom.style.borderRadius = '50%';
         }
+
+        // Caso especial: Foto do Aluno
+        if (tipo === 'variavel' && dadosEl.variavel === '{foto}') {
+            dom.style.overflow = 'hidden';
+            const placeholder = dom.querySelector('.el-imagem-placeholder');
+            if (placeholder) {
+                placeholder.style.borderRadius = est.borderRadius || '0px';
+            }
+        }
     }
 
     // =====================================================
@@ -882,6 +901,21 @@
         const bRadius = parseInt(el.estilos.borderRadius) || 0;
         document.getElementById('prop-border-radius').value = bRadius;
         document.getElementById('prop-border-radius-label').textContent = `${bRadius}px`;
+
+        // Formato Foto
+        const grupoFoto = document.getElementById('grupo-foto-formato');
+        if (el.variavel === '{foto}') {
+            grupoFoto.classList.remove('hidden');
+            let val = 'retangulo';
+            if (el.estilos.borderRadius === '50%') {
+                val = 'circulo';
+            } else if (el.estilos.borderRadius && el.estilos.borderRadius !== '0px') {
+                val = 'arredondado';
+            }
+            document.getElementById('prop-foto-formato').value = val;
+        } else {
+            grupoFoto.classList.add('hidden');
+        }
     }
 
     function atualizarPainelPosicao(el) {
@@ -961,6 +995,32 @@
             aplicarEstilosNoDOM(dom, el);
             updateMoveable();
         }
+    }
+
+    function aplicarFormatoFoto(valor) {
+        const el = getElementoData(elementoSelecionadoId);
+        if (!el || el.variavel !== '{foto}') { return; }
+
+        let radius = '0px';
+        if (valor === 'arredondado') {
+            radius = '16px';
+        } else if (valor === 'circulo') {
+            radius = '50%';
+        }
+
+        el.estilos.borderRadius = radius;
+
+        // Atualizar o input de border-radius
+        const numRadius = radius === '50%' ? 50 : (radius === '16px' ? 16 : 0);
+        document.getElementById('prop-border-radius').value = numRadius;
+        document.getElementById('prop-border-radius-label').textContent = radius;
+
+        const dom = document.getElementById(el.id);
+        if (dom) {
+            aplicarEstilosNoDOM(dom, el);
+            updateMoveable();
+        }
+        salvarHistorico();
     }
 
     function setAlign(align) {
