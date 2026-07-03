@@ -20,6 +20,7 @@ Route::get('/login', function () {
 })->name('login');
 
 use App\Http\Controllers\Admin\TemplateCrachaV2Controller;
+use App\Http\Controllers\Admin\TemplateCrachaV3Controller;
 use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
@@ -45,6 +46,10 @@ Route::middleware(['auth'])->group(function () {
     // Editor de Crachás V2 (SVG-Edit)
     Route::get('/admin/template-crachas-v2/{templateCrachaV2}/editor', [TemplateCrachaV2Controller::class, 'editor'])->name('template-crachas-v2.editor');
     Route::post('/admin/template-crachas-v2/{templateCrachaV2}/save', [TemplateCrachaV2Controller::class, 'save'])->name('template-crachas-v2.save');
+
+    // Editor de Crachás V3 (Moveable)
+    Route::get('/admin/template-crachas-v3/{templateCrachaV3}/editor', [TemplateCrachaV3Controller::class, 'editor'])->name('template-crachas-v3.editor');
+    Route::post('/admin/template-crachas-v3/{templateCrachaV3}/save', [TemplateCrachaV3Controller::class, 'save'])->name('template-crachas-v3.save');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');
