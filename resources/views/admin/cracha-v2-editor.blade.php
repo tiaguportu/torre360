@@ -140,15 +140,16 @@
                     <p class="text-xs text-slate-500 mt-1">Carregando módulos do SVG-Edit</p>
                 </div>
 
-                <iframe id="svgedit-iframe" src="/vendor/svgedit/editor/index.html" class="w-full h-full border-none"></iframe>
+                <iframe id="svgedit-iframe" src="{{ asset('vendor/svgedit/editor/index.html') }}" class="w-full h-full border-none"></iframe>
             </div>
         </main>
 
     </div>
 
     <!-- Scripts de Integração do SVG-Edit -->
+    <!-- Scripts de Integração do SVG-Edit -->
     <script>
-        let editor = null;
+        let canvasAPI = null;
         let iframeWindow = null;
 
         // Dimensões do Template
@@ -164,30 +165,40 @@
         // Monitorar carregamento do Iframe
         const iframe = document.getElementById('svgedit-iframe');
         
-        // Loop de checagem para encontrar a API do SVG-Edit
+        // Loop de checagem para encontrar a API do SVG-Edit (svgCanvas ou svgEditor)
         const checkEditorInterval = setInterval(() => {
             try {
-                if (iframe && iframe.contentWindow && iframe.contentWindow.svgEditor) {
-                    iframeWindow = iframe.contentWindow;
-                    editor = iframeWindow.svgEditor;
+                if (iframe && iframe.contentWindow) {
+                    const win = iframe.contentWindow;
+                    // SVG-Edit 7 expõe svgCanvas na window. Fallback para svgEditor.canvas se necessário.
+                    const api = win.svgCanvas || (win.svgEditor ? win.svgEditor.canvas : null);
                     
-                    // Aguarda mais um breve momento para garantir inicialização de DOM interno
-                    clearInterval(checkEditorInterval);
-                    inicializarEditor();
+                    if (api) {
+                        iframeWindow = win;
+                        canvasAPI = api;
+                        clearInterval(checkEditorInterval);
+                        inicializarEditor();
+                    }
                 }
             } catch (e) {
-                // Previne erros de CORS cruzados se o iframe não estiver pronto ou em domínios diferentes
+                // CORS ou ainda carregando
             }
         }, 100);
 
         function inicializarEditor() {
             try {
-                // Carregar o SVG inicial
-                editor.loadFromString(initialSvgContent);
+                // Carregar o SVG inicial usando setSvgString ou o método correspondente
+                if (typeof canvasAPI.setSvgString === 'function') {
+                    canvasAPI.setSvgString(initialSvgContent);
+                } else if (typeof canvasAPI.loadFromString === 'function') {
+                    canvasAPI.loadFromString(initialSvgContent);
+                }
 
                 // Configurar o tamanho do canvas de trabalho para corresponder exatamente ao tamanho do crachá
-                if (editor.canvas) {
-                    editor.canvas.setResolution(templateWidth, templateHeight);
+                if (typeof canvasAPI.setResolution === 'function') {
+                    canvasAPI.setResolution(templateWidth, templateHeight);
+                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.setResolution === 'function') {
+                    canvasAPI.canvas.setResolution(templateWidth, templateHeight);
                 }
 
                 // Ocultar overlay de carregamento
@@ -205,24 +216,28 @@
          * Insere um texto correspondente a uma variável dinâmica no canvas
          */
         function inserirTexto(variavel) {
-            if (!editor || !editor.canvas) {
+            if (!canvasAPI) {
                 alert("O editor ainda não está totalmente carregado.");
                 return;
             }
 
             try {
-                // Geramos um texto centralizado
                 const posX = Math.round(templateWidth / 2) - 50;
                 const posY = Math.round(templateHeight / 2);
                 
-                // SVG String contendo o elemento de texto
                 const textSvg = `<text x="${posX}" y="${posY}" fill="#1e293b" font-size="14" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600">${variavel}</text>`;
                 
-                editor.canvas.importSvgString(textSvg);
-                
-                // Força o modo de seleção
-                if (editor.canvas.selectMode) {
-                    editor.canvas.selectMode();
+                if (typeof canvasAPI.importSvgString === 'function') {
+                    canvasAPI.importSvgString(textSvg);
+                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.importSvgString === 'function') {
+                    canvasAPI.canvas.importSvgString(textSvg);
+                }
+
+                // Força o modo de seleção no canvas
+                if (typeof canvasAPI.setMode === 'function') {
+                    canvasAPI.setMode('select');
+                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.selectMode === 'function') {
+                    canvasAPI.canvas.selectMode();
                 }
             } catch (e) {
                 console.error("Erro ao inserir variável de texto:", e);
@@ -233,7 +248,7 @@
          * Insere um elemento de imagem que representa o placeholder de foto
          */
         function inserirFoto() {
-            if (!editor || !editor.canvas) {
+            if (!canvasAPI) {
                 alert("O editor ainda não está totalmente carregado.");
                 return;
             }
@@ -243,13 +258,19 @@
                 const posY = 50;
                 const fotoUrl = 'https://ui-avatars.com/api/?name=FOTO&color=7F9CF5&background=EBF4FF';
 
-                // Criamos uma imagem com um ID especial para identificarmos na renderização do PDF
                 const imageSvg = `<image x="${posX}" y="${posY}" width="120" height="120" href="${fotoUrl}" id="foto-aluno-v2" preserveAspectRatio="xMidYMid slice" />`;
                 
-                editor.canvas.importSvgString(imageSvg);
+                if (typeof canvasAPI.importSvgString === 'function') {
+                    canvasAPI.importSvgString(imageSvg);
+                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.importSvgString === 'function') {
+                    canvasAPI.canvas.importSvgString(imageSvg);
+                }
 
-                if (editor.canvas.selectMode) {
-                    editor.canvas.selectMode();
+                // Força o modo de seleção
+                if (typeof canvasAPI.setMode === 'function') {
+                    canvasAPI.setMode('select');
+                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.selectMode === 'function') {
+                    canvasAPI.canvas.selectMode();
                 }
             } catch (e) {
                 console.error("Erro ao inserir variável de foto:", e);
@@ -260,49 +281,64 @@
          * Salva as alterações no banco de dados via AJAX
          */
         function salvarLayout() {
-            if (!editor || !editor.canvas) {
+            if (!canvasAPI) {
                 alert("Não foi possível salvar: O editor não está pronto.");
                 return;
             }
 
-            // Exibe indicador de salvamento
             showToast("Salvando layout...", "bg-slate-700");
 
             try {
-                // Obtém a string SVG gerada no Canvas
-                editor.getSvgString()(function(svg, error) {
-                    if (error) {
-                        console.error("Erro ao obter string SVG:", error);
-                        showToast("Erro ao obter o SVG do editor.", "bg-rose-600");
-                        return;
-                    }
-
-                    // Envia para o backend Laravel
-                    fetch("{{ route('template-crachas-v2.save', $templateCrachaV2->id) }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({ svg_content: svg })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showToast(data.message, "bg-emerald-500");
-                        } else {
-                            showToast("Falha ao salvar: " + (data.message || "Erro desconhecido"), "bg-rose-600");
+                // Obtém a string SVG do canvas
+                const res = canvasAPI.getSvgString();
+                
+                if (typeof res === 'string') {
+                    enviarSvgParaBackend(res);
+                } else if (typeof res === 'function' || (typeof canvasAPI.getSvgString === 'function' && res === undefined)) {
+                    canvasAPI.getSvgString()(function(svg, error) {
+                        if (error) {
+                            console.error("Erro ao obter string SVG:", error);
+                            showToast("Erro ao obter o SVG do editor.", "bg-rose-600");
+                            return;
                         }
-                    })
-                    .catch(err => {
-                        console.error("Erro na requisição AJAX:", err);
-                        showToast("Erro de rede ao salvar o template.", "bg-rose-600");
+                        enviarSvgParaBackend(svg);
                     });
-                });
+                } else if (res && typeof res.then === 'function') {
+                    res.then(svg => enviarSvgParaBackend(svg))
+                       .catch(err => {
+                           console.error(err);
+                           showToast("Erro ao obter o SVG.", "bg-rose-600");
+                       });
+                } else {
+                    showToast("Erro: Formato de obtenção do SVG não reconhecido.", "bg-rose-600");
+                }
             } catch (e) {
                 console.error("Erro no fluxo de salvamento:", e);
                 showToast("Erro ao processar salvamento.", "bg-rose-600");
             }
+        }
+
+        function enviarSvgParaBackend(svg) {
+            fetch("{{ route('template-crachas-v2.save', $templateCrachaV2->id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ svg_content: svg })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "bg-emerald-500");
+                } else {
+                    showToast("Falha ao salvar: " + (data.message || "Erro desconhecido"), "bg-rose-600");
+                }
+            })
+            .catch(err => {
+                console.error("Erro na requisição AJAX:", err);
+                showToast("Erro de rede ao salvar o template.", "bg-rose-600");
+            });
         }
 
         /**
