@@ -188,7 +188,7 @@
         function inicializarEditor() {
             try {
                 let svgParaCarregar = initialSvgContent;
-                // Remove preâmbulo <?xml ...?> se existir para evitar quebras de parser no canvas
+                // Remove preambulo xml se existir para evitar quebras de parser no canvas
                 svgParaCarregar = svgParaCarregar.replace(/^<\?xml[^>]*\?>/i, '').trim();
 
                 // Carregar o SVG inicial usando setSvgString ou o método correspondente
