@@ -140,7 +140,7 @@
                     <p class="text-xs text-slate-500 mt-1">Carregando módulos do SVG-Edit</p>
                 </div>
 
-                <iframe id="svgedit-iframe" src="{{ asset('vendor/svgedit/editor/index.html') }}" class="w-full h-full border-none"></iframe>
+                <iframe id="svgedit-iframe" src="{{ asset('vendor/svgedit/editor/index.html') }}?v={{ time() }}" class="w-full h-full border-none"></iframe>
             </div>
         </main>
 

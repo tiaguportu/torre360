@@ -40,7 +40,10 @@
   })
   svgEditor.init()
   window.svgEditor = svgEditor;
-  window.svgCanvas = svgEditor.canvas;
+  Object.defineProperty(window, 'svgCanvas', {
+    get: function() { return svgEditor ? svgEditor.canvas : null; },
+    configurable: true
+  });
   if (typeof XDOMAIN !== 'undefined' && XDOMAIN) {
     svgEditor.setConfig({
       canvasName: 'xdomain', // Namespace this
