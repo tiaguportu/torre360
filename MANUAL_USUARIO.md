@@ -1051,3 +1051,48 @@ Para comparar os modelos vetoriais V2 ou realizar a emissão definitiva:
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
+### 6.9 Templates de Crachá V3 (Editor Moveable — HTML Interativo)
+O sistema conta com um terceiro módulo de crachás (V3) utilizando o editor **Moveable**, baseado em elementos HTML interativos que podem ser arrastados, redimensionados e rotacionados livremente na tela. Existe para comparação e uso em paralelo com os módulos V1 (básico) e V2 (SVG-Edit).
+
+1. Vá em **Secretaria → Templates de Crachá V3**.
+2. **Criação:** Clique em **Novo Template** e defina o nome, tipo de entidade (Pessoa ou Turma) e as dimensões em pixels (Largura e Altura). Salve para liberar o editor.
+3. **Editor Canvas (Nova Aba):** Após salvar, clique em **Editar Canvas** na tabela ou no botão do formulário de edição. O editor abrirá em **uma nova aba do navegador**.
+
+#### Interface do Editor V3:
+
+**Cabeçalho:**
+- Nome do template, dimensões e tipo de entidade exibidos no topo.
+- Controles de **Zoom** (−/+ de 30% a 200%).
+- Botões de **Desfazer (Ctrl+Z)** e **Refazer (Ctrl+Y)** com histórico de até 50 estados.
+- Seletor de **cor de fundo** do crachá.
+- Botão **Salvar** (Ctrl+S) e **Fechar**.
+
+**Sidebar Esquerda — Aba "Elementos":**
+- **Inserir Elemento:** Botões para adicionar Texto, Retângulo, Círculo ou Linha.
+- **Campos de Pessoa:** Lista de variáveis dinâmicas como `{nome}`, `{foto}`, `{cpf}`, `{email}`, etc.
+- **Campos de Turma** (somente para templates do tipo Turma): Variáveis como `{turma_nome}`, `{turma_serie}`, `{turma_curso}`.
+- Clique em qualquer variável para **inserir o elemento no canvas** automaticamente.
+
+**Sidebar Esquerda — Aba "Propriedades":**
+Ao selecionar um elemento no canvas, a aba Propriedades exibe:
+- **Posição e Tamanho:** X, Y, Largura e Altura editáveis numericamente.
+- **Rotação:** Slider de -180° a +180°.
+- **Texto:** Conteúdo, tamanho de fonte, peso, alinhamento e cor do texto.
+- **Fundo e Borda:** Cor de fundo (com opção de transparência), cor e espessura da borda, arredondamento.
+- **Ações:** Duplicar e Deletar elemento.
+
+**Canvas Central:**
+- Exibe o crachá no tamanho real (ajustável pelo zoom).
+- Clique em um elemento para selecioná-lo e manipular com o Moveable.
+- **Duplo clique** em um elemento de texto para editar o conteúdo inline.
+- Tecla **Delete** para remover o elemento selecionado.
+
+4. **Salvamento:** O layout é salvo como **JSON estruturado** no banco de dados, preservando posição, tamanho, rotação, estilos e o tipo de cada elemento (dinâmico ou estático).
+
+> [!NOTE]
+> Os crachás V3 utilizam marcadores dinâmicos como `{nome}`, `{foto}` e `{turma_nome}` que serão substituídos pelos dados reais no momento da impressão em lote. A geração de PDF a partir do formato V3 será disponibilizada em versão futura.
+
+---
+
+> **Torre360** — Gestão inteligente para instituições de ensino.
+
