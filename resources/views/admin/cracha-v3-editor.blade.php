@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Editor de Crachá V3 — {{ $templateCrachaV3->nome }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Moveable via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/moveable@0.56.0/dist/moveable.min.js"></script>
+    <!-- Moveable Local -->
+    <script src="{{ asset('js/moveable.min.js') }}"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -453,7 +453,7 @@
                 <!-- O Crachá -->
                 <div id="cracha-canvas"
                     style="width: {{ $templateCrachaV3->largura }}px; height: {{ $templateCrachaV3->altura }}px; background: #ffffff;"
-                    onclick="desselecionarTudo($event)">
+                    onclick="desselecionarTudo(event)">
                     <!-- Elementos serão inseridos aqui via JS -->
                 </div>
             </div>
