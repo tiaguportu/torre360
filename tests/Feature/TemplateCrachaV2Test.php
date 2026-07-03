@@ -180,6 +180,30 @@ class TemplateCrachaV2Test extends TestCase
         $this->assertStringContainsString('stroke="#ff0000"', $svgProcessado);
     }
 
+    public function test_service_v2_calcula_bbox_da_foto_acumulando_transformacoes_dos_pais(): void
+    {
+        $pessoa = Pessoa::factory()->create();
+
+        // SVG contendo um elemento de foto dentro de dois grupos <g> com transformações
+        // Primeiro pai transiciona 20, 20
+        // Segundo pai transiciona 10, 10
+        // Elemento local está em 5, 5 com largura 50 e altura 50
+        $svg = '<svg><g transform="matrix(1,0,0,1,20,20)"><g transform="matrix(1,0,0,1,10,10)"><rect class="foto" x="5" y="5" width="50" height="50" /></g></g></svg>';
+
+        $dom = new \DOMDocument;
+        $dom->loadXML($svg);
+
+        $bbox = TemplateCrachaV2Service::extrairBBoxFoto($dom);
+
+        $this->assertNotNull($bbox);
+        // x final deve ser: 5 (local) + 10 (pai 2) + 20 (pai 1) = 35
+        $this->assertEquals(35, $bbox['x']);
+        // y final deve ser: 5 (local) + 10 (pai 2) + 20 (pai 1) = 35
+        $this->assertEquals(35, $bbox['y']);
+        $this->assertEquals(50, $bbox['width']);
+        $this->assertEquals(50, $bbox['height']);
+    }
+
     public function test_geracao_de_pdf_de_crachas_v2(): void
     {
         $template = TemplateCrachaV2::create([

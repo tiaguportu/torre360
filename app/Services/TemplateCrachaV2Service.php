@@ -359,19 +359,23 @@ class TemplateCrachaV2Service
                         $h = 2 * $ry;
                     }
 
-                    // Aplica transformações matriciais se houver transform="matrix(...)"
-                    if ($el->hasAttribute('transform')) {
-                        $transform = $el->getAttribute('transform');
-                        if (preg_match('/matrix\s*\(([^)]+)\)/', $transform, $matches)) {
-                            $vals = array_map('floatval', array_map('trim', explode(',', $matches[1])));
-                            if (count($vals) === 6) {
-                                // matrix(a, b, c, d, tx, ty) -> a=scaleX, d=scaleY, tx=transX, ty=transY
-                                $x = ($x * $vals[0]) + $vals[4];
-                                $y = ($y * $vals[3]) + $vals[5];
-                                $w = $w * $vals[0];
-                                $h = $h * $vals[3];
+                    // Acumula transformações matriciais do próprio elemento e de todos os seus pais até o SVG raiz
+                    $current = $el;
+                    while ($current && $current !== $dom->documentElement) {
+                        if ($current instanceof \DOMElement && $current->hasAttribute('transform')) {
+                            $transform = $current->getAttribute('transform');
+                            if (preg_match('/matrix\s*\(([^)]+)\)/', $transform, $matches)) {
+                                $vals = array_map('floatval', array_map('trim', explode(',', $matches[1])));
+                                if (count($vals) === 6) {
+                                    // matrix(a, b, c, d, tx, ty) -> a=scaleX, d=scaleY, tx=transX, ty=transY
+                                    $x = ($x * $vals[0]) + $vals[4];
+                                    $y = ($y * $vals[3]) + $vals[5];
+                                    $w = $w * $vals[0];
+                                    $h = $h * $vals[3];
+                                }
                             }
                         }
+                        $current = $current->parentNode;
                     }
 
                     return [
@@ -407,7 +411,7 @@ class TemplateCrachaV2Service
             // Processa o SVG injetando variáveis e convertendo CSS de classe em inline
             $svgProcessado = self::processarSvg($svgOriginal, $pessoa, $turma);
 
-            // Carrega no DOM para extrair a foto geométrica e remove-la do background
+            // Carrega no DOM para extrair a foto geométrica
             $dom = new \DOMDocument;
             libxml_use_internal_errors(true);
             $dom->loadXML($svgProcessado, LIBXML_NOENT | LIBXML_HTML_NODEFDTD);
@@ -418,8 +422,12 @@ class TemplateCrachaV2Service
 
             if ($fotoBBox && isset($fotoBBox['element'])) {
                 $el = $fotoBBox['element'];
-                if ($el->parentNode) {
-                    $el->parentNode->removeChild($el);
+
+                // Mantém o elemento no SVG para preservar bordas/molduras, mas torna o preenchimento invisível
+                $el->setAttribute('fill', 'none');
+                $el->setAttribute('fill-opacity', '0');
+                if ($el->hasAttribute('fill-rule')) {
+                    $el->removeAttribute('fill-rule');
                 }
 
                 // Transforma as coordenadas de px para pt (pontos do PDF)
@@ -429,7 +437,7 @@ class TemplateCrachaV2Service
                 $fotoBBox['height'] = $fotoBBox['height'] * 0.75;
             }
 
-            // Salva o SVG de background limpo
+            // Salva o SVG de background limpo (com o placeholder transparente)
             $svgLimpo = $dom->documentElement ? $dom->saveXML($dom->documentElement) : $dom->saveXML();
 
             $svgsProcessados->push((object) [
