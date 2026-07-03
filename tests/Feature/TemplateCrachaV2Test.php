@@ -142,6 +142,25 @@ class TemplateCrachaV2Test extends TestCase
         $this->assertStringContainsString('fill="url(#pattern-foto-aluno-'.$pessoa->id.')"', $svgProcessado);
     }
 
+    public function test_service_v2_planifica_tags_use_do_svg_para_compatibilidade_pdf(): void
+    {
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Renato Abreu',
+        ]);
+
+        // SVG contendo um símbolo em defs e uma referência use na camada ativa
+        $svgOriginal = '<svg><defs><symbol id="simbolo_teste"><rect width="50" height="50" fill="blue" /></symbol></defs><g class="layer"><use href="#simbolo_teste" id="use_1" transform="matrix(1,0,0,1,10,10)" /></g></svg>';
+
+        // Processa
+        $svgProcessado = TemplateCrachaV2Service::processarSvg($svgOriginal, $pessoa);
+
+        // O SVG resultante NÃO deve conter a tag <use>
+        $this->assertStringNotContainsString('<use', $svgProcessado);
+        // Deve conter o wrapper <g> com o transform correspondente herdado e o rect clonado
+        $this->assertStringContainsString('transform="matrix(1,0,0,1,10,10)"', $svgProcessado);
+        $this->assertStringContainsString('<rect width="50" height="50" fill="blue"/>', $svgProcessado);
+    }
+
     public function test_geracao_de_pdf_de_crachas_v2(): void
     {
         $template = TemplateCrachaV2::create([

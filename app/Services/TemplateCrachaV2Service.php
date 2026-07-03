@@ -65,6 +65,55 @@ class TemplateCrachaV2Service
     }
 
     /**
+     * Resolve as tags <use> do SVG clonando os elementos referenciados (símbolos) diretamente no local de uso.
+     * Isso resolve limitações de renderização de referências e símbolos no DomPDF.
+     */
+    public static function flatteningSvgUse(\DOMDocument $dom): void
+    {
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('svg', 'http://www.w3.org/2000/svg');
+
+        $useElements = $dom->getElementsByTagName('use');
+
+        $uses = [];
+        foreach ($useElements as $u) {
+            $uses[] = $u;
+        }
+
+        foreach ($uses as $use) {
+            $href = $use->getAttribute('href') ?: $use->getAttribute('xlink:href');
+            if (! $href || strpos($href, '#') !== 0) {
+                continue;
+            }
+
+            $id = substr($href, 1);
+            $referencedElement = null;
+            $results = $xpath->query("//*[@id='$id']");
+            if ($results->length > 0) {
+                $referencedElement = $results->item(0);
+            }
+
+            if ($referencedElement) {
+                $wrapper = $dom->createElementNS('http://www.w3.org/2000/svg', 'g');
+
+                foreach ($use->attributes as $attr) {
+                    if ($attr->nodeName !== 'href' && $attr->nodeName !== 'xlink:href') {
+                        $wrapper->setAttribute($attr->nodeName, $attr->nodeValue);
+                    }
+                }
+
+                foreach ($referencedElement->childNodes as $child) {
+                    $wrapper->appendChild($child->cloneNode(true));
+                }
+
+                if ($use->parentNode) {
+                    $use->parentNode->replaceChild($wrapper, $use);
+                }
+            }
+        }
+    }
+
+    /**
      * Processa o SVG do template substituindo as variáveis de texto e injetando a foto em base64 da Pessoa.
      */
     public static function processarSvg(string $svgContent, Pessoa $pessoa, ?Turma $turma = null): string
@@ -88,6 +137,9 @@ class TemplateCrachaV2Service
 
         $dom->loadXML($xmlContent, LIBXML_NOENT | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
+
+        // Resolve os <use> clonando os símbolos para compatibilidade com o DomPDF
+        self::flatteningSvgUse($dom);
 
         // 1. Processar os textos que contêm classes mapeadas (text e tspan)
         $textTags = ['text', 'tspan'];
