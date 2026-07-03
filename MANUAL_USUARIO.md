@@ -1027,7 +1027,7 @@ Para mapear um elemento de texto ou imagem do canvas com as informações dinâm
     *   `telefone`: Preenchido com o telefone de contato.
     *   `profissao`: Preenchido com a profissão registrada.
     *   `cor_raca`: Preenchido com a cor/raça.
-    *   `foto`: Aplica-se a elementos do tipo **Imagem** (`<image>`). Substitui a origem/href da imagem pela foto real da pessoa (codificada em Base64) ou pelo avatar padrão do aluno.
+    *   `foto`: Aplica-se a elementos do tipo **Imagem** (`<image>`) ou **Formas Geométricas** (como `<rect>`, `<circle>`, `<ellipse>`, `<polygon>`, `<path>`). Se for uma imagem, substitui a origem/href pela foto real. Se for uma forma geométrica (ex: um círculo ou retângulo desenhado no editor), o sistema converte a foto em um preenchimento proporcional (cobertura "slice"), adaptando o retrato automaticamente para preencher os limites geométricos do polígono com perfeição.
 
 *   **Classes de Turma (Somente para templates de Turma):**
     *   `turma_nome`: Preenchido com o nome da turma.

@@ -110,30 +110,74 @@ class TemplateCrachaV2Service
             }
         }
 
-        // 2. Processar a imagem da foto
-        $images = $dom->getElementsByTagName('image');
-        foreach ($images as $img) {
-            $deveSubstituir = false;
+        // Cria a tag <defs> se ela não existir
+        $defs = $dom->getElementsByTagName('defs')->item(0);
+        if (! $defs) {
+            $defs = $dom->createElementNS('http://www.w3.org/2000/svg', 'defs');
+            $dom->documentElement->insertBefore($defs, $dom->documentElement->firstChild);
+        }
 
-            // Verifica pela classe
-            if ($img->hasAttribute('class')) {
-                $classAttr = $img->getAttribute('class');
-                $classes = array_map('trim', explode(' ', $classAttr));
-                if (in_array('foto', $classes)) {
+        // Gera a URL da foto (Base64 ou avatar padrão)
+        $fotoUrl = self::getFotoBase64($pessoa);
+
+        // Cria o elemento <pattern> para a foto
+        $patternId = 'pattern-foto-aluno-'.$pessoa->id;
+
+        // Remove pattern antigo se existir
+        $oldPattern = $dom->getElementById($patternId);
+        if ($oldPattern) {
+            $oldPattern->parentNode->removeChild($oldPattern);
+        }
+
+        $pattern = $dom->createElementNS('http://www.w3.org/2000/svg', 'pattern');
+        $pattern->setAttribute('id', $patternId);
+        $pattern->setAttribute('x', '0');
+        $pattern->setAttribute('y', '0');
+        $pattern->setAttribute('width', '1');
+        $pattern->setAttribute('height', '1');
+        $pattern->setAttribute('patternContentUnits', 'objectBoundingBox');
+
+        // Cria a tag <image> interna do pattern preenchendo proporcionalmente (cover/slice)
+        $image = $dom->createElementNS('http://www.w3.org/2000/svg', 'image');
+        $image->setAttribute('href', $fotoUrl);
+        $image->setAttribute('x', '0');
+        $image->setAttribute('y', '0');
+        $image->setAttribute('width', '1');
+        $image->setAttribute('height', '1');
+        $image->setAttribute('preserveAspectRatio', 'xMidYMid slice');
+
+        $pattern->appendChild($image);
+        $defs->appendChild($pattern);
+
+        // 2. Processar a imagem da foto ou formas geométricas com a classe 'foto'
+        $geometricTags = ['rect', 'circle', 'ellipse', 'polygon', 'path', 'image'];
+        foreach ($geometricTags as $tag) {
+            $elements = $dom->getElementsByTagName($tag);
+            foreach ($elements as $el) {
+                $deveSubstituir = false;
+
+                if ($el->hasAttribute('class')) {
+                    $classAttr = $el->getAttribute('class');
+                    $classes = array_map('trim', explode(' ', $classAttr));
+                    if (in_array('foto', $classes)) {
+                        $deveSubstituir = true;
+                    }
+                }
+
+                if ($el->hasAttribute('id') && $el->getAttribute('id') === 'foto-aluno-v2') {
                     $deveSubstituir = true;
                 }
-            }
 
-            // Ou pelo ID (retrocompatibilidade)
-            if ($img->hasAttribute('id') && $img->getAttribute('id') === 'foto-aluno-v2') {
-                $deveSubstituir = true;
-            }
-
-            if ($deveSubstituir) {
-                $fotoUrl = self::getFotoBase64($pessoa);
-                $img->setAttribute('href', $fotoUrl);
-                if ($img->hasAttribute('xlink:href')) {
-                    $img->setAttribute('xlink:href', $fotoUrl);
+                if ($deveSubstituir) {
+                    if ($tag === 'image') {
+                        $el->setAttribute('href', $fotoUrl);
+                        if ($el->hasAttribute('xlink:href')) {
+                            $el->setAttribute('xlink:href', $fotoUrl);
+                        }
+                    } else {
+                        // Aplica o pattern de preenchimento na forma geométrica
+                        $el->setAttribute('fill', 'url(#'.$patternId.')');
+                    }
                 }
             }
         }

@@ -122,6 +122,26 @@ class TemplateCrachaV2Test extends TestCase
         $this->assertStringContainsString('href="https://ui-avatars.com', $svgProcessado);
     }
 
+    public function test_service_v2_injeta_foto_usando_pattern_em_formas_geometricas(): void
+    {
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Julio Cesar',
+        ]);
+
+        // Círculo e retângulo com a classe 'foto'
+        $svgOriginal = '<svg><rect class="foto" width="100" height="150" /><circle class="foto" r="50" /></svg>';
+
+        // Processa
+        $svgProcessado = TemplateCrachaV2Service::processarSvg($svgOriginal, $pessoa);
+
+        // Deve conter a tag <defs> e o <pattern> com ID dinâmico da pessoa
+        $this->assertStringContainsString('<defs', $svgProcessado);
+        $this->assertStringContainsString('id="pattern-foto-aluno-'.$pessoa->id.'"', $svgProcessado);
+
+        // As formas geométricas devem ter o fill apontando para o pattern
+        $this->assertStringContainsString('fill="url(#pattern-foto-aluno-'.$pessoa->id.')"', $svgProcessado);
+    }
+
     public function test_geracao_de_pdf_de_crachas_v2(): void
     {
         $template = TemplateCrachaV2::create([
