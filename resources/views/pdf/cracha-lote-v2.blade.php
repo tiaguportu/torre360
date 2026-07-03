@@ -79,6 +79,42 @@
                                         z-index: 10;
                                     " />
                                 @endif
+
+                                <!-- Textos dinâmicos sobrepostos absolutamente (nome, profissao, etc.) -->
+                                @if (isset($item->textos) && count($item->textos) > 0)
+                                    @foreach ($item->textos as $texto)
+                                        @php
+                                            $textAlign = match($texto['anchor']) {
+                                                'middle' => 'center',
+                                                'end'    => 'right',
+                                                default  => 'left',
+                                            };
+                                            // Para text-anchor="middle", compensamos left pelo ponto central
+                                            $leftPt = $texto['x'];
+                                            if ($texto['anchor'] === 'middle') {
+                                                $leftPt = $leftPt - ($texto['width'] ?? ($crachaLargura / 2));
+                                            } elseif ($texto['anchor'] === 'end') {
+                                                $leftPt = $leftPt - ($texto['width'] ?? 0);
+                                            }
+                                            // y é a linha de base do texto; subtraímos a altura da fonte para top
+                                            $topPt = $texto['y'] - $texto['font_size'];
+                                        @endphp
+                                        <div style="
+                                            position: absolute;
+                                            left: {{ $leftPt }}pt;
+                                            top: {{ $topPt }}pt;
+                                            width: {{ $texto['width'] ? $texto['width'].'pt' : $crachaLargura.'pt' }};
+                                            font-family: {{ $texto['font_family'] }};
+                                            font-size: {{ $texto['font_size'] }}pt;
+                                            color: {{ $texto['fill'] }};
+                                            text-align: {{ $textAlign }};
+                                            white-space: nowrap;
+                                            overflow: visible;
+                                            z-index: 20;
+                                            line-height: 1;
+                                        ">{{ $texto['content'] }}</div>
+                                    @endforeach
+                                @endif
                             </div>
                         </td>
                     @endforeach

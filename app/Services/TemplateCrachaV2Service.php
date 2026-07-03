@@ -394,6 +394,135 @@ class TemplateCrachaV2Service
     }
 
     /**
+     * Resolve a posição absoluta (x, y) de um elemento SVG acumulando todas as matrizes de transformação dos pais.
+     */
+    private static function acumularTransformsAbsolutos(\DOMElement $el, \DOMDocument $dom): array
+    {
+        $tx = 0.0;
+        $ty = 0.0;
+        $sx = 1.0;
+        $sy = 1.0;
+
+        $current = $el;
+        while ($current && $current !== $dom->documentElement) {
+            if ($current instanceof \DOMElement && $current->hasAttribute('transform')) {
+                $transform = $current->getAttribute('transform');
+                if (preg_match('/matrix\s*\(([^)]+)\)/', $transform, $matches)) {
+                    $vals = array_map('floatval', array_map('trim', explode(',', $matches[1])));
+                    if (count($vals) === 6) {
+                        $tx += $vals[4] * $sx;
+                        $ty += $vals[5] * $sy;
+                        $sx *= $vals[0];
+                        $sy *= $vals[3];
+                    }
+                } elseif (preg_match('/translate\s*\(([^)]+)\)/', $transform, $matches)) {
+                    $parts = array_map('floatval', array_map('trim', explode(',', preg_replace('/\s+/', ',', trim($matches[1])))));
+                    $tx += ($parts[0] ?? 0) * $sx;
+                    $ty += ($parts[1] ?? 0) * $sy;
+                }
+            }
+            $current = $current->parentNode;
+        }
+
+        return ['tx' => $tx, 'ty' => $ty, 'sx' => $sx, 'sy' => $sy];
+    }
+
+    /**
+     * Extrai todos os elementos <text> que têm classes mapeadas, calculando suas posições absolutas finais.
+     * Remove-os do DOM após extração para evitar dupla renderização.
+     *
+     * @return array<int, array{x: float, y: float, width: float|null, anchor: string, content: string, font_family: string, font_size: float, fill: string, class: string}>
+     */
+    public static function extrairTextosAbsolutos(\DOMDocument $dom, Pessoa $pessoa, ?Turma $turma = null): array
+    {
+        $textos = [];
+        $elementosParaRemover = [];
+
+        $textElements = $dom->getElementsByTagName('text');
+        foreach ($textElements as $el) {
+            if (! $el->hasAttribute('class')) {
+                continue;
+            }
+
+            $classAttr = $el->getAttribute('class');
+            $classes = array_map('trim', explode(' ', $classAttr));
+
+            $valor = null;
+            foreach ($classes as $c) {
+                $valor = self::getValorVariavelPorNome($c, $pessoa, $turma);
+                if ($valor !== null) {
+                    break;
+                }
+            }
+
+            if ($valor === null) {
+                continue;
+            }
+
+            // Posição local do elemento (x, y do próprio atributo + transform próprio)
+            $localX = (float) ($el->getAttribute('x') ?: 0);
+            $localY = (float) ($el->getAttribute('y') ?: 0);
+
+            // Acumula transforms dos pais (os grupos <g> englobantes)
+            $transforms = self::acumularTransformsAbsolutos($el, $dom);
+
+            // Transform próprio do elemento de texto (ex: transform="matrix(1,0,0,1,tx,ty)")
+            $selfTx = 0.0;
+            $selfTy = 0.0;
+            if ($el->hasAttribute('transform')) {
+                $t = $el->getAttribute('transform');
+                if (preg_match('/matrix\s*\(([^)]+)\)/', $t, $m)) {
+                    $v = array_map('floatval', array_map('trim', explode(',', $m[1])));
+                    if (count($v) === 6) {
+                        $selfTx = $v[4];
+                        $selfTy = $v[5];
+                    }
+                } elseif (preg_match('/translate\s*\(([^)]+)\)/', $t, $m)) {
+                    $parts = array_map('floatval', array_map('trim', explode(',', preg_replace('/\s+/', ',', trim($m[1])))));
+                    $selfTx = $parts[0] ?? 0;
+                    $selfTy = $parts[1] ?? 0;
+                }
+            }
+
+            // Posição absoluta final em px
+            $absX = ($localX + $selfTx) * $transforms['sx'] + $transforms['tx'];
+            $absY = ($localY + $selfTy) * $transforms['sy'] + $transforms['ty'];
+
+            // Estilos de fonte
+            $fontSize = (float) ($el->getAttribute('font-size') ?: 12);
+            $fontFamily = $el->getAttribute('font-family') ?: 'Arial, sans-serif';
+            $fill = $el->getAttribute('fill') ?: '#000000';
+            $textAnchor = $el->getAttribute('text-anchor') ?: 'start';
+
+            // Largura máxima do texto (lengthAdjust hint)
+            $width = $el->hasAttribute('textLength') ? (float) $el->getAttribute('textLength') : null;
+
+            $textos[] = [
+                'x' => $absX * 0.75,
+                'y' => $absY * 0.75,
+                'width' => $width ? $width * 0.75 : null,
+                'anchor' => $textAnchor,
+                'content' => $valor,
+                'font_family' => $fontFamily,
+                'font_size' => $fontSize * 0.75,
+                'fill' => $fill,
+                'class' => $classAttr,
+            ];
+
+            $elementosParaRemover[] = $el;
+        }
+
+        // Remove após loop para não invalidar o iterator
+        foreach ($elementosParaRemover as $el) {
+            if ($el->parentNode) {
+                $el->parentNode->removeChild($el);
+            }
+        }
+
+        return $textos;
+    }
+
+    /**
      * Gera o PDF consolidado dos crachás V2.
      *
      * @param  Collection<int, object>  $pessoasComTurma  Coleção de objetos com 'pessoa' e 'turma'
@@ -411,7 +540,7 @@ class TemplateCrachaV2Service
             // Processa o SVG injetando variáveis e convertendo CSS de classe em inline
             $svgProcessado = self::processarSvg($svgOriginal, $pessoa, $turma);
 
-            // Carrega no DOM para extrair a foto geométrica
+            // Carrega no DOM para extrair foto e textos dinâmicos
             $dom = new \DOMDocument;
             libxml_use_internal_errors(true);
             $dom->loadXML($svgProcessado, LIBXML_NOENT | LIBXML_HTML_NODEFDTD);
@@ -437,7 +566,10 @@ class TemplateCrachaV2Service
                 $fotoBBox['height'] = $fotoBBox['height'] * 0.75;
             }
 
-            // Salva o SVG de background limpo (com o placeholder transparente)
+            // Extrai os textos dinâmicos (classes mapeadas) e remove-os do DOM para overlay HTML
+            $textosOverlay = self::extrairTextosAbsolutos($dom, $pessoa, $turma);
+
+            // Salva o SVG de background limpo (sem textos e com placeholder de foto transparente)
             $svgLimpo = $dom->documentElement ? $dom->saveXML($dom->documentElement) : $dom->saveXML();
 
             $svgsProcessados->push((object) [
@@ -446,6 +578,7 @@ class TemplateCrachaV2Service
                 'svg' => $svgLimpo,
                 'foto_url' => $fotoUrl,
                 'foto_bbox' => $fotoBBox,
+                'textos' => $textosOverlay,
             ]);
         }
 
