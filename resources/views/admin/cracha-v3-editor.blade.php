@@ -23,7 +23,7 @@
         /* Canvas */
         #cracha-canvas {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 0 0 1px rgba(139,92,246,0.3), 0 25px 50px -12px rgba(0,0,0,0.8);
         }
 
@@ -512,7 +512,7 @@
         }
 
         // Inicializar Moveable (sem target inicial)
-        moveableInstance = new Moveable(document.body, {
+        moveableInstance = new Moveable(canvas, {
             target: null,
             container: canvas,
             draggable: true,
