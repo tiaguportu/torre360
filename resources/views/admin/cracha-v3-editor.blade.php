@@ -531,7 +531,6 @@
         // Inicializar Moveable (sem target inicial)
         moveableInstance = new Moveable(document.body, {
             target: null,
-            container: canvas,
             zoom: zoomAtual,
             draggable: true,
             resizable: true,
