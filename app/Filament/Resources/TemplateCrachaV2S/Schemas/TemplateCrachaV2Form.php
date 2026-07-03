@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 class TemplateCrachaV2Form
@@ -54,7 +55,7 @@ class TemplateCrachaV2Form
                     ->schema([
                         Placeholder::make('editor_canvas_btn')
                             ->label('')
-                            ->content(fn ($record) => $record
+                            ->content(fn (?Model $record) => $record
                                 ? new HtmlString('
                                     <div class="flex flex-col gap-2.5 items-start p-4 bg-slate-900 border border-slate-800 rounded-xl max-w-xl">
                                         <p class="text-sm font-semibold text-slate-200">Editor Canvas Vetorial (SVG-Edit)</p>
