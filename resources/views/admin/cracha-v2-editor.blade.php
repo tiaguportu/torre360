@@ -89,17 +89,14 @@
                         Campos de Pessoa
                     </h3>
                     <div class="grid grid-cols-1 gap-2">
-                        <button onclick="inserirFoto()" class="bg-slate-900 hover:bg-slate-800 text-left px-3 py-2.5 rounded-lg border border-slate-800 text-xs font-medium transition-all duration-200 hover:border-emerald-500/50 flex items-center justify-between group">
-                            <span class="text-slate-200 group-hover:text-emerald-400">Foto da Pessoa ({foto})</span>
-                            <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        </button>
                         @foreach ($todasVariaveis['pessoa']['Variáveis de Pessoa'] ?? [] as $key => $label)
-                            @if ($key !== '{foto}')
-                                <button onclick="inserirTexto('{{ $key }}')" class="bg-slate-900 hover:bg-slate-800 text-left px-3 py-2.5 rounded-lg border border-slate-800 text-xs font-medium transition-all duration-200 hover:border-emerald-500/50 flex items-center justify-between group">
-                                    <span class="text-slate-200 group-hover:text-emerald-400">{{ $label }}</span>
-                                    <span class="text-[10px] text-slate-500 font-mono bg-slate-950 px-1.5 py-0.5 rounded">{{ $key }}</span>
-                                </button>
-                            @endif
+                            @php
+                                $classVal = trim($key, '{}');
+                            @endphp
+                            <button onclick="copiarClasse('{{ $classVal }}')" class="bg-slate-900 hover:bg-slate-800 text-left px-3 py-2.5 rounded-lg border border-slate-800 text-xs font-medium transition-all duration-200 hover:border-emerald-500/50 flex items-center justify-between group active:scale-95">
+                                <span class="text-slate-200 group-hover:text-emerald-400">{{ $label }}</span>
+                                <span class="text-[10px] text-slate-500 font-mono bg-slate-950 px-1.5 py-0.5 rounded group-hover:text-emerald-400">Class: {{ $classVal }}</span>
+                            </button>
                         @endforeach
                     </div>
                 </div>
@@ -113,9 +110,12 @@
                     </h3>
                     <div class="grid grid-cols-1 gap-2">
                         @foreach ($todasVariaveis['turma']['Variáveis de Turma'] ?? [] as $key => $label)
-                            <button onclick="inserirTexto('{{ $key }}')" class="bg-slate-900 hover:bg-slate-800 text-left px-3 py-2.5 rounded-lg border border-slate-800 text-xs font-medium transition-all duration-200 hover:border-blue-500/50 flex items-center justify-between group">
+                            @php
+                                $classVal = trim($key, '{}');
+                            @endphp
+                            <button onclick="copiarClasse('{{ $classVal }}')" class="bg-slate-900 hover:bg-slate-800 text-left px-3 py-2.5 rounded-lg border border-slate-800 text-xs font-medium transition-all duration-200 hover:border-blue-500/50 flex items-center justify-between group active:scale-95">
                                 <span class="text-slate-200 group-hover:text-blue-400">{{ $label }}</span>
-                                <span class="text-[10px] text-slate-500 font-mono bg-slate-950 px-1.5 py-0.5 rounded">{{ $key }}</span>
+                                <span class="text-[10px] text-slate-500 font-mono bg-slate-950 px-1.5 py-0.5 rounded group-hover:text-blue-400">Class: {{ $classVal }}</span>
                             </button>
                         @endforeach
                     </div>
@@ -213,170 +213,15 @@
         }
 
         /**
-         * Insere um texto correspondente a uma variável dinâmica no canvas
+         * Copia a classe para a área de transferência do usuário
          */
-        function inserirTexto(variavel) {
-            if (!canvasAPI) {
-                alert("O editor ainda não está totalmente carregado.");
-                return;
-            }
-
-            try {
-                const posX = Math.round(templateWidth / 2) - 50;
-                const posY = Math.round(templateHeight / 2);
-                const uniqueId = 'text_' + Date.now() + '_' + Math.round(Math.random() * 1000);
-
-                if (typeof canvasAPI.addSVGElementFromJson === 'function') {
-                    canvasAPI.addSVGElementFromJson({
-                        element: 'text',
-                        attr: {
-                            x: posX,
-                            y: posY,
-                            fill: '#1e293b',
-                            'font-size': '14px',
-                            'font-family': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                            'font-weight': '600',
-                            id: uniqueId
-                        },
-                        textContent: variavel
-                    });
-                    
-                    const el = iframeWindow.document.getElementById(uniqueId);
-                    if (el) {
-                        if (typeof canvasAPI.select === 'function') {
-                            canvasAPI.select([el]);
-                        } else if (typeof canvasAPI.selectOnly === 'function') {
-                            canvasAPI.selectOnly([el], true);
-                        }
-                        if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
-                            canvasAPI.recalculateAllSelectedDimensions();
-                        }
-                    }
-                } else {
-                    const svgDoc = iframeWindow.document;
-                    const svgContent = svgDoc.getElementById('svgcontent') || svgDoc.querySelector('svg');
-                    if (svgContent) {
-                        const newText = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        newText.setAttribute('x', posX);
-                        newText.setAttribute('y', posY);
-                        newText.setAttribute('fill', '#1e293b');
-                        newText.setAttribute('font-size', '14px');
-                        newText.setAttribute('font-family', "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif");
-                        newText.setAttribute('font-weight', '600');
-                        newText.setAttribute('id', uniqueId);
-                        newText.textContent = variavel;
-                        svgContent.appendChild(newText);
-                        
-                        const el = svgDoc.getElementById(uniqueId);
-                        if (el) {
-                            if (typeof canvasAPI.select === 'function') {
-                                canvasAPI.select([el]);
-                            } else if (typeof canvasAPI.selectOnly === 'function') {
-                                canvasAPI.selectOnly([el], true);
-                            }
-                            if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
-                                canvasAPI.recalculateAllSelectedDimensions();
-                            }
-                        }
-                    }
-                }
-
-                // Força o modo de seleção
-                if (typeof canvasAPI.setMode === 'function') {
-                    canvasAPI.setMode('select');
-                }
-            } catch (e) {
-                console.error("Erro ao inserir variável de texto:", e);
-            }
-        }
-
-        /**
-         * Insere um elemento de imagem que representa o placeholder de foto
-         */
-        function inserirFoto() {
-            if (!canvasAPI) {
-                alert("O editor ainda não está totalmente carregado.");
-                return;
-            }
-
-            try {
-                const posX = Math.round((templateWidth - 120) / 2);
-                const posY = 50;
-                const fotoUrl = 'https://ui-avatars.com/api/?name=FOTO&color=7F9CF5&background=EBF4FF';
-                const uniqueId = 'foto-aluno-v2';
-
-                if (typeof canvasAPI.addSVGElementFromJson === 'function') {
-                    const oldFoto = iframeWindow.document.getElementById(uniqueId);
-                    if (oldFoto) {
-                        oldFoto.remove();
-                    }
-
-                    canvasAPI.addSVGElementFromJson({
-                        element: 'image',
-                        attr: {
-                            x: posX,
-                            y: posY,
-                            width: 120,
-                            height: 120,
-                            'xlink:href': fotoUrl,
-                            href: fotoUrl,
-                            id: uniqueId,
-                            preserveAspectRatio: 'xMidYMid slice'
-                        }
-                    });
-                    
-                    const el = iframeWindow.document.getElementById(uniqueId);
-                    if (el) {
-                        if (typeof canvasAPI.select === 'function') {
-                            canvasAPI.select([el]);
-                        } else if (typeof canvasAPI.selectOnly === 'function') {
-                            canvasAPI.selectOnly([el], true);
-                        }
-                        if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
-                            canvasAPI.recalculateAllSelectedDimensions();
-                        }
-                    }
-                } else {
-                    const svgDoc = iframeWindow.document;
-                    const svgContent = svgDoc.getElementById('svgcontent') || svgDoc.querySelector('svg');
-                    if (svgContent) {
-                        const oldFoto = svgDoc.getElementById(uniqueId);
-                        if (oldFoto) {
-                            oldFoto.remove();
-                        }
-
-                        const newImg = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'image');
-                        newImg.setAttribute('x', posX);
-                        newImg.setAttribute('y', posY);
-                        newImg.setAttribute('width', 120);
-                        newImg.setAttribute('height', 120);
-                        newImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', fotoUrl);
-                        newImg.setAttribute('href', fotoUrl);
-                        newImg.setAttribute('id', uniqueId);
-                        newImg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-                        svgContent.appendChild(newImg);
-                        
-                        const el = svgDoc.getElementById(uniqueId);
-                        if (el) {
-                            if (typeof canvasAPI.select === 'function') {
-                                canvasAPI.select([el]);
-                            } else if (typeof canvasAPI.selectOnly === 'function') {
-                                canvasAPI.selectOnly([el], true);
-                            }
-                            if (typeof canvasAPI.recalculateAllSelectedDimensions === 'function') {
-                                canvasAPI.recalculateAllSelectedDimensions();
-                            }
-                        }
-                    }
-                }
-
-                // Força o modo de seleção
-                if (typeof canvasAPI.setMode === 'function') {
-                    canvasAPI.setMode('select');
-                }
-            } catch (e) {
-                console.error("Erro ao inserir variável de foto:", e);
-            }
+        function copiarClasse(className) {
+            navigator.clipboard.writeText(className).then(() => {
+                showToast(`Classe "${className}" copiada para o clipboard! Cole-a na propriedade Class do elemento no SVG-Edit.`, "bg-emerald-500");
+            }).catch(err => {
+                console.error("Erro ao copiar classe:", err);
+                showToast("Erro ao copiar classe para a área de transferência.", "bg-rose-600");
+            });
         }
 
         /**

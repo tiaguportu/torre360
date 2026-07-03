@@ -97,6 +97,31 @@ class TemplateCrachaV2Test extends TestCase
         $this->assertStringContainsString('href="https://ui-avatars.com', $svgProcessado);
     }
 
+    public function test_service_v2_substitui_variaveis_usando_classes_css(): void
+    {
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Maria Silva',
+            'cpf' => '111.222.333-44',
+        ]);
+
+        $turma = Turma::factory()->create([
+            'nome' => 'Segunda Série B',
+        ]);
+
+        // SVG contendo classes nos elementos
+        $svgOriginal = '<svg><text class="nome">Placeholder Nome</text><text class="cpf text-style">Placeholder CPF</text><text class="turma_nome">Placeholder Turma</text><image class="foto border-img" href="placeholder.jpg" /></svg>';
+
+        // Processa
+        $svgProcessado = TemplateCrachaV2Service::processarSvg($svgOriginal, $pessoa, $turma);
+
+        $this->assertStringContainsString('Maria Silva', $svgProcessado);
+        $this->assertStringContainsString('111.222.333-44', $svgProcessado);
+        $this->assertStringContainsString('Segunda Série B', $svgProcessado);
+        // Deve ter substituído a imagem original pela url de avatar
+        $this->assertStringNotContainsString('href="placeholder.jpg"', $svgProcessado);
+        $this->assertStringContainsString('href="https://ui-avatars.com', $svgProcessado);
+    }
+
     public function test_geracao_de_pdf_de_crachas_v2(): void
     {
         $template = TemplateCrachaV2::create([
