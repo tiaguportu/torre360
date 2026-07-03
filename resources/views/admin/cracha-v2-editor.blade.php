@@ -224,20 +224,47 @@
             try {
                 const posX = Math.round(templateWidth / 2) - 50;
                 const posY = Math.round(templateHeight / 2);
-                
-                const textSvg = `<text x="${posX}" y="${posY}" fill="#1e293b" font-size="14" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="600">${variavel}</text>`;
-                
-                if (typeof canvasAPI.importSvgString === 'function') {
-                    canvasAPI.importSvgString(textSvg);
-                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.importSvgString === 'function') {
-                    canvasAPI.canvas.importSvgString(textSvg);
+                const uniqueId = 'text_' + Date.now() + '_' + Math.round(Math.random() * 1000);
+
+                if (typeof canvasAPI.addSVGElementFromJson === 'function') {
+                    canvasAPI.addSVGElementFromJson({
+                        element: 'text',
+                        attr: {
+                            x: posX,
+                            y: posY,
+                            fill: '#1e293b',
+                            'font-size': '14px',
+                            'font-family': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            'font-weight': '600',
+                            id: uniqueId
+                        },
+                        textContent: variavel
+                    });
+                    
+                    if (typeof canvasAPI.selectOnly === 'function') {
+                        const el = iframeWindow.document.getElementById(uniqueId);
+                        if (el) canvasAPI.selectOnly([el], true);
+                    }
+                } else {
+                    const svgDoc = iframeWindow.document;
+                    const svgContent = svgDoc.getElementById('svgcontent') || svgDoc.querySelector('svg');
+                    if (svgContent) {
+                        const newText = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        newText.setAttribute('x', posX);
+                        newText.setAttribute('y', posY);
+                        newText.setAttribute('fill', '#1e293b');
+                        newText.setAttribute('font-size', '14px');
+                        newText.setAttribute('font-family', "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif");
+                        newText.setAttribute('font-weight', '600');
+                        newText.setAttribute('id', uniqueId);
+                        newText.textContent = variavel;
+                        svgContent.appendChild(newText);
+                    }
                 }
 
-                // Força o modo de seleção no canvas
+                // Força o modo de seleção
                 if (typeof canvasAPI.setMode === 'function') {
                     canvasAPI.setMode('select');
-                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.selectMode === 'function') {
-                    canvasAPI.canvas.selectMode();
                 }
             } catch (e) {
                 console.error("Erro ao inserir variável de texto:", e);
@@ -257,20 +284,57 @@
                 const posX = Math.round((templateWidth - 120) / 2);
                 const posY = 50;
                 const fotoUrl = 'https://ui-avatars.com/api/?name=FOTO&color=7F9CF5&background=EBF4FF';
+                const uniqueId = 'foto-aluno-v2';
 
-                const imageSvg = `<image x="${posX}" y="${posY}" width="120" height="120" href="${fotoUrl}" id="foto-aluno-v2" preserveAspectRatio="xMidYMid slice" />`;
-                
-                if (typeof canvasAPI.importSvgString === 'function') {
-                    canvasAPI.importSvgString(imageSvg);
-                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.importSvgString === 'function') {
-                    canvasAPI.canvas.importSvgString(imageSvg);
+                if (typeof canvasAPI.addSVGElementFromJson === 'function') {
+                    const oldFoto = iframeWindow.document.getElementById(uniqueId);
+                    if (oldFoto) {
+                        oldFoto.remove();
+                    }
+
+                    canvasAPI.addSVGElementFromJson({
+                        element: 'image',
+                        attr: {
+                            x: posX,
+                            y: posY,
+                            width: 120,
+                            height: 120,
+                            'xlink:href': fotoUrl,
+                            href: fotoUrl,
+                            id: uniqueId,
+                            preserveAspectRatio: 'xMidYMid slice'
+                        }
+                    });
+                    
+                    if (typeof canvasAPI.selectOnly === 'function') {
+                        const el = iframeWindow.document.getElementById(uniqueId);
+                        if (el) canvasAPI.selectOnly([el], true);
+                    }
+                } else {
+                    const svgDoc = iframeWindow.document;
+                    const svgContent = svgDoc.getElementById('svgcontent') || svgDoc.querySelector('svg');
+                    if (svgContent) {
+                        const oldFoto = svgDoc.getElementById(uniqueId);
+                        if (oldFoto) {
+                            oldFoto.remove();
+                        }
+
+                        const newImg = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'image');
+                        newImg.setAttribute('x', posX);
+                        newImg.setAttribute('y', posY);
+                        newImg.setAttribute('width', 120);
+                        newImg.setAttribute('height', 120);
+                        newImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', fotoUrl);
+                        newImg.setAttribute('href', fotoUrl);
+                        newImg.setAttribute('id', uniqueId);
+                        newImg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+                        svgContent.appendChild(newImg);
+                    }
                 }
 
                 // Força o modo de seleção
                 if (typeof canvasAPI.setMode === 'function') {
                     canvasAPI.setMode('select');
-                } else if (canvasAPI.canvas && typeof canvasAPI.canvas.selectMode === 'function') {
-                    canvasAPI.canvas.selectMode();
                 }
             } catch (e) {
                 console.error("Erro ao inserir variável de foto:", e);
