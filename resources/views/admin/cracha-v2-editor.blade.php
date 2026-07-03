@@ -241,9 +241,13 @@
                         textContent: variavel
                     });
                     
-                    if (typeof canvasAPI.selectOnly === 'function') {
-                        const el = iframeWindow.document.getElementById(uniqueId);
-                        if (el) canvasAPI.selectOnly([el], true);
+                    const el = iframeWindow.document.getElementById(uniqueId);
+                    if (el) {
+                        if (typeof canvasAPI.select === 'function') {
+                            canvasAPI.select([el]);
+                        } else if (typeof canvasAPI.selectOnly === 'function') {
+                            canvasAPI.selectOnly([el], true);
+                        }
                     }
                 } else {
                     const svgDoc = iframeWindow.document;
@@ -259,6 +263,15 @@
                         newText.setAttribute('id', uniqueId);
                         newText.textContent = variavel;
                         svgContent.appendChild(newText);
+                        
+                        const el = svgDoc.getElementById(uniqueId);
+                        if (el) {
+                            if (typeof canvasAPI.select === 'function') {
+                                canvasAPI.select([el]);
+                            } else if (typeof canvasAPI.selectOnly === 'function') {
+                                canvasAPI.selectOnly([el], true);
+                            }
+                        }
                     }
                 }
 
@@ -306,9 +319,13 @@
                         }
                     });
                     
-                    if (typeof canvasAPI.selectOnly === 'function') {
-                        const el = iframeWindow.document.getElementById(uniqueId);
-                        if (el) canvasAPI.selectOnly([el], true);
+                    const el = iframeWindow.document.getElementById(uniqueId);
+                    if (el) {
+                        if (typeof canvasAPI.select === 'function') {
+                            canvasAPI.select([el]);
+                        } else if (typeof canvasAPI.selectOnly === 'function') {
+                            canvasAPI.selectOnly([el], true);
+                        }
                     }
                 } else {
                     const svgDoc = iframeWindow.document;
@@ -329,6 +346,15 @@
                         newImg.setAttribute('id', uniqueId);
                         newImg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
                         svgContent.appendChild(newImg);
+                        
+                        const el = svgDoc.getElementById(uniqueId);
+                        if (el) {
+                            if (typeof canvasAPI.select === 'function') {
+                                canvasAPI.select([el]);
+                            } else if (typeof canvasAPI.selectOnly === 'function') {
+                                canvasAPI.selectOnly([el], true);
+                            }
+                        }
                     }
                 }
 
