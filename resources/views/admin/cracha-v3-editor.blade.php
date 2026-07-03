@@ -476,8 +476,25 @@
     const DADOS_INICIAIS = {!! json_encode($templateCrachaV3->dados_json) !!};
 
     // =====================================================
-    // ESTADO DA APLICAÇÃO
+    // ESTADO DA APLICAÇÃO E MONITOR DE ERROS
     // =====================================================
+    window.addEventListener('error', function(e) {
+        if (typeof showToast === 'function') {
+            showToast("Erro JS: " + e.message, "error");
+        } else {
+            alert("Erro JS: " + e.message);
+        }
+    });
+
+    function updateMoveable() {
+        if (!moveableInstance) return;
+        if (typeof moveableInstance.updateRect === 'function') {
+            moveableInstance.updateRect();
+        } else if (typeof moveableInstance.updateTarget === 'function') {
+            moveableInstance.updateTarget();
+        }
+    }
+
     let elementosData = []; // Array de objetos com todos os dados dos elementos
     let elementoSelecionadoId = null;
     let moveableInstance = null;
@@ -512,9 +529,10 @@
         }
 
         // Inicializar Moveable (sem target inicial)
-        moveableInstance = new Moveable(canvas, {
+        moveableInstance = new Moveable(document.body, {
             target: null,
             container: canvas,
+            zoom: zoomAtual,
             draggable: true,
             resizable: true,
             rotatable: true,
@@ -796,7 +814,7 @@
 
         // Configura Moveable
         moveableInstance.target = dom;
-        moveableInstance.updateTarget();
+        updateMoveable();
 
         // Atualiza painel de propriedades
         mudarTab('propriedades');
@@ -808,7 +826,7 @@
         elementoSelecionadoId = null;
         document.querySelectorAll('.cracha-elemento').forEach(el => el.classList.remove('selecionado'));
         moveableInstance.target = null;
-        moveableInstance.updateTarget();
+        updateMoveable();
 
         document.getElementById('painel-props-conteudo').classList.add('hidden');
         document.getElementById('sem-selecao').classList.remove('hidden');
@@ -885,7 +903,7 @@
         const dom = document.getElementById(el.id);
         if (dom) {
             dom.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotacao}deg)`;
-            moveableInstance.updateTarget();
+            updateMoveable();
         }
     }
 
@@ -898,7 +916,7 @@
         if (dom) {
             dom.style.width = `${el.largura}px`;
             dom.style.height = `${el.altura}px`;
-            moveableInstance.updateTarget();
+            updateMoveable();
         }
     }
 
@@ -910,7 +928,7 @@
         const dom = document.getElementById(el.id);
         if (dom) {
             dom.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotacao}deg)`;
-            moveableInstance.updateTarget();
+            updateMoveable();
         }
     }
 
@@ -942,7 +960,7 @@
         const dom = document.getElementById(el.id);
         if (dom) {
             aplicarEstilosNoDOM(dom, el);
-            moveableInstance.updateTarget();
+            updateMoveable();
         }
     }
 
@@ -979,7 +997,7 @@
         elementosData = elementosData.filter(el => el.id !== elementoSelecionadoId);
         elementoSelecionadoId = null;
         moveableInstance.target = null;
-        moveableInstance.updateTarget();
+        updateMoveable();
         document.getElementById('painel-props-conteudo').classList.add('hidden');
         document.getElementById('sem-selecao').classList.remove('hidden');
         salvarHistorico();
@@ -1012,6 +1030,10 @@
         zoomAtual = Math.max(0.3, Math.min(2, zoomAtual + delta));
         zoomWrapper.style.transform = `scale(${zoomAtual})`;
         document.getElementById('zoom-label').textContent = `${Math.round(zoomAtual * 100)}%`;
+        if (moveableInstance) {
+            moveableInstance.zoom = zoomAtual;
+            updateMoveable();
+        }
     }
 
     // =====================================================
@@ -1083,7 +1105,7 @@
         // Desselecionar
         elementoSelecionadoId = null;
         moveableInstance.target = null;
-        moveableInstance.updateTarget();
+        updateMoveable();
         document.getElementById('painel-props-conteudo').classList.add('hidden');
         document.getElementById('sem-selecao').classList.remove('hidden');
     }
