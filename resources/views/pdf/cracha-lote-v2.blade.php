@@ -62,8 +62,23 @@
                 <tr>
                     @foreach ($rowSvgs as $item)
                         <td>
-                            <div class="badge-container" style="width: {{ $crachaLargura }}pt; height: {{ $crachaAltura }}pt;">
-                                {!! $item->svg !!}
+                            <div class="badge-container" style="width: {{ $crachaLargura }}pt; height: {{ $crachaAltura }}pt; position: relative; overflow: hidden;">
+                                <!-- Fundo do Crachá (renderizado como imagem para garantir alinhamento perfeito de fontes e matrizes de transformações) -->
+                                <img src="data:image/svg+xml;base64,{{ base64_encode($item->svg) }}" style="width: 100%; height: 100%; display: block; border: none; padding: 0; margin: 0;" />
+                                
+                                <!-- Foto do Aluno sobreposta absolutamente -->
+                                @if (isset($item->foto_bbox))
+                                    <img src="{{ $item->foto_url }}" style="
+                                        position: absolute;
+                                        left: {{ $item->foto_bbox['x'] }}pt;
+                                        top: {{ $item->foto_bbox['y'] }}pt;
+                                        width: {{ $item->foto_bbox['width'] }}pt;
+                                        height: {{ $item->foto_bbox['height'] }}pt;
+                                        object-fit: cover;
+                                        border-radius: {{ $item->foto_bbox['is_circle'] ? '50%' : '0' }};
+                                        z-index: 10;
+                                    " />
+                                @endif
                             </div>
                         </td>
                     @endforeach

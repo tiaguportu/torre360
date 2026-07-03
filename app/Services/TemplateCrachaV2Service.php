@@ -305,6 +305,91 @@ class TemplateCrachaV2Service
     }
 
     /**
+     * Extrai o BBox absoluto da foto (a partir de formas geométricas com a classe 'foto')
+     * e retorna um array com x, y, width, height e se é círculo.
+     */
+    public static function extrairBBoxFoto(\DOMDocument $dom): ?array
+    {
+        $geometricTags = ['rect', 'circle', 'ellipse', 'polygon', 'path', 'image'];
+        foreach ($geometricTags as $tag) {
+            $elements = $dom->getElementsByTagName($tag);
+            foreach ($elements as $el) {
+                $deveExtrair = false;
+
+                if ($el->hasAttribute('class')) {
+                    $classAttr = $el->getAttribute('class');
+                    $classes = array_map('trim', explode(' ', $classAttr));
+                    if (in_array('foto', $classes)) {
+                        $deveExtrair = true;
+                    }
+                }
+
+                if ($el->hasAttribute('id') && $el->getAttribute('id') === 'foto-aluno-v2') {
+                    $deveExtrair = true;
+                }
+
+                if ($deveExtrair) {
+                    $x = 0;
+                    $y = 0;
+                    $w = 120;
+                    $h = 120;
+                    $isCircle = ($tag === 'circle' || $tag === 'ellipse');
+
+                    if ($tag === 'rect' || $tag === 'image') {
+                        $x = (float) ($el->getAttribute('x') ?: 0);
+                        $y = (float) ($el->getAttribute('y') ?: 0);
+                        $w = (float) ($el->getAttribute('width') ?: 120);
+                        $h = (float) ($el->getAttribute('height') ?: 120);
+                    } elseif ($tag === 'circle') {
+                        $cx = (float) ($el->getAttribute('cx') ?: 0);
+                        $cy = (float) ($el->getAttribute('cy') ?: 0);
+                        $r = (float) ($el->getAttribute('r') ?: 60);
+                        $x = $cx - $r;
+                        $y = $cy - $r;
+                        $w = 2 * $r;
+                        $h = 2 * $r;
+                    } elseif ($tag === 'ellipse') {
+                        $cx = (float) ($el->getAttribute('cx') ?: 0);
+                        $cy = (float) ($el->getAttribute('cy') ?: 0);
+                        $rx = (float) ($el->getAttribute('rx') ?: 60);
+                        $ry = (float) ($el->getAttribute('ry') ?: 60);
+                        $x = $cx - $rx;
+                        $y = $cy - $ry;
+                        $w = 2 * $rx;
+                        $h = 2 * $ry;
+                    }
+
+                    // Aplica transformações matriciais se houver transform="matrix(...)"
+                    if ($el->hasAttribute('transform')) {
+                        $transform = $el->getAttribute('transform');
+                        if (preg_match('/matrix\s*\(([^)]+)\)/', $transform, $matches)) {
+                            $vals = array_map('floatval', array_map('trim', explode(',', $matches[1])));
+                            if (count($vals) === 6) {
+                                // matrix(a, b, c, d, tx, ty) -> a=scaleX, d=scaleY, tx=transX, ty=transY
+                                $x = ($x * $vals[0]) + $vals[4];
+                                $y = ($y * $vals[3]) + $vals[5];
+                                $w = $w * $vals[0];
+                                $h = $h * $vals[3];
+                            }
+                        }
+                    }
+
+                    return [
+                        'x' => $x,
+                        'y' => $y,
+                        'width' => $w,
+                        'height' => $h,
+                        'is_circle' => $isCircle,
+                        'element' => $el,
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Gera o PDF consolidado dos crachás V2.
      *
      * @param  Collection<int, object>  $pessoasComTurma  Coleção de objetos com 'pessoa' e 'turma'
@@ -319,13 +404,40 @@ class TemplateCrachaV2Service
 
             $svgOriginal = $template->svg_content ?: '';
 
-            // Processa o SVG injetando variáveis e foto correspondente
+            // Processa o SVG injetando variáveis e convertendo CSS de classe em inline
             $svgProcessado = self::processarSvg($svgOriginal, $pessoa, $turma);
+
+            // Carrega no DOM para extrair a foto geométrica e remove-la do background
+            $dom = new \DOMDocument;
+            libxml_use_internal_errors(true);
+            $dom->loadXML($svgProcessado, LIBXML_NOENT | LIBXML_HTML_NODEFDTD);
+            libxml_clear_errors();
+
+            $fotoBBox = self::extrairBBoxFoto($dom);
+            $fotoUrl = self::getFotoBase64($pessoa);
+
+            if ($fotoBBox && isset($fotoBBox['element'])) {
+                $el = $fotoBBox['element'];
+                if ($el->parentNode) {
+                    $el->parentNode->removeChild($el);
+                }
+
+                // Transforma as coordenadas de px para pt (pontos do PDF)
+                $fotoBBox['x'] = $fotoBBox['x'] * 0.75;
+                $fotoBBox['y'] = $fotoBBox['y'] * 0.75;
+                $fotoBBox['width'] = $fotoBBox['width'] * 0.75;
+                $fotoBBox['height'] = $fotoBBox['height'] * 0.75;
+            }
+
+            // Salva o SVG de background limpo
+            $svgLimpo = $dom->documentElement ? $dom->saveXML($dom->documentElement) : $dom->saveXML();
 
             $svgsProcessados->push((object) [
                 'pessoa' => $pessoa,
                 'turma' => $turma,
-                'svg' => $svgProcessado,
+                'svg' => $svgLimpo,
+                'foto_url' => $fotoUrl,
+                'foto_bbox' => $fotoBBox,
             ]);
         }
 
