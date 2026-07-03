@@ -29,7 +29,7 @@
             border: 0.5pt solid #cccccc;
             box-sizing: border-box;
         }
-        .badge-img {
+        .badge-container svg {
             display: block;
             width: 100%;
             height: 100%;
@@ -63,7 +63,7 @@
                     @foreach ($rowSvgs as $item)
                         <td>
                             <div class="badge-container" style="width: {{ $crachaLargura }}pt; height: {{ $crachaAltura }}pt;">
-                                <img class="badge-img" src="data:image/svg+xml;base64,{{ base64_encode($item->svg) }}" />
+                                {!! $item->svg !!}
                             </div>
                         </td>
                     @endforeach

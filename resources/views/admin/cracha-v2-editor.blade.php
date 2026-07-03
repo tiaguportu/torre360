@@ -160,7 +160,7 @@
         @php
             $defaultSvg = '<svg width="' . $templateCrachaV2->largura . '" height="' . $templateCrachaV2->altura . '" viewBox="0 0 ' . $templateCrachaV2->largura . ' ' . $templateCrachaV2->altura . '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="100%" height="100%" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" id="canvas-background" /></svg>';
         @endphp
-        const initialSvgContent = `{!! addslashes($templateCrachaV2->svg_content ?: $defaultSvg) !!}`;
+        const initialSvgContent = {!! json_encode($templateCrachaV2->svg_content ?: $defaultSvg) !!};
 
         // Monitorar carregamento do Iframe
         const iframe = document.getElementById('svgedit-iframe');
@@ -187,11 +187,15 @@
 
         function inicializarEditor() {
             try {
+                let svgParaCarregar = initialSvgContent;
+                // Remove preâmbulo <?xml ...?> se existir para evitar quebras de parser no canvas
+                svgParaCarregar = svgParaCarregar.replace(/^<\?xml[^>]*\?>/i, '').trim();
+
                 // Carregar o SVG inicial usando setSvgString ou o método correspondente
                 if (typeof canvasAPI.setSvgString === 'function') {
-                    canvasAPI.setSvgString(initialSvgContent);
+                    canvasAPI.setSvgString(svgParaCarregar);
                 } else if (typeof canvasAPI.loadFromString === 'function') {
-                    canvasAPI.loadFromString(initialSvgContent);
+                    canvasAPI.loadFromString(svgParaCarregar);
                 }
 
                 // Configurar o tamanho do canvas de trabalho para corresponder exatamente ao tamanho do crachá
@@ -236,28 +240,49 @@
             showToast("Salvando layout...", "bg-slate-700");
 
             try {
-                // Obtém a string SVG do canvas
-                const res = canvasAPI.getSvgString();
-                
-                if (typeof res === 'string') {
-                    enviarSvgParaBackend(res);
-                } else if (typeof res === 'function' || (typeof canvasAPI.getSvgString === 'function' && res === undefined)) {
-                    canvasAPI.getSvgString()(function(svg, error) {
-                        if (error) {
-                            console.error("Erro ao obter string SVG:", error);
-                            showToast("Erro ao obter o SVG do editor.", "bg-rose-600");
-                            return;
-                        }
-                        enviarSvgParaBackend(svg);
-                    });
-                } else if (res && typeof res.then === 'function') {
-                    res.then(svg => enviarSvgParaBackend(svg))
-                       .catch(err => {
-                           console.error(err);
-                           showToast("Erro ao obter o SVG.", "bg-rose-600");
-                       });
+                let svg = '';
+
+                // 1. Tenta obter via svgCanvasToString() (síncrono e oficial do canvas do SVG-Edit 7)
+                if (typeof canvasAPI.svgCanvasToString === 'function') {
+                    svg = canvasAPI.svgCanvasToString();
+                }
+                // 2. Tenta obter via getSvgString() direto
+                else {
+                    const res = canvasAPI.getSvgString();
+                    if (typeof res === 'string') {
+                        svg = res;
+                    } else if (res && typeof res.then === 'function') {
+                        res.then(val => {
+                            if (typeof val === 'string') {
+                                enviarSvgParaBackend(val);
+                            }
+                        }).catch(err => {
+                            console.error("Erro na Promise do SVG:", err);
+                        });
+                        return;
+                    }
+                }
+
+                if (svg && svg.trim() !== '') {
+                    enviarSvgParaBackend(svg);
                 } else {
-                    showToast("Erro: Formato de obtenção do SVG não reconhecido.", "bg-rose-600");
+                    // 3. Fallback assíncrono clássico se getSvgString requerer callback
+                    if (typeof canvasAPI.getSvgString === 'function') {
+                        canvasAPI.getSvgString()(function(val, error) {
+                            if (error) {
+                                console.error("Erro no callback do SVG:", error);
+                                showToast("Erro ao extrair SVG do editor.", "bg-rose-600");
+                                return;
+                            }
+                            if (val) {
+                                enviarSvgParaBackend(val);
+                            } else {
+                                showToast("Erro: O editor retornou SVG vazio.", "bg-rose-600");
+                            }
+                        });
+                    } else {
+                        showToast("Erro: Método de exportação de SVG não encontrado.", "bg-rose-600");
+                    }
                 }
             } catch (e) {
                 console.error("Erro no fluxo de salvamento:", e);

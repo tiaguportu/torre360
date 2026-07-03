@@ -89,22 +89,32 @@ class TemplateCrachaV2Service
         $dom->loadXML($xmlContent, LIBXML_NOENT | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
-        // 1. Processar os textos que contêm classes mapeadas
-        $texts = $dom->getElementsByTagName('text');
-        foreach ($texts as $text) {
-            if ($text->hasAttribute('class')) {
-                $classAttr = $text->getAttribute('class');
-                $classes = array_map('trim', explode(' ', $classAttr));
+        // 1. Processar os textos que contêm classes mapeadas (text e tspan)
+        $textTags = ['text', 'tspan'];
+        foreach ($textTags as $tag) {
+            $elements = $dom->getElementsByTagName($tag);
+            foreach ($elements as $el) {
+                if ($el->hasAttribute('class')) {
+                    $classAttr = $el->getAttribute('class');
+                    $classes = array_map('trim', explode(' ', $classAttr));
 
-                foreach ($classes as $c) {
-                    $valor = self::getValorVariavelPorNome($c, $pessoa, $turma);
-                    if ($valor !== null) {
-                        // Limpa o nó interno e define o valor
-                        while ($text->hasChildNodes()) {
-                            $text->removeChild($text->firstChild);
+                    foreach ($classes as $c) {
+                        $valor = self::getValorVariavelPorNome($c, $pessoa, $turma);
+                        if ($valor !== null) {
+                            if ($tag === 'text') {
+                                // Se a classe estiver no <text>, tenta atualizar o <tspan> filho se houver
+                                $tspan = $el->getElementsByTagName('tspan')->item(0);
+                                if ($tspan) {
+                                    $tspan->nodeValue = htmlspecialchars($valor, ENT_XML1, 'UTF-8');
+                                } else {
+                                    $el->nodeValue = htmlspecialchars($valor, ENT_XML1, 'UTF-8');
+                                }
+                            } else {
+                                // Se a classe estiver diretamente no <tspan>, atualiza o tspan diretamente
+                                $el->nodeValue = htmlspecialchars($valor, ENT_XML1, 'UTF-8');
+                            }
+                            break; // Para após achar a primeira correspondência
                         }
-                        $text->appendChild($dom->createTextNode($valor));
-                        break; // Para após achar a primeira correspondência
                     }
                 }
             }
