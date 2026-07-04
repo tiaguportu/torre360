@@ -8,6 +8,7 @@ use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
 
 class ContractTemplateService
 {
@@ -46,7 +47,24 @@ class ContractTemplateService
             '{{ASSINATURA.MAE}}' => $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo),
         ];
 
-        return str_replace(array_keys($macros), array_values($macros), $html);
+        $html = str_replace(array_keys($macros), array_values($macros), $html);
+
+        try {
+            return Blade::render($html, [
+                'contrato' => $contrato,
+                'unidade' => $unidade,
+                'aluno' => $aluno,
+                'responsaveis' => $contrato->responsaveisFinanceiros,
+                'faturas' => $contrato->faturas,
+            ]);
+        } catch (\Throwable $e) {
+            if (app()->runningUnitTests()) {
+                throw $e;
+            }
+            logger()->error('Erro ao renderizar template de contrato com Blade: '.$e->getMessage());
+
+            return $html;
+        }
     }
 
     protected function generateAssinaturaBlock(string $titulo, ?string $extra = null, ?string $cpf = null): string

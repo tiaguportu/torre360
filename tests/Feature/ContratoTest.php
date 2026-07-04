@@ -65,4 +65,31 @@ class ContratoTest extends TestCase
         $this->assertStringContainsString('Turma', $htmlResult);
         $this->assertStringContainsString('Série/Ano', $htmlResult);
     }
+
+    public function test_template_contrato_suporta_condicionais_e_loops_do_blade(): void
+    {
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Joãozinho da Silva',
+            'data_nascimento' => '2015-05-15',
+            'cpf' => '123.456.789-00',
+        ]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 12000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        $service = new ContractTemplateService;
+
+        // Template usando condicionais e loops do Blade
+        $htmlOriginal = '@if($aluno->nome == "Joãozinho da Silva") Nome correto: {{ $aluno->nome }} @else Outro nome @endif';
+        $htmlResult = $service->process($contrato, $htmlOriginal);
+
+        $this->assertStringContainsString('Nome correto: Joãozinho da Silva', $htmlResult);
+        $this->assertStringNotContainsString('Outro nome', $htmlResult);
+    }
 }

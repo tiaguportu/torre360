@@ -1112,8 +1112,45 @@ Para agilizar o processo de criação de novos modelos a partir de um já existe
 3. Clique no botão de ações em lote no topo da tabela e selecione **Clonar Selecionados**.
 4. Confirme a ação. O sistema gerará cópias exatas do conteúdo dos templates selecionados, adicionando o sufixo `(Cópia)` no nome dos novos registros e garantindo que o status de "Padrão" seja copiado como desmarcado (evitando conflito com o modelo padrão atual).
 
+### 23.2 Suporte a Condicionais e Loops (Sintaxe Blade)
+Como o sistema utiliza o framework Laravel, o processamento dos templates de contrato suporta **estruturas de controle do Blade** diretamente no texto do modelo. Isso possibilita a criação de contratos dinâmicos, que podem ocultar seções inteiras ou iterar sobre coleções de dados.
+
+#### Exemplos Práticos:
+
+*   **Estrutura de Repetição (Loop) para Responsáveis Financeiros:**
+    Caso o contrato possua um ou mais responsáveis cadastrados, você pode listar as informações de cada um utilizando o `@foreach`:
+    ```html
+    @foreach($responsaveis as $rf)
+        <p>
+            <strong>Nome:</strong> {{ $rf->pessoa->nome }} <br>
+            <strong>CPF:</strong> {{ $rf->pessoa->cpf }}
+        </p>
+    @endforeach
+    ```
+
+*   **Estrutura Condicional (IF-ELSE) para Dados Opcionais:**
+    Você pode verificar a presença de um responsável (como o Pai ou a Mãe) e exibir o bloco correspondente somente se os dados existirem no cadastro do aluno:
+    ```html
+    @if($aluno->responsaveis->where('pivot.tipo_vinculo.nome', 'Pai')->count())
+        <p>
+            <strong>Pai:</strong> {{ $aluno->responsaveis->firstWhere('pivot.tipo_vinculo.nome', 'Pai')->nome }}
+        </p>
+    @else
+        <p><em>Pai não cadastrado / não declarado.</em></p>
+    @endif
+    ```
+
+*   **Entidades Disponíveis no Escopo do Blade:**
+    Ao utilizar a sintaxe Blade `{{ $variavel }}`, você tem acesso direto às seguintes variáveis de contexto:
+    - `$contrato`: O model do Contrato sendo gerado (ex: `{{ $contrato->valor_total }}`).
+    - `$aluno`: O model da Pessoa (aluno) vinculada à matrícula (ex: `{{ $aluno->nome }}`).
+    - `$unidade`: A Unidade de Ensino vinculada ao curso (ex: `{{ $unidade->nome }}`).
+    - `$responsaveis`: A coleção de responsáveis financeiros associados ao contrato.
+    - `$faturas`: A coleção de faturas geradas para o contrato.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
