@@ -1075,7 +1075,7 @@ O sistema conta com um terceiro módulo de crachás (V3) utilizando o editor **M
 Ao selecionar um elemento no canvas, a aba Propriedades exibe:
 - **Posição e Tamanho:** X, Y, Largura e Altura editáveis numericamente.
 - **Rotação:** Slider de -180° a +180°.
-- **Texto:** Conteúdo, tamanho de fonte, peso, alinhamento e cor do texto.
+- **Texto:** Conteúdo, família da fonte (Sans-serif, Serif, Monospace), tamanho de fonte, peso, alinhamento e cor do texto.
 - **Fundo e Borda:** Cor de fundo (com opção de transparência), cor e espessura da borda, arredondamento.
 - **Formato da Foto** (somente para o elemento `{foto}`): Opção para selecionar o corte da foto entre **Retângulo**, **Canto Arredondado** e **Círculo / Elipse**.
 - **Alinhamento:**

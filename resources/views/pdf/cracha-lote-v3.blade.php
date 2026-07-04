@@ -103,11 +103,13 @@
                                         // Estilos específicos de texto
                                         $textStyle = "";
                                         if ($el['tipo'] === 'texto' || ($el['tipo'] === 'variavel' && $el['variavel'] !== '{foto}')) {
+                                            $fontFamily = $est['fontFamily'] ?? 'sans-serif';
                                             $fontSize = $est['fontSizePt'] ?? '10pt';
                                             $fontWeight = $est['fontWeight'] ?? 'normal';
                                             $color = $est['color'] ?? '#000000';
                                             $textAlign = $est['textAlign'] ?? 'left';
                                             $textStyle = "
+                                                font-family: {$fontFamily};
                                                 font-size: {$fontSize};
                                                 font-weight: {$fontWeight};
                                                 color: {$color};

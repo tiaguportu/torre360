@@ -361,6 +361,14 @@
                                 <label class="text-[10px] text-slate-500 mb-1 block">Conteúdo</label>
                                 <textarea id="prop-conteudo" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none resize-none" oninput="aplicarConteudo()"></textarea>
                             </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 mb-1 block">Família da Fonte</label>
+                                <select id="prop-font-family" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none" onchange="aplicarEstilo()">
+                                    <option value="sans-serif">Sans-serif (Helvetica / Arial)</option>
+                                    <option value="serif">Serif (Times New Roman / Georgia)</option>
+                                    <option value="monospace">Monospace (Courier / Courier New)</option>
+                                </select>
+                            </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="text-[10px] text-slate-500 mb-1 block">Tamanho (px)</label>
@@ -803,6 +811,7 @@
         const tipo = dadosEl.tipo;
 
         // Reset
+        dom.style.fontFamily = est.fontFamily || 'sans-serif';
         dom.style.fontSize = est.fontSize || '14px';
         dom.style.fontWeight = est.fontWeight || '400';
         dom.style.color = est.color || '#1e293b';
@@ -854,6 +863,7 @@
             altura: tipo === 'linha' ? 20 : (tipo === 'circulo' ? 60 : (tipo === 'retangulo' ? 50 : 30)),
             rotacao: 0,
             estilos: {
+                fontFamily: 'sans-serif',
                 fontSize: '14px',
                 fontWeight: '600',
                 color: '#1e293b',
@@ -894,6 +904,7 @@
             altura: isFoto ? 80 : 30,
             rotacao: 0,
             estilos: {
+                fontFamily: 'sans-serif',
                 fontSize: '13px',
                 fontWeight: '600',
                 color: '#1e293b',
@@ -999,6 +1010,7 @@
         if (el.tipo === 'texto' || (el.tipo === 'variavel' && el.variavel !== '{foto}')) {
             grupoTexto.classList.remove('hidden');
             document.getElementById('prop-conteudo').value = el.variavel ? el.variavel : (el.conteudo || '');
+            document.getElementById('prop-font-family').value = el.estilos.fontFamily || 'sans-serif';
             document.getElementById('prop-font-size').value = parseInt(el.estilos.fontSize) || 14;
             document.getElementById('prop-font-weight').value = el.estilos.fontWeight || '600';
             document.getElementById('prop-color').value = el.estilos.color || '#1e293b';
@@ -1094,6 +1106,7 @@
         const el = getElementoData(elementoSelecionadoId);
         if (!el) { return; }
 
+        el.estilos.fontFamily = document.getElementById('prop-font-family').value;
         el.estilos.fontSize = document.getElementById('prop-font-size').value + 'px';
         el.estilos.fontWeight = document.getElementById('prop-font-weight').value;
         el.estilos.color = document.getElementById('prop-color').value;
