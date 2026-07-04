@@ -121,6 +121,10 @@
                                         <img src="{{ $el['foto_url'] }}" 
                                              class="badge-element" 
                                              style="{{ $elementStyle }} object-fit: cover;" />
+                                    @elseif ($el['tipo'] === 'imagem')
+                                        <img src="{{ $el['conteudo'] }}" 
+                                             class="badge-element" 
+                                             style="{{ $elementStyle }} object-fit: contain;" />
                                     @else
                                         <div class="badge-element" style="{{ $elementStyle }} {{ $textStyle }}">
                                             @if ($el['tipo'] === 'texto' || $el['tipo'] === 'variavel')

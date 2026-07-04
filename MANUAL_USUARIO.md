@@ -1066,7 +1066,7 @@ O sistema conta com um terceiro módulo de crachás (V3) utilizando o editor **M
 - Botão **Salvar** (Ctrl+S) e **Fechar**.
 
 **Sidebar Esquerda — Aba "Elementos":**
-- **Inserir Elemento:** Botões para adicionar Texto, Retângulo, Círculo ou Linha.
+- **Inserir Elemento:** Botões para adicionar Texto, Retângulo, Círculo, Linha ou **Importar Imagem (Local)** (permite fazer o upload de qualquer arquivo de imagem local, mantendo o canal alpha de transparência para arquivos do tipo PNG).
 - **Campos de Pessoa:** Lista de variáveis dinâmicas como `{nome}`, `{foto}`, `{cpf}`, `{email}`, etc.
 - **Campos de Turma** (somente para templates do tipo Turma): Variáveis como `{turma_nome}`, `{turma_serie}`, `{turma_curso}`.
 - Clique em qualquer variável para **inserir o elemento no canvas** automaticamente.

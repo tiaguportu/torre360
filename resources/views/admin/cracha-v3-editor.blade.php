@@ -229,6 +229,11 @@
                             <svg class="w-5 h-5 text-violet-400 group-hover:text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2.5" d="M4 12h16"/></svg>
                             Linha
                         </button>
+                        <button onclick="document.getElementById('upload-imagem-input').click()"
+                            class="col-span-2 flex items-center justify-center gap-2 p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-violet-500/50 rounded-xl transition-all text-xs font-medium text-slate-300 group active:scale-95">
+                            <svg class="w-4 h-4 text-violet-400 group-hover:text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Importar Imagem (Local)
+                        </button>
                     </div>
                 </div>
 
@@ -471,6 +476,7 @@
         </main>
 
     </div>
+    <input type="file" id="upload-imagem-input" accept="image/*" class="hidden" onchange="uploadImagemSelecionada(this)">
 
     <script>
     // =====================================================
@@ -662,6 +668,8 @@
             el.style.alignItems = 'center';
         } else if (dadosEl.tipo === 'retangulo' || dadosEl.tipo === 'circulo') {
             el.innerHTML = '';
+        } else if (dadosEl.tipo === 'imagem') {
+            el.innerHTML = `<img src="${dadosEl.conteudo}" class="w-full h-full object-contain pointer-events-none" style="display: block; border-radius: ${dadosEl.estilos.borderRadius || '0px'};" />`;
         } else {
             // texto ou variavel de texto
             const innerSpan = document.createElement('span');
@@ -730,9 +738,13 @@
             dom.style.borderRadius = '50%';
         }
 
-        // Caso especial: Foto do Aluno
-        if (tipo === 'variavel' && dadosEl.variavel === '{foto}') {
+        // Caso especial: Foto do Aluno ou Imagem Importada
+        if (tipo === 'imagem' || (tipo === 'variavel' && dadosEl.variavel === '{foto}')) {
             dom.style.overflow = 'hidden';
+            const img = dom.querySelector('img');
+            if (img) {
+                img.style.borderRadius = est.borderRadius || '0px';
+            }
             const placeholder = dom.querySelector('.el-imagem-placeholder');
             if (placeholder) {
                 placeholder.style.borderRadius = est.borderRadius || '0px';
@@ -860,7 +872,7 @@
         document.getElementById('sem-selecao').classList.add('hidden');
         document.getElementById('painel-props-conteudo').classList.remove('hidden');
 
-        const tipoLabels = { texto: 'Texto', variavel: 'Campo Dinâmico', retangulo: 'Retângulo', circulo: 'Círculo', linha: 'Linha' };
+        const tipoLabels = { texto: 'Texto', variavel: 'Campo Dinâmico', retangulo: 'Retângulo', circulo: 'Círculo', linha: 'Linha', imagem: 'Imagem' };
         document.getElementById('prop-tipo').textContent = tipoLabels[el.tipo] || el.tipo;
 
         const varLabel = document.getElementById('prop-variavel-label');
@@ -881,7 +893,7 @@
 
         // Texto
         const grupoTexto = document.getElementById('grupo-texto');
-        if (el.tipo !== 'retangulo' && el.tipo !== 'linha' && el.tipo !== 'circulo') {
+        if (el.tipo === 'texto' || (el.tipo === 'variavel' && el.variavel !== '{foto}')) {
             grupoTexto.classList.remove('hidden');
             document.getElementById('prop-conteudo').value = el.variavel ? el.variavel : (el.conteudo || '');
             document.getElementById('prop-font-size').value = parseInt(el.estilos.fontSize) || 14;
@@ -1021,6 +1033,57 @@
             updateMoveable();
         }
         salvarHistorico();
+    }
+
+    function uploadImagemSelecionada(input) {
+        const file = input.files[0];
+        if (!file) { return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Src = e.target.result;
+            
+            const id = `el_${contadorId++}`;
+            const el = {
+                id,
+                tipo: 'imagem',
+                variavel: null,
+                labelVariavel: null,
+                conteudo: base64Src,
+                x: Math.round(CANVAS_W / 2 - 60),
+                y: Math.round(CANVAS_H / 2 - 60),
+                largura: 120,
+                altura: 120,
+                rotacao: 0,
+                estilos: {
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1e293b',
+                    textAlign: 'center',
+                    backgroundColor: 'transparent',
+                    bgTransparent: true,
+                    borderColor: '#8b5cf6',
+                    borderWidth: '0',
+                    borderRadius: '0px',
+                    opacity: 100,
+                },
+            };
+
+            elementosData.push(el);
+            const dom = criarElementoDOM(el);
+            canvas.appendChild(dom);
+            selecionarElemento(id);
+            salvarHistorico();
+            
+            input.value = '';
+            showToast('Imagem importada com sucesso!', 'success');
+        };
+        
+        reader.onerror = function() {
+            showToast('Erro ao ler arquivo de imagem.', 'error');
+        };
+        
+        reader.readAsDataURL(file);
     }
 
     function setAlign(align) {

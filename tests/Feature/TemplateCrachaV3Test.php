@@ -145,6 +145,16 @@ class TemplateCrachaV3Test extends TestCase
                         'altura' => 30,
                         'estilos' => [],
                     ],
+                    [
+                        'id' => 'el_4',
+                        'tipo' => 'imagem',
+                        'conteudo' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                        'x' => 10,
+                        'y' => 300,
+                        'largura' => 50,
+                        'altura' => 50,
+                        'estilos' => ['borderRadius' => '8px'],
+                    ],
                 ],
             ],
         ]);
