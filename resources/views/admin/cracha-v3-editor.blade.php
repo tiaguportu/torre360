@@ -434,6 +434,31 @@
                         </div>
                     </div>
 
+                    <!-- Camadas / Profundidade -->
+                    <div class="pt-3 border-t border-slate-800 space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Profundidade (Camadas)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="alterarCamada('frente')" class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition-all active:scale-95" title="Trazer para a Frente">
+                                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7"/></svg>
+                                Trazer p/ Frente
+                            </button>
+                            <button onclick="alterarCamada('atras')" class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition-all active:scale-95" title="Enviar para Trás">
+                                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7"/></svg>
+                                Enviar p/ Trás
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="alterarCamada('avancar')" class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition-all active:scale-95" title="Avançar uma camada">
+                                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                Avançar
+                            </button>
+                            <button onclick="alterarCamada('recuar')" class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition-all active:scale-95" title="Recuar uma camada">
+                                <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                Recuar
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Ações -->
                     <div class="pt-2 border-t border-slate-800 space-y-2">
                         <button onclick="duplicarElemento()" class="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 transition-all font-medium active:scale-95">
@@ -1084,6 +1109,45 @@
         };
         
         reader.readAsDataURL(file);
+    }
+
+    function reordenarDOM() {
+        elementosData.forEach(elData => {
+            const dom = document.getElementById(elData.id);
+            if (dom) {
+                canvas.appendChild(dom);
+            }
+        });
+        updateMoveable();
+    }
+
+    function alterarCamada(acao) {
+        if (!elementoSelecionadoId) { return; }
+        const idx = elementosData.findIndex(el => el.id === elementoSelecionadoId);
+        if (idx === -1) { return; }
+
+        const el = elementosData[idx];
+
+        if (acao === 'frente') {
+            if (idx === elementosData.length - 1) { return; }
+            elementosData.splice(idx, 1);
+            elementosData.push(el);
+        } else if (acao === 'atras') {
+            if (idx === 0) { return; }
+            elementosData.splice(idx, 1);
+            elementosData.unshift(el);
+        } else if (acao === 'avancar') {
+            if (idx === elementosData.length - 1) { return; }
+            elementosData[idx] = elementosData[idx + 1];
+            elementosData[idx + 1] = el;
+        } else if (acao === 'recuar') {
+            if (idx === 0) { return; }
+            elementosData[idx] = elementosData[idx - 1];
+            elementosData[idx - 1] = el;
+        }
+
+        reordenarDOM();
+        salvarHistorico();
     }
 
     function setAlign(align) {

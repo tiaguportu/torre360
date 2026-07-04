@@ -1078,6 +1078,7 @@ Ao selecionar um elemento no canvas, a aba Propriedades exibe:
 - **Texto:** Conteúdo, tamanho de fonte, peso, alinhamento e cor do texto.
 - **Fundo e Borda:** Cor de fundo (com opção de transparência), cor e espessura da borda, arredondamento.
 - **Formato da Foto** (somente para o elemento `{foto}`): Opção para selecionar o corte da foto entre **Retângulo**, **Canto Arredondado** e **Círculo / Elipse**.
+- **Profundidade (Camadas):** Controles para reordenar a pilha de elementos no layout e no PDF final: **Trazer p/ Frente** (topo da pilha), **Enviar p/ Trás** (fundo da pilha), **Avançar** (sobe um nível) e **Recuar** (desce um nível).
 - **Ações:** Duplicar e Deletar elemento.
 
 **Canvas Central:**
