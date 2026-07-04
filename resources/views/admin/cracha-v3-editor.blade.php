@@ -431,6 +431,66 @@
                                     <span class="text-[9px] text-slate-600">200</span>
                                 </div>
                             </div>
+                    </div>
+                    </div>
+
+                    <!-- Alinhamento -->
+                    <div class="pt-3 border-t border-slate-800 space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Alinhamento</label>
+                        
+                        <!-- Alinhar ao Canvas -->
+                        <div class="space-y-1">
+                            <span class="text-[9px] text-slate-400 block">Alinhar ao Canvas:</span>
+                            <div class="grid grid-cols-6 gap-1 bg-slate-955 p-1 rounded-lg border border-slate-800">
+                                <button onclick="alinharElemento('left')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar à Esquerda">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16M8 8h12M8 16h8"/></svg>
+                                </button>
+                                <button onclick="alinharElemento('centerH')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Centralizar Horizontalmente">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M6 8h12M8 16h8"/></svg>
+                                </button>
+                                <button onclick="alinharElemento('right')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar à Direita">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 4v16M4 8h12M8 16h12"/></svg>
+                                </button>
+                                <button onclick="alinharElemento('top')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar ao Topo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16M8 8v12M16 8v8"/></svg>
+                                </button>
+                                <button onclick="alinharElemento('centerV')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Centralizar Verticalmente">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M8 6v12M16 8v8"/></svg>
+                                </button>
+                                <button onclick="alinharElemento('bottom')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar à Base">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M8 4v12M16 8v12"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Alinhar com outro Elemento -->
+                        <div class="space-y-1.5 mt-2">
+                            <span class="text-[9px] text-slate-400 block">Alinhar com outro elemento:</span>
+                            <div class="flex gap-1.5 items-center">
+                                <select id="prop-alinhar-alvo" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white focus:border-violet-500 focus:outline-none">
+                                    <option value="">Selecione o elemento...</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-6 gap-1 bg-slate-955 p-1 rounded-lg border border-slate-800">
+                                <button onclick="alinharComElemento('left')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar Esquerda com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v16M8 8h12M8 16h8"/></svg>
+                                </button>
+                                <button onclick="alinharComElemento('centerH')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Centralizar Horizontalmente com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M6 8h12M8 16h8"/></svg>
+                                </button>
+                                <button onclick="alinharComElemento('right')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar Direita com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 4v16M4 8h12M8 16h12"/></svg>
+                                </button>
+                                <button onclick="alinharComElemento('top')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar Topo com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16M8 8v12M16 8v8"/></svg>
+                                </button>
+                                <button onclick="alinharComElemento('centerV')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Centralizar Verticalmente com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M8 6v12M16 8v8"/></svg>
+                                </button>
+                                <button onclick="alinharComElemento('bottom')" class="p-1 hover:bg-slate-800 rounded text-slate-300 transition-colors flex items-center justify-center" title="Alinhar Base com o Alvo">
+                                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M8 4v12M16 8v12"/></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -900,6 +960,24 @@
         const tipoLabels = { texto: 'Texto', variavel: 'Campo Dinâmico', retangulo: 'Retângulo', circulo: 'Círculo', linha: 'Linha', imagem: 'Imagem' };
         document.getElementById('prop-tipo').textContent = tipoLabels[el.tipo] || el.tipo;
 
+        // Popula o dropdown de alinhamento com outros elementos
+        const alinharAlvoSelect = document.getElementById('prop-alinhar-alvo');
+        if (alinharAlvoSelect) {
+            alinharAlvoSelect.innerHTML = '<option value="">Selecione o elemento...</option>';
+            elementosData.forEach(otherEl => {
+                if (otherEl.id !== el.id) {
+                    const label = otherEl.variavel
+                        ? `Dinâmico: ${otherEl.variavel}`
+                        : (otherEl.tipo === 'texto' ? `Texto: "${otherEl.conteudo.substring(0, 15)}..."` : `${tipoLabels[otherEl.tipo] || otherEl.tipo} (${otherEl.id})`);
+                    
+                    const opt = document.createElement('option');
+                    opt.value = otherEl.id;
+                    opt.textContent = label;
+                    alinharAlvoSelect.appendChild(opt);
+                }
+            });
+        }
+
         const varLabel = document.getElementById('prop-variavel-label');
         if (el.variavel) {
             varLabel.textContent = `Variável: ${el.variavel} — ${el.labelVariavel || ''}`;
@@ -1147,6 +1225,77 @@
         }
 
         reordenarDOM();
+        salvarHistorico();
+    }
+
+    function alinharElemento(direcao) {
+        if (!elementoSelecionadoId) { return; }
+        const el = getElementoData(elementoSelecionadoId);
+        if (!el) { return; }
+
+        if (direcao === 'left') {
+            el.x = 0;
+        } else if (direcao === 'centerH') {
+            el.x = Math.round((CANVAS_W - el.largura) / 2);
+        } else if (direcao === 'right') {
+            el.x = CANVAS_W - el.largura;
+        } else if (direcao === 'top') {
+            el.y = 0;
+        } else if (direcao === 'centerV') {
+            el.y = Math.round((CANVAS_H - el.altura) / 2);
+        } else if (direcao === 'bottom') {
+            el.y = CANVAS_H - el.altura;
+        }
+
+        const dom = document.getElementById(el.id);
+        if (dom) {
+            dom.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotacao}deg)`;
+            
+            document.getElementById('prop-x').value = el.x;
+            document.getElementById('prop-y').value = el.y;
+
+            updateMoveable();
+        }
+        salvarHistorico();
+    }
+
+    function alinharComElemento(direcao) {
+        if (!elementoSelecionadoId) { return; }
+        const el = getElementoData(elementoSelecionadoId);
+        if (!el) { return; }
+
+        const alvoId = document.getElementById('prop-alinhar-alvo').value;
+        if (!alvoId) {
+            showToast('Por favor, selecione um elemento alvo.', 'info');
+            return;
+        }
+
+        const alvo = getElementoData(alvoId);
+        if (!alvo) { return; }
+
+        if (direcao === 'left') {
+            el.x = alvo.x;
+        } else if (direcao === 'centerH') {
+            el.x = Math.round(alvo.x + (alvo.largura - el.largura) / 2);
+        } else if (direcao === 'right') {
+            el.x = alvo.x + alvo.largura - el.largura;
+        } else if (direcao === 'top') {
+            el.y = alvo.y;
+        } else if (direcao === 'centerV') {
+            el.y = Math.round(alvo.y + (alvo.altura - el.altura) / 2);
+        } else if (direcao === 'bottom') {
+            el.y = alvo.y + alvo.altura - el.altura;
+        }
+
+        const dom = document.getElementById(el.id);
+        if (dom) {
+            dom.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotacao}deg)`;
+            
+            document.getElementById('prop-x').value = el.x;
+            document.getElementById('prop-y').value = el.y;
+
+            updateMoveable();
+        }
         salvarHistorico();
     }
 

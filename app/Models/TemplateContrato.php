@@ -39,4 +39,14 @@ class TemplateContrato extends Model
     {
         return $this->hasMany(Contrato::class);
     }
+
+    public function clonar(): self
+    {
+        $clone = $this->replicate();
+        $clone->nome = $this->nome.' (Cópia)';
+        $clone->is_padrao = false;
+        $clone->save();
+
+        return $clone;
+    }
 }

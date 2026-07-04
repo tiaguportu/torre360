@@ -1078,6 +1078,9 @@ Ao selecionar um elemento no canvas, a aba Propriedades exibe:
 - **Texto:** Conteúdo, tamanho de fonte, peso, alinhamento e cor do texto.
 - **Fundo e Borda:** Cor de fundo (com opção de transparência), cor e espessura da borda, arredondamento.
 - **Formato da Foto** (somente para o elemento `{foto}`): Opção para selecionar o corte da foto entre **Retângulo**, **Canto Arredondado** e **Círculo / Elipse**.
+- **Alinhamento:**
+  - **Alinhar ao Canvas:** Alinha o elemento selecionado em relação ao fundo do crachá (Esquerda, Centro Horizontal, Direita, Topo, Centro Vertical, Base).
+  - **Alinhar com outro Elemento:** Permite escolher outro elemento alvo e alinhar o atual em relação a ele (bordas e centros).
 - **Profundidade (Camadas):** Controles para reordenar a pilha de elementos no layout e no PDF final: **Trazer p/ Frente** (topo da pilha), **Enviar p/ Trás** (fundo da pilha), **Avançar** (sobe um nível) e **Recuar** (desce um nível).
 - **Ações:** Duplicar e Deletar elemento.
 
@@ -1098,5 +1101,19 @@ Para gerar e imprimir os crachás dos alunos no novo modelo V3:
 
 ---
 
+## 📄 23. Templates de Contrato
+
+O módulo de **Templates de Contrato** (acessível no menu **Financeiro → Templates de Contrato**) permite criar e gerenciar os modelos de contrato que serão utilizados na geração de contratos dos alunos.
+
+### 23.1 Clonagem em Lote (Bulk Action)
+Para agilizar o processo de criação de novos modelos a partir de um já existente, você pode duplicá-los facilmente na listagem de templates:
+1. Vá em **Financeiro → Templates de Contrato**.
+2. Selecione um ou mais templates de contrato na tabela marcando a caixa de seleção lateral.
+3. Clique no botão de ações em lote no topo da tabela e selecione **Clonar Selecionados**.
+4. Confirme a ação. O sistema gerará cópias exatas do conteúdo dos templates selecionados, adicionando o sufixo `(Cópia)` no nome dos novos registros e garantindo que o status de "Padrão" seja copiado como desmarcado (evitando conflito com o modelo padrão atual).
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
