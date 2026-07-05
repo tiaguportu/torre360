@@ -17,6 +17,25 @@
             text-align: justify;
         }
 
+        /* Ajuste de listas para manter compatibilidade com formatação de marcadores no PDF */
+        .template-content ul, 
+        body ul {
+            list-style-type: disc !important;
+            margin-left: 20px !important;
+            padding-left: 5px !important;
+        }
+        .template-content ol, 
+        body ol {
+            list-style-type: decimal !important;
+            margin-left: 20px !important;
+            padding-left: 5px !important;
+        }
+        .template-content li, 
+        body li {
+            display: list-item !important;
+            margin-bottom: 5px !important;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 20px;

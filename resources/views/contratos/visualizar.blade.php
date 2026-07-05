@@ -11,6 +11,27 @@
     @livewireStyles
     @filamentStyles
     <style>
+        /* Restaura estilos de marcadores HTML afetados pelo reset/preflight do Tailwind */
+        .template-content ul, 
+        .p-8 ul {
+            list-style-type: disc !important;
+            margin-left: 1.5rem !important;
+            padding-left: 0.5rem !important;
+            display: block !important;
+        }
+        .template-content ol, 
+        .p-8 ol {
+            list-style-type: decimal !important;
+            margin-left: 1.5rem !important;
+            padding-left: 0.5rem !important;
+            display: block !important;
+        }
+        .template-content li, 
+        .p-8 li {
+            display: list-item !important;
+            margin-bottom: 0.25rem !important;
+        }
+
         @media print {
             .no-print {
                 display: none !important;
