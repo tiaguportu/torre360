@@ -1185,9 +1185,17 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `$responsaveis`: A coleção de responsáveis financeiros associados ao contrato.
     - `$faturas`: A coleção de faturas geradas para o contrato.
 
+*   **Tabelas e Assinaturas Pré-Geradas (Para uso no Editor Visual):**
+    Caso você prefira não usar o modo Código Fonte ou não queira montar tabelas e loops manualmente no editor visual, digite as seguintes variáveis exatamente como texto plano utilizando a sintaxe `{!! $variavel !!}` (com chaves e exclamação para renderizar o HTML):
+    - `{!! $tabelaFaturas !!}`: Insere a tabela dinâmica completa das parcelas do contrato.
+    - `{!! $tabelaAluno !!}`: Insere a tabela com dados cadastrais e acadêmicos do Aluno.
+    - `{!! $infoResponsaveis !!}`: Insere o parágrafo corrido com a qualificação dos responsáveis financeiros e endereços.
+    - `{!! $assinaturasRepresentantes !!}`: Insere as linhas de assinatura para os representantes legais da escola.
+    - `{!! $assinaturasResponsaveis !!}`: Insere as linhas de assinatura para todos os responsáveis do contrato.
+    - `{!! $assinaturaPai !!}`: Insere a linha de assinatura específica do Pai do aluno.
+    - `{!! $assinaturaMae !!}`: Insere a linha de assinatura específica da Mãe do aluno.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
-
-
 

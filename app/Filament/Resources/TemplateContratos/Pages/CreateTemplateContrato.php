@@ -100,6 +100,18 @@ class CreateTemplateContrato extends CreateRecord
         $html .= '<li><code>$faturas</code>: Coleção de todas as faturas/parcelas geradas para o contrato (vencimento, valor bruto, valor líquido).</li>';
         $html .= '</ul>';
 
+        $html .= '<h3>Variáveis de Tabela e Assinatura Prontas (Uso Simplificado no Editor Visual)</h3>';
+        $html .= '<p>Se você não deseja usar o modo Código Fonte ou programar loops no editor, digite as variáveis abaixo como texto plano diretamente no editor visual (obrigatoriamente usando a sintaxe de chaves com exclamação <code>{!! $variavel !!}</code> para que o layout HTML seja renderizado):</p>';
+        $html .= '<ul>';
+        $html .= '<li><code>{!! $tabelaFaturas !!}</code>: Tabela dinâmica contendo todas as faturas, vencimentos e valores do contrato.</li>';
+        $html .= '<li><code>{!! $tabelaAluno !!}</code>: Tabela estruturada com os dados do Aluno, Turma e Série.</li>';
+        $html .= '<li><code>{!! $infoResponsaveis !!}</code>: Texto completo de qualificação dos responsáveis financeiros com endereços.</li>';
+        $html .= '<li><code>{!! $assinaturasRepresentantes !!}</code>: Linhas de assinatura dos representantes da unidade.</li>';
+        $html .= '<li><code>{!! $assinaturasResponsaveis !!}</code>: Linhas de assinatura dos responsáveis financeiros do contrato.</li>';
+        $html .= '<li><code>{!! $assinaturaPai !!}</code>: Linha de assinatura específica do Pai do aluno.</li>';
+        $html .= '<li><code>{!! $assinaturaMae !!}</code>: Linha de assinatura específica da Mãe do aluno.</li>';
+        $html .= '</ul>';
+
         return $html;
     }
 }

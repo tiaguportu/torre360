@@ -3,6 +3,11 @@
 namespace App\Services;
 
 use App\Models\Contrato;
+use App\Models\Pessoa;
+use App\Models\TipoVinculo;
+use App\Models\Unidade;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 
 class ContractTemplateService
@@ -20,6 +25,9 @@ class ContractTemplateService
         $unidade = $contrato->matricula?->turma?->serie?->curso?->unidade;
         $aluno = $contrato->matricula?->pessoa;
 
+        // Mapa de nomes de vínculos para busca rápida no pivô
+        $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
+
         $html = $this->preprocessBlade($html);
 
         try {
@@ -29,6 +37,15 @@ class ContractTemplateService
                 'aluno' => $aluno,
                 'responsaveis' => $contrato->responsaveisFinanceiros,
                 'faturas' => $contrato->faturas,
+
+                // Variáveis com HTML pré-gerado para uso direto no editor visual sem código fonte
+                'tabelaFaturas' => $this->generateFaturasTable($contrato),
+                'tabelaAluno' => $this->generateAlunoTable($contrato),
+                'infoResponsaveis' => $this->generateResponsaveisInfo($contrato),
+                'assinaturasRepresentantes' => $this->generateAssinaturasUnidade($unidade),
+                'assinaturasResponsaveis' => $this->generateAssinaturasResponsaveis($contrato),
+                'assinaturaPai' => $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo),
+                'assinaturaMae' => $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo),
             ]);
         } catch (\Throwable $e) {
             if (app()->runningUnitTests()) {
@@ -76,5 +93,150 @@ class ContractTemplateService
         }, $content);
 
         return $content;
+    }
+
+    protected function generateAssinaturaBlock(string $titulo, ?string $extra = null, ?string $cpf = null): string
+    {
+        $extraFormatado = $extra ? " ({$extra})" : '';
+        $cpfValor = $cpf ?: '___________________________';
+
+        return '<div style="margin-top: 50px; margin-bottom: 30px;">'
+            .'_______________________________________________<br>'
+            .$titulo.$extraFormatado.'<br><br>'
+            ."CPF nº {$cpfValor}"
+            .'</div>';
+    }
+
+    protected function generateAssinaturasUnidade(?Unidade $unidade): string
+    {
+        if (! $unidade || $unidade->representantesLegais->isEmpty()) {
+            return $this->generateAssinaturaBlock('CONTRATADA', 'Escola Torre de Marfim');
+        }
+
+        $html = '';
+        foreach ($unidade->representantesLegais as $rep) {
+            $cargo = $rep->pivot->cargo ?? 'Representante Legal';
+            $html .= $this->generateAssinaturaBlock('CONTRATADA', "{$rep->nome} - {$cargo}", $rep->cpf);
+        }
+
+        return $html;
+    }
+
+    protected function generateAssinaturasResponsaveis(Contrato $contrato): string
+    {
+        $html = '';
+        foreach ($contrato->responsaveisFinanceiros as $rf) {
+            if ($rf->pessoa) {
+                $html .= $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $rf->pessoa->nome, $rf->pessoa->cpf);
+            }
+        }
+
+        return $html;
+    }
+
+    protected function generateAssinaturaParente(?Pessoa $aluno, string $vinculoNome, Collection $tiposVinculo): string
+    {
+        if (! $aluno) {
+            return $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $vinculoNome);
+        }
+
+        $parente = $aluno->responsaveis->first(function ($resp) use ($vinculoNome, $tiposVinculo) {
+            return $tiposVinculo->get($resp->pivot->tipo_vinculo_id) === $vinculoNome;
+        });
+
+        return $this->generateAssinaturaBlock(
+            'CONTRATANTE-ADERENTE',
+            $parente ? "{$parente->nome} - {$vinculoNome}" : $vinculoNome,
+            $parente?->cpf
+        );
+    }
+
+    protected function generateAlunoTable(Contrato $contrato): string
+    {
+        $mat = $contrato->matricula;
+        if (! $mat) {
+            return 'Nenhum aluno vinculado a este contrato.';
+        }
+
+        $aluno = $mat->pessoa;
+        $nome = $aluno?->nome ?? '-';
+        $nascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
+        $cpf = $aluno?->cpf ?? '-';
+        $turma = $mat->turma?->nome ?? '-';
+        $serie = $mat->turma?->serie?->nome ?? '-';
+
+        $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black; margin: 10px 0;">';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2; width: 30%;">Nome Completo</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$nome.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Data de Nascimento</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$nascimento.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">CPF</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$cpf.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Turma</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$turma.'</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px; font-weight: bold; background-color: #f2f2f2;">Série/Ano</td>';
+        $html .= '<td style="border: 1pt solid black; padding: 5px;">'.$serie.'</td>';
+        $html .= '</tr>';
+        $html .= '</table>';
+
+        return $html;
+    }
+
+    protected function generateResponsaveisInfo(Contrato $contrato): string
+    {
+        $info = [];
+        foreach ($contrato->responsaveisFinanceiros as $rf) {
+            $p = $rf->pessoa;
+            if (! $p) {
+                continue;
+            }
+
+            $end = $p->enderecos->first();
+            $enderecoStr = $end ? "{$end->logradouro}, {$end->numero} - {$end->bairro}, {$end->cidade?->nome}/{$end->cidade?->estado?->sigla}" : '_______';
+
+            $info[] = "<strong>{$p->nome}</strong>, CPF: {$p->cpf}, residente em {$enderecoStr}.";
+        }
+
+        return implode('<br>', $info);
+    }
+
+    protected function generateFaturasTable(Contrato $contrato): string
+    {
+        $faturas = $contrato->faturas->sortBy('vencimento');
+
+        if ($faturas->isEmpty()) {
+            return 'Nenhuma fatura encontrada.';
+        }
+
+        $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black;">';
+        $html .= '<thead><tr style="background-color: #f2f2f2;">';
+        $html .= '<th style="border: 1pt solid black; padding: 5px;">Parcela</th>';
+        $html .= '<th style="border: 1pt solid black; padding: 5px;">Vencimento</th>';
+        $html .= '<th style="border: 1pt solid black; padding: 5px;">Valor Original</th>';
+        $html .= '<th style="border: 1pt solid black; padding: 5px;">Valor com Desconto</th>';
+        $html .= '</tr></thead><tbody>';
+
+        $i = 1;
+        foreach ($faturas as $fatura) {
+            $html .= '<tr>';
+            $html .= '<td style="border: 1pt solid black; padding: 5px; text-align: center;">'.$i++.'</td>';
+            $html .= '<td style="border: 1pt solid black; padding: 5px; text-align: center;">'.Carbon::parse($fatura->vencimento)->format('d/m/Y').'</td>';
+            $html .= '<td style="border: 1pt solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor_bruto, 2, ',', '.').'</td>';
+            $html .= '<td style="border: 1pt solid black; padding: 5px; text-align: right;">R$ '.number_format($fatura->valor, 2, ',', '.').'</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+
+        return $html;
     }
 }
