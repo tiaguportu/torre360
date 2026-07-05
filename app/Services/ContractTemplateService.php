@@ -42,6 +42,9 @@ class ContractTemplateService
 
     protected function preprocessBlade(string $content): string
     {
+        // Remove macros legadas do tipo {{MACRO}} ou {{MACRO.SUB}}
+        $content = preg_replace('/\{\{[A-Z_]+(?:\.[A-Z_]+)*\}\}/', '', $content);
+
         // Decodifica entidades HTML apenas dentro de tags de expressão {{ ... }}
         $content = preg_replace_callback('/\{\{(.*?)\}\}/s', function ($matches) {
             $decoded = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
