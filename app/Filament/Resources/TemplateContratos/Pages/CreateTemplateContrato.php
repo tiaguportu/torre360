@@ -54,7 +54,13 @@ class CreateTemplateContrato extends CreateRecord
         $html .= '@endif';
         $html .= '</pre>';
 
+        $html .= '<h4>Exemplo de Exibição de Contagens (count)</h4>';
+        $html .= '<pre style="background-color: #f3f4f6; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-bottom: 10px;">';
+        $html .= 'Este contrato possui {{ $faturas->count() }} parcelas no total.';
+        $html .= '</pre>';
+
         $html .= '<h3>Macros e Variáveis Disponíveis</h3>';
+
 
         $html .= '<h4>1. Macros Estáticas (Substituição Direta)</h4>';
         $html .= '<ul>';

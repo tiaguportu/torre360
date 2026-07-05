@@ -1140,6 +1140,13 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     @endif
     ```
 
+*   **Exibição de Contagens (Quantidade de itens em coleções):**
+    Para exibir a contagem total de faturas ou responsáveis de uma coleção de forma simples:
+    ```html
+    <p>Este contrato possui um total de {{ $faturas->count() }} parcelas.</p>
+    ```
+
+
 *   **Entidades Disponíveis no Escopo do Blade:**
     Ao utilizar a sintaxe Blade `{{ $variavel }}`, você tem acesso direto às seguintes variáveis de contexto:
     - `$contrato`: O model do Contrato sendo gerado (ex: `{{ $contrato->valor_total }}`).
