@@ -35,7 +35,7 @@ class ContratoTest extends TestCase
         $this->assertEquals('Joãozinho da Silva', $contrato->matricula->pessoa->nome);
     }
 
-    public function test_template_contrato_gera_tabela_vertical_do_aluno(): void
+    public function test_template_contrato_suporta_variavel_aluno_no_blade(): void
     {
         $aluno = Pessoa::factory()->create([
             'nome' => 'Joãozinho da Silva',
@@ -53,17 +53,10 @@ class ContratoTest extends TestCase
         ]);
 
         $service = new ContractTemplateService;
-        $htmlOriginal = 'Dados do aluno: {{ALUNO.TABELA}}';
+        $htmlOriginal = 'Nome do aluno: {{ $aluno->nome }} - CPF: {{ $aluno->cpf }}';
         $htmlResult = $service->process($contrato, $htmlOriginal);
 
-        $this->assertStringContainsString('Nome Completo', $htmlResult);
-        $this->assertStringContainsString('Joãozinho da Silva', $htmlResult);
-        $this->assertStringContainsString('Data de Nascimento', $htmlResult);
-        $this->assertStringContainsString('15/05/2015', $htmlResult);
-        $this->assertStringContainsString('CPF', $htmlResult);
-        $this->assertStringContainsString('123.456.789-00', $htmlResult);
-        $this->assertStringContainsString('Turma', $htmlResult);
-        $this->assertStringContainsString('Série/Ano', $htmlResult);
+        $this->assertStringContainsString('Nome do aluno: Joãozinho da Silva - CPF: 123.456.789-00', $htmlResult);
     }
 
     public function test_template_contrato_suporta_condicionais_e_loops_do_blade(): void

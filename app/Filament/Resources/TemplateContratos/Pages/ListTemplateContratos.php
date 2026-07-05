@@ -69,33 +69,21 @@ class ListTemplateContratos extends ListRecords
         $html .= 'Este contrato possui {{ $faturas->count() }} parcelas no total.';
         $html .= '</pre>';
 
-        $html .= '<h3>Macros e Variáveis Disponíveis</h3>';
-
-
-        $html .= '<h4>1. Macros Estáticas (Substituição Direta)</h4>';
+        $html .= '<h3>Objetos e Variáveis do Blade Disponíveis</h3>';
         $html .= '<ul>';
-        $html .= '<li><code>{{CONTRATO.ID}}</code>: ID do contrato.</li>';
-        $html .= '<li><code>{{CONTRATO.VALOR}}</code>: Valor total formatado (ex: R$ 1.200,00).</li>';
-        $html .= '<li><code>{{CONTRATO.DATA}}</code>: Data de hoje formatada por extenso.</li>';
-        $html .= '<li><code>{{UNIDADE.NOME}}</code>: Nome da Unidade.</li>';
-        $html .= '<li><code>{{UNIDADE.CNPJ}}</code>: CNPJ da Unidade.</li>';
-        $html .= '<li><code>{{UNIDADE.REPRESENTANTES}}</code>: Nomes dos representantes legais da unidade formatados gramaticalmente.</li>';
-        $html .= '<li><code>{{ALUNO.TABELA}}</code>: Tabela HTML pré-formatada com as informações básicas do Aluno.</li>';
-        $html .= '<li><code>{{RESPONSAVEIS.INFO}}</code>: Informações em texto e CPF dos responsáveis financeiros do contrato.</li>';
-        $html .= '<li><code>{{FATURAS.TABELA}}</code>: Tabela HTML pré-formatada contendo as parcelas, vencimentos e valores do contrato.</li>';
-        $html .= '<li><code>{{ASSINATURA.REPRESENTANTES}}</code>: Linhas de assinatura para os representantes legais da Unidade.</li>';
-        $html .= '<li><code>{{ASSINATURA.RESPONSAVEIS}}</code>: Linhas de assinatura para os responsáveis financeiros do contrato.</li>';
-        $html .= '<li><code>{{ASSINATURA.PAI}}</code>: Linha de assinatura específica para o Pai.</li>';
-        $html .= '<li><code>{{ASSINATURA.MAE}}</code>: Linha de assinatura específica para a Mãe.</li>';
-        $html .= '</ul>';
-
-        $html .= '<h4>2. Objetos e Variáveis do Blade (Escopo)</h4>';
-        $html .= '<ul>';
-        $html .= '<li><code>$contrato</code>: Modelo do Contrato (ex: <code>{{ $contrato->valor_total }}</code>).</li>';
-        $html .= '<li><code>$aluno</code>: Cadastro do Aluno (Pessoa) (ex: <code>{{ $aluno->nome }}</code>, <code>{{ $aluno->cpf }}</code>).</li>';
-        $html .= '<li><code>$unidade</code>: Unidade de Ensino (ex: <code>{{ $unidade->nome }}</code>).</li>';
-        $html .= '<li><code>$responsaveis</code>: Coleção dos responsáveis financeiros do contrato. Cada item possui a relação <code>$rf->pessoa</code>.</li>';
-        $html .= '<li><code>$faturas</code>: Coleção de faturas geradas para o contrato.</li>';
+        $html .= '<li><code>$contrato</code>: O modelo do Contrato (ex: <code>{{ $contrato->valor_total }}</code>, <code>{{ $contrato->id }}</code>).</li>';
+        $html .= '<li><code>$aluno</code>: Cadastro do Aluno (objeto Pessoa) contendo os seguintes atributos principais:';
+        $html .= '  <ul>';
+        $html .= '    <li><code>{{ $aluno->nome }}</code>: Nome completo do aluno.</li>';
+        $html .= '    <li><code>{{ $aluno->cpf }}</code>: CPF do aluno (se cadastrado).</li>';
+        $html .= '    <li><code>{{ $aluno->identidade }}</code>: Registro Geral (RG) / Identidade do aluno.</li>';
+        $html .= '    <li><code>{{ $aluno->data_nascimento }}</code>: Data de nascimento.</li>';
+        $html .= '    <li><code>{{ $aluno->responsaveis }}</code>: Lista de todos os contatos/parentes do aluno.</li>';
+        $html .= '  </ul>';
+        $html .= '</li>';
+        $html .= '<li><code>$unidade</code>: Unidade de Ensino (ex: <code>{{ $unidade->nome }}</code>, <code>{{ $unidade->cnpj }}</code>).</li>';
+        $html .= '<li><code>$responsaveis</code>: Coleção dos responsáveis financeiros do contrato (cada item contém a pessoa associada via <code>$rf->pessoa</code>).</li>';
+        $html .= '<li><code>$faturas</code>: Coleção de todas as faturas/parcelas geradas para o contrato (vencimento, valor bruto, valor líquido).</li>';
         $html .= '</ul>';
 
         $html .= '<h3>O que você pode fazer nesta página?</h3>';
