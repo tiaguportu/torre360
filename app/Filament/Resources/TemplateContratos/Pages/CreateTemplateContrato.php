@@ -61,7 +61,13 @@ class CreateTemplateContrato extends CreateRecord
 
         $html .= '<h3>Objetos e Variáveis do Blade Disponíveis</h3>';
         $html .= '<ul>';
-        $html .= '<li><code>$contrato</code>: O modelo do Contrato (ex: <code>{{ $contrato->valor_total }}</code>, <code>{{ $contrato->id }}</code>).</li>';
+        $html .= '<li><code>$contrato</code>: O modelo do Contrato (ex: <code>{{ $contrato->valor_total }}</code>, <code>{{ $contrato->id }}</code>).';
+        $html .= '  <ul>';
+        $html .= '    <li><code>{{ $contrato->matricula->turma->nome }}</code>: Nome da turma do aluno.</li>';
+        $html .= '    <li><code>{{ $contrato->matricula->turma->serie->nome }}</code>: Nome da série/ano do aluno.</li>';
+        $html .= '    <li><code>{{ $contrato->matricula->pessoa->nome }}</code>: Nome do aluno associado ao contrato.</li>';
+        $html .= '  </ul>';
+        $html .= '</li>';
         $html .= '<li><code>$aluno</code>: Cadastro do Aluno (objeto Pessoa) contendo os seguintes atributos principais:';
         $html .= '  <ul>';
         $html .= '    <li><code>{{ $aluno->nome }}</code>: Nome completo do aluno.</li>';

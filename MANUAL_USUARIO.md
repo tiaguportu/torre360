@@ -1149,7 +1149,10 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
 
 *   **Entidades Disponíveis no Escopo do Blade:**
     Ao utilizar a sintaxe Blade `{{ $variavel }}`, você tem acesso direto às seguintes variáveis de contexto:
-    - `$contrato`: O model do Contrato sendo gerado (ex: `{{ $contrato->valor_total }}`).
+    - `$contrato`: O model do Contrato sendo gerado (ex: `{{ $contrato->valor_total }}`). Caminhos comuns úteis:
+      - `{{ $contrato->matricula->turma->nome }}`: Nome da turma do aluno neste contrato.
+      - `{{ $contrato->matricula->turma->serie->nome }}`: Nome da série/ano do aluno.
+      - `{{ $contrato->matricula->pessoa->nome }}`: Nome do aluno associado ao contrato.
     - `$aluno`: O model da Pessoa (aluno) vinculada à matrícula. Atributos comuns disponíveis:
       - `{{ $aluno->nome }}`: Nome completo.
       - `{{ $aluno->cpf }}`: CPF do aluno.
