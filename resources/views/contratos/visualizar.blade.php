@@ -32,6 +32,25 @@
             margin-bottom: 0.25rem !important;
         }
 
+        /* Restaura estilos de tabelas e bordas afetados pelo reset/preflight do Tailwind */
+        .template-content table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin-top: 10px !important;
+            margin-bottom: 15px !important;
+            border: 1px solid #000000 !important;
+        }
+        .template-content th,
+        .template-content td {
+            border: 1px solid #000000 !important;
+            padding: 6px 10px !important;
+        }
+        .template-content th {
+            font-weight: bold;
+            background-color: #f3f4f6;
+        }
+
+
         @media print {
             .no-print {
                 display: none !important;

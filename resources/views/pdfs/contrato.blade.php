@@ -36,6 +36,25 @@
             margin-bottom: 5px !important;
         }
 
+        /* Ajuste de tabelas e bordas no PDF */
+        .template-content table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin-top: 10px !important;
+            margin-bottom: 15px !important;
+            border: 1px solid #000000 !important;
+        }
+        .template-content th,
+        .template-content td {
+            border: 1px solid #000000 !important;
+            padding: 6px 10px !important;
+        }
+        .template-content th {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+
+
         .header {
             text-align: center;
             margin-bottom: 20px;
