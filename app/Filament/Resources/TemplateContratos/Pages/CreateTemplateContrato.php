@@ -59,6 +59,24 @@ class CreateTemplateContrato extends CreateRecord
         $html .= 'Este contrato possui {{ $faturas->count() }} parcelas no total.';
         $html .= '</pre>';
 
+        $html .= '<h4>Exemplo de Tabela Dinâmica (Faturas/Parcelas)</h4>';
+        $html .= '<pre style="background-color: #f3f4f6; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-bottom: 10px;">';
+        $html .= '&lt;table&gt;'."\n";
+        $html .= '  &lt;thead&gt;'."\n";
+        $html .= '    &lt;tr&gt;&lt;th&gt;Parcela&lt;/th&gt;&lt;th&gt;Vencimento&lt;/th&gt;&lt;th&gt;Valor&lt;/th&gt;&lt;/tr&gt;'."\n";
+        $html .= '  &lt;/thead&gt;'."\n";
+        $html .= '  &lt;tbody&gt;'."\n";
+        $html .= '    @foreach($faturas->sortBy(\'vencimento\') as $index => $f)'."\n";
+        $html .= '      &lt;tr&gt;'."\n";
+        $html .= '        &lt;td&gt;{{ $index + 1 }}&lt;/td&gt;'."\n";
+        $html .= '        &lt;td&gt;{{ \Carbon\Carbon::parse($f->vencimento)->format(\'d/m/Y\') }}&lt;/td&gt;'."\n";
+        $html .= '        &lt;td&gt;R$ {{ number_format($f->valor, 2, \',\', \'.\') }}&lt;/td&gt;'."\n";
+        $html .= '      &lt;/tr&gt;'."\n";
+        $html .= '    @endforeach'."\n";
+        $html .= '  &lt;/tbody&gt;'."\n";
+        $html .= '&lt;/table&gt;';
+        $html .= '</pre>';
+
         $html .= '<h3>Objetos e Variáveis do Blade Disponíveis</h3>';
         $html .= '<ul>';
         $html .= '<li><code>$contrato</code>: O modelo do Contrato (ex: <code>{{ $contrato->valor_total }}</code>, <code>{{ $contrato->id }}</code>).';

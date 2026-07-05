@@ -1146,6 +1146,28 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     <p>Este contrato possui um total de {{ $faturas->count() }} parcelas.</p>
     ```
 
+*   **Criação de Tabelas Dinâmicas (Exemplo com faturas do contrato):**
+    Você pode iterar sobre a coleção de faturas para montar uma tabela HTML clássica usando `@foreach`:
+    ```html
+    <table>
+        <thead>
+            <tr>
+                <th>Parcela</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($faturas->sortBy('vencimento') as $index => $f)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ \Carbon\Carbon::parse($f->vencimento)->format('d/m/Y') }}</td>
+                    <td>R$ {{ number_format($f->valor, 2, ',', '.') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    ```
 
 *   **Entidades Disponíveis no Escopo do Blade:**
     Ao utilizar a sintaxe Blade `{{ $variavel }}`, você tem acesso direto às seguintes variáveis de contexto:
