@@ -76,7 +76,8 @@
                 'responsavel' => $responsavel,
                 'serie' => $serie,
                 'curso' => $curso,
-                'periodoLetivo' => $periodoLetivo
+                'periodoLetivo' => $periodoLetivo,
+                'conteudo_template' => $conteudo_template ?? null,
             ])
         </div>
 
