@@ -76,8 +76,9 @@ class GeradorCrachasV2 extends Page implements HasForms
 
                         Grid::make(2)
                             ->schema([
-                                Select::make('turma_id')
-                                    ->label('Turma')
+                                Select::make('turma_ids')
+                                    ->label('Turmas')
+                                    ->multiple()
                                     ->options(Turma::pluck('nome', 'id'))
                                     ->searchable()
                                     ->preload()
@@ -128,7 +129,7 @@ class GeradorCrachasV2 extends Page implements HasForms
         $html .= '<h3>Como usar?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Modelo de Crachá V2:</strong> Selecione o layout V2 cadastrado no sistema.</li>';
-        $html .= '<li><strong>Origem:</strong> Defina se deseja gerar para todos os alunos de uma **Turma** ou de forma **Individual** selecionando os nomes das pessoas.</li>';
+        $html .= '<li><strong>Origem:</strong> Defina se deseja gerar para todos os alunos de uma ou mais **Turmas** ou de forma **Individual** selecionando os nomes das pessoas.</li>';
         $html .= '<li><strong>Gerar:</strong> Confirme no botão abaixo para baixar o PDF gerado.</li>';
         $html .= '</ul>';
 
@@ -141,7 +142,7 @@ class GeradorCrachasV2 extends Page implements HasForms
 
         $templateId = $state['template_id'] ?? null;
         $tipoSelecao = $state['tipo_selecao'] ?? 'individual';
-        $turmaId = $state['turma_id'] ?? null;
+        $turmaIds = $state['turma_ids'] ?? [];
         $pessoaIds = $state['pessoa_ids'] ?? [];
 
         if (! $templateId) {
@@ -169,28 +170,31 @@ class GeradorCrachasV2 extends Page implements HasForms
         $pessoasComTurma = collect();
 
         if ($tipoSelecao === 'turma') {
-            $turma = Turma::find($turmaId);
-            if (! $turma) {
+            if (empty($turmaIds)) {
                 Notification::make()
-                    ->title('Erro')
-                    ->body('Turma selecionada não encontrada.')
+                    ->title('Erro de Validação')
+                    ->body('Selecione pelo menos uma turma.')
                     ->danger()
                     ->send();
 
                 return null;
             }
 
-            $matriculas = $turma->matriculas()
-                ->where('situacao', SituacaoMatricula::ATIVA)
-                ->with('pessoa')
-                ->get();
+            $turmas = Turma::whereIn('id', $turmaIds)->get();
 
-            foreach ($matriculas as $m) {
-                if ($m->pessoa) {
-                    $pessoasComTurma->push((object) [
-                        'pessoa' => $m->pessoa,
-                        'turma' => $turma,
-                    ]);
+            foreach ($turmas as $turma) {
+                $matriculas = $turma->matriculas()
+                    ->where('situacao', SituacaoMatricula::ATIVA)
+                    ->with('pessoa')
+                    ->get();
+
+                foreach ($matriculas as $m) {
+                    if ($m->pessoa) {
+                        $pessoasComTurma->push((object) [
+                            'pessoa' => $m->pessoa,
+                            'turma' => $turma,
+                        ]);
+                    }
                 }
             }
         } else {
