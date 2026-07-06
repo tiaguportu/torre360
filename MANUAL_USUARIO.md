@@ -1010,47 +1010,8 @@ O sistema calcula automaticamente quantos crachás cabem por folha A4 com base n
 3. Selecione o modelo de crachá e confirme. O sistema buscará todos os alunos com matrícula ativa nas turmas e gerará o PDF unificado com os crachás já preenchidos.
 4. Se a quantidade de crachás selecionados exceder a capacidade de uma única folha A4, o sistema realizará a quebra de página automaticamente no PDF para as folhas seguintes.
 
-### 22.3 Editor Vetorial de Crachás V2 (SVG-Edit com Mapeamento de Classes)
-
-O **Editor de Crachás V2** adota uma abordagem totalmente integrada com as ferramentas gráficas nativas do **SVG-Edit 7**, eliminando os limites de injeção programática do editor clássico. Você desenha os textos, imagens, fundos e molduras diretamente no canvas e vincula as informações dinâmicas usando a propriedade **Class (Classe CSS)** dos elementos.
-
-#### A. Como Vincular Variáveis via Propriedade Class:
-Para mapear um elemento de texto ou imagem do canvas com as informações dinâmicas da Pessoa ou Turma, selecione o elemento no editor e preencha o campo **Class** no painel de propriedades do SVG-Edit com um dos seguintes identificadores (sem chaves):
-
-*   **Classes de Pessoa (Aluno/Colaborador):**
-    *   `nome`: Preenchido com o nome completo.
-    *   `cpf`: Preenchido com o CPF.
-    *   `identidade`: Preenchido com o RG/Identidade.
-    *   `data_nascimento`: Preenchido com a data de nascimento (DD/MM/AAAA).
-    *   `sexo`: Preenchido com o sexo.
-    *   `email`: Preenchido com o e-mail.
-    *   `telefone`: Preenchido com o telefone de contato.
-    *   `profissao`: Preenchido com a profissão registrada.
-    *   `cor_raca`: Preenchido com a cor/raça.
-    *   `foto`: Aplica-se a elementos do tipo **Imagem** (`<image>`) ou **Formas Geométricas** (como `<rect>`, `<circle>`, `<ellipse>`, `<polygon>`, `<path>`). Se for uma imagem, substitui a origem/href pela foto real. Se for uma forma geométrica (ex: um círculo ou retângulo desenhado no editor), o sistema converte a foto em um preenchimento proporcional (cobertura "slice"), adaptando o retrato automaticamente para preencher os limites geométricos do polígono com perfeição.
-
-*   **Classes de Turma (Somente para templates de Turma):**
-    *   `turma_nome`: Preenchido com o nome da turma.
-    *   `turma_periodo`: Preenchido com o nome do período letivo.
-    *   `turma_serie`: Preenchido com o nome da série/ano.
-    *   `turma_curso`: Preenchido com o nome do curso correspondente.
-
-#### B. Barra Lateral de Referência Rápida:
-Para facilitar a edição e evitar erros de digitação:
-1. No menu lateral esquerdo do Editor V2, você visualiza a lista completa de classes mapeadas organizadas por categorias.
-2. Cada variável possui um botão de cópia rápida (ex: `Class: nome`). Ao clicar, o nome da classe é copiado automaticamente para a área de transferência (clipboard).
-3. Selecione o elemento desejado no centro do editor, clique duas vezes no campo **Class** na barra superior de propriedades do SVG-Edit e pressione `Ctrl + V` para colar.
-
-#### C. Impressão de Crachás V2 em Lote:
-Para comparar os modelos vetoriais V2 ou realizar a emissão definitiva:
-1. Acesse o menu de **Pessoas** ou de **Turmas**.
-2. Selecione os registros desejados e escolha as ações em lote denominadas **"Imprimir Crachá V2 (SVG)"** ou **"Imprimir Crachá dos Alunos V2 (SVG)"**.
-3. O PDF resultante renderiza o vetor SVG em alta qualidade com as fotos em base64 e as variáveis preenchidas conforme as classes definidas no editor.
-
----
-
-### 6.9 Templates de Crachá V3 (Editor Moveable — HTML Interativo)
-O sistema conta com um terceiro módulo de crachás (V3) utilizando o editor **Moveable**, baseado em elementos HTML interativos que podem ser arrastados, redimensionados e rotacionados livremente na tela. Existe para comparação e uso em paralelo com os módulos V1 (básico) e V2 (SVG-Edit).
+### 22.3 Templates de Crachá V3 (Editor Moveable — HTML Interativo)
+O sistema conta com um novo módulo de crachás (V3) utilizando o editor **Moveable**, baseado em elementos HTML interativos que podem ser arrastados, redimensionados e rotacionados livremente na tela. Existe para comparação e uso em paralelo com o módulo V1 (básico).
 
 1. Vá em **Secretaria → Templates de Crachá V3**.
 2. **Criação:** Clique em **Novo Template** e defina o nome, tipo de entidade (Pessoa ou Turma) e as dimensões em pixels (Largura e Altura). Salve para liberar o editor.
@@ -1100,10 +1061,9 @@ Para gerar e imprimir os crachás dos alunos no novo modelo V3:
 4. Escolha o modelo de crachá V3 desejado e confirme. O sistema gerará um arquivo PDF contendo os crachás diagramados na folha A4 com substituição automática de dados e fotos.
 
 ### 22.4 Interfaces Individuais do Gerador de Crachás
-Para facilitar e separar a geração de crachás por versão, o sistema oferece três interfaces dedicadas sob o menu **Secretaria**:
+Para facilitar e separar a geração de crachás por versão, o sistema oferece duas interfaces dedicadas sob o menu **Secretaria**:
 
 *   **Gerador de Crachás V1:** Acesso via **Secretaria → Gerador de Crachás V1**, utiliza os modelos do Editor Canvas (FabricJS).
-*   **Gerador de Crachás V2:** Acesso via **Secretaria → Gerador de Crachás V2**, utiliza os modelos do Editor SVG (SVG-Edit).
 *   **Gerador de Crachás V3:** Acesso via **Secretaria → Gerador de Crachás V3**, utiliza os modelos do Editor Moveable.
 
 Em cada um dos geradores, o formulário de parâmetros permite selecionar:

@@ -7,9 +7,7 @@ use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\NotaHabilidade;
 use App\Models\TemplateCracha;
-use App\Models\TemplateCrachaV2;
 use App\Models\Turma;
-use App\Services\TemplateCrachaV2Service;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -300,65 +298,7 @@ class TurmasTable
                             );
                         })
                         ->deselectRecordsAfterCompletion(),
-                    BulkAction::make('imprimirCrachasLoteV2')
-                        ->label('Imprimir Crachá dos Alunos V2 (SVG)')
-                        ->icon('heroicon-o-identification')
-                        ->color('warning')
-                        ->form([
-                            Select::make('template_cracha_v2_id')
-                                ->label('Selecione o Modelo de Crachá V2')
-                                ->options(fn () => TemplateCrachaV2::pluck('nome', 'id'))
-                                ->required()
-                                ->searchable()
-                                ->preload(),
-                        ])
-                        ->action(function (Collection $records, array $data) {
-                            $template = TemplateCrachaV2::find($data['template_cracha_v2_id']);
-                            if (! $template) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title('Template V2 não encontrado')
-                                    ->send();
 
-                                return;
-                            }
-
-                            // Busca as matrículas ativas de todas as turmas selecionadas
-                            $pessoasComTurma = collect();
-                            foreach ($records as $turma) {
-                                $matriculas = $turma->matriculas()
-                                    ->where('situacao', SituacaoMatricula::ATIVA)
-                                    ->with('pessoa')
-                                    ->get();
-
-                                foreach ($matriculas as $m) {
-                                    if ($m->pessoa) {
-                                        $pessoasComTurma->push((object) [
-                                            'pessoa' => $m->pessoa,
-                                            'turma' => $turma,
-                                        ]);
-                                    }
-                                }
-                            }
-
-                            if ($pessoasComTurma->isEmpty()) {
-                                Notification::make()
-                                    ->warning()
-                                    ->title('Nenhum aluno ativo encontrado nas turmas selecionadas')
-                                    ->send();
-
-                                return null;
-                            }
-
-                            $pdf = TemplateCrachaV2Service::gerarPdf($template, $pessoasComTurma);
-
-                            return response()->streamDownload(
-                                fn () => print ($pdf->output()),
-                                'crachas_turmas_v2.pdf',
-                                ['Content-Type' => 'application/pdf']
-                            );
-                        })
-                        ->deselectRecordsAfterCompletion(),
                 ]),
             ])
             ->stackedOnMobile();

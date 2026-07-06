@@ -7,9 +7,7 @@ use App\Enums\Sexo;
 use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
 use App\Models\TemplateCracha;
-use App\Models\TemplateCrachaV2;
 use App\Models\TemplateCrachaV3;
-use App\Services\TemplateCrachaV2Service;
 use App\Services\TemplateCrachaV3Service;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\BulkAction;
@@ -172,46 +170,7 @@ class PessoasTable
                             );
                         })
                         ->deselectRecordsAfterCompletion(),
-                    BulkAction::make('imprimirCrachasV2')
-                        ->label('Imprimir Crachá V2 (SVG)')
-                        ->icon('heroicon-o-identification')
-                        ->color('success')
-                        ->form([
-                            Select::make('template_cracha_v2_id')
-                                ->label('Selecione o Modelo de Crachá V2')
-                                ->options(fn () => TemplateCrachaV2::pluck('nome', 'id'))
-                                ->required()
-                                ->searchable()
-                                ->preload(),
-                        ])
-                        ->action(function (Collection $records, array $data) {
-                            $template = TemplateCrachaV2::find($data['template_cracha_v2_id']);
-                            if (! $template) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title('Template V2 não encontrado')
-                                    ->send();
 
-                                return;
-                            }
-
-                            $pessoasComTurma = collect();
-                            foreach ($records as $p) {
-                                $pessoasComTurma->push((object) [
-                                    'pessoa' => $p,
-                                    'turma' => null,
-                                ]);
-                            }
-
-                            $pdf = TemplateCrachaV2Service::gerarPdf($template, $pessoasComTurma);
-
-                            return response()->streamDownload(
-                                fn () => print ($pdf->output()),
-                                'crachas_v2.pdf',
-                                ['Content-Type' => 'application/pdf']
-                            );
-                        })
-                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('imprimirCrachasV3')
                         ->label('Imprimir Crachá V3 (Moveable)')
                         ->icon('heroicon-o-identification')

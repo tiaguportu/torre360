@@ -11,6 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('template_crachas_v2');
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
         Schema::create('template_crachas_v2', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
@@ -20,13 +28,5 @@ return new class extends Migration
             $table->longText('svg_content')->nullable();
             $table->timestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('template_crachas_v2');
     }
 };
