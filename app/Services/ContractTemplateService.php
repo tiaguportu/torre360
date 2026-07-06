@@ -104,7 +104,13 @@ class ContractTemplateService
                 } catch (\Throwable $e) {
                     logger()->error("Erro ao renderizar macro customizada {$configKey}: ".$e->getMessage());
 
-                    return "<!-- Erro ao renderizar macro \${$variableNameCamel} -->";
+                    // Retorna um bloco visual destacado com o erro para que o administrador saiba o que aconteceu
+                    $errorMessage = htmlspecialchars($e->getMessage());
+
+                    return "<div style='border: 2px dashed #ef4444; padding: 15px; margin: 15px 0; background-color: #fef2f2; color: #b91c1c; font-family: monospace; font-size: 13px; border-radius: 6px; text-align: left;'>"
+                        ."<strong>Erro ao renderizar a macro customizada \${$variableNameCamel} (Configuração: {$configKey}):</strong><br>"
+                        .$errorMessage
+                        .'</div>';
                 }
             }
 
