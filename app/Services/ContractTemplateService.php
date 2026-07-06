@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Configuracao;
 use App\Models\Contrato;
 use App\Models\Pessoa;
 use App\Models\TipoVinculo;
@@ -137,6 +138,21 @@ class ContractTemplateService
         }
 
         $aluno = $mat->pessoa;
+
+        // Busca configuração customizada no banco
+        $config = Configuracao::where('campo', 'template_tabela_aluno')->first();
+        if ($config && ! empty($config->valor)) {
+            try {
+                return Blade::render($config->valor, [
+                    'contrato' => $contrato,
+                    'aluno' => $aluno,
+                    'matricula' => $mat,
+                ]);
+            } catch (\Throwable $e) {
+                logger()->error('Erro ao renderizar template customizado de tabela de aluno: '.$e->getMessage());
+            }
+        }
+
         $nome = $aluno?->nome ?? '-';
         $nascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
         $cpf = $aluno?->cpf ?? '-';
@@ -193,6 +209,19 @@ class ContractTemplateService
 
         if ($faturas->isEmpty()) {
             return 'Nenhuma fatura encontrada.';
+        }
+
+        // Busca configuração customizada no banco
+        $config = Configuracao::where('campo', 'template_tabela_faturas')->first();
+        if ($config && ! empty($config->valor)) {
+            try {
+                return Blade::render($config->valor, [
+                    'contrato' => $contrato,
+                    'faturas' => $faturas,
+                ]);
+            } catch (\Throwable $e) {
+                logger()->error('Erro ao renderizar template customizado de tabela de faturas: '.$e->getMessage());
+            }
         }
 
         $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black;">';

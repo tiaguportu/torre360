@@ -153,11 +153,45 @@ class GeradorCrachas extends Page implements HasForms
         $user = auth()->user();
         $activeRole = session('active_role');
 
+        $canViewV1 = $user->can('ViewAny:TemplateCracha');
+        $canViewV2 = $user->can('ViewAny:TemplateCrachaV2');
+        $canViewV3 = $user->can('ViewAny:TemplateCrachaV3');
+        $canViewPessoas = $user->can('ViewAny:Pessoa');
+        $canViewTurmas = $user->can('ViewAny:Turma');
+
         $html = '<p>Esta página permite realizar a geração centralizada de crachás em PDF de qualquer uma das três versões disponíveis no sistema (Versão 1, Versão 2 ou Versão 3).</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Parâmetros de Geração:</strong> Escolha a versão (V1, V2 ou V3) e, em seguida, selecione o modelo de crachá correspondente cadastrado no sistema.</li>';
-        $html .= '<li><strong>Origem dos Crachás:</strong> Defina se deseja gerar os crachás para uma <strong>Turma inteira</strong> (apenas alunos com matrículas ativas) ou de forma <strong>Individual</strong> selecionando uma ou mais pessoas por busca.</li>';
+
+        $versoesDisponiveis = [];
+        if ($canViewV1) {
+            $versoesDisponiveis[] = 'Versão 1 (Canvas)';
+        }
+        if ($canViewV2) {
+            $versoesDisponiveis[] = 'Versão 2 (SVG Edit)';
+        }
+        if ($canViewV3) {
+            $versoesDisponiveis[] = 'Versão 3 (Moveable)';
+        }
+
+        if (! empty($versoesDisponiveis)) {
+            $html .= '<li><strong>Parâmetros de Geração:</strong> Escolha entre as versões disponíveis para você ('.implode(', ', $versoesDisponiveis).') e selecione o modelo correspondente cadastrado.</li>';
+        } else {
+            $html .= '<li><strong>Parâmetros de Geração:</strong> <span class="text-danger">Você não possui permissão para visualizar nenhum dos modelos de crachá cadastrados.</span></li>';
+        }
+
+        if ($canViewTurmas || $canViewPessoas) {
+            $html .= '<li><strong>Origem dos Crachás:</strong> Defina se deseja gerar os crachás ';
+            $origens = [];
+            if ($canViewTurmas) {
+                $origens[] = 'para uma <strong>Turma inteira</strong> (apenas alunos com matrículas ativas)';
+            }
+            if ($canViewPessoas) {
+                $origens[] = 'de forma <strong>Individual</strong> selecionando uma ou mais pessoas por busca';
+            }
+            $html .= implode(' ou ', $origens).'.</li>';
+        }
+
         $html .= '<li><strong>Geração do PDF:</strong> Clique no botão de gerar para que o sistema renderize em lote o crachá das pessoas com as informações e foto preenchidas no padrão configurado e faça o download automático do PDF.</li>';
         $html .= '</ul>';
 
