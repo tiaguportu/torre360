@@ -32,6 +32,15 @@ class ContractTemplateService
         // Pré-processa o template: resolve escapes do editor e compila as macros customizadas {{!! variavel !!}}
         $html = $this->preprocessBlade($html, $contrato, $aluno, $unidade, $tiposVinculo);
 
+        // Gera as variáveis de fallback clássicas para manter compatibilidade retroativa com templates antigos
+        $tabelaFaturas = $this->generateFaturasTableFallback($contrato);
+        $tabelaAluno = $this->generateAlunoTableFallback($contrato);
+        $infoResponsaveis = $this->generateResponsaveisInfo($contrato);
+        $assinaturasRepresentantes = $this->generateAssinaturasUnidade($unidade);
+        $assinaturasResponsaveis = $this->generateAssinaturasResponsaveis($contrato);
+        $assinaturaPai = $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo);
+        $assinaturaMae = $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo);
+
         try {
             return Blade::render($html, [
                 'contrato' => $contrato,
@@ -39,6 +48,14 @@ class ContractTemplateService
                 'aluno' => $aluno,
                 'responsaveis' => $contrato->responsaveisFinanceiros,
                 'faturas' => $contrato->faturas,
+                // Variáveis do Blade para templates antigos
+                'tabelaFaturas' => $tabelaFaturas,
+                'tabelaAluno' => $tabelaAluno,
+                'infoResponsaveis' => $infoResponsaveis,
+                'assinaturasRepresentantes' => $assinaturasRepresentantes,
+                'assinaturasResponsaveis' => $assinaturasResponsaveis,
+                'assinaturaPai' => $assinaturaPai,
+                'assinaturaMae' => $assinaturaMae,
             ]);
         } catch (\Throwable $e) {
             if (app()->runningUnitTests()) {
