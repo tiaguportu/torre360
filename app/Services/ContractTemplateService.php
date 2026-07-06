@@ -80,10 +80,13 @@ class ContractTemplateService
         $content = str_replace(chr(194).chr(160), ' ', $content);
         $content = str_replace('&nbsp;', ' ', $content);
 
-        // Processa as macros dinâmicas no formato {{!! variavel !!}}
-        $content = preg_replace_callback('/\{\{!!\s*(\w+)\s*!!\}\}/', function ($matches) use ($contrato, $aluno, $unidade, $tiposVinculo) {
-            $variableName = $matches[1];
-            $configKey = 'template_contrato_'.$variableName;
+        // Processa as macros dinâmicas no formato {{!! $variavel !!}} (com cifrão e em camelCase)
+        $content = preg_replace_callback('/\{\{!!\s*\$?(\w+)\s*!!\}\}/', function ($matches) use ($contrato, $aluno, $unidade, $tiposVinculo) {
+            $variableNameCamel = $matches[1];
+
+            // Converte camelCase para snake_case
+            $variableNameSnake = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $variableNameCamel));
+            $configKey = 'template_contrato_'.$variableNameSnake;
 
             // Busca a configuração correspondente no banco de dados
             $config = Configuracao::where('campo', $configKey)->first();
@@ -101,12 +104,12 @@ class ContractTemplateService
                 } catch (\Throwable $e) {
                     logger()->error("Erro ao renderizar macro customizada {$configKey}: ".$e->getMessage());
 
-                    return "<!-- Erro ao renderizar macro {$variableName} -->";
+                    return "<!-- Erro ao renderizar macro \${$variableNameCamel} -->";
                 }
             }
 
             // Fallback para as variáveis padrões do sistema
-            return $this->getFallbackHtmlForVariable($variableName, $contrato, $aluno, $unidade, $tiposVinculo);
+            return $this->getFallbackHtmlForVariable($variableNameSnake, $contrato, $aluno, $unidade, $tiposVinculo);
         }, $content);
 
         return $content;

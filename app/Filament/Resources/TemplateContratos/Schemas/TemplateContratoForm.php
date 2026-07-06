@@ -45,9 +45,9 @@ class TemplateContratoForm
                                 $html .= '<h4 class="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Macros Customizáveis (Sem Código Fonte)</h4>';
                                 $html .= '<p class="text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">Para desenhar tabelas prontas ou linhas de assinatura diretamente pelo editor visual, digite as macros abaixo exatamente como texto plano. Os templates delas podem ser editados no menu <strong>Configurações</strong> do painel:</p>';
                                 $html .= '<ul class="space-y-1 text-xs font-mono text-gray-600 dark:text-gray-400">';
-                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! tabela_fatura !!}}</code> - Tabela de faturas</li>';
-                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! tabela_aluno !!}}</code> - Tabela com dados do Aluno</li>';
-                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! assinaturas_responsaveis !!}}</code> - Assinatura dos responsáveis</li>';
+                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $tabelaFatura !!}}</code> - Tabela de faturas</li>';
+                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $tabelaAluno !!}}</code> - Tabela com dados do Aluno</li>';
+                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $assinaturasResponsaveis !!}}</code> - Assinatura dos responsáveis</li>';
                                 $html .= '</ul>';
                                 $html .= '</div>';
                                 $html .= '<div>';

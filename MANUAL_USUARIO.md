@@ -1148,14 +1148,14 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `$faturas`: A coleção de faturas geradas para o contrato.
 
 *   **Macros e Tabelas Customizáveis (Para uso no Editor Visual):**
-    Caso você prefira não usar o modo Código Fonte ou não queira montar tabelas e loops manualmente no editor visual, digite as seguintes macros exatamente como texto plano utilizando a sintaxe `{{!! variavel !!}}`. Os layouts e o visual destas macros podem ser editados de forma centralizada no menu **Configurações** do painel administrativo (as configurações iniciam com o prefixo `template_contrato_`):
-    - `{{!! tabela_fatura !!}}`: Insere a tabela dinâmica completa das parcelas do contrato (configuração: `template_contrato_tabela_fatura`).
-    - `{{!! tabela_aluno !!}}`: Insere a tabela com dados cadastrais e acadêmicos do Aluno (configuração: `template_contrato_tabela_aluno`).
-    - `{{!! info_responsaveis !!}}`: Insere o parágrafo corrido com a qualificação dos responsáveis financeiros e endereços (configuração: `template_contrato_info_responsaveis`).
-    - `{{!! assinaturas_representantes !!}}`: Insere as linhas de assinatura para os representantes legais da escola (configuração: `template_contrato_assinaturas_representantes`).
-    - `{{!! assinaturas_responsaveis !!}}`: Insere as linhas de assinatura para todos os responsáveis do contrato (configuração: `template_contrato_assinaturas_responsaveis`).
-    - `{{!! assinatura_pai !!}}`: Insere a linha de assinatura específica do Pai do aluno (configuração: `template_contrato_assinatura_pai`).
-    - `{{!! assinatura_mae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`).
+    Caso você prefira não usar o modo Código Fonte ou não queira montar tabelas e loops manualmente no editor visual, digite as seguintes macros exatamente como texto plano utilizando a sintaxe `{{!! $variavel !!}}` (em camelCase e com cifrão). Os layouts e o visual destas macros podem ser editados de forma centralizada no menu **Configurações** do painel administrativo (as configurações iniciam com o prefixo `template_contrato_` e em formato snake_case):
+    - `{{!! $tabelaFatura !!}}`: Insere a tabela dinâmica completa das parcelas do contrato (configuração: `template_contrato_tabela_fatura`).
+    - `{{!! $tabelaAluno !!}}`: Insere a tabela com dados cadastrais e acadêmicos do Aluno (configuração: `template_contrato_tabela_aluno`).
+    - `{{!! $infoResponsaveis !!}}`: Insere o parágrafo corrido com a qualificação dos responsáveis financeiros e endereços (configuração: `template_contrato_info_responsaveis`).
+    - `{{!! $assinaturasRepresentantes !!}}`: Insere as linhas de assinatura para os representantes legais da escola (configuração: `template_contrato_assinaturas_representantes`).
+    - `{{!! $assinaturasResponsaveis !!}}`: Insere as linhas de assinatura para todos os responsáveis do contrato (configuração: `template_contrato_assinaturas_responsaveis`).
+    - `{{!! $assinaturaPai !!}}`: Insere a linha de assinatura específica do Pai do aluno (configuração: `template_contrato_assinatura_pai`).
+    - `{{!! $assinaturaMae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`).
 
 ---
 

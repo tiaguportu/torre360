@@ -108,15 +108,15 @@ class ListTemplateContratos extends ListRecords
         $html .= '</ul>';
 
         $html .= '<h3>Macros e Variáveis de Tabela Customizáveis (Uso Simplificado no Editor Visual)</h3>';
-        $html .= '<p>Se você não deseja usar o modo Código Fonte ou programar loops no editor, digite as macros abaixo como texto plano diretamente no editor visual (usando a sintaxe de chaves com exclamação dupla <code>{{!! variavel !!}}</code>). Os layouts destas tabelas/assinaturas podem ser editados em <strong>Configurações</strong> do painel administrativo:</p>';
+        $html .= '<p>Se você não deseja usar o modo Código Fonte ou programar loops no editor, digite as macros abaixo como texto plano diretamente no editor visual (usando a sintaxe de chaves com exclamação dupla e cifrão <code>{{!! $variavel !!}}</code>). Os layouts destas tabelas/assinaturas podem ser editados em <strong>Configurações</strong> do painel administrativo:</p>';
         $html .= '<ul>';
-        $html .= '<li><code>{{!! tabela_fatura !!}}</code>: Tabela dinâmica contendo todas as faturas, vencimentos e valores do contrato (configuração: <code>template_contrato_tabela_fatura</code>).</li>';
-        $html .= '<li><code>{{!! tabela_aluno !!}}</code>: Tabela estruturada com os dados do Aluno, Turma e Série (configuração: <code>template_contrato_tabela_aluno</code>).</li>';
-        $html .= '<li><code>{{!! info_responsaveis !!}}</code>: Texto completo de qualificação dos responsáveis financeiros com endereços (configuração: <code>template_contrato_info_responsaveis</code>).</li>';
-        $html .= '<li><code>{{!! assinaturas_representantes !!}}</code>: Linhas de assinatura dos representantes da unidade (configuração: <code>template_contrato_assinaturas_representantes</code>).</li>';
-        $html .= '<li><code>{{!! assinaturas_responsaveis !!}}</code>: Linhas de assinatura dos responsáveis financeiros do contrato (configuração: <code>template_contrato_assinaturas_responsaveis</code>).</li>';
-        $html .= '<li><code>{{!! assinatura_pai !!}}</code>: Linha de assinatura específica do Pai do aluno (configuração: <code>template_contrato_assinatura_pai</code>).</li>';
-        $html .= '<li><code>{{!! assinatura_mae !!}}</code>: Linha de assinatura específica da Mãe do aluno (configuração: <code>template_contrato_assinatura_mae</code>).</li>';
+        $html .= '<li><code>{{!! $tabelaFatura !!}}</code>: Tabela dinâmica contendo todas as faturas, vencimentos e valores do contrato (configuração: <code>template_contrato_tabela_fatura</code>).</li>';
+        $html .= '<li><code>{{!! $tabelaAluno !!}}</code>: Tabela estruturada com os dados do Aluno, Turma e Série (configuração: <code>template_contrato_tabela_aluno</code>).</li>';
+        $html .= '<li><code>{{!! $infoResponsaveis !!}</code>: Texto completo de qualificação dos responsáveis financeiros com endereços (configuração: <code>template_contrato_info_responsaveis</code>).</li>';
+        $html .= '<li><code>{{!! $assinaturasRepresentantes !!}</code>: Linhas de assinatura dos representantes da unidade (configuração: <code>template_contrato_assinaturas_representantes</code>).</li>';
+        $html .= '<li><code>{{!! $assinaturasResponsaveis !!}</code>: Linhas de assinatura dos responsáveis financeiros do contrato (configuração: <code>template_contrato_assinaturas_responsaveis</code>).</li>';
+        $html .= '<li><code>{{!! $assinaturaPai !!}</code>: Linha de assinatura específica do Pai do aluno (configuração: <code>template_contrato_assinatura_pai</code>).</li>';
+        $html .= '<li><code>{{!! $assinaturaMae !!}</code>: Linha de assinatura específica da Mãe do aluno (configuração: <code>template_contrato_assinatura_mae</code>).</li>';
         $html .= '</ul>';
 
         $html .= '<h3>O que você pode fazer nesta página?</h3>';
