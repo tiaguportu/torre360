@@ -59,23 +59,20 @@ class CreateTemplateContrato extends CreateRecord
         $html .= 'Este contrato possui {{ $faturas->count() }} parcelas no total.';
         $html .= '</pre>';
 
-        $html .= '<h4>Exemplo de Tabela Dinâmica (Faturas/Parcelas)</h4>';
-        $html .= '<pre style="background-color: #f3f4f6; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-bottom: 10px;">';
-        $html .= '&lt;table&gt;'."\n";
-        $html .= '  &lt;thead&gt;'."\n";
-        $html .= '    &lt;tr&gt;&lt;th&gt;Parcela&lt;/th&gt;&lt;th&gt;Vencimento&lt;/th&gt;&lt;th&gt;Valor&lt;/th&gt;&lt;/tr&gt;'."\n";
-        $html .= '  &lt;/thead&gt;'."\n";
-        $html .= '  &lt;tbody&gt;'."\n";
-        $html .= '    @foreach($faturas->sortBy(\'vencimento\') as $index => $f)'."\n";
-        $html .= '      &lt;tr&gt;'."\n";
-        $html .= '        &lt;td&gt;{{ $index + 1 }}&lt;/td&gt;'."\n";
-        $html .= '        &lt;td&gt;{{ \Carbon\Carbon::parse($f->vencimento)->format(\'d/m/Y\') }}&lt;/td&gt;'."\n";
-        $html .= '        &lt;td&gt;R$ {{ number_format($f->valor, 2, \',\', \'.\') }}&lt;/td&gt;'."\n";
-        $html .= '      &lt;/tr&gt;'."\n";
-        $html .= '    @endforeach'."\n";
-        $html .= '  &lt;/tbody&gt;'."\n";
-        $html .= '&lt;/table&gt;';
-        $html .= '</pre>';
+        $html .= '<h4>Exemplo de Tabela Dinâmica no Editor Visual (Sem Código Fonte)</h4>';
+        $html .= '<p>Para criar uma tabela de tamanho variável (que cresce de acordo com o número de faturas) diretamente pelo editor visual, crie uma tabela de 4 linhas:</p>';
+        $html .= '<ul style="margin-left: 20px; list-style-type: disc; margin-bottom: 10px;">';
+        $html .= '  <li><strong>Linha 1 (Cabeçalho):</strong> Digite os títulos das colunas (ex: Parcela | Vencimento | Valor).</li>';
+        $html .= '  <li><strong>Linha 2 (Abertura do Loop):</strong> Mescle as células da linha e digite: <code>@foreach($faturas-&gt;sortBy(\'vencimento\') as $index =&gt; $f)</code></li>';
+        $html .= '  <li><strong>Linha 3 (Dados):</strong> Digite as variáveis nas respectivas células de dados:';
+        $html .= '    <ul style="margin-left: 20px; list-style-type: circle; margin-top: 5px; margin-bottom: 5px;">';
+        $html .= '      <li>Célula 1: <code>{{ $index + 1 }}</code></li>';
+        $html .= '      <li>Célula 2: <code>{{ \Carbon\Carbon::parse($f-&gt;vencimento)-&gt;format(\'d/m/Y\') }}</code></li>';
+        $html .= '      <li>Célula 3: <code>R$ {{ number_format($f-&gt;valor, 2, \',\', \'.\') }}</code></li>';
+        $html .= '    </ul>';
+        $html .= '  </li>';
+        $html .= '  <li><strong>Linha 4 (Fechamento do Loop):</strong> Mescle as células da linha e digite: <code>@endforeach</code></li>';
+        $html .= '</ul>';
 
         $html .= '<h3>Objetos e Variáveis do Blade Disponíveis</h3>';
         $html .= '<ul>';

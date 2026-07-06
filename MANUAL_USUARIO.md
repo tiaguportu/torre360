@@ -1146,28 +1146,16 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     <p>Este contrato possui um total de {{ $faturas->count() }} parcelas.</p>
     ```
 
-*   **Criação de Tabelas Dinâmicas (Exemplo com faturas do contrato):**
-    Você pode iterar sobre a coleção de faturas para montar uma tabela HTML clássica usando `@foreach`:
-    ```html
-    <table>
-        <thead>
-            <tr>
-                <th>Parcela</th>
-                <th>Vencimento</th>
-                <th>Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($faturas->sortBy('vencimento') as $index => $f)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($f->vencimento)->format('d/m/Y') }}</td>
-                    <td>R$ {{ number_format($f->valor, 2, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-    ```
+*   **Criação de Tabelas Dinâmicas no Editor Visual (Truque das Linhas de Controle):**
+    Para desenhar uma tabela de tamanho variável (que cresce de acordo com o número de registros) diretamente pelo editor visual do painel, insira uma tabela de 4 linhas:
+    *   **Linha 1 (Cabeçalho):** Digite os títulos das colunas (ex: Parcela, Vencimento, Valor).
+    *   **Linha 2 (Abertura do Loop):** Mescle todas as células desta linha e digite: `@foreach($faturas->sortBy('vencimento') as $index => $f)`
+    *   **Linha 3 (Dados):** Digite as variáveis nas respectivas células de dados:
+        *   Célula 1: `{{ $index + 1 }}`
+        *   Célula 2: `{{ \Carbon\Carbon::parse($f->vencimento)->format('d/m/Y') }}`
+        *   Célula 3: `R$ {{ number_format($f->valor, 2, ',', '.') }}`
+    *   **Linha 4 (Fechamento do Loop):** Mescle todas as células desta linha e digite: `@endforeach`
+
 
 *   **Entidades Disponíveis no Escopo do Blade:**
     Ao utilizar a sintaxe Blade `{{ $variavel }}`, você tem acesso direto às seguintes variáveis de contexto:
