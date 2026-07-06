@@ -1099,16 +1099,19 @@ Para gerar e imprimir os crachás dos alunos no novo modelo V3:
 3. No botão de ações em lote, selecione **Imprimir Crachá V3 (Moveable)**.
 4. Escolha o modelo de crachá V3 desejado e confirme. O sistema gerará um arquivo PDF contendo os crachás diagramados na folha A4 com substituição automática de dados e fotos.
 
-### 22.4 Interface do Gerador de Crachás (Geração Centralizada)
-Para facilitar e centralizar a geração de crachás no sistema, está disponível a interface **Gerador de Crachás**:
-1. Acesse o menu **Secretaria → Gerador de Crachás**.
-2. No formulário principal, selecione:
-   - **Versão do Crachá:** Escolha a versão do template desejado (Versão 1, Versão 2 ou Versão 3).
-   - **Modelo de Crachá:** Escolha o template correspondente cadastrado. O campo filtra automaticamente as opções baseando-se na versão escolhida.
-   - **Selecionar Pessoas por:** Escolha a forma de obter os dados das pessoas:
-     - **Por Turma:** Seleciona todos os alunos matriculados ativos de uma turma escolhida. Os dados da turma também são injetados no PDF.
-     - **Seleção Individual:** Permite buscar e selecionar livremente as pessoas pelo campo de multiselect (com busca inteligente de nome/CPF).
-3. Clique em **Gerar Crachás em PDF** para baixar o lote de crachás de forma automática.
+### 22.4 Interfaces Individuais do Gerador de Crachás
+Para facilitar e separar a geração de crachás por versão, o sistema oferece três interfaces dedicadas sob o menu **Secretaria**:
+
+*   **Gerador de Crachás V1:** Acesso via **Secretaria → Gerador de Crachás V1**, utiliza os modelos do Editor Canvas (FabricJS).
+*   **Gerador de Crachás V2:** Acesso via **Secretaria → Gerador de Crachás V2**, utiliza os modelos do Editor SVG (SVG-Edit).
+*   **Gerador de Crachás V3:** Acesso via **Secretaria → Gerador de Crachás V3**, utiliza os modelos do Editor Moveable.
+
+Em cada um dos geradores, o formulário de parâmetros permite selecionar:
+1.  **Modelo de Crachá:** O template correspondente à versão do gerador acessado.
+2.  **Selecionar Pessoas por:** Escolha a forma de obter os dados das pessoas:
+    *   **Por Turma:** Seleciona todos os alunos matriculados ativos de uma turma escolhida. Os dados da turma também são injetados no PDF.
+    *   **Seleção Individual:** Permite buscar e selecionar livremente as pessoas pelo campo de multiselect (com busca inteligente de nome/CPF).
+3.  Clique em **Gerar Crachás em PDF** para baixar o lote de crachás correspondente de forma automática.
 
 ---
 

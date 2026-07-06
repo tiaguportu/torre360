@@ -4,7 +4,7 @@
 
         <div class="mt-6 flex justify-end">
             <x-filament::button type="submit" size="lg" color="success" icon="heroicon-o-identification">
-                Gerar Crachás em PDF
+                Gerar Crachás V3 em PDF
             </x-filament::button>
         </div>
     </form>
