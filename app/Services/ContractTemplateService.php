@@ -29,7 +29,8 @@ class ContractTemplateService
         // Mapa de nomes de vínculos para busca rápida no pivô
         $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
 
-        $html = $this->preprocessBlade($html);
+        // Pré-processa o template: resolve escapes do editor e compila as macros customizadas {{!! variavel !!}}
+        $html = $this->preprocessBlade($html, $contrato, $aluno, $unidade, $tiposVinculo);
 
         try {
             return Blade::render($html, [
@@ -38,15 +39,6 @@ class ContractTemplateService
                 'aluno' => $aluno,
                 'responsaveis' => $contrato->responsaveisFinanceiros,
                 'faturas' => $contrato->faturas,
-
-                // Variáveis com HTML pré-gerado para uso direto no editor visual sem código fonte
-                'tabelaFaturas' => $this->generateFaturasTable($contrato),
-                'tabelaAluno' => $this->generateAlunoTable($contrato),
-                'infoResponsaveis' => $this->generateResponsaveisInfo($contrato),
-                'assinaturasRepresentantes' => $this->generateAssinaturasUnidade($unidade),
-                'assinaturasResponsaveis' => $this->generateAssinaturasResponsaveis($contrato),
-                'assinaturaPai' => $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo),
-                'assinaturaMae' => $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo),
             ]);
         } catch (\Throwable $e) {
             if (app()->runningUnitTests()) {
@@ -58,7 +50,7 @@ class ContractTemplateService
         }
     }
 
-    protected function preprocessBlade(string $content): string
+    protected function preprocessBlade(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
     {
         // Remove macros legadas do tipo {{MACRO}} ou {{MACRO.SUB}}
         $content = preg_replace('/\{\{[A-Z_]+(?:\.[A-Z_]+)*\}\}/', '', $content);
@@ -71,7 +63,58 @@ class ContractTemplateService
         $content = str_replace(chr(194).chr(160), ' ', $content);
         $content = str_replace('&nbsp;', ' ', $content);
 
+        // Processa as macros dinâmicas no formato {{!! variavel !!}}
+        $content = preg_replace_callback('/\{\{!!\s*(\w+)\s*!!\}\}/', function ($matches) use ($contrato, $aluno, $unidade, $tiposVinculo) {
+            $variableName = $matches[1];
+            $configKey = 'template_contrato_'.$variableName;
+
+            // Busca a configuração correspondente no banco de dados
+            $config = Configuracao::where('campo', $configKey)->first();
+
+            if ($config && ! empty($config->valor)) {
+                try {
+                    // Renderiza o template da macro customizada usando Blade
+                    return Blade::render($config->valor, [
+                        'contrato' => $contrato,
+                        'aluno' => $aluno,
+                        'unidade' => $unidade,
+                        'responsaveis' => $contrato->responsaveisFinanceiros,
+                        'faturas' => $contrato->faturas,
+                    ]);
+                } catch (\Throwable $e) {
+                    logger()->error("Erro ao renderizar macro customizada {$configKey}: ".$e->getMessage());
+
+                    return "<!-- Erro ao renderizar macro {$variableName} -->";
+                }
+            }
+
+            // Fallback para as variáveis padrões do sistema
+            return $this->getFallbackHtmlForVariable($variableName, $contrato, $aluno, $unidade, $tiposVinculo);
+        }, $content);
+
         return $content;
+    }
+
+    protected function getFallbackHtmlForVariable(string $variableName, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
+    {
+        switch ($variableName) {
+            case 'tabela_fatura':
+                return $this->generateFaturasTableFallback($contrato);
+            case 'tabela_aluno':
+                return $this->generateAlunoTableFallback($contrato);
+            case 'info_responsaveis':
+                return $this->generateResponsaveisInfo($contrato);
+            case 'assinaturas_representantes':
+                return $this->generateAssinaturasUnidade($unidade);
+            case 'assinaturas_responsaveis':
+                return $this->generateAssinaturasResponsaveis($contrato);
+            case 'assinatura_pai':
+                return $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo);
+            case 'assinatura_mae':
+                return $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo);
+            default:
+                return '';
+        }
     }
 
     protected function generateAssinaturaBlock(string $titulo, ?string $extra = null, ?string $cpf = null): string
@@ -130,7 +173,7 @@ class ContractTemplateService
         );
     }
 
-    protected function generateAlunoTable(Contrato $contrato): string
+    protected function generateAlunoTableFallback(Contrato $contrato): string
     {
         $mat = $contrato->matricula;
         if (! $mat) {
@@ -138,21 +181,6 @@ class ContractTemplateService
         }
 
         $aluno = $mat->pessoa;
-
-        // Busca configuração customizada no banco
-        $config = Configuracao::where('campo', 'template_tabela_aluno')->first();
-        if ($config && ! empty($config->valor)) {
-            try {
-                return Blade::render($config->valor, [
-                    'contrato' => $contrato,
-                    'aluno' => $aluno,
-                    'matricula' => $mat,
-                ]);
-            } catch (\Throwable $e) {
-                logger()->error('Erro ao renderizar template customizado de tabela de aluno: '.$e->getMessage());
-            }
-        }
-
         $nome = $aluno?->nome ?? '-';
         $nascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
         $cpf = $aluno?->cpf ?? '-';
@@ -203,25 +231,12 @@ class ContractTemplateService
         return implode('<br>', $info);
     }
 
-    protected function generateFaturasTable(Contrato $contrato): string
+    protected function generateFaturasTableFallback(Contrato $contrato): string
     {
         $faturas = $contrato->faturas->sortBy('vencimento');
 
         if ($faturas->isEmpty()) {
             return 'Nenhuma fatura encontrada.';
-        }
-
-        // Busca configuração customizada no banco
-        $config = Configuracao::where('campo', 'template_tabela_faturas')->first();
-        if ($config && ! empty($config->valor)) {
-            try {
-                return Blade::render($config->valor, [
-                    'contrato' => $contrato,
-                    'faturas' => $faturas,
-                ]);
-            } catch (\Throwable $e) {
-                logger()->error('Erro ao renderizar template customizado de tabela de faturas: '.$e->getMessage());
-            }
         }
 
         $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black;">';
