@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\TemplateContratos\Schemas;
 
+use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -31,12 +31,10 @@ class TemplateContratoForm
 
                 Section::make('Conteúdo do Contrato')
                     ->schema([
-                        Textarea::make('conteudo')
-                            ->label('Conteúdo do Contrato (HTML / Blade)')
+                        TinyEditor::make('conteudo')
+                            ->label('Conteúdo do Contrato')
                             ->required()
-                            ->rows(30)
-                            ->columnSpanFull()
-                            ->extraInputAttributes(['style' => 'font-family: monospace; font-size: 13px; line-height: 1.5;']),
+                            ->columnSpanFull(),
 
                         Placeholder::make('ajuda_blade')
                             ->label('Ajuda do Editor e Variáveis')
@@ -44,8 +42,8 @@ class TemplateContratoForm
                             ->content(function () {
                                 $html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm bg-gray-50 dark:bg-gray-900/50 p-5 rounded-lg border border-gray-100 dark:border-gray-800">';
                                 $html .= '<div>';
-                                $html .= '<h4 class="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Tabelas e Assinaturas Prontas</h4>';
-                                $html .= '<p class="text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">Para inserir tabelas prontas de faturas/alunos ou linhas de assinatura diretamente, digite as variáveis abaixo exatamente como texto plano:</p>';
+                                $html .= '<h4 class="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Tabelas e Assinaturas Prontas (Sem Código Fonte)</h4>';
+                                $html .= '<p class="text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">Para desenhar tabelas prontas de faturas/alunos ou linhas de assinatura diretamente pelo editor visual (sem alternar para modo código), digite as variáveis abaixo exatamente como texto plano:</p>';
                                 $html .= '<ul class="space-y-1 text-xs font-mono text-gray-600 dark:text-gray-400">';
                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{!! $tabelaFaturas !!}</code> - Tabela de faturas</li>';
                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{!! $tabelaAluno !!}</code> - Tabela com dados do Aluno</li>';
