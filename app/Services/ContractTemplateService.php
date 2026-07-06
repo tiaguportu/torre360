@@ -96,6 +96,7 @@ class ContractTemplateService
                     // Renderiza o template da macro customizada usando Blade
                     return Blade::render($config->valor, [
                         'contrato' => $contrato,
+                        'matricula' => $contrato->matricula,
                         'aluno' => $aluno,
                         'unidade' => $unidade,
                         'responsaveis' => $contrato->responsaveisFinanceiros,
