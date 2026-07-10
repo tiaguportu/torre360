@@ -50,8 +50,8 @@
             padding: 6px 10px !important;
         }
         .template-content th {
-            font-weight: bold;
-            background-color: #f2f2f2;
+            font-weight: bold !important;
+            background-color: #f2f2f2 !important;
         }
         .template-content p {
             margin-bottom: 1rem !important;
@@ -132,16 +132,21 @@
         }
 
         table.alunos {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 10px 0 !important;
+            border: 1px solid #000000 !important;
         }
 
         table.alunos th,
         table.alunos td {
-            border: 1px solid #000;
-            padding: 5px;
-            text-align: left;
+            border: 1px solid #000000 !important;
+            padding: 5px !important;
+            text-align: left !important;
+        }
+        table.alunos th {
+            font-weight: bold !important;
+            background-color: #f2f2f2 !important;
         }
     </style>
 </head>

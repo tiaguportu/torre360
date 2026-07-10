@@ -54,6 +54,23 @@
             min-height: 1rem;
         }
 
+        table.alunos {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 10px 0 !important;
+            border: 1px solid #000000 !important;
+        }
+        table.alunos th,
+        table.alunos td {
+            border: 1px solid #000000 !important;
+            padding: 5px !important;
+            text-align: left !important;
+        }
+        table.alunos th {
+            font-weight: bold !important;
+            background-color: #f2f2f2 !important;
+        }
+
 
         @media print {
             .no-print {
@@ -63,6 +80,8 @@
                 background-color: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .max-w-4xl {
                 max-width: 100% !important;
@@ -79,6 +98,21 @@
             }
             .border-b {
                 border-bottom: none !important;
+            }
+            .template-content table,
+            table.alunos {
+                border-collapse: collapse !important;
+                border: 1px solid #000000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .template-content th,
+            .template-content td,
+            table.alunos th,
+            table.alunos td {
+                border: 1px solid #000000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
     </style>
