@@ -49,6 +49,10 @@
             font-weight: bold;
             background-color: #f3f4f6;
         }
+        .template-content p {
+            margin-bottom: 1rem !important;
+            min-height: 1rem;
+        }
 
 
         @media print {

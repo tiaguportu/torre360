@@ -53,6 +53,10 @@
             font-weight: bold;
             background-color: #f2f2f2;
         }
+        .template-content p {
+            margin-bottom: 1rem !important;
+            min-height: 1rem;
+        }
 
 
         .header {
