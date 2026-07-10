@@ -73,15 +73,27 @@
 
 
         @media print {
-            .no-print {
-                display: none !important;
+            * {
+                float: none !important;
+                position: static !important;
+                overflow: visible !important;
+                box-sizing: border-box !important;
             }
-            body {
+            body, html {
                 background-color: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+            }
+            .flex, .flex-col, .grid, .overflow-hidden, .overflow-y-auto {
+                display: block !important;
+                overflow: visible !important;
+            }
+            .no-print {
+                display: none !important;
             }
             .max-w-4xl {
                 max-width: 100% !important;
@@ -91,10 +103,11 @@
                 border-radius: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                display: block !important;
             }
-            .overflow-y-auto {
-                overflow: visible !important;
+            .p-8, .sm\:p-12 {
                 padding: 0 !important;
+                overflow: visible !important;
             }
             .border-b {
                 border-bottom: none !important;
