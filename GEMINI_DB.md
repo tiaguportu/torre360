@@ -187,7 +187,14 @@ Estrutura de ensino e turmas.
 
 ### `template_contratos`
 - **Representa:** Modelos de contrato com conteúdo HTML e macros.
-- **Campos Principais:** `nome`, `conteudo` (longText), `cabecalho` (longText, nullable), `rodape` (longText, nullable), `is_padrao` (boolean).
+- **Campos Principais:**
+    - `nome`: Identificação do template.
+    - `versao`: Versão do template (1 = HTML/Editor Visual, 2 = ODT/Arquivo Externo).
+    - `cabecalho` (longText, nullable): Conteúdo de cabeçalho (utilizado na V1).
+    - `conteudo` (longText): Conteúdo principal (utilizado na V1).
+    - `rodape` (longText, nullable): Conteúdo de rodapé (utilizado na V1).
+    - `arquivo_odt` (string, nullable): Caminho do arquivo ODT carregado para o template (utilizado na V2).
+    - `is_padrao` (boolean): Flag que indica se este é o modelo padrão ativo no sistema.
 - **Relacionamentos:** HasMany `contrato`.
 
 ### `faturas` e `item_faturas`

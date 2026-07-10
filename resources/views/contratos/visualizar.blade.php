@@ -145,10 +145,16 @@
         <div class="bg-gray-800 text-white p-4 flex justify-between items-center no-print">
             <h1 class="text-xl font-bold">Visualização do Contrato</h1>
             <div class="flex gap-4">
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition">
-                    Imprimir / Salvar PDF
-                </button>
-                <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition">
+                @if(isset($is_v2) && $is_v2)
+                    <a href="{{ route('contratos.pdf', $contrato) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition text-center flex items-center">
+                        Visualizar / Imprimir PDF
+                    </a>
+                @else
+                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition">
+                        Imprimir / Salvar PDF
+                    </button>
+                @endif
+                <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition flex items-center">
                     Voltar
                 </a>
             </div>
@@ -168,18 +174,24 @@
                 </div>
             @endif
 
-            @include('pdfs.contrato', [
-                'contrato' => $contrato,
-                'matricula' => $matricula,
-                'aluno' => $aluno,
-                'responsavel' => $responsavel,
-                'serie' => $serie,
-                'curso' => $curso,
-                'periodoLetivo' => $periodoLetivo,
-                'conteudo_template' => $conteudo_template ?? null,
-                'cabecalho_template' => $cabecalho_template ?? null,
-                'rodape_template' => $rodape_template ?? null,
-            ])
+            @if(isset($is_v2) && $is_v2)
+                <div class="w-full rounded-lg overflow-hidden border border-gray-200 shadow-inner">
+                    <iframe src="{{ route('contratos.pdf', $contrato) }}" class="w-full h-[750px]" style="border: none;"></iframe>
+                </div>
+            @else
+                @include('pdfs.contrato', [
+                    'contrato' => $contrato,
+                    'matricula' => $matricula,
+                    'aluno' => $aluno,
+                    'responsavel' => $responsavel,
+                    'serie' => $serie,
+                    'curso' => $curso,
+                    'periodoLetivo' => $periodoLetivo,
+                    'conteudo_template' => $conteudo_template ?? null,
+                    'cabecalho_template' => $cabecalho_template ?? null,
+                    'rodape_template' => $rodape_template ?? null,
+                ])
+            @endif
         </div>
 
         <!-- Footer com ação de Assinatura -->

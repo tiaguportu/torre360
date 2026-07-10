@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\Configuracao;
 use App\Models\Contrato;
 use App\Models\Pessoa;
+use App\Models\TemplateContrato;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Storage;
 
 class ContractTemplateService
 {
@@ -367,5 +369,213 @@ class ContractTemplateService
         $html .= '</tbody></table>';
 
         return $html;
+    }
+
+    public function generatePdfFromOdt(Contrato $contrato, TemplateContrato $template): string
+    {
+        if (empty($template->arquivo_odt) || ! Storage::disk('local')->exists($template->arquivo_odt)) {
+            throw new \Exception("Arquivo ODT do template de contrato #{$template->id} não encontrado.");
+        }
+
+        // Carrega relações necessárias caso não estejam presentes
+        $contrato->loadMissing([
+            'matricula.pessoa.responsaveis',
+            'matricula.turma.serie.curso.unidade.representantesLegais',
+            'responsaveisFinanceiros.pessoa.enderecos',
+            'faturas',
+        ]);
+
+        $tempDir = storage_path('app/temp');
+        if (! file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $odtFileName = 'contrato_'.$contrato->id.'_'.uniqid().'.odt';
+        $tempOdtPath = $tempDir.DIRECTORY_SEPARATOR.$odtFileName;
+
+        // Copia o ODT original do storage para o local temporário
+        $odtStream = Storage::disk('local')->get($template->arquivo_odt);
+        file_put_contents($tempOdtPath, $odtStream);
+
+        // Processa o XML dentro do ZIP do ODT
+        $zip = new \ZipArchive;
+        if ($zip->open($tempOdtPath) === true) {
+            $contentXml = $zip->getFromName('content.xml');
+            $stylesXml = $zip->getFromName('styles.xml');
+
+            if ($contentXml) {
+                $contentXml = $this->processOdtXml($contentXml, $contrato);
+                $zip->deleteName('content.xml');
+                $zip->addFromString('content.xml', $contentXml);
+            }
+
+            if ($stylesXml) {
+                $stylesXml = $this->processOdtXml($stylesXml, $contrato);
+                $zip->deleteName('styles.xml');
+                $zip->addFromString('styles.xml', $stylesXml);
+            }
+
+            $zip->close();
+        } else {
+            throw new \Exception('Não foi possível abrir o arquivo ODT temporário.');
+        }
+
+        // Converte para PDF usando LibreOffice
+        $libreOfficePath = config('services.libreoffice.path') ?: env('LIBREOFFICE_PATH');
+        if (! $libreOfficePath) {
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                $defaultWinPath = 'C:\\Program Files\\LibreOffice\\program\\soffice.exe';
+                if (file_exists($defaultWinPath)) {
+                    $libreOfficePath = '"'.$defaultWinPath.'"';
+                } else {
+                    $libreOfficePath = 'soffice';
+                }
+            } else {
+                $libreOfficePath = 'soffice';
+            }
+        } else {
+            $libreOfficePath = '"'.trim($libreOfficePath, '"').'"';
+        }
+
+        // Comando síncrono
+        $command = "{$libreOfficePath} --headless --convert-to pdf --outdir ".escapeshellarg($tempDir).' '.escapeshellarg($tempOdtPath);
+
+        exec($command, $output, $returnVar);
+
+        $pdfFileName = pathinfo($odtFileName, PATHINFO_FILENAME).'.pdf';
+        $tempPdfPath = $tempDir.DIRECTORY_SEPARATOR.$pdfFileName;
+
+        if (! file_exists($tempPdfPath)) {
+            @unlink($tempOdtPath);
+            throw new \Exception("Erro na conversão do ODT para PDF. Verifique se o LibreOffice está instalado e no PATH do sistema. Comando executado: {$command}. Output: ".implode("\n", $output));
+        }
+
+        $pdfContent = file_get_contents($tempPdfPath);
+
+        // Limpa arquivos temporários
+        @unlink($tempOdtPath);
+        @unlink($tempPdfPath);
+
+        return $pdfContent;
+    }
+
+    protected function processOdtXml(string $xml, Contrato $contrato): string
+    {
+        // Limpa tags XML que quebram as expressões no LibreOffice
+        // Limpa tags dentro de {{...}} e {{!!...!!}}
+        $xml = preg_replace_callback('/\{\{.*?\}\}/s', function ($matches) {
+            return preg_replace('/<[^>]*>/', '', $matches[0]);
+        }, $xml);
+
+        // Limpa tags dentro de ${...}
+        $xml = preg_replace_callback('/\$\{.*?\}/s', function ($matches) {
+            return preg_replace('/<[^>]*>/', '', $matches[0]);
+        }, $xml);
+
+        // Preparar variáveis para o Blade
+        $aluno = $contrato->matricula?->pessoa;
+        $unidade = $contrato->matricula?->turma?->serie?->curso?->unidade;
+        $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;
+
+        $bladeData = [
+            'contrato' => $contrato,
+            'aluno' => $aluno,
+            'unidade' => $unidade,
+            'responsavel' => $responsavel,
+            'responsaveis' => $contrato->responsaveisFinanceiros,
+            'faturas' => $contrato->faturas,
+        ];
+
+        // Substituir as expressões do tipo {{ $variavel }} ou {{ expression }}
+        $xml = preg_replace_callback('/\{\{(.*?)\}\}/s', function ($matches) use ($bladeData) {
+            $expression = trim($matches[1]);
+
+            if (str_starts_with($expression, '!!') && str_ends_with($expression, '!!')) {
+                $expression = trim(substr($expression, 2, -2));
+            }
+
+            if (preg_match('/^[a-zA-Z_]\w*$/', $expression)) {
+                $expression = '$'.$expression;
+            }
+
+            try {
+                $rendered = Blade::render('{{ '.$expression.' }}', $bladeData);
+                $rendered = str_replace(['<br>', '<br/>', '<br />'], '<text:line-break/>', $rendered);
+                $rendered = strip_tags($rendered, '<text:line-break>');
+
+                return htmlspecialchars($rendered, ENT_QUOTES, 'UTF-8', false);
+            } catch (\Throwable $e) {
+                logger()->error('Erro ao renderizar expressao ODT: '.$expression.' - '.$e->getMessage());
+
+                return $matches[0];
+            }
+        }, $xml);
+
+        // Substituir expressões do tipo ${aluno.nome}
+        $xml = preg_replace_callback('/\$\{(.*?)\}/s', function ($matches) use ($bladeData) {
+            $path = trim($matches[1]);
+
+            $parts = explode('.', $path);
+            $expression = '$'.array_shift($parts);
+            foreach ($parts as $part) {
+                $expression .= '->'.$part;
+            }
+
+            try {
+                $rendered = Blade::render('{{ '.$expression.' }}', $bladeData);
+                $rendered = str_replace(['<br>', '<br/>', '<br />'], '<text:line-break/>', $rendered);
+                $rendered = strip_tags($rendered, '<text:line-break>');
+
+                return htmlspecialchars($rendered, ENT_QUOTES, 'UTF-8', false);
+            } catch (\Throwable $e) {
+                logger()->error('Erro ao renderizar expressao ${} no ODT: '.$path.' - '.$e->getMessage());
+
+                return $matches[0];
+            }
+        }, $xml);
+
+        // Processamento da Tabela Dinâmica de Faturas
+        $xml = $this->processOdtFaturasTable($xml, $contrato);
+
+        return $xml;
+    }
+
+    protected function processOdtFaturasTable(string $xml, Contrato $contrato): string
+    {
+        $pattern = '/<table:table-row[^>]*>(?:(?!<\/table:table-row>).)*?\[fatura\.(?:parcela|vencimento|valor|valor_original)\].*?<\/table:table-row>/s';
+
+        if (preg_match($pattern, $xml, $matches)) {
+            $rowTemplate = $matches[0];
+            $faturas = $contrato->faturas->sortBy('vencimento');
+
+            $newRowsXml = '';
+            $i = 1;
+            foreach ($faturas as $fatura) {
+                $processedRow = $rowTemplate;
+
+                $valorFormatado = 'R$ '.number_format($fatura->valor, 2, ',', '.');
+                $valorOriginalFormatado = 'R$ '.number_format($fatura->valor_bruto, 2, ',', '.');
+                $vencimentoFormatado = Carbon::parse($fatura->vencimento)->format('d/m/Y');
+
+                $processedRow = str_replace('[fatura.parcela]', $i++, $processedRow);
+                $processedRow = str_replace('[fatura.vencimento]', $vencimentoFormatado, $processedRow);
+                $processedRow = str_replace('[fatura.valor]', htmlspecialchars($valorFormatado, ENT_QUOTES, 'UTF-8'), $processedRow);
+                $processedRow = str_replace('[fatura.valor_original]', htmlspecialchars($valorOriginalFormatado, ENT_QUOTES, 'UTF-8'), $processedRow);
+
+                $newRowsXml .= $processedRow;
+            }
+
+            if ($newRowsXml === '') {
+                $newRowsXml = str_replace(
+                    ['[fatura.parcela]', '[fatura.vencimento]', '[fatura.valor]', '[fatura.valor_original]'],
+                    ['-', 'Nenhuma fatura', '-', '-'],
+                    $rowTemplate
+                );
+            }
+
+            $xml = str_replace($rowTemplate, $newRowsXml, $xml);
+        }
+
+        return $xml;
     }
 }

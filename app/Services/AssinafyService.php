@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Contrato;
-use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Client\Response;
@@ -149,31 +148,32 @@ class AssinafyService
             // 1. Gerar PDF
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
 
-            // Lógica de Template Dinâmico
-            $template = $contrato->templateContrato
-                ?? TemplateContrato::where('is_padrao', true)->first();
-
-            $conteudoTemplate = null;
-            $cabecalhoTemplate = null;
-            $rodapeTemplate = null;
-            if ($template) {
+            if ($template && $template->versao == 2) {
                 $templateService = app(ContractTemplateService::class);
-                $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
-                $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
-                $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
-            }
+                $pdfContent = $templateService->generatePdfFromOdt($contrato, $template);
+            } else {
+                $conteudoTemplate = null;
+                $cabecalhoTemplate = null;
+                $rodapeTemplate = null;
+                if ($template) {
+                    $templateService = app(ContractTemplateService::class);
+                    $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
+                    $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
+                    $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
+                }
 
-            $pdfContent = Pdf::loadView('pdfs.contrato', [
-                'contrato' => $contrato,
-                'matricula' => $matricula,
-                'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
-                'serie' => $matricula->turma?->serie,
-                'curso' => $matricula->turma?->serie?->curso,
-                'periodoLetivo' => $matricula->periodoLetivo,
-                'conteudo_template' => $conteudoTemplate,
-                'cabecalho_template' => $cabecalhoTemplate,
-                'rodape_template' => $rodapeTemplate,
-            ])->output();
+                $pdfContent = Pdf::loadView('pdfs.contrato', [
+                    'contrato' => $contrato,
+                    'matricula' => $matricula,
+                    'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
+                    'serie' => $matricula->turma?->serie,
+                    'curso' => $matricula->turma?->serie?->curso,
+                    'periodoLetivo' => $matricula->periodoLetivo,
+                    'conteudo_template' => $conteudoTemplate,
+                    'cabecalho_template' => $cabecalhoTemplate,
+                    'rodape_template' => $rodapeTemplate,
+                ])->output();
+            }
 
             // --- PASSO 1: Upload do Documento ---
             Notification::make()->title('Passo 1/4: Realizando upload do documento...')->info()->send();
