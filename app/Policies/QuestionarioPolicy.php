@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\Questionario;
-use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -13,36 +12,13 @@ class QuestionarioPolicy
 {
     use HandlesAuthorization;
 
-    public function before(AuthUser $authUser, string $ability): ?bool
-    {
-        /** @var User $authUser */
-        if ($authUser->hasRole('super_admin')) {
-            return true;
-        }
-
-        return null;
-    }
-
     public function viewAny(AuthUser $authUser): bool
     {
-        if ($authUser->can('ViewAny:Questionario')) {
-            return true;
-        }
-
-        return request()->routeIs('*.questionarios.responder');
+        return $authUser->can('ViewAny:Questionario');
     }
 
     public function view(AuthUser $authUser, Questionario $questionario): bool
     {
-        if (request()->routeIs('*.questionarios.responder')) {
-            return $questionario->podeSerRespondidoPor($authUser);
-        }
-
-        /** @var User $authUser */
-        if ($questionario->ehDono($authUser) || $questionario->ehObservador($authUser)) {
-            return true;
-        }
-
         return $authUser->can('View:Questionario');
     }
 
@@ -53,21 +29,11 @@ class QuestionarioPolicy
 
     public function update(AuthUser $authUser, Questionario $questionario): bool
     {
-        /** @var User $authUser */
-        if ($questionario->ehDono($authUser)) {
-            return true;
-        }
-
         return $authUser->can('Update:Questionario');
     }
 
     public function delete(AuthUser $authUser, Questionario $questionario): bool
     {
-        /** @var User $authUser */
-        if ($questionario->ehDono($authUser)) {
-            return true;
-        }
-
         return $authUser->can('Delete:Questionario');
     }
 
