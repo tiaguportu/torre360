@@ -41,6 +41,7 @@ class ContractTemplateService
         $assinaturaPai = $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo, $contrato);
         $assinaturaMae = $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo, $contrato);
         $assinaturaResponsavelFinanceiro = $this->generateAssinaturaResponsavelFinanceiro($contrato, $aluno, $tiposVinculo);
+        $assinaturaResponsavelLegalUnidade = $this->generateAssinaturasUnidade($unidade);
 
         try {
             return Blade::render($html, [
@@ -58,6 +59,7 @@ class ContractTemplateService
                 'assinaturaPai' => $assinaturaPai,
                 'assinaturaMae' => $assinaturaMae,
                 'assinaturaResponsavelFinanceiro' => $assinaturaResponsavelFinanceiro,
+                'assinaturaResponsavelLegalUnidade' => $assinaturaResponsavelLegalUnidade,
             ]);
         } catch (\Throwable $e) {
             if (app()->runningUnitTests()) {
@@ -143,6 +145,8 @@ class ContractTemplateService
                 return $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo, $contrato);
             case 'assinatura_responsavel_financeiro':
                 return $this->generateAssinaturaResponsavelFinanceiro($contrato, $aluno, $tiposVinculo);
+            case 'assinatura_responsavel_legal_unidade':
+                return $this->generateAssinaturasUnidade($unidade);
             default:
                 return '';
         }

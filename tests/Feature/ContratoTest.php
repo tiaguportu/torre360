@@ -3,10 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\Contrato;
+use App\Models\Curso;
+use App\Models\InstituicaoEnsino;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
+use App\Models\Serie;
 use App\Models\TipoVinculo;
+use App\Models\Turma;
+use App\Models\Turno;
+use App\Models\Unidade;
 use App\Services\ContractTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -338,5 +344,78 @@ class ContratoTest extends TestCase
         $this->assertStringContainsString('Maria da Silva - Mãe', $htmlResult);
         $this->assertStringNotContainsString('Maria da Silva - Mãe e Responsável Financeira', $htmlResult);
         $this->assertStringContainsString('Tio Patinhas - Responsável Financeiro', $htmlResult);
+    }
+
+    public function test_assinatura_responsavel_legal_unidade(): void
+    {
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Joãozinho da Silva',
+        ]);
+
+        // Cria a instituição
+        $instituicao = InstituicaoEnsino::create([
+            'nome' => 'Escola Teste',
+            'flag_ativo' => true,
+        ]);
+
+        // Cria a unidade e o representante legal
+        $unidade = Unidade::create([
+            'nome' => 'Unidade Teste',
+            'instituicao_ensino_id' => $instituicao->id,
+            'flag_ativo' => true,
+        ]);
+
+        $rep = Pessoa::factory()->create([
+            'nome' => 'Diretor Presidente',
+            'cpf' => '999.999.999-99',
+        ]);
+
+        $unidade->representantesLegais()->attach($rep->id, ['cargo' => 'Diretor']);
+
+        // Configura curso -> serie -> turma vinculada a unidade
+        $curso = Curso::create([
+            'nome_interno' => 'Curso Teste',
+            'nome_externo' => 'Curso Teste',
+            'unidade_id' => $unidade->id,
+        ]);
+
+        $serie = Serie::create([
+            'nome' => 'Serie Teste',
+            'curso_id' => $curso->id,
+            'sistema_avaliacao' => 'Parecer',
+        ]);
+
+        $turno = Turno::create([
+            'nome' => 'Tarde',
+            'hora_inicio' => '13:00:00',
+            'hora_fim' => '18:00:00',
+        ]);
+
+        $turma = Turma::create([
+            'nome' => 'Turma Teste',
+            'serie_id' => $serie->id,
+            'turno_id' => $turno->id,
+            'tipo_avaliacao' => 'notas',
+        ]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turma->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 12000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        $service = new ContractTemplateService;
+
+        // 1. Testa com a macro
+        $htmlResult = $service->process($contrato, 'Assinatura Unidade: {{!! assinatura_responsavel_legal_unidade !!}}');
+        $this->assertStringContainsString('Diretor Presidente - Diretor', $htmlResult);
+
+        // 2. Testa com a variável Blade
+        $htmlResultBlade = $service->process($contrato, 'Assinatura Unidade: {!! $assinaturaResponsavelLegalUnidade !!}');
+        $this->assertStringContainsString('Diretor Presidente - Diretor', $htmlResultBlade);
     }
 }

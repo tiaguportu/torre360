@@ -1159,6 +1159,7 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `{{!! $assinaturaPai !!}}`: Insere a linha de assinatura específica do Pai do aluno (configuração: `template_contrato_assinatura_pai`).
     - `{{!! $assinaturaMae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`).
     - `{{!! $assinaturaResponsavelFinanceiro !!}}`: Insere a linha de assinatura específica do Responsável Financeiro (configuração: `template_contrato_assinatura_responsavel_financeiro`).
+    - `{{!! $assinaturaResponsavelLegalUnidade !!}}`: Insere a linha de assinatura do Representante Legal da Unidade de Ensino (configuração: `template_contrato_assinatura_responsavel_legal_unidade`).
 
 ---
 

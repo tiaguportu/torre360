@@ -51,6 +51,7 @@ class TemplateContratoForm
                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $assinaturaPai !!}}</code> - Assinatura do Pai</li>';
                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $assinaturaMae !!}}</code> - Assinatura da Mãe</li>';
                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $assinaturaResponsavelFinanceiro !!}}</code> - Assinatura do Responsável Financeiro</li>';
+                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{!! $assinaturaResponsavelLegalUnidade !!}}</code> - Assinatura do Resp. Legal da Unidade</li>';
                                 $html .= '</ul>';
                                 $html .= '</div>';
                                 $html .= '<div>';
