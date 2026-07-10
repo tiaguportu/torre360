@@ -249,4 +249,94 @@ class ContratoTest extends TestCase
         $this->assertStringContainsString('Maria da Silva - Mãe', $htmlResultBlade);
         $this->assertStringContainsString('Tio Patinhas - Responsável Financeiro', $htmlResultBlade);
     }
+
+    public function test_assinaturas_responsaveis_consolidada(): void
+    {
+        // Garante os tipos de vinculo no banco
+        TipoVinculo::updateOrCreate(['id' => 1], ['nome' => 'Pai']);
+        TipoVinculo::updateOrCreate(['id' => 2], ['nome' => 'Mãe']);
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Joãozinho da Silva',
+            'data_nascimento' => '2015-05-15',
+            'cpf' => '123.456.789-00',
+        ]);
+
+        $pai = Pessoa::factory()->create([
+            'nome' => 'José da Silva',
+            'cpf' => '111.111.111-11',
+        ]);
+
+        $mae = Pessoa::factory()->create([
+            'nome' => 'Maria da Silva',
+            'cpf' => '222.222.222-22',
+        ]);
+
+        $terceiro = Pessoa::factory()->create([
+            'nome' => 'Tio Patinhas',
+            'cpf' => '333.333.333-33',
+        ]);
+
+        $aluno->responsaveis()->attach($pai->id, ['tipo_vinculo_id' => 1]);
+        $aluno->responsaveis()->attach($mae->id, ['tipo_vinculo_id' => 2]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 12000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        $service = new ContractTemplateService;
+
+        // CENÁRIO 1: Pai é o responsável financeiro
+        $rfPai = ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $pai->id,
+        ]);
+        $contrato->refresh();
+
+        // Testa com a macro
+        $htmlResult = $service->process($contrato, 'Assinaturas: {{!! assinaturas_responsaveis !!}}');
+        $this->assertStringContainsString('José da Silva - Pai e Responsável Financeiro', $htmlResult);
+        $this->assertStringContainsString('Maria da Silva - Mãe', $htmlResult);
+        $this->assertStringNotContainsString('Maria da Silva - Mãe e Responsável Financeira', $htmlResult);
+        $this->assertStringNotContainsString('Responsável Financeiro</', $htmlResult); // Tio Patinhas não é responsável ainda
+
+        // Limpa responsavel financeiro
+        $rfPai->delete();
+        $contrato->refresh();
+
+        // CENÁRIO 2: Mãe é a responsável financeira
+        $rfMae = ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $mae->id,
+        ]);
+        $contrato->refresh();
+
+        $htmlResult = $service->process($contrato, 'Assinaturas: {{!! assinaturas_responsaveis !!}}');
+        $this->assertStringContainsString('José da Silva - Pai', $htmlResult);
+        $this->assertStringNotContainsString('José da Silva - Pai e Responsável Financeiro', $htmlResult);
+        $this->assertStringContainsString('Maria da Silva - Mãe e Responsável Financeira', $htmlResult);
+        $this->assertStringNotContainsString('Responsável Financeiro</', $htmlResult);
+
+        $rfMae->delete();
+        $contrato->refresh();
+
+        // CENÁRIO 3: Terceiro é o responsável financeiro
+        ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $terceiro->id,
+        ]);
+        $contrato->refresh();
+
+        $htmlResult = $service->process($contrato, 'Assinaturas: {{!! assinaturas_responsaveis !!}}');
+        $this->assertStringContainsString('José da Silva - Pai', $htmlResult);
+        $this->assertStringNotContainsString('José da Silva - Pai e Responsável Financeiro', $htmlResult);
+        $this->assertStringContainsString('Maria da Silva - Mãe', $htmlResult);
+        $this->assertStringNotContainsString('Maria da Silva - Mãe e Responsável Financeira', $htmlResult);
+        $this->assertStringContainsString('Tio Patinhas - Responsável Financeiro', $htmlResult);
+    }
 }

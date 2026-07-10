@@ -177,10 +177,41 @@ class ContractTemplateService
 
     protected function generateAssinaturasResponsaveis(Contrato $contrato): string
     {
+        $aluno = $contrato->matricula?->pessoa;
+        $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
+
+        $paiId = null;
+        $maeId = null;
         $html = '';
+
+        if ($aluno) {
+            // Assinatura do Pai
+            $pai = $aluno->responsaveis->first(function ($resp) use ($tiposVinculo) {
+                return $tiposVinculo->get($resp->pivot->tipo_vinculo_id) === 'Pai';
+            });
+            if ($pai) {
+                $paiId = $pai->id;
+                $html .= $this->generateAssinaturaParente($aluno, 'Pai', $tiposVinculo, $contrato);
+            }
+
+            // Assinatura da Mãe
+            $mae = $aluno->responsaveis->first(function ($resp) use ($tiposVinculo) {
+                return $tiposVinculo->get($resp->pivot->tipo_vinculo_id) === 'Mãe';
+            });
+            if ($mae) {
+                $maeId = $mae->id;
+                $html .= $this->generateAssinaturaParente($aluno, 'Mãe', $tiposVinculo, $contrato);
+            }
+        }
+
+        // Assinatura de Terceiros que sejam Responsáveis Financeiros
         foreach ($contrato->responsaveisFinanceiros as $rf) {
-            if ($rf->pessoa) {
-                $html .= $this->generateAssinaturaBlock('CONTRATANTE-ADERENTE', $rf->pessoa->nome, $rf->pessoa->cpf);
+            if ($rf->pessoa && $rf->pessoa_id !== $paiId && $rf->pessoa_id !== $maeId) {
+                $html .= $this->generateAssinaturaBlock(
+                    'CONTRATANTE-ADERENTE',
+                    $rf->pessoa->nome.' - Responsável Financeiro',
+                    $rf->pessoa->cpf
+                );
             }
         }
 

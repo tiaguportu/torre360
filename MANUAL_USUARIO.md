@@ -1153,10 +1153,12 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `{{!! $tabelaAluno !!}}`: Insere a tabela com dados cadastrais e acadêmicos do Aluno (configuração: `template_contrato_tabela_aluno`).
     - `{{!! $infoResponsaveis !!}}`: Insere o parágrafo corrido com a qualificação dos responsáveis financeiros e endereços (configuração: `template_contrato_info_responsaveis`).
     - `{{!! $assinaturasRepresentantes !!}}`: Insere as linhas de assinatura para os representantes legais da escola (configuração: `template_contrato_assinaturas_representantes`).
-    - `{{!! $assinaturasResponsaveis !!}}`: Insere as linhas de assinatura para todos os responsáveis do contrato (configuração: `template_contrato_assinaturas_responsaveis`).
-    - `{{!! $assinaturaPai !!}}`: Insere a linha de assinatura específica do Pai do aluno (configuração: `template_contrato_assinatura_pai`). Caso o Pai também seja o Responsável Financeiro do contrato, a assinatura constará com a observação "e Responsável Financeiro".
-    - `{{!! $assinaturaMae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`). Caso a Mãe também seja a Responsável Financeira do contrato, a assinatura constará com a observação "e Responsável Financeira".
-    - `{{!! $assinaturaResponsavelFinanceiro !!}}`: Insere a linha de assinatura do Responsável Financeiro (configuração: `template_contrato_assinatura_responsavel_financeiro`). Caso o Responsável Financeiro seja o Pai ou a Mãe, esta variável ficará vazia (pois a responsabilidade já é impressa na assinatura deles), sendo exibida apenas se for um terceiro.
+    - `{{!! $assinaturasResponsaveis !!}}`: Insere de forma consolidada e inteligente todas as linhas de assinatura necessárias do contrato (Pai, Mãe e Responsável Financeiro) (configuração: `template_contrato_assinaturas_responsaveis`). Ela aplica automaticamente as seguintes regras para simplificar o contrato:
+      - Caso o Pai ou a Mãe sejam também o Responsável Financeiro, as assinaturas deles constarão com a observação "e Responsável Financeiro(a)".
+      - A assinatura do Responsável Financeiro de terceiros é exibida somente se ele não for nem o Pai nem a Mãe, evitando duplicidade de linhas.
+    - `{{!! $assinaturaPai !!}}`: Insere a linha de assinatura específica do Pai do aluno (configuração: `template_contrato_assinatura_pai`).
+    - `{{!! $assinaturaMae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`).
+    - `{{!! $assinaturaResponsavelFinanceiro !!}}`: Insere a linha de assinatura específica do Responsável Financeiro (configuração: `template_contrato_assinatura_responsavel_financeiro`).
 
 ---
 
