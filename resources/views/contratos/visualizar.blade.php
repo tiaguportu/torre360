@@ -114,6 +114,14 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+            p, li, h1, h2, h3, h4, h5, h6, tr, td, th {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .clause-title, .clause-body {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
         }
     </style>
 </head>

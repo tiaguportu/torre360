@@ -35,6 +35,15 @@
             display: list-item !important;
             margin-bottom: 5px !important;
         }
+        
+        p, li, h1, h2, h3, h4, h5, h6, tr, td, th {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        .clause-title, .clause-body {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
 
         /* Ajuste de tabelas e bordas no PDF */
         .template-content table {
