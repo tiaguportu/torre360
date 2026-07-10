@@ -461,16 +461,36 @@ class ContractTemplateService
 
     protected function processOdtXml(string $xml, Contrato $contrato): string
     {
-        // Limpa tags XML que quebram as expressões no LibreOffice
-        // Limpa tags dentro de {{...}} e {{!!...!!}}
-        $xml = preg_replace_callback('/\{\{.*?\}\}/s', function ($matches) {
-            return preg_replace('/<[^>]*>/', '', $matches[0]);
+        // 1. Limpa tags XML de dentro das diretivas do Blade e decodifica entidades HTML/XML
+        $xml = preg_replace_callback('/@(if|unless|isset|empty|foreach|forelse|while|switch|case|default|break|continue|php|end[a-zA-Z_]+)(?:\s*\((?:(?>[^()]+)|(?R))*\))?/s', function ($matches) {
+            $cleaned = preg_replace('/<[^>]*>/', '', $matches[0]);
+
+            return htmlspecialchars_decode($cleaned, ENT_QUOTES);
         }, $xml);
 
-        // Limpa tags dentro de ${...}
-        $xml = preg_replace_callback('/\$\{.*?\}/s', function ($matches) {
-            return preg_replace('/<[^>]*>/', '', $matches[0]);
+        // 2. Limpa tags XML de dentro das expressões {{...}} e decodifica entidades HTML/XML
+        $xml = preg_replace_callback('/\{\{(.*?)\}\}/s', function ($matches) {
+            $cleaned = preg_replace('/<[^>]*>/', '', $matches[1]);
+            $decoded = htmlspecialchars_decode($cleaned, ENT_QUOTES);
+
+            return '{{'.$decoded.'}}';
         }, $xml);
+
+        // 3. Limpa tags XML de dentro das expressões ${...} e as converte para a sintaxe Blade padrão
+        $xml = preg_replace_callback('/\$\{(.*?)\}/s', function ($matches) {
+            $cleaned = preg_replace('/<[^>]*>/', '', $matches[1]);
+            $decoded = htmlspecialchars_decode($cleaned, ENT_QUOTES);
+            $parts = explode('.', $decoded);
+            $expression = '$'.array_shift($parts);
+            foreach ($parts as $part) {
+                $expression .= '->'.$part;
+            }
+
+            return '{{ '.$expression.' }}';
+        }, $xml);
+
+        // 4. Processamento da Tabela Dinâmica de Faturas (roda antes do Blade para substituir os placeholders)
+        $xml = $this->processOdtFaturasTable($xml, $contrato);
 
         // Preparar variáveis para o Blade
         $aluno = $contrato->matricula?->pessoa;
@@ -486,56 +506,15 @@ class ContractTemplateService
             'faturas' => $contrato->faturas,
         ];
 
-        // Substituir as expressões do tipo {{ $variavel }} ou {{ expression }}
-        $xml = preg_replace_callback('/\{\{(.*?)\}\}/s', function ($matches) use ($bladeData) {
-            $expression = trim($matches[1]);
+        // 5. Renderizar o XML completo usando Blade
+        try {
+            $xml = Blade::render($xml, $bladeData);
+        } catch (\Throwable $e) {
+            logger()->error('Erro ao renderizar content.xml completo com Blade: '.$e->getMessage());
+        }
 
-            if (str_starts_with($expression, '!!') && str_ends_with($expression, '!!')) {
-                $expression = trim(substr($expression, 2, -2));
-            }
-
-            if (preg_match('/^[a-zA-Z_]\w*$/', $expression)) {
-                $expression = '$'.$expression;
-            }
-
-            try {
-                $rendered = Blade::render('{{ '.$expression.' }}', $bladeData);
-                $rendered = str_replace(['<br>', '<br/>', '<br />'], '<text:line-break/>', $rendered);
-                $rendered = strip_tags($rendered, '<text:line-break>');
-
-                return htmlspecialchars($rendered, ENT_QUOTES, 'UTF-8', false);
-            } catch (\Throwable $e) {
-                logger()->error('Erro ao renderizar expressao ODT: '.$expression.' - '.$e->getMessage());
-
-                return $matches[0];
-            }
-        }, $xml);
-
-        // Substituir expressões do tipo ${aluno.nome}
-        $xml = preg_replace_callback('/\$\{(.*?)\}/s', function ($matches) use ($bladeData) {
-            $path = trim($matches[1]);
-
-            $parts = explode('.', $path);
-            $expression = '$'.array_shift($parts);
-            foreach ($parts as $part) {
-                $expression .= '->'.$part;
-            }
-
-            try {
-                $rendered = Blade::render('{{ '.$expression.' }}', $bladeData);
-                $rendered = str_replace(['<br>', '<br/>', '<br />'], '<text:line-break/>', $rendered);
-                $rendered = strip_tags($rendered, '<text:line-break>');
-
-                return htmlspecialchars($rendered, ENT_QUOTES, 'UTF-8', false);
-            } catch (\Throwable $e) {
-                logger()->error('Erro ao renderizar expressao ${} no ODT: '.$path.' - '.$e->getMessage());
-
-                return $matches[0];
-            }
-        }, $xml);
-
-        // Processamento da Tabela Dinâmica de Faturas
-        $xml = $this->processOdtFaturasTable($xml, $contrato);
+        // 6. Converter quebras de linha em conteúdo de texto para tags de quebra de linha do ODT
+        $xml = preg_replace('/([^>])\r?\n([^<])/', '$1<text:line-break/>$2', $xml);
 
         return $xml;
     }

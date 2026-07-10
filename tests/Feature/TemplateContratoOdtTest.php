@@ -141,4 +141,78 @@ class TemplateContratoOdtTest extends TestCase
         $this->assertStringContainsString('10/09/2026', $processedXml);
         $this->assertStringContainsString('R$ 1.200,00', $processedXml);
     }
+
+    public function test_estruturas_condicionais_e_loops_no_xml_do_odt()
+    {
+        Storage::fake('local');
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Carlos de Souza',
+            'data_nascimento' => '2015-05-15',
+        ]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'matricula_id' => $matricula->id,
+            'valor_total' => 2400.00,
+        ]);
+
+        // Simula XML contendo condicionais e loops com tags de formatação quebradas no meio
+        $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>
+        <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+            <office:body>
+                <office:text>
+                    <!-- Teste de condicional normal -->
+                    <text:p>@if($aluno-&gt;nome == "Carlos de Souza")</text:p>
+                    <text:p>Nome do Aluno coincide!</text:p>
+                    <text:p>@else</text:p>
+                    <text:p>Nome diferente!</text:p>
+                    <text:p>@endif</text:p>
+
+                    <!-- Teste de condicional com tags XML internas (simulando LibreOffice Writer) -->
+                    <text:p>@i<text:span>f</text:span>($contrato-&gt;valor_total &gt; 1000)</text:p>
+                    <text:p>Contrato de alto valor</text:p>
+                    <text:p>@en<text:span>dif</text:span></text:p>
+
+                    <!-- Teste de loop foreach repetindo parágrafos -->
+                    <text:p>Faturas:</text:p>
+                    @foreach($faturas as $f)
+                        <text:p>Parcela com vencimento em {{ \Carbon\Carbon::parse($f-&gt;vencimento)-&gt;format("d/m/Y") }}</text:p>
+                    @endforeach
+                </office:text>
+            </office:body>
+        </office:document-content>';
+
+        // Faturas de teste
+        Fatura::create([
+            'contrato_id' => $contrato->id,
+            'vencimento' => '2026-08-10',
+        ]);
+        Fatura::create([
+            'contrato_id' => $contrato->id,
+            'vencimento' => '2026-09-10',
+        ]);
+
+        // Processamento
+        $service = new ContractTemplateService;
+        $reflection = new \ReflectionClass(ContractTemplateService::class);
+        $method = $reflection->getMethod('processOdtXml');
+        $method->setAccessible(true);
+
+        $processedXml = $method->invokeArgs($service, [$xmlContent, $contrato]);
+
+        // Asserts do IF/ELSE
+        $this->assertStringContainsString('Nome do Aluno coincide!', $processedXml);
+        $this->assertStringNotContainsString('Nome diferente!', $processedXml);
+
+        // Asserts do IF com tags e entidades
+        $this->assertStringContainsString('Contrato de alto valor', $processedXml);
+
+        // Asserts do Foreach de faturas repetindo parágrafos
+        $this->assertStringContainsString('Parcela com vencimento em 10/08/2026', $processedXml);
+        $this->assertStringContainsString('Parcela com vencimento em 10/09/2026', $processedXml);
+    }
 }

@@ -330,6 +330,23 @@ O sistema também suporta a geração de contratos a partir de um modelo de arqu
      - `[fatura.valor_original]`: Valor bruto original da parcela.
    - O sistema identificará automaticamente essa linha e clonará ela para cada uma das parcelas do contrato no PDF final.
 5. **Geração de PDF:** Ao visualizar o contrato no sistema ou enviar para assinatura digital na plataforma Assinafy, o sistema lerá o arquivo `.odt`, traduzirá todas as variáveis e gerará o PDF do contrato utilizando o LibreOffice headless do servidor de forma 100% fiel à formatação do editor externo.
+6. **Condicionais e Loops (Blade):** Você pode usar a sintaxe nativa do Blade diretamente no texto do documento ODT para criar seções condicionais ou loops que repetem parágrafos inteiros:
+   - **Exemplo de Condicional:**
+     ```text
+     @if($aluno->idade > 18)
+     Cláusula de Maioridade: O aluno declara ser plenamente capaz...
+     @else
+     Cláusula de Assistência: O aluno é assistido por seu responsável legal...
+     @endif
+     ```
+   - **Exemplo de Loop (Repetir Parágrafo):**
+     ```text
+     Responsáveis Vinculados:
+     @foreach($responsaveis as $resp)
+     Nome: {{ $resp->pessoa->nome }} - CPF: {{ $resp->pessoa->cpf }}
+     @endforeach
+     ```
+   - As diretivas de controle e eco são limpas de tags internas do LibreOffice automaticamente antes do processamento.
 
 ### 6.7 Templates de Crachá V2 (Editor SVG)
 O sistema conta com um novo módulo de criação de crachás versão 2 (V2), utilizando o editor vetorial SVG-Edit, permitindo maior flexibilidade e controle visual do desenho.
