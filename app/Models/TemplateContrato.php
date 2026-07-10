@@ -13,6 +13,8 @@ class TemplateContrato extends Model
         'nome',
         'conteudo',
         'is_padrao',
+        'cabecalho',
+        'rodape',
     ];
 
     protected function casts(): array

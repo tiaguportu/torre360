@@ -187,7 +187,7 @@ Estrutura de ensino e turmas.
 
 ### `template_contratos`
 - **Representa:** Modelos de contrato com conteúdo HTML e macros.
-- **Campos Principais:** `nome`, `conteudo` (longText), `is_padrao` (boolean).
+- **Campos Principais:** `nome`, `conteudo` (longText), `cabecalho` (longText, nullable), `rodape` (longText, nullable), `is_padrao` (boolean).
 - **Relacionamentos:** HasMany `contrato`.
 
 ### `faturas` e `item_faturas`

@@ -307,6 +307,7 @@ O sistema permite a criação de modelos de contrato customizáveis com substitu
    - `{{FATURAS_TABELA}}`: Gera uma tabela com o cronograma de parcelas e vencimentos.
 5. **Template Padrão:** Marque a opção "Template Padrão" em um dos modelos para que ele seja selecionado automaticamente ao criar novos contratos.
 6. **Seleção no Contrato:** No formulário de **Contratos**, você pode escolher qual template deseja utilizar para aquele contrato específico.
+7. **Cabeçalho e Rodapé:** O formulário de edição/criação do template possui abas exclusivas para configuração de **Cabeçalho** e **Rodapé**. Nelas, você pode inserir imagens de logotipos, textos institucionais e informações da mantenedora utilizando o mesmo editor visual rico. Estes elementos serão aplicados automaticamente no topo e final do contrato (tanto na tela de visualização quanto no PDF enviado para assinatura digital).
 
 ### 6.7 Templates de Crachá V2 (Editor SVG)
 O sistema conta com um novo módulo de criação de crachás versão 2 (V2), utilizando o editor vetorial SVG-Edit, permitindo maior flexibilidade e controle visual do desenho.

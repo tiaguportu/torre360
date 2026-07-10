@@ -22,9 +22,13 @@ class VisualizarContratoController extends Controller
             ?? TemplateContrato::where('is_padrao', true)->first();
 
         $conteudoTemplate = null;
+        $cabecalhoTemplate = null;
+        $rodapeTemplate = null;
         if ($template) {
             $templateService = app(ContractTemplateService::class);
             $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
+            $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
+            $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
         }
 
         return view('contratos.visualizar', [
@@ -37,6 +41,8 @@ class VisualizarContratoController extends Controller
             'curso' => $matricula?->turma?->serie?->curso,
             'periodoLetivo' => $matricula?->periodoLetivo,
             'conteudo_template' => $conteudoTemplate,
+            'cabecalho_template' => $cabecalhoTemplate,
+            'rodape_template' => $rodapeTemplate,
         ]);
     }
 }

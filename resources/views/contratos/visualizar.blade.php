@@ -177,6 +177,8 @@
                 'curso' => $curso,
                 'periodoLetivo' => $periodoLetivo,
                 'conteudo_template' => $conteudo_template ?? null,
+                'cabecalho_template' => $cabecalho_template ?? null,
+                'rodape_template' => $rodape_template ?? null,
             ])
         </div>
 

@@ -190,9 +190,21 @@
     @endphp
 
     @if(isset($conteudo_template) && $conteudo_template)
+        @if(isset($cabecalho_template) && $cabecalho_template)
+            <div class="template-header" style="margin-bottom: 20px;">
+                {!! $cabecalho_template !!}
+            </div>
+        @endif
+
         <div class="template-content">
             {!! $conteudo_template !!}
         </div>
+
+        @if(isset($rodape_template) && $rodape_template)
+            <div class="template-footer" style="margin-top: 30px;">
+                {!! $rodape_template !!}
+            </div>
+        @endif
     @else
         <div class="header">
             <div class="center bold uppercase">
