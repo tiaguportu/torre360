@@ -659,6 +659,9 @@ class ContractTemplateService
             } elseif (str_contains($src, '/storage/')) {
                 $parts = explode('/storage/', $src);
                 $localPath = public_path('storage/'.end($parts));
+            } elseif (str_contains($src, '/visualizar-documento/')) {
+                $parts = explode('/visualizar-documento/', $src);
+                $localPath = storage_path('app/'.end($parts));
             }
 
             if ($localPath && file_exists($localPath)) {
