@@ -92,6 +92,7 @@ class MatriculasTable
                 EditAction::make(),
                 Action::make('pendencias')
                     ->label('Pendências')
+                    ->hiddenLabel()
                     ->tooltip('Ver Pendências da Matrícula')
                     ->icon(Heroicon::OutlinedExclamationTriangle)
                     ->color('danger')
