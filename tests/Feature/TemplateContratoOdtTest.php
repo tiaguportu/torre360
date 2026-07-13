@@ -215,4 +215,67 @@ class TemplateContratoOdtTest extends TestCase
         $this->assertStringContainsString('Parcela com vencimento em 10/08/2026', $processedXml);
         $this->assertStringContainsString('Parcela com vencimento em 10/09/2026', $processedXml);
     }
+
+    public function test_escape_de_arroba_e_formatacao_html_em_macros_no_odt()
+    {
+        Storage::fake('local');
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Carlos de Souza',
+            'data_nascimento' => '2015-05-15',
+        ]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'matricula_id' => $matricula->id,
+            'valor_total' => 2400.00,
+        ]);
+
+        // Simula XML contendo um email com @ e uma macro que retorna HTML (será simulado no fallback ou renderização)
+        $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>
+        <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0">
+            <office:automatic-styles>
+                <style:style style:name="Standard" style:family="text" />
+            </office:automatic-styles>
+            <office:body>
+                <office:text>
+                    <text:p>E-mail: contato@escolatorredemarfim.com.br</text:p>
+                    <text:p>{{!! infoResponsaveis !!}}</text:p>
+                </office:text>
+            </office:body>
+        </office:document-content>';
+
+        // Responsável financeiro para gerar o infoResponsaveis (contendo <strong> e quebra de linha)
+        $responsavel = Pessoa::factory()->create([
+            'nome' => 'Mauricio de Souza',
+            'cpf' => '123.456.789-00',
+        ]);
+        $contrato->responsaveisFinanceiros()->create([
+            'pessoa_id' => $responsavel->id,
+        ]);
+
+        // Processamento
+        $service = new ContractTemplateService;
+        $reflection = new \ReflectionClass(ContractTemplateService::class);
+        $method = $reflection->getMethod('processOdtXml');
+        $method->setAccessible(true);
+
+        $processedXml = $method->invokeArgs($service, [$xmlContent, $contrato]);
+
+        // Verifica se o arroba do email foi mantido e não quebrou a compilação do Blade
+        $this->assertStringContainsString('contato@escolatorredemarfim.com.br', $processedXml);
+
+        // Verifica se o estilo Negrito foi injetado nos estilos automáticos
+        $this->assertStringContainsString('style:name="Negrito"', $processedXml);
+
+        // Verifica se a macro infoResponsaveis (que retorna HTML com strong e br) foi convertida para ODT
+        // O HTML original gerado é: <strong>Mauricio de Souza</strong>, CPF: 123.456.789-00, residente em _______
+        // O convertido deve conter as tags de span Negrito e não conter tags HTML puras
+        $this->assertStringContainsString('<text:span text:style-name="Negrito">Mauricio de Souza</text:span>', $processedXml);
+        $this->assertStringNotContainsString('<strong>', $processedXml);
+        $this->assertStringNotContainsString('</strong>', $processedXml);
+    }
 }

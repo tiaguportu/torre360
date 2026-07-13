@@ -402,21 +402,22 @@ class ContractTemplateService
         // Processa o XML dentro do ZIP do ODT
         $zip = new \ZipArchive;
         if ($zip->open($tempOdtPath) === true) {
-            $contentXml = $zip->getFromName('content.xml');
-            $stylesXml = $zip->getFromName('styles.xml');
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
 
-            if ($contentXml) {
-                $contentXml = $this->processOdtXml($contentXml, $contrato);
-                $zip->deleteName('content.xml');
-                $zip->addFromString('content.xml', $contentXml);
+                // Processa apenas arquivos XML de texto (evita settings, meta e manifestos de sistema)
+                if (str_ends_with($filename, '.xml') &&
+                    ! in_array($filename, ['settings.xml', 'meta.xml', 'manifest.xml']) &&
+                    ! str_contains($filename, 'META-INF/')) {
+
+                    $xmlContent = $zip->getFromIndex($i);
+                    if ($xmlContent) {
+                        $processedXml = $this->processOdtXml($xmlContent, $contrato);
+                        $zip->deleteName($filename);
+                        $zip->addFromString($filename, $processedXml);
+                    }
+                }
             }
-
-            if ($stylesXml) {
-                $stylesXml = $this->processOdtXml($stylesXml, $contrato);
-                $zip->deleteName('styles.xml');
-                $zip->addFromString('styles.xml', $stylesXml);
-            }
-
             $zip->close();
         } else {
             throw new \Exception('Não foi possível abrir o arquivo ODT temporário.');
@@ -467,6 +468,17 @@ class ContractTemplateService
             return htmlspecialchars_decode($cleaned, ENT_QUOTES);
         }, $xml);
 
+        // Escapa arrobas que não sejam diretivas do Blade para evitar erros de compilação
+        $xml = preg_replace('/@(?!if\b|else\b|elseif\b|unless\b|isset\b|empty\b|foreach\b|forelse\b|while\b|switch\b|case\b|default\b|break\b|continue\b|php\b|end[a-zA-Z_]+\b)/', '{{ "@" }}', $xml);
+
+        // Garante que o estilo inline "Negrito" exista nos estilos automáticos do XML
+        if (str_contains($xml, '<office:automatic-styles>')) {
+            $styleDefinition = '<style:style style:name="Negrito" style:family="text"><style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-weight-complex="bold"/></style:style>';
+            if (! str_contains($xml, 'style:name="Negrito"')) {
+                $xml = str_replace('<office:automatic-styles>', '<office:automatic-styles>'.$styleDefinition, $xml);
+            }
+        }
+
         // 2. Limpa tags XML de dentro das expressões {{...}} e decodifica entidades HTML/XML
         $xml = preg_replace_callback('/\{\{(.*?)\}\}/s', function ($matches) {
             $cleaned = preg_replace('/<[^>]*>/', '', $matches[1]);
@@ -513,6 +525,9 @@ class ContractTemplateService
         try {
             $xml = Blade::render($xml, $bladeData);
         } catch (\Throwable $e) {
+            if (app()->runningUnitTests()) {
+                throw $e;
+            }
             logger()->error('Erro ao renderizar content.xml completo com Blade: '.$e->getMessage());
         }
 
@@ -589,11 +604,24 @@ class ContractTemplateService
                 $resolvedHtml = $this->getFallbackHtmlForVariable($variableNameSnake, $contrato, $aluno, $unidade, $tiposVinculo);
             }
 
-            // Converter o HTML resolvedHtml para formato compatível com o XML do ODT
-            $odtContent = preg_replace('/<br\s*\/?>/i', '<text:line-break/>', $resolvedHtml);
-            $odtContent = strip_tags($odtContent, '<text:line-break>');
+            // Escapa todo o HTML de forma segura antes de converter as tags básicas
+            $escapedHtml = htmlspecialchars($resolvedHtml, ENT_QUOTES, 'UTF-8', false);
 
-            return htmlspecialchars($odtContent, ENT_QUOTES, 'UTF-8', false);
+            // Converter tags básicas de quebra de linha
+            $odtContent = preg_replace('/&lt;br\s*\/?&gt;/i', '<text:line-break/>', $escapedHtml);
+            $odtContent = preg_replace('/&lt;\/div&gt;/i', '<text:line-break/>', $odtContent);
+            $odtContent = preg_replace('/&lt;\/p&gt;/i', '<text:line-break/>', $odtContent);
+
+            // Converter tags de negrito para o estilo "Negrito"
+            $odtContent = preg_replace('/&lt;strong&gt;/i', '<text:span text:style-name="Negrito">', $odtContent);
+            $odtContent = preg_replace('/&lt;\/strong&gt;/i', '</text:span>', $odtContent);
+            $odtContent = preg_replace('/&lt;b&gt;/i', '<text:span text:style-name="Negrito">', $odtContent);
+            $odtContent = preg_replace('/&lt;\/b&gt;/i', '</text:span>', $odtContent);
+
+            // Remove quaisquer outras tags HTML escapadas que restarem (como tabelas, links etc.)
+            $odtContent = preg_replace('/&lt;[^&]*&gt;/', '', $odtContent);
+
+            return $odtContent;
         }, $content);
 
         return $content;
