@@ -86,7 +86,7 @@
         }
 
         @media print {
-            * {
+            *:not(.template-header):not(.template-footer):not(.footer) {
                 float: none !important;
                 position: static !important;
                 overflow: visible !important;

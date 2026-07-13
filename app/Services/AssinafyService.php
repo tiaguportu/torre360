@@ -172,7 +172,7 @@ class AssinafyService
                     'conteudo_template' => $conteudoTemplate,
                     'cabecalho_template' => $cabecalhoTemplate,
                     'rodape_template' => $rodapeTemplate,
-                ])->output();
+                ])->setOption('isRemoteEnabled', true)->output();
             }
 
             // --- PASSO 1: Upload do Documento ---
