@@ -48,7 +48,7 @@ class ContractTemplateService
         $assinaturaResponsavelLegalUnidade = $this->generateAssinaturasUnidade($unidade);
 
         try {
-            return Blade::render($html, [
+            $renderedHtml = Blade::render($html, [
                 'contrato' => $contrato,
                 'unidade' => $unidade,
                 'aluno' => $aluno,
@@ -71,8 +71,23 @@ class ContractTemplateService
             }
             logger()->error('Erro ao renderizar template de contrato com Blade: '.$e->getMessage());
 
-            return $html;
+            $renderedHtml = $html;
         }
+
+        // Substitui chaves de paginação por elementos HTML para tratamento via CSS no DomPDF
+        $renderedHtml = str_replace(
+            ['{PAGINA_ATUAL}', '{PAGE_NUM}', '{TOTAL_PAGINAS}', '{PAGE_COUNT}'],
+            [
+                '<span class="page-number"></span>',
+                '<span class="page-number"></span>',
+                '<span class="page-count"></span>',
+                '<span class="page-count"></span>',
+            ],
+            $renderedHtml
+        );
+
+        // Processa imagens locais no HTML convertendo-as para Base64 para correta exibição no PDF
+        return $this->processHtmlImages($renderedHtml);
     }
 
     protected function preprocessBlade(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
@@ -627,5 +642,38 @@ class ContractTemplateService
         }, $content);
 
         return $content;
+    }
+
+    /**
+     * Processa todas as imagens locais no HTML e converte os caminhos locais (/storage/...)
+     * para Data-URI Base64, garantindo a renderização correta das imagens no DomPDF.
+     */
+    public function processHtmlImages(string $html): string
+    {
+        return preg_replace_callback('/<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>/i', function ($matches) {
+            $src = $matches[1];
+
+            $localPath = null;
+            if (str_starts_with($src, '/storage/')) {
+                $localPath = public_path(substr($src, 1));
+            } elseif (str_contains($src, '/storage/')) {
+                $parts = explode('/storage/', $src);
+                $localPath = public_path('storage/'.end($parts));
+            }
+
+            if ($localPath && file_exists($localPath)) {
+                try {
+                    $mimeType = mime_content_type($localPath) ?: 'image/jpeg';
+                    $data = file_get_contents($localPath);
+                    $base64 = 'data:'.$mimeType.';base64,'.base64_encode($data);
+
+                    return str_replace($src, $base64, $matches[0]);
+                } catch (\Throwable $e) {
+                    logger()->error('Erro ao converter imagem local do contrato para base64: '.$e->getMessage());
+                }
+            }
+
+            return $matches[0];
+        }, $html);
     }
 }

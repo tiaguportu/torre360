@@ -314,7 +314,9 @@ O sistema permite a criação de modelos de contrato customizáveis com substitu
    - `{{FATURAS_TABELA}}`: Gera uma tabela com o cronograma de parcelas e vencimentos.
 5. **Template Padrão:** Marque a opção "Template Padrão" em um dos modelos para que ele seja selecionado automaticamente ao criar novos contratos.
 6. **Seleção no Contrato:** No formulário de **Contratos**, você pode escolher qual template deseja utilizar para aquele contrato específico.
-7. **Cabeçalho e Rodapé:** O formulário de edição/criação do template possui abas exclusivas para configuração de **Cabeçalho** e **Rodapé**. Nelas, você pode inserir imagens de logotipos, textos institucionais e informações da mantenedora utilizando o mesmo editor visual rico. Estes elementos serão aplicados automaticamente no topo e final do contrato (tanto na tela de visualização quanto no PDF enviado para assinatura digital).
+7. **Cabeçalho e Rodapé:** O formulário de edição/criação do template possui abas exclusivas para configuração de **Cabeçalho** e **Rodapé**. Nelas, você pode inserir imagens de logotipos, textos institucionais e informações da mantenedora utilizando o mesmo editor visual rico. Estes elementos serão aplicados automaticamente no topo e final do contrato (tanto na tela de visualização quanto no PDF enviado para assinatura digital). Além disso:
+   - **Numeração de Páginas:** Você pode inserir as chaves `{PAGINA_ATUAL}` (ou `{PAGE_NUM}`) e `{TOTAL_PAGINAS}` (ou `{PAGE_COUNT}`) no cabeçalho ou rodapé para que a numeração seja calculada e renderizada dinamicamente em cada página do PDF final (ex: "Página {PAGINA_ATUAL} de {TOTAL_PAGINAS}").
+   - **Imagens:** Imagens locais inseridas por upload no cabeçalho, rodapé ou conteúdo do contrato serão automaticamente processadas e codificadas em Base64 na geração do PDF para garantir sua renderização completa e sem falhas de carregamento.
 
 ### 6.4.1 Templates baseados em Arquivos ODT (Versão 2)
 O sistema também suporta a geração de contratos a partir de um modelo de arquivo externo `.odt` (OpenDocument Text), onde toda a formatação e layout ficam sob responsabilidade do editor de ODT externo (como o LibreOffice Writer).

@@ -95,6 +95,8 @@ class CreateTemplateContrato extends CreateRecord
         $html .= '<li><code>$unidade</code>: Unidade de Ensino (ex: <code>{{ $unidade->nome }}</code>, <code>{{ $unidade->cnpj }}</code>).</li>';
         $html .= '<li><code>$responsaveis</code>: Coleção dos responsáveis financeiros do contrato (cada item contém a pessoa associada via <code>$rf->pessoa</code>).</li>';
         $html .= '<li><code>$faturas</code>: Coleção de todas as faturas/parcelas geradas para o contrato (vencimento, valor bruto, valor líquido).</li>';
+        $html .= '<li><code>{PAGINA_ATUAL}</code> ou <code>{PAGE_NUM}</code>: Número da página atual (exclusivo para cabeçalho/rodapé no PDF).</li>';
+        $html .= '<li><code>{TOTAL_PAGINAS}</code> ou <code>{PAGE_COUNT}</code>: Total de páginas do documento (exclusivo para cabeçalho/rodapé no PDF).</li>';
         $html .= '</ul>';
 
         $html .= '<h3>Macros e Variáveis de Tabela Customizáveis (Uso Simplificado no Editor Visual)</h3>';

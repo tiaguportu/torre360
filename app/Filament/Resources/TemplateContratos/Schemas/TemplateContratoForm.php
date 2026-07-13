@@ -117,6 +117,8 @@ class TemplateContratoForm
                                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{ $contrato->matricula->turma->nome }}</code> - Turma do aluno</li>';
                                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{ $contrato->matricula->turma->serie->nome }}</code> - Série do aluno</li>';
                                                 $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{{ $unidade->nome }}</code> - Unidade de Ensino</li>';
+                                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{PAGINA_ATUAL}</code> - Página atual (exclusivo para cabeçalho/rodapé)</li>';
+                                                $html .= '<li><code class="text-primary-600 dark:text-primary-400 font-bold">{TOTAL_PAGINAS}</code> - Total de páginas (exclusivo para cabeçalho/rodapé)</li>';
                                                 $html .= '</ul>';
                                                 $html .= '</div>';
                                                 $html .= '</div>';

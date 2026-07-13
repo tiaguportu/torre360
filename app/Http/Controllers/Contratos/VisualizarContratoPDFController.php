@@ -62,7 +62,7 @@ class VisualizarContratoPDFController extends Controller
             'conteudo_template' => $conteudoTemplate,
             'cabecalho_template' => $cabecalhoTemplate,
             'rodape_template' => $rodapeTemplate,
-        ]);
+        ])->setOption('isRemoteEnabled', true);
 
         return $pdf->stream("Contrato_{$contrato->id}.pdf");
     }

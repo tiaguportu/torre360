@@ -36,6 +36,14 @@
             }
         @endif
 
+        .page-number::before {
+            content: counter(page);
+        }
+
+        .page-count::before {
+            content: counter(pages);
+        }
+
         body {
             font-family: 'Book Antiqua', 'Palatino Linotype', 'Palatino', serif;
             font-size: 10pt;
