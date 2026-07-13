@@ -272,6 +272,13 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
    - A lista detalhada de quais documentos estão faltando e quais foram rejeitados (com o respectivo motivo da rejeição).
 3. Esta funcionalidade permite manter a família informada sobre a necessidade de regularização documental para efetivação da matrícula.
 
+### 6.3.1 Consulta de Pendências da Matrícula
+1. Na lista de **Matrículas**, se o aluno não possuir nenhum responsável associado (Pai/Mãe/Responsável) ou possuir documentos obrigatórios pendentes ou rejeitados, um botão vermelho de **Pendências** (ícone de triângulo de alerta) aparecerá na respectiva linha da tabela, exibindo a contagem total de pendências em um badge.
+2. Ao clicar no botão, um modal se abrirá listando em destaque todas as pendências daquela matrícula:
+   - **Falta de Responsáveis:** Um alerta se houver ausência de responsáveis vinculados à ficha do aluno, acompanhado de um atalho para edição rápida do cadastro de pessoa.
+   - **Documentos Pendentes:** Detalhamento dos documentos obrigatórios que estão faltando ou foram rejeitados, com um link rápido para ir direto à gestão de documentos da matrícula.
+3. Além disso, as linhas que possuem pendências de responsável ou de documentos obrigatórios são pintadas com fundo avermelhado e o nome do aluno é exibido em negrito e vermelho para chamar a atenção da equipe da secretaria.
+
 ### 6.4 Visualização e Prévia de Documentos
 1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.
 2. Esta funcionalidade permite conferir o conteúdo do arquivo rapidamente sem a necessidade de downloads manuais.

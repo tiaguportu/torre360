@@ -6,6 +6,7 @@ use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
+use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Matricula;
@@ -30,14 +31,14 @@ class MatriculasTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordClasses(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
+            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->searchable()
                     ->sortable()
-                    ->weight(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'bold' : null)
-                    ->color(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'danger' : null),
+                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'bold' : null)
+                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'danger' : null),
                 TextColumn::make('turma.nome')
                     ->label('Turma')
                     ->searchable()
@@ -89,6 +90,91 @@ class MatriculasTable
             ])
             ->actions([
                 EditAction::make(),
+                Action::make('pendencias')
+                    ->label('Pendências')
+                    ->tooltip('Ver Pendências da Matrícula')
+                    ->icon(Heroicon::OutlinedExclamationTriangle)
+                    ->color('danger')
+                    ->badge(function (Matricula $record) {
+                        $count = 0;
+                        if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
+                            $count++;
+                        }
+                        $count += $record->getMissingMandatoryDocumentsCount();
+                        $count += $record->getRejectedDocuments()->count();
+
+                        return $count ?: null;
+                    })
+                    ->badgeColor('danger')
+                    ->visible(fn (Matricula $record) => ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) ||
+                        $record->hasPendingIssues()
+                    )
+                    ->modalHeading('Pendências da Matrícula')
+                    ->modalDescription(function (Matricula $record) {
+                        $html = '<div class="space-y-4 text-left">';
+
+                        // Alerta de Falta de Responsáveis
+                        if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
+                            $html .= '
+                            <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
+                                <div class="flex items-center gap-2 font-bold mb-1">
+                                    <span>⚠️ Alerta de Cadastro</span>
+                                </div>
+                                <p class="text-sm">Este aluno não possui nenhum <strong>Pai, Mãe ou Responsável</strong> associado ao seu cadastro de pessoa.</p>
+                                <div class="mt-2">
+                                    <a href="'.PessoaResource::getUrl('edit', ['record' => $record->pessoa_id]).'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
+                                        Clique aqui para associar responsáveis na ficha do aluno
+                                    </a>
+                                </div>
+                            </div>';
+                        }
+
+                        // Alerta de Documentos Faltantes / Rejeitados
+                        if ($record->hasPendingIssues()) {
+                            $faltantes = $record->getMissingMandatoryDocuments();
+                            $rejeitados = $record->getRejectedDocuments();
+
+                            $html .= '
+                            <div class="p-4 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 dark:text-warning-400">
+                                <div class="flex items-center gap-2 font-bold mb-1">
+                                    <span>📄 Documentos Pendentes</span>
+                                </div>';
+
+                            if ($faltantes->isNotEmpty()) {
+                                $html .= '<p class="text-sm font-semibold mt-2">Documentos Faltantes:</p>';
+                                $html .= '<ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 mt-1">';
+                                foreach ($faltantes as $doc) {
+                                    $html .= "<li>{$doc->nome}</li>";
+                                }
+                                $html .= '</ul>';
+                            }
+
+                            if ($rejeitados->isNotEmpty()) {
+                                $html .= '<p class="text-sm font-semibold mt-2">Documentos Rejeitados:</p>';
+                                $html .= '<ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 mt-1">';
+                                foreach ($rejeitados as $docInserido) {
+                                    $docNome = $docInserido->tipoDocumento->nome;
+                                    $obs = $docInserido->observacoes ? " (Motivo: <span class='italic'>{$docInserido->observacoes}</span>)" : '';
+                                    $html .= "<li>{$docNome}{$obs}</li>";
+                                }
+                                $html .= '</ul>';
+                            }
+
+                            $html .= '
+                                <div class="mt-3">
+                                    <a href="'.DocumentosMatricula::getUrl(['record' => $record]).'" class="text-xs font-bold underline text-warning-800 dark:text-warning-300 hover:text-warning-900" target="_blank">
+                                        Clique aqui para gerenciar os documentos da matrícula
+                                    </a>
+                                </div>
+                            </div>';
+                        }
+
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
                 Action::make('boletim')
                     ->label('Boletim')
                     ->tooltip('Ver Boletim Escolar')
