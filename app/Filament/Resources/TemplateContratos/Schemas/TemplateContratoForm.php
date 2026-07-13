@@ -132,6 +132,7 @@ class TemplateContratoForm
                             ->schema([
                                 TinyEditor::make('cabecalho')
                                     ->label('Cabeçalho do Contrato')
+                                    ->helperText('Variáveis disponíveis: {PAGINA_ATUAL} ou {PAGE_NUM} para página atual, {TOTAL_PAGINAS} ou {PAGE_COUNT} para total de páginas.')
                                     ->columnSpanFull(),
                             ]),
                         Tab::make('Conteúdo Principal')
@@ -147,6 +148,7 @@ class TemplateContratoForm
                             ->schema([
                                 TinyEditor::make('rodape')
                                     ->label('Rodapé do Contrato')
+                                    ->helperText('Variáveis disponíveis: {PAGINA_ATUAL} ou {PAGE_NUM} para página atual, {TOTAL_PAGINAS} ou {PAGE_COUNT} para total de páginas.')
                                     ->columnSpanFull(),
                             ]),
                     ])
