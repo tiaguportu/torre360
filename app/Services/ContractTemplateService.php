@@ -399,25 +399,27 @@ class ContractTemplateService
         $odtStream = Storage::disk('local')->get($template->arquivo_odt);
         file_put_contents($tempOdtPath, $odtStream);
 
-        // Processa o XML dentro do ZIP do ODT
+        // Processa os arquivos XML dentro do ZIP do ODT
         $zip = new \ZipArchive;
         if ($zip->open($tempOdtPath) === true) {
+            $xmlFiles = [];
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
-
-                // Processa apenas arquivos XML de texto (evita settings, meta e manifestos de sistema)
                 if (str_ends_with($filename, '.xml') &&
                     ! in_array($filename, ['settings.xml', 'meta.xml', 'manifest.xml']) &&
                     ! str_contains($filename, 'META-INF/')) {
-
-                    $xmlContent = $zip->getFromIndex($i);
-                    if ($xmlContent) {
-                        $processedXml = $this->processOdtXml($xmlContent, $contrato);
-                        $zip->deleteName($filename);
-                        $zip->addFromString($filename, $processedXml);
-                    }
+                    $xmlFiles[] = $filename;
                 }
             }
+
+            foreach ($xmlFiles as $filename) {
+                $xmlContent = $zip->getFromName($filename);
+                if ($xmlContent !== false) {
+                    $processedXml = $this->processOdtXml($xmlContent, $contrato);
+                    $zip->addFromString($filename, $processedXml);
+                }
+            }
+
             $zip->close();
         } else {
             throw new \Exception('Não foi possível abrir o arquivo ODT temporário.');
