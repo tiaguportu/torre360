@@ -32,7 +32,19 @@
             }
         @else
             @page {
-                margin: 1.5cm;
+                margin-top: 1.5cm;
+                margin-bottom: 2.0cm;
+                margin-left: 1.5cm;
+                margin-right: 1.5cm;
+            }
+            .footer {
+                position: fixed;
+                bottom: -1.5cm;
+                left: 0;
+                right: 0;
+                height: 1.5cm;
+                text-align: center;
+                font-size: 9pt;
             }
         @endif
 
@@ -136,11 +148,6 @@
             margin-bottom: 10px;
         }
 
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 9pt;
-        }
 
         .signature-table {
             width: 100%;
@@ -241,6 +248,10 @@
             {!! $conteudo_template !!}
         </div>
     @else
+        <div class="footer">
+            Documento gerado em {{ date('d/m/Y H:i:s') }} - ID: {{ $contrato->id }}
+        </div>
+
         <div class="header">
             <div class="center bold uppercase">
                 ESCOLA TORRE DE MARFIM<br>
@@ -432,9 +443,6 @@
             @endforeach
         </table>
 
-        <div class="footer">
-            Documento gerado em {{ date('d/m/Y H:i:s') }} - ID: {{ $contrato->id }}
-        </div>
     @endif
 
 </body>
