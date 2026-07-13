@@ -457,6 +457,9 @@ class ContractTemplateService
 
     protected function processOdtXml(string $xml, Contrato $contrato): string
     {
+        $aluno = $contrato->matricula?->pessoa;
+        $unidade = $contrato->matricula?->turma?->serie?->curso?->unidade;
+
         // 1. Limpa tags XML de dentro das diretivas do Blade e decodifica entidades HTML/XML
         $xml = preg_replace_callback('/@(if|unless|isset|empty|foreach|forelse|while|switch|case|default|break|continue|php|end[a-zA-Z_]+)(?:\s*\((?:(?>[^()]+)|(?R))*\))?/s', function ($matches) {
             $cleaned = preg_replace('/<[^>]*>/', '', $matches[0]);
@@ -471,6 +474,10 @@ class ContractTemplateService
 
             return '{{'.$decoded.'}}';
         }, $xml);
+
+        // Processa as macros dinâmicas no formato {{!! algumaCoisa !!}} no XML do ODT
+        $tiposVinculo = TipoVinculo::all()->pluck('nome', 'id');
+        $xml = $this->preprocessOdtMacros($xml, $contrato, $aluno, $unidade, $tiposVinculo);
 
         // 3. Limpa tags XML de dentro das expressões ${...} e as converte para a sintaxe Blade padrão
         $xml = preg_replace_callback('/\$\{(.*?)\}/s', function ($matches) {
@@ -552,5 +559,43 @@ class ContractTemplateService
         }
 
         return $xml;
+    }
+
+    protected function preprocessOdtMacros(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
+    {
+        $content = preg_replace_callback('/\{\{!!\s*\$?(\w+)\s*!!\}\}/', function ($matches) use ($contrato, $aluno, $unidade, $tiposVinculo) {
+            $variableNameCamel = $matches[1];
+            $variableNameSnake = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $variableNameCamel));
+            $configKey = 'template_contrato_'.$variableNameSnake;
+
+            $config = Configuracao::where('campo', $configKey)->first();
+            $resolvedHtml = '';
+
+            if ($config && ! empty($config->valor)) {
+                try {
+                    $resolvedHtml = Blade::render($config->valor, [
+                        'contrato' => $contrato,
+                        'matricula' => $contrato->matricula,
+                        'aluno' => $aluno,
+                        'unidade' => $unidade,
+                        'responsaveis' => $contrato->responsaveisFinanceiros,
+                        'faturas' => $contrato->faturas,
+                    ]);
+                } catch (\Throwable $e) {
+                    logger()->error("Erro ao renderizar macro customizada {$configKey} no ODT: ".$e->getMessage());
+                    $resolvedHtml = $e->getMessage();
+                }
+            } else {
+                $resolvedHtml = $this->getFallbackHtmlForVariable($variableNameSnake, $contrato, $aluno, $unidade, $tiposVinculo);
+            }
+
+            // Converter o HTML resolvedHtml para formato compatível com o XML do ODT
+            $odtContent = preg_replace('/<br\s*\/?>/i', '<text:line-break/>', $resolvedHtml);
+            $odtContent = strip_tags($odtContent, '<text:line-break>');
+
+            return htmlspecialchars($odtContent, ENT_QUOTES, 'UTF-8', false);
+        }, $content);
+
+        return $content;
     }
 }
