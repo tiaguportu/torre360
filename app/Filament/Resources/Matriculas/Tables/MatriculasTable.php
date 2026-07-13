@@ -372,6 +372,7 @@ class MatriculasTable
                     ->modalSubmitActionLabel('Sim, gerar contrato')
                     ->action(function (Matricula $record) {
                         $contrato = Contrato::create([
+                            'matricula_id' => $record->id,
                             'valor_total' => 0,
                             'data_aceite' => now(),
                         ]);
