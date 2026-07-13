@@ -14,12 +14,28 @@ class QuestionarioPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:Questionario');
+        if ($authUser->can('ViewAny:Questionario')) {
+            return true;
+        }
+
+        if (request()->routeIs('*.responder')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function view(AuthUser $authUser, Questionario $questionario): bool
     {
-        return $authUser->can('View:Questionario');
+        if ($authUser->can('View:Questionario')) {
+            return true;
+        }
+
+        if (request()->routeIs('*.responder')) {
+            return $questionario->podeSerRespondidoPor($authUser);
+        }
+
+        return false;
     }
 
     public function create(AuthUser $authUser): bool
