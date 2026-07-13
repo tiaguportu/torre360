@@ -72,12 +72,41 @@
         }
 
 
+        @media screen {
+            .template-header {
+                position: static !important;
+                margin-bottom: 20px !important;
+                height: auto !important;
+            }
+            .template-footer {
+                position: static !important;
+                margin-top: 30px !important;
+                height: auto !important;
+            }
+        }
+
         @media print {
             * {
                 float: none !important;
                 position: static !important;
                 overflow: visible !important;
                 box-sizing: border-box !important;
+            }
+            .template-header {
+                position: fixed !important;
+                top: -2.5cm !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 2.0cm !important;
+                text-align: center !important;
+            }
+            .template-footer {
+                position: fixed !important;
+                bottom: -1.8cm !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 1.5cm !important;
+                text-align: center !important;
             }
             body, html {
                 background-color: white !important;

@@ -5,9 +5,36 @@
     <meta charset="UTF-8">
     <title>Contrato de Prestação de Serviços Educacionais</title>
     <style>
-        @page {
-            margin: 1.5cm;
-        }
+        @if(isset($conteudo_template) && $conteudo_template)
+            @page {
+                margin-top: 3.2cm;
+                margin-bottom: 2.5cm;
+                margin-left: 1.5cm;
+                margin-right: 1.5cm;
+            }
+
+            .template-header {
+                position: fixed;
+                top: -2.5cm;
+                left: 0;
+                right: 0;
+                height: 2.0cm;
+                text-align: center;
+            }
+
+            .template-footer {
+                position: fixed;
+                bottom: -1.8cm;
+                left: 0;
+                right: 0;
+                height: 1.5cm;
+                text-align: center;
+            }
+        @else
+            @page {
+                margin: 1.5cm;
+            }
+        @endif
 
         body {
             font-family: 'Book Antiqua', 'Palatino Linotype', 'Palatino', serif;
@@ -191,20 +218,20 @@
 
     @if(isset($conteudo_template) && $conteudo_template)
         @if(isset($cabecalho_template) && $cabecalho_template)
-            <div class="template-header" style="margin-bottom: 20px;">
+            <div class="template-header">
                 {!! $cabecalho_template !!}
+            </div>
+        @endif
+
+        @if(isset($rodape_template) && $rodape_template)
+            <div class="template-footer">
+                {!! $rodape_template !!}
             </div>
         @endif
 
         <div class="template-content">
             {!! $conteudo_template !!}
         </div>
-
-        @if(isset($rodape_template) && $rodape_template)
-            <div class="template-footer" style="margin-top: 30px;">
-                {!! $rodape_template !!}
-            </div>
-        @endif
     @else
         <div class="header">
             <div class="center bold uppercase">
