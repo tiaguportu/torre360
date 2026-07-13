@@ -12,6 +12,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Settings;
 
 class ContractTemplateService
 {
@@ -420,37 +422,31 @@ class ContractTemplateService
             throw new \Exception('Não foi possível abrir o arquivo ODT temporário.');
         }
 
-        // Converte para PDF usando LibreOffice
-        $libreOfficePath = config('services.libreoffice.path') ?: env('LIBREOFFICE_PATH');
-        if (! $libreOfficePath) {
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                $defaultWinPath = 'C:\\Program Files\\LibreOffice\\program\\soffice.exe';
-                if (file_exists($defaultWinPath)) {
-                    $libreOfficePath = '"'.$defaultWinPath.'"';
-                } else {
-                    $libreOfficePath = 'soffice';
-                }
-            } else {
-                $libreOfficePath = 'soffice';
-            }
-        } else {
-            $libreOfficePath = '"'.trim($libreOfficePath, '"').'"';
-        }
-
-        // Comando síncrono
-        $command = "{$libreOfficePath} --headless --convert-to pdf --outdir ".escapeshellarg($tempDir).' '.escapeshellarg($tempOdtPath);
-
-        exec($command, $output, $returnVar);
+        // Configura o PHPWord para usar o renderizador DomPDF (que já é dependência do projeto)
+        Settings::setPdfRendererName(Settings::PDF_RENDERER_DOMPDF);
+        Settings::setPdfRendererPath(base_path('vendor/dompdf/dompdf'));
 
         $pdfFileName = pathinfo($odtFileName, PATHINFO_FILENAME).'.pdf';
         $tempPdfPath = $tempDir.DIRECTORY_SEPARATOR.$pdfFileName;
 
-        if (! file_exists($tempPdfPath)) {
-            @unlink($tempOdtPath);
-            throw new \Exception("Erro na conversão do ODT para PDF. Verifique se o LibreOffice está instalado e no PATH do sistema. Comando executado: {$command}. Output: ".implode("\n", $output));
-        }
+        try {
+            // Carrega o documento ODT temporário processado
+            $phpWord = IOFactory::load($tempOdtPath, 'ODText');
 
-        $pdfContent = file_get_contents($tempPdfPath);
+            // Cria o escritor PDF e salva o documento
+            $pdfWriter = IOFactory::createWriter($phpWord, 'PDF');
+            $pdfWriter->save($tempPdfPath);
+
+            if (! file_exists($tempPdfPath)) {
+                throw new \Exception('Arquivo PDF temporário não foi gerado.');
+            }
+
+            $pdfContent = file_get_contents($tempPdfPath);
+        } catch (\Throwable $e) {
+            @unlink($tempOdtPath);
+            @unlink($tempPdfPath);
+            throw new \Exception('Erro ao converter ODT para PDF via PHPWord: '.$e->getMessage());
+        }
 
         // Limpa arquivos temporários
         @unlink($tempOdtPath);
