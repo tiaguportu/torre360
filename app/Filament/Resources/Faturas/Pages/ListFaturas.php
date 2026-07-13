@@ -43,7 +43,7 @@ class ListFaturas extends ListRecords
                         ->helperText('Se marcado, o valor total será dividido pelo número de matrículas e parcelas.'),
                 ])
                 ->action(function (array $data) {
-                    $contrato = Contrato::with('matriculas.turma.periodoLetivo')->find($data['contrato_id']);
+                    $contrato = Contrato::with('matricula.turma.periodoLetivo')->find($data['contrato_id']);
                     if (! $contrato) {
                         return;
                     }
@@ -52,14 +52,14 @@ class ListFaturas extends ListRecords
                     $valorTotal = $contrato->valor_total;
                     $startDate = Carbon::parse($contrato->data_aceite);
 
-                    $matriculas = $contrato->matriculas;
-                    $numMatriculas = $matriculas->count() ?: 1;
+                    $matricula = $contrato->matricula;
+                    $numMatriculas = $matricula ? 1 : 0;
 
                     if ($data['por_matricula']) {
                         // Cria parcelas para cada matrícula
-                        $valorPorFatura = $valorTotal / ($numMatriculas * $numParcelas);
+                        $valorPorFatura = $valorTotal / (max(1, $numMatriculas) * $numParcelas);
 
-                        foreach ($matriculas as $matricula) {
+                        if ($matricula) {
                             $startDate = $contrato->data_aceite ? Carbon::parse($contrato->data_aceite)->startOfDay() : now()->startOfDay();
 
                             // Se não houver data_fim no período letivo, usamos o fallback de meses
@@ -91,8 +91,8 @@ class ListFaturas extends ListRecords
 
                         $startDate = $contrato->data_aceite ? Carbon::parse($contrato->data_aceite)->startOfDay() : now()->startOfDay();
 
-                        $origEndDate = ($matriculas->first()?->turma?->periodoLetivo?->data_fim)
-                            ? Carbon::parse($matriculas->first()->turma->periodoLetivo->data_fim)->startOfDay()
+                        $origEndDate = ($matricula?->turma?->periodoLetivo?->data_fim)
+                            ? Carbon::parse($matricula->turma->periodoLetivo->data_fim)->startOfDay()
                             : $startDate->copy()->addMonths($numParcelas);
 
                         $endDate = $origEndDate->lt($startDate) ? $startDate->copy() : $origEndDate;

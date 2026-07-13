@@ -424,12 +424,11 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
                 // 4. Criar Contrato para a Matrícula
                 $contrato = Contrato::create([
+                    'matricula_id' => $matricula->id,
                     'valor_total' => 0,
                     'data_aceite' => now(),
                     'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula',
                 ]);
-
-                $matricula->update(['contrato_id' => $contrato->id]);
 
                 $alunosPessoa[] = ['aluno' => $aluno, 'contrato' => $contrato];
             }

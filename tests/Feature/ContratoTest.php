@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\InstituicaoEnsino;
@@ -13,8 +14,11 @@ use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
+use App\Models\User;
 use App\Services\ContractTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ContratoTest extends TestCase
@@ -417,5 +421,59 @@ class ContratoTest extends TestCase
         // 2. Testa com a variável Blade
         $htmlResultBlade = $service->process($contrato, 'Assinatura Unidade: {!! $assinaturaResponsavelLegalUnidade !!}');
         $this->assertStringContainsString('Diretor Presidente - Diretor', $htmlResultBlade);
+    }
+
+    public function test_action_gerar_contrato_na_matricula(): void
+    {
+        $adminUser = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'email_verified_at' => now(),
+        ]);
+        $role = Role::firstOrCreate(['name' => 'super_admin']);
+        $adminUser->assignRole($role);
+        session(['active_role' => 'super_admin']);
+
+        $this->actingAs($adminUser);
+
+        // Garante o tipo de vinculo 'Pai' no banco
+        TipoVinculo::updateOrCreate(['id' => 1], ['nome' => 'Pai']);
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Joãozinho da Silva',
+            'data_nascimento' => '2015-05-15',
+            'cpf' => '123.456.789-00',
+        ]);
+
+        $responsavel = Pessoa::factory()->create([
+            'nome' => 'José da Silva',
+            'cpf' => '111.111.111-11',
+        ]);
+
+        $aluno->responsaveis()->attach($responsavel->id, ['tipo_vinculo_id' => 1]); // 1 = Pai
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        // Simula a action de tabela "gerarContrato"
+        Livewire::test(ListMatriculas::class)
+            ->callTableAction('gerarContrato', $matricula)
+            ->assertHasNoTableActionErrors();
+
+        // Verifica que o contrato foi criado corretamente no BD
+        $this->assertDatabaseHas('contrato', [
+            'matricula_id' => $matricula->id,
+            'valor_total' => 0.00,
+        ]);
+
+        // Verifica que o responsável financeiro foi criado
+        $contrato = Contrato::where('matricula_id', $matricula->id)->first();
+        $this->assertNotNull($contrato);
+        $this->assertDatabaseHas('responsavel_financeiro', [
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $responsavel->id,
+            'percentual' => 100.00,
+        ]);
     }
 }

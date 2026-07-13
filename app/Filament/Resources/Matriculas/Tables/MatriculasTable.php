@@ -365,7 +365,7 @@ class MatriculasTable
                     ->tooltip('Gerar Contrato para esta Matrícula')
                     ->icon(Heroicon::OutlinedDocumentPlus)
                     ->color('success')
-                    ->visible(fn (Matricula $record) => ! $record->contrato_id && $record->pessoa->responsaveis()->exists())
+                    ->visible(fn (Matricula $record) => ! $record->contrato()->exists() && $record->pessoa->responsaveis()->exists())
                     ->requiresConfirmation()
                     ->modalHeading('Gerar Contrato?')
                     ->modalDescription('As pessoas responsáveis pelo aluno serão vinculadas ao contrato com valor R$ 0,00.')
@@ -376,9 +376,6 @@ class MatriculasTable
                             'valor_total' => 0,
                             'data_aceite' => now(),
                         ]);
-
-                        $record->contrato_id = $contrato->id;
-                        $record->save();
 
                         $responsaveis = $record->pessoa->responsaveis;
                         $count = $responsaveis->count();
