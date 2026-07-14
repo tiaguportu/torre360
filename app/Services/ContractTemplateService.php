@@ -654,19 +654,55 @@ class ContractTemplateService
             $src = $matches[1];
 
             $localPath = null;
-            if (str_starts_with($src, '/storage/')) {
-                $localPath = public_path(substr($src, 1));
+            if (str_contains($src, '/visualizar-documento/')) {
+                $parts = explode('/visualizar-documento/', $src);
+                $filename = end($parts);
+                try {
+                    $disk = Storage::disk('local');
+                    if ($disk->exists($filename)) {
+                        $localPath = $disk->path($filename);
+                    }
+                } catch (\Throwable $e) {
+                    logger()->warning('Erro ao obter caminho do disco local para visualizar-documento: '.$e->getMessage());
+                }
             } elseif (str_contains($src, '/storage/')) {
                 $parts = explode('/storage/', $src);
-                $localPath = public_path('storage/'.end($parts));
-            } elseif (str_contains($src, '/visualizar-documento/')) {
-                $parts = explode('/visualizar-documento/', $src);
-                $localPath = storage_path('app/'.end($parts));
+                $filename = end($parts);
+                try {
+                    $disk = Storage::disk('public');
+                    if ($disk->exists($filename)) {
+                        $localPath = $disk->path($filename);
+                    }
+                } catch (\Throwable $e) {
+                    logger()->warning('Erro ao obter caminho do disco public para storage: '.$e->getMessage());
+                }
+            }
+
+            // Fallback de caminho clássico se o Storage não resolveu
+            if (! $localPath) {
+                if (str_starts_with($src, '/storage/')) {
+                    $localPath = public_path(substr($src, 1));
+                } elseif (str_contains($src, '/storage/')) {
+                    $parts = explode('/storage/', $src);
+                    $localPath = public_path('storage/'.end($parts));
+                } elseif (str_contains($src, '/visualizar-documento/')) {
+                    $parts = explode('/visualizar-documento/', $src);
+                    $localPath = storage_path('app/'.end($parts));
+                }
             }
 
             if ($localPath && file_exists($localPath)) {
                 try {
-                    $mimeType = mime_content_type($localPath) ?: 'image/jpeg';
+                    $extension = strtolower(pathinfo($localPath, PATHINFO_EXTENSION));
+                    $mimeType = match ($extension) {
+                        'png' => 'image/png',
+                        'gif' => 'image/gif',
+                        'svg' => 'image/svg+xml',
+                        'webp' => 'image/webp',
+                        'jpg', 'jpeg' => 'image/jpeg',
+                        default => (function_exists('mime_content_type') ? mime_content_type($localPath) : null) ?: 'image/jpeg',
+                    };
+
                     $data = file_get_contents($localPath);
                     $base64 = 'data:'.$mimeType.';base64,'.base64_encode($data);
 
