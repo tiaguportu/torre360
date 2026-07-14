@@ -262,16 +262,13 @@
         <div class="bg-gray-800 text-white p-4 flex justify-between items-center no-print">
             <h1 class="text-xl font-bold">Visualização do Contrato</h1>
             <div class="flex gap-4">
-                @if(isset($is_v2) && $is_v2)
-                    <a href="{{ route('contratos.pdf', $contrato) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition text-center flex items-center">
-                        Visualizar / Imprimir PDF
-                    </a>
-                @else
-                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition">
-                        Imprimir / Salvar PDF
-                    </button>
-                @endif
-                <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition flex items-center">
+                <a href="{{ route('contratos.pdf', $contrato) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition text-center flex items-center text-white">
+                    Gerar PDF (Servidor)
+                </a>
+                <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-750 px-4 py-2 rounded font-medium transition flex items-center text-white">
+                    Imprimir (Navegador)
+                </button>
+                <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition flex items-center text-white">
                     Voltar
                 </a>
             </div>
