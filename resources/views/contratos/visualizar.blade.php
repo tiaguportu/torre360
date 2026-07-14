@@ -83,32 +83,6 @@
                 margin-top: 30px !important;
                 height: auto !important;
             }
-            /* Visualização da quebra de página na tela */
-            .page-break-preview {
-                border-top: 2px dashed #f97316 !important;
-                position: relative !important;
-                margin-top: 2.5rem !important;
-                margin-bottom: 2.5rem !important;
-                height: 0 !important;
-                clear: both !important;
-                display: block !important;
-            }
-            .page-break-preview::after {
-                content: "Quebra de Página (PDF)" !important;
-                position: absolute !important;
-                top: -10px !important;
-                right: 20px !important;
-                background-color: #ffedd5 !important;
-                color: #ea580c !important;
-                font-size: 10px !important;
-                font-weight: bold !important;
-                padding: 2px 8px !important;
-                border-radius: 9999px !important;
-                border: 1px solid #fed7aa !important;
-                font-family: sans-serif !important;
-                z-index: 10 !important;
-                display: inline-block !important;
-            }
         }
 
         @media print {
