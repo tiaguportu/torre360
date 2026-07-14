@@ -1,3 +1,4 @@
+@if(isset($is_pdf) && $is_pdf)
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -231,6 +232,7 @@
 </head>
 
 <body>
+@endif
 
     @php
         $unidade = $matricula?->turma?->serie?->curso?->unidade;
@@ -473,6 +475,8 @@
 
     @endif
 
+@if(isset($is_pdf) && $is_pdf)
 </body>
 
-</html> 
+</html>
+@endif 

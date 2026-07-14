@@ -172,6 +172,7 @@ class AssinafyService
                     'conteudo_template' => $conteudoTemplate,
                     'cabecalho_template' => $cabecalhoTemplate,
                     'rodape_template' => $rodapeTemplate,
+                    'is_pdf' => true,
                 ])->setOption('isRemoteEnabled', true)->output();
             }
 
