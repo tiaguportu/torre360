@@ -664,6 +664,25 @@ class ContractTemplateService
                 $localPath = storage_path('app/'.end($parts));
             }
 
+            // Fallbacks de segurança para encontrar a imagem caso o caminho deduzido falhe ou links simbólicos estejam quebrados
+            if ($localPath && ! file_exists($localPath)) {
+                $filename = basename($src);
+                if (str_contains($src, '/storage/')) {
+                    $parts = explode('/storage/', $src);
+                    $storagePath = storage_path('app/public/'.end($parts));
+                    if (file_exists($storagePath)) {
+                        $localPath = $storagePath;
+                    }
+                } elseif (str_contains($src, '/visualizar-documento/')) {
+                    // Tenta procurar em subpastas conhecidas do storage
+                    if (file_exists(storage_path('app/public/'.$filename))) {
+                        $localPath = storage_path('app/public/'.$filename);
+                    } elseif (file_exists(storage_path('app/public/documentos/'.$filename))) {
+                        $localPath = storage_path('app/public/documentos/'.$filename);
+                    }
+                }
+            }
+
             if ($localPath && file_exists($localPath)) {
                 try {
                     $mimeType = mime_content_type($localPath) ?: 'image/jpeg';
