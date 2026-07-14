@@ -22,10 +22,15 @@
                 text-align: center;
             }
 
+            .template-header p {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .template-header img {
+                height: 2.4cm !important;
+                width: auto !important;
                 max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
             }
 
             .template-footer {
@@ -35,6 +40,17 @@
                 right: 0;
                 height: 1.8cm;
                 text-align: center;
+            }
+
+            .template-footer p {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .template-footer img {
+                height: 1.4cm !important;
+                width: auto !important;
+                max-width: 100%;
             }
         @else
             @page {

@@ -162,10 +162,14 @@
                 height: 2.8cm !important;
                 text-align: center !important;
             }
+            .template-header p {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
             .template-header img {
+                height: 2.4cm !important;
+                width: auto !important;
                 max-width: 100% !important;
-                max-height: 100% !important;
-                object-fit: contain !important;
             }
             .template-footer {
                 position: fixed !important;
@@ -174,6 +178,15 @@
                 right: 0 !important;
                 height: 1.8cm !important;
                 text-align: center !important;
+            }
+            .template-footer p {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .template-footer img {
+                height: 1.4cm !important;
+                width: auto !important;
+                max-width: 100% !important;
             }
             .footer {
                 position: fixed !important;
