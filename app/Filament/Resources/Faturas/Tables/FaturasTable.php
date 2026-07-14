@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Faturas\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -50,6 +51,10 @@ class FaturasTable
             ])
             ->filters([
                 //
+            ])
+            ->actions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),

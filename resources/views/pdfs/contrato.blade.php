@@ -7,27 +7,33 @@
     <style>
         @if(isset($conteudo_template) && $conteudo_template)
             @page {
-                margin-top: 3.2cm;
-                margin-bottom: 2.5cm;
+                margin-top: 3.8cm;
+                margin-bottom: 2.8cm;
                 margin-left: 1.5cm;
                 margin-right: 1.5cm;
             }
 
             .template-header {
                 position: fixed;
-                top: -2.5cm;
+                top: -3.3cm;
                 left: 0;
                 right: 0;
-                height: 2.0cm;
+                height: 2.8cm;
                 text-align: center;
+            }
+
+            .template-header img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
             }
 
             .template-footer {
                 position: fixed;
-                bottom: -1.8cm;
+                bottom: -2.3cm;
                 left: 0;
                 right: 0;
-                height: 1.5cm;
+                height: 1.8cm;
                 text-align: center;
             }
         @else

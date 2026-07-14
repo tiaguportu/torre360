@@ -143,8 +143,8 @@
 
         @media print {
             @page {
-                margin-top: 3.2cm;
-                margin-bottom: 2.5cm;
+                margin-top: 3.8cm;
+                margin-bottom: 2.8cm;
                 margin-left: 1.5cm;
                 margin-right: 1.5cm;
             }
@@ -159,15 +159,20 @@
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                height: 2.0cm !important;
+                height: 2.8cm !important;
                 text-align: center !important;
+            }
+            .template-header img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
             }
             .template-footer {
                 position: fixed !important;
                 bottom: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                height: 1.5cm !important;
+                height: 1.8cm !important;
                 text-align: center !important;
             }
             .footer {
@@ -175,7 +180,7 @@
                 bottom: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                height: 1.5cm !important;
+                height: 1.8cm !important;
                 text-align: center !important;
             }
             body, html {
