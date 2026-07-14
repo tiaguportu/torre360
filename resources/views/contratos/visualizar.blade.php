@@ -83,9 +83,71 @@
                 margin-top: 30px !important;
                 height: auto !important;
             }
+            /* Visualização da quebra de página na tela */
+            .template-content div[style*="page-break-after: always"],
+            .template-content p[style*="page-break-after: always"],
+            .template-content div[style*="page-break-before: always"],
+            .template-content p[style*="page-break-before: always"],
+            .template-content hr[style*="page-break-after: always"],
+            .template-content hr[style*="page-break-before: always"],
+            .template-content [style*="break-after: page"],
+            .template-content [style*="break-before: page"],
+            .p-8 div[style*="page-break-after: always"],
+            .p-8 p[style*="page-break-after: always"],
+            .p-8 div[style*="page-break-before: always"],
+            .p-8 p[style*="page-break-before: always"],
+            .p-8 hr[style*="page-break-after: always"],
+            .p-8 hr[style*="page-break-before: always"],
+            .p-8 [style*="break-after: page"],
+            .p-8 [style*="break-before: page"] {
+                border-top: 2px dashed #f97316 !important;
+                position: relative !important;
+                margin-top: 2.5rem !important;
+                margin-bottom: 2.5rem !important;
+                height: 0 !important;
+                clear: both !important;
+                display: block !important;
+            }
+            .template-content div[style*="page-break-after: always"]::after,
+            .template-content p[style*="page-break-after: always"]::after,
+            .template-content div[style*="page-break-before: always"]::after,
+            .template-content p[style*="page-break-before: always"]::after,
+            .template-content hr[style*="page-break-after: always"]::after,
+            .template-content hr[style*="page-break-before: always"]::after,
+            .template-content [style*="break-after: page"]::after,
+            .template-content [style*="break-before: page"]::after,
+            .p-8 div[style*="page-break-after: always"]::after,
+            .p-8 p[style*="page-break-after: always"]::after,
+            .p-8 div[style*="page-break-before: always"]::after,
+            .p-8 p[style*="page-break-before: always"]::after,
+            .p-8 hr[style*="page-break-after: always"]::after,
+            .p-8 hr[style*="page-break-before: always"]::after,
+            .p-8 [style*="break-after: page"]::after,
+            .p-8 [style*="break-before: page"]::after {
+                content: "Quebra de Página (PDF)" !important;
+                position: absolute !important;
+                top: -10px !important;
+                right: 20px !important;
+                background-color: #ffedd5 !important;
+                color: #ea580c !important;
+                font-size: 10px !important;
+                font-weight: bold !important;
+                padding: 2px 8px !important;
+                border-radius: 9999px !important;
+                border: 1px solid #fed7aa !important;
+                font-family: sans-serif !important;
+                z-index: 10 !important;
+                display: inline-block !important;
+            }
         }
 
         @media print {
+            @page {
+                margin-top: 3.2cm;
+                margin-bottom: 2.5cm;
+                margin-left: 1.5cm;
+                margin-right: 1.5cm;
+            }
             *:not(.template-header):not(.template-footer):not(.footer) {
                 float: none !important;
                 position: static !important;
@@ -94,7 +156,7 @@
             }
             .template-header {
                 position: fixed !important;
-                top: -2.5cm !important;
+                top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
                 height: 2.0cm !important;
@@ -102,7 +164,15 @@
             }
             .template-footer {
                 position: fixed !important;
-                bottom: -1.8cm !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 1.5cm !important;
+                text-align: center !important;
+            }
+            .footer {
+                position: fixed !important;
+                bottom: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
                 height: 1.5cm !important;

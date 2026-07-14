@@ -87,6 +87,12 @@
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
+        .template-header, .template-header *,
+        .template-footer, .template-footer *,
+        .footer, .footer * {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+        }
         .clause-title, .clause-body {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
