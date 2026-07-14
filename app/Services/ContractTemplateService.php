@@ -87,7 +87,10 @@ class ContractTemplateService
         );
 
         // Processa imagens locais no HTML convertendo-as para Base64 para correta exibição no PDF
-        return $this->processHtmlImages($renderedHtml);
+        $renderedHtml = $this->processHtmlImages($renderedHtml);
+
+        // Processa quebras de página inserindo a classe page-break-preview
+        return $this->processPageBreaks($renderedHtml);
     }
 
     protected function preprocessBlade(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
@@ -677,6 +680,25 @@ class ContractTemplateService
             }
 
             return $matches[0];
+        }, $html);
+    }
+
+    /**
+     * Identifica elementos com quebra de página manual e injeta a classe css correspondente
+     */
+    public function processPageBreaks(string $html): string
+    {
+        return preg_replace_callback('/<([a-z0-9]+)\s+([^>]*style=["\'][^"\']*(page-break-after|break-after)\s*:\s*(always|page)[^"\']*["\'][^>]*)>/i', function ($matches) {
+            $tag = $matches[1];
+            $attributes = $matches[2];
+
+            if (preg_match('/class=["\']([^"\']*)["\']/i', $attributes)) {
+                $attributes = preg_replace('/class=["\']([^"\']*)["\']/i', 'class="$1 page-break-preview"', $attributes);
+            } else {
+                $attributes .= ' class="page-break-preview"';
+            }
+
+            return "<{$tag} {$attributes}>";
         }, $html);
     }
 }

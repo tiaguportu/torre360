@@ -84,22 +84,7 @@
                 height: auto !important;
             }
             /* Visualização da quebra de página na tela */
-            .template-content div[style*="page-break-after: always"],
-            .template-content p[style*="page-break-after: always"],
-            .template-content div[style*="page-break-before: always"],
-            .template-content p[style*="page-break-before: always"],
-            .template-content hr[style*="page-break-after: always"],
-            .template-content hr[style*="page-break-before: always"],
-            .template-content [style*="break-after: page"],
-            .template-content [style*="break-before: page"],
-            .p-8 div[style*="page-break-after: always"],
-            .p-8 p[style*="page-break-after: always"],
-            .p-8 div[style*="page-break-before: always"],
-            .p-8 p[style*="page-break-before: always"],
-            .p-8 hr[style*="page-break-after: always"],
-            .p-8 hr[style*="page-break-before: always"],
-            .p-8 [style*="break-after: page"],
-            .p-8 [style*="break-before: page"] {
+            .page-break-preview {
                 border-top: 2px dashed #f97316 !important;
                 position: relative !important;
                 margin-top: 2.5rem !important;
@@ -108,22 +93,7 @@
                 clear: both !important;
                 display: block !important;
             }
-            .template-content div[style*="page-break-after: always"]::after,
-            .template-content p[style*="page-break-after: always"]::after,
-            .template-content div[style*="page-break-before: always"]::after,
-            .template-content p[style*="page-break-before: always"]::after,
-            .template-content hr[style*="page-break-after: always"]::after,
-            .template-content hr[style*="page-break-before: always"]::after,
-            .template-content [style*="break-after: page"]::after,
-            .template-content [style*="break-before: page"]::after,
-            .p-8 div[style*="page-break-after: always"]::after,
-            .p-8 p[style*="page-break-after: always"]::after,
-            .p-8 div[style*="page-break-before: always"]::after,
-            .p-8 p[style*="page-break-before: always"]::after,
-            .p-8 hr[style*="page-break-after: always"]::after,
-            .p-8 hr[style*="page-break-before: always"]::after,
-            .p-8 [style*="break-after: page"]::after,
-            .p-8 [style*="break-before: page"]::after {
+            .page-break-preview::after {
                 content: "Quebra de Página (PDF)" !important;
                 position: absolute !important;
                 top: -10px !important;
@@ -265,9 +235,6 @@
                 <a href="{{ route('contratos.pdf', $contrato) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition text-center flex items-center text-white">
                     Gerar PDF (Servidor)
                 </a>
-                <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-750 px-4 py-2 rounded font-medium transition flex items-center text-white">
-                    Imprimir (Navegador)
-                </button>
                 <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition flex items-center text-white">
                     Voltar
                 </a>
