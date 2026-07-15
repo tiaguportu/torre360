@@ -207,7 +207,7 @@
             <h1 class="text-xl font-bold">Visualização do Contrato</h1>
             <div class="flex gap-4">
                 <a href="{{ route('contratos.pdf', $contrato) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium transition text-center flex items-center text-white">
-                    Gerar PDF (Servidor)
+                    Gerar PDF
                 </a>
                 <a href="/admin/contratos" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-medium transition flex items-center text-white">
                     Voltar
@@ -238,8 +238,8 @@
                 'curso' => $curso,
                 'periodoLetivo' => $periodoLetivo,
                 'conteudo_template' => $conteudo_template ?? null,
-                'cabecalho_template' => $cabecalho_template ?? null,
-                'rodape_template' => $rodape_template ?? null,
+                'cabecalho_template' => null,
+                'rodape_template' => null,
             ])
         </div>
 
