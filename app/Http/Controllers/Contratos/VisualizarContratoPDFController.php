@@ -27,21 +27,7 @@ class VisualizarContratoPDFController extends Controller
             abort(404, 'Nenhum template de contrato ativo no sistema.');
         }
 
-        if ($template->versao == 2) {
-            try {
-                $pdfContent = $templateService->generatePdfFromOdt($contrato, $template);
-
-                return response($pdfContent, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="Contrato_'.$contrato->id.'.pdf"',
-                ]);
-            } catch (\Exception $e) {
-                logger()->error("Erro ao gerar PDF ODT para visualização do Contrato #{$contrato->id}: ".$e->getMessage());
-                abort(500, 'Erro ao processar PDF do contrato: '.$e->getMessage());
-            }
-        }
-
-        // Fluxo para template V1 (DomPDF)
+        // Fluxo para template DomPDF
         $matricula = $contrato->matricula;
         $aluno = $matricula?->pessoa;
         $responsavel = $contrato->responsaveisFinanceiros->first()?->pessoa;

@@ -318,45 +318,6 @@ O sistema permite a criação de modelos de contrato customizáveis com substitu
    - **Numeração de Páginas:** Você pode inserir as chaves `{PAGINA_ATUAL}` (ou `{PAGE_NUM}`) e `{TOTAL_PAGINAS}` (ou `{PAGE_COUNT}`) no cabeçalho ou rodapé para que a numeração seja calculada e renderizada dinamicamente em cada página do PDF final (ex: "Página {PAGINA_ATUAL} de {TOTAL_PAGINAS}").
    - **Imagens:** Imagens locais inseridas por upload no cabeçalho, rodapé ou conteúdo do contrato serão automaticamente processadas e codificadas em Base64 na geração do PDF para garantir sua renderização completa e sem falhas de carregamento.
 
-### 6.4.1 Templates baseados em Arquivos ODT (Versão 2)
-O sistema também suporta a geração de contratos a partir de um modelo de arquivo externo `.odt` (OpenDocument Text), onde toda a formatação e layout ficam sob responsabilidade do editor de ODT externo (como o LibreOffice Writer).
-
-1. **Criação e Versão:** Ao criar um novo template, selecione a **Versão 2 - Upload de Arquivo .odt (LibreOffice)** no campo **Versão do Template**.
-2. **Upload do Arquivo:** Faça o upload do arquivo `.odt` formatado.
-3. **Variáveis no ODT:** Dentro do arquivo `.odt` (no editor externo), escreva as variáveis nos locais onde deseja que as informações reais do contrato sejam exibidas. As seguintes chaves são suportadas:
-   - `{{ $aluno->nome }}` ou `${aluno.nome}`: Nome completo do aluno.
-   - `{{ $aluno->cpf }}` ou `${aluno.cpf}`: CPF do aluno.
-   - `{{ $responsavel->nome }}` ou `${responsavel.nome}`: Nome do responsável financeiro do contrato.
-   - `{{ $responsavel->cpf }}` ou `${responsavel.cpf}`: CPF do responsável.
-   - `{{ $unidade->nome }}` ou `${unidade.nome}`: Unidade de Ensino.
-   - `{{ "R$ " . number_format($contrato->valor_total, 2, ",", ".") }}`: Valor total do contrato formatado como moeda.
-4. **Tabelas Dinâmicas de Faturas:** Para listar as parcelas e faturas de forma automática no arquivo ODT:
-   - Desenhe uma tabela com cabeçalho no seu documento ODT.
-   - Na linha de dados, preencha exatamente com os placeholders abaixo em cada coluna correspondente:
-     - `[fatura.parcela]`: Exibe o número da parcela.
-     - `[fatura.vencimento]`: Data de vencimento da parcela.
-     - `[fatura.valor]`: Valor líquido da parcela.
-     - `[fatura.valor_original]`: Valor bruto original da parcela.
-   - O sistema identificará automaticamente essa linha e clonará ela para cada uma das parcelas do contrato no PDF final.
-5. **Geração de PDF:** Ao visualizar o contrato no sistema ou enviar para assinatura digital na plataforma Assinafy, o sistema lerá o arquivo `.odt`, traduzirá todas as variáveis e gerará o PDF do contrato utilizando o LibreOffice headless do servidor de forma 100% fiel à formatação do editor externo.
-6. **Condicionais e Loops (Blade):** Você pode usar a sintaxe nativa do Blade diretamente no texto do documento ODT para criar seções condicionais ou loops que repetem parágrafos inteiros:
-   - **Exemplo de Condicional:**
-     ```text
-     @if($aluno->idade > 18)
-     Cláusula de Maioridade: O aluno declara ser plenamente capaz...
-     @else
-     Cláusula de Assistência: O aluno é assistido por seu responsável legal...
-     @endif
-     ```
-   - **Exemplo de Loop (Repetir Parágrafo):**
-     ```text
-     Responsáveis Vinculados:
-     @foreach($responsaveis as $resp)
-     Nome: {{ $resp->pessoa->nome }} - CPF: {{ $resp->pessoa->cpf }}
-     @endforeach
-     ```
-   - As diretivas de controle e eco são limpas de tags internas do LibreOffice automaticamente antes do processamento.
-
 ### 6.7 Templates de Crachá V2 (Editor SVG)
 O sistema conta com um novo módulo de criação de crachás versão 2 (V2), utilizando o editor vetorial SVG-Edit, permitindo maior flexibilidade e controle visual do desenho.
 1. Vá em **Secretaria → Templates de Crachá V2**.

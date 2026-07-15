@@ -24,16 +24,12 @@ class VisualizarContratoController extends Controller
         $conteudoTemplate = null;
         $cabecalhoTemplate = null;
         $rodapeTemplate = null;
-        $isV2 = false;
 
         if ($template) {
-            $isV2 = $template->versao == 2;
-            if (! $isV2) {
-                $templateService = app(ContractTemplateService::class);
-                $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
-                $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
-                $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
-            }
+            $templateService = app(ContractTemplateService::class);
+            $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
+            $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
+            $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
         }
 
         return view('contratos.visualizar', [
@@ -48,7 +44,6 @@ class VisualizarContratoController extends Controller
             'conteudo_template' => $conteudoTemplate,
             'cabecalho_template' => $cabecalhoTemplate,
             'rodape_template' => $rodapeTemplate,
-            'is_v2' => $isV2,
         ]);
     }
 }

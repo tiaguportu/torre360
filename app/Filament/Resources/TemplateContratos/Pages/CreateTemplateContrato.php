@@ -110,29 +110,6 @@ class CreateTemplateContrato extends CreateRecord
         $html .= '<li><code>{{!! $assinaturaPai !!}</code>: Linha de assinatura específica do Pai do aluno (configuração: <code>template_contrato_assinatura_pai</code>).</li>';
         $html .= '<li><code>{{!! $assinaturaMae !!}</code>: Linha de assinatura específica da Mãe do aluno (configuração: <code>template_contrato_assinatura_mae</code>).</li>';
         $html .= '</ul>';
-        $html .= '<h3>Templates baseados em Arquivo ODT (Versão 2)</h3>';
-        $html .= '<p>Na Versão 2, a formatação visual do contrato é feita fora do sistema (ex: no LibreOffice Writer ou Microsoft Word), e o arquivo .odt é carregado no template. O sistema realiza as substituições de variáveis diretamente no documento antes de gerar o PDF final.</p>';
-        $html .= '<h4>Substituição de Variáveis Globais no ODT</h4>';
-        $html .= '<p>Insira chaves ou placeholders de cifrão no local onde deseja exibir os valores. Exemplo:</p>';
-        $html .= '<ul style="margin-left: 20px; list-style-type: disc; margin-bottom: 10px;">';
-        $html .= '  <li><code>{{ $aluno->nome }}</code> ou <code>${aluno.nome}</code> - Nome completo do aluno.</li>';
-        $html .= '  <li><code>{{ $responsavel->nome }}</code> ou <code>${responsavel.nome}</code> - Nome do responsável financeiro.</li>';
-        $html .= '  <li><code>{{ $contrato->valor_total }}</code> ou <code>${contrato.valor_total}</code> - Valor total do contrato.</li>';
-        $html .= '</ul>';
-        $html .= '<h4>Tabela Dinâmica de Faturas no ODT</h4>';
-        $html .= '<p>Para listar as faturas/parcelas do contrato de forma dinâmica no ODT:</p>';
-        $html .= '<ol style="margin-left: 20px; list-style-type: decimal; margin-bottom: 10px;">';
-        $html .= '  <li>Crie uma tabela com cabeçalho no seu arquivo .odt.</li>';
-        $html .= '  <li>Na linha de dados abaixo do cabeçalho, insira exatamente as seguintes chaves nas colunas da tabela:';
-        $html .= '    <ul style="margin-left: 20px; list-style-type: circle; margin-top: 5px; margin-bottom: 5px;">';
-        $html .= '      <li>Coluna Parcela: <code>[fatura.parcela]</code></li>';
-        $html .= '      <li>Coluna Vencimento: <code>[fatura.vencimento]</code></li>';
-        $html .= '      <li>Coluna Valor com Desconto: <code>[fatura.valor]</code></li>';
-        $html .= '      <li>Coluna Valor Original: <code>[fatura.valor_original]</code></li>';
-        $html .= '    </ul>';
-        $html .= '  </li>';
-        $html .= '  <li>O sistema clonará esta linha para cada parcela do contrato correspondente.</li>';
-        $html .= '</ol>';
 
         return $html;
     }

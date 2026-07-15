@@ -11,9 +11,7 @@ class TemplateContrato extends Model
 
     protected $fillable = [
         'nome',
-        'versao',
         'conteudo',
-        'arquivo_odt',
         'is_padrao',
         'cabecalho',
         'rodape',
@@ -23,7 +21,6 @@ class TemplateContrato extends Model
     {
         return [
             'is_padrao' => 'boolean',
-            'versao' => 'integer',
         ];
     }
 
@@ -36,11 +33,6 @@ class TemplateContrato extends Model
             if ($template->is_padrao) {
                 // Se este for padrão, desativar todos os outros
                 static::where('id', '!=', $template->id)->update(['is_padrao' => false]);
-            }
-
-            // Se for versão 2 (ODT), garantir que conteudo não seja nulo para evitar erro no banco
-            if ($template->versao == 2 && is_null($template->conteudo)) {
-                $template->conteudo = '';
             }
         });
     }

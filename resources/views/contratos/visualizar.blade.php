@@ -229,24 +229,18 @@
                 </div>
             @endif
 
-            @if(isset($is_v2) && $is_v2)
-                <div class="w-full rounded-lg overflow-hidden border border-gray-200 shadow-inner">
-                    <iframe src="{{ route('contratos.pdf', $contrato) }}" class="w-full h-[750px]" style="border: none;"></iframe>
-                </div>
-            @else
-                @include('pdfs.contrato', [
-                    'contrato' => $contrato,
-                    'matricula' => $matricula,
-                    'aluno' => $aluno,
-                    'responsavel' => $responsavel,
-                    'serie' => $serie,
-                    'curso' => $curso,
-                    'periodoLetivo' => $periodoLetivo,
-                    'conteudo_template' => $conteudo_template ?? null,
-                    'cabecalho_template' => $cabecalho_template ?? null,
-                    'rodape_template' => $rodape_template ?? null,
-                ])
-            @endif
+            @include('pdfs.contrato', [
+                'contrato' => $contrato,
+                'matricula' => $matricula,
+                'aluno' => $aluno,
+                'responsavel' => $responsavel,
+                'serie' => $serie,
+                'curso' => $curso,
+                'periodoLetivo' => $periodoLetivo,
+                'conteudo_template' => $conteudo_template ?? null,
+                'cabecalho_template' => $cabecalho_template ?? null,
+                'rodape_template' => $rodape_template ?? null,
+            ])
         </div>
 
         <!-- Footer com ação de Assinatura -->

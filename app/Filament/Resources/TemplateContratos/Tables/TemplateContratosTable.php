@@ -20,20 +20,6 @@ class TemplateContratosTable
                 TextColumn::make('nome')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('versao')
-                    ->label('Versão')
-                    ->badge()
-                    ->color(fn (int $state): string => match ($state) {
-                        1 => 'info',
-                        2 => 'success',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
-                        1 => 'V1 (Visual)',
-                        2 => 'V2 (ODT)',
-                        default => 'Desconhecida',
-                    })
-                    ->sortable(),
                 IconColumn::make('is_padrao')
                     ->label('Padrão')
                     ->boolean()
