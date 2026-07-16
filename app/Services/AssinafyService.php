@@ -158,7 +158,7 @@ class AssinafyService
                 $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
             }
 
-            $pdfContent = Pdf::loadView('pdfs.contrato', [
+            $pdfContent = $templateService->generatePdf([
                 'contrato' => $contrato,
                 'matricula' => $matricula,
                 'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
@@ -168,7 +168,7 @@ class AssinafyService
                 'conteudo_template' => $conteudoTemplate,
                 'cabecalho_template' => $cabecalhoTemplate,
                 'rodape_template' => $rodapeTemplate,
-            ])->setOption('isRemoteEnabled', true)->output();
+            ])->output();
 
             // --- PASSO 1: Upload do Documento ---
             Notification::make()->title('Passo 1/4: Realizando upload do documento...')->info()->send();

@@ -30,6 +30,15 @@ class VisualizarContratoController extends Controller
             $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
             $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
             $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
+
+            // Para visualização web, substitui o placeholder %%TOTAL_PAGINAS%% por '-'
+            $conteudoTemplate = str_replace('%%TOTAL_PAGINAS%%', '-', $conteudoTemplate);
+            if ($cabecalhoTemplate) {
+                $cabecalhoTemplate = str_replace('%%TOTAL_PAGINAS%%', '-', $cabecalhoTemplate);
+            }
+            if ($rodapeTemplate) {
+                $rodapeTemplate = str_replace('%%TOTAL_PAGINAS%%', '-', $rodapeTemplate);
+            }
         }
 
         return view('contratos.visualizar', [

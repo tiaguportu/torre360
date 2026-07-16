@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Contratos\RelationManagers;
 
 use App\Filament\Resources\Faturas\Schemas\FaturaForm;
 use App\Filament\Resources\Faturas\Tables\FaturasTable;
+use Filament\Actions\CreateAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -21,6 +22,9 @@ class FaturasRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return FaturasTable::configure($table);
+        return FaturasTable::configure($table)
+            ->headerActions([
+                CreateAction::make(),
+            ]);
     }
 }

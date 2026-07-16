@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Contrato;
 use App\Models\TemplateContrato;
 use App\Services\ContractTemplateService;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class VisualizarContratoPDFController extends Controller
 {
@@ -36,7 +35,7 @@ class VisualizarContratoPDFController extends Controller
         $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
         $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
 
-        $pdf = Pdf::loadView('pdfs.contrato', [
+        $pdf = $templateService->generatePdf([
             'contrato' => $contrato,
             'matricula' => $matricula,
             'aluno' => $aluno,
@@ -48,7 +47,7 @@ class VisualizarContratoPDFController extends Controller
             'conteudo_template' => $conteudoTemplate,
             'cabecalho_template' => $cabecalhoTemplate,
             'rodape_template' => $rodapeTemplate,
-        ])->setOption('isRemoteEnabled', true);
+        ]);
 
         return $pdf->stream("Contrato_{$contrato->id}.pdf");
     }

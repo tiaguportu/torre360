@@ -342,6 +342,7 @@ A nova versão de impressão permite gerar crachás vetoriais baseados em SVG de
 Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
 1. Uma fatura pode conter múltiplos itens (Mensalidade + Taxa de Material + Uniforme).
 2. As faturas podem ser geradas em lote a partir de contratos.
+3. Na tela de edição de um Contrato (`Financeiro → Contratos → Editar`), na aba de Faturas Relacionadas, é possível visualizar, criar, editar e excluir faturas associadas a este contrato individualmente.
 
 ### 7.1.1 Gerar Faturas Automaticamente
 Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), utilize o botão **Gerar Faturas Automaticamente** para criar o parcelamento do contrato de forma rápida.

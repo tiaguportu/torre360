@@ -7,6 +7,7 @@ use App\Models\Contrato;
 use App\Models\Pessoa;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
+use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
@@ -77,14 +78,41 @@ class ContractTemplateService
             [
                 '<span class="page-number"></span>',
                 '<span class="page-number"></span>',
-                '<span class="page-count"></span>',
-                '<span class="page-count"></span>',
+                '%%TOTAL_PAGINAS%%',
+                '%%TOTAL_PAGINAS%%',
             ],
             $renderedHtml
         );
 
         // Processa imagens locais no HTML convertendo-as para Base64 para correta exibição no PDF
         return $this->processHtmlImages($renderedHtml);
+    }
+
+    /**
+     * Renderiza o PDF do contrato em duas passagens para calcular e injetar dinamicamente
+     * o total correto de páginas, evitando que {TOTAL_PAGINAS} retorne 0.
+     */
+    public function generatePdf(array $viewData): PDF
+    {
+        // 1. Renderização inicial para cálculo de páginas
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.contrato', $viewData)
+            ->setOption('isRemoteEnabled', true);
+
+        $pdf->render();
+        $totalPaginas = $pdf->getDomPDF()->getCanvas()->get_page_count();
+
+        // 2. Substitui o placeholder no conteúdo renderizado das views
+        $viewData['conteudo_template'] = str_replace('%%TOTAL_PAGINAS%%', $totalPaginas, $viewData['conteudo_template']);
+        if (! empty($viewData['cabecalho_template'])) {
+            $viewData['cabecalho_template'] = str_replace('%%TOTAL_PAGINAS%%', $totalPaginas, $viewData['cabecalho_template']);
+        }
+        if (! empty($viewData['rodape_template'])) {
+            $viewData['rodape_template'] = str_replace('%%TOTAL_PAGINAS%%', $totalPaginas, $viewData['rodape_template']);
+        }
+
+        // 3. Renderiza novamente o PDF final com o valor exato
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.contrato', $viewData)
+            ->setOption('isRemoteEnabled', true);
     }
 
     protected function preprocessBlade(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string

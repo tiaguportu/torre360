@@ -476,4 +476,43 @@ class ContratoTest extends TestCase
             'percentual' => 100.00,
         ]);
     }
+
+    public function test_total_paginas_e_calculado_corretamente_no_pdf(): void
+    {
+        $aluno = Pessoa::factory()->create(['nome' => 'Joãozinho']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $contrato = Contrato::create([
+            'valor_total' => 12000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        $service = new ContractTemplateService;
+
+        $viewData = [
+            'contrato' => $contrato,
+            'matricula' => $matricula,
+            'aluno' => $aluno,
+            'responsavel' => null,
+            'responsaveisFinanceiros' => collect(),
+            'serie' => null,
+            'curso' => null,
+            'periodoLetivo' => null,
+            'conteudo_template' => 'Este contrato contém {TOTAL_PAGINAS} páginas no total. E também {PAGE_COUNT}.',
+            'cabecalho_template' => null,
+            'rodape_template' => null,
+        ];
+
+        // Processa as variáveis e macros
+        $viewData['conteudo_template'] = $service->process($contrato, $viewData['conteudo_template']);
+
+        // Verifica que o process substituiu a chave pelo placeholder %%TOTAL_PAGINAS%%
+        $this->assertStringContainsString('%%TOTAL_PAGINAS%%', $viewData['conteudo_template']);
+        $this->assertStringNotContainsString('{TOTAL_PAGINAS}', $viewData['conteudo_template']);
+
+        // Executa a geração do PDF (duas passagens)
+        $pdf = $service->generatePdf($viewData);
+
+        // O canvas do DomPDF deve ter exatamente 1 página
+        $this->assertEquals(1, $pdf->getDomPDF()->getCanvas()->get_page_count());
+    }
 }
