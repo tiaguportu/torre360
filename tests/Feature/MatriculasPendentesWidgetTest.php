@@ -2,8 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use App\Filament\Widgets\MatriculasPendentesWidget;
+use App\Models\Cidade;
+use App\Models\Estado;
 use App\Models\Matricula;
+use App\Models\Pais;
 use App\Models\Pessoa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,15 +20,32 @@ class MatriculasPendentesWidgetTest extends TestCase
     /** @test */
     public function deve_contar_corretamente_pendencias_das_matriculas()
     {
+        $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
+        $estado = Estado::create(['pais_id' => $pais->id, 'nome' => 'São Paulo', 'sigla' => 'SP']);
+        $cidade = Cidade::create(['estado_id' => $estado->id, 'nome' => 'São Paulo']);
+
+        $dadosCompletos = [
+            'nome' => 'Aluno Completo',
+            'data_nascimento' => '2010-01-01',
+            'cpf' => '12345678901',
+            'email' => 'aluno@teste.com',
+            'telefone' => '11999999999',
+            'sexo' => Sexo::MASCULINO,
+            'cor_raca' => CorRaca::BRANCA,
+            'nacionalidade_id' => $pais->id,
+            'naturalidade_id' => $cidade->id,
+        ];
+
         // Cria aluno sem responsável (pendência de responsável)
-        $aluno1 = Pessoa::factory()->create(['cpf' => '12345678901', 'data_nascimento' => '2010-01-01']);
+        // Note: Seus dados estão completos, mas não tem responsável.
+        $aluno1 = Pessoa::factory()->create(array_merge($dadosCompletos, ['cpf' => '12345678901']));
         Matricula::factory()->create([
             'pessoa_id' => $aluno1->id,
             'situacao' => 'ativa',
         ]);
 
-        // Cria aluno com responsável (sem pendência de responsável)
-        $aluno2 = Pessoa::factory()->create(['cpf' => '98765432109', 'data_nascimento' => '2011-02-02']);
+        // Cria aluno com responsável (sem nenhuma pendência: responsável associado e dados completos)
+        $aluno2 = Pessoa::factory()->create(array_merge($dadosCompletos, ['cpf' => '98765432109']));
         $responsavel = Pessoa::factory()->create();
         $aluno2->responsaveis()->attach($responsavel->id);
         Matricula::factory()->create([
@@ -31,11 +53,12 @@ class MatriculasPendentesWidgetTest extends TestCase
             'situacao' => 'ativa',
         ]);
 
-        // Cria aluno sem CPF (pendência de cadastro)
-        $alunoSemCpf = Pessoa::factory()->create(['cpf' => null, 'data_nascimento' => '2012-03-03']);
-        $alunoSemCpf->responsaveis()->attach($responsavel->id);
+        // Cria aluno sem CPF (pendência de cadastro - incompleto)
+        // Possui responsável, mas CPF é null
+        $alunoIncompleto = Pessoa::factory()->create(array_merge($dadosCompletos, ['cpf' => null]));
+        $alunoIncompleto->responsaveis()->attach($responsavel->id);
         Matricula::factory()->create([
-            'pessoa_id' => $alunoSemCpf->id,
+            'pessoa_id' => $alunoIncompleto->id,
             'situacao' => 'ativa',
         ]);
 

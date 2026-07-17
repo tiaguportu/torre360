@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
+use App\Models\Pais;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -68,15 +69,25 @@ class MatriculasPendentesWidget extends BaseWidget
                 }
             });
 
-        // 3. Contagem de Matrículas com dados cadastrais ausentes (CPF ou Data de Nascimento)
+        // 3. Contagem de Matrículas com dados cadastrais ausentes (cadastro incompleto)
         $cadastroPendenteCount = Matricula::query()
             ->where('situacao', SituacaoMatricula::ATIVA)
             ->whereHas('pessoa', function ($query) {
-                $query->where(function ($q) {
-                    $q->whereNull('cpf')
-                        ->orWhere('cpf', '')
-                        ->orWhereNull('data_nascimento');
-                });
+                $query->where(function ($sub) {
+                    $sub->whereNull('nome')->orWhere('nome', '')
+                        ->orWhereNull('data_nascimento')
+                        ->orWhereNull('cpf')->orWhere('cpf', '')
+                        ->orWhereNull('email')->orWhere('email', '')
+                        ->orWhereNull('telefone')->orWhere('telefone', '')
+                        ->orWhereNull('sexo')
+                        ->orWhereNull('cor_raca')
+                        ->orWhereNull('nacionalidade_id');
+                })
+                    ->orWhere(function ($sub) {
+                        $brasilId = Pais::where('nome', 'Brasil')->value('id') ?? 1;
+                        $sub->where('nacionalidade_id', $brasilId)
+                            ->whereNull('naturalidade_id');
+                    });
             })
             ->count();
 
