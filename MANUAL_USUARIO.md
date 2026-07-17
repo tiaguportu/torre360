@@ -246,6 +246,24 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
    - **Responsáveis:** Visualizam apenas as matrículas onde são os responsáveis financeiros (no contrato) OU onde possuem vínculo legal direto com o aluno (vínculo pai/mãe registrado no sistema).
 8. **Filtro Padrão:** Para facilitar o dia a dia, a listagem de matrículas exibe por padrão apenas os alunos com **Situação: Ativa**. Caso precise consultar alunos em outras situações (como Trancado ou Cancelado), utilize a barra de filtros da tabela.
 
+### 6.1.1 Importação e Exportação de Contratos em Lote
+
+Para facilitar a gestão em larga escala, o sistema permite exportar e importar contratos em lote por meio de planilhas eletrônicas.
+
+#### 📤 Como Exportar
+1. Acesse **Financeiro → Contratos**.
+2. Para exportar a listagem completa de contratos, clique no botão **Exportar** no cabeçalho superior direito da página.
+3. Para exportar apenas contratos específicos, selecione-os usando as caixas de seleção ao lado de cada registro na tabela, acesse o menu de **Ações em Lote** e escolha **Exportar Selecionados**.
+4. O arquivo gerado conterá as informações fundamentais de cada contrato, incluindo os IDs das tabelas relacionadas (`matricula_id` e `template_contrato_id`) e os nomes de exibição amigáveis correspondentes para facilitar o preenchimento manual posterior.
+
+#### 📥 Como Importar
+1. Acesse **Financeiro → Contratos** e clique no botão **Importar** no cabeçalho superior direito.
+2. Selecione o arquivo com os contratos no formato da planilha (como CSV ou Excel) e faça o upload.
+3. **Mapeamento e Atualização Inteligente:**
+   - **ID Existente:** Se a planilha contiver a coluna de ID com um valor que já existe no banco de dados, o respectivo contrato terá suas informações atualizadas.
+   - **Novo Contrato:** Caso o ID seja omitido ou não corresponda a nenhum registro no sistema, um novo contrato será criado.
+   - **Resolução de Chaves Estrangeiras:** O importador associa automaticamente o contrato à matrícula do aluno e ao modelo do contrato. Caso os códigos de ID (`matricula_id` ou `template_contrato_id`) não sejam informados, mas o nome do aluno (`matricula_aluno_nome`) ou o nome do modelo (`template_contrato_nome`) estejam presentes, o sistema resolverá as relações buscando os registros correspondentes de forma transparente.
+
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
 1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:

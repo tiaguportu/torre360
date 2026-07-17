@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\Contratos\Tables;
 
+use App\Filament\Exports\ContratoExporter;
+use App\Models\Contrato;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -86,6 +89,10 @@ class ContratosTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->exporter(ContratoExporter::class)
+                        ->label('Exportar Selecionados')
+                        ->visible(fn (): bool => auth()->user()->can('export', Contrato::class)),
                 ]),
             ])
             ->stackedOnMobile();

@@ -75,6 +75,7 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->color($semResponsavelCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
                     'tableFilters[sem_responsavel][value]' => '1',
+                    'tableFilters[situacao][value]' => '',
                 ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
@@ -83,6 +84,7 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
                     'tableFilters[documentos_pendentes][value]' => '1',
+                    'tableFilters[situacao][value]' => '',
                 ])),
         ];
     }
