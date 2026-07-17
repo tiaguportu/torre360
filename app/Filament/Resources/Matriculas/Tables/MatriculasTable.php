@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
+use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
@@ -21,6 +22,7 @@ use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -87,6 +89,48 @@ class MatriculasTable
                     ->options(SituacaoMatricula::class)
                     ->label('Situação')
                     ->default(SituacaoMatricula::ATIVA->value),
+                TernaryFilter::make('sem_responsavel')
+                    ->label('Responsável Pendente')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
+                            $q->whereDoesntHave('responsaveis');
+                        }),
+                        false: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
+                            $q->whereHas('responsaveis');
+                        }),
+                    ),
+                TernaryFilter::make('documentos_pendentes')
+                    ->label('Documento Pendente')
+                    ->queries(
+                        true: fn (Builder $query) => $query->where(function (Builder $q) {
+                            $q->whereHas('turma.serie.curso.documentos', function ($qSub) {
+                                $qSub->where('flag_obrigatorio', true)
+                                    ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                            })
+                                ->orWhereHas('turma.tiposDocumentos', function ($qSub) {
+                                    $qSub->where('flag_obrigatorio', true)
+                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                                })
+                                ->orWhereHas('tiposDocumentos', function ($qSub) {
+                                    $qSub->where('flag_obrigatorio', true)
+                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                                });
+                        }),
+                        false: fn (Builder $query) => $query->where(function (Builder $q) {
+                            $q->whereDoesntHave('turma.serie.curso.documentos', function ($qSub) {
+                                $qSub->where('flag_obrigatorio', true)
+                                    ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                            })
+                                ->whereDoesntHave('turma.tiposDocumentos', function ($qSub) {
+                                    $qSub->where('flag_obrigatorio', true)
+                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                                })
+                                ->whereDoesntHave('tiposDocumentos', function ($qSub) {
+                                    $qSub->where('flag_obrigatorio', true)
+                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
+                                });
+                        }),
+                    ),
             ])
             ->actions([
                 EditAction::make(),

@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\SituacaoMatricula;
+use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -71,12 +72,18 @@ class MatriculasPendentesWidget extends BaseWidget
             Stat::make('Pendência de Responsáveis', $semResponsavelCount)
                 ->description('Matrículas sem responsável associado')
                 ->descriptionIcon('heroicon-m-user-minus')
-                ->color($semResponsavelCount > 0 ? 'danger' : 'success'),
+                ->color($semResponsavelCount > 0 ? 'danger' : 'success')
+                ->url(MatriculaResource::getUrl('index', [
+                    'tableFilters[sem_responsavel][value]' => '1',
+                ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
                 ->description('Documentos obrigatórios faltantes')
                 ->descriptionIcon('heroicon-m-document-text')
-                ->color($documentosPendentesCount > 0 ? 'danger' : 'success'),
+                ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
+                ->url(MatriculaResource::getUrl('index', [
+                    'tableFilters[documentos_pendentes][value]' => '1',
+                ])),
         ];
     }
 }

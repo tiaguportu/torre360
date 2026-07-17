@@ -5,6 +5,7 @@ use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\Bancos\BancoResource;
 use App\Filament\Resources\CentroCustos\CentroCustoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Fornecedores\FornecedorResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Pessoas\PessoaResource;
@@ -211,6 +212,10 @@ return [
                 'avisarPendencia',
                 'boletim',
                 'boletim_editar',
+            ],
+            ContratoResource::class => [
+                'import',
+                'export',
             ],
             PessoaResource::class => [
                 'import',

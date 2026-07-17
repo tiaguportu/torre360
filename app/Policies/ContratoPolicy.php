@@ -71,4 +71,14 @@ class ContratoPolicy
     {
         return $authUser->can('Reorder:Contrato');
     }
+
+    public function import(AuthUser $authUser): bool
+    {
+        return $authUser->can('Import:Contrato');
+    }
+
+    public function export(AuthUser $authUser): bool
+    {
+        return $authUser->can('Export:Contrato');
+    }
 }
