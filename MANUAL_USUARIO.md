@@ -9,7 +9,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
-4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria** e o de **Questionários Pendentes**, que informa sempre que houver questionários ativos aguardando sua resposta.
+4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes** e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas sem responsáveis cadastrados ou com documentos obrigatórios pendentes).
 
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.

@@ -27,8 +27,6 @@ class GeradorCrachasTest extends TestCase
         $response1 = $this->actingAs($admin)->get('/admin/secretaria/gerador-crachas-v1');
         $response1->assertStatus(200);
 
-
-
         $response3 = $this->actingAs($admin)->get('/admin/secretaria/gerador-crachas-v3');
         $response3->assertStatus(200);
     }
@@ -42,8 +40,6 @@ class GeradorCrachasTest extends TestCase
 
         $response1 = $this->actingAs($user)->get('/admin/secretaria/gerador-crachas-v1');
         $response1->assertStatus(403);
-
-
 
         $response3 = $this->actingAs($user)->get('/admin/secretaria/gerador-crachas-v3');
         $response3->assertStatus(403);
@@ -63,8 +59,6 @@ class GeradorCrachasTest extends TestCase
             ->test(GeradorCrachasV1::class)
             ->assertSet('data.tipo_selecao', 'individual')
             ->assertHasNoFormErrors();
-
-
 
         Livewire::actingAs($admin)
             ->test(GeradorCrachasV3::class)
