@@ -48,11 +48,11 @@ class MatriculasTable
 
                         $user = auth()->user();
 
-                        if ($user->can('update', $record->pessoa)) {
+                        if ($user && $user->can('Update:Pessoa')) {
                             return PessoaResource::getUrl('edit', ['record' => $record->pessoa]);
                         }
 
-                        if ($user->can('view', $record->pessoa)) {
+                        if ($user && $user->can('View:Pessoa')) {
                             $pages = PessoaResource::getPages();
 
                             return isset($pages['view'])
