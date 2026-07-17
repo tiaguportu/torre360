@@ -74,8 +74,8 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-minus')
                 ->color($semResponsavelCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
-                    'tableFilters[sem_responsavel][value]' => '1',
-                    'tableFilters[situacao][value]' => '',
+                    'filters[sem_responsavel][value]' => '1',
+                    'filters[situacao][value]' => '',
                 ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
@@ -83,8 +83,8 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
-                    'tableFilters[documentos_pendentes][value]' => '1',
-                    'tableFilters[situacao][value]' => '',
+                    'filters[documentos_pendentes][value]' => '1',
+                    'filters[situacao][value]' => '',
                 ])),
         ];
     }

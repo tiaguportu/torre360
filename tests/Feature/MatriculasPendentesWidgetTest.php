@@ -55,11 +55,11 @@ class MatriculasPendentesWidgetTest extends TestCase
         // Verifica que a URL do primeiro card contém o filtro 'sem_responsavel' e limpa o de situação
         $url0 = urldecode($stats[0]->getUrl());
         $this->assertStringContainsString('sem_responsavel', $url0);
-        $this->assertStringContainsString('tableFilters[situacao][value]=', $url0);
+        $this->assertStringContainsString('filters[situacao][value]=', $url0);
 
         // Verifica que a URL do segundo card contém o filtro 'documentos_pendentes' e limpa o de situação
         $url1 = urldecode($stats[1]->getUrl());
         $this->assertStringContainsString('documentos_pendentes', $url1);
-        $this->assertStringContainsString('tableFilters[situacao][value]=', $url1);
+        $this->assertStringContainsString('filters[situacao][value]=', $url1);
     }
 }

@@ -102,7 +102,7 @@ class EnsureActiveRole
 
                                     NavigationItem::make('Preceptorias')
                                         ->url(fn () => PreceptoriaResource::getUrl('index', [
-                                            'tableFilters[matricula][value]' => $matriculaAtiva->id,
+                                            'filters[matricula][value]' => $matriculaAtiva->id,
                                         ])),
 
                                     NavigationItem::make('Documentos')
