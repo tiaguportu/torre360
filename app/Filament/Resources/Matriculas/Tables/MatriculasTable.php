@@ -33,14 +33,14 @@ class MatriculasTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
+            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento)))) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->searchable()
                     ->sortable()
-                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'bold' : null)
-                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'danger' : null)
+                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento)))) ? 'bold' : null)
+                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento)))) ? 'danger' : null)
                     ->url(function (Matricula $record) {
                         if (! $record->pessoa) {
                             return null;
@@ -152,6 +152,22 @@ class MatriculasTable
                                 });
                         }),
                     ),
+                TernaryFilter::make('dados_pendentes')
+                    ->label('Cadastro Pendente')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
+                            $q->where(function ($qSub) {
+                                $qSub->whereNull('cpf')
+                                    ->orWhere('cpf', '')
+                                    ->orWhereNull('data_nascimento');
+                            });
+                        }),
+                        false: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
+                            $q->whereNotNull('cpf')
+                                ->where('cpf', '!=', '')
+                                ->whereNotNull('data_nascimento');
+                        }),
+                    ),
             ])
             ->actions([
                 EditAction::make(),
@@ -166,6 +182,9 @@ class MatriculasTable
                         if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
                             $count++;
                         }
+                        if ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento))) {
+                            $count++;
+                        }
                         $count += $record->getMissingMandatoryDocumentsCount();
                         $count += $record->getRejectedDocuments()->count();
 
@@ -173,6 +192,7 @@ class MatriculasTable
                     })
                     ->badgeColor('danger')
                     ->visible(fn (Matricula $record) => ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) ||
+                        ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento))) ||
                         $record->hasPendingIssues()
                     )
                     ->modalHeading('Pendências da Matrícula')
@@ -190,6 +210,31 @@ class MatriculasTable
                                 <div class="mt-2">
                                     <a href="'.PessoaResource::getUrl('edit', ['record' => $record->pessoa_id]).'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
                                         Clique aqui para associar responsáveis na ficha do aluno
+                                    </a>
+                                </div>
+                            </div>';
+                        }
+
+                        // Alerta de Dados Cadastrais Faltantes
+                        if ($record->pessoa && (blank($record->pessoa->cpf) || blank($record->pessoa->data_nascimento))) {
+                            $faltantes = [];
+                            if (blank($record->pessoa->cpf)) {
+                                $faltantes[] = '<strong>CPF</strong>';
+                            }
+                            if (blank($record->pessoa->data_nascimento)) {
+                                $faltantes[] = '<strong>Data de Nascimento</strong>';
+                            }
+                            $textoFaltantes = implode(' e ', $faltantes);
+
+                            $html .= '
+                            <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
+                                <div class="flex items-center gap-2 font-bold mb-1">
+                                    <span>⚠️ Dados Cadastrais Incompletos</span>
+                                </div>
+                                <p class="text-sm">Este aluno está sem informação de '.$textoFaltantes.'.</p>
+                                <div class="mt-2">
+                                    <a href="'.PessoaResource::getUrl('edit', ['record' => $record->pessoa_id]).'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
+                                        Clique aqui para editar os dados cadastrais do aluno
                                     </a>
                                 </div>
                             </div>';

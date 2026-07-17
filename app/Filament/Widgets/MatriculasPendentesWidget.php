@@ -68,6 +68,18 @@ class MatriculasPendentesWidget extends BaseWidget
                 }
             });
 
+        // 3. Contagem de Matrículas com dados cadastrais ausentes (CPF ou Data de Nascimento)
+        $cadastroPendenteCount = Matricula::query()
+            ->where('situacao', SituacaoMatricula::ATIVA)
+            ->whereHas('pessoa', function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNull('cpf')
+                        ->orWhere('cpf', '')
+                        ->orWhereNull('data_nascimento');
+                });
+            })
+            ->count();
+
         return [
             Stat::make('Pendência de Responsáveis', $semResponsavelCount)
                 ->description('Matrículas sem responsável associado')
@@ -84,6 +96,15 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
                     'filters[documentos_pendentes][value]' => '1',
+                    'filters[situacao][value]' => SituacaoMatricula::ATIVA->value,
+                ])),
+
+            Stat::make('Pendência de Cadastro', $cadastroPendenteCount)
+                ->description('Alunos sem CPF ou Data de Nascimento')
+                ->descriptionIcon('heroicon-m-identification')
+                ->color($cadastroPendenteCount > 0 ? 'danger' : 'success')
+                ->url(MatriculaResource::getUrl('index', [
+                    'filters[dados_pendentes][value]' => '1',
                     'filters[situacao][value]' => SituacaoMatricula::ATIVA->value,
                 ])),
         ];
