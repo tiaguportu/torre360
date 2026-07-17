@@ -43,7 +43,7 @@ class MatriculasPendentesWidget extends BaseWidget
     {
         // 1. Contagem de Matrículas sem responsáveis (pendência de responsáveis)
         $semResponsavelCount = Matricula::query()
-            ->whereIn('situacao', [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE])
+            ->where('situacao', SituacaoMatricula::ATIVA)
             ->whereHas('pessoa', function ($query) {
                 $query->whereDoesntHave('responsaveis');
             })
@@ -53,7 +53,7 @@ class MatriculasPendentesWidget extends BaseWidget
         $documentosPendentesCount = 0;
 
         Matricula::query()
-            ->whereIn('situacao', [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE])
+            ->where('situacao', SituacaoMatricula::ATIVA)
             ->with([
                 'turma.serie.curso.documentos',
                 'turma.tiposDocumentos',
@@ -75,7 +75,6 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->color($semResponsavelCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
                     'filters[sem_responsavel][value]' => '1',
-                    'filters[situacao][value]' => '',
                 ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
@@ -84,7 +83,6 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
                     'filters[documentos_pendentes][value]' => '1',
-                    'filters[situacao][value]' => '',
                 ])),
         ];
     }
