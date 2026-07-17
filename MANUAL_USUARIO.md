@@ -245,6 +245,7 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
    - **Administradores/Secretaria:** Visualizam todas as matrículas do sistema.
    - **Responsáveis:** Visualizam apenas as matrículas onde são os responsáveis financeiros (no contrato) OU onde possuem vínculo legal direto com o aluno (vínculo pai/mãe registrado no sistema).
 8. **Filtro Padrão:** Para facilitar o dia a dia, a listagem de matrículas exibe por padrão apenas os alunos com **Situação: Ativa**. Caso precise consultar alunos em outras situações (como Trancado ou Cancelado), utilize a barra de filtros da tabela.
+9. **Atalho para Ficha do Aluno:** Na listagem de matrículas, ao clicar em cima do nome de um aluno, você será direcionado para o cadastro da Pessoa (Aluno). O redirecionamento respeita as permissões do seu usuário: se possuir permissão de edição, abrirá em modo de edição; se possuir apenas permissão de visualização, abrirá em modo de visualização; se não possuir nenhuma destas permissões, o nome não será clicável.
 
 ### 6.1.1 Importação e Exportação de Contratos em Lote
 

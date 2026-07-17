@@ -40,7 +40,28 @@ class MatriculasTable
                     ->searchable()
                     ->sortable()
                     ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'bold' : null)
-                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'danger' : null),
+                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists())) ? 'danger' : null)
+                    ->url(function (Matricula $record) {
+                        if (! $record->pessoa) {
+                            return null;
+                        }
+
+                        $user = auth()->user();
+
+                        if ($user->can('update', $record->pessoa)) {
+                            return PessoaResource::getUrl('edit', ['record' => $record->pessoa]);
+                        }
+
+                        if ($user->can('view', $record->pessoa)) {
+                            $pages = PessoaResource::getPages();
+
+                            return isset($pages['view'])
+                                ? PessoaResource::getUrl('view', ['record' => $record->pessoa])
+                                : PessoaResource::getUrl('edit', ['record' => $record->pessoa]);
+                        }
+
+                        return null;
+                    }),
                 TextColumn::make('turma.nome')
                     ->label('Turma')
                     ->searchable()
