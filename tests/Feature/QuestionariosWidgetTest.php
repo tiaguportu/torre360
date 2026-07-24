@@ -59,6 +59,25 @@ class QuestionariosWidgetTest extends TestCase
     }
 
     /** @test */
+    public function widget_nao_deve_exibir_se_periodo_de_aplicacao_estiver_vencido()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Criar questionário com fim de aplicação no passado
+        Questionario::create([
+            'titulo' => 'Questionário Vencido',
+            'descricao' => 'Teste vencido',
+            'is_ativo' => true,
+            'is_anonimo' => false,
+            'inicio_aplicacao' => now()->subDays(10),
+            'fim_aplicacao' => now()->subDays(1),
+        ]);
+
+        $this->assertFalse(QuestionariosPendentes::canView());
+    }
+
+    /** @test */
     public function can_access_deve_permitir_acesso_se_usuario_for_do_publico_alvo()
     {
         $user = User::factory()->create();

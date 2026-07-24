@@ -31,6 +31,21 @@ class QuestionariosPendentes extends Widget
                 $q->whereNull('fim_aplicacao')->orWhere('fim_aplicacao', '>=', now());
             })
             ->get()
+            ->filter(function ($q) {
+                if (! $q->is_ativo) {
+                    return false;
+                }
+
+                if ($q->fim_aplicacao && now()->gt($q->fim_aplicacao)) {
+                    return false;
+                }
+
+                if ($q->inicio_aplicacao && now()->lt($q->inicio_aplicacao)) {
+                    return false;
+                }
+
+                return true;
+            })
             ->filter(fn ($q) => $q->podeSerRespondidoPor($user))
             ->filter(function ($q) use ($user) {
                 // Se o questionário não for anônimo, verificamos se o usuário logado já respondeu
