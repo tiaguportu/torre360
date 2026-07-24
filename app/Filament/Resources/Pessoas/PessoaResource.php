@@ -8,7 +8,10 @@ use App\Filament\Resources\Pessoas\Pages\ListPessoas;
 use App\Filament\Resources\Pessoas\RelationManagers\AlunosRelationManager;
 use App\Filament\Resources\Pessoas\RelationManagers\EnderecoRelationManager;
 use App\Filament\Resources\Pessoas\RelationManagers\MatriculasRelationManager;
+use App\Filament\Resources\Pessoas\RelationManagers\NecessidadesEducacaoEspecialRelationManager;
+use App\Filament\Resources\Pessoas\RelationManagers\RecursosAcessibilidadeRelationManager;
 use App\Filament\Resources\Pessoas\RelationManagers\ResponsaveisRelationManager;
+use App\Filament\Resources\Pessoas\RelationManagers\TranstornosAprendizagemRelationManager;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Filament\Resources\Pessoas\Tables\PessoasTable;
 use App\Models\Pessoa;
@@ -47,6 +50,9 @@ class PessoaResource extends Resource
             AlunosRelationManager::class,
             EnderecoRelationManager::class,
             MatriculasRelationManager::class,
+            NecessidadesEducacaoEspecialRelationManager::class,
+            TranstornosAprendizagemRelationManager::class,
+            RecursosAcessibilidadeRelationManager::class,
         ];
     }
 

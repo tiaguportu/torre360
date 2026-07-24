@@ -120,6 +120,12 @@ Para garantir a privacidade e segurança dos dados, a visualização da lista de
 - **Professores:** Visualizam seus próprios dados e os dados de pessoas vinculadas aos seus usuários.
 - **Administradores/Secretaria:** Possuem visibilidade total de todas as pessoas cadastradas.
 
+### 4.4 Necessidades Especiais, Transtornos e Recursos de Acessibilidade
+Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas para o acompanhamento pedagógico e de inclusão:
+1. **Necessidades de Educação Especial:** Permite registrar e gerenciar as necessidades do aluno (ex: *Baixa visão, Surdez, TEA, Altas habilidades ou superdotação*), incluindo observações complementares.
+2. **Transtornos de Aprendizagem:** Permite categorizar transtornos diagnosticados ou observados (ex: *Discalculia, Dislexia, TDAH, TPAC*), com campo livre para detalhar pareceres e observações.
+3. **Recursos de Acessibilidade:** Permite definir os recursos de apoio que a pessoa necessita no dia a dia ou em exames/avaliações (ex: *Tradutor-intérprete de Libras, Prova ampliada (Fonte 18), Auxílio ledor, Prova em Braille, Tempo adicional*).
+
 ---
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação

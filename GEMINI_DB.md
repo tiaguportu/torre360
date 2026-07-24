@@ -51,6 +51,9 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
     - HasMany `matriculas`.
     - BelongsToMany `unidade` (via `representante_unidade`) como Representante Legal.
+    - HasMany `necessidadesEducacaoEspecial`.
+    - HasMany `transtornosAprendizagem`.
+    - HasMany `recursosAcessibilidade`.
 
 ### `endereco`
 - **Representa:** Localização física de pessoas ou unidades.
@@ -93,6 +96,30 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
     - `altura`: Altura do crachá em pixels (default 480).
     - `imagem_fundo`: Caminho da imagem de fundo.
     - `dados_layout`: JSON contendo os elementos de texto, estilos e imagens do canvas Fabric.js.
+
+### `categoria_necessidade_educacao_especiais`
+- **Representa:** Categorias de necessidades de educação especial (ex: Baixa visão, Cegueira, Surdez, TEA, etc.).
+- **Campos Principais:** `nome` (único), `descricao`.
+
+### `necessidade_educacao_especiais`
+- **Representa:** Registros de necessidades de educação especial vinculados a uma pessoa.
+- **Campos Principais:** `pessoa_id` (FK `pessoa`), `categoria_necessidade_educacao_especial_id` (FK `categoria_necessidade_educacao_especiais`), `observacao`.
+
+### `categoria_transtorno_aprendizagens`
+- **Representa:** Categorias de transtornos de aprendizagem (ex: Dislexia, TDAH, Discalculia, etc.).
+- **Campos Principais:** `nome` (único), `descricao`.
+
+### `transtorno_aprendizagens`
+- **Representa:** Registros de transtornos de aprendizagem vinculados a uma pessoa.
+- **Campos Principais:** `pessoa_id` (FK `pessoa`), `categoria_transtorno_aprendizagem_id` (FK `categoria_transtorno_aprendizagens`), `observacao`.
+
+### `categoria_recurso_acessabilidades`
+- **Representa:** Categorias de recursos de acessibilidade (ex: Tradutor-intérprete de Libras, Prova ampliada, etc.).
+- **Campos Principais:** `nome` (único), `descricao`.
+
+### `recurso_acessabilidades`
+- **Representa:** Registros de recursos de acessibilidade vinculados a uma pessoa.
+- **Campos Principais:** `pessoa_id` (FK `pessoa`), `categoria_recurso_acessabilidade_id` (FK `categoria_recurso_acessabilidades`), `observacao`.
 
 ---
 

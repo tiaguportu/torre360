@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
         ]);
         $this->call([
             HabilidadeBnccSeeder::class,
+            CategoriaNecessidadeEducacaoEspecialSeeder::class,
+            CategoriaTranstornoAprendizagemSeeder::class,
+            CategoriaRecursoAcessibilidadeSeeder::class,
         ]);
     }
 }

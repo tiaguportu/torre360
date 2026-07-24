@@ -94,6 +94,21 @@ class Pessoa extends Model
         return $this->hasMany(Preceptoria::class, 'professor_id');
     }
 
+    public function necessidadesEducacaoEspecial(): HasMany
+    {
+        return $this->hasMany(NecessidadeEducacaoEspecial::class, 'pessoa_id');
+    }
+
+    public function transtornosAprendizagem(): HasMany
+    {
+        return $this->hasMany(TranstornoAprendizagem::class, 'pessoa_id');
+    }
+
+    public function recursosAcessibilidade(): HasMany
+    {
+        return $this->hasMany(RecursoAcessibilidade::class, 'pessoa_id');
+    }
+
     /**
      * Retorna uma lista de motivos (vínculos) que impedem a exclusão da pessoa.
      */
