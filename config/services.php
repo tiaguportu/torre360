@@ -49,11 +49,4 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
-    'gov_cpf' => [
-        'client_id' => env('GOV_CPF_CLIENT_ID'),
-        'client_secret' => env('GOV_CPF_CLIENT_SECRET'),
-        'user_cpf' => env('GOV_CPF_USER_CPF'),
-        'environment' => env('GOV_CPF_ENVIRONMENT', 'homologacao'),
-    ],
-
 ];

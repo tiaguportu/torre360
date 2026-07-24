@@ -5,15 +5,10 @@ namespace App\Filament\Resources\Pessoas\Schemas;
 use App\Enums\CorRaca;
 use App\Enums\Sexo;
 use App\Models\Pais;
-use App\Services\GovCpfService;
-use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class PessoaForm
@@ -65,58 +60,7 @@ class PessoaForm
                     ->mask('999.999.999-99')
                     ->unique(ignoreRecord: true)
                     ->maxLength(14)
-                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/[^0-9]/', '', $state) : null)
-                    ->suffixAction(
-                        Action::make('consultarCpfGov')
-                            ->icon('heroicon-m-magnifying-glass')
-                            ->tooltip('Consultar dados no Cadastro Base do Cidadão (Gov.br)')
-                            ->action(function (Get $get, Set $set, GovCpfService $cpfService) {
-                                $cpfStr = $get('cpf');
-                                $cpfLimpo = preg_replace('/[^0-9]/', '', $cpfStr ?? '');
-
-                                if (empty($cpfLimpo) || strlen($cpfLimpo) !== 11) {
-                                    Notification::make()
-                                        ->warning()
-                                        ->title('CPF Inválido')
-                                        ->body('Informe um CPF válido com 11 dígitos para realizar a consulta.')
-                                        ->send();
-
-                                    return;
-                                }
-
-                                try {
-                                    $dados = $cpfService->consultarEPopularPessoa($cpfLimpo);
-
-                                    if (! empty($dados['nome'])) {
-                                        $set('nome', $dados['nome']);
-                                    }
-                                    if (! empty($dados['data_nascimento'])) {
-                                        $set('data_nascimento', $dados['data_nascimento']);
-                                    }
-                                    if (! empty($dados['sexo'])) {
-                                        $set('sexo', $dados['sexo']);
-                                    }
-                                    if (! empty($dados['nacionalidade_id'])) {
-                                        $set('nacionalidade_id', $dados['nacionalidade_id']);
-                                    }
-                                    if (! empty($dados['naturalidade_id'])) {
-                                        $set('naturalidade_id', $dados['naturalidade_id']);
-                                    }
-
-                                    Notification::make()
-                                        ->success()
-                                        ->title('Consulta realizada com sucesso!')
-                                        ->body('As informações de Nome, Data de Nascimento, Sexo, Nacionalidade e Naturalidade foram preenchidas a partir da API do Governo.')
-                                        ->send();
-                                } catch (\Exception $e) {
-                                    Notification::make()
-                                        ->danger()
-                                        ->title('Falha na Consulta de CPF')
-                                        ->body($e->getMessage())
-                                        ->send();
-                                }
-                            })
-                    ),
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/[^0-9]/', '', $state) : null),
 
                 TextInput::make('email')
                     ->email()
