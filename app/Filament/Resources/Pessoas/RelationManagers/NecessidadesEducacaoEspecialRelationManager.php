@@ -19,6 +19,10 @@ class NecessidadesEducacaoEspecialRelationManager extends RelationManager
 
     protected static ?string $title = 'Necessidades de Educação Especial';
 
+    protected static ?string $modelLabel = 'Necessidade de Educação Especial';
+
+    protected static ?string $pluralModelLabel = 'Necessidades de Educação Especial';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -38,7 +42,7 @@ class NecessidadesEducacaoEspecialRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('id')
+            ->recordTitleAttribute('observacao')
             ->columns([
                 TextColumn::make('categoria.nome')
                     ->label('Categoria')

@@ -19,6 +19,10 @@ class RecursosAcessibilidadeRelationManager extends RelationManager
 
     protected static ?string $title = 'Recursos de Acessibilidade';
 
+    protected static ?string $modelLabel = 'Recurso de Acessibilidade';
+
+    protected static ?string $pluralModelLabel = 'Recursos de Acessibilidade';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -38,7 +42,7 @@ class RecursosAcessibilidadeRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('id')
+            ->recordTitleAttribute('observacao')
             ->columns([
                 TextColumn::make('categoria.nome')
                     ->label('Categoria')

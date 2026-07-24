@@ -19,6 +19,10 @@ class TranstornosAprendizagemRelationManager extends RelationManager
 
     protected static ?string $title = 'Transtornos de Aprendizagem';
 
+    protected static ?string $modelLabel = 'Transtorno de Aprendizagem';
+
+    protected static ?string $pluralModelLabel = 'Transtornos de Aprendizagem';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -38,7 +42,7 @@ class TranstornosAprendizagemRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('id')
+            ->recordTitleAttribute('observacao')
             ->columns([
                 TextColumn::make('categoria.nome')
                     ->label('Categoria')
