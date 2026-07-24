@@ -102,6 +102,7 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 
 ### 4.1 Cadastro de Pessoa
 1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento, **Identidade (RG)**, **Profissão** e **Estado Civil**).
+   - **Consulta de CPF no Governo (Gov.br / CBC - CPF):** Ao digitar o CPF no campo correspondente, clique no botão com ícone de **lupa** ao lado do campo para consultar automaticamente a base de dados oficial do Governo Federal (Cadastro Base do Cidadão - Receita Federal / SERPRO). O sistema preencherá automaticamente os campos de **Nome**, **Data de Nascimento**, **Sexo**, **Nacionalidade** (País) e **Naturalidade** (Município/UF).
 2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo. Os campos de **Sexo** e **Cor / Raça** agora utilizam indicadores visuais (badges) coloridos para facilitar a identificação rápida na tabela.
 3. **Endereços e Automação via CEP:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa.
    - **Agilidade no Preenchimento:** Comece digitando o **CEP**. Ao sair do campo (ou pressionar TAB), o sistema consulta automaticamente a base do **ViaCEP** e preenche para você o **Logradouro**, **Bairro** e a **Cidade/Estado**.
