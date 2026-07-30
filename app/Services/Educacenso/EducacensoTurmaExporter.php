@@ -53,6 +53,40 @@ class EducacensoTurmaExporter
     }
 
     /**
+     * Mapeia qualquer código de sub-etapa/etapa de ensino para uma Etapa Agregada válida do INEP (301, 302, 304, etc.).
+     */
+    private function resolveEtapaAgregada(mixed $etapaRaw, Turma $turma): string
+    {
+        $code = $this->extractCode($turma->etapaEnsinoAgregada?->codigo ?? $etapaRaw);
+
+        if (empty($code)) {
+            return '301';
+        }
+
+        // Se o código já for de Etapa Agregada (300+), retorna diretamente
+        if (is_numeric($code) && (int) $code >= 300) {
+            return (string) $code;
+        }
+
+        // Mapeia sub-etapas para a Etapa Agregada INEP correspondente
+        $num = (int) $code;
+        if (in_array($num, [1, 2, 3])) {
+            return '301'; // Educação Infantil (Creche/Pré-escola)
+        }
+        if ($num >= 14 && $num <= 24) {
+            return '302'; // Ensino Fundamental 9 Anos
+        }
+        if ($num >= 25 && $num <= 38) {
+            return '304'; // Ensino Médio
+        }
+        if ($num >= 65 && $num <= 74) {
+            return '305'; // EJA / Profissional
+        }
+
+        return (string) $code;
+    }
+
+    /**
      * Constrói a linha no formato Registro 20 para uma turma específica com 66 campos.
      */
     public function buildRegistro20Line(Turma $turma): string
@@ -132,12 +166,11 @@ class EducacensoTurmaExporter
             $f22 = '';
         }
 
-        // 23. Etapa agregada (Código INEP da Etapa quando Tipo de turma for 6 ou 9, senão NULO "")
+        // 23. Etapa agregada (Código INEP de Etapa Agregada quando Tipo de turma for 6 ou 9, senão NULO "")
         $etapaInepRaw = $turma->etapaEnsino?->codigo ?? $turma->etapaEnsinoAgregada?->codigo ?? $turma->etapa_ensino_id ?? '';
-        $etapaInep = $this->extractCode($etapaInepRaw);
 
         if (in_array($tipoTurma, [6, 9])) {
-            $f23 = $etapaInep !== '' ? $etapaInep : '302';
+            $f23 = $this->resolveEtapaAgregada($etapaInepRaw, $turma);
         } else {
             $f23 = '';
         }
@@ -147,10 +180,10 @@ class EducacensoTurmaExporter
         $f24 = $formaOrg !== '' ? $formaOrg : '1';
 
         // 25. Código do eixo do curso de qualificação profissional
-        $f25 = in_array($etapaInep, ['67', '68', '73', '75']) ? $this->extractCode($turma->codigo_eixo_qualificacao ?? '') : '';
+        $f25 = in_array($f23, ['67', '68', '73', '75']) ? $this->extractCode($turma->codigo_eixo_qualificacao ?? '') : '';
 
         // 26. Código do curso da Educação Profissional
-        $f26 = in_array($etapaInep, ['39', '40', '64', '74']) ? $this->extractCode($turma->codigo_curso_profissional ?? '') : '';
+        $f26 = in_array($f23, ['39', '40', '64', '74']) ? $this->extractCode($turma->codigo_curso_profissional ?? '') : '';
 
         // 27. Carga horária total do curso
         $f27 = '';
@@ -168,7 +201,7 @@ class EducacensoTurmaExporter
 
         // Campos 30 a 32: Organização curricular (Formação geral básica, Itinerário formativo, IFTP)
         // Deve ser 0 ou 1 quando Etapa agregada for 304 ou 305, SENÃO NULO ("")
-        if (in_array($etapaInep, ['304', '305'])) {
+        if (in_array($f23, ['304', '305'])) {
             $f30 = $turma->formacao_geral_basica ? '1' : '1';
             $f31 = $turma->itinerario_formativo ? '1' : '0';
             $f32 = $turma->itinerario_tecnico ? '1' : '0';

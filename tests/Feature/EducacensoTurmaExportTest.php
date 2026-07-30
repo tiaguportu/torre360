@@ -96,7 +96,7 @@ class EducacensoTurmaExportTest extends TestCase
         $this->assertEquals('6', $fields[13]); // 14. Tipo Turma
         $this->assertEquals('800', $fields[20]); // 21. Carga Horaria
         $this->assertEquals('0', $fields[21]); // 22. Classe Especial
-        $this->assertEquals('14', $fields[22]); // 23. Etapa INEP
+        $this->assertEquals('302', $fields[22]); // 23. Etapa INEP (Etapa Agregada)
         $this->assertEquals('1', $fields[23]); // 24. Forma de Organização
         $this->assertEquals('07:00', $fields[27]); // 28. Hora Inicio
         $this->assertEquals('12:00', $fields[28]); // 29. Hora Fim
