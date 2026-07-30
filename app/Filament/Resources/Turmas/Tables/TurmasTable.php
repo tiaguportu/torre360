@@ -79,6 +79,11 @@ class TurmasTable
                     ->label('Vagas')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('carga_horaria_total')
+                    ->label('Carga Horária (h)')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

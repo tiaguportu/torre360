@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\Turmas\Schemas;
 
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class TurmaForm
@@ -38,6 +41,10 @@ class TurmaForm
                 TextInput::make('vagas_maximas')
                     ->numeric()
                     ->default(30),
+                TextInput::make('carga_horaria_total')
+                    ->label('Carga Horária Total (horas)')
+                    ->numeric()
+                    ->suffix('horas'),
                 ColorPicker::make('cor')
                     ->label('Cor da Turma')
                     ->default(fn () => '#'.str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)),
@@ -78,6 +85,44 @@ class TurmaForm
                 Toggle::make('turma_educacao_especial')
                     ->label('Turma de Educação Especial (Classe Especial)')
                     ->default(false),
+                Section::make('Horário de Funcionamento (Dias da Semana)')
+                    ->schema([
+                        Repeater::make('horariosFuncionamento')
+                            ->relationship('horariosFuncionamento')
+                            ->schema([
+                                Select::make('dia_semana')
+                                    ->label('Dia da Semana')
+                                    ->options([
+                                        0 => 'Domingo',
+                                        1 => 'Segunda-feira',
+                                        2 => 'Terça-feira',
+                                        3 => 'Quarta-feira',
+                                        4 => 'Quinta-feira',
+                                        5 => 'Sexta-feira',
+                                        6 => 'Sábado',
+                                    ])
+                                    ->required()
+                                    ->distinct(),
+                                TimePicker::make('hora_inicio')
+                                    ->label('Hora de Início')
+                                    ->seconds(false),
+                                TimePicker::make('hora_fim')
+                                    ->label('Hora de Término')
+                                    ->seconds(false),
+                            ])
+                            ->columns(3)
+                            ->defaultItems(0)
+                            ->itemLabel(fn (array $state): ?string => match ((int) ($state['dia_semana'] ?? null)) {
+                                0 => 'Domingo',
+                                1 => 'Segunda-feira',
+                                2 => 'Terça-feira',
+                                3 => 'Quarta-feira',
+                                4 => 'Quinta-feira',
+                                5 => 'Sexta-feira',
+                                6 => 'Sábado',
+                                default => null,
+                            }),
+                    ]),
             ]);
     }
 }

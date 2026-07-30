@@ -71,6 +71,11 @@ class Turma extends Model
         return $this->belongsToMany(Disciplina::class, 'turma_disciplina')->withPivot('professor_id')->withTimestamps();
     }
 
+    public function horariosFuncionamento(): HasMany
+    {
+        return $this->hasMany(TurmaHorario::class);
+    }
+
     protected function casts(): array
     {
         return [
@@ -79,6 +84,7 @@ class Turma extends Model
             'tipo_mediacao_didatico_pedagogica' => 'integer',
             'tipo_turma' => 'integer',
             'local_funcionamento_diferenciado' => 'integer',
+            'carga_horaria_total' => 'integer',
         ];
     }
 }

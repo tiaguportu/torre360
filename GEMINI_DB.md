@@ -128,7 +128,13 @@ Estrutura de ensino e turmas.
 
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
-- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `professor_conselheiro_id`, `vagas_maximas`, `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean).
+- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean).
+- **Relacionamentos:** HasMany `horariosFuncionamento` (`turma_horario`).
+
+### `turma_horario`
+- **Representa:** Horário de funcionamento da turma por dia da semana (Domingo a Sábado).
+- **Campos Principais:** `turma_id`, `dia_semana` (0=Domingo, 1=Segunda, 2=Terça, 3=Quarta, 4=Quinta, 5=Sexta, 6=Sábado), `hora_inicio`, `hora_fim`.
+- **Relacionamentos:** BelongsTo `turma`.
 
 ### `disciplina`
 - **Representa:** Matérias ou componentes curriculares.
