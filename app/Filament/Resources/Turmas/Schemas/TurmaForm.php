@@ -114,46 +114,40 @@ class TurmaForm
                     ->label('Turma de Educação Especial (Classe Especial)')
                     ->default(false)
                     ->live(),
-                Section::make('Educacenso 2026 - Organização e Idioma')
-                    ->columnSpanFull()
-                    ->collapsible()
-                    ->schema([
-                        Select::make('forma_organizacao')
-                            ->label('Forma de Organização da Turma')
-                            ->options([
-                                1 => '1 - Série/Ano (Série Anual)',
-                                2 => '2 - Períodos semestrais',
-                                3 => '3 - Ciclos',
-                                4 => '4 - Grupos não seriados com base na idade ou competência',
-                                5 => '5 - Módulos',
-                                6 => '6 - Alternância regular de períodos de estudos',
-                            ]),
-                        Select::make('modalidade_ensino')
-                            ->label('Modalidade de Ensino')
-                            ->options([
-                                1 => '1 - Ensino Regular',
-                                2 => '2 - Educação Especial',
-                                3 => '3 - Educação de Jovens e Adultos (EJA)',
-                                4 => '4 - Educação Profissional',
-                            ]),
-                        Select::make('tipo_lingua_ministrada')
-                            ->label('Língua em que o Ensino é Ministrado')
-                            ->options([
-                                1 => '1 - Somente em Língua Portuguesa',
-                                2 => '2 - Em Língua Indígena e Língua Portuguesa',
-                                3 => '3 - Somente em Língua Indígena',
-                            ])
-                            ->default(1)
-                            ->live(),
-                        TextInput::make('codigo_lingua_indigena')
-                            ->label('Código da Língua Indígena (INEP)')
-                            ->visible(fn (Get $get) => in_array((int) $get('tipo_lingua_ministrada'), [2, 3]))
-                            ->maxLength(10),
-                        Toggle::make('turma_educacao_bilingue_surdos')
-                            ->label('Turma de Educação Bilíngue de Surdos')
-                            ->default(false),
+                Select::make('forma_organizacao')
+                    ->label('Forma de Organização da Turma')
+                    ->options([
+                        1 => '1 - Série/Ano (Série Anual)',
+                        2 => '2 - Períodos semestrais',
+                        3 => '3 - Ciclos',
+                        4 => '4 - Grupos não seriados com base na idade ou competência',
+                        5 => '5 - Módulos',
+                        6 => '6 - Alternância regular de períodos de estudos',
+                    ]),
+                Select::make('modalidade_ensino')
+                    ->label('Modalidade de Ensino')
+                    ->options([
+                        1 => '1 - Ensino Regular',
+                        2 => '2 - Educação Especial',
+                        3 => '3 - Educação de Jovens e Adultos (EJA)',
+                        4 => '4 - Educação Profissional',
+                    ]),
+                Select::make('tipo_lingua_ministrada')
+                    ->label('Língua em que o Ensino é Ministrado')
+                    ->options([
+                        1 => '1 - Somente em Língua Portuguesa',
+                        2 => '2 - Em Língua Indígena e Língua Portuguesa',
+                        3 => '3 - Somente em Língua Indígena',
                     ])
-                    ->columns(2),
+                    ->default(1)
+                    ->live(),
+                TextInput::make('codigo_lingua_indigena')
+                    ->label('Código da Língua Indígena (INEP)')
+                    ->visible(fn (Get $get) => in_array((int) $get('tipo_lingua_ministrada'), [2, 3]))
+                    ->maxLength(10),
+                Toggle::make('turma_educacao_bilingue_surdos')
+                    ->label('Turma de Educação Bilíngue de Surdos')
+                    ->default(false),
                 Section::make('Educacenso 2026 - Atendimento Educacional Especializado (AEE)')
                     ->columnSpanFull()
                     ->collapsible()
