@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Turmas\Schemas;
 
+use App\Models\EtapaEnsino;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
 use Filament\Forms\Components\ColorPicker;
@@ -11,6 +12,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class TurmaForm
@@ -58,6 +61,28 @@ class TurmaForm
                     ])
                     ->required()
                     ->default('notas'),
+                Select::make('etapa_ensino_agregada_id')
+                    ->label('Etapa de Ensino Agregada')
+                    ->relationship('etapaEnsinoAgregada', 'nome')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - {$record->nome}")
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set) => $set('etapa_ensino_id', null)),
+                Select::make('etapa_ensino_id')
+                    ->label('Etapa de Ensino')
+                    ->options(function (Get $get) {
+                        $agregadaId = $get('etapa_ensino_agregada_id');
+                        if (! $agregadaId) {
+                            return [];
+                        }
+
+                        return EtapaEnsino::where('etapa_ensino_agregada_id', $agregadaId)
+                            ->get()
+                            ->mapWithKeys(fn ($item) => [$item->id => "{$item->codigo} - {$item->nome}"]);
+                    })
+                    ->searchable()
+                    ->preload(),
                 Select::make('tipo_mediacao_didatico_pedagogica')
                     ->label('Tipo de Mediação Didático-Pedagógica')
                     ->options([

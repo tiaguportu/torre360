@@ -203,6 +203,8 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
 1. Vá em **Acadêmico → Turmas**.
 2. **Cadastro e Edição de Turmas:** Ao cadastrar ou atualizar uma turma, é possível preencher:
    - **Código:** Código identificador da turma (código INEP/Educacenso ou controle interno).
+   - **Etapa de Ensino Agregada:** Seleção do agrupamento macro da etapa conforme classificação do Educacenso (ex: *301 - Educação Infantil*, *302 - Ensino Fundamental*, *304 - Ensino Médio*, etc.).
+   - **Etapa de Ensino:** Seleção da etapa específica vinculada à Etapa Agregada selecionada (ex: *14 - Ensino fundamental de 9 anos - 1º Ano*, *25 - Ensino médio - 1ª Série*, etc.). O seletor é filtrado dinamicamente com base na Etapa Agregada escolhida.
    - **Tipo de mediação didático-pedagógica:**
      - `1 - Presencial`
      - `2 - Semipresencial`
@@ -219,8 +221,8 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
      - `3 - Unidade prisional`
    - **Turma de Educação Especial (Classe Especial):** Seleção para identificar turmas de classe especial.
    - **Carga Horária Total (horas):** Carga horária total da turma definida em horas.
-   - **Horário de Funcionamento (Dias da Semana):** Permite adicionar o horário de funcionamento para cada dia da semana (Domingo, Segunda-feira, Terça-feira, Quarta-feira, Quinta-feira, Sexta-feira e Sábado), especificando a **Hora de Início** e a **Hora de Término** correspondentes.
-3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado ou Flag de Educação Especial.
+   - **Horário de Funcionamento (Dias da Semana):** Quadro colapsável em largura total que permite definir e visualizar os horários de início e término fixos para todos os dias da semana (Domingo a Sábado).
+3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Etapa Agregada, Etapa de Ensino, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado ou Flag de Educação Especial.
 4. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
 - **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.

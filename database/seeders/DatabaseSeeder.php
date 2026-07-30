@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             CategoriaNecessidadeEducacaoEspecialSeeder::class,
             CategoriaTranstornoAprendizagemSeeder::class,
             CategoriaRecursoAcessibilidadeSeeder::class,
+            EtapaEnsinoSeeder::class,
         ]);
     }
 }

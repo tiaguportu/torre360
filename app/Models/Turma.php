@@ -21,6 +21,16 @@ class Turma extends Model
         return $this->belongsTo(Serie::class);
     }
 
+    public function etapaEnsinoAgregada(): BelongsTo
+    {
+        return $this->belongsTo(EtapaEnsinoAgregada::class, 'etapa_ensino_agregada_id');
+    }
+
+    public function etapaEnsino(): BelongsTo
+    {
+        return $this->belongsTo(EtapaEnsino::class, 'etapa_ensino_id');
+    }
+
     public function turno(): BelongsTo
     {
         return $this->belongsTo(Turno::class);

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Turmas\Tables;
 use App\Enums\SituacaoMatricula;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
+use App\Models\EtapaEnsino;
 use App\Models\NotaHabilidade;
 use App\Models\TemplateCracha;
 use App\Models\Turma;
@@ -52,6 +53,14 @@ class TurmasTable
                 TextColumn::make('turno.nome')
                     ->label('Turno')
                     ->sortable(),
+                TextColumn::make('etapaEnsinoAgregada.nome')
+                    ->label('Etapa Agregada')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('etapaEnsino.nome')
+                    ->label('Etapa de Ensino')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tipo_mediacao_didatico_pedagogica')
                     ->label('Mediação')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
@@ -262,6 +271,28 @@ class TurmasTable
                                     'habilidades' => 'Habilidades',
                                     'hibrido' => 'Híbrido',
                                 ]),
+                            Select::make('etapa_ensino_agregada_id')
+                                ->label('Etapa de Ensino Agregada')
+                                ->relationship('etapaEnsinoAgregada', 'nome')
+                                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - {$record->nome}")
+                                ->searchable()
+                                ->preload()
+                                ->live()
+                                ->afterStateUpdated(fn (Set $set) => $set('etapa_ensino_id', null)),
+                            Select::make('etapa_ensino_id')
+                                ->label('Etapa de Ensino')
+                                ->options(function (Get $get) {
+                                    $agregadaId = $get('etapa_ensino_agregada_id');
+                                    if (! $agregadaId) {
+                                        return [];
+                                    }
+
+                                    return EtapaEnsino::where('etapa_ensino_agregada_id', $agregadaId)
+                                        ->get()
+                                        ->mapWithKeys(fn ($item) => [$item->id => "{$item->codigo} - {$item->nome}"]);
+                                })
+                                ->searchable()
+                                ->preload(),
                             Select::make('tipo_mediacao_didatico_pedagogica')
                                 ->label('Tipo de Mediação Didático-Pedagógica')
                                 ->options([

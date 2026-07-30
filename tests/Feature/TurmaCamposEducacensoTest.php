@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Curso;
+use App\Models\EtapaEnsino;
+use App\Models\EtapaEnsinoAgregada;
 use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\Turno;
@@ -33,11 +35,24 @@ class TurmaCamposEducacensoTest extends TestCase
             'hora_fim' => '12:00:00',
         ]);
 
+        $etapaAgregada = EtapaEnsinoAgregada::create([
+            'codigo' => '302',
+            'nome' => 'Ensino Fundamental',
+        ]);
+
+        $etapaEnsino = EtapaEnsino::create([
+            'etapa_ensino_agregada_id' => $etapaAgregada->id,
+            'codigo' => '14',
+            'nome' => 'Ensino fundamental de 9 anos - 1º Ano',
+        ]);
+
         $turma = Turma::create([
             'nome' => 'Turma 101 Especial',
             'codigo' => 'TURMA-2026-01',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,
+            'etapa_ensino_agregada_id' => $etapaAgregada->id,
+            'etapa_ensino_id' => $etapaEnsino->id,
             'carga_horaria_total' => 800,
             'tipo_mediacao_didatico_pedagogica' => 1, // Presencial
             'tipo_turma' => 6, // Curricular
@@ -48,6 +63,8 @@ class TurmaCamposEducacensoTest extends TestCase
         $this->assertDatabaseHas('turma', [
             'id' => $turma->id,
             'codigo' => 'TURMA-2026-01',
+            'etapa_ensino_agregada_id' => $etapaAgregada->id,
+            'etapa_ensino_id' => $etapaEnsino->id,
             'carga_horaria_total' => 800,
             'tipo_mediacao_didatico_pedagogica' => 1,
             'tipo_turma' => 6,
