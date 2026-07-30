@@ -11,18 +11,25 @@ class UnidadeInstituicaoInepTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_pode_criar_instituicao_ensino_com_codigo_inep(): void
+    public function test_pode_criar_instituicao_ensino_com_codigo_inep_e_flags_orgaos(): void
     {
         $instituicao = InstituicaoEnsino::create([
             'nome' => 'Instituição Teste INEP',
             'cnpj' => '12.345.678/0001-99',
             'codigo_inep' => '12345678',
+            'orgao_vinculado_escola_publica' => 'Secretaria Municipal de Educação',
+            'flag_secretaria_educacao_mec' => true,
+            'flag_seguranca_publica_forcas_armadas' => false,
+            'flag_secretaria_saude' => false,
+            'flag_outro_orgao_publico' => false,
             'flag_ativo' => true,
         ]);
 
         $this->assertDatabaseHas('instituicao_ensinos', [
             'id' => $instituicao->id,
             'codigo_inep' => '12345678',
+            'orgao_vinculado_escola_publica' => 'Secretaria Municipal de Educação',
+            'flag_secretaria_educacao_mec' => true,
         ]);
     }
 
@@ -45,11 +52,6 @@ class UnidadeInstituicaoInepTest extends TestCase
             'localizacao_zona' => '1',
             'localizacao_diferenciada' => '7',
             'dependencia_administrativa' => '3',
-            'orgao_vinculado_escola_publica' => 'Secretaria Municipal de Educação',
-            'flag_secretaria_educacao_mec' => true,
-            'flag_seguranca_publica_forcas_armadas' => false,
-            'flag_secretaria_saude' => false,
-            'flag_outro_orgao_publico' => false,
         ]);
 
         $this->assertDatabaseHas('unidade', [
@@ -62,7 +64,6 @@ class UnidadeInstituicaoInepTest extends TestCase
             'localizacao_zona' => '1',
             'localizacao_diferenciada' => '7',
             'dependencia_administrativa' => '3',
-            'flag_secretaria_educacao_mec' => true,
         ]);
     }
 }

@@ -75,12 +75,12 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `instituicao_ensinos`
 - **Representa:** Uma instituição de ensino que pode possuir várias unidades.
-- **Campos Principais:** `nome`, `cnpj`, `codigo_inep`, `logo` (caminho da imagem), `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
+- **Campos Principais:** `nome`, `cnpj`, `codigo_inep`, `orgao_vinculado_escola_publica`, `flag_secretaria_educacao_mec`, `flag_seguranca_publica_forcas_armadas`, `flag_secretaria_saude`, `flag_outro_orgao_publico`, `logo` (caminho da imagem), `celular_whatsapp`, `instagram`, `facebook`, `youtube`, `flag_ativo`.
 - **Relacionamentos:** BelongsTo `endereco`, HasMany `unidade`.
 
 ### `unidade`
 - **Representa:** Uma unidade escolar ou administrativa pertencente a uma instituição.
-- **Campos Principais:** `instituicao_ensino_id`, `nome`, `cnpj`, `codigo_inep`, `situacao_funcionamento` (1-Em atividade, 2-Paralisada, 3-Extinta), `telefone`, `email`, `codigo_orgao_regional_ensino`, `localizacao_zona` (1-Urbana, 2-Rural), `localizacao_diferenciada` (1, 2, 3, 7, 8), `dependencia_administrativa` (1, 2, 3, 4), `orgao_vinculado_escola_publica`, `flag_secretaria_educacao_mec`, `flag_seguranca_publica_forcas_armadas`, `flag_secretaria_saude`, `flag_outro_orgao_publico`, `celular_whatsapp`, `instagram`, `facebook`, `youtube`.
+- **Campos Principais:** `instituicao_ensino_id`, `nome`, `cnpj`, `codigo_inep`, `situacao_funcionamento` (1-Em atividade, 2-Paralisada, 3-Extinta), `telefone`, `email`, `codigo_orgao_regional_ensino`, `localizacao_zona` (1-Urbana, 2-Rural), `localizacao_diferenciada` (1, 2, 3, 7, 8), `dependencia_administrativa` (1, 2, 3, 4), `celular_whatsapp`, `instagram`, `facebook`, `youtube`.
 - **Relacionamentos:** 
     - BelongsTo `instituicao_ensino`.
     - BelongsTo `endereco`.

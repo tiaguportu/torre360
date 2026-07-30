@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Unidades\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -72,22 +71,6 @@ class UnidadeForm
                                 '3' => '3-Municipal',
                                 '4' => '4-Privada',
                             ]),
-                        TextInput::make('orgao_vinculado_escola_publica')
-                            ->label('Órgão ao qual a escola pública está vinculada')
-                            ->maxLength(255)
-                            ->columnSpanFull(),
-                    ])->columns(2),
-
-                Section::make('Vínculos com Órgãos Públicos / Mantenedores')
-                    ->schema([
-                        Toggle::make('flag_secretaria_educacao_mec')
-                            ->label('Secretaria de Educação/Ministério da Educação'),
-                        Toggle::make('flag_seguranca_publica_forcas_armadas')
-                            ->label('Secretaria de Segurança Pública/Forças Armadas/Militar'),
-                        Toggle::make('flag_secretaria_saude')
-                            ->label('Secretaria da Saúde/Ministério da Saúde'),
-                        Toggle::make('flag_outro_orgao_publico')
-                            ->label('Outro órgão da administração pública'),
                     ])->columns(2),
 
                 Section::make('Contato e Redes Sociais')

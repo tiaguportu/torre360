@@ -24,6 +24,9 @@ class InstituicaoEnsinoForm
                         TextInput::make('codigo_inep')
                             ->label('Código INEP')
                             ->maxLength(255),
+                        TextInput::make('orgao_vinculado_escola_publica')
+                            ->label('Órgão ao qual a escola pública está vinculada')
+                            ->maxLength(255),
                         FileUpload::make('logo')
                             ->image()
                             ->directory('instituicao-logos')
@@ -36,6 +39,18 @@ class InstituicaoEnsinoForm
                         Toggle::make('flag_ativo')
                             ->required()
                             ->default(true),
+                    ])->columns(2),
+
+                Section::make('Vínculos com Órgãos Públicos / Mantenedores')
+                    ->schema([
+                        Toggle::make('flag_secretaria_educacao_mec')
+                            ->label('Secretaria de Educação/Ministério da Educação'),
+                        Toggle::make('flag_seguranca_publica_forcas_armadas')
+                            ->label('Secretaria de Segurança Pública/Forças Armadas/Militar'),
+                        Toggle::make('flag_secretaria_saude')
+                            ->label('Secretaria da Saúde/Ministério da Saúde'),
+                        Toggle::make('flag_outro_orgao_publico')
+                            ->label('Outro órgão da administração pública'),
                     ])->columns(2),
 
                 Section::make('Redes Sociais e Contato')

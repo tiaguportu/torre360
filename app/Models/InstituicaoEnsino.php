@@ -19,6 +19,10 @@ class InstituicaoEnsino extends Model
     {
         return [
             'flag_ativo' => 'boolean',
+            'flag_secretaria_educacao_mec' => 'boolean',
+            'flag_seguranca_publica_forcas_armadas' => 'boolean',
+            'flag_secretaria_saude' => 'boolean',
+            'flag_outro_orgao_publico' => 'boolean',
         ];
     }
 
