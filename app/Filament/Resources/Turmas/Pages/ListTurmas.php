@@ -52,6 +52,7 @@ class ListTurmas extends ListRecords
 
         if ($canUpdate) {
             $html .= '<li><strong>Editar:</strong> Altere dados da turma ou encerre turmas antigas.</li>';
+            $html .= '<li><strong>Editar em Lote (lote):</strong> Selecione duas ou mais turmas na tabela para alterar simultaneamente a Série, Turno, Professor Conselheiro, Vagas, Carga Horária, Tipo de Avaliação, Mediação, Tipo de Turma, Local Diferenciado e Flag de Educação Especial.</li>';
         }
 
         if ($canViewBoletim) {

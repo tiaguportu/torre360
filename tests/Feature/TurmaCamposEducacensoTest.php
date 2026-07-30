@@ -110,4 +110,58 @@ class TurmaCamposEducacensoTest extends TestCase
             'hora_fim' => '11:45:00',
         ]);
     }
+
+    public function test_pode_editar_turmas_em_lote(): void
+    {
+        $unidade = Unidade::create(['nome' => 'Unidade Sede']);
+        $curso = Curso::create([
+            'unidade_id' => $unidade->id,
+            'nome_externo' => 'Ensino Fundamental',
+            'nome_interno' => 'EF',
+        ]);
+        $serie = Serie::create([
+            'nome' => '1º Ano',
+            'curso_id' => $curso->id,
+            'sistema_avaliacao' => 'nota',
+        ]);
+        $turno = Turno::create([
+            'nome' => 'Matutino',
+            'hora_inicio' => '07:00:00',
+            'hora_fim' => '12:00:00',
+        ]);
+
+        $turma1 = Turma::create([
+            'nome' => 'Turma A',
+            'serie_id' => $serie->id,
+            'turno_id' => $turno->id,
+            'carga_horaria_total' => 200,
+        ]);
+
+        $turma2 = Turma::create([
+            'nome' => 'Turma B',
+            'serie_id' => $serie->id,
+            'turno_id' => $turno->id,
+            'carga_horaria_total' => 200,
+        ]);
+
+        Turma::whereIn('id', [$turma1->id, $turma2->id])->update([
+            'carga_horaria_total' => 800,
+            'tipo_mediacao_didatico_pedagogica' => 2,
+            'turma_educacao_especial' => true,
+        ]);
+
+        $this->assertDatabaseHas('turma', [
+            'id' => $turma1->id,
+            'carga_horaria_total' => 800,
+            'tipo_mediacao_didatico_pedagogica' => 2,
+            'turma_educacao_especial' => 1,
+        ]);
+
+        $this->assertDatabaseHas('turma', [
+            'id' => $turma2->id,
+            'carga_horaria_total' => 800,
+            'tipo_mediacao_didatico_pedagogica' => 2,
+            'turma_educacao_especial' => 1,
+        ]);
+    }
 }

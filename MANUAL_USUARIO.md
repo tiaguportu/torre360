@@ -220,7 +220,8 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
    - **Turma de Educação Especial (Classe Especial):** Seleção para identificar turmas de classe especial.
    - **Carga Horária Total (horas):** Carga horária total da turma definida em horas.
    - **Horário de Funcionamento (Dias da Semana):** Permite adicionar o horário de funcionamento para cada dia da semana (Domingo, Segunda-feira, Terça-feira, Quarta-feira, Quinta-feira, Sexta-feira e Sábado), especificando a **Hora de Início** e a **Hora de Término** correspondentes.
-3. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
+3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado ou Flag de Educação Especial.
+4. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
 - **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.
 - **Cancelada (Vermelho):** Vínculo encerrado definitivamente.

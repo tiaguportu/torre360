@@ -225,6 +225,89 @@ class TurmasTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('bulkEdit')
+                        ->label('Editar em Lote')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('warning')
+                        ->form([
+                            Select::make('serie_id')
+                                ->relationship('serie', 'nome')
+                                ->label('Série')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('turno_id')
+                                ->relationship('turno', 'nome')
+                                ->label('Turno')
+                                ->searchable()
+                                ->preload(),
+                            Select::make('professor_conselheiro_id')
+                                ->relationship('professorConselheiro', 'nome')
+                                ->label('Professor Conselheiro')
+                                ->searchable(['nome', 'cpf'])
+                                ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
+                                ->preload(),
+                            TextInput::make('vagas_maximas')
+                                ->label('Vagas Máximas')
+                                ->numeric(),
+                            TextInput::make('carga_horaria_total')
+                                ->label('Carga Horária Total (horas)')
+                                ->numeric(),
+                            Select::make('tipo_avaliacao')
+                                ->label('Tipo de Avaliação')
+                                ->options([
+                                    'notas' => 'Notas',
+                                    'habilidades' => 'Habilidades',
+                                    'hibrido' => 'Híbrido',
+                                ]),
+                            Select::make('tipo_mediacao_didatico_pedagogica')
+                                ->label('Tipo de Mediação Didático-Pedagógica')
+                                ->options([
+                                    1 => '1 - Presencial',
+                                    2 => '2 - Semipresencial',
+                                    3 => '3 - Educação a distância – EAD',
+                                ]),
+                            Select::make('tipo_turma')
+                                ->label('Tipo de Turma')
+                                ->options([
+                                    4 => '4 - Atividade complementar',
+                                    5 => '5 - Atendimento educacional especializado (AEE)',
+                                    6 => '6 - Curricular (etapa de ensino)',
+                                    9 => '9 - Curricular (etapa de ensino) com Atividade Complementar',
+                                ]),
+                            Select::make('local_funcionamento_diferenciado')
+                                ->label('Local de Funcionamento Diferenciado da Turma')
+                                ->options([
+                                    0 => '0 - A turma não está em local de funcionamento diferenciado',
+                                    1 => '1 - Sala anexa',
+                                    2 => '2 - Unidade de atendimento socioeducativo',
+                                    3 => '3 - Unidade prisional',
+                                ]),
+                            Select::make('turma_educacao_especial')
+                                ->label('Turma de Educação Especial (Classe Especial)')
+                                ->options([
+                                    '1' => 'Sim',
+                                    '0' => 'Não',
+                                ]),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $updateData = array_filter($data, fn ($value) => $value !== null && $value !== '');
+                            if (empty($updateData)) {
+                                return;
+                            }
+
+                            if (array_key_exists('turma_educacao_especial', $updateData)) {
+                                $updateData['turma_educacao_especial'] = (bool) $updateData['turma_educacao_especial'];
+                            }
+
+                            $records->each(fn ($record) => $record->update($updateData));
+
+                            Notification::make()
+                                ->title('Turmas atualizadas em lote com sucesso!')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('Update:Turma')),
                     DeleteBulkAction::make(),
                     BulkAction::make('imprimirBoletinsLote')
                         ->label('Imprimir Boletins em Lote')
