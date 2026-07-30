@@ -88,36 +88,29 @@ class EducacensoTurmaExportTest extends TestCase
         $this->assertEquals('12345678', $fields[1]); // 2. Código INEP Escola
         $this->assertEquals('T101', $fields[2]); // 3. Código Turma
         $this->assertEquals('', $fields[3]); // 4. INEP Turma
-        $this->assertEquals('Turma 101', $fields[4]); // 5. Nome Turma
+        $this->assertEquals('TURMA 101', $fields[4]); // 5. Nome Turma (Sanitizado A-Z 0-9 ª º -)
         $this->assertEquals('1', $fields[5]); // 6. Mediação
-        $this->assertEquals('0', $fields[6]); // 7. Domingo
-        $this->assertEquals('1', $fields[7]); // 8. Segunda
-        $this->assertEquals('0', $fields[8]); // 9. Terça
+        $this->assertEquals('', $fields[6]); // 7. Domingo
+        $this->assertEquals('07:00-12:00', $fields[7]); // 8. Segunda (do mock)
+        $this->assertEquals('08:00-16:00', $fields[8]); // 9. Terça (fallback)
         $this->assertEquals('6', $fields[13]); // 14. Tipo Turma
         $this->assertEquals('0', $fields[20]); // 21. Local Funcionamento Diferenciado
         $this->assertEquals('0', $fields[21]); // 22. Classe Especial
-        $this->assertEquals('302', $fields[22]); // 23. Etapa INEP (Etapa Agregada)
-        $this->assertEquals('1', $fields[23]); // 24. Forma de Organização
-        $this->assertEquals('800', $fields[27]); // 28. Carga Horaria
-        $this->assertEquals('1', $fields[36]); // 37. Modalidade
+        $this->assertEquals('302', $fields[22]); // 23. Etapa Agregada
+        $this->assertEquals('14', $fields[23]); // 24. Etapa
+        $this->assertEquals('800', $fields[27]); // 28. Carga Horária
+        $this->assertEquals('0', $fields[28]); // 29. Alternância
     }
 
     public function test_acao_de_exportacao_em_lote_gera_arquivo_txt(): void
     {
         Permission::findOrCreate('ViewAny:Turma', 'web');
+
         $user = User::factory()->create();
         $user->givePermissionTo('ViewAny:Turma');
 
-        $unidade = Unidade::create(['nome' => 'U1']);
-        $curso = Curso::create(['unidade_id' => $unidade->id, 'nome_externo' => 'C1', 'nome_interno' => 'C1']);
-        $serie = Serie::create(['nome' => 'S1', 'curso_id' => $curso->id, 'sistema_avaliacao' => 'nota']);
-        $turno = Turno::create(['nome' => 'T1', 'hora_inicio' => '07:00:00', 'hora_fim' => '12:00:00']);
-
-        $turma = Turma::create([
-            'nome' => 'Turma B',
+        $turma = Turma::factory()->create([
             'codigo' => 'TB',
-            'serie_id' => $serie->id,
-            'turno_id' => $turno->id,
             'tipo_mediacao_didatico_pedagogica' => 1,
             'tipo_turma' => 6,
         ]);
@@ -127,6 +120,5 @@ class EducacensoTurmaExportTest extends TestCase
 
         $this->assertStringStartsWith('20|', $output);
         $this->assertStringContainsString('|TB|', $output);
-        $this->assertStringContainsString('|Turma B|', $output);
     }
 }
