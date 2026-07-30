@@ -94,6 +94,7 @@ class TurmaForm
                     ->schema([
                         Repeater::make('horariosFuncionamento')
                             ->relationship('horariosFuncionamento')
+                            ->hiddenLabel()
                             ->schema([
                                 Select::make('dia_semana')
                                     ->label('Dia da Semana')
