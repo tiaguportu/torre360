@@ -84,26 +84,25 @@ class EducacensoTurmaExportTest extends TestCase
         $fields = explode('|', $line);
 
         $this->assertCount(66, $fields);
-        $this->assertEquals('20', $fields[0]); // Registro
-        $this->assertEquals('12345678', $fields[1]); // Código INEP Escola
-        $this->assertEquals('T101', $fields[2]); // Código Turma
-        $this->assertEquals('', $fields[3]); // INEP Turma
-        $this->assertEquals('Turma 101', $fields[4]); // Nome Turma
-        $this->assertEquals('1', $fields[5]); // Mediação
-        $this->assertEquals('6', $fields[6]); // Tipo Turma
-        $this->assertEquals('07:00', $fields[7]); // Hora Inicio
-        $this->assertEquals('12:00', $fields[8]); // Hora Fim
-        $this->assertEquals('0', $fields[9]); // Dom
-        $this->assertEquals('1', $fields[10]); // Seg
-        $this->assertEquals('0', $fields[11]); // Ter
-        $this->assertEquals('0', $fields[16]); // Local Diferenciado
-        $this->assertEquals('1', $fields[17]); // Forma de Organização
-        $this->assertEquals('800', $fields[18]); // Carga Horaria
-        $this->assertEquals('0', $fields[19]); // Classe Especial
-        $this->assertEquals('1', $fields[20]); // Modalidade
-        $this->assertEquals('14', $fields[21]); // Etapa INEP
-        $this->assertEquals('1', $fields[22]); // Língua
-        $this->assertEquals('1', $fields[25]); // AEE Libras
+        $this->assertEquals('20', $fields[0]); // 1. Registro
+        $this->assertEquals('12345678', $fields[1]); // 2. Código INEP Escola
+        $this->assertEquals('T101', $fields[2]); // 3. Código Turma
+        $this->assertEquals('', $fields[3]); // 4. INEP Turma
+        $this->assertEquals('Turma 101', $fields[4]); // 5. Nome Turma
+        $this->assertEquals('1', $fields[5]); // 6. Mediação
+        $this->assertEquals('0', $fields[6]); // 7. Domingo
+        $this->assertEquals('1', $fields[7]); // 8. Segunda
+        $this->assertEquals('0', $fields[8]); // 9. Terça
+        $this->assertEquals('6', $fields[13]); // 14. Tipo Turma
+        $this->assertEquals('800', $fields[20]); // 21. Carga Horaria
+        $this->assertEquals('0', $fields[21]); // 22. Classe Especial
+        $this->assertEquals('14', $fields[22]); // 23. Etapa INEP
+        $this->assertEquals('1', $fields[23]); // 24. Forma de Organização
+        $this->assertEquals('07:00', $fields[27]); // 28. Hora Inicio
+        $this->assertEquals('12:00', $fields[28]); // 29. Hora Fim
+        $this->assertEquals('1', $fields[36]); // 37. Modalidade
+        $this->assertEquals('1', $fields[37]); // 38. Língua
+        $this->assertEquals('1', $fields[40]); // 41. AEE Libras
     }
 
     public function test_acao_de_exportacao_em_lote_gera_arquivo_txt(): void
