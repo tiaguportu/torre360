@@ -33,7 +33,7 @@ class EducacensoTurmaExporter
     }
 
     /**
-     * Extrai apenas o código numérico inicial quando a string é no formato "1 - Descrição".
+     * Extrai o código numérico inicial quando a string for "1 - Descrição" ou mapeia descrições para seus códigos INEP.
      */
     private function extractCode(mixed $value): string
     {
@@ -45,11 +45,58 @@ class EducacensoTurmaExporter
 
         if (str_contains($str, '-')) {
             $parts = explode('-', $str);
-
-            return trim($parts[0]);
+            $candidate = trim($parts[0]);
+            if ($candidate !== '') {
+                return $candidate;
+            }
         }
 
-        return $str;
+        $map = [
+            'presencial' => '1',
+            'semipresencial' => '2',
+            'ead' => '3',
+            'educacao a distancia - ead' => '3',
+            'educação a distância – ead' => '3',
+            'atividade complementar' => '4',
+            'atendimento educacional especializado (aee)' => '5',
+            'aee' => '5',
+            'curricular' => '6',
+            'curricular (etapa de ensino)' => '6',
+            'curricular (etapa de ensino) com atividade complementar' => '9',
+            'curricular c/ ativ. comp.' => '9',
+            'regular' => '1',
+            'ensino regular' => '1',
+            'especial' => '2',
+            'educação especial' => '2',
+            'eja' => '3',
+            'educação de jovens e adultos (eja)' => '3',
+            'profissional' => '4',
+            'educação profissional' => '4',
+            'somente em língua portuguesa' => '1',
+            'português' => '1',
+            'em língua indígena e língua portuguesa' => '2',
+            'indígena + português' => '2',
+            'somente em língua indígena' => '3',
+            'indígena' => '3',
+            'a turma não está em local de funcionamento diferenciado' => '0',
+            'sala anexa' => '1',
+            'unidade de atendimento socioeducativo' => '2',
+            'unidade prisional' => '3',
+            'série/ano' => '1',
+            'série/ano (série anual)' => '1',
+            'períodos semestrais' => '2',
+            'semestral' => '2',
+            'ciclos' => '3',
+            'grupos não seriados' => '4',
+            'grupos não seriados com base na idade ou competência' => '4',
+            'módulos' => '5',
+            'alternância' => '6',
+            'alternância regular de períodos de estudos' => '6',
+        ];
+
+        $lower = mb_strtolower($str);
+
+        return $map[$lower] ?? $str;
     }
 
     /**
@@ -63,31 +110,29 @@ class EducacensoTurmaExporter
             return '301';
         }
 
-        // Se o código já for de Etapa Agregada (300+), retorna diretamente
         if (is_numeric($code) && (int) $code >= 300) {
             return (string) $code;
         }
 
-        // Mapeia sub-etapas para a Etapa Agregada INEP correspondente
         $num = (int) $code;
         if (in_array($num, [1, 2, 3])) {
-            return '301'; // Educação Infantil (Creche/Pré-escola)
+            return '301';
         }
         if ($num >= 14 && $num <= 24) {
-            return '302'; // Ensino Fundamental 9 Anos
+            return '302';
         }
         if ($num >= 25 && $num <= 38) {
-            return '304'; // Ensino Médio
+            return '304';
         }
         if ($num >= 65 && $num <= 74) {
-            return '305'; // EJA / Profissional
+            return '305';
         }
 
         return (string) $code;
     }
 
     /**
-     * Constrói a linha no formato Registro 20 para uma turma específica com 66 campos.
+     * Constrói a linha no formato Registro 20 para uma turma específica com a ordem exata de 66 campos do Educacenso.
      */
     public function buildRegistro20Line(Turma $turma): string
     {
@@ -121,13 +166,13 @@ class EducacensoTurmaExporter
 
         // Campos 7 a 13: Dias da semana (Domingo a Sábado). Devem ser 0 ou 1 QUANDO mediação == 1, senão NULOS ("")
         if ($mediacao === 1) {
-            $f7 = $diasSemana->contains(0) ? '1' : '0'; // Domingo
-            $f8 = $diasSemana->contains(1) ? '1' : '0'; // Segunda-feira
-            $f9 = $diasSemana->contains(2) ? '1' : '0'; // Terça-feira
-            $f10 = $diasSemana->contains(3) ? '1' : '0'; // Quarta-feira
-            $f11 = $diasSemana->contains(4) ? '1' : '0'; // Quinta-feira
-            $f12 = $diasSemana->contains(5) ? '1' : '0'; // Sexta-feira
-            $f13 = $diasSemana->contains(6) ? '1' : '0'; // Sábado
+            $f7 = $diasSemana->contains(0) ? '1' : '0';
+            $f8 = $diasSemana->contains(1) ? '1' : '0';
+            $f9 = $diasSemana->contains(2) ? '1' : '0';
+            $f10 = $diasSemana->contains(3) ? '1' : '0';
+            $f11 = $diasSemana->contains(4) ? '1' : '0';
+            $f12 = $diasSemana->contains(5) ? '1' : '0';
+            $f13 = $diasSemana->contains(6) ? '1' : '0';
         } else {
             $f7 = $f8 = $f9 = $f10 = $f11 = $f12 = $f13 = '';
         }
@@ -141,7 +186,6 @@ class EducacensoTurmaExporter
         $f14 = (string) $tipoTurma;
 
         // Campos 15 a 20: Tipo de atividade complementar (Código 1 a 6)
-        // Deve ser preenchido quando Tipo de turma for 4 ou 9, SENÃO DEVE SER NULO ("")
         if (in_array($tipoTurma, [4, 9])) {
             $f15 = $this->extractCode($turma->atividade_complementar_1 ?? '');
             $f16 = $this->extractCode($turma->atividade_complementar_2 ?? '');
@@ -156,8 +200,11 @@ class EducacensoTurmaExporter
             $f15 = $f16 = $f17 = $f18 = $f19 = $f20 = '';
         }
 
-        // 21. Carga horária total da turma (em horas)
-        $f21 = $turma->carga_horaria_total !== null ? (string) $turma->carga_horaria_total : '';
+        // 21. Local de funcionamento diferenciado da turma (0, 1, 2 ou 3)
+        $f21 = $this->extractCode($turma->local_funcionamento_diferenciado ?? '0');
+        if (! in_array($f21, ['0', '1', '2', '3'])) {
+            $f21 = '0';
+        }
 
         // 22. Turma de Educação Especial (0 ou 1 quando Tipo de turma for 6 ou 9, senão NULO "")
         if (in_array($tipoTurma, [6, 9])) {
@@ -188,19 +235,13 @@ class EducacensoTurmaExporter
         // 27. Carga horária total do curso
         $f27 = '';
 
-        // 28. Hora inicial (HH:MM se mediação == 1, senão nulo "")
-        // 29. Hora final (HH:MM se mediação == 1, senão nulo "")
-        if ($mediacao === 1) {
-            $horaInicioMin = $horarios ? $horarios->whereNotNull('hora_inicio')->min('hora_inicio') : null;
-            $horaFimMax = $horarios ? $horarios->whereNotNull('hora_fim')->max('hora_fim') : null;
-            $f28 = $horaInicioMin ? substr((string) $horaInicioMin, 0, 5) : '';
-            $f29 = $horaFimMax ? substr((string) $horaFimMax, 0, 5) : '';
-        } else {
-            $f28 = $f29 = '';
-        }
+        // 28. Carga horária total da turma (em horas)
+        $f28 = $turma->carga_horaria_total !== null ? (string) $turma->carga_horaria_total : '';
+
+        // 29. Turma de Formação por Alternância (0 ou 1)
+        $f29 = ($f24 === '6' || (bool) $turma->formacao_alternancia) ? '1' : '0';
 
         // Campos 30 a 32: Organização curricular (Formação geral básica, Itinerário formativo, IFTP)
-        // Deve ser 0 ou 1 quando Etapa agregada for 304 ou 305, SENÃO NULO ("")
         if (in_array($f23, ['304', '305'])) {
             $f30 = $turma->formacao_geral_basica ? '1' : '1';
             $f31 = $turma->itinerario_formativo ? '1' : '0';
@@ -210,7 +251,6 @@ class EducacensoTurmaExporter
         }
 
         // Campos 33 a 36: Áreas do itinerário formativo (Linguagens, Matemática, Ciências Natureza, Ciências Humanas)
-        // Deve ser 0 ou 1 QUANDO Itinerário formativo de aprofundamento (IFA) == 1, SENÃO NULO ("")
         if ($f31 === '1') {
             $f33 = $turma->ifa_linguagens ? '1' : '0';
             $f34 = $turma->ifa_matematica ? '1' : '0';
@@ -226,43 +266,46 @@ class EducacensoTurmaExporter
         // 37. Modalidade de ensino (1: Regular, 2: Especial, 3: EJA, 4: Profissional)
         $f37 = $this->extractCode($turma->modalidade_ensino ?? '1');
 
-        // 38. Tipo de língua ministrada (1: Português, 2: Indígena+Português, 3: Indígena)
-        $f38 = $this->extractCode($turma->tipo_lingua_ministrada ?? '1');
+        // 38. Código do curso técnico (quando IFTP == 1, senão NULO "")
+        $f38 = ($f32 === '1') ? $this->extractCode($turma->codigo_curso_tecnico ?? '') : '';
 
-        // 39. Código da língua indígena (se tipo_lingua em 2, 3, senão nulo "")
-        $f39 = in_array($f38, ['2', '3']) ? $this->extractCode($turma->codigo_lingua_indigena ?? '') : '';
+        // Campos 39 a 65: Disciplinas / Áreas de conhecimento
+        // DEVE SER 0 OU 1 QUANDO ETAPA NÃO FOR 1, 2 OU 3 (Educação Infantil/Creche/Pré-Escola/301), SENÃO DEVE SER NULO ("")
+        $isEdInfantil = in_array($f23, ['301', '1', '2', '3']);
 
-        // 40. Local de funcionamento diferenciado
-        $f40 = $this->extractCode($turma->local_funcionamento_diferenciado ?? '0');
-
-        // Campos 41 a 51: AEE Flags (0 ou 1)
-        $f41 = $turma->flag_aee_ensino_libras ? '1' : '0';
-        $f42 = $turma->flag_aee_ensino_soroba ? '1' : '0';
-        $f43 = '0';
-        $f44 = $turma->flag_aee_processos_cognitivos ? '1' : '0';
-        $f45 = $turma->flag_aee_orientacao_mobilidade ? '1' : '0';
-        $f46 = '0';
-        $f47 = $turma->flag_aee_ensino_caa ? '1' : '0';
-        $f48 = $turma->flag_aee_enriquecimento_curricular ? '1' : '0';
-        $f49 = $turma->flag_aee_ensino_informatica_acessivel ? '1' : '0';
-        $f50 = $turma->flag_aee_portugues_segunda_lingua ? '1' : '0';
-        $f51 = $turma->flag_aee_tecnologia_assistiva ? '1' : '0';
-
-        // Campos 52 a 65: Disciplinas (0 ou 1)
-        $f52 = '0';
-        $f53 = '0';
-        $f54 = '0';
-        $f55 = '0';
-        $f56 = '0';
-        $f57 = '0';
-        $f58 = '0';
-        $f59 = '0';
-        $f60 = '0';
-        $f61 = '0';
-        $f62 = '0';
-        $f63 = '0';
-        $f64 = '0';
-        $f65 = '0';
+        if ($isEdInfantil) {
+            // Educação Infantil / Creche / Pré-escola não possui disciplinas -> NULOS ("")
+            $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = $f47 = $f48 = $f49 = $f50 = $f51 = $f52 = $f53 = $f54 = $f55 = $f56 = $f57 = $f58 = $f59 = $f60 = $f61 = $f62 = $f63 = $f64 = $f65 = '';
+        } else {
+            // Para Ensino Fundamental, Ensino Médio, EJA -> 0 ou 1
+            $f39 = $turma->disc_quimica ? '1' : '0';
+            $f40 = $turma->disc_fisica ? '1' : '0';
+            $f41 = $turma->disc_matematica ? '1' : '0';
+            $f42 = $turma->disc_biologia ? '1' : '0';
+            $f43 = $turma->disc_ciencias ? '1' : '0';
+            $f44 = $turma->disc_portugues ? '1' : '1';
+            $f45 = $turma->disc_ingles ? '1' : '0';
+            $f46 = $turma->disc_espanhol ? '1' : '0';
+            $f47 = $turma->disc_outra_lingua ? '1' : '0';
+            $f48 = $turma->disc_arte ? '1' : '0';
+            $f49 = $turma->disc_educacao_fisica ? '1' : '0';
+            $f50 = $turma->disc_historia ? '1' : '0';
+            $f51 = $turma->disc_geografia ? '1' : '0';
+            $f52 = $turma->disc_filosofia ? '1' : '0';
+            $f53 = $turma->disc_informatica ? '1' : '0';
+            $f54 = $turma->disc_profissionalizante ? '1' : '0';
+            $f55 = $turma->disc_libras ? '1' : '0';
+            $f56 = $turma->disc_pedagogica ? '1' : '0';
+            $f57 = $turma->disc_ensino_religioso ? '1' : '0';
+            $f58 = $turma->disc_lingua_indigena ? '1' : '0';
+            $f59 = $turma->disc_estudos_sociais ? '1' : '0';
+            $f60 = $turma->disc_sociologia ? '1' : '0';
+            $f61 = $turma->disc_frances ? '1' : '0';
+            $f62 = $turma->disc_portugues_segunda_lingua ? '1' : '0';
+            $f63 = $turma->disc_estagio_supervisionado ? '1' : '0';
+            $f64 = $turma->disc_projeto_vida ? '1' : '0';
+            $f65 = $turma->disc_outras ? '1' : '0';
+        }
 
         // 66. Turma de Educação Bilíngue de Surdos (0 ou 1)
         $f66 = $turma->turma_educacao_bilingue_surdos ? '1' : '0';

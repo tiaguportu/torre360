@@ -64,7 +64,6 @@ class TurmaForm
                 Select::make('etapa_ensino_agregada_id')
                     ->label('Etapa de Ensino Agregada')
                     ->relationship('etapaEnsinoAgregada', 'nome')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->codigo} - {$record->nome}")
                     ->searchable()
                     ->preload()
                     ->live()
@@ -79,7 +78,7 @@ class TurmaForm
 
                         return EtapaEnsino::where('etapa_ensino_agregada_id', $agregadaId)
                             ->get()
-                            ->mapWithKeys(fn ($item) => [$item->id => "{$item->codigo} - {$item->nome}"]);
+                            ->pluck('nome', 'id');
                     })
                     ->searchable()
                     ->preload(),

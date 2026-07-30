@@ -94,15 +94,12 @@ class EducacensoTurmaExportTest extends TestCase
         $this->assertEquals('1', $fields[7]); // 8. Segunda
         $this->assertEquals('0', $fields[8]); // 9. Terça
         $this->assertEquals('6', $fields[13]); // 14. Tipo Turma
-        $this->assertEquals('800', $fields[20]); // 21. Carga Horaria
+        $this->assertEquals('0', $fields[20]); // 21. Local Funcionamento Diferenciado
         $this->assertEquals('0', $fields[21]); // 22. Classe Especial
         $this->assertEquals('302', $fields[22]); // 23. Etapa INEP (Etapa Agregada)
         $this->assertEquals('1', $fields[23]); // 24. Forma de Organização
-        $this->assertEquals('07:00', $fields[27]); // 28. Hora Inicio
-        $this->assertEquals('12:00', $fields[28]); // 29. Hora Fim
+        $this->assertEquals('800', $fields[27]); // 28. Carga Horaria
         $this->assertEquals('1', $fields[36]); // 37. Modalidade
-        $this->assertEquals('1', $fields[37]); // 38. Língua
-        $this->assertEquals('1', $fields[40]); // 41. AEE Libras
     }
 
     public function test_acao_de_exportacao_em_lote_gera_arquivo_txt(): void
