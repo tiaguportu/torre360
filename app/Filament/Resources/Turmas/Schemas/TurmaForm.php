@@ -111,17 +111,7 @@ class TurmaForm
                                     ->seconds(false),
                             ])
                             ->columns(3)
-                            ->defaultItems(0)
-                            ->itemLabel(fn (array $state): ?string => match ((int) ($state['dia_semana'] ?? null)) {
-                                0 => 'Domingo',
-                                1 => 'Segunda-feira',
-                                2 => 'Terça-feira',
-                                3 => 'Quarta-feira',
-                                4 => 'Quinta-feira',
-                                5 => 'Sexta-feira',
-                                6 => 'Sábado',
-                                default => null,
-                            }),
+                            ->defaultItems(0),
                     ]),
             ]);
     }
