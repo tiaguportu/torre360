@@ -84,6 +84,41 @@ class TurmasTable
                     ->label('Ed. Especial')
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('forma_organizacao')
+                    ->label('Forma de Organização')
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        1 => '1 - Série/Ano',
+                        2 => '2 - Semestral',
+                        3 => '3 - Ciclos',
+                        4 => '4 - Grupos não seriados',
+                        5 => '5 - Módulos',
+                        6 => '6 - Alternância',
+                        default => $state,
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('modalidade_ensino')
+                    ->label('Modalidade')
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        1 => '1 - Regular',
+                        2 => '2 - Especial',
+                        3 => '3 - EJA',
+                        4 => '4 - Profissional',
+                        default => $state,
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('tipo_lingua_ministrada')
+                    ->label('Língua Ministrada')
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        1 => '1 - Português',
+                        2 => '2 - Indígena + Português',
+                        3 => '3 - Indígena',
+                        default => $state,
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('turma_educacao_bilingue_surdos')
+                    ->label('Bilíngue Surdos')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('professorConselheiro.nome')
                     ->label('Professor Conselheiro')
                     ->sortable(),
@@ -322,6 +357,37 @@ class TurmasTable
                                     '1' => 'Sim',
                                     '0' => 'Não',
                                 ]),
+                            Select::make('forma_organizacao')
+                                ->label('Forma de Organização da Turma')
+                                ->options([
+                                    1 => '1 - Série/Ano (Série Anual)',
+                                    2 => '2 - Períodos semestrais',
+                                    3 => '3 - Ciclos',
+                                    4 => '4 - Grupos não seriados com base na idade ou competência',
+                                    5 => '5 - Módulos',
+                                    6 => '6 - Alternância regular de períodos de estudos',
+                                ]),
+                            Select::make('modalidade_ensino')
+                                ->label('Modalidade de Ensino')
+                                ->options([
+                                    1 => '1 - Ensino Regular',
+                                    2 => '2 - Educação Especial',
+                                    3 => '3 - Educação de Jovens e Adultos (EJA)',
+                                    4 => '4 - Educação Profissional',
+                                ]),
+                            Select::make('tipo_lingua_ministrada')
+                                ->label('Língua em que o Ensino é Ministrado')
+                                ->options([
+                                    1 => '1 - Somente em Língua Portuguesa',
+                                    2 => '2 - Em Língua Indígena e Língua Portuguesa',
+                                    3 => '3 - Somente em Língua Indígena',
+                                ]),
+                            Select::make('turma_educacao_bilingue_surdos')
+                                ->label('Turma de Educação Bilíngue de Surdos')
+                                ->options([
+                                    '1' => 'Sim',
+                                    '0' => 'Não',
+                                ]),
                         ])
                         ->action(function (array $data, Collection $records) {
                             $updateData = array_filter($data, fn ($value) => $value !== null && $value !== '');
@@ -331,6 +397,9 @@ class TurmasTable
 
                             if (array_key_exists('turma_educacao_especial', $updateData)) {
                                 $updateData['turma_educacao_especial'] = (bool) $updateData['turma_educacao_especial'];
+                            }
+                            if (array_key_exists('turma_educacao_bilingue_surdos', $updateData)) {
+                                $updateData['turma_educacao_bilingue_surdos'] = (bool) $updateData['turma_educacao_bilingue_surdos'];
                             }
 
                             $records->each(fn ($record) => $record->update($updateData));

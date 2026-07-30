@@ -44,7 +44,9 @@ class CreateTurma extends CreateRecord
         $html .= '<li><strong>Tipo de mediação didático-pedagógica:</strong> 1-Presencial, 2-Semipresencial, 3-Educação a distância (EAD).</li>';
         $html .= '<li><strong>Tipo de turma:</strong> 4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular com Atividade Complementar.</li>';
         $html .= '<li><strong>Local de funcionamento diferenciado:</strong> 0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional.</li>';
-        $html .= '<li><strong>Turma de Educação Especial:</strong> Flag indicando se é uma classe especial.</li>';
+        $html .= '<li><strong>Forma de organização e modalidade:</strong> Série anual, Semestral, Ciclos, Módulos, Alternância e Modalidade de Ensino (Regular, Especial, EJA, Profissional).</li>';
+        $html .= '<li><strong>Língua ministrada e bilíngue surdos:</strong> Define se a língua é Português, Indígena (código da etnia) ou turma bilíngue de surdos.</li>';
+        $html .= '<li><strong>Atendimento Educacional Especializado (AEE):</strong> Opções para indicar recursos de AEE aplicados à turma.</li>';
         $html .= '</ul>';
 
         return $html;

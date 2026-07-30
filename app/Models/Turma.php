@@ -95,6 +95,19 @@ class Turma extends Model
             'tipo_turma' => 'integer',
             'local_funcionamento_diferenciado' => 'integer',
             'carga_horaria_total' => 'integer',
+            'forma_organizacao' => 'integer',
+            'modalidade_ensino' => 'integer',
+            'tipo_lingua_ministrada' => 'integer',
+            'turma_educacao_bilingue_surdos' => 'boolean',
+            'flag_aee_ensino_libras' => 'boolean',
+            'flag_aee_ensino_soroba' => 'boolean',
+            'flag_aee_ensino_informatica_acessivel' => 'boolean',
+            'flag_aee_ensino_caa' => 'boolean',
+            'flag_aee_tecnologia_assistiva' => 'boolean',
+            'flag_aee_processos_cognitivos' => 'boolean',
+            'flag_aee_enriquecimento_curricular' => 'boolean',
+            'flag_aee_portugues_segunda_lingua' => 'boolean',
+            'flag_aee_orientacao_mobilidade' => 'boolean',
         ];
     }
 }
