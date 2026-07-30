@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Turmas\Schemas;
 
+use App\Models\Turma;
+use App\Models\TurmaHorario;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -86,6 +88,9 @@ class TurmaForm
                     ->label('Turma de Educação Especial (Classe Especial)')
                     ->default(false),
                 Section::make('Horário de Funcionamento (Dias da Semana)')
+                    ->columnSpanFull()
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
                         Repeater::make('horariosFuncionamento')
                             ->relationship('horariosFuncionamento')
@@ -101,8 +106,9 @@ class TurmaForm
                                         5 => 'Sexta-feira',
                                         6 => 'Sábado',
                                     ])
-                                    ->required()
-                                    ->distinct(),
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->required(),
                                 TimePicker::make('hora_inicio')
                                     ->label('Hora de Início')
                                     ->seconds(false),
@@ -111,7 +117,53 @@ class TurmaForm
                                     ->seconds(false),
                             ])
                             ->columns(3)
-                            ->defaultItems(0),
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->default(fn () => array_map(fn ($dia) => [
+                                'dia_semana' => $dia,
+                                'hora_inicio' => null,
+                                'hora_fim' => null,
+                            ], range(0, 6)))
+                            ->loadStateFromRelationshipsUsing(function (Repeater $component, ?Turma $record) {
+                                if (! $record) {
+                                    return;
+                                }
+
+                                $existing = $record->horariosFuncionamento->keyBy('dia_semana');
+                                $items = [];
+
+                                for ($dia = 0; $dia <= 6; $dia++) {
+                                    $horario = $existing->get($dia);
+                                    $items[] = [
+                                        'dia_semana' => $dia,
+                                        'hora_inicio' => $horario?->hora_inicio,
+                                        'hora_fim' => $horario?->hora_fim,
+                                    ];
+                                }
+
+                                $component->state($items);
+                            })
+                            ->saveRelationshipsUsing(function (Turma $record, array $state) {
+                                foreach ($state as $item) {
+                                    if (! empty($item['hora_inicio']) || ! empty($item['hora_fim'])) {
+                                        TurmaHorario::updateOrCreate(
+                                            [
+                                                'turma_id' => $record->id,
+                                                'dia_semana' => $item['dia_semana'],
+                                            ],
+                                            [
+                                                'hora_inicio' => $item['hora_inicio'] ?: null,
+                                                'hora_fim' => $item['hora_fim'] ?: null,
+                                            ]
+                                        );
+                                    } else {
+                                        TurmaHorario::where('turma_id', $record->id)
+                                            ->where('dia_semana', $item['dia_semana'])
+                                            ->delete();
+                                    }
+                                }
+                            }),
                     ]),
             ]);
     }
