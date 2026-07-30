@@ -89,6 +89,37 @@ class EducacensoTurmaExporter
             $turma->flag_aee_ensino_informatica_acessivel ? '1' : '0', // 34. AEE Informática Acessível
             $turma->flag_aee_portugues_segunda_lingua ? '1' : '0', // 35. AEE Português 2ª Língua
             $turma->flag_aee_tecnologia_assistiva ? '1' : '0', // 36. AEE Tecnologia Assistiva
+            // Campos 37 a 66: Disciplinas / Áreas de Conhecimento / Cursos / Atividades Complementares
+            '', // 37. Química
+            '', // 38. Física
+            '', // 39. Biologia
+            '', // 40. Ciências
+            '', // 41. Matemática
+            '', // 42. Língua / Literatura Portuguesa
+            '', // 43. Língua Estrangeira - Inglês
+            '', // 44. Língua Estrangeira - Espanhol
+            '', // 45. Língua Estrangeira - Francês
+            '', // 46. Língua Estrangeira - Outra
+            '', // 47. Arte (Artes Plásticas, Música, Teatro, Dança, etc.)
+            '', // 48. Educação Física
+            '', // 49. História
+            '', // 50. Geografia
+            '', // 51. Filosofia
+            '', // 52. Ensino Religioso
+            '', // 53. Estudos Sociais
+            '', // 54. Sociologia
+            '', // 55. Informática / Computação
+            '', // 56. Disciplina Profissionalizante
+            '', // 57. Libras
+            '', // 58. Disciplinas Pedagógicas
+            '', // 59. Outras Disciplinas
+            '', // 60. Código do Curso Técnico
+            '', // 61. Código do Curso FIC / Formação Inicial e Continuada
+            '', // 62. Tipo de Atendimento Complementar
+            '', // 63. Atividade Complementar 1
+            '', // 64. Atividade Complementar 2
+            '', // 65. Atividade Complementar 3
+            '', // 66. Atividade Complementar 4
         ];
 
         return implode('|', $fields);

@@ -83,7 +83,7 @@ class EducacensoTurmaExportTest extends TestCase
 
         $fields = explode('|', $line);
 
-        $this->assertCount(36, $fields);
+        $this->assertCount(66, $fields);
         $this->assertEquals('20', $fields[0]); // Registro
         $this->assertEquals('12345678', $fields[1]); // Código INEP Escola
         $this->assertEquals('T101', $fields[2]); // Código Turma
