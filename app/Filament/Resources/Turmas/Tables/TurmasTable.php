@@ -10,6 +10,7 @@ use App\Models\NotaHabilidade;
 use App\Models\TemplateCracha;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
+use App\Services\Educacenso\EducacensoTurmaExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -590,7 +591,24 @@ class TurmasTable
                             );
                         })
                         ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('exportarEducacenso')
+                        ->label('Exportar para Educacenso')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $exporter = new EducacensoTurmaExporter;
+                            $content = $exporter->export($records);
 
+                            $filename = 'educacenso_turmas_'.date('Ymd_His').'.txt';
+
+                            return response()->streamDownload(
+                                fn () => print ($content),
+                                $filename,
+                                ['Content-Type' => 'text/plain; charset=UTF-8']
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('ViewAny:Turma')),
                 ]),
             ])
             ->stackedOnMobile();

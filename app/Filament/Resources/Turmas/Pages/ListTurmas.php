@@ -62,6 +62,7 @@ class ListTurmas extends ListRecords
         }
 
         $html .= '<li><strong>Vínculos:</strong> As turmas são essenciais para o processo de matrícula e lançamento de notas.</li>';
+        $html .= '<li><strong>Exportar para Educacenso (lote):</strong> Selecione as turmas desejadas e clique em "Exportar para Educacenso" para baixar o arquivo no formato .txt padrão do INEP (Registro 20) com delimitador Pipe (|).</li>';
         $html .= '</ul>';
 
         return $html;

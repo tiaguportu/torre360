@@ -240,7 +240,8 @@ As situações de matrícula no Torre360 são fixas e padronizadas para garantir
    - **Carga Horária Total (horas):** Carga horária total da turma definida em horas.
    - **Horário de Funcionamento (Dias da Semana):** Quadro colapsável em largura total que permite definir e visualizar os horários de início e término fixos para todos os dias da semana (Domingo a Sábado).
 3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Etapa Agregada, Etapa de Ensino, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado, Forma de Organização, Modalidade, Língua Ministrada ou Flags de Educação Especial e Bilíngue de Surdos.
-4. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
+4. **Exportar para Educacenso em Lote:** Na listagem de turmas (`/admin/turmas`), selecione uma ou mais turmas e acione a ação em lote **Exportar para Educacenso**. O sistema gerará e baixará automaticamente um arquivo `.txt` configurado no padrão oficial do INEP (Registro 20) separado por Pipe (`|`), com campos não preenchidos representados por delimitadores vazios (ex: `||`).
+5. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
 - **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.
 - **Cancelada (Vermelho):** Vínculo encerrado definitivamente.
