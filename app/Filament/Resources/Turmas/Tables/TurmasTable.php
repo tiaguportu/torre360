@@ -65,19 +65,19 @@ class TurmasTable
                 TextColumn::make('tipo_mediacao_didatico_pedagogica')
                     ->label('Mediação')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
-                        1 => '1 - Presencial',
-                        2 => '2 - Semipresencial',
-                        3 => '3 - EAD',
+                        1 => 'Presencial',
+                        2 => 'Semipresencial',
+                        3 => 'Educação a distância – EAD',
                         default => $state,
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tipo_turma')
                     ->label('Tipo de Turma')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
-                        4 => '4 - Atividade complementar',
-                        5 => '5 - AEE',
-                        6 => '6 - Curricular',
-                        9 => '9 - Curricular c/ Ativ. Comp.',
+                        4 => 'Atividade complementar',
+                        5 => 'Atendimento educacional especializado (AEE)',
+                        6 => 'Curricular',
+                        9 => 'Curricular c/ Ativ. Comp.',
                         default => $state,
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -88,31 +88,31 @@ class TurmasTable
                 TextColumn::make('forma_organizacao')
                     ->label('Forma de Organização')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
-                        1 => '1 - Série/Ano',
-                        2 => '2 - Semestral',
-                        3 => '3 - Ciclos',
-                        4 => '4 - Grupos não seriados',
-                        5 => '5 - Módulos',
-                        6 => '6 - Alternância',
+                        1 => 'Série/Ano',
+                        2 => 'Semestral',
+                        3 => 'Ciclos',
+                        4 => 'Grupos não seriados',
+                        5 => 'Módulos',
+                        6 => 'Alternância',
                         default => $state,
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('modalidade_ensino')
                     ->label('Modalidade')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
-                        1 => '1 - Regular',
-                        2 => '2 - Especial',
-                        3 => '3 - EJA',
-                        4 => '4 - Profissional',
+                        1 => 'Regular',
+                        2 => 'Especial',
+                        3 => 'EJA',
+                        4 => 'Profissional',
                         default => $state,
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tipo_lingua_ministrada')
                     ->label('Língua Ministrada')
                     ->formatStateUsing(fn ($state) => match ((int) $state) {
-                        1 => '1 - Português',
-                        2 => '2 - Indígena + Português',
-                        3 => '3 - Indígena',
+                        1 => 'Português',
+                        2 => 'Indígena + Português',
+                        3 => 'Indígena',
                         default => $state,
                     })
                     ->toggleable(isToggledHiddenByDefault: true),

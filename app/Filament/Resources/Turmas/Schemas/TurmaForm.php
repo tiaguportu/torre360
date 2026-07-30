@@ -86,28 +86,28 @@ class TurmaForm
                 Select::make('tipo_mediacao_didatico_pedagogica')
                     ->label('Tipo de Mediação Didático-Pedagógica')
                     ->options([
-                        1 => '1 - Presencial',
-                        2 => '2 - Semipresencial',
-                        3 => '3 - Educação a distância – EAD',
+                        1 => 'Presencial',
+                        2 => 'Semipresencial',
+                        3 => 'Educação a distância – EAD',
                     ])
                     ->default(1),
                 Select::make('tipo_turma')
                     ->label('Tipo de Turma')
                     ->options([
-                        4 => '4 - Atividade complementar',
-                        5 => '5 - Atendimento educacional especializado (AEE)',
-                        6 => '6 - Curricular (etapa de ensino)',
-                        9 => '9 - Curricular (etapa de ensino) com Atividade Complementar',
+                        4 => 'Atividade complementar',
+                        5 => 'Atendimento educacional especializado (AEE)',
+                        6 => 'Curricular (etapa de ensino)',
+                        9 => 'Curricular (etapa de ensino) com Atividade Complementar',
                     ])
                     ->default(6)
                     ->live(),
                 Select::make('local_funcionamento_diferenciado')
                     ->label('Local de Funcionamento Diferenciado da Turma')
                     ->options([
-                        0 => '0 - A turma não está em local de funcionamento diferenciado',
-                        1 => '1 - Sala anexa',
-                        2 => '2 - Unidade de atendimento socioeducativo',
-                        3 => '3 - Unidade prisional',
+                        0 => 'A turma não está em local de funcionamento diferenciado',
+                        1 => 'Sala anexa',
+                        2 => 'Unidade de atendimento socioeducativo',
+                        3 => 'Unidade prisional',
                     ])
                     ->default(0),
                 Toggle::make('turma_educacao_especial')
@@ -117,27 +117,27 @@ class TurmaForm
                 Select::make('forma_organizacao')
                     ->label('Forma de Organização da Turma')
                     ->options([
-                        1 => '1 - Série/Ano (Série Anual)',
-                        2 => '2 - Períodos semestrais',
-                        3 => '3 - Ciclos',
-                        4 => '4 - Grupos não seriados com base na idade ou competência',
-                        5 => '5 - Módulos',
-                        6 => '6 - Alternância regular de períodos de estudos',
+                        1 => 'Série/Ano (Série Anual)',
+                        2 => 'Períodos semestrais',
+                        3 => 'Ciclos',
+                        4 => 'Grupos não seriados com base na idade ou competência',
+                        5 => 'Módulos',
+                        6 => 'Alternância regular de períodos de estudos',
                     ]),
                 Select::make('modalidade_ensino')
                     ->label('Modalidade de Ensino')
                     ->options([
-                        1 => '1 - Ensino Regular',
-                        2 => '2 - Educação Especial',
-                        3 => '3 - Educação de Jovens e Adultos (EJA)',
-                        4 => '4 - Educação Profissional',
+                        1 => 'Ensino Regular',
+                        2 => 'Educação Especial',
+                        3 => 'Educação de Jovens e Adultos (EJA)',
+                        4 => 'Educação Profissional',
                     ]),
                 Select::make('tipo_lingua_ministrada')
                     ->label('Língua em que o Ensino é Ministrado')
                     ->options([
-                        1 => '1 - Somente em Língua Portuguesa',
-                        2 => '2 - Em Língua Indígena e Língua Portuguesa',
-                        3 => '3 - Somente em Língua Indígena',
+                        1 => 'Somente em Língua Portuguesa',
+                        2 => 'Em Língua Indígena e Língua Portuguesa',
+                        3 => 'Somente em Língua Indígena',
                     ])
                     ->default(1)
                     ->live(),
