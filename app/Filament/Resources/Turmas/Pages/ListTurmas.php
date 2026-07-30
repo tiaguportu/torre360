@@ -41,13 +41,13 @@ class ListTurmas extends ListRecords
         $canUpdate = $user->can('Update:Turma');
         $canViewBoletim = $user->can('Boletim:Matricula');
 
-        $html = '<p>Nesta página você gerencia as turmas da instituição, vinculando-as a séries e períodos letivos.</p>';
+        $html = '<p>Nesta página você gerencia as turmas da instituição, vinculando-as a séries, períodos letivos, além de definir dados de mediação didática e tipo de turma.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Listagem:</strong> Visualize todas as turmas ativas e seus respectivos cursos/séries.</li>';
+        $html .= '<li><strong>Listagem:</strong> Visualize todas as turmas ativas, seus códigos, séries, turnos, tipo de mediação didático-pedagógica, tipo de turma e flag de Educação Especial.</li>';
 
         if ($canCreate) {
-            $html .= '<li><strong>Nova Turma:</strong> Crie uma nova turma definindo o nome, turno e capacidade.</li>';
+            $html .= '<li><strong>Nova Turma:</strong> Crie uma nova turma definindo o nome, código, turno, capacidade, tipo de mediação (1-Presencial, 2-Semipresencial, 3-EAD), tipo de turma (4, 5, 6, 9), local de funcionamento diferenciado e flag de Educação Especial.</li>';
         }
 
         if ($canUpdate) {

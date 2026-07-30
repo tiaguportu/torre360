@@ -24,6 +24,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
@@ -37,6 +38,10 @@ class TurmasTable
                 TextColumn::make('nome')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('codigo')
+                    ->label('Código')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('serie.nome')
                     ->label('Série')
                     ->sortable()
@@ -44,6 +49,29 @@ class TurmasTable
                 TextColumn::make('turno.nome')
                     ->label('Turno')
                     ->sortable(),
+                TextColumn::make('tipo_mediacao_didatico_pedagogica')
+                    ->label('Mediação')
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        1 => '1 - Presencial',
+                        2 => '2 - Semipresencial',
+                        3 => '3 - EAD',
+                        default => $state,
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('tipo_turma')
+                    ->label('Tipo de Turma')
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        4 => '4 - Atividade complementar',
+                        5 => '5 - AEE',
+                        6 => '6 - Curricular',
+                        9 => '9 - Curricular c/ Ativ. Comp.',
+                        default => $state,
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('turma_educacao_especial')
+                    ->label('Ed. Especial')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('professorConselheiro.nome')
                     ->label('Professor Conselheiro')
                     ->sortable(),

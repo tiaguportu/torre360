@@ -128,7 +128,7 @@ Estrutura de ensino e turmas.
 
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
-- **Turma - Campos Faltantes:** `tipo_avaliacao` (Enum: notas, habilidades, hibrido). Define quais recursos de avaliação estarão disponíveis para a turma.
+- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `professor_conselheiro_id`, `vagas_maximas`, `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean).
 
 ### `disciplina`
 - **Representa:** Matérias ou componentes curriculares.

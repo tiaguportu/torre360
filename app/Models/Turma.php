@@ -75,6 +75,10 @@ class Turma extends Model
     {
         return [
             'tipo_avaliacao' => 'string',
+            'turma_educacao_especial' => 'boolean',
+            'tipo_mediacao_didatico_pedagogica' => 'integer',
+            'tipo_turma' => 'integer',
+            'local_funcionamento_diferenciado' => 'integer',
         ];
     }
 }

@@ -198,6 +198,27 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
 As situações de matrícula no Torre360 são fixas e padronizadas para garantir a consistência dos relatórios. Cada estado possui uma cor e ícone específicos na listagem:
 - **Ativa (Verde):** Aluno regularmente matriculado e frequentando.
 - **Reserva (Cinza):** Vaga reservada (pré-matrícula) aguardando efetivação.
+
+### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
+1. Vá em **Acadêmico → Turmas**.
+2. **Cadastro e Edição de Turmas:** Ao cadastrar ou atualizar uma turma, é possível preencher:
+   - **Código:** Código identificador da turma (código INEP/Educacenso ou controle interno).
+   - **Tipo de mediação didático-pedagógica:**
+     - `1 - Presencial`
+     - `2 - Semipresencial`
+     - `3 - Educação a distância – EAD`
+   - **Tipo de turma:**
+     - `4 - Atividade complementar`
+     - `5 - Atendimento educacional especializado (AEE)`
+     - `6 - Curricular (etapa de ensino)`
+     - `9 - Curricular (etapa de ensino) com Atividade Complementar`
+   - **Local de funcionamento diferenciado da turma:**
+     - `0 - A turma não está em local de funcionamento diferenciado`
+     - `1 - Sala anexa`
+     - `2 - Unidade de atendimento socioeducativo`
+     - `3 - Unidade prisional`
+   - **Turma de Educação Especial (Classe Especial):** Seleção para identificar turmas de classe especial.
+3. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
 - **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.
 - **Cancelada (Vermelho):** Vínculo encerrado definitivamente.

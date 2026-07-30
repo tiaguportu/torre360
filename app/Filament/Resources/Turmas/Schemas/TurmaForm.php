@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Turmas\Schemas;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class TurmaForm
@@ -15,6 +16,9 @@ class TurmaForm
             ->components([
                 TextInput::make('nome')
                     ->required()
+                    ->maxLength(255),
+                TextInput::make('codigo')
+                    ->label('Código')
                     ->maxLength(255),
                 Select::make('serie_id')
                     ->relationship('serie', 'nome')
@@ -45,6 +49,35 @@ class TurmaForm
                     ])
                     ->required()
                     ->default('notas'),
+                Select::make('tipo_mediacao_didatico_pedagogica')
+                    ->label('Tipo de Mediação Didático-Pedagógica')
+                    ->options([
+                        1 => '1 - Presencial',
+                        2 => '2 - Semipresencial',
+                        3 => '3 - Educação a distância – EAD',
+                    ])
+                    ->default(1),
+                Select::make('tipo_turma')
+                    ->label('Tipo de Turma')
+                    ->options([
+                        4 => '4 - Atividade complementar',
+                        5 => '5 - Atendimento educacional especializado (AEE)',
+                        6 => '6 - Curricular (etapa de ensino)',
+                        9 => '9 - Curricular (etapa de ensino) com Atividade Complementar',
+                    ])
+                    ->default(6),
+                Select::make('local_funcionamento_diferenciado')
+                    ->label('Local de Funcionamento Diferenciado da Turma')
+                    ->options([
+                        0 => '0 - A turma não está em local de funcionamento diferenciado',
+                        1 => '1 - Sala anexa',
+                        2 => '2 - Unidade de atendimento socioeducativo',
+                        3 => '3 - Unidade prisional',
+                    ])
+                    ->default(0),
+                Toggle::make('turma_educacao_especial')
+                    ->label('Turma de Educação Especial (Classe Especial)')
+                    ->default(false),
             ]);
     }
 }
