@@ -1199,5 +1199,36 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
 
 ---
 
+## 🏫 24. Gestão de Instituições de Ensino e Unidades Escolares
+
+O sistema permite gerenciar a estrutura da rede de ensino em dois níveis: **Instituição de Ensino** (mantenedora/rede) e **Unidades Escolares** (escolas/unidades físicas).
+
+### 24.1 Instituição de Ensino (`/admin/instituicao-ensinos`)
+Acesse **Localização e Cadastros → Instituições de Ensino**.
+- **Código INEP:** Registro do código oficial da mantenedora junto ao INEP.
+- **Dados Gerais:** Nome, CNPJ, Logotipo institucional e status (Ativo/Inativo).
+- **Canais de Comunicação:** Celular/WhatsApp, Instagram, Facebook e YouTube.
+- **Ajuda Integrada:** O botão de ajuda no cabeçalho resume as ações disponíveis de acordo com suas permissões.
+
+### 24.2 Unidade Escolar (`/admin/unidades`)
+Acesse **Localização e Cadastros → Unidades**.
+- **Código INEP:** Código identificador oficial da escola no Censo Escolar/INEP.
+- **Situação de Funcionamento:** Indica o status da escola (1-Em atividade, 2-Paralisada ou 3-Extinta).
+- **Contato Escolar:** Telefone com máscara no formato `(99)99999-999` ou `(99)99999-9999` e E-mail de contato da unidade.
+- **Órgão Regional de Ensino:** Código da diretoria/órgão regional de ensino vinculado.
+- **Dados do Censo / MEC:**
+  - **Localização / Zona da escola:** 1-Urbana ou 2-Rural.
+  - **Localização diferenciada:** 1-Área de assentamento, 2-Terra indígena, 3-Comunidade quilombola, 7-Não está em área de localização diferenciada ou 8-Área onde se localizam povos e comunidades tradicionais.
+  - **Dependência administrativa:** 1-Federal, 2-Estadual, 3-Municipal ou 4-Privada.
+  - **Órgão vinculado:** Identificação do órgão ao qual a escola pública está associada.
+- **Flags de Vínculos com Órgãos Públicos / Mantenedores:**
+  - *Secretaria de Educação/Ministério da Educação*
+  - *Secretaria de Segurança Pública/Forças Armadas/Militar*
+  - *Secretaria da Saúde/Ministério da Saúde*
+  - *Outro órgão da administração pública*
+- **Ajuda Integrada:** Botão de ajuda no cabeçalho com orientações sobre preenchimento e permissões registradas no Shield.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 

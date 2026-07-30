@@ -23,6 +23,9 @@ class InstituicaoEnsinosTable
                     ->sortable(),
                 TextColumn::make('cnpj')
                     ->searchable(),
+                TextColumn::make('codigo_inep')
+                    ->label('Código INEP')
+                    ->searchable(),
                 IconColumn::make('flag_ativo')
                     ->label('Ativo')
                     ->boolean(),

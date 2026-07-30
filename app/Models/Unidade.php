@@ -13,6 +13,16 @@ class Unidade extends Model
 
     protected $guarded = [];
 
+    public function casts(): array
+    {
+        return [
+            'flag_secretaria_educacao_mec' => 'boolean',
+            'flag_seguranca_publica_forcas_armadas' => 'boolean',
+            'flag_secretaria_saude' => 'boolean',
+            'flag_outro_orgao_publico' => 'boolean',
+        ];
+    }
+
     public function instituicaoEnsino(): BelongsTo
     {
         return $this->belongsTo(InstituicaoEnsino::class);

@@ -21,6 +21,9 @@ class InstituicaoEnsinoForm
                             ->required(),
                         TextInput::make('cnpj')
                             ->mask('99.999.999/9999-99'),
+                        TextInput::make('codigo_inep')
+                            ->label('Código INEP')
+                            ->maxLength(255),
                         FileUpload::make('logo')
                             ->image()
                             ->directory('instituicao-logos')
