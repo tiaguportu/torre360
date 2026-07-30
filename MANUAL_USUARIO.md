@@ -126,6 +126,22 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 2. **Transtornos de Aprendizagem:** Permite categorizar transtornos diagnosticados ou observados (ex: *Discalculia, Dislexia, TDAH, TPAC*), com campo livre para detalhar pareceres e observações.
 3. **Recursos de Acessibilidade:** Permite definir os recursos de apoio que a pessoa necessita no dia a dia ou em exames/avaliações (ex: *Tradutor-intérprete de Libras, Prova ampliada (Fonte 18), Auxílio ledor, Prova em Braille, Tempo adicional*).
 
+### 4.5 Exportação de Pessoas para o Educacenso (INEP)
+1. Vá em **Secretaria / Pessoas** (`/admin/pessoas`).
+2. Selecione uma ou mais pessoas/alunos na tabela utilizando as caixas de seleção.
+3. Clique na barra de ações em lote e escolha **Exportar para Educacenso**.
+4. O sistema gera e faz o download automático de um arquivo no formato `.txt` padrão INEP (delimitado pelo caractere Pipe `|`), contendo os 9 campos cadastrais:
+   - **Campo 1:** Código do aluno na Entidade/Escola (código próprio ou ID)
+   - **Campo 2:** Número do CPF (11 dígitos, se disponível)
+   - **Campo 3:** Número da Matrícula (Registro Civil - Certidão de nascimento, se disponível)
+   - **Campo 4:** Nome completo (sanitizado sem acentos, caixa alta)
+   - **Campo 5:** Data de nascimento (`DD/MM/AAAA`)
+   - **Campo 6:** Filiação 1 (Mãe/Responsável 1)
+   - **Campo 7:** Filiação 2 (Pai/Responsável 2)
+   - **Campo 8:** Município de nascimento (Código IBGE da naturalidade com 7 dígitos)
+   - **Campo 9:** Identificação única do aluno - INEP (12 dígitos, se disponível)
+5. Os campos sem informação cadastrada são deixados em branco, gerando delimitadores consecutivos (`||`).
+
 ---
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação

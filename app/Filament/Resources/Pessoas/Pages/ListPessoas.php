@@ -61,6 +61,7 @@ class ListPessoas extends ListRecords
             $html .= '<li><strong>Editar:</strong> Altere endereços, contatos e documentos pessoais.</li>';
         }
         $html .= '<li><strong>Impressão de Crachás:</strong> Selecione uma ou mais pessoas na tabela e use a ação em lote "Imprimir Crachá" para gerar os crachás em PDF de forma automatizada.</li>';
+        $html .= '<li><strong>Exportar para Educacenso (lote):</strong> Selecione as pessoas/alunos desejados e acione a opção "Exportar para Educacenso" na barra de ações em lote para gerar o arquivo .txt com os 9 campos formatados com delimitador Pipe (|).</li>';
         $html .= '</ul>';
 
         return $html;

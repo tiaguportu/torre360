@@ -99,6 +99,26 @@ class PessoaForm
                     ->searchable()
                     ->preload(),
 
+                TextInput::make('codigo')
+                    ->label('Código do Aluno na Entidade/Escola')
+                    ->maxLength(20),
+
+                TextInput::make('codigo_inep')
+                    ->label('Identificação Única (INEP)')
+                    ->maxLength(12),
+
+                TextInput::make('certidao_nascimento')
+                    ->label('Certidão de Nascimento (Matrícula Civil)')
+                    ->maxLength(32),
+
+                TextInput::make('filiacao_1')
+                    ->label('Filiação 1 (Mãe/Responsável 1)')
+                    ->maxLength(100),
+
+                TextInput::make('filiacao_2')
+                    ->label('Filiação 2 (Pai/Responsável 2)')
+                    ->maxLength(100),
+
                 Select::make('users')
                     ->label('Usuários do Sistema')
                     ->relationship('users', 'name')
