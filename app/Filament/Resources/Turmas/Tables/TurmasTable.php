@@ -8,6 +8,7 @@ use App\Models\EtapaAvaliativa;
 use App\Models\NotaHabilidade;
 use App\Models\TemplateCracha;
 use App\Models\Turma;
+use App\Models\TurmaHorario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -18,6 +19,8 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
@@ -303,6 +306,79 @@ class TurmasTable
 
                             Notification::make()
                                 ->title('Turmas atualizadas em lote com sucesso!')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('Update:Turma')),
+                    BulkAction::make('definirHorariosLote')
+                        ->label('Horários de Funcionamento em Lote')
+                        ->icon('heroicon-o-clock')
+                        ->color('info')
+                        ->modalHeading('Definir Horário de Funcionamento em Lote')
+                        ->modalDescription('Selecione os dias da semana e horários para aplicar às turmas selecionadas.')
+                        ->form([
+                            Toggle::make('substituir_existentes')
+                                ->label('Substituir horários anteriores das turmas')
+                                ->default(true),
+                            Repeater::make('horarios')
+                                ->label('Horários por Dia da Semana')
+                                ->schema([
+                                    Select::make('dia_semana')
+                                        ->label('Dia da Semana')
+                                        ->options([
+                                            0 => 'Domingo',
+                                            1 => 'Segunda-feira',
+                                            2 => 'Terça-feira',
+                                            3 => 'Quarta-feira',
+                                            4 => 'Quinta-feira',
+                                            5 => 'Sexta-feira',
+                                            6 => 'Sábado',
+                                        ])
+                                        ->required()
+                                        ->distinct(),
+                                    TimePicker::make('hora_inicio')
+                                        ->label('Hora de Início')
+                                        ->seconds(false)
+                                        ->required(),
+                                    TimePicker::make('hora_fim')
+                                        ->label('Hora de Término')
+                                        ->seconds(false)
+                                        ->required(),
+                                ])
+                                ->columns(3)
+                                ->defaultItems(1)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $horarios = $data['horarios'] ?? [];
+                            if (empty($horarios)) {
+                                return;
+                            }
+
+                            $substituir = $data['substituir_existentes'] ?? true;
+
+                            foreach ($records as $turma) {
+                                if ($substituir) {
+                                    $turma->horariosFuncionamento()->delete();
+                                }
+
+                                foreach ($horarios as $item) {
+                                    TurmaHorario::updateOrCreate(
+                                        [
+                                            'turma_id' => $turma->id,
+                                            'dia_semana' => $item['dia_semana'],
+                                        ],
+                                        [
+                                            'hora_inicio' => $item['hora_inicio'],
+                                            'hora_fim' => $item['hora_fim'],
+                                        ]
+                                    );
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Horários de funcionamento aplicados em lote com sucesso!')
                                 ->success()
                                 ->send();
                         })
