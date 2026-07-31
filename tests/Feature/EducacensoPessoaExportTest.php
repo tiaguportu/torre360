@@ -88,8 +88,8 @@ class EducacensoPessoaExportTest extends TestCase
 
         $this->assertCount(110, $fields);
         $this->assertEquals('30', $fields[0]); // 1. Registro
-        $this->assertEquals('', $fields[2]); // 3. INEP Pessoa
-        $this->assertEquals('101', $fields[3]); // 4. ID Escola/Entidade
+        $this->assertEquals('101', $fields[2]); // 3. Código no sistema próprio
+        $this->assertEquals('', $fields[3]); // 4. Identificação única (INEP)
         $this->assertEquals('12345678900', $fields[4]); // 5. CPF
         $this->assertEquals('JOAO DA SILVA CAO', $fields[5]); // 6. Nome Sanitizado
         $this->assertEquals('15/05/2010', $fields[6]); // 7. Data Nascimento
@@ -127,7 +127,8 @@ class EducacensoPessoaExportTest extends TestCase
 
         $this->assertCount(110, $fields);
         $this->assertEquals('30', $fields[0]);
-        $this->assertEquals((string) $pessoa->id, $fields[3]);
+        $this->assertEquals((string) $pessoa->id, $fields[2]); // Campo 3
+        $this->assertEquals('', $fields[3]); // Campo 4
         $this->assertEquals('PEDRO SEM DOCUMENTOS', $fields[5]);
         $this->assertEquals('', $fields[4]); // CPF vazio
         $this->assertEquals('', $fields[6]); // Data nasc vazia
