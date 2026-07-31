@@ -104,14 +104,16 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('3509502', $fields[15]); // 16. IBGE Cidade Nascimento
         $this->assertEquals('1', $fields[16]); // 17. Tem Deficiência
         $this->assertEquals('1', $fields[17]); // 18. Cegueira
-        $this->assertEquals('1', $fields[35]); // 36. Prova Braille
-        $this->assertEquals('13000000', $fields[37]); // 38. CEP
-        $this->assertEquals('RUA DAS FLORES', $fields[38]); // 39. Logradouro
-        $this->assertEquals('123', $fields[39]); // 40. Número
-        $this->assertEquals('CENTRO', $fields[41]); // 42. Bairro
-        $this->assertEquals('3509502', $fields[42]); // 43. IBGE Cidade Endereço
-        $this->assertEquals('SP', $fields[43]); // 44. UF Endereço
-        $this->assertEquals('joao@example.com', $fields[44]); // 45. Email
+        $this->assertEquals('0', $fields[28]); // 29. Tem Transtorno Aprendizagem (0)
+        $this->assertEquals('', $fields[29]); // 30. Dislexia (nulo pois f29 == 0)
+        $this->assertEquals('1', $fields[43]); // 44. Prova Braille
+        $this->assertEquals('13000000', $fields[45]); // 46. CEP
+        $this->assertEquals('RUA DAS FLORES', $fields[46]); // 47. Logradouro
+        $this->assertEquals('123', $fields[47]); // 48. Número
+        $this->assertEquals('CENTRO', $fields[49]); // 50. Bairro
+        $this->assertEquals('3509502', $fields[50]); // 51. IBGE Cidade Endereço
+        $this->assertEquals('SP', $fields[51]); // 52. UF Endereço
+        $this->assertEquals('joao@example.com', $fields[52]); // 53. Email
     }
 
     public function test_exportacao_com_campos_opcionais_vazios_gera_pipes_duplos(): void
