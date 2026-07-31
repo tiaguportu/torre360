@@ -85,7 +85,7 @@ class EducacensoPessoaExportTest extends TestCase
 
         $fields = explode('|', $line);
 
-        $this->assertCount(45, $fields);
+        $this->assertCount(110, $fields);
         $this->assertEquals('30', $fields[0]); // 1. Registro
         $this->assertEquals('', $fields[2]); // 3. INEP Pessoa
         $this->assertEquals('101', $fields[3]); // 4. ID Escola/Entidade
@@ -124,7 +124,7 @@ class EducacensoPessoaExportTest extends TestCase
 
         $fields = explode('|', $line);
 
-        $this->assertCount(45, $fields);
+        $this->assertCount(110, $fields);
         $this->assertEquals('30', $fields[0]);
         $this->assertEquals((string) $pessoa->id, $fields[3]);
         $this->assertEquals('PEDRO SEM DOCUMENTOS', $fields[5]);
