@@ -13,6 +13,33 @@ enum CorRaca: string implements HasLabel
     case AMARELA = '4';
     case INDIGENA = '5';
 
+    public static function tryFromValue(mixed $value): ?self
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof self) {
+            return $value;
+        }
+
+        $str = (string) $value;
+
+        if ($enum = self::tryFrom($str)) {
+            return $enum;
+        }
+
+        return match (mb_strtolower($str)) {
+            '0', 'nao_declarada', 'nao_declarado', 'não declarada', 'não declarado' => self::NAO_DECLARADA,
+            '1', 'branca', 'branc' => self::BRANCA,
+            '2', 'preta', 'pret' => self::PRETA,
+            '3', 'parda', 'pard' => self::PARDA,
+            '4', 'amarela', 'amar' => self::AMARELA,
+            '5', 'indigena', 'indígena', 'indig' => self::INDIGENA,
+            default => null,
+        };
+    }
+
     public function getLabel(): ?string
     {
         return match ($this) {

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\CorRaca;
+use App\Casts\CorRacaCast;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +45,7 @@ class Pessoa extends Model
     {
         return [
             'sexo' => Sexo::class,
-            'cor_raca' => CorRaca::class,
+            'cor_raca' => CorRacaCast::class,
             'tipo_nacionalidade' => Nacionalidade::class,
         ];
     }
