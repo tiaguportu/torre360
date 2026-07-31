@@ -275,9 +275,16 @@ class EducacensoPessoaExporter
             $f18 = $f19 = $f20 = $f21 = $f22 = $f23 = $f24 = $f25 = $f26 = $f27 = $f28 = '';
         }
 
-        // 29. Pessoa física com transtorno que impacta o desenvolvimento da aprendizagem (0 ou 1)
-        $temTranstorno = $pessoa->transtornosAprendizagem?->isNotEmpty();
-        $f29 = $temTranstorno ? '1' : '0';
+        // Verificação do vínculo de estudante no Registro 60 (escola atual)
+        $temVinculoRegistro60 = $pessoa->matriculas?->isNotEmpty() || ($pessoa->relationLoaded('matriculas') && $pessoa->getRelation('matriculas')->isNotEmpty());
+
+        // 29. Pessoa física com transtorno que impacta o desenvolvimento da aprendizagem (0 ou 1 quando houver vínculo, senão nulo)
+        if ($temVinculoRegistro60) {
+            $temTranstorno = $pessoa->transtornosAprendizagem?->isNotEmpty();
+            $f29 = $temTranstorno ? '1' : '0';
+        } else {
+            $f29 = '';
+        }
 
         // 30 a 35. Tipos de Transtorno de Aprendizagem (0 ou 1 quando f29==1, senão nulo)
         if ($f29 === '1') {
@@ -292,9 +299,6 @@ class EducacensoPessoaExporter
         } else {
             $f30 = $f31 = $f32 = $f33 = $f34 = $f35 = '';
         }
-
-        // Verificação do vínculo de estudante no Registro 60 (escola atual)
-        $temVinculoRegistro60 = $pessoa->matriculas?->isNotEmpty() || ($pessoa->relationLoaded('matriculas') && $pessoa->getRelation('matriculas')->isNotEmpty());
 
         // 36 e 37. Deve ser 0 ou 1 quando f17==1 ou f29==1 E houver vínculo no Registro 60 na escola atual, senão nulo
         if (($f17 === '1' || $f29 === '1') && $temVinculoRegistro60) {

@@ -15,8 +15,10 @@ use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\AssinafyService;
 use App\Services\ContractTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -514,5 +516,76 @@ class ContratoTest extends TestCase
 
         // O canvas do DomPDF deve ter exatamente 1 página
         $this->assertEquals(1, $pdf->getDomPDF()->getCanvas()->get_page_count());
+    }
+
+    public function test_assinafy_service_processa_template_sem_erro_de_variavel_indefinida(): void
+    {
+        Http::fake([
+            '*/accounts/*/documents' => Http::response(['data' => []], 200),
+            '*/documents' => Http::response(['id' => 'doc_123', 'data' => ['id' => 'doc_123']], 200),
+            '*/accounts/*/signers' => Http::response(['data' => [['id' => 'sig_123', 'email' => 'pai@example.com']]], 200),
+            '*/documents/*/assignments' => Http::response([
+                'signing_urls' => [
+                    ['signer_id' => 'sig_123', 'url' => 'https://sandbox.assinafy.com.br/sign/123'],
+                ],
+            ], 200),
+        ]);
+
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste']);
+        $responsavel = Pessoa::factory()->create(['nome' => 'Pai Teste', 'email' => 'pai@example.com']);
+        $responsavel->users()->create([
+            'name' => 'Pai Teste',
+            'email' => 'pai@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $contrato = Contrato::create([
+            'valor_total' => 5000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        $contrato->responsaveisFinanceiros()->create([
+            'pessoa_id' => $responsavel->id,
+            'percentual' => 100,
+        ]);
+
+        $assinafyService = new AssinafyService;
+        $result = $assinafyService->enviarContrato($contrato);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('https://sandbox.assinafy.com.br/sign/123', $result['redirect_url']);
+    }
+
+    public function test_rota_post_gerar_assinatura_funciona_sem_erro_de_template(): void
+    {
+        Http::fake([
+            '*/accounts/*/documents' => Http::response(['data' => []], 200),
+            '*/documents' => Http::response(['id' => 'doc_123', 'data' => ['id' => 'doc_123']], 200),
+            '*/accounts/*/signers' => Http::response(['data' => [['id' => 'sig_123', 'email' => 'pai@example.com']]], 200),
+            '*/documents/*/assignments' => Http::response([
+                'signing_urls' => [
+                    ['signer_id' => 'sig_123', 'url' => 'https://sandbox.assinafy.com.br/sign/123'],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste']);
+        $responsavel = Pessoa::factory()->create(['nome' => 'Pai Teste', 'email' => 'pai@example.com']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $contrato = Contrato::create([
+            'valor_total' => 5000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+        $contrato->responsaveisFinanceiros()->create([
+            'pessoa_id' => $responsavel->id,
+            'percentual' => 100,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('contratos.gerar-assinatura', $contrato));
+
+        $response->assertRedirect('https://sandbox.assinafy.com.br/sign/123');
     }
 }

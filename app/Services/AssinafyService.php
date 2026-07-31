@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contrato;
+use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Client\Response;
@@ -48,6 +49,7 @@ class AssinafyService
                 'matricula.turma.serie.curso.unidade.representantesLegais.users',
                 'matricula.periodoLetivo',
                 'responsaveisFinanceiros.pessoa.users',
+                'templateContrato',
             ]);
 
             $matricula = $contrato->matricula;
@@ -148,11 +150,16 @@ class AssinafyService
             // 1. Gerar PDF
             Notification::make()->title('Gerando PDF do contrato...')->info()->send();
 
+            $template = $contrato->templateContrato
+                ?? TemplateContrato::where('is_padrao', true)->first();
+
+            $templateService = app(ContractTemplateService::class);
+
             $conteudoTemplate = null;
             $cabecalhoTemplate = null;
             $rodapeTemplate = null;
+
             if ($template) {
-                $templateService = app(ContractTemplateService::class);
                 $conteudoTemplate = $templateService->process($contrato, $template->conteudo);
                 $cabecalhoTemplate = $template->cabecalho ? $templateService->process($contrato, $template->cabecalho) : null;
                 $rodapeTemplate = $template->rodape ? $templateService->process($contrato, $template->rodape) : null;
@@ -161,6 +168,8 @@ class AssinafyService
             $pdfContent = $templateService->generatePdf([
                 'contrato' => $contrato,
                 'matricula' => $matricula,
+                'aluno' => $matricula?->pessoa,
+                'responsavel' => $contrato->responsaveisFinanceiros->first()?->pessoa,
                 'responsaveisFinanceiros' => $contrato->responsaveisFinanceiros,
                 'serie' => $matricula->turma?->serie,
                 'curso' => $matricula->turma?->serie?->curso,
