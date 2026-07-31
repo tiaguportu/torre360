@@ -141,8 +141,8 @@ class EducacensoPessoaExporter
         // 3. Código INEP da Pessoa / Aluno / Profissional
         $f3 = $this->extractCode($pessoa->codigo_inep ?? $pessoa->id_inep ?? '');
 
-        // 4. Código da Pessoa na Entidade / Escola (ID no sistema)
-        $f4 = (string) $pessoa->id;
+        // 4. Código da Pessoa na Entidade / Escola (Código ou ID no sistema próprio)
+        $f4 = (string) ($pessoa->codigo ?? $pessoa->id);
 
         // 5. CPF (11 dígitos)
         $f5 = $this->sanitizeCpf($pessoa->cpf);
