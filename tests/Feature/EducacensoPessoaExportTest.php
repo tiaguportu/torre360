@@ -101,18 +101,17 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('', $fields[12]); // 13. Povo Indígena (nulo pois Cor/Raça != 5)
         $this->assertEquals('1', $fields[13]); // 14. Nacionalidade (1 = Brasileira)
         $this->assertEquals('76', $fields[14]); // 15. Código País (76)
-        $this->assertEquals('SP', $fields[15]); // 16. UF Nascimento
-        $this->assertEquals('3509502', $fields[16]); // 17. IBGE Cidade Nascimento
-        $this->assertEquals('1', $fields[17]); // 18. Tem Deficiência
-        $this->assertEquals('1', $fields[18]); // 19. Cegueira
-        $this->assertEquals('1', $fields[36]); // 37. Prova Braille
-        $this->assertEquals('13000000', $fields[38]); // 39. CEP
-        $this->assertEquals('RUA DAS FLORES', $fields[39]); // 40. Logradouro
-        $this->assertEquals('123', $fields[40]); // 41. Número
-        $this->assertEquals('CENTRO', $fields[42]); // 43. Bairro
-        $this->assertEquals('3509502', $fields[43]); // 44. IBGE Cidade Endereço
-        $this->assertEquals('SP', $fields[44]); // 45. UF Endereço
-        $this->assertEquals('joao@example.com', $fields[45]); // 46. Email
+        $this->assertEquals('3509502', $fields[15]); // 16. IBGE Cidade Nascimento
+        $this->assertEquals('1', $fields[16]); // 17. Tem Deficiência
+        $this->assertEquals('1', $fields[17]); // 18. Cegueira
+        $this->assertEquals('1', $fields[35]); // 36. Prova Braille
+        $this->assertEquals('13000000', $fields[37]); // 38. CEP
+        $this->assertEquals('RUA DAS FLORES', $fields[38]); // 39. Logradouro
+        $this->assertEquals('123', $fields[39]); // 40. Número
+        $this->assertEquals('CENTRO', $fields[41]); // 42. Bairro
+        $this->assertEquals('3509502', $fields[42]); // 43. IBGE Cidade Endereço
+        $this->assertEquals('SP', $fields[43]); // 44. UF Endereço
+        $this->assertEquals('joao@example.com', $fields[44]); // 45. Email
     }
 
     public function test_exportacao_com_campos_opcionais_vazios_gera_pipes_duplos(): void

@@ -249,68 +249,65 @@ class EducacensoPessoaExporter
         // 15. País de Nacionalidade (76 = Brasil)
         $f15 = ($pessoa->relationLoaded('nacionalidade') ? $pessoa->getRelation('nacionalidade')?->codigo : null) ?? '76';
 
-        // 16. UF de Nascimento (Naturalidade UF)
-        $f16 = $pessoa->naturalidade?->estado?->sigla ?? '';
+        // 16. Município de Nascimento (Código IBGE)
+        $f16 = $pessoa->naturalidade?->codigo_ibge ?? '';
 
-        // 17. Município de Nascimento (Código IBGE)
-        $f17 = $pessoa->naturalidade?->codigo_ibge ?? '';
-
-        // 18. Pessoa com Deficiência, Transtorno ou Altas Habilidades (0 ou 1)
+        // 17. Pessoa física com deficiência, transtorno do espectro autista e altas habilidades ou superdotação (0 ou 1)
         $temDeficiencia = $pessoa->necessidadesEducacaoEspecial?->isNotEmpty() || $pessoa->transtornosAprendizagem?->isNotEmpty();
-        $f18 = $temDeficiencia ? '1' : '0';
+        $f17 = $temDeficiencia ? '1' : '0';
 
-        // 19 a 28. Tipos de Deficiência e Altas Habilidades
+        // 18 a 27. Tipos de Deficiência e Altas Habilidades
         $necNames = mb_strtolower($pessoa->necessidadesEducacaoEspecial?->pluck('nome')->implode(' ') ?? '');
         $traNames = mb_strtolower($pessoa->transtornosAprendizagem?->pluck('nome')->implode(' ') ?? '');
         $allSpecial = $necNames.' '.$traNames;
 
-        $f19 = str_contains($allSpecial, 'cegueira') ? '1' : '0';
-        $f20 = (str_contains($allSpecial, 'baixa visão') || str_contains($allSpecial, 'visão reduzida')) ? '1' : '0';
-        $f21 = str_contains($allSpecial, 'surdez') ? '1' : '0';
-        $f22 = str_contains($allSpecial, 'auditiva') ? '1' : '0';
-        $f23 = str_contains($allSpecial, 'surdocegueira') ? '1' : '0';
-        $f24 = (str_contains($allSpecial, 'física') || str_contains($allSpecial, 'motora')) ? '1' : '0';
-        $f25 = (str_contains($allSpecial, 'intelectual') || str_contains($allSpecial, 'mental')) ? '1' : '0';
-        $f26 = str_contains($allSpecial, 'múltipla') ? '1' : '0';
-        $f27 = (str_contains($allSpecial, 'autis') || str_contains($allSpecial, 'tea') || str_contains($allSpecial, 'espectro')) ? '1' : '0';
-        $f28 = (str_contains($allSpecial, 'altas habilidades') || str_contains($allSpecial, 'superdotação')) ? '1' : '0';
+        $f18 = str_contains($allSpecial, 'cegueira') ? '1' : '0';
+        $f19 = (str_contains($allSpecial, 'baixa visão') || str_contains($allSpecial, 'visão reduzida')) ? '1' : '0';
+        $f20 = str_contains($allSpecial, 'surdez') ? '1' : '0';
+        $f21 = str_contains($allSpecial, 'auditiva') ? '1' : '0';
+        $f22 = str_contains($allSpecial, 'surdocegueira') ? '1' : '0';
+        $f23 = (str_contains($allSpecial, 'física') || str_contains($allSpecial, 'motora')) ? '1' : '0';
+        $f24 = (str_contains($allSpecial, 'intelectual') || str_contains($allSpecial, 'mental')) ? '1' : '0';
+        $f25 = str_contains($allSpecial, 'múltipla') ? '1' : '0';
+        $f26 = (str_contains($allSpecial, 'autis') || str_contains($allSpecial, 'tea') || str_contains($allSpecial, 'espectro')) ? '1' : '0';
+        $f27 = (str_contains($allSpecial, 'altas habilidades') || str_contains($allSpecial, 'superdotação')) ? '1' : '0';
 
-        // 29 a 38. Recursos de Acessibilidade em Avaliações do INEP
+        // 28 a 37. Recursos de Acessibilidade em Avaliações do INEP
         $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
 
-        $f29 = str_contains($recNames, 'leitor') ? '1' : '0';
-        $f30 = str_contains($recNames, 'transcrição') ? '1' : '0';
-        $f31 = str_contains($recNames, 'guia') ? '1' : '0';
-        $f32 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
-        $f33 = str_contains($recNames, 'labial') ? '1' : '0';
-        $f34 = str_contains($recNames, '18') ? '1' : '0';
-        $f35 = str_contains($recNames, '24') ? '1' : '0';
-        $f36 = str_contains($recNames, 'áudio') ? '1' : '0';
-        $f37 = str_contains($recNames, 'braille') ? '1' : '0';
-        $f38 = ($f29 === '0' && $f30 === '0' && $f31 === '0' && $f32 === '0' && $f33 === '0' && $f34 === '0' && $f35 === '0' && $f36 === '0' && $f37 === '0') ? '1' : '0';
+        $f28 = str_contains($recNames, 'leitor') ? '1' : '0';
+        $f29 = str_contains($recNames, 'transcrição') ? '1' : '0';
+        $f30 = str_contains($recNames, 'guia') ? '1' : '0';
+        $f31 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
+        $f32 = str_contains($recNames, 'labial') ? '1' : '0';
+        $f33 = str_contains($recNames, '18') ? '1' : '0';
+        $f34 = str_contains($recNames, '24') ? '1' : '0';
+        $f35 = str_contains($recNames, 'áudio') ? '1' : '0';
+        $f36 = str_contains($recNames, 'braille') ? '1' : '0';
+        $f37 = ($f28 === '0' && $f29 === '0' && $f30 === '0' && $f31 === '0' && $f32 === '0' && $f33 === '0' && $f34 === '0' && $f35 === '0' && $f36 === '0') ? '1' : '0';
 
-        // 39 a 45. Endereço da Pessoa
+        // 38 a 44. Endereço da Pessoa
         $end = $pessoa->enderecos?->first();
-        $f39 = ! empty($end?->cep) ? preg_replace('/[^0-9]/', '', $end->cep) : '';
-        $f40 = $this->sanitizeString($end?->logradouro ?? '', 100);
-        $f41 = $this->sanitizeString($end?->numero ?? '', 20);
-        $f42 = $this->sanitizeString($end?->complemento ?? '', 50);
-        $f43 = $this->sanitizeString($end?->bairro ?? '', 50);
-        $f44 = $end?->cidade?->codigo_ibge ?? '';
-        $f45 = $end?->cidade?->estado?->sigla ?? '';
+        $f38 = ! empty($end?->cep) ? preg_replace('/[^0-9]/', '', $end->cep) : '';
+        $f39 = $this->sanitizeString($end?->logradouro ?? '', 100);
+        $f40 = $this->sanitizeString($end?->numero ?? '', 20);
+        $f41 = $this->sanitizeString($end?->complemento ?? '', 50);
+        $f42 = $this->sanitizeString($end?->bairro ?? '', 50);
+        $f43 = $end?->cidade?->codigo_ibge ?? '';
+        $f44 = $end?->cidade?->estado?->sigla ?? '';
 
-        // 46. E-mail
-        $f46 = ! empty($pessoa->email) ? trim(mb_strtolower($pessoa->email)) : '';
+        // 45. E-mail
+        $f45 = ! empty($pessoa->email) ? trim(mb_strtolower($pessoa->email)) : '';
 
-        // Campos 47 a 110: Completando o layout oficial de 110 campos do Registro 30 do INEP/Educacenso
-        $extraFields = array_fill(0, 64, '');
+        // Campos 46 a 110: Completando o layout oficial de 110 campos do Registro 30 do INEP/Educacenso
+        $extraFields = array_fill(0, 65, '');
 
         $fields = array_merge([
             $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
             $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20,
             $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
             $f31, $f32, $f33, $f34, $f35, $f36, $f37, $f38, $f39, $f40,
-            $f41, $f42, $f43, $f44, $f45, $f46,
+            $f41, $f42, $f43, $f44, $f45,
         ], $extraFields);
 
         return implode('|', $fields);
