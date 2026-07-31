@@ -60,25 +60,39 @@ class Contrato extends Model
     {
         $signatarios = collect();
 
-        // 1. Responsáveis Financeiros
-        foreach ($this->responsaveisFinanceiros as $resp) {
-            $pessoa = $resp->pessoa;
+        $addSignatario = function (?Pessoa $pessoa) use (&$signatarios) {
             if (! $pessoa) {
-                continue;
+                return;
             }
 
+            // 1. E-mail cadastrado na ficha da Pessoa
+            $emailPessoa = strtolower(trim($pessoa->email ?? ''));
+            if (! empty($emailPessoa)) {
+                $signatarios->push([
+                    'nome' => $pessoa->nome,
+                    'email' => $emailPessoa,
+                ]);
+            }
+
+            // 2. E-mails de usuários (User) associados à Pessoa
             foreach ($pessoa->users as $user) {
-                if ($user->email) {
+                $emailUser = strtolower(trim($user->email ?? ''));
+                if (! empty($emailUser)) {
                     $signatarios->push([
                         'nome' => $user->name ?? $pessoa->nome,
-                        'email' => strtolower(trim($user->email)),
+                        'email' => $emailUser,
                     ]);
                 }
             }
+        };
+
+        // 1. Responsáveis Financeiros
+        foreach ($this->responsaveisFinanceiros as $resp) {
+            $addSignatario($resp->pessoa);
         }
 
         // 2. Pai e Mãe do aluno vinculado
-        $vinculosInteresse = TipoVinculo::whereIn('nome', ['Pai', 'Mãe'])->pluck('id')->toArray();
+        $vinculosInteresse = TipoVinculo::whereIn('nome', ['Pai', 'Mãe', 'pai', 'mãe'])->pluck('id')->toArray();
 
         $mat = $this->matricula;
         if ($mat) {
@@ -86,14 +100,7 @@ class Contrato extends Model
             if ($aluno) {
                 foreach ($aluno->responsaveis as $resp) {
                     if (in_array($resp->pivot->tipo_vinculo_id, $vinculosInteresse)) {
-                        foreach ($resp->users as $user) {
-                            if ($user->email) {
-                                $signatarios->push([
-                                    'nome' => $user->name ?? $resp->nome,
-                                    'email' => strtolower(trim($user->email)),
-                                ]);
-                            }
-                        }
+                        $addSignatario($resp);
                     }
                 }
             }
@@ -102,29 +109,28 @@ class Contrato extends Model
             $unidade = $mat->turma?->serie?->curso?->unidade;
             if ($unidade) {
                 foreach ($unidade->representantesLegais as $rep) {
-                    foreach ($rep->users as $user) {
-                        if ($user->email) {
-                            $signatarios->push([
-                                'nome' => $user->name ?? $rep->nome,
-                                'email' => strtolower(trim($user->email)),
-                            ]);
-                        }
-                    }
+                    $addSignatario($rep);
                 }
             }
         }
 
-        // Fallback: se não houver nenhum signatário via usuário, usa e-mail do aluno
+        // Fallback: se não houver nenhum signatário, usa e-mail do aluno (se houver)
         if ($signatarios->isEmpty() && $mat) {
             $aluno = $mat->pessoa;
             if ($aluno) {
-                $signatarios->push([
-                    'nome' => $aluno->nome,
-                    'email' => strtolower(trim($aluno->email ?? '')),
-                ]);
+                $emailAluno = strtolower(trim($aluno->email ?? ''));
+                if (! empty($emailAluno)) {
+                    $signatarios->push([
+                        'nome' => $aluno->nome,
+                        'email' => $emailAluno,
+                    ]);
+                }
             }
         }
 
-        return $signatarios->unique('email')->values();
+        return $signatarios
+            ->filter(fn ($s) => ! empty($s['email']))
+            ->unique('email')
+            ->values();
     }
 }
