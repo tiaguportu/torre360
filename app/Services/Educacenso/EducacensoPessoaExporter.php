@@ -222,25 +222,25 @@ class EducacensoPessoaExporter
             }
         }
 
-        // 13. Nacionalidade (1: Brasileira, 2: Naturalizado, 3: Estrangeira)
-        $f13 = '1';
+        // 13. País de Nacionalidade (76 = Brasil)
+        $f13 = ($pessoa->relationLoaded('nacionalidade') ? $pessoa->getRelation('nacionalidade')?->codigo : null) ?? '76';
+
+        // 14. Nacionalidade (1: Brasileira, 2: Naturalizado/Exterior, 3: Estrangeira)
+        $f14 = '1';
         if ($pessoa->tipo_nacionalidade instanceof Nacionalidade) {
-            $f13 = $pessoa->tipo_nacionalidade->value;
+            $f14 = $pessoa->tipo_nacionalidade->value;
         } elseif (! empty($pessoa->tipo_nacionalidade)) {
-            $f13 = (string) $pessoa->tipo_nacionalidade;
+            $f14 = (string) $pessoa->tipo_nacionalidade;
         } elseif ($pessoa->relationLoaded('nacionalidade') && $pessoa->getRelation('nacionalidade')?->nome) {
             $nacionalidadeNome = mb_strtolower($pessoa->getRelation('nacionalidade')->nome);
             if (str_contains($nacionalidadeNome, 'estrangeir')) {
-                $f13 = '3';
+                $f14 = '3';
             } elseif (str_contains($nacionalidadeNome, 'naturalizad')) {
-                $f13 = '2';
+                $f14 = '2';
             } else {
-                $f13 = '1';
+                $f14 = '1';
             }
         }
-
-        // 14. País de Nacionalidade (76 = Brasil)
-        $f14 = ($pessoa->relationLoaded('nacionalidade') ? $pessoa->getRelation('nacionalidade')?->codigo : null) ?? '76';
 
         // 15. UF de Nascimento (Naturalidade UF)
         $f15 = $pessoa->naturalidade?->estado?->sigla ?? '';

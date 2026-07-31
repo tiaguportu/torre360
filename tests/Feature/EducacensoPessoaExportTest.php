@@ -98,8 +98,8 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('MARIA DA SILVA', $fields[9]); // 10. Mãe
         $this->assertEquals('1', $fields[10]); // 11. Sexo (1 = Masculino)
         $this->assertEquals('3', $fields[11]); // 12. Cor/Raça (3 = Parda)
-        $this->assertEquals('1', $fields[12]); // 13. Nacionalidade (1 = Brasileira)
-        $this->assertEquals('76', $fields[13]); // 14. Código País (76)
+        $this->assertEquals('76', $fields[12]); // 13. Código País (76)
+        $this->assertEquals('1', $fields[13]); // 14. Nacionalidade (1 = Brasileira)
         $this->assertEquals('SP', $fields[14]); // 15. UF Nascimento
         $this->assertEquals('3509502', $fields[15]); // 16. IBGE Cidade Nascimento
         $this->assertEquals('1', $fields[16]); // 17. Tem Deficiência
