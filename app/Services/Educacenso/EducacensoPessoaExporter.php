@@ -293,35 +293,48 @@ class EducacensoPessoaExporter
             $f30 = $f31 = $f32 = $f33 = $f34 = $f35 = '';
         }
 
-        // 36 a 45. Recursos de Acessibilidade em Avaliações do INEP
+        // Verificação do vínculo de estudante no Registro 60 (escola atual)
+        $temVinculoRegistro60 = $pessoa->matriculas?->isNotEmpty() || ($pessoa->relationLoaded('matriculas') && $pessoa->getRelation('matriculas')->isNotEmpty());
+
+        // 36 e 37. Deve ser 0 ou 1 quando f17==1 ou f29==1 E houver vínculo no Registro 60 na escola atual, senão nulo
+        if (($f17 === '1' || $f29 === '1') && $temVinculoRegistro60) {
+            $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
+            $f36 = (str_contains($recNames, 'aee') || str_contains($recNames, 'atendimento especial')) ? '1' : '0';
+            $f37 = str_contains($recNames, 'recurso') ? '1' : '0';
+        } else {
+            $f36 = '';
+            $f37 = '';
+        }
+
+        // 38 a 47. Recursos de Acessibilidade em Avaliações do INEP
         $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
 
-        $f36 = str_contains($recNames, 'leitor') ? '1' : '0';
-        $f37 = str_contains($recNames, 'transcrição') ? '1' : '0';
-        $f38 = str_contains($recNames, 'guia') ? '1' : '0';
-        $f39 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
-        $f40 = str_contains($recNames, 'labial') ? '1' : '0';
-        $f41 = str_contains($recNames, '18') ? '1' : '0';
-        $f42 = str_contains($recNames, '24') ? '1' : '0';
-        $f43 = str_contains($recNames, 'áudio') ? '1' : '0';
-        $f44 = str_contains($recNames, 'braille') ? '1' : '0';
-        $f45 = ($f36 === '0' && $f37 === '0' && $f38 === '0' && $f39 === '0' && $f40 === '0' && $f41 === '0' && $f42 === '0' && $f43 === '0' && $f44 === '0') ? '1' : '0';
+        $f38 = str_contains($recNames, 'leitor') ? '1' : '0';
+        $f39 = str_contains($recNames, 'transcrição') ? '1' : '0';
+        $f40 = str_contains($recNames, 'guia') ? '1' : '0';
+        $f41 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
+        $f42 = str_contains($recNames, 'labial') ? '1' : '0';
+        $f43 = str_contains($recNames, '18') ? '1' : '0';
+        $f44 = str_contains($recNames, '24') ? '1' : '0';
+        $f45 = str_contains($recNames, 'áudio') ? '1' : '0';
+        $f46 = str_contains($recNames, 'braille') ? '1' : '0';
+        $f47 = ($f38 === '0' && $f39 === '0' && $f40 === '0' && $f41 === '0' && $f42 === '0' && $f43 === '0' && $f44 === '0' && $f45 === '0' && $f46 === '0') ? '1' : '0';
 
-        // 46 a 52. Endereço da Pessoa
+        // 48 a 54. Endereço da Pessoa
         $end = $pessoa->enderecos?->first();
-        $f46 = ! empty($end?->cep) ? preg_replace('/[^0-9]/', '', $end->cep) : '';
-        $f47 = $this->sanitizeString($end?->logradouro ?? '', 100);
-        $f48 = $this->sanitizeString($end?->numero ?? '', 20);
-        $f49 = $this->sanitizeString($end?->complemento ?? '', 50);
-        $f50 = $this->sanitizeString($end?->bairro ?? '', 50);
-        $f51 = $end?->cidade?->codigo_ibge ?? '';
-        $f52 = $end?->cidade?->estado?->sigla ?? '';
+        $f48 = ! empty($end?->cep) ? preg_replace('/[^0-9]/', '', $end->cep) : '';
+        $f49 = $this->sanitizeString($end?->logradouro ?? '', 100);
+        $f50 = $this->sanitizeString($end?->numero ?? '', 20);
+        $f51 = $this->sanitizeString($end?->complemento ?? '', 50);
+        $f52 = $this->sanitizeString($end?->bairro ?? '', 50);
+        $f53 = $end?->cidade?->codigo_ibge ?? '';
+        $f54 = $end?->cidade?->estado?->sigla ?? '';
 
-        // 53. E-mail
-        $f53 = ! empty($pessoa->email) ? trim(mb_strtolower($pessoa->email)) : '';
+        // 55. E-mail
+        $f55 = ! empty($pessoa->email) ? trim(mb_strtolower($pessoa->email)) : '';
 
-        // Campos 54 a 110: Completando o layout oficial de 110 campos do Registro 30 do INEP/Educacenso
-        $extraFields = array_fill(0, 57, '');
+        // Campos 56 a 110: Completando o layout oficial de 110 campos do Registro 30 do INEP/Educacenso
+        $extraFields = array_fill(0, 55, '');
 
         $fields = array_merge([
             $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
@@ -329,7 +342,7 @@ class EducacensoPessoaExporter
             $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
             $f31, $f32, $f33, $f34, $f35, $f36, $f37, $f38, $f39, $f40,
             $f41, $f42, $f43, $f44, $f45, $f46, $f47, $f48, $f49, $f50,
-            $f51, $f52, $f53,
+            $f51, $f52, $f53, $f54, $f55,
         ], $extraFields);
 
         return implode('|', $fields);
