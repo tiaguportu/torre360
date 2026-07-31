@@ -368,7 +368,6 @@ class ContratoTest extends TestCase
         $unidade = Unidade::create([
             'nome' => 'Unidade Teste',
             'instituicao_ensino_id' => $instituicao->id,
-            'flag_ativo' => true,
         ]);
 
         $rep = Pessoa::factory()->create([
