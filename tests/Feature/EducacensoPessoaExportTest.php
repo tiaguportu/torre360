@@ -8,6 +8,7 @@ use App\Enums\Sexo;
 use App\Models\Cidade;
 use App\Models\Endereco;
 use App\Models\Estado;
+use App\Models\Matricula;
 use App\Models\NecessidadeEducacaoEspecial;
 use App\Models\Pais;
 use App\Models\Pessoa;
@@ -80,6 +81,7 @@ class EducacensoPessoaExportTest extends TestCase
         $endereco->setRelation('cidade', $cidade);
 
         $pessoa->setRelation('enderecos', collect([$endereco]));
+        $pessoa->setRelation('matriculas', collect([new Matricula]));
 
         $exporter = new EducacensoPessoaExporter;
         $line = $exporter->buildRegistro30Line($pessoa);
@@ -106,9 +108,11 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('1', $fields[17]); // 18. Cegueira
         $this->assertEquals('0', $fields[28]); // 29. Tem Transtorno Aprendizagem (0)
         $this->assertEquals('', $fields[29]); // 30. Dislexia (nulo pois f29 == 0)
-        $this->assertEquals('', $fields[35]); // 36. AEE (nulo pois não tem vínculo Registro 60)
-        $this->assertEquals('', $fields[36]); // 37. Recurso AEE (nulo pois não tem vínculo Registro 60)
-        $this->assertEquals('1', $fields[45]); // 46. Prova Braille
+        $this->assertEquals('0', $fields[35]); // 36. AEE (com vínculo reg 60)
+        $this->assertEquals('0', $fields[36]); // 37. Recurso AEE (com vínculo reg 60)
+        $this->assertEquals('0', $fields[37]); // 38. Leitor (com vínculo reg 60)
+        $this->assertEquals('1', $fields[45]); // 46. Prova Braille (com vínculo reg 60)
+        $this->assertEquals('0', $fields[46]); // 47. Nenhum recurso (com vínculo reg 60)
         $this->assertEquals('13000000', $fields[47]); // 48. CEP
         $this->assertEquals('RUA DAS FLORES', $fields[48]); // 49. Logradouro
         $this->assertEquals('123', $fields[49]); // 50. Número

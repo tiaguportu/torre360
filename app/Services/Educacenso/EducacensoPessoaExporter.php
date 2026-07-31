@@ -306,19 +306,23 @@ class EducacensoPessoaExporter
             $f37 = '';
         }
 
-        // 38 a 47. Recursos de Acessibilidade em Avaliações do INEP
-        $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
+        // 38 a 47. Recursos de Acessibilidade em Avaliações do INEP (0 ou 1 quando f17==1 ou f29==1 E houver vínculo no Registro 60 na escola atual, senão nulo)
+        if (($f17 === '1' || $f29 === '1') && $temVinculoRegistro60) {
+            $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
 
-        $f38 = str_contains($recNames, 'leitor') ? '1' : '0';
-        $f39 = str_contains($recNames, 'transcrição') ? '1' : '0';
-        $f40 = str_contains($recNames, 'guia') ? '1' : '0';
-        $f41 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
-        $f42 = str_contains($recNames, 'labial') ? '1' : '0';
-        $f43 = str_contains($recNames, '18') ? '1' : '0';
-        $f44 = str_contains($recNames, '24') ? '1' : '0';
-        $f45 = str_contains($recNames, 'áudio') ? '1' : '0';
-        $f46 = str_contains($recNames, 'braille') ? '1' : '0';
-        $f47 = ($f38 === '0' && $f39 === '0' && $f40 === '0' && $f41 === '0' && $f42 === '0' && $f43 === '0' && $f44 === '0' && $f45 === '0' && $f46 === '0') ? '1' : '0';
+            $f38 = str_contains($recNames, 'leitor') ? '1' : '0';
+            $f39 = str_contains($recNames, 'transcrição') ? '1' : '0';
+            $f40 = str_contains($recNames, 'guia') ? '1' : '0';
+            $f41 = (str_contains($recNames, 'libras') || str_contains($recNames, 'intérprete')) ? '1' : '0';
+            $f42 = str_contains($recNames, 'labial') ? '1' : '0';
+            $f43 = str_contains($recNames, '18') ? '1' : '0';
+            $f44 = str_contains($recNames, '24') ? '1' : '0';
+            $f45 = str_contains($recNames, 'áudio') ? '1' : '0';
+            $f46 = str_contains($recNames, 'braille') ? '1' : '0';
+            $f47 = ($f38 === '0' && $f39 === '0' && $f40 === '0' && $f41 === '0' && $f42 === '0' && $f43 === '0' && $f44 === '0' && $f45 === '0' && $f46 === '0') ? '1' : '0';
+        } else {
+            $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = $f47 = '';
+        }
 
         // 48 a 54. Endereço da Pessoa
         $end = $pessoa->enderecos?->first();
