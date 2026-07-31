@@ -3,6 +3,7 @@
 namespace App\Services\Educacenso;
 
 use App\Enums\CorRaca;
+use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Models\Pessoa;
 use Carbon\Carbon;
@@ -205,14 +206,7 @@ class EducacensoPessoaExporter
         // 12. Cor / Raça (0: Não declarada, 1: Branca, 2: Preta, 3: Parda, 4: Amarela, 5: Indígena)
         $f12 = '0';
         if ($pessoa->cor_raca instanceof CorRaca) {
-            $f12 = match ($pessoa->cor_raca) {
-                CorRaca::BRANCA => '1',
-                CorRaca::PRETA => '2',
-                CorRaca::PARDA => '3',
-                CorRaca::AMARELA => '4',
-                CorRaca::INDIGENA => '5',
-                default => '0',
-            };
+            $f12 = $pessoa->cor_raca->value;
         } elseif (is_string($pessoa->cor_raca) || is_numeric($pessoa->cor_raca)) {
             $cr = mb_strtolower((string) $pessoa->cor_raca);
             if ($cr === '1' || str_contains($cr, 'branc')) {
@@ -230,8 +224,10 @@ class EducacensoPessoaExporter
 
         // 13. Nacionalidade (1: Brasileira, 2: Naturalizado, 3: Estrangeira)
         $f13 = '1';
-        $nacionalidadeNome = mb_strtolower($pessoa->nacionalidade?->nome ?? '');
-        if ($nacionalidadeNome !== '') {
+        if ($pessoa->nacionalidade instanceof Nacionalidade) {
+            $f13 = $pessoa->nacionalidade->value;
+        } elseif ($pessoa->relationLoaded('nacionalidade') && $pessoa->getRelation('nacionalidade')?->nome) {
+            $nacionalidadeNome = mb_strtolower($pessoa->getRelation('nacionalidade')->nome);
             if (str_contains($nacionalidadeNome, 'estrangeir')) {
                 $f13 = '3';
             } elseif (str_contains($nacionalidadeNome, 'naturalizad')) {
@@ -242,7 +238,7 @@ class EducacensoPessoaExporter
         }
 
         // 14. País de Nacionalidade (76 = Brasil)
-        $f14 = $pessoa->nacionalidade?->codigo ?? '76';
+        $f14 = ($pessoa->relationLoaded('nacionalidade') ? $pessoa->getRelation('nacionalidade')?->codigo : null) ?? '76';
 
         // 15. UF de Nascimento (Naturalidade UF)
         $f15 = $pessoa->naturalidade?->estado?->sigla ?? '';

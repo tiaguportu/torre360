@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Pessoas\Schemas;
 
 use App\Enums\CorRaca;
+use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Models\Pais;
 use Filament\Forms\Components\DatePicker;
@@ -38,7 +39,15 @@ class PessoaForm
                 DatePicker::make('data_nascimento')
                     ->label('Data de Nascimento'),
 
+                Select::make('nacionalidade')
+                    ->label('Nacionalidade')
+                    ->options(Nacionalidade::class)
+                    ->default(Nacionalidade::BRASILEIRA)
+                    ->searchable()
+                    ->preload(),
+
                 Select::make('nacionalidade_id')
+                    ->label('País de Nacionalidade')
                     ->relationship('nacionalidade', 'nome', fn ($query) => $query->whereNotNull('nome'))
                     ->default(fn () => self::getBrasilId())
                     ->getOptionLabelFromRecordUsing(fn ($record) => ($record->sigla ? mb_convert_encoding('&#'.(127397 + ord(strtoupper($record->sigla[0]))).';&#'.(127397 + ord(strtoupper($record->sigla[1]))).';', 'UTF-8', 'HTML-ENTITIES').' ' : '').$record->nome

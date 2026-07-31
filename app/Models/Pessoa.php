@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CorRaca;
+use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,7 @@ class Pessoa extends Model
         return [
             'sexo' => Sexo::class,
             'cor_raca' => CorRaca::class,
+            'nacionalidade' => Nacionalidade::class,
         ];
     }
 

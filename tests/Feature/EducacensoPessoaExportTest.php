@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\CorRaca;
+use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Models\Cidade;
 use App\Models\Endereco;
@@ -131,5 +132,29 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('', $fields[4]); // CPF vazio
         $this->assertEquals('', $fields[6]); // Data nasc vazia
         $this->assertStringContainsString('||', $line);
+    }
+
+    public function test_enums_cor_raca_e_nacionalidade_possuem_valores_e_labels_corretos(): void
+    {
+        $this->assertEquals('0', CorRaca::NAO_DECLARADA->value);
+        $this->assertEquals('Não Declarada', CorRaca::NAO_DECLARADA->getLabel());
+
+        $this->assertEquals('1', CorRaca::BRANCA->value);
+        $this->assertEquals('Branca', CorRaca::BRANCA->getLabel());
+
+        $this->assertEquals('3', CorRaca::PARDA->value);
+        $this->assertEquals('Parda', CorRaca::PARDA->getLabel());
+
+        $this->assertEquals('5', CorRaca::INDIGENA->value);
+        $this->assertEquals('Indígena', CorRaca::INDIGENA->getLabel());
+
+        $this->assertEquals('1', Nacionalidade::BRASILEIRA->value);
+        $this->assertEquals('Brasileira', Nacionalidade::BRASILEIRA->getLabel());
+
+        $this->assertEquals('2', Nacionalidade::BRASILEIRA_EXTERIOR_OU_NATURALIZADO->value);
+        $this->assertEquals('Brasileira - nascido no Exterior ou Naturalizado', Nacionalidade::BRASILEIRA_EXTERIOR_OU_NATURALIZADO->getLabel());
+
+        $this->assertEquals('3', Nacionalidade::ESTRANGEIRA->value);
+        $this->assertEquals('Estrangeira', Nacionalidade::ESTRANGEIRA->getLabel());
     }
 }
