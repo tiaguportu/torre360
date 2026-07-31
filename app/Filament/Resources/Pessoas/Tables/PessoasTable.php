@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Pessoas\Tables;
 
 use App\Enums\CorRaca;
+use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Filament\Exports\PessoaExporter;
 use App\Models\Pessoa;
@@ -226,8 +227,13 @@ class PessoasTable
                                 ->options(CorRaca::class)
                                 ->preload()
                                 ->searchable(),
-                            Select::make('nacionalidade_id')
+                            Select::make('tipo_nacionalidade')
                                 ->label('Nacionalidade')
+                                ->options(Nacionalidade::class)
+                                ->preload()
+                                ->searchable(),
+                            Select::make('nacionalidade_id')
+                                ->label('País de Nacionalidade')
                                 ->relationship('nacionalidade', 'nome')
                                 ->preload()
                                 ->searchable(),
@@ -251,6 +257,7 @@ class PessoasTable
                             $updateData = array_filter([
                                 'sexo' => $data['sexo'] ?? null,
                                 'cor_raca' => $data['cor_raca'] ?? null,
+                                'tipo_nacionalidade' => $data['tipo_nacionalidade'] ?? null,
                                 'nacionalidade_id' => $data['nacionalidade_id'] ?? null,
                                 'estado_civil' => $data['estado_civil'] ?? null,
                                 'profissao' => $data['profissao'] ?? null,

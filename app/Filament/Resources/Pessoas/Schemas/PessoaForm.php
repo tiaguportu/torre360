@@ -39,7 +39,7 @@ class PessoaForm
                 DatePicker::make('data_nascimento')
                     ->label('Data de Nascimento'),
 
-                Select::make('nacionalidade')
+                Select::make('tipo_nacionalidade')
                     ->label('Nacionalidade')
                     ->options(Nacionalidade::class)
                     ->default(Nacionalidade::BRASILEIRA)

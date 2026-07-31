@@ -224,8 +224,10 @@ class EducacensoPessoaExporter
 
         // 13. Nacionalidade (1: Brasileira, 2: Naturalizado, 3: Estrangeira)
         $f13 = '1';
-        if ($pessoa->nacionalidade instanceof Nacionalidade) {
-            $f13 = $pessoa->nacionalidade->value;
+        if ($pessoa->tipo_nacionalidade instanceof Nacionalidade) {
+            $f13 = $pessoa->tipo_nacionalidade->value;
+        } elseif (! empty($pessoa->tipo_nacionalidade)) {
+            $f13 = (string) $pessoa->tipo_nacionalidade;
         } elseif ($pessoa->relationLoaded('nacionalidade') && $pessoa->getRelation('nacionalidade')?->nome) {
             $nacionalidadeNome = mb_strtolower($pessoa->getRelation('nacionalidade')->nome);
             if (str_contains($nacionalidadeNome, 'estrangeir')) {

@@ -46,7 +46,7 @@ class Pessoa extends Model
         return [
             'sexo' => Sexo::class,
             'cor_raca' => CorRaca::class,
-            'nacionalidade' => Nacionalidade::class,
+            'tipo_nacionalidade' => Nacionalidade::class,
         ];
     }
 
