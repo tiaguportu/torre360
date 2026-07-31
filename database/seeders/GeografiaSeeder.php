@@ -9,21 +9,33 @@ class GeografiaSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Países (Amostra abrangente, pode ser expandida conforme necessário)
+        // 1. Países (com códigos INEP para o Educacenso)
         $paises = [
-            ['nome' => 'Brasil', 'sigla' => 'br'],
-            ['nome' => 'Portugal', 'sigla' => 'pt'],
-            ['nome' => 'Angola', 'sigla' => 'ao'],
-            ['nome' => 'Cabo Verde', 'sigla' => 'cv'],
-            ['nome' => 'Guiné-Bissau', 'sigla' => 'gw'],
-            ['nome' => 'Moçambique', 'sigla' => 'mz'],
-            ['nome' => 'São Tomé e Príncipe', 'sigla' => 'st'],
-            ['nome' => 'Timor-Leste', 'sigla' => 'tl'],
-            ['nome' => 'Estados Unidos', 'sigla' => 'us'],
-            ['nome' => 'Espanha', 'sigla' => 'es'],
-            ['nome' => 'França', 'sigla' => 'fr'],
-            ['nome' => 'Itália', 'sigla' => 'it'],
-            ['nome' => 'Alemanha', 'sigla' => 'de'],
+            ['nome' => 'Brasil', 'sigla' => 'br', 'codigo' => '76'],
+            ['nome' => 'Portugal', 'sigla' => 'pt', 'codigo' => '620'],
+            ['nome' => 'Angola', 'sigla' => 'ao', 'codigo' => '24'],
+            ['nome' => 'Cabo Verde', 'sigla' => 'cv', 'codigo' => '132'],
+            ['nome' => 'Guiné-Bissau', 'sigla' => 'gw', 'codigo' => '624'],
+            ['nome' => 'Moçambique', 'sigla' => 'mz', 'codigo' => '508'],
+            ['nome' => 'São Tomé e Príncipe', 'sigla' => 'st', 'codigo' => '678'],
+            ['nome' => 'Timor-Leste', 'sigla' => 'tl', 'codigo' => '626'],
+            ['nome' => 'Estados Unidos', 'sigla' => 'us', 'codigo' => '840'],
+            ['nome' => 'Espanha', 'sigla' => 'es', 'codigo' => '724'],
+            ['nome' => 'França', 'sigla' => 'fr', 'codigo' => '250'],
+            ['nome' => 'Itália', 'sigla' => 'it', 'codigo' => '380'],
+            ['nome' => 'Alemanha', 'sigla' => 'de', 'codigo' => '276'],
+            ['nome' => 'Argentina', 'sigla' => 'ar', 'codigo' => '32'],
+            ['nome' => 'Uruguai', 'sigla' => 'uy', 'codigo' => '858'],
+            ['nome' => 'Paraguai', 'sigla' => 'py', 'codigo' => '600'],
+            ['nome' => 'Chile', 'sigla' => 'cl', 'codigo' => '152'],
+            ['nome' => 'Colômbia', 'sigla' => 'co', 'codigo' => '170'],
+            ['nome' => 'Peru', 'sigla' => 'pe', 'codigo' => '604'],
+            ['nome' => 'Venezuela', 'sigla' => 've', 'codigo' => '862'],
+            ['nome' => 'Bolívia', 'sigla' => 'bo', 'codigo' => '68'],
+            ['nome' => 'Equador', 'sigla' => 'ec', 'codigo' => '218'],
+            ['nome' => 'Japão', 'sigla' => 'jp', 'codigo' => '392'],
+            ['nome' => 'China', 'sigla' => 'cn', 'codigo' => '156'],
+            ['nome' => 'Reino Unido', 'sigla' => 'gb', 'codigo' => '826'],
         ];
 
         foreach ($paises as $pais) {
