@@ -126,21 +126,6 @@ class PessoasTable
                         ->exporter(PessoaExporter::class)
                         ->label('Exportar Selecionados')
                         ->visible(fn (): bool => auth()->user()->can('export', Pessoa::class)),
-                    BulkAction::make('exportarEducacenso')
-                        ->label('Exportar para Educacenso')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->action(function (Collection $records) {
-                            $exporter = new EducacensoPessoaExporter;
-                            $output = $exporter->export($records);
-
-                            return response()->streamDownload(
-                                fn () => print ($output),
-                                'educacenso_pessoas_'.now()->format('Ymd_His').'.txt',
-                                ['Content-Type' => 'text/plain; charset=UTF-8']
-                            );
-                        })
-                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('imprimirCrachas')
                         ->label('Imprimir Crachá')
                         ->icon('heroicon-o-identification')
@@ -260,14 +245,7 @@ class PessoasTable
                                 ->label('Profissão'),
                             TextInput::make('identidade')
                                 ->label('Identidade (RG)'),
-                            TextInput::make('codigo_inep')
-                                ->label('Identificação Única (INEP)'),
-                            TextInput::make('certidao_nascimento')
-                                ->label('Certidão de Nascimento (Matrícula Civil)'),
-                            TextInput::make('filiacao_1')
-                                ->label('Filiação 1 (Mãe/Responsável 1)'),
-                            TextInput::make('filiacao_2')
-                                ->label('Filiação 2 (Pai/Responsável 2)'),
+
                         ])
                         ->action(function (Collection $records, array $data): void {
                             $updateData = array_filter([
@@ -277,10 +255,6 @@ class PessoasTable
                                 'estado_civil' => $data['estado_civil'] ?? null,
                                 'profissao' => $data['profissao'] ?? null,
                                 'identidade' => $data['identidade'] ?? null,
-                                'codigo_inep' => $data['codigo_inep'] ?? null,
-                                'certidao_nascimento' => $data['certidao_nascimento'] ?? null,
-                                'filiacao_1' => $data['filiacao_1'] ?? null,
-                                'filiacao_2' => $data['filiacao_2'] ?? null,
                             ], fn ($value) => filled($value));
 
                             try {
@@ -288,6 +262,7 @@ class PessoasTable
                                     if (! empty($updateData)) {
                                         $record->update($updateData);
                                     }
+
                                 }
 
                                 Notification::make()
@@ -303,6 +278,23 @@ class PessoasTable
                                     ->danger()
                                     ->send();
                             }
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('exportarEducacenso')
+                        ->label('Exportar para Educacenso')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $exporter = new EducacensoPessoaExporter;
+                            $txtContent = $exporter->export($records);
+
+                            $filename = 'educacenso_pessoas_'.now()->format('Ymd_His').'.txt';
+
+                            return response()->streamDownload(
+                                fn () => print ($txtContent),
+                                $filename,
+                                ['Content-Type' => 'text/plain; charset=UTF-8']
+                            );
                         })
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make()

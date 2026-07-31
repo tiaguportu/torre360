@@ -2,10 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CorRaca;
+use App\Enums\Sexo;
 use App\Models\Cidade;
+use App\Models\Endereco;
 use App\Models\Estado;
+use App\Models\NecessidadeEducacaoEspecial;
 use App\Models\Pais;
 use App\Models\Pessoa;
+use App\Models\RecursoAcessibilidade;
+use App\Models\TipoVinculo;
 use App\Services\Educacenso\EducacensoPessoaExporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,141 +20,116 @@ class EducacensoPessoaExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createCidadeMock(): Cidade
+    public function test_pode_exportar_pessoa_no_formato_registro_30_do_educacenso(): void
     {
-        $pais = Pais::create([
+        $pais = new Pais([
             'nome' => 'Brasil',
             'sigla' => 'BR',
+            'codigo' => '76',
         ]);
 
-        $estado = Estado::create([
-            'pais_id' => $pais->id,
+        $estado = new Estado([
             'nome' => 'São Paulo',
             'sigla' => 'SP',
         ]);
 
-        return Cidade::create([
-            'nome' => 'São Paulo',
-            'estado_id' => $estado->id,
-            'codigo_ibge' => '3550308',
+        $cidade = new Cidade([
+            'nome' => 'Campinas',
+            'codigo_ibge' => '3509502',
         ]);
-    }
+        $cidade->setRelation('estado', $estado);
 
-    public function test_pode_exportar_pessoa_com_todos_os_campos_educacenso_preenchidos(): void
-    {
-        $cidade = $this->createCidadeMock();
-
-        $pessoa = Pessoa::create([
-            'codigo' => 'ALU12345',
-            'cpf' => '123.456.789-01',
-            'certidao_nascimento' => '12345678901234567890123456789012',
-            'nome' => 'João da Silva Sauro',
+        $pessoa = new Pessoa([
+            'id' => 101,
+            'nome' => 'João da Silva Ção',
+            'cpf' => '123.456.789-00',
             'data_nascimento' => '2010-05-15',
-            'filiacao_1' => 'Maria da Silva',
-            'filiacao_2' => 'José Sauro',
-            'naturalidade_id' => $cidade->id,
-            'codigo_inep' => '123456789012',
+            'sexo' => Sexo::MASCULINO,
+            'cor_raca' => CorRaca::PARDA,
+            'email' => 'joao@example.com',
         ]);
 
+        $pessoa->setRelation('nacionalidade', $pais);
+        $pessoa->setRelation('naturalidade', $cidade);
+
+        $pai = new Pessoa(['nome' => 'José da Silva']);
+        $mae = new Pessoa(['nome' => 'Maria da Silva']);
+
+        $tipoPai = new TipoVinculo(['nome' => 'Pai']);
+        $tipoMae = new TipoVinculo(['nome' => 'Mãe']);
+
+        $pai->pivot = (object) ['tipoVinculo' => $tipoPai];
+        $mae->pivot = (object) ['tipoVinculo' => $tipoMae];
+
+        $pessoa->setRelation('responsaveis', collect([$pai, $mae]));
+
+        $nec = new NecessidadeEducacaoEspecial(['nome' => 'Cegueira']);
+        $rec = new RecursoAcessibilidade(['nome' => 'Prova em Braille']);
+
+        $pessoa->setRelation('necessidadesEducacaoEspecial', collect([$nec]));
+        $pessoa->setRelation('transtornosAprendizagem', collect());
+        $pessoa->setRelation('recursosAcessibilidade', collect([$rec]));
+
+        $endereco = new Endereco([
+            'logradouro' => 'Rua das Flores',
+            'numero' => '123',
+            'bairro' => 'Centro',
+            'cep' => '13000-000',
+        ]);
+        $endereco->setRelation('cidade', $cidade);
+
+        $pessoa->setRelation('enderecos', collect([$endereco]));
+
         $exporter = new EducacensoPessoaExporter;
-        $line = $exporter->buildPessoaLine($pessoa);
+        $line = $exporter->buildRegistro30Line($pessoa);
 
         $fields = explode('|', $line);
 
-        $this->assertCount(9, $fields);
-        $this->assertEquals('ALU12345', $fields[0]); // 1. Código Escola
-        $this->assertEquals('12345678901', $fields[1]); // 2. CPF
-        $this->assertEquals('12345678901234567890123456789012', $fields[2]); // 3. Certidão
-        $this->assertEquals('JOAO DA SILVA SAURO', $fields[3]); // 4. Nome
-        $this->assertEquals('15/05/2010', $fields[4]); // 5. Data Nascimento
-        $this->assertEquals('MARIA DA SILVA', $fields[5]); // 6. Filiação 1
-        $this->assertEquals('JOSE SAURO', $fields[6]); // 7. Filiação 2
-        $this->assertEquals('3550308', $fields[7]); // 8. Código IBGE
-        $this->assertEquals('123456789012', $fields[8]); // 9. INEP
+        $this->assertCount(45, $fields);
+        $this->assertEquals('30', $fields[0]); // 1. Registro
+        $this->assertEquals('', $fields[2]); // 3. INEP Pessoa
+        $this->assertEquals('101', $fields[3]); // 4. ID Escola/Entidade
+        $this->assertEquals('12345678900', $fields[4]); // 5. CPF
+        $this->assertEquals('JOAO DA SILVA CAO', $fields[5]); // 6. Nome Sanitizado
+        $this->assertEquals('15/05/2010', $fields[6]); // 7. Data Nascimento
+        $this->assertEquals('1', $fields[7]); // 8. Filiação Declarada
+        $this->assertEquals('JOSE DA SILVA', $fields[8]); // 9. Pai
+        $this->assertEquals('MARIA DA SILVA', $fields[9]); // 10. Mãe
+        $this->assertEquals('1', $fields[10]); // 11. Sexo (1 = Masculino)
+        $this->assertEquals('3', $fields[11]); // 12. Cor/Raça (3 = Parda)
+        $this->assertEquals('1', $fields[12]); // 13. Nacionalidade (1 = Brasileira)
+        $this->assertEquals('76', $fields[13]); // 14. Código País (76)
+        $this->assertEquals('SP', $fields[14]); // 15. UF Nascimento
+        $this->assertEquals('3509502', $fields[15]); // 16. IBGE Cidade Nascimento
+        $this->assertEquals('1', $fields[16]); // 17. Tem Deficiência
+        $this->assertEquals('1', $fields[17]); // 18. Cegueira
+        $this->assertEquals('1', $fields[35]); // 36. Prova Braille
+        $this->assertEquals('13000000', $fields[37]); // 38. CEP
+        $this->assertEquals('RUA DAS FLORES', $fields[38]); // 39. Logradouro
+        $this->assertEquals('123', $fields[39]); // 40. Número
+        $this->assertEquals('CENTRO', $fields[41]); // 42. Bairro
+        $this->assertEquals('3509502', $fields[42]); // 43. IBGE Cidade Endereço
+        $this->assertEquals('SP', $fields[43]); // 44. UF Endereço
+        $this->assertEquals('joao@example.com', $fields[44]); // 45. Email
     }
 
-    public function test_exporta_pessoa_com_campos_opcionais_vazios_gerando_pipes_consecutivos(): void
+    public function test_exportacao_com_campos_opcionais_vazios_gera_pipes_duplos(): void
     {
-        $cidade = $this->createCidadeMock();
-
         $pessoa = Pessoa::create([
-            'nome' => 'Ana Clara',
-            'data_nascimento' => '2015-10-20',
-            'naturalidade_id' => $cidade->id,
+            'nome' => 'Pedro Sem Documentos',
         ]);
 
         $exporter = new EducacensoPessoaExporter;
-        $line = $exporter->buildPessoaLine($pessoa);
+        $line = $exporter->buildRegistro30Line($pessoa);
 
         $fields = explode('|', $line);
 
-        $this->assertCount(9, $fields);
-        $this->assertEquals((string) $pessoa->id, $fields[0]); // 1. ID como código fallback
-        $this->assertEquals('', $fields[1]); // 2. CPF vazio
-        $this->assertEquals('', $fields[2]); // 3. Certidão vazia
-        $this->assertEquals('ANA CLARA', $fields[3]); // 4. Nome
-        $this->assertEquals('20/10/2015', $fields[4]); // 5. Data Nascimento
-        $this->assertEquals('', $fields[5]); // 6. Filiação 1 vazia
-        $this->assertEquals('', $fields[6]); // 7. Filiação 2 vazia
-        $this->assertEquals('3550308', $fields[7]); // 8. Código IBGE
-        $this->assertEquals('', $fields[8]); // 9. INEP vazio
-
-        // Verifica presença de pipes duplos para campos ausentes (ex: id|||ANA CLARA|...)
-        $this->assertStringContainsString((string) $pessoa->id.'|||ANA CLARA|20/10/2015|||3550308|', $line);
-    }
-
-    public function test_busca_filiacao_em_responsaveis_caso_campos_filiacao_estejam_vazios(): void
-    {
-        $cidade = $this->createCidadeMock();
-
-        $aluno = Pessoa::create([
-            'nome' => 'Carlos Eduardo',
-            'data_nascimento' => '2012-03-08',
-            'naturalidade_id' => $cidade->id,
-        ]);
-
-        $mae = Pessoa::create([
-            'nome' => 'Fernanda Oliveira',
-        ]);
-
-        $pai = Pessoa::create([
-            'nome' => 'Roberto Oliveira',
-        ]);
-
-        $aluno->responsaveis()->attach($mae->id);
-        $aluno->responsaveis()->attach($pai->id);
-
-        $exporter = new EducacensoPessoaExporter;
-        $line = $exporter->buildPessoaLine($aluno);
-
-        $fields = explode('|', $line);
-
-        $this->assertEquals('FERNANDA OLIVEIRA', $fields[5]); // 6. Filiação 1 via responsável 1
-        $this->assertEquals('ROBERTO OLIVEIRA', $fields[6]); // 7. Filiação 2 via responsável 2
-    }
-
-    public function test_exportacao_colecao_de_pessoas_formata_linhas_separadas_por_quebra_de_linha(): void
-    {
-        $cidade = $this->createCidadeMock();
-
-        $p1 = Pessoa::create([
-            'nome' => 'Pedro Álvares',
-            'data_nascimento' => '2008-01-01',
-            'naturalidade_id' => $cidade->id,
-        ]);
-
-        $p2 = Pessoa::create([
-            'nome' => 'Lucas Santos',
-            'data_nascimento' => '2009-02-02',
-            'naturalidade_id' => $cidade->id,
-        ]);
-
-        $exporter = new EducacensoPessoaExporter;
-        $output = $exporter->export(collect([$p1, $p2]));
-
-        $lines = explode("\r\n", $output);
-        $this->assertCount(2, $lines);
-        $this->assertStringContainsString('PEDRO ALVARES', $lines[0]);
-        $this->assertStringContainsString('LUCAS SANTOS', $lines[1]);
+        $this->assertCount(45, $fields);
+        $this->assertEquals('30', $fields[0]);
+        $this->assertEquals((string) $pessoa->id, $fields[3]);
+        $this->assertEquals('PEDRO SEM DOCUMENTOS', $fields[5]);
+        $this->assertEquals('', $fields[4]); // CPF vazio
+        $this->assertEquals('', $fields[6]); // Data nasc vazia
+        $this->assertStringContainsString('||', $line);
     }
 }

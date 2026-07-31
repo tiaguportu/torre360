@@ -45,7 +45,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
-- **Campos Principais:** `nome`, `cpf`, `data_nascimento`, `foto` (armazenamento privado), `email`, `sexo` (Enum), `cor_raca` (Enum), `codigo` (Código da escola/entidade), `codigo_inep` (INEP do aluno), `certidao_nascimento` (Matrícula Civil/Certidão), `filiacao_1`, `filiacao_2`.
+- **Campos Principais:** `nome`, `cpf`, `data_nascimento`, `foto` (armazenamento privado), `email`, `sexo` (Enum), `cor_raca` (Enum).
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
