@@ -23,6 +23,10 @@ class PaisTable
                 TextColumn::make('sigla')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('codigo')
+                    ->label('Código INEP')
+                    ->searchable()
+                    ->sortable(),
             ])
             ->filters([
                 //

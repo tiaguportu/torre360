@@ -16,6 +16,9 @@ class PaisForm
                     ->maxLength(255),
                 Forms\Components\TextInput::make('sigla')
                     ->maxLength(3),
+                Forms\Components\TextInput::make('codigo')
+                    ->label('Código INEP / Educacenso')
+                    ->maxLength(10),
             ]);
     }
 }
