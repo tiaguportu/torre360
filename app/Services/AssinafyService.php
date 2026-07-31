@@ -14,15 +14,16 @@ class AssinafyService
 {
     protected string $apiUrl;
 
-    protected string $apiKey;
+    protected ?string $apiKey = null;
 
-    protected string $accountId;
+    protected ?string $accountId = null;
 
     public function __construct()
     {
-        $this->apiUrl = rtrim(config('services.assinafy.url', env('ASSINAFY_API_URL')), '/');
-        $this->apiKey = config('services.assinafy.key', env('ASSINAFY_API_KEY'));
-        $this->accountId = config('services.assinafy.account_id', env('ASSINAFY_ACCOUNT_ID'));
+        $rawUrl = config('services.assinafy.url') ?? env('ASSINAFY_API_URL') ?? 'https://sandbox.assinafy.com.br/v1';
+        $this->apiUrl = rtrim((string) $rawUrl, '/');
+        $this->apiKey = config('services.assinafy.key') ?? env('ASSINAFY_API_KEY');
+        $this->accountId = config('services.assinafy.account_id') ?? env('ASSINAFY_ACCOUNT_ID');
 
         // Ajuste Crítico: Para chamadas de API no Sandbox, a URL deve ser sandbox.assinafy.com.br
         // O endereço .pages.dev é apenas o frontend e retorna 405 para POSTs.
@@ -43,6 +44,12 @@ class AssinafyService
     public function enviarContrato(Contrato $contrato): array
     {
         try {
+            if (empty($this->apiKey) || empty($this->accountId)) {
+                return [
+                    'success' => false,
+                    'message' => 'Configuração do Assinafy pendente no servidor: As variáveis ASSINAFY_API_KEY e ASSINAFY_ACCOUNT_ID precisam ser definidas no arquivo .env.',
+                ];
+            }
             // 0. Carregar dados relacionados
             $contrato->load([
                 'matricula.pessoa.responsaveis.users',
@@ -342,7 +349,7 @@ class AssinafyService
     public function baixarDocumentoAssinado(Contrato $contrato): ?Response
     {
         try {
-            if (! $contrato->assinafy_id) {
+            if (empty($this->apiKey) || ! $contrato->assinafy_id) {
                 return null;
             }
 
