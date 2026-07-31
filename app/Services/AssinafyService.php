@@ -392,13 +392,11 @@ class AssinafyService
 
         $contrato = Contrato::where('assinafy_id', $idAssinafy)->first();
 
-        // Fallback: se não achar pelo assinafy_id, tenta extrair ID do nome do arquivo (ex: contrato_136.pdf ou Contrato - Escola Torre de Marfim - Aluno - 136.pdf)
-        if (! $contrato && $fileName) {
-            if (preg_match('/contrato_(\d+)/i', $fileName, $matches) || preg_match('/(?:Contrato - Escola Torre de Marfim - .*? - )(\d+)\.pdf/i', $fileName, $matches)) {
-                $contrato = Contrato::find($matches[1]);
-                if ($contrato && ! $contrato->assinafy_id) {
-                    $contrato->update(['assinafy_id' => $idAssinafy]);
-                }
+        // Fallback: se não achar pelo assinafy_id, tenta extrair ID do nome do arquivo (ex: Contrato - Escola Torre de Marfim - Aluno - 136.pdf)
+        if (! $contrato && $fileName && preg_match('/Contrato - Escola Torre de Marfim - .*? - (\d+)\.pdf/i', $fileName, $matches)) {
+            $contrato = Contrato::find($matches[1]);
+            if ($contrato && ! $contrato->assinafy_id) {
+                $contrato->update(['assinafy_id' => $idAssinafy]);
             }
         }
 
