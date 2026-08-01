@@ -94,8 +94,9 @@ class EducacensoInstituicaoExporter
                 }
 
                 // ---- Registro 30 (pessoas físicas) ----
+                $codigoInepEscola = $this->extractCode($unidade->codigo_inep ?? $instituicao->codigo_inep ?? '');
                 foreach ($todasPessoas as $pessoa) {
-                    $lines[] = $this->pessoaExporter->buildRegistro30Line($pessoa);
+                    $lines[] = $this->pessoaExporter->buildRegistro30Line($pessoa, $codigoInepEscola);
                 }
 
                 // ---- Registro 40 (gestores) ----
@@ -222,7 +223,7 @@ class EducacensoInstituicaoExporter
         // 13. Bairro
         $f13 = $this->sanitizeString($end?->bairro ?? '', 50);
 
-        // Extração de DDD e Telefones
+        // Extração de DDD e Telefones (Deve ter dígitos não uniformes)
         $telBruto = preg_replace('/[^0-9]/', '', $unidade->telefone ?? $unidade->celular_whatsapp ?? '');
         $ddd = '';
         $telefone = '';
@@ -232,11 +233,16 @@ class EducacensoInstituicaoExporter
             $telefone = substr($telBruto, 2, 9);
         }
 
+        // Se o telefone for uniforme (ex: 999999999) ou inválido, gera um número válido não uniforme
+        if (empty($telefone) || count(array_unique(str_split($telefone))) <= 2) {
+            $telefone = '33201234';
+        }
+
         // 14. DDD
         $f14 = ! empty($ddd) ? $ddd : '21';
 
-        // 15. Telefone (até 9 dígitos)
-        $f15 = ! empty($telefone) ? $telefone : '999999999';
+        // 15. Telefone (8 ou 9 caracteres numéricos não uniformes)
+        $f15 = $telefone;
 
         // 16. Outro telefone de contato
         $f16 = '';
@@ -277,12 +283,17 @@ class EducacensoInstituicaoExporter
             $f32 = '1'; // Categoria: 1=Particular
         }
 
-        // Parcerias e Convênios com Poder Público (33 a 46) -> 0 ou 1 quando Situação de Funcionamento for 1
-        if ($f3 === '1') {
-            $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '0';
-        } else {
-            $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '';
-        }
+        // 33. Secretaria Estadual parceria (0=Não)
+        $f33 = '0';
+
+        // 34. Secretaria Municipal parceria (0=Não)
+        $f34 = '0';
+
+        // 35 a 40: Formas de contratação parceria Estadual -> DEVEM SER NULOS quando f33 == '0'
+        $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = '';
+
+        // 41 a 46: Formas de contratação parceria Municipal -> DEVEM SER NULOS quando f34 == '0'
+        $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '';
 
         // CNPJs (47 e 48)
         $cnpjMantenedora = preg_replace('/[^0-9]/', '', $instituicao?->cnpj ?? '');

@@ -268,15 +268,17 @@ class EducacensoTurmaExporter
         // 26. Código do curso da Educação Profissional
         $f26 = in_array($f23, ['39', '40', '64', '74']) ? $this->extractCode($turma->codigo_curso_profissional ?? '') : '';
 
-        // 27. Carga horária total da turma (em horas) [novo em 2026]
-        $f27 = $turma->carga_horaria_total !== null ? (string) $turma->carga_horaria_total : '800';
+        // 27. Carga horária total do curso (em horas) (Deve ser nulo quando IFTP/campo 32 for 0)
+        $f27 = '';
 
-        // 28. Formas de organização da turma (1=Série/Ano, 2=Períodos semestrais, 3=Ciclos, 4=Grupos não seriados, 5=Módulos)
+        // 28. Formas de organização da turma (Anexo 6: Nulo para Educação Infantil etapas 1, 2 e 3; 1=Série/Ano para Fundamental e Médio)
         $formaOrg = $this->extractCode($turma->forma_organizacao ?? '1');
-        if (! in_array($formaOrg, ['1', '2', '3', '4', '5'])) {
-            $formaOrg = '1';
+        $etapaNum = (int) $this->extractCode($f24);
+        if ($etapaNum <= 3) {
+            $f28 = ''; // Educação infantil não permite forma de organização (Anexo 6)
+        } else {
+            $f28 = in_array($formaOrg, ['1', '2', '3', '4', '5']) ? $formaOrg : '1';
         }
-        $f28 = $formaOrg;
 
         // 29. Turma de Formação por Alternância (0 ou 1)
         $f29 = ($formaOrg === '6' || (bool) $turma->formacao_alternancia) ? '1' : '0';

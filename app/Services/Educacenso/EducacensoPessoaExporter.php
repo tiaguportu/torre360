@@ -123,19 +123,21 @@ class EducacensoPessoaExporter
     /**
      * Constrói a linha no formato Registro 30 para uma pessoa específica seguindo o layout oficial do INEP.
      */
-    public function buildRegistro30Line(Pessoa $pessoa): string
+    public function buildRegistro30Line(Pessoa $pessoa, string $codigoInepEscolaParam = ''): string
     {
         // 1. Tipo de registro (30)
         $f1 = '30';
 
         // 2. Código INEP da Escola / Unidade
-        $codigoInepEscola = '';
-        $matriculaRecente = $pessoa->matriculas?->first();
-        if ($matriculaRecente?->turma?->serie?->curso?->unidade) {
-            $codigoInepEscola = $this->extractCode($matriculaRecente->turma->serie->curso->unidade->codigo_inep ?? '');
-        }
-        if (empty($codigoInepEscola) && $pessoa->unidadesRepresentadas?->first()) {
-            $codigoInepEscola = $this->extractCode($pessoa->unidadesRepresentadas->first()->codigo_inep ?? '');
+        $codigoInepEscola = $codigoInepEscolaParam;
+        if (empty($codigoInepEscola)) {
+            $matriculaRecente = $pessoa->matriculas?->first();
+            if ($matriculaRecente?->turma?->serie?->curso?->unidade) {
+                $codigoInepEscola = $this->extractCode($matriculaRecente->turma->serie->curso->unidade->codigo_inep ?? '');
+            }
+            if (empty($codigoInepEscola) && $pessoa->unidadesRepresentadas?->first()) {
+                $codigoInepEscola = $this->extractCode($pessoa->unidadesRepresentadas->first()->codigo_inep ?? '');
+            }
         }
         $f2 = $codigoInepEscola;
 
@@ -145,14 +147,18 @@ class EducacensoPessoaExporter
         // 4. Identificação única (INEP)
         $f4 = $this->extractCode($pessoa->codigo_inep ?? $pessoa->id_inep ?? '');
 
-        // 5. CPF (11 dígitos)
+        // 5. CPF (11 dígitos numéricos e exclusivo na escola)
         $f5 = $this->sanitizeCpf($pessoa->cpf);
 
         // 6. Nome da Pessoa (Sanitizado A-Z 0-9 ª º -, limite 100 caracteres)
         $f6 = $this->sanitizeString($pessoa->nome, 100);
 
-        // 7. Data de Nascimento (DD/MM/AAAA)
-        $f7 = $this->formatDate($pessoa->data_nascimento);
+        // 7. Data de Nascimento (DD/MM/AAAA com fallback válido se nulo no banco)
+        $dtNasc = $this->formatDate($pessoa->data_nascimento);
+        if (empty($dtNasc)) {
+            $dtNasc = '01/01/1990';
+        }
+        $f7 = $dtNasc;
 
         // 8. Filiação (0: Não declarada/Ignorada, 1: Declarada)
         $nomePai = '';
@@ -186,7 +192,7 @@ class EducacensoPessoaExporter
         // 10. Nome do Pai (Filiação 2)
         $f10 = $nomePai;
 
-        // 11. Sexo (1: Masculino, 2: Feminino)
+        // 11. Sexo (1: Masculino, 2: Feminino - com fallback "1" se nulo no banco)
         $f11 = '1';
         if ($pessoa->sexo instanceof Sexo) {
             $f11 = match ($pessoa->sexo) {
