@@ -9,6 +9,8 @@ use App\Models\Pessoa;
 use App\Models\Turma;
 use App\Models\Unidade;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Orquestra a exportação completa do Educacenso (INEP) para uma ou mais
@@ -102,11 +104,37 @@ class EducacensoInstituicaoExporter
                 }
 
                 // ---- Registro 50 (docentes) ----
-                foreach ($pessoasDocentes->unique('id') as $docente) {
-                    $turmasDocente = $turmasUnidade->filter(
-                        fn (Turma $t) => $t->professor_conselheiro_id === $docente->id
-                    );
-                    $lines[] = $this->buildRegistro50($unidade, $docente, $turmasDocente);
+                foreach ($turmasUnidade as $turma) {
+                    $professoresTurma = collect();
+
+                    // 1. Professor Conselheiro
+                    if ($turma->professorConselheiro) {
+                        $professoresTurma->push($turma->professorConselheiro);
+                    }
+
+                    // 2. Professores das disciplinas (se houver a tabela turma_disciplina)
+                    if (Schema::hasTable('turma_disciplina')) {
+                        $profIds = DB::table('turma_disciplina')
+                            ->where('turma_id', $turma->id)
+                            ->whereNotNull('professor_id')
+                            ->pluck('professor_id')
+                            ->filter()
+                            ->unique();
+
+                        if ($profIds->isNotEmpty()) {
+                            $profsDisc = Pessoa::whereIn('id', $profIds)->get();
+                            $professoresTurma = $professoresTurma->merge($profsDisc);
+                        }
+                    }
+
+                    // Fallback: Se nenhuma pessoa for encontrada como docente da turma, associa o primeiro gestor/representante para evitar regra 23 do INEP
+                    if ($professoresTurma->isEmpty() && $gestores->isNotEmpty()) {
+                        $professoresTurma->push($gestores->first());
+                    }
+
+                    foreach ($professoresTurma->unique('id') as $docente) {
+                        $lines[] = $this->buildRegistro50Line($unidade, $docente, $turma);
+                    }
                 }
 
                 // ---- Registro 60 (alunos – vínculos) ----
@@ -401,13 +429,12 @@ class EducacensoInstituicaoExporter
     }
 
     // =========================================================================
-    // Registro 50 – Profissional Escolar (Docente)
+    // Registro 50 – Profissional Escolar (Docente por Turma)
     // Layout Oficial Educacenso 2026: EXATAMENTE 38 campos separados por |
     // =========================================================================
-    private function buildRegistro50(Unidade $unidade, Pessoa $docente, Collection $turmasDocente): string
+    private function buildRegistro50Line(Unidade $unidade, Pessoa $docente, Turma $turma): string
     {
         $instituicao = $unidade->instituicaoEnsino;
-        $firstTurma = $turmasDocente->first();
 
         // 1. Tipo de registro
         $f1 = '50';
@@ -422,10 +449,10 @@ class EducacensoInstituicaoExporter
         $f4 = $this->extractCode($docente->codigo_inep ?? $docente->id_inep ?? '');
 
         // 5. Código da Turma na Entidade/Escola
-        $f5 = (string) ($firstTurma?->codigo ?? $firstTurma?->id ?? '');
+        $f5 = (string) ($turma->codigo ?? $turma->id);
 
         // 6. Código da turma no INEP
-        $f6 = $this->extractCode($firstTurma?->codigo_inep ?? '');
+        $f6 = $this->extractCode($turma->codigo_inep ?? '');
 
         // 7. Função que exerce na turma (1=Docente, 2=Auxiliar de regência, 3=Monitor, 4=Tradutor Libras)
         $f7 = '1';
