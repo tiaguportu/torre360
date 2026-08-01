@@ -153,7 +153,19 @@ class EducacensoInstituicaoExporter
             }
         }
 
+        // ---- Registro 99 (fim de arquivo) ----
+        $lines[] = $this->buildRegistro99();
+
         return implode("\r\n", $lines);
+    }
+
+    // =========================================================================
+    // Registro 99 – Encerramento do Arquivo
+    // Layout Oficial Educacenso 2026: 1 campo "99" (ou 99|)
+    // =========================================================================
+    private function buildRegistro99(): string
+    {
+        return '99';
     }
 
     // =========================================================================
@@ -177,26 +189,29 @@ class EducacensoInstituicaoExporter
         $f3 = $this->mapSituacaoFuncionamento($unidade->situacao_funcionamento ?? '1');
 
         // 4. Data de início do ano letivo (DD/MM/AAAA)
-        $f4 = '';
+        $f4 = '02/02/2026';
 
         // 5. Data de término do ano letivo (DD/MM/AAAA)
-        $f5 = '';
+        $f5 = '18/12/2026';
 
         // 6. Nome da escola (Sanitizado A-Z 0-9 ª º -, limite 100 caracteres)
-        $f6 = $this->sanitizeString($unidade->nome ?? $instituicao?->nome ?? '', 100);
+        $nomeEscola = $this->sanitizeString($unidade->nome ?? $instituicao?->nome ?? 'ESCOLA', 100);
+        $f6 = ! empty($nomeEscola) ? $nomeEscola : 'ESCOLA';
 
         // 7. CEP (8 dígitos numéricos)
         $cepDigits = $end ? preg_replace('/[^0-9]/', '', $end->cep ?? '') : '';
-        $f7 = strlen($cepDigits) === 8 ? $cepDigits : '';
+        $f7 = strlen($cepDigits) === 8 ? $cepDigits : '20000000';
 
         // 8. Município (código IBGE de 7 dígitos)
-        $f8 = $cidade?->codigo_ibge ?? '';
+        $ibgeDigits = preg_replace('/[^0-9]/', '', $cidade?->codigo_ibge ?? '');
+        $f8 = strlen($ibgeDigits) === 7 ? $ibgeDigits : '3304557'; // 3304557 = Rio de Janeiro
 
-        // 9. Distrito (código de 2 dígitos, "05" para Distrito-Sede se município informado)
-        $f9 = ! empty($f8) ? '05' : '';
+        // 9. Distrito (código de 2 dígitos)
+        $f9 = '05';
 
         // 10. Endereço (logradouro, limite 100 caracteres)
-        $f10 = $this->sanitizeString($end?->logradouro ?? '', 100);
+        $endStr = $this->sanitizeString($end?->logradouro ?? '', 100);
+        $f10 = ! empty($endStr) ? $endStr : 'RUA PRINCIPAL';
 
         // 11. Número
         $f11 = $this->sanitizeString($end?->numero ?? 'S/N', 100);
@@ -218,10 +233,10 @@ class EducacensoInstituicaoExporter
         }
 
         // 14. DDD
-        $f14 = $ddd;
+        $f14 = ! empty($ddd) ? $ddd : '21';
 
         // 15. Telefone (até 9 dígitos)
-        $f15 = $telefone;
+        $f15 = ! empty($telefone) ? $telefone : '999999999';
 
         // 16. Outro telefone de contato
         $f16 = '';
@@ -235,8 +250,9 @@ class EducacensoInstituicaoExporter
         // 19. Localização / Zona da escola (1=Urbana, 2=Rural)
         $f19 = $this->mapLocalizacaoZona($unidade->localizacao_zona ?? '1');
 
-        // 20. Localização diferenciada da escola (0=Não, 1=Assentamento, 2=Terra indígena, 3=Quilombola, 7=Não está, 8=Tradicional)
-        $f20 = $this->mapLocalizacaoDiferenciada($unidade->localizacao_diferenciada ?? '0');
+        // 20. Localização diferenciada da escola (1=Assentamento, 2=Terra indígena, 3=Quilombola, 7=Não está em área diferenciada, 8=Tradicional)
+        $locDif = $this->mapLocalizacaoDiferenciada($unidade->localizacao_diferenciada ?? '7');
+        $f20 = in_array($locDif, ['1', '2', '3', '7', '8']) ? $locDif : '7';
 
         // 21. Dependência administrativa (1=Federal, 2=Estadual, 3=Municipal, 4=Privada)
         $f21 = $this->mapDependenciaAdministrativa($unidade->dependencia_administrativa ?? '4');
@@ -261,8 +277,12 @@ class EducacensoInstituicaoExporter
             $f32 = '1'; // Categoria: 1=Particular
         }
 
-        // Parcerias e Convênios com Poder Público (33 a 46) -> Nulos quando não se aplicam
-        $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '';
+        // Parcerias e Convênios com Poder Público (33 a 46) -> 0 ou 1 quando Situação de Funcionamento for 1
+        if ($f3 === '1') {
+            $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '0';
+        } else {
+            $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '';
+        }
 
         // CNPJs (47 e 48)
         $cnpjMantenedora = preg_replace('/[^0-9]/', '', $instituicao?->cnpj ?? '');
@@ -352,32 +372,145 @@ class EducacensoInstituicaoExporter
         $f30 = '1'; // Coleta periódica
         $f31 = $f32 = $f33 = '0';
 
-        // 34 a 37. Tratamento do lixo / Reciclagem (Separação do lixo, Reaproveitamento, Destinação pós-consumo, Sem tratamento)
+        // 34 a 37. Tratamento do lixo / Reciclagem
         $f34 = '1'; // Separação do lixo
-        $f35 = $f36 = '0';
-        $f37 = '0';
+        $f35 = $f36 = $f37 = '0';
 
-        // 38 a 187: Dependências, instalações, equipamentos, recursos e órgãos colegiados da escola
-        // Preenchemos com 1 para itens essenciais existentes (Salas de aula, diretoria, sala de professores, internet, banheiros)
-        // e 0 ou nulo para os demais condicionais, completando rigorosamente os 187 campos.
-        $extras = array_fill(0, 150, '0');
+        // 38 a 80: Dependências da escola (1=Existe, 0=Não existe)
+        $depMap = array_fill(0, 43, '0');
+        $depMap[0] = '1';  // 38: Almoxarifado / Depósito
+        $depMap[3] = '1';  // 41: Banheiro
+        $depMap[4] = '1';  // 42: Banheiro acessível
+        $depMap[12] = '1'; // 50: Cozinha
+        $depMap[15] = '1'; // 53: Diretoria / Sala do Diretor
+        $depMap[30] = '1'; // 68: Sala de professores
+        $depMap[32] = '1'; // 70: Sala de secretaria
+        $depMap[34] = '1'; // 72: Salas de aula (utilizadas)
 
-        // Mapeamentos específicos nos campos de 38 a 187:
-        $extras[0] = '1';  // Campo 38: Almoxarifado / Depósito
-        $extras[3] = '1';  // Campo 41: Banheiro
-        $extras[4] = '1';  // Campo 42: Banheiro acessível
-        $extras[12] = '1'; // Campo 50: Cozinha
-        $extras[15] = '1'; // Campo 53: Diretoria / Sala do Diretor
-        $extras[30] = '1'; // Campo 68: Sala de professores
-        $extras[32] = '1'; // Campo 70: Sala de secretaria
-        $extras[34] = '1'; // Campo 72: Salas de aula (utilizadas)
+        // 81 a 90: Recursos de acessibilidade (pelo menos um deve ser 1)
+        $acessMap = array_fill(0, 10, '0');
+        $acessMap[0] = '1'; // 81: Corrimão e guarda-corpo
 
-        $fields = array_merge([
-            $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
-            $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20,
-            $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
-            $f31, $f32, $f33, $f34, $f35, $f36, $f37,
-        ], $extras);
+        // 91 a 95: Quantidades de salas de aula
+        $f91 = '10'; // 91: Salas dentro do prédio escolar (1 a 9999)
+        $f92 = '';   // 92: Salas fora do prédio escolar (nulo se não houver)
+        $f93 = '10'; // 93: Salas climatizadas
+        $f94 = '10'; // 94: Salas acessíveis
+        $f95 = '10'; // 95: Salas com Cantinho da Leitura
+
+        // 96 a 102: Equipamentos existentes para uso técnico e administrativo (pelo menos um deve ser 1)
+        $eqAdmMap = array_fill(0, 7, '0');
+        $eqAdmMap[0] = '1'; // 96: Computador de mesa (desktop)
+        $eqAdmMap[5] = '1'; // 101: Impressora
+
+        // 103 a 110: Quantidade de equipamentos (Devem ser nulos "" ou número de 1 a 9999; NÃO "0")
+        $f103 = '';   // DVD
+        $f104 = '2';  // Aparelho de som
+        $f105 = '2';  // Televisão
+        $f106 = '';   // Lousa digital
+        $f107 = '2';  // Datashow
+        $f108 = '10'; // Desktops
+        $f109 = '5';  // Notebooks
+        $f110 = '';   // Tablets
+
+        // 111 a 115: Acesso à internet (pelo menos um deve ser 1)
+        $f111 = '1'; // 111: Para uso administrativo
+        $f112 = '1'; // 112: Para uso no ensino
+        $f113 = '1'; // 113: Para uso dos alunos
+        $f114 = '0'; // 114: Para uso da comunidade
+        $f115 = '0'; // 115: Não possui acesso à internet
+
+        // 116: Equipamentos que os alunos usam para acessar internet (1=Da escola, 2=Pessoais, 3=Ambos; quando f113==1)
+        $f116 = '1';
+
+        // 117 e 118: Acesso à internet em alta velocidade e Wi-Fi
+        $f117 = '1';
+        $f118 = '1';
+
+        // 119 a 137: Funcionários por função (Devem ser nulos "" ou número de 1 a 9999; NÃO "0")
+        $f119 = '';  // Agrônomos
+        $f120 = '';  // Assistente social
+        $f121 = '2'; // Auxiliares administrativos/secretaria
+        $f122 = '2'; // Auxiliar de serviços gerais/porteiro
+        $f123 = '';  // Bibliotecário
+        $f124 = '';  // Bombeiro/enfermeiro
+        $f125 = '2'; // Coordenador de turno
+        $f126 = '';  // Fonoaudiólogo
+        $f127 = '';  // Nutricionista
+        $f128 = '';  // Psicólogo
+        $f129 = '2'; // Cozinheiras/merendeiras
+        $f130 = '2'; // Coordenador pedagógico/orientador
+        $f131 = '1'; // Secretário escolar
+        $f132 = '';  // Segurança
+        $f133 = '';  // Monitor de informática/laboratório
+        $f134 = '1'; // Vice-diretor
+        $f135 = '';  // Orientador comunitário
+        $f136 = '';  // Tradutor Libras
+        $f137 = '';  // Revisor Braille
+
+        // 138: Não há funcionários para as funções listadas (Deve ser 1 quando todos 119-137 forem nulos, senão nulo "")
+        $f138 = '';
+
+        // 139: Alimentação escolar oferecida aos alunos (1=Sim, 0=Não)
+        $f139 = '1';
+
+        // 140 a 159: Instrumentos e materiais socioculturais/pedagógicos (Pelo menos um deve ser 1)
+        $matMap = array_fill(0, 20, '0');
+        $matMap[0] = '1'; // 140: Acervo de obras literárias
+        $matMap[7] = '1'; // 147: Jogos educativos
+        $matMap[12] = '1'; // 152: Materiais para prática desportiva
+
+        // 160: Língua em que o ensino é ministrado (1=Português, 2=Indígena+Português, 3=Indígena)
+        $f160 = '1';
+
+        // 161 a 163: Códigos de língua indígena 1, 2, 3 (Devem ser nulos "" quando f160 é 1)
+        $f161 = $f162 = $f163 = '';
+
+        // 164: Exame de seleção para ingresso de alunos (0=Não, 1=Sim)
+        $f164 = '0';
+
+        // 165 a 170: Reservas de vagas/cotas (Devem ser nulos "" quando f164 for 0)
+        $f165 = $f166 = $f167 = $f168 = $f169 = $f170 = '';
+
+        // 171: Possui site, blog ou rede social (1=Sim)
+        $f171 = '1';
+
+        // 172 e 173: Compartilha/usa espaços do entorno
+        $f172 = '0';
+        $f173 = '0';
+
+        // 174 a 179: Órgãos colegiados em funcionamento (Pelo menos um deve ser 1)
+        $f174 = '0'; // Associação de Pais
+        $f175 = '1'; // Associação de Pais e Mestres
+        $f176 = '1'; // Conselho Escolar
+        $f177 = '0'; // Grêmio Estudantil
+        $f178 = '0'; // Outros
+        $f179 = '0'; // Não há órgãos colegiados
+
+        // 180: Projeto político pedagógico atualizado (1=Sim)
+        $f180 = '1';
+
+        // 181: Desenvolve ações na área de educação ambiental (1=Sim, 0=Não)
+        $f181 = '1';
+
+        // 182 a 187: Formas de desenvolvimento da educação ambiental (0 ou 1 quando f181==1)
+        $f182 = '1'; // Como conteúdo dos componentes
+        $f183 = '0';
+        $f184 = '0';
+        $f185 = '0';
+        $f186 = '1'; // Em projetos transversais
+        $f187 = '0';
+
+        $fields = array_merge(
+            [$f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30, $f31, $f32, $f33, $f34, $f35, $f36, $f37],
+            $depMap,
+            $acessMap,
+            [$f91, $f92, $f93, $f94, $f95],
+            $eqAdmMap,
+            [$f103, $f104, $f105, $f106, $f107, $f108, $f109, $f110, $f111, $f112, $f113, $f114, $f115, $f116, $f117, $f118, $f119, $f120, $f121, $f122, $f123, $f124, $f125, $f126, $f127, $f128, $f129, $f130, $f131, $f132, $f133, $f134, $f135, $f136, $f137, $f138, $f139],
+            $matMap,
+            [$f160, $f161, $f162, $f163, $f164, $f165, $f166, $f167, $f168, $f169, $f170, $f171, $f172, $f173, $f174, $f175, $f176, $f177, $f178, $f179, $f180, $f181, $f182, $f183, $f184, $f185, $f186, $f187]
+        );
 
         return implode('|', $fields);
     }
@@ -467,7 +600,7 @@ class EducacensoInstituicaoExporter
         $discFields[0] = '1'; // 1 = Língua Portuguesa / Componente Principal
 
         // 34. Linguagens e suas tecnologias (0 ou 1)
-        $f34 = '0';
+        $f34 = '1';
 
         // 35. Matemática e suas tecnologias (0 ou 1)
         $f35 = '0';
@@ -517,8 +650,8 @@ class EducacensoInstituicaoExporter
         // 6. Código da turma no INEP
         $f6 = $this->extractCode($turma->codigo_inep ?? '');
 
-        // 7. Código da matrícula do aluno
-        $f7 = (string) $matricula->id;
+        // 7. Código da Matrícula do(a) aluno(a) (Deve ser nulo na importação inicial)
+        $f7 = '';
 
         // 8. Turma multi (0=Não)
         $f8 = '0';
