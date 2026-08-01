@@ -1258,6 +1258,7 @@ Acesse **Localização e Cadastros → Instituições de Ensino**.
   - *Outro órgão da administração pública*
 - **Dados Gerais:** Nome, CNPJ, Logotipo institucional e status (Ativo/Inativo).
 - **Canais de Comunicação:** Celular/WhatsApp, Instagram, Facebook e YouTube.
+- **Exportação Completa para o Educacenso (Ação em Lote):** Selecione uma ou mais instituições na tabela e utilize a opção em lote **Exportar para Educacenso** para gerar o arquivo `.txt` completo no formato oficial do INEP (Censo Escolar 2026), contendo todos os registros: **00** (Escola), **10** (Infraestrutura), **20** (Turmas), **30** (Pessoas Físicas), **40** (Gestores), **50** (Docentes) e **60** (Vínculos de Alunos).
 - **Ajuda Integrada:** O botão de ajuda no cabeçalho resume as ações disponíveis de acordo com suas permissões.
 
 ### 24.2 Unidade Escolar (`/admin/unidades`)
