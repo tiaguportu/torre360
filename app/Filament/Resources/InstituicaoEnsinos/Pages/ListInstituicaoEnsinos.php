@@ -39,6 +39,7 @@ class ListInstituicaoEnsinos extends ListRecords
 
         $canCreate = $user->can('Create:InstituicaoEnsino');
         $canUpdate = $user->can('Update:InstituicaoEnsino');
+        $canViewAny = $user->can('ViewAny:InstituicaoEnsino');
 
         $html = '<p>Nesta página você pode gerenciar as Instituições de Ensino mantenedoras da rede escolar.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
@@ -51,6 +52,10 @@ class ListInstituicaoEnsinos extends ListRecords
 
         if ($canUpdate) {
             $html .= '<li><strong>Editar:</strong> Atualize os dados cadastrais, endereço e mídias sociais da instituição.</li>';
+        }
+
+        if ($canViewAny) {
+            $html .= '<li><strong>Exportar para Educacenso (lote):</strong> Selecione uma ou mais Instituições de Ensino e clique em "Exportar para Educacenso" para gerar o arquivo <code>.txt</code> completo no padrão INEP/Educacenso 2026, contendo todos os registros: <strong>00</strong> (Identificação da Escola), <strong>10</strong> (Caracterização e Infraestrutura), <strong>20</strong> (Turmas), <strong>30</strong> (Pessoas Físicas), <strong>40</strong> (Gestores), <strong>50</strong> (Docentes) e <strong>60</strong> (Vínculos de Alunos). Os campos são delimitados por Pipe (|).</li>';
         }
 
         $html .= '</ul>';
