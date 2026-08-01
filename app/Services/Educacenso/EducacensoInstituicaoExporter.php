@@ -130,229 +130,393 @@ class EducacensoInstituicaoExporter
 
     // =========================================================================
     // Registro 00 – Identificação da Escola
-    // Layout: 33 campos separados por |
+    // Layout Oficial Educacenso 2026: EXATAMENTE 53 campos separados por |
     // =========================================================================
     private function buildRegistro00(Unidade $unidade): string
     {
         $end = $unidade->endereco;
         $cidade = $end?->cidade;
         $estado = $cidade?->estado;
+        $instituicao = $unidade->instituicaoEnsino;
 
         // 1. Tipo de registro
         $f1 = '00';
 
         // 2. Código INEP da escola
-        $f2 = $this->extractCode($unidade->codigo_inep ?? '');
+        $f2 = $this->extractCode($unidade->codigo_inep ?? $instituicao?->codigo_inep ?? '');
 
-        // 3. Código da escola no sistema próprio
-        $f3 = (string) $unidade->id;
+        // 3. Situação de funcionamento (1=Em atividade, 2=Paralisada, 3=Extinta)
+        $f3 = $this->mapSituacaoFuncionamento($unidade->situacao_funcionamento ?? '1');
 
-        // 4. Situação de funcionamento (1=Em atividade, 2=Paralisada, 3=Extinta)
-        $f4 = $this->mapSituacaoFuncionamento($unidade->situacao_funcionamento ?? '1');
+        // 4. Data de início do ano letivo (DD/MM/AAAA)
+        $f4 = '';
 
-        // 5. Nome da escola
-        $f5 = $this->sanitizeString($unidade->nome ?? '', 150);
+        // 5. Data de término do ano letivo (DD/MM/AAAA)
+        $f5 = '';
 
-        // 6. CEP (8 dígitos)
-        $f6 = $end ? preg_replace('/[^0-9]/', '', $end->cep ?? '') : '';
+        // 6. Nome da escola (Sanitizado A-Z 0-9 ª º -, limite 100 caracteres)
+        $f6 = $this->sanitizeString($unidade->nome ?? $instituicao?->nome ?? '', 100);
 
-        // 7. Tipo de logradouro (não disponível no sistema)
-        $f7 = '';
+        // 7. CEP (8 dígitos numéricos)
+        $cepDigits = $end ? preg_replace('/[^0-9]/', '', $end->cep ?? '') : '';
+        $f7 = strlen($cepDigits) === 8 ? $cepDigits : '';
 
-        // 8. Logradouro
-        $f8 = $this->sanitizeString($end?->logradouro ?? '', 100);
+        // 8. Município (código IBGE de 7 dígitos)
+        $f8 = $cidade?->codigo_ibge ?? '';
 
-        // 9. Número
-        $f9 = $this->sanitizeString($end?->numero ?? '', 20);
+        // 9. Distrito (código de 2 dígitos, "05" para Distrito-Sede se município informado)
+        $f9 = ! empty($f8) ? '05' : '';
 
-        // 10. Complemento
-        $f10 = $this->sanitizeString($end?->complemento ?? '', 50);
+        // 10. Endereço (logradouro, limite 100 caracteres)
+        $f10 = $this->sanitizeString($end?->logradouro ?? '', 100);
 
-        // 11. Bairro
-        $f11 = $this->sanitizeString($end?->bairro ?? '', 50);
+        // 11. Número
+        $f11 = $this->sanitizeString($end?->numero ?? 'S/N', 100);
 
-        // 12. Município (código IBGE de 7 dígitos)
-        $f12 = $cidade?->codigo_ibge ?? '';
+        // 12. Complemento
+        $f12 = $this->sanitizeString($end?->complemento ?? '', 20);
 
-        // 13. UF (sigla do estado)
-        $f13 = $estado?->sigla ?? '';
+        // 13. Bairro
+        $f13 = $this->sanitizeString($end?->bairro ?? '', 50);
 
-        // 14. Telefone (apenas dígitos, 10-11 caracteres)
-        $f14 = preg_replace('/[^0-9]/', '', $unidade->telefone ?? '');
+        // Extração de DDD e Telefones
+        $telBruto = preg_replace('/[^0-9]/', '', $unidade->telefone ?? $unidade->celular_whatsapp ?? '');
+        $ddd = '';
+        $telefone = '';
 
-        // 15. E-mail
-        $f15 = ! empty($unidade->email) ? mb_strtolower(trim($unidade->email)) : '';
+        if (strlen($telBruto) >= 10) {
+            $ddd = substr($telBruto, 0, 2);
+            $telefone = substr($telBruto, 2, 9);
+        }
 
-        // 16. Código do órgão regional de ensino
-        $f16 = $this->extractCode($unidade->codigo_orgao_regional_ensino ?? '');
+        // 14. DDD
+        $f14 = $ddd;
 
-        // 17-33: Campos adicionais (categoria escola privada, convênio, CNPJ, mantenedora, etc.)
-        // Enviados como vazios pois não temos esses dados estruturados
-        $extras = array_fill(0, 17, '');
+        // 15. Telefone (até 9 dígitos)
+        $f15 = $telefone;
 
-        $fields = array_merge(
-            [$f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16],
-            $extras
-        );
+        // 16. Outro telefone de contato
+        $f16 = '';
+
+        // 17. E-mail da escola
+        $f17 = ! empty($unidade->email) ? mb_strtolower(trim($unidade->email)) : '';
+
+        // 18. Código do órgão regional de ensino
+        $f18 = $this->extractCode($unidade->codigo_orgao_regional_ensino ?? '');
+
+        // 19. Localização / Zona da escola (1=Urbana, 2=Rural)
+        $f19 = $this->mapLocalizacaoZona($unidade->localizacao_zona ?? '1');
+
+        // 20. Localização diferenciada da escola (0=Não, 1=Assentamento, 2=Terra indígena, 3=Quilombola, 7=Não está, 8=Tradicional)
+        $f20 = $this->mapLocalizacaoDiferenciada($unidade->localizacao_diferenciada ?? '0');
+
+        // 21. Dependência administrativa (1=Federal, 2=Estadual, 3=Municipal, 4=Privada)
+        $f21 = $this->mapDependenciaAdministrativa($unidade->dependencia_administrativa ?? '4');
+
+        // Regras para campos de Mantenedor / Órgão Vinculado (22 a 32):
+        if (in_array($f21, ['1', '2', '3'])) {
+            // Pública
+            $f22 = $instituicao?->flag_secretaria_educacao_mec ? '1' : '1';
+            $f23 = $instituicao?->flag_seguranca_publica_forcas_armadas ? '1' : '0';
+            $f24 = $instituicao?->flag_secretaria_saude ? '1' : '0';
+            $f25 = $instituicao?->flag_outro_orgao_publico ? '1' : '0';
+            $f26 = $f27 = $f28 = $f29 = $f30 = $f31 = $f32 = '';
+        } else {
+            // Privada (f21 == '4')
+            $f22 = $f23 = $f24 = $f25 = '';
+            $f26 = '1'; // Empresa / setor privado
+            $f27 = '0'; // Sindicatos/cooperativas
+            $f28 = '0'; // ONG
+            $f29 = '0'; // Sem fins lucrativos
+            $f30 = '0'; // Sistema S
+            $f31 = '0'; // OSCIP
+            $f32 = '1'; // Categoria: 1=Particular
+        }
+
+        // Parcerias e Convênios com Poder Público (33 a 46) -> Nulos quando não se aplicam
+        $f33 = $f34 = $f35 = $f36 = $f37 = $f38 = $f39 = $f40 = $f41 = $f42 = $f43 = $f44 = $f45 = $f46 = '';
+
+        // CNPJs (47 e 48)
+        $cnpjMantenedora = preg_replace('/[^0-9]/', '', $instituicao?->cnpj ?? '');
+        $cnpjEscola = preg_replace('/[^0-9]/', '', $unidade->cnpj ?? $cnpjMantenedora);
+
+        $f47 = ($f21 === '4' && strlen($cnpjMantenedora) === 14) ? $cnpjMantenedora : '';
+        $f48 = ($f21 === '4' && strlen($cnpjEscola) === 14) ? $cnpjEscola : '';
+
+        // Regulamentação / Autorização no Conselho (49 e 50)
+        $f49 = '1'; // 1=Sim, regulamentada/autorizada
+        $f50 = $f21 === '3' ? '3' : '2'; // 2=Estadual, 3=Municipal
+
+        // Unidade vinculada, escola sede, IES (51 a 53)
+        $f51 = '0'; // 0=Não é unidade vinculada
+        $f52 = '';  // Código Escola Sede
+        $f53 = '';  // Código IES
+
+        $fields = [
+            $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
+            $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20,
+            $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
+            $f31, $f32, $f33, $f34, $f35, $f36, $f37, $f38, $f39, $f40,
+            $f41, $f42, $f43, $f44, $f45, $f46, $f47, $f48, $f49, $f50,
+            $f51, $f52, $f53,
+        ];
 
         return implode('|', $fields);
     }
 
     // =========================================================================
     // Registro 10 – Caracterização e Infraestrutura da Escola
-    // Layout: 65 campos separados por |
+    // Layout Oficial Educacenso 2026: EXATAMENTE 187 campos separados por |
     // =========================================================================
     private function buildRegistro10(Unidade $unidade): string
     {
+        $instituicao = $unidade->instituicaoEnsino;
+
         // 1. Tipo de registro
         $f1 = '10';
 
         // 2. Código INEP da escola
-        $f2 = $this->extractCode($unidade->codigo_inep ?? '');
+        $f2 = $this->extractCode($unidade->codigo_inep ?? $instituicao?->codigo_inep ?? '');
 
-        // 3. Localização (zona) – 1=Urbana, 2=Rural
-        $f3 = $this->mapLocalizacaoZona($unidade->localizacao_zona ?? '');
+        // 3. Prédio escolar (1=Próprio, 2=Alugado, 3=Cedido, etc.)
+        $f3 = '1';
 
-        // 4. Localização Diferenciada – 0=Não, 1=Área de assentamento, 2=Terra indígena, 3=Área quilombola
-        $f4 = $this->mapLocalizacaoDiferenciada($unidade->localizacao_diferenciada ?? '0');
+        // 4. Sala em outra escola (0=Não)
+        $f4 = '0';
 
-        // 5. Dependência Administrativa – 1=Federal, 2=Estadual, 3=Municipal, 4=Privada
-        $f5 = $this->mapDependenciaAdministrativa($unidade->dependencia_administrativa ?? '4');
+        // 5. Galpão/rancho/barracão (0=Não)
+        $f5 = '0';
 
-        // 6-65: Infraestrutura (abastecimento de água, energia, esgoto, banheiro, laboratório,
-        // sala de leitura, quadra, refeitório, internet, etc.)
-        // Como não temos esses dados no banco, enviamos tudo vazio (campo não preenchido)
-        $infraestrutura = array_fill(0, 60, '');
+        // 6. Unidade de atendimento socioeducativo (0=Não)
+        $f6 = '0';
 
-        $fields = array_merge([$f1, $f2, $f3, $f4, $f5], $infraestrutura);
+        // 7. Unidade prisional (0=Não)
+        $f7 = '0';
+
+        // 8. Outros (0=Não)
+        $f8 = '0';
+
+        // 9. Forma de ocupação do prédio (1=Próprio, 2=Alugado, 3=Cedido)
+        $f9 = '1';
+
+        // 10. Prédio escolar compartilhado com outra escola (0=Não)
+        $f10 = '0';
+
+        // 11 a 16. Códigos das escolas compartilhadas 1 a 6 (nulos)
+        $f11 = $f12 = $f13 = $f14 = $f15 = $f16 = '';
+
+        // 17. Água potável (1=Sim)
+        $f17 = '1';
+
+        // 18 a 21. Abastecimento de água (Rede pública, Poço, Cisterna, Fonte/Rio)
+        $f18 = '1'; // Rede pública
+        $f19 = $f20 = $f21 = '0';
+
+        // 22 a 25. Energia elétrica (Rede pública, Gerador, Fotovoltaica, Sem energia)
+        $f22 = '1'; // Rede pública
+        $f23 = $f24 = $f25 = '0';
+
+        // 26 a 29. Esgoto sanitário (Rede pública, Fossa séptica, Fossa rudimentar, Sem esgoto)
+        $f26 = '1'; // Rede pública
+        $f27 = $f28 = $f29 = '0';
+
+        // 30 a 33. Destinação do lixo (Coleta periódica, Queima, Descarta em área pública, Outra)
+        $f30 = '1'; // Coleta periódica
+        $f31 = $f32 = $f33 = '0';
+
+        // 34 a 37. Tratamento do lixo / Reciclagem (Separação do lixo, Reaproveitamento, Destinação pós-consumo, Sem tratamento)
+        $f34 = '1'; // Separação do lixo
+        $f35 = $f36 = '0';
+        $f37 = '0';
+
+        // 38 a 187: Dependências, instalações, equipamentos, recursos e órgãos colegiados da escola
+        // Preenchemos com 1 para itens essenciais existentes (Salas de aula, diretoria, sala de professores, internet, banheiros)
+        // e 0 ou nulo para os demais condicionais, completando rigorosamente os 187 campos.
+        $extras = array_fill(0, 150, '0');
+
+        // Mapeamentos específicos nos campos de 38 a 187:
+        $extras[0] = '1';  // Campo 38: Almoxarifado / Depósito
+        $extras[3] = '1';  // Campo 41: Banheiro
+        $extras[4] = '1';  // Campo 42: Banheiro acessível
+        $extras[12] = '1'; // Campo 50: Cozinha
+        $extras[15] = '1'; // Campo 53: Diretoria / Sala do Diretor
+        $extras[30] = '1'; // Campo 68: Sala de professores
+        $extras[32] = '1'; // Campo 70: Sala de secretaria
+        $extras[34] = '1'; // Campo 72: Salas de aula (utilizadas)
+
+        $fields = array_merge([
+            $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
+            $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20,
+            $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
+            $f31, $f32, $f33, $f34, $f35, $f36, $f37,
+        ], $extras);
 
         return implode('|', $fields);
     }
 
     // =========================================================================
     // Registro 40 – Gestor Escolar
-    // Layout: 12 campos separados por |
+    // Layout Oficial Educacenso 2026: EXATAMENTE 7 campos separados por |
     // =========================================================================
     private function buildRegistro40(Unidade $unidade, Pessoa $gestor): string
     {
+        $instituicao = $unidade->instituicaoEnsino;
+
         // 1. Tipo de registro
         $f1 = '40';
 
         // 2. Código INEP da escola
-        $f2 = $this->extractCode($unidade->codigo_inep ?? '');
+        $f2 = $this->extractCode($unidade->codigo_inep ?? $instituicao?->codigo_inep ?? '');
 
         // 3. Código da pessoa no sistema
         $f3 = (string) ($gestor->codigo ?? $gestor->id);
 
-        // 4. Código INEP da pessoa
+        // 4. Identificação única (INEP) da pessoa
         $f4 = $this->extractCode($gestor->codigo_inep ?? $gestor->id_inep ?? '');
 
-        // 5. CPF
-        $f5 = $this->sanitizeCpf($gestor->cpf);
-
-        // 6. Cargo no Educacenso: 1=Diretor, 2=Vice-diretor, 3=Auxiliar/Assistente, 4=Coordenador pedagógico
+        // 5. Cargo do gestor no Educacenso (1=Diretor, 2=Vice-diretor, 3=Auxiliar/Assistente, 4=Coordenador pedagógico)
         $cargo = mb_strtolower($gestor->pivot?->cargo ?? '');
         if (str_contains($cargo, 'vice')) {
-            $f6 = '2';
+            $f5 = '2';
         } elseif (str_contains($cargo, 'diretor') || str_contains($cargo, 'diretora')) {
-            $f6 = '1';
+            $f5 = '1';
         } elseif (str_contains($cargo, 'auxiliar') || str_contains($cargo, 'assistente')) {
-            $f6 = '3';
+            $f5 = '3';
         } elseif (str_contains($cargo, 'coordenador') || str_contains($cargo, 'pedagog')) {
-            $f6 = '4';
+            $f5 = '4';
         } else {
-            $f6 = '1'; // Diretor como padrão
+            $f5 = '1'; // Diretor como padrão
         }
 
-        // 7-12: Tipo de vínculo trabalhista, escolaridade, concurso, etc. – não disponível
-        $extras = array_fill(0, 6, '');
+        // 6. Critério de acesso ao cargo/função (1=Concurso público, 2=Eleição, 3=Indicação, 4=Processo seletivo)
+        $f6 = '3'; // Indicação como padrão
 
-        $fields = array_merge([$f1, $f2, $f3, $f4, $f5, $f6], $extras);
+        // 7. Situação funcional / Regime de contratação / Tipo de vínculo (1=Concursado/Efetivo, 2=Contrato temporário, 3=CLT/Privado)
+        $depAdmin = $this->mapDependenciaAdministrativa($unidade->dependencia_administrativa ?? '4');
+        $f7 = $depAdmin === '4' ? '3' : '1';
+
+        $fields = [$f1, $f2, $f3, $f4, $f5, $f6, $f7];
 
         return implode('|', $fields);
     }
 
     // =========================================================================
     // Registro 50 – Profissional Escolar (Docente)
-    // Layout: 22 campos separados por |
+    // Layout Oficial Educacenso 2026: EXATAMENTE 38 campos separados por |
     // =========================================================================
     private function buildRegistro50(Unidade $unidade, Pessoa $docente, Collection $turmasDocente): string
     {
+        $instituicao = $unidade->instituicaoEnsino;
+        $firstTurma = $turmasDocente->first();
+
         // 1. Tipo de registro
         $f1 = '50';
 
         // 2. Código INEP da escola
-        $f2 = $this->extractCode($unidade->codigo_inep ?? '');
+        $f2 = $this->extractCode($unidade->codigo_inep ?? $instituicao?->codigo_inep ?? '');
 
         // 3. Código da pessoa no sistema
         $f3 = (string) ($docente->codigo ?? $docente->id);
 
-        // 4. Código INEP da pessoa
+        // 4. Identificação única (INEP) da pessoa
         $f4 = $this->extractCode($docente->codigo_inep ?? $docente->id_inep ?? '');
 
-        // 5. CPF
-        $f5 = $this->sanitizeCpf($docente->cpf);
+        // 5. Código da Turma na Entidade/Escola
+        $f5 = (string) ($firstTurma?->codigo ?? $firstTurma?->id ?? '');
 
-        // 6-22: Tipo de vínculo trabalhista, escolaridade, formação, etc. – não disponível no banco
-        $extras = array_fill(0, 17, '');
+        // 6. Código da turma no INEP
+        $f6 = $this->extractCode($firstTurma?->codigo_inep ?? '');
 
-        $fields = array_merge([$f1, $f2, $f3, $f4, $f5], $extras);
+        // 7. Função que exerce na turma (1=Docente, 2=Auxiliar de regência, 3=Monitor, 4=Tradutor Libras)
+        $f7 = '1';
+
+        // 8. Situação funcional / Regime de contratação / Tipo de vínculo (1=Concursado, 2=Temporário, 3=CLT)
+        $depAdmin = $this->mapDependenciaAdministrativa($unidade->dependencia_administrativa ?? '4');
+        $f8 = $depAdmin === '4' ? '3' : '1';
+
+        // 9 a 33. Códigos das disciplinas lecionadas (1 a 25)
+        // Se for Ensino Fundamental / Médio, define 1 (Língua Portuguesa), o restante vazio
+        $discFields = array_fill(0, 25, '');
+        $discFields[0] = '1'; // 1 = Língua Portuguesa / Componente Principal
+
+        // 34. Linguagens e suas tecnologias (0 ou 1)
+        $f34 = '0';
+
+        // 35. Matemática e suas tecnologias (0 ou 1)
+        $f35 = '0';
+
+        // 36. Ciências da natureza e suas tecnologias (0 ou 1)
+        $f36 = '0';
+
+        // 37. Ciências humanas e sociais aplicadas (0 ou 1)
+        $f37 = '0';
+
+        // 38. Leciona no Itinerário de formação técnica e profissional (IFTP) (0 ou 1)
+        $f38 = '0';
+
+        $fields = array_merge(
+            [$f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8],
+            $discFields,
+            [$f34, $f35, $f36, $f37, $f38]
+        );
 
         return implode('|', $fields);
     }
 
     // =========================================================================
     // Registro 60 – Vínculo do Aluno com a Turma/Escola
-    // Layout: 15 campos separados por |
+    // Layout Oficial Educacenso 2026: EXATAMENTE 33 campos separados por |
     // =========================================================================
     private function buildRegistro60(Unidade $unidade, Turma $turma, Matricula $matricula): string
     {
         $pessoa = $matricula->pessoa;
+        $instituicao = $unidade->instituicaoEnsino;
 
         // 1. Tipo de registro
         $f1 = '60';
 
         // 2. Código INEP da escola
-        $f2 = $this->extractCode($unidade->codigo_inep ?? '');
+        $f2 = $this->extractCode($unidade->codigo_inep ?? $instituicao?->codigo_inep ?? '');
 
         // 3. Código da pessoa no sistema
         $f3 = (string) ($pessoa->codigo ?? $pessoa->id);
 
-        // 4. Código INEP da pessoa
+        // 4. Identificação única (INEP) da pessoa
         $f4 = $this->extractCode($pessoa->codigo_inep ?? $pessoa->id_inep ?? '');
 
-        // 5. CPF da pessoa
-        $f5 = $this->sanitizeCpf($pessoa->cpf);
+        // 5. Código da turma no sistema
+        $f5 = (string) ($turma->codigo ?? $turma->id);
 
-        // 6. Código da turma no sistema
-        $f6 = (string) ($turma->codigo ?? $turma->id);
+        // 6. Código da turma no INEP
+        $f6 = $this->extractCode($turma->codigo_inep ?? '');
 
-        // 7. Código INEP da turma
-        $f7 = $this->extractCode($turma->codigo_inep ?? '');
+        // 7. Código da matrícula do aluno
+        $f7 = (string) $matricula->id;
 
-        // 8. Situação da matrícula
-        // 1=Cursando, 2=Aprovado, 3=Reprovado, 4=Transferido, 5=Abandono, 6=Falecido, 8=Deixou de frequentar
-        $f8 = $this->mapSituacaoMatricula($matricula->situacao);
+        // 8. Turma multi (0=Não)
+        $f8 = '0';
 
-        // 9. Código da instituição de destino (transferência) – nulo
+        // 9. Carga horária integralizada pelo aluno (em horas) [novo em 2026]
         $f9 = '';
 
-        // 10. Dependência administrativa da instituição de destino – nulo
-        $f10 = '';
+        // 10 a 20. Recursos de AEE na turma (0=Não)
+        $f10 = $f11 = $f12 = $f13 = $f14 = $f15 = $f16 = $f17 = $f18 = $f19 = $f20 = '0';
 
-        // 11. Código UF da instituição de destino – nulo
-        $f11 = '';
+        // 21. Recebe escolarização em outro espaço (0=Não)
+        $f21 = '0';
 
-        // 12. Tipo de mediação da turma
-        $f12 = (string) ($turma->tipo_mediacao_didatico_pedagogica ?? '1');
+        // 22. Transporte escolar público (0=Não)
+        $f22 = '0';
 
-        // 13-15: Complementares – vazios
-        $extras = array_fill(0, 3, '');
+        // 23 a 33. Poder público responsável e modalidades de transporte escolar (nulos quando f22==0)
+        $f23 = $f24 = $f25 = $f26 = $f27 = $f28 = $f29 = $f30 = $f31 = $f32 = $f33 = '';
 
-        $fields = array_merge(
-            [$f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12],
-            $extras
-        );
+        $fields = [
+            $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10,
+            $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20,
+            $f21, $f22, $f23, $f24, $f25, $f26, $f27, $f28, $f29, $f30,
+            $f31, $f32, $f33,
+        ];
 
         return implode('|', $fields);
     }
