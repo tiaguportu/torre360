@@ -383,13 +383,14 @@ class AssinafyService
         Log::info('fileName: '.$fileName);
 
         // Mapeia eventos para status do contrato
-        $status = match ($event) {
-            'document_signed' => 'signed',
-            'document_completed' => 'completed',
+        $eventLower = strtolower((string) $event);
+
+        $status = match ($eventLower) {
+            'document_signed', 'document_completed' => 'signed',
+            'signer_signed_document', 'signer_signed', 'signature_completed' => 'enviado',
             'document_refused' => 'refused',
             'document_ready' => 'ready',
-            'document_uploaded' => 'enviado',
-            'signature_requested' => 'enviado',
+            'document_uploaded', 'signature_requested' => 'enviado',
             default => $event ?? 'unknown'
         };
 
@@ -417,8 +418,11 @@ class AssinafyService
             if ($signerEmail) {
                 $signerEmailClean = strtolower(trim($signerEmail));
                 $signersStatus = $requestLog['signers_status'] ?? [];
+
+                // Se o evento é de um signatário individual assinando, grava como 'signed' para aquele signatário
+                $isSignerSignedEvent = in_array($eventLower, ['signer_signed_document', 'signer_signed', 'document_signed', 'document_completed']);
                 $signersStatus[$signerEmailClean] = [
-                    'status' => in_array($status, ['signed', 'completed']) ? 'signed' : $status,
+                    'status' => $isSignerSignedEvent ? 'signed' : (in_array($status, ['signed', 'completed']) ? 'signed' : $status),
                     'signed_at' => now()->toDateTimeString(),
                 ];
                 $requestLog['signers_status'] = $signersStatus;
@@ -496,11 +500,12 @@ class AssinafyService
                 }
 
                 if ($email) {
+                    $statusValue = strtolower((string) ($s['status'] ?? ''));
                     $isCompleted = ($s['completed'] ?? false) === true
                         || ($s['signed'] ?? false) === true
-                        || in_array(strtolower($s['status'] ?? ''), ['signed', 'completed']);
+                        || in_array($statusValue, ['signed', 'completed', 'signer_signed_document', 'signer_signed']);
 
-                    $isRefused = in_array(strtolower($s['status'] ?? ''), ['refused', 'rejected', 'declined']);
+                    $isRefused = in_array($statusValue, ['refused', 'rejected', 'declined']);
 
                     $sigStatus = $isCompleted ? 'signed' : ($isRefused ? 'refused' : 'pending');
                     $signedAt = $s['signed_at'] ?? $s['completed_at'] ?? null;
