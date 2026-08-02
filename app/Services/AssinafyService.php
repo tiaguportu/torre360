@@ -85,65 +85,72 @@ class AssinafyService
             $nomeAluno = $contrato->matricula?->pessoa?->nome ?? 'Aluno';
             $nomeArquivoBase = "Contrato - Escola Torre de Marfim - {$nomeAluno} - {$contrato->id}.pdf";
 
-            // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API) ---
+            // --- ETAPA A: Verificar se o documento já existe no Assinafy (Consulta API Multi-ambiente) ---
             Notification::make()->title('Consultando Assinafy para evitar duplicidade de documento...')->info()->send();
 
             $documentId = $contrato->assinafy_id;
+            $urlsToTry = $this->getApiUrlsToTry($contrato);
 
-            // Busca por nome do arquivo via API
-            $responseSearchDoc = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->get("{$this->apiUrl}/accounts/{$this->accountId}/documents", [
-                'search' => $nomeArquivoBase,
-            ]);
+            // Busca por nome do arquivo via API nos ambientes disponíveis
+            if (! $documentId) {
+                foreach ($urlsToTry as $url) {
+                    $responseSearchDoc = Http::withHeaders([
+                        'X-Api-Key' => $this->apiKey,
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])->get("{$url}/accounts/{$this->accountId}/documents", [
+                        'search' => $nomeArquivoBase,
+                    ]);
 
-            if ($responseSearchDoc->successful()) {
-                $documents = $responseSearchDoc->json('data') ?? [];
-                foreach ($documents as $doc) {
-                    if (($doc['name'] ?? '') === $nomeArquivoBase || ($doc['original_name'] ?? '') === $nomeArquivoBase) {
-                        $documentId = $doc['id'];
-                        break;
+                    if ($responseSearchDoc->successful()) {
+                        $documents = $responseSearchDoc->json('data') ?? [];
+                        foreach ($documents as $doc) {
+                            if (($doc['name'] ?? '') === $nomeArquivoBase || ($doc['original_name'] ?? '') === $nomeArquivoBase) {
+                                $documentId = $doc['id'];
+                                break 2;
+                            }
+                        }
                     }
                 }
             }
 
             // Se encontramos o documento (seja no banco ou na busca API), tentamos obter a URL
             if ($documentId) {
-                $responseGet = Http::withHeaders([
-                    'X-Api-Key' => $this->apiKey,
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])->get("{$this->apiUrl}/documents/{$documentId}");
+                foreach ($urlsToTry as $url) {
+                    $responseGet = Http::withHeaders([
+                        'X-Api-Key' => $this->apiKey,
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])->get("{$url}/documents/{$documentId}");
 
-                if ($responseGet->successful()) {
-                    $docData = $responseGet->json('data');
-                    $signingUrl = null;
+                    if ($responseGet->successful()) {
+                        $docData = $responseGet->json('data') ?? $responseGet->json();
+                        $signingUrl = null;
 
-                    // Busca o link específico do signatário atual na lista de signing_urls
-                    $signingUrls = $docData['assignment']['signing_urls'] ?? $docData['signing_urls'] ?? [];
-                    $signingUrl = null;
+                        // Busca o link específico do signatário atual na lista de signing_urls
+                        $signingUrls = $docData['assignment']['signing_urls'] ?? $docData['signing_urls'] ?? [];
 
-                    foreach ($signingUrls as $sUrl) {
-                        // Tenta casar pelo e-mail na URL ou pelo signer_id se disponível
-                        if (str_contains(strtolower(urldecode($sUrl['url'] ?? '')), strtolower($emailSignatario))) {
-                            $signingUrl = $sUrl['url'];
-                            break;
-                        }
-                    }
-
-                    // Sem fallback cego aqui. Se o signatário alvo não tiver URL de assinatura correspondente cadastrada no Assinafy,
-                    // deixamos nulo para que o fluxo siga e gere um novo documento com o conjunto completo de signatários corretos.
-
-                    if ($signingUrl) {
-                        Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
-
-                        if ($contrato->assinafy_id !== $documentId) {
-                            $contrato->update(['assinafy_id' => $documentId, 'assinafy_status' => 'enviado']);
+                        foreach ($signingUrls as $sUrl) {
+                            if (str_contains(strtolower(urldecode($sUrl['url'] ?? '')), strtolower($emailSignatario))) {
+                                $signingUrl = $sUrl['url'];
+                                break;
+                            }
                         }
 
-                        return ['success' => true, 'redirect_url' => $signingUrl];
+                        if ($signingUrl) {
+                            Notification::make()->title('Contrato correspondente encontrado no Assinafy. Reaproveitando...')->info()->send();
+
+                            $reqLog = $contrato->assinafy_request_log ?? [];
+                            $reqLog['environment_url'] = $url;
+
+                            $contrato->update([
+                                'assinafy_id' => $documentId,
+                                'assinafy_status' => 'enviado',
+                                'assinafy_request_log' => $reqLog,
+                            ]);
+
+                            return ['success' => true, 'redirect_url' => $signingUrl];
+                        }
                     }
                 }
 
@@ -344,7 +351,7 @@ class AssinafyService
     }
 
     /**
-     * Obtém o conteúdo do documento assinado na Assinafy.
+     * Obtém o conteúdo do documento assinado na Assinafy com fallback multi-ambiente.
      */
     public function baixarDocumentoAssinado(Contrato $contrato): ?Response
     {
@@ -353,15 +360,17 @@ class AssinafyService
                 return null;
             }
 
-            $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}/download/certificated");
+            $urlsToTry = $this->getApiUrlsToTry($contrato);
 
-            if ($response->successful()) {
-                return $response;
+            foreach ($urlsToTry as $url) {
+                $response = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                ])->get("{$url}/documents/{$contrato->assinafy_id}/download/certificated");
+
+                if ($response->successful()) {
+                    return $response;
+                }
             }
-
-            Log::warning("Erro ao baixar documento Assinafy para Contrato #{$contrato->id}: ".$response->body());
 
             return null;
         } catch (\Exception $e) {
@@ -403,9 +412,6 @@ class AssinafyService
         // Fallback: se não achar pelo assinafy_id, tenta extrair ID do nome do arquivo (ex: Contrato - Escola Torre de Marfim - Aluno - 136.pdf)
         if (! $contrato && $fileName && preg_match('/Contrato - Escola Torre de Marfim - .*? - (\d+)\.pdf/i', $fileName, $matches)) {
             $contrato = Contrato::find($matches[1]);
-            if ($contrato && ! $contrato->assinafy_id) {
-                $contrato->update(['assinafy_id' => $idAssinafy]);
-            }
         }
 
         if ($contrato) {
@@ -431,6 +437,7 @@ class AssinafyService
             $requestLog['webhook_last'] = $payload;
 
             $updateData = [
+                'assinafy_id' => $idAssinafy,
                 'assinafy_status' => $status,
                 'assinafy_request_log' => $requestLog,
             ];
@@ -448,7 +455,7 @@ class AssinafyService
     }
 
     /**
-     * Consulta o documento na API da Assinafy e atualiza os status individuais dos signatários no contrato.
+     * Consulta o documento na API da Assinafy e atualiza os status individuais dos signatários no contrato com fallback multi-ambiente.
      */
     public function consultarEAtualizarStatusSignatarios(Contrato $contrato): array
     {
@@ -460,16 +467,30 @@ class AssinafyService
         }
 
         try {
-            $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}");
+            $urlsToTry = $this->getApiUrlsToTry($contrato);
+            $response = null;
+            $usedUrl = null;
 
-            if (! $response->successful()) {
+            foreach ($urlsToTry as $url) {
+                $res = Http::withHeaders([
+                    'X-Api-Key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])->get("{$url}/documents/{$contrato->assinafy_id}");
+
+                if ($res->successful()) {
+                    $response = $res;
+                    $usedUrl = $url;
+                    break;
+                }
+            }
+
+            if (! $response || ! $response->successful()) {
+                $lastErr = $response ? ($response->json('message') ?? $response->body()) : 'Documento não encontrado nos ambientes da Assinafy.';
+
                 return [
                     'success' => false,
-                    'message' => 'Erro ao consultar documento no Assinafy: '.($response->json('message') ?? $response->body()),
+                    'message' => 'Erro ao consultar documento no Assinafy: '.$lastErr,
                 ];
             }
 
@@ -520,6 +541,9 @@ class AssinafyService
             $requestLog = $contrato->assinafy_request_log ?? [];
             $requestLog['signers_status'] = array_merge($requestLog['signers_status'] ?? [], $signersStatus);
             $requestLog['last_check'] = now()->toDateTimeString();
+            if ($usedUrl) {
+                $requestLog['environment_url'] = $usedUrl;
+            }
 
             $updateData = [
                 'assinafy_request_log' => $requestLog,
@@ -547,5 +571,38 @@ class AssinafyService
                 'message' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Retorna a lista de URLs da API Assinafy a serem tentadas (Primária e Fallback entre Produção e Sandbox).
+     */
+    public function getApiUrlsToTry(?Contrato $contrato = null): array
+    {
+        $urls = [];
+
+        // 1. Se o contrato tiver uma URL de ambiente salva no log
+        $savedUrl = $contrato?->assinafy_request_log['environment_url'] ?? null;
+        if (! empty($savedUrl)) {
+            $urls[] = rtrim($savedUrl, '/');
+        }
+
+        // 2. A URL configurada no ambiente atual
+        $configuredUrl = rtrim($this->apiUrl, '/');
+        if (! in_array($configuredUrl, $urls)) {
+            $urls[] = $configuredUrl;
+        }
+
+        // 3. Fallbacks para o outro ambiente (Sandbox vs Produção)
+        $sandBoxUrl = 'https://sandbox.assinafy.com.br/v1';
+        $prodUrl = 'https://api.assinafy.com.br/v1';
+
+        if (! in_array($sandBoxUrl, $urls)) {
+            $urls[] = $sandBoxUrl;
+        }
+        if (! in_array($prodUrl, $urls)) {
+            $urls[] = $prodUrl;
+        }
+
+        return $urls;
     }
 }
