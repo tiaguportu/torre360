@@ -47,9 +47,10 @@ class AlunoForm
                     ),
 
                 TextInput::make('cpf')
+                    ->label('CPF')
                     ->unique('pessoa', ignoreRecord: true)
-                    ->mask('999.999.999-99')
-                    ->maxLength(14),
+                    ->maxLength(11)
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/\D/', '', $state) : null),
 
                 TextInput::make('email')
                     ->email()

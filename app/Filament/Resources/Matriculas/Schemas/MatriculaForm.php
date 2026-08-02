@@ -33,8 +33,10 @@ class MatriculaForm
                             ->required()
                             ->maxLength(255),
                         TextInput::make('cpf')
+                            ->label('CPF')
                             ->unique(ignoreRecord: true)
-                            ->maxLength(14),
+                            ->maxLength(11)
+                            ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/\D/', '', $state) : null),
                         TextInput::make('email')
                             ->email()
                             ->maxLength(255),

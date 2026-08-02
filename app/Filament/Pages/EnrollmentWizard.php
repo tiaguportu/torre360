@@ -87,8 +87,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->columnSpanFull(),
                 TextInput::make('cpf')
                     ->label('CPF')
-                    ->maxLength(14)
-                    ->mask('999.999.999-99')
+                    ->maxLength(11)
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/\D/', '', $state) : null)
                     ->live(onBlur: true)
                     ->afterStateUpdated(function ($set, $state, $component) use ($statePath) {
                         if (empty($state)) {

@@ -66,10 +66,10 @@ class PessoaForm
                     ),
 
                 TextInput::make('cpf')
-                    ->mask('999.999.999-99')
+                    ->label('CPF')
                     ->unique(ignoreRecord: true)
-                    ->maxLength(14)
-                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/[^0-9]/', '', $state) : null),
+                    ->maxLength(11)
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/\D/', '', $state) : null),
 
                 TextInput::make('email')
                     ->email()

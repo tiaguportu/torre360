@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\CorRacaCast;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,13 @@ class Pessoa extends Model
     protected $table = 'pessoa';
 
     protected $guarded = [];
+
+    protected function cpf(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => $value ? (preg_replace('/\D/', '', $value) ?: null) : null,
+        );
+    }
 
     public function users(): BelongsToMany
     {

@@ -70,7 +70,7 @@ class ContratoTest extends TestCase
         $htmlOriginal = 'Nome do aluno: {{ $aluno->nome }} - CPF: {{ $aluno->cpf }}';
         $htmlResult = $service->process($contrato, $htmlOriginal);
 
-        $this->assertStringContainsString('Nome do aluno: Joãozinho da Silva - CPF: 123.456.789-00', $htmlResult);
+        $this->assertStringContainsString('Nome do aluno: Joãozinho da Silva - CPF: 12345678900', $htmlResult);
     }
 
     public function test_template_contrato_suporta_condicionais_e_loops_do_blade(): void
