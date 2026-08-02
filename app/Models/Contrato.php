@@ -150,12 +150,12 @@ class Contrato extends Model
             $status = 'pending';
             $signedAt = null;
 
-            if ($contratoConcluido) {
-                $status = 'signed';
-                $signedAt = $infoAssinatura['signed_at'] ?? $this->data_aceite?->format('Y-m-d H:i:s');
-            } elseif ($infoAssinatura) {
+            if ($infoAssinatura) {
                 $status = $infoAssinatura['status'] ?? 'pending';
                 $signedAt = $infoAssinatura['signed_at'] ?? null;
+            } elseif ($contratoConcluido) {
+                $status = 'signed';
+                $signedAt = $this->data_aceite?->format('Y-m-d H:i:s');
             }
 
             return [
