@@ -474,8 +474,9 @@ class AssinafyService
 
             $signersStatus = [];
 
-            // Tenta obter de 'assignment.signers', 'signers' ou 'assignment.signing_urls'
+            // Tenta obter de 'assignment.signers', 'assignment.summary.signers', 'signers' ou 'assignment.signing_urls'
             $signersList = $docData['assignment']['signers']
+                ?? $docData['assignment']['summary']['signers']
                 ?? $docData['signers']
                 ?? $docData['assignment']['signing_urls']
                 ?? [];
@@ -495,8 +496,14 @@ class AssinafyService
                 }
 
                 if ($email) {
-                    $sigStatus = $s['status'] ?? (isset($s['signed_at']) && $s['signed_at'] ? 'signed' : (isset($s['signed']) && $s['signed'] ? 'signed' : 'pending'));
-                    $signedAt = $s['signed_at'] ?? null;
+                    $isCompleted = ($s['completed'] ?? false) === true
+                        || ($s['signed'] ?? false) === true
+                        || in_array(strtolower($s['status'] ?? ''), ['signed', 'completed']);
+
+                    $isRefused = in_array(strtolower($s['status'] ?? ''), ['refused', 'rejected', 'declined']);
+
+                    $sigStatus = $isCompleted ? 'signed' : ($isRefused ? 'refused' : 'pending');
+                    $signedAt = $s['signed_at'] ?? $s['completed_at'] ?? null;
 
                     $signersStatus[$email] = [
                         'status' => $sigStatus,
