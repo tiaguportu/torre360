@@ -408,18 +408,132 @@ class AssinafyService
         }
 
         if ($contrato) {
-            $contrato->update([
+            $requestLog = $contrato->assinafy_request_log ?? [];
+            $signerEmail = $payload['object']['signer']['email']
+                ?? $payload['signer']['email']
+                ?? $payload['email']
+                ?? null;
+
+            if ($signerEmail) {
+                $signerEmailClean = strtolower(trim($signerEmail));
+                $signersStatus = $requestLog['signers_status'] ?? [];
+                $signersStatus[$signerEmailClean] = [
+                    'status' => in_array($status, ['signed', 'completed']) ? 'signed' : $status,
+                    'signed_at' => now()->toDateTimeString(),
+                ];
+                $requestLog['signers_status'] = $signersStatus;
+            }
+
+            $requestLog['webhook_last'] = $payload;
+
+            $updateData = [
                 'assinafy_status' => $status,
-                'assinafy_request_log' => array_merge($contrato->assinafy_request_log ?? [], ['webhook_last' => $payload]),
-            ]);
+                'assinafy_request_log' => $requestLog,
+            ];
 
             if ($status === 'signed' || $status === 'completed') {
-                $contrato->update(['data_aceite' => now()]);
+                $updateData['data_aceite'] = now();
             }
+
+            $contrato->update($updateData);
 
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Consulta o documento na API da Assinafy e atualiza os status individuais dos signatários no contrato.
+     */
+    public function consultarEAtualizarStatusSignatarios(Contrato $contrato): array
+    {
+        if (empty($this->apiKey) || ! $contrato->assinafy_id) {
+            return [
+                'success' => false,
+                'message' => 'Contrato ainda não possui documento gerado na Assinafy ou API key não configurada.',
+            ];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-Api-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->get("{$this->apiUrl}/documents/{$contrato->assinafy_id}");
+
+            if (! $response->successful()) {
+                return [
+                    'success' => false,
+                    'message' => 'Erro ao consultar documento no Assinafy: '.($response->json('message') ?? $response->body()),
+                ];
+            }
+
+            $docData = $response->json('data') ?? $response->json();
+            $docStatus = $docData['status'] ?? $contrato->assinafy_status;
+
+            $signersStatus = [];
+
+            // Tenta obter de 'assignment.signers', 'signers' ou 'assignment.signing_urls'
+            $signersList = $docData['assignment']['signers']
+                ?? $docData['signers']
+                ?? $docData['assignment']['signing_urls']
+                ?? [];
+
+            foreach ($signersList as $s) {
+                $email = null;
+                if (! empty($s['email'])) {
+                    $email = strtolower(trim($s['email']));
+                } elseif (! empty($s['url'])) {
+                    $parsedUrl = parse_url($s['url']);
+                    if (isset($parsedUrl['query'])) {
+                        parse_str($parsedUrl['query'], $queryVars);
+                        if (! empty($queryVars['email'])) {
+                            $email = strtolower(trim($queryVars['email']));
+                        }
+                    }
+                }
+
+                if ($email) {
+                    $sigStatus = $s['status'] ?? (isset($s['signed_at']) && $s['signed_at'] ? 'signed' : (isset($s['signed']) && $s['signed'] ? 'signed' : 'pending'));
+                    $signedAt = $s['signed_at'] ?? null;
+
+                    $signersStatus[$email] = [
+                        'status' => $sigStatus,
+                        'signed_at' => $signedAt,
+                    ];
+                }
+            }
+
+            $requestLog = $contrato->assinafy_request_log ?? [];
+            $requestLog['signers_status'] = array_merge($requestLog['signers_status'] ?? [], $signersStatus);
+            $requestLog['last_check'] = now()->toDateTimeString();
+
+            $updateData = [
+                'assinafy_request_log' => $requestLog,
+            ];
+
+            if ($docStatus === 'signed' || $docStatus === 'completed') {
+                $updateData['assinafy_status'] = $docStatus;
+                if (! $contrato->data_aceite) {
+                    $updateData['data_aceite'] = now();
+                }
+            }
+
+            $contrato->update($updateData);
+
+            return [
+                'success' => true,
+                'status' => $docStatus,
+                'signers' => $signersStatus,
+            ];
+        } catch (\Exception $e) {
+            Log::error("Exceção ao consultar status Assinafy para Contrato #{$contrato->id}: ".$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }

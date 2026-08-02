@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Contratos\Pages\ListContratos;
+use App\Filament\Resources\Contratos\Tables\ContratosTable;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Models\Contrato;
 use App\Models\Curso;
@@ -17,6 +19,7 @@ use App\Models\Unidade;
 use App\Models\User;
 use App\Services\AssinafyService;
 use App\Services\ContractTemplateService;
+use Filament\Tables\Table;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -554,5 +557,109 @@ class ContratoTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('https://sandbox.assinafy.com.br/sign/123', $result['redirect_url']);
+    }
+
+    public function test_tabela_contratos_acao_assinar_contrato_redireciona_para_url_assinafy(): void
+    {
+        Http::fake([
+            '*/accounts/*/documents' => Http::response(['data' => []], 200),
+            '*/documents' => Http::response(['id' => 'doc_999', 'data' => ['id' => 'doc_999']], 200),
+            '*/accounts/*/signers' => Http::response(['data' => [['id' => 'sig_999', 'email' => 'aluno@example.com']]], 200),
+            '*/documents/*/assignments' => Http::response([
+                'signing_urls' => [
+                    ['signer_id' => 'sig_999', 'url' => 'https://sandbox.assinafy.com.br/sign/999'],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $contrato = Contrato::create([
+            'valor_total' => 3000.00,
+            'matricula_id' => $matricula->id,
+            'assinafy_status' => 'pending',
+        ]);
+
+        $contrato->responsaveisFinanceiros()->create([
+            'pessoa_id' => $aluno->id,
+            'percentual' => 100,
+        ]);
+
+        $table = ContratosTable::configure(Table::make(new ListContratos));
+        $action = $table->getAction('visualizar_contrato');
+
+        $this->assertNotNull($action);
+        $this->assertEquals('Assinar Contrato', $action->getLabel($contrato));
+
+        $assinafyService = app(AssinafyService::class);
+        $result = $assinafyService->enviarContrato($contrato);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('https://sandbox.assinafy.com.br/sign/999', $result['redirect_url']);
+    }
+
+    public function test_get_status_signatarios_retorna_status_individual_dos_signatarios(): void
+    {
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste', 'email' => 'aluno@example.com']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 4000.00,
+            'matricula_id' => $matricula->id,
+            'assinafy_status' => 'pending',
+            'assinafy_request_log' => [
+                'signers_status' => [
+                    'aluno@example.com' => [
+                        'status' => 'signed',
+                        'signed_at' => '2026-08-01 10:00:00',
+                    ],
+                ],
+            ],
+        ]);
+
+        $statusSignatarios = $contrato->getStatusSignatarios();
+
+        $this->assertNotEmpty($statusSignatarios);
+        $this->assertEquals('signed', $statusSignatarios->first()['status']);
+    }
+
+    public function test_consultar_e_atualizar_status_signatarios_no_assinafy_service(): void
+    {
+        Http::fake([
+            '*/documents/doc_12345' => Http::response([
+                'data' => [
+                    'id' => 'doc_12345',
+                    'status' => 'pending',
+                    'signers' => [
+                        [
+                            'email' => 'pai@example.com',
+                            'status' => 'signed',
+                            'signed_at' => '2026-08-01 12:00:00',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste', 'email' => 'pai@example.com']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 4000.00,
+            'matricula_id' => $matricula->id,
+            'assinafy_id' => 'doc_12345',
+            'assinafy_status' => 'pending',
+        ]);
+
+        $service = new AssinafyService;
+        $result = $service->consultarEAtualizarStatusSignatarios($contrato);
+
+        $this->assertTrue($result['success']);
+        $contrato->refresh();
+
+        $this->assertEquals('signed', $contrato->assinafy_request_log['signers_status']['pai@example.com']['status']);
     }
 }

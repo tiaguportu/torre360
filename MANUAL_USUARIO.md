@@ -1242,6 +1242,13 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `{{!! $assinaturaResponsavelFinanceiro !!}}`: Insere a linha de assinatura específica do Responsável Financeiro (configuração: `template_contrato_assinatura_responsavel_financeiro`).
     - `{{!! $assinaturaResponsavelLegalUnidade !!}}`: Insere a linha de assinatura do Representante Legal da Unidade de Ensino (configuração: `template_contrato_assinatura_responsavel_legal_unidade`).
 
+### 23.2 Gestão de Contratos e Assinatura Digital (`/admin/contratos`)
+Acesse **Financeiro → Contratos**.
+- **Status por Signatário:** A coluna **Signatários e Status** na tabela de contratos exibe o estado individual de cada pessoa responsável pela assinatura (ex: Pai, Mãe, Responsável Financeiro). É possível visualizar de forma clara quem já assinou (🟢 *Assinado*) e quem ainda falta assinar (🟡 *Pendente*).
+- **Sincronização em Tempo Real:** Ao clicar no botão **Sincronizar Assinaturas** (ícone de recarga), o sistema realiza a consulta síncrona na API do Assinafy e atualiza instantaneamente a lista de quem já assinou o contrato no painel.
+- **Assinatura Digital (Assinafy):** Na tabela de contratos, ao clicar em **Assinar Contrato** para um contrato que esteja pendente de assinatura, o sistema realiza a comunicação direta com a plataforma **Assinafy** e encaminha o usuário diretamente para a URL de assinatura do documento (ex: `https://app.assinafy.com.br/release/...`).
+- **Visualização de Contrato Assinado:** Quando o status do contrato for "Assinado", a ação na tabela se altera para **Ver Contrato Assinado**, permitindo a visualização da versão concluída ou o download do arquivo PDF com o certificado de assinatura digital.
+
 ---
 
 ## 🏫 24. Gestão de Instituições de Ensino e Unidades Escolares

@@ -133,4 +133,37 @@ class Contrato extends Model
             ->unique('email')
             ->values();
     }
+
+    /**
+     * Retorna a lista de signatários com seus respetivos status individuais de assinatura.
+     */
+    public function getStatusSignatarios(): Collection
+    {
+        $signatarios = $this->getSignatarios();
+        $logStatus = $this->assinafy_request_log['signers_status'] ?? [];
+        $contratoConcluido = in_array($this->assinafy_status, ['signed', 'completed']);
+
+        return $signatarios->map(function ($sig) use ($logStatus, $contratoConcluido) {
+            $email = strtolower(trim($sig['email'] ?? ''));
+            $infoAssinatura = $logStatus[$email] ?? null;
+
+            $status = 'pending';
+            $signedAt = null;
+
+            if ($contratoConcluido) {
+                $status = 'signed';
+                $signedAt = $infoAssinatura['signed_at'] ?? $this->data_aceite?->format('Y-m-d H:i:s');
+            } elseif ($infoAssinatura) {
+                $status = $infoAssinatura['status'] ?? 'pending';
+                $signedAt = $infoAssinatura['signed_at'] ?? null;
+            }
+
+            return [
+                'nome' => $sig['nome'],
+                'email' => $sig['email'],
+                'status' => $status,
+                'signed_at' => $signedAt,
+            ];
+        });
+    }
 }
