@@ -11,6 +11,15 @@ class CreateContrato extends CreateRecord
 {
     protected static string $resource = ContratoResource::class;
 
+    protected function getCreateFormAction(): Action
+    {
+        return parent::getCreateFormAction()
+            ->requiresConfirmation()
+            ->modalHeading('Confirmar Criação de Contrato')
+            ->modalDescription('Deseja realmente salvar este novo contrato?')
+            ->modalSubmitActionLabel('Sim, salvar');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

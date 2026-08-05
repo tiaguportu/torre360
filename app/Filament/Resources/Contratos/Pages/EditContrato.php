@@ -202,6 +202,12 @@ class EditContrato extends EditRecord
                 ->modalHeading('Confirmar Alteração de Contrato Enviado')
                 ->modalDescription('Atenção: Este contrato já foi enviado para a plataforma Assinafy. Ao salvar as alterações, as informações e assinaturas anteriores serão resetadas, sendo necessário submeter o contrato novamente para assinatura digital. Deseja continuar?')
                 ->modalSubmitActionLabel('Sim, alterar e resetar assinatura');
+        } else {
+            $action
+                ->requiresConfirmation()
+                ->modalHeading('Confirmar Salvar Alterações')
+                ->modalDescription('Deseja realmente salvar as alterações efetuadas neste contrato?')
+                ->modalSubmitActionLabel('Sim, salvar');
         }
 
         return $action;

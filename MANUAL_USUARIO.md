@@ -315,6 +315,11 @@ Para facilitar a gestão em larga escala, o sistema permite exportar e importar 
    - **Novo Contrato:** Caso o ID seja omitido ou não corresponda a nenhum registro no sistema, um novo contrato será criado.
    - **Resolução de Chaves Estrangeiras:** O importador associa automaticamente o contrato à matrícula do aluno e ao modelo do contrato. Caso os códigos de ID (`matricula_id` ou `template_contrato_id`) não sejam informados, mas o nome do aluno (`matricula_aluno_nome`) ou o nome do modelo (`template_contrato_nome`) estejam presentes, o sistema resolverá as relações buscando os registros correspondentes de forma transparente.
 
+#### 🛡️ Confirmação ao Salvar e Criar Contratos
+Ao criar um novo contrato ou salvar as alterações em um contrato existente, o sistema exibirá obrigatoriamente um **modal de confirmação**. 
+- Se o contrato já foi enviado para a plataforma de assinatura digital (Assinafy), o modal informará que salvar as alterações limpará os dados da assinatura anterior, exigindo uma nova submissão.
+- Para novos contratos ou contratos não submetidos, o modal solicitará a confirmação simples antes de efetivar o salvamento.
+
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
 1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
