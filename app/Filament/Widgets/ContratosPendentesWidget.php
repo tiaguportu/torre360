@@ -24,17 +24,40 @@ class ContratosPendentesWidget extends Widget
             return collect();
         }
 
-        $emails = collect([$user->email]);
-        $pessoa = $user->pessoa;
-        if ($pessoa && ! empty($pessoa->email)) {
-            $emails->push($pessoa->email);
+        // Buscar Pessoas associadas ao usuário logado
+        $pessoas = $user->pessoas;
+        $pessoasIds = $pessoas->pluck('id')->filter()->toArray();
+
+        if (empty($pessoasIds)) {
+            return collect();
         }
 
-        $emailsClean = $emails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
+        // Coletar e-mails do usuário e de suas pessoas associadas
+        $userEmails = collect([$user->email]);
+        foreach ($pessoas as $p) {
+            if (! empty($p->email)) {
+                $userEmails->push($p->email);
+            }
+        }
+        $emailsClean = $userEmails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
 
         return Contrato::query()
             ->with(['matricula.pessoa', 'matricula.turma.serie'])
             ->whereNotIn('assinafy_status', ['signed', 'completed'])
+            ->where(function ($query) use ($pessoasIds) {
+                $query->whereHas('matricula', function ($qMat) use ($pessoasIds) {
+                    $qMat->whereIn('pessoa_id', $pessoasIds)
+                        ->orWhereHas('pessoa.responsaveis', function ($qResp) use ($pessoasIds) {
+                            $qResp->whereIn('responsavel_id', $pessoasIds);
+                        });
+                })
+                ->orWhereHas('responsaveisFinanceiros', function ($qRF) use ($pessoasIds) {
+                    $qRF->whereIn('pessoa_id', $pessoasIds);
+                })
+                ->orWhereHas('matricula.turma.serie.curso.unidade.representantesLegais', function ($qRep) use ($pessoasIds) {
+                    $qRep->whereIn('pessoa_id', $pessoasIds);
+                });
+            })
             ->latest()
             ->get()
             ->filter(function (Contrato $contrato) use ($emailsClean) {
