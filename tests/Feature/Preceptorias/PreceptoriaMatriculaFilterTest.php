@@ -49,10 +49,10 @@ class PreceptoriaMatriculaFilterTest extends TestCase
         $outraMatricula = Matricula::factory()->create(['pessoa_id' => $outroAluno->id]);
 
         // Preceptorias
-        $preceptoriaAluno1 = Preceptoria::factory()->create(['matricula_id' => $matricula1->id]);
-        $preceptoriaAluno2 = Preceptoria::factory()->create(['matricula_id' => $matricula2->id]);
-        $preceptoriaOutroAluno = Preceptoria::factory()->create(['matricula_id' => $outraMatricula->id]);
-        $preceptoriaSlotVago = Preceptoria::factory()->create(['matricula_id' => null]);
+        $preceptoriaAluno1 = Preceptoria::factory()->create(['matricula_id' => $matricula1->id, 'data' => now()->toDateString(), 'hora_inicio' => '14:00:00']);
+        $preceptoriaAluno2 = Preceptoria::factory()->create(['matricula_id' => $matricula2->id, 'data' => now()->toDateString(), 'hora_inicio' => '14:30:00']);
+        $preceptoriaOutroAluno = Preceptoria::factory()->create(['matricula_id' => $outraMatricula->id, 'data' => now()->toDateString(), 'hora_inicio' => '15:00:00']);
+        $preceptoriaSlotVago = Preceptoria::factory()->create(['matricula_id' => null, 'data' => now()->toDateString(), 'hora_inicio' => '15:30:00']);
 
         session(['active_role' => 'responsavel']);
 
