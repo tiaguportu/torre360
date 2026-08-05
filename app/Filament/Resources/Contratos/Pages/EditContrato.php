@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contratos\Pages;
 
 use App\Filament\Resources\Contratos\ContratoResource;
+use App\Models\Contrato;
 use App\Models\Fatura;
 use App\Models\ItemFatura;
 use Carbon\Carbon;
@@ -156,6 +157,15 @@ class EditContrato extends EditRecord
                         )
                         ->success()
                         ->send();
+
+                    if ($contrato->jaEnviadoAssinafy()) {
+                        $contrato->resetAssinafyState();
+                        Notification::make()
+                            ->title('Assinatura Resetada')
+                            ->body('Como as faturas foram regeradas, os registros anteriores de assinatura no Assinafy foram limpos.')
+                            ->warning()
+                            ->send();
+                    }
                 }),
 
             Action::make('visualizarContrato')
@@ -180,6 +190,37 @@ class EditContrato extends EditRecord
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar'),
         ];
+    }
+
+    protected function getSaveFormAction(): Action
+    {
+        $action = parent::getSaveFormAction();
+
+        if ($this->getRecord()?->jaEnviadoAssinafy()) {
+            $action
+                ->requiresConfirmation()
+                ->modalHeading('Confirmar Alteração de Contrato Enviado')
+                ->modalDescription('Atenção: Este contrato já foi enviado para a plataforma Assinafy. Ao salvar as alterações, as informações e assinaturas anteriores serão resetadas, sendo necessário submeter o contrato novamente para assinatura digital. Deseja continuar?')
+                ->modalSubmitActionLabel('Sim, alterar e resetar assinatura');
+        }
+
+        return $action;
+    }
+
+    protected function beforeSave(): void
+    {
+        /** @var Contrato $contrato */
+        $contrato = $this->getRecord();
+
+        if ($contrato->jaEnviadoAssinafy()) {
+            $contrato->resetAssinafyState();
+
+            Notification::make()
+                ->title('Assinatura do Assinafy Resetada')
+                ->body('Como o contrato foi modificado, as informações anteriores de assinatura foram limpas. Um novo envio poderá ser realizado ao visualizar o contrato.')
+                ->warning()
+                ->send();
+        }
     }
 
     private function getHelpContent(): string

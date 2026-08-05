@@ -27,6 +27,43 @@ class ContratoResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
+    public static function getNavigationBadge(): ?string
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        $emails = collect([$user->email]);
+        $pessoa = $user->pessoa;
+        if ($pessoa && ! empty($pessoa->email)) {
+            $emails->push($pessoa->email);
+        }
+
+        $emailsClean = $emails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
+
+        $count = static::getModel()::query()
+            ->whereNotIn('assinafy_status', ['signed', 'completed'])
+            ->get()
+            ->filter(function (Contrato $contrato) use ($emailsClean) {
+                $statusSignatarios = $contrato->getStatusSignatarios();
+
+                return $statusSignatarios->contains(function ($sig) use ($emailsClean) {
+                    $sigEmail = strtolower(trim($sig['email'] ?? ''));
+
+                    return $emailsClean->contains($sigEmail) && ($sig['status'] ?? 'pending') === 'pending';
+                });
+            })
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ContratoForm::configure($schema);

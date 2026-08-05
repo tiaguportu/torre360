@@ -204,4 +204,28 @@ class Contrato extends Model
             ];
         });
     }
+
+    /**
+     * Verifica se o contrato já possui registro de envio ou assinatura no Assinafy.
+     */
+    public function jaEnviadoAssinafy(): bool
+    {
+        return ! empty($this->assinafy_id) || ! empty($this->assinafy_request_log);
+    }
+
+    /**
+     * Reseta as informações de envio e assinaturas do Assinafy no contrato,
+     * permitindo que um novo envio para assinatura seja realizado.
+     */
+    public function resetAssinafyState(): void
+    {
+        if ($this->jaEnviadoAssinafy()) {
+            $this->update([
+                'assinafy_id' => null,
+                'assinafy_status' => 'pending',
+                'assinafy_request_log' => null,
+                'data_aceite' => null,
+            ]);
+        }
+    }
 }

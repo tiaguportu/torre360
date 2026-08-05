@@ -25,8 +25,11 @@ class FaturasTable
                 TextColumn::make('vencimento')
                     ->date()
                     ->sortable(),
+                TextColumn::make('valor_bruto')
+                    ->label('Valor Total (Sem Desconto)')
+                    ->money('BRL'),
                 TextColumn::make('valor')
-                    ->label('Valor Total')
+                    ->label('Valor Com Desconto')
                     ->money('BRL'),
                 TextColumn::make('valor_pago')
                     ->label('Total Pago')
