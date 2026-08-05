@@ -14,7 +14,7 @@ class PreceptoriaPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:Preceptoria');
+        return $authUser->can('ViewAny:Preceptoria') || $authUser->can('Agendar:Preceptoria');
     }
 
     public function view(AuthUser $authUser, Preceptoria $preceptoria): bool
