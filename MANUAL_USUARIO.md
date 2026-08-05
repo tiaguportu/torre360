@@ -1298,6 +1298,19 @@ Acesse **Localização e Cadastros → Unidades**.
   - **Dependência administrativa:** 1-Federal, 2-Estadual, 3-Municipal ou 4-Privada.
 - **Ajuda Integrada:** Botão de ajuda no cabeçalho com orientações sobre preenchimento e permissões registradas no Shield.
 
+
+---
+
+## 📄 25. Preceptorias e Agendamento (`/admin/preceptorias`)
+
+O módulo de **Preceptorias** permite o cadastro, acompanhamento e agendamento de atendimentos de preceptoria para os alunos.
+
+### 25.1 Controle de Permissões via Filament Shield
+O acesso e as ações do módulo de Preceptorias são totalmente configuráveis através do **Filament Shield** (em **Gerenciamento de Acesso → Shield / Roles**):
+- **Visualização (`ViewAny:Preceptoria` / `View:Preceptoria`):** Permite visualizar a listagem e os detalhes dos atendimentos.
+- **Criação e Edição (`Create:Preceptoria` / `Update:Preceptoria`):** Permite cadastrar novos horários e gerenciar a agenda dos preceptores.
+- **Agendamento (`Agendar:Preceptoria`):** Controla quem pode acessar a rota `/admin/preceptorias/agendar` e utilizar o formulário simplificado de agendamento de horários para dependentes/alunos. Sem esta permissão atribuída à função do usuário no Shield, o acesso ao caminho `admin/preceptorias/agendar` é bloqueado com erro 403 Forbidden.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.

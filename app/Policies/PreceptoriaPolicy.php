@@ -72,7 +72,7 @@ class PreceptoriaPolicy
         return $authUser->can('Reorder:Preceptoria');
     }
 
-    public function agendar(AuthUser $authUser, Preceptoria $preceptoria): bool
+    public function agendar(AuthUser $authUser, ?Preceptoria $preceptoria = null): bool
     {
         return $authUser->can('Agendar:Preceptoria');
     }

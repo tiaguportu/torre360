@@ -34,6 +34,11 @@ class AgendarPreceptoria extends Page implements HasForms
 
     protected static ?string $title = 'Agendar Preceptoria';
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return auth()->user()?->can('Agendar:Preceptoria') ?? false;
+    }
+
     public ?array $data = [];
 
     public function mount(): void
