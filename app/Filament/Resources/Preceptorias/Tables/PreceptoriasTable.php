@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Preceptorias\Tables;
 
+use App\Models\Matricula;
 use App\Models\Preceptoria;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -86,6 +87,34 @@ class PreceptoriasTable
                             fn ($q) => $q->whereIn('id', auth()->user()?->pessoas->pluck('id'))
                         )
                         ->orderBy('nome')
+                    )
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('matricula')
+                    ->label('Matrícula / Aluno')
+                    ->relationship(
+                        'matricula',
+                        'id',
+                        function (Builder $query) {
+                            $user = auth()->user();
+                            $activeRole = session('active_role');
+
+                            if ($activeRole === 'responsavel' && $user?->pessoa) {
+                                $alunoIds = $user->pessoa->alunos()->pluck('aluno_id')->toArray();
+
+                                return $query->whereIn('pessoa_id', $alunoIds);
+                            }
+
+                            if ($activeRole === 'aluno' && $user?->pessoa) {
+                                return $query->where('pessoa_id', $user->pessoa->id);
+                            }
+
+                            return $query;
+                        }
+                    )
+                    ->getOptionLabelFromRecordUsing(
+                        fn (Matricula $record) => $record->label_exibicao
                     )
                     ->searchable()
                     ->preload(),
