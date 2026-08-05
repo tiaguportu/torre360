@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Preceptorias\Schemas;
 
 use App\Models\Matricula;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
@@ -26,12 +27,6 @@ class PreceptoriaForm
                             ->preload()
                             ->required(),
 
-                        DatePicker::make('data')
-                            ->label('Data')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y'),
-
                         TimePicker::make('hora_inicio')
                             ->label('Hora Início')
                             ->required()
@@ -41,6 +36,28 @@ class PreceptoriaForm
                             ->label('Hora Fim')
                             ->seconds(false)
                             ->nullable(),
+
+                        DatePicker::make('data')
+                            ->label('Data')
+                            ->required()
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->visible(fn (string $operation) => $operation !== 'create'),
+
+                        Repeater::make('datas')
+                            ->label('Datas das Preceptorias')
+                            ->simple(
+                                DatePicker::make('data')
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('d/m/Y')
+                            )
+                            ->addActionLabel('Adicionar outra data')
+                            ->default([now()->format('Y-m-d')])
+                            ->minItems(1)
+                            ->required()
+                            ->visible(fn (string $operation) => $operation === 'create')
+                            ->columnSpanFull(),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),

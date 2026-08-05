@@ -328,6 +328,14 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 2. Ao clicar no botão, o sistema solicitará confirmação, exibirá a **data e hora do último envio realizado** (se houver) e listará os e-mails do aluno e responsáveis que receberão o alerta.
 3. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.
 
+### 6.5.1 Cadastro e Criação de Preceptorias em Lote (Múltiplas Datas)
+1. Vá em **Preceptoria → Preceptorias** e clique em **Criar Preceptoria** (`/admin/preceptorias/create`).
+2. No formulário de criação, selecione o **Ciclo de Preceptoria**, a **Hora Início**, a **Hora Fim**, o **Professor** responsável e, opcionalmente, a **Matrícula / Aluno**.
+3. **Seleção de Múltiplas Datas:** Na seção de datas, o sistema permite selecionar um ou vários dias para o cadastro.
+   - Clique em **"Adicionar outra data"** para incluir quantas datas desejar.
+   - Ao salvar, o sistema criará automaticamente uma instância de preceptoria separada para cada dia adicionado.
+4. **Ajuda Integrada:** Em todas as páginas da gestão de preceptorias (Listagem, Cadastro, Edição e Agendamento), utilize o botão de **Ajuda** no cabeçalho para obter orientações específicas da tela.
+
 ### 6.2 Gestão de Documentos
 1. Cada Matrícula possui uma lista de documentos necessários (RG, CPF, Histórico Escolar).
 2. Vá na aba **Documentos** da matrícula para fazer o upload dos arquivos.
