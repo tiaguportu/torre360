@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\CronogramaAula;
 use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 
 class FrequenciaPendenteWidget extends Widget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = -4;
 
     protected string $view = 'filament.widgets.frequencia-pendente';
@@ -49,10 +52,22 @@ class FrequenciaPendenteWidget extends Widget
                 (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
             ');
 
-        // Se o usuário logado for professor, filtra apenas pelas aulas dele
-        $pessoaId = $user->pessoa?->id;
-        if ($user->hasRole('professor') && $pessoaId) {
-            $query->where('pessoa_id', $pessoaId);
+        // Se o usuário logado possui a role/papel ativo de professor, filtra apenas pelas aulas associadas a ele
+        $isProfessor = $user->hasRole('professor')
+            || session('active_role') === 'professor'
+            || $user->active_role === 'professor';
+
+        if ($isProfessor) {
+            $pessoasIds = array_filter(array_merge(
+                [$user->pessoa?->id],
+                $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []
+            ));
+
+            if (! empty($pessoasIds)) {
+                $query->whereIn('pessoa_id', $pessoasIds);
+            } else {
+                return collect();
+            }
         }
 
         $cronogramas = $query->orderBy('data', 'desc')
@@ -78,9 +93,21 @@ class FrequenciaPendenteWidget extends Widget
                 (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
             ');
 
-        $pessoaId = $user?->pessoa?->id;
-        if ($user?->hasRole('professor') && $pessoaId) {
-            $query->where('pessoa_id', $pessoaId);
+        $isProfessor = $user?->hasRole('professor')
+            || session('active_role') === 'professor'
+            || $user?->active_role === 'professor';
+
+        if ($isProfessor && $user) {
+            $pessoasIds = array_filter(array_merge(
+                [$user->pessoa?->id],
+                $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []
+            ));
+
+            if (! empty($pessoasIds)) {
+                $query->whereIn('pessoa_id', $pessoasIds);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         $cronogramas = $query->get();
@@ -234,6 +261,10 @@ class FrequenciaPendenteWidget extends Widget
     {
         $user = Auth::user();
         if (! $user) {
+            return false;
+        }
+
+        if (static::hasShield() && ! static::getPermissionDefined()) {
             return false;
         }
 

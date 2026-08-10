@@ -11,6 +11,7 @@ use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class FrequenciaPendenteWidgetTest extends TestCase
@@ -27,7 +28,7 @@ class FrequenciaPendenteWidgetTest extends TestCase
 
         $turma = Turma::factory()->create();
         $aluno = Pessoa::factory()->create();
-        $matricula = Matricula::factory()->create([
+        Matricula::factory()->create([
             'turma_id' => $turma->id,
             'pessoa_id' => $aluno->id,
         ]);
@@ -35,14 +36,14 @@ class FrequenciaPendenteWidgetTest extends TestCase
         $disciplina = Disciplina::factory()->create();
 
         // Cronograma Passado (pendente)
-        $caPassado = CronogramaAula::factory()->create([
+        CronogramaAula::factory()->create([
             'turma_id' => $turma->id,
             'disciplina_id' => $disciplina->id,
             'data' => now()->subDays(2)->format('Y-m-d'),
         ]);
 
         // Cronograma Futuro (não deve ser incluído)
-        $caFuturo = CronogramaAula::factory()->create([
+        CronogramaAula::factory()->create([
             'turma_id' => $turma->id,
             'disciplina_id' => $disciplina->id,
             'data' => now()->addDays(2)->format('Y-m-d'),
@@ -54,6 +55,58 @@ class FrequenciaPendenteWidgetTest extends TestCase
 
         $this->assertTrue($pendencias->has(now()->subDays(2)->format('Y-m-d')));
         $this->assertFalse($pendencias->has(now()->addDays(2)->format('Y-m-d')));
+    }
+
+    public function test_professor_so_visualiza_suas_proprias_pendencias(): void
+    {
+        Role::firstOrCreate(['name' => 'professor']);
+
+        $profPessoa1 = Pessoa::factory()->create(['nome' => 'Professor Um']);
+        $profUser1 = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'email_verified_at' => now(),
+        ]);
+        $profUser1->pessoas()->attach($profPessoa1->id);
+        $profUser1->assignRole('professor');
+
+        $profPessoa2 = Pessoa::factory()->create(['nome' => 'Professor Dois']);
+
+        $turma = Turma::factory()->create();
+        $aluno = Pessoa::factory()->create();
+        Matricula::factory()->create([
+            'turma_id' => $turma->id,
+            'pessoa_id' => $aluno->id,
+        ]);
+        $disciplina = Disciplina::factory()->create();
+
+        $dataHoje = now()->toDateString();
+
+        // Aula do Prof 1
+        $caProf1 = CronogramaAula::factory()->create([
+            'turma_id' => $turma->id,
+            'disciplina_id' => $disciplina->id,
+            'pessoa_id' => $profPessoa1->id,
+            'data' => $dataHoje,
+        ]);
+
+        // Aula do Prof 2
+        CronogramaAula::factory()->create([
+            'turma_id' => $turma->id,
+            'disciplina_id' => $disciplina->id,
+            'pessoa_id' => $profPessoa2->id,
+            'data' => $dataHoje,
+        ]);
+
+        $this->actingAs($profUser1);
+
+        $testable = Livewire::test(FrequenciaPendenteWidget::class);
+        $pendencias = $testable->instance()->getPendenciasAgrupadas();
+
+        $this->assertTrue($pendencias->has($dataHoje));
+        $aulasDoDia = $pendencias->get($dataHoje);
+
+        $this->assertCount(1, $aulasDoDia);
+        $this->assertEquals($caProf1->id, $aulasDoDia->first()->id);
     }
 
     public function test_lancamento_em_lote_do_dia_salva_frequencias_com_sucesso(): void
