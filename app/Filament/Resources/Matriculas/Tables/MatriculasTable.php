@@ -651,6 +651,109 @@ class MatriculasTable
                                     ->send();
                             }
                         }),
+                    BulkAction::make('enviar_avisos_preceptoria_lote')
+                        ->label('Avisar Preceptoria em Lote')
+                        ->icon(Heroicon::OutlinedCalendarDays)
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Confirmar Envio de Avisos de Preceptoria em Lote')
+                        ->modalDescription('Esta ação enviará avisos de disponibilidade de horários para agendamento de preceptoria para todas as matrículas selecionadas que ainda não possuem preceptoria agendada nos ciclos vigentes.')
+                        ->visible(fn () => auth()->user()->can('AvisarPossibilidadePreceptoria:Matricula') || auth()->user()->can('avisarPossibilidadePreceptoria:Matricula'))
+                        ->action(function (Collection $records) {
+                            $totalSent = 0;
+                            $countMatriculasNotificadas = 0;
+                            $countMatriculasJaAgendadas = 0;
+                            $countMatriculasSemJanelas = 0;
+                            $countMatriculasSemEmail = 0;
+                            $todasFalhas = [];
+
+                            foreach ($records as $record) {
+                                if ($record->hasPreceptoriaInActiveCycles()) {
+                                    $countMatriculasJaAgendadas++;
+
+                                    continue;
+                                }
+
+                                if (! $record->hasAvailablePreceptoriaWindows()) {
+                                    $countMatriculasSemJanelas++;
+
+                                    continue;
+                                }
+
+                                $destinatarios = $record->getNotificationRecipients();
+
+                                if ($destinatarios->isEmpty()) {
+                                    $countMatriculasSemEmail++;
+
+                                    continue;
+                                }
+
+                                $result = $record->notifyPossibilityPreceptoria();
+                                $totalSent += $result['enviados'];
+
+                                if ($result['enviados'] > 0) {
+                                    $countMatriculasNotificadas++;
+                                }
+
+                                if (! empty($result['falhas'])) {
+                                    foreach ($result['falhas'] as $email => $erro) {
+                                        $todasFalhas[] = "Matrícula de {$record->pessoa->nome} ({$email}): {$erro}";
+                                    }
+                                }
+                            }
+
+                            if ($totalSent > 0) {
+                                Notification::make()
+                                    ->title('Avisos de Preceptoria Enviados')
+                                    ->body("Foram enviados {$totalSent} avisos para os responsáveis de {$countMatriculasNotificadas} matrícula(s).")
+                                    ->success()
+                                    ->send()
+                                    ->sendToDatabase(auth()->user());
+                            }
+
+                            if ($countMatriculasJaAgendadas > 0) {
+                                Notification::make()
+                                    ->title('Matrículas com Agendamento Existente')
+                                    ->body("{$countMatriculasJaAgendadas} matrícula(s) foram ignoradas por já possuírem preceptoria agendada nos ciclos vigentes.")
+                                    ->info()
+                                    ->send();
+                            }
+
+                            if ($countMatriculasSemJanelas > 0) {
+                                Notification::make()
+                                    ->title('Sem Janelas Disponíveis')
+                                    ->body("{$countMatriculasSemJanelas} matrícula(s) não foram notificadas pois não há janelas de preceptoria disponíveis para agendamento.")
+                                    ->warning()
+                                    ->send();
+                            }
+
+                            if ($countMatriculasSemEmail > 0) {
+                                Notification::make()
+                                    ->title('Sem E-mail Cadastrado')
+                                    ->body("{$countMatriculasSemEmail} matrícula(s) elegíveis não puderam ser notificadas por falta de e-mail cadastrado para aluno ou responsáveis.")
+                                    ->warning()
+                                    ->persistent()
+                                    ->send();
+                            }
+
+                            if (! empty($todasFalhas)) {
+                                Notification::make()
+                                    ->title('Alguns e-mails falharam')
+                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', $todasFalhas)))
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+                            }
+
+                            if ($totalSent === 0 && $countMatriculasJaAgendadas === 0 && $countMatriculasSemJanelas === 0 && $countMatriculasSemEmail === 0 && empty($todasFalhas)) {
+                                Notification::make()
+                                    ->title('Nenhuma notificação enviada')
+                                    ->body('Nenhuma das matrículas selecionadas atende aos critérios para envio do aviso de preceptoria.')
+                                    ->info()
+                                    ->send();
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                     BulkAction::make('editar_lote')
                         ->label('Editar em Lote')

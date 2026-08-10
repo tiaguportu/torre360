@@ -322,11 +322,16 @@ Ao criar um novo contrato ou salvar as alterações em um contrato existente, o 
 
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
-1. Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
+1. **Aviso Individual:** Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
    - A matrícula do aluno não possuir nenhuma preceptoria agendada dentro dos **ciclos de preceptoria vigentes** (aqueles cuja data atual esteja entre o início e o fim do ciclo).
    - Existirem horários vagos (janelas) cadastrados por professores no sistema.
 2. Ao clicar no botão, o sistema solicitará confirmação, exibirá a **data e hora do último envio realizado** (se houver) e listará os e-mails do aluno e responsáveis que receberão o alerta.
-3. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.
+3. **Avisar Preceptoria em Lote (Ação em Lote):** É possível enviar alertas para múltiplas matrículas simultaneamente na tela de **Matrículas**:
+   - Selecione uma ou mais matrículas na tabela utilizando as caixas de seleção.
+   - Acesse o menu de **Ações em Lote** e clique em **Avisar Preceptoria em Lote**.
+   - **Regra de Proteção:** Caso alguma das matrículas selecionadas já possua agendamento de preceptoria feito em ciclos vigentes, o sistema ignorará automaticamente o envio para ela, garantindo que responsáveis com agendamentos já realizados não recebam avisos desnecessários.
+   - O sistema emitirá um resumo detalhado ao final informando quantas matrículas foram notificadas, quantas foram ignoradas por já possuírem agendamento ou por falta de janelas/e-mail cadastrado.
+4. O aviso incentiva a família a acessar o painel e realizar o agendamento no horário de sua preferência.
 
 ### 6.5.1 Cadastro e Criação de Preceptorias em Lote (Múltiplas Datas e Ranges)
 1. Vá em **Preceptoria → Preceptorias** e clique em **Criar Preceptoria** (`/admin/preceptorias/create`).
