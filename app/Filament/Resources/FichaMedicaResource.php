@@ -86,13 +86,16 @@ class FichaMedicaResource extends Resource implements HasShieldPermissions
                             ->schema([
                                 Toggle::make('has_alergia_lactose')
                                     ->label('Alergia / Intolerância a Lactose')
-                                    ->colors(['on' => 'danger', 'off' => 'gray']),
+                                    ->onColor('danger')
+                                    ->offColor('gray'),
                                 Toggle::make('has_alergia_gluten')
                                     ->label('Intolerância a Glúten (Celíaco)')
-                                    ->colors(['on' => 'danger', 'off' => 'gray']),
+                                    ->onColor('danger')
+                                    ->offColor('gray'),
                                 Toggle::make('has_alergia_amendoim')
                                     ->label('Alergia a Amendoim / Oleaginosas')
-                                    ->colors(['on' => 'danger', 'off' => 'gray']),
+                                    ->onColor('danger')
+                                    ->offColor('gray'),
                             ]),
                         Textarea::make('outras_alergias_alimentares')
                             ->label('Outras Alergias Alimentares ou Medicamentosas')
