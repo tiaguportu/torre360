@@ -11,6 +11,10 @@
         }
     }">
         @foreach($this->getStatuses() as $status)
+            @php
+                $statusInteressados = $this->getInteressados()->where('status_interessado_id', $status->id);
+                $valorTotalColuna = $statusInteressados->sum('valor_estimado');
+            @endphp
             <div 
                 class="kanban-column"
                 ondragover="event.preventDefault()"
@@ -23,14 +27,19 @@
                         <div class="flex items-center gap-2">
                             <span class="kanban-column-title">{{ $status->nome }}</span>
                             <span class="kanban-column-count">
-                                {{ $this->getInteressados()->where('status_interessado_id', $status->id)->count() }}
+                                {{ $statusInteressados->count() }}
                             </span>
                         </div>
+                        @if($valorTotalColuna > 0)
+                            <div class="kanban-column-value">
+                                R$ {{ number_format($valorTotalColuna, 2, ',', '.') }}
+                            </div>
+                        @endif
                         <div class="kanban-column-color" style="background-color: {{ $status->cor_hex ?? ($status->cor === 'info' ? '#3b82f6' : ($status->cor === 'warning' ? '#f59e0b' : ($status->cor === 'success' ? '#10b981' : ($status->cor === 'danger' ? '#ef4444' : '#6366f1')))) }}"></div>
                     </div>
 
                     <div class="kanban-cards-container custom-scrollbar">
-                        @foreach($this->getInteressados()->where('status_interessado_id', $status->id) as $record)
+                        @foreach($statusInteressados as $record)
                             <div 
                                 draggable="true"
                                 @dragstart="draggingRecordId = {{ $record->id }}"
@@ -39,11 +48,24 @@
                                 :class="draggingRecordId === {{ $record->id }} ? 'opacity-40' : ''"
                             >
                                 <div class="kanban-card {{ $record->precisaDeContato() ? 'kanban-card-error' : '' }}" title="{{ $record->ultimoHistorico ? 'Último Contato (' . $record->ultimoHistorico->created_at->format('d/m/Y') . '): ' . $record->ultimoHistorico->relato : 'Sem histórico de contato registrado' }}">
-                                    <div class="flex justify-between items-start gap-2 mb-2">
+                                    <div class="flex justify-between items-start gap-2 mb-1">
                                         <h4 class="kanban-card-title">{{ $record->pessoa->nome }}</h4>
                                         <a href="{{ $this->getResource()::getUrl('edit', ['record' => $record]) }}" class="kanban-card-edit">
                                             <x-filament::icon icon="heroicon-m-pencil-square" class="w-4 h-4" />
                                         </a>
+                                    </div>
+
+                                    {{-- Temperatura --}}
+                                    <div class="kanban-card-temperature">
+                                        @php $temp = $record->temperaturaCalculada(); @endphp
+                                        <span class="kanban-temp-badge kanban-temp-{{ $temp }}">
+                                            {{ match($temp) { 'quente' => '🔥', 'morno' => '🟡', 'frio' => '🔵', default => '—' } }}
+                                        </span>
+                                        @if($record->valor_estimado)
+                                            <span class="kanban-card-valor">
+                                                R$ {{ number_format($record->valor_estimado, 0, ',', '.') }}
+                                            </span>
+                                        @endif
                                     </div>
 
                                     @php
@@ -69,6 +91,11 @@
                                             <div class="kanban-avatar" title="{{ $record->usuario?->name }}">
                                                 {{ substr($record->usuario?->name ?? '?', 0, 1) }}
                                             </div>
+                                            @if($record->diasNoFunil() > 30)
+                                                <span class="kanban-dias-alerta" title="{{ $record->diasNoFunil() }} dias no funil">
+                                                    {{ $record->diasNoFunil() }}d
+                                                </span>
+                                            @endif
                                         </div>
 
                                         @if($record->data_proximo_contato)
@@ -161,6 +188,17 @@
             color: #8c9bab;
         }
 
+        .kanban-column-value {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #059669;
+            margin-top: 0.125rem;
+        }
+
+        .dark .kanban-column-value {
+            color: #34d399;
+        }
+
         .kanban-column-color {
             height: 3px;
             width: 40px;
@@ -238,6 +276,45 @@
             color: #9fadbc;
         }
 
+        .kanban-card-temperature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .kanban-temp-badge {
+            font-size: 0.8rem;
+        }
+
+        .kanban-card-valor {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #059669;
+            background: #ecfdf5;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+        }
+
+        .dark .kanban-card-valor {
+            color: #34d399;
+            background: #064e3b;
+        }
+
+        .kanban-dias-alerta {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #ef4444;
+            background: #fef2f2;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+        }
+
+        .dark .kanban-dias-alerta {
+            color: #f87171;
+            background: #5d1f1a;
+        }
+
         .kanban-card-footer {
             display: flex;
             justify-content: space-between;
@@ -251,7 +328,7 @@
             border-radius: 50%;
             background: #dfe1e6;
             display: flex;
-            items-center: center;
+            align-items: center;
             justify-content: center;
             font-size: 10px;
             font-weight: 700;

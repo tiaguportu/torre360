@@ -3,16 +3,51 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Interessado extends Model
 {
+    use HasFactory, LogsActivity;
+
     protected $table = 'interessado';
 
     protected $guarded = [];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status_interessado_id',
+                'origem_interessado_id',
+                'usuario_id',
+                'temperatura',
+                'valor_estimado',
+                'motivo_perda',
+                'data_proximo_contato',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('crm');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'data_proximo_contato' => 'datetime',
+            'data_primeiro_contato' => 'datetime',
+            'data_conversao' => 'datetime',
+            'valor_estimado' => 'decimal:2',
+        ];
+    }
+
+    // ─── Relationships ──────────────────────────────────────────
 
     public function pessoa(): BelongsTo
     {
@@ -49,6 +84,38 @@ class Interessado extends Model
         return $this->hasOne(HistoricoContato::class)->latestOfMany();
     }
 
+    // ─── Scopes ─────────────────────────────────────────────────
+
+    /**
+     * Filtra leads que não estão em status final (ganho/perdido).
+     */
+    public function scopeAtivos(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn (Builder $q) => $q->where('is_final', false));
+    }
+
+    /**
+     * Filtra leads com contato atrasado.
+     */
+    public function scopePrecisaContato(Builder $query): Builder
+    {
+        return $query->whereNotNull('data_proximo_contato')
+            ->where('data_proximo_contato', '<', now());
+    }
+
+    /**
+     * Filtra leads por consultor responsável.
+     */
+    public function scopeDoConsultor(Builder $query, int $usuarioId): Builder
+    {
+        return $query->where('usuario_id', $usuarioId);
+    }
+
+    // ─── Business Methods ───────────────────────────────────────
+
+    /**
+     * Verifica se o lead precisa de contato urgente.
+     */
     public function precisaDeContato(): bool
     {
         if (! $this->data_proximo_contato) {
@@ -69,5 +136,50 @@ class Interessado extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Calcula quantos dias o lead está no funil de vendas.
+     */
+    public function diasNoFunil(): int
+    {
+        return (int) $this->created_at->diffInDays(now());
+    }
+
+    /**
+     * Calcula a temperatura do lead baseado em atividade.
+     * Se há temperatura manual, retorna ela. Caso contrário, calcula automaticamente.
+     *
+     * - Quente: contato nos últimos 3 dias ou lead criado há menos de 5 dias
+     * - Morno: contato nos últimos 10 dias
+     * - Frio: sem contato há mais de 10 dias
+     */
+    public function temperaturaCalculada(): string
+    {
+        if ($this->temperatura) {
+            return $this->temperatura;
+        }
+
+        $ultimoContato = $this->ultimoHistorico?->created_at;
+        $referencia = $ultimoContato ?? $this->created_at;
+        $diasSemContato = (int) $referencia->diffInDays(now());
+
+        if ($diasSemContato <= 3) {
+            return 'quente';
+        }
+
+        if ($diasSemContato <= 10) {
+            return 'morno';
+        }
+
+        return 'frio';
+    }
+
+    /**
+     * Retorna o total de contatos realizados com este lead.
+     */
+    public function totalContatos(): int
+    {
+        return $this->historicos()->count();
     }
 }

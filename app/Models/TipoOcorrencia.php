@@ -6,24 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class StatusInteressado extends Model
+class TipoOcorrencia extends Model
 {
     use HasFactory;
 
-    protected $table = 'status_interessado';
+    protected $table = 'tipo_ocorrencias';
 
     protected $guarded = [];
 
     protected function casts(): array
     {
         return [
-            'is_final' => 'boolean',
-            'is_ganho' => 'boolean',
+            'notificar_responsaveis_padrao' => 'boolean',
         ];
     }
 
-    public function interessados(): HasMany
+    public function ocorrencias(): HasMany
     {
-        return $this->hasMany(Interessado::class, 'status_interessado_id');
+        return $this->hasMany(OcorrenciaEscolar::class, 'tipo_ocorrencia_id');
     }
 }

@@ -31,6 +31,8 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
 | 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
 | 📖 **Currículo (BNCC)** | Áreas de Conhecimento, Campos de Experiência e Habilidades |
+| 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
+| 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
 | 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield), Logs e Configurações Gerais |
@@ -51,36 +53,76 @@ Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automati
 
 ## 🎯 3. CRM — Gestão de Leads e Interessados
 
-O módulo de CRM permite gerenciar o processo de captação de novos alunos antes mesmo da matrícula.
+O módulo de CRM permite gerenciar o processo de captação de novos alunos antes mesmo da matrícula. Ele oferece um funil de vendas visual (Kanban), qualificação de leads, rastreamento de contatos e automações de follow-up.
 
-### 3.1 Kanban de Interessados (Estilo Trello)
+### 3.1 Kanban de Interessados (Funil de Vendas)
 1. Vá em **CRM → Interessados**.
 2. Utilize a visualização em **Funil de Vendas (CRM)**:
    - **Interface:** O layout é inspirado no Trello, com colunas coloridas que facilitam a distinção visual entre as etapas do funil (ex: *Novo Contato*, *Agendamento*, *Matrícula*).
-   - **Drag & Drop:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real.
-   - **Indicadores Visuais:**
-     - **Cores nas Colunas:** Cada etapa possui uma barra de destaque com a cor configurada (Ex: Azul para informativo, Vermelho para crítico).
+   - **Drag & Drop:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real. Ao mover para um status de "Matriculado", a data de conversão é registrada automaticamente.
+   - **Filtro por Consultor:** Use o botão "Filtrar Consultor" no topo para visualizar apenas os leads de um consultor específico.
+   - **Indicadores Visuais nos Cards:**
+     - **Temperatura:** Cada card exibe um indicador visual: 🔥 Quente, 🟡 Morno, 🔵 Frio. Se nenhuma temperatura foi definida manualmente, o sistema calcula automaticamente baseado na atividade recente.
+     - **Valor Estimado:** Quando preenchido, o valor potencial da matrícula é exibido no card em verde.
+     - **Total por Coluna:** O cabeçalho de cada coluna mostra o valor total estimado dos leads daquela etapa.
+     - **Dias no Funil:** Leads com mais de 30 dias no funil exibem um alerta vermelho no card.
      - **Contagem:** O topo de cada coluna mostra o número total de interessados naquela etapa.
-     - **Alertas de Data:** 
-      - As datas de "Próximo Contato" mudam de cor automaticamente no card: **Vermelho** se estiverem atrasadas (ou se a data agendada for anterior à data atual) e **Amarelo** se forem para hoje.
-      - **Acompanhamento (Follow-up):** Se a data do "Próximo Contato" estiver no passado (atraso) ou for anterior à data do último contato realizado (agendamento desatualizado), o card ganhará uma borda e fundo vermelhos de erro no Kanban, e um botão de alerta em destaque aparecerá na página de edição. O card também exibe no título (tooltip) o resumo do último contato realizado para consulta rápida.
+     - **Alertas de Data:** As datas de "Próximo Contato" mudam de cor automaticamente: **Vermelho** se estiverem atrasadas, **Amarelo** se forem para hoje.
+     - **Cards em Vermelho:** Se a data do "Próximo Contato" estiver no passado, o card ganha borda e fundo vermelhos de alerta. O tooltip mostra o resumo do último contato.
    - **Acesso Rápido:** Clique no ícone de lápis no card para editar as informações completas ou ver o histórico de contatos.
-3. Clique em um card para ver o histórico de contatos e observações.
 
-### 3.2 Registro de Histórico de Contato
-1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contato**.
-2. Registre cada ligação, e-mail ou visita, definindo o tipo de contato e o relato do que foi conversado.
+### 3.2 Listagem de Interessados (Tabela)
+1. Na página de listagem, você encontra uma tabela completa com:
+   - **Colunas:** Nome, Telefone (com cópia rápida), Consultor, Origem, Status (badge colorido), Temperatura, Dias no Funil, Valor Estimado, Próximo Contato e Total de Contatos.
+   - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
+2. **Filtros Avançados:**
+   - **Status:** Filtre por múltiplos status simultaneamente.
+   - **Origem:** Filtre por fonte de captação.
+   - **Consultor:** Filtre por consultor responsável.
+   - **Precisa de Contato:** Filtre leads com contato atrasado.
+   - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
+3. **Ações Rápidas na Tabela:**
+   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo.
+   - **Matricular:** Mova o lead diretamente para status de matrícula com um clique.
+   - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro).
+4. **Ações em Lote:**
+   - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
+   - **Excluir:** Exclua múltiplos leads selecionados.
 
-### 3.3 Alertas e Notificações em Tempo Real
-1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos (exceto perfis de Professor ou Aluno/Responsável) recebem um alerta instantâneo no sininho do sistema.
-2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde dinâmico com a quantidade total de novos interessados que ainda não foram atendidos (status "Novo").
-3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para que você possa alertar o consultor responsável por e-mail e sistema.
+### 3.3 Qualificação de Leads
+O formulário de edição do interessado oferece ferramentas de qualificação:
+- **Resumo do Lead:** Seção no topo mostrando dias no funil, total de contatos realizados e temperatura calculada automaticamente.
+- **Temperatura:** Defina manualmente (Quente/Morno/Frio) ou deixe o sistema calcular automaticamente baseado na atividade.
+- **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
+- **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
 
-### 3.4 Registro de Vínculo
-O sistema permite registrar o grau de parentesco do interessado principal com cada aluno vinculado:
-- **Opções:** Pai, Mãe, Parente ou Tutor.
-- **Flexibilidade:** Ao cadastrar múltiplos alunos para o mesmo interessado, você deve definir um vínculo específico para cada uma das crianças.
-- **Onde Ver:** Os vínculos são exibidos dentro de cada registro na aba de **Dependentes** do cadastro do interessado.
+### 3.4 Registro de Histórico de Contato
+1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contatos**.
+2. Registre cada ligação, e-mail ou visita, informando:
+   - **Tipo de Contato:** Telefone, WhatsApp, Presencial, etc.
+   - **Relato:** Descrição do que foi conversado.
+   - **Duração:** Tempo em minutos do atendimento.
+   - **Resultado:** Agendou Visita, Retornar, Sem Interesse, Efetuou Matrícula, Outro.
+3. O sistema registra automaticamente quem realizou o contato e a data.
+
+### 3.5 Alertas e Notificações
+1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos recebem um alerta instantâneo.
+2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde com a quantidade de leads com status "Novo".
+3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema.
+4. **Notificação Automática Diária:** O sistema envia automaticamente (às 8h) notificações por e-mail e sininho para consultores com leads pendentes de contato.
+
+### 3.6 Dependentes (Alunos Vinculados)
+O sistema permite registrar os potenciais alunos vinculados ao interessado:
+- **Dados:** Nome da criança, Série de interesse, Data de nascimento.
+- **Vínculo:** Pai, Mãe, Parente ou Tutor.
+- **Flexibilidade:** Cadastre múltiplos alunos para o mesmo interessado.
+
+### 3.7 Formulário Público de Captação
+Interessados podem se cadastrar diretamente pelo site (**quero-uma-vaga**):
+- O formulário permite cadastro como responsável ou próprio aluno.
+- Suporta múltiplos alunos por cadastro.
+- O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade.
+- A equipe interna é notificada automaticamente via sininho.
 
 ---
 
@@ -1315,6 +1357,36 @@ O acesso e as ações do módulo de Preceptorias são totalmente configuráveis 
 - **Visualização (`ViewAny:Preceptoria` / `View:Preceptoria`):** Permite visualizar a listagem e os detalhes dos atendimentos.
 - **Criação e Edição (`Create:Preceptoria` / `Update:Preceptoria`):** Permite cadastrar novos horários e gerenciar a agenda dos preceptores.
 - **Agendamento (`Agendar:Preceptoria`):** Controla quem pode acessar a rota `/admin/preceptorias/agendar` e utilizar o formulário simplificado de agendamento de horários para dependentes/alunos. Sem esta permissão atribuída à função do usuário no Shield, o acesso ao caminho `admin/preceptorias/agendar` é bloqueado com erro 403 Forbidden.
+
+---
+
+## 📝 26. Lançamento Rápido no Diário (`/admin/cronograma-aulas/{record}/frequencia`)
+
+O módulo de **Lançamento Rápido no Diário** permite que o professor registre no final da aula, em uma única tela fluida e responsiva (mobile-friendly):
+1. **Conteúdo Ministrado & BNCC:** Registro descritivo dos tópicos lecionados e seleção das Habilidades da BNCC desenvolvidas.
+2. **Dever / Tarefa de Casa:** Campo dedicado para registrar lições e prazos de entrega para a turma.
+3. **Anexos de Material de Aula:** Upload de apresentações, exercícios e arquivos PDF suporte.
+4. **Frequência dos Alunos:** Chamada rápida com botões de presenças e faltas.
+5. **Botão de Presença em Lote:** Permite marcar todos os alunos presentes com um único clique.
+
+---
+
+## 🏥 27. Saúde Escolar, Ficha Médica e Ambulatório (`/admin/ficha-medicas` e `/admin/atendimento-enfermagems`)
+
+Módulo essencial para a Educação Infantil e Ensino Fundamental para assegurar os cuidados médicos e alimentares:
+1. **Restrições Alimentares Destacadas:** Toggles e alertas visuais de alergia a lactose, glúten e amendoim para a cantina/cozinha da escola.
+2. **Medicamentos de Uso Contínuo:** Controle de dosagens, horários de administração e arquivo de autorização dos pais.
+3. **Contatos de Emergência:** Telefones e grau de parentesco para acionamento urgente.
+4. **Atendimentos de Enfermagem (`/admin/atendimento-enfermagems`):** Prontuário do ambulatório escolar registrando sintomas, medicamentos ministrados e condutas adotadas.
+
+---
+
+## 🚨 28. Convivência e Ocorrências da Rotina (`/admin/ocorrencia-escolars` e `/admin/tipo-ocorrencias`)
+
+Permite o acompanhamento da rotina disciplinar, operacional e pedagógica dos estudantes:
+1. **Tipos de Ocorrências (`/admin/tipo-ocorrencias`):** Classificação por gravidade (Positiva, Leve, Média, Grave) e categorias (Disciplinar, Operacional, Pedagógico, Saúde).
+2. **Registro de Ocorrências:** Cadastro de acontecimentos (atraso na chegada, uniforme incompleto, desentendimento, advertências ou elogios pedagógicos).
+3. **Notificação em Tempo Real aos Responsáveis:** Envio automático via e-mail, push e painel interno aos pais cadastrados. A notificação pode ser facilmente desativada/ativada em registros específicos.
 
 ---
 

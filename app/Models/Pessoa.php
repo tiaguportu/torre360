@@ -119,6 +119,16 @@ class Pessoa extends Model
         return $this->hasMany(RecursoAcessibilidade::class, 'pessoa_id');
     }
 
+    public function fichaMedica(): HasOne
+    {
+        return $this->hasOne(FichaMedica::class, 'pessoa_id');
+    }
+
+    public function atendimentosEnfermagem(): HasMany
+    {
+        return $this->hasMany(AtendimentoEnfermagem::class, 'pessoa_id');
+    }
+
     /**
      * Retorna uma lista de motivos (vínculos) que impedem a exclusão da pessoa.
      */

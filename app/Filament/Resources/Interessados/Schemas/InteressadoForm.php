@@ -6,16 +6,19 @@ use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Models\Interessado;
 use App\Models\Pessoa;
+use App\Models\StatusInteressado;
 use App\Notifications\AcompanhamentoInteressadoNotification;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification as FilamentNotification;
 use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
@@ -83,6 +86,28 @@ class InteressadoForm
                                     ->columnSpanFull()
                                     ->visible(fn (?Interessado $record) => $record?->precisaDeContato() ?? false),
 
+                                // Resumo Visual (somente na edição)
+                                Section::make('Resumo do Lead')
+                                    ->schema([
+                                        Placeholder::make('dias_funil')
+                                            ->label('Dias no Funil')
+                                            ->content(fn (Interessado $record): string => $record->diasNoFunil().' dias'),
+                                        Placeholder::make('total_contatos')
+                                            ->label('Total de Contatos')
+                                            ->content(fn (Interessado $record): string => $record->totalContatos().' contato(s)'),
+                                        Placeholder::make('temperatura_calc')
+                                            ->label('Temperatura Calculada')
+                                            ->content(fn (Interessado $record): string => match ($record->temperaturaCalculada()) {
+                                                'quente' => '🔥 Quente',
+                                                'morno' => '🟡 Morno',
+                                                'frio' => '🔵 Frio',
+                                                default => '—',
+                                            }),
+                                    ])
+                                    ->columns(3)
+                                    ->collapsible()
+                                    ->visible(fn (?Interessado $record) => $record !== null),
+
                                 Select::make('pessoa_id')
                                     ->label('Pessoa / Interessado')
                                     ->relationship('pessoa', 'nome')
@@ -134,9 +159,30 @@ class InteressadoForm
                                     ->required()
                                     ->native(false),
 
+                                Select::make('temperatura')
+                                    ->label('Temperatura do Lead')
+                                    ->options([
+                                        'quente' => '🔥 Quente',
+                                        'morno' => '🟡 Morno',
+                                        'frio' => '🔵 Frio',
+                                    ])
+                                    ->native(false)
+                                    ->helperText('Deixe vazio para calcular automaticamente.'),
+
+                                TextInput::make('valor_estimado')
+                                    ->label('Valor Estimado (R$)')
+                                    ->numeric()
+                                    ->prefix('R$')
+                                    ->minValue(0),
+
                                 DateTimePicker::make('data_proximo_contato')
                                     ->label('Próximo Contato')
                                     ->native(false),
+
+                                TextInput::make('motivo_perda')
+                                    ->label('Motivo da Perda')
+                                    ->visible(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
+                                    ->columnSpanFull(),
 
                                 Textarea::make('observacoes')
                                     ->label('Observações')
@@ -175,5 +221,19 @@ class InteressadoForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * Verifica se o status selecionado é um status de perda.
+     */
+    private static function isStatusPerdido(?int $statusId): bool
+    {
+        if (! $statusId) {
+            return false;
+        }
+
+        $status = StatusInteressado::find($statusId);
+
+        return $status && $status->is_final && ! $status->is_ganho;
     }
 }

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
+Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlapping();

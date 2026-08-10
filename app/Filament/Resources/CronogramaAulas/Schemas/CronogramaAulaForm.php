@@ -6,6 +6,7 @@ use App\Models\Turma;
 use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
@@ -87,6 +88,26 @@ class CronogramaAulaForm
                 Textarea::make('conteudo_ministrado')
                     ->label('Conteúdo Ministrado')
                     ->rows(3),
+
+                Select::make('habilidades')
+                    ->label('Habilidades da BNCC')
+                    ->relationship('habilidades', 'nome')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->getOptionLabelFromRecordUsing(fn ($record) => ($record->codigo ? "[{$record->codigo}] " : '').$record->nome),
+
+                Textarea::make('dever_casa')
+                    ->label('Dever / Tarefa de Casa')
+                    ->rows(2)
+                    ->placeholder('Descreva as tarefas e deveres passados para os alunos...'),
+
+                FileUpload::make('anexo_material')
+                    ->label('Anexos de Material de Aula')
+                    ->multiple()
+                    ->directory('materiais-aula')
+                    ->preserveFilenames()
+                    ->columnSpanFull(),
 
                 Grid::make(2)
                     ->schema([

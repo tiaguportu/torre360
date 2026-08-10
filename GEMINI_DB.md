@@ -253,7 +253,7 @@ Estrutura de ensino e turmas.
 ## 6. CRM e Prospecção
 ### `interessado`
 - **Representa:** Leads para novos alunos.
-- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `usuario_id` (opcional/nullable), `observacoes`.
+- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
     - BelongsTo `status_interessado`.
@@ -262,6 +262,9 @@ Estrutura de ensino e turmas.
     - HasMany `dependentes` (InteressadoDependente).
     - HasMany `historico_contato`.
     - HasOne `ultimoHistorico` (Latest of Many).
+- **Auditoria:** Trilha de auditoria via `activity_log` com `log_name: crm`, rastreando mudanças em status, temperatura, consultor e valor.
+- **Scopes:** `ativos()` (não finalizados), `precisaContato()` (contato atrasado), `doConsultor($id)`.
+- **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `temperaturaCalculada()`, `totalContatos()`.
 
 ### `interessado_dependente` (Alunos Vinculados)
 - **Representa:** Os potenciais alunos vinculados a um interessado principal.
@@ -269,11 +272,21 @@ Estrutura de ensino e turmas.
 
 ### `historico_contato`
 - **Representa:** Registro de cada interação com o interessado (ligação, visita, etc).
-- **Campos Principais:** `relato`, `data_contato`.
-- **Relacionamentos:** BelongsTo `interessado`, BelongsTo `tipo_contato_interessado`.
+- **Campos Principais:** `relato`, `data_contato`, `usuario_id` (FK `users`, nullable — quem registrou), `duracao_minutos` (integer nullable), `resultado` (string nullable: agendou_visita, retornar, sem_interesse, matriculou, outro).
+- **Relacionamentos:** BelongsTo `interessado`, BelongsTo `tipo_contato_interessado`, BelongsTo `users` (usuário que registrou).
 
-### `status_interessado` e `origem_interessado`
-- Tabelas de configuração para as etapas do funil e fontes de captação.
+### `status_interessado`
+- **Representa:** Etapas do funil de vendas.
+- **Campos Principais:** `nome`, `cor`, `ordem`, `is_final` (boolean — indica status de encerramento), `is_ganho` (boolean — indica conversão/matrícula).
+- **Relacionamentos:** HasMany `interessado`.
+
+### `origem_interessado`
+- **Representa:** Fontes de captação de leads (Site, Indicação, Instagram, etc).
+- **Campos Principais:** `nome`.
+
+### `tipo_contato_interessado`
+- **Representa:** Tipos de contato disponíveis (Telefone, WhatsApp, Presencial, etc).
+- **Campos Principais:** `nome`.
 
 ---
 
@@ -393,7 +406,41 @@ Estrutura de ensino e turmas.
   - `preceptoria_id` — FK → `preceptoria.id` (CascadeOnDelete).
   - `tipo` (string/enum) — Tipo do relatório (Análise Geral, Plano Pessoal, etc).
   - `corpo` (longText HTML) — editado com TinyEditor.
-
   - `publico` (boolean) — define se o relatório é visível para o aluno e seus responsáveis.
 - **Relacionamentos:** BelongsTo `Preceptoria`.
+
+---
+
+## 10. Saúde Escolar e Ambulatório
+
+### `ficha_medicas`
+- **Representa:** Ficha médica e de restrições alimentares do estudante.
+- **Campos Principais:** `pessoa_id` (FK `pessoa`, unique), `tipo_sanguineo`, `has_alergia_lactose`, `has_alergia_gluten`, `has_alergia_amendoim`, `outras_alergias_alimentares`, `observacoes_alimentares`, `plano_saude`, `numero_carteira_sus`, `hospital_preferencia`, `observacoes_gerais`.
+- **Relacionamentos:** BelongsTo `Pessoa`, HasMany `MedicamentoAluno`, HasMany `ContatoEmergencia`.
+
+### `medicamento_alunos`
+- **Representa:** Medicamentos de uso contínuo do estudante.
+- **Campos Principais:** `ficha_medica_id`, `nome_medicamento`, `dosagem`, `horario_administracao`, `instrucoes`, `autorizado_responsaveis`, `arquivo_receita_path`.
+
+### `contato_emergencias`
+- **Representa:** Contatos de emergência para casos de urgência médica.
+- **Campos Principais:** `ficha_medica_id`, `nome`, `parentesco_grau`, `telefone_principal`, `telefone_secundario`, `observacoes`.
+
+### `atendimento_enfermagems`
+- **Representa:** Prontuário de atendimentos prestados no ambulatório escolar.
+- **Campos Principais:** `pessoa_id`, `atendido_por_user_id` (FK `users`), `data_hora`, `sintomas_queixa`, `procedimento_realizado`, `medicamento_ministrado`, `notificado_responsaveis`, `observacoes`.
+
+---
+
+## 11. Convivência e Ocorrências Escolares
+
+### `tipo_ocorrencias`
+- **Representa:** Tipos e classificações de ocorrências disciplinares/operacionais/pedagógicas.
+- **Campos Principais:** `nome`, `categoria` (`disciplinar`, `operacional`, `pedagogico`, `saude`), `gravidade` (`positiva`, `leve`, `media`, `grave`), `notificar_responsaveis_padrao`.
+
+### `ocorrencia_escolars`
+- **Representa:** Ocorrências registradas na rotina escolar do aluno.
+- **Campos Principais:** `matricula_id` (FK `matricula`), `tipo_ocorrencia_id` (FK `tipo_ocorrencias`), `registrado_por_user_id` (FK `users`), `data_hora`, `descricao`, `providencias_tomadas`, `notificar_responsaveis` (boolean), `notificacao_enviada_em` (datetime).
+- **Notificação:** Dispara automaticamente `OcorrenciaRegistradaNotification` via e-mail/push/painel para os responsáveis do aluno quando `notificar_responsaveis == true`.
+
 

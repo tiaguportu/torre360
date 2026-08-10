@@ -19,7 +19,13 @@ class CronogramaAula extends Model
     {
         return [
             'data' => 'date',
+            'anexo_material' => 'array',
         ];
+    }
+
+    public function habilidades()
+    {
+        return $this->belongsToMany(Habilidade::class, 'cronograma_aula_habilidade', 'cronograma_aula_id', 'habilidade_id');
     }
 
     public function frequencias(): HasMany

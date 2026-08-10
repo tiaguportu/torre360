@@ -11,6 +11,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -34,6 +35,19 @@ class HistoricosRelationManager extends RelationManager
                     ->label('Data do Contato')
                     ->default(now())
                     ->required(),
+                TextInput::make('duracao_minutos')
+                    ->label('Duração (minutos)')
+                    ->numeric()
+                    ->minValue(1),
+                Select::make('resultado')
+                    ->label('Resultado')
+                    ->options([
+                        'agendou_visita' => 'Agendou Visita',
+                        'retornar' => 'Retornar depois',
+                        'sem_interesse' => 'Sem Interesse',
+                        'matriculou' => 'Efetuou Matrícula',
+                        'outro' => 'Outro',
+                    ]),
                 Textarea::make('relato')
                     ->label('Relato do Atendimento')
                     ->required()
@@ -45,13 +59,40 @@ class HistoricosRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('relato')
+            ->defaultSort('data_contato', 'desc')
             ->columns([
                 TextColumn::make('tipoContato.nome')
                     ->label('Tipo'),
                 TextColumn::make('data_contato')
                     ->label('Data')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
+                TextColumn::make('usuario.name')
+                    ->label('Registrado por')
+                    ->placeholder('—')
+                    ->icon('heroicon-o-user'),
+                TextColumn::make('resultado')
+                    ->label('Resultado')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'agendou_visita' => 'success',
+                        'matriculou' => 'success',
+                        'retornar' => 'warning',
+                        'sem_interesse' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'agendou_visita' => 'Agendou Visita',
+                        'retornar' => 'Retornar',
+                        'sem_interesse' => 'Sem Interesse',
+                        'matriculou' => 'Matriculou',
+                        'outro' => 'Outro',
+                        default => '—',
+                    }),
+                TextColumn::make('duracao_minutos')
+                    ->label('Duração')
+                    ->suffix(' min')
+                    ->placeholder('—'),
                 TextColumn::make('relato')
                     ->label('Relato')
                     ->limit(50),
@@ -61,7 +102,12 @@ class HistoricosRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->label('Registrar Contato'),
+                    ->label('Registrar Contato')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['usuario_id'] = auth()->id();
+
+                        return $data;
+                    }),
             ])
             ->actions([
                 ViewAction::make(),
@@ -72,6 +118,7 @@ class HistoricosRelationManager extends RelationManager
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }
