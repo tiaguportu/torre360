@@ -662,20 +662,22 @@ class MatriculasTable
                         ->action(function (Collection $records) {
                             $totalSent = 0;
                             $countMatriculasNotificadas = 0;
-                            $countMatriculasJaAgendadas = 0;
-                            $countMatriculasSemJanelas = 0;
-                            $countMatriculasSemEmail = 0;
+                            $matriculasJaAgendadas = [];
+                            $matriculasSemJanelas = [];
+                            $matriculasSemEmail = [];
                             $todasFalhas = [];
 
                             foreach ($records as $record) {
+                                $alunoNome = $record->pessoa?->nome ?? "Matrícula #{$record->id}";
+
                                 if ($record->hasPreceptoriaInActiveCycles()) {
-                                    $countMatriculasJaAgendadas++;
+                                    $matriculasJaAgendadas[] = $alunoNome;
 
                                     continue;
                                 }
 
                                 if (! $record->hasAvailablePreceptoriaWindows()) {
-                                    $countMatriculasSemJanelas++;
+                                    $matriculasSemJanelas[] = $alunoNome;
 
                                     continue;
                                 }
@@ -683,7 +685,7 @@ class MatriculasTable
                                 $destinatarios = $record->getNotificationRecipients();
 
                                 if ($destinatarios->isEmpty()) {
-                                    $countMatriculasSemEmail++;
+                                    $matriculasSemEmail[] = $alunoNome;
 
                                     continue;
                                 }
@@ -697,7 +699,7 @@ class MatriculasTable
 
                                 if (! empty($result['falhas'])) {
                                     foreach ($result['falhas'] as $email => $erro) {
-                                        $todasFalhas[] = "Matrícula de {$record->pessoa->nome} ({$email}): {$erro}";
+                                        $todasFalhas[] = "Matrícula de {$alunoNome} ({$email}): {$erro}";
                                     }
                                 }
                             }
@@ -711,26 +713,29 @@ class MatriculasTable
                                     ->sendToDatabase(auth()->user());
                             }
 
-                            if ($countMatriculasJaAgendadas > 0) {
+                            if (! empty($matriculasJaAgendadas)) {
+                                $count = count($matriculasJaAgendadas);
                                 Notification::make()
                                     ->title('Matrículas com Agendamento Existente')
-                                    ->body("{$countMatriculasJaAgendadas} matrícula(s) foram ignoradas por já possuírem preceptoria agendada nos ciclos vigentes.")
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) foram ignoradas por já possuírem preceptoria agendada:<br>• ".implode('<br>• ', $matriculasJaAgendadas)))
                                     ->info()
                                     ->send();
                             }
 
-                            if ($countMatriculasSemJanelas > 0) {
+                            if (! empty($matriculasSemJanelas)) {
+                                $count = count($matriculasSemJanelas);
                                 Notification::make()
                                     ->title('Sem Janelas Disponíveis')
-                                    ->body("{$countMatriculasSemJanelas} matrícula(s) não foram notificadas pois não há janelas de preceptoria disponíveis para agendamento.")
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não foram notificadas pois não há janelas disponíveis:<br>• ".implode('<br>• ', $matriculasSemJanelas)))
                                     ->warning()
                                     ->send();
                             }
 
-                            if ($countMatriculasSemEmail > 0) {
+                            if (! empty($matriculasSemEmail)) {
+                                $count = count($matriculasSemEmail);
                                 Notification::make()
                                     ->title('Sem E-mail Cadastrado')
-                                    ->body("{$countMatriculasSemEmail} matrícula(s) elegíveis não puderam ser notificadas por falta de e-mail cadastrado para aluno ou responsáveis.")
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não puderam ser notificadas por falta de e-mail cadastrado:<br>• ".implode('<br>• ', $matriculasSemEmail)))
                                     ->warning()
                                     ->persistent()
                                     ->send();
@@ -745,7 +750,7 @@ class MatriculasTable
                                     ->send();
                             }
 
-                            if ($totalSent === 0 && $countMatriculasJaAgendadas === 0 && $countMatriculasSemJanelas === 0 && $countMatriculasSemEmail === 0 && empty($todasFalhas)) {
+                            if ($totalSent === 0 && empty($matriculasJaAgendadas) && empty($matriculasSemJanelas) && empty($matriculasSemEmail) && empty($todasFalhas)) {
                                 Notification::make()
                                     ->title('Nenhuma notificação enviada')
                                     ->body('Nenhuma das matrículas selecionadas atende aos critérios para envio do aviso de preceptoria.')
