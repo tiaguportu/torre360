@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class FrequenciaPendenteWidget extends Widget
 {
@@ -269,8 +270,21 @@ class FrequenciaPendenteWidget extends Widget
             return false;
         }
 
-        if (static::hasShield() && ! static::getPermissionDefined()) {
+        $activeRole = session('active_role') ?? $user->active_role;
+
+        if (! $activeRole) {
             return false;
+        }
+
+        if ($activeRole !== 'super_admin') {
+            try {
+                $role = Role::findByName($activeRole, 'web');
+                if (! $role->hasPermissionTo(static::getPermissionName())) {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                return false;
+            }
         }
 
         return (new static)->getPendenciasAgrupadas()->isNotEmpty();
