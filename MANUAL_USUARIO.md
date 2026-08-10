@@ -9,7 +9,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
-4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes** e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas sem responsáveis cadastrados ou com documentos obrigatórios pendentes).
+4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas sem responsáveis cadastrados ou com documentos obrigatórios pendentes).
 
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
@@ -201,10 +201,14 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 8. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 9. **Botão de Ajuda nas Telas de Cadastro, Edição e Lançamento de Notas:** Ao criar, editar uma avaliação ou lançar notas, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas ou ações que seu usuário tem permissão para realizar.
 
-### 5.2 Frequência Escolar
-1. Em **Acadêmico → Frequência**, selecione o Cronograma de Aula do dia.
-2. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
-3. **Auditoria e Segurança:** Toda ação de lançamento, alteração ou exclusão de frequência escolar (presença/ausência) é automaticamente auditada e registrada no log de atividades para controle e rastreabilidade dos lançamentos feitos por professores e administradores.
+### 5.2 Frequência Escolar e Cronograma de Aulas
+1. **Widget de Pendências no Dashboard:** No painel principal (**Dashboard**), o sistema exibe o widget **Pendências de Lançamento de Frequência**, agrupando automaticamente todas as aulas com chamadas não lançadas ou incompletas em datas iguais a hoje ou anteriores.
+   - **Lançamento Rápido em Lote por Dia:** Clique em **Lançar Chamada do Dia** no card da data correspondente para abrir um modal interativo.
+   - **Configuração de Chamada em Lote:** O modal seleciona por padrão todas as matérias/aulas do dia e atribui **Presença** para todos os alunos matriculados. É possível desselecionar aulas específicas, desmarcar alunos ou alterar o status individual para **Ausente** antes de confirmar.
+2. Em **Calendário e Horários → Cronograma de Aulas** (ou **admin/cronograma-aulas**), a listagem por padrão ativa o filtro **Frequência Pendente** (apenas pendentes), exibindo prioritariamente os cronogramas de aulas que possuem frequências ainda não lançadas ou incompletas.
+3. Selecione o Cronograma de Aula do dia e utilize a ação **Frequência** para realizar o lançamento da chamada individual no diário de classe.
+4. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
+5. **Auditoria e Segurança:** Toda ação de lançamento, alteração ou exclusão de frequência escolar (presença/ausência) é automaticamente auditada e registrada no log de atividades para controle e rastreabilidade dos lançamentos feitos por professores e administradores.
 
 ### 5.3 Boletim do Aluno
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
