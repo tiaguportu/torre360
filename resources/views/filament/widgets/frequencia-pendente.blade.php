@@ -6,18 +6,28 @@
     @if($pendenciasPorDia->isNotEmpty())
         <x-filament::section>
             <x-slot name="heading">
-                <div class="flex items-center space-x-2">
-                    <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-amber-500 animate-pulse" />
-                    <span class="text-lg font-bold text-gray-900 dark:text-white">
-                        Pendências de Chamada
-                    </span>
-                    <x-filament::badge color="warning">
-                        Últimos {{ $pendenciasPorDia->count() }} {{ $pendenciasPorDia->count() === 1 ? 'dia' : 'dias' }}
-                    </x-filament::badge>
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center space-x-2">
+                        <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-amber-500 animate-pulse" />
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">
+                            Pendências de Chamada
+                        </span>
+                        <x-filament::badge color="warning">
+                            Últimos {{ $pendenciasPorDia->count() }} {{ $pendenciasPorDia->count() === 1 ? 'dia' : 'dias' }}
+                        </x-filament::badge>
+                    </div>
+
+                    <a
+                        href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('index') }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                        <span>Ver mais</span>
+                        <x-heroicon-o-arrow-right-circle class="w-4 h-4" />
+                    </a>
                 </div>
             </x-slot>
 
-            <x-slot name="headerEnd">
+            <x-slot name="headerActions">
                 <x-filament::button
                     tag="a"
                     href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('index') }}"
@@ -27,10 +37,6 @@
                 >
                     Ver mais
                 </x-filament::button>
-            </x-slot>
-
-            <x-slot name="description">
-                Exibindo os 3 últimos dias com chamadas não lançadas ou incompletas. Clique no botão de cada dia para abrir o formulário em lote ou em "Ver mais" para acessar a tabela completa.
             </x-slot>
 
             {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) NO PADRÃO FILAMENT --}}
