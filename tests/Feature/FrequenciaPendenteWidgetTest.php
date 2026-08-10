@@ -135,15 +135,8 @@ class FrequenciaPendenteWidgetTest extends TestCase
 
         $testable = Livewire::test(FrequenciaPendenteWidget::class);
 
-        $testable->call('abrirModalLancamento', $dataHoje);
-
-        $this->assertTrue($testable->get('showModal'));
-        $this->assertEquals($dataHoje, $testable->get('dataSelecionada'));
-
-        // Salva com estado padrão (presença para todos alunos da aula do dia)
-        $testable->call('salvarFrequenciasDoDia');
-
-        $this->assertFalse($testable->get('showModal'));
+        $testable->mountAction('lancarChamadaDia', ['data' => $dataHoje])
+            ->callMountedAction();
 
         $this->assertDatabaseHas('frequencia_escolar', [
             'cronograma_aula_id' => $ca->id,

@@ -7,15 +7,27 @@ use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Section;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 
-class FrequenciaPendenteWidget extends Widget
+class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 {
     use HasWidgetShield;
+    use InteractsWithActions;
+    use InteractsWithForms;
 
     protected static ?int $sort = -4;
 
@@ -23,20 +35,9 @@ class FrequenciaPendenteWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
-    public bool $showModal = false;
-
-    public ?string $dataSelecionada = null;
-
-    public ?string $dataSelecionadaFormatada = null;
-
-    public array $aulasDoDia = [];
-
-    public array $aulasSelecionadas = [];
-
-    public array $alunosDoDia = [];
-
     /**
      * Retorna os cronogramas de aula com frequências pendentes agrupados por data (<= hoje).
+     * Limita aos 3 últimos dias pendentes.
      */
     public function getPendenciasAgrupadas(): Collection
     {
@@ -80,211 +81,213 @@ class FrequenciaPendenteWidget extends Widget
         })->take(3);
     }
 
-    public function getTotalPrevistoLancamentos(): int
+    /**
+     * Action nativa do Filament para Lançamento de Frequência do Dia em Lote.
+     */
+    public function lancarChamadaDiaAction(): Action
     {
-        $aulasAtivas = array_keys(array_filter($this->aulasSelecionadas));
-        if (empty($aulasAtivas)) {
-            return 0;
-        }
+        return Action::make('lancarChamadaDia')
+            ->label('Lançar Chamada do Dia')
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->size('sm')
+            ->modalHeading(fn (array $arguments): string => 'Lançamento de Frequência — '.Carbon::parse($arguments['data'] ?? now()->toDateString())->format('d/m/Y'))
+            ->modalDescription('Selecione as matérias e defina a presença dos alunos matriculados.')
+            ->modalSubmitActionLabel('Salvar Frequências')
+            ->modalWidth('4xl')
+            ->fillForm(function (array $arguments): array {
+                $data = $arguments['data'] ?? now()->toDateString();
+                $user = Auth::user();
 
-        $aulasObjetos = CronogramaAula::whereIn('id', $aulasAtivas)->get();
-        $turmaIdsAtivas = $aulasObjetos->pluck('turma_id')->toArray();
+                $query = CronogramaAula::query()
+                    ->with(['turma.matriculas.pessoa', 'disciplina', 'professor'])
+                    ->whereDate('data', $data)
+                    ->whereRaw('
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
+                    ');
 
-        $total = 0;
-        foreach ($this->alunosDoDia as $alunoData) {
-            if (! ($alunoData['selecionado'] ?? false)) {
-                continue;
-            }
-            if (in_array($alunoData['turma_id'], $turmaIdsAtivas)) {
-                $aulasDaTurma = $aulasObjetos->where('turma_id', $alunoData['turma_id'])->count();
-                $total += $aulasDaTurma;
-            }
-        }
+                $isProfessor = $user?->hasRole('professor')
+                    || session('active_role') === 'professor'
+                    || $user?->active_role === 'professor';
 
-        return $total;
-    }
+                if ($isProfessor && $user) {
+                    $pessoasIds = array_filter(array_merge(
+                        [$user->pessoa?->id],
+                        $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []
+                    ));
 
-    public function abrirModalLancamento(string $data): void
-    {
-        $this->dataSelecionada = $data;
-        $this->dataSelecionadaFormatada = Carbon::parse($data)->format('d/m/Y');
-
-        $user = Auth::user();
-        $query = CronogramaAula::query()
-            ->with(['turma.matriculas.pessoa', 'disciplina', 'professor'])
-            ->whereDate('data', $data)
-            ->whereRaw('
-                (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
-                (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
-            ');
-
-        $isProfessor = $user?->hasRole('professor')
-            || session('active_role') === 'professor'
-            || $user?->active_role === 'professor';
-
-        if ($isProfessor && $user) {
-            $pessoasIds = array_filter(array_merge(
-                [$user->pessoa?->id],
-                $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []
-            ));
-
-            if (! empty($pessoasIds)) {
-                $query->whereIn('pessoa_id', $pessoasIds);
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
-
-        $cronogramas = $query->get();
-
-        $this->aulasDoDia = [];
-        $this->aulasSelecionadas = [];
-
-        $turmaIds = [];
-
-        foreach ($cronogramas as $ca) {
-            $this->aulasDoDia[] = [
-                'id' => $ca->id,
-                'turma_id' => $ca->turma_id,
-                'turma_nome' => $ca->turma?->nome ?? 'Sem Turma',
-                'disciplina_nome' => $ca->disciplina?->nome ?? 'Sem Disciplina',
-                'professor_nome' => $ca->professor?->nome ?? 'Sem Professor',
-                'horario' => ($ca->hora_inicio ? Carbon::parse($ca->hora_inicio)->format('H:i') : '').
-                            ($ca->hora_fim ? ' - '.Carbon::parse($ca->hora_fim)->format('H:i') : ''),
-            ];
-
-            $this->aulasSelecionadas[$ca->id] = true;
-            $turmaIds[] = $ca->turma_id;
-        }
-
-        $turmaIds = array_unique($turmaIds);
-
-        $matriculas = Matricula::whereIn('turma_id', $turmaIds)
-            ->with(['pessoa', 'turma'])
-            ->get()
-            ->sortBy(fn ($m) => $m->pessoa?->nome);
-
-        $this->alunosDoDia = [];
-        foreach ($matriculas as $m) {
-            $this->alunosDoDia[$m->id] = [
-                'id' => $m->id,
-                'nome' => $m->pessoa?->nome ?? 'Aluno sem Nome',
-                'turma_id' => $m->turma_id,
-                'turma_nome' => $m->turma?->nome ?? '',
-                'situacao' => 'presente',
-                'selecionado' => true,
-            ];
-        }
-
-        $this->showModal = true;
-    }
-
-    public function fecharModal(): void
-    {
-        $this->showModal = false;
-        $this->dataSelecionada = null;
-        $this->dataSelecionadaFormatada = null;
-        $this->aulasDoDia = [];
-        $this->aulasSelecionadas = [];
-        $this->alunosDoDia = [];
-    }
-
-    public function marcarTodosAlunosPresentes(): void
-    {
-        foreach ($this->alunosDoDia as $id => $aluno) {
-            $this->alunosDoDia[$id]['situacao'] = 'presente';
-            $this->alunosDoDia[$id]['selecionado'] = true;
-        }
-    }
-
-    public function marcarTodosAlunosAusentes(): void
-    {
-        foreach ($this->alunosDoDia as $id => $aluno) {
-            $this->alunosDoDia[$id]['situacao'] = 'ausente';
-            $this->alunosDoDia[$id]['selecionado'] = true;
-        }
-    }
-
-    public function desselecionarTodosAlunos(): void
-    {
-        foreach ($this->alunosDoDia as $id => $aluno) {
-            $this->alunosDoDia[$id]['selecionado'] = false;
-        }
-    }
-
-    public function selecionarTodosAlunos(): void
-    {
-        foreach ($this->alunosDoDia as $id => $aluno) {
-            $this->alunosDoDia[$id]['selecionado'] = true;
-        }
-    }
-
-    public function toggleAula(int $aulaId): void
-    {
-        $this->aulasSelecionadas[$aulaId] = ! ($this->aulasSelecionadas[$aulaId] ?? false);
-    }
-
-    public function selecionarTodasAulas(): void
-    {
-        foreach ($this->aulasDoDia as $aula) {
-            $this->aulasSelecionadas[$aula['id']] = true;
-        }
-    }
-
-    public function desselecionarTodasAulas(): void
-    {
-        foreach ($this->aulasDoDia as $aula) {
-            $this->aulasSelecionadas[$aula['id']] = false;
-        }
-    }
-
-    public function salvarFrequenciasDoDia(): void
-    {
-        $aulasAtivas = array_keys(array_filter($this->aulasSelecionadas));
-
-        if (empty($aulasAtivas)) {
-            Notification::make()
-                ->title('Nenhuma aula selecionada')
-                ->body('Por favor, selecione ao menos uma aula para lançar a frequência.')
-                ->warning()
-                ->send();
-
-            return;
-        }
-
-        $aulasObjetos = CronogramaAula::whereIn('id', $aulasAtivas)->get();
-        $totalLancados = 0;
-
-        foreach ($aulasObjetos as $ca) {
-            // Pega alunos cuja turma bate com a turma da aula e que estão selecionados
-            foreach ($this->alunosDoDia as $matriculaId => $alunoData) {
-                if (! ($alunoData['selecionado'] ?? false)) {
-                    continue;
+                    if (! empty($pessoasIds)) {
+                        $query->whereIn('pessoa_id', $pessoasIds);
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
                 }
 
-                if ($alunoData['turma_id'] == $ca->turma_id) {
-                    FrequenciaEscolar::updateOrCreate(
-                        [
-                            'cronograma_aula_id' => $ca->id,
-                            'matricula_id' => $matriculaId,
-                        ],
-                        [
-                            'situacao' => $alunoData['situacao'] ?? 'presente',
-                        ]
-                    );
+                $cronogramas = $query->get();
+                $turmaIds = $cronogramas->pluck('turma_id')->unique()->toArray();
+                $aulasIds = $cronogramas->pluck('id')->toArray();
 
-                    $totalLancados++;
+                $matriculas = Matricula::whereIn('turma_id', $turmaIds)
+                    ->with(['pessoa', 'turma'])
+                    ->get()
+                    ->sortBy(fn ($m) => $m->pessoa?->nome);
+
+                $frequenciasForm = [];
+                foreach ($matriculas as $m) {
+                    $frequenciasForm[] = [
+                        'matricula_id' => $m->id,
+                        'situacao' => 'presente',
+                    ];
                 }
-            }
-        }
 
-        Notification::make()
-            ->title('Frequências lançadas com sucesso!')
-            ->body("Foram registrados {$totalLancados} lançamentos de chamada para o dia {$this->dataSelecionadaFormatada}.")
-            ->success()
-            ->send();
+                return [
+                    'data' => $data,
+                    'aulas' => $aulasIds,
+                    'frequencias' => $frequenciasForm,
+                ];
+            })
+            ->form(function (array $arguments): array {
+                $data = $arguments['data'] ?? now()->toDateString();
+                $user = Auth::user();
 
-        $this->fecharModal();
+                $query = CronogramaAula::query()
+                    ->with(['turma', 'disciplina', 'professor'])
+                    ->whereDate('data', $data)
+                    ->whereRaw('
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
+                    ');
+
+                $isProfessor = $user?->hasRole('professor')
+                    || session('active_role') === 'professor'
+                    || $user?->active_role === 'professor';
+
+                if ($isProfessor && $user) {
+                    $pessoasIds = array_filter(array_merge(
+                        [$user->pessoa?->id],
+                        $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []
+                    ));
+
+                    if (! empty($pessoasIds)) {
+                        $query->whereIn('pessoa_id', $pessoasIds);
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
+                }
+
+                $cronogramas = $query->get();
+                $turmaIds = $cronogramas->pluck('turma_id')->unique()->toArray();
+
+                $optionsAulas = [];
+                foreach ($cronogramas as $ca) {
+                    $horario = ($ca->hora_inicio ? Carbon::parse($ca->hora_inicio)->format('H:i') : '').
+                        ($ca->hora_fim ? ' - '.Carbon::parse($ca->hora_fim)->format('H:i') : '');
+
+                    $optionsAulas[$ca->id] = "{$ca->disciplina?->nome} — Turma: {$ca->turma?->nome}".($horario ? " ({$horario})" : '');
+                }
+
+                $matriculas = Matricula::whereIn('turma_id', $turmaIds)
+                    ->with(['pessoa', 'turma', 'periodoLetivo'])
+                    ->get()
+                    ->sortBy(fn ($m) => $m->pessoa?->nome);
+
+                $matriculasOptions = [];
+                foreach ($matriculas as $m) {
+                    $matriculasOptions[$m->id] = "{$m->pessoa?->nome} ({$m->turma?->nome})";
+                }
+
+                return [
+                    Section::make('Disciplinas & Aulas do Dia')
+                        ->description('Selecione as aulas onde deseja aplicar o lançamento de frequência.')
+                        ->schema([
+                            CheckboxList::make('aulas')
+                                ->label('Aulas com Frequência Pendente')
+                                ->options($optionsAulas)
+                                ->bulkToggleable()
+                                ->columns(2)
+                                ->required(),
+                        ]),
+
+                    Section::make('Frequência dos Alunos (Chamada)')
+                        ->description('Marque Presença ou Ausência para cada estudante matriculado nas turmas do dia.')
+                        ->schema([
+                            Repeater::make('frequencias')
+                                ->label('Alunos Matriculados')
+                                ->schema([
+                                    Select::make('matricula_id')
+                                        ->label('Aluno')
+                                        ->options($matriculasOptions)
+                                        ->required()
+                                        ->disabled()
+                                        ->dehydrated(),
+                                    ToggleButtons::make('situacao')
+                                        ->label('Situação')
+                                        ->options([
+                                            'presente' => 'Presente',
+                                            'ausente' => 'Ausente',
+                                        ])
+                                        ->colors([
+                                            'presente' => 'success',
+                                            'ausente' => 'danger',
+                                        ])
+                                        ->icons([
+                                            'presente' => 'heroicon-o-check',
+                                            'ausente' => 'heroicon-o-x-circle',
+                                        ])
+                                        ->required()
+                                        ->inline(),
+                                ])
+                                ->columns(2)
+                                ->addable(false)
+                                ->deletable(false)
+                                ->reorderable(false),
+                        ]),
+                ];
+            })
+            ->action(function (array $data, array $arguments): void {
+                $aulasAtivas = $data['aulas'] ?? [];
+
+                if (empty($aulasAtivas)) {
+                    Notification::make()
+                        ->title('Nenhuma aula selecionada')
+                        ->body('Por favor, selecione ao menos uma aula para lançar a frequência.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $aulasObjetos = CronogramaAula::whereIn('id', $aulasAtivas)->get();
+                $totalLancados = 0;
+
+                foreach ($aulasObjetos as $ca) {
+                    $matriculasTurma = Matricula::where('turma_id', $ca->turma_id)->pluck('id')->toArray();
+
+                    foreach ($data['frequencias'] as $frequenciaData) {
+                        if (in_array($frequenciaData['matricula_id'], $matriculasTurma)) {
+                            FrequenciaEscolar::updateOrCreate(
+                                [
+                                    'cronograma_aula_id' => $ca->id,
+                                    'matricula_id' => $frequenciaData['matricula_id'],
+                                ],
+                                [
+                                    'situacao' => $frequenciaData['situacao'] ?? 'presente',
+                                ]
+                            );
+                            $totalLancados++;
+                        }
+                    }
+                }
+
+                $dataFormatada = Carbon::parse($arguments['data'] ?? now()->toDateString())->format('d/m/Y');
+
+                Notification::make()
+                    ->title('Frequências lançadas com sucesso!')
+                    ->body("Foram registrados {$totalLancados} lançamentos de chamada para o dia {$dataFormatada}.")
+                    ->success()
+                    ->send();
+            });
     }
 
     public static function canView(): bool
