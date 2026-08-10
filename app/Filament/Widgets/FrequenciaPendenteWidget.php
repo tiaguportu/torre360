@@ -77,7 +77,31 @@ class FrequenciaPendenteWidget extends Widget
 
         return $cronogramas->groupBy(function (CronogramaAula $item) {
             return Carbon::parse($item->data)->format('Y-m-d');
-        });
+        })->take(3);
+    }
+
+    public function getTotalPrevistoLancamentos(): int
+    {
+        $aulasAtivas = array_keys(array_filter($this->aulasSelecionadas));
+        if (empty($aulasAtivas)) {
+            return 0;
+        }
+
+        $aulasObjetos = CronogramaAula::whereIn('id', $aulasAtivas)->get();
+        $turmaIdsAtivas = $aulasObjetos->pluck('turma_id')->toArray();
+
+        $total = 0;
+        foreach ($this->alunosDoDia as $alunoData) {
+            if (! ($alunoData['selecionado'] ?? false)) {
+                continue;
+            }
+            if (in_array($alunoData['turma_id'], $turmaIdsAtivas)) {
+                $aulasDaTurma = $aulasObjetos->where('turma_id', $alunoData['turma_id'])->count();
+                $total += $aulasDaTurma;
+            }
+        }
+
+        return $total;
     }
 
     public function abrirModalLancamento(string $data): void
