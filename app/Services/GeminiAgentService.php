@@ -110,4 +110,89 @@ Diretrizes obrigatórias de resposta:
             return 'Ocorreu uma falha na conexão com o serviço de IA: '.$e->getMessage();
         }
     }
+
+    /**
+     * Analisa uma mensagem bruta de texto (ex: WhatsApp, e-mail, anotação)
+     * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini 1.5 Flash.
+     *
+     * @return array<string, mixed>
+     */
+    public function extrairLeadDeTexto(string $mensagemBruta): array
+    {
+        $apiKey = config('services.gemini.key');
+
+        if (empty($apiKey)) {
+            throw new \Exception('A chave de API do Gemini não está configurada. Adicione GEMINI_API_KEY no arquivo .env.');
+        }
+
+        $systemInstruction = 'Você é um assistente especialista em CRM comercial escolar do sistema Torre360.
+Sua função é analisar mensagens de texto brutas de clientes (provenientes de WhatsApp, e-mails, transcrições de voz ou anotações) e extrair com precisão os dados cadastrais e comerciais do Lead.
+
+Você DEVE retornar a resposta estritamente no formato JSON válido com a seguinte estrutura:
+{
+  "responsavel_nome": "Nome completo do responsável/interessado ou null",
+  "responsavel_email": "E-mail do responsável ou null",
+  "responsavel_telefone": "Telefone com DDD ou null",
+  "responsavel_cpf": "CPF (apenas dígitos) ou null",
+  "origem_sugerida": "Canal de origem inferido (ex: WhatsApp, Instagram, E-mail, Site, Indicação) ou null",
+  "temperatura": "quente|morno|frio (quente se demonstra urgência/muito interesse, morno se busca informações gerais, frio se apenas sondagem)",
+  "valor_estimado": valor_numerico_ou_null,
+  "observacoes": "Resumo objetivo das necessidades e observações contidas no texto",
+  "alunos": [
+    {
+      "nome": "Nome do aluno/criança ou null",
+      "data_nascimento": "YYYY-MM-DD (calcule/infira se houver idade) ou null",
+      "serie_pretendida": "Nome da série/ano pretendido (ex: 1º Ano, Berçário, 9º Ano) ou null",
+      "vinculo": "Pai|Mãe|Tutor|Parente"
+    }
+  ]
+}
+Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
+
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post($endpoint, [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $mensagemBruta],
+                        ],
+                    ],
+                ],
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.1,
+                    'responseMimeType' => 'application/json',
+                ],
+            ]);
+
+            if (! $response->successful()) {
+                $errorMsg = $response->json('error.message') ?? $response->body();
+                throw new \Exception("Erro na API do Gemini: {$errorMsg}");
+            }
+
+            $jsonText = $response->json('candidates.0.content.parts.0.text') ?? '';
+
+            // Limpa eventuais cercas markdown ```json se presentes
+            $jsonClean = trim(preg_replace('/^```(?:json)?|```$/m', '', $jsonText));
+
+            $data = json_decode($jsonClean, true);
+
+            if (! is_array($data)) {
+                throw new \Exception('A resposta da IA não pôde ser convertida em um objeto JSON válido.');
+            }
+
+            return $data;
+        } catch (\Exception $e) {
+            throw new \Exception('Falha ao processar mensagem com IA: '.$e->getMessage());
+        }
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
@@ -14,6 +15,7 @@ class CreateInteressado extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
+            ImportarLeadIaAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')

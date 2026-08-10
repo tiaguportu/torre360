@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
@@ -28,6 +29,7 @@ class KanbanInteressados extends Page
     protected function getHeaderActions(): array
     {
         return [
+            ImportarLeadIaAction::make(),
             Action::make('filtroConsultor')
                 ->label('Filtrar Consultor')
                 ->icon('heroicon-o-funnel')

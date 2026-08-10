@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -15,6 +16,7 @@ class ListInteressados extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            ImportarLeadIaAction::make(),
             Action::make('kanban')
                 ->label('Ver Kanban')
                 ->icon('heroicon-o-view-columns')
