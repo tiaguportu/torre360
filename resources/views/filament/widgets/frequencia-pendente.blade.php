@@ -17,8 +17,20 @@
                 </div>
             </x-slot>
 
+            <x-slot name="headerEnd">
+                <x-filament::button
+                    tag="a"
+                    href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('index') }}"
+                    color="gray"
+                    size="sm"
+                    icon="heroicon-o-arrow-right-circle"
+                >
+                    Ver mais
+                </x-filament::button>
+            </x-slot>
+
             <x-slot name="description">
-                Exibindo os 3 últimos dias com chamadas não lançadas ou incompletas. Clique no botão de cada dia para abrir o formulário em lote.
+                Exibindo os 3 últimos dias com chamadas não lançadas ou incompletas. Clique no botão de cada dia para abrir o formulário em lote ou em "Ver mais" para acessar a tabela completa.
             </x-slot>
 
             {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) NO PADRÃO FILAMENT --}}
@@ -31,8 +43,8 @@
                         $diaSemana = ucfirst($carbonData->translatedFormat('l'));
                     @endphp
 
-                    <div class="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md flex flex-col justify-between space-y-4">
-                        <div class="space-y-2">
+                    <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md flex flex-col justify-between">
+                        <div class="space-y-2 p-1">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                                     {{ $diaSemana }}
@@ -58,7 +70,8 @@
                             </div>
                         </div>
 
-                        <div class="pt-2">
+                        {{-- CONTAINER DO BOTÃO COM MARGEM DE SEGURANÇA INTERNA E SUPERIOR PARA AFASTAR DAS BORDAS --}}
+                        <div class="pt-4 mt-3 px-2 pb-2">
                             {{ ($this->lancarChamadaDiaAction)(['data' => $data]) }}
                         </div>
                     </div>
