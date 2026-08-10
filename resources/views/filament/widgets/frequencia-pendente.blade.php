@@ -18,10 +18,10 @@
             </x-slot>
 
             <x-slot name="description">
-                Exibindo aulas até a data de hoje com chamadas não lançadas ou incompletas. Selecione o dia para realizar o lançamento em lote.
+                Exibindo dias com chamadas pendentes (até hoje). Clique em "Lançar Chamada do Dia" para visualizar as aulas e registrar a frequência em lote.
             </x-slot>
 
-            <div class="space-y-4">
+            <div class="space-y-3">
                 @foreach($pendenciasPorDia as $data => $cronogramas)
                     @php
                         $carbonData = \Illuminate\Support\Carbon::parse($data);
@@ -29,51 +29,37 @@
                         $dataDisplay = $carbonData->format('d/m/Y') . ' (' . ucfirst($carbonData->translatedFormat('l')) . ')';
                     @endphp
 
-                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div class="space-y-1">
-                                <div class="flex items-center space-x-2">
-                                    <h4 class="font-bold text-base text-gray-900 dark:text-white">
-                                        {{ $dataDisplay }}
-                                    </h4>
-                                    @if($isHoje)
-                                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                            Hoje
-                                        </span>
-                                    @else
-                                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                            Atrasado
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $cronogramas->count() }} {{ $cronogramas->count() === 1 ? 'aula' : 'aulas' }} sem chamada neste dia.
-                                </div>
-
-                                <div class="flex flex-wrap gap-2 pt-1">
-                                    @foreach($cronogramas as $ca)
-                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                            <span class="font-semibold mr-1">{{ $ca->turma?->nome }}:</span>
-                                            {{ $ca->disciplina?->nome }}
-                                            @if($ca->hora_inicio)
-                                                <span class="ml-1 text-gray-500 dark:text-gray-400">({{ \Illuminate\Support\Carbon::parse($ca->hora_inicio)->format('H:i') }})</span>
-                                            @endif
-                                        </span>
-                                    @endforeach
-                                </div>
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-bold text-base text-gray-900 dark:text-white">
+                                    {{ $dataDisplay }}
+                                </h4>
+                                @if($isHoje)
+                                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                                        Hoje
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                                        Atrasado
+                                    </span>
+                                @endif
                             </div>
 
-                            <div class="flex items-center shrink-0">
-                                <x-filament::button
-                                    wire:click="abrirModalLancamento('{{ $data }}')"
-                                    icon="heroicon-o-check-circle"
-                                    color="success"
-                                    size="sm"
-                                >
-                                    Lançar Chamada do Dia
-                                </x-filament::button>
-                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $cronogramas->count() }} {{ $cronogramas->count() === 1 ? 'aula pendente neste dia' : 'aulas pendentes neste dia' }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center shrink-0">
+                            <x-filament::button
+                                wire:click="abrirModalLancamento('{{ $data }}')"
+                                icon="heroicon-o-check-circle"
+                                color="success"
+                                size="sm"
+                            >
+                                Lançar Chamada do Dia
+                            </x-filament::button>
                         </div>
                     </div>
                 @endforeach
@@ -98,7 +84,7 @@
                                 Lançar Frequência do Dia {{ $dataSelecionadaFormatada }}
                             </h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Por padrão todos os alunos recebem presença e todas as matérias do dia são incluídas. Altere as seleções conforme necessário.
+                                Selecione as matérias e alunos que deseja dar presença no dia. Clique na tag da matéria para incluir ou desmarcar.
                             </p>
                         </div>
                         <button wire:click="fecharModal" type="button" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
@@ -109,15 +95,15 @@
                     {{-- Modal Body --}}
                     <div class="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
 
-                        {{-- SEÇÃO 1: SELEÇÃO DE AULAS/MATÉRIAS --}}
+                        {{-- SEÇÃO 1: SELEÇÃO DE AULAS/MATÉRIAS (MULTISELECT TIPO TAG) --}}
                         <div class="space-y-3">
                             <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
                                 <h4 class="font-bold text-sm text-gray-800 dark:text-gray-200 flex items-center gap-2">
                                     <x-heroicon-o-academic-cap class="w-4 h-4 text-primary-500" />
-                                    1. Matérias / Aulas do Dia ({{ count($aulasDoDia) }})
+                                    1. Matérias / Aulas do Dia (Clique para selecionar/desselecionar)
                                 </h4>
                                 <div class="flex gap-2">
-                                    <button wire:click="selecionarTodasAulas" type="button" class="text-xs text-primary-600 dark:text-primary-400 hover:underline">
+                                    <button wire:click="selecionarTodasAulas" type="button" class="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium">
                                         Selecionar Todas
                                     </button>
                                     <span class="text-gray-300">|</span>
@@ -127,29 +113,29 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="flex flex-wrap gap-2.5">
                                 @foreach($aulasDoDia as $aula)
-                                    <label class="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition">
-                                        <input
-                                            type="checkbox"
-                                            wire:model.live="aulasSelecionadas.{{ $aula['id'] }}"
-                                            class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700"
-                                        >
-                                        <div class="text-xs">
-                                            <div class="font-bold text-gray-900 dark:text-white">
-                                                {{ $aula['disciplina_nome'] }}
-                                            </div>
-                                            <div class="text-gray-600 dark:text-gray-300">
-                                                Turma: <span class="font-semibold">{{ $aula['turma_nome'] }}</span>
-                                            </div>
-                                            <div class="text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                                                <span>Prof: {{ $aula['professor_nome'] }}</span>
-                                                @if($aula['horario'])
-                                                    <span>• {{ $aula['horario'] }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </label>
+                                    @php
+                                        $isSelecionada = $aulasSelecionadas[$aula['id']] ?? false;
+                                    @endphp
+                                    <button
+                                        type="button"
+                                        wire:click="toggleAula({{ $aula['id'] }})"
+                                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition cursor-pointer select-none {{ $isSelecionada ? 'bg-emerald-50 text-emerald-900 border border-emerald-300 shadow-sm dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-500/20' : 'bg-gray-100 text-gray-400 border border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700 line-through opacity-70 hover:opacity-100' }}"
+                                    >
+                                        @if($isSelecionada)
+                                            <x-heroicon-s-check-circle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                        @else
+                                            <x-heroicon-o-minus-circle class="w-4 h-4 text-gray-400 shrink-0" />
+                                        @endif
+
+                                        <span class="font-bold">{{ $aula['disciplina_nome'] }}</span>
+                                        <span class="opacity-90">({{ $aula['turma_nome'] }})</span>
+
+                                        @if($aula['horario'])
+                                            <span class="text-[11px] opacity-75 font-normal">({{ $aula['horario'] }})</span>
+                                        @endif
+                                    </button>
                                 @endforeach
                             </div>
                         </div>
@@ -162,13 +148,13 @@
                                     2. Alunos Matriculados ({{ count($alunosDoDia) }})
                                 </h4>
                                 <div class="flex flex-wrap gap-2 text-xs">
-                                    <button wire:click="marcarTodosAlunosPresentes" type="button" class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 hover:bg-emerald-200 font-medium">
+                                    <button wire:click="marcarTodosAlunosPresentes" type="button" class="px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 hover:bg-emerald-200 font-medium transition">
                                         Marcar Todos Presentes
                                     </button>
-                                    <button wire:click="marcarTodosAlunosAusentes" type="button" class="px-2 py-1 rounded bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 hover:bg-rose-200 font-medium">
+                                    <button wire:click="marcarTodosAlunosAusentes" type="button" class="px-2.5 py-1 rounded bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 hover:bg-rose-200 font-medium transition">
                                         Marcar Todos Ausentes
                                     </button>
-                                    <button wire:click="desselecionarTodosAlunos" type="button" class="px-2 py-1 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 font-medium">
+                                    <button wire:click="desselecionarTodosAlunos" type="button" class="px-2.5 py-1 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 font-medium transition">
                                         Desselecionar Alunos
                                     </button>
                                 </div>

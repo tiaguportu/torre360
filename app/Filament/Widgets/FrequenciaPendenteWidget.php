@@ -194,6 +194,11 @@ class FrequenciaPendenteWidget extends Widget
         }
     }
 
+    public function toggleAula(int $aulaId): void
+    {
+        $this->aulasSelecionadas[$aulaId] = ! ($this->aulasSelecionadas[$aulaId] ?? false);
+    }
+
     public function selecionarTodasAulas(): void
     {
         foreach ($this->aulasDoDia as $aula) {
