@@ -77,7 +77,7 @@ Diretrizes obrigatórias de resposta:
         ];
 
         // Endpoint da API do Gemini (usando o modelo gemini-1.5-flash estável e rápido)
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
 
         try {
             $response = Http::withHeaders([
@@ -149,7 +149,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
 }
 Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
 
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
 
         try {
             $response = Http::withHeaders([
