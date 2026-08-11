@@ -1,4 +1,4 @@
-<x-filament-widgets::widget>
+<x-filament-panels::page>
     @php
         $pendenciasPorDia = $this->getPendenciasAgrupadas();
     @endphp
@@ -6,22 +6,18 @@
     @if($pendenciasPorDia->isNotEmpty())
         <x-filament::section>
             <x-slot name="heading">
-                Pendências de Chamada
+                <div class="flex items-center space-x-2">
+                    <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-amber-500 animate-pulse" />
+                    <span class="text-lg font-bold text-gray-900 dark:text-white">
+                        Painel Completo de Pendências de Chamada
+                    </span>
+                    <x-filament::badge color="warning">
+                        {{ $pendenciasPorDia->count() }} {{ $pendenciasPorDia->count() === 1 ? 'dia pendente' : 'dias pendentes' }}
+                    </x-filament::badge>
+                </div>
             </x-slot>
 
-            <x-slot name="headerActions">
-                <x-filament::button
-                    tag="a"
-                    href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('pendencias') }}"
-                    color="gray"
-                    size="sm"
-                    icon="heroicon-o-arrow-right-circle"
-                >
-                    Ver mais
-                </x-filament::button>
-            </x-slot>
-
-            {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) NO PADRÃO FILAMENT --}}
+            {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 @foreach($pendenciasPorDia as $data => $cronogramas)
                     @php
@@ -58,7 +54,7 @@
                             </div>
                         </div>
 
-                        {{-- CONTAINER DO BOTÃO COM MARGEM DE SEGURANÇA INTERNA E SUPERIOR PARA AFASTAR DAS BORDAS --}}
+                        {{-- CONTAINER DO BOTÃO DE AÇÃO DA CHAMADA DO DIA --}}
                         <div class="pt-4 mt-3 px-2 pb-2">
                             {{ ($this->lancarChamadaDiaAction)(['data' => $data]) }}
                         </div>
@@ -66,8 +62,18 @@
                 @endforeach
             </div>
         </x-filament::section>
+    @else
+        <div class="p-12 text-center bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+            <x-heroicon-o-check-circle class="w-16 h-16 text-emerald-500 mx-auto" />
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                Todas as chamadas estão em dia!
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Não há nenhuma aula com frequência pendente ou atrasada no momento.
+            </p>
+        </div>
     @endif
 
-    {{-- RENDEREIZAÇÃO DOS MODAIS NATIVOS DE ACTION DO FILAMENT COM Z-INDEX OFICIAL --}}
+    {{-- RENDEREIZAÇÃO DOS MODAIS NATIVOS DE ACTION --}}
     <x-filament-actions::modals />
-</x-filament-widgets::widget>
+</x-filament-panels::page>

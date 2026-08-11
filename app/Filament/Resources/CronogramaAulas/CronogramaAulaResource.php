@@ -99,6 +99,7 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
     {
         return [
             'index' => Pages\ListCronogramaAulas::route('/'),
+            'pendencias' => Pages\PendenciasFrequencia::route('/pendencias'),
             'calendar' => Pages\Calendar::route('/calendar'),
             'create' => Pages\CreateCronogramaAula::route('/create'),
             'verifica-conflitos' => Pages\VerificaConflitos::route('/verifica-conflitos'),
