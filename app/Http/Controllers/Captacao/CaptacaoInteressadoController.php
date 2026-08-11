@@ -27,7 +27,7 @@ class CaptacaoInteressadoController extends Controller
 {
     public function show(): View
     {
-        $unidades = Unidade::where('flag_ativo', true)->orderBy('nome')->get();
+        $unidades = Unidade::orderBy('nome')->get();
 
         $series = Serie::with('curso')
             ->orderBy('nome')
