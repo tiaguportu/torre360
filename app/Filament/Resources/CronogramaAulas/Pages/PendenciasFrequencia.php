@@ -111,7 +111,15 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
             ));
 
             if (! empty($pessoasIds)) {
-                $query->whereIn('pessoa_id', $pessoasIds);
+                $query->where(function ($q) use ($pessoasIds) {
+                    $q->whereIn('pessoa_id', $pessoasIds)
+                        ->orWhereHas('turma', function ($tq) use ($pessoasIds) {
+                            $tq->whereIn('professor_conselheiro_id', $pessoasIds)
+                                ->orWhereHas('disciplinas', function ($dq) use ($pessoasIds) {
+                                    $dq->whereIn('turma_disciplina.professor_id', $pessoasIds);
+                                });
+                        });
+                });
             } else {
                 return collect();
             }
@@ -163,7 +171,15 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
                     ));
 
                     if (! empty($pessoasIds)) {
-                        $query->whereIn('pessoa_id', $pessoasIds);
+                        $query->where(function ($q) use ($pessoasIds) {
+                            $q->whereIn('pessoa_id', $pessoasIds)
+                                ->orWhereHas('turma', function ($tq) use ($pessoasIds) {
+                                    $tq->whereIn('professor_conselheiro_id', $pessoasIds)
+                                        ->orWhereHas('disciplinas', function ($dq) use ($pessoasIds) {
+                                            $dq->whereIn('turma_disciplina.professor_id', $pessoasIds);
+                                        });
+                                });
+                        });
                     } else {
                         $query->whereRaw('1 = 0');
                     }
@@ -223,7 +239,15 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
                     ));
 
                     if (! empty($pessoasIds)) {
-                        $query->whereIn('pessoa_id', $pessoasIds);
+                        $query->where(function ($q) use ($pessoasIds) {
+                            $q->whereIn('pessoa_id', $pessoasIds)
+                                ->orWhereHas('turma', function ($tq) use ($pessoasIds) {
+                                    $tq->whereIn('professor_conselheiro_id', $pessoasIds)
+                                        ->orWhereHas('disciplinas', function ($dq) use ($pessoasIds) {
+                                            $dq->whereIn('turma_disciplina.professor_id', $pessoasIds);
+                                        });
+                                });
+                        });
                     } else {
                         $query->whereRaw('1 = 0');
                     }

@@ -266,6 +266,8 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 
 - **Regra de Pendência de Chamada por Data:** Para ser contabilizado no diário de classe e na pendência de lançamento de chamada de um determinado Cronograma de Aula, o aluno deve ter sua **Data de Ativação menor ou igual à data da aula** e (**Data de Desativação posterior à data da aula ou nula**). Se um aluno for matriculado na data X, ele só contabilizará presença/falta e pendência a partir da data X, não sendo cobrado em aulas de datas anteriores (X-1, X-2, etc.).
 
+- **Permissão de Chamada do Professor Regente:** O professor regente/conselheiro da turma (definido no cadastro da turma) possui autorização total para visualizar pendências e realizar o lançamento de frequência para **todas as aulas da sua turma**, mesmo quando a aula estiver cadastrada no nome de outro professor ou ministrada por um docente convidado/substituto.
+
 **Edição em Lote:** Na listagem de Matrículas (`/admin/matriculas`), é possível selecionar múltiplas matrículas e acionar a ação **Editar em Lote** para atualizar simultaneamente os campos de **Turma**, **Período Letivo**, **Situação**, **Data de Ativação** e **Data de Desativação**.
 
 ### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
