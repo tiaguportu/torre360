@@ -6,7 +6,7 @@
     @if($pendenciasPorDia->isNotEmpty())
         <x-filament::section>
             {{-- CABEÇALHO PERSONALIZADO E INFALÍVEL --}}
-            <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-100 dark:border-gray-800">
                 <h3 class="text-base font-bold text-gray-900 dark:text-white">
                     Pendências de Chamada
                 </h3>
