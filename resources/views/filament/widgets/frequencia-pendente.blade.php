@@ -9,7 +9,7 @@
                 Pendências de Chamada
             </x-slot>
 
-            <x-slot name="headerActions">
+            <x-slot name="headerEnd">
                 <x-filament::button
                     tag="a"
                     href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('pendencias') }}"
