@@ -5,18 +5,6 @@
 
     @if($pendenciasPorDia->isNotEmpty())
         <x-filament::section>
-            <x-slot name="heading">
-                <div class="flex items-center space-x-2">
-                    <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-amber-500 animate-pulse" />
-                    <span class="text-lg font-bold text-gray-900 dark:text-white">
-                        Painel Completo de Pendências de Chamada
-                    </span>
-                    <x-filament::badge color="warning">
-                        {{ $pendenciasPorDia->count() }} {{ $pendenciasPorDia->count() === 1 ? 'dia pendente' : 'dias pendentes' }}
-                    </x-filament::badge>
-                </div>
-            </x-slot>
-
             {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 @foreach($pendenciasPorDia as $data => $cronogramas)

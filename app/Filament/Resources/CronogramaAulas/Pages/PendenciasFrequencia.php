@@ -32,7 +32,18 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
 
     protected string $view = 'filament.resources.cronograma-aulas.pages.pendencias-frequencia';
 
-    protected static ?string $title = 'Pendências de Lançamento de Frequência';
+    public function getTitle(): string
+    {
+        $count = $this->getPendenciasAgrupadas()->count();
+
+        if ($count === 0) {
+            return 'Pendências de Lançamento de Frequência';
+        }
+
+        $label = $count === 1 ? 'dia pendente' : 'dias pendentes';
+
+        return "Pendências de Lançamento de Frequência ({$count} {$label})";
+    }
 
     public static function canAccess(array $parameters = []): bool
     {
