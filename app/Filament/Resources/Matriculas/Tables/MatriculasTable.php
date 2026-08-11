@@ -102,6 +102,16 @@ class MatriculasTable
                     ->label('Situação')
                     ->badge()
                     ->sortable(),
+                TextColumn::make('data_ativacao')
+                    ->label('Data de Ativação')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('data_desativacao')
+                    ->label('Data de Desativação')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

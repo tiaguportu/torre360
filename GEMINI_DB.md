@@ -164,6 +164,8 @@ Estrutura de ensino e turmas.
 - **Representa:** Vínculo do aluno com uma turma em um período letivo.
 - **Campos Principais:**
     - `situacao`: Enum (`App\Enums\SituacaoMatricula`). Estados: `ativa`, `pendente`, `trancada`, `cancelada`, `concluido`, `reserva`, `evasao`.
+    - `data_ativacao`: Data (date, nullable) de ativação da matrícula.
+    - `data_desativacao`: Data (date, nullable) de desativação ou encerramento da matrícula.
     - `periodo_letivo_id`: BelongsTo `periodo_letivo`.
     - `turma_id`: BelongsTo `turma`.
     - `pessoa_id`: BelongsTo `pessoa` (Aluno).

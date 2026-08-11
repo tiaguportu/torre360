@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Matriculas\Schemas;
 use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
 use App\Models\Turma;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -71,6 +72,14 @@ class MatriculaForm
                     ->native(false)
                     ->preload()
                     ->searchable(),
+                DatePicker::make('data_ativacao')
+                    ->label('Data de Ativação')
+                    ->native(false)
+                    ->displayFormat('d/m/Y'),
+                DatePicker::make('data_desativacao')
+                    ->label('Data de Desativação')
+                    ->native(false)
+                    ->displayFormat('d/m/Y'),
             ]);
     }
 }

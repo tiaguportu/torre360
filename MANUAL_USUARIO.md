@@ -255,10 +255,14 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
 3. **Funcionamento:** O sistema utiliza este número inteiro para ordenar as disciplinas de cima para baixo na visualização do boletim. Disciplinas com números menores (ex: 1, 2, 3) aparecem primeiro.
 4. Caso duas disciplinas tenham o mesmo número de ordem, elas serão exibidas por ordem alfabética de nome.
 
-### 5.7 Situações de Matrícula (Padronização)
+### 5.7 Situações e Datas da Matrícula (Padronização)
 As situações de matrícula no Torre360 são fixas e padronizadas para garantir a consistência dos relatórios. Cada estado possui uma cor e ícone específicos na listagem:
 - **Ativa (Verde):** Aluno regularmente matriculado e frequentando.
 - **Reserva (Cinza):** Vaga reservada (pré-matrícula) aguardando efetivação.
+
+Além da situação, a **Matrícula** registra as seguintes datas de acompanhamento:
+- **Data de Ativação:** Data em que a matrícula foi ativada e o vínculo letivo com o aluno iniciou.
+- **Data de Desativação:** Data em que a matrícula foi encerrada, desativada, trancada, cancelada ou concluída.
 
 ### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
 1. Vá em **Acadêmico → Turmas**.

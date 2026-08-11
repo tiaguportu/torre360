@@ -30,6 +30,8 @@ class Matricula extends Model
     {
         return [
             'situacao' => SituacaoMatricula::class,
+            'data_ativacao' => 'date',
+            'data_desativacao' => 'date',
         ];
     }
 
