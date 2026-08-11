@@ -50,7 +50,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
             ->with(['turma.matriculas.pessoa', 'disciplina', 'professor'])
             ->whereDate('data', '<=', now()->toDateString())
             ->whereRaw('
-                (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id AND (matricula.data_ativacao IS NULL OR matricula.data_ativacao <= cronograma_aula.data) AND (matricula.data_desativacao IS NULL OR matricula.data_desativacao > cronograma_aula.data)) > 
                 (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
             ');
 
@@ -103,7 +103,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                     ->with(['turma.matriculas.pessoa', 'disciplina', 'professor'])
                     ->whereDate('data', $data)
                     ->whereRaw('
-                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id AND (matricula.data_ativacao IS NULL OR matricula.data_ativacao <= cronograma_aula.data) AND (matricula.data_desativacao IS NULL OR matricula.data_desativacao > cronograma_aula.data)) > 
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
@@ -129,6 +129,14 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                 $aulasIds = $cronogramas->pluck('id')->toArray();
 
                 $matriculas = Matricula::whereIn('turma_id', $turmaIds)
+                    ->where(function ($q) use ($data) {
+                        $q->whereNull('data_ativacao')
+                            ->orWhereDate('data_ativacao', '<=', $data);
+                    })
+                    ->where(function ($q) use ($data) {
+                        $q->whereNull('data_desativacao')
+                            ->orWhereDate('data_desativacao', '>', $data);
+                    })
                     ->with(['pessoa', 'turma'])
                     ->get()
                     ->sortBy(fn ($m) => $m->pessoa?->nome);
@@ -155,7 +163,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                     ->with(['turma', 'disciplina', 'professor'])
                     ->whereDate('data', $data)
                     ->whereRaw('
-                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id AND (matricula.data_ativacao IS NULL OR matricula.data_ativacao <= cronograma_aula.data) AND (matricula.data_desativacao IS NULL OR matricula.data_desativacao > cronograma_aula.data)) > 
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
@@ -188,6 +196,14 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                 }
 
                 $matriculas = Matricula::whereIn('turma_id', $turmaIds)
+                    ->where(function ($q) use ($data) {
+                        $q->whereNull('data_ativacao')
+                            ->orWhereDate('data_ativacao', '<=', $data);
+                    })
+                    ->where(function ($q) use ($data) {
+                        $q->whereNull('data_desativacao')
+                            ->orWhereDate('data_desativacao', '>', $data);
+                    })
                     ->with(['pessoa', 'turma', 'periodoLetivo'])
                     ->get()
                     ->sortBy(fn ($m) => $m->pessoa?->nome);
@@ -262,7 +278,17 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                 $totalLancados = 0;
 
                 foreach ($aulasObjetos as $ca) {
-                    $matriculasTurma = Matricula::where('turma_id', $ca->turma_id)->pluck('id')->toArray();
+                    $matriculasTurma = Matricula::where('turma_id', $ca->turma_id)
+                        ->where(function ($q) use ($ca) {
+                            $q->whereNull('data_ativacao')
+                                ->orWhereDate('data_ativacao', '<=', $ca->data);
+                        })
+                        ->where(function ($q) use ($ca) {
+                            $q->whereNull('data_desativacao')
+                                ->orWhereDate('data_desativacao', '>', $ca->data);
+                        })
+                        ->pluck('id')
+                        ->toArray();
 
                     foreach ($data['frequencias'] as $frequenciaData) {
                         if (in_array($frequenciaData['matricula_id'], $matriculasTurma)) {

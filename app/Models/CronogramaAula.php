@@ -55,7 +55,17 @@ class CronogramaAula extends Model
 
     public function hasPendingFrequencies(): bool
     {
-        $totalMatriculados = $this->turma->matriculas()->count();
+        $totalMatriculados = $this->turma->matriculas()
+            ->where(function ($q) {
+                $q->whereNull('data_ativacao')
+                    ->orWhereDate('data_ativacao', '<=', $this->data);
+            })
+            ->where(function ($q) {
+                $q->whereNull('data_desativacao')
+                    ->orWhereDate('data_desativacao', '>', $this->data);
+            })
+            ->count();
+
         $frequenciasLancadas = $this->frequencias()->whereNotNull('situacao')->count();
 
         return ($totalMatriculados - $frequenciasLancadas) > 0;

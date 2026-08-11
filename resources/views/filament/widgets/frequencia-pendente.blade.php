@@ -5,12 +5,11 @@
 
     @if($pendenciasPorDia->isNotEmpty())
         <x-filament::section>
-            {{-- CABEÇALHO PERSONALIZADO E INFALÍVEL --}}
-            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-100 dark:border-gray-800">
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">
-                    Pendências de Chamada
-                </h3>
+            <x-slot name="heading">
+                Pendências de Chamada
+            </x-slot>
 
+            <x-slot name="afterHeader">
                 <x-filament::button
                     tag="a"
                     href="{{ \App\Filament\Resources\CronogramaAulas\CronogramaAulaResource::getUrl('pendencias') }}"
@@ -20,7 +19,7 @@
                 >
                     Ver mais
                 </x-filament::button>
-            </div>
+            </x-slot>
 
             {{-- GRID DE 3 COLUNAS (1/3 DA LARGURA CADA) NO PADRÃO FILAMENT --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

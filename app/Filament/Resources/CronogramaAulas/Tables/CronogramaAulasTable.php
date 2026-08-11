@@ -141,7 +141,7 @@ class CronogramaAulasTable
                     ->indicator('Apenas Pendentes')
                     ->default(true)
                     ->query(fn ($query) => $query->whereRaw('
-                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id) > 
+                        (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id AND (matricula.data_ativacao IS NULL OR matricula.data_ativacao <= cronograma_aula.data) AND (matricula.data_desativacao IS NULL OR matricula.data_desativacao > cronograma_aula.data)) > 
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ')),
             ])
