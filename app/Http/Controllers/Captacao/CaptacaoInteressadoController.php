@@ -10,6 +10,7 @@ use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
+use App\Models\Serie;
 use App\Models\StatusInteressado;
 use App\Models\Turma;
 use App\Models\Unidade;
@@ -28,23 +29,27 @@ class CaptacaoInteressadoController extends Controller
     {
         $unidades = Unidade::where('flag_ativo', true)->orderBy('nome')->get();
 
+        $series = Serie::with('curso')
+            ->orderBy('nome')
+            ->get();
+
         $turmas = Turma::with(['serie.curso', 'turno'])
             ->orderBy('nome')
             ->get();
 
-        return view('captacao.interessado', compact('unidades', 'turmas'));
+        return view('captacao.interessado', compact('unidades', 'series', 'turmas'));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        // Verifica reCAPTCHA v3 (Desativado temporariamente para testes)
-        // $this->verificarRecaptcha($request);
+        // Verifica reCAPTCHA v3
+        $this->verificarRecaptcha($request);
 
         $validated = $request->validate([
             // Quem preenche
             'tipo_preenchimento' => ['required', 'in:proprio,responsavel'],
 
-            // Dados do responsável (quando pai/mãe preenche)
+            // Dados do responsável
             'responsavel_nome' => ['required_if:tipo_preenchimento,responsavel', 'nullable', 'string', 'max:255'],
             'responsavel_cpf' => ['nullable', 'string', 'max:20'],
             'responsavel_telefone' => ['required', 'string', 'max:30'],
@@ -56,28 +61,27 @@ class CaptacaoInteressadoController extends Controller
             'alunos.*.data_nascimento' => ['nullable', 'date'],
             'alunos.*.vinculo' => ['nullable', 'string', 'max:100'],
             'alunos.*.unidade_id' => ['nullable', 'exists:unidade,id'],
-            'alunos.*.turma_id' => ['nullable', 'exists:turma,id'],
+            'alunos.*.serie_id' => ['nullable', 'exists:serie,id'],
+            'alunos.*.turno_preferencia' => ['nullable', 'string', 'in:Manhã,Tarde,Integral,Sem preferência'],
 
-            // Interesse Geral / Extras
+            // Extras
             'observacoes' => ['nullable', 'string', 'max:2000'],
             'como_conheceu' => ['nullable', 'exists:origem_interessado,id'],
         ], [
             'tipo_preenchimento.required' => 'Informe quem está preenchendo.',
             'responsavel_nome.required_if' => 'Informe o nome do responsável.',
-            'responsavel_telefone.required' => 'O telefone para contato é obrigatório.',
+            'responsavel_telefone.required' => 'O telefone / WhatsApp para contato é obrigatório.',
             'responsavel_email.required' => 'O e-mail para contato é obrigatório.',
             'responsavel_email.email' => 'Informe um e-mail válido.',
             'alunos.required' => 'Informe os dados de ao menos um aluno.',
             'alunos.*.nome.required' => 'Informe o nome completo do aluno.',
         ]);
 
-        // Determina nome do interessado (pessoa principal que preenche o form)
-        // Se for "proprio", o nome vem do primeiro aluno da lista
         $nomeInteressado = $validated['tipo_preenchimento'] === 'responsavel'
             ? $validated['responsavel_nome']
             : $validated['alunos'][0]['nome'];
 
-        // Cria ou localiza a pessoa pelo e-mail
+        // Cria ou localiza a Pessoa pelo e-mail
         $pessoa = Pessoa::firstOrCreate(
             ['email' => $validated['responsavel_email']],
             [
@@ -87,47 +91,73 @@ class CaptacaoInteressadoController extends Controller
             ]
         );
 
-        // Status padrão "Novo"
         $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
-        // Origem: site público (cria se não existir)
-        $origemSite = OrigemInteressado::firstOrCreate(
-            ['nome' => 'Site'],
-        );
-
-        // Origem
+        $origemSite = OrigemInteressado::firstOrCreate(['nome' => 'Site']);
         $origemId = $request->como_conheceu ?? $origemSite->id;
 
-        // Cria ou atualiza o Interessado (Lead)
+        // Infere temperatura baseada no grau de detalhe preenchido
+        $temperatura = $this->inferirTemperatura($validated);
+
         $interessado = Interessado::updateOrCreate(
             ['pessoa_id' => $pessoa->id],
             [
                 'status_interessado_id' => $statusNovo?->id ?? 1,
                 'origem_interessado_id' => $origemId,
+                'temperatura' => $temperatura,
+                'data_primeiro_contato' => now(),
+                'data_proximo_contato' => now()->addDays(1),
                 'observacoes' => $this->montarObservacoes($validated),
             ]
         );
 
-        // Salva dependentes (múltiplos agora)
         $this->salvarDependentes($interessado, $validated);
 
-        // Envia E-mail de Agradecimento e Registra Log
-        // Usa a unidade do primeiro aluno como referência principal para o e-mail
         $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
-        $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId ?? $validated['unidade_id'] ?? null);
+        $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId);
 
-        // Notifica equipe interna
         $this->notificarEquipeInterna($interessado, $pessoa);
 
-        return redirect()->route('captacao.interessado.sucesso');
+        // Redireciona com dados para personalizar a página de sucesso
+        $primeiraUnidade = $primeiraUnidadeId ? Unidade::find($primeiraUnidadeId) : Unidade::where('flag_ativo', true)->first();
+
+        return redirect()
+            ->route('captacao.interessado.sucesso')
+            ->with([
+                'nome_responsavel' => $nomeInteressado,
+                'whatsapp_unidade' => $primeiraUnidade?->celular_whatsapp ?? null,
+                'nome_unidade' => $primeiraUnidade?->nome ?? null,
+            ]);
     }
 
     /**
-     * Notifica a equipe administrativa sobre o novo lead
+     * Infere a temperatura do lead baseada no grau de detalhe preenchido.
+     */
+    private function inferirTemperatura(array $data): string
+    {
+        $primeiroAluno = $data['alunos'][0] ?? [];
+        $temUnidade = ! empty($primeiroAluno['unidade_id']);
+        $temSerie = ! empty($primeiroAluno['serie_id']);
+        $temTurno = ! empty($primeiroAluno['turno_preferencia']) && $primeiroAluno['turno_preferencia'] !== 'Sem preferência';
+        $temData = ! empty($primeiroAluno['data_nascimento']);
+
+        $score = ($temUnidade ? 2 : 0) + ($temSerie ? 2 : 0) + ($temTurno ? 1 : 0) + ($temData ? 1 : 0);
+
+        if ($score >= 4) {
+            return 'quente';
+        }
+
+        if ($score >= 2) {
+            return 'morno';
+        }
+
+        return 'frio';
+    }
+
+    /**
+     * Notifica a equipe administrativa sobre o novo lead.
      */
     private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa): void
     {
-        // Busca usuários que possuem permissão para ver interessados ou são administradores
-        // Evita enviar para perfis como portaria, alunos, etc.
         $destinatarios = User::permission('View:Interessado')->get();
 
         if ($destinatarios->isEmpty()) {
@@ -153,40 +183,39 @@ class CaptacaoInteressadoController extends Controller
     }
 
     /**
-     * Salva os dependentes vinculados ao interessado
+     * Salva os dependentes vinculados ao interessado.
      */
     private function salvarDependentes(Interessado $interessado, array $data): void
     {
-        // Limpa dependentes anteriores se for uma atualização
         $interessado->dependentes()->delete();
 
-        // Se houver múltiplos alunos, itera sobre eles, caso contrário usa o formato antigo
-        $alunos = $data['alunos'] ?? [[
-            'nome' => $data['aluno_nome'],
-            'data_nascimento' => $data['aluno_data_nascimento'] ?? null,
-            'turma_id' => $data['turma_id'] ?? null,
-            'vinculo' => 'Filho(a)',
-        ]];
+        $alunos = $data['alunos'] ?? [];
 
         foreach ($alunos as $alunoData) {
             if (empty($alunoData['nome'])) {
                 continue;
             }
 
-            $turma = ! empty($alunoData['turma_id']) ? Turma::find($alunoData['turma_id']) : null;
+            // Prioriza serie_id do formulário novo, fallback para turma (legado)
+            $serieId = $alunoData['serie_id'] ?? null;
+
+            if (! $serieId && ! empty($alunoData['turma_id'])) {
+                $turma = Turma::find($alunoData['turma_id']);
+                $serieId = $turma?->serie_id;
+            }
 
             InteressadoDependente::create([
                 'interessado_id' => $interessado->id,
                 'nome_crianca' => $alunoData['nome'],
                 'data_nascimento' => $alunoData['data_nascimento'] ?? null,
                 'vinculo' => $alunoData['vinculo'] ?? 'Parente',
-                'serie_id' => $turma?->serie_id,
+                'serie_id' => $serieId,
             ]);
         }
     }
 
     /**
-     * Envia e-mail de agradecimento e registra no log
+     * Envia e-mail de agradecimento e registra no log.
      */
     private function enviarEmailERegistrarLog(Pessoa $pessoa, ?int $unidadeId = null): void
     {
@@ -194,21 +223,16 @@ class CaptacaoInteressadoController extends Controller
             return;
         }
 
-        // Busca a unidade para personalizar o e-mail (fallback para a primeira se não houver)
         $unidade = ($unidadeId ? Unidade::find($unidadeId) : null) ?? Unidade::first();
 
-        // Se realmente não houver nenhuma unidade no banco (raro), criamos uma temporária para não quebrar o e-mail
         if (! $unidade) {
             $unidade = new Unidade(['nome' => 'Torre360']);
         }
 
         try {
             $mailable = new AgradecimentoInteresseMail($pessoa, $unidade);
-
-            // Envia o e-mail
             Mail::to($pessoa->email)->send($mailable);
 
-            // Registra no Log
             EmailLog::create([
                 'to' => [$pessoa->email],
                 'subject' => "Recebemos seu interesse - {$unidade->nome}",
@@ -216,14 +240,17 @@ class CaptacaoInteressadoController extends Controller
                 'sent_at' => now(),
             ]);
         } catch (\Exception $e) {
-            // Log do erro no sistema para auditoria, sem travar o usuário
             \Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: ".$e->getMessage());
         }
     }
 
     public function sucesso(): View
     {
-        return view('captacao.sucesso');
+        return view('captacao.sucesso', [
+            'nomeResponsavel' => session('nome_responsavel'),
+            'whatsappUnidade' => session('whatsapp_unidade'),
+            'nomeUnidade' => session('nome_unidade'),
+        ]);
     }
 
     /**
@@ -235,18 +262,22 @@ class CaptacaoInteressadoController extends Controller
     {
         $obs = [];
 
-        if (! empty($data['unidade_id'])) {
-            $unidade = Unidade::find($data['unidade_id']);
-            $obs[] = 'Unidade de interesse: '.($unidade?->nome ?? '-');
-        }
+        foreach ($data['alunos'] ?? [] as $i => $aluno) {
+            $label = 'Aluno '.($i + 1).': '.($aluno['nome'] ?? '-');
 
-        if (! empty($data['turma_id'])) {
-            $turma = Turma::with('serie')->find($data['turma_id']);
-            $obs[] = 'Turma de interesse: '.($turma?->nome ?? '-').' – '.($turma?->serie?->nome ?? '-');
-        }
+            if (! empty($aluno['unidade_id'])) {
+                $label .= ' | Unidade: '.(Unidade::find($aluno['unidade_id'])?->nome ?? '-');
+            }
 
-        if (! empty($data['turno_preferencia'])) {
-            $obs[] = 'Turno de preferência: '.$data['turno_preferencia'];
+            if (! empty($aluno['serie_id'])) {
+                $label .= ' | Série: '.(Serie::find($aluno['serie_id'])?->nome ?? '-');
+            }
+
+            if (! empty($aluno['turno_preferencia'])) {
+                $label .= ' | Turno: '.$aluno['turno_preferencia'];
+            }
+
+            $obs[] = $label;
         }
 
         if (! empty($data['observacoes'])) {
@@ -266,7 +297,6 @@ class CaptacaoInteressadoController extends Controller
         $siteKey = config('services.recaptcha.site_key');
         $secret = config('services.recaptcha.secret');
 
-        // Se as chaves não estiverem configuradas, pula a verificação (ambiente de teste/local)
         if (empty($siteKey) || empty($secret)) {
             \Log::info('reCAPTCHA ignorado: Chaves não configuradas no .env');
 
@@ -276,8 +306,6 @@ class CaptacaoInteressadoController extends Controller
         $token = $request->input('recaptcha_token');
 
         if (empty($token)) {
-            // Se as chaves NÃO estão configuradas, apenas logamos e deixamos passar.
-            // Se as chaves ESTÃO configuradas e o token faltou, aí sim é um erro.
             if (! empty($siteKey) && ! empty($secret)) {
                 \Log::warning('reCAPTCHA falhou: Token ausente no request com chaves configuradas');
                 abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
@@ -303,7 +331,6 @@ class CaptacaoInteressadoController extends Controller
             }
         } catch (\Exception $e) {
             \Log::error('Erro ao conectar com API do reCAPTCHA: '.$e->getMessage());
-            // Em caso de erro de conexão com o Google, deixamos passar para não travar o site
         }
     }
 }
