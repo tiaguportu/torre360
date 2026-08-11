@@ -264,6 +264,8 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 - **Data de Ativação:** Data em que a matrícula foi ativada e o vínculo letivo com o aluno iniciou.
 - **Data de Desativação:** Data em que a matrícula foi encerrada, desativada, trancada, cancelada ou concluída.
 
+**Edição em Lote:** Na listagem de Matrículas (`/admin/matriculas`), é possível selecionar múltiplas matrículas e acionar a ação **Editar em Lote** para atualizar simultaneamente os campos de **Turma**, **Período Letivo**, **Situação**, **Data de Ativação** e **Data de Desativação**.
+
 ### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
 1. Vá em **Acadêmico → Turmas**.
 2. **Cadastro e Edição de Turmas:** Ao cadastrar ou atualizar uma turma, é possível preencher:

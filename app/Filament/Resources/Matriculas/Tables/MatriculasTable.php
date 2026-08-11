@@ -18,6 +18,7 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
@@ -788,6 +789,14 @@ class MatriculasTable
                                 ->label('Situação')
                                 ->options(SituacaoMatricula::class)
                                 ->preload(),
+                            DatePicker::make('data_ativacao')
+                                ->label('Data de Ativação')
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
+                            DatePicker::make('data_desativacao')
+                                ->label('Data de Desativação')
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
                         ])
                         ->action(function (Collection $records, array $data) {
                             $updateData = array_filter($data);
