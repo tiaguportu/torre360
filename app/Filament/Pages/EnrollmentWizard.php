@@ -10,8 +10,10 @@ use App\Models\Cidade;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Endereco;
+use App\Models\Interessado;
 use App\Models\Matricula;
 use App\Models\Pais;
+use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\TipoVinculo;
@@ -27,6 +29,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -72,12 +75,60 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
     public function mount(): void
     {
-        $this->form->fill();
+        $this->form->fill([
+            'data_ativacao' => now()->toDateString(),
+            'situacao' => SituacaoMatricula::ATIVA->value,
+            'periodo_letivo_id' => PeriodoLetivo::latest('id')->value('id'),
+        ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Assistente de Matrícula')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<p>O <strong>Assistente de Matrícula</strong> guia você em 3 etapas para cadastrar um ou mais alunos de uma mesma família, criando automaticamente as matrículas, contratos e vínculos de responsabilidade.</p>';
+
+        $html .= '<h3>Etapas</h3><ol>';
+        $html .= '<li><strong>Dados do(s) Aluno(s):</strong> Adicione quantos filhos forem necessários. Digite o CPF para buscar automaticamente um cadastro já existente. Preencha nome, data de nascimento, endereço e, se desejar, crie um acesso de portal para o aluno.</li>';
+        $html .= '<li><strong>Pais / Responsáveis:</strong> Cadastre os responsáveis da família. O CPF também busca cadastros existentes. Defina o vínculo (Pai, Mãe, Avó, etc.) e se é responsável financeiro. Os responsáveis serão vinculados a <em>todos</em> os alunos adicionados na etapa anterior.</li>';
+        $html .= '<li><strong>Plano e Matrícula:</strong> Selecione a unidade, o período letivo, o curso e a turma. Defina a situação inicial (Ativa ou Pendente) e a data de ativação. As turmas são filtradas automaticamente pela unidade e pelo curso escolhidos.</li>';
+        $html .= '</ol>';
+
+        $html .= '<h3>Dicas importantes</h3><ul>';
+        $html .= '<li>Se o CPF já está cadastrado, os dados são preenchidos automaticamente — você só precisa revisar.</li>';
+        $html .= '<li>Se o aluno ou responsável já era um <strong>Interessado no CRM</strong>, a conversão será registrada automaticamente.</li>';
+        $html .= '<li>A turma mostra a quantidade de vagas disponíveis. Não é possível matricular em turma lotada.</li>';
+        $html .= '<li>O campo <strong>Percentual</strong> do responsável financeiro define a divisão do contrato (ex: dois responsáveis com 50% cada).</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 
     public function form(Schema $schema): Schema
     {
-        $getPessoaFields = function (string $statePath) {
+        /**
+         * Gera os campos de identificação de uma Pessoa (aluno ou responsável).
+         * O $statePath é o prefixo relativo dentro do item do Repeater.
+         */
+        $getPessoaFields = function () {
             return [
                 FileUpload::make('foto')
                     ->image()
@@ -85,65 +136,76 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->imageEditorAspectRatios(['3:4'])
                     ->directory('pessoas_fotos')
                     ->columnSpanFull(),
+
                 TextInput::make('cpf')
                     ->label('CPF')
-                    ->maxLength(11)
+                    ->maxLength(14)
                     ->dehydrateStateUsing(fn (?string $state) => $state ? preg_replace('/\D/', '', $state) : null)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function ($set, $state, $component) use ($statePath) {
+                    ->afterStateUpdated(function ($set, $state) {
                         if (empty($state)) {
                             return;
                         }
 
                         $cleanState = preg_replace('/\D/', '', $state);
 
-                        $pessoa = Pessoa::with('endereco')
-                            ->where('cpf', $state)
-                            ->orWhere('cpf', $cleanState)
+                        $pessoa = Pessoa::with('enderecos')
+                            ->where('cpf', $cleanState)
                             ->orWhereRaw("REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?", [$cleanState])
                             ->first();
 
                         if ($pessoa) {
-                            $prefix = $statePath ? "{$statePath}." : '';
+                            $endereco = $pessoa->enderecos->first();
 
-                            $formData = [
-                                "{$prefix}nome" => $pessoa->nome,
-                                "{$prefix}data_nascimento" => $pessoa->data_nascimento,
-                                "{$prefix}email" => $pessoa->email,
-                                "{$prefix}telefone" => $pessoa->telefone,
-                                "{$prefix}nacionalidade_id" => (string) $pessoa->nacionalidade_id,
-                                "{$prefix}naturalidade_id" => (string) $pessoa->naturalidade_id,
-                                "{$prefix}sexo" => $pessoa->sexo?->value,
-                                "{$prefix}cor_raca" => $pessoa->cor_raca?->value,
-                            ];
+                            $set('nome', $pessoa->nome);
+                            $set('data_nascimento', $pessoa->data_nascimento?->toDateString());
+                            $set('email', $pessoa->email);
+                            $set('telefone', $pessoa->telefone);
+                            $set('nacionalidade_id', (string) $pessoa->nacionalidade_id);
+                            $set('naturalidade_id', (string) $pessoa->naturalidade_id);
+                            $set('sexo', $pessoa->sexo?->value);
+                            $set('cor_raca', $pessoa->cor_raca instanceof CorRaca ? $pessoa->cor_raca->value : $pessoa->cor_raca);
+                            $set('pessoa_id_existente', $pessoa->id);
 
-                            if ($pessoa->endereco) {
-                                $formData["{$prefix}cidade_id"] = (string) $pessoa->endereco->cidade_id;
-                                $formData["{$prefix}cep"] = $pessoa->endereco->cep;
-                                $formData["{$prefix}logradouro"] = $pessoa->endereco->logradouro;
-                                $formData["{$prefix}numero"] = $pessoa->endereco->numero;
-                                $formData["{$prefix}bairro"] = $pessoa->endereco->bairro;
-                            }
-
-                            foreach ($formData as $key => $value) {
-                                $set($key, $value);
+                            if ($endereco) {
+                                $set('cidade_id', (string) $endereco->cidade_id);
+                                $set('cep', $endereco->cep);
+                                $set('logradouro', $endereco->logradouro);
+                                $set('numero', $endereco->numero);
+                                $set('bairro', $endereco->bairro);
+                                $set('complemento', $endereco->complemento);
                             }
 
                             Notification::make()
-                                ->title('Dados carregados')
+                                ->title('Cadastro encontrado')
                                 ->body("Pessoa identificada: {$pessoa->nome}")
                                 ->success()
                                 ->send();
                         } else {
+                            $set('pessoa_id_existente', null);
+
                             Notification::make()
                                 ->title('Aviso')
-                                ->body('Nenhum registro encontrado para este CPF.')
+                                ->body('Nenhum registro encontrado para este CPF. Preencha os dados abaixo.')
                                 ->warning()
                                 ->send();
                         }
                     }),
-                TextInput::make('nome')->required()->maxLength(255),
-                DatePicker::make('data_nascimento')->label('Data de Nascimento'),
+
+                // Campo oculto para guardar o ID de pessoa já existente
+                TextInput::make('pessoa_id_existente')
+                    ->hidden()
+                    ->dehydrated(),
+
+                TextInput::make('nome')
+                    ->required()
+                    ->maxLength(255),
+
+                DatePicker::make('data_nascimento')
+                    ->label('Data de Nascimento')
+                    ->native(false)
+                    ->displayFormat('d/m/Y'),
+
                 TextInput::make('email')
                     ->email()
                     ->maxLength(255)
@@ -156,18 +218,23 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         if (User::where('email', $state)->exists()) {
                             Notification::make()
                                 ->title('Atenção')
-                                ->body('Este e-mail já está em uso por outro usuário. Se prosseguir, a pessoa será vinculada ao usuário existente.')
+                                ->body('Este e-mail já está em uso. A pessoa será vinculada ao usuário existente.')
                                 ->warning()
                                 ->send();
                         }
                     }),
-                TextInput::make('telefone')->tel()->maxLength(20),
+
+                TextInput::make('telefone')
+                    ->tel()
+                    ->maxLength(20),
+
                 Select::make('nacionalidade_id')
                     ->label('Nacionalidade')
                     ->options(Pais::pluck('nome', 'id'))
                     ->default(fn () => Pais::where('nome', 'Brasil')->value('id'))
                     ->searchable()
                     ->live(),
+
                 Select::make('naturalidade_id')
                     ->label('Naturalidade')
                     ->searchable()
@@ -180,14 +247,17 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         ->toArray())
                     ->getOptionLabelUsing(fn ($value): ?string => ($c = Cidade::with('estado')->find($value)) ? "{$c->nome} - ".($c->estado?->sigla ?? '') : null)
                     ->visible(fn ($get) => $get('nacionalidade_id') == Pais::where('nome', 'Brasil')->value('id')),
+
                 Select::make('sexo')
                     ->label('Sexo')
                     ->options(Sexo::class)
                     ->searchable(),
+
                 Select::make('cor_raca')
                     ->label('Cor/Raça')
                     ->options(CorRaca::class)
                     ->searchable(),
+
                 Checkbox::make('criar_usuario')
                     ->label('Criar conta de acesso para esta pessoa?')
                     ->helperText('Será enviado um e-mail com a senha para o endereço informado acima.')
@@ -205,7 +275,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         if (User::where('email', $email)->exists()) {
                             Notification::make()
                                 ->title('Atenção')
-                                ->body('Este e-mail já está em uso por outro usuário. Se prosseguir, a pessoa será vinculada ao usuário existente.')
+                                ->body('Este e-mail já está em uso. A pessoa será vinculada ao usuário existente.')
                                 ->warning()
                                 ->send();
                         }
@@ -252,6 +322,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         // Silently fail if API is down
                     }
                 }),
+
             Select::make('cidade_id')
                 ->label('Cidade')
                 ->searchable()
@@ -263,6 +334,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     ->mapWithKeys(fn ($cidade) => [$cidade->id => "{$cidade->nome} - ".($cidade->estado?->sigla ?? '')])
                     ->toArray())
                 ->getOptionLabelUsing(fn ($value): ?string => ($c = Cidade::with('estado')->find($value)) ? "{$c->nome} - ".($c->estado?->sigla ?? '') : null),
+
             TextInput::make('logradouro')->label('Logradouro'),
             TextInput::make('numero')->label('Número'),
             TextInput::make('complemento')->label('Complemento'),
@@ -272,6 +344,10 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         return $schema
             ->components([
                 Wizard::make([
+
+                    // ═══════════════════════════════════════════════════
+                    // STEP 1 — Alunos
+                    // ═══════════════════════════════════════════════════
                     Step::make('Dados do(s) Aluno(s)')
                         ->description('Identificação básica do(s) estudante(s)')
                         ->icon('heroicon-m-user')
@@ -283,14 +359,20 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                 ->schema([
                                     Section::make('Identificação do Aluno')
                                         ->columns(2)
-                                        ->schema($getPessoaFields('')),
+                                        ->schema($getPessoaFields()),
+
                                     Section::make('Endereço do Aluno')
                                         ->columns(2)
                                         ->schema($enderecoFields),
                                 ])
                                 ->collapsible()
-                                ->cloneable(),
+                                ->cloneable()
+                                ->itemLabel(fn (array $state): ?string => $state['nome'] ?? 'Novo Aluno'),
                         ]),
+
+                    // ═══════════════════════════════════════════════════
+                    // STEP 2 — Responsáveis
+                    // ═══════════════════════════════════════════════════
                     Step::make('Pais / Responsáveis')
                         ->description('Vínculos familiares e financeiros')
                         ->icon('heroicon-m-users')
@@ -306,10 +388,12 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                                 ->label('Vínculo')
                                                 ->options(TipoVinculo::pluck('nome', 'id'))
                                                 ->required(),
+
                                             Checkbox::make('is_financeiro')
                                                 ->label('Responsável Financeiro?')
                                                 ->live()
                                                 ->default(true),
+
                                             TextInput::make('percentual')
                                                 ->label('Percentual (%)')
                                                 ->numeric()
@@ -317,40 +401,104 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                                 ->visible(fn ($get) => $get('is_financeiro'))
                                                 ->required(fn ($get) => $get('is_financeiro')),
                                         ]),
+
                                     Section::make('Identificação do Responsável')
                                         ->columns(2)
-                                        ->schema($getPessoaFields('')),
+                                        ->schema($getPessoaFields()),
+
                                     Section::make('Endereço do Responsável')
                                         ->columns(2)
                                         ->schema($enderecoFields),
-                                ]),
+                                ])
+                                ->collapsible()
+                                ->itemLabel(fn (array $state): ?string => $state['nome'] ?? 'Novo Responsável'),
                         ]),
+
+                    // ═══════════════════════════════════════════════════
+                    // STEP 3 — Plano e Matrícula (MELHORADO)
+                    // ═══════════════════════════════════════════════════
                     Step::make('Plano e Matrícula')
-                        ->description('Definição de curso e turma')
+                        ->description('Definição de curso, turma e configurações da matrícula')
                         ->icon('heroicon-m-academic-cap')
                         ->components([
-                            Section::make()
+                            Section::make('Escola e Turma')
                                 ->columns(2)
-                                ->components([
+                                ->schema([
                                     Select::make('unidade_id')
                                         ->label('Unidade / Escola')
                                         ->options(Unidade::pluck('nome', 'id'))
                                         ->searchable()
-                                        ->required(),
+                                        ->required()
+                                        ->live(),
+
+                                    Select::make('periodo_letivo_id')
+                                        ->label('Período Letivo')
+                                        ->options(PeriodoLetivo::orderByDesc('id')->pluck('nome', 'id'))
+                                        ->searchable()
+                                        ->required()
+                                        ->live(),
+
                                     Select::make('curso_id')
                                         ->label('Curso')
-                                        ->options(Curso::pluck('nome_interno', 'id'))
+                                        ->options(fn (Get $get) => Curso::when(
+                                            $get('unidade_id'),
+                                            fn ($q, $unidade) => $q->where('unidade_id', $unidade)
+                                        )->pluck('nome_interno', 'id'))
                                         ->live()
                                         ->searchable()
                                         ->required(),
+
                                     Select::make('turma_id')
                                         ->label('Turma')
-                                        ->options(
-                                            fn ($get) => Turma::whereHas('serie', fn ($q) => $q->where('curso_id', $get('curso_id')))
-                                                ->pluck('nome', 'id')
-                                        )
+                                        ->options(function (Get $get) {
+                                            $cursoId = $get('curso_id');
+                                            $periodoLetivoId = $get('periodo_letivo_id');
+
+                                            if (! $cursoId) {
+                                                return [];
+                                            }
+
+                                            return Turma::whereHas('serie', fn ($q) => $q->where('curso_id', $cursoId))
+                                                ->when($periodoLetivoId, fn ($q) => $q->where('periodo_letivo_id', $periodoLetivoId))
+                                                ->get()
+                                                ->mapWithKeys(function (Turma $turma) {
+                                                    $matriculasAtivas = $turma->matriculas()->count();
+                                                    $vagas = $turma->vagas_maximas;
+                                                    $vagasLabel = $vagas
+                                                        ? " ({$matriculasAtivas}/{$vagas} vagas)"
+                                                        : " ({$matriculasAtivas} matriculados)";
+
+                                                    $icone = ($vagas && $matriculasAtivas >= $vagas) ? ' 🔴 LOTADA' : '';
+
+                                                    return [$turma->id => $turma->nome.$vagasLabel.$icone];
+                                                })
+                                                ->toArray();
+                                        })
                                         ->searchable()
-                                        ->required(),
+                                        ->required()
+                                        ->helperText('As turmas mostram (matriculados/vagas). Turmas marcadas com 🔴 estão lotadas.'),
+                                ]),
+
+                            Section::make('Configurações da Matrícula')
+                                ->columns(2)
+                                ->schema([
+                                    Select::make('situacao')
+                                        ->label('Situação Inicial')
+                                        ->options([
+                                            SituacaoMatricula::ATIVA->value => SituacaoMatricula::ATIVA->getLabel(),
+                                            SituacaoMatricula::PENDENTE->value => SituacaoMatricula::PENDENTE->getLabel(),
+                                            SituacaoMatricula::RESERVA->value => SituacaoMatricula::RESERVA->getLabel(),
+                                        ])
+                                        ->default(SituacaoMatricula::ATIVA->value)
+                                        ->required()
+                                        ->native(false)
+                                        ->helperText('Use "Pendente" quando a documentação ainda não foi entregue.'),
+
+                                    DatePicker::make('data_ativacao')
+                                        ->label('Data de Ativação')
+                                        ->native(false)
+                                        ->displayFormat('d/m/Y')
+                                        ->default(now()->toDateString()),
                                 ]),
                         ]),
                 ])
@@ -372,15 +520,35 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         try {
             DB::beginTransaction();
 
-            $turma = Turma::find($raw['turma_id']);
+            $turma = Turma::with('serie')->find($raw['turma_id']);
 
-            /** @var list<Pessoa> $alunosPessoa */
+            // ── Validação de vagas ──────────────────────────────────────
+            if ($turma && $turma->vagas_maximas) {
+                $alunosCount = count($raw['alunos']);
+                $matriculadas = $turma->matriculas()->count();
+
+                if (($matriculadas + $alunosCount) > $turma->vagas_maximas) {
+                    $disponiveis = max(0, $turma->vagas_maximas - $matriculadas);
+                    Notification::make()
+                        ->title('Turma sem vagas suficientes')
+                        ->body("A turma \"{$turma->nome}\" possui apenas {$disponiveis} vaga(s) disponível(is) e você tentou matricular {$alunosCount} aluno(s).")
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+            }
+
+            /** @var list<array{aluno: Pessoa, contrato: Contrato}> $alunosPessoa */
             $alunosPessoa = [];
 
             foreach ($raw['alunos'] as $alunoData) {
-                // Criar Endereço do Aluno, se preenchido
-                $alunoEnderecoId = null;
-                if (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id'])) {
+
+                // ── Buscar ou criar Pessoa Aluno ────────────────────────
+                $aluno = $this->buscarOuCriarPessoa($alunoData);
+
+                // ── Endereço do Aluno (apenas se não existia antes) ─────
+                if (! $alunoData['pessoa_id_existente'] && (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id']))) {
                     $endereco = Endereco::create([
                         'cidade_id' => $alunoData['cidade_id'] ?? null,
                         'logradouro' => $alunoData['logradouro'] ?? null,
@@ -389,40 +557,24 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'bairro' => $alunoData['bairro'] ?? null,
                         'cep' => $alunoData['cep'] ?? null,
                     ]);
-                    $alunoEnderecoId = $endereco->id;
+                    $aluno->enderecos()->attach($endereco->id);
                 }
 
-                // 1. Criar Pessoa Aluno
-                $aluno = Pessoa::create([
-                    'nome' => $alunoData['nome'],
-                    'cpf' => $alunoData['cpf'] ?? null,
-                    'data_nascimento' => $alunoData['data_nascimento'] ?? null,
-                    'sexo' => $alunoData['sexo'] ?? null,
-                    'email' => $alunoData['email'] ?? null,
-                    'telefone' => $alunoData['telefone'] ?? null,
-                    'nacionalidade_id' => $alunoData['nacionalidade_id'] ?? null,
-                    'naturalidade_id' => $alunoData['naturalidade_id'] ?? null,
-                    'cor_raca' => $alunoData['cor_raca'] ?? null,
-                ]);
-
-                if ($alunoEnderecoId) {
-                    $aluno->enderecos()->attach($alunoEnderecoId);
-                }
-
-                // 2. Criar usuário para o aluno, se solicitado
+                // ── Criar usuário para o aluno, se solicitado ───────────
                 if (! empty($alunoData['criar_usuario']) && ! empty($alunoData['email'])) {
                     $this->criarUsuarioParaPessoa($aluno, $alunoData['email'], 'aluno');
                 }
 
-                // 3. Criar Matrícula
+                // ── Criar Matrícula ─────────────────────────────────────
                 $matricula = Matricula::create([
                     'pessoa_id' => $aluno->id,
                     'turma_id' => $raw['turma_id'],
-                    'situacao' => SituacaoMatricula::ATIVA,
-                    'periodo_letivo_id' => $turma?->periodo_letivo_id,
+                    'situacao' => $raw['situacao'] ?? SituacaoMatricula::ATIVA->value,
+                    'periodo_letivo_id' => $raw['periodo_letivo_id'] ?? $turma?->periodo_letivo_id,
+                    'data_ativacao' => $raw['data_ativacao'] ?? null,
                 ]);
 
-                // 4. Criar Contrato para a Matrícula
+                // ── Criar Contrato para a Matrícula ─────────────────────
                 $contrato = Contrato::create([
                     'matricula_id' => $matricula->id,
                     'valor_total' => 0,
@@ -430,13 +582,18 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula',
                 ]);
 
-                $alunosPessoa[] = ['aluno' => $aluno, 'contrato' => $contrato];
+                // ── Integração CRM: marcar conversão ────────────────────
+                $this->marcarConversaoCRM($aluno);
+
+                $alunosPessoa[] = ['aluno' => $aluno, 'contrato' => $contrato, 'matricula' => $matricula];
             }
 
+            // ── Responsáveis ────────────────────────────────────────────
             foreach ($raw['responsaveis'] as $respData) {
-                // Criar endereço do responsável
-                $respEnderecoId = null;
-                if (! empty($respData['logradouro']) || ! empty($respData['cidade_id'])) {
+                $responsavelPessoa = $this->buscarOuCriarPessoa($respData);
+
+                // Endereço do responsável (apenas se não existia antes)
+                if (! $respData['pessoa_id_existente'] && (! empty($respData['logradouro']) || ! empty($respData['cidade_id']))) {
                     $enderecoResp = Endereco::create([
                         'cidade_id' => $respData['cidade_id'] ?? null,
                         'logradouro' => $respData['logradouro'] ?? null,
@@ -445,34 +602,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         'bairro' => $respData['bairro'] ?? null,
                         'cep' => $respData['cep'] ?? null,
                     ]);
-                    $respEnderecoId = $enderecoResp->id;
-                }
-
-                // Criar ou buscar Pessoa Responsável
-                $q = Pessoa::query();
-                if (! empty($respData['cpf'])) {
-                    $q->where('cpf', $respData['cpf']);
-                } else {
-                    $q->where('nome', $respData['nome'])->where('email', $respData['email']);
-                }
-
-                $responsavelPessoa = $q->first();
-                if (! $responsavelPessoa) {
-                    $responsavelPessoa = Pessoa::create([
-                        'nome' => $respData['nome'],
-                        'cpf' => $respData['cpf'] ?? null,
-                        'data_nascimento' => $respData['data_nascimento'] ?? null,
-                        'sexo' => $respData['sexo'] ?? null,
-                        'email' => $respData['email'] ?? null,
-                        'telefone' => $respData['telefone'] ?? null,
-                        'nacionalidade_id' => $respData['nacionalidade_id'] ?? null,
-                        'naturalidade_id' => $respData['naturalidade_id'] ?? null,
-                        'cor_raca' => $respData['cor_raca'] ?? null,
-                    ]);
-
-                    if ($respEnderecoId) {
-                        $responsavelPessoa->enderecos()->attach($respEnderecoId);
-                    }
+                    $responsavelPessoa->enderecos()->attach($enderecoResp->id);
                 }
 
                 // Criar usuário para o responsável, se solicitado
@@ -480,16 +610,24 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     $this->criarUsuarioParaPessoa($responsavelPessoa, $respData['email'], 'responsavel');
                 }
 
-                // Vincular responsável a todos os alunos cadastrados
+                // Vincular responsável a todos os alunos
                 foreach ($alunosPessoa as $entry) {
                     $alunoObj = $entry['aluno'];
                     $contratoObj = $entry['contrato'];
 
-                    AlunoResponsavel::create([
-                        'aluno_id' => $alunoObj->id,
-                        'responsavel_id' => $responsavelPessoa->id,
-                        'tipo_vinculo_id' => $respData['tipo_vinculo_id'],
-                    ]);
+                    // Evitar duplicata no vínculo aluno-responsável
+                    $jaVinculado = $alunoObj->responsaveis()
+                        ->wherePivot('tipo_vinculo_id', $respData['tipo_vinculo_id'])
+                        ->where('pessoa.id', $responsavelPessoa->id)
+                        ->exists();
+
+                    if (! $jaVinculado) {
+                        AlunoResponsavel::create([
+                            'aluno_id' => $alunoObj->id,
+                            'responsavel_id' => $responsavelPessoa->id,
+                            'tipo_vinculo_id' => $respData['tipo_vinculo_id'],
+                        ]);
+                    }
 
                     if ($respData['is_financeiro'] ?? false) {
                         ResponsavelFinanceiro::create([
@@ -504,16 +642,26 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             DB::commit();
 
             $count = count($alunosPessoa);
+            $primeiraMatricula = $alunosPessoa[0]['matricula'] ?? null;
+
             Notification::make()
                 ->title('Matrícula realizada com sucesso!')
-                ->body($count > 1 ? "{$count} alunos matriculados com sucesso." : 'Aluno matriculado com sucesso.')
+                ->body($count > 1
+                    ? "{$count} alunos matriculados com sucesso."
+                    : 'Aluno matriculado com sucesso.')
                 ->success()
                 ->send();
 
-            $this->redirect('/admin/matriculas');
+            // Redirecionar para a edição da primeira matrícula criada
+            if ($primeiraMatricula) {
+                $this->redirect(route('filament.admin.resources.matriculas.edit', ['record' => $primeiraMatricula->id]));
+            } else {
+                $this->redirect('/admin/matriculas');
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             Notification::make()
                 ->title('Erro ao realizar matrícula')
                 ->body($e->getMessage())
@@ -523,20 +671,82 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
     }
 
     /**
+     * Busca uma Pessoa existente pelo CPF ou cria uma nova com os dados fornecidos.
+     * Se encontrada, atualiza apenas os campos ainda em branco.
+     */
+    private function buscarOuCriarPessoa(array $dados): Pessoa
+    {
+        // Usar ID pré-carregado no form (preenchido via auto-fill por CPF)
+        if (! empty($dados['pessoa_id_existente'])) {
+            $pessoa = Pessoa::find($dados['pessoa_id_existente']);
+            if ($pessoa) {
+                return $pessoa;
+            }
+        }
+
+        // Busca por CPF
+        $cpf = ! empty($dados['cpf']) ? preg_replace('/\D/', '', $dados['cpf']) : null;
+        if ($cpf) {
+            $pessoa = Pessoa::where('cpf', $cpf)
+                ->orWhereRaw("REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?", [$cpf])
+                ->first();
+
+            if ($pessoa) {
+                return $pessoa;
+            }
+        }
+
+        // Busca por nome + e-mail (fallback sem CPF)
+        if (empty($cpf) && ! empty($dados['nome']) && ! empty($dados['email'])) {
+            $pessoa = Pessoa::where('nome', $dados['nome'])
+                ->where('email', $dados['email'])
+                ->first();
+
+            if ($pessoa) {
+                return $pessoa;
+            }
+        }
+
+        // Criar nova pessoa
+        return Pessoa::create([
+            'nome' => $dados['nome'],
+            'cpf' => $cpf,
+            'data_nascimento' => $dados['data_nascimento'] ?? null,
+            'sexo' => $dados['sexo'] ?? null,
+            'email' => $dados['email'] ?? null,
+            'telefone' => $dados['telefone'] ?? null,
+            'nacionalidade_id' => $dados['nacionalidade_id'] ?? null,
+            'naturalidade_id' => $dados['naturalidade_id'] ?? null,
+            'cor_raca' => $dados['cor_raca'] ?? null,
+        ]);
+    }
+
+    /**
+     * Se a Pessoa era um Interessado ativo no CRM, marca a data de conversão.
+     */
+    private function marcarConversaoCRM(Pessoa $pessoa): void
+    {
+        $interessado = Interessado::where('pessoa_id', $pessoa->id)
+            ->whereNull('data_conversao')
+            ->first();
+
+        if ($interessado) {
+            $interessado->update(['data_conversao' => now()]);
+        }
+    }
+
+    /**
      * Cria um novo usuário vinculado à Pessoa, atribui o role e envia e-mail de boas-vindas.
      */
     private function criarUsuarioParaPessoa(Pessoa $pessoa, string $email, string $role): void
     {
-        // Verificar se já existe usuário com este e-mail
         $userExistente = User::where('email', $email)->first();
 
         if ($userExistente) {
-            // Apenas vincular a pessoa ao usuário existente, se ainda não estiver vinculado
             if (! $userExistente->pessoas()->where('pessoa_id', $pessoa->id)->exists()) {
                 $userExistente->pessoas()->attach($pessoa->id);
             }
 
-            // Garantir que o role seja atribuído
             if (! $userExistente->hasRole($role)) {
                 $userExistente->assignRole($role);
             }
@@ -556,7 +766,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
         $usuario->assignRole($role);
         $usuario->pessoas()->attach($pessoa->id);
-
         $usuario->notify(new WelcomeUserMail($senha));
     }
 }

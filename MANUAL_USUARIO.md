@@ -335,8 +335,9 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a forma mais rápida e guiada de registrar um ou mais alunos com todos os seus vínculos familiares em um único fluxo de 3 etapas.
 
 #### Etapa 1 — Dados do(s) Aluno(s)
-- Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada.
+- Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada. Se o cadastro for encontrado, os campos são preenchidos automaticamente e o aluno existente é reutilizado (sem duplicação).
 - O formulário permite cadastrar **múltiplos alunos** na mesma matrícula (irmãos, por exemplo) clicando em **"Adicionar Aluno"**. Todos compartilharão os mesmos responsáveis.
+- O cabeçalho do item no Repeater exibe o **nome do aluno** conforme é preenchido, para fácil identificação.
 - **Criar conta de acesso:** Ao preencher o campo **E-mail**, aparecerá um checkbox **"Criar conta de acesso para esta pessoa?"**. Se marcado, o sistema criará automaticamente um usuário com o papel **`aluno`** e enviará um e-mail de boas-vindas com a senha gerada para o endereço informado.
 
 > [!NOTE]
@@ -344,16 +345,26 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
 
 #### Etapa 2 — Pais / Responsáveis
 - Adicione um ou mais responsáveis e defina o **vínculo** (Pai, Mãe, Tutor etc.) e se é **Responsável Financeiro** (e o percentual correspondente).
+- O campo **CPF** também busca automaticamente um responsável já cadastrado. Responsáveis existentes **não são duplicados**: o sistema os encontra e vincula diretamente.
 - Os responsáveis cadastrados serão vinculados a **todos os alunos** adicionados na Etapa 1.
 - **Criar conta de acesso:** Igualmente ao aluno, se o responsável possuir e-mail e o checkbox estiver marcado, será criado um usuário com o papel **`responsavel`**.
 
 #### Etapa 3 — Plano e Matrícula
-- Selecione a **Unidade**, o **Curso** e a **Turma** em que os alunos serão matriculados.
+- Selecione a **Unidade / Escola** e o **Período Letivo** (pré-selecionado com o período mais recente).
+- Selecione o **Curso** — a lista de turmas é filtrada automaticamente pela unidade e curso escolhidos.
+- Selecione a **Turma** — o campo exibe a quantidade de **vagas ocupadas / vagas totais** (ex: `3/30 vagas`) e marca turmas lotadas com 🔴. Não é possível concluir a matrícula se a turma estiver cheia.
+- Defina a **Situação Inicial** da matrícula: `Ativa` (padrão), `Pendente` (aguardando documentação/pagamento) ou `Reserva`.
+- Defina a **Data de Ativação** (preenchida automaticamente com a data de hoje).
 - Ao clicar em **"Finalizar Matrícula"**, o sistema criará automaticamente:
-  - As Pessoas (Aluno e Responsáveis).
-  - Uma Matrícula por aluno.
+  - As Pessoas (Aluno e Responsáveis) — **reutilizando cadastros existentes** se encontrados por CPF.
+  - Uma Matrícula por aluno, com situação, período letivo e data de ativação corretos.
   - Um Contrato vinculado a cada matrícula.
   - Os usuários de acesso (se solicitado), com envio de e-mail de boas-vindas.
+  - A **conversão automática no CRM**: se algum aluno possuía um cadastro de Interessado ativo no CRM, a `data_conversao` é registrada automaticamente.
+- Após salvar, você é redirecionado para a tela de edição da primeira matrícula criada.
+
+> [!TIP]
+> Use o botão **Ajuda** (ícone de interrogação cinza) no canto superior direito para consultar instruções detalhadas sobre o wizard a qualquer momento.
 
 ### 6.1 Matrículas e Contratos
 1. Ao realizar uma matrícula, o sistema permite a criação automática de um **Contrato**.
