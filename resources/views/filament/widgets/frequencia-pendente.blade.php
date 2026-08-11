@@ -38,13 +38,13 @@
                                     {{ $diaSemana }}
                                 </span>
                                 @if($isHoje)
-                                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                                    <x-filament::badge color="info">
                                         Hoje
-                                    </span>
+                                    </x-filament::badge>
                                 @else
-                                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                                    <x-filament::badge color="warning">
                                         Atrasado
-                                    </span>
+                                    </x-filament::badge>
                                 @endif
                             </div>
 
