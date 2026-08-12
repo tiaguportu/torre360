@@ -1353,6 +1353,20 @@ Acesse **Financeiro → Contratos**.
 - **Assinatura Digital (Assinafy):** Na tabela de contratos, ao clicar em **Assinar Contrato** para um contrato que esteja pendente de assinatura, o sistema realiza a comunicação direta com a plataforma **Assinafy** e encaminha o usuário diretamente para a URL de assinatura do documento (ex: `https://app.assinafy.com.br/release/...`).
 - **Visualização de Contrato Assinado:** Quando o status do contrato for "Assinado", a ação na tabela se altera para **Ver Contrato Assinado**, permitindo a visualização da versão concluída ou o download do arquivo PDF com o certificado de assinatura digital.
 
+### 23.3 Gestão de Faturas, Dar Baixa e Transações Bancárias (`/admin/faturas` e `/admin/transacao-bancarias`)
+- **Status Controlado da Fatura:** O campo de status é gerenciado por um Enum (`StatusFatura`), com rótulos e cores de identificação visual clara:
+  - 🟡 **Pendente:** Fatura aguardando pagamento.
+  - 🟢 **Pago:** Fatura quitada integralmente.
+  - 🔴 **Atrasado:** Fatura com vencimento expirado sem quitação.
+  - 🔵 **Pago Parcialmente:** Foi dada baixa em valor inferior ao saldo devedor.
+  - ⚪ **Cancelado:** Fatura anulada.
+- **Ação "Dar Baixa" em 1-Clique:** Diretamente na listagem de **Faturas** ou no gerenciador de faturas dentro do **Contrato**, a ação **Dar Baixa** permite registrar pagamentos instantaneamente:
+  - Abre um modal pré-preenchido com o saldo devedor atual da fatura.
+  - Solicita a seleção do **Banco**, valor recebido, data do pagamento e observações.
+  - Ao confirmar, o sistema gera automaticamente a **Transação Bancária** de entrada vinculada à fatura e atualiza seu status para *Pago* (ou *Pago Parcialmente* caso restem valores).
+- **Filtros por Período e Status de Faturas:** É possível filtrar faturas por status (ex: somente em aberto) e definir faixas de vencimento.
+- **Interface de Transações Bancárias Legível:** A tela de transações bancárias exibe o nome do Banco, o Aluno/Contrato vinculado, o Plano de Contas, o Fornecedor e traz badges coloridos identificando **↑ Entrada (verde)** e **↓ Saída (vermelho)** com valores formatados em moeda (R$).
+
 ---
 
 ## 🏫 24. Gestão de Instituições de Ensino e Unidades Escolares

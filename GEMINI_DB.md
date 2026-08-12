@@ -245,10 +245,34 @@ Estrutura de ensino e turmas.
 - **Relacionamentos:** HasMany `contrato`.
 
 ### `faturas` e `item_faturas`
-- Cobranças geradas a partir de contratos.
+- **Representa:** Cobranças e parcelamentos gerados a partir dos contratos de prestação de serviços educacionais.
+- **`faturas` — Campos Principais:**
+    - `contrato_id`: FK `contrato`.
+    - `vencimento`: Data de vencimento da fatura.
+    - `status`: Enum (`App\Enums\StatusFatura`). Estados: `pendente` (amarelo), `pago` (verde), `atrasado` (vermelho), `cancelado` (cinza), `parcial` (azul - pago parcialmente).
+    - `pix_copia_e_cola`: Código ou chave PIX para pagamento.
+- **Lógica de Negócio e Atributos Computados (Model `Fatura`):**
+    - `valor_bruto`: Soma total dos itens sem descontos.
+    - `valor`: Valor total líquido com descontos aplicados (absolutos ou percentuais).
+    - `valor_pago`: Soma das transações bancárias de entrada vinculadas à fatura.
+    - `valor_restante`: Saldo devedor pendente (`valor` − `valor_pago`).
+- **Relacionamentos:** BelongsTo `contrato`, HasMany `itens` (`item_faturas`), HasMany `transacoes` (`transacao_bancarias`).
 
 ### `transacao_bancarias`
-- Fluxo de caixa e conciliação bancária.
+- **Representa:** Registros do fluxo de caixa e conciliação bancária (entradas e saídas).
+- **Campos Principais:**
+    - `banco_id`: FK `bancos`.
+    - `fatura_id` (nullable): FK `faturas` — vincula a transação a uma cobrança recebida.
+    - `plano_conta_id` (nullable): FK `plano_contas`.
+    - `centro_custo_id` (nullable): FK `centro_custos`.
+    - `fornecedor_id` (nullable): FK `fornecedors`.
+    - `tipo`: Enum/String (`entrada`, `saida`).
+    - `valor`: Valor numérico da transação.
+    - `data_transacao`: Data de efetivação/movimentação.
+    - `descricao`: Descrição ou observação.
+    - `conciliado`: Boolean que indica se a movimentação foi confirmada no extrato.
+    - `external_id`: Identificador da transação no banco/OFX.
+- **Relacionamentos:** BelongsTo `banco`, BelongsTo `fatura`, BelongsTo `planoConta`, BelongsTo `centroCusto`, BelongsTo `fornecedor`.
 
 ---
 

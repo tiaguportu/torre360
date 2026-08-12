@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StatusFatura;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,14 @@ class Fatura extends Model
     protected $table = 'faturas';
 
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => StatusFatura::class,
+            'vencimento' => 'date',
+        ];
+    }
 
     public function contrato(): BelongsTo
     {

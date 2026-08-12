@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Faturas\Schemas;
 
+use App\Enums\StatusFatura;
 use App\Models\Contrato;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -21,15 +22,21 @@ class FaturaForm
                 Select::make('contrato_id')
                     ->label('Contrato')
                     ->relationship('contrato', 'id')
-                    ->getOptionLabelFromRecordUsing(fn (Contrato $record) => "Contrato #{$record->id}")
+                    ->getOptionLabelFromRecordUsing(fn (Contrato $record) => "Contrato #{$record->id} — ".($record->matricula?->pessoa?->nome ?? 'Sem aluno'))
                     ->searchable()
                     ->preload()
                     ->required(),
+
                 DatePicker::make('vencimento')
-                    ->required(),
-                TextInput::make('status')
                     ->required()
-                    ->default('pendente'),
+                    ->label('Data de Vencimento'),
+
+                Select::make('status')
+                    ->label('Status')
+                    ->options(StatusFatura::class)
+                    ->required()
+                    ->native(false)
+                    ->default(StatusFatura::Pendente),
 
                 Placeholder::make('total_consolidado')
                     ->label('Valor Total Consolidado')
@@ -55,10 +62,13 @@ class FaturaForm
                     }),
 
                 Textarea::make('pix_copia_e_cola')
+                    ->label('PIX Copia e Cola')
+                    ->helperText('Código PIX para pagamento desta fatura')
                     ->columnSpanFull(),
 
                 Repeater::make('itens')
                     ->relationship()
+                    ->label('Itens da Fatura')
                     ->schema([
                         TextInput::make('descricao')
                             ->label('Descrição')

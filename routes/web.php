@@ -11,9 +11,9 @@ Route::get('/', [LandingPageController::class, 'index'])->name('home');
 Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->name('solicitar-acesso');
 
 // Formulário público de captação de interessados
-Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');
-Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
-Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
+Route::get('/quero-uma-vaga', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');
+Route::post('/quero-uma-vaga', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
+Route::get('/quero-uma-vaga/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
