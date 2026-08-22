@@ -1456,7 +1456,7 @@ O Portal usa o **mesmo login e senha** do painel principal — é só um caminho
 4. **Documentos (`/portal/documentos`):** Lista os contratos vinculados, com opções para visualizar, baixar o PDF, iniciar/continuar a assinatura digital (Assinafy) ou baixar o contrato já assinado.
 
 > [!NOTE]
-> Usuários com papéis de equipe (administrador, secretaria, professor, coordenador) não têm acesso ao `/portal` — continuam usando exclusivamente o painel `/admin`.
+> Usuários com papéis de equipe (administrador, secretaria, professor, coordenador, super_admin) não têm acesso ao `/portal` — continuam usando exclusivamente o painel `/admin`. Se uma conta de equipe (já autenticada) tentar acessar `/portal`, o sistema exibe um aviso e redireciona automaticamente de volta para o `/admin`, em vez de mostrar um erro 403.
 
 > [!NOTE]
 > As rotas de visualização/download de contrato (`/contratos/{id}/...`) e de boletim (`/matriculas/{id}/boletim/download`) agora verificam se o registro pertence ao usuário logado antes de liberar o acesso — aluno/responsável só acessam os próprios registros ou os de seus dependentes; usuários com papel de equipe continuam com acesso irrestrito.
