@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torre360 — Sistema de Gestão Escolar de Elite</title>
     <meta name="description" content="Gestão escolar moderna, eficiente e profissional. Torre360: A solução completa para instituições que buscam a excelência.">
+    <link rel="canonical" href="{{ url()->current() }}">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
@@ -26,9 +27,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS V4 CDN -->
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "SoftwareApplication",
+        "name": "Torre360",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Android",
+        "description": "Sistema de gestão escolar: acadêmico, financeiro e CRM de captação em uma única plataforma.",
+        "url": "{{ url('/') }}"
+    }
+    </script>
 
     <style>
         :root {
@@ -112,6 +124,7 @@
 
         section {
             padding: 100px 20px;
+            scroll-margin-top: 90px;
         }
 
         input, textarea {
@@ -133,7 +146,7 @@
 <body class="antialiased">
 
     <!-- Navbar -->
-    <nav class="fixed top-0 w-full z-50 px-8 py-5 flex justify-between items-center transition-all duration-300 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+    <nav id="navbar" class="fixed top-0 w-full z-50 px-8 py-5 flex justify-between items-center transition-all duration-300 bg-white/80 backdrop-blur-lg border-b border-slate-200">
         <a href="/" class="flex items-center gap-3 decoration-0">
             <img src="/logo-adaptative.svg" alt="Torre360" class="h-10 w-auto">
             <span class="text-2xl font-bold tracking-tight text-[#312783]">Torre360</span>
@@ -143,8 +156,21 @@
             <a href="#mobile" class="nav-link text-slate-600">Mobile</a>
             <a href="#contato" class="nav-link text-slate-600">Contato</a>
         </div>
-        <div>
-            <a href="/admin" class="btn-navy px-6 py-2.5 rounded-full text-sm font-semibold">
+        <div class="flex items-center gap-4">
+            <a href="/admin" class="hidden sm:inline-flex btn-navy px-6 py-2.5 rounded-full text-sm font-semibold">
+                Painel Administrativo
+            </a>
+            <button type="button" id="mobile-menu-toggle" class="md:hidden flex flex-col justify-center gap-1.5 w-10 h-10" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu">
+                <span class="block w-6 h-0.5 bg-[#312783]"></span>
+                <span class="block w-6 h-0.5 bg-[#312783]"></span>
+                <span class="block w-6 h-0.5 bg-[#312783]"></span>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-lg flex-col p-6 gap-5">
+            <a href="#solucao" class="nav-link text-slate-600">Solução</a>
+            <a href="#mobile" class="nav-link text-slate-600">Mobile</a>
+            <a href="#contato" class="nav-link text-slate-600">Contato</a>
+            <a href="/admin" class="btn-navy px-6 py-2.5 rounded-full text-sm font-semibold text-center sm:hidden">
                 Painel Administrativo
             </a>
         </div>
@@ -155,7 +181,7 @@
         <div class="container mx-auto grid md:grid-cols-2 gap-16 items-center">
             <div class="space-y-10">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-sm font-medium">
-                    <span class="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-full bg-[#ddaf00] animate-pulse"></span>
                     Gestão Escolar Elevada à Excelência
                 </div>
                 <h1 class="text-5xl md:text-7xl font-extrabold leading-[1.1] text-[#312783]">
@@ -174,7 +200,7 @@
                 </div>
             </div>
             <div class="relative">
-                <img src="/images/landing/hero.png" alt="Torre360 Workflow" class="img-mask w-full float shadow-none ring-1 ring-slate-200">
+                <img src="/images/landing/hero.png" alt="Torre360 Workflow" width="1024" height="1024" class="img-mask w-full shadow-none ring-1 ring-slate-200">
                 <div class="absolute -bottom-6 -left-6 glass-light p-6 shadow-xl hidden md:block">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold">✓</div>
@@ -243,7 +269,7 @@
     <section id="mobile">
         <div class="container mx-auto grid md:grid-cols-2 gap-20 items-center">
             <div class="order-2 md:order-1">
-                <img src="/images/landing/mobile.png" alt="Torre360 App Mobile" class="img-mask w-full max-w-md mx-auto">
+                <img src="/images/landing/mobile.png" alt="Torre360 App Mobile" width="1024" height="1024" loading="lazy" class="img-mask w-full max-w-md mx-auto">
             </div>
             <div class="order-1 md:order-2 space-y-10">
                 <h2 class="text-4xl md:text-5xl font-bold leading-tight">O controle na palma da sua mão.</h2>
@@ -310,24 +336,35 @@
                         </div>
                     @endif
 
+                    @if($errors->any())
+                        <div class="bg-red-100 border border-red-200 text-red-700 p-6 rounded-2xl mb-6">
+                            <p class="font-bold mb-2">Corrija os campos abaixo:</p>
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <form action="{{ route('solicitar-acesso') }}" method="POST" class="space-y-6">
                         @csrf
                         <div class="grid grid-cols-2 gap-6">
                             <div class="col-span-2">
                                 <label class="block text-sm font-bold text-slate-700 mb-2">Nome Completo</label>
-                                <input type="text" name="nome" placeholder="Como podemos te chamar?" required>
+                                <input type="text" name="nome" value="{{ old('nome') }}" placeholder="Como podemos te chamar?" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
                                 <label class="block text-sm font-bold text-slate-700 mb-2">E-mail Corporativo</label>
-                                <input type="email" name="email" placeholder="seuemail@escola.com.br" required>
+                                <input type="email" name="email" value="{{ old('email') }}" placeholder="seuemail@escola.com.br" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
                                 <label class="block text-sm font-bold text-slate-700 mb-2">WhatsApp / Telefone</label>
-                                <input type="text" name="whatsapp" placeholder="(00) 00000-0000">
+                                <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="(00) 00000-0000">
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-sm font-bold text-slate-700 mb-2">Mensagem (Opcional)</label>
-                                <textarea name="mensagem" rows="3" placeholder="Conte um pouco sobre sua necessidade..."></textarea>
+                                <textarea name="mensagem" rows="3" placeholder="Conte um pouco sobre sua necessidade...">{{ old('mensagem') }}</textarea>
                             </div>
                         </div>
                         <button type="submit" class="w-full btn-gold py-5 rounded-2xl font-bold text-lg uppercase tracking-wide">
@@ -352,6 +389,25 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        const menuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        menuToggle.addEventListener('click', () => {
+            const isOpen = mobileMenu.classList.toggle('flex');
+            mobileMenu.classList.toggle('hidden', !isOpen);
+            menuToggle.setAttribute('aria-expanded', isOpen);
+        });
+
+        mobileMenu.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenu.classList.remove('flex');
+                menuToggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+    </script>
 
 </body>
 </html>
