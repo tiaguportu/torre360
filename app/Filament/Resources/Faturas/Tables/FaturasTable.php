@@ -102,61 +102,7 @@ class FaturasTable
                     ->toggle(),
             ])
             ->recordActions([
-                Action::make('dar_baixa')
-                    ->label('Dar Baixa')
-                    ->icon('heroicon-o-banknotes')
-                    ->color('success')
-                    ->visible(fn (Fatura $record) => $record->status !== StatusFatura::Pago)
-                    ->schema([
-                        Select::make('banco_id')
-                            ->label('Banco')
-                            ->options(Banco::where('is_active', true)->pluck('nome', 'id'))
-                            ->required(),
-                        TextInput::make('valor')
-                            ->label('Valor Recebido (R$)')
-                            ->prefix('R$')
-                            ->numeric()
-                            ->required()
-                            ->default(fn (Fatura $record) => $record->valor_restante),
-                        DatePicker::make('data_transacao')
-                            ->label('Data do Pagamento')
-                            ->required()
-                            ->default(now())
-                            ->native(false),
-                        TextInput::make('descricao')
-                            ->label('Observação')
-                            ->placeholder('Ex: Pago via PIX, Boleto, Dinheiro...'),
-                    ])
-                    ->modalHeading('Dar Baixa na Fatura')
-                    ->modalDescription(fn (Fatura $record) => "Fatura #{$record->id} — Saldo devedor: R$ ".number_format($record->valor_restante, 2, ',', '.'))
-                    ->modalSubmitActionLabel('Confirmar Pagamento')
-                    ->action(function (array $data, Fatura $record): void {
-                        TransacaoBancaria::create([
-                            'banco_id' => $data['banco_id'],
-                            'fatura_id' => $record->id,
-                            'tipo' => 'entrada',
-                            'valor' => $data['valor'],
-                            'data_transacao' => $data['data_transacao'],
-                            'descricao' => $data['descricao'] ?? "Baixa manual — Fatura #{$record->id}",
-                            'conciliado' => true,
-                        ]);
-
-                        // Recalcula o saldo devedor após inserção
-                        $record->refresh();
-                        $novoSaldo = $record->valor_restante;
-
-                        if ($novoSaldo <= 0) {
-                            $record->update(['status' => StatusFatura::Pago]);
-                        } elseif ($record->status === StatusFatura::Pendente || $record->status === StatusFatura::Atrasado) {
-                            $record->update(['status' => StatusFatura::Parcial]);
-                        }
-
-                        Notification::make()
-                            ->title('Baixa registrada com sucesso!')
-                            ->body($novoSaldo <= 0 ? 'Fatura marcada como PAGA.' : 'Pagamento parcial registrado. Saldo restante: R$ '.number_format(max(0, $novoSaldo), 2, ',', '.'))
-                            ->success()
-                            ->send();
-                    }),
+                self::darBaixaAction(),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -166,5 +112,69 @@ class FaturasTable
             ])
             ->defaultSort('vencimento', 'asc')
             ->stackedOnMobile();
+    }
+
+    /**
+     * Ação de baixa manual de pagamento, compartilhada entre a listagem de Faturas
+     * e o RelationManager de Faturas dentro de Contrato.
+     */
+    public static function darBaixaAction(): Action
+    {
+        return Action::make('dar_baixa')
+            ->label('Dar Baixa')
+            ->icon('heroicon-o-banknotes')
+            ->color('success')
+            ->visible(fn (Fatura $record) => ! in_array($record->status, [StatusFatura::Pago, StatusFatura::Cancelado]))
+            ->schema([
+                Select::make('banco_id')
+                    ->label('Banco')
+                    ->options(Banco::where('is_active', true)->pluck('nome', 'id'))
+                    ->required(),
+                TextInput::make('valor')
+                    ->label('Valor Recebido (R$)')
+                    ->prefix('R$')
+                    ->numeric()
+                    ->minValue(0.01)
+                    ->required()
+                    ->default(fn (Fatura $record) => $record->valor_restante),
+                DatePicker::make('data_transacao')
+                    ->label('Data do Pagamento')
+                    ->required()
+                    ->default(now())
+                    ->native(false),
+                TextInput::make('descricao')
+                    ->label('Observação')
+                    ->placeholder('Ex: Pago via PIX, Boleto, Dinheiro...'),
+            ])
+            ->modalHeading('Dar Baixa na Fatura')
+            ->modalDescription(fn (Fatura $record) => "Fatura #{$record->id} — Saldo devedor: R$ ".number_format($record->valor_restante, 2, ',', '.'))
+            ->modalSubmitActionLabel('Confirmar Pagamento')
+            ->action(function (array $data, Fatura $record): void {
+                TransacaoBancaria::create([
+                    'banco_id' => $data['banco_id'],
+                    'fatura_id' => $record->id,
+                    'tipo' => 'entrada',
+                    'valor' => $data['valor'],
+                    'data_transacao' => $data['data_transacao'],
+                    'descricao' => $data['descricao'] ?? "Baixa manual — Fatura #{$record->id}",
+                    'conciliado' => true,
+                ]);
+
+                // Recalcula o saldo devedor após inserção
+                $record->refresh();
+                $novoSaldo = $record->valor_restante;
+
+                if ($novoSaldo <= 0) {
+                    $record->update(['status' => StatusFatura::Pago]);
+                } elseif ($record->status === StatusFatura::Pendente || $record->status === StatusFatura::Atrasado) {
+                    $record->update(['status' => StatusFatura::Parcial]);
+                }
+
+                Notification::make()
+                    ->title('Baixa registrada com sucesso!')
+                    ->body($novoSaldo <= 0 ? 'Fatura marcada como PAGA.' : 'Pagamento parcial registrado. Saldo restante: R$ '.number_format(max(0, $novoSaldo), 2, ',', '.'))
+                    ->success()
+                    ->send();
+            });
     }
 }

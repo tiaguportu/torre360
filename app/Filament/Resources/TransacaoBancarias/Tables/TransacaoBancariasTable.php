@@ -19,6 +19,13 @@ class TransacaoBancariasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'banco',
+                'fatura.contrato.matricula.pessoa',
+                'planoConta',
+                'centroCusto',
+                'fornecedor',
+            ]))
             ->columns([
                 TextColumn::make('data_transacao')
                     ->label('Data')

@@ -118,7 +118,7 @@ O sistema permite registrar os potenciais alunos vinculados ao interessado:
 - **Flexibilidade:** Cadastre múltiplos alunos para o mesmo interessado.
 
 ### 3.7 Formulário Público de Captação
-Interessados podem se cadastrar diretamente pelo site (**quero-uma-vaga**):
+Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - O formulário permite cadastro como responsável ou próprio aluno.
 - Suporta múltiplos alunos por cadastro.
 - O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade.
@@ -900,7 +900,7 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 O Torre360 disponibiliza um formulário público que pode ser integrado ou divulgado no site da sua escola para captar o interesse de novos alunos de forma automática e integrada ao funil do CRM.
 
 ### 17.1 Como Funciona
-- O formulário público é acessado através do endereço: `https://seu-dominio.com/quero-uma-vaga`.
+- O formulário público é acessado através do endereço: `https://seu-dominio.com/quero-matricular`.
 - Ele possui um design moderno, dividido em etapas guiadas para preenchimento ágil.
 - O preenchimento está disponível para duas situações: o próprio aluno interessado, ou um responsável (pai/mãe/tutor) interessado em inscrever um aluno menor.
 

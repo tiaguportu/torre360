@@ -75,7 +75,7 @@ class Fatura extends Model
     protected function valorPago(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->transacoes->sum('valor')
+            get: fn () => $this->transacoes->where('tipo', 'entrada')->sum('valor')
         );
     }
 
