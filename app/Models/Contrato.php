@@ -45,6 +45,25 @@ class Contrato extends Model
         return $this->belongsTo(TemplateContrato::class);
     }
 
+    /**
+     * Verifica se o usuário pode ver este contrato: equipe interna sempre pode;
+     * aluno/responsável só se o contrato for do próprio aluno ou de um dependente seu.
+     */
+    public function isAccessibleBy(User $user): bool
+    {
+        if ($user->isStaff()) {
+            return true;
+        }
+
+        $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
+
+        if ($this->matricula && $idsAcessiveis->contains($this->matricula->pessoa_id)) {
+            return true;
+        }
+
+        return $this->responsaveisFinanceiros->pluck('pessoa_id')->intersect($idsAcessiveis)->isNotEmpty();
+    }
+
     protected function casts(): array
     {
         return [

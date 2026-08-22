@@ -12,6 +12,8 @@ class BoletimPDFController extends Controller
 {
     public function download(Matricula $record, Request $request)
     {
+        abort_unless($record->isAccessibleBy($request->user()), 403);
+
         $etapaId = $request->query('etapa_id');
         $boletimService = app(BoletimService::class);
 

@@ -11,6 +11,8 @@ class VisualizarContratoPDFController extends Controller
 {
     public function __invoke(Contrato $contrato, ContractTemplateService $templateService)
     {
+        abort_unless($contrato->isAccessibleBy(auth()->user()), 403);
+
         $contrato->load([
             'matricula.pessoa',
             'matricula.turma.serie.curso',

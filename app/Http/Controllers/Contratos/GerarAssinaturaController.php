@@ -10,6 +10,8 @@ class GerarAssinaturaController extends Controller
 {
     public function __invoke(Contrato $contrato, AssinafyService $service)
     {
+        abort_unless($contrato->isAccessibleBy(auth()->user()), 403);
+
         $result = $service->enviarContrato($contrato);
 
         if ($result['success'] && isset($result['redirect_url'])) {

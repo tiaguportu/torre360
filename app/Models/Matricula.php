@@ -55,6 +55,25 @@ class Matricula extends Model
         return $this->hasOne(Contrato::class);
     }
 
+    /**
+     * Verifica se o usuário pode ver esta matrícula: equipe interna sempre pode;
+     * aluno/responsável só se a matrícula for a própria ou de um dependente seu.
+     */
+    public function isAccessibleBy(User $user): bool
+    {
+        if ($user->isStaff()) {
+            return true;
+        }
+
+        $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
+
+        if ($idsAcessiveis->contains($this->pessoa_id)) {
+            return true;
+        }
+
+        return $this->contrato?->responsaveisFinanceiros->pluck('pessoa_id')->intersect($idsAcessiveis)->isNotEmpty() ?? false;
+    }
+
     public function notas(): HasMany
     {
         return $this->hasMany(Nota::class);

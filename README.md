@@ -186,6 +186,8 @@ Controle de acesso baseado em papéis (RBAC).
    ```
    Acesse em: `http://127.0.0.1:8000/admin`
 
+   Usuários com papel `aluno` ou `responsavel` também podem entrar por um painel dedicado e simplificado (mesmo login/senha), com boletim, financeiro e documentos/contrato: `http://127.0.0.1:8000/portal`
+
 8. **Permissões RBAC (Shield):**
    ```bash
    php artisan shield:generate --all

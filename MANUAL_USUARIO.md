@@ -1444,5 +1444,24 @@ Permite o acompanhamento da rotina disciplinar, operacional e pedagógica dos es
 
 ---
 
+## 🏠 29. Portal do Aluno/Responsável (`/portal`)
+
+Além do acesso ao painel administrativo (com visibilidade restrita — veja a seção 6.1, item "Visibilidade Restrita"), usuários com o papel **aluno** ou **responsavel** também podem entrar por um endereço dedicado e mais simples: **`/portal`**.
+
+O Portal usa o **mesmo login e senha** do painel principal — é só um caminho de entrada alternativo, mais enxuto, focado em três telas de consulta:
+
+1. **Início:** Lista os alunos vinculados ao seu cadastro (o próprio, se você for aluno; seus dependentes, se você for responsável), com atalhos rápidos para as telas abaixo.
+2. **Boletins (`/portal/academico`):** Lista as matrículas acessíveis e permite baixar o boletim em PDF de cada uma.
+3. **Financeiro (`/portal/financeiro`):** Lista as faturas do(s) aluno(s), com vencimento, valor, valor pago, saldo devedor e status.
+4. **Documentos (`/portal/documentos`):** Lista os contratos vinculados, com opções para visualizar, baixar o PDF, iniciar/continuar a assinatura digital (Assinafy) ou baixar o contrato já assinado.
+
+> [!NOTE]
+> Usuários com papéis de equipe (administrador, secretaria, professor, coordenador) não têm acesso ao `/portal` — continuam usando exclusivamente o painel `/admin`.
+
+> [!NOTE]
+> As rotas de visualização/download de contrato (`/contratos/{id}/...`) e de boletim (`/matriculas/{id}/boletim/download`) agora verificam se o registro pertence ao usuário logado antes de liberar o acesso — aluno/responsável só acessam os próprios registros ou os de seus dependentes; usuários com papel de equipe continuam com acesso irrestrito.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 

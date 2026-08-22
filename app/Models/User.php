@@ -42,8 +42,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         // Permitir acesso se o e-mail não estiver verificado (para ver o aviso de verificação)
         // Se já estiver verificado, o acesso depende da validade da ativação.
-        if ($this->hasVerifiedEmail()) {
-            return (bool) $this->is_active;
+        if ($this->hasVerifiedEmail() && ! $this->is_active) {
+            return false;
+        }
+
+        // O painel Portal é uma porta de entrada simplificada extra para aluno/responsável;
+        // não substitui o acesso deles ao admin (que já tem visibilidade restrita por papel).
+        if ($panel->getId() === 'portal') {
+            return $this->hasAnyRole(['aluno', 'responsavel']);
         }
 
         return true;
@@ -71,6 +77,28 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function getPessoaAttribute(): ?Pessoa
     {
         return $this->pessoas->first();
+    }
+
+    /**
+     * Verifica se o usuário possui algum papel de equipe (acesso amplo ao painel admin).
+     */
+    public function isStaff(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'admin', 'secretaria', 'professor', 'coordenador']);
+    }
+
+    /**
+     * Pessoas cujos dados este usuário pode ver no Portal (ele mesmo, se for aluno,
+     * mais seus dependentes, se for responsável).
+     *
+     * @return \Illuminate\Support\Collection<int, Pessoa>
+     */
+    public function pessoasAcessiveis(): \Illuminate\Support\Collection
+    {
+        $pessoas = $this->pessoas;
+        $dependentes = $pessoas->flatMap(fn (Pessoa $pessoa) => $pessoa->alunos);
+
+        return $pessoas->merge($dependentes)->unique('id')->values();
     }
 
     public function getActiveRoleAttribute(): ?string

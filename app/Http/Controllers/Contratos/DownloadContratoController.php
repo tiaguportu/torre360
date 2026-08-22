@@ -11,6 +11,8 @@ class DownloadContratoController extends Controller
 {
     public function __invoke(Contrato $contrato, AssinafyService $assinafyService)
     {
+        abort_unless($contrato->isAccessibleBy(auth()->user()), 403);
+
         $response = $assinafyService->baixarDocumentoAssinado($contrato);
 
         if (! $response) {
