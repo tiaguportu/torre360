@@ -31,6 +31,14 @@
                            class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
                             Documentos
                         </a>
+                        <a href="{{ \App\Filament\Portal\Pages\Ocorrencias::getUrl() }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
+                            Ocorrências
+                        </a>
+                        <a href="{{ \App\Filament\Portal\Pages\Preceptoria::getUrl() }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
+                            Preceptoria
+                        </a>
                     </div>
                 </div>
             @endforeach

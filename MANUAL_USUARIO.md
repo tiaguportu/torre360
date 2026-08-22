@@ -1448,12 +1448,17 @@ Permite o acompanhamento da rotina disciplinar, operacional e pedagógica dos es
 
 Além do acesso ao painel administrativo (com visibilidade restrita — veja a seção 6.1, item "Visibilidade Restrita"), usuários com o papel **aluno** ou **responsavel** também podem entrar por um endereço dedicado e mais simples: **`/portal`**.
 
-O Portal usa o **mesmo login e senha** do painel principal — é só um caminho de entrada alternativo, mais enxuto, focado em três telas de consulta:
+O Portal usa o **mesmo login e senha** do painel principal — é só um caminho de entrada alternativo, mais enxuto, focado em seis telas de consulta e ação:
 
 1. **Início:** Lista os alunos vinculados ao seu cadastro (o próprio, se você for aluno; seus dependentes, se você for responsável), com atalhos rápidos para as telas abaixo.
 2. **Boletins (`/portal/academico`):** Lista as matrículas acessíveis e permite baixar o boletim em PDF de cada uma.
 3. **Financeiro (`/portal/financeiro`):** Lista as faturas do(s) aluno(s), com vencimento, valor, valor pago, saldo devedor e status.
 4. **Documentos (`/portal/documentos`):** Lista os contratos vinculados, com opções para visualizar, baixar o PDF, iniciar/continuar a assinatura digital (Assinafy) ou baixar o contrato já assinado.
+5. **Ocorrências (`/portal/ocorrencias`):** Lista as ocorrências escolares (elogios, advertências, atrasos etc.) registradas para o(s) aluno(s), com o mesmo destaque de gravidade por cor usado no admin.
+6. **Preceptoria (`/portal/preceptoria`):** Permite agendar (ou desagendar) um horário de preceptoria para o aluno diretamente pelo Portal, com a mesma regra de antecedência mínima de 2 dias já usada no admin. A lista de horários mostra apenas os professores vinculados à turma do aluno (professor conselheiro ou do cronograma de aulas).
+
+> [!NOTE]
+> **Pagamento de fatura online não está disponível no Portal.** Hoje o Financeiro do Portal é só consulta (ver fatura, valor, status). Colocar um botão de "pagar agora" exige integrar um gateway de pagamento (PIX/boleto/cartão) — isso não foi implementado porque depende de uma decisão de produto (qual gateway, taxas, conta recebedora) antes de qualquer código.
 
 > [!NOTE]
 > Usuários com papéis de equipe (administrador, secretaria, professor, coordenador, super_admin) não têm acesso ao `/portal` — continuam usando exclusivamente o painel `/admin`. Se uma conta de equipe (já autenticada) tentar acessar `/portal`, o sistema exibe um aviso e redireciona automaticamente de volta para o `/admin`, em vez de mostrar um erro 403.
