@@ -27,6 +27,8 @@ class Documentos extends Page implements HasTable
 
     protected static ?string $slug = 'documentos';
 
+    protected string $view = 'filament.portal.pages.documentos';
+
     public function table(Table $table): Table
     {
         return $table

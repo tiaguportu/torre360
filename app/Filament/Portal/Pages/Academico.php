@@ -25,6 +25,8 @@ class Academico extends Page implements HasTable
 
     protected static ?string $slug = 'academico';
 
+    protected string $view = 'filament.portal.pages.academico';
+
     public function table(Table $table): Table
     {
         return $table

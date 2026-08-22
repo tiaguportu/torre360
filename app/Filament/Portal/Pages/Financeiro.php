@@ -26,6 +26,8 @@ class Financeiro extends Page implements HasTable
 
     protected static ?string $slug = 'financeiro';
 
+    protected string $view = 'filament.portal.pages.financeiro';
+
     public function table(Table $table): Table
     {
         return $table

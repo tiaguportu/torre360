@@ -1461,6 +1461,9 @@ O Portal usa o **mesmo login e senha** do painel principal — é só um caminho
 > [!NOTE]
 > As rotas de visualização/download de contrato (`/contratos/{id}/...`) e de boletim (`/matriculas/{id}/boletim/download`) agora verificam se o registro pertence ao usuário logado antes de liberar o acesso — aluno/responsável só acessam os próprios registros ou os de seus dependentes; usuários com papel de equipe continuam com acesso irrestrito.
 
+> [!WARNING]
+> **Correção (22/08/2026):** as telas de Boletins, Financeiro e Documentos do Portal estavam sendo publicadas sem a tabela de dados aparecer (página em branco, sem listar nada). O problema era só de exibição — a permissão e os dados já estavam corretos — e foi corrigido.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
