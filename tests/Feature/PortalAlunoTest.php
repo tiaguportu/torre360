@@ -130,4 +130,58 @@ class PortalAlunoTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_aluno_nao_ve_fatura_de_outro_aluno_no_financeiro_do_portal(): void
+    {
+        $dados = $this->criarAlunoComDados();
+
+        $outraPessoa = Pessoa::factory()->create(['nome' => 'Outro Aluno']);
+        $outraMatricula = Matricula::factory()->create(['pessoa_id' => $outraPessoa->id]);
+        $outroContrato = Contrato::create([
+            'matricula_id' => $outraMatricula->id,
+            'valor_total' => 900,
+            'assinafy_status' => 'pending',
+        ]);
+        Fatura::create([
+            'contrato_id' => $outroContrato->id,
+            'vencimento' => now()->addDays(5),
+            'status' => StatusFatura::Pendente,
+        ]);
+
+        $this->actingAs($dados['user'])
+            ->get('/portal/financeiro')
+            ->assertOk()
+            ->assertDontSee('Outro Aluno');
+    }
+
+    public function test_aluno_nao_ve_documento_de_outro_aluno_na_lista_do_portal(): void
+    {
+        $dados = $this->criarAlunoComDados();
+
+        $outraPessoa = Pessoa::factory()->create(['nome' => 'Outro Aluno']);
+        $outraMatricula = Matricula::factory()->create(['pessoa_id' => $outraPessoa->id]);
+        Contrato::create([
+            'matricula_id' => $outraMatricula->id,
+            'valor_total' => 500,
+            'assinafy_status' => 'pending',
+        ]);
+
+        $this->actingAs($dados['user'])
+            ->get('/portal/documentos')
+            ->assertOk()
+            ->assertDontSee('Outro Aluno');
+    }
+
+    public function test_aluno_nao_ve_boletim_de_outro_aluno_no_academico_do_portal(): void
+    {
+        $dados = $this->criarAlunoComDados();
+
+        $outraPessoa = Pessoa::factory()->create(['nome' => 'Outro Aluno']);
+        Matricula::factory()->create(['pessoa_id' => $outraPessoa->id, 'situacao' => 'ativa']);
+
+        $this->actingAs($dados['user'])
+            ->get('/portal/academico')
+            ->assertOk()
+            ->assertDontSee('Outro Aluno');
+    }
 }

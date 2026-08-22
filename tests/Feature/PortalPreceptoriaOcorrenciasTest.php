@@ -130,4 +130,47 @@ class PortalPreceptoriaOcorrenciasTest extends TestCase
             'matricula_id' => null,
         ]);
     }
+
+    public function test_aluno_cancela_a_propria_preceptoria_agendada(): void
+    {
+        $dados = $this->criarAlunoComMatricula();
+
+        $slot = PreceptoriaModel::factory()->create([
+            'professor_id' => $dados['professor']->id,
+            'data' => now()->addDays(3)->toDateString(),
+            'matricula_id' => $dados['matricula']->id,
+        ]);
+
+        Livewire::actingAs($dados['user'])
+            ->test(Preceptoria::class)
+            ->call('liberarHorario', $slot->id);
+
+        $this->assertDatabaseHas('preceptoria', [
+            'id' => $slot->id,
+            'matricula_id' => null,
+        ]);
+    }
+
+    public function test_aluno_nao_cancela_preceptoria_de_outro_aluno(): void
+    {
+        $dados = $this->criarAlunoComMatricula();
+
+        $outraPessoa = Pessoa::factory()->create(['nome' => 'Outro Aluno']);
+        $outraMatricula = Matricula::factory()->create(['pessoa_id' => $outraPessoa->id]);
+
+        $slot = PreceptoriaModel::factory()->create([
+            'professor_id' => $dados['professor']->id,
+            'data' => now()->addDays(3)->toDateString(),
+            'matricula_id' => $outraMatricula->id,
+        ]);
+
+        Livewire::actingAs($dados['user'])
+            ->test(Preceptoria::class)
+            ->call('liberarHorario', $slot->id);
+
+        $this->assertDatabaseHas('preceptoria', [
+            'id' => $slot->id,
+            'matricula_id' => $outraMatricula->id,
+        ]);
+    }
 }

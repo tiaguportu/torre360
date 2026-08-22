@@ -50,4 +50,43 @@ class PortalPanelAccessTest extends TestCase
 
         $response->assertRedirect(url('/portal/login'));
     }
+
+    public function test_aluno_desativado_nao_acessa_o_portal(): void
+    {
+        $user = User::factory()->create(['activated_at' => now()->subDays(30), 'deactivated_at' => now()->subDay()]);
+        $user->assignRole('aluno');
+
+        $pessoa = Pessoa::factory()->create();
+        $pessoa->users()->save($user);
+
+        $response = $this->actingAs($user)->get('/portal');
+
+        $response->assertForbidden();
+    }
+
+    public function test_aluno_ainda_nao_ativado_nao_acessa_o_portal(): void
+    {
+        $user = User::factory()->create(['activated_at' => null]);
+        $user->assignRole('aluno');
+
+        $pessoa = Pessoa::factory()->create();
+        $pessoa->users()->save($user);
+
+        $response = $this->actingAs($user)->get('/portal');
+
+        $response->assertForbidden();
+    }
+
+    public function test_aluno_tambem_consegue_acessar_o_admin_pois_portal_e_um_acesso_extra(): void
+    {
+        $user = User::factory()->create(['activated_at' => now()]);
+        $user->assignRole('aluno');
+
+        $pessoa = Pessoa::factory()->create();
+        $pessoa->users()->save($user);
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertOk();
+    }
 }
