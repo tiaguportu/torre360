@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Interessados\Pages;
 
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Filament\Widgets\CrmFollowUpCalendarWidget;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\ViewField;
@@ -12,6 +13,13 @@ use Filament\Resources\Pages\ListRecords;
 class ListInteressados extends ListRecords
 {
     protected static string $resource = InteressadoResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            CrmFollowUpCalendarWidget::make(),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {
