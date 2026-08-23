@@ -68,6 +68,188 @@ class GeminiLeadExtractionTest extends TestCase
         $this->assertEquals('Gabriel Lima', $resultado['alunos'][0]['nome']);
     }
 
+    public function test_extrair_lead_de_imagem_print_usando_gemini_service_mockado(): void
+    {
+        config(['services.gemini.key' => 'fake-gemini-key']);
+
+        // Cria uma imagem temporária para o teste
+        $tempImagePath = tempnam(sys_get_temp_dir(), 'lead_print_').'.png';
+        file_put_contents($tempImagePath, 'fake-image-bytes-data');
+
+        $mockResponseJson = [
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([
+                                    'responsavel_nome' => 'Mariana Costa',
+                                    'responsavel_email' => 'mariana.costa@hotmail.com',
+                                    'responsavel_telefone' => '(31) 99999-8888',
+                                    'responsavel_cpf' => null,
+                                    'origem_sugerida' => 'WhatsApp',
+                                    'temperatura' => 'quente',
+                                    'valor_estimado' => 1500.00,
+                                    'observacoes' => 'Print do WhatsApp pedindo vaga no 1º Ano.',
+                                    'alunos' => [
+                                        [
+                                            'nome' => 'Enzo Costa',
+                                            'data_nascimento' => '2018-05-15',
+                                            'serie_pretendida' => '1º Ano',
+                                            'vinculo' => 'Mãe',
+                                        ],
+                                    ],
+                                ]),
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => function ($request) {
+                $payload = $request->data();
+                $parts = $payload['contents'][0]['parts'] ?? [];
+
+                // Verifica se enviou a imagem inline_data
+                $hasImage = false;
+                foreach ($parts as $part) {
+                    if (isset($part['inline_data'])) {
+                        $hasImage = true;
+                        break;
+                    }
+                }
+
+                if (! $hasImage) {
+                    return Http::response(['error' => 'Imagem não enviada'], 400);
+                }
+
+                return Http::response([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    [
+                                        'text' => json_encode([
+                                            'responsavel_nome' => 'Mariana Costa',
+                                            'responsavel_email' => 'mariana.costa@hotmail.com',
+                                            'responsavel_telefone' => '(31) 99999-8888',
+                                            'responsavel_cpf' => null,
+                                            'origem_sugerida' => 'WhatsApp',
+                                            'temperatura' => 'quente',
+                                            'valor_estimado' => 1500.00,
+                                            'observacoes' => 'Print do WhatsApp pedindo vaga no 1º Ano.',
+                                            'alunos' => [
+                                                [
+                                                    'nome' => 'Enzo Costa',
+                                                    'data_nascimento' => '2018-05-15',
+                                                    'serie_pretendida' => '1º Ano',
+                                                    'vinculo' => 'Mãe',
+                                                ],
+                                            ],
+                                        ]),
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        try {
+            $service = app(GeminiAgentService::class);
+            $resultado = $service->extrairLead(imagePath: $tempImagePath);
+
+            $this->assertEquals('Mariana Costa', $resultado['responsavel_nome']);
+            $this->assertEquals('mariana.costa@hotmail.com', $resultado['responsavel_email']);
+            $this->assertEquals('(31) 99999-8888', $resultado['responsavel_telefone']);
+            $this->assertCount(1, $resultado['alunos']);
+            $this->assertEquals('Enzo Costa', $resultado['alunos'][0]['nome']);
+        } finally {
+            if (file_exists($tempImagePath)) {
+                unlink($tempImagePath);
+            }
+        }
+    }
+
+    public function test_extrair_lead_combinando_texto_e_imagem_print(): void
+    {
+        config(['services.gemini.key' => 'fake-gemini-key']);
+
+        $tempImagePath = tempnam(sys_get_temp_dir(), 'lead_print_').'.jpg';
+        file_put_contents($tempImagePath, 'fake-jpeg-content');
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => function ($request) {
+                $payload = $request->data();
+                $parts = $payload['contents'][0]['parts'] ?? [];
+
+                $hasImage = false;
+                $hasText = false;
+                foreach ($parts as $part) {
+                    if (isset($part['inline_data'])) {
+                        $hasImage = true;
+                    }
+                    if (isset($part['text']) && str_contains($part['text'], 'Observação adicional: preferência tarde')) {
+                        $hasText = true;
+                    }
+                }
+
+                if (! $hasImage || ! $hasText) {
+                    return Http::response(['error' => 'Faltam dados esperados'], 400);
+                }
+
+                return Http::response([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    [
+                                        'text' => json_encode([
+                                            'responsavel_nome' => 'Carlos Silva',
+                                            'responsavel_email' => 'carlos@empresa.com',
+                                            'responsavel_telefone' => '(11) 97777-1111',
+                                            'origem_sugerida' => 'Instagram',
+                                            'temperatura' => 'quente',
+                                            'alunos' => [],
+                                        ]),
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        try {
+            $service = app(GeminiAgentService::class);
+            $resultado = $service->extrairLead(
+                mensagemBruta: 'Observação adicional: preferência tarde',
+                imagePath: $tempImagePath
+            );
+
+            $this->assertEquals('Carlos Silva', $resultado['responsavel_nome']);
+            $this->assertEquals('carlos@empresa.com', $resultado['responsavel_email']);
+        } finally {
+            if (file_exists($tempImagePath)) {
+                unlink($tempImagePath);
+            }
+        }
+    }
+
+    public function test_extrair_lead_sem_texto_e_sem_imagem_lanca_excecao(): void
+    {
+        config(['services.gemini.key' => 'fake-gemini-key']);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service = app(GeminiAgentService::class);
+        $service->extrairLead(null, null);
+    }
+
     public function test_salvar_lead_extraido_cria_pessoa_interessado_e_dependentes(): void
     {
         $consultor = User::factory()->create();

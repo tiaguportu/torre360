@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
@@ -91,9 +92,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      * Pessoas cujos dados este usuário pode ver no Portal (ele mesmo, se for aluno,
      * mais seus dependentes, se for responsável).
      *
-     * @return \Illuminate\Support\Collection<int, Pessoa>
+     * @return Collection<int, Pessoa>
      */
-    public function pessoasAcessiveis(): \Illuminate\Support\Collection
+    public function pessoasAcessiveis(): Collection
     {
         $pessoas = $this->pessoas;
         $dependentes = $pessoas->flatMap(fn (Pessoa $pessoa) => $pessoa->alunos);

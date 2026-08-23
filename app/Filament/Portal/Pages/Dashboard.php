@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Models\Pessoa;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Panel;
@@ -33,7 +34,7 @@ class Dashboard extends Page
     }
 
     /**
-     * @return Collection<int, \App\Models\Pessoa>
+     * @return Collection<int, Pessoa>
      */
     protected function getPessoasAcessiveis(): Collection
     {

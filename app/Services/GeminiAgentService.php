@@ -112,12 +112,12 @@ Diretrizes obrigatórias de resposta:
     }
 
     /**
-     * Analisa uma mensagem bruta de texto (ex: WhatsApp, e-mail, anotação)
+     * Analisa uma mensagem bruta de texto e/ou um print de conversa (screenshot / imagem)
      * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini 1.5 Flash.
      *
      * @return array<string, mixed>
      */
-    public function extrairLeadDeTexto(string $mensagemBruta): array
+    public function extrairLead(?string $mensagemBruta = null, ?string $imagePath = null, ?string $imageMimeType = null): array
     {
         $apiKey = config('services.gemini.key');
 
@@ -125,8 +125,15 @@ Diretrizes obrigatórias de resposta:
             throw new \Exception('A chave de API do Gemini não está configurada. Adicione GEMINI_API_KEY no arquivo .env.');
         }
 
+        $temTexto = ! empty(trim((string) $mensagemBruta));
+        $temImagem = ! empty($imagePath);
+
+        if (! $temTexto && ! $temImagem) {
+            throw new \InvalidArgumentException('É necessário fornecer uma mensagem de texto ou um print/imagem para extrair o lead.');
+        }
+
         $systemInstruction = 'Você é um assistente especialista em CRM comercial escolar do sistema Torre360.
-Sua função é analisar mensagens de texto brutas de clientes (provenientes de WhatsApp, e-mails, transcrições de voz ou anotações) e extrair com precisão os dados cadastrais e comerciais do Lead.
+Sua função é analisar mensagens de texto brutas e/ou imagens (prints/capturas de tela de conversas de WhatsApp, Instagram, e-mails, anotações ou fotos) de clientes e interessados e extrair com máxima precisão os dados cadastrais e comerciais do Lead.
 
 Você DEVE retornar a resposta estritamente no formato JSON válido com a seguinte estrutura:
 {
@@ -137,7 +144,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
   "origem_sugerida": "Canal de origem inferido (ex: WhatsApp, Instagram, E-mail, Site, Indicação) ou null",
   "temperatura": "quente|morno|frio (quente se demonstra urgência/muito interesse, morno se busca informações gerais, frio se apenas sondagem)",
   "valor_estimado": valor_numerico_ou_null,
-  "observacoes": "Resumo objetivo das necessidades e observações contidas no texto",
+  "observacoes": "Resumo objetivo das necessidades e observações contidas no texto ou na imagem",
   "alunos": [
     {
       "nome": "Nome do aluno/criança ou null",
@@ -149,6 +156,34 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
 }
 Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
 
+        $parts = [];
+
+        if ($temImagem) {
+            if (! file_exists((string) $imagePath)) {
+                throw new \Exception("Arquivo de imagem não encontrado no caminho: {$imagePath}");
+            }
+
+            $mimeType = $imageMimeType ?: (mime_content_type((string) $imagePath) ?: 'image/png');
+            $imageContent = file_get_contents((string) $imagePath);
+
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => $mimeType,
+                    'data' => base64_encode((string) $imageContent),
+                ],
+            ];
+        }
+
+        if ($temTexto) {
+            $parts[] = [
+                'text' => trim((string) $mensagemBruta),
+            ];
+        } elseif ($temImagem) {
+            $parts[] = [
+                'text' => 'Por favor, analise a imagem/print anexado da conversa e extraia todos os dados cadastrais e comerciais do Lead conforme as instruções.',
+            ];
+        }
+
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
 
         try {
@@ -158,9 +193,7 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
                 'contents' => [
                     [
                         'role' => 'user',
-                        'parts' => [
-                            ['text' => $mensagemBruta],
-                        ],
+                        'parts' => $parts,
                     ],
                 ],
                 'systemInstruction' => [
@@ -192,7 +225,18 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
 
             return $data;
         } catch (\Exception $e) {
-            throw new \Exception('Falha ao processar mensagem com IA: '.$e->getMessage());
+            throw new \Exception('Falha ao processar dados com IA: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Analisa uma mensagem bruta de texto (ex: WhatsApp, e-mail, anotação)
+     * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini 1.5 Flash.
+     *
+     * @return array<string, mixed>
+     */
+    public function extrairLeadDeTexto(string $mensagemBruta): array
+    {
+        return $this->extrairLead(mensagemBruta: $mensagemBruta);
     }
 }

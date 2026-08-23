@@ -51,12 +51,12 @@ class ContratosPendentesWidget extends Widget
                             $qResp->whereIn('responsavel_id', $pessoasIds);
                         });
                 })
-                ->orWhereHas('responsaveisFinanceiros', function ($qRF) use ($pessoasIds) {
-                    $qRF->whereIn('pessoa_id', $pessoasIds);
-                })
-                ->orWhereHas('matricula.turma.serie.curso.unidade.representantesLegais', function ($qRep) use ($pessoasIds) {
-                    $qRep->whereIn('pessoa_id', $pessoasIds);
-                });
+                    ->orWhereHas('responsaveisFinanceiros', function ($qRF) use ($pessoasIds) {
+                        $qRF->whereIn('pessoa_id', $pessoasIds);
+                    })
+                    ->orWhereHas('matricula.turma.serie.curso.unidade.representantesLegais', function ($qRep) use ($pessoasIds) {
+                        $qRep->whereIn('pessoa_id', $pessoasIds);
+                    });
             })
             ->latest()
             ->get()
