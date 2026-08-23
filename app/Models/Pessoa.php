@@ -194,15 +194,13 @@ class Pessoa extends Model
     }
 
     /**
-     * Verifica se o cadastro da pessoa possui pendências de dados básicos ou falta de endereço.
+     * Verifica se o cadastro da pessoa possui pendências de dados básicos ou falta de endereço para qualificação civil.
      */
     public function hasIncompleteCadastro(): bool
     {
         if (blank($this->nome) ||
             blank($this->data_nascimento) ||
             blank($this->cpf) ||
-            blank($this->email) ||
-            blank($this->telefone) ||
             blank($this->sexo) ||
             blank($this->cor_raca) ||
             blank($this->nacionalidade_id)
@@ -243,12 +241,6 @@ class Pessoa extends Model
         if (blank($this->cpf)) {
             $faltantes[] = 'CPF';
         }
-        if (blank($this->email)) {
-            $faltantes[] = 'E-mail';
-        }
-        if (blank($this->telefone)) {
-            $faltantes[] = 'Telefone';
-        }
         if (blank($this->sexo)) {
             $faltantes[] = 'Sexo';
         }
@@ -282,8 +274,6 @@ class Pessoa extends Model
             $sub->whereNull('nome')->orWhere('nome', '')
                 ->orWhereNull('data_nascimento')
                 ->orWhereNull('cpf')->orWhere('cpf', '')
-                ->orWhereNull('email')->orWhere('email', '')
-                ->orWhereNull('telefone')->orWhere('telefone', '')
                 ->orWhereNull('sexo')
                 ->orWhereNull('cor_raca')
                 ->orWhereNull('nacionalidade_id')
@@ -306,8 +296,6 @@ class Pessoa extends Model
         return $query->whereNotNull('nome')->where('nome', '!=', '')
             ->whereNotNull('data_nascimento')
             ->whereNotNull('cpf')->where('cpf', '!=', '')
-            ->whereNotNull('email')->where('email', '!=', '')
-            ->whereNotNull('telefone')->where('telefone', '!=', '')
             ->whereNotNull('sexo')
             ->whereNotNull('cor_raca')
             ->whereNotNull('nacionalidade_id')

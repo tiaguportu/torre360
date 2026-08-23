@@ -62,7 +62,7 @@ class MatriculaPendenciaCadastroTest extends TestCase
             'nome' => 'Maria Silva',
             'data_nascimento' => null,
             'cpf' => null,
-            'email' => 'maria@teste.com',
+            'email' => null,
             'telefone' => null,
             'sexo' => Sexo::FEMININO,
             'cor_raca' => null,
@@ -75,10 +75,39 @@ class MatriculaPendenciaCadastroTest extends TestCase
         $camposFaltantes = $pessoa->getMissingCadastroFields();
         $this->assertContains('Data de Nascimento', $camposFaltantes);
         $this->assertContains('CPF', $camposFaltantes);
-        $this->assertContains('Telefone', $camposFaltantes);
         $this->assertContains('Cor/Raça', $camposFaltantes);
         $this->assertContains('Naturalidade', $camposFaltantes);
         $this->assertContains('Endereço', $camposFaltantes);
+
+        // Telefone e E-mail não devem ser considerados pendências
+        $this->assertNotContains('Telefone', $camposFaltantes);
+        $this->assertNotContains('E-mail', $camposFaltantes);
+    }
+
+    /** @test */
+    public function pessoa_sem_email_e_telefone_mas_com_dados_civeis_e_endereco_esta_completa()
+    {
+        $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
+        $estado = Estado::create(['pais_id' => $pais->id, 'nome' => 'São Paulo', 'sigla' => 'SP']);
+        $cidade = Cidade::create(['estado_id' => $estado->id, 'nome' => 'São Paulo']);
+
+        $pessoa = Pessoa::factory()->create([
+            'nome' => 'Pessoa Sem Contato',
+            'data_nascimento' => '1990-01-01',
+            'cpf' => '12345678900',
+            'email' => null,
+            'telefone' => null,
+            'sexo' => Sexo::MASCULINO,
+            'cor_raca' => CorRaca::BRANCA,
+            'nacionalidade_id' => $pais->id,
+            'naturalidade_id' => $cidade->id,
+        ]);
+
+        $endereco = $this->criarEndereco($cidade);
+        $pessoa->enderecos()->attach($endereco->id);
+
+        $this->assertFalse($pessoa->hasIncompleteCadastro());
+        $this->assertEmpty($pessoa->getMissingCadastroFields());
     }
 
     /** @test */
@@ -123,12 +152,12 @@ class MatriculaPendenciaCadastroTest extends TestCase
         // Aluno completo
         $aluno = $this->criarPessoaCompleta($pais, $cidade, '11111111111', 'Aluno');
 
-        // Pai sem telefone e sem endereço
+        // Pai sem endereço (e sem CPF)
         $pai = Pessoa::factory()->create([
             'nome' => 'Carlos Pai',
             'data_nascimento' => '1980-01-01',
-            'cpf' => '22222222222',
-            'email' => 'carlos@teste.com',
+            'cpf' => null,
+            'email' => null,
             'telefone' => null,
             'sexo' => Sexo::MASCULINO,
             'cor_raca' => CorRaca::BRANCA,
