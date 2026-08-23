@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('switch-role')->middleware('auth');
 
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
-Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->name('solicitar-acesso');
+Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->middleware('throttle:5,1')->name('solicitar-acesso');
 
 // Formulário público de captação de interessados
 Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');

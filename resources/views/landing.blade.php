@@ -6,9 +6,11 @@
     <title>Torre360 — Sistema de Gestão Escolar de Elite</title>
     <meta name="description" content="Gestão escolar moderna, eficiente e profissional. Torre360: A solução completa para instituições que buscam a excelência.">
     <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="Torre360 — Sistema de Gestão Escolar de Elite">
     <meta property="og:description" content="Gestão escolar moderna, eficiente e profissional. Centralize tudo em uma plataforma robusta e intuitiva.">
@@ -29,6 +31,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    @endif
+
+    @if(config('services.google_analytics.measurement_id'))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.measurement_id') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){ dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', '{{ config('services.google_analytics.measurement_id') }}');
+        </script>
+    @endif
 
     <script type="application/ld+json">
     {
@@ -200,7 +216,11 @@
                 </div>
             </div>
             <div class="relative">
-                <img src="/images/landing/hero.png" alt="Torre360 Workflow" width="1024" height="1024" class="img-mask w-full shadow-none ring-1 ring-slate-200">
+                <picture>
+                    <source srcset="/images/landing/hero.avif" type="image/avif">
+                    <source srcset="/images/landing/hero.webp" type="image/webp">
+                    <img src="/images/landing/hero.png" alt="Torre360 Workflow" width="1024" height="1024" fetchpriority="high" class="img-mask w-full shadow-none ring-1 ring-slate-200">
+                </picture>
                 <div class="absolute -bottom-6 -left-6 glass-light p-6 shadow-xl hidden md:block">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold">✓</div>
@@ -269,7 +289,11 @@
     <section id="mobile">
         <div class="container mx-auto grid md:grid-cols-2 gap-20 items-center">
             <div class="order-2 md:order-1">
-                <img src="/images/landing/mobile.png" alt="Torre360 App Mobile" width="1024" height="1024" loading="lazy" class="img-mask w-full max-w-md mx-auto">
+                <picture>
+                    <source srcset="/images/landing/mobile.avif" type="image/avif">
+                    <source srcset="/images/landing/mobile.webp" type="image/webp">
+                    <img src="/images/landing/mobile.png" alt="Torre360 App Mobile" width="1024" height="1024" loading="lazy" class="img-mask w-full max-w-md mx-auto">
+                </picture>
             </div>
             <div class="order-1 md:order-2 space-y-10">
                 <h2 class="text-4xl md:text-5xl font-bold leading-tight">O controle na palma da sua mão.</h2>
@@ -319,11 +343,11 @@
                     <div class="space-y-6">
                         <div class="flex items-center gap-5">
                             <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">📞</div>
-                            <p class="text-lg font-semibold">(11) 99999-9999</p>
+                            <a href="tel:+5511999999999" class="text-lg font-semibold hover:text-[#ddaf00] transition-colors">(11) 99999-9999</a>
                         </div>
                         <div class="flex items-center gap-5">
                             <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">✉️</div>
-                            <p class="text-lg font-semibold">contato@escolatorredemarfim.com.br</p>
+                            <a href="mailto:contato@escolatorredemarfim.com.br" class="text-lg font-semibold hover:text-[#ddaf00] transition-colors">contato@escolatorredemarfim.com.br</a>
                         </div>
                     </div>
                 </div>
@@ -337,7 +361,7 @@
                     @endif
 
                     @if($errors->any())
-                        <div class="bg-red-100 border border-red-200 text-red-700 p-6 rounded-2xl mb-6">
+                        <div role="alert" aria-live="assertive" class="bg-red-100 border border-red-200 text-red-700 p-6 rounded-2xl mb-6">
                             <p class="font-bold mb-2">Corrija os campos abaixo:</p>
                             <ul class="list-disc list-inside space-y-1 text-sm">
                                 @foreach($errors->all() as $error)
@@ -347,26 +371,34 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('solicitar-acesso') }}" method="POST" class="space-y-6">
+                    <form id="form-contato" action="{{ route('solicitar-acesso') }}" method="POST" class="space-y-6">
                         @csrf
                         <div class="grid grid-cols-2 gap-6">
                             <div class="col-span-2">
-                                <label class="block text-sm font-bold text-slate-700 mb-2">Nome Completo</label>
-                                <input type="text" name="nome" value="{{ old('nome') }}" placeholder="Como podemos te chamar?" required>
+                                <label for="nome" class="block text-sm font-bold text-slate-700 mb-2">Nome Completo</label>
+                                <input type="text" id="nome" name="nome" value="{{ old('nome') }}" placeholder="Como podemos te chamar?" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
-                                <label class="block text-sm font-bold text-slate-700 mb-2">E-mail Corporativo</label>
-                                <input type="email" name="email" value="{{ old('email') }}" placeholder="seuemail@escola.com.br" required>
+                                <label for="email" class="block text-sm font-bold text-slate-700 mb-2">E-mail Corporativo</label>
+                                <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="seuemail@escola.com.br" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
-                                <label class="block text-sm font-bold text-slate-700 mb-2">WhatsApp / Telefone</label>
-                                <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="(00) 00000-0000">
+                                <label for="whatsapp" class="block text-sm font-bold text-slate-700 mb-2">WhatsApp / Telefone</label>
+                                <input type="text" id="whatsapp" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="(00) 00000-0000">
                             </div>
                             <div class="col-span-2">
-                                <label class="block text-sm font-bold text-slate-700 mb-2">Mensagem (Opcional)</label>
-                                <textarea name="mensagem" rows="3" placeholder="Conte um pouco sobre sua necessidade...">{{ old('mensagem') }}</textarea>
+                                <label for="mensagem" class="block text-sm font-bold text-slate-700 mb-2">Mensagem (Opcional)</label>
+                                <textarea id="mensagem" name="mensagem" rows="3" placeholder="Conte um pouco sobre sua necessidade...">{{ old('mensagem') }}</textarea>
                             </div>
                         </div>
+                        @if(config('services.recaptcha.site_key'))
+                            <input type="hidden" name="recaptcha_token" id="recaptcha-token">
+                            <p class="text-xs text-slate-400">
+                                Este site é protegido pelo reCAPTCHA e se aplicam a
+                                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline">Política de Privacidade</a> e os
+                                <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline">Termos de Serviço</a> do Google.
+                            </p>
+                        @endif
                         <button type="submit" class="w-full btn-gold py-5 rounded-2xl font-bold text-lg uppercase tracking-wide">
                             Solicitar Demonstração Grátis
                         </button>
@@ -407,6 +439,20 @@
                 menuToggle.setAttribute('aria-expanded', 'false');
             });
         });
+
+        @if(config('services.recaptcha.site_key'))
+            const formContato = document.getElementById('form-contato');
+            formContato.addEventListener('submit', (e) => {
+                e.preventDefault();
+                grecaptcha.ready(() => {
+                    grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', { action: 'solicitar_acesso' })
+                        .then((token) => {
+                            document.getElementById('recaptcha-token').value = token;
+                            formContato.submit();
+                        });
+                });
+            });
+        @endif
     </script>
 
 </body>

@@ -55,4 +55,8 @@ return [
         'account_id' => env('ASSINAFY_ACCOUNT_ID'),
     ],
 
+    'google_analytics' => [
+        'measurement_id' => env('GOOGLE_ANALYTICS_ID'),
+    ],
+
 ];
