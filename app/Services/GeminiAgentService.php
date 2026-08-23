@@ -76,36 +76,25 @@ Diretrizes obrigatórias de resposta:
             ],
         ];
 
-        // Endpoint da API do Gemini (usando o modelo gemini-1.5-flash estável e rápido)
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
+        // Monta o payload para o assistente
+        $payload = [
+            'contents' => $contents,
+            'systemInstruction' => [
+                'parts' => [
+                    ['text' => $systemInstruction],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0.2,
+                'topP' => 0.95,
+                'maxOutputTokens' => 1500,
+            ],
+        ];
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($endpoint, [
-                'contents' => $contents,
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => $systemInstruction],
-                    ],
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.2,
-                    'topP' => 0.95,
-                    'maxOutputTokens' => 1500,
-                ],
-            ]);
+            $data = $this->callGeminiApi($payload);
 
-            if ($response->successful()) {
-                $data = $response->json();
-
-                return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Desculpe, não consegui obter uma resposta válida do assistente de IA.';
-            }
-
-            $errorMsg = $response->json('error.message') ?? $response->body();
-
-            return "Erro ao comunicar com a API do Gemini: {$errorMsg}";
-
+            return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Desculpe, não consegui obter uma resposta válida do assistente de IA.';
         } catch (\Exception $e) {
             return 'Ocorreu uma falha na conexão com o serviço de IA: '.$e->getMessage();
         }
@@ -113,18 +102,12 @@ Diretrizes obrigatórias de resposta:
 
     /**
      * Analisa uma mensagem bruta de texto e/ou um print de conversa (screenshot / imagem)
-     * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini 1.5 Flash.
+     * e extrai estruturadamente os dados de um Lead/Interessado usando a API do Gemini.
      *
      * @return array<string, mixed>
      */
     public function extrairLead(?string $mensagemBruta = null, ?string $imagePath = null, ?string $imageMimeType = null): array
     {
-        $apiKey = config('services.gemini.key');
-
-        if (empty($apiKey)) {
-            throw new \Exception('A chave de API do Gemini não está configurada. Adicione GEMINI_API_KEY no arquivo .env.');
-        }
-
         $temTexto = ! empty(trim((string) $mensagemBruta));
         $temImagem = ! empty($imagePath);
 
@@ -184,35 +167,27 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
             ];
         }
 
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}";
+        $payload = [
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => $parts,
+                ],
+            ],
+            'systemInstruction' => [
+                'parts' => [
+                    ['text' => $systemInstruction],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($endpoint, [
-                'contents' => [
-                    [
-                        'role' => 'user',
-                        'parts' => $parts,
-                    ],
-                ],
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => $systemInstruction],
-                    ],
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.1,
-                    'responseMimeType' => 'application/json',
-                ],
-            ]);
-
-            if (! $response->successful()) {
-                $errorMsg = $response->json('error.message') ?? $response->body();
-                throw new \Exception("Erro na API do Gemini: {$errorMsg}");
-            }
-
-            $jsonText = $response->json('candidates.0.content.parts.0.text') ?? '';
+            $responseJson = $this->callGeminiApi($payload);
+            $jsonText = $responseJson['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
             // Limpa eventuais cercas markdown ```json se presentes
             $jsonClean = trim(preg_replace('/^```(?:json)?|```$/m', '', $jsonText));
@@ -230,8 +205,86 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
     }
 
     /**
+     * Lista de modelos do Gemini para tentar em cascata caso haja alta demanda ou sobrecarga.
+     *
+     * @return array<int, string>
+     */
+    protected function getCandidateModels(): array
+    {
+        $configured = config('services.gemini.model');
+        $defaults = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
+
+        if (! empty($configured)) {
+            return array_values(array_unique(array_merge([$configured], $defaults)));
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * Executa a requisição à API do Gemini com fallback automático entre modelos
+     * em caso de sobrecarga temporária (503 / 429 / high demand).
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    protected function callGeminiApi(array $payload): array
+    {
+        $apiKey = config('services.gemini.key');
+
+        if (empty($apiKey)) {
+            throw new \Exception('A chave de API do Gemini não está configurada. Adicione GEMINI_API_KEY no arquivo .env.');
+        }
+
+        $models = $this->getCandidateModels();
+        $lastError = null;
+
+        foreach ($models as $model) {
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+
+            try {
+                $response = Http::timeout(45)
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->post($endpoint, $payload);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    if (isset($json['candidates'][0]['content']['parts'][0]['text'])) {
+                        return $json;
+                    }
+                }
+
+                $statusCode = $response->status();
+                $errorMsg = (string) ($response->json('error.message') ?? $response->body());
+                $lastError = $errorMsg;
+
+                // Se for erro de demanda, rate limit ou sobrecarga temporária, tenta o próximo modelo
+                $isTemporaryIssue = str_contains(strtolower($errorMsg), 'demand')
+                    || str_contains(strtolower($errorMsg), 'overloaded')
+                    || str_contains(strtolower($errorMsg), 'resource_exhausted')
+                    || str_contains(strtolower($errorMsg), 'quota')
+                    || in_array($statusCode, [429, 500, 502, 503, 504]);
+
+                if (! $isTemporaryIssue) {
+                    // Erro estrutural ou de parâmetros: lança imediatamente
+                    throw new \Exception("Erro na API do Gemini: {$errorMsg}");
+                }
+            } catch (\Exception $e) {
+                $lastError = $e->getMessage();
+                if (str_contains(strtolower($e->getMessage()), 'chave') || str_contains(strtolower($e->getMessage()), 'invalid')) {
+                    throw $e;
+                }
+            }
+        }
+
+        throw new \Exception("Os servidores de IA do Gemini estão temporariamente com alta demanda. Por favor, tente novamente em instantes. (Detalhes: {$lastError})");
+    }
+
+    /**
      * Analisa uma mensagem bruta de texto (ex: WhatsApp, e-mail, anotação)
-     * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini 1.5 Flash.
+     * e extrai estruturadamente os dados de um Lead/Interessado usando o Gemini.
      *
      * @return array<string, mixed>
      */
