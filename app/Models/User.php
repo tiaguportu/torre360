@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\VerifyEmailNotification;
+use App\Providers\AppServiceProvider;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -132,10 +133,19 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function hasPermissionTo($permission, $guardName = null): bool
     {
+        $permName = is_string($permission) ? $permission : ($permission->name ?? '');
+        $isWidgetPerm = AppServiceProvider::isWidgetShieldPermission($permName);
+
         $activeRole = session('active_role');
 
         if ($activeRole) {
             if ($activeRole === 'super_admin') {
+                if ($isWidgetPerm) {
+                    $role = $this->roles->where('name', 'super_admin')->first();
+
+                    return $role ? $role->hasPermissionTo($permission, $guardName) : false;
+                }
+
                 return true;
             }
 
@@ -145,6 +155,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         }
 
         if ($this->hasRole('super_admin')) {
+            if ($isWidgetPerm) {
+                $role = $this->roles->where('name', 'super_admin')->first();
+
+                return $role ? $role->hasPermissionTo($permission, $guardName) : false;
+            }
+
             return true;
         }
 

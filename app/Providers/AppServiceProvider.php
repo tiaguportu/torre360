@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
+use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -38,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::before(function ($user, $ability) {
+            // Permissões de widgets do Shield devem respeitar a seleção na Role, mesmo para super_admin
+            if (is_string($ability) && static::isWidgetShieldPermission($ability)) {
+                return null;
+            }
+
             $activeRole = session('active_role');
 
             if ($activeRole) {
@@ -73,5 +79,27 @@ class AppServiceProvider extends ServiceProvider
         Queue::after(function (JobProcessed $event) {
             Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
         });
+    }
+
+    /**
+     * Verifica se uma dada permissão é referente a um Widget gerenciado pelo Filament Shield.
+     */
+    public static function isWidgetShieldPermission(string $permission): bool
+    {
+        static $widgetPermissions = null;
+
+        if ($widgetPermissions === null) {
+            try {
+                $widgets = FilamentShield::getWidgets() ?? [];
+                $widgetPermissions = collect($widgets)
+                    ->flatMap(fn ($widget) => array_keys($widget['permissions'] ?? []))
+                    ->flip()
+                    ->all();
+            } catch (\Throwable $e) {
+                $widgetPermissions = [];
+            }
+        }
+
+        return isset($widgetPermissions[$permission]);
     }
 }

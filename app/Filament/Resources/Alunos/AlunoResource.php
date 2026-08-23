@@ -21,6 +21,8 @@ class AlunoResource extends Resource
 {
     protected static ?string $model = Aluno::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $modelLabel = 'Aluno';
 
     protected static ?string $pluralModelLabel = 'Alunos';

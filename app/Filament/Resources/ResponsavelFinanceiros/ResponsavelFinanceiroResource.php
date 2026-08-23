@@ -17,6 +17,8 @@ class ResponsavelFinanceiroResource extends Resource
 {
     protected static ?string $model = ResponsavelFinanceiro::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $modelLabel = 'Responsável Financeiro';
 
     protected static ?string $pluralModelLabel = 'Responsáveis Financeiros';
