@@ -4,12 +4,13 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Models\AlunoResponsavel;
 use App\Models\Avaliacao;
+use App\Models\Contrato;
 use App\Models\CronogramaAula;
 use App\Models\Disciplina;
 use App\Models\Matricula;
 use App\Models\Pessoa;
-use App\Models\ResponsavelFinanceiro;
 use App\Models\Turma;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Forms\Components\Select;
@@ -48,7 +49,11 @@ class CronogramaCalendarWidget extends Widget implements HasForms
         // Aplica filtros fixos e de permissão
         $this->applyQueryFilters($queryCronograma, 'pessoa_id');
 
-        $eventsCronograma = $queryCronograma->get()->map(function (CronogramaAula $record) {
+        $user = auth()->user();
+        $canViewAula = $user?->can('View:CronogramaAula') ?? false;
+        $canViewAvaliacao = $user?->can('View:Avaliacao') ?? false;
+
+        $eventsCronograma = $queryCronograma->get()->map(function (CronogramaAula $record) use ($canViewAula) {
             $start = $record->data->format('Y-m-d').'T'.($record->hora_inicio ? substr($record->hora_inicio, 0, 8) : '00:00:00');
             $end = $record->data->format('Y-m-d').'T'.($record->hora_fim ? substr($record->hora_fim, 0, 8) : '23:59:59');
 
@@ -62,7 +67,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                 'title' => "{$record->turma?->nome} - {$record->disciplina?->nome}",
                 'start' => $start,
                 'end' => $end,
-                'url' => CronogramaAulaResource::getUrl('view', ['record' => $record]),
+                'url' => $canViewAula ? CronogramaAulaResource::getUrl('view', ['record' => $record]) : null,
                 'turma_id' => (string) $record->turma_id,
                 'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
                 'turma_cor' => $turmaCor,
@@ -88,7 +93,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
         $queryAvaliacao = Avaliacao::with(['turma', 'disciplina', 'professor', 'etapaAvaliativa', 'categoria']);
         $this->applyQueryFilters($queryAvaliacao, 'professor_id');
 
-        $eventsAvaliacao = $queryAvaliacao->get()->map(function (Avaliacao $record) {
+        $eventsAvaliacao = $queryAvaliacao->get()->map(function (Avaliacao $record) use ($canViewAvaliacao) {
             $data = $record->data_prevista ? $record->data_prevista->format('Y-m-d') : date('Y-m-d');
             $start = $data.'T00:00:00';
             $end = $data.'T23:59:59';
@@ -103,7 +108,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                 'title' => "AVALIAÇÃO: {$record->turma?->nome} - {$record->disciplina?->nome}",
                 'start' => $start,
                 'end' => $end,
-                'url' => AvaliacaoResource::getUrl('view', ['record' => $record]),
+                'url' => $canViewAvaliacao ? AvaliacaoResource::getUrl('view', ['record' => $record]) : null,
                 'turma_id' => (string) $record->turma_id,
                 'turma_nome' => $record->turma?->nome ?? 'Sem Turma',
                 'turma_cor' => $turmaCor,
@@ -147,9 +152,9 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             return;
         }
 
-        $activeRole = $user->active_role;
+        $activeRole = session('active_role') ?? $user->active_role;
 
-        if (in_array($activeRole, ['super_admin', 'secretaria'])) {
+        if (in_array($activeRole, ['super_admin', 'secretaria', 'admin'])) {
             return;
         }
 
@@ -158,7 +163,7 @@ class CronogramaCalendarWidget extends Widget implements HasForms
             $query->whereIn($professorField, $pessoaIds);
         }
 
-        if ($activeRole === 'responsavel') {
+        if ($activeRole === 'responsavel' || $activeRole === 'aluno') {
             $turmasIds = $this->getTurmasPermitidasIds();
             $query->whereIn('turma_id', $turmasIds);
         }
@@ -183,7 +188,8 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                     ->options(function () {
                                         $query = Turma::whereNotNull('nome')->orderBy('nome');
 
-                                        if (auth()->user()?->active_role === 'responsavel') {
+                                        $activeRole = session('active_role') ?? auth()->user()?->active_role;
+                                        if (in_array($activeRole, ['responsavel', 'aluno'])) {
                                             $query->whereIn('id', $this->getTurmasPermitidasIds());
                                         }
 
@@ -196,7 +202,20 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                 Select::make('disciplinas')
                                     ->label('Disciplinas')
                                     ->multiple()
-                                    ->options(Disciplina::whereNotNull('nome')->orderBy('nome')->pluck('nome', 'id'))
+                                    ->options(function () {
+                                        $query = Disciplina::whereNotNull('nome')->orderBy('nome');
+
+                                        $activeRole = session('active_role') ?? auth()->user()?->active_role;
+                                        if (in_array($activeRole, ['responsavel', 'aluno'])) {
+                                            $turmasIds = $this->getTurmasPermitidasIds();
+                                            $disciplinasCronograma = CronogramaAula::whereIn('turma_id', $turmasIds)->pluck('disciplina_id');
+                                            $disciplinasAvaliacao = Avaliacao::whereIn('turma_id', $turmasIds)->pluck('disciplina_id');
+                                            $todasDisciplinas = $disciplinasCronograma->merge($disciplinasAvaliacao)->filter()->unique();
+                                            $query->whereIn('id', $todasDisciplinas);
+                                        }
+
+                                        return $query->pluck('nome', 'id');
+                                    })
                                     ->searchable()
                                     ->live()
                                     ->hidden(fn () => $this->fixedDisciplinaId !== null),
@@ -204,13 +223,25 @@ class CronogramaCalendarWidget extends Widget implements HasForms
                                 Select::make('professores')
                                     ->label('Professores')
                                     ->multiple()
-                                    ->options(Pessoa::whereHas('users', fn ($q) => $q->role('professor'))
-                                        ->whereNotNull('nome')
-                                        ->orderBy('nome')
-                                        ->pluck('nome', 'id'))
+                                    ->options(function () {
+                                        $query = Pessoa::whereHas('users', fn ($q) => $q->role('professor'))
+                                            ->whereNotNull('nome')
+                                            ->orderBy('nome');
+
+                                        $activeRole = session('active_role') ?? auth()->user()?->active_role;
+                                        if (in_array($activeRole, ['responsavel', 'aluno'])) {
+                                            $turmasIds = $this->getTurmasPermitidasIds();
+                                            $professoresCronogramaIds = CronogramaAula::whereIn('turma_id', $turmasIds)->pluck('pessoa_id');
+                                            $professoresAvaliacaoIds = Avaliacao::whereIn('turma_id', $turmasIds)->pluck('professor_id');
+                                            $todosProfessores = $professoresCronogramaIds->merge($professoresAvaliacaoIds)->filter()->unique();
+                                            $query->whereIn('id', $todosProfessores);
+                                        }
+
+                                        return $query->pluck('nome', 'id');
+                                    })
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn () => $this->fixedProfessorId !== null || auth()->user()?->active_role === 'professor'),
+                                    ->hidden(fn () => $this->fixedProfessorId !== null || (session('active_role') ?? auth()->user()?->active_role) === 'professor'),
                             ]),
                     ])
                     ->collapsible()
@@ -225,24 +256,41 @@ class CronogramaCalendarWidget extends Widget implements HasForms
 
     private function getTurmasPermitidasIds(): array
     {
-        $pessoaIds = auth()->user()->pessoas->pluck('id');
-
-        if ($pessoaIds->isEmpty()) {
+        $user = auth()->user();
+        if (! $user) {
             return [];
         }
 
-        // 1. Matrículas onde é Responsável Financeiro (via Contrato)
-        $contratosIds = ResponsavelFinanceiro::whereIn('pessoa_id', $pessoaIds)->pluck('contrato_id');
-        $queryMatriculas = Matricula::query()
-            ->whereIn('contrato_id', $contratosIds);
+        $pessoaIds = $user->pessoas->pluck('id')->toArray();
+        if (empty($pessoaIds)) {
+            return [];
+        }
 
-        // 2. Matrículas onde é Responsável pelo Aluno (via aluno_responsavel)
-        $queryMatriculas->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoaIds) {
-            $q->whereIn('responsavel_id', $pessoaIds);
-        });
+        // 1. Alunos vinculados via tabela aluno_responsavel
+        $alunoIds = AlunoResponsavel::whereIn('responsavel_id', $pessoaIds)
+            ->pluck('aluno_id')
+            ->toArray();
 
-        return $queryMatriculas->pluck('turma_id')
+        // 2. Matrículas onde é Responsável Financeiro (via Contrato -> ResponsavelFinanceiro)
+        $matriculasContratoIds = Contrato::whereHas('responsaveisFinanceiros', function ($q) use ($pessoaIds) {
+            $q->whereIn('pessoa_id', $pessoaIds);
+        })->pluck('matricula_id')->filter()->toArray();
+
+        // 3. Matrículas das pessoas (próprio usuário ou alunos dependentes) ou via contrato
+        $todasPessoasIds = array_unique(array_merge($pessoaIds, $alunoIds));
+
+        $turmasIds = Matricula::query()
+            ->where(function ($q) use ($todasPessoasIds, $matriculasContratoIds) {
+                $q->whereIn('pessoa_id', $todasPessoasIds);
+                if (! empty($matriculasContratoIds)) {
+                    $q->orWhereIn('id', $matriculasContratoIds);
+                }
+            })
+            ->pluck('turma_id')
+            ->filter()
             ->unique()
             ->toArray();
+
+        return array_values($turmasIds);
     }
 }

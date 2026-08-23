@@ -91,11 +91,18 @@
             filterEvents() {
                 if (!this.calendar) return;
                 
-                const filtered = this.allEvents.filter(event => {
-                    const selectedTurmas = this.filters?.turmas || [];
-                    const selectedDisciplinas = this.filters?.disciplinas || [];
-                    const selectedProfessores = this.filters?.professores || [];
+                const toArray = (val) => {
+                    if (!val) return [];
+                    if (Array.isArray(val)) return val.map(String);
+                    if (typeof val === 'object') return Object.values(val).map(String);
+                    return [String(val)];
+                };
 
+                const selectedTurmas = toArray(this.filters?.turmas);
+                const selectedDisciplinas = toArray(this.filters?.disciplinas);
+                const selectedProfessores = toArray(this.filters?.professores);
+
+                const filtered = this.allEvents.filter(event => {
                     const matchTurma = selectedTurmas.length === 0 || selectedTurmas.includes(String(event.turma_id));
                     const matchDisciplina = selectedDisciplinas.length === 0 || selectedDisciplinas.includes(String(event.disciplina_id));
                     const matchProfessor = selectedProfessores.length === 0 || selectedProfessores.includes(String(event.professor_id));
