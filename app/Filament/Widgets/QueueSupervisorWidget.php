@@ -97,10 +97,20 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
             ->label('Limpar Fila')
             ->icon('heroicon-m-trash')
             ->color('danger')
+            ->visible(fn () => auth()->user()?->hasRole('super_admin') ?? false)
             ->requiresConfirmation()
             ->modalHeading('Limpar todos os Jobs?')
             ->modalDescription('Isso removerá todas as notificações e processos pendentes permanentemente.')
             ->action(function () {
+                if (! auth()->user()?->hasRole('super_admin')) {
+                    Notification::make()
+                        ->title('Acesso Negado')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 DB::table('jobs')->truncate();
 
                 Notification::make()
