@@ -6,6 +6,7 @@ use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -370,5 +371,97 @@ class Matricula extends Model
             $this->turma?->nome ?? 'S/T',
             $this->pessoa?->nome ?? 'S/A'
         );
+    }
+
+    /**
+     * Retorna a lista de pessoas com dados cadastrais ou endereço pendentes vinculadas a esta matrícula.
+     *
+     * @return Collection<int, array{tipo: string, pessoa: Pessoa, campos: array<string>}>
+     */
+    public function getPessoasComCadastroIncompleto(): Collection
+    {
+        $incompletas = collect();
+
+        // 1. Aluno
+        if ($this->pessoa && $this->pessoa->hasIncompleteCadastro()) {
+            $incompletas->push([
+                'tipo' => 'Aluno',
+                'pessoa' => $this->pessoa,
+                'campos' => $this->pessoa->getMissingCadastroFields(),
+            ]);
+        }
+
+        // 2. Responsáveis do Aluno
+        if ($this->pessoa) {
+            $responsaveis = $this->pessoa->relationLoaded('responsaveis')
+                ? $this->pessoa->responsaveis
+                : $this->pessoa->responsaveis()->with('enderecos')->get();
+
+            foreach ($responsaveis as $resp) {
+                if ($resp->hasIncompleteCadastro()) {
+                    $vinculoNome = 'Responsável';
+                    if ($resp->pivot && $resp->pivot->tipo_vinculo_id) {
+                        $vinculoNome = TipoVinculo::find($resp->pivot->tipo_vinculo_id)?->nome ?? 'Responsável';
+                    }
+
+                    $incompletas->push([
+                        'tipo' => $vinculoNome,
+                        'pessoa' => $resp,
+                        'campos' => $resp->getMissingCadastroFields(),
+                    ]);
+                }
+            }
+        }
+
+        // 3. Responsáveis Financeiros do Contrato
+        if ($this->contrato) {
+            $rfList = $this->contrato->relationLoaded('responsaveisFinanceiros')
+                ? $this->contrato->responsaveisFinanceiros
+                : $this->contrato->responsaveisFinanceiros()->with(['pessoa.enderecos'])->get();
+
+            foreach ($rfList as $rf) {
+                if ($rf->pessoa && $rf->pessoa->hasIncompleteCadastro()) {
+                    if (! $incompletas->contains(fn ($item) => $item['pessoa']->id === $rf->pessoa->id)) {
+                        $incompletas->push([
+                            'tipo' => 'Responsável Financeiro',
+                            'pessoa' => $rf->pessoa,
+                            'campos' => $rf->pessoa->getMissingCadastroFields(),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $incompletas;
+    }
+
+    /**
+     * Verifica se a matrícula possui alguma pendência cadastral (no Aluno, nos Responsáveis ou no Responsável Financeiro).
+     */
+    public function hasIncompleteCadastro(): bool
+    {
+        return $this->getPessoasComCadastroIncompleto()->isNotEmpty();
+    }
+
+    /**
+     * Scope para filtrar matrículas com pendência de cadastro em Aluno, Responsáveis ou Responsáveis Financeiros.
+     */
+    public function scopeComCadastroIncompleto(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereHas('pessoa', fn ($sub) => $sub->incompleto())
+                ->orWhereHas('pessoa.responsaveis', fn ($sub) => $sub->incompleto())
+                ->orWhereHas('contrato.responsaveisFinanceiros.pessoa', fn ($sub) => $sub->incompleto());
+        });
+    }
+
+    /**
+     * Scope para filtrar matrículas com cadastro completo (Aluno completo, e nenhum responsável ou financeiro incompleto).
+     */
+    public function scopeComCadastroCompleto(Builder $query): Builder
+    {
+        return $query->whereHas('pessoa', fn ($sub) => $sub->completo())
+            ->whereDoesntHave('pessoa.responsaveis', fn ($sub) => $sub->incompleto())
+            ->whereDoesntHave('contrato.responsaveisFinanceiros.pessoa', fn ($sub) => $sub->incompleto());
     }
 }

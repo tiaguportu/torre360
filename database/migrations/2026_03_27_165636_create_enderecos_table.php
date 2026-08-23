@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('enderecos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cidade_id')->constrained('cidades')->onDelete('cascade');
+            $table->foreignId('cidade_id')->constrained('cidade')->onDelete('cascade');
             $table->string('logradouro');
             $table->string('numero', 10)->nullable();
             $table->string('bairro')->nullable();

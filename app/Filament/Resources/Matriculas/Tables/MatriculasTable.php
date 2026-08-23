@@ -11,7 +11,6 @@ use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Matricula;
-use App\Models\Pais;
 use App\Models\ResponsavelFinanceiro;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -38,38 +37,20 @@ class MatriculasTable
             return false;
         }
 
-        $brasilId = Pais::where('nome', 'Brasil')->value('id') ?? 1;
-
-        if (blank($pessoa->nome) ||
-            blank($pessoa->data_nascimento) ||
-            blank($pessoa->cpf) ||
-            blank($pessoa->email) ||
-            blank($pessoa->telefone) ||
-            blank($pessoa->sexo) ||
-            blank($pessoa->cor_raca) ||
-            blank($pessoa->nacionalidade_id)
-        ) {
-            return true;
-        }
-
-        if ($pessoa->nacionalidade_id == $brasilId && blank($pessoa->naturalidade_id)) {
-            return true;
-        }
-
-        return false;
+        return $pessoa->hasIncompleteCadastro();
     }
 
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || self::hasIncompleteCadastro($record->pessoa)) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
+            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->searchable()
                     ->sortable()
-                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || self::hasIncompleteCadastro($record->pessoa)) ? 'bold' : null)
-                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || self::hasIncompleteCadastro($record->pessoa)) ? 'danger' : null)
+                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'bold' : null)
+                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'danger' : null)
                     ->url(function (Matricula $record) {
                         if (! $record->pessoa) {
                             return null;
@@ -194,38 +175,8 @@ class MatriculasTable
                 TernaryFilter::make('dados_pendentes')
                     ->label('Cadastro Pendente')
                     ->queries(
-                        true: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
-                            $q->where(function ($sub) {
-                                $sub->whereNull('nome')->orWhere('nome', '')
-                                    ->orWhereNull('data_nascimento')
-                                    ->orWhereNull('cpf')->orWhere('cpf', '')
-                                    ->orWhereNull('email')->orWhere('email', '')
-                                    ->orWhereNull('telefone')->orWhere('telefone', '')
-                                    ->orWhereNull('sexo')
-                                    ->orWhereNull('cor_raca')
-                                    ->orWhereNull('nacionalidade_id');
-                            })
-                                ->orWhere(function ($sub) {
-                                    $brasilId = Pais::where('nome', 'Brasil')->value('id') ?? 1;
-                                    $sub->where('nacionalidade_id', $brasilId)
-                                        ->whereNull('naturalidade_id');
-                                });
-                        }),
-                        false: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
-                            $brasilId = Pais::where('nome', 'Brasil')->value('id') ?? 1;
-                            $q->whereNotNull('nome')->where('nome', '!=', '')
-                                ->whereNotNull('data_nascimento')
-                                ->whereNotNull('cpf')->where('cpf', '!=', '')
-                                ->whereNotNull('email')->where('email', '!=', '')
-                                ->whereNotNull('telefone')->where('telefone', '!=', '')
-                                ->whereNotNull('sexo')
-                                ->whereNotNull('cor_raca')
-                                ->whereNotNull('nacionalidade_id')
-                                ->where(function ($sub) use ($brasilId) {
-                                    $sub->where('nacionalidade_id', '!=', $brasilId)
-                                        ->orWhereNotNull('naturalidade_id');
-                                });
-                        }),
+                        true: fn (Builder $query) => $query->comCadastroIncompleto(),
+                        false: fn (Builder $query) => $query->comCadastroCompleto(),
                     ),
             ])
             ->actions([
@@ -241,9 +192,8 @@ class MatriculasTable
                         if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
                             $count++;
                         }
-                        if (self::hasIncompleteCadastro($record->pessoa)) {
-                            $count++;
-                        }
+                        $incompletas = $record->getPessoasComCadastroIncompleto();
+                        $count += $incompletas->count();
                         $count += $record->getMissingMandatoryDocumentsCount();
                         $count += $record->getRejectedDocuments()->count();
 
@@ -251,7 +201,7 @@ class MatriculasTable
                     })
                     ->badgeColor('danger')
                     ->visible(fn (Matricula $record) => ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) ||
-                        self::hasIncompleteCadastro($record->pessoa) ||
+                        $record->hasIncompleteCadastro() ||
                         $record->hasPendingIssues()
                     )
                     ->modalHeading('Pendências da Matrícula')
@@ -275,52 +225,28 @@ class MatriculasTable
                         }
 
                         // Alerta de Dados Cadastrais Faltantes
-                        if (self::hasIncompleteCadastro($record->pessoa)) {
-                            $brasilId = Pais::where('nome', 'Brasil')->value('id') ?? 1;
-                            $camposFaltantes = [];
+                        $incompletas = $record->getPessoasComCadastroIncompleto();
+                        if ($incompletas->isNotEmpty()) {
+                            foreach ($incompletas as $item) {
+                                $tipoPessoa = $item['tipo'];
+                                $pessoa = $item['pessoa'];
+                                $camposFormatados = collect($item['campos'])->map(fn ($c) => "<strong>{$c}</strong>")->join(', ', ' e ');
 
-                            if (blank($record->pessoa->nome)) {
-                                $camposFaltantes[] = '<strong>Nome</strong>';
-                            }
-                            if (blank($record->pessoa->data_nascimento)) {
-                                $camposFaltantes[] = '<strong>Data de Nascimento</strong>';
-                            }
-                            if (blank($record->pessoa->cpf)) {
-                                $camposFaltantes[] = '<strong>CPF</strong>';
-                            }
-                            if (blank($record->pessoa->email)) {
-                                $camposFaltantes[] = '<strong>E-mail</strong>';
-                            }
-                            if (blank($record->pessoa->telefone)) {
-                                $camposFaltantes[] = '<strong>Telefone</strong>';
-                            }
-                            if (blank($record->pessoa->sexo)) {
-                                $camposFaltantes[] = '<strong>Sexo</strong>';
-                            }
-                            if (blank($record->pessoa->cor_raca)) {
-                                $camposFaltantes[] = '<strong>Cor/Raça</strong>';
-                            }
-                            if (blank($record->pessoa->nacionalidade_id)) {
-                                $camposFaltantes[] = '<strong>Nacionalidade</strong>';
-                            }
-                            if ($record->pessoa->nacionalidade_id == $brasilId && blank($record->pessoa->naturalidade_id)) {
-                                $camposFaltantes[] = '<strong>Naturalidade</strong>';
-                            }
+                                $editUrl = PessoaResource::getUrl('edit', ['record' => $pessoa->id]);
 
-                            $textoFaltantes = collect($camposFaltantes)->join(', ', ' e ');
-
-                            $html .= '
-                            <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
-                                <div class="flex items-center gap-2 font-bold mb-1">
-                                    <span>⚠️ Dados Cadastrais Incompletos</span>
-                                </div>
-                                <p class="text-sm">O cadastro do aluno possui campos sem informação: '.$textoFaltantes.'.</p>
-                                <div class="mt-2">
-                                    <a href="'.PessoaResource::getUrl('edit', ['record' => $record->pessoa_id]).'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
-                                        Clique aqui para editar os dados cadastrais do aluno
-                                    </a>
-                                </div>
-                            </div>';
+                                $html .= '
+                                <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
+                                    <div class="flex items-center gap-2 font-bold mb-1">
+                                        <span>⚠️ Dados Cadastrais Incompletos ('.$tipoPessoa.')</span>
+                                    </div>
+                                    <p class="text-sm">O cadastro de <strong>'.e($pessoa->nome ?: 'Sem nome').'</strong> possui campos sem informação: '.$camposFormatados.'.</p>
+                                    <div class="mt-2">
+                                        <a href="'.$editUrl.'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
+                                            Clique aqui para editar os dados cadastrais desta pessoa
+                                        </a>
+                                    </div>
+                                </div>';
+                            }
                         }
 
                         // Alerta de Documentos Faltantes / Rejeitados

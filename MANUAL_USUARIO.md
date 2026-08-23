@@ -9,7 +9,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
-4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas sem responsáveis cadastrados ou com documentos obrigatórios pendentes).
+4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes ou pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro).
 
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
@@ -445,11 +445,12 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 3. Esta funcionalidade permite manter a família informada sobre a necessidade de regularização documental para efetivação da matrícula.
 
 ### 6.3.1 Consulta de Pendências da Matrícula
-1. Na lista de **Matrículas**, se o aluno não possuir nenhum responsável associado (Pai/Mãe/Responsável) ou possuir documentos obrigatórios pendentes ou rejeitados, um botão vermelho de **Pendências** (ícone de triângulo de alerta) aparecerá na respectiva linha da tabela, exibindo a contagem total de pendências em um badge.
+1. Na lista de **Matrículas**, se houver pendência de responsáveis (aluno sem Pai/Mãe/Responsável), pendência de documentos obrigatórios (faltantes ou rejeitados) ou **pendência de cadastro** (dados básicos incompletos ou falta de endereço no **Aluno**, nos **Responsáveis** ou no **Responsável Financeiro** do contrato), um botão vermelho de **Pendências** (ícone de triângulo de alerta) aparecerá na respectiva linha da tabela, exibindo a contagem total de pendências em um badge.
 2. Ao clicar no botão, um modal se abrirá listando em destaque todas as pendências daquela matrícula:
    - **Falta de Responsáveis:** Um alerta se houver ausência de responsáveis vinculados à ficha do aluno, acompanhado de um atalho para edição rápida do cadastro de pessoa.
+   - **Dados Cadastrais Incompletos:** Detalhamento específico para cada pessoa vinculada (identificando claramente se é o Aluno, o Pai, a Mãe ou o Responsável Financeiro), listando todos os campos ou endereço ausentes, acompanhado de link direto para abrir a ficha de edição daquela pessoa.
    - **Documentos Pendentes:** Detalhamento dos documentos obrigatórios que estão faltando ou foram rejeitados, com um link rápido para ir direto à gestão de documentos da matrícula.
-3. Além disso, as linhas que possuem pendências de responsável ou de documentos obrigatórios são pintadas com fundo avermelhado e o nome do aluno é exibido em negrito e vermelho para chamar a atenção da equipe da secretaria.
+3. Além disso, as linhas que possuem pendências são pintadas com fundo avermelhado e o nome do aluno é exibido em negrito e vermelho para chamar a atenção da equipe da secretaria. A tabela também dispõe do filtro **Cadastro Pendente** para listar rapidamente todas as matrículas nessa condição.
 
 ### 6.4 Visualização e Prévia de Documentos
 1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.

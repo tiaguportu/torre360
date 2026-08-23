@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\CorRacaCast;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -169,5 +170,154 @@ class Pessoa extends Model
         }
 
         return $reasons;
+    }
+
+    /**
+     * Verifica se a nacionalidade da pessoa é brasileira.
+     */
+    public function isBrasileiro(): bool
+    {
+        if (! $this->nacionalidade_id) {
+            return false;
+        }
+
+        if ($this->relationLoaded('nacionalidade')) {
+            return strtolower($this->nacionalidade?->nome ?? '') === 'brasil' || strtoupper($this->nacionalidade?->sigla ?? '') === 'bra';
+        }
+
+        return Pais::where('id', $this->nacionalidade_id)
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(nome) = ?', ['brasil'])
+                    ->orWhereRaw('UPPER(sigla) = ?', ['bra']);
+            })
+            ->exists();
+    }
+
+    /**
+     * Verifica se o cadastro da pessoa possui pendências de dados básicos ou falta de endereço.
+     */
+    public function hasIncompleteCadastro(): bool
+    {
+        if (blank($this->nome) ||
+            blank($this->data_nascimento) ||
+            blank($this->cpf) ||
+            blank($this->email) ||
+            blank($this->telefone) ||
+            blank($this->sexo) ||
+            blank($this->cor_raca) ||
+            blank($this->nacionalidade_id)
+        ) {
+            return true;
+        }
+
+        if ($this->isBrasileiro() && blank($this->naturalidade_id)) {
+            return true;
+        }
+
+        $temEndereco = $this->relationLoaded('enderecos')
+            ? $this->enderecos->isNotEmpty()
+            : $this->enderecos()->exists();
+
+        if (! $temEndereco) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Retorna a lista de campos ou dados faltantes no cadastro da pessoa.
+     *
+     * @return array<string>
+     */
+    public function getMissingCadastroFields(): array
+    {
+        $faltantes = [];
+
+        if (blank($this->nome)) {
+            $faltantes[] = 'Nome';
+        }
+        if (blank($this->data_nascimento)) {
+            $faltantes[] = 'Data de Nascimento';
+        }
+        if (blank($this->cpf)) {
+            $faltantes[] = 'CPF';
+        }
+        if (blank($this->email)) {
+            $faltantes[] = 'E-mail';
+        }
+        if (blank($this->telefone)) {
+            $faltantes[] = 'Telefone';
+        }
+        if (blank($this->sexo)) {
+            $faltantes[] = 'Sexo';
+        }
+        if (blank($this->cor_raca)) {
+            $faltantes[] = 'Cor/Raça';
+        }
+        if (blank($this->nacionalidade_id)) {
+            $faltantes[] = 'Nacionalidade';
+        }
+        if ($this->isBrasileiro() && blank($this->naturalidade_id)) {
+            $faltantes[] = 'Naturalidade';
+        }
+
+        $temEndereco = $this->relationLoaded('enderecos')
+            ? $this->enderecos->isNotEmpty()
+            : $this->enderecos()->exists();
+
+        if (! $temEndereco) {
+            $faltantes[] = 'Endereço';
+        }
+
+        return $faltantes;
+    }
+
+    /**
+     * Scope para filtrar pessoas com cadastro incompleto.
+     */
+    public function scopeIncompleto(Builder $query): Builder
+    {
+        return $query->where(function ($sub) {
+            $sub->whereNull('nome')->orWhere('nome', '')
+                ->orWhereNull('data_nascimento')
+                ->orWhereNull('cpf')->orWhere('cpf', '')
+                ->orWhereNull('email')->orWhere('email', '')
+                ->orWhereNull('telefone')->orWhere('telefone', '')
+                ->orWhereNull('sexo')
+                ->orWhereNull('cor_raca')
+                ->orWhereNull('nacionalidade_id')
+                ->orWhere(function ($q) {
+                    $q->whereHas('nacionalidade', function ($paisQuery) {
+                        $paisQuery->whereRaw('LOWER(nome) = ?', ['brasil'])
+                            ->orWhereRaw('UPPER(sigla) = ?', ['bra']);
+                    })
+                        ->whereNull('naturalidade_id');
+                })
+                ->orWhereDoesntHave('enderecos');
+        });
+    }
+
+    /**
+     * Scope para filtrar pessoas com cadastro completo.
+     */
+    public function scopeCompleto(Builder $query): Builder
+    {
+        return $query->whereNotNull('nome')->where('nome', '!=', '')
+            ->whereNotNull('data_nascimento')
+            ->whereNotNull('cpf')->where('cpf', '!=', '')
+            ->whereNotNull('email')->where('email', '!=', '')
+            ->whereNotNull('telefone')->where('telefone', '!=', '')
+            ->whereNotNull('sexo')
+            ->whereNotNull('cor_raca')
+            ->whereNotNull('nacionalidade_id')
+            ->where(function ($sub) {
+                $sub->whereDoesntHave('nacionalidade', function ($paisQuery) {
+                    $paisQuery->whereRaw('LOWER(nome) = ?', ['brasil'])
+                        ->orWhereRaw('UPPER(sigla) = ?', ['bra']);
+                })
+                    ->orWhereNotNull('naturalidade_id');
+            })
+            ->whereHas('enderecos');
     }
 }
