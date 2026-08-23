@@ -70,7 +70,9 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
 
                     // Executa o worker em segundo plano (Linux) redirecionando a saída para o limbo
                     // para não bloquear a requisição do usuário.
-                    shell_exec('php artisan queue:work --stop-when-empty > /dev/null 2>&1 &');
+                    $phpBinary = escapeshellcmd(env('QUEUE_PHP_BINARY', 'php'));
+                    $artisanPath = escapeshellarg(base_path('artisan'));
+                    shell_exec("{$phpBinary} {$artisanPath} queue:work --stop-when-empty > /dev/null 2>&1 &");
 
                     // Atualiza o heartbeat
                     Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));

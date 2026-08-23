@@ -6,12 +6,17 @@ use App\Models\Matricula;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DocumentosPendentesNotification extends Notification
+class DocumentosPendentesNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 120, 300];
 
     public function __construct(public Matricula $matricula)
     {

@@ -15,6 +15,10 @@ class PossibilidadePreceptoriaNotification extends Notification implements Shoul
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public array $backoff = [30, 120, 300];
+
     /**
      * Create a new notification instance.
      */

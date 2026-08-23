@@ -8,12 +8,17 @@ use App\Notifications\Channels\FcmChannel;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class FrequenciaPendenteNotification extends Notification
+class FrequenciaPendenteNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 120, 300];
 
     /**
      * Create a new notification instance.

@@ -16,6 +16,10 @@ class QuestionarioDisponivelNotification extends Notification implements ShouldQ
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public array $backoff = [30, 120, 300];
+
     public function __construct(public Questionario $questionario) {}
 
     public function via(object $notifiable): array

@@ -5,6 +5,7 @@ namespace App\Notifications\Channels;
 use App\Models\Matricula;
 use App\Services\FcmService;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class FcmChannel
 {
@@ -22,14 +23,23 @@ class FcmChannel
             return;
         }
 
-        $data = $notification->toPush($notifiable);
+        try {
+            $data = $notification->toPush($notifiable);
 
-        $result = $this->fcmService->sendPush(
-            $fcmToken,
-            $data['title'],
-            $data['body'],
-            $data['data'] ?? []
-        );
+            $result = $this->fcmService->sendPush(
+                $fcmToken,
+                $data['title'],
+                $data['body'],
+                $data['data'] ?? []
+            );
+        } catch (\Throwable $e) {
+            // Nao deixar propagar: token invalido/expirado nao se resolve com retry, entao
+            // so gera ruido em failed_jobs. Uma falha de push tambem nunca deve ser motivo
+            // para o job desse canal ficar tentando de novo (mail/database sao jobs a parte).
+            Log::error('FcmChannel: falha ao enviar push para '.$notifiable->id.': '.$e->getMessage());
+
+            return;
+        }
 
         // Registro de Atividade (Audit Log)
         if (isset($notification->matricula) && $notification->matricula instanceof Matricula) {
