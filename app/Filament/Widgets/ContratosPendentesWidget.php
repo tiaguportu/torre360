@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Contrato;
 use App\Services\AssinafyService;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ContratosPendentesWidget extends Widget
 {
+    use HasCustomWidgetShield;
+
     protected static ?int $sort = -4;
 
     protected string $view = 'filament.widgets.contratos-pendentes';
@@ -95,6 +98,10 @@ class ContratosPendentesWidget extends Widget
 
     public static function canView(): bool
     {
+        if (! static::hasWidgetShieldPermission()) {
+            return false;
+        }
+
         $user = Auth::user();
         if (! $user) {
             return false;

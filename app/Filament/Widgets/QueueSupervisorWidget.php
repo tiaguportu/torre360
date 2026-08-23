@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class QueueSupervisorWidget extends Widget implements HasActions, HasForms
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
     use InteractsWithActions;
     use InteractsWithForms;
 

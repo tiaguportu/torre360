@@ -52,6 +52,39 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Atribuir permissões de widgets do Filament Shield
+        $widgetPermissions = [
+            'View:AlunosPorTurmaChart',
+            'View:ContratosPendentesWidget',
+            'View:CrmFollowUpCalendarWidget',
+            'View:CronogramaCalendarWidget',
+            'View:FrequenciaPendenteWidget',
+            'View:InteressadoOrigemChart',
+            'View:InteressadoStatusChart',
+            'View:MatriculasPendentesWidget',
+            'View:PreceptoriaCalendarWidget',
+            'View:PreceptoriaSchedulingWidget',
+            'View:QuestionariosPendentes',
+            'View:QueueSupervisorWidget',
+            'View:StatsOverview',
+        ];
+
+        foreach ($widgetPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        $superAdmin = Role::where('name', 'super_admin')->first();
+        if ($superAdmin) {
+            foreach ($widgetPermissions as $permName) {
+                if (! $superAdmin->hasPermissionTo($permName)) {
+                    $superAdmin->givePermissionTo($permName);
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

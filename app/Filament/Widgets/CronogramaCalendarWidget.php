@@ -12,7 +12,7 @@ use App\Models\Disciplina;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Turma;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -23,7 +23,7 @@ use Filament\Widgets\Widget;
 
 class CronogramaCalendarWidget extends Widget implements HasForms
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
     use InteractsWithForms;
 
     protected string $view = 'filament.widgets.cronograma-calendar-widget';

@@ -5,7 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Matricula;
 use App\Models\Preceptoria;
 use App\Models\User;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -14,26 +14,29 @@ use Illuminate\Support\HtmlString;
 
 class PreceptoriaSchedulingWidget extends BaseWidget
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
 
     protected static ?int $sort = 2;
 
     public static function canView(): bool
     {
+        if (! static::hasWidgetShieldPermission()) {
+            return false;
+        }
+
         $user = Auth::user();
 
         if (! $user) {
             return false;
         }
 
-        $activeRole = $user->active_role;
+        $activeRole = session('active_role') ?? $user->active_role;
 
         // O widget de agendamento só deve ser visível se o role ativo for um dos permitidos
         if (! in_array($activeRole, ['responsavel', 'aluno', 'super_admin'])) {
             return false;
         }
 
-        // Respeita também as permissões do Shield (através da trait HasWidgetShield)
         return true;
     }
 

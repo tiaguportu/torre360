@@ -5,35 +5,13 @@ namespace App\Filament\Widgets;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Turma;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Spatie\Permission\Models\Role;
 
 class StatsOverview extends BaseWidget
 {
-    use HasWidgetShield;
-
-    public static function canView(): bool
-    {
-        $activeRole = session('active_role');
-
-        if (! $activeRole) {
-            return false;
-        }
-
-        if ($activeRole === 'super_admin') {
-            return true;
-        }
-
-        try {
-            $role = Role::findByName($activeRole, 'web');
-
-            return $role->hasPermissionTo(static::getPermissionName());
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
+    use HasCustomWidgetShield;
 
     protected static ?int $sort = 1;
 

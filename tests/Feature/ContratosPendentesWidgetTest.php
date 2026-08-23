@@ -10,16 +10,33 @@ use App\Models\Pessoa;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ContratosPendentesWidgetTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Role $role;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $this->role = Role::firstOrCreate(['name' => 'responsavel', 'guard_name' => 'web']);
+        $permission = Permission::firstOrCreate(['name' => 'View:ContratosPendentesWidget', 'guard_name' => 'web']);
+        $this->role->givePermissionTo($permission);
+    }
+
     public function test_widget_nao_exibe_se_usuario_nao_tiver_contrato_pendente(): void
     {
         $user = User::factory()->create(['email' => 'usuario.sem.pendencia@example.com']);
+        $user->assignRole($this->role);
         $this->actingAs($user);
+        session(['active_role' => 'responsavel']);
 
         $this->assertFalse(ContratosPendentesWidget::canView());
         $this->assertNull(ContratoResource::getNavigationBadge());
@@ -29,6 +46,8 @@ class ContratosPendentesWidgetTest extends TestCase
     {
         $email = 'responsavel.pendente@example.com';
         $user = User::factory()->create(['email' => $email]);
+        $user->assignRole($this->role);
+        session(['active_role' => 'responsavel']);
         $pessoa = Pessoa::factory()->create(['nome' => 'Responsável Teste', 'email' => $email]);
         $pessoa->users()->save($user);
 
@@ -82,7 +101,9 @@ class ContratosPendentesWidgetTest extends TestCase
         $userB = User::factory()->create(['email' => 'outra@example.com']);
         $pessoaB->users()->save($userB);
 
+        $userB->assignRole($this->role);
         $this->actingAs($userB);
+        session(['active_role' => 'responsavel']);
 
         $this->assertFalse(ContratosPendentesWidget::canView());
     }

@@ -1474,5 +1474,30 @@ O Portal usa o **mesmo login e senha** do painel principal — é só um caminho
 
 ---
 
+## 🛡️ 30. Controle Granular de Widgets pelo Filament Shield (`/admin/shield/roles`)
+
+O sistema permite o gerenciamento completo e granular de quais widgets aparecem na tela inicial (**Dashboard**) para cada papel (**Role**):
+
+1. **Acesso:** Vá em **Sistema e Segurança → Papéis (Shield)** e clique em **Editar** no papel desejado (ex: `super_admin`, `admin`, `secretaria`, `professor`, etc.).
+2. **Aba Widgets:** Acesse a aba **Widgets** na tela de permissões do papel.
+3. **Seleção Individual:** Todos os 13 widgets da aplicação estão disponíveis para marcação:
+   - *Visão Geral de Estatísticas (`StatsOverview`)*
+   - *Alunos por Turma (`AlunosPorTurmaChart`)*
+   - *Matrículas com Pendências (`MatriculasPendentesWidget`)*
+   - *Contratos Pendentes de Assinatura (`ContratosPendentesWidget`)*
+   - *Questionários Pendentes (`QuestionariosPendentes`)*
+   - *Pendências de Lançamento de Frequência (`FrequenciaPendenteWidget`)*
+   - *Agendamento de Preceptoria (`PreceptoriaSchedulingWidget`)*
+   - *Calendário de Preceptorias (`PreceptoriaCalendarWidget`)*
+   - *Calendário de Aulas e Avaliações (`CronogramaCalendarWidget`)*
+   - *Agenda de Follow-up CRM (`CrmFollowUpCalendarWidget`)*
+   - *Origem dos Interessados (`InteressadoOrigemChart`)*
+   - *Interessados por Status (`InteressadoStatusChart`)*
+   - *Supervisor de Filas e Jobs (`QueueSupervisorWidget`)*
+4. **Respeito às Permissões para Super Admin:** Mesmo para o papel **Super Administrador (`super_admin`)**, a exibição dos widgets na tela inicial respeita estritamente as opções marcadas na aba de Widgets do Shield. Isso permite que a instituição personalize a tela inicial mesmo para administradores globais, exibindo apenas as informações mais relevantes.
+5. **Combinação com Regras de Negócio:** Para widgets dinâmicos (como *Contratos Pendentes*, *Questionários Pendentes* e *Pendências de Frequência*), o widget só é renderizado se a permissão estiver ativa no papel **e** se houver dados/pendências reais pertinentes ao usuário logado.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 

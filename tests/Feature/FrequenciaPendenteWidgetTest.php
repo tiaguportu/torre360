@@ -11,12 +11,27 @@ use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class FrequenciaPendenteWidgetTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $permission = Permission::firstOrCreate(['name' => 'View:FrequenciaPendenteWidget', 'guard_name' => 'web']);
+        $adminRole->givePermissionTo($permission);
+
+        $profRole = Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
+        $profRole->givePermissionTo($permission);
+    }
 
     public function test_widget_exibe_pendencias_para_datas_hoje_ou_anteriores(): void
     {
@@ -24,7 +39,9 @@ class FrequenciaPendenteWidgetTest extends TestCase
             'activated_at' => now()->subDay(),
             'email_verified_at' => now(),
         ]);
+        $user->assignRole('admin');
         $this->actingAs($user);
+        session(['active_role' => 'admin']);
 
         $turma = Turma::factory()->create();
         $aluno = Pessoa::factory()->create();
@@ -115,7 +132,9 @@ class FrequenciaPendenteWidgetTest extends TestCase
             'activated_at' => now()->subDay(),
             'email_verified_at' => now(),
         ]);
+        $user->assignRole('admin');
         $this->actingAs($user);
+        session(['active_role' => 'admin']);
 
         $turma = Turma::factory()->create();
         $aluno1 = Pessoa::factory()->create();

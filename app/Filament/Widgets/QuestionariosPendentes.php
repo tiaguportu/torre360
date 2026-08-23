@@ -4,11 +4,14 @@ namespace App\Filament\Widgets;
 
 use App\Models\Questionario;
 use App\Models\QuestionarioResposta;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
 class QuestionariosPendentes extends Widget
 {
+    use HasCustomWidgetShield;
+
     protected static ?int $sort = -5;
 
     protected string $view = 'filament.widgets.questionarios-pendentes';
@@ -63,6 +66,10 @@ class QuestionariosPendentes extends Widget
 
     public static function canView(): bool
     {
+        if (! static::hasWidgetShieldPermission()) {
+            return false;
+        }
+
         $user = Auth::user();
         if (! $user) {
             return false;

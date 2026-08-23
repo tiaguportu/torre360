@@ -5,7 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Interessado;
 use App\Models\User;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -17,7 +17,7 @@ use Filament\Widgets\Widget;
 
 class CrmFollowUpCalendarWidget extends Widget implements HasForms
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
     use InteractsWithForms;
 
     protected string $view = 'filament.widgets.crm-follow-up-calendar-widget';

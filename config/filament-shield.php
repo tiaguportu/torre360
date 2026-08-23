@@ -14,8 +14,6 @@ use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\TransacaoBancarias\TransacaoBancariaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 
 return [
 
@@ -277,8 +275,7 @@ return [
         'subject' => 'class',
         'prefix' => 'view',
         'exclude' => [
-            AccountWidget::class,
-            FilamentInfoWidget::class,
+            //
         ],
     ],
 

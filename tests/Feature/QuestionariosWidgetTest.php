@@ -8,27 +8,51 @@ use App\Models\Questionario;
 use App\Models\QuestionarioAlvo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class QuestionariosWidgetTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    private Role $role;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $this->role = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $permission = Permission::firstOrCreate(['name' => 'View:QuestionariosPendentes', 'guard_name' => 'web']);
+        $this->role->givePermissionTo($permission);
+    }
+
+    private function createAuthorizedUser(): User
+    {
+        $user = User::factory()->create(['activated_at' => now()]);
+        $user->assignRole($this->role);
+        $this->actingAs($user);
+        session(['active_role' => 'admin']);
+
+        return $user;
+    }
+
+    #[Test]
     public function widget_nao_deve_exibir_se_nao_houver_questionarios_pendentes()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->createAuthorizedUser();
 
         // Sem questionários na base, canView deve retornar false
         $this->assertFalse(QuestionariosPendentes::canView());
     }
 
-    /** @test */
+    #[Test]
     public function widget_deve_exibir_se_houver_questionario_elegivel()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->createAuthorizedUser();
 
         // Criar questionário ativo sem restrição de alvos
         Questionario::create([
@@ -41,11 +65,10 @@ class QuestionariosWidgetTest extends TestCase
         $this->assertTrue(QuestionariosPendentes::canView());
     }
 
-    /** @test */
+    #[Test]
     public function widget_nao_deve_exibir_se_questionario_estiver_inativo()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->createAuthorizedUser();
 
         // Criar questionário inativo
         Questionario::create([
@@ -58,11 +81,10 @@ class QuestionariosWidgetTest extends TestCase
         $this->assertFalse(QuestionariosPendentes::canView());
     }
 
-    /** @test */
+    #[Test]
     public function widget_nao_deve_exibir_se_periodo_de_aplicacao_estiver_vencido()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->createAuthorizedUser();
 
         // Criar questionário com fim de aplicação no passado
         Questionario::create([
@@ -77,11 +99,10 @@ class QuestionariosWidgetTest extends TestCase
         $this->assertFalse(QuestionariosPendentes::canView());
     }
 
-    /** @test */
+    #[Test]
     public function can_access_deve_permitir_acesso_se_usuario_for_do_publico_alvo()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $user = $this->createAuthorizedUser();
 
         $questionario = Questionario::create([
             'titulo' => 'Questionário Alvo',
@@ -100,12 +121,11 @@ class QuestionariosWidgetTest extends TestCase
         $this->assertTrue(ResponderQuestionario::canAccess(['record' => $questionario]));
     }
 
-    /** @test */
+    #[Test]
     public function can_access_deve_negar_acesso_se_usuario_nao_for_do_publico_alvo()
     {
-        $user = User::factory()->create();
+        $user = $this->createAuthorizedUser();
         $outroUser = User::factory()->create();
-        $this->actingAs($user);
 
         $questionario = Questionario::create([
             'titulo' => 'Questionário Alvo Outro',
@@ -124,13 +144,10 @@ class QuestionariosWidgetTest extends TestCase
         $this->assertFalse(ResponderQuestionario::canAccess(['record' => $questionario]));
     }
 
-    /** @test */
+    #[Test]
     public function usuario_elegivel_deve_conseguir_acessar_a_rota_de_responder()
     {
-        $user = User::factory()->create([
-            'activated_at' => now(),
-        ]);
-        $this->actingAs($user);
+        $user = $this->createAuthorizedUser();
 
         $questionario = Questionario::create([
             'titulo' => 'Questionário Alvo',
@@ -149,7 +166,7 @@ class QuestionariosWidgetTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function usuario_elegivel_deve_receber_403_ao_tentar_acessar_a_listagem_sem_permissao_shield()
     {
         $user = User::factory()->create([
@@ -175,7 +192,7 @@ class QuestionariosWidgetTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function usuario_elegivel_deve_receber_403_ao_tentar_acessar_a_visualizacao_sem_permissao_shield()
     {
         $user = User::factory()->create([

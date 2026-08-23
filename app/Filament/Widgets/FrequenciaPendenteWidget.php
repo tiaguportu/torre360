@@ -5,7 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\CronogramaAula;
 use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -25,7 +25,7 @@ use Spatie\Permission\Models\Role;
 
 class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
     use InteractsWithActions;
     use InteractsWithForms;
 
@@ -342,26 +342,13 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 
     public static function canView(): bool
     {
+        if (! static::hasWidgetShieldPermission()) {
+            return false;
+        }
+
         $user = Auth::user();
         if (! $user) {
             return false;
-        }
-
-        $activeRole = session('active_role') ?? $user->active_role;
-
-        if (! $activeRole) {
-            return false;
-        }
-
-        if ($activeRole !== 'super_admin') {
-            try {
-                $role = Role::findByName($activeRole, 'web');
-                if (! $role->hasPermissionTo(static::getPermissionName())) {
-                    return false;
-                }
-            } catch (\Throwable $e) {
-                return false;
-            }
         }
 
         return (new static)->getPendenciasAgrupadas()->isNotEmpty();

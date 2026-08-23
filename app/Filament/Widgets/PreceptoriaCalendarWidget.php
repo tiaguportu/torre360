@@ -9,7 +9,7 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Models\Turma;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use App\Traits\HasCustomWidgetShield;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PreceptoriaCalendarWidget extends Widget implements HasForms
 {
-    use HasWidgetShield;
+    use HasCustomWidgetShield;
     use InteractsWithForms;
 
     protected string $view = 'filament.widgets.preceptoria-calendar-widget';
