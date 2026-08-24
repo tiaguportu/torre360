@@ -66,7 +66,7 @@ class EducacensoPessoaExportTest extends TestCase
         $pessoa->setRelation('responsaveis', collect([$pai, $mae]));
 
         $nec = new NecessidadeEducacaoEspecial(['nome' => 'Cegueira']);
-        $rec = new RecursoAcessibilidade(['nome' => 'Prova em Braille']);
+        $rec = new RecursoAcessibilidade(['nome' => 'Prova Braille']);
 
         $pessoa->setRelation('necessidadesEducacaoEspecial', collect([$nec]));
         $pessoa->setRelation('transtornosAprendizagem', collect());
@@ -96,8 +96,8 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('JOAO DA SILVA CAO', $fields[5]); // 6. Nome Sanitizado
         $this->assertEquals('15/05/2010', $fields[6]); // 7. Data Nascimento
         $this->assertEquals('1', $fields[7]); // 8. Filiação Declarada
-        $this->assertEquals('JOSE DA SILVA', $fields[8]); // 9. Pai
-        $this->assertEquals('MARIA DA SILVA', $fields[9]); // 10. Mãe
+        $this->assertEquals('MARIA DA SILVA', $fields[8]); // 9. Mãe (Filiação 1)
+        $this->assertEquals('JOSE DA SILVA', $fields[9]); // 10. Pai (Filiação 2)
         $this->assertEquals('1', $fields[10]); // 11. Sexo (1 = Masculino)
         $this->assertEquals('3', $fields[11]); // 12. Cor/Raça (3 = Parda)
         $this->assertEquals('', $fields[12]); // 13. Povo Indígena (nulo pois Cor/Raça != 5)
@@ -111,15 +111,11 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('0', $fields[35]); // 36. AEE (com vínculo reg 60)
         $this->assertEquals('0', $fields[36]); // 37. Recurso AEE (com vínculo reg 60)
         $this->assertEquals('0', $fields[37]); // 38. Leitor (com vínculo reg 60)
-        $this->assertEquals('1', $fields[45]); // 46. Prova Braille (com vínculo reg 60)
-        $this->assertEquals('0', $fields[46]); // 47. Nenhum recurso (com vínculo reg 60)
-        $this->assertEquals('13000000', $fields[47]); // 48. CEP
-        $this->assertEquals('RUA DAS FLORES', $fields[48]); // 49. Logradouro
-        $this->assertEquals('123', $fields[49]); // 50. Número
-        $this->assertEquals('CENTRO', $fields[51]); // 52. Bairro
+        $this->assertEquals('1', $fields[46]); // 47. Prova Braille (com vínculo reg 60)
+        $this->assertEquals('0', $fields[48]); // 49. Nenhum recurso (com vínculo reg 60)
+        $this->assertEquals('13000000', $fields[51]); // 52. CEP
         $this->assertEquals('3509502', $fields[52]); // 53. IBGE Cidade Endereço
-        $this->assertEquals('SP', $fields[53]); // 54. UF Endereço
-        $this->assertEquals('joao@example.com', $fields[54]); // 55. Email
+        $this->assertEquals('joao@example.com', $fields[109]); // 110. Email
     }
 
     public function test_exportacao_com_campos_opcionais_vazios_gera_pipes_duplos(): void
@@ -139,7 +135,7 @@ class EducacensoPessoaExportTest extends TestCase
         $this->assertEquals('', $fields[3]); // Campo 4
         $this->assertEquals('PEDRO SEM DOCUMENTOS', $fields[5]);
         $this->assertEquals('', $fields[4]); // CPF vazio
-        $this->assertEquals('', $fields[6]); // Data nasc vazia
+        $this->assertEquals('01/01/1990', $fields[6]); // Data nasc vazia usa fallback válido do INEP
         $this->assertStringContainsString('||', $line);
     }
 

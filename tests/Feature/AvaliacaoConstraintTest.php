@@ -10,13 +10,13 @@ use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\Turma;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class AvaliacaoConstraintTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     private Turma $turma;
 
@@ -38,13 +38,16 @@ class AvaliacaoConstraintTest extends TestCase
 
         $periodo = PeriodoLetivo::first() ?? PeriodoLetivo::create([
             'nome' => '2026',
-            'inicio' => '2026-01-01',
-            'fim' => '2026-12-31',
+            'data_inicio' => '2026-01-01',
+            'data_fim' => '2026-12-31',
         ]);
 
         $this->etapa = EtapaAvaliativa::first() ?? EtapaAvaliativa::create([
             'nome' => '1º Bimestre Teste',
+            'turma_id' => $this->turma->id,
             'periodo_letivo_id' => $periodo->id,
+            'data_inicio' => '2026-01-01',
+            'data_fim' => '2026-03-31',
         ]);
 
         $this->categoria = CategoriaAvaliacao::first() ?? CategoriaAvaliacao::create(['nome' => 'Categoria Teste Manual']);
@@ -63,6 +66,7 @@ class AvaliacaoConstraintTest extends TestCase
             'categoria_avaliacao_id' => $this->categoria->id,
             'professor_id' => $this->professor->id,
             'data_prevista' => now(),
+            'data_ocorrencia' => now(),
             'data_limite_lancamento' => now()->addDays(15),
             'nota_maxima' => 10,
             'peso_etapa_avaliativa' => 1,
@@ -78,6 +82,7 @@ class AvaliacaoConstraintTest extends TestCase
             'categoria_avaliacao_id' => $this->categoria->id,
             'professor_id' => $this->professor->id,
             'data_prevista' => now(),
+            'data_ocorrencia' => now(),
             'data_limite_lancamento' => now()->addDays(15),
             'nota_maxima' => 10,
             'peso_etapa_avaliativa' => 1,
@@ -95,6 +100,7 @@ class AvaliacaoConstraintTest extends TestCase
             'categoria_avaliacao_id' => $this->categoria->id,
             'professor_id' => null,
             'data_prevista' => now(),
+            'data_ocorrencia' => now(),
             'data_limite_lancamento' => now()->addDays(15),
             'nota_maxima' => 10,
             'peso_etapa_avaliativa' => 1,
@@ -110,6 +116,7 @@ class AvaliacaoConstraintTest extends TestCase
             'categoria_avaliacao_id' => $this->categoria->id,
             'professor_id' => null,
             'data_prevista' => now(),
+            'data_ocorrencia' => now(),
             'data_limite_lancamento' => now()->addDays(15),
             'nota_maxima' => 10,
             'peso_etapa_avaliativa' => 1,
@@ -126,6 +133,7 @@ class AvaliacaoConstraintTest extends TestCase
             'categoria_avaliacao_id' => $this->categoria->id,
             'professor_id' => $this->professor->id,
             'data_prevista' => now(),
+            'data_ocorrencia' => now(),
             'data_limite_lancamento' => now()->addDays(15),
             'nota_maxima' => 10,
             'peso_etapa_avaliativa' => 1,
@@ -148,6 +156,7 @@ class AvaliacaoConstraintTest extends TestCase
                 'categoria_avaliacao_id' => $this->categoria->id,
                 'professor_id' => $this->professor->id,
                 'data_prevista' => now(),
+                'data_ocorrencia' => now(),
                 'data_limite_lancamento' => now()->addDays(15),
                 'nota_maxima' => 10,
                 'peso_etapa_avaliativa' => 1,
@@ -165,6 +174,7 @@ class AvaliacaoConstraintTest extends TestCase
                 'categoria_avaliacao_id' => $this->categoria->id,
                 'professor_id' => $this->professor->id,
                 'data_prevista' => now(),
+                'data_ocorrencia' => now(),
                 'data_limite_lancamento' => now()->addDays(15),
                 'nota_maxima' => 10,
                 'peso_etapa_avaliativa' => 1,
