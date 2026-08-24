@@ -43,6 +43,7 @@ class MatriculasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['pessoa', 'turma', 'periodoLetivo']))
             ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
             ->columns([
                 TextColumn::make('pessoa.nome')

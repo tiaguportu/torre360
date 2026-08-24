@@ -31,6 +31,10 @@ class PreceptoriasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->with(['professor', 'matricula.pessoa', 'matricula.turma'])
+                ->withExists('relatorios')
+            )
             ->columns([
                 TextColumn::make('data')
                     ->label('Data')
@@ -63,7 +67,7 @@ class PreceptoriasTable
 
                 IconColumn::make('relatorio_exists')
                     ->label('Relatório')
-                    ->state(fn ($record) => $record->relatorios()->exists())
+                    ->state(fn ($record) => $record->relatorios_exists)
                     ->boolean()
                     ->trueIcon('heroicon-o-document-text')
                     ->falseIcon('heroicon-o-minus-circle')
