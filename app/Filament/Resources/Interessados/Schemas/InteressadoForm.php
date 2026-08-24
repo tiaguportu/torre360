@@ -133,15 +133,15 @@ class InteressadoForm
 
                                 TextInput::make('pessoa_email')
                                     ->label('E-mail')
-                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_email', Pessoa::find($get('pessoa_id'))?->email))
-                                    ->disabled()
-                                    ->dehydrated(false),
+                                    ->email()
+                                    ->maxLength(255)
+                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_email', Pessoa::find($get('pessoa_id'))?->email)),
 
                                 TextInput::make('pessoa_telefone')
                                     ->label('Telefone')
-                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone))
-                                    ->disabled()
-                                    ->dehydrated(false),
+                                    ->tel()
+                                    ->maxLength(20)
+                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone)),
 
                                 Select::make('status_interessado_id')
                                     ->label('Status')

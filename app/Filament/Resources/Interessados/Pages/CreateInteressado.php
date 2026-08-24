@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Interessados\Pages;
 
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Models\Pessoa;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
@@ -12,6 +13,20 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateInteressado extends CreateRecord
 {
     protected static string $resource = InteressadoResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        if (! empty($data['pessoa_id'])) {
+            Pessoa::whereKey($data['pessoa_id'])->update([
+                'email' => $data['pessoa_email'] ?? null,
+                'telefone' => $data['pessoa_telefone'] ?? null,
+            ]);
+        }
+
+        unset($data['pessoa_email'], $data['pessoa_telefone']);
+
+        return $data;
+    }
 
     protected function afterCreate(): void
     {
