@@ -11,6 +11,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -52,6 +53,44 @@ class SchoolSetupWizard extends Page implements HasForms, HasShieldPermissions
     public function mount(): void
     {
         $this->form->fill();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Assistente de Configuração Escolar')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<p>O <strong>Assistente de Configuração Escolar</strong> guia você em 3 etapas para realizar a configuração inicial do sistema, criando a primeira Unidade, o Período Letivo, o Curso e a Turma.</p>';
+
+        $html .= '<h3>Etapas</h3><ol>';
+        $html .= '<li><strong>A Escola:</strong> Informe o nome da Unidade/Escola sede.</li>';
+        $html .= '<li><strong>Calendário:</strong> Defina o nome do ano letivo e as datas de início e término previsto das aulas.</li>';
+        $html .= '<li><strong>Estrutura de Ensino:</strong> Cadastre o primeiro Curso e a primeira Turma do sistema.</li>';
+        $html .= '</ol>';
+
+        $html .= '<h3>Dicas importantes</h3><ul>';
+        $html .= '<li>Este assistente é destinado apenas à configuração inicial do sistema, quando ainda não existem unidades cadastradas.</li>';
+        $html .= '<li>Após salvar, você será redirecionado para o painel principal, onde poderá complementar os cadastros criados.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 
     public function form(Schema $schema): Schema

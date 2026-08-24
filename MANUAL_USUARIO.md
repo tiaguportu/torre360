@@ -551,6 +551,7 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 1. Acesse **Financeiro → Relatórios → DRE**.
 2. Filtre pelo mês ou período desejado.
 3. O sistema consolida todas as receitas (Faturas pagas) e despesas (Pagamentos a fornecedores) com base no **Plano de Contas**, mostrando o lucro ou prejuízo do período.
+4. Utilize o botão de **Ajuda** (ícone de interrogação cinza) no cabeçalho para consultar um resumo dos filtros e da ação de atualização do relatório.
 
 ---
 
@@ -596,6 +597,11 @@ O sistema registra automaticamente ações críticas e navegações:
 - **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
 - **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.
 - **Notificações:** Tentativas de envio de mensagens Push (Firebase/FCM) e suas respectivas respostas do servidor são registradas no histórico da matrícula para depuração e acompanhamento técnico.
+
+### 9.3 Ferramentas de Super Administrador
+Páginas restritas exclusivamente a usuários com o papel **super_admin**, ambas com botão de **Ajuda** no cabeçalho:
+- **Assistente de Configuração Escolar:** Wizard de 3 etapas (Escola, Calendário, Estrutura de Ensino) usado apenas na configuração inicial do sistema, quando ainda não há unidades cadastradas. Cria automaticamente a primeira Unidade, Período Letivo, Curso e Turma.
+- **Git Pull (Atualizar Sistema):** Busca as últimas alterações do repositório (`git pull origin main`) e, em caso de sucesso, executa automaticamente `optimize:clear` e `migrate --force`. É uma ação sensível que afeta o ambiente de produção para todos os usuários — utilize com cautela.
 
 ---
 

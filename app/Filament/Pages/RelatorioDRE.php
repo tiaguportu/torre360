@@ -7,6 +7,7 @@ use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
@@ -79,7 +80,34 @@ class RelatorioDRE extends Page implements HasForms
                 ->label('Atualizar Relatório')
                 ->icon('heroicon-m-arrow-path')
                 ->action('generateDRE'),
+
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Demonstrativo de Resultados (DRE)')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<p>O <strong>Demonstrativo de Resultados (DRE)</strong> apresenta um resumo financeiro consolidado, mostrando receitas, despesas e o resultado do período selecionado.</p>';
+
+        $html .= '<h3>Como usar?</h3><ul>';
+        $html .= '<li><strong>Data Início / Data Fim:</strong> Defina o intervalo de datas que deseja analisar.</li>';
+        $html .= '<li><strong>Atualizar Relatório:</strong> Recalcula o DRE com base no período informado nos filtros.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 
     public function generateDRE(): void
