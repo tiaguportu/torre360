@@ -167,6 +167,7 @@ class OcorrenciaEscolarResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-o-paper-airplane')
                     ->color('primary')
                     ->requiresConfirmation()
+                    ->authorize(fn (OcorrenciaEscolar $record) => auth()->user()?->can('reenviarNotificacao', $record))
                     ->action(function (OcorrenciaEscolar $record) {
                         $record->update(['notificar_responsaveis' => true]);
                         $enviado = $record->enviarNotificacaoResponsaveis();
