@@ -61,6 +61,26 @@ class Preceptoria extends Model
     }
 
     /**
+     * Retorna a data e horário completo do início da preceptoria.
+     */
+    public function getDataHoraInicioAttribute(): ?Carbon
+    {
+        if (! $this->data) {
+            return null;
+        }
+
+        $dataStr = Carbon::parse($this->data)->format('Y-m-d');
+
+        if ($this->hora_inicio) {
+            $horaStr = Carbon::parse($this->hora_inicio)->format('H:i:s');
+
+            return Carbon::parse("{$dataStr} {$horaStr}");
+        }
+
+        return Carbon::parse($dataStr)->endOfDay();
+    }
+
+    /**
      * Verifica se o agendamento é para o dia seguinte.
      */
     public function isAgendamentoNoDiaSeguinte(): bool
@@ -73,15 +93,11 @@ class Preceptoria extends Model
     }
 
     /**
-     * Verifica se o agendamento é para uma data futura.
+     * Verifica se o agendamento é para uma data/hora futura.
      */
     public function isAgendamentoFuturo(): bool
     {
-        if (! $this->data) {
-            return false;
-        }
-
-        return Carbon::parse($this->data)->isFuture();
+        return $this->data_hora_inicio?->isFuture() ?? false;
     }
 
     /**
