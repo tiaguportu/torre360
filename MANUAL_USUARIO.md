@@ -979,10 +979,12 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
 6. **Ações em Lote:** Para facilitar a gestão de múltiplos horários, você pode selecionar várias preceptorias na tabela e utilizar:
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
    - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
+   - **Enviar Lembretes em Lote:** Selecione várias preceptorias (por exemplo, todas as do dia ou da semana) e clique em **Enviar Lembretes em Lote** para disparar de uma só vez o lembrete de agendamento (e-mail, push e sininho) para todas as elegíveis. O modal de confirmação informa quantas preceptorias selecionadas serão realmente notificadas e quantas serão ignoradas por não estarem completamente agendadas ou já terem ocorrido.
 7. **Visualização de Detalhes:** Clique no botão de visualização (ícone de olho) na coluna de ações da tabela de preceptorias para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
 8. **Alertas e Lembretes:**
    - **Badge de Alerta:** Na listagem de preceptorias, a data de agendamentos previstos para **amanhã** aparecerá destacada em vermelho com um ícone de alerta, facilitando a identificação de compromissos imediatos.
    - **Botão Relembrar:** Para cada preceptoria completamente agendada (com data, horário, professor e aluno) que ocorrerá no futuro, o botão **Relembrar** (ícone de envelope amarelo) estará disponível. Ao acioná-lo, o sistema enviará um lembrete automático por e-mail, push e sininho para o professor, para o aluno e para os responsáveis vinculados.
+   - Os lembretes (individuais ou em lote) são enviados de forma assíncrona por uma fila (queue), garantindo que a tela não trave enquanto os e-mails são processados.
 
 ---
 
@@ -1031,6 +1033,8 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
   - `isAgendamentoNoDiaSeguinte()`: Identifica se a sessão ocorre amanhã para alertas visuais.
   - `relembrarAgendamento()`: Dispara notificações de lembrete multicanal (E-mail, Push, Banco) para todos os envolvidos, registrando o evento `notificacao_lembrete_preceptoria` no log de atividades.
 - **Notificações:** O sistema envia notificações automáticas (via canais configurados na tabela `notifications`) para os usuários vinculados ao Professor sempre que houver um novo agendamento ou liberação de horário.
+- **Envio Assíncrono:** `LembretePreceptoriaNotification` implementa `ShouldQueue`, então cada lembrete (disparado individualmente pelo botão **Relembrar** ou em massa pela ação **Enviar Lembretes em Lote**) é processado em background pela fila (`QUEUE_CONNECTION=database`), evitando travar a interface ao notificar muitos destinatários de uma vez.
+- **Ação em Lote `relembrar_lote`:** Definida em `PreceptoriasTable`, filtra a seleção pelas preceptorias elegíveis (`isCompletamenteAgendada()` + `isAgendamentoFuturo()`) e chama `relembrarAgendamento()` para cada uma, somando envios e falhas antes de exibir o resultado consolidado.
  desejado e clique em **Confirmar Agendamento**.
 
 > [!IMPORTANT]
