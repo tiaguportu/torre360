@@ -49,4 +49,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/template-crachas-v3/{templateCrachaV3}/save', [TemplateCrachaV3Controller::class, 'save'])->name('template-crachas-v3.save');
 });
 
-Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->name('mobile.register-token');
+Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'throttle:10,1'])->name('mobile.register-token');
