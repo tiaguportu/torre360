@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\EtapaAvaliatiwas\Schemas;
+namespace App\Filament\Resources\EtapaAvaliativas\Schemas;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;

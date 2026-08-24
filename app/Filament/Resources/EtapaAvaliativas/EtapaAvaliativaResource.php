@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\EtapaAvaliatiwas;
+namespace App\Filament\Resources\EtapaAvaliativas;
 
-use App\Filament\Resources\EtapaAvaliatiwas\Pages\CreateEtapaAvaliativa;
-use App\Filament\Resources\EtapaAvaliatiwas\Pages\EditEtapaAvaliativa;
-use App\Filament\Resources\EtapaAvaliatiwas\Pages\ListEtapaAvaliatiwas;
-use App\Filament\Resources\EtapaAvaliatiwas\Schemas\EtapaAvaliativaForm;
-use App\Filament\Resources\EtapaAvaliatiwas\Tables\EtapaAvaliatiwasTable;
+use App\Filament\Resources\EtapaAvaliativas\Pages\CreateEtapaAvaliativa;
+use App\Filament\Resources\EtapaAvaliativas\Pages\EditEtapaAvaliativa;
+use App\Filament\Resources\EtapaAvaliativas\Pages\ListEtapaAvaliativas;
+use App\Filament\Resources\EtapaAvaliativas\Schemas\EtapaAvaliativaForm;
+use App\Filament\Resources\EtapaAvaliativas\Tables\EtapaAvaliativasTable;
 use App\Models\EtapaAvaliativa;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -32,7 +32,7 @@ class EtapaAvaliativaResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return EtapaAvaliatiwasTable::configure($table);
+        return EtapaAvaliativasTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -45,7 +45,7 @@ class EtapaAvaliativaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListEtapaAvaliatiwas::route('/'),
+            'index' => ListEtapaAvaliativas::route('/'),
             'create' => CreateEtapaAvaliativa::route('/create'),
             'edit' => EditEtapaAvaliativa::route('/{record}/edit'),
         ];

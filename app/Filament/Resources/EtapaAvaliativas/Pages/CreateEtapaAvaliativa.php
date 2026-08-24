@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\EtapaAvaliatiwas\Pages;
+namespace App\Filament\Resources\EtapaAvaliativas\Pages;
 
-use App\Filament\Resources\EtapaAvaliatiwas\EtapaAvaliativaResource;
+use App\Filament\Resources\EtapaAvaliativas\EtapaAvaliativaResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateEtapaAvaliativa extends CreateRecord

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\EtapaAvaliatiwas\Pages;
+namespace App\Filament\Resources\EtapaAvaliativas\Pages;
 
-use App\Filament\Resources\EtapaAvaliatiwas\EtapaAvaliativaResource;
+use App\Filament\Resources\EtapaAvaliativas\EtapaAvaliativaResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListEtapaAvaliatiwas extends ListRecords
+class ListEtapaAvaliativas extends ListRecords
 {
     protected static string $resource = EtapaAvaliativaResource::class;
 
