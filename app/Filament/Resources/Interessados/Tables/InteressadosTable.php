@@ -250,7 +250,7 @@ class InteressadosTable
                             ->visible(fn (Interessado $record) => $record->dependentes->count() > 1)
                             ->required(fn (Interessado $record) => $record->dependentes->count() > 1),
                     ])
-                    ->url(function (array $data, Interessado $record) {
+                    ->action(function (array $data, Interessado $record, $livewire) {
                         $template = MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id']);
 
                         $dependente = filled($data['interessado_dependente_id'] ?? null)
@@ -268,9 +268,10 @@ class InteressadosTable
                             $telefone = '55'.$telefone;
                         }
 
-                        return 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
-                    })
-                    ->openUrlInNewTab(),
+                        $url = 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
+
+                        $livewire->js("window.open(".json_encode($url).", '_blank')");
+                    }),
 
                 Action::make('finalizarMatricula')
                     ->label('Matricular')
