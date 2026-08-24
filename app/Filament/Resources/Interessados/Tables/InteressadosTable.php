@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Interessados\Tables;
 
 use App\Models\Interessado;
+use App\Models\MensagemWhatsappTemplate;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
@@ -100,6 +101,14 @@ class InteressadosTable
                     ->color('gray')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('dias_sem_interacao')
+                    ->label('Sem Interação')
+                    ->state(fn (Interessado $record): string => $record->diasSemInteracao().'d')
+                    ->color(fn (Interessado $record): string => $record->estaEstagnado() ? 'danger' : 'gray')
+                    ->icon(fn (Interessado $record) => $record->estaEstagnado() ? 'heroicon-o-exclamation-circle' : null)
+                    ->tooltip('Dias desde a última interação registrada com o lead.')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('faixa_distancia_escola')
                     ->label('Distância')
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
@@ -156,6 +165,12 @@ class InteressadosTable
                         'morno' => '🟡 Morno',
                         'frio' => '🔵 Frio',
                     ]),
+                TernaryFilter::make('estagnado')
+                    ->label('Estagnado (7+ dias sem interação)')
+                    ->queries(
+                        true: fn ($query) => $query->estagnados(),
+                        false: fn ($query) => $query->whereNotIn('id', Interessado::estagnados()->pluck('id')),
+                    ),
             ])
             ->actions([
                 Action::make('registrarAtendimento')
@@ -216,6 +231,46 @@ class InteressadosTable
                             ->success()
                             ->send();
                     }),
+
+                Action::make('enviarWhatsapp')
+                    ->label('WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->visible(fn (Interessado $record) => filled($record->pessoa?->telefone))
+                    ->modalHeading('Enviar Mensagem via WhatsApp')
+                    ->form([
+                        Select::make('mensagem_whatsapp_template_id')
+                            ->label('Modelo de Mensagem')
+                            ->options(fn () => MensagemWhatsappTemplate::ativos()->pluck('nome', 'id'))
+                            ->searchable()
+                            ->required(),
+                        Select::make('interessado_dependente_id')
+                            ->label('Aluno')
+                            ->options(fn (Interessado $record) => $record->dependentes->pluck('nome_crianca', 'id'))
+                            ->visible(fn (Interessado $record) => $record->dependentes->count() > 1)
+                            ->required(fn (Interessado $record) => $record->dependentes->count() > 1),
+                    ])
+                    ->url(function (array $data, Interessado $record) {
+                        $template = MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id']);
+
+                        $dependente = filled($data['interessado_dependente_id'] ?? null)
+                            ? $record->dependentes->firstWhere('id', $data['interessado_dependente_id'])
+                            : $record->dependentes->first();
+
+                        $mensagem = strtr($template?->conteudo ?? '', [
+                            '[Nome do Responsável]' => $record->pessoa->nome,
+                            '[Nome do Aluno]' => $dependente?->nome_crianca ?? 'aluno(a)',
+                            '[Horário de Visita Agendada]' => $record->data_proximo_contato ? $record->data_proximo_contato->format('d/m/Y \à\s H:i').'h' : 'a definir',
+                        ]);
+
+                        $telefone = preg_replace('/\D/', '', (string) $record->pessoa->telefone);
+                        if (strlen($telefone) <= 11) {
+                            $telefone = '55'.$telefone;
+                        }
+
+                        return 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
+                    })
+                    ->openUrlInNewTab(),
 
                 Action::make('finalizarMatricula')
                     ->label('Matricular')
