@@ -8,6 +8,7 @@ use App\Models\Interessado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Notifications\AcompanhamentoInteressadoNotification;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -95,14 +96,17 @@ class InteressadoForm
                                         Placeholder::make('total_contatos')
                                             ->label('Total de Contatos')
                                             ->content(fn (Interessado $record): string => $record->totalContatos().' contato(s)'),
-                                        Placeholder::make('temperatura_calc')
-                                            ->label('Temperatura Calculada')
-                                            ->content(fn (Interessado $record): string => match ($record->temperaturaCalculada()) {
-                                                'quente' => '🔥 Quente',
-                                                'morno' => '🟡 Morno',
-                                                'frio' => '🔵 Frio',
-                                                default => '—',
-                                            }),
+                                        Placeholder::make('lead_score')
+                                            ->label('Lead Score (automático)')
+                                            ->content(fn (Interessado $record): string => $record->lead_score !== null
+                                                ? "{$record->lead_score} / 100"
+                                                : 'Ainda não calculado'),
+                                        Placeholder::make('lead_score_detalhamento')
+                                            ->label('Detalhamento do Score')
+                                            ->columnSpanFull()
+                                            ->content(fn (Interessado $record): string => collect(LeadScoreService::detalhar($record))
+                                                ->map(fn (array $fator) => "{$fator['fator']}: {$fator['pontos']}/{$fator['maximo']}")
+                                                ->implode(' · ')),
                                     ])
                                     ->columns(3)
                                     ->collapsible()
@@ -160,14 +164,34 @@ class InteressadoForm
                                     ->native(false),
 
                                 Select::make('temperatura')
-                                    ->label('Temperatura do Lead')
+                                    ->label('Temperatura (percepção do consultor)')
                                     ->options([
                                         'quente' => '🔥 Quente',
                                         'morno' => '🟡 Morno',
                                         'frio' => '🔵 Frio',
                                     ])
                                     ->native(false)
-                                    ->helperText('Deixe vazio para calcular automaticamente.'),
+                                    ->helperText('Avaliação manual e subjetiva do consultor. Não é calculada automaticamente — use o "Lead Score" no resumo para o indicador automático.'),
+
+                                Select::make('faixa_distancia_escola')
+                                    ->label('Distância até a Escola')
+                                    ->options([
+                                        'ate_2km' => 'Até 2km',
+                                        'de_2_a_5km' => '2 a 5km',
+                                        'de_5_a_10km' => '5 a 10km',
+                                        'mais_de_10km' => 'Mais de 10km',
+                                    ])
+                                    ->native(false),
+
+                                Select::make('meio_transporte')
+                                    ->label('Meio de Transporte')
+                                    ->options([
+                                        'carro_proprio' => 'Carro próprio',
+                                        'van_escolar' => 'Van escolar',
+                                        'transporte_publico' => 'Transporte público',
+                                        'a_pe_ou_bicicleta' => 'A pé / Bicicleta',
+                                    ])
+                                    ->native(false),
 
                                 TextInput::make('valor_estimado')
                                     ->label('Valor Estimado (R$)')

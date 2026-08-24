@@ -15,6 +15,7 @@ use App\Models\StatusInteressado;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
@@ -95,15 +96,11 @@ class CaptacaoInteressadoController extends Controller
         $origemSite = OrigemInteressado::firstOrCreate(['nome' => 'Site']);
         $origemId = $request->como_conheceu ?? $origemSite->id;
 
-        // Infere temperatura baseada no grau de detalhe preenchido
-        $temperatura = $this->inferirTemperatura($validated);
-
         $interessado = Interessado::updateOrCreate(
             ['pessoa_id' => $pessoa->id],
             [
                 'status_interessado_id' => $statusNovo?->id ?? 1,
                 'origem_interessado_id' => $origemId,
-                'temperatura' => $temperatura,
                 'data_primeiro_contato' => now(),
                 'data_proximo_contato' => now()->addDays(1),
                 'observacoes' => $this->montarObservacoes($validated),
@@ -111,6 +108,8 @@ class CaptacaoInteressadoController extends Controller
         );
 
         $this->salvarDependentes($interessado, $validated);
+
+        LeadScoreService::recalcular($interessado);
 
         $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
         $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId);
@@ -127,30 +126,6 @@ class CaptacaoInteressadoController extends Controller
                 'whatsapp_unidade' => $primeiraUnidade?->celular_whatsapp ?? null,
                 'nome_unidade' => $primeiraUnidade?->nome ?? null,
             ]);
-    }
-
-    /**
-     * Infere a temperatura do lead baseada no grau de detalhe preenchido.
-     */
-    private function inferirTemperatura(array $data): string
-    {
-        $primeiroAluno = $data['alunos'][0] ?? [];
-        $temUnidade = ! empty($primeiroAluno['unidade_id']);
-        $temSerie = ! empty($primeiroAluno['serie_id']);
-        $temTurno = ! empty($primeiroAluno['turno_preferencia']) && $primeiroAluno['turno_preferencia'] !== 'Sem preferência';
-        $temData = ! empty($primeiroAluno['data_nascimento']);
-
-        $score = ($temUnidade ? 2 : 0) + ($temSerie ? 2 : 0) + ($temTurno ? 1 : 0) + ($temData ? 1 : 0);
-
-        if ($score >= 4) {
-            return 'quente';
-        }
-
-        if ($score >= 2) {
-            return 'morno';
-        }
-
-        return 'frio';
     }
 
     /**

@@ -55,12 +55,18 @@
                                         </a>
                                     </div>
 
-                                    {{-- Temperatura --}}
+                                    {{-- Lead Score (automático) + Temperatura (percepção do consultor) --}}
                                     <div class="kanban-card-temperature">
-                                        @php $temp = $record->temperaturaCalculada(); @endphp
-                                        <span class="kanban-temp-badge kanban-temp-{{ $temp }}">
-                                            {{ match($temp) { 'quente' => '🔥', 'morno' => '🟡', 'frio' => '🔵', default => '—' } }}
-                                        </span>
+                                        @if($record->lead_score !== null)
+                                            <span class="kanban-score-badge kanban-score-{{ \App\Services\LeadScoreService::cor($record->lead_score) }}" title="Lead Score (automático)">
+                                                {{ $record->lead_score }}
+                                            </span>
+                                        @endif
+                                        @if($record->temperatura)
+                                            <span class="kanban-temp-badge kanban-temp-{{ $record->temperatura }}" title="Temperatura (percepção do consultor)">
+                                                {{ match($record->temperatura) { 'quente' => '🔥', 'morno' => '🟡', 'frio' => '🔵', default => '—' } }}
+                                            </span>
+                                        @endif
                                         @if($record->valor_estimado)
                                             <span class="kanban-card-valor">
                                                 R$ {{ number_format($record->valor_estimado, 0, ',', '.') }}
@@ -285,6 +291,53 @@
 
         .kanban-temp-badge {
             font-size: 0.8rem;
+        }
+
+        .kanban-score-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.05rem 0.4rem;
+            border-radius: 10px;
+        }
+
+        .kanban-score-success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .dark .kanban-score-success {
+            background: #14532d;
+            color: #4ade80;
+        }
+
+        .kanban-score-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .dark .kanban-score-warning {
+            background: #533f17;
+            color: #fbbf24;
+        }
+
+        .kanban-score-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .dark .kanban-score-danger {
+            background: #5d1f1a;
+            color: #f87171;
+        }
+
+        .kanban-score-gray {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .dark .kanban-score-gray {
+            background: #374151;
+            color: #9ca3af;
         }
 
         .kanban-card-valor {

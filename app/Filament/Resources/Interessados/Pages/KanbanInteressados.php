@@ -7,6 +7,7 @@ use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use App\Models\User;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
@@ -95,6 +96,8 @@ class KanbanInteressados extends Page
             }
 
             $record->update($updateData);
+
+            LeadScoreService::recalcular($record);
 
             Notification::make()
                 ->title('Status atualizado!')

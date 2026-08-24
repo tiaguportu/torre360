@@ -11,6 +11,7 @@ use App\Models\Serie;
 use App\Models\StatusInteressado;
 use App\Models\User;
 use App\Services\GeminiAgentService;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -217,6 +218,8 @@ class ImportarLeadIaAction
                 }
             }
         }
+
+        LeadScoreService::recalcular($interessado);
 
         return $interessado;
     }

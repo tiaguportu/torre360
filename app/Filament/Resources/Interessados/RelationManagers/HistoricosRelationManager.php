@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\RelationManagers;
 
+use App\Services\LeadScoreService;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -107,16 +108,20 @@ class HistoricosRelationManager extends RelationManager
                         $data['usuario_id'] = auth()->id();
 
                         return $data;
-                    }),
+                    })
+                    ->after(fn () => LeadScoreService::recalcular($this->getOwnerRecord())),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->after(fn () => LeadScoreService::recalcular($this->getOwnerRecord())),
+                DeleteAction::make()
+                    ->after(fn () => LeadScoreService::recalcular($this->getOwnerRecord())),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->after(fn () => LeadScoreService::recalcular($this->getOwnerRecord())),
                 ]),
             ])
             ->stackedOnMobile();

@@ -6,6 +6,7 @@ use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -52,15 +53,23 @@ class InteressadosTable
                     ->badge()
                     ->color(fn ($state, $record) => $record->status?->cor ?? 'gray')
                     ->sortable(),
+                TextColumn::make('lead_score')
+                    ->label('Score')
+                    ->badge()
+                    ->color(fn (?int $state): string => LeadScoreService::cor($state))
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}" : '—')
+                    ->sortable()
+                    ->tooltip('Indicador automático 0-100, calculado a partir de perfil, engajamento e intenção do lead.'),
                 TextColumn::make('temperatura_display')
-                    ->label('Temp.')
-                    ->state(fn (Interessado $record): string => match ($record->temperaturaCalculada()) {
+                    ->label('Temp. (consultor)')
+                    ->state(fn (Interessado $record): string => match ($record->temperatura) {
                         'quente' => '🔥 Quente',
                         'morno' => '🟡 Morno',
                         'frio' => '🔵 Frio',
-                        default => '—',
+                        default => 'Não avaliada',
                     })
                     ->sortable(query: fn ($query, $direction) => $query->orderBy('temperatura', $direction))
+                    ->tooltip('Percepção manual do consultor sobre o lead.')
                     ->toggleable(),
                 TextColumn::make('dias_funil')
                     ->label('Dias no Funil')
@@ -90,6 +99,26 @@ class InteressadosTable
                     ->badge()
                     ->color('gray')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('faixa_distancia_escola')
+                    ->label('Distância')
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'ate_2km' => 'Até 2km',
+                        'de_2_a_5km' => '2 a 5km',
+                        'de_5_a_10km' => '5 a 10km',
+                        'mais_de_10km' => '+10km',
+                        default => '—',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('meio_transporte')
+                    ->label('Transporte')
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'carro_proprio' => 'Carro próprio',
+                        'van_escolar' => 'Van escolar',
+                        'transporte_publico' => 'Transporte público',
+                        'a_pe_ou_bicicleta' => 'A pé/Bicicleta',
+                        default => '—',
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Criado em')
@@ -180,6 +209,8 @@ class InteressadosTable
 
                         $record->update($updateData);
 
+                        LeadScoreService::recalcular($record);
+
                         Notification::make()
                             ->title('Atendimento registrado com sucesso!')
                             ->success()
@@ -199,6 +230,8 @@ class InteressadosTable
                             'status_interessado_id' => $statusMatriculado?->id,
                             'data_conversao' => now(),
                         ]);
+
+                        LeadScoreService::recalcular($record);
 
                         Notification::make()
                             ->title('Matrícula finalizada!')
@@ -234,6 +267,8 @@ class InteressadosTable
                                 'status_interessado_id' => $statusPerdido->id,
                                 'motivo_perda' => $data['motivo_perda'],
                             ]);
+
+                            LeadScoreService::recalcular($record);
                         }
 
                         Notification::make()

@@ -43,6 +43,7 @@ class Interessado extends Model
             'data_proximo_contato' => 'datetime',
             'data_primeiro_contato' => 'datetime',
             'data_conversao' => 'datetime',
+            'lead_score_atualizado_em' => 'datetime',
             'valor_estimado' => 'decimal:2',
         ];
     }
@@ -144,35 +145,6 @@ class Interessado extends Model
     public function diasNoFunil(): int
     {
         return (int) $this->created_at->diffInDays(now());
-    }
-
-    /**
-     * Calcula a temperatura do lead baseado em atividade.
-     * Se há temperatura manual, retorna ela. Caso contrário, calcula automaticamente.
-     *
-     * - Quente: contato nos últimos 3 dias ou lead criado há menos de 5 dias
-     * - Morno: contato nos últimos 10 dias
-     * - Frio: sem contato há mais de 10 dias
-     */
-    public function temperaturaCalculada(): string
-    {
-        if ($this->temperatura) {
-            return $this->temperatura;
-        }
-
-        $ultimoContato = $this->ultimoHistorico?->created_at;
-        $referencia = $ultimoContato ?? $this->created_at;
-        $diasSemContato = (int) $referencia->diffInDays(now());
-
-        if ($diasSemContato <= 3) {
-            return 'quente';
-        }
-
-        if ($diasSemContato <= 10) {
-            return 'morno';
-        }
-
-        return 'frio';
     }
 
     /**

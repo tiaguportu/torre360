@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Interessados\Pages;
 
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
@@ -11,6 +12,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateInteressado extends CreateRecord
 {
     protected static string $resource = InteressadoResource::class;
+
+    protected function afterCreate(): void
+    {
+        LeadScoreService::recalcular($this->record);
+    }
 
     protected function getHeaderActions(): array
     {

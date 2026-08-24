@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Interessados\Pages;
 
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
@@ -11,6 +12,11 @@ use Filament\Resources\Pages\EditRecord;
 class EditInteressado extends EditRecord
 {
     protected static string $resource = InteressadoResource::class;
+
+    protected function afterSave(): void
+    {
+        LeadScoreService::recalcular($this->record);
+    }
 
     protected function getHeaderActions(): array
     {

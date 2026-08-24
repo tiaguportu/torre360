@@ -183,37 +183,6 @@ class InteressadoTest extends TestCase
         $this->assertEquals(15, $interessado->fresh()->diasNoFunil());
     }
 
-    // ─── Testes do método temperaturaCalculada() ───────────────────
-
-    public function test_temperatura_calculada_retorna_manual_quando_definida(): void
-    {
-        $interessado = $this->criarInteressado([
-            'temperatura' => 'frio',
-        ]);
-
-        $this->assertEquals('frio', $interessado->temperaturaCalculada());
-    }
-
-    public function test_temperatura_calculada_quente_para_lead_recente(): void
-    {
-        $interessado = $this->criarInteressado([
-            'temperatura' => null,
-        ]);
-
-        // Lead criado agora, sem contatos → referência é created_at (0 dias)
-        $this->assertEquals('quente', $interessado->temperaturaCalculada());
-    }
-
-    public function test_temperatura_calculada_frio_para_lead_sem_contato_ha_muito_tempo(): void
-    {
-        $interessado = $this->criarInteressado([
-            'temperatura' => null,
-        ]);
-        $interessado->update(['created_at' => now()->subDays(20)]);
-
-        $this->assertEquals('frio', $interessado->fresh()->temperaturaCalculada());
-    }
-
     // ─── Testes dos Scopes ─────────────────────────────────────────
 
     public function test_scope_ativos_filtra_status_finais(): void
