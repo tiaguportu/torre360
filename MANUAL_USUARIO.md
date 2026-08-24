@@ -330,6 +330,27 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
    - No cálculo do boletim, o sistema identificará qual das categorias vinculadas possui a **menor nota** e a substituirá pela nota da categoria substitutiva (caso esta seja maior).
    - Visualmente, a nota que foi substituída aparecerá riscada no boletim para facilitar a conferência pedagógica.
 
+### 5.9 Lançamento de Notas em Grade (Lançamento Rápido)
+Para agilizar o lançamento de uma avaliação já cadastrada, sem precisar navegar até a listagem de Avaliações e abrir cada registro individualmente:
+1. Vá em **Avaliações → Lançamento de Notas em Grade**.
+2. Selecione, em sequência, a **Turma**, a **Disciplina** (filtrada apenas pelas disciplinas com avaliações naquela turma) e a **Avaliação** (filtrada pela combinação de turma e disciplina escolhida).
+3. Assim que uma avaliação é selecionada, o sistema exibe uma grade com todos os alunos matriculados na turma e um campo de nota para cada um, já preenchido com o valor existente (se houver).
+4. Digite as notas e pressione **Enter** em qualquer campo, ou clique em **Salvar Notas** no topo da página, para gravar tudo de uma vez.
+5. O sistema valida que nenhuma nota ultrapasse a **Nota Máxima** configurada na avaliação; deixar um campo em branco remove a nota daquele aluno, caso já exista uma.
+6. **Visibilidade Restrita:** Assim como na listagem de Avaliações, professores só conseguem selecionar turmas, disciplinas e avaliações vinculadas a si mesmos. Administradores, secretaria e coordenação têm acesso a todas.
+
+### 5.10 Fechamento do Ciclo Letivo e Situação Final
+Rotina de fechamento que consolida as etapas avaliativas de cada disciplina e define automaticamente a situação final do aluno (Aprovado, Recuperação ou Reprovado).
+1. Vá em **Acadêmico → Fechamento do Ciclo Letivo**.
+2. Selecione o **Período Letivo** e, opcionalmente, uma **Turma** específica (deixe em branco para processar todas as turmas do período de uma vez).
+3. Clique em **Calcular Situação Final**. O sistema irá, para cada aluno com matrícula ativa ou concluída e cada disciplina de sua turma:
+   - Calcular a **média simples** entre as médias de todas as Etapas Avaliativas (bimestres/trimestres) do período letivo.
+   - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota **substitui a menor média de etapa**, desde que seja melhor do que ela — o mesmo princípio já usado na substituição de notas dentro do boletim.
+   - Classificar o resultado conforme as notas de corte configuradas no cadastro do **Período Letivo** (campos **Nota Mínima para Aprovação**, padrão 7,0, e **Nota Mínima para Recuperação**, padrão 5,0): média igual ou acima da nota de aprovação = **Aprovado**; entre a nota de recuperação e a de aprovação = **Recuperação**; abaixo da nota de recuperação = **Reprovado**.
+4. O resultado é exibido na própria página, agrupado por turma, com aluno, disciplina, média final e um selo colorido de situação (verde = Aprovado, amarelo = Recuperação, vermelho = Reprovado).
+5. **Gravação:** Cada cálculo é salvo (um registro por aluno/disciplina/período letivo). Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior — útil após correção de notas.
+6. **Turmas por Habilidades:** Turmas configuradas com Tipo de Avaliação `Habilidades` não entram no fechamento, pois não possuem notas numéricas — apenas turmas `Notas` ou `Híbrido`.
+
 ---
 
 ## 📝 6. Secretaria e Documentação
