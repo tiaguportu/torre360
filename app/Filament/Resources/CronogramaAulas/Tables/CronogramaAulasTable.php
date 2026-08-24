@@ -32,6 +32,7 @@ class CronogramaAulasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['turma', 'disciplina', 'professor', 'periodoLetivo']))
             ->columns([
 
                 TextColumn::make('turma.nome')
