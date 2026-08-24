@@ -18,10 +18,13 @@ class AuditLog extends Model
         'new_values',
     ];
 
-    protected $casts = [
-        'old_values' => 'json',
-        'new_values' => 'json',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'old_values' => 'json',
+            'new_values' => 'json',
+        ];
+    }
 
     public function user()
     {

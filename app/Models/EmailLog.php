@@ -16,12 +16,15 @@ class EmailLog extends Model
         'sent_at',
     ];
 
-    protected $casts = [
-        'to' => 'json',
-        'cc' => 'json',
-        'bcc' => 'json',
-        'sent_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'to' => 'json',
+            'cc' => 'json',
+            'bcc' => 'json',
+            'sent_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {

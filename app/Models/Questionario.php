@@ -22,14 +22,17 @@ class Questionario extends Model
         'ultimo_envio_aviso',
     ];
 
-    protected $casts = [
-        'inicio_aplicacao' => 'datetime',
-        'fim_aplicacao' => 'datetime',
-        'is_anonimo' => 'boolean',
-        'is_ativo' => 'boolean',
-        'max_respostas_por_usuario' => 'integer',
-        'ultimo_envio_aviso' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'inicio_aplicacao' => 'datetime',
+            'fim_aplicacao' => 'datetime',
+            'is_anonimo' => 'boolean',
+            'is_ativo' => 'boolean',
+            'max_respostas_por_usuario' => 'integer',
+            'ultimo_envio_aviso' => 'datetime',
+        ];
+    }
 
     /**
      * Scope para filtrar questionários visíveis para um usuário específico.

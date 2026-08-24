@@ -18,10 +18,13 @@ class QuestionarioResposta extends Model
         'status',
     ];
 
-    protected $casts = [
-        'inicio_preenchimento' => 'datetime',
-        'fim_preenchimento' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'inicio_preenchimento' => 'datetime',
+            'fim_preenchimento' => 'datetime',
+        ];
+    }
 
     public function questionario(): BelongsTo
     {

@@ -15,13 +15,16 @@ class Avaliacao extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'data_prevista' => 'date',
-        'data_ocorrencia' => 'date',
-        'data_limite_lancamento' => 'date',
-        'nota_maxima' => 'decimal:2',
-        'peso_etapa_avaliativa' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'data_prevista' => 'date',
+            'data_ocorrencia' => 'date',
+            'data_limite_lancamento' => 'date',
+            'nota_maxima' => 'decimal:2',
+            'peso_etapa_avaliativa' => 'decimal:2',
+        ];
+    }
 
     protected static function booted(): void
     {

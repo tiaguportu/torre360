@@ -16,9 +16,12 @@ class QuestionarioPerguntaResposta extends Model
         'resposta_json',
     ];
 
-    protected $casts = [
-        'resposta_json' => 'json',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'resposta_json' => 'json',
+        ];
+    }
 
     public function respostaPai(): BelongsTo
     {

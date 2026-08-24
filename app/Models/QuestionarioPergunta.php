@@ -18,11 +18,14 @@ class QuestionarioPergunta extends Model
         'condicao_exibicao',
     ];
 
-    protected $casts = [
-        'opcoes' => 'json',
-        'is_obrigatoria' => 'boolean',
-        'condicao_exibicao' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'opcoes' => 'json',
+            'is_obrigatoria' => 'boolean',
+            'condicao_exibicao' => 'array',
+        ];
+    }
 
     public function bloco(): BelongsTo
     {
