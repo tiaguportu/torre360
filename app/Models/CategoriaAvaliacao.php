@@ -17,6 +17,13 @@ class CategoriaAvaliacao extends Model
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'eh_recuperacao' => 'boolean',
+        ];
+    }
+
     public function getNomeComDescricaoAttribute(): string
     {
         return $this->descricao ? "{$this->nome} - {$this->descricao}" : $this->nome;

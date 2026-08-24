@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Pessoas\Schemas;
 use App\Enums\CorRaca;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
+use App\Filament\Resources\Enderecos\Schemas\EnderecoForm;
 use App\Models\Pais;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -109,6 +110,14 @@ class PessoaForm
                     ->options(CorRaca::class)
                     ->searchable()
                     ->preload(),
+
+                Select::make('enderecos')
+                    ->label('Endereços')
+                    ->relationship('enderecos', 'logradouro', fn ($query) => $query->whereNotNull('logradouro'))
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm(fn (Schema $schema) => EnderecoForm::configure($schema)->getComponents()),
 
                 Select::make('users')
                     ->label('Usuários do Sistema')

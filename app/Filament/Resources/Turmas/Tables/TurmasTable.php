@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Turmas\Tables;
 
 use App\Enums\SituacaoMatricula;
+use App\Jobs\GerarBoletinsTurmaPdfJob;
+use App\Jobs\GerarCrachasTurmaPdfJob;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\EtapaEnsino;
@@ -11,7 +13,6 @@ use App\Models\TemplateCracha;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
 use App\Services\Educacenso\EducacensoTurmaExporter;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -257,14 +258,17 @@ class TurmasTable
                             ->required(),
                     ])
                     ->action(function (Turma $record, array $data) {
-                        $params = [
-                            'turma_ids' => [$record->id],
-                        ];
-                        if ($data['etapa_id'] > 0) {
-                            $params['etapa_id'] = $data['etapa_id'];
-                        }
+                        GerarBoletinsTurmaPdfJob::dispatch(
+                            turmaIds: [$record->id],
+                            etapaId: $data['etapa_id'] > 0 ? (int) $data['etapa_id'] : null,
+                            userId: auth()->id(),
+                        );
 
-                        return redirect()->route('turmas.boletins.download', $params);
+                        Notification::make()
+                            ->title('Geração dos boletins iniciada')
+                            ->body('Você receberá uma notificação com o link para download assim que os boletins estiverem prontos.')
+                            ->success()
+                            ->send();
                     })
                     ->visible(fn (Turma $record) => auth()->user()->can('Boletim:Matricula') && (
                         $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
@@ -508,15 +512,19 @@ class TurmasTable
                                 ->required(),
                         ])
                         ->action(function (Collection $records, array $data) {
-                            $params = [
-                                'turma_ids' => $records->pluck('id')->toArray(),
-                            ];
-                            if ($data['etapa_id'] > 0) {
-                                $params['etapa_id'] = $data['etapa_id'];
-                            }
+                            GerarBoletinsTurmaPdfJob::dispatch(
+                                turmaIds: $records->pluck('id')->toArray(),
+                                etapaId: $data['etapa_id'] > 0 ? (int) $data['etapa_id'] : null,
+                                userId: auth()->id(),
+                            );
 
-                            return redirect()->route('turmas.boletins.download', $params);
+                            Notification::make()
+                                ->title('Geração dos boletins iniciada')
+                                ->body('Você receberá uma notificação com o link para download assim que os boletins estiverem prontos.')
+                                ->success()
+                                ->send();
                         })
+                        ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()->can('Boletim:Matricula')),
                     BulkAction::make('imprimirCrachasLote')
                         ->label('Imprimir Crachá dos Alunos')
@@ -531,64 +539,17 @@ class TurmasTable
                                 ->preload(),
                         ])
                         ->action(function (Collection $records, array $data) {
-                            $template = TemplateCracha::find($data['template_cracha_id']);
-                            if (! $template) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title('Template não encontrado')
-                                    ->send();
-
-                                return;
-                            }
-
-                            // Busca as matrículas ativas de todas as turmas selecionadas
-                            $pessoasComTurma = collect();
-                            foreach ($records as $turma) {
-                                $matriculas = $turma->matriculas()
-                                    ->where('situacao', SituacaoMatricula::ATIVA)
-                                    ->with('pessoa')
-                                    ->get();
-
-                                foreach ($matriculas as $m) {
-                                    if ($m->pessoa) {
-                                        $pessoasComTurma->push((object) [
-                                            'pessoa' => $m->pessoa,
-                                            'turma' => $turma,
-                                        ]);
-                                    }
-                                }
-                            }
-
-                            if ($pessoasComTurma->isEmpty()) {
-                                Notification::make()
-                                    ->warning()
-                                    ->title('Nenhum aluno ativo encontrado nas turmas selecionadas')
-                                    ->send();
-
-                                return null;
-                            }
-
-                            $layout = $template->dados_layout;
-                            $objects = $layout['objects'] ?? [];
-                            $backgroundImage = $layout['backgroundImage']['src'] ?? null;
-
-                            // Dimensões do crachá em pontos (pixels * 0.75)
-                            $crachaLargura = $template->largura * 0.75;
-                            $crachaAltura = $template->altura * 0.75;
-
-                            $pdf = Pdf::loadView('pdf.cracha-lote', [
-                                'pessoasComTurma' => $pessoasComTurma,
-                                'objects' => $objects,
-                                'backgroundImage' => $backgroundImage,
-                                'crachaLargura' => $crachaLargura,
-                                'crachaAltura' => $crachaAltura,
-                            ])->setPaper('a4', 'portrait');
-
-                            return response()->streamDownload(
-                                fn () => print ($pdf->output()),
-                                'crachas_turmas.pdf',
-                                ['Content-Type' => 'application/pdf']
+                            GerarCrachasTurmaPdfJob::dispatch(
+                                turmaIds: $records->pluck('id')->toArray(),
+                                templateCrachaId: (int) $data['template_cracha_id'],
+                                userId: auth()->id(),
                             );
+
+                            Notification::make()
+                                ->title('Geração dos crachás iniciada')
+                                ->body('Você receberá uma notificação com o link para download assim que os crachás estiverem prontos.')
+                                ->success()
+                                ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('exportarEducacenso')

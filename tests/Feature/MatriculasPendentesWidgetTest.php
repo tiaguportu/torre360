@@ -13,6 +13,7 @@ use App\Models\Matricula;
 use App\Models\Pais;
 use App\Models\Pessoa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MatriculasPendentesWidgetTest extends TestCase
@@ -51,7 +52,7 @@ class MatriculasPendentesWidgetTest extends TestCase
         return $pessoa;
     }
 
-    /** @test */
+    #[Test]
     public function deve_contar_corretamente_pendencias_das_matriculas()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -98,7 +99,7 @@ class MatriculasPendentesWidgetTest extends TestCase
         $this->assertEquals(1, $stats[2]->getValue());
     }
 
-    /** @test */
+    #[Test]
     public function deve_detectar_pendencia_de_cadastro_quando_responsavel_estiver_incompleto()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -136,7 +137,7 @@ class MatriculasPendentesWidgetTest extends TestCase
         $this->assertTrue($matricula->hasIncompleteCadastro());
     }
 
-    /** @test */
+    #[Test]
     public function deve_detectar_pendencia_de_cadastro_quando_responsavel_financeiro_estiver_incompleto()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -176,7 +177,7 @@ class MatriculasPendentesWidgetTest extends TestCase
         $this->assertTrue($matricula->hasIncompleteCadastro());
     }
 
-    /** @test */
+    #[Test]
     public function deve_detectar_pendencia_quando_aluno_nao_tem_endereco()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -209,7 +210,7 @@ class MatriculasPendentesWidgetTest extends TestCase
         $this->assertContains('Endereço', $alunoSemEndereco->getMissingCadastroFields());
     }
 
-    /** @test */
+    #[Test]
     public function deve_gerar_url_com_filtro_correto_no_widget()
     {
         $widget = new MatriculasPendentesWidget;

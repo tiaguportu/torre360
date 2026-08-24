@@ -10,13 +10,14 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MatriculaAlunoLinkTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function usuario_com_permissao_de_edicao_deve_ver_link_para_edicao_da_pessoa()
     {
         $user = User::factory()->create([
@@ -43,7 +44,7 @@ class MatriculaAlunoLinkTest extends TestCase
         $this->assertEquals($expectedUrl, $column->getUrl());
     }
 
-    /** @test */
+    #[Test]
     public function usuario_com_permissao_de_visualizacao_apenas_deve_ver_link_de_visualizacao_da_pessoa()
     {
         $user = User::factory()->create([
@@ -70,7 +71,7 @@ class MatriculaAlunoLinkTest extends TestCase
         $this->assertEquals($expectedUrl, $column->getUrl());
     }
 
-    /** @test */
+    #[Test]
     public function usuario_sem_permissao_nao_deve_ver_link_na_coluna_do_aluno()
     {
         $user = User::factory()->create([

@@ -317,6 +317,66 @@ class PreceptoriasTable
                         })
                         ->deselectRecordsAfterCompletion(),
 
+                    BulkAction::make('relembrar_lote')
+                        ->label('Enviar Lembretes em Lote')
+                        ->icon(Heroicon::OutlinedEnvelope)
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Confirmar Envio de Lembretes em Lote')
+                        ->modalDescription(function (Collection $records) {
+                            $elegiveis = $records->filter(fn (Preceptoria $record) => $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo());
+                            $ignoradas = $records->count() - $elegiveis->count();
+
+                            $html = '<div class="space-y-4">';
+                            $html .= '<div>Deseja enviar lembretes para '.$elegiveis->count().' preceptoria(s) selecionada(s)?</div>';
+
+                            if ($ignoradas > 0) {
+                                $html .= '<div class="text-gray-500 text-sm italic">'.$ignoradas.' preceptoria(s) serão ignoradas por não estarem completamente agendadas ou já terem ocorrido.</div>';
+                            }
+
+                            $html .= '</div>';
+
+                            return new HtmlString($html);
+                        })
+                        ->modalSubmitActionLabel('Sim, enviar lembretes')
+                        ->action(function (Collection $records) {
+                            $elegiveis = $records->filter(fn (Preceptoria $record) => $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo());
+
+                            $totalEnviados = 0;
+                            $totalFalhas = 0;
+
+                            foreach ($elegiveis as $record) {
+                                $result = $record->relembrarAgendamento();
+                                $totalEnviados += $result['enviados'];
+                                $totalFalhas += count($result['falhas']);
+                            }
+
+                            if ($totalEnviados > 0) {
+                                Notification::make()
+                                    ->title('Lembretes Enviados')
+                                    ->body("Foram enviados {$totalEnviados} lembrete(s) para {$elegiveis->count()} preceptoria(s).")
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($totalFalhas > 0) {
+                                Notification::make()
+                                    ->title('Algumas notificações falharam')
+                                    ->body("{$totalFalhas} envio(s) falharam. Consulte os logs para mais detalhes.")
+                                    ->danger()
+                                    ->send();
+                            }
+
+                            if ($totalEnviados === 0 && $totalFalhas === 0) {
+                                Notification::make()
+                                    ->title('Nenhum lembrete enviado')
+                                    ->body('Nenhuma das preceptorias selecionadas é elegível ou possui destinatários com e-mail.')
+                                    ->warning()
+                                    ->send();
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     BulkAction::make('editar_lote')
                         ->label('Editar em Lote')
                         ->icon(Heroicon::OutlinedPencilSquare)

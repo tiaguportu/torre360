@@ -28,4 +28,19 @@ class PeriodoLetivo extends Model
     {
         return $this->hasMany(DiaNaoLetivo::class);
     }
+
+    public function situacoesFinais(): HasMany
+    {
+        return $this->hasMany(SituacaoFinalDisciplina::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'data_inicio' => 'date',
+            'data_fim' => 'date',
+            'nota_aprovacao' => 'decimal:2',
+            'nota_recuperacao_minima' => 'decimal:2',
+        ];
+    }
 }

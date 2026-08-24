@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Faturas\Pages;
 
+use App\Enums\StatusFatura;
 use App\Filament\Resources\Faturas\FaturaResource;
 use App\Models\Contrato;
 use App\Models\Fatura;
@@ -14,10 +15,40 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListFaturas extends ListRecords
 {
     protected static string $resource = FaturaResource::class;
+
+    public function getTabs(): array
+    {
+        $baseQuery = fn () => FaturaResource::getEloquentQuery();
+
+        $emAberto = [StatusFatura::Pendente, StatusFatura::Parcial, StatusFatura::Atrasado];
+
+        return [
+            'todas' => Tab::make('Todas')
+                ->badge($baseQuery()->count()),
+            'a_vencer' => Tab::make('A Vencer')
+                ->modifyQueryUsing(fn (Builder $query) => $query
+                    ->whereIn('status', $emAberto)
+                    ->whereDate('vencimento', '>=', today()))
+                ->badge($baseQuery()->whereIn('status', $emAberto)->whereDate('vencimento', '>=', today())->count())
+                ->badgeColor('info'),
+            'vencidas' => Tab::make('Vencidas')
+                ->modifyQueryUsing(fn (Builder $query) => $query
+                    ->whereIn('status', $emAberto)
+                    ->whereDate('vencimento', '<', today()))
+                ->badge($baseQuery()->whereIn('status', $emAberto)->whereDate('vencimento', '<', today())->count())
+                ->badgeColor('danger'),
+            'pagas' => Tab::make('Pagas')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', StatusFatura::Pago))
+                ->badge($baseQuery()->where('status', StatusFatura::Pago)->count())
+                ->badgeColor('success'),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {

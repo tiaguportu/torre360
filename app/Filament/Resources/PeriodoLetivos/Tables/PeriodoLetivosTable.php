@@ -23,6 +23,14 @@ class PeriodoLetivosTable
                 TextColumn::make('data_fim')
                     ->date()
                     ->sortable(),
+                TextColumn::make('nota_aprovacao')
+                    ->label('Nota Aprovação')
+                    ->numeric(2)
+                    ->toggleable(),
+                TextColumn::make('nota_recuperacao_minima')
+                    ->label('Nota Recuperação')
+                    ->numeric(2)
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

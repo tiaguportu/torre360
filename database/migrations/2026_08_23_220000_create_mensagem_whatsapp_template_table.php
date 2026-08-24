@@ -23,14 +23,14 @@ return new class extends Migration
         DB::table('mensagem_whatsapp_template')->insert([
             [
                 'nome' => 'Lembrete de Visita Agendada',
-                'conteudo' => "Olá, [Nome do Responsável]! Tudo bem? Passando para confirmar a visita de [Nome do Aluno] agendada para [Horário de Visita Agendada]. Contamos com vocês! 😊",
+                'conteudo' => 'Olá, [Nome do Responsável]! Tudo bem? Passando para confirmar a visita de [Nome do Aluno] agendada para [Horário de Visita Agendada]. Contamos com vocês! 😊',
                 'ativo' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'nome' => 'Retomar Contato',
-                'conteudo' => "Olá, [Nome do Responsável]! Notamos que faz um tempo desde nosso último contato sobre a matrícula de [Nome do Aluno]. Podemos conversar e tirar suas dúvidas?",
+                'conteudo' => 'Olá, [Nome do Responsável]! Notamos que faz um tempo desde nosso último contato sobre a matrícula de [Nome do Aluno]. Podemos conversar e tirar suas dúvidas?',
                 'ativo' => true,
                 'created_at' => now(),
                 'updated_at' => now(),

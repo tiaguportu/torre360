@@ -13,6 +13,7 @@ use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class NotificationSystemTest extends TestCase
@@ -31,7 +32,7 @@ class NotificationSystemTest extends TestCase
         $this->app->instance(FcmService::class, $fcmMock);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_send_system_notification_to_all_channels()
     {
         Notification::fake();
@@ -58,7 +59,7 @@ class NotificationSystemTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_sends_frequencia_pendente_notification_via_all_channels()
     {
         Notification::fake();
@@ -79,7 +80,7 @@ class NotificationSystemTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_sends_documentos_pendentes_notification_via_all_channels()
     {
         Notification::fake();

@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Avaliacaos\Pages;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
-use App\Models\Nota;
+use App\Services\NotaLancamentoService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -16,7 +16,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class LancarNotas extends EditRecord
 {
@@ -115,32 +114,7 @@ class LancarNotas extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $avaliacao = $this->getRecord();
-        $turma = $avaliacao->turma;
-
-        if (! $turma) {
-            return $data;
-        }
-
-        $matriculas = $turma->matriculas()
-            ->join('pessoa', 'matricula.pessoa_id', '=', 'pessoa.id')
-            ->select('matricula.*', 'pessoa.nome as aluno_nome')
-            ->orderBy('pessoa.nome')
-            ->with(['pessoa'])
-            ->get();
-
-        $notasExistentes = $avaliacao->notas()->pluck('valor', 'matricula_id')->toArray();
-
-        $state = [];
-        foreach ($matriculas as $matricula) {
-            $state[] = [
-                'matricula_id' => $matricula->id,
-                'aluno_nome' => $matricula->pessoa?->nome ?? 'Sem Nome',
-                'valor' => $notasExistentes[$matricula->id] ?? null,
-            ];
-        }
-
-        $data['notas_alunos'] = $state;
+        $data['notas_alunos'] = app(NotaLancamentoService::class)->estadoNotasParaGrade($this->getRecord());
 
         return $data;
     }
@@ -150,42 +124,16 @@ class LancarNotas extends EditRecord
         $avaliacao = $this->getRecord();
         $notasAlunos = $this->data['notas_alunos'] ?? [];
 
-        Log::info('Dados para salvar (saveNotas):', $this->data);
+        try {
+            app(NotaLancamentoService::class)->salvarNotas($avaliacao, $notasAlunos);
+        } catch (\InvalidArgumentException $e) {
+            Notification::make()
+                ->title('Erro ao salvar nota')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
 
-        foreach ($notasAlunos as $index => $item) {
-            if (! isset($item['matricula_id'])) {
-                continue;
-            }
-
-            if (isset($item['valor']) && $item['valor'] !== '' && $item['valor'] !== null) {
-                $valor = (float) str_replace(',', '.', $item['valor']);
-
-                if ($valor > $avaliacao->nota_maxima) {
-                    Notification::make()
-                        ->title("Erro ao salvar nota para {$item['aluno_nome']}")
-                        ->body("A nota ({$valor}) não pode ser maior que a nota máxima da avaliação ({$avaliacao->nota_maxima}).")
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                Nota::updateOrCreate(
-                    [
-                        'avaliacao_id' => $avaliacao->id,
-                        'matricula_id' => $item['matricula_id'],
-                    ],
-                    [
-                        'valor' => $valor,
-                    ]
-                );
-            } else {
-                // Se o valor estiver vazio, removemos a nota se ela existir
-                Nota::where([
-                    'avaliacao_id' => $avaliacao->id,
-                    'matricula_id' => $item['matricula_id'],
-                ])->delete();
-            }
+            return;
         }
 
         if ($shouldSendSavedNotification) {

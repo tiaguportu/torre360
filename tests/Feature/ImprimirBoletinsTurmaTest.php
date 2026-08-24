@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
+use App\Jobs\GerarBoletinsTurmaPdfJob;
 use App\Models\Avaliacao;
 use App\Models\Disciplina;
 use App\Models\EtapaAvaliativa;
@@ -12,6 +13,7 @@ use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -53,87 +55,17 @@ class ImprimirBoletinsTurmaTest extends TestCase
         ]);
     }
 
-    public function test_usuario_autenticado_pode_baixar_boletim_da_turma_por_etapa(): void
+    private function criarTurmaComNotas(): Turma
     {
-        $matricula = Matricula::factory()->create([
-            'turma_id' => $this->turma->id,
-            'situacao' => 'ativa',
-        ]);
-
-        $response = $this->actingAs($this->adminUser)
-            ->get(route('turmas.boletins.download', [
-                'turma_ids' => [$this->turma->id],
-                'etapa_id' => $this->etapa->id,
-            ]));
-
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'application/pdf');
-    }
-
-    public function test_usuario_autenticado_pode_baixar_boletins_em_lote(): void
-    {
-        $turma2 = Turma::factory()->create([
-            'periodo_letivo_id' => $this->etapa->periodo_letivo_id,
-        ]);
-
-        $matricula1 = Matricula::factory()->create([
-            'turma_id' => $this->turma->id,
-            'situacao' => 'ativa',
-        ]);
-
-        $matricula2 = Matricula::factory()->create([
-            'turma_id' => $turma2->id,
-            'situacao' => 'ativa',
-        ]);
-
-        $response = $this->actingAs($this->adminUser)
-            ->get(route('turmas.boletins.download', [
-                'turma_ids' => [$this->turma->id, $turma2->id],
-                'etapa_id' => $this->etapa->id,
-            ]));
-
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'application/pdf');
-    }
-
-    public function test_retorna_erro_se_nao_houver_dados_para_gerar(): void
-    {
-        // Turma sem matrículas ativas
-        $response = $this->actingAs($this->adminUser)
-            ->get(route('turmas.boletins.download', [
-                'turma_ids' => [$this->turma->id],
-                'etapa_id' => $this->etapa->id,
-            ]));
-
-        // Deve redirecionar de volta com mensagem de erro
-        $response->assertStatus(302);
-        $response->assertSessionHas('error');
-    }
-
-    public function test_usuario_nao_autenticado_nao_pode_baixar_boletins(): void
-    {
-        $response = $this->get(route('turmas.boletins.download', [
-            'turma_ids' => [$this->turma->id],
-            'etapa_id' => $this->etapa->id,
-        ]));
-
-        $response->assertRedirect(route('filament.admin.auth.login'));
-    }
-
-    public function test_tela_de_listagem_de_turmas_exibe_botao_imprimir_apenas_se_houver_notas(): void
-    {
-        $this->actingAs($this->adminUser);
-
-        // 1. Criar turma que possui notas
-        $turmaComNotas = Turma::factory()->create([
+        $turma = Turma::factory()->create([
             'periodo_letivo_id' => $this->etapa->periodo_letivo_id,
         ]);
         $matricula = Matricula::factory()->create([
-            'turma_id' => $turmaComNotas->id,
+            'turma_id' => $turma->id,
             'situacao' => 'ativa',
         ]);
         $avaliacao = Avaliacao::create([
-            'turma_id' => $turmaComNotas->id,
+            'turma_id' => $turma->id,
             'disciplina_id' => Disciplina::factory()->create()->id,
             'etapa_avaliativa_id' => $this->etapa->id,
             'peso_etapa_avaliativa' => 1.0,
@@ -147,8 +79,51 @@ class ImprimirBoletinsTurmaTest extends TestCase
             'valor' => 8.5,
         ]);
 
-        // 2. Testar no Livewire que o botão imprimirBoletins está visível na turma com notas
-        // e oculto na turma que não possui notas ($this->turma)
+        return $turma;
+    }
+
+    public function test_acao_imprimir_boletins_despacha_job_em_fila(): void
+    {
+        Bus::fake();
+
+        $turma = $this->criarTurmaComNotas();
+
+        Livewire::actingAs($this->adminUser)
+            ->test(ListTurmas::class)
+            ->callTableAction('imprimirBoletins', $turma, data: ['etapa_id' => $this->etapa->id])
+            ->assertHasNoTableActionErrors();
+
+        Bus::assertDispatched(GerarBoletinsTurmaPdfJob::class, function (GerarBoletinsTurmaPdfJob $job) use ($turma) {
+            return $job->turmaIds === [$turma->id]
+                && $job->etapaId === $this->etapa->id
+                && $job->userId === $this->adminUser->id;
+        });
+    }
+
+    public function test_acao_em_lote_imprimir_boletins_despacha_job_com_todas_as_turmas_selecionadas(): void
+    {
+        Bus::fake();
+
+        $turma1 = $this->criarTurmaComNotas();
+        $turma2 = $this->criarTurmaComNotas();
+
+        Livewire::actingAs($this->adminUser)
+            ->test(ListTurmas::class)
+            ->callTableBulkAction('imprimirBoletinsLote', [$turma1, $turma2], data: ['etapa_id' => $this->etapa->id]);
+
+        Bus::assertDispatched(GerarBoletinsTurmaPdfJob::class, function (GerarBoletinsTurmaPdfJob $job) use ($turma1, $turma2) {
+            return $job->turmaIds === [$turma1->id, $turma2->id]
+                && $job->etapaId === $this->etapa->id
+                && $job->userId === $this->adminUser->id;
+        });
+    }
+
+    public function test_tela_de_listagem_de_turmas_exibe_botao_imprimir_apenas_se_houver_notas(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $turmaComNotas = $this->criarTurmaComNotas();
+
         Livewire::test(ListTurmas::class)
             ->assertStatus(200)
             ->assertTableActionVisible('imprimirBoletins', $turmaComNotas)

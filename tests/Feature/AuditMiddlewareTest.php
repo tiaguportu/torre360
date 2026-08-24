@@ -6,6 +6,7 @@ use App\Http\Middleware\AuditMiddleware;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\Test;
 use Spatie\Activitylog\ActivityLogger;
 use Tests\TestCase;
 
@@ -37,7 +38,7 @@ class AuditMiddlewareTest extends TestCase
             });
     }
 
-    /** @test */
+    #[Test]
     public function deve_registrar_activity_log_para_usuario_com_role_responsavel()
     {
         $user = $this->createMock(User::class);
@@ -71,7 +72,7 @@ class AuditMiddlewareTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function deve_registrar_activity_log_para_usuario_com_role_professor()
     {
         $user = $this->createMock(User::class);
@@ -94,7 +95,7 @@ class AuditMiddlewareTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function deve_registrar_activity_log_para_usuario_com_role_secretaria()
     {
         $user = $this->createMock(User::class);
@@ -117,7 +118,7 @@ class AuditMiddlewareTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function deve_priorizar_role_da_sessao_no_activity_log()
     {
         $user = $this->createMock(User::class);
@@ -141,7 +142,7 @@ class AuditMiddlewareTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function nao_deve_registrar_activity_log_para_outras_roles()
     {
         $user = $this->createMock(User::class);

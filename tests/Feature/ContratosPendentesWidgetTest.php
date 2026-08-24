@@ -7,6 +7,7 @@ use App\Filament\Widgets\ContratosPendentesWidget;
 use App\Models\Contrato;
 use App\Models\Matricula;
 use App\Models\Pessoa;
+use App\Models\TemplateContrato;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -54,9 +55,16 @@ class ContratosPendentesWidgetTest extends TestCase
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste']);
         $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
 
+        $template = TemplateContrato::create([
+            'nome' => 'Contrato de Matrícula 2026',
+            'conteudo' => '<p>Conteúdo</p>',
+            'is_padrao' => false,
+        ]);
+
         $contrato = Contrato::create([
             'valor_total' => 5000.00,
             'matricula_id' => $matricula->id,
+            'template_contrato_id' => $template->id,
             'assinafy_status' => 'pending',
         ]);
 
@@ -73,6 +81,7 @@ class ContratosPendentesWidgetTest extends TestCase
 
         Livewire::test(ContratosPendentesWidget::class)
             ->assertSee('Contratos Pendentes de Assinatura Digital')
+            ->assertSee('Contrato de Matrícula 2026')
             ->assertSee('Aluno Teste');
     }
 

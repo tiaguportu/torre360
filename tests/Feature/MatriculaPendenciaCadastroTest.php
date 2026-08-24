@@ -13,6 +13,7 @@ use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\TipoVinculo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MatriculaPendenciaCadastroTest extends TestCase
@@ -51,7 +52,7 @@ class MatriculaPendenciaCadastroTest extends TestCase
         return $pessoa;
     }
 
-    /** @test */
+    #[Test]
     public function pessoa_has_incomplete_cadastro_identifica_campos_e_endereco()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -84,7 +85,7 @@ class MatriculaPendenciaCadastroTest extends TestCase
         $this->assertNotContains('E-mail', $camposFaltantes);
     }
 
-    /** @test */
+    #[Test]
     public function pessoa_sem_email_e_telefone_mas_com_dados_civeis_e_endereco_esta_completa()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -110,7 +111,7 @@ class MatriculaPendenciaCadastroTest extends TestCase
         $this->assertEmpty($pessoa->getMissingCadastroFields());
     }
 
-    /** @test */
+    #[Test]
     public function matricula_com_pessoas_completas_nao_possui_pendencia_cadastral()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);
@@ -142,7 +143,7 @@ class MatriculaPendenciaCadastroTest extends TestCase
         $this->assertEquals(0, Matricula::comCadastroIncompleto()->count());
     }
 
-    /** @test */
+    #[Test]
     public function matricula_detecta_pendencia_detalhada_de_cada_pessoa_envolvida()
     {
         $pais = Pais::create(['nome' => 'Brasil', 'sigla' => 'BRA']);

@@ -12,6 +12,7 @@ use App\Models\Turma;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AvaliacaoConstraintTest extends TestCase
@@ -55,7 +56,7 @@ class AvaliacaoConstraintTest extends TestCase
         $this->professor = Pessoa::first() ?? Pessoa::create(['nome' => 'Professor Teste Manual']);
     }
 
-    /** @test */
+    #[Test]
     public function nao_deve_permitir_criar_duas_avaliacoes_com_a_mesma_combinacao_com_professor()
     {
         // Cria a primeira avaliação
@@ -89,7 +90,7 @@ class AvaliacaoConstraintTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function nao_deve_permitir_criar_duas_avaliacoes_com_a_mesma_combinacao_com_professor_nulo()
     {
         // Cria a primeira avaliação com professor nulo
@@ -123,7 +124,7 @@ class AvaliacaoConstraintTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function deve_permitir_salvar_avaliacao_existente_sem_erro_de_duplicidade()
     {
         $avaliacao = Avaliacao::create([
@@ -144,7 +145,7 @@ class AvaliacaoConstraintTest extends TestCase
         $this->assertTrue($avaliacao->save());
     }
 
-    /** @test */
+    #[Test]
     public function deve_lancar_query_exception_no_banco_se_ignorar_eventos_do_eloquent()
     {
         // Cria a primeira avaliação sem disparar eventos

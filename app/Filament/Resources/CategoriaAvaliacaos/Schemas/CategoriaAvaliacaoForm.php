@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CategoriaAvaliacaos\Schemas;
 use App\Models\CategoriaAvaliacao;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class CategoriaAvaliacaoForm
@@ -24,6 +25,11 @@ class CategoriaAvaliacaoForm
                     ->numeric()
                     ->helperText('Define a ordem de exibição desta categoria no boletim.')
                     ->default(0),
+
+                Toggle::make('eh_recuperacao')
+                    ->label('É recuperação final?')
+                    ->helperText('No fechamento do ciclo letivo, a nota consolidada desta categoria substitui a menor média de etapa do aluno na disciplina, desde que seja melhor que ela.')
+                    ->default(false),
 
                 Select::make('substituidas')
                     ->label('Substitui quais categorias?')

@@ -95,6 +95,11 @@ class Matricula extends Model
         return $this->hasMany(Preceptoria::class);
     }
 
+    public function situacoesFinais(): HasMany
+    {
+        return $this->hasMany(SituacaoFinalDisciplina::class);
+    }
+
     /**
      * Verifica se a matrícula possui uma preceptoria agendada para o futuro.
      */

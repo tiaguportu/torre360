@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Alunos\Schemas;
 
+use App\Filament\Resources\Enderecos\Schemas\EnderecoForm;
 use App\Models\Pais;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -74,7 +75,8 @@ class AlunoForm
                     ->relationship('enderecos', 'logradouro', fn ($query) => $query->whereNotNull('logradouro'))
                     ->multiple()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->createOptionForm(fn (Schema $schema) => EnderecoForm::configure($schema)->getComponents()),
             ]);
     }
 }

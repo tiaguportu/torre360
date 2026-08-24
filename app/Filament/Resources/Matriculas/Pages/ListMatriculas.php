@@ -11,10 +11,34 @@ use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListMatriculas extends ListRecords
 {
     protected static string $resource = MatriculaResource::class;
+
+    public function getTabs(): array
+    {
+        $baseQuery = fn () => MatriculaResource::getEloquentQuery();
+
+        return [
+            'todas' => Tab::make('Todas')
+                ->badge($baseQuery()->count()),
+            'pendentes' => Tab::make('Pendentes')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('situacao', SituacaoMatricula::PENDENTE))
+                ->badge($baseQuery()->where('situacao', SituacaoMatricula::PENDENTE)->count())
+                ->badgeColor('warning'),
+            'ativas' => Tab::make('Ativas')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('situacao', SituacaoMatricula::ATIVA))
+                ->badge($baseQuery()->where('situacao', SituacaoMatricula::ATIVA)->count())
+                ->badgeColor('success'),
+            'canceladas' => Tab::make('Canceladas')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('situacao', SituacaoMatricula::CANCELADA))
+                ->badge($baseQuery()->where('situacao', SituacaoMatricula::CANCELADA)->count())
+                ->badgeColor('danger'),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {

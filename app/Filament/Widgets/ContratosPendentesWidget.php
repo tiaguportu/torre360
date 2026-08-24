@@ -45,7 +45,7 @@ class ContratosPendentesWidget extends Widget
         $emailsClean = $userEmails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
 
         return Contrato::query()
-            ->with(['matricula.pessoa', 'matricula.turma.serie'])
+            ->with(['templateContrato', 'matricula.pessoa', 'matricula.turma.serie'])
             ->whereNotIn('assinafy_status', ['signed', 'completed'])
             ->where(function ($query) use ($pessoasIds) {
                 $query->whereHas('matricula', function ($qMat) use ($pessoasIds) {

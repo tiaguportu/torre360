@@ -7,8 +7,10 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Models\User;
+use App\Notifications\Preceptorias\LembretePreceptoriaNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -88,6 +90,65 @@ class PreceptoriaRelembrarTest extends TestCase
             ->test(ListPreceptorias::class)
             ->assertSuccessful()
             ->assertCanSeeTableRecords([$preceptoriaFutura]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_bulk_action_relembrar_lote_envia_apenas_para_preceptorias_elegiveis(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow('2026-08-23 21:00:00');
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $permViewAny = Permission::firstOrCreate(['name' => 'ViewAny:Preceptoria', 'guard_name' => 'web']);
+
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $roleAdmin->givePermissionTo($permViewAny);
+
+        $user = User::factory()->create();
+        $user->assignRole($roleAdmin);
+        session(['active_role' => 'admin']);
+
+        $professor = Pessoa::factory()->create(['email' => 'professor@example.com']);
+        $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+
+        // Elegível: futura e completamente agendada
+        $preceptoriaFutura = Preceptoria::factory()->create([
+            'data' => '2026-08-24',
+            'hora_inicio' => '07:15:00',
+            'hora_fim' => '08:15:00',
+            'professor_id' => $professor->id,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        // Não elegível: já ocorreu
+        $preceptoriaPassada = Preceptoria::factory()->create([
+            'data' => '2026-08-20',
+            'hora_inicio' => '10:00:00',
+            'hora_fim' => '11:00:00',
+            'professor_id' => $professor->id,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        // Não elegível: sem aluno vinculado
+        $preceptoriaIncompleta = Preceptoria::factory()->create([
+            'data' => '2026-08-25',
+            'hora_inicio' => '09:00:00',
+            'hora_fim' => '10:00:00',
+            'professor_id' => $professor->id,
+            'matricula_id' => null,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListPreceptorias::class)
+            ->callTableBulkAction('relembrar_lote', [$preceptoriaFutura, $preceptoriaPassada, $preceptoriaIncompleta]);
+
+        Notification::assertSentTo($professor, LembretePreceptoriaNotification::class, function ($notification) use ($preceptoriaFutura) {
+            return $notification->preceptoria->is($preceptoriaFutura);
+        });
+
+        Notification::assertSentTimes(LembretePreceptoriaNotification::class, 2);
 
         Carbon::setTestNow();
     }
