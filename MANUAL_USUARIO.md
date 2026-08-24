@@ -162,10 +162,11 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
 ### 4.1 Cadastro de Pessoa
 1. Preencha os dados básicos (**CPF com máscara automática**, Nome, Data de Nascimento, **Identidade (RG)**, **Profissão** e **Estado Civil**).
 2. **Edição em Lote:** Na listagem de pessoas, você pode selecionar múltiplos registros e utilizar a ação **Editar em Lote** para atualizar rapidamente o Sexo, Raça/Cor, Nacionalidade, Estado Civil, Profissão ou Identidade de várias pessoas ao mesmo tempo. Os campos de **Sexo** e **Cor / Raça** agora utilizam indicadores visuais (badges) coloridos para facilitar a identificação rápida na tabela.
-3. **Endereços e Automação via CEP:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa.
+3. **Nacionalidade:** O cadastro possui dois campos distintos exigidos pelo Censo Escolar (Educacenso) do INEP: a **Classificação de Nacionalidade** (Brasileira, Brasileira nascida no exterior/Naturalizada ou Estrangeira) e o **País de Nacionalidade** (o país propriamente dito). Ambos são enviados separadamente no Educacenso e por isso não devem ser confundidos.
+4. **Endereços e Automação via CEP:** Na aba de endereços, você pode vincular um ou mais endereços à pessoa.
    - **Agilidade no Preenchimento:** Comece digitando o **CEP**. Ao sair do campo (ou pressionar TAB), o sistema consulta automaticamente a base do **ViaCEP** e preenche para você o **Logradouro**, **Bairro** e a **Cidade/Estado**.
    - **Tipos de Endereço:** Escolha o **Tipo** (ex: Residencial ou Comercial) e complete com o **Número** e **Complemento** (apartamento, bloco, etc).
-4. **Foto:** Use o editor integrado para ajustar a foto de perfil.
+5. **Foto:** Use o editor integrado para ajustar a foto de perfil.
 
 ### 4.2 Segurança e Privacidade das Fotos
 1. As fotos de perfil das pessoas são armazenadas de forma segura em um **disco privado**.

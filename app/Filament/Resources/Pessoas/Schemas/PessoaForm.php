@@ -40,9 +40,10 @@ class PessoaForm
                     ->label('Data de Nascimento'),
 
                 Select::make('tipo_nacionalidade')
-                    ->label('Nacionalidade')
+                    ->label('Classificação de Nacionalidade (Educacenso)')
                     ->options(Nacionalidade::class)
                     ->default(Nacionalidade::BRASILEIRA)
+                    ->helperText('Classificação exigida pelo Censo Escolar (INEP): se a pessoa é brasileira, brasileira nascida no exterior/naturalizada ou estrangeira.')
                     ->searchable()
                     ->preload(),
 
@@ -52,6 +53,7 @@ class PessoaForm
                     ->default(fn () => self::getBrasilId())
                     ->getOptionLabelFromRecordUsing(fn ($record) => ($record->sigla ? mb_convert_encoding('&#'.(127397 + ord(strtoupper($record->sigla[0]))).';&#'.(127397 + ord(strtoupper($record->sigla[1]))).';', 'UTF-8', 'HTML-ENTITIES').' ' : '').$record->nome
                     )
+                    ->helperText('País de nacionalidade da pessoa.')
                     ->live()
                     ->searchable()
                     ->preload(),
