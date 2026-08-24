@@ -34,8 +34,11 @@ class GitPull extends Page
         $result = Process::run('git pull origin main');
 
         if ($result->successful()) {
+            Process::run('php artisan optimize:clear');
+            Process::run('php artisan migrate --force');
+
             Notification::make()
-                ->title('Sistema Atualizado')
+                ->title('Sistema Atualizado com Sucesso')
                 ->body($result->output())
                 ->success()
                 ->send();
