@@ -8,9 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Validation\ValidationException;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Avaliacao extends Model
 {
+    use LogsActivity;
+
     protected $table = 'avaliacao';
 
     protected $guarded = [];
@@ -24,6 +28,36 @@ class Avaliacao extends Model
             'nota_maxima' => 'decimal:2',
             'peso_etapa_avaliativa' => 'decimal:2',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'turma_id',
+                'disciplina_id',
+                'etapa_avaliativa_id',
+                'categoria_avaliacao_id',
+                'professor_id',
+                'data_prevista',
+                'data_ocorrencia',
+                'data_limite_lancamento',
+                'nota_maxima',
+                'peso_etapa_avaliativa',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('avaliacao')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $label = $this->label_exibicao;
+
+                return match ($eventName) {
+                    'created' => "Criada avaliação: {$label}.",
+                    'updated' => "Atualizada avaliação: {$label}.",
+                    'deleted' => "Excluída avaliação: {$label}.",
+                    default => "Avaliação {$label}: evento {$eventName}",
+                };
+            });
     }
 
     protected static function booted(): void

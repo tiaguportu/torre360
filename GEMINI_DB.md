@@ -153,8 +153,9 @@ Estrutura de ensino e turmas.
 ### `disciplina`
 - **Representa:** Matérias ou componentes curriculares.
 - **Campos Principais:** `nome`, `slug`, `cor`, `ordem_boletim`.
-- **Relacionamentos:** HasMany `cronograma_aula`, HasMany `habilidades`, BelongsToMany `turma` (via `turma_disciplina`).
+- **Relacionamentos:** HasMany `cronograma_aula`, HasMany `habilidades`, HasMany `avaliacoes`, HasManyThrough `notas` (via `avaliacao`), BelongsToMany `turma` (via `turma_disciplina`).
 - **Propósito da `ordem_boletim`:** Define a sequência numérica para ordenação das disciplinas na visualização e impressão de boletins.
+- **Restrição de Integridade:** Não pode ser editada nem excluída (individualmente ou em lote) caso já possua notas lançadas em alguma avaliação vinculada (`possuiNotasVinculadas()`). Bloqueio aplicado na camada de UI (Filament), nas páginas de edição/listagem.
 
 ### `turma_disciplina`
 - **Representa:** Tabela pivô que define a grade curricular (disciplinas) de uma turma específica.
@@ -187,6 +188,7 @@ Estrutura de ensino e turmas.
 - **Representa:** Atividades avaliativas aplicadas às turmas.
 - **Campos Principais:** `turma_id`, `disciplina_id`, `etapa_avaliativa_id`, `categoria_avaliacao_id`, `professor_id` (nullable), `data_prevista`, `data_limite_lancamento`, `nota_maxima`, `peso_etapa_avaliativa`.
 - **Restrição de Unicidade:** Possui um índice composto exclusivo (`avaliacao_composite_unique`) que impede a existência de duas avaliações com a mesma combinação de: **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**.
+- **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: avaliacao`), gravando ações de criação, alteração e exclusão com a identificação do usuário responsável (`causer`).
 
 ### `nota`
 - **Representa:** Notas individuais dos alunos em cada avaliação.

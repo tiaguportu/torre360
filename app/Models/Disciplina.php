@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Disciplina extends Model
 {
@@ -46,5 +47,20 @@ class Disciplina extends Model
     public function professor(): BelongsTo
     {
         return $this->belongsTo(Pessoa::class, 'professor_id');
+    }
+
+    public function avaliacoes(): HasMany
+    {
+        return $this->hasMany(Avaliacao::class);
+    }
+
+    public function notas(): HasManyThrough
+    {
+        return $this->hasManyThrough(Nota::class, Avaliacao::class);
+    }
+
+    public function possuiNotasVinculadas(): bool
+    {
+        return $this->notas()->exists();
     }
 }

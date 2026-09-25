@@ -203,6 +203,7 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 7. **Restrição de Duplicidade (Prevenção de Erros):** O sistema impede a criação de avaliações duplicadas. Não é permitido salvar mais de uma avaliação com a mesma combinação de **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**. Caso tente cadastrar uma combinação idêntica, um aviso de validação será exibido e o registro não será salvo.
 8. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
 9. **Botão de Ajuda nas Telas de Cadastro, Edição e Lançamento de Notas:** Ao criar, editar uma avaliação ou lançar notas, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas ou ações que seu usuário tem permissão para realizar.
+10. **Auditoria e Segurança:** Toda criação, alteração ou exclusão de avaliação é automaticamente auditada e registrada no log de atividades, permitindo identificar qual usuário realizou cada mudança.
 
 ### 5.2 Frequência Escolar e Cronograma de Aulas
 1. **Widget de Pendências no Dashboard:** No painel principal (**Dashboard**), o sistema exibe o widget **Pendências de Lançamento de Frequência**, agrupando automaticamente todas as aulas com chamadas não lançadas ou incompletas em datas iguais a hoje ou anteriores.
@@ -257,6 +258,7 @@ O sistema permite avaliar competências e habilidades específicas organizadas p
 2. No cadastro da disciplina, utilize o campo **Ordem no Boletim**.
 3. **Funcionamento:** O sistema utiliza este número inteiro para ordenar as disciplinas de cima para baixo na visualização do boletim. Disciplinas com números menores (ex: 1, 2, 3) aparecem primeiro.
 4. Caso duas disciplinas tenham o mesmo número de ordem, elas serão exibidas por ordem alfabética de nome.
+5. **Restrição de Integridade (Notas Lançadas):** Não é permitido editar ou excluir uma disciplina que já possua notas lançadas em alguma de suas avaliações. Ao tentar salvar ou excluir, o sistema exibirá um aviso informando a restrição. Isso vale tanto para a exclusão individual quanto para a exclusão em lote.
 
 ### 5.7 Situações e Datas da Matrícula (Padronização)
 As situações de matrícula no Torre360 são fixas e padronizadas para garantir a consistência dos relatórios. Cada estado possui uma cor e ícone específicos na listagem:
