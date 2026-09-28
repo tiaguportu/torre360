@@ -471,4 +471,63 @@ Estrutura de ensino e turmas.
 - **Campos Principais:** `matricula_id` (FK `matricula`), `tipo_ocorrencia_id` (FK `tipo_ocorrencias`), `registrado_por_user_id` (FK `users`), `data_hora`, `descricao`, `providencias_tomadas`, `notificar_responsaveis` (boolean), `notificacao_enviada_em` (datetime).
 - **Notificação:** Dispara automaticamente `OcorrenciaRegistradaNotification` via e-mail/push/painel para os responsáveis do aluno quando `notificar_responsaveis == true`.
 
+---
+
+## 12. Secretaria Digital e Rematrícula Online
+
+### `template_documentos`
+- **Representa:** Modelos e minutas de documentos oficiais escolares com suporte a tags/macros dinâmicas.
+- **Campos Principais:**
+  - `nome`: Título do template (ex: Declaração de Matrícula Oficial, Declaração de Quitação Anual).
+  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_transferencia`, `historico_escolar`, `declaracao_conclusao`, `outro`).
+  - `conteudo`: Corpo do documento em formato HTML enriquecido (editado via RichEditor/TinyEditor).
+  - `cabecalho_personalizado`, `rodape_personalizado`: Textos ou minutas complementares.
+  - `exige_autenticidade`: Boolean indicando se o documento deve receber código hash verificador e QR Code de autenticidade pública.
+  - `ativo`: Flag booleana indicando disponibilidade do template.
+- **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+
+### `solicitacao_documentos`
+- **Representa:** Requerimento e emissão de declarações ou documentos oficiais solicitados por pais/responsáveis ou emitidos pela secretaria.
+- **Campos Principais:**
+  - `aluno_id`: FK `pessoa.id` (aluno).
+  - `solicitante_id`: FK `pessoa.id` (responsável ou interessado solicitante).
+  - `template_documento_id`: FK `template_documentos.id`.
+  - `matricula_id`: FK `matricula.id` (vínculo com o histórico/ano letivo em questão).
+  - `status`: Enum `StatusSolicitacaoDocumento` (`solicitado`, `em_processamento`, `emitido`, `rejeitado`, `cancelado`).
+  - `observacoes`: Justificativas ou instruções da secretaria.
+  - `arquivo_pdf_path`: Caminho no storage privado do arquivo PDF timbrado gerado.
+  - `codigo_autenticidade`: Token hash criptográfico único (ex: `SEC-ABC12345-DEF6`) para conferência pública.
+  - `autenticado_em`: Data e hora em que a via oficial e o QR Code foram lavrados.
+  - `emitido_por_user_id`: FK `users.id` do operador que lavrou o documento.
+- **Relacionamentos:** BelongsTo `Pessoa` (aluno e solicitante), BelongsTo `TemplateDocumento`, BelongsTo `Matricula`, BelongsTo `User` (emitidoPor).
+
+### `periodo_rematriculas`
+- **Representa:** Campanhas anuais ou semestrais de rematrícula online para as famílias.
+- **Campos Principais:**
+  - `periodo_letivo_origem_id`: FK `periodo_letivo.id` (ano/semestre letivo corrente).
+  - `periodo_letivo_destino_id`: FK `periodo_letivo.id` (ano/semestre letivo de destino para renovação).
+  - `titulo`: Nome da campanha (ex: Rematrícula Online 2027).
+  - `data_inicio`, `data_fim`: Período de vigência em que o formulário fica aberto no Portal da Família.
+  - `instrucoes`: Texto explicativo e orientações exibidas no portal.
+  - `permite_inadimplentes`: Booleano para trava financeira (se `false`, bloqueia rematrícula para quem tiver mensalidades pendentes).
+  - `ativo`: Booleano que define a campanha em andamento.
+- **Relacionamentos:** BelongsTo `PeriodoLetivo` (origem e destino), HasMany `Rematricula`.
+
+### `rematriculas`
+- **Representa:** O registro da manifestação de renovação/rematrícula de um aluno.
+- **Campos Principais:**
+  - `periodo_rematricula_id`: FK `periodo_rematriculas.id`.
+  - `matricula_origem_id`: FK `matricula.id` (matrícula que está sendo renovada).
+  - `matricula_gerada_id`: FK `matricula.id` (nova matrícula gerada no período subsequente após aprovação/efetivação).
+  - `responsavel_financeiro_id`: FK `pessoa.id`.
+  - `serie_pretendida_id`: FK `serie.id`.
+  - `turno_pretendido_id`: FK `turno.id`.
+  - `status`: Enum `StatusRematricula` (`pendente`, `confirmada_responsavel`, `aprovada_secretaria`, `rejeitada`, `efetivada`).
+  - `data_confirmacao`: Data e hora em que a família enviou a confirmação pelo Portal.
+  - `ip_confirmacao`: Endereço IP do responsável para rastreabilidade de assinatura.
+  - `observacoes`: Observações pedagógicas ou observações da família.
+  - `contrato_gerado_id`: FK `contrato.id` (novo contrato financeiro formalizado na rematrícula).
+- **Relacionamentos:** BelongsTo `PeriodoRematricula`, BelongsTo `Matricula` (origem e gerada), BelongsTo `Pessoa` (responsável financeiro), BelongsTo `Serie`, BelongsTo `Turno`, BelongsTo `Contrato`.
+
+
 

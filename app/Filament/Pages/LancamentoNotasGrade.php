@@ -45,10 +45,10 @@ class LancamentoNotasGrade extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
+        $this->getSchema('content')->fill();
     }
 
-    public function form(Schema $schema): Schema
+    public function content(Schema $schema): Schema
     {
         return $schema
             ->components([
@@ -206,7 +206,7 @@ class LancamentoNotasGrade extends Page implements HasForms
 
         $this->avaliacaoAtual = $avaliacao;
 
-        $this->form->fill([
+        $this->getSchema('content')->fill([
             'turma_id' => $this->data['turma_id'] ?? null,
             'disciplina_id' => $this->data['disciplina_id'] ?? null,
             'avaliacao_id' => $avaliacaoId,
@@ -222,7 +222,7 @@ class LancamentoNotasGrade extends Page implements HasForms
 
         Gate::authorize('lancarNotas', $this->avaliacaoAtual);
 
-        $state = $this->form->getState();
+        $state = $this->getSchema('content')->getState();
 
         try {
             app(NotaLancamentoService::class)->salvarNotas($this->avaliacaoAtual, $state['notas'] ?? []);

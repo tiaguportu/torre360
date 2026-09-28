@@ -270,7 +270,7 @@ class InteressadosTable
 
                         $url = 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
 
-                        $livewire->js("window.open(".json_encode($url).", '_blank')");
+                        $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),
 
                 Action::make('finalizarMatricula')

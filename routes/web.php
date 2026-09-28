@@ -15,6 +15,9 @@ Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])-
 Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
+// Validação pública de autenticidade documental (QR Code)
+Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)->name('documentos.validar-autenticidade');
+
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
@@ -28,6 +31,7 @@ use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
+use App\Http\Controllers\ValidarDocumentoController;
 
 // Rota de visualização de documentos privados (autenticação tratada no controller para evitar 403 do middleware)
 Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)

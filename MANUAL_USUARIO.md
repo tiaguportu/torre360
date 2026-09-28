@@ -1533,5 +1533,54 @@ O sistema permite o gerenciamento completo e granular de quais widgets aparecem 
 
 ---
 
+## 📄 31. Secretaria Digital — Declarações Oficiais e Histórico com QR Code
+
+O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico e permite que a instituição elabore minutas personalizadas, atenda a pedidos de certidões e emita documentos timbrados protegidos por autenticação pública digital com QR Code.
+
+### 31.1 Modelos de Documentos (`/admin/template-documentos`)
+1. **Templates com Macros Dinâmicas:** A secretaria pode cadastrar modelos de certidões e declarações (Matrícula, Frequência, Quitação Financeira, Transferência, Histórico Escolar, Conclusão de Curso) utilizando o editor de texto enriquecido (Rich/TinyEditor).
+2. **Tags de Substituição Automática:** O sistema substitui automaticamente na hora da emissão:
+   - `{NOME_ALUNO}`, `{CPF_ALUNO}`, `{DATA_NASCIMENTO_ALUNO}`, `{MAE_ALUNO}`, `{PAI_ALUNO}`
+   - `{MATRICULA}`, `{ANO_LETIVO}`, `{CURSO}`, `{SERIE}`, `{TURNO}`, `{TURMA}`
+   - `{NOME_INSTITUICAO}`, `{CNPJ_INSTITUICAO}`, `{ENDERECO_INSTITUICAO}`
+   - `{DATA_EXTENSO}`, `{CIDADE_DATA}`, `{CODIGO_AUTENTICIDADE}`
+3. **Autenticidade e Carimbo Digital:** Ao marcar o campo *Exige Código e QR Code de Autenticidade*, cada documento gerado recebe um carimbo com hash único e QR Code para auditoria instantânea por câmeras de celular.
+
+### 31.2 Gestão de Solicitações e Emissão (`/admin/solicitacao-documentos`)
+1. **Atendimento a Requerimentos:** A secretaria visualiza pedidos abertos tanto presencialmente quanto vindos do Portal da Família.
+2. **Ação Rápida de Emissão:** Com um clique no botão **Emitir Documento (com QR Code)**, o sistema processa todas as macros, gera o PDF timbrado oficial no servidor e cria o hash rastreável.
+3. **Download e Impressão:** O operador pode baixar o PDF oficial imediatamente ou enviar aos pais com status *Emitido*.
+
+### 31.3 Validação Pública de Autenticidade (`/validar-documento/{codigo}`)
+1. Qualquer empresa, órgão público ou cartório que receba o documento pode apontar a câmera do smartphone para o QR Code impresso no rodapé ou acessar o link público: `http://seusistema/validar-documento`.
+2. O validador confere o código hash na base de dados e exibe uma tela amigável confirmando a autenticidade, nome do estudante, curso/série, data de lavratura e situação do documento.
+
+---
+
+## 🔄 32. Rematrícula Online (Administração e Portal da Família)
+
+Automatize o processo de rematrícula entre períodos letivos, permitindo que as famílias confirmem vagas, manifestem preferência de turnos e formalizem a renovação de onde estiverem.
+
+### 32.1 Campanhas de Rematrícula (`/admin/periodo-rematriculas`)
+1. **Abertura de Período:** A direção cadastra a campanha escolhendo o *Período Letivo Origem* (ex: 2026) e o *Período Letivo Destino* (ex: 2027).
+2. **Vigência e Instruções:** Define-se a data de início e término em que a campanha ficará ativa, além de instruções de acolhimento e orientações aos pais.
+3. **Bloqueio de Inadimplência:** Opcionalmente, pode-se desmarcar *Permitir Inadimplentes*. Com isso, estudantes com faturas em atraso não conseguem concluir a rematrícula pelo Portal antes de regularizarem suas pendências no financeiro.
+
+### 32.2 Acompanhamento e Efetivação (`/admin/rematriculas`)
+1. **Painel de Controle:** A secretaria acompanha o status de cada rematrícula:
+   - `Pendente`: Aguardando resposta do responsável.
+   - `Confirmada pelo Responsável`: Família preencheu o formulário no portal.
+   - `Aprovada pela Secretaria`: Vaga e documentação validadas.
+   - `Efetivada`: Matrícula gerada no período letivo subsequente.
+2. **Efetivação em 1 Clique:** Na listagem de rematrículas, a ação **Efetivar Rematrícula** cria automaticamente a nova matrícula do estudante no ano letivo destino (com turma/turno escolhidos) e já formaliza o novo contrato de prestação de serviços educacionais.
+
+### 32.3 Rematrícula pelo Portal da Família (`/portal/rematricula`)
+1. Ao acessar o Portal durante uma campanha ativa, a família visualiza o banner e formulário intuitivo de Rematrícula.
+2. O responsável confere os dados do filho, seleciona a série pretendida e turno preferencial, declara a ciência das diretrizes e clica em **Confirmar Rematrícula**.
+3. O sistema registra data, hora e endereço IP da confirmação com total segurança jurídica e atualiza o painel da secretaria em tempo real.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 

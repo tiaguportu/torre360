@@ -42,10 +42,10 @@ class FechamentoCicloLetivo extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
+        $this->getSchema('content')->fill();
     }
 
-    public function form(Schema $schema): Schema
+    public function content(Schema $schema): Schema
     {
         return $schema
             ->components([
@@ -101,7 +101,7 @@ class FechamentoCicloLetivo extends Page implements HasForms
 
     public function calcularSituacaoFinal(): void
     {
-        $state = $this->form->getState();
+        $state = $this->getSchema('content')->getState();
 
         if (! ($state['periodo_letivo_id'] ?? null)) {
             Notification::make()

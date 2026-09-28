@@ -49,7 +49,7 @@ class EditDisciplina extends EditRecord
                 ->persistent()
                 ->send();
 
-            throw new Halt();
+            throw new Halt;
         }
     }
 
