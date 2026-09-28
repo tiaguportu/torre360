@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Interessado;
 use App\Models\User;
+use App\Models\VisitaInteressado;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
@@ -73,6 +74,62 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
      * a cada mudança de filtro.
      */
     public function getEvents(): array
+    {
+        return array_merge($this->getEventosFollowUp(), $this->getEventosVisitas());
+    }
+
+    /**
+     * Visitas agendadas dos leads ativos, com o mesmo escopo de consultor dos follow-ups.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getEventosVisitas(): array
+    {
+        $query = VisitaInteressado::query()
+            ->agendadas()
+            ->whereHas('interessado', fn ($q) => $q->ativos())
+            ->with(['interessado.pessoa', 'interessado.usuario', 'usuario']);
+
+        if ($this->fixedConsultorId) {
+            $consultorId = $this->fixedConsultorId;
+        } elseif (! auth()->user()->hasRole(['super_admin', 'admin'])) {
+            $consultorId = auth()->id();
+        }
+
+        if (isset($consultorId)) {
+            $query->where(fn ($q) => $q
+                ->where('usuario_id', $consultorId)
+                ->orWhereHas('interessado', fn ($lead) => $lead->where('usuario_id', $consultorId)));
+        }
+
+        return $query->get()->map(function (VisitaInteressado $visita) {
+            $overdue = $visita->data_hora->isPast();
+            $color = $overdue ? '#ef4444' : '#8b5cf6';
+            $consultor = $visita->usuario ?? $visita->interessado->usuario;
+
+            return [
+                'id' => 'visita-'.$visita->id,
+                'title' => 'Visita: '.($visita->interessado->pessoa?->nome ?? 'Interessado #'.$visita->interessado_id),
+                'start' => $visita->data_hora->format('Y-m-d\TH:i:s'),
+                'url' => InteressadoResource::getUrl('edit', ['record' => $visita->interessado]),
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+                'textColor' => '#ffffff',
+                'consultor_id' => (string) $consultor?->id,
+                'atrasado' => $overdue,
+                'extendedProps' => [
+                    'consultor' => $consultor?->name ?? 'Sem consultor',
+                    'status' => 'Visita agendada',
+                    'atrasado' => $overdue,
+                ],
+            ];
+        })->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getEventosFollowUp(): array
     {
         $query = Interessado::ativos()
             ->whereNotNull('data_proximo_contato')

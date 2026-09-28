@@ -7,6 +7,7 @@ use App\Models\Interessado;
 use App\Models\User;
 use App\Notifications\AcompanhamentoInteressadoNotification;
 use App\Notifications\LeadEstagnadoNotification;
+use App\Services\VisitaInteressadoService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
@@ -15,10 +16,16 @@ class NotificarInteressadosPendentesCommand extends Command
 {
     protected $signature = 'crm:notificar-pendentes';
 
-    protected $description = 'Notifica consultores sobre leads com contato atrasado ou estagnados sem interação';
+    protected $description = 'Notifica consultores sobre leads com contato atrasado, estagnados sem interação e visitas agendadas para as próximas 24h';
 
     public function handle(): int
     {
+        $lembretesVisita = VisitaInteressadoService::enviarLembretes();
+
+        if ($lembretesVisita > 0) {
+            $this->info("Lembretes de visita enviados: {$lembretesVisita}.");
+        }
+
         $atrasados = Interessado::with(['pessoa', 'usuario', 'status'])
             ->precisaContato()
             ->ativos()

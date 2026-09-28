@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Interessados\Tables;
 
+use App\Filament\Pages\EnrollmentWizard;
 use App\Models\Interessado;
 use App\Models\MensagemWhatsappTemplate;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\LeadScoreService;
+use App\Services\VisitaInteressadoService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -49,6 +51,11 @@ class InteressadosTable
                     ->label('Origem')
                     ->sortable()
                     ->toggleable(),
+                TextColumn::make('campanha.nome')
+                    ->label('Campanha')
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status.nome')
                     ->label('Status')
                     ->badge()
@@ -142,6 +149,11 @@ class InteressadosTable
                     ->preload(),
                 SelectFilter::make('origem')
                     ->relationship('origem', 'nome')
+                    ->multiple()
+                    ->preload(),
+                SelectFilter::make('campanha')
+                    ->label('Campanha')
+                    ->relationship('campanha', 'nome')
                     ->multiple()
                     ->preload(),
                 SelectFilter::make('consultor')
@@ -260,7 +272,7 @@ class InteressadosTable
                         $mensagem = strtr($template?->conteudo ?? '', [
                             '[Nome do Responsável]' => $record->pessoa->nome,
                             '[Nome do Aluno]' => $dependente?->nome_crianca ?? 'aluno(a)',
-                            '[Horário de Visita Agendada]' => $record->data_proximo_contato ? $record->data_proximo_contato->format('d/m/Y \à\s H:i').'h' : 'a definir',
+                            '[Horário de Visita Agendada]' => ($record->proximaVisita?->data_hora ?? $record->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir',
                         ]);
 
                         $telefone = preg_replace('/\D/', '', (string) $record->pessoa->telefone);
@@ -273,12 +285,57 @@ class InteressadosTable
                         $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),
 
-                Action::make('finalizarMatricula')
+                Action::make('agendarVisita')
+                    ->label('Agendar Visita')
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('info')
+                    ->visible(fn (Interessado $record) => ! $record->status?->is_final)
+                    ->modalHeading('Agendar Visita à Escola')
+                    ->form([
+                        DateTimePicker::make('data_hora')
+                            ->label('Data e Hora')
+                            ->seconds(false)
+                            ->native(false)
+                            ->displayFormat('d/m/Y H:i')
+                            ->minDate(now())
+                            ->required(),
+                        Select::make('interessado_dependente_id')
+                            ->label('Aluno')
+                            ->options(fn (Interessado $record) => $record->dependentes->pluck('nome_crianca', 'id'))
+                            ->placeholder('Toda a família')
+                            ->visible(fn (Interessado $record) => $record->dependentes->count() > 1),
+                        Textarea::make('observacoes')
+                            ->label('Observações')
+                            ->rows(2),
+                    ])
+                    ->action(function (array $data, Interessado $record) {
+                        VisitaInteressadoService::agendar(
+                            $record,
+                            $data['data_hora'],
+                            $record->usuario_id ?? auth()->id(),
+                            $data['interessado_dependente_id'] ?? null,
+                            $data['observacoes'] ?? null,
+                        );
+
+                        Notification::make()
+                            ->title('Visita agendada com sucesso!')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('matricular')
                     ->label('Matricular')
+                    ->icon('heroicon-o-academic-cap')
+                    ->color('success')
+                    ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && EnrollmentWizard::canAccess())
+                    ->url(fn (Interessado $record) => EnrollmentWizard::getUrl(['interessado' => $record->id])),
+
+                Action::make('finalizarMatricula')
+                    ->label('Marcar matriculado')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => ! $record->status?->is_ganho)
+                    ->visible(fn ($record) => ! $record->status?->is_ganho && ! EnrollmentWizard::canAccess())
                     ->action(function (Interessado $record) {
                         $statusMatriculado = StatusInteressado::where('nome', 'Matriculado')->first();
 

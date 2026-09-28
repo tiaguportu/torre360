@@ -74,6 +74,7 @@ class InteressadoResource extends Resource implements HasShieldPermissions
     {
         return [
             RelationManagers\HistoricosRelationManager::class,
+            RelationManagers\VisitasRelationManager::class,
         ];
     }
 

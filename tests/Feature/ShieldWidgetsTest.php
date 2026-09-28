@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Filament\Widgets\AlunosPorTurmaChart;
 use App\Filament\Widgets\ContratosPendentesWidget;
+use App\Filament\Widgets\ConversaoCampanhaWidget;
+use App\Filament\Widgets\ConversaoOrigemWidget;
 use App\Filament\Widgets\CrmFollowUpCalendarWidget;
 use App\Filament\Widgets\CronogramaCalendarWidget;
 use App\Filament\Widgets\FrequenciaPendenteWidget;
@@ -43,6 +45,8 @@ class ShieldWidgetsTest extends TestCase
         $expectedWidgets = [
             AlunosPorTurmaChart::class,
             ContratosPendentesWidget::class,
+            ConversaoCampanhaWidget::class,
+            ConversaoOrigemWidget::class,
             CrmFollowUpCalendarWidget::class,
             CronogramaCalendarWidget::class,
             FrequenciaPendenteWidget::class,

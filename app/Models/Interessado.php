@@ -26,6 +26,7 @@ class Interessado extends Model
             ->logOnly([
                 'status_interessado_id',
                 'origem_interessado_id',
+                'campanha_marketing_id',
                 'usuario_id',
                 'temperatura',
                 'valor_estimado',
@@ -83,6 +84,28 @@ class Interessado extends Model
     public function ultimoHistorico(): HasOne
     {
         return $this->hasOne(HistoricoContato::class)->latestOfMany();
+    }
+
+    public function campanha(): BelongsTo
+    {
+        return $this->belongsTo(CampanhaMarketing::class, 'campanha_marketing_id');
+    }
+
+    public function visitas(): HasMany
+    {
+        return $this->hasMany(VisitaInteressado::class);
+    }
+
+    /**
+     * Próxima visita agendada (futura), usada para lembretes e mensagens.
+     */
+    public function proximaVisita(): HasOne
+    {
+        return $this->hasOne(VisitaInteressado::class)
+            ->ofMany(
+                ['data_hora' => 'min'],
+                fn (Builder $query) => $query->agendadas()->where('data_hora', '>=', now())
+            );
     }
 
     // ─── Scopes ─────────────────────────────────────────────────
