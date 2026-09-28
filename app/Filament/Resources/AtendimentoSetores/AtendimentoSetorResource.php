@@ -25,6 +25,8 @@ class AtendimentoSetorResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Setores de Atendimento';
 
+    protected static ?string $slug = 'atendimento-setores';
+
     protected static ?int $navigationSort = 3;
 
     public static function getPermissionPrefixes(): array

@@ -25,6 +25,8 @@ class EventoEscolarResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Eventos Escolares e RSVP';
 
+    protected static ?string $slug = 'eventos-escolares';
+
     protected static ?int $navigationSort = 1;
 
     public static function getPermissionPrefixes(): array

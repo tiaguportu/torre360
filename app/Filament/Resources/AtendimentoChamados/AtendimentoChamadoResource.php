@@ -25,6 +25,8 @@ class AtendimentoChamadoResource extends Resource implements HasShieldPermission
 
     protected static ?string $pluralModelLabel = 'Central de Atendimento';
 
+    protected static ?string $slug = 'atendimento-chamados';
+
     protected static ?int $navigationSort = 2;
 
     public static function getPermissionPrefixes(): array
