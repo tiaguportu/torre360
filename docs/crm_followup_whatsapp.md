@@ -39,6 +39,10 @@ vezes no mesmo disparo. Para cada lead com consultor responsável, ele:
 > implementam `ShouldQueue` — elas só aparecem depois que a fila for
 > processada (`queue:work`, já agendado a cada minuto em `routes/console.php`).
 
+O mesmo comando também envia, antes dos alertas acima, o **lembrete de visitas**
+agendadas para as próximas 24 horas (só no sino, uma única vez por visita). Detalhes em
+`docs/crm_captacao_campanhas_visitas.md`.
+
 Na tabela de Interessados (`InteressadosTable`), há uma coluna "Sem Interação"
 (dias desde a última interação, com destaque vermelho quando estagnado) e um
 filtro "Estagnado (7+ dias sem interação)", ambos usando os mesmos
@@ -54,8 +58,10 @@ variáveis, substituídas automaticamente no envio:
 - `[Nome do Responsável]` → `interessado.pessoa.nome`
 - `[Nome do Aluno]` → `nome_crianca` do dependente selecionado (ou o único
   dependente, se houver apenas um)
-- `[Horário de Visita Agendada]` → `interessado.data_proximo_contato`
-  formatado (`d/m/Y \à\s H:i`), ou "a definir" se não houver data marcada
+- `[Horário de Visita Agendada]` → data da próxima visita agendada do lead
+  (`Interessado::proximaVisita`, ver `docs/crm_captacao_campanhas_visitas.md`),
+  com fallback para `interessado.data_proximo_contato`, formatada como
+  `d/m/Y às H:i h`, ou "a definir" se não houver nenhuma das duas
 
 A ação "WhatsApp" na tabela de Interessados (`InteressadosTable`, ao lado de
 "Atendimento") abre um formulário para escolher o modelo (e o aluno, se o

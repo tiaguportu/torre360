@@ -78,12 +78,14 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 2. **Filtros Avançados:**
    - **Status:** Filtre por múltiplos status simultaneamente.
    - **Origem:** Filtre por fonte de captação.
+   - **Campanha:** Filtre pela campanha de marketing que originou o lead (a coluna **Campanha** pode ser exibida pelo seletor de colunas).
    - **Consultor:** Filtre por consultor responsável.
    - **Precisa de Contato:** Filtre leads com contato atrasado.
    - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
 3. **Ações Rápidas na Tabela:**
    - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo.
-   - **Matricular:** Mova o lead diretamente para status de matrícula com um clique.
+   - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
+   - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que apenas move o lead para o status de matrícula.
    - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro).
 4. **Ações em Lote:**
    - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
@@ -110,6 +112,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
 2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde com a quantidade de leads com status "Novo".
 3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema.
 4. **Notificação Automática Diária:** O sistema envia automaticamente (às 8h) notificações por e-mail e sininho para consultores com leads pendentes de contato.
+5. **Lembrete de Visita:** No mesmo disparo das 8h, o consultor recebe um aviso no sininho das visitas agendadas para as próximas 24 horas (um aviso por visita).
 
 ### 3.6 Dependentes (Alunos Vinculados)
 O sistema permite registrar os potenciais alunos vinculados ao interessado:
@@ -140,6 +143,36 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - Infere a **Origem do Lead** (ex: WhatsApp, Instagram, Indicação).
    - Classifica a **Temperatura** do Lead (🔥 Quente, 🟡 Morno, 🔵 Frio) analisando o tom e urgência da mensagem.
    - Cadastra/vincula a `Pessoa`, o `Interessado` e os `Dependentes` no banco de dados com um único clique!
+
+### 3.9 Campanhas de Marketing e Rastreamento (UTM)
+Descubra quais campanhas trazem leads que realmente viram matrícula.
+1. Vá em **CRM / Comercial → Campanhas de Marketing** e clique em **Novo**.
+2. Informe o **nome**, o **canal** (Google Ads, Meta Ads, Instagram, e-mail, indicação, evento etc.), o período, o **investimento (R$)** e o **Código UTM** (letras, números, hífen e sublinhado; o sistema grava sempre em minúsculas).
+3. Use o código no link da campanha, por exemplo:
+   `https://seusite.com.br/quero-matricular?utm_source=instagram&utm_medium=cpc&utm_campaign=CODIGO`
+4. Quem preencher o formulário depois de clicar nesse link entra no CRM já atribuído à campanha, e o UTM fica visível na ficha do lead (aba **Dados do Negócio**). Se a campanha estiver **inativa** ou o código não existir, o lead é criado normalmente, apenas sem campanha.
+5. A atribuição vale para o **primeiro** contato: se a mesma pessoa preencher o formulário de novo por outro link, a campanha original é mantida. Você também pode escolher a campanha manualmente na ficha do lead.
+6. A lista de campanhas mostra **Leads**, **Matrículas**, **Conversão** e **Investimento**. Na tela inicial, os widgets **Conversão por Campanha de Marketing** (com custo por lead e por matrícula) e **Conversão por Origem do Lead** comparam o desempenho. Só contam como matrícula os leads convertidos.
+
+### 3.10 Agendamento de Visitas
+1. Na tabela de Interessados, clique em **Agendar Visita**, ou abra o lead e use a aba **Visitas à Escola → Agendar Visita**.
+2. Informe data e hora (no agendamento rápido da tabela a data não pode estar no passado), o aluno (quando há mais de um) e observações. O consultor responsável pelo lead passa a ser o responsável pela visita.
+3. O **Próximo Contato** do lead é ajustado para a data da visita, sem adiar um retorno que já estivesse marcado para antes.
+4. As visitas aparecem no **calendário de follow-up** em roxo (vermelho se estiverem atrasadas), como `Visita: nome`. Cada consultor vê as suas; administradores veem todas.
+5. Depois da visita, na aba **Visitas à Escola**, marque **Realizada** ou **Não compareceu**.
+6. A variável `[Horário de Visita Agendada]` dos modelos de WhatsApp passa a usar a próxima visita agendada.
+
+### 3.11 Matricular a partir do Lead
+1. Na tabela de Interessados, clique em **Matricular** no lead (não aparece em leads já matriculados).
+2. O **Assistente de Matrícula** abre com um aviso "Dados do lead carregados" e já traz:
+   - os **alunos** cadastrados como dependentes (nome e data de nascimento);
+   - o **responsável financeiro** com os dados de contato do lead. Se o contato tiver o mesmo nome de um dos alunos (o próprio aluno preencheu o formulário), os dados de contato vão para o aluno e nenhum responsável é presumido;
+   - o **curso** e a **unidade**, a partir da série de interesse.
+3. Revise, escolha o vínculo do responsável, a turma e demais dados, e conclua em **Finalizar Matrícula**.
+4. Ao finalizar, o lead é marcado como **Matriculado**, com a data de conversão, e entra nos indicadores de conversão por campanha e origem.
+
+### 3.12 Leads da Landing Page
+Em **CRM / Comercial → Leads da Landing Page** ficam os pedidos de demonstração enviados pelo formulário da página inicial do sistema. São **escolas interessadas em contratar o Torre360**, não famílias em busca de vaga; por isso são separados dos Interessados. O menu mostra o número de leads novos. Use **Em contato**, **Descartar** e **Reabrir** para acompanhar cada pedido. Disponível para administradores.
 
 ---
 

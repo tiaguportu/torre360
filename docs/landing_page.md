@@ -73,6 +73,15 @@ Controller: `App\Http\Controllers\LandingPageController`
   (`config/services.php` → `services.google_analytics.measurement_id`). Sem a env,
   nada é carregado — não há ID de tracking real configurado ainda.
 
+## Gestão dos leads da landing (2026-09-28)
+
+Os pedidos recebidos em `POST /solicitar-acesso` (tabela `landing_leads`) eram gravados
+mas não havia tela para consultá-los. Agora existem em **CRM / Comercial → Leads da
+Landing Page** (`LandingLeadResource`), com badge de leads novos, filtro por status e as
+ações **Em contato**, **Descartar** e **Reabrir**. São leads B2B (escolas interessadas no
+sistema), por isso **não** são convertidos em `Interessado`. Ver
+`docs/crm_captacao_campanhas_visitas.md`.
+
 ## Pendências / decisões que ficaram para o usuário
 
 - Telefone `(11) 99999-9999` e e-mail `contato@escolatorredemarfim.com.br` na seção

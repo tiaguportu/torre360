@@ -281,15 +281,18 @@ Estrutura de ensino e turmas.
 ## 6. CRM e Prospecção
 ### `interessado`
 - **Representa:** Leads para novos alunos.
-- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
     - BelongsTo `status_interessado`.
     - BelongsTo `origem_interessado`.
+    - BelongsTo `campanha_marketing` (`campanha`).
     - BelongsTo `users` (Consultor Responsável).
     - HasMany `dependentes` (InteressadoDependente).
     - HasMany `historico_contato`.
+    - HasMany `visita_interessado` (`visitas`).
     - HasOne `ultimoHistorico` (Latest of Many).
+    - HasOne `proximaVisita` (visita agendada futura mais próxima).
 - **Auditoria:** Trilha de auditoria via `activity_log` com `log_name: crm`, rastreando mudanças em status, temperatura, consultor e valor.
 - **Scopes:** `ativos()` (não finalizados), `precisaContato()` (contato atrasado), `doConsultor($id)`.
 - **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `temperaturaCalculada()`, `totalContatos()`.
@@ -315,6 +318,21 @@ Estrutura de ensino e turmas.
 ### `tipo_contato_interessado`
 - **Representa:** Tipos de contato disponíveis (Telefone, WhatsApp, Presencial, etc).
 - **Campos Principais:** `nome`.
+
+### `campanha_marketing`
+- **Representa:** Campanhas de captação (Google Ads, Meta Ads, evento etc.) usadas para atribuir e medir leads.
+- **Campos Principais:** `nome`, `canal` (chave de `CampanhaMarketing::CANAIS`, nullable), `codigo_utm` (string nullable, **único**, sempre minúsculo — casa com `utm_campaign`), `data_inicio`/`data_fim` (date nullable), `custo` (decimal 12,2, padrão 0), `ativa` (boolean, padrão true), `observacoes`.
+- **Relacionamentos:** HasMany `interessado`.
+
+### `visita_interessado`
+- **Representa:** Visita de um lead à escola.
+- **Campos Principais:** `interessado_id` (FK, `cascadeOnDelete`), `interessado_dependente_id` (FK nullable, `nullOnDelete`), `usuario_id` (FK `users` nullable — consultor), `data_hora`, `status` (Enum `App\Enums\StatusVisitaInteressado`: `agendada`, `realizada`, `faltou`, `cancelada`), `observacoes`, `lembrete_enviado_em` (datetime nullable).
+- **Índice:** (`status`, `data_hora`).
+- **Relacionamentos:** BelongsTo `interessado`, BelongsTo `interessado_dependente` (`dependente`), BelongsTo `users` (`usuario`).
+
+### `landing_leads`
+- **Representa:** Pedidos de demonstração recebidos pela landing page do produto (`/`). São leads **B2B** (escolas), independentes de `interessado`.
+- **Campos Principais:** `nome`, `email`, `whatsapp` (nullable), `mensagem` (nullable), `status` (`novo` padrão, `em_contato`, `descartado`).
 
 ---
 

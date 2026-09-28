@@ -135,6 +135,20 @@ Controle de acesso baseado em papéis (RBAC).
 
 ---
 
+### 7. 🎯 CRM e Captação
+Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_captacao_campanhas_visitas.md`, `docs/crm_lead_score.md` e `docs/crm_followup_whatsapp.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `Interessado` | Lead com funil Kanban, lead score, histórico de contatos, dependentes e atribuição de campanha/UTM |
+| `CampanhaMarketing` | Campanhas com código UTM e investimento; leads do formulário `/quero-matricular?utm_campaign=CODIGO` são atribuídos automaticamente |
+| `VisitaInteressado` | Visitas à escola agendadas por lead, exibidas no calendário de follow-up e lembradas 24h antes (`crm:notificar-pendentes`) |
+| Conversão | Ação **Matricular** abre o Assistente de Matrícula pré-preenchido com o lead e o marca como convertido ao finalizar |
+| Widgets | `ConversaoCampanhaWidget` e `ConversaoOrigemWidget`: leads, matrículas, taxa e custo por campanha/origem |
+| `LandingLead` | Pedidos de demonstração da landing page (leads B2B, separados de `Interessado`) |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
