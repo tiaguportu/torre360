@@ -1,8 +1,18 @@
 <?php
 
+use App\Http\Controllers\Admin\TemplateCrachaV3Controller;
+use App\Http\Controllers\Api\MobileTokenController;
+use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
+use App\Http\Controllers\Contratos\DownloadContratoController;
+use App\Http\Controllers\Contratos\GerarAssinaturaController;
+use App\Http\Controllers\Contratos\VisualizarContratoController;
+use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
+use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ValidarDocumentoController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('switch-role')->middleware('auth');
@@ -21,17 +31,6 @@ Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoCo
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
-
-use App\Http\Controllers\Admin\TemplateCrachaV3Controller;
-use App\Http\Controllers\Api\MobileTokenController;
-use App\Http\Controllers\BoletimPDFController;
-use App\Http\Controllers\Contratos\DownloadContratoController;
-use App\Http\Controllers\Contratos\GerarAssinaturaController;
-use App\Http\Controllers\Contratos\VisualizarContratoController;
-use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
-use App\Http\Controllers\Documentos\VisualizarDocumentoController;
-use App\Http\Controllers\QuestionarioRespostaPDFController;
-use App\Http\Controllers\ValidarDocumentoController;
 
 // Rota de visualização de documentos privados (autenticação tratada no controller para evitar 403 do middleware)
 Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
