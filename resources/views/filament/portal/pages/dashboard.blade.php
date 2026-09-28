@@ -18,9 +18,23 @@
                         </p>
                     @endforeach
 
+                    @php $matriculaAtual = $pessoa->matriculas->sortByDesc('id')->first(); @endphp
+
                     <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ \App\Filament\Portal\Pages\Academico::getUrl() }}"
+                        <a href="{{ \App\Filament\Portal\Pages\Notas::getUrl(['aluno' => $matriculaAtual?->id]) }}"
                            class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-500">
+                            Notas
+                        </a>
+                        <a href="{{ \App\Filament\Portal\Pages\Frequencia::getUrl(['aluno' => $matriculaAtual?->id]) }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
+                            Frequência
+                        </a>
+                        <a href="{{ \App\Filament\Portal\Pages\Horarios::getUrl(['aluno' => $matriculaAtual?->id]) }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
+                            Horários
+                        </a>
+                        <a href="{{ \App\Filament\Portal\Pages\Academico::getUrl() }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
                             Boletim
                         </a>
                         <a href="{{ \App\Filament\Portal\Pages\Financeiro::getUrl() }}"
