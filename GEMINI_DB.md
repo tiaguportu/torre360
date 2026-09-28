@@ -529,5 +529,79 @@ Estrutura de ensino e turmas.
   - `contrato_gerado_id`: FK `contrato.id` (novo contrato financeiro formalizado na rematrícula).
 - **Relacionamentos:** BelongsTo `PeriodoRematricula`, BelongsTo `Matricula` (origem e gerada), BelongsTo `Pessoa` (responsável financeiro), BelongsTo `Serie`, BelongsTo `Turno`, BelongsTo `Contrato`.
 
+---
+
+## 13. Comunicação Escolar, Eventos (RSVP) e Central de Atendimento
+
+### `eventos_escolares`
+- **Representa:** Atividades, reuniões, celebrações e passeios pedagógicos organizados pela instituição.
+- **Campos Principais:**
+  - `uuid`: Identificador único UUID para compartilhamento/segurança.
+  - `unidade_id`: FK `unidade.id` (unidade escolar responsável).
+  - `titulo`: Nome do evento (ex: Reunião Geral de Pais, Visita Cultural ao Museu).
+  - `tipo`: Enum `TipoEventoEscolar` (`reuniao_pais`, `passeio_cultural`, `festa_comemorativa`, `palestra`, `formatura`, `outro`).
+  - `descricao`: Programação e detalhes em texto HTML.
+  - `local`: Espaço físico ou endereço de destino.
+  - `data_inicio`, `data_fim`: Horários de início e término.
+  - `limite_vagas`: Lotação máxima permitida (null = livre).
+  - `prazo_confirmacao`: Data limite para as famílias manifestarem RSVP.
+  - `exige_autorizacao`: Booleano indicando necessidade de assinatura formal dos pais para saídas escolares.
+  - `termo_autorizacao`: Minuta legal da autorização de saída.
+  - `valor_por_pessoa`: Custo de participação (transporte/ingresso) para fins informativos.
+  - `publico_alvo`: String (`todos` ou `turmas_especificas`).
+  - `ativo`: Booleano de visibilidade no calendário.
+- **Relacionamentos:** BelongsTo `Unidade`, BelongsToMany `Turma` (via `evento_escolar_turmas`), HasMany `EventoConfirmacao`.
+
+### `evento_escolar_turmas`
+- **Representa:** Tabela pivô de vínculo entre eventos direcionados e turmas participantes.
+- **Campos:** `evento_escolar_id`, `turma_id`.
+
+### `evento_confirmacoes`
+- **Representa:** A confirmação de presença (RSVP), contagem de acompanhantes e autorização legal dos responsáveis.
+- **Campos Principais:**
+  - `evento_escolar_id`: FK `eventos_escolares.id`.
+  - `matricula_id`: FK `matricula.id` (estudante vinculado).
+  - `responsavel_id`: FK `pessoa.id` (responsável que respondeu).
+  - `status`: Enum `StatusRsvp` (`pendente`, `confirmado`, `recusado`).
+  - `quantidade_acompanhantes`: Número de familiares extras declarados.
+  - `autorizado`: Booleano com aceite formal do termo de saída.
+  - `data_resposta`: Data e hora da resposta.
+  - `ip_resposta`: Endereço IP do responsável para validade jurídica da autorização.
+  - `observacoes`: Mensagens ou orientações da família para a coordenação.
+- **Relacionamentos:** BelongsTo `EventoEscolar`, BelongsTo `Matricula`, BelongsTo `Pessoa`.
+
+### `atendimento_setores`
+- **Representa:** Áreas e departamentos da escola disponíveis para abertura de chamados no Portal da Família.
+- **Campos Principais:** `nome` (Secretaria, Financeiro, Coordenação, Ambulatório, Ouvidoria), `descricao`, `email_notificacao`, `ativo`, `ordem`.
+- **Relacionamentos:** HasMany `AtendimentoChamado`.
+
+### `atendimento_chamados`
+- **Representa:** Protocolos e tickets de atendimento abertos pelas famílias ou registrados pela recepção.
+- **Campos Principais:**
+  - `protocolo`: Código único formatado (ex: `ATD-2026-ABC12`).
+  - `setor_id`: FK `atendimento_setores.id`.
+  - `matricula_id`: FK `matricula.id` (opcional, para vincular a dúvida a um aluno).
+  - `solicitante_id`: FK `pessoa.id` (responsável/solicitante).
+  - `responsavel_atendimento_id`: FK `users.id` (atendente escolar atribuído).
+  - `assunto`: Resumo da solicitação.
+  - `prioridade`: Enum `PrioridadeChamado` (`baixa`, `normal`, `alta`, `urgente`).
+  - `status`: Enum `StatusChamado` (`aberto`, `em_andamento`, `aguardando_solicitante`, `resolvido`, `fechado`).
+  - `avaliacao_nota`: Nota de 1 a 5 estrelas concedida pela família na resolução.
+  - `avaliacao_comentario`: Opinião descritiva sobre o atendimento.
+  - `fechado_em`: Data e hora de encerramento do chamado.
+- **Relacionamentos:** BelongsTo `AtendimentoSetor`, BelongsTo `Matricula`, BelongsTo `Pessoa`, BelongsTo `User`, HasMany `AtendimentoMensagem`.
+
+### `atendimento_mensagens`
+- **Representa:** Linha do tempo e mensagens trocadas dentro de um chamado de atendimento.
+- **Campos Principais:**
+  - `chamado_id`: FK `atendimento_chamados.id`.
+  - `user_id`: FK `users.id` (quando a mensagem é da equipe escolar).
+  - `pessoa_id`: FK `pessoa.id` (quando a mensagem é da família).
+  - `mensagem`: Texto da mensagem.
+  - `anexo_path`: Caminho no storage de arquivo/comprovante anexado.
+  - `lida_em`: Data e hora de visualização.
+- **Relacionamentos:** BelongsTo `AtendimentoChamado`, BelongsTo `User`, BelongsTo `Pessoa`.
+
+
 
 

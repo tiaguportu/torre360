@@ -1581,6 +1581,34 @@ Automatize o processo de rematrícula entre períodos letivos, permitindo que as
 
 ---
 
+## 📢 33. Comunicação Escolar — Eventos com RSVP e Central de Atendimento
+
+O módulo de **Comunicação Escolar** reduz o fluxo de ligações e atendimento presencial, estabelecendo um canal direto, seguro e rastreável entre a escola e as famílias.
+
+### 33.1 Gestão de Eventos e Atividades (`/admin/evento-escolars`)
+1. **Cadastro de Atividades:** A coordenação publica reuniões de pais e mestres, celebrações, feiras de ciências, palestras ou passeios pedagógicos externos.
+2. **Direcionamento de Público:** O evento pode ser destinado a toda a escola ou apenas a turmas específicas.
+3. **Controle de Vagas e Prazo Limite:** É possível fixar limite máximo de participantes e prazo de expiração para o RSVP.
+4. **Termos de Autorização de Saída:** Para passeios externos, ativa-se a exigência de autorização formal dos pais com a minuta legal pré-configurada.
+5. **Lista de Presença em Tempo Real:** Com um clique na ação **Lista de Presença**, a equipe visualiza os alunos confirmados, acompanhantes declarados e o status do termo de autorização assinado.
+
+### 33.2 Confirmação de Presença no Portal da Família (`/portal/eventos`)
+1. Os responsáveis visualizam cards informativos com data, horário, local, vagas restantes e programação do evento.
+2. Com um clique em **Confirmar Presença**, informam a quantidade de acompanhantes e, caso o evento exija autorização de saída, assinam o termo digital com registro de data, hora e IP do dispositivo.
+
+### 33.3 Central de Atendimento & Chamados (`/admin/atendimento-chamados` e `/admin/atendimento-setores`)
+1. **Setores de Atendimento:** Configure os departamentos disponíveis para contato (Secretaria, Setor Financeiro, Coordenação Pedagógica, Ambulatório e Direção).
+2. **Painel de Chamados:** A equipe acompanha chamados organizados por protocolo único (`ATD-YYYY-XXXXX`), com filtros por setor, status e prioridade.
+3. **Ação Rápida "Responder":** O atendente responde a dúvida da família, anexa documentos/comprovantes em PDF e atualiza a situação do atendimento com notificações instantâneas.
+
+### 33.4 Atendimento pelo Portal da Família (`/portal/atendimento`)
+1. **Abertura Descomplicada:** O responsável clica em **Novo Chamado**, seleciona o setor, o estudante (opcional), informa o assunto e descreve a solicitação com opção de anexos.
+2. **Histórico e Conversa:** Todas as mensagens da escola e da família ficam salvas em uma linha do tempo organizada e segura.
+3. **Avaliação do Atendimento:** Ao término da solicitação, o responsável avalia a experiência com nota de 1 a 5 estrelas e comentário de feedback para a ouvidoria da escola.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
