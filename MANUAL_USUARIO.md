@@ -1485,7 +1485,7 @@ Permite o acompanhamento da rotina disciplinar, operacional e pedagógica dos es
 
 Além do acesso ao painel administrativo (com visibilidade restrita — veja a seção 6.1, item "Visibilidade Restrita"), usuários com o papel **aluno** ou **responsavel** também podem entrar por um endereço dedicado e mais simples: **`/portal`**.
 
-O Portal usa o **mesmo login e senha** do painel principal — é só um caminho de entrada alternativo, mais enxuto, focado em seis telas de consulta e ação:
+O Portal usa o **mesmo login e senha** do painel principal — é só um caminho de entrada alternativo, mais enxuto, focado em telas de consulta e ação:
 
 1. **Início:** Lista os alunos vinculados ao seu cadastro (o próprio, se você for aluno; seus dependentes, se você for responsável), com atalhos rápidos para as telas abaixo.
 2. **Boletins (`/portal/academico`):** Lista as matrículas acessíveis e permite baixar o boletim em PDF de cada uma.
@@ -1493,6 +1493,13 @@ O Portal usa o **mesmo login e senha** do painel principal — é só um caminho
 4. **Documentos (`/portal/documentos`):** Lista os contratos vinculados, com opções para visualizar, baixar o PDF, iniciar/continuar a assinatura digital (Assinafy) ou baixar o contrato já assinado.
 5. **Ocorrências (`/portal/ocorrencias`):** Lista as ocorrências escolares (elogios, advertências, atrasos etc.) registradas para o(s) aluno(s), com o mesmo destaque de gravidade por cor usado no admin.
 6. **Preceptoria (`/portal/preceptoria`):** Permite agendar (ou desagendar) um horário de preceptoria para o aluno diretamente pelo Portal, com a mesma regra de antecedência mínima de 2 dias já usada no admin. A lista de horários mostra apenas os professores vinculados à turma do aluno (professor conselheiro ou do cronograma de aulas).
+7. **Notas (`/portal/notas`):** Mostra as notas do aluno por etapa avaliativa (bimestre/trimestre), com uma linha por disciplina: nota de cada categoria de avaliação, **média**, **média da turma** e **frequência**. É o mesmo cálculo do boletim. Médias abaixo da nota mínima de aprovação do período letivo (padrão 7,0) e frequências abaixo de 75% aparecem em vermelho; notas substituídas por uma avaliação de recuperação aparecem riscadas. Para turmas avaliadas por habilidades (Educação Infantil/BNCC), a tela também exibe o **conceito** de cada habilidade (Realiza bem, Em desenvolvimento, Não realiza, Não observado) e a observação do professor.
+8. **Frequência (`/portal/frequencia`):** Mostra o percentual geral de presença, o total de aulas registradas, presenças e faltas, o resumo **por disciplina** e a lista aula a aula (data, disciplina, horário e situação), com filtros por situação (faltas/presenças) e disciplina. Quando a frequência geral fica abaixo do mínimo exigido (75%), aparece um aviso no topo da tela.
+9. **Horários (`/portal/horarios`):** Mostra as aulas da semana do aluno, dia a dia, em ordem de horário, com disciplina, professor e — quando o professor registrou — conteúdo e dever de casa. Dias não letivos (feriados/recessos) aparecem destacados. Use **Anterior**, **Hoje** e **Próxima** para navegar entre as semanas; sábado e domingo só aparecem quando há aula ou dia não letivo. Os horários vêm do cronograma de aulas cadastrado pela escola.
+
+**Vários filhos:** nas telas de Notas, Frequência e Horários, quando o seu cadastro está ligado a mais de um aluno, aparece uma lista no topo para escolher qual aluno consultar. A tela só permite ver matrículas que pertencem à sua família, mesmo que o endereço seja alterado manualmente.
+
+**Calendário (`/portal/calendario`):** além das provas e dos dias não letivos, agora mostra as **aulas** da turma do aluno (de 45 dias atrás até 90 dias à frente). Em celulares, o calendário abre na visão de lista.
 
 > [!NOTE]
 > **Pagamento de fatura online não está disponível no Portal.** Hoje o Financeiro do Portal é só consulta (ver fatura, valor, status). Colocar um botão de "pagar agora" exige integrar um gateway de pagamento (PIX/boleto/cartão) — isso não foi implementado porque depende de uma decisão de produto (qual gateway, taxas, conta recebedora) antes de qualquer código.
