@@ -11,6 +11,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class PessoaForm
@@ -77,6 +78,11 @@ class PessoaForm
                 TextInput::make('email')
                     ->email()
                     ->maxLength(255),
+
+                Toggle::make('aceita_comunicacao')
+                    ->label('Aceita receber comunicações da escola')
+                    ->default(true)
+                    ->helperText('Desative se a pessoa pediu para não receber e-mails de comunicação em massa (campanhas, avisos). Notificações individuais obrigatórias (boletim, ocorrências, financeiro) continuam sendo enviadas.'),
 
                 Select::make('estado_civil')
                     ->options([

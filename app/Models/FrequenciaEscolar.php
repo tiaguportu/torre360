@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\FrequenciaFaltaObserver;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ObservedBy(FrequenciaFaltaObserver::class)]
 class FrequenciaEscolar extends Model
 {
     use LogsActivity;
