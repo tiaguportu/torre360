@@ -64,23 +64,32 @@ Estrutura curricular e planejamento pedagógico.
 | `Serie` | Anos/séries vinculadas a um curso |
 | `Disciplina` | Matérias vinculadas a uma Área de Conhecimento |
 | `Habilidade` | Competências por disciplina e série |
+| `MatrizCurricular` | Grade de referência (série × disciplina): carga horária semanal e obrigatoriedade. Origem do vínculo `turma_disciplina` ao criar uma turma. |
 | `PeriodoLetivo` | **Eixo temporal central.** Ex: "1º Semestre 2025". Possui várias Turmas, Etapas e Dias Não Letivos. |
 | `DiaNaoLetivo` | Feriados/recessos vinculados a um PeriodoLetivo |
 | `Turma` | Classe de alunos — pertence a uma Série, Turno e PeriodoLetivo |
+| `Sala` | Ambiente físico (sala de aula, laboratório...) de uma unidade, usado na grade horária |
+| `GradeHorario` | Quadro de horários semanal recorrente da turma (disciplina, professor, sala, dia e horário), com detecção de conflitos. Gera o `CronogramaAula` do período. |
+| `PlanoAula` | Planejamento prévio de uma aula (objetivos, metodologia, habilidades BNCC); ao ser executado, vira um `CronogramaAula` |
 | `EtapaAvaliativa` | Bimestre/trimestre — pertence a um PeriodoLetivo |
 | `Avaliacao` | Prova/trabalho — vinculada a uma EtapaAvaliativa, Disciplina e Turma. Possui `data_prevista`, `nota_maxima`, `peso_etapa_avaliativa`. |
 | `Nota` | Nota individual — vincula uma Avaliacao a uma Matricula |
-| `CronogramaAula` | Horário semanal de aulas por Turma, Disciplina e Professor |
+| `CronogramaAula` | Diário de aulas datado por Turma, Disciplina e Professor |
 | `Coordenador` | Vincula uma Pessoa como coordenadora de um Curso |
 
 **Hierarquia pedagógica:**
 ```
+Serie
+ └── MatrizCurricular (Disciplina + carga horária) ──> popula turma_disciplina
+
 PeriodoLetivo
  ├── DiaNaoLetivo
  ├── EtapaAvaliativa
  │    └── Avaliacao (+ Disciplina + Turma)
  │         └── Nota (por Matricula)
  └── Turma
+      ├── GradeHorario (Disciplina + Professor + Sala) ──> gera ──> CronogramaAula
+      ├── PlanoAula (Disciplina + Professor) ──> ao executar ──> CronogramaAula
       ├── CronogramaAula
       └── Matricula
 ```

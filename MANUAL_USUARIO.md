@@ -1660,6 +1660,41 @@ Para otimizar o início do ano letivo sem a necessidade de alocar aluno por alun
 
 ---
 
+## 🗂️ 35. Planejamento Pedagógico — Matriz Curricular, Salas, Grade Horária e Planos de Aula
+
+Recursos para organizar o período letivo **antes do início das aulas**: definir quais disciplinas cada série deve ter, montar a grade de horários da semana, reservar salas físicas e planejar o conteúdo com antecedência.
+
+### 35.1 Matriz Curricular (`Acadêmico → Séries`)
+
+1. Abra uma **Série** e vá na aba **Matriz Curricular**.
+2. Cadastre cada disciplina que a série deve ter, com a **carga horária semanal** (em aulas), se é **obrigatória** ou optativa, e a **ordem**.
+3. Sempre que uma **turma nova** dessa série for criada, o sistema já vincula automaticamente essas disciplinas a ela (aba **Disciplinas** da turma) — sem professor definido, para a coordenação atribuir depois.
+4. Se a turma já existir (ou a matriz for alterada depois), use o botão **Sincronizar Disciplinas da Matriz**, disponível tanto na aba Matriz Curricular da Série (aplica a todas as turmas da série) quanto na edição da própria Turma (aplica só a ela). Só **adiciona** o que falta — nunca remove uma disciplina vinculada manualmente.
+
+### 35.2 Salas (`Acadêmico → Salas`)
+
+Cadastro dos ambientes físicos da escola — salas de aula, laboratórios, quadra, auditório etc. — usados para reservar espaço na grade horária. Informe a **unidade**, o **nome**, a **capacidade** (opcional, usada apenas como referência) e o **tipo**. Salas podem ser desativadas sem serem excluídas.
+
+> Este cadastro é diferente do recurso de **Ensalamento em Lote Assistido** (seção 34), que distribui **alunos entre turmas**. Aqui o assunto é o **espaço físico** usado pela turma em cada aula.
+
+### 35.3 Grade Horária (na Turma → aba "Grade Horária")
+
+1. Abra a turma e vá na aba **Grade Horária**.
+2. Cadastre cada horário recorrente da semana: **disciplina**, **professor**, **sala** (opcionais), **dia da semana** e **horário de início e fim**. Essa grade vale para todas as semanas do período letivo — é o "quadro de horários" da turma.
+3. **Detecção de conflitos:** ao salvar, o sistema verifica se a turma, o professor ou a sala já têm outro horário cadastrado no mesmo dia da semana que se sobrepõe ao horário informado, e bloqueia o cadastro com uma mensagem explicando o conflito encontrado.
+4. **Gerar Cronograma do Período:** na listagem de **Turmas**, use esta ação para transformar a grade horária em aulas reais no diário (cronograma de aulas) para todo o período letivo da turma. Dias não letivos (feriados, recessos) são pulados automaticamente, e rodar a ação de novo não duplica aulas já geradas — é seguro repetir depois de ajustar a grade.
+
+### 35.4 Planos de Aula (`Acadêmico → Planos de Aula`)
+
+Permite ao professor planejar o que vai lecionar antes da aula acontecer.
+
+1. Crie um plano informando **turma**, **disciplina** (só aparecem as disciplinas já vinculadas à turma), **data prevista**, **objetivos**, **metodologia**, **recursos necessários**, **avaliação prevista** e as **habilidades da BNCC** que pretende trabalhar. É possível anexar materiais de apoio.
+2. Quando a aula acontecer, clique em **Executar** na listagem: o sistema cria automaticamente o registro correspondente no diário de aulas (cronograma), levando o conteúdo planejado e as habilidades para lá, e permite ajustar a data caso a aula tenha sido dada em dia diferente do previsto.
+3. Um plano **executado** não pode mais ser editado (o registro real do diário passa a ser a fonte da verdade) nem executado de novo.
+4. Cada professor só vê os planos das turmas onde é professor da disciplina, professor conselheiro ou responsável pelo próprio plano; coordenação e administração veem todos.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 
