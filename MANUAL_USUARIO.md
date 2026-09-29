@@ -1660,6 +1660,51 @@ Para otimizar o início do ano letivo sem a necessidade de alocar aluno por alun
 
 ---
 
+## 💰 35. Régua de Cobrança Inteligente e Redução de Inadimplência (`/admin/regua-cobrancas`)
+
+O módulo de **Régua de Cobrança Inteligente** automatiza a comunicação financeira com as famílias em momentos estratégicos do ciclo de vencimento das faturas, diminuindo drasticamente os atrasos por esquecimento e fornecendo canais diretos de pagamento (linha digitável, PIX Copia e Cola e link do portal).
+
+### 35.1 Conceito da Régua por Gatilhos de Dias
+O sistema monitora diariamente as faturas em aberto e calcula a data de vencimento em relação ao dia atual:
+- **Gatilhos Preventivos (Dias Negativos):**
+  - **-5 dias:** Lembrete amigável avisando sobre o vencimento próximo.
+  - **-2 dias:** Segundo lembrete preventivo com dados para pagamento.
+- **Gatilho de Vencimento (Dia 0):**
+  - Notificação "Vence Hoje" alertando para o pagamento no dia do vencimento.
+- **Gatilhos de Inadimplência (Dias Positivos):**
+  - **+3 dias:** Primeiro comunicado de atraso com aviso de fatura pendente.
+  - **+7 dias:** Segunda notificação de cobrança amigável.
+  - **+15 dias:** Aviso formal de regularização financeira pré-bloqueio de serviços.
+
+### 35.2 Canais de Disparo Multicanal
+Os lembretes podem ser configurados para os seguintes canais:
+1. **E-mail:** E-mail formatado com detalhes da fatura, valor restante, vencimento e botão de pagamento.
+2. **Portal da Família:** Notificação interna (Sininho) no painel dos pais.
+3. **Push Notification:** Alerta direto na tela do smartphone dos responsáveis com app escolar instalado.
+4. **Todos (Multicanal):** Disparo simultâneo em todos os canais cadastrados.
+
+### 35.3 Macros Dinâmicas nas Mensagens
+Ao cadastrar ou editar uma régua, utilize as seguintes variáveis automáticas:
+- `{{RESPONSAVEL_NOME}}`: Nome do responsável financeiro ou familiar.
+- `{{ALUNO_NOME}}`: Nome do estudante vinculado à matrícula do contrato.
+- `{{NUMERO_FATURA}}`: Número de identificação da fatura (ex: #1234).
+- `{{VALOR}}`: Saldo devedor atual da fatura formatado em Reais (ex: 550,00).
+- `{{DATA_VENCIMENTO}}`: Data de vencimento no formato brasileiro (dd/mm/aaaa).
+- `{{DIAS_ATRASO}}`: Quantidade exata de dias em atraso (caso vencida).
+- `{{LINK_PAGAMENTO}}`: Link direto para visualização da fatura no Portal.
+- `{{PIX_COPIA_COLA}}`: Código PIX para cópia instantânea no aplicativo bancário.
+
+### 35.4 Cobrança Pontual e Histórico na Gestão de Faturas (`/admin/faturas`)
+Além do envio automatizado noturno:
+1. **Ação "Cobrar":** Em qualquer fatura em aberto na tabela de Faturas, o operador clica no botão **Cobrar**, escolhe o modelo de régua ou redige uma mensagem personalizada e dispara imediatamente para todos os responsáveis.
+2. **Histórico de Lembretes:** Clique em **Histórico de Lembretes** para consultar a lista completa de notificações emitidas (data, horário, canal, destinatário e mensagem enviada).
+3. **Executar Régua do Dia:** No topo da listagem de Faturas ou na listagem de Réguas, utilize o botão **Executar Régua do Dia** para forçar o processamento imediato sob demanda (com suporte a modo de simulação *Dry-Run*).
+
+### 35.5 Automação Agendada (Cron)
+O comando Artisan `php artisan cobranca:executar-regua` está programado no agendador do Laravel (`routes/console.php`) para rodar automaticamente todos os dias às **08:00**, garantindo que nenhum lembrete seja esquecido.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

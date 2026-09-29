@@ -6,6 +6,7 @@ use App\Enums\StatusFatura;
 use App\Filament\Resources\Faturas\FaturaResource;
 use App\Models\Contrato;
 use App\Models\Fatura;
+use App\Services\ReguaCobrancaService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -148,6 +149,22 @@ class ListFaturas extends ListRecords
                         ->success()
                         ->send();
                 }),
+            Action::make('executar_regua')
+                ->label('Executar Régua do Dia')
+                ->icon('heroicon-o-bell-alert')
+                ->color('warning')
+                ->visible(fn () => auth()->user()?->can('Execute:ReguaCobranca') ?? false)
+                ->requiresConfirmation()
+                ->modalHeading('Processar Régua de Cobrança')
+                ->modalDescription('Deseja analisar as faturas que atingiram a data alvo das réguas ativas e enviar os lembretes aos responsáveis?')
+                ->action(function () {
+                    $res = app(ReguaCobrancaService::class)->processarReguaDiaria();
+                    Notification::make()
+                        ->title('Régua de Cobrança Processada!')
+                        ->body("{$res['total_notificacoes_enviadas']} notificação(ões) enviada(s) para {$res['total_faturas_analisadas']} fatura(s) analisada(s).")
+                        ->success()
+                        ->send();
+                }),
             CreateAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
@@ -172,21 +189,28 @@ class ListFaturas extends ListRecords
 
         $canCreate = $user->can('Create:Fatura');
         $canUpdate = $user->can('Update:Fatura');
+        $canExecuteRegua = $user->can('Execute:ReguaCobranca');
 
-        $html = '<p>Nesta página você gerencia a cobrança dos contratos através das faturas.</p>';
+        $html = '<p>Nesta página você gerencia a cobrança dos contratos através das faturas e monitora o fluxo de recebimentos.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>Criação em Lote:</strong> Ferramenta para gerar rapidamente todas as parcelas de um contrato de uma só vez.</li>';
+        $html .= '<li><strong>Cobrança Pontual (Ação na Tabela):</strong> Use o botão <em>"Cobrar"</em> em qualquer fatura em aberto para disparar na hora uma mensagem personalizada via E-mail, Portal ou Push.</li>';
+        $html .= '<li><strong>Histórico de Lembretes:</strong> Veja a lista completa de notificações de cobrança já enviadas para cada fatura.</li>';
+
+        if ($canExecuteRegua) {
+            $html .= '<li><strong>Executar Régua do Dia:</strong> Dispare manualmente a verificação da régua de cobrança automática para as faturas de hoje.</li>';
+        }
 
         if ($canCreate) {
             $html .= '<li><strong>Nova Fatura:</strong> Crie uma cobrança avulsa ou manual vinculada a um contrato.</li>';
         }
 
         if ($canUpdate) {
-            $html .= '<li><strong>Status e Pagamento:</strong> Marque faturas como pagas, pendentes ou canceladas.</li>';
+            $html .= '<li><strong>Status e Pagamento:</strong> Registre baixas manuais parciais ou integrais das faturas.</li>';
         }
 
-        $html .= '<li><strong>Vencimentos:</strong> Acompanhe as faturas que estão vencidas ou próximas do vencimento através dos filtros.</li>';
+        $html .= '<li><strong>Abas de Vencimento:</strong> Acompanhe rapidamente faturas <em>A Vencer</em>, <em>Vencidas</em> e <em>Pagas</em>.</li>';
         $html .= '</ul>';
 
         return $html;

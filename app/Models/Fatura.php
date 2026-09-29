@@ -37,6 +37,11 @@ class Fatura extends Model
         return $this->hasMany(TransacaoBancaria::class);
     }
 
+    public function cobrancaLogs(): HasMany
+    {
+        return $this->hasMany(ReguaCobrancaLog::class);
+    }
+
     /**
      * Valor total bruto da fatura (soma dos itens sem descontos)
      */

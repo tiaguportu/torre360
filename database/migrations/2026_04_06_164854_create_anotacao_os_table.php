@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('anotacao_os', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('ordem_servico_id')->constrained('ordem_servicos')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->text('texto');
-            $table->json('fotos')->nullable();
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('anotacao_os')) {
+            Schema::create('anotacao_os', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('ordem_servico_id')->constrained('ordem_servicos')->cascadeOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->text('texto');
+                $table->json('fotos')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

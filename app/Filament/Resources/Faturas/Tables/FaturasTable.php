@@ -5,13 +5,17 @@ namespace App\Filament\Resources\Faturas\Tables;
 use App\Enums\StatusFatura;
 use App\Models\Banco;
 use App\Models\Fatura;
+use App\Models\ReguaCobranca;
 use App\Models\TransacaoBancaria;
+use App\Services\ReguaCobrancaService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
@@ -19,6 +23,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class FaturasTable
 {
@@ -103,6 +108,8 @@ class FaturasTable
             ])
             ->recordActions([
                 self::darBaixaAction(),
+                self::enviarCobrancaAction(),
+                self::historicoCobrancasAction(),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -112,6 +119,120 @@ class FaturasTable
             ])
             ->defaultSort('vencimento', 'asc')
             ->stackedOnMobile();
+    }
+
+    /**
+     * Ação para disparar lembrete de cobrança pontual para os responsáveis da fatura.
+     */
+    public static function enviarCobrancaAction(): Action
+    {
+        return Action::make('enviar_cobranca')
+            ->label('Cobrar')
+            ->icon('heroicon-o-paper-airplane')
+            ->color('warning')
+            ->visible(fn (Fatura $record): bool => ! in_array($record->status, [StatusFatura::Pago, StatusFatura::Cancelado]))
+            ->modalHeading(fn (Fatura $record): string => "Enviar Lembrete de Cobrança — Fatura #{$record->id}")
+            ->modalDescription(fn (Fatura $record): string => 'Aluno: '.($record->contrato?->matricula?->pessoa?->nome ?? 'N/I').' — Vencimento: '.($record->vencimento?->format('d/m/Y') ?? 'N/I').' — Saldo: R$ '.number_format($record->valor_restante, 2, ',', '.'))
+            ->modalSubmitActionLabel('Disparar Notificação')
+            ->schema([
+                Select::make('regua_id')
+                    ->label('Modelo de Régua / Mensagem')
+                    ->options(ReguaCobranca::where('is_ativo', true)->orderBy('ordem')->pluck('nome', 'id'))
+                    ->placeholder('Selecione uma régua ou digite abaixo...')
+                    ->searchable(),
+
+                Select::make('canal')
+                    ->label('Canal de Envio')
+                    ->options([
+                        'todos' => 'Todos os Canais (E-mail, Portal e Push)',
+                        'email' => 'Apenas E-mail',
+                        'portal' => 'Apenas Portal da Família',
+                        'push' => 'Apenas Push Notification',
+                    ])
+                    ->default('todos')
+                    ->required(),
+
+                TextInput::make('assunto_personalizado')
+                    ->label('Assunto Personalizado (Opcional)')
+                    ->placeholder('Deixe em branco para usar o da régua'),
+
+                Textarea::make('mensagem_personalizada')
+                    ->label('Mensagem Personalizada (Opcional)')
+                    ->placeholder('Caso queira enviar uma mensagem avulsa exclusiva, digite aqui...')
+                    ->rows(3)
+                    ->helperText('Se informado, substituirá o texto da régua selecionada.'),
+            ])
+            ->action(function (array $data, Fatura $record): void {
+                $regra = ! empty($data['regua_id']) ? ReguaCobranca::find($data['regua_id']) : null;
+                $msg = ! empty($data['mensagem_personalizada']) ? $data['mensagem_personalizada'] : null;
+                $assunto = ! empty($data['assunto_personalizado']) ? $data['assunto_personalizado'] : null;
+                $canal = $data['canal'] ?? 'todos';
+
+                try {
+                    $res = app(ReguaCobrancaService::class)->dispararLembreteManual(
+                        $record,
+                        $regra,
+                        $msg,
+                        $assunto,
+                        $canal
+                    );
+
+                    Notification::make()
+                        ->title('Lembrete de Cobrança Enviado!')
+                        ->body("Notificação enviada com sucesso para {$res['total_enviados']} responsável(is).")
+                        ->success()
+                        ->send();
+                } catch (\Throwable $e) {
+                    Notification::make()
+                        ->title('Erro ao enviar cobrança')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    /**
+     * Ação para visualizar o histórico de lembretes enviados para esta fatura.
+     */
+    public static function historicoCobrancasAction(): Action
+    {
+        return Action::make('historico_cobrancas')
+            ->label('Histórico de Lembretes')
+            ->icon('heroicon-o-clock')
+            ->color('gray')
+            ->modalHeading(fn (Fatura $record): string => "Histórico de Cobranças — Fatura #{$record->id}")
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fechar')
+            ->form([
+                Placeholder::make('logs')
+                    ->label('')
+                    ->content(function (Fatura $record) {
+                        $logs = $record->cobrancaLogs()->with('reguaCobranca', 'pessoa')->latest()->get();
+
+                        if ($logs->isEmpty()) {
+                            return new HtmlString('<p class="text-sm text-gray-500 py-3 text-center">Nenhum lembrete de cobrança disparado para esta fatura até o momento.</p>');
+                        }
+
+                        $html = '<div class="space-y-3 max-h-72 overflow-y-auto">';
+                        foreach ($logs as $log) {
+                            $regraNome = $log->reguaCobranca?->nome ?? 'Disparo Manual';
+                            $data = $log->created_at?->format('d/m/Y H:i') ?? $log->data_envio?->format('d/m/Y');
+                            $dest = $log->pessoa?->nome ?? $log->destinatario;
+                            $canal = ucfirst($log->canal);
+                            $badgeColor = $log->status_envio === 'sucesso' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'text-red-600 bg-red-50 dark:bg-red-900/30';
+
+                            $html .= "<div class='p-3 border rounded-lg bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-xs space-y-1'>";
+                            $html .= "<div class='flex justify-between items-center'><span class='font-bold text-gray-800 dark:text-gray-200'>{$regraNome}</span><span class='px-2 py-0.5 rounded text-[10px] font-semibold {$badgeColor}'>".ucfirst($log->status_envio).'</span></div>';
+                            $html .= "<div class='text-gray-500'><strong>Destinatário:</strong> {$dest} ({$canal}) • <strong>Data:</strong> {$data}</div>";
+                            $html .= "<div class='text-gray-600 dark:text-gray-300 italic text-[11px] pt-1 border-t border-gray-100 dark:border-gray-700'>".e($log->mensagem_enviada).'</div>';
+                            $html .= '</div>';
+                        }
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
+                    }),
+            ]);
     }
 
     /**

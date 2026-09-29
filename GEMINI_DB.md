@@ -293,6 +293,34 @@ Estrutura de ensino e turmas.
     - `external_id`: Identificador da transação no banco/OFX.
 - **Relacionamentos:** BelongsTo `banco`, BelongsTo `fatura`, BelongsTo `planoConta`, BelongsTo `centroCusto`, BelongsTo `fornecedor`.
 
+### `regua_cobrancas`
+- **Representa:** Definição das etapas e regras automatizadas de notificação preventiva e cobrança de inadimplência escolar.
+- **Campos Principais:**
+    - `nome`: Nome amigável da régua (ex: "Lembrete Preventivo (5 dias antes)", "Vencimento Hoje", "Aviso de Atraso (3 dias)").
+    - `dias_offset`: Número inteiro representando o intervalo em dias em relação à data de vencimento da fatura (valores negativos para antes do vencimento, 0 para no dia do vencimento, valores positivos para dias de atraso).
+    - `tipo_gatilho`: Enum/String (`antes_vencimento`, `no_vencimento`, `apos_vencimento`).
+    - `canal`: Enum/String (`todos`, `email`, `portal`, `push`).
+    - `assunto`: Assunto do e-mail ou título da notificação com suporte a macros dinâmicas.
+    - `mensagem`: Texto do lembrete com suporte a interpolação de tags (`{{RESPONSAVEL_NOME}}`, `{{ALUNO_NOME}}`, `{{NUMERO_FATURA}}`, `{{VALOR}}`, `{{DATA_VENCIMENTO}}`, `{{DIAS_ATRASO}}`, `{{LINK_PAGAMENTO}}`, `{{PIX_COPIA_COLA}}`).
+    - `is_ativo`: Boolean que ativa ou pausa os disparos automáticos desta regra.
+    - `horario_envio`: Horário de execução diária (padrão: 08:00).
+    - `ordem`: Sequência numérica de ordenação.
+- **Relacionamentos:** HasMany `logs` (`regua_cobranca_logs`).
+
+### `regua_cobranca_logs`
+- **Representa:** Trilha histórica de notificações disparadas pela régua para cada fatura e responsável, prevenindo envios duplicados no mesmo dia.
+- **Campos Principais:**
+    - `regua_cobranca_id`: FK `regua_cobrancas`.
+    - `fatura_id`: FK `faturas`.
+    - `pessoa_id`: FK `pessoa` (Responsável notificado).
+    - `canal`: Canal utilizado (`email`, `portal`, `push`).
+    - `destinatario`: E-mail ou identificador de destino.
+    - `mensagem_enviada`: Conteúdo textual processado com os dados reais interpolados.
+    - `status_envio`: Situação da entrega (`sucesso`, `falha`).
+    - `erro`: Mensagem de erro em caso de falha de conexão/transporte.
+    - `data_envio`: Data em que a notificação foi emitida.
+- **Relacionamentos:** BelongsTo `reguaCobranca`, BelongsTo `fatura`, BelongsTo `pessoa`.
+
 ---
 
 ## 6. CRM e Prospecção
