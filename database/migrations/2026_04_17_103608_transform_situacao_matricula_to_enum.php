@@ -66,7 +66,9 @@ return new class extends Migration
         }
 
         // 4. Remover a tabela legada
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('situacao_matricula');
+        Schema::enableForeignKeyConstraints();
     }
 
     /**

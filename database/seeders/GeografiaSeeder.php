@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class GeografiaSeeder extends Seeder
 {
@@ -38,11 +39,15 @@ class GeografiaSeeder extends Seeder
             ['nome' => 'Reino Unido', 'sigla' => 'gb', 'codigo' => '826'],
         ];
 
+        $tabelaPais = Schema::hasTable('pais') ? 'pais' : 'paises';
+        $tabelaEstado = Schema::hasTable('estado') ? 'estado' : 'estados';
+        $tabelaCidade = Schema::hasTable('cidade') ? 'cidade' : 'cidades';
+
         foreach ($paises as $pais) {
-            DB::table('pais')->updateOrInsert(['sigla' => $pais['sigla']], $pais);
+            DB::table($tabelaPais)->updateOrInsert(['sigla' => $pais['sigla']], $pais);
         }
 
-        $brasilId = DB::table('pais')->where('sigla', 'br')->first()->id;
+        $brasilId = DB::table($tabelaPais)->where('sigla', 'br')->first()->id;
 
         // 2. Estados do Brasil
         $estados = [
@@ -76,7 +81,7 @@ class GeografiaSeeder extends Seeder
         ];
 
         foreach ($estados as $estado) {
-            DB::table('estado')->updateOrInsert(['sigla' => $estado['sigla'], 'pais_id' => $brasilId], $estado);
+            DB::table($tabelaEstado)->updateOrInsert(['sigla' => $estado['sigla'], 'pais_id' => $brasilId], $estado);
         }
 
         // 3. Cidades (População via JSON IBGE)
@@ -112,7 +117,7 @@ class GeografiaSeeder extends Seeder
             ];
 
             // Buscar IDs dos estados para evitar múltiplas queries
-            $estadoIds = DB::table('estado')->pluck('id', 'sigla')->toArray();
+            $estadoIds = DB::table($tabelaEstado)->pluck('id', 'sigla')->toArray();
 
             $cidadesParaInserir = [];
             foreach ($municipios as $m) {
@@ -130,7 +135,7 @@ class GeografiaSeeder extends Seeder
                 // Inserir/Atualizar em lotes de 100 para evitar limites de memória/SQL
                 if (count($cidadesParaInserir) >= 100) {
                     foreach ($cidadesParaInserir as $cidade) {
-                        DB::table('cidade')->updateOrInsert(
+                        DB::table($tabelaCidade)->updateOrInsert(
                             ['codigo_ibge' => $cidade['codigo_ibge']],
                             $cidade
                         );
@@ -141,7 +146,7 @@ class GeografiaSeeder extends Seeder
 
             if (! empty($cidadesParaInserir)) {
                 foreach ($cidadesParaInserir as $cidade) {
-                    DB::table('cidade')->updateOrInsert(
+                    DB::table($tabelaCidade)->updateOrInsert(
                         ['codigo_ibge' => $cidade['codigo_ibge']],
                         $cidade
                     );

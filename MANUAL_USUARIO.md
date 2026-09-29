@@ -1608,6 +1608,58 @@ O módulo de **Comunicação Escolar** reduz o fluxo de ligações e atendimento
 
 ---
 
+## 🏫 34. Ensalamento em Lote Assistido (`/admin/ensalamento`)
+
+O módulo de **Ensalamento em Lote Assistido** foi desenvolvido para apoiar a equipe pedagógica e a secretaria durante o planejamento do período letivo, permitindo organizar a distribuição dos estudantes entre as turmas de forma visual, equilibrada e em conformidade com a capacidade física das salas de aula.
+
+### 34.1 Filtros do Planejamento Letivo
+1. Acesse o menu lateral em **Acadêmico → Ensalamento em Lote Assistido** (URL: `/admin/ensalamento`).
+2. Utilize os filtros superiores para selecionar o cenário desejado:
+   - **Período Letivo:** Selecione o ano letivo em planejamento ou em curso.
+   - **Curso:** Filtre por segmento (ex: Educação Infantil, Ensino Fundamental).
+   - **Série / Ano:** Escolha a série correspondente (ex: 1º Ano, 2º Ano).
+   - **Turno (Opcional):** Permite focar em um turno específico (Matutino/Vespertino) ou analisar todos simultaneamente.
+
+### 34.2 Indicadores e Cards Visuais de Ocupação
+O topo da tela consolida os números globais do cenário:
+- **Turmas na Série:** Quantidade de salas abertas para a série selecionada.
+- **Capacidade Total:** Soma das vagas máximas configuradas para todas as turmas.
+- **Já Ensalados:** Total de alunos já alocados e taxa percentual de ocupação global.
+- **Aguardando Turma:** Quantidade de estudantes com matrícula ativa aguardando definição de sala.
+
+Em cada **Card de Turma**, você acompanha:
+- **Barra de Ocupação Dinâmica:** Progresso visual colorido conforme o preenchimento (verde até 85%, âmbar entre 85% e 99%, vermelho se lotada).
+- **Equilíbrio de Gênero:** Contagem e proporção em tempo real de meninos e meninas matriculados na sala.
+- **Lista de Alunos Ensalados (Sanfona):** Expanda para visualizar os estudantes alocados, com atalhos para **Transferir** de sala ou **Desensalar** (retornando o aluno para a fila de espera).
+
+### 34.3 Alocação Manual e em Lote
+1. Na seção inferior, o sistema lista todos os estudantes matriculados que ainda não possuem turma definida na série.
+2. **Alocação Individual Rápida:** No seletor da coluna direita do aluno, escolha a turma desejada; o aluno é alocado imediatamente com validação de vagas livres.
+3. **Alocação em Lote:**
+   - Marque a caixa de seleção de múltiplos alunos (ou utilize a caixa do cabeçalho para selecionar todos).
+   - No topo da tabela, escolha a **Turma de Destino**.
+   - Clique em **Alocar Selecionados**. O sistema valida o teto de capacidade da sala antes de confirmar.
+
+### 34.4 Distribuição Automática Inteligente
+Para otimizar o início do ano letivo sem a necessidade de alocar aluno por aluno manualmente:
+1. Clique no botão de cabeçalho **Distribuição Automática Inteligente** (ou na ação rápida do quadro de turmas).
+2. Selecione as turmas participantes do rateio.
+3. Escolha o critério do algoritmo:
+   - **Equilíbrio Harmônico de Gênero (Recomendado):** Distribui circularmente meninas e meninos para garantir paridade proporcional entre as turmas.
+   - **Ordem Alfabética:** Ordena os alunos de A a Z e divide em blocos homogêneos sequenciais.
+   - **Equilíbrio por Faixa Etária:** Distribui ordenando por data de nascimento para igualar a média de idade entre as salas.
+4. Defina as opções complementares:
+   - *Redistribuir todos da série:* Reorganiza inclusive quem já estava ensalado.
+   - *Respeitar estritamente o limite de vagas:* Impede qualquer superlotação acima da capacidade cadastrada da turma.
+5. Clique em **Executar Distribuição**. Os alunos são alocados instantaneamente em transação segura no banco de dados.
+
+### 34.5 Controle de Acesso e Permissões (Shield)
+- **`View:Ensalamento`:** Permite visualizar os cenários, ocupação de salas e métricas de turmas.
+- **`Manage:Ensalamento`:** Habilita ações de alocação manual, execução da distribuição automática, transferências e desensalamento.
+- **Ajuda Contextual:** O botão de interrogação no cabeçalho exibe orientações adaptadas às permissões do usuário logado.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

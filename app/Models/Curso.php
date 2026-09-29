@@ -14,6 +14,11 @@ class Curso extends Model
 
     protected $guarded = [];
 
+    public function getNomeAttribute(): string
+    {
+        return $this->nome_externo ?? $this->nome_interno ?? '';
+    }
+
     public function unidade(): BelongsTo
     {
         return $this->belongsTo(Unidade::class);

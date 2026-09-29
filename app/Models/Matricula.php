@@ -46,6 +46,16 @@ class Matricula extends Model
         return $this->belongsTo(Turma::class);
     }
 
+    public function serie(): BelongsTo
+    {
+        return $this->belongsTo(Serie::class);
+    }
+
+    public function getSerieNomeAttribute(): ?string
+    {
+        return $this->serie?->nome ?? $this->turma?->serie?->nome;
+    }
+
     public function periodoLetivo(): BelongsTo
     {
         return $this->belongsTo(PeriodoLetivo::class);
@@ -54,6 +64,11 @@ class Matricula extends Model
     public function contrato(): HasOne
     {
         return $this->hasOne(Contrato::class);
+    }
+
+    public function rematriculas(): HasMany
+    {
+        return $this->hasMany(Rematricula::class, 'matricula_origem_id');
     }
 
     /**

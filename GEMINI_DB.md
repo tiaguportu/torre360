@@ -135,6 +135,23 @@ Estrutura de ensino e turmas.
 - **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `etapa_ensino_agregada_id`, `etapa_ensino_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean), `forma_organizacao` (1-Série/Ano, 2-Semestral, 3-Ciclos, 4-Grupos não seriados, 5-Módulos, 6-Alternância), `modalidade_ensino` (1-Regular, 2-Especial, 3-EJA, 4-Profissional), `tipo_lingua_ministrada` (1-Português, 2-Indígena+Português, 3-Indígena), `codigo_lingua_indigena`, `turma_educacao_bilingue_surdos` (boolean) e flags de AEE (`flag_aee_*`).
 - **Relacionamentos:** BelongsTo `etapaEnsinoAgregada` (`etapa_ensino_agregada`), BelongsTo `etapaEnsino` (`etapa_ensino`), HasMany `horariosFuncionamento` (`turma_horario`).
 
+### `matricula`
+- **Representa:** Registro de matrícula acadêmica de um estudante na instituição de ensino.
+- **Campos Principais:**
+    - `pessoa_id`: BelongsTo `pessoa` (Aluno).
+    - `turma_id`: BelongsTo `turma` (nullable, suporta matrículas aguardando alocação de sala no ensalamento).
+    - `serie_id`: BelongsTo `serie` (nullable, série/ano escolar do estudante para fins de planejamento e ensalamento em lote).
+    - `periodo_letivo_id`: BelongsTo `periodo_letivo`.
+    - `situacao`: Enum `SituacaoMatricula` (`ativa`, `trancada`, `cancelada`, `concluido`, `reserva`, `pendente`, `evasao`).
+    - `data_ativacao`: Data em que a matrícula entrou em vigência.
+    - `data_desativacao`: Data de cancelamento ou encerramento da matrícula.
+- **Relacionamentos:**
+    - BelongsTo `pessoa`, BelongsTo `turma`, BelongsTo `serie`, BelongsTo `periodoLetivo`.
+    - HasOne `contrato`.
+    - HasMany `rematriculas` (via `matricula_origem_id`).
+    - HasMany `frequencias`.
+    - HasMany `notas`.
+
 ### `etapa_ensino_agregada`
 - **Representa:** Agrupamento/Categoria macro das etapas do Educacenso/INEP (ex: 301 - Educação Infantil, 302 - Ensino Fundamental, 304 - Ensino Médio, etc.).
 - **Campos Principais:** `codigo` (string/unique), `nome`.
