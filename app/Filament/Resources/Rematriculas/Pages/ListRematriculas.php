@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Rematriculas\Pages;
 
 use App\Filament\Resources\Rematriculas\RematriculaResource;
+use App\Models\VideoTutorial;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
@@ -26,6 +27,7 @@ class ListRematriculas extends ListRecords
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'rematriculas-lista')->orderBy('ordem')->first(),
                         ]),
                 ]),
         ];

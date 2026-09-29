@@ -754,3 +754,23 @@ Estrutura de ensino e turmas.
 
 ### Canais de mensagem (`App\Contracts\CanalMensagem`)
 - **Não é tabela**, é uma abstração de código: `EmailCanal` (envia e registra em `email_logs`) e `FcmCanal` (push para os usuários vinculados à Pessoa), resolvidos por `CanalMensagemManager`.
+
+---
+
+## 16. Central de Ajuda — Vídeos Tutoriais
+
+### `video_tutorial`
+- **Representa:** Vídeos curtos de treinamento exibidos na Central de Ajuda (`/admin/video-tutorials`) e, opcionalmente, dentro do modal de "Ajuda" de uma tela específica.
+- **Campos Principais:**
+  - `titulo`: Nome do vídeo.
+  - `descricao`: Texto curto explicando o que o vídeo ensina (nullable).
+  - `categoria`: Texto livre para agrupamento visual (ex: CRM, Secretaria, Acadêmico) — nullable.
+  - `chave_pagina`: Chave nullable/indexada que liga o vídeo ao modal de "Ajuda" de uma tela específica. Ver `App\Models\VideoTutorial::CHAVES_PAGINA` para a lista de chaves válidas (uma mesma chave pode ser reaproveitada por mais de uma página do mesmo fluxo).
+  - `arquivo`: Path no disco `public` (`storage/app/public/video-tutoriais/...`) do arquivo de vídeo enviado — nullable, tem prioridade sobre `url_externo` quando ambos estão preenchidos.
+  - `url_externo`: Link do YouTube/Vimeo, usado quando não há `arquivo` — nullable.
+  - `duracao_segundos`: Duração informada manualmente (não há detecção automática) — nullable.
+  - `ordem`: Inteiro para ordenação manual na listagem.
+  - `ativo`: Booleano; quando `false`, some tanto da Central de Ajuda quanto do modal de Ajuda da tela relacionada.
+- **Sem relacionamentos com outras tabelas** — é uma entidade independente, apenas linkada a telas do Filament via `chave_pagina` (string), não por FK.
+- **Acessores do Model:** `arquivo_url` (URL pública via `Storage::disk('public')`), `url_embed` (converte link do YouTube/Vimeo para URL de embed em iframe), `url_assistir` (`arquivo_url` ?? `url_externo`), `duracao_formatada` (ex: "1min 27s").
+- **Seeder:** `VideoTutorialSeeder` (não roda no `DatabaseSeeder` principal — é chamado sob demanda com `php artisan db:seed --class=VideoTutorialSeeder`, copiando os arquivos de vídeo para o disco `public` e criando os registros via `updateOrCreate` por `chave_pagina`).

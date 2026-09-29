@@ -58,6 +58,7 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsed(),
                 NavigationGroup::make('Sistema e Segurança')
                     ->collapsed(),
+                NavigationGroup::make('Ajuda'),
                 NavigationGroup::make('Filament Shield')
                     ->collapsed(),
             ])

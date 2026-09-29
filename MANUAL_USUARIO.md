@@ -1817,4 +1817,28 @@ Permite ao professor planejar o que vai lecionar antes da aula acontecer.
 
 ---
 
+## 🎬 38. Central de Ajuda — Vídeos Tutoriais (`/admin/video-tutorials`)
+
+A **Central de Ajuda** reúne vídeos curtos que ensinam a usar as principais funcionalidades do Torre360, acessível pelo grupo **Ajuda** do menu lateral.
+
+### 38.1 Assistir e Baixar Vídeos
+1. Em **Ajuda → Vídeos Tutoriais**, a listagem mostra título, categoria, duração e situação (ativo/inativo) de cada vídeo.
+2. **Assistir:** Abre o vídeo direto no navegador, em um player embutido — não precisa baixar nada. Funciona tanto para arquivos enviados ao sistema quanto para links do YouTube/Vimeo (o link é convertido automaticamente em player incorporado).
+3. **Baixar / Abrir Link:** Baixa o arquivo de vídeo, ou abre o link externo em uma nova aba, quando o vídeo estiver hospedado fora do sistema.
+
+### 38.2 Cadastro de um Novo Vídeo (`Create:VideoTutorial`)
+1. Clique em **Criar Vídeo Tutorial** e preencha **Título**, **Descrição** e **Categoria** (texto livre, ex: CRM, Secretaria, Acadêmico).
+2. Envie um **arquivo de vídeo** (até 40MB, formatos MP4/WebM/OGG) ou informe um **link externo** (YouTube/Vimeo). Se as duas opções forem preenchidas, o arquivo enviado tem prioridade sobre o link.
+3. **Tela Relacionada:** Selecione opcionalmente a tela do sistema à qual esse vídeo se refere. Quando preenchido, o vídeo passa a aparecer automaticamente dentro do botão de **Ajuda** daquela tela específica, além de continuar disponível na Central de Ajuda.
+4. **Ordem** define a posição de exibição na listagem; **Ativo** controla se o vídeo fica visível (um vídeo inativo some tanto da Central de Ajuda quanto do modal de Ajuda da tela relacionada).
+
+### 38.3 Vídeo Dentro do Botão de Ajuda de Cada Tela
+Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamente dentro do próprio modal de **Ajuda** daquela página, acima do texto explicativo de sempre. Hoje isso já está configurado para: **Kanban de Interessados**, **Acompanhamento de Rematrículas**, **Lançamento de Frequência** e o fluxo de **Avaliações** (Gestão de Avaliações, Cadastrar Avaliação e Lançamento de Notas em Grade).
+
+### 38.4 Permissões
+- **Ver e assistir:** Professor, Secretaria, Coordenador, Administrador e Super Administrador.
+- **Cadastrar, editar e excluir vídeos:** Secretaria, Administrador e Super Administrador.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

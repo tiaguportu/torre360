@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Avaliacaos\Pages;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
+use App\Models\VideoTutorial;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
@@ -26,6 +27,7 @@ class CreateAvaliacao extends CreateRecord
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'avaliacoes-notas')->orderBy('ordem')->first(),
                         ]),
                 ]),
         ];
