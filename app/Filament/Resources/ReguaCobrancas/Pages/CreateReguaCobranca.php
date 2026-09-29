@@ -6,10 +6,24 @@ use App\Filament\Resources\ReguaCobrancas\ReguaCobrancaResource;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class CreateReguaCobranca extends CreateRecord
 {
     protected static string $resource = ReguaCobrancaResource::class;
+
+    public function boot(): void
+    {
+        if (! Schema::hasTable('regua_cobrancas')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+    }
 
     protected function getHeaderActions(): array
     {

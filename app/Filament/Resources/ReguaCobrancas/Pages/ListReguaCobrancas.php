@@ -12,10 +12,24 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class ListReguaCobrancas extends ListRecords
 {
     protected static string $resource = ReguaCobrancaResource::class;
+
+    public function boot(): void
+    {
+        if (! Schema::hasTable('regua_cobrancas')) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+    }
 
     protected function getHeaderActions(): array
     {
