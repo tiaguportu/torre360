@@ -2,7 +2,12 @@
 
 namespace App\Filament\Resources\Interessados\Tables;
 
+use AmidEsfahani\FilamentTinyEditor\TinyEditor;
+use App\Enums\StatusComunicacaoEmMassa;
+use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
+use App\Jobs\EnviarComunicacaoEmMassaJob;
+use App\Models\ComunicacaoEmMassa;
 use App\Models\Interessado;
 use App\Models\MensagemWhatsappTemplate;
 use App\Models\StatusInteressado;
@@ -393,6 +398,42 @@ class InteressadosTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('enviarComunicacaoEmail')
+                        ->label('Enviar Comunicação por E-mail')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('info')
+                        ->visible(fn () => auth()->user()?->can('Create:ComunicacaoEmMassa') && auth()->user()?->can('Enviar:ComunicacaoEmMassa'))
+                        ->form([
+                            TextInput::make('assunto')
+                                ->label('Assunto')
+                                ->required()
+                                ->maxLength(255),
+                            TinyEditor::make('corpo')
+                                ->label('Mensagem')
+                                ->helperText('Use [Nome] para inserir o primeiro nome do destinatário. Só recebem quem tem e-mail cadastrado e não pediu para não receber comunicações.')
+                                ->required(),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $comunicacao = ComunicacaoEmMassa::create([
+                                'nome' => 'Envio em lote — '.now()->format('d/m/Y H:i'),
+                                'tipo_publico' => TipoPublicoComunicacao::Interessados,
+                                'filtros' => ['interessado_ids' => $records->pluck('id')->all()],
+                                'canal' => 'email',
+                                'assunto' => $data['assunto'],
+                                'corpo' => $data['corpo'],
+                                'status' => StatusComunicacaoEmMassa::Rascunho,
+                                'enviado_por_user_id' => auth()->id(),
+                            ]);
+
+                            EnviarComunicacaoEmMassaJob::dispatch($comunicacao);
+
+                            Notification::make()
+                                ->title('Envio iniciado')
+                                ->body('A comunicação para os '.$records->count().' lead(s) selecionado(s) foi colocada na fila de envio.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('atribuirConsultor')
                         ->label('Atribuir Consultor')
                         ->icon('heroicon-o-user-plus')

@@ -56,7 +56,16 @@ class Pessoa extends Model
             'sexo' => Sexo::class,
             'cor_raca' => CorRacaCast::class,
             'tipo_nacionalidade' => Nacionalidade::class,
+            'aceita_comunicacao' => 'boolean',
         ];
+    }
+
+    /**
+     * Pessoas que não pediram para não receber comunicações (LGPD).
+     */
+    public function scopeAceitamComunicacao(Builder $query): Builder
+    {
+        return $query->where('aceita_comunicacao', true);
     }
 
     public function matriculas(): HasMany

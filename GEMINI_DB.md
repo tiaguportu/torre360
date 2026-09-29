@@ -45,7 +45,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
-- **Campos Principais:** `nome`, `cpf` (armazenado apenas como dígitos numéricos, sem pontos ou traço), `data_nascimento`, `foto` (armazenamento privado), `email`, `sexo` (Enum), `cor_raca` (Enum - 0:Não Declarada, 1:Branca, 2:Preta, 3:Parda, 4:Amarela, 5:Indígena), `tipo_nacionalidade` (Enum - 1:Brasileira, 2:Naturalizado/Exterior, 3:Estrangeira), `nacionalidade_id` (Pais).
+- **Campos Principais:** `nome`, `cpf` (armazenado apenas como dígitos numéricos, sem pontos ou traço), `data_nascimento`, `foto` (armazenamento privado), `email`, `aceita_comunicacao` (boolean, padrão true — opt-out de comunicações em massa por LGPD; não afeta notificações individuais obrigatórias), `sexo` (Enum), `cor_raca` (Enum - 0:Não Declarada, 1:Branca, 2:Preta, 3:Parda, 4:Amarela, 5:Indígena), `tipo_nacionalidade` (Enum - 1:Brasileira, 2:Naturalizado/Exterior, 3:Estrangeira), `nacionalidade_id` (Pais).
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
@@ -243,6 +243,7 @@ Estrutura de ensino e turmas.
 - **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronograma_aula`.
 - **Campos Principais:** `matricula_id`, `cronograma_aula_id`, `situacao` (Enum/String: 'presente', 'ausente').
 - **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: frequencia_escolar`), gravando ações de criação, alteração e exclusão das frequências com a identificação do aluno, aula e situação atribuída.
+- **Observer:** `FrequenciaFaltaObserver` (registrado via atributo `#[ObservedBy]` no model) dispara `FrequenciaAusenciaNotification` para o(s) responsável(is) do aluno sempre que `situacao` é criada ou alterada para `'ausente'`. Não notifica quando a data da aula está fora do intervalo `data_ativacao`–`data_desativacao` da matrícula. Ver seção 14.
 
 ---
 
@@ -696,3 +697,32 @@ Estrutura de ensino e turmas.
   - `erro`: Mensagem de erro caso o envio falhe.
   - `data_envio`: Data (Y-m-d) em que o disparo foi concretizado (evita duplicações no mesmo dia).
 - **Relacionamentos:** BelongsTo `ReguaCobranca`, BelongsTo `Fatura`, BelongsTo `Pessoa`.
+
+---
+
+## 15. Comunicação: Canais e Disparo em Massa
+
+> A régua de cobrança (seção 14) já envia por portal/e-mail/push com sua própria lógica.
+> O que segue é uma camada mais genérica, para alertas individuais (ex: falta do aluno) e
+> disparos em massa fora do contexto financeiro (CRM).
+
+### `comunicacao_em_massa`
+- **Representa:** Um envio de e-mail para um grupo de pessoas (leads do CRM ou responsáveis de turma), processado em fila.
+- **Campos Principais:**
+  - `nome`: Identificação interna (não aparece para quem recebe).
+  - `tipo_publico`: Enum `TipoPublicoComunicacao` (`interessados`, `responsaveis_turma`) — define como `filtros` é interpretado.
+  - `filtros`: JSON com os critérios de segmentação:
+    - `interessados`: `interessado_ids` (seleção explícita, tem prioridade) ou `status_interessado_ids`/`origem_interessado_ids` (pelo menos um filtro é exigido — sem nenhum filtro nem seleção, não retorna ninguém).
+    - `responsaveis_turma`: `turma_ids` (responsáveis dos alunos com matrícula ativa nessas turmas).
+  - `canal`: Hoje só `'email'` (`CanalMensagemManager`); campo já preparado para outros canais.
+  - `assunto`, `corpo`: Conteúdo do e-mail; aceitam a variável `[Nome]`.
+  - `status`: Enum `StatusComunicacaoEmMassa` (`rascunho`, `enviando`, `concluida`, `falhou`).
+  - `total_destinatarios`, `total_enviados`, `total_falhas`: Contadores gravados ao final do envio.
+  - `enviado_por_user_id`: FK `users.id`. `enviado_em`: datetime.
+- **Relacionamentos:** BelongsTo `User` (`enviadoPor`).
+- **Serviço:** `ComunicacaoEmMassaService::destinatarios()` resolve `filtros` em uma lista de `Pessoa`, já excluindo quem não tem e-mail ou tem `aceita_comunicacao = false`.
+- **Job:** `EnviarComunicacaoEmMassaJob` (fila) envia via `EmailCanal`, atualiza os contadores/status e notifica quem criou o envio ao concluir.
+- **Origem do envio:** ação em lote **Enviar Comunicação por E-mail** na tabela de Interessados (cria com `filtros.interessado_ids` = seleção) ou a tela **CRM / Comercial → Comunicação em Massa** (segmentação por status/origem/turma).
+
+### Canais de mensagem (`App\Contracts\CanalMensagem`)
+- **Não é tabela**, é uma abstração de código: `EmailCanal` (envia e registra em `email_logs`) e `FcmCanal` (push para os usuários vinculados à Pessoa), resolvidos por `CanalMensagemManager`.

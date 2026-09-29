@@ -149,6 +149,18 @@ Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_
 
 ---
 
+### 8. 📣 Comunicação
+Canais de mensagem e disparo em massa. Detalhes em `docs/comunicacao_canais_alerta_falta_massa.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `CanalMensagem` (contrato) | Abstração de envio por e-mail (`EmailCanal`) ou push (`FcmCanal`), resolvida por `CanalMensagemManager` |
+| Alerta de falta | Observer em `FrequenciaEscolar`: ao lançar falta, notifica o(s) responsável(is) por e-mail, sino e push |
+| `ComunicacaoEmMassa` | Envio de e-mail segmentado (leads do CRM por status/origem, ou responsáveis por turma) ou para uma seleção explícita, processado em fila |
+| `Pessoa.aceita_comunicacao` | Opt-out de comunicações em massa (LGPD); não afeta notificações individuais obrigatórias |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
