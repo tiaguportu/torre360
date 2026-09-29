@@ -125,11 +125,12 @@ class LancamentoNotasGrade extends Page implements HasForms
                                 TextInput::make('aluno_nome')
                                     ->label('Aluno')
                                     ->disabled()
-                                    ->columnSpan(3),
+                                    ->columnSpan(['default' => 2, 'md' => 3]),
                                 Hidden::make('matricula_id'),
                                 TextInput::make('valor')
                                     ->label('Nota')
                                     ->numeric()
+                                    ->inputMode('decimal')
                                     ->minValue(0)
                                     ->maxValue(fn () => $this->avaliacaoAtual?->nota_maxima ?? 10)
                                     ->validationMessages([
@@ -139,7 +140,7 @@ class LancamentoNotasGrade extends Page implements HasForms
                                     ->live()
                                     ->extraInputAttributes(['wire:keydown.enter' => 'salvarNotas']),
                             ])
-                            ->columns(4)
+                            ->columns(['default' => 3, 'md' => 4])
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false),

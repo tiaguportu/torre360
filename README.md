@@ -200,7 +200,7 @@ Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_
    ```
    Acesse em: `http://127.0.0.1:8000/admin`
 
-   Usuários com papel `aluno` ou `responsavel` também podem entrar por um painel dedicado e simplificado (mesmo login/senha), com boletim, financeiro e documentos/contrato: `http://127.0.0.1:8000/portal`
+   Usuários com papel `aluno` ou `responsavel` também podem entrar por um painel dedicado e simplificado (mesmo login/senha), com notas, frequência, horários, calendário, boletim, financeiro e documentos/contrato: `http://127.0.0.1:8000/portal` (detalhes em `docs/portal_familia_notas_frequencia_horarios.md`)
 
 8. **Permissões RBAC (Shield):**
    ```bash

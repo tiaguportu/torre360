@@ -181,6 +181,7 @@ class LancarFrequencia extends EditRecord
                             ->schema([
                                 Select::make('matricula_id')
                                     ->label('Aluno')
+                                    ->hiddenLabel()
                                     ->options(fn (): array => Matricula::where('turma_id', $this->record->turma_id)
                                         ->with(['pessoa', 'periodoLetivo', 'turma'])
                                         ->get()
@@ -193,6 +194,8 @@ class LancarFrequencia extends EditRecord
                                     ->columnSpan(['md' => 1]),
                                 ToggleButtons::make('situacao')
                                     ->label('Situação')
+                                    ->hiddenLabel()
+                                    ->grouped()
                                     ->options([
                                         'presente' => 'Presente',
                                         'ausente' => 'Ausente',
