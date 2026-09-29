@@ -647,6 +647,34 @@ Estrutura de ensino e turmas.
   - `lida_em`: Data e hora de visualização.
 - **Relacionamentos:** BelongsTo `AtendimentoChamado`, BelongsTo `User`, BelongsTo `Pessoa`.
 
+---
 
+## 14. Régua de Cobrança e Gestão de Inadimplência
 
+### `regua_cobrancas`
+- **Representa:** Parâmetros e regras de disparo automatizado de lembretes e avisos de cobrança (preventivos, no dia e de atraso).
+- **Campos Principais:**
+  - `nome`: Identificação amigável da régua (ex: Lembrete Preventivo 5 dias, Vencimento Hoje, Notificação Crítica).
+  - `dias_offset`: Dias relativos ao vencimento (Negativo = antes do vencimento, 0 = no dia, Positivo = após o vencimento).
+  - `tipo_gatilho`: Enum/String (`antes_vencimento`, `no_vencimento`, `apos_vencimento`).
+  - `canal`: Meio de notificação (`email`, `portal`, `push`, `todos`).
+  - `assunto`: Título/assunto da mensagem com suporte a macros dinâmicas.
+  - `mensagem`: Conteúdo do lembrete com macros (`{{ALUNO_NOME}}`, `{{RESPONSAVEL_NOME}}`, `{{NUMERO_FATURA}}`, `{{VALOR}}`, `{{DATA_VENCIMENTO}}`, `{{DIAS_ATRASO}}`).
+  - `is_ativo`: Booleano para ligar/desligar a régua.
+  - `horario_envio`: Horário diário preferencial de envio.
+  - `ordem`: Ordem de exibição e processamento.
+- **Relacionamentos:** HasMany `ReguaCobrancaLog`.
 
+### `regua_cobranca_logs`
+- **Representa:** Histórico de auditoria e registro de disparos de lembretes vinculados a faturas específicas.
+- **Campos Principais:**
+  - `regua_cobranca_id`: FK `regua_cobrancas.id`.
+  - `fatura_id`: FK `faturas.id`.
+  - `pessoa_id`: FK `pessoa.id` (responsável notificado).
+  - `canal`: Canal efetivo do envio (`portal`, `email`, `push`).
+  - `destinatario`: E-mail ou identificador de destino.
+  - `mensagem_enviada`: Cópia fiel do texto renderizado com as variáveis resolvidas.
+  - `status_envio`: String (`sucesso`, `falha`).
+  - `erro`: Mensagem de erro caso o envio falhe.
+  - `data_envio`: Data (Y-m-d) em que o disparo foi concretizado (evita duplicações no mesmo dia).
+- **Relacionamentos:** BelongsTo `ReguaCobranca`, BelongsTo `Fatura`, BelongsTo `Pessoa`.

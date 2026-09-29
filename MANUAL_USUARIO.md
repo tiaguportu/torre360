@@ -1705,7 +1705,25 @@ O comando Artisan `php artisan cobranca:executar-regua` está programado no agen
 
 ---
 
+## 🚀 36. Atualização do Sistema e Manutenção de Banco em Produção (`/admin/git-pull`)
+
+A ferramenta de atualização do sistema permite aos Super Administradores manter o ambiente de produção sincronizado com a branch `main` do repositório Git e gerenciar a aplicação de esquemas de banco de dados e otimização de caches diretamente pelo painel administrativo.
+
+### 36.1 Recursos Disponíveis:
+1. **Atualização Completa (Git Pull Origin Main):**
+   - Baixa os commits mais recentes do repositório remoto.
+   - Executa a limpeza completa de cache de rotas, configurações, visualizações e componentes (`optimize:clear`).
+   - Aplica automaticamente todas as migrações de banco de dados pendentes de forma segura (`migrate --force`).
+   - Apresenta feedback com o log exato das alterações baixadas e migrações executadas.
+2. **Executar Migrações do Banco:**
+   - Executa diretamente o comando de migrações (`migrate --force`) do Laravel utilizando o driver Artisan nativo da aplicação.
+   - Cria imediatamente novas tabelas e colunas adicionadas ao sistema, sem depender de comandos no terminal do servidor de hospedagem.
+3. **Limpar Caches do Sistema:**
+   - Limpa os caches de compilação do Blade, esquemas do Filament, rotas e configurações para garantir que novas telas e recursos apareçam imediatamente.
+
+### 36.2 Controle de Acesso:
+- A página e o atalho de sincronização no cabeçalho do painel são de visibilidade e execução estritamente restritas a usuários autenticados com o papel de **Super Administrador** (`super_admin`).
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
-
-
-

@@ -94,14 +94,13 @@ class ReguaCobrancasTable
                     ->schema([
                         Select::make('fatura_id')
                             ->label('Fatura de Teste')
-                            ->options(
-                                Fatura::whereIn('status', ['pendente', 'atrasado', 'parcial'])
-                                    ->with('contrato.matricula.pessoa')
-                                    ->limit(30)
-                                    ->get()
-                                    ->mapWithKeys(fn (Fatura $f) => [
-                                        $f->id => "#{$f->id} - Aluno: ".($f->contrato?->matricula?->pessoa?->nome ?? 'N/I')." (Venc: {$f->vencimento?->format('d/m/Y')})",
-                                    ])
+                            ->options(fn () => Fatura::whereIn('status', ['pendente', 'atrasado', 'parcial'])
+                                ->with('contrato.matricula.pessoa')
+                                ->limit(30)
+                                ->get()
+                                ->mapWithKeys(fn (Fatura $f) => [
+                                    $f->id => "#{$f->id} - Aluno: ".($f->contrato?->matricula?->pessoa?->nome ?? 'N/I')." (Venc: {$f->vencimento?->format('d/m/Y')})",
+                                ])
                             )
                             ->required()
                             ->searchable(),
