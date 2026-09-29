@@ -25,17 +25,18 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 |---|---|
 | 🎯 **CRM / Comercial** | Gestão de Interessados e Kanban de Prospecção |
 | 🎓 **Acadêmico** | Matrículas, Alunos, Turmas, Cursos e Séries |
-| ✅ **Avaliações** | Lançamento de Notas, Avaliações e Etapas Acadêmicas |
+| ✅ **Avaliações** | Lançamento de Notas e Avaliações |
 | 📅 **Calendário e Horários** | Cronograma de Aulas, Horários e Dias não letivos |
-| 💰 **Financeiro** | Faturas, Contratos, Bancos, Conciliação e Plano de Contas |
+| 💰 **Financeiro** | Faturas, Contratos, Fornecedores e Transações Bancárias |
 | 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
 | 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
-| 📖 **Currículo (BNCC)** | Áreas de Conhecimento, Campos de Experiência e Habilidades |
+| 📖 **Currículo (BNCC)** | Habilidades vinculadas à BNCC |
 | 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
-| 📍 **Localização e Cadastros** | Cidades, Estados, Endereços e Dados Base |
-| 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield), Logs e Configurações Gerais |
+| 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
+| ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
+| 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield) e Logs de Auditoria |
 
 ### 2.1 Barra Lateral Dinâmica (Perfil Responsável)
 
