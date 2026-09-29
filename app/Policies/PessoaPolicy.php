@@ -92,7 +92,8 @@ class PessoaPolicy
         return $authUser->can('DetachEndereco:Pessoa');
     }
 
-    public function attachAluno(AuthUser $authUser, Pessoa $pessoa): bool
+    // $pessoa é opcional: a AttachAction do Filament (header action) autoriza sem um registro alvo, pois o vínculo ainda não existe.
+    public function attachAluno(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('AttachAluno:Pessoa');
     }
@@ -102,7 +103,8 @@ class PessoaPolicy
         return $authUser->can('DetachAluno:Pessoa');
     }
 
-    public function attachResponsavel(AuthUser $authUser, Pessoa $pessoa): bool
+    // $pessoa é opcional pelo mesmo motivo de attachAluno(): AttachAction é header action, sem registro alvo no momento da autorização.
+    public function attachResponsavel(AuthUser $authUser, ?Pessoa $pessoa = null): bool
     {
         return $authUser->can('AttachResponsavel:Pessoa');
     }
