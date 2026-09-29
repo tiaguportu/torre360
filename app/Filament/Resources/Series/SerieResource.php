@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Series;
 use App\Filament\Resources\Series\Pages\CreateSerie;
 use App\Filament\Resources\Series\Pages\EditSerie;
 use App\Filament\Resources\Series\Pages\ListSeries;
+use App\Filament\Resources\Series\RelationManagers\MatrizCurricularRelationManager;
 use App\Filament\Resources\Series\RelationManagers\TurmasRelationManager;
 use App\Filament\Resources\Series\Schemas\SerieForm;
 use App\Filament\Resources\Series\Tables\SeriesTable;
@@ -42,6 +43,7 @@ class SerieResource extends Resource
     {
         return [
             TurmasRelationManager::class,
+            MatrizCurricularRelationManager::class,
         ];
     }
 

@@ -71,4 +71,9 @@ class TurmaPolicy
     {
         return $authUser->can('Reorder:Turma');
     }
+
+    public function gerarCronograma(AuthUser $authUser, Turma $turma): bool
+    {
+        return $authUser->can('GerarCronograma:Turma');
+    }
 }
