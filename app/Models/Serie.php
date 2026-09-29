@@ -26,4 +26,9 @@ class Serie extends Model
     {
         return $this->hasMany(Habilidade::class);
     }
+
+    public function matrizCurricular(): HasMany
+    {
+        return $this->hasMany(MatrizCurricular::class);
+    }
 }

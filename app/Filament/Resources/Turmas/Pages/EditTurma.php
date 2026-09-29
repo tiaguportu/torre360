@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\Turmas\Pages;
 
 use App\Filament\Resources\Turmas\TurmaResource;
+use App\Models\Turma;
+use App\Services\MatrizCurricularService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTurma extends EditRecord
@@ -16,6 +19,23 @@ class EditTurma extends EditRecord
     {
         return [
             DeleteAction::make(),
+            Action::make('sincronizarMatrizCurricular')
+                ->label('Sincronizar Disciplinas da Matriz')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalDescription('Adiciona a esta turma as disciplinas da matriz curricular da série que ainda não estiverem vinculadas. Disciplinas já vinculadas não são alteradas.')
+                ->visible(fn () => auth()->user()->can('Update:Turma'))
+                ->action(function () {
+                    /** @var Turma $turma */
+                    $turma = $this->record;
+                    $total = app(MatrizCurricularService::class)->sincronizarTurmaDisciplinas($turma);
+
+                    Notification::make()
+                        ->title($total > 0 ? "{$total} disciplina(s) adicionada(s)." : 'Nenhuma disciplina nova para adicionar.')
+                        ->success()
+                        ->send();
+                }),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')

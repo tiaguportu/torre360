@@ -6,6 +6,7 @@ use App\Filament\Resources\Turmas\Pages\CreateTurma;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\Pages\ListTurmas;
 use App\Filament\Resources\Turmas\RelationManagers\DisciplinasRelationManager;
+use App\Filament\Resources\Turmas\RelationManagers\GradeHorariosRelationManager;
 use App\Filament\Resources\Turmas\RelationManagers\HabilidadesRelationManager;
 use App\Filament\Resources\Turmas\RelationManagers\MatriculasRelationManager;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
@@ -74,6 +75,7 @@ class TurmaResource extends Resource
             MatriculasRelationManager::class,
             DisciplinasRelationManager::class,
             HabilidadesRelationManager::class,
+            GradeHorariosRelationManager::class,
         ];
     }
 

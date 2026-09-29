@@ -13,6 +13,7 @@ use App\Models\TemplateCracha;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
 use App\Services\Educacenso\EducacensoTurmaExporter;
+use App\Services\GradeHorarioService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -274,6 +275,23 @@ class TurmasTable
                         $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
                         NotaHabilidade::whereIn('matricula_id', $record->matriculas()->pluck('id'))->exists()
                     )),
+                Action::make('gerarCronograma')
+                    ->label('Gerar Cronograma do Período')
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('Gerar Cronograma do Período')
+                    ->modalDescription('Cria as aulas do diário (cronograma) para todo o período letivo da turma, a partir da grade horária cadastrada. Aulas já existentes na mesma data, disciplina e horário não são duplicadas. Dias não letivos são pulados automaticamente.')
+                    ->modalSubmitActionLabel('Gerar')
+                    ->visible(fn (Turma $record) => auth()->user()->can('gerarCronograma', $record) && $record->gradeHorarios()->exists())
+                    ->action(function (Turma $record) {
+                        $total = app(GradeHorarioService::class)->gerarCronograma($record);
+
+                        Notification::make()
+                            ->title($total > 0 ? "{$total} aula(s) criada(s) no cronograma." : 'Nenhuma aula nova para criar (grade sem alteração ou já gerada).')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

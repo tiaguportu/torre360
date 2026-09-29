@@ -66,6 +66,31 @@ class Turma extends Model
         return $this->hasMany(CronogramaAula::class);
     }
 
+    public function gradeHorarios(): HasMany
+    {
+        return $this->hasMany(GradeHorario::class);
+    }
+
+    public function planosAula(): HasMany
+    {
+        return $this->hasMany(PlanoAula::class);
+    }
+
+    /**
+     * Alunos com matrícula ativa hoje (usado para validar capacidade de sala).
+     */
+    public function matriculasAtivasCount(): int
+    {
+        return $this->matriculas()
+            ->where(function ($q) {
+                $q->whereNull('data_ativacao')->orWhereDate('data_ativacao', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('data_desativacao')->orWhereDate('data_desativacao', '>', now());
+            })
+            ->count();
+    }
+
     public function tiposDocumentos(): BelongsToMany
     {
         return $this->belongsToMany(TipoDocumento::class, 'tipo_documento_turma');

@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Turmas\Pages;
 
 use App\Filament\Resources\Turmas\TurmaResource;
+use App\Models\Turma;
+use App\Services\MatrizCurricularService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
@@ -10,6 +12,18 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateTurma extends CreateRecord
 {
     protected static string $resource = TurmaResource::class;
+
+    /**
+     * Ao criar a turma, já popula as disciplinas previstas na matriz
+     * curricular da série (quando houver), sem impedir o ajuste manual depois.
+     */
+    protected function afterCreate(): void
+    {
+        /** @var Turma $turma */
+        $turma = $this->record;
+
+        app(MatrizCurricularService::class)->sincronizarTurmaDisciplinas($turma);
+    }
 
     protected function getHeaderActions(): array
     {

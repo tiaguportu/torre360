@@ -10,6 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Remove a tabela singular legada que está em duplicidade
         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('habilidade');
         Schema::enableForeignKeyConstraints();

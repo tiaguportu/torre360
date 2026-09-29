@@ -176,7 +176,24 @@ Estrutura de ensino e turmas.
 
 ### `turma_disciplina`
 - **Representa:** Tabela pivô que define a grade curricular (disciplinas) de uma turma específica.
-- **Campos:** `turma_id`, `disciplina_id`.
+- **Campos:** `turma_id`, `disciplina_id`, `professor_id` (pivot, nullable).
+
+### `matriz_curricular`
+- **Representa:** Grade de referência (série × disciplina): o que uma turma dessa série deve ter e a carga horária semanal esperada. É a origem do vínculo `turma_disciplina` — ao criar uma turma, `MatrizCurricularService::sincronizarTurmaDisciplinas()` popula automaticamente as disciplinas faltantes (sem sobrescrever vínculos manuais já existentes).
+- **Campos Principais:** `serie_id`, `disciplina_id`, `carga_horaria_semanal` (nullable), `obrigatoria` (boolean, padrão true), `ordem` (nullable). Único por `(serie_id, disciplina_id)`.
+- **Relacionamentos:** BelongsTo `serie`, BelongsTo `disciplina`.
+- **UI:** Relation manager na tela de Série; ação "Sincronizar Disciplinas da Matriz" na tela de Turma.
+
+### `sala`
+- **Representa:** Ambiente físico da unidade (sala de aula, laboratório, quadra etc.), usado para reservar espaço na grade horária. **Não confundir** com o "ensalamento" de `EnsalamentoService`, que distribui alunos entre turmas.
+- **Campos Principais:** `unidade_id`, `nome`, `capacidade` (nullable), `tipo` (nullable), `ativa` (boolean, padrão true).
+- **Relacionamentos:** BelongsTo `unidade`, HasMany `grade_horario`.
+
+### `grade_horario`
+- **Representa:** Horário recorrente da grade semanal de uma turma — vale para todas as semanas do período letivo. É a origem do `cronograma_aula` gerado por `GradeHorarioService::gerarCronograma()`.
+- **Campos Principais:** `turma_id`, `disciplina_id`, `professor_id` (FK `pessoa`, nullable), `sala_id` (nullable), `dia_semana` (mesma convenção de `turma_horario`: 0=Domingo...6=Sábado), `hora_inicio`, `hora_fim`.
+- **Relacionamentos:** BelongsTo `turma`, `disciplina`, `professor` (Pessoa), `sala`.
+- **Conflitos:** `GradeHorarioConflitoService::conflitos()` detecta sobreposição de horário (mesmo dia da semana + intervalo cruzado) para a mesma turma, o mesmo professor ou a mesma sala; usado para bloquear o cadastro na UI (RelationManager da Turma).
 
 ### `matricula`
 - **Representa:** Vínculo do aluno com uma turma em um período letivo.
@@ -219,6 +236,7 @@ Estrutura de ensino e turmas.
 ### `habilidades`
 - **Representa:** Banco de competências e habilidades (BNCC ou Institucionais).
 - **Campos Principais:** `codigo` (BNCC), `nome`, `tipo` (Enum: BNCC, Institucional), `campo_experiencia_id` (BelongsTo).
+- **Nome de tabela (histórico):** uma migração antiga renomeia `habilidades` para o singular `habilidade`, e migrações posteriores tratavam a existência de qualquer uma das duas como "schema já correto". Numa instalação do zero isso deixava a tabela apenas com o schema legado (sem `codigo`/`nome`/`tipo`) e uma migração seguinte a excluía por completo, quebrando qualquer teste ou instalação nova (`2026_04_18_000000_create_habilidades_tables.php` corrigido para checar a coluna `codigo`, não só o nome da tabela). No banco já em uso isso não muda nada — a tabela `habilidades` já existia com o schema correto.
 
 ### `turma_habilidade`
 - **Representa:** Tabela pivô que define quais habilidades serão avaliadas em uma turma específica.
@@ -237,6 +255,16 @@ Estrutura de ensino e turmas.
 - **Representa:** Planejamento e agendamento de aulas.
 - **Relacionamentos:** BelongsTo `turma`, BelongsTo `disciplina`, BelongsTo `pessoa` (Professor), HasMany `frequencias`.
 - **Campos Principais:** `turma_id`, `disciplina_id`, `pessoa_id`, `data`, `hora_inicio`, `hora_fim`, `conteudo_ministrado`.
+
+### `plano_aula`
+- **Representa:** O que o professor planeja lecionar numa data futura (objetivos, metodologia, recursos, avaliação prevista e habilidades BNCC). Ao ser executado (`PlanoAulaService::executar()`), gera o registro real no diário (`cronograma_aula`) e não pode mais ser editado nem executado de novo.
+- **Campos Principais:** `turma_id`, `disciplina_id`, `professor_id` (FK `pessoa`, nullable), `data_prevista`, `objetivos`, `metodologia` (nullable), `recursos` (nullable), `avaliacao` (nullable), `anexo_material` (json, nullable), `cronograma_aula_id` (nullable, preenchido ao executar), `executado_em` (nullable).
+- **Relacionamentos:** BelongsTo `turma`, `disciplina`, `professor` (Pessoa), `cronogramaAula`; BelongsToMany `habilidades` (via `plano_aula_habilidade`).
+- **Escopo por professor:** mesmo critério de `CronogramaAulaResource` (professor da disciplina na turma, professor conselheiro, ou autor do plano).
+
+### `plano_aula_habilidade`
+- **Representa:** Tabela pivô entre `plano_aula` e `habilidades` (habilidades BNCC previstas), copiada para `cronograma_aula_habilidade` quando o plano é executado.
+- **Campos:** `plano_aula_id`, `habilidade_id`.
 
 ### `frequencia_escolar`
 - **Representa:** Presença ou falta dos alunos em uma aula do cronograma.
