@@ -155,6 +155,16 @@ class InteressadoForm
                                     ->required()
                                     ->native(false),
 
+                                Select::make('campanha_marketing_id')
+                                    ->label('Campanha de Marketing')
+                                    ->relationship('campanha', 'nome')
+                                    ->searchable()
+                                    ->preload()
+                                    ->native(false)
+                                    ->helperText(fn (?Interessado $record): ?string => filled($record?->utm_source) || filled($record?->utm_campaign)
+                                        ? 'UTM capturado: '.collect([$record->utm_source, $record->utm_medium, $record->utm_campaign])->filter()->implode(' / ')
+                                        : null),
+
                                 Select::make('usuario_id')
                                     ->label('Consultor Responsável')
                                     ->relationship('usuario', 'name')

@@ -21,6 +21,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Notifications\WelcomeUserMail;
+use App\Services\InteressadoMatriculaService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
@@ -44,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 
 class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 {
@@ -73,13 +75,35 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
     public ?array $data = [];
 
+    /**
+     * Lead do CRM que originou a matrícula (rota `?interessado={id}`). Travado
+     * para não ser alterado pelo cliente entre as requisições do Livewire.
+     */
+    #[Locked]
+    public ?int $interessadoId = null;
+
     public function mount(): void
     {
-        $this->form->fill([
+        $dados = [
             'data_ativacao' => now()->toDateString(),
             'situacao' => SituacaoMatricula::ATIVA->value,
             'periodo_letivo_id' => PeriodoLetivo::latest('id')->value('id'),
-        ]);
+        ];
+
+        $interessado = Interessado::with(['pessoa', 'dependentes.serie.curso'])->find(request()->integer('interessado'));
+
+        if ($interessado) {
+            $this->interessadoId = $interessado->id;
+            $dados = array_merge($dados, InteressadoMatriculaService::dadosParaWizard($interessado));
+
+            Notification::make()
+                ->title('Dados do lead carregados')
+                ->body("Formulário pré-preenchido com os dados de {$interessado->pessoa?->nome}. Revise e complete as informações.")
+                ->info()
+                ->send();
+        }
+
+        $this->form->fill($dados);
     }
 
     protected function getHeaderActions(): array
@@ -195,7 +219,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 // Campo oculto para guardar o ID de pessoa já existente
                 TextInput::make('pessoa_id_existente')
                     ->hidden()
-                    ->dehydrated(),
+                    ->dehydrated()
+                    ->dehydratedWhenHidden(),
 
                 TextInput::make('nome')
                     ->required()
@@ -548,7 +573,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 $aluno = $this->buscarOuCriarPessoa($alunoData);
 
                 // ── Endereço do Aluno (apenas se não existia antes) ─────
-                if (! $alunoData['pessoa_id_existente'] && (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id']))) {
+                if (! ($alunoData['pessoa_id_existente'] ?? null) && (! empty($alunoData['logradouro']) || ! empty($alunoData['cidade_id']))) {
                     $endereco = Endereco::create([
                         'cidade_id' => $alunoData['cidade_id'] ?? null,
                         'logradouro' => $alunoData['logradouro'] ?? null,
@@ -593,7 +618,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 $responsavelPessoa = $this->buscarOuCriarPessoa($respData);
 
                 // Endereço do responsável (apenas se não existia antes)
-                if (! $respData['pessoa_id_existente'] && (! empty($respData['logradouro']) || ! empty($respData['cidade_id']))) {
+                if (! ($respData['pessoa_id_existente'] ?? null) && (! empty($respData['logradouro']) || ! empty($respData['cidade_id']))) {
                     $enderecoResp = Endereco::create([
                         'cidade_id' => $respData['cidade_id'] ?? null,
                         'logradouro' => $respData['logradouro'] ?? null,
@@ -636,6 +661,14 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                             'percentual' => $respData['percentual'] ?? 100,
                         ]);
                     }
+                }
+            }
+
+            if ($this->interessadoId) {
+                $interessadoOrigem = Interessado::find($this->interessadoId);
+
+                if ($interessadoOrigem) {
+                    InteressadoMatriculaService::registrarConversao($interessadoOrigem);
                 }
             }
 
@@ -731,7 +764,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             ->first();
 
         if ($interessado) {
-            $interessado->update(['data_conversao' => now()]);
+            InteressadoMatriculaService::registrarConversao($interessado);
         }
     }
 

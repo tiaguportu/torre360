@@ -16,6 +16,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\LeadScoreService;
+use App\Services\UtmTracker;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
@@ -26,8 +27,10 @@ use Illuminate\View\View;
 
 class CaptacaoInteressadoController extends Controller
 {
-    public function show(): View
+    public function show(Request $request): View
     {
+        UtmTracker::capturar($request);
+
         $unidades = Unidade::orderBy('nome')->get();
 
         $series = Serie::with('curso')
@@ -107,6 +110,8 @@ class CaptacaoInteressadoController extends Controller
             ]
         );
 
+        $this->registrarAtribuicao($interessado, UtmTracker::atribuicao($request));
+
         $this->salvarDependentes($interessado, $validated);
 
         LeadScoreService::recalcular($interessado);
@@ -126,6 +131,21 @@ class CaptacaoInteressadoController extends Controller
                 'whatsapp_unidade' => $primeiraUnidade?->celular_whatsapp ?? null,
                 'nome_unidade' => $primeiraUnidade?->nome ?? null,
             ]);
+    }
+
+    /**
+     * Grava a atribuição de campanha/UTM apenas se o lead ainda não tiver uma
+     * (first touch: um novo envio do mesmo contato não reescreve a origem).
+     *
+     * @param  array<string, mixed>  $atribuicao
+     */
+    private function registrarAtribuicao(Interessado $interessado, array $atribuicao): void
+    {
+        if ($atribuicao === [] || filled($interessado->utm_source) || filled($interessado->utm_campaign) || filled($interessado->campanha_marketing_id)) {
+            return;
+        }
+
+        $interessado->update($atribuicao);
     }
 
     /**
