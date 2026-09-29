@@ -141,6 +141,18 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - Classifica a **Temperatura** do Lead (🔥 Quente, 🟡 Morno, 🔵 Frio) analisando o tom e urgência da mensagem.
    - Cadastra/vincula a `Pessoa`, o `Interessado` e os `Dependentes` no banco de dados com um único clique!
 
+### 3.9 Comunicação em Massa por E-mail
+Envie um mesmo e-mail para um grupo de pessoas de uma só vez, sem precisar selecionar contato por contato.
+
+1. **Pela tabela de Interessados:** selecione os leads desejados (caixas de seleção) e use a ação em lote **Enviar Comunicação por E-mail**. Informe o assunto e a mensagem (editor de texto rico) e confirme — o envio é feito em segundo plano.
+2. **Por segmento, em CRM / Comercial → Comunicação em Massa:** crie uma nova comunicação escolhendo o **público**:
+   - **Interessados (CRM):** filtre por **status** do lead e/ou **origem**. É preciso escolher ao menos um filtro, para evitar enviar para "todos os leads" sem querer.
+   - **Responsáveis por turma:** escolha uma ou mais turmas; o e-mail vai para os responsáveis dos alunos com matrícula ativa nelas.
+3. Escreva o **assunto** e a **mensagem**. Use `[Nome]` para inserir automaticamente o primeiro nome de cada destinatário.
+4. Salve como rascunho. A lista mostra a quantidade estimada de **destinatários**. Clique em **Enviar** para confirmar (a tela mostra quantas pessoas vão receber antes de você confirmar) — o envio roda em fila e, ao terminar, você recebe um aviso no sininho com o total enviado e eventuais falhas.
+5. **Quem não recebe:** pessoas sem e-mail cadastrado e pessoas que desativaram o campo **"Aceita receber comunicações da escola"** no próprio cadastro (ficha de Pessoa) — veja a seção 4.1. Isso não afeta notificações individuais obrigatórias (boletim, ocorrências, financeiro), que continuam sendo enviadas normalmente.
+6. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
+
 ---
 
 ## 📍 13. Gestão de Unidades e Canais Digitais
@@ -167,6 +179,7 @@ Uma **Pessoa** no sistema é a entidade central. Ela pode acumular múltiplos pa
    - **Agilidade no Preenchimento:** Comece digitando o **CEP**. Ao sair do campo (ou pressionar TAB), o sistema consulta automaticamente a base do **ViaCEP** e preenche para você o **Logradouro**, **Bairro** e a **Cidade/Estado**.
    - **Tipos de Endereço:** Escolha o **Tipo** (ex: Residencial ou Comercial) e complete com o **Número** e **Complemento** (apartamento, bloco, etc).
 5. **Foto:** Use o editor integrado para ajustar a foto de perfil.
+6. **Aceita receber comunicações da escola:** ativado por padrão. Desative se a pessoa pedir para não receber e-mails de comunicação em massa (campanhas, avisos gerais — veja a seção 3.9). Notificações individuais obrigatórias (boletim, ocorrências, financeiro) não são afetadas por essa opção.
 
 ### 4.2 Segurança e Privacidade das Fotos
 1. As fotos de perfil das pessoas são armazenadas de forma segura em um **disco privado**.
@@ -213,6 +226,7 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 3. Selecione o Cronograma de Aula do dia e utilize a ação **Frequência** para realizar o lançamento da chamada individual no diário de classe.
 4. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
 5. **Auditoria e Segurança:** Toda ação de lançamento, alteração ou exclusão de frequência escolar (presença/ausência) é automaticamente auditada e registrada no log de atividades para controle e rastreabilidade dos lançamentos feitos por professores e administradores.
+6. **Alerta de Falta ao Responsável:** Ao marcar um aluno como **Ausente** (na chamada individual ou em lote), o(s) responsável(is) cadastrado(s) recebem automaticamente um aviso por e-mail, sininho e push, com a disciplina e a data da falta. O alerta não é enviado para faltas lançadas em datas fora do período em que a matrícula estava ativa (ex: antes da ativação ou após o desligamento do aluno).
 
 ### 5.3 Boletim do Aluno
 1. Na visualização de **Matrículas**, use a ação **Boletim**.
@@ -663,6 +677,7 @@ O Torre360 possui um sistema central de notificações em tempo real que garante
 
 ### 11.2 Principais Notificações
 - **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado. Chega por e-mail e push para os alunos e seus responsáveis financeiros.
+- **Falta do Aluno:** Enviada ao(s) responsável(is) sempre que uma falta é lançada para o aluno (veja a seção 5.2).
 - **Lançamento de Frequência Pendente:** Alerta enviado aos professores quando uma aula em seu cronograma ainda não teve a frequência lançada. Agora também disponível via Push e Sininho.
 - **Agendamento de Preceptoria:** Notificação multicanal disparada sempre que uma nova preceptoria é marcada ou cancelada. São notificados o solicitante, o professor, o aluno e seus responsáveis legais.
 - **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin' ou 'secretaria' recebem notificações sempre que um novo documento é inserido ou removido.
