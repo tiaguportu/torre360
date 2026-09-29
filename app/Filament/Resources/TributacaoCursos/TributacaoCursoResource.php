@@ -21,9 +21,9 @@ class TributacaoCursoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Tributações dos Cursos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 9;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptPercent;
 

@@ -34,7 +34,9 @@ class ConfiguracaoResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Configurações';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Sistema e Segurança';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+
+    protected static ?int $navigationSort = 19;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog';
 

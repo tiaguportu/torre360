@@ -19,7 +19,7 @@ class AtendimentoSetorResource extends Resource implements HasShieldPermissions
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Comunicação Escolar';
+    protected static \UnitEnum|string|null $navigationGroup = 'Configurações';
 
     protected static ?string $modelLabel = 'Setor de Atendimento';
 
@@ -27,7 +27,7 @@ class AtendimentoSetorResource extends Resource implements HasShieldPermissions
 
     protected static ?string $slug = 'atendimento-setores';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 18;
 
     public static function getPermissionPrefixes(): array
     {

@@ -21,7 +21,9 @@ class EtapaAvaliativaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Etapas Avaliativas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Avaliações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+
+    protected static ?int $navigationSort = 14;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedQueueList;
 

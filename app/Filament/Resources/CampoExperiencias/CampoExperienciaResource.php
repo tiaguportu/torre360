@@ -32,9 +32,9 @@ class CampoExperienciaResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Campos de Experiência';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Currículo (BNCC)';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 16;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBookmark;
 

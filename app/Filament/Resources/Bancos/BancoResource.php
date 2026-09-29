@@ -21,9 +21,9 @@ class BancoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Bancos';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 5;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
 

@@ -21,9 +21,9 @@ class AreaConhecimentoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Áreas de Conhecimento';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Acadêmico';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 15;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedVariable;
 

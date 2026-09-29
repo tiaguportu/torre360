@@ -21,9 +21,9 @@ class CodigoBacenResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Códigos BACEN';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 6;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
 

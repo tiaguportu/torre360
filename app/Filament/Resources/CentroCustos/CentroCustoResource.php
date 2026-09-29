@@ -21,9 +21,9 @@ class CentroCustoResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Centros de Custo';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedChartPie;
 

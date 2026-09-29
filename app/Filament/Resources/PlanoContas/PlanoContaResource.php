@@ -21,9 +21,9 @@ class PlanoContaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Plano de Contas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 8;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedListBullet;
 

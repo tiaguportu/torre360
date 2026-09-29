@@ -21,7 +21,7 @@ class CidadeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Cidades';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Localização e Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
     protected static ?int $navigationSort = 3;
 

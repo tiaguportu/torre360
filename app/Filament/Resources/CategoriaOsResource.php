@@ -19,7 +19,9 @@ class CategoriaOsResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-tag';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Operacional';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+
+    protected static ?int $navigationSort = 12;
 
     protected static ?string $modelLabel = 'Categoria de OS';
 

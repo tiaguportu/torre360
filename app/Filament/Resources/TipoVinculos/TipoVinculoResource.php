@@ -22,7 +22,9 @@ class TipoVinculoResource extends Resource
 {
     protected static ?string $model = TipoVinculo::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Localização e Cadastros';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+
+    protected static ?int $navigationSort = 4;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLink;
 
