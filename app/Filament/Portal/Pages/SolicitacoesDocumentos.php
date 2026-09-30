@@ -131,8 +131,8 @@ class SolicitacoesDocumentos extends Page implements HasTable
                     ->label('Baixar PDF')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
-                    ->visible(fn (SolicitacaoDocumento $record) => $record->status === StatusSolicitacaoDocumento::Disponivel && ! empty($record->arquivo_path) && Storage::disk('public')->exists($record->arquivo_path))
-                    ->url(fn (SolicitacaoDocumento $record) => Storage::disk('public')->url($record->arquivo_path))
+                    ->visible(fn (SolicitacaoDocumento $record) => $record->status === StatusSolicitacaoDocumento::Disponivel && ! empty($record->arquivo_path) && (Storage::disk('local')->exists($record->arquivo_path) || Storage::disk('public')->exists($record->arquivo_path)))
+                    ->url(fn (SolicitacaoDocumento $record) => route('documentos.visualizar', ['path' => $record->arquivo_path]))
                     ->openUrlInNewTab(),
 
                 Action::make('conferir_qr')
