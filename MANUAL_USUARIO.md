@@ -395,11 +395,29 @@ Rotina de fechamento que consolida as etapas avaliativas de cada disciplina e de
 2. Selecione o **Período Letivo** e, opcionalmente, uma **Turma** específica (deixe em branco para processar todas as turmas do período de uma vez).
 3. Clique em **Calcular Situação Final**. O sistema irá, para cada aluno com matrícula ativa ou concluída e cada disciplina de sua turma:
    - Calcular a **média simples** entre as médias de todas as Etapas Avaliativas (bimestres/trimestres) do período letivo.
-   - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota **substitui a menor média de etapa**, desde que seja melhor do que ela — o mesmo princípio já usado na substituição de notas dentro do boletim.
+   - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota substitui média(s) de etapa conforme o modo de recuperação configurado no Período Letivo (item 5.10.1 abaixo).
    - Classificar o resultado conforme as notas de corte configuradas no cadastro do **Período Letivo** (campos **Nota Mínima para Aprovação**, padrão 7,0, e **Nota Mínima para Recuperação**, padrão 5,0): média igual ou acima da nota de aprovação = **Aprovado**; entre a nota de recuperação e a de aprovação = **Recuperação**; abaixo da nota de recuperação = **Reprovado**.
 4. O resultado é exibido na própria página, agrupado por turma, com aluno, disciplina, média final e um selo colorido de situação (verde = Aprovado, amarelo = Recuperação, vermelho = Reprovado).
 5. **Gravação:** Cada cálculo é salvo (um registro por aluno/disciplina/período letivo). Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior — útil após correção de notas.
 6. **Turmas por Habilidades:** Turmas configuradas com Tipo de Avaliação `Habilidades` não entram no fechamento, pois não possuem notas numéricas — apenas turmas `Notas` ou `Híbrido`.
+
+#### 5.10.1 Recuperação Anual ou por Etapa
+
+No cadastro do **Período Letivo**, o toggle **"Recuperação por etapa (em vez de recuperação anual)"** define como as notas de recuperação são aproveitadas:
+
+- **Desligado (padrão) — recuperação anual:** todas as avaliações de recuperação do período, não importa a etapa em que foram lançadas, são somadas num único valor, que substitui a **menor** média de etapa do aluno (se for melhor que ela). Só uma etapa é recuperada.
+- **Ligado — recuperação por etapa:** cada nota de recuperação só pode substituir a média da **própria etapa** em que foi lançada. Permite recuperar mais de uma etapa de forma independente (por exemplo, uma recuperação logo depois de cada bimestre fechar).
+
+#### 5.10.2 Exame Final
+
+Ainda no cadastro do **Período Letivo**, o toggle **"Permitir exame final"** habilita um segundo mecanismo, além (ou no lugar) da recuperação: quando ligado, aparece também o campo **"Nota Mínima para Aprovação após o Exame Final"** (padrão 5,0).
+
+1. Depois de calcular a situação final, disciplinas que ficaram em **Recuperação** mostram um botão **Lançar Exame Final** na própria tabela de resultados (coluna "Exame Final").
+2. Ao clicar, informe a **Nota do Exame Final** (0 a 10) e salve.
+3. O sistema calcula a **média simples entre a média do período e a nota do exame** e compara com a nota mínima pós-exame configurada — o resultado é sempre **Aprovado** ou **Reprovado** (não existe uma segunda recuperação).
+4. O resultado aparece na mesma coluna como um selo colorido com a média pós-exame entre parênteses, no lugar do botão — não é possível lançar o exame final duas vezes para a mesma disciplina.
+5. Recalcular o fechamento **preserva** o exame final já lançado se a disciplina continuar em Recuperação; se a nova situação deixar de ser Recuperação (por exemplo, depois de uma correção de nota), o exame lançado é descartado, pois deixou de fazer sentido.
+6. O resultado pós-exame passa a valer também no **Histórico Escolar** emitido pela Secretaria Digital (seção 31.1) — a disciplina aparece com a situação definitiva, não com "Recuperação".
 
 ---
 
@@ -1601,6 +1619,7 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
    - `{NOME_INSTITUICAO}`, `{CNPJ_INSTITUICAO}`, `{ENDERECO_INSTITUICAO}`
    - `{DATA_EXTENSO}`, `{CIDADE_DATA}`, `{CODIGO_AUTENTICIDADE}`
 3. **Autenticidade e Carimbo Digital:** Ao marcar o campo *Exige Código e QR Code de Autenticidade*, cada documento gerado recebe um carimbo com hash único e QR Code para auditoria instantânea por câmeras de celular.
+4. **Histórico Escolar real:** no modelo do tipo Histórico Escolar, a tag `{{TABELA_HISTORICO}}` traz uma tabela por ano/período letivo do aluno com a média e a situação final **já calculadas pelo Fechamento do Ciclo Letivo** (seção 5.10) — incluindo o resultado do exame final, quando houver. Um período letivo ainda não fechado aparece com um aviso em vez de dados inventados.
 
 ### 31.2 Gestão de Solicitações e Emissão (`/admin/solicitacao-documentos`)
 1. **Atendimento a Requerimentos:** A secretaria visualiza pedidos abertos tanto presencialmente quanto vindos do Portal da Família.
