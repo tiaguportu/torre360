@@ -25,8 +25,10 @@ Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])-
 Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
-// Validação pública de autenticidade documental (QR Code)
-Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)->name('documentos.validar-autenticidade');
+// Validação pública de autenticidade documental (QR Code com proteção contra raspagem)
+Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)
+    ->middleware('throttle:15,1')
+    ->name('documentos.validar-autenticidade');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');

@@ -1609,7 +1609,10 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
 
 ### 31.3 Validação Pública de Autenticidade (`/validar-documento/{codigo}`)
 1. Qualquer empresa, órgão público ou cartório que receba o documento pode apontar a câmera do smartphone para o QR Code impresso no rodapé ou acessar o link público: `http://seusistema/validar-documento`.
-2. O validador confere o código hash na base de dados e exibe uma tela amigável confirmando a autenticidade, nome do estudante, curso/série, data de lavratura e situação do documento.
+2. O validador confere o código alfanumérico na base de dados e exibe uma tela oficial confirmando a autenticidade, curso/série, data de lavratura e situação do documento.
+3. **Proteção contra Raspagem em Massa (Rate Limiting):** A rota pública conta com limitação automática de requisições por IP (`throttle: 15 req/min`), neutralizando tentativas de varredura automatizada por robôs.
+4. **Busca Estrita por Código de Alta Entropia:** A consulta aceita exclusivamente o *Código de Verificação* aleatório de 12 dígitos gerado no QR Code (ex: `TR36-XXXX-XXXX-XXXX`). Buscas por número de protocolo sequencial são bloqueadas na consulta pública para evitar ataques de enumeração de estudantes.
+5. **Conformidade com a LGPD e Proteção de Menores:** O nome do estudante é parcialmente mascarado na tela pública (ex: `B****** M*****`), permitindo a conferência por quem porta o documento físico sem expor dados pessoais completos a terceiros ou raspadores web.
 
 ---
 
