@@ -11,6 +11,14 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
 4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes ou pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro).
 
+### 🔑 Recuperação de Senha
+Caso tenha esquecido sua senha:
+1. Na tela de login, clique no link **Esqueceu sua senha?**.
+2. Informe o **E-mail** cadastrado e confirme a verificação de segurança.
+3. Clique em **Enviar email**.
+4. Você receberá um e-mail contendo um **link seguro e temporário** de redefinição. Sua senha atual permanecerá funcionando até que a troca seja efetivamente confirmada por você.
+5. Acesse o link recebido no e-mail, informe e confirme sua nova senha para concluir o acesso.
+
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
 > Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
@@ -530,7 +538,7 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 3. Para PDFs, o navegador utiliza seu visualizador nativo integrado à página.
 
 > [!NOTE]
-> A prévia de documentos é protegida por segurança. Apenas usuários autenticados com as devidas permissões podem visualizar os arquivos, garantindo a privacidade dos dados dos alunos.
+> **Armazenamento e Acesso Seguro (LGPD):** Todos os documentos emitidos oficialmente (declarações, certificados) e os arquivos anexados pelos estudantes são armazenados em disco privado protegido. O acesso é estritamente controlado por regras de autorização do sistema: apenas a equipe da escola e o próprio estudante ou seus responsáveis legais podem visualizá-los ou baixá-los, garantindo a privacidade dos dados e a conformidade legal.
 
 6.3 Assinatura Digital (Assinafy)
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.

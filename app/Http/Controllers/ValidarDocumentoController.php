@@ -22,7 +22,6 @@ class ValidarDocumentoController extends Controller
 
             $documento = SolicitacaoDocumento::query()
                 ->where('codigo_verificacao', $codigoLimpo)
-                ->orWhere('protocolo', $codigoLimpo)
                 ->with(['matricula.pessoa', 'matricula.turma.serie.curso.unidade', 'templateDocumento'])
                 ->first();
         }

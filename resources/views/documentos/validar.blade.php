@@ -229,7 +229,7 @@
 
         <div class="content">
             <form action="{{ url('/validar-documento') }}" method="GET" class="search-form">
-                <input type="text" name="codigo" class="search-input" placeholder="Digite o código (ex: TR36-XXXX-XXXX-XXXX) ou Protocolo" value="{{ $codigoBusca ?? '' }}" required>
+                <input type="text" name="codigo" class="search-input" placeholder="Digite o código de verificação (ex: TR36-XXXX-XXXX-XXXX)" value="{{ $codigoBusca ?? '' }}" required>
                 <button type="submit" class="btn-search">Verificar</button>
             </form>
 
@@ -305,13 +305,13 @@
                         <div class="status-icon">✕</div>
                         <div class="status-text">
                             <h2>Documento Não Encontrado</h2>
-                            <p>Não foi localizado nenhum documento oficial com o código ou protocolo informado (<strong>{{ $codigoBusca }}</strong>). Verifique a digitação ou procure a secretaria escolar.</p>
+                            <p>Não foi localizado nenhum documento oficial com o código informado (<strong>{{ $codigoBusca }}</strong>). Verifique a digitação ou procure a secretaria escolar.</p>
                         </div>
                     </div>
                 @endif
             @else
                 <div style="text-align: center; padding: 20px 0; color: #64748b; font-size: 14px;">
-                    Digite o código de verificação impresso no carimbo digital do documento ou o número de protocolo para atestar sua veracidade.
+                    Digite o código de verificação impresso no carimbo digital do documento para atestar sua veracidade.
                 </div>
             @endif
         </div>

@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\WithFileUploads;
 use UnitEnum;
 
@@ -94,8 +95,7 @@ class CentralAtendimento extends Page
             return null;
         }
 
-        return AtendimentoChamado::with(['setor', 'matricula.pessoa', 'mensagens.user', 'mensagens.pessoa'])
-            ->find($this->chamadoSelecionadoId);
+        return $this->meusChamados->firstWhere('id', $this->chamadoSelecionadoId);
     }
 
     public function abrirNovoChamadoModal(): void
@@ -107,19 +107,26 @@ class CentralAtendimento extends Page
 
     public function criarChamado(): void
     {
+        $matriculasIds = $this->matriculasAcessiveis->pluck('id')->all();
+
         $this->validate([
             'novoSetorId' => 'required|exists:atendimento_setores,id',
+            'novoMatriculaId' => ['nullable', 'integer', Rule::in($matriculasIds)],
             'novoAssunto' => 'required|string|min:4|max:255',
-            'novaMensagemInicial' => 'required|string|min:5',
+            'novaMensagemInicial' => 'required|string|min:5|max:10000',
+            'novoAnexo' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
         ], [
             'novoSetorId.required' => 'Por favor, selecione o setor de destino.',
+            'novoMatriculaId.in' => 'A matrícula selecionada não é acessível pelo seu usuário.',
             'novoAssunto.required' => 'O assunto é obrigatório.',
             'novaMensagemInicial.required' => 'A mensagem explicativa é obrigatória.',
+            'novoAnexo.mimes' => 'O anexo deve ser um arquivo PDF ou imagem (JPG, PNG, WEBP).',
+            'novoAnexo.max' => 'O anexo não pode ser maior que 5MB.',
         ]);
 
         $anexoPath = null;
         if ($this->novoAnexo) {
-            $anexoPath = $this->novoAnexo->store('atendimentos/anexos', 'public');
+            $anexoPath = $this->novoAnexo->store('atendimentos/anexos', 'local');
         }
 
         $solicitanteId = auth()->user()->pessoa?->id ?: auth()->user()->pessoasAcessiveis()->first()?->id;
@@ -170,19 +177,24 @@ class CentralAtendimento extends Page
     public function enviarResposta(): void
     {
         $this->validate([
-            'respostaTexto' => 'required|string|min:2',
+            'respostaTexto' => 'required|string|min:2|max:10000',
+            'respostaAnexo' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
         ], [
             'respostaTexto.required' => 'Digite sua mensagem antes de enviar.',
+            'respostaAnexo.mimes' => 'O anexo deve ser um arquivo PDF ou imagem (JPG, PNG, WEBP).',
+            'respostaAnexo.max' => 'O anexo não pode ser maior que 5MB.',
         ]);
 
         $chamado = $this->chamadoAtual;
         if (! $chamado) {
+            Notification::make()->title('Chamado não localizado ou acesso negado.')->danger()->send();
+
             return;
         }
 
         $anexoPath = null;
         if ($this->respostaAnexo) {
-            $anexoPath = $this->respostaAnexo->store('atendimentos/anexos', 'public');
+            $anexoPath = $this->respostaAnexo->store('atendimentos/anexos', 'local');
         }
 
         $solicitanteId = auth()->user()->pessoa?->id ?: auth()->user()->pessoasAcessiveis()->first()?->id;

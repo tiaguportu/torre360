@@ -57,6 +57,19 @@ class SolicitacaoDocumento extends Model
         return $codigo;
     }
 
+    public function isAccessibleBy(User $user): bool
+    {
+        if ($user->isStaff()) {
+            return true;
+        }
+
+        if ($this->solicitado_por_user_id === $user->id) {
+            return true;
+        }
+
+        return $this->matricula?->isAccessibleBy($user) ?? false;
+    }
+
     public function isValido(): bool
     {
         if ($this->status !== StatusSolicitacaoDocumento::Disponivel) {

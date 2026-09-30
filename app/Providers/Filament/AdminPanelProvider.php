@@ -5,7 +5,6 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
-use App\Filament\Pages\Auth\Register;
 use App\Http\Middleware\AuditMiddleware;
 use App\Http\Middleware\EnsureActiveRole;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -37,7 +36,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Torre360 Gestão Escolar')
             ->login(CustomLogin::class)
-            ->registration(Register::class)
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)
@@ -95,10 +93,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): string => view('filament.hooks.assistant-chat')->render(),
-            )
-            ->renderHook(
-                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn (): string => view('filament.hooks.register-link')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,

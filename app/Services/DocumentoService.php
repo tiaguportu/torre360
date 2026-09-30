@@ -141,7 +141,7 @@ class DocumentoService
             ->setPaper('a4', 'portrait');
 
         $caminhoRelativo = 'documentos_emitidos/'.$solicitacao->protocolo.'.pdf';
-        Storage::disk('public')->put($caminhoRelativo, $pdf->output());
+        Storage::disk('local')->put($caminhoRelativo, $pdf->output());
 
         $solicitacao->arquivo_path = $caminhoRelativo;
         $solicitacao->status = StatusSolicitacaoDocumento::Disponivel;

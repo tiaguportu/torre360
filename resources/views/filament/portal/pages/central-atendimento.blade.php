@@ -272,7 +272,7 @@
                                     @if($msg->anexo_path)
                                         <div class="mt-3 pt-2 border-t border-black/10 dark:border-white/10">
                                             <a 
-                                                href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($msg->anexo_path) }}" 
+                                                href="{{ route('documentos.visualizar', ['path' => $msg->anexo_path]) }}" 
                                                 target="_blank" 
                                                 class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline">
                                                 <x-heroicon-o-paper-clip class="w-4 h-4" />
