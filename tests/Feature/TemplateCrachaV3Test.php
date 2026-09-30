@@ -8,6 +8,7 @@ use App\Models\Turma;
 use App\Models\User;
 use App\Services\TemplateCrachaV3Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TemplateCrachaV3Test extends TestCase
@@ -41,6 +42,7 @@ class TemplateCrachaV3Test extends TestCase
     public function test_usuario_autenticado_pode_acessar_editor_e_salvar_layout_json(): void
     {
         $user = User::factory()->create();
+        $user->assignRole(Role::firstOrCreate(['name' => 'secretaria']));
 
         $template = TemplateCrachaV3::create([
             'nome' => 'Crachá V3 Rota',
@@ -94,6 +96,32 @@ class TemplateCrachaV3Test extends TestCase
         $this->assertEquals('#ff0000', $savedTemplate->dados_json['fundo']);
         $this->assertCount(1, $savedTemplate->dados_json['elementos']);
         $this->assertEquals('Teste V3', $savedTemplate->dados_json['elementos'][0]['conteudo']);
+    }
+
+    public function test_usuario_sem_papel_de_staff_nao_pode_acessar_ou_salvar_template(): void
+    {
+        // Regressão de segurança: a rota exigia apenas 'auth', permitindo que qualquer
+        // conta autenticada (ex.: aluno/responsável do portal) alterasse o template do crachá.
+        $user = User::factory()->create();
+        $user->assignRole(Role::firstOrCreate(['name' => 'aluno']));
+
+        $template = TemplateCrachaV3::create([
+            'nome' => 'Crachá V3 Protegido',
+            'largura' => 300,
+            'altura' => 480,
+            'tipo_entidade' => 'pessoa',
+            'dados_json' => ['fundo' => '#ffffff', 'elementos' => []],
+        ]);
+
+        $this->actingAs($user);
+
+        $this->get(route('template-crachas-v3.editor', $template->id))->assertForbidden();
+
+        $this->postJson(route('template-crachas-v3.save', $template->id), [
+            'dados_json' => ['fundo' => '#000000', 'elementos' => []],
+        ])->assertForbidden();
+
+        $this->assertEquals('#ffffff', TemplateCrachaV3::find($template->id)->dados_json['fundo']);
     }
 
     public function test_service_v3_substitui_variaveis_e_injeta_foto_e_dados(): void
