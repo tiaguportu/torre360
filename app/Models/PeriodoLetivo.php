@@ -41,6 +41,9 @@ class PeriodoLetivo extends Model
             'data_fim' => 'date',
             'nota_aprovacao' => 'decimal:2',
             'nota_recuperacao_minima' => 'decimal:2',
+            'recuperacao_por_etapa' => 'boolean',
+            'exame_final_habilitado' => 'boolean',
+            'nota_aprovacao_pos_exame' => 'decimal:2',
         ];
     }
 }

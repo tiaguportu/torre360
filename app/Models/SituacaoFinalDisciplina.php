@@ -18,6 +18,9 @@ class SituacaoFinalDisciplina extends Model
             'media_final' => 'decimal:2',
             'situacao' => SituacaoFinal::class,
             'calculado_em' => 'datetime',
+            'nota_exame_final' => 'decimal:2',
+            'media_final_pos_exame' => 'decimal:2',
+            'situacao_final_pos_exame' => SituacaoFinal::class,
         ];
     }
 
