@@ -20,6 +20,7 @@ use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Models\VideoTutorial;
 use App\Notifications\WelcomeUserMail;
 use App\Services\InteressadoMatriculaService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -121,6 +122,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'enrollment-wizard-matricula')->first(),
                         ]),
                 ]),
         ];

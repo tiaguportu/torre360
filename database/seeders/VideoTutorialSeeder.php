@@ -56,6 +56,33 @@ class VideoTutorialSeeder extends Seeder
                 'duracao_segundos' => 87,
                 'source' => 'C:\\Users\\tiagu\\AppData\\Local\\Temp\\claude\\c--xampp-htdocs-torre360\\383eb60a-ceb6-4813-b9d1-fe8738a3efba\\scratchpad\\video_avaliacao\\avaliacao_e_notas_demo.mp4',
             ],
+            [
+                'chave_pagina' => 'enrollment-wizard-matricula',
+                'titulo' => 'Assistente de Matrícula (Wizard)',
+                'descricao' => 'Como usar o assistente passo a passo para matricular um novo aluno: dados do aluno, responsáveis e plano/turma.',
+                'categoria' => 'Matrículas',
+                'ordem' => 5,
+                'duracao_segundos' => 80,
+                'source' => 'C:\\Users\\tiagu\\AppData\\Local\\Temp\\claude\\c--xampp-htdocs-torre360\\383eb60a-ceb6-4813-b9d1-fe8738a3efba\\scratchpad\\video_wizard\\assistente_matricula_demo.mp4',
+            ],
+            [
+                'chave_pagina' => 'solicitacao-documentos-emissao-qrcode',
+                'titulo' => 'Secretaria Digital: Emissão de Documentos com QR Code',
+                'descricao' => 'Como emitir uma declaração ou certidão oficial, gerar o PDF com QR Code de autenticidade e validar o documento publicamente.',
+                'categoria' => 'Secretaria',
+                'ordem' => 6,
+                'duracao_segundos' => 70,
+                'source' => 'C:\\Users\\tiagu\\AppData\\Local\\Temp\\claude\\c--xampp-htdocs-torre360\\383eb60a-ceb6-4813-b9d1-fe8738a3efba\\scratchpad\\video_secretaria_digital\\secretaria_digital_qrcode_demo.mp4',
+            ],
+            [
+                'chave_pagina' => 'usuarios-cadastro',
+                'titulo' => 'Como Cadastrar Novos Usuários',
+                'descricao' => 'Como criar um usuário para um novo colaborador, gerar senha forte e escolher o papel (role) que define suas permissões no sistema.',
+                'categoria' => 'Sistema e Segurança',
+                'ordem' => 7,
+                'duracao_segundos' => 56,
+                'source' => 'C:\\Users\\tiagu\\AppData\\Local\\Temp\\claude\\c--xampp-htdocs-torre360\\383eb60a-ceb6-4813-b9d1-fe8738a3efba\\scratchpad\\video_usuarios\\cadastro_usuarios_demo.mp4',
+            ],
         ];
 
         Storage::disk('public')->makeDirectory('video-tutoriais');

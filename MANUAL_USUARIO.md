@@ -1833,7 +1833,7 @@ A **Central de Ajuda** reúne vídeos curtos que ensinam a usar as principais fu
 4. **Ordem** define a posição de exibição na listagem; **Ativo** controla se o vídeo fica visível (um vídeo inativo some tanto da Central de Ajuda quanto do modal de Ajuda da tela relacionada).
 
 ### 38.3 Vídeo Dentro do Botão de Ajuda de Cada Tela
-Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamente dentro do próprio modal de **Ajuda** daquela página, acima do texto explicativo de sempre. Hoje isso já está configurado para: **Kanban de Interessados**, **Acompanhamento de Rematrículas**, **Lançamento de Frequência** e o fluxo de **Avaliações** (Gestão de Avaliações, Cadastrar Avaliação e Lançamento de Notas em Grade).
+Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamente dentro do próprio modal de **Ajuda** daquela página, acima do texto explicativo de sempre. Hoje isso já está configurado para: **Kanban de Interessados**, **Acompanhamento de Rematrículas**, **Lançamento de Frequência**, o fluxo de **Avaliações** (Gestão de Avaliações, Cadastrar Avaliação e Lançamento de Notas em Grade), o **Assistente de Matrícula (Wizard)**, o fluxo de **Emissão de Documentos com QR Code** na Secretaria Digital (Gestão de Documentos, Emitir Documento) e o **Cadastro de Novos Usuários**.
 
 ### 38.4 Permissões
 - **Ver e assistir:** Professor, Secretaria, Coordenador, Administrador e Super Administrador.
