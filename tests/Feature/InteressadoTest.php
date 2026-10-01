@@ -347,4 +347,20 @@ class InteressadoTest extends TestCase
         $this->assertFalse($novo->is_final);
         $this->assertFalse($novo->is_ganho);
     }
+
+    public function test_pagina_de_edicao_renderiza_o_resumo_do_lead(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $interessado = $this->criarInteressado();
+
+        $this->actingAs($admin)
+            ->get("/admin/interessados/{$interessado->id}/edit")
+            ->assertOk()
+            ->assertSee('Resumo do Lead')
+            ->assertSee('Detalhamento do score')
+            ->assertSee('Dias no funil');
+    }
 }

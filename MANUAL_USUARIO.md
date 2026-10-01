@@ -106,7 +106,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
-- **Resumo do Lead:** Seção no topo mostrando dias no funil, total de contatos realizados e temperatura calculada automaticamente.
+- **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.
 - **Temperatura:** Defina manualmente (Quente/Morno/Frio) ou deixe o sistema calcular automaticamente baseado na atividade.
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
