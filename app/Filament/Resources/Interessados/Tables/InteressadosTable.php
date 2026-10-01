@@ -13,6 +13,7 @@ use App\Models\MensagemWhatsappTemplate;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
+use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\VisitaInteressadoService;
 use Filament\Actions\Action;
@@ -355,6 +356,26 @@ class InteressadosTable
                             ->title('Matrícula finalizada!')
                             ->success()
                             ->send();
+                    }),
+
+                Action::make('gerarConvite')
+                    ->label('Gerar Link de Convite')
+                    ->icon('heroicon-o-link')
+                    ->color('info')
+                    ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
+                    ->modalHeading('Convite de Matrícula Online')
+                    ->modalDescription('Envie este link ao responsável para que ele mesmo confirme os dados antes de você efetivar a matrícula. Válido por 7 dias e de uso único.')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar')
+                    ->form(function (Interessado $record) {
+                        $link = app(ConviteMatriculaService::class)->gerarConvite($record);
+
+                        return [
+                            TextInput::make('link')
+                                ->label('Link do Convite (copie e envie ao responsável)')
+                                ->default($link)
+                                ->readOnly(),
+                        ];
                     }),
 
                 Action::make('marcarPerdido')

@@ -1664,25 +1664,25 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
 
 ## 🔄 32. Rematrícula Online (Administração e Portal da Família)
 
-Automatize o processo de rematrícula entre períodos letivos, permitindo que as famílias confirmem vagas, manifestem preferência de turnos e formalizem a renovação de onde estiverem.
+Automatize o processo de rematrícula entre períodos letivos: a família confirma a vaga pelo Portal, e o sistema gera a nova matrícula, o contrato, a cobrança e já envia para assinatura digital — sem a secretaria precisar fazer nada manualmente, a menos que algo falhe.
 
 ### 32.1 Campanhas de Rematrícula (`/admin/periodo-rematriculas`)
-1. **Abertura de Período:** A direção cadastra a campanha escolhendo o *Período Letivo Origem* (ex: 2026) e o *Período Letivo Destino* (ex: 2027).
-2. **Vigência e Instruções:** Define-se a data de início e término em que a campanha ficará ativa, além de instruções de acolhimento e orientações aos pais.
-3. **Bloqueio de Inadimplência:** Opcionalmente, pode-se desmarcar *Permitir Inadimplentes*. Com isso, estudantes com faturas em atraso não conseguem concluir a rematrícula pelo Portal antes de regularizarem suas pendências no financeiro.
+1. **Abertura de Período:** a secretaria cadastra a campanha escolhendo o *Período Letivo Origem* (ex: 2026) e o *Período Letivo Destino* (ex: 2027), a vigência (data de início/fim) e se está ativa.
+2. **Modelo de Contrato e Cobrança:** selecione o *Modelo de Contrato* a ser gerado, o *Valor Total*, a *Quantidade de Parcelas* e o *Valor de Entrada* (0 se não houver) — esses dois últimos definem automaticamente como as faturas são geradas quando a família confirma a rematrícula. Sem um modelo de contrato selecionado, a campanha só cria a nova matrícula, sem contrato nem cobrança.
+3. **Mensagem aos Pais:** texto livre exibido no Portal durante a campanha.
 
-### 32.2 Acompanhamento e Efetivação (`/admin/rematriculas`)
-1. **Painel de Controle:** A secretaria acompanha o status de cada rematrícula:
-   - `Pendente`: Aguardando resposta do responsável.
-   - `Confirmada pelo Responsável`: Família preencheu o formulário no portal.
-   - `Aprovada pela Secretaria`: Vaga e documentação validadas.
-   - `Efetivada`: Matrícula gerada no período letivo subsequente.
-2. **Efetivação em 1 Clique:** Na listagem de rematrículas, a ação **Efetivar Rematrícula** cria automaticamente a nova matrícula do estudante no ano letivo destino (com turma/turno escolhidos) e já formaliza o novo contrato de prestação de serviços educacionais.
+### 32.2 Acompanhamento (`/admin/rematriculas`)
+A secretaria acompanha o status de cada rematrícula:
+- **Iniciada:** a família abriu o processo, mas ainda não confirmou os dados.
+- **Dados Confirmados:** a família confirmou, mas o contrato não foi enviado para assinatura (geralmente porque a campanha não tem modelo de contrato configurado, ou o envio ao Assinafy falhou — nesse caso, a secretaria resolve manualmente na tela do Contrato gerado).
+- **Aguardando Assinatura do Contrato:** tudo certo — nova matrícula, contrato e faturas já gerados, contrato enviado para o Assinafy.
+- **Rematrícula Confirmada:** o contrato foi assinado (confirmação automática via webhook do Assinafy) — processo concluído.
+- **Cancelada.**
 
 ### 32.3 Rematrícula pelo Portal da Família (`/portal/rematricula`)
-1. Ao acessar o Portal durante uma campanha ativa, a família visualiza o banner e formulário intuitivo de Rematrícula.
-2. O responsável confere os dados do filho, seleciona a série pretendida e turno preferencial, declara a ciência das diretrizes e clica em **Confirmar Rematrícula**.
-3. O sistema registra data, hora e endereço IP da confirmação com total segurança jurídica e atualiza o painel da secretaria em tempo real.
+1. Durante uma campanha ativa, a família vê a lista de dependentes elegíveis e o botão **Realizar Rematrícula**.
+2. O responsável escolhe a série pretendida e o turno de preferência para o próximo período, pode deixar observações, e confirma.
+3. **Nos bastidores, tudo acontece automaticamente:** o sistema cria a nova matrícula no período de destino, gera o contrato a partir do modelo configurado na campanha (copiando os responsáveis financeiros do contrato anterior), gera as faturas (entrada + parcelas) e envia o contrato para assinatura digital via Assinafy. A família recebe o link de assinatura pelo mesmo processo já usado na matrícula original (seção 23.3).
 
 ---
 
@@ -2034,6 +2034,24 @@ Cadastro de obrigações da escola com fornecedores: descrição, valor, vencime
 
 - **Relatório de Inadimplência** (`/admin/financeiro/relatorio-inadimplencia`): faturas em atraso com aluno, turma, responsável(is) e dias de atraso, com filtro por turma e por faixa de atraso (1–7, 8–15, 16–30, mais de 30 dias). Resumo no topo com total de faturas, valor devido e responsáveis inadimplentes.
 - **Fluxo de Caixa** (`/admin/financeiro/fluxo-de-caixa`): entradas, saídas e saldo consolidados dos últimos 12 meses, a partir das transações bancárias já lançadas (baixas manuais, webhook e extratos importados).
+
+---
+
+## ✉️ 41. Convite de Matrícula Online
+
+Link único enviado a um lead já qualificado pelo CRM para que a própria família confirme/complete os dados — sem precisar passar pelo formulário público completo nem ver qualquer outro cadastro.
+
+### 41.1 Gerando o Convite (`/admin/interessados`)
+1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra a ação **Gerar Link de Convite**.
+2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.).
+
+### 41.2 O que a Família Vê
+1. Ao abrir o link, a família vê uma página simples com seus próprios dados: telefone, e-mail, e cada dependente já cadastrado com os campos **Série de Interesse** e **Turno de Preferência**.
+2. Depois de confirmar, uma tela de agradecimento avisa que a secretaria vai entrar em contato — o link não pode mais ser usado a partir daí.
+3. Um link expirado, já usado ou inválido mostra um aviso claro, com atalho para o formulário público completo.
+
+### 41.3 O que Muda para a Secretaria
+A confirmação pelo convite **não efetiva a matrícula por si só** — ela só atualiza os dados do lead (telefone, e-mail, série de cada dependente) e registra no histórico do CRM que a família confirmou online. A secretaria continua usando a ação **Matricular** (já existente) para efetivamente abrir o Assistente de Matrícula pré-preenchido e concluir o processo — só que agora com os dados já confirmados pela própria família, sem precisar ligar para confirmar cada informação.
 
 ---
 

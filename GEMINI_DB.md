@@ -377,6 +377,7 @@ Estrutura de ensino e turmas.
 ### `interessado`
 - **Representa:** Leads para novos alunos.
 - **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Convite de Matrícula Online (Onda 7):** `token_convite` (string nullable, único), `token_convite_expira_em` (datetime nullable), `token_convite_usado_em` (datetime nullable). Gerado por `ConviteMatriculaService::gerarConvite()`; `Interessado::conviteValido()` verifica existência + validade + não-uso. Rota pública `/quero-matricular/convite/{token}`.
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
     - BelongsTo `status_interessado`.
@@ -616,32 +617,30 @@ Estrutura de ensino e turmas.
 - **Relacionamentos:** BelongsTo `Pessoa` (aluno e solicitante), BelongsTo `TemplateDocumento`, BelongsTo `Matricula`, BelongsTo `User` (emitidoPor).
 
 ### `periodo_rematriculas`
-- **Representa:** Campanhas anuais ou semestrais de rematrícula online para as famílias.
+- **Representa:** Campanhas de rematrícula online para as famílias.
 - **Campos Principais:**
-  - `periodo_letivo_origem_id`: FK `periodo_letivo.id` (ano/semestre letivo corrente).
-  - `periodo_letivo_destino_id`: FK `periodo_letivo.id` (ano/semestre letivo de destino para renovação).
-  - `titulo`: Nome da campanha (ex: Rematrícula Online 2027).
-  - `data_inicio`, `data_fim`: Período de vigência em que o formulário fica aberto no Portal da Família.
-  - `instrucoes`: Texto explicativo e orientações exibidas no portal.
-  - `permite_inadimplentes`: Booleano para trava financeira (se `false`, bloqueia rematrícula para quem tiver mensalidades pendentes).
-  - `ativo`: Booleano que define a campanha em andamento.
-- **Relacionamentos:** BelongsTo `PeriodoLetivo` (origem e destino), HasMany `Rematricula`.
+  - `nome`: Nome da campanha (ex: Rematrícula 2027).
+  - `periodo_letivo_origem_id`, `periodo_letivo_destino_id`: FK `periodo_letivo` (ano/semestre atual e o de destino da renovação).
+  - `template_contrato_id`: FK `template_contratos` (nullable) — modelo usado para gerar o novo contrato; sem ele, a rematrícula só cria a nova Matrícula, sem Contrato/faturas.
+  - `valor_taxa`: Valor total do novo contrato gerado.
+  - `quantidade_parcelas_padrao` (padrão 12), `valor_entrada_padrao` (padrão 0) — Onda 7: usados por `GeracaoFaturasContratoService` para gerar a cobrança automaticamente ao efetivar.
+  - `data_inicio`, `data_fim`, `is_ativo`: vigência da campanha no Portal (`PeriodoRematricula::isAberto()`).
+  - `mensagem_orientacao`: texto livre exibido à família no Portal.
+- **Relacionamentos:** BelongsTo `periodoLetivoOrigem`/`periodoLetivoDestino` (`PeriodoLetivo`), BelongsTo `templateContrato`, HasMany `rematriculas`.
 
 ### `rematriculas`
-- **Representa:** O registro da manifestação de renovação/rematrícula de um aluno.
+- **Representa:** O processo de rematrícula de um aluno dentro de uma campanha.
 - **Campos Principais:**
-  - `periodo_rematricula_id`: FK `periodo_rematriculas.id`.
-  - `matricula_origem_id`: FK `matricula.id` (matrícula que está sendo renovada).
-  - `matricula_gerada_id`: FK `matricula.id` (nova matrícula gerada no período subsequente após aprovação/efetivação).
-  - `responsavel_financeiro_id`: FK `pessoa.id`.
-  - `serie_pretendida_id`: FK `serie.id`.
-  - `turno_pretendido_id`: FK `turno.id`.
-  - `status`: Enum `StatusRematricula` (`pendente`, `confirmada_responsavel`, `aprovada_secretaria`, `rejeitada`, `efetivada`).
-  - `data_confirmacao`: Data e hora em que a família enviou a confirmação pelo Portal.
-  - `ip_confirmacao`: Endereço IP do responsável para rastreabilidade de assinatura.
-  - `observacoes`: Observações pedagógicas ou observações da família.
-  - `contrato_gerado_id`: FK `contrato.id` (novo contrato financeiro formalizado na rematrícula).
-- **Relacionamentos:** BelongsTo `PeriodoRematricula`, BelongsTo `Matricula` (origem e gerada), BelongsTo `Pessoa` (responsável financeiro), BelongsTo `Serie`, BelongsTo `Turno`, BelongsTo `Contrato`.
+  - `periodo_rematricula_id`: FK `periodo_rematriculas`.
+  - `matricula_origem_id`: FK `matricula` (matrícula do ano corrente sendo renovada).
+  - `turma_destino_id` (nullable), `serie_destino_id` (nullable), `turno_pretendido_id` (nullable): preferências informadas pela família; se não houver turma específica, o sistema tenta achar uma pela série+turno no período de destino.
+  - `solicitante_user_id`: FK `users` (quem confirmou os dados pelo Portal).
+  - `status`: Enum `StatusRematricula`: `iniciada` → `dados_confirmados` → `aguardando_assinatura` (Onda 7: quando o contrato foi enviado ao Assinafy) → `confirmada` (Onda 7: só quando o contrato é efetivamente assinado — ver webhook do Assinafy) — ou `cancelada`.
+  - `contrato_id`: FK `contrato` (nullable, o novo contrato gerado).
+  - `nova_matricula_id`: FK `matricula` (nullable, a matrícula criada no período de destino).
+  - `observacoes`, `data_confirmacao`.
+- **Relacionamentos:** BelongsTo `periodoRematricula`, `matriculaOrigem`/`novaMatricula` (`Matricula`), `turmaDestino` (`Turma`), `serieDestino` (`Serie`), `turnoPretendido` (`Turno`), `solicitante` (`User`), `contrato` (`Contrato`).
+- **Fluxo completo (Onda 7):** `RematriculaService::efetivar()` cria a nova Matrícula e o Contrato (com `data_aceite = hoje`), gera as faturas via `GeracaoFaturasContratoService`, e envia o contrato para assinatura via `AssinafyService::enviarContrato()`. `AssinafyService::handleWebhook()` identifica o contrato pela nova relação `Contrato::rematricula()` e, ao receber a confirmação de assinatura, marca a `Rematricula` como `confirmada`.
 
 ---
 
