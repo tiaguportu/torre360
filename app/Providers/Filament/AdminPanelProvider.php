@@ -104,6 +104,26 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
+                    <script>
+                        // Rede de segurança: o x-trap.noscroll do Alpine trava o scroll (overflow:hidden no <html>)
+                        // e às vezes não libera quando o modal some durante um re-render/navegação do Livewire.
+                        (() => {
+                            const destravar = () => {
+                                if (document.querySelector(".fi-modal-open")) return;
+                                const html = document.documentElement;
+                                if (html.style.overflow === "hidden") {
+                                    html.style.overflow = "";
+                                    html.style.paddingRight = "";
+                                }
+                                if (document.body.style.overflow === "hidden") document.body.style.overflow = "";
+                            };
+                            document.addEventListener("livewire:navigated", destravar);
+                            document.addEventListener("DOMContentLoaded", () => {
+                                new MutationObserver(() => setTimeout(destravar, 400))
+                                    .observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+                            });
+                        })();
+                    </script>
                     <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">
                     <link rel="manifest" href="/manifest.json">
                     <meta name="apple-mobile-web-app-capable" content="yes">
