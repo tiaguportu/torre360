@@ -97,14 +97,16 @@ PeriodoLetivo
 ---
 
 ### 4. 📝 Secretaria
-Operação de secretaria virtual e vínculo aluno–escola.
+Operação de secretaria virtual e vínculo aluno–escola. Rematrícula e matrícula por convite em `docs/matricula_rematricula_online.md`.
 
 | Recurso | Descrição |
 |---|---|
 | `SituacaoMatricula` | Status da matrícula (Ativo, Trancado, Evadido...) |
 | `Matricula` | Vínculo Aluno ↔ Turma. Permite criação rápida de Pessoa diretamente no formulário. Exibe alunos como "Nome - CPF". |
 | `Contrato` | Geração de contrato derivado de uma Matricula |
-| `DocumentoObrigatorio` | Documentos exigidos por Curso |
+| `TipoDocumento` | Documentos exigidos por Curso/Turma/Matrícula |
+| `PeriodoRematricula` / `Rematricula` | Campanha de rematrícula online: a família confirma os dados pelo Portal, o sistema gera a nova Matrícula, Contrato, faturas e envia para assinatura via Assinafy automaticamente — a rematrícula só fica `Confirmada` quando o contrato é assinado |
+| Convite de Matrícula Online | Link único e temporário (`ConviteMatriculaService`) enviado a um lead do CRM para confirmar/completar dados sem expor outros registros, antes da secretaria efetivar a matrícula |
 
 ---
 
