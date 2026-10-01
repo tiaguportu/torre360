@@ -25,6 +25,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 
 class InteressadoForm
 {
@@ -130,6 +131,10 @@ class InteressadoForm
                                 TextInput::make('pessoa_telefone')
                                     ->label('Telefone')
                                     ->tel()
+                                    ->placeholder('(11) 98888-7777')
+                                    ->mask(RawJs::make(<<<'JS'
+                                        $input.replace(/\D/g, '').length > 10 ? '(99) 99999-9999' : '(99) 9999-99999'
+                                        JS))
                                     ->maxLength(20)
                                     ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone)),
 

@@ -149,6 +149,15 @@ Policies em `app/Policies` (`CampanhaMarketingPolicy`, `VisitaInteressadoPolicy`
 `LandingLeadPolicy`) delegam para essas permissões. Ajuste fino continua possível pelo
 Shield.
 
+## 6.1 Máscara de telefone na ficha do lead
+
+Em `InteressadoForm`, o campo `pessoa_telefone` usa máscara dinâmica (Alpine mask via
+`Filament\Support\RawJs`): com até 10 dígitos aplica `(99) 9999-9999` (fixo) e com 11
+dígitos `(99) 99999-9999` (celular), sempre com DDD. O valor é gravado em `pessoa.telefone`
+já formatado (o botão de WhatsApp da tabela remove os não-dígitos antes de montar o link).
+Não há validação de quantidade de dígitos, para não bloquear leads antigos com telefone em
+outro formato.
+
 ## 7. Migrations
 
 | Migration | O que faz |

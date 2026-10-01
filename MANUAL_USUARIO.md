@@ -110,6 +110,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
+- **Telefone:** O campo tem máscara no padrão Brasil com DDD, aceitando fixo `(11) 3333-4444` ou celular `(11) 98888-7777`. A máscara se ajusta sozinha conforme a quantidade de dígitos digitada.
 
 ### 3.4 Registro de Histórico de Contato
 1. Dentro do cadastro do Interessado, utilize a aba **Histórico de Contatos**.
