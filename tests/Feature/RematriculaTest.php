@@ -131,8 +131,15 @@ class RematriculaTest extends TestCase
         $this->assertEquals($aluno->id, $novaMatricula->pessoa_id);
 
         $rematricula->refresh();
-        $this->assertEquals(StatusRematricula::Confirmada, $rematricula->status);
+        // Sem Assinafy configurado (padrão em teste), o envio para assinatura falha
+        // graciosamente e a rematrícula fica em DadosConfirmados para a secretaria
+        // resolver manualmente — só vira Confirmada quando o contrato é assinado
+        // (ver AssinafyService::handleWebhook() e RematriculaAssinaturaTest).
+        $this->assertEquals(StatusRematricula::DadosConfirmados, $rematricula->status);
         $this->assertNotNull($rematricula->nova_matricula_id);
         $this->assertNotNull($rematricula->contrato_id);
+
+        // A cobrança (faturas) já deve ter sido gerada automaticamente
+        $this->assertSame(12, $rematricula->contrato->faturas()->count());
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -43,6 +44,11 @@ class Contrato extends Model
     public function templateContrato(): BelongsTo
     {
         return $this->belongsTo(TemplateContrato::class);
+    }
+
+    public function rematricula(): HasOne
+    {
+        return $this->hasOne(Rematricula::class);
     }
 
     /**

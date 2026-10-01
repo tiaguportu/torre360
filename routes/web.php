@@ -26,6 +26,16 @@ Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])-
 Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
+// Convite de matrícula online: link único enviado a um lead já qualificado pelo CRM
+Route::get('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'convite'])
+    ->middleware('throttle:15,1')
+    ->name('captacao.interessado.convite');
+Route::post('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'confirmarConvite'])
+    ->middleware('throttle:15,1')
+    ->name('captacao.interessado.convite.confirmar');
+Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoController::class, 'conviteConfirmado'])
+    ->name('captacao.interessado.convite.sucesso');
+
 // Validação pública de autenticidade documental (QR Code com proteção contra raspagem)
 Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)
     ->middleware('throttle:15,1')
