@@ -31,20 +31,24 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 | Grupo | O que você faz aqui |
 |---|---|
-| 🎯 **CRM / Comercial** | Gestão de Interessados e Kanban de Prospecção |
-| 🎓 **Acadêmico** | Matrículas, Alunos, Turmas, Cursos e Séries |
-| ✅ **Avaliações** | Lançamento de Notas e Avaliações |
-| 📅 **Calendário e Horários** | Cronograma de Aulas, Horários e Dias não letivos |
-| 💰 **Financeiro** | Faturas, Contratos, Fornecedores e Transações Bancárias |
-| 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
-| 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
+| 🏠 **Início** | Painel com indicadores, calendários e pendências |
+| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp |
+| 🗂️ **Secretaria** | Matrículas, Pessoas, Coordenadores, Documentos (modelos, emitidos com QR e inseridos), Crachás |
+| 🎓 **Acadêmico** | Cursos, Séries, Turmas, Ensalamento, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
+| ✅ **Avaliações** | Avaliações, Notas, Avaliação e Notas de Habilidades e Lançamento de Notas em Grade |
 | 📖 **Currículo (BNCC)** | Habilidades vinculadas à BNCC |
-| 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
+| 🤝 **Preceptoria** | Ciclos, Preceptorias (e agendamento), Relatórios e Templates de Relatório |
+| 📅 **Calendário e Horários** | Cronograma de Aulas, Dias não letivos e Períodos Letivos |
+| 📢 **Comunicação Escolar** | Eventos Escolares (RSVP) e Central de Atendimento |
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
+| 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
+| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato e DRE |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
-| 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield) e Logs de Auditoria |
+| 🛡️ **Sistema e Segurança** | Usuários, Logs de Atividade e E-mails Enviados |
+| ❓ **Ajuda** | Central de Ajuda — Vídeos Tutoriais |
+| 🔐 **Filament Shield** | Roles e permissões (Super Administrador) |
 
 ### 2.1 Barra Lateral Dinâmica (Perfil Responsável)
 
@@ -1873,7 +1877,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 - **Sistema e Segurança e Início:** Logs de Atividade (somente Super Administrador), E-mails Enviados e a tela Início.
 - **Portal da Família/Aluno (`/portal`):** as 14 páginas (Início, Notas, Frequência, Horários, Calendário, Boletins, Documentos e Contratos, Solicitar Documentos Oficiais, Eventos e Atividades, Rematrícula Online, Financeiro, Ocorrências, Agendar Preceptoria e Central de Atendimento), com explicações em linguagem simples para as famílias.
 - **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
-- As demais telas serão cobertas nas próximas etapas (Secretaria, Avaliações, Preceptoria, Financeiro, Configurações, Sistema e Portal da Família). A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
+- **Cobertura completa:** todas as telas do menu lateral do painel administrativo e do Portal da Família têm o botão de Ajuda. A única exceção é **Filament Shield → Roles** (tela de papéis e permissões, fornecida pelo pacote Shield), que por ora não tem o botão. Um teste automático impede que novas telas entrem no menu sem Ajuda. A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
 
 ### 39.3 Para a equipe de desenvolvimento
 O guia de como montar a ajuda de uma nova tela (construtor `HelpContent` e botão `HasAjudaAction`) está em `docs/ajuda_modal_design.md`.
