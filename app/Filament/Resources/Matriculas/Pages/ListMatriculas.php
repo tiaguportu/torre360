@@ -3,19 +3,22 @@
 namespace App\Filament\Resources\Matriculas\Pages;
 
 use App\Enums\SituacaoMatricula;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
 use App\Models\Pessoa;
+use App\Support\HelpContent;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListMatriculas extends ListRecords
 {
+    use HasAjudaAction;
+
     protected static string $resource = MatriculaResource::class;
 
     public function getTabs(): array
@@ -89,27 +92,13 @@ class ListMatriculas extends ListRecords
                 })
                 ->successNotificationTitle('Matrículas criadas com sucesso!'),
             CreateAction::make(),
-            Action::make('ajuda')
-                ->label('Ajuda')
-                ->icon('heroicon-o-question-mark-circle')
-                ->color('gray')
-                ->modalHeading('Ajuda: Gestão de Matrículas')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Fechar')
-                ->form([
-                    ViewField::make('help_content')
-                        ->view('filament.components.help-content')
-                        ->viewData([
-                            'content' => $this->getHelpContent(),
-                        ]),
-                ]),
+            $this->ajudaAction('Gestão de Matrículas', $this->getHelpContent()),
         ];
     }
 
-    private function getHelpContent(): string
+    private function getHelpContent(): HelpContent
     {
         $user = auth()->user();
-        $activeRole = session('active_role');
 
         $canCreate = $user->can('Create:Matricula');
         $canUpdate = $user->can('Update:Matricula');
@@ -118,42 +107,31 @@ class ListMatriculas extends ListRecords
         $canAvisarPreceptoria = $user->can('AvisarPossibilidadePreceptoria:Matricula');
         $canBoletim = $user->can('Boletim:Matricula');
 
-        $html = '<p>Esta página permite gerenciar as matrículas dos alunos no sistema. Aqui você pode visualizar, filtrar e realizar ações em massa.</p>';
-        $html .= '<h3>O que você pode fazer aqui?</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Listagem e Busca:</strong> Visualize todos os alunos matriculados. Use a barra de busca para encontrar alunos por nome ou os filtros para filtrar por Curso, Turma, Período Letivo ou Situação.</li>';
+        $conteudo = HelpContent::make('🎓', 'Gestão de Matrículas', 'Acompanhe, filtre e atue nas matrículas dos alunos.')
+            ->secao('🎯 O que você pode fazer aqui?', [
+                ['📋', 'Listagem e busca', 'Veja todos os alunos matriculados. Busque por nome ou filtre por Curso, Turma, Período Letivo e Situação.'],
+                ['🗂️', 'Abas de situação', 'Alterne entre Todas, Pendentes, Ativas e Canceladas; o número em cada aba mostra quantas matrículas há.'],
+                $canCreate ? ['👥', 'Matrícula em Lote', 'Use o botão "Matrícula em Lote" para matricular vários alunos de uma vez em uma turma, definindo a situação.'] : null,
+            ]);
 
-        if ($canCreate) {
-            $html .= '<li><strong>Matrícula em Lote:</strong> Use o botão "Matrícula em Lote" para matricular vários alunos de uma vez em uma turma específica.</li>';
-        }
-
-        $html .= '<li><strong>Ações Individuais:</strong><ul>';
-        if ($canUpdate) {
-            $html .= '<li><strong>Editar:</strong> Altere dados da matrícula (turma, situação, etc).</li>';
-        }
-        if ($canBoletim) {
-            $html .= '<li><strong>Boletim:</strong> Visualiza o boletim escolar do aluno (disponível apenas se houver notas).</li>';
-        }
-        if ($canDocumentos) {
-            $html .= '<li><strong>Documentos:</strong> Gerencia o envio de documentos obrigatórios. O ícone fica vermelho se houver pendências.</li>';
-        }
-        if ($canAvisarPendencia) {
-            $html .= '<li><strong>Avisar Pendência:</strong> Envia um e-mail automático aos responsáveis listando os documentos que faltam.</li>';
-        }
-        if ($canAvisarPreceptoria) {
-            $html .= '<li><strong>Avisar Preceptoria:</strong> Envia um convite para agendamento de preceptoria quando houver disponibilidade.</li>';
-        }
-        $html .= '</ul></li>';
+        $conteudo->secao('⚡ Ações em cada matrícula', [
+            $canUpdate ? ['✏️', 'Editar', 'Altere dados da matrícula, como turma e situação.'] : null,
+            $canBoletim ? ['📄', 'Boletim', 'Abre o boletim escolar do aluno (disponível apenas se houver notas).'] : null,
+            $canDocumentos ? ['📎', 'Documentos', 'Gerencia o envio dos documentos obrigatórios. O ícone fica vermelho se houver pendências.'] : null,
+            $canAvisarPendencia ? ['📧', 'Avisar Pendência', 'Envia um e-mail automático aos responsáveis listando os documentos que faltam.'] : null,
+            $canAvisarPreceptoria ? ['🤝', 'Avisar Preceptoria', 'Envia um convite para agendar a preceptoria quando houver disponibilidade.'] : null,
+        ]);
 
         if ($canUpdate || $canAvisarPendencia) {
-            $html .= '<li><strong>Ações em Lote:</strong> Selecione vários registros para realizar ações coletivas.</li>';
+            $conteudo->secao('📦 Ações em lote', [
+                ['☑️', 'Seleção múltipla', 'Marque vários registros na lista para realizar ações coletivas.'],
+            ]);
         }
-        $html .= '</ul>';
 
         if ($canDocumentos) {
-            $html .= '<p><small>Dica: Linhas com fundo avermelhado indicam alunos com documentos obrigatórios pendentes.</small></p>';
+            $conteudo->dica('Linhas com fundo avermelhado indicam alunos com documentos obrigatórios pendentes.', '🔴');
         }
 
-        return $html;
+        return $conteudo;
     }
 }

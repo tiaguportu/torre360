@@ -1882,7 +1882,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 ### 39.2 Telas já cobertas
 - **Todas as telas que já tinham o botão** ganharam o novo visual (cartões, emojis, modo escuro).
 - **Acadêmico:** Cursos, Planos de Aula, Salas, Frequências Escolares e Fechamento do Ciclo Letivo.
-- **Secretaria:** Coordenadores.
+- **Secretaria:** Coordenadores e Matrículas (ajuda reescrita no novo formato, incluindo as abas Todas, Pendentes, Ativas e Canceladas).
 - **Avaliações e Currículo (BNCC):** Notas e Habilidades.
 - **Preceptoria e Calendário:** Ciclos de Preceptoria, Relatórios de Preceptoria, Templates de Relatório e Dias Não Letivos.
 - **Financeiro e Operacional:** Fornecedores, Transações Bancárias e Ordens de Serviço.

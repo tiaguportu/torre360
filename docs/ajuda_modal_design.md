@@ -50,3 +50,6 @@ $this->ajudaCadastro('🏦', 'Bancos', 'Resumo.', 'Banco', 'Texto da listagem.',
     extras: [['🌳', 'Item extra', 'Texto']], dica: 'Dica opcional');
 ```
 Usado nas tabelas auxiliares do grupo Configurações (fase 6).
+
+## Telas legadas migradas
+Telas antigas (HTML montado à mão) ganham o visual novo automaticamente, mas podem ser migradas para `HelpContent` para ter hero com emoji e cartões. Já migradas: Cursos e Matrículas (`ListMatriculas`, que também passou a explicar as abas de situação).

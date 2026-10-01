@@ -28,6 +28,7 @@ use App\Filament\Resources\Fornecedores\Pages\ListFornecedores;
 use App\Filament\Resources\FrequenciaEscolars\Pages\ListFrequenciaEscolars;
 use App\Filament\Resources\Habilidades\Pages\ListHabilidades;
 use App\Filament\Resources\LandingLeads\Pages\ListLandingLeads;
+use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Filament\Resources\MensagemWhatsappTemplates\Pages\ListMensagemWhatsappTemplates;
 use App\Filament\Resources\Notas\Pages\ListNotas;
 use App\Filament\Resources\OrdemServicoResource\Pages\ListOrdemServicos;
@@ -62,6 +63,7 @@ class AjudaCoberturaSidebarTest extends TestCase
     {
         return [
             'Cursos' => [ListCursos::class],
+            'Matrículas' => [ListMatriculas::class],
             'Campanhas de Marketing' => [ListCampanhaMarketings::class],
             'Comunicação em Massa' => [ListComunicacaoEmMassas::class],
             'Leads da Landing Page' => [ListLandingLeads::class],
