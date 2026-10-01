@@ -38,14 +38,15 @@ Resumo de alto nível das melhorias de segurança aplicadas ao sistema, a partir
 
 ## Mass assignment nos models
 
-- Todos os models que usavam `protected $guarded = [];` passaram a declarar `protected $fillable` explícito, listando só as colunas reais de cada tabela (introspecção feita contra o schema migrado, não contra um banco de desenvolvimento potencialmente desatualizado). Dois models (`Coordenador`, `TributacaoCurso`) ficaram de fora porque já apontam para um nome de tabela que não existe no banco atual — bug pré-existente, sem relação com esta mudança, não corrigido aqui.
+- Todos os models que usavam `protected $guarded = [];` passaram a declarar `protected $fillable` explícito, listando só as colunas reais de cada tabela (introspecção feita contra o schema migrado, não contra um banco de desenvolvimento potencialmente desatualizado).
 - Efeitos colaterais corrigidos junto:
   - Os importadores de CSV (`ContratoImporter`, `PessoaImporter`) dependiam de mass-assignar `id` para reimportar/atualizar um registro por ID explícito; passaram a setar o `id` diretamente em vez de via array.
   - `EducacensoPessoaExporter`: um bug pré-existente (lia `nome` diretamente em models que só têm esse dado através da relação `categoria`) ficou exposto porque o `$guarded = []` anterior mascarava o erro ao aceitar um atributo `nome` que não existe de fato nessas tabelas. Corrigido para ler via `categoria.nome`, com os eager loads correspondentes.
+  - `Coordenador`/`TributacaoCurso` apontavam para um nome de tabela que diverge entre ambientes: uma migration de rename antiga ficou com os dois renames adicionados depois de já ter sido marcada como executada em ambientes mais antigos (então nunca surtiu efeito lá), enquanto um ambiente novo (testes, instalação do zero) já aplica o rename normalmente. Adicionada uma migration nova e idempotente que corrige só os ambientes que ainda estão com o nome antigo; precisa rodar `php artisan migrate` nesses ambientes para o efeito ser aplicado.
 
 ## Pendências conhecidas
 
 - Autenticação de dois fatores para contas administrativas: avaliada e, por ora, não implementada.
 - Deploy em ambiente sem Composer/shell: ver nota no `.gitignore` sobre comitar `vendor/` quando necessário.
-- Corrigir o nome de tabela de `Coordenador` e `TributacaoCurso` (ver seção acima).
+- **Rodar `php artisan migrate` em produção** para aplicar o rename de `coordenadores`/`tributacao_cursos` (ver seção acima) — sem isso, `Coordenador`/`TributacaoCurso` não funcionam em produção.
 - Uma Content-Security-Policy mais estrita ainda não foi ativada (ver seção "Headers e rede").
