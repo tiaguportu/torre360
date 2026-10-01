@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\FechamentoCicloLetivo;
 use App\Filament\Resources\CampanhaMarketings\Pages\ListCampanhaMarketings;
 use App\Filament\Resources\ComunicacaoEmMassas\Pages\ListComunicacaoEmMassas;
+use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
+use App\Filament\Resources\FrequenciaEscolars\Pages\ListFrequenciaEscolars;
 use App\Filament\Resources\LandingLeads\Pages\ListLandingLeads;
 use App\Filament\Resources\MensagemWhatsappTemplates\Pages\ListMensagemWhatsappTemplates;
+use App\Filament\Resources\PlanoAulas\Pages\ListPlanoAulas;
+use App\Filament\Resources\Salas\Pages\ListSalas;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,6 +36,11 @@ class AjudaCoberturaSidebarTest extends TestCase
             'Comunicação em Massa' => [ListComunicacaoEmMassas::class],
             'Leads da Landing Page' => [ListLandingLeads::class],
             'Modelos de WhatsApp' => [ListMensagemWhatsappTemplates::class],
+            'Coordenadores' => [ListCoordenadors::class],
+            'Frequências Escolares' => [ListFrequenciaEscolars::class],
+            'Planos de Aula' => [ListPlanoAulas::class],
+            'Salas' => [ListSalas::class],
+            'Fechamento do Ciclo Letivo' => [FechamentoCicloLetivo::class],
         ];
     }
 

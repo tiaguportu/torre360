@@ -1864,7 +1864,8 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 
 ### 39.2 Telas já cobertas
 - **Todas as telas que já tinham o botão** ganharam o novo visual (cartões, emojis, modo escuro).
-- **Acadêmico:** Cursos (texto no novo formato).
+- **Acadêmico:** Cursos, Planos de Aula, Salas, Frequências Escolares e Fechamento do Ciclo Letivo.
+- **Secretaria:** Coordenadores.
 - **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
 - As demais telas serão cobertas nas próximas etapas (Secretaria, Avaliações, Preceptoria, Financeiro, Configurações, Sistema e Portal da Família). A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
 
