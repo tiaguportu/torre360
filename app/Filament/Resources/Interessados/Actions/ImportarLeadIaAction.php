@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\Interessados\Actions;
 
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\Serie;
 use App\Models\StatusInteressado;
+use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\GeminiAgentService;
 use App\Services\LeadScoreService;
@@ -17,6 +19,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 class ImportarLeadIaAction
@@ -218,6 +221,33 @@ class ImportarLeadIaAction
                 }
             }
         }
+
+        // 6. Registra o Histórico de Contato com o relato da conversa
+        $relato = ! empty($extracted['relato_contato']) ? trim((string) $extracted['relato_contato']) : trim((string) ($extracted['observacoes'] ?? ''));
+        if ($relato === '') {
+            $relato = 'Contato inicial registrado via importação com IA.';
+        }
+
+        $tipoNome = ! empty($extracted['tipo_contato']) ? trim((string) $extracted['tipo_contato']) : 'WhatsApp';
+        $tipoContato = TipoContatoInteressado::whereRaw('LOWER(nome) = ?', [mb_strtolower($tipoNome)])->first()
+            ?? TipoContatoInteressado::firstOrCreate(['nome' => $tipoNome]);
+
+        try {
+            $dataContato = ! empty($extracted['data_contato']) ? Carbon::parse((string) $extracted['data_contato']) : now();
+        } catch (\Throwable) {
+            $dataContato = now();
+        }
+        if ($dataContato->isFuture()) {
+            $dataContato = now();
+        }
+
+        HistoricoContato::create([
+            'interessado_id' => $interessado->id,
+            'usuario_id' => $usuarioId,
+            'tipo_contato_interessado_id' => $tipoContato->id,
+            'relato' => $relato,
+            'data_contato' => $dataContato,
+        ]);
 
         LeadScoreService::recalcular($interessado);
 

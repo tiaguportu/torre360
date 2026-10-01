@@ -275,6 +275,9 @@ class GeminiLeadExtractionTest extends TestCase
             'temperatura' => 'quente',
             'valor_estimado' => 2200.50,
             'observacoes' => 'Procura vaga urgente para transferência.',
+            'tipo_contato' => 'WhatsApp',
+            'data_contato' => '2026-09-28 14:30:00',
+            'relato_contato' => 'Pai pediu valores e vaga para 2026.',
             'alunos' => [
                 [
                     'nome' => 'Matheus Alves',
@@ -298,6 +301,13 @@ class GeminiLeadExtractionTest extends TestCase
             'usuario_id' => $consultor->id,
             'temperatura' => 'quente',
             'valor_estimado' => 2200.50,
+        ]);
+
+        $this->assertDatabaseHas('historico_contato', [
+            'interessado_id' => $interessado->id,
+            'usuario_id' => $consultor->id,
+            'relato' => 'Pai pediu valores e vaga para 2026.',
+            'data_contato' => '2026-09-28 14:30:00',
         ]);
 
         $this->assertDatabaseHas('interessado_dependente', [

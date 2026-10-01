@@ -150,6 +150,8 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - Clique em **Analisar e Criar Lead**.
 > **Alta demanda:** se aparecer a mensagem "servidores de IA do Gemini estão temporariamente com alta demanda", o sistema já tentou automaticamente vários modelos em duas rodadas. Aguarde alguns instantes e tente novamente.
 3. **O que a IA faz automaticamente:**
+   - **Histórico de Contato:** registra automaticamente um contato com o relato da conversa, o canal (WhatsApp, Ligação, E-mail ou Presencial) e a data/hora em que ocorreu (quando identificada no texto/print; caso contrário, usa o momento da importação).
+   - **Observações com datas:** o resumo em Observações cita as datas disponíveis (conversa, visitas, prazos, previsão de matrícula) no formato DD/MM/AAAA.
    - Lê e interpreta o print ou o texto recebido com alta precisão.
    - Extrai o Nome completo, E-mail, Telefone e CPF do responsável.
    - Extrai o Nome da criança/aluno, calcula a Data de Nascimento se uma idade for informada, e identifica o Vínculo (Pai, Mãe, Tutor).
