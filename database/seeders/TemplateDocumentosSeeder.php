@@ -43,10 +43,42 @@ class TemplateDocumentosSeeder extends Seeder
                 'validade_dias' => 90,
                 'is_ativo' => true,
             ],
+            [
+                'nome' => 'Declaração para Passe Escolar e Transporte',
+                'tipo' => TipoTemplateDocumento::DeclaracaoTransporte,
+                'descricao' => 'Comprova matrícula e horários para concessão de passe escolar e gratuidade no transporte público.',
+                'conteudo' => '<p>Declaramos para os devidos fins de comprovação junto aos órgãos gestores de trânsito e empresas concessionárias de transporte público coletivo ou fretamento escolar, que o(a) estudante <strong>{{ALUNO_NOME}}</strong>, CPF nº <strong>{{ALUNO_CPF}}</strong>, RG nº <strong>{{ALUNO_RG}}</strong>, residente e domiciliado(a) no endereço <strong>{{ALUNO_ENDERECO}}</strong>, é aluno(a) devidamente matriculado(a) sob o nº <strong>{{MATRICULA_ID}}</strong>, cursando o(a) <strong>{{SERIE_NOME}}</strong> no turno <strong>{{TURNO_NOME}}</strong> ({{HORARIO_AULAS}}).</p><p>Atestamos que o(a) estudante frequenta as atividades pedagógicas curriculares de segunda a sexta-feira, necessitando de deslocamento regular entre sua residência e esta unidade de ensino no período letivo de <strong>{{PERIODO_LETIVO}}</strong>.</p>',
+                'validade_dias' => 60,
+                'is_ativo' => true,
+            ],
+            [
+                'nome' => 'Declaração de Turno e Horário de Aulas',
+                'tipo' => TipoTemplateDocumento::DeclaracaoHorario,
+                'descricao' => 'Comprova turno, horários de entrada e saída para fins de estágio, cursos ou emprego.',
+                'conteudo' => '<p>Declaramos para os devidos fins de direito, a pedido da parte interessada, que o(a) estudante <strong>{{ALUNO_NOME}}</strong>, portador(a) do CPF nº <strong>{{ALUNO_CPF}}</strong>, encontra-se matriculado(a) nesta instituição de ensino no <strong>{{SERIE_NOME}}</strong> do <strong>{{CURSO_NOME}}</strong>, cumprindo jornada de aulas no turno <strong>{{TURNO_NOME}}</strong>, com horário regular das <strong>{{HORARIO_AULAS}}</strong>, nos dias úteis letivos de <strong>{{PERIODO_LETIVO}}</strong>.</p><p>Esta declaração destina-se a fins de compatibilização de horários com estágio supervisionado, programas de jovem aprendiz ou atividades complementares.</p>',
+                'validade_dias' => 30,
+                'is_ativo' => true,
+            ],
+            [
+                'nome' => 'Declaração de Transferência e Vaga',
+                'tipo' => TipoTemplateDocumento::DeclaracaoTransferencia,
+                'descricao' => 'Atesta transferência ou situação escolar para ingresso em outra instituição de ensino.',
+                'conteudo' => '<p>Declaramos para os devidos fins que o(a) estudante <strong>{{ALUNO_NOME}}</strong>, nascido(a) em <strong>{{ALUNO_NASCIMENTO}}</strong>, filho(a) de <strong>{{ALUNO_MAE}}</strong> e <strong>{{ALUNO_PAI}}</strong>, CPF nº <strong>{{ALUNO_CPF}}</strong>, esteve regularmente matriculado(a) nesta instituição no(a) <strong>{{SERIE_NOME}}</strong> do <strong>{{CURSO_NOME}}</strong> sob a Matrícula nº <strong>{{MATRICULA_ID}}</strong>, encontrando-se na situação <strong>{{SITUACAO_MATRICULA}}</strong>.</p><p>A presente declaração possui validade transitória de 30 (trinta) dias, prazo no qual será expedido o competente Histórico Escolar definitivo pela Secretaria Escolar.</p>',
+                'validade_dias' => 30,
+                'is_ativo' => true,
+            ],
+            [
+                'nome' => 'Declaração de Conclusão de Série/Ano Letivo',
+                'tipo' => TipoTemplateDocumento::DeclaracaoConclusao,
+                'descricao' => 'Atesta a conclusão e aprovação na série escolar ao final do ano letivo.',
+                'conteudo' => '<p>Certificamos para os devidos fins de direito que o(a) estudante <strong>{{ALUNO_NOME}}</strong>, portador(a) do CPF nº <strong>{{ALUNO_CPF}}</strong> e RG nº <strong>{{ALUNO_RG}}</strong>, concluiu com aproveitamento satisfatório e frequência regulamentar os componentes curriculares referentes ao(à) <strong>{{SERIE_NOME}}</strong> do <strong>{{CURSO_NOME}}</strong>, no ano letivo de <strong>{{PERIODO_LETIVO}}</strong>, estando apto(a) a prosseguir seus estudos na etapa seguinte.</p><p>O Histórico Escolar correspondente encontra-se em fase de escrituração e autenticação final pela Secretaria.</p>',
+                'validade_dias' => 60,
+                'is_ativo' => true,
+            ],
         ];
 
         foreach ($templates as $tpl) {
-            TemplateDocumento::firstOrCreate(
+            TemplateDocumento::updateOrCreate(
                 ['nome' => $tpl['nome']],
                 $tpl
             );

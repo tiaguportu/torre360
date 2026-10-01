@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Enums\StatusFatura;
 use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
 use Illuminate\Database\Eloquent\Builder;
@@ -483,5 +484,80 @@ class Matricula extends Model
         return $query->whereHas('pessoa', fn ($sub) => $sub->completo())
             ->whereDoesntHave('pessoa.responsaveis', fn ($sub) => $sub->incompleto())
             ->whereDoesntHave('contrato.responsaveisFinanceiros.pessoa', fn ($sub) => $sub->incompleto());
+    }
+
+    /**
+     * Verifica se o contrato da matrícula possui faturas vencidas em atraso ou não quitadas após a data de vencimento.
+     */
+    public function hasDebitosVencidos(): bool
+    {
+        if (! $this->contrato) {
+            return false;
+        }
+
+        return $this->contrato->faturas()
+            ->where(function (Builder $query) {
+                $query->where('status', StatusFatura::Atrasado)
+                    ->orWhere(function (Builder $q) {
+                        $q->whereIn('status', [StatusFatura::Pendente, StatusFatura::Parcial])
+                            ->whereDate('vencimento', '<', now()->toDateString());
+                    });
+            })
+            ->exists();
+    }
+
+    /**
+     * Retorna a quantidade de faturas com débitos vencidos.
+     */
+    public function getDebitosVencidosCount(): int
+    {
+        if (! $this->contrato) {
+            return 0;
+        }
+
+        return $this->contrato->faturas()
+            ->where(function (Builder $query) {
+                $query->where('status', StatusFatura::Atrasado)
+                    ->orWhere(function (Builder $q) {
+                        $q->whereIn('status', [StatusFatura::Pendente, StatusFatura::Parcial])
+                            ->whereDate('vencimento', '<', now()->toDateString());
+                    });
+            })
+            ->count();
+    }
+
+    /**
+     * Retorna o horário formatado das aulas da turma do aluno para declarações.
+     */
+    public function getHorarioAulasFormatado(): string
+    {
+        $turno = $this->turma?->turno;
+
+        if ($turno && $turno->hora_inicio && $turno->hora_fim) {
+            $inicio = substr((string) $turno->hora_inicio, 0, 5);
+            $fim = substr((string) $turno->hora_fim, 0, 5);
+
+            return "das {$inicio} às {$fim}";
+        }
+
+        $turnoNome = mb_strtolower($turno?->nome ?? '');
+
+        if (str_contains($turnoNome, 'manhã') || str_contains($turnoNome, 'matutino')) {
+            return 'das 07:15 às 12:35';
+        }
+
+        if (str_contains($turnoNome, 'tarde') || str_contains($turnoNome, 'vespertino')) {
+            return 'das 13:15 às 18:35';
+        }
+
+        if (str_contains($turnoNome, 'noite') || str_contains($turnoNome, 'noturno')) {
+            return 'das 19:00 às 22:30';
+        }
+
+        if (str_contains($turnoNome, 'integral')) {
+            return 'das 07:30 às 17:30';
+        }
+
+        return 'em horário regulamentar escolar';
     }
 }
