@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FechamentoCicloLetivo;
+use App\Filament\Resources\ActivityLogs\Pages\ListActivityLogs;
 use App\Filament\Resources\AreaConhecimentos\Pages\ListAreaConhecimentos;
 use App\Filament\Resources\Bancos\Pages\ListBancos;
 use App\Filament\Resources\CampanhaMarketings\Pages\ListCampanhaMarketings;
@@ -18,6 +20,7 @@ use App\Filament\Resources\Configuracaos\Pages\ListConfiguracaos;
 use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
 use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
+use App\Filament\Resources\EmailLogs\Pages\ListEmailLogs;
 use App\Filament\Resources\Enderecos\Pages\ListEnderecos;
 use App\Filament\Resources\Estados\Pages\ListEstados;
 use App\Filament\Resources\EtapaAvaliativas\Pages\ListEtapaAvaliativas;
@@ -43,6 +46,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -91,6 +95,9 @@ class AjudaCoberturaSidebarTest extends TestCase
             'Campos de Experiência' => [ManageCampoExperiencias::class],
             'Configurações' => [ListConfiguracaos::class],
             'Endereços' => [ListEnderecos::class],
+            'Logs de Atividade' => [ListActivityLogs::class],
+            'E-mails Enviados' => [ListEmailLogs::class],
+            'Início (Dashboard)' => [Dashboard::class],
         ];
     }
 
@@ -98,6 +105,8 @@ class AjudaCoberturaSidebarTest extends TestCase
     public function test_tela_possui_botao_de_ajuda(string $pagina): void
     {
         $user = User::factory()->create(['activated_at' => now()->subDay(), 'email_verified_at' => now()]);
+        // super_admin: algumas telas (ex: Logs de Atividade) checam o papel, não só a permissão
+        $user->assignRole(Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']));
         Gate::before(fn () => true);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
