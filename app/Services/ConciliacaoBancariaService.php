@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\Fatura;
 use App\Models\Fornecedor;
 use App\Models\TransacaoBancaria;
 use Carbon\Carbon;
 
 class ConciliacaoBancariaService
 {
+    public function __construct(private BaixaFaturaService $baixaFaturaService) {}
+
     public function processarOfx(string $content, int $bancoId): int
     {
         // Parser simplificado de OFX (baseado em regex para extrair STMTTRN)
@@ -83,6 +86,8 @@ class ConciliacaoBancariaService
             $count++;
         }
 
+        $this->conciliarCreditosComFaturas($bancoId);
+
         return $count;
     }
 
@@ -125,7 +130,76 @@ class ConciliacaoBancariaService
         }
         fclose($handle);
 
+        $this->conciliarCreditosComFaturas($bancoId);
+
         return $count;
+    }
+
+    /**
+     * Tenta casar créditos importados (entradas) ainda não vinculados a uma fatura, por
+     * identificador explícito na descrição ou por valor + janela de data em torno do
+     * vencimento. Só concilia automaticamente quando há exatamente UMA fatura em aberto
+     * candidata — valores ambíguos (duas faturas do mesmo valor no período) ficam para
+     * conciliação manual, evitando vincular ao título errado.
+     *
+     * Roda automaticamente ao final de cada importação de extrato, e pode ser chamada de
+     * novo manualmente para reprocessar transações que ficaram pendentes (ex.: a fatura
+     * só foi gerada depois do crédito ter sido importado).
+     *
+     * @return int quantidade de transações conciliadas nesta chamada
+     */
+    public function conciliarCreditosComFaturas(?int $bancoId = null): int
+    {
+        $pendentes = TransacaoBancaria::query()
+            ->where('tipo', 'entrada')
+            ->where('conciliado', false)
+            ->whereNull('fatura_id')
+            ->when($bancoId, fn ($q) => $q->where('banco_id', $bancoId))
+            ->get();
+
+        $conciliadas = 0;
+
+        foreach ($pendentes as $transacao) {
+            $fatura = $this->encontrarFaturaCorrespondente($transacao);
+
+            if (! $fatura) {
+                continue;
+            }
+
+            $transacao->update(['fatura_id' => $fatura->id, 'conciliado' => true]);
+            $this->baixaFaturaService->atualizarStatusFatura($fatura);
+            $conciliadas++;
+        }
+
+        return $conciliadas;
+    }
+
+    private function encontrarFaturaCorrespondente(TransacaoBancaria $transacao): ?Fatura
+    {
+        $statusAbertos = ['pendente', 'atrasado', 'parcial'];
+
+        // 1. Identificador explícito na descrição do extrato (ex.: "Pagamento Fatura #123")
+        if ($transacao->descricao && preg_match('/fatura\s*#?\s*(\d+)/i', $transacao->descricao, $matches)) {
+            $fatura = Fatura::whereIn('status', $statusAbertos)->find((int) $matches[1]);
+
+            if ($fatura && abs($fatura->valor_restante - $transacao->valor) < 0.01) {
+                return $fatura;
+            }
+        }
+
+        // 2. Valor + janela de data em torno do vencimento (pagamento pode chegar antes
+        // ou com atraso em relação à data de vencimento original).
+        $dataTransacao = Carbon::parse($transacao->data_transacao);
+
+        $candidatas = Fatura::whereIn('status', $statusAbertos)
+            ->whereBetween('vencimento', [
+                $dataTransacao->copy()->subDays(45)->toDateString(),
+                $dataTransacao->copy()->addDays(10)->toDateString(),
+            ])
+            ->get()
+            ->filter(fn (Fatura $f) => abs($f->valor_restante - $transacao->valor) < 0.01);
+
+        return $candidatas->count() === 1 ? $candidatas->first() : null;
     }
 
     private function extractTag(string $content, string $tag): ?string
