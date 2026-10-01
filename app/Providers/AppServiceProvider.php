@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -78,6 +79,14 @@ class AppServiceProvider extends ServiceProvider
 
         Queue::after(function (JobProcessed $event) {
             Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
+        });
+
+        // Política de senha: tamanho + complexidade sempre; verificação de vazamento
+        // (HaveIBeenPwned) só em produção, para não depender de rede em dev/testes.
+        Password::defaults(function () {
+            $rule = Password::min(10)->mixedCase()->numbers()->symbols();
+
+            return app()->environment('production') ? $rule->uncompromised() : $rule;
         });
     }
 
