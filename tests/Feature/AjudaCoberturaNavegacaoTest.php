@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Matriculas\MatriculaResource;
+use App\Filament\Resources\Pessoas\PessoaResource;
+use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\Pages\ListRoles;
 use Filament\Facades\Filament;
 use ReflectionClass;
@@ -62,6 +65,25 @@ class AjudaCoberturaNavegacaoTest extends TestCase
     public function test_todas_as_telas_do_painel_admin_tem_botao_de_ajuda(): void
     {
         $this->assertSame([], $this->telasSemAjuda('admin'), 'Telas do admin sem botão de Ajuda');
+    }
+
+    /**
+     * A sidebar dinâmica de responsáveis/alunos (EnsureActiveRole) aponta para páginas internas
+     * (editar, boletim, documentos, agendar) que não aparecem na navegação padrão.
+     */
+    public function test_destinos_da_sidebar_do_responsavel_tem_botao_de_ajuda(): void
+    {
+        $destinos = [
+            PessoaResource::getPages()['edit']->getPage(),
+            MatriculaResource::getPages()['boletim']->getPage(),
+            MatriculaResource::getPages()['documentos']->getPage(),
+            PreceptoriaResource::getPages()['index']->getPage(),
+            PreceptoriaResource::getPages()['agendar']->getPage(),
+        ];
+
+        $faltando = array_values(array_filter($destinos, fn (string $classe) => ! $this->temAjuda($classe)));
+
+        $this->assertSame([], $faltando, 'Destinos da sidebar do responsável sem botão de Ajuda');
     }
 
     public function test_todas_as_telas_do_portal_tem_botao_de_ajuda(): void
