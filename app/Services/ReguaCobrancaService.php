@@ -278,8 +278,8 @@ class ReguaCobrancaService
             '{{VALOR}}' => $valorRestante,
             '{{DATA_VENCIMENTO}}' => $vencimento->format('d/m/Y'),
             '{{DIAS_ATRASO}}' => (string) $diasAtraso,
-            '{{LINK_PAGAMENTO}}' => url("/admin/faturas/{$fatura->id}"),
-            '{{PIX_COPIA_COLA}}' => '00020126360014BR.GOV.BCB.PIX0114+551199999999520400005303986540'.$valorRestante.'5802BR5925TORRE360 GESTAO ESCOLAR6009SAO PAULO62070503***6304',
+            '{{LINK_PAGAMENTO}}' => $fatura->link_pagamento ?? url("/admin/faturas/{$fatura->id}"),
+            '{{PIX_COPIA_COLA}}' => $fatura->pix_copia_e_cola ?? 'PIX ainda não gerado para esta fatura — use a ação "Gerar Cobrança".',
         ];
 
         return str_replace(array_keys($tags), array_values($tags), $texto);

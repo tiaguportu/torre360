@@ -32,8 +32,8 @@ class NotaLancamentoService
         return $matriculas->map(fn ($matricula) => [
             'matricula_id' => $matricula->id,
             'aluno_nome' => $matricula->aluno_nome ?? 'Sem Nome',
-            'valor' => $notasExistentes[$matricula->id]?->valor,
-            'situacao' => $notasExistentes[$matricula->id]?->situacao?->value,
+            'valor' => $notasExistentes->get($matricula->id)?->valor,
+            'situacao' => $notasExistentes->get($matricula->id)?->situacao?->value,
         ])->all();
     }
 

@@ -10,7 +10,7 @@ class SituacaoFinalDisciplina extends Model
 {
     protected $table = 'situacao_final_disciplina';
 
-    protected $fillable = ['matricula_id', 'disciplina_id', 'periodo_letivo_id', 'media_final', 'situacao', 'calculado_em'];
+    protected $fillable = ['matricula_id', 'disciplina_id', 'periodo_letivo_id', 'media_final', 'situacao', 'calculado_em', 'nota_exame_final', 'media_final_pos_exame', 'situacao_final_pos_exame'];
 
     protected function casts(): array
     {
@@ -18,6 +18,9 @@ class SituacaoFinalDisciplina extends Model
             'media_final' => 'decimal:2',
             'situacao' => SituacaoFinal::class,
             'calculado_em' => 'datetime',
+            'nota_exame_final' => 'decimal:2',
+            'media_final_pos_exame' => 'decimal:2',
+            'situacao_final_pos_exame' => SituacaoFinal::class,
         ];
     }
 

@@ -423,11 +423,29 @@ Rotina de fechamento que consolida as etapas avaliativas de cada disciplina e de
 2. Selecione o **Período Letivo** e, opcionalmente, uma **Turma** específica (deixe em branco para processar todas as turmas do período de uma vez).
 3. Clique em **Calcular Situação Final**. O sistema irá, para cada aluno com matrícula ativa ou concluída e cada disciplina de sua turma:
    - Calcular a **média simples** entre as médias de todas as Etapas Avaliativas (bimestres/trimestres) do período letivo.
-   - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota **substitui a menor média de etapa**, desde que seja melhor do que ela — o mesmo princípio já usado na substituição de notas dentro do boletim.
+   - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota substitui média(s) de etapa conforme o modo de recuperação configurado no Período Letivo (item 5.10.1 abaixo).
    - Classificar o resultado conforme as notas de corte configuradas no cadastro do **Período Letivo** (campos **Nota Mínima para Aprovação**, padrão 7,0, e **Nota Mínima para Recuperação**, padrão 5,0): média igual ou acima da nota de aprovação = **Aprovado**; entre a nota de recuperação e a de aprovação = **Recuperação**; abaixo da nota de recuperação = **Reprovado**.
 4. O resultado é exibido na própria página, agrupado por turma, com aluno, disciplina, média final e um selo colorido de situação (verde = Aprovado, amarelo = Recuperação, vermelho = Reprovado).
 5. **Gravação:** Cada cálculo é salvo (um registro por aluno/disciplina/período letivo). Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior — útil após correção de notas.
 6. **Turmas por Habilidades:** Turmas configuradas com Tipo de Avaliação `Habilidades` não entram no fechamento, pois não possuem notas numéricas — apenas turmas `Notas` ou `Híbrido`.
+
+#### 5.10.1 Recuperação Anual ou por Etapa
+
+No cadastro do **Período Letivo**, o toggle **"Recuperação por etapa (em vez de recuperação anual)"** define como as notas de recuperação são aproveitadas:
+
+- **Desligado (padrão) — recuperação anual:** todas as avaliações de recuperação do período, não importa a etapa em que foram lançadas, são somadas num único valor, que substitui a **menor** média de etapa do aluno (se for melhor que ela). Só uma etapa é recuperada.
+- **Ligado — recuperação por etapa:** cada nota de recuperação só pode substituir a média da **própria etapa** em que foi lançada. Permite recuperar mais de uma etapa de forma independente (por exemplo, uma recuperação logo depois de cada bimestre fechar).
+
+#### 5.10.2 Exame Final
+
+Ainda no cadastro do **Período Letivo**, o toggle **"Permitir exame final"** habilita um segundo mecanismo, além (ou no lugar) da recuperação: quando ligado, aparece também o campo **"Nota Mínima para Aprovação após o Exame Final"** (padrão 5,0).
+
+1. Depois de calcular a situação final, disciplinas que ficaram em **Recuperação** mostram um botão **Lançar Exame Final** na própria tabela de resultados (coluna "Exame Final").
+2. Ao clicar, informe a **Nota do Exame Final** (0 a 10) e salve.
+3. O sistema calcula a **média simples entre a média do período e a nota do exame** e compara com a nota mínima pós-exame configurada — o resultado é sempre **Aprovado** ou **Reprovado** (não existe uma segunda recuperação).
+4. O resultado aparece na mesma coluna como um selo colorido com a média pós-exame entre parênteses, no lugar do botão — não é possível lançar o exame final duas vezes para a mesma disciplina.
+5. Recalcular o fechamento **preserva** o exame final já lançado se a disciplina continuar em Recuperação; se a nova situação deixar de ser Recuperação (por exemplo, depois de uma correção de nota), o exame lançado é descartado, pois deixou de fazer sentido.
+6. O resultado pós-exame passa a valer também no **Histórico Escolar** emitido pela Secretaria Digital (seção 31.1) — a disciplina aparece com a situação definitiva, não com "Recuperação".
 
 ---
 
@@ -1629,6 +1647,7 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
    - `{NOME_INSTITUICAO}`, `{CNPJ_INSTITUICAO}`, `{ENDERECO_INSTITUICAO}`
    - `{DATA_EXTENSO}`, `{CIDADE_DATA}`, `{CODIGO_AUTENTICIDADE}`
 3. **Autenticidade e Carimbo Digital:** Ao marcar o campo *Exige Código e QR Code de Autenticidade*, cada documento gerado recebe um carimbo com hash único e QR Code para auditoria instantânea por câmeras de celular.
+4. **Histórico Escolar real:** no modelo do tipo Histórico Escolar, a tag `{{TABELA_HISTORICO}}` traz uma tabela por ano/período letivo do aluno com a média e a situação final **já calculadas pelo Fechamento do Ciclo Letivo** (seção 5.10) — incluindo o resultado do exame final, quando houver. Um período letivo ainda não fechado aparece com um aviso em vez de dados inventados.
 
 ### 31.2 Gestão de Solicitações e Emissão (`/admin/solicitacao-documentos`)
 1. **Atendimento a Requerimentos:** A secretaria visualiza pedidos abertos tanto presencialmente quanto vindos do Portal da Família.
@@ -1646,25 +1665,25 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
 
 ## 🔄 32. Rematrícula Online (Administração e Portal da Família)
 
-Automatize o processo de rematrícula entre períodos letivos, permitindo que as famílias confirmem vagas, manifestem preferência de turnos e formalizem a renovação de onde estiverem.
+Automatize o processo de rematrícula entre períodos letivos: a família confirma a vaga pelo Portal, e o sistema gera a nova matrícula, o contrato, a cobrança e já envia para assinatura digital — sem a secretaria precisar fazer nada manualmente, a menos que algo falhe.
 
 ### 32.1 Campanhas de Rematrícula (`/admin/periodo-rematriculas`)
-1. **Abertura de Período:** A direção cadastra a campanha escolhendo o *Período Letivo Origem* (ex: 2026) e o *Período Letivo Destino* (ex: 2027).
-2. **Vigência e Instruções:** Define-se a data de início e término em que a campanha ficará ativa, além de instruções de acolhimento e orientações aos pais.
-3. **Bloqueio de Inadimplência:** Opcionalmente, pode-se desmarcar *Permitir Inadimplentes*. Com isso, estudantes com faturas em atraso não conseguem concluir a rematrícula pelo Portal antes de regularizarem suas pendências no financeiro.
+1. **Abertura de Período:** a secretaria cadastra a campanha escolhendo o *Período Letivo Origem* (ex: 2026) e o *Período Letivo Destino* (ex: 2027), a vigência (data de início/fim) e se está ativa.
+2. **Modelo de Contrato e Cobrança:** selecione o *Modelo de Contrato* a ser gerado, o *Valor Total*, a *Quantidade de Parcelas* e o *Valor de Entrada* (0 se não houver) — esses dois últimos definem automaticamente como as faturas são geradas quando a família confirma a rematrícula. Sem um modelo de contrato selecionado, a campanha só cria a nova matrícula, sem contrato nem cobrança.
+3. **Mensagem aos Pais:** texto livre exibido no Portal durante a campanha.
 
-### 32.2 Acompanhamento e Efetivação (`/admin/rematriculas`)
-1. **Painel de Controle:** A secretaria acompanha o status de cada rematrícula:
-   - `Pendente`: Aguardando resposta do responsável.
-   - `Confirmada pelo Responsável`: Família preencheu o formulário no portal.
-   - `Aprovada pela Secretaria`: Vaga e documentação validadas.
-   - `Efetivada`: Matrícula gerada no período letivo subsequente.
-2. **Efetivação em 1 Clique:** Na listagem de rematrículas, a ação **Efetivar Rematrícula** cria automaticamente a nova matrícula do estudante no ano letivo destino (com turma/turno escolhidos) e já formaliza o novo contrato de prestação de serviços educacionais.
+### 32.2 Acompanhamento (`/admin/rematriculas`)
+A secretaria acompanha o status de cada rematrícula:
+- **Iniciada:** a família abriu o processo, mas ainda não confirmou os dados.
+- **Dados Confirmados:** a família confirmou, mas o contrato não foi enviado para assinatura (geralmente porque a campanha não tem modelo de contrato configurado, ou o envio ao Assinafy falhou — nesse caso, a secretaria resolve manualmente na tela do Contrato gerado).
+- **Aguardando Assinatura do Contrato:** tudo certo — nova matrícula, contrato e faturas já gerados, contrato enviado para o Assinafy.
+- **Rematrícula Confirmada:** o contrato foi assinado (confirmação automática via webhook do Assinafy) — processo concluído.
+- **Cancelada.**
 
 ### 32.3 Rematrícula pelo Portal da Família (`/portal/rematricula`)
-1. Ao acessar o Portal durante uma campanha ativa, a família visualiza o banner e formulário intuitivo de Rematrícula.
-2. O responsável confere os dados do filho, seleciona a série pretendida e turno preferencial, declara a ciência das diretrizes e clica em **Confirmar Rematrícula**.
-3. O sistema registra data, hora e endereço IP da confirmação com total segurança jurídica e atualiza o painel da secretaria em tempo real.
+1. Durante uma campanha ativa, a família vê a lista de dependentes elegíveis e o botão **Realizar Rematrícula**.
+2. O responsável escolhe a série pretendida e o turno de preferência para o próximo período, pode deixar observações, e confirma.
+3. **Nos bastidores, tudo acontece automaticamente:** o sistema cria a nova matrícula no período de destino, gera o contrato a partir do modelo configurado na campanha (copiando os responsáveis financeiros do contrato anterior), gera as faturas (entrada + parcelas) e envia o contrato para assinatura digital via Assinafy. A família recebe o link de assinatura pelo mesmo processo já usado na matrícula original (seção 23.3).
 
 ---
 
@@ -1888,7 +1907,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 - **Secretaria:** Coordenadores e Matrículas (ajuda reescrita no novo formato, incluindo as abas Todas, Pendentes, Ativas e Canceladas).
 - **Avaliações e Currículo (BNCC):** Notas e Habilidades.
 - **Preceptoria e Calendário:** Ciclos de Preceptoria, Relatórios de Preceptoria, Templates de Relatório e Dias Não Letivos.
-- **Financeiro e Operacional:** Fornecedores, Transações Bancárias e Ordens de Serviço.
+- **Financeiro e Operacional:** Fornecedores, Transações Bancárias, Ordens de Serviço, Contas a Pagar, Relatório de Inadimplência e Fluxo de Caixa.
 - **Configurações (tabelas auxiliares):** Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipos de Vínculo, Tributações dos Cursos, Etapas Avaliativas, Categorias de Avaliação, Categorias de OS, Áreas de Conhecimento, Campos de Experiência, Configurações e Endereços.
 - **Sistema e Segurança e Início:** Logs de Atividade (somente Super Administrador), E-mails Enviados e a tela Início.
 - **Portal da Família/Aluno (`/portal`):** as 14 páginas (Início, Notas, Frequência, Horários, Calendário, Boletins, Documentos e Contratos, Solicitar Documentos Oficiais, Eventos e Atividades, Rematrícula Online, Financeiro, Ocorrências, Agendar Preceptoria e Central de Atendimento), com explicações em linguagem simples para as famílias.
@@ -1991,6 +2010,49 @@ O módulo de **Matrícula Externa 100% Self-Service** permite que pais, mães e 
 - O responsável é direcionado para a página de sucesso com o **Protocolo Oficial de Matrícula**, detalhamento da turma, dados do contrato aceito e lista dos documentos sob análise.
 - A tela disponibiliza o botão **"Imprimir Comprovante"** para arquivo da família e um atalho direto para login no **Portal da Família** (`/portal`).
 - A equipe da secretaria escolar recebe uma notificação instantânea no painel administrativo para validação documental e homologação da matrícula.
+
+---
+
+## 💳 43. Financeiro Automatizado: Gateway, Conciliação e Relatórios
+
+Completa a Régua de Cobrança (seção 35) com a geração real de PIX/boleto, baixa automática por webhook, conciliação bancária e relatórios consolidados. Detalhes técnicos em `docs/financeiro_gateway_conciliacao_relatorios.md`.
+
+### 43.1 Gerar Cobrança e Dados de Pagamento (`/admin/faturas`)
+1. Na listagem de **Faturas**, uma fatura ainda sem cobrança gerada mostra o botão **Gerar Cobrança** — cria o PIX/boleto no gateway configurado (por padrão, um gateway de testes "Fake", até a escola configurar um gateway real).
+2. Depois de gerada, o botão **Dados de Pagamento** mostra o código PIX copia-e-cola, a linha digitável e os links de pagamento/boleto para copiar ou repassar à família.
+3. Com o gateway de testes ativo, aparece também **Simular Pagamento (Dev)** — confirma o pagamento na hora, como se a confirmação tivesse vindo do gateway de verdade, útil para testar o fluxo completo antes de configurar um gateway real.
+
+### 43.2 Pagamento pelo Portal da Família (`/portal/financeiro`)
+Na listagem de faturas do Portal, o responsável financeiro vê o botão **Pagar** em qualquer fatura em aberto: ao clicar, o sistema gera a cobrança automaticamente (se ainda não existir) e mostra o PIX copia-e-cola e os links de pagamento — sem precisar passar pela secretaria.
+
+### 43.3 Conciliação Automática de Créditos (`/admin/transacao-bancarias`)
+Ao importar um extrato (seção 23.3), o sistema tenta automaticamente casar cada crédito importado com uma fatura em aberto, por um número de fatura mencionado na descrição ou por valor e data próxima do vencimento — só concilia sozinho quando há exatamente uma fatura candidata. O botão **Conciliar Créditos Pendentes** reprocessa créditos que ficaram sem par (por exemplo, quando a fatura só foi gerada depois do crédito chegar).
+
+### 43.4 Contas a Pagar (`/admin/conta-pagars`)
+Cadastro de obrigações da escola com fornecedores: descrição, valor, vencimento, fornecedor, plano de contas e centro de custo. O botão **Dar Baixa** registra a saída no banco escolhido e marca a conta como paga. Contas pendentes vencidas são marcadas automaticamente como **Atrasado** todos os dias às 07h.
+
+### 43.5 Relatórios
+
+- **Relatório de Inadimplência** (`/admin/financeiro/relatorio-inadimplencia`): faturas em atraso com aluno, turma, responsável(is) e dias de atraso, com filtro por turma e por faixa de atraso (1–7, 8–15, 16–30, mais de 30 dias). Resumo no topo com total de faturas, valor devido e responsáveis inadimplentes.
+- **Fluxo de Caixa** (`/admin/financeiro/fluxo-de-caixa`): entradas, saídas e saldo consolidados dos últimos 12 meses, a partir das transações bancárias já lançadas (baixas manuais, webhook e extratos importados).
+
+---
+
+## ✉️ 44. Convite de Matrícula Online
+
+Link único enviado a um lead já qualificado pelo CRM para que a própria família confirme/complete os dados — sem precisar passar pelo formulário público completo nem ver qualquer outro cadastro.
+
+### 44.1 Gerando o Convite (`/admin/interessados`)
+1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra a ação **Gerar Link de Convite**.
+2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.).
+
+### 44.2 O que a Família Vê
+1. Ao abrir o link, a família vê uma página simples com seus próprios dados: telefone, e-mail, e cada dependente já cadastrado com os campos **Série de Interesse** e **Turno de Preferência**.
+2. Depois de confirmar, uma tela de agradecimento avisa que a secretaria vai entrar em contato — o link não pode mais ser usado a partir daí.
+3. Um link expirado, já usado ou inválido mostra um aviso claro, com atalho para o formulário público completo.
+
+### 44.3 O que Muda para a Secretaria
+A confirmação pelo convite **não efetiva a matrícula por si só** — ela só atualiza os dados do lead (telefone, e-mail, série de cada dependente) e registra no histórico do CRM que a família confirmou online. A secretaria continua usando a ação **Matricular** (já existente) para efetivamente abrir o Assistente de Matrícula pré-preenchido e concluir o processo — só que agora com os dados já confirmados pela própria família, sem precisar ligar para confirmar cada informação.
 
 ---
 

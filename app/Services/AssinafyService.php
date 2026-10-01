@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusRematricula;
 use App\Models\Contrato;
 use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -444,6 +445,19 @@ class AssinafyService
             }
 
             $contrato->update($updateData);
+
+            // Se este contrato é de uma Rematrícula Online aguardando assinatura, a
+            // confirmação do documento assinado é o que efetivamente conclui o processo.
+            if (in_array($status, ['signed', 'completed'], true)) {
+                $rematricula = $contrato->rematricula;
+
+                if ($rematricula && $rematricula->status !== StatusRematricula::Confirmada) {
+                    $rematricula->update([
+                        'status' => StatusRematricula::Confirmada,
+                        'data_confirmacao' => now(),
+                    ]);
+                }
+            }
 
             return true;
         }

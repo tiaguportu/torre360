@@ -15,6 +15,7 @@ use App\Models\StatusInteressado;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\UtmTracker;
 use Filament\Actions\Action;
@@ -246,6 +247,60 @@ class CaptacaoInteressadoController extends Controller
             'whatsappUnidade' => session('whatsapp_unidade'),
             'nomeUnidade' => session('nome_unidade'),
         ]);
+    }
+
+    /**
+     * Página do convite de matrícula online: confirma/completa os dados de um lead já
+     * qualificado pelo CRM, pré-preenchidos e restritos ao próprio interessado — nenhum
+     * outro registro é exposto nem navegável a partir daqui.
+     */
+    public function convite(string $token, ConviteMatriculaService $service): View
+    {
+        $interessado = $service->validarToken($token);
+
+        if (! $interessado) {
+            return view('captacao.convite-invalido');
+        }
+
+        $interessado->loadMissing(['pessoa', 'dependentes.serie']);
+
+        return view('captacao.convite', [
+            'interessado' => $interessado,
+            'series' => Serie::with('curso')->orderBy('nome')->get(),
+        ]);
+    }
+
+    public function confirmarConvite(Request $request, string $token, ConviteMatriculaService $service): RedirectResponse
+    {
+        $interessado = $service->validarToken($token);
+
+        if (! $interessado) {
+            return redirect()->route('captacao.interessado.convite', $token);
+        }
+
+        $dependentesIds = $interessado->dependentes()->pluck('id')->all();
+
+        $validated = $request->validate([
+            'telefone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'dependentes' => ['required', 'array', 'min:1'],
+            'dependentes.*.id' => ['required', 'integer', 'in:'.implode(',', $dependentesIds ?: [0])],
+            'dependentes.*.serie_id' => ['nullable', 'exists:serie,id'],
+            'dependentes.*.turno_preferencia' => ['nullable', 'string', 'in:Manhã,Tarde,Integral,Sem preferência'],
+        ]);
+
+        $service->confirmar(
+            $interessado,
+            ['telefone' => $validated['telefone'] ?? null, 'email' => $validated['email'] ?? null],
+            $validated['dependentes']
+        );
+
+        return redirect()->route('captacao.interessado.convite.sucesso', $token);
+    }
+
+    public function conviteConfirmado(string $token): View
+    {
+        return view('captacao.convite-sucesso');
     }
 
     /**

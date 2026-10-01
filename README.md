@@ -76,6 +76,7 @@ Estrutura curricular e planejamento pedagógico.
 | `Nota` | Nota individual — vincula uma Avaliacao a uma Matricula |
 | `CronogramaAula` | Diário de aulas datado por Turma, Disciplina e Professor |
 | `Coordenador` | Vincula uma Pessoa como coordenadora de um Curso |
+| `SituacaoFinalDisciplina` | Situação final (Aprovado/Recuperação/Reprovado) de uma matrícula numa disciplina, gerada pelo **Fechamento do Ciclo Letivo**. Suporta recuperação anual ou por etapa e exame final, ambos configuráveis por `PeriodoLetivo` — detalhes em `docs/recuperacao_etapa_exame_final.md`. |
 
 **Hierarquia pedagógica:**
 ```
@@ -97,25 +98,31 @@ PeriodoLetivo
 ---
 
 ### 4. 📝 Secretaria
-Operação de secretaria virtual e vínculo aluno–escola.
+Operação de secretaria virtual e vínculo aluno–escola. Rematrícula e matrícula por convite em `docs/matricula_rematricula_online.md`.
 
 | Recurso | Descrição |
 |---|---|
 | `SituacaoMatricula` | Status da matrícula (Ativo, Trancado, Evadido...) |
 | `Matricula` | Vínculo Aluno ↔ Turma. Permite criação rápida de Pessoa diretamente no formulário. Exibe alunos como "Nome - CPF". |
 | `Contrato` | Geração de contrato derivado de uma Matricula |
-| `DocumentoObrigatorio` | Documentos exigidos por Curso |
+| `TipoDocumento` | Documentos exigidos por Curso/Turma/Matrícula |
+| `PeriodoRematricula` / `Rematricula` | Campanha de rematrícula online: a família confirma os dados pelo Portal, o sistema gera a nova Matrícula, Contrato, faturas e envia para assinatura via Assinafy automaticamente — a rematrícula só fica `Confirmada` quando o contrato é assinado |
+| Convite de Matrícula Online | Link único e temporário (`ConviteMatriculaService`) enviado a um lead do CRM para confirmar/completar dados sem expor outros registros, antes da secretaria efetivar a matrícula |
 
 ---
 
 ### 5. 💰 Financeiro
-Controle de tesouraria e cobrança.
+Controle de tesouraria e cobrança. Detalhes do gateway, webhook e conciliação em `docs/financeiro_gateway_conciliacao_relatorios.md`.
 
 | Recurso | Descrição |
 |---|---|
 | `ResponsavelFinanceiro` | Pessoa responsável pelos pagamentos de um contrato |
-| `Titulo` | Parcelas/cobranças vinculadas a um contrato |
+| `Fatura` | Parcelas/cobranças vinculadas a um contrato (tabela `faturas`, renomeada da antiga `titulos`). Tem PIX/boleto/link de pagamento via `GatewayPagamento` e baixa automática por webhook. |
 | `TributacaoCurso` | Natureza fiscal do curso para NFS-e |
+| `ReguaCobranca` | Lembretes automáticos por gatilho de dias antes/depois do vencimento, multicanal |
+| `ContaPagar` | Contas a pagar (fornecedor, plano de contas, centro de custo), com baixa manual |
+| `GatewayPagamento` (contrato) | Abstração de gateway de cobrança — driver `Fake` por padrão, resolvido por `GatewayPagamentoManager` |
+| Relatórios | Inadimplência (por turma/faixa de atraso/responsável) e Fluxo de Caixa consolidado mensal |
 
 ---
 

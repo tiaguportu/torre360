@@ -59,6 +59,23 @@ class ListTransacaoBancarias extends ListRecords
                         ->success()
                         ->send();
                 }),
+
+            Action::make('conciliarCreditosPendentes')
+                ->label('Conciliar Créditos Pendentes')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalDescription('Tenta casar entradas importadas que ainda não foram vinculadas a nenhuma fatura (por identificador na descrição ou por valor + data de vencimento). Útil depois de gerar uma fatura que já tinha um crédito importado anteriormente.')
+                ->action(function (ConciliacaoBancariaService $service): void {
+                    $total = $service->conciliarCreditosComFaturas();
+
+                    Notification::make()
+                        ->title('Conciliação concluída!')
+                        ->body("{$total} transação(ões) vinculada(s) a faturas.")
+                        ->success()
+                        ->send();
+                }),
+
             CreateAction::make(),
             $this->ajudaAction('Transações Bancárias', $this->getHelpContent()),
         ];

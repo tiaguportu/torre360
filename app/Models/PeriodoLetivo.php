@@ -12,7 +12,7 @@ class PeriodoLetivo extends Model
 
     protected $table = 'periodo_letivo';
 
-    protected $fillable = ['nome', 'data_inicio', 'data_fim', 'nota_aprovacao', 'nota_recuperacao_minima'];
+    protected $fillable = ['nome', 'data_inicio', 'data_fim', 'nota_aprovacao', 'nota_recuperacao_minima', 'recuperacao_por_etapa', 'exame_final_habilitado', 'nota_aprovacao_pos_exame'];
 
     public function turmas(): HasMany
     {
@@ -41,6 +41,9 @@ class PeriodoLetivo extends Model
             'data_fim' => 'date',
             'nota_aprovacao' => 'decimal:2',
             'nota_recuperacao_minima' => 'decimal:2',
+            'recuperacao_por_etapa' => 'boolean',
+            'exame_final_habilitado' => 'boolean',
+            'nota_aprovacao_pos_exame' => 'decimal:2',
         ];
     }
 }
