@@ -17,6 +17,7 @@ use UnitEnum;
 class Calendario extends Page
 {
     use HasAjudaAction;
+
     /**
      * Janela de aulas exibida no calendário, em dias antes e depois de hoje.
      */

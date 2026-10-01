@@ -9,6 +9,7 @@ use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
+use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
@@ -46,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
 
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
+    Route::get('/historicos-escolares/{record}/pdf', [HistoricoEscolarPDFController::class, 'stream'])->name('historicos-escolares.pdf');
+    Route::get('/historicos-escolares/{record}/download', [HistoricoEscolarPDFController::class, 'download'])->name('historicos-escolares.download');
     Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
 
     // Editor de Crachás V3 (Moveable)

@@ -27,6 +27,7 @@ use App\Filament\Resources\EtapaAvaliativas\Pages\ListEtapaAvaliativas;
 use App\Filament\Resources\Fornecedores\Pages\ListFornecedores;
 use App\Filament\Resources\FrequenciaEscolars\Pages\ListFrequenciaEscolars;
 use App\Filament\Resources\Habilidades\Pages\ListHabilidades;
+use App\Filament\Resources\HistoricoEscolars\Pages\ListHistoricoEscolars;
 use App\Filament\Resources\LandingLeads\Pages\ListLandingLeads;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Filament\Resources\MensagemWhatsappTemplates\Pages\ListMensagemWhatsappTemplates;
@@ -98,6 +99,7 @@ class AjudaCoberturaSidebarTest extends TestCase
             'Campos de Experiência' => [ManageCampoExperiencias::class],
             'Configurações' => [ListConfiguracaos::class],
             'Endereços' => [ListEnderecos::class],
+            'Histórico Escolar Multi-Ano' => [ListHistoricoEscolars::class],
             'Logs de Atividade' => [ListActivityLogs::class],
             'E-mails Enviados' => [ListEmailLogs::class],
             'Início (Dashboard)' => [Dashboard::class],

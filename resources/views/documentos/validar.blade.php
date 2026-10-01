@@ -296,6 +296,69 @@
                         </tr>
                     </table>
 
+                @elseif ($historico)
+                    @php
+                        $unidade = $historico->unidade ?? $historico->pessoa?->matriculas()->latest()->first()?->turma?->serie?->curso?->unidade;
+                        $cursoNome = $historico->curso?->nome_externo ?? $historico->curso?->nome_interno ?? 'Educação Básica';
+                        $situacaoLabel = match($historico->situacao) {
+                            'concluido' => 'Concluído',
+                            'transferido' => 'Transferido',
+                            default => 'Em Curso',
+                        };
+                    @endphp
+
+                    <div class="status-card success">
+                        <div class="status-icon">✓</div>
+                        <div class="status-text">
+                            <h2>Histórico Escolar Autêntico e Válido</h2>
+                            <p>O Histórico Escolar consultado foi lavrado oficialmente pela instituição de ensino e possui autenticidade confirmada no sistema Torre360.</p>
+                        </div>
+                    </div>
+
+                    <table class="details-table">
+                        <tr>
+                            <td class="details-label">Tipo de Documento:</td>
+                            <td class="details-value"><strong>HISTÓRICO ESCOLAR OFICIAL MULTI-ANO</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Estudante:</td>
+                            <td class="details-value">
+                                <strong>{{ $nomeAlunoMascarado ?? '-' }}</strong>
+                                <span style="display: block; color: #64748b; font-size: 11px; margin-top: 2px;">
+                                    (Identificação protegida em conformidade com a LGPD)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Instituição / Unidade:</td>
+                            <td class="details-value">{{ $unidade?->nome ?? config('app.name', 'Torre de Marfim') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Etapa / Curso:</td>
+                            <td class="details-value">{{ $cursoNome }}</td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Situação do Aluno:</td>
+                            <td class="details-value">
+                                <span class="badge-tag valid">{{ $situacaoLabel }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Código de Autenticidade:</td>
+                            <td class="details-value"><code>{{ $historico->codigo_autenticidade }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Data de Expedição:</td>
+                            <td class="details-value">{{ $historico->data_emissao ? \Carbon\Carbon::parse($historico->data_emissao)->format('d/m/Y') : '-' }}</td>
+                        </tr>
+                        @if ($historico->data_conclusao)
+                            <tr>
+                                <td class="details-label">Data de Conclusão:</td>
+                                <td class="details-value">{{ \Carbon\Carbon::parse($historico->data_conclusao)->format('d/m/Y') }}</td>
+                            </tr>
+                        @endif
+                    </table>
+
                 @elseif ($documento && ! $documento->isValido())
                     <div class="status-card danger">
                         <div class="status-icon">!</div>

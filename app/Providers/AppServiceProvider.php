@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
+use App\Models\LeadScoreConfiguracao;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
@@ -34,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
-        \App\Models\LeadScoreConfiguracao::aplicar();
+        LeadScoreConfiguracao::aplicar();
 
         Table::configureUsing(function (Table $table): void {
             $table

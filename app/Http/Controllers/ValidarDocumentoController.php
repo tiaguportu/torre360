@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HistoricoEscolar;
 use App\Models\SolicitacaoDocumento;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,8 @@ class ValidarDocumentoController extends Controller
         $buscou = false;
         $nomeAlunoMascarado = null;
 
+        $historico = null;
+
         if (! empty($codigoBusca)) {
             $buscou = true;
             $codigoLimpo = strtoupper(trim($codigoBusca));
@@ -30,10 +33,23 @@ class ValidarDocumentoController extends Controller
             if ($documento && $documento->matricula?->pessoa?->nome) {
                 $nomeAlunoMascarado = self::mascararNome($documento->matricula->pessoa->nome);
             }
+
+            // Se não encontrou em SolicitacaoDocumento, busca em HistoricoEscolar
+            if (! $documento) {
+                $historico = HistoricoEscolar::query()
+                    ->where('codigo_autenticidade', $codigoLimpo)
+                    ->with(['pessoa', 'curso', 'unidade'])
+                    ->first();
+
+                if ($historico && $historico->pessoa?->nome) {
+                    $nomeAlunoMascarado = self::mascararNome($historico->pessoa->nome);
+                }
+            }
         }
 
         return view('documentos.validar', [
             'documento' => $documento,
+            'historico' => $historico,
             'codigoBusca' => $codigoBusca,
             'buscou' => $buscou,
             'nomeAlunoMascarado' => $nomeAlunoMascarado,

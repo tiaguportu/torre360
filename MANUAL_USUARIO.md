@@ -1898,4 +1898,37 @@ O guia de como montar a ajuda de uma nova tela (construtor `HelpContent` e botã
 
 ---
 
+## 📜 40. Histórico Escolar Oficial Multi-Ano (`/admin/historico-escolars`)
+
+O módulo de **Histórico Escolar Oficial Multi-Ano** atende a uma das exigências mais rigorosas da legislação educacional brasileira (Lei de Diretrizes e Bases da Educação Nacional - LDB nº 9.394/1996 e BNCC), permitindo consolidar toda a trajetória acadêmica do estudante em uma matriz curricular padronizada para **processos de transferência** ou **encerramento de ciclo (conclusão do Ensino Fundamental ou Ensino Médio)**.
+
+### 40.1 Visão Geral e Benefícios
+- **Matriz Curricular Tabular Oficial:** Apresenta todas as séries/anos cursados lado a lado em colunas, com os componentes curriculares organizados por Área do Conhecimento (Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Parte Diversificada).
+- **Histórico Híbrido (Interno + Externo):** Permite registrar anos letivos cursados no Torre360 e também lançar notas, cargas horárias e estabelecimentos de ensino onde o aluno estudou antes de se transferir para a escola.
+- **Sincronização com 1 Clique:** O sistema lê todas as matrículas ativas ou concluídas do estudante no Torre360, buscando as médias finais fechadas, cargas horárias da matriz curricular e taxas de frequência, montando a matriz automaticamente sem necessidade de digitação manual.
+- **Emissão Oficial em PDF (A4 Paisagem):** Gera o documento timbrado oficial com cabeçalho institucional, dados do estudante, tabela matricial de desempenho, resumo cronológico de estabelecimentos cursados, termo formal de certificação de conclusão e assinaturas da Secretaria e Direção Escolar.
+- **Carimbo Digital e QR Code de Autenticidade:** Cada histórico emitido possui um código alfanumérico único e QR Code criptográfico que permite a qualquer cartório, universidade ou escola de destino validar a autenticidade do documento em tempo real através do portal público (`/validar-documento`).
+
+### 40.2 Como Emitir um Histórico Escolar
+1. Acesse o menu lateral em **Secretaria → Histórico Escolar Multi-Ano** (`/admin/historico-escolars`).
+2. Clique no botão **Novo Histórico Escolar**.
+3. **Aba Dados Gerais:**
+   - Selecione o **Estudante (Aluno)**.
+   - Escolha o **Curso / Etapa** (ex: *Ensino Fundamental*, *Ensino Médio*).
+   - Defina a **Situação do Aluno**:
+     - *Em Curso:* para alunos que continuam estudando na instituição.
+     - *Concluído:* para formandos (habilita o campo de **Data de Conclusão** e o termo formal de Certificado de Conclusão).
+     - *Transferido:* para alunos em processo de transferência para outra escola.
+   - A **Unidade Escolar** e a **Data de Expedição** já vêm preenchidas, e o **Código de Autenticidade** exclusivo é gerado automaticamente.
+4. Clique em **Salvar**.
+   - O sistema detecta automaticamente se o estudante possui matrículas internas no Torre360 e importa todos os anos letivos, séries, disciplinas e médias finais diretamente para o histórico!
+5. **Aba Anos e Séries (Multi-Ano):**
+   - Visualize e edite cada coluna da matriz curricular.
+   - Para anos cursados em outra escola anterior, clique em **Adicionar Ano / Série**, selecione a origem como *Externo (Outra Escola)* e informe o nome do estabelecimento de ensino, cidade/UF, carga horária e as disciplinas com notas correspondentes.
+6. **Aba Certificação e Observações:**
+   - Personalize o texto oficial da certidão de conclusão ou adicione amparos legais específicos (ex: convalidações de estudos no exterior, exames de classificação, etc.).
+7. Clique no botão **Emitir PDF Oficial** (ícone de impressora verde) no topo da página ou na listagem para visualizar e imprimir o documento em formato paisagem com alta fidelidade visual.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

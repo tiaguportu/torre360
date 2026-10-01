@@ -73,6 +73,11 @@ class Pessoa extends Model
         return $this->hasMany(Matricula::class, 'pessoa_id');
     }
 
+    public function historicosEscolares(): HasMany
+    {
+        return $this->hasMany(HistoricoEscolar::class, 'pessoa_id');
+    }
+
     public function responsaveisFinanceiros(): HasMany
     {
         return $this->hasMany(ResponsavelFinanceiro::class, 'pessoa_id');

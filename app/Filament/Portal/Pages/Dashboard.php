@@ -15,6 +15,7 @@ use Illuminate\Support\Collection;
 class Dashboard extends Page
 {
     use HasAjudaAction;
+
     protected static string $routePath = '/';
 
     protected static ?int $navigationSort = -2;

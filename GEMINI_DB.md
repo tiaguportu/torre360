@@ -779,3 +779,56 @@ Estrutura de ensino e turmas.
 - **Sem relacionamentos com outras tabelas** — é uma entidade independente, apenas linkada a telas do Filament via `chave_pagina` (string), não por FK.
 - **Acessores do Model:** `arquivo_url` (URL pública via `Storage::disk('public')`), `url_embed` (converte link do YouTube/Vimeo para URL de embed em iframe), `url_assistir` (`arquivo_url` ?? `url_externo`), `duracao_formatada` (ex: "1min 27s").
 - **Seeder:** `VideoTutorialSeeder` (não roda no `DatabaseSeeder` principal — é chamado sob demanda com `php artisan db:seed --class=VideoTutorialSeeder`, copiando os arquivos de vídeo para o disco `public` e criando os registros via `updateOrCreate` por `chave_pagina`).
+
+---
+
+## 17. Histórico Escolar Oficial Multi-Ano
+
+### `historico_escolars`
+- **Representa:** O cabeçalho e os metadados do Histórico Escolar Oficial de um estudante para uma determinada etapa/curso da Educação Básica (Ensino Fundamental ou Ensino Médio).
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Aluno).
+  - `curso_id`: FK `curso` (nullable — ex: Ensino Fundamental, Ensino Médio).
+  - `unidade_id`: FK `unidade` (Unidade escolar expedidora).
+  - `codigo_autenticidade`: Token hash criptográfico único (ex: `HIST-2026-ABCD-1234`) para conferência pública e QR Code.
+  - `situacao`: String/Enum (`em_curso`, `concluido`, `transferido`).
+  - `data_conclusao`: Data de término do ciclo/formatura (nullable).
+  - `data_emissao`: Data em que o documento oficial foi expedido.
+  - `titulo_certificacao`: Título do termo de conclusão (ex: "Certificado de Conclusão do Ensino Fundamental").
+  - `texto_certificacao`: Texto legal formal atestando a conclusão com base na LDB 9.394/96.
+  - `observacoes`: Amparo legal, observações de aproveitamento, convalidações ou transferências.
+  - `emitido_por_user_id`: FK `users` (operador que lavrou o documento).
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `Curso`, BelongsTo `Unidade`, BelongsTo `User` (`emitidoPor`), HasMany `anos` (`HistoricoEscolarAno`).
+
+### `historico_escolar_anos`
+- **Representa:** Cada coluna/série na matriz curricular do histórico escolar (cada ano letivo cursado pelo estudante, no Torre360 ou em outras instituições de ensino anteriores).
+- **Campos Principais:**
+  - `historico_escolar_id`: FK `historico_escolars`.
+  - `matricula_id`: FK `matricula` (nullable — vinculada à matrícula interna caso cursada no Torre360).
+  - `ano_letivo`: Ano civil do período letivo (ex: 2023, 2024, 2025).
+  - `serie_id`: FK `serie` (nullable).
+  - `serie_nome`: Nome amigável da série/ano (ex: "6º Ano", "1ª Série EM").
+  - `ordem`: Sequência numérica para ordenação da esquerda para a direita na matriz tabular.
+  - `tipo`: String (`interno` para cursado no Torre360, `externo` para cursado em outra escola antes da transferência).
+  - `escola_nome`: Nome do estabelecimento de ensino onde o ano foi cursado.
+  - `escola_cidade`, `escola_uf`: Município e Estado da instituição.
+  - `dias_letivos`: Total de dias letivos (padrão: 200).
+  - `carga_horaria_total`: Carga horária total cumprida no ano letivo (em horas).
+  - `frequencia_percentual`: Taxa percentual de frequência global no ano (ex: 98.50).
+  - `situacao_ano`: Resultado final do ano letivo (`Aprovado`, `Reprovado`, `Classificado`, `Transferido`, `Cursando`).
+  - `observacoes`: Anotações ou ressalvas específicas do ano escolar.
+- **Relacionamentos:** BelongsTo `HistoricoEscolar`, BelongsTo `Matricula`, BelongsTo `Serie`, HasMany `disciplinas` (`HistoricoEscolarDisciplina`).
+
+### `historico_escolar_disciplinas`
+- **Representa:** As notas e cargas horárias dos componentes curriculares obtidas pelo estudante em cada ano/série do histórico escolar.
+- **Campos Principais:**
+  - `historico_escolar_ano_id`: FK `historico_escolar_anos`.
+  - `disciplina_id`: FK `disciplina` (nullable).
+  - `disciplina_nome`: Nome do componente curricular (ex: "Língua Portuguesa", "Matemática", "História").
+  - `area_conhecimento`: Área do conhecimento conforme a BNCC (ex: "Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas", "Parte Diversificada").
+  - `carga_horaria`: Carga horária anual da disciplina (em horas).
+  - `nota_final`: Média final obtida no ano (decimal:2).
+  - `conceito`: Conceito avaliativo alternativo quando a avaliação não for puramente numérica.
+  - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`).
+  - `ordem`: Sequência de ordenação vertical.
+- **Relacionamentos:** BelongsTo `ano` (`HistoricoEscolarAno`), BelongsTo `disciplina` (`Disciplina`).

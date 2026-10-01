@@ -9,6 +9,7 @@ use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class InteressadoTest extends TestCase
@@ -350,7 +351,7 @@ class InteressadoTest extends TestCase
 
     public function test_pagina_de_edicao_renderiza_o_resumo_do_lead(): void
     {
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         $admin = User::factory()->create(['activated_at' => now()]);
         $admin->assignRole('super_admin');
 

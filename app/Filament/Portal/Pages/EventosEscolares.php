@@ -18,6 +18,7 @@ use UnitEnum;
 class EventosEscolares extends Page
 {
     use HasAjudaAction;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
 
     protected static UnitEnum|string|null $navigationGroup = 'Meus Dados';
