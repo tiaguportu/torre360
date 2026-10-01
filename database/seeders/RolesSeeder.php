@@ -85,6 +85,67 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Atribuir permissões da Central de Ajuda (Vídeos Tutoriais)
+        $verVideoTutorial = ['ViewAny:VideoTutorial', 'View:VideoTutorial'];
+        $gerenciarVideoTutorial = ['Create:VideoTutorial', 'Update:VideoTutorial', 'Delete:VideoTutorial', 'DeleteAny:VideoTutorial'];
+
+        foreach ([...$verVideoTutorial, ...$gerenciarVideoTutorial] as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['professor', 'secretaria', 'coordenador', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($verVideoTutorial as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($gerenciarVideoTutorial as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
+        // Permissões de Histórico Escolar
+        $historicoPermissions = [
+            'ViewAny:HistoricoEscolar',
+            'View:HistoricoEscolar',
+            'Create:HistoricoEscolar',
+            'Update:HistoricoEscolar',
+            'Delete:HistoricoEscolar',
+            'DeleteAny:HistoricoEscolar',
+        ];
+
+        foreach ($historicoPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($historicoPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

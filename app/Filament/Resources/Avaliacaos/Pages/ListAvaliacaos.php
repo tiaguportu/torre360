@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Avaliacaos\Pages;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
+use App\Models\VideoTutorial;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\ViewField;
@@ -28,6 +29,7 @@ class ListAvaliacaos extends ListRecords
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'avaliacoes-notas')->orderBy('ordem')->first(),
                         ]),
                 ]),
         ];

@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Enums\StatusSolicitacaoDocumento;
+use App\Enums\TipoTemplateDocumento;
 use App\Models\Matricula;
 use App\Models\SituacaoFinalDisciplina;
 use App\Models\SolicitacaoDocumento;
 use App\Models\TemplateDocumento;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -83,6 +85,10 @@ class DocumentoService
             '{{CURSO_NOME}}' => $curso?->nome_externo ?? $curso?->nome_interno ?? '-',
             '{{PERIODO_LETIVO}}' => $periodoLetivo?->nome ?? (string) now()->year,
             '{{TURNO_NOME}}' => $turma?->turno?->nome ?? 'Regular',
+            '{{HORARIO_AULAS}}' => $matricula->getHorarioAulasFormatado(),
+            '{{ANO_LETIVO}}' => $periodoLetivo?->nome ?? (string) now()->year,
+            '{{ANO_ANTERIOR}}' => (string) (now()->year - 1),
+            '{{STATUS_FINANCEIRO}}' => $matricula->hasDebitosVencidos() ? 'Com pendências' : 'Adimplente / Em dia',
 
             // Unidade / Escola
             '{{UNIDADE_NOME}}' => $unidade?->nome ?? 'Torre360',
@@ -101,6 +107,48 @@ class DocumentoService
         ];
 
         return str_replace(array_keys($variaveis), array_values($variaveis), $template->conteudo);
+    }
+
+    /**
+     * Valida regras de negócio para emissão do documento (ex: adimplência para quitação).
+     *
+     * @throws \DomainException
+     */
+    public function validarEmissao(TemplateDocumento $template, Matricula $matricula): void
+    {
+        if ($template->tipo === TipoTemplateDocumento::DeclaracaoQuitacao) {
+            if ($matricula->hasDebitosVencidos()) {
+                $totalPendencias = $matricula->getDebitosVencidosCount();
+                throw new \DomainException("Não foi possível emitir a Declaração de Quitação de Débitos: constam {$totalPendencias} fatura(s) com pendências financeiras ou vencidas em aberto. Por favor, acesse o menu Financeiro para regularizar.");
+            }
+        }
+    }
+
+    /**
+     * Cria e emite o documento oficial instantaneamente, gerando o PDF com carimbo e QR Code.
+     *
+     * @throws \DomainException
+     */
+    public function emitirDocumento(Matricula $matricula, TemplateDocumento $template, ?string $observacao = null, ?User $solicitadoPor = null): SolicitacaoDocumento
+    {
+        $this->validarEmissao($template, $matricula);
+
+        $solicitacao = SolicitacaoDocumento::create([
+            'protocolo' => SolicitacaoDocumento::gerarProtocolo(),
+            'codigo_verificacao' => SolicitacaoDocumento::gerarCodigoVerificacao(),
+            'matricula_id' => $matricula->id,
+            'template_documento_id' => $template->id,
+            'solicitado_por_user_id' => $solicitadoPor?->id ?? auth()->id(),
+            'status' => StatusSolicitacaoDocumento::Disponivel,
+            'observacao_solicitante' => $observacao,
+            'data_solicitacao' => now(),
+            'data_emissao' => now(),
+            'data_validade' => now()->addDays($template->validade_dias ?? 30),
+        ]);
+
+        $this->gerarPdf($solicitacao);
+
+        return $solicitacao;
     }
 
     /**
@@ -142,7 +190,7 @@ class DocumentoService
             ->setPaper('a4', 'portrait');
 
         $caminhoRelativo = 'documentos_emitidos/'.$solicitacao->protocolo.'.pdf';
-        Storage::disk('public')->put($caminhoRelativo, $pdf->output());
+        Storage::disk('local')->put($caminhoRelativo, $pdf->output());
 
         $solicitacao->arquivo_path = $caminhoRelativo;
         $solicitacao->status = StatusSolicitacaoDocumento::Disponivel;

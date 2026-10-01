@@ -9,7 +9,7 @@ class ResponsavelFinanceiro extends Model
 {
     protected $table = 'responsavel_financeiro';
 
-    protected $guarded = [];
+    protected $fillable = ['contrato_id', 'pessoa_id', 'percentual'];
 
     public function contrato(): BelongsTo
     {

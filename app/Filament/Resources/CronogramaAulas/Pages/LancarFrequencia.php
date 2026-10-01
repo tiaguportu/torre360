@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CronogramaAulas\Pages;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\Matricula;
+use App\Models\VideoTutorial;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -40,7 +41,10 @@ class LancarFrequencia extends EditRecord
                 ->form([
                     ViewField::make('help_content')
                         ->view('filament.components.help-content')
-                        ->viewData(['content' => $this->getHelpContent()]),
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'cronograma-aula-lancar-frequencia')->orderBy('ordem')->first(),
+                        ]),
                 ])
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar'),

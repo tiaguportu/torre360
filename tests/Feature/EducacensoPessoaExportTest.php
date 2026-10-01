@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Enums\CorRaca;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
+use App\Models\CategoriaNecessidadeEducacaoEspecial;
+use App\Models\CategoriaRecursoAcessibilidade;
 use App\Models\Cidade;
 use App\Models\Endereco;
 use App\Models\Estado;
@@ -42,7 +44,6 @@ class EducacensoPessoaExportTest extends TestCase
         $cidade->setRelation('estado', $estado);
 
         $pessoa = new Pessoa([
-            'id' => 101,
             'nome' => 'João da Silva Ção',
             'cpf' => '123.456.789-00',
             'data_nascimento' => '2010-05-15',
@@ -50,6 +51,7 @@ class EducacensoPessoaExportTest extends TestCase
             'cor_raca' => CorRaca::PARDA,
             'email' => 'joao@example.com',
         ]);
+        $pessoa->id = 101; // 'id' não é mass-assignable; setado diretamente só para o teste de formatação.
 
         $pessoa->setRelation('nacionalidade', $pais);
         $pessoa->setRelation('naturalidade', $cidade);
@@ -65,8 +67,11 @@ class EducacensoPessoaExportTest extends TestCase
 
         $pessoa->setRelation('responsaveis', collect([$pai, $mae]));
 
-        $nec = new NecessidadeEducacaoEspecial(['nome' => 'Cegueira']);
-        $rec = new RecursoAcessibilidade(['nome' => 'Prova Braille']);
+        $nec = new NecessidadeEducacaoEspecial;
+        $nec->setRelation('categoria', new CategoriaNecessidadeEducacaoEspecial(['nome' => 'Cegueira']));
+
+        $rec = new RecursoAcessibilidade;
+        $rec->setRelation('categoria', new CategoriaRecursoAcessibilidade(['nome' => 'Prova Braille']));
 
         $pessoa->setRelation('necessidadesEducacaoEspecial', collect([$nec]));
         $pessoa->setRelation('transtornosAprendizagem', collect());

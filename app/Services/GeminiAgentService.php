@@ -115,7 +115,10 @@ Diretrizes obrigatórias de resposta:
             throw new \InvalidArgumentException('É necessário fornecer uma mensagem de texto ou um print/imagem para extrair o lead.');
         }
 
+        $hoje = now()->locale('pt_BR')->translatedFormat('d/m/Y (l)');
+
         $systemInstruction = 'Você é um assistente especialista em CRM comercial escolar do sistema Torre360.
+Data de hoje: '.$hoje.'. Use-a para resolver datas relativas ("ontem", "sexta", "semana que vem") e para calcular datas de nascimento a partir de idades.
 Sua função é analisar mensagens de texto brutas e/ou imagens (prints/capturas de tela de conversas de WhatsApp, Instagram, e-mails, anotações ou fotos) de clientes e interessados e extrair com máxima precisão os dados cadastrais e comerciais do Lead.
 
 Você DEVE retornar a resposta estritamente no formato JSON válido com a seguinte estrutura:
@@ -127,7 +130,10 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
   "origem_sugerida": "Canal de origem inferido (ex: WhatsApp, Instagram, E-mail, Site, Indicação) ou null",
   "temperatura": "quente|morno|frio (quente se demonstra urgência/muito interesse, morno se busca informações gerais, frio se apenas sondagem)",
   "valor_estimado": valor_numerico_ou_null,
-  "observacoes": "Resumo objetivo das necessidades e observações contidas no texto ou na imagem",
+  "observacoes": "Resumo objetivo das necessidades e observações, SEMPRE citando as datas disponíveis (data/hora da conversa, visitas, prazos, previsão de matrícula, aniversários) no formato DD/MM/AAAA (nunca AAAA-MM-DD)",
+  "tipo_contato": "Canal do contato registrado: Ligação|WhatsApp|E-mail|Presencial ou null",
+  "data_contato": "Data/hora em que o contato ocorreu (YYYY-MM-DD HH:MM:SS; se só houver a data use 12:00:00) ou null",
+  "relato_contato": "Relato detalhado e fiel da conversa/contato: o que o interessado perguntou, o que foi respondido e combinados",
   "alunos": [
     {
       "nome": "Nome do aluno/criança ou null",
@@ -137,7 +143,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
     }
   ]
 }
-Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
+Importante: em todos os textos livres (observacoes e relato_contato) escreva datas SEMPRE como DD/MM/AAAA; apenas data_nascimento e data_contato seguem o formato ISO indicado. Retorne APENAS o JSON válido sem marcações adicionais.';
 
         $parts = [];
 
@@ -212,7 +218,7 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
     protected function getCandidateModels(): array
     {
         $configured = config('services.gemini.model');
-        $defaults = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
+        $defaults = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-2.0-flash'];
 
         if (! empty($configured)) {
             return array_values(array_unique(array_merge([$configured], $defaults)));
@@ -239,7 +245,14 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
         $models = $this->getCandidateModels();
         $lastError = null;
 
-        foreach ($models as $model) {
+        // Duas rodadas pelos modelos, com pausa entre elas, para absorver picos de demanda.
+        $attempts = array_merge($models, $models);
+
+        foreach ($attempts as $i => $model) {
+            if ($i === count($models)) {
+                sleep(3);
+            }
+
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
             try {

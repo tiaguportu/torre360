@@ -10,7 +10,7 @@ class DiaNaoLetivo extends Model
 {
     protected $table = 'dia_nao_letivo';
 
-    protected $guarded = [];
+    protected $fillable = ['periodo_letivo_id', 'curso_id', 'data', 'descricao', 'flag_ativo'];
 
     public function periodoLetivo(): BelongsTo
     {

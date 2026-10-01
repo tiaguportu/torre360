@@ -12,7 +12,7 @@ class TipoOcorrencia extends Model
 
     protected $table = 'tipo_ocorrencias';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'categoria', 'gravidade', 'notificar_responsaveis_padrao'];
 
     protected function casts(): array
     {

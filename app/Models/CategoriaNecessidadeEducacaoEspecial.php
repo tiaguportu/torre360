@@ -12,7 +12,7 @@ class CategoriaNecessidadeEducacaoEspecial extends Model
 
     protected $table = 'categoria_necessidade_educacao_especiais';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'descricao'];
 
     public function necessidadesEducacaoEspecial(): HasMany
     {

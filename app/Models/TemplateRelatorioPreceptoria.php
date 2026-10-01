@@ -11,5 +11,5 @@ class TemplateRelatorioPreceptoria extends Model
 
     protected $table = 'template_relatorio_preceptoria';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'corpo'];
 }

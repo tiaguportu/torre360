@@ -12,7 +12,7 @@ class NecessidadeEducacaoEspecial extends Model
 
     protected $table = 'necessidade_educacao_especiais';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'categoria_necessidade_educacao_especial_id', 'observacao'];
 
     public function pessoa(): BelongsTo
     {

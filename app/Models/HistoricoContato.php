@@ -9,7 +9,7 @@ class HistoricoContato extends Model
 {
     protected $table = 'historico_contato';
 
-    protected $guarded = [];
+    protected $fillable = ['interessado_id', 'usuario_id', 'tipo_contato_interessado_id', 'relato', 'data_contato', 'duracao_minutos', 'resultado'];
 
     protected function casts(): array
     {

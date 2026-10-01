@@ -18,7 +18,7 @@ class Interessado extends Model
 
     protected $table = 'interessado';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'data_proximo_contato', 'observacoes', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao'];
 
     public function getActivitylogOptions(): LogOptions
     {

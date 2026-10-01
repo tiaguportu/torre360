@@ -13,7 +13,7 @@ class TemplateDocumento extends Model
 
     protected $table = 'template_documentos';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'tipo', 'descricao', 'cabecalho', 'conteudo', 'rodape', 'validade_dias', 'is_ativo'];
 
     public function solicitacoes(): HasMany
     {

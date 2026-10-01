@@ -198,12 +198,15 @@ class ContractTemplateService
 
     protected function generateAssinaturaBlock(string $titulo, ?string $extra = null, ?string $cpf = null): string
     {
-        $extraFormatado = $extra ? " ({$extra})" : '';
-        $cpfValor = $cpf ?: '___________________________';
+        // Ponto único de escape: todo texto de assinatura (nome, cargo, vínculo) passa por aqui
+        // antes de virar HTML, então dados de Pessoa vindos de formulários públicos não podem
+        // injetar markup/script no contrato.
+        $extraFormatado = $extra ? ' ('.e($extra).')' : '';
+        $cpfValor = $cpf ? e($cpf) : '___________________________';
 
         return '<div style="margin-top: 50px; margin-bottom: 30px;">'
             .'_______________________________________________<br>'
-            .$titulo.$extraFormatado.'<br><br>'
+            .e($titulo).$extraFormatado.'<br><br>'
             ."CPF nº {$cpfValor}"
             .'</div>';
     }
@@ -332,11 +335,11 @@ class ContractTemplateService
         }
 
         $aluno = $mat->pessoa;
-        $nome = $aluno?->nome ?? '-';
+        $nome = e($aluno?->nome ?? '-');
         $nascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
-        $cpf = $aluno?->cpf ?? '-';
-        $turma = $mat->turma?->nome ?? '-';
-        $serie = $mat->turma?->serie?->nome ?? '-';
+        $cpf = e($aluno?->cpf ?? '-');
+        $turma = e($mat->turma?->nome ?? '-');
+        $serie = e($mat->turma?->serie?->nome ?? '-');
 
         $html = '<table style="width: 100%; border-collapse: collapse; border: 1pt solid black; margin: 10px 0;">';
         $html .= '<tr>';
@@ -374,9 +377,11 @@ class ContractTemplateService
             }
 
             $end = $p->enderecos->first();
-            $enderecoStr = $end ? "{$end->logradouro}, {$end->numero} - {$end->bairro}, {$end->cidade?->nome}/{$end->cidade?->estado?->sigla}" : '_______';
+            $enderecoStr = $end
+                ? e($end->logradouro).', '.e($end->numero).' - '.e($end->bairro).', '.e($end->cidade?->nome).'/'.e($end->cidade?->estado?->sigla)
+                : '_______';
 
-            $info[] = "<strong>{$p->nome}</strong>, CPF: {$p->cpf}, residente em {$enderecoStr}.";
+            $info[] = '<strong>'.e($p->nome).'</strong>, CPF: '.e($p->cpf).", residente em {$enderecoStr}.";
         }
 
         return implode('<br>', $info);

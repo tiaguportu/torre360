@@ -15,7 +15,7 @@ class CategoriaAvaliacao extends Model
 
     protected $table = 'categoria_avaliacao';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'descricao', 'ordem_boletim', 'categoria_avaliacao_substituicao_id', 'eh_recuperacao'];
 
     protected function casts(): array
     {

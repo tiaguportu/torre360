@@ -9,7 +9,7 @@ class InteressadoDependente extends Model
 {
     protected $table = 'interessado_dependente';
 
-    protected $guarded = [];
+    protected $fillable = ['interessado_id', 'nome_crianca', 'serie_id', 'vinculo', 'data_nascimento'];
 
     public function interessado(): BelongsTo
     {

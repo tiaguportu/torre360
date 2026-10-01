@@ -113,7 +113,9 @@ class AtendimentoChamadoForm
 
                                         FileUpload::make('anexo_path')
                                             ->label('Anexo')
-                                            ->disk('public')
+                                            ->disk('local')
+                                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                            ->maxSize(5120)
                                             ->directory('atendimentos/anexos'),
                                     ]),
 

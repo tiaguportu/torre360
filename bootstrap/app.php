@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\PersistentMobileSession;
+use App\Http\Middleware\SecurityHeaders;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Foundation\Application;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(prepend: [
             PersistentMobileSession::class,
         ]);
+        $middleware->append(SecurityHeaders::class);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : route('filament.admin.auth.login'));
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/assinafy',

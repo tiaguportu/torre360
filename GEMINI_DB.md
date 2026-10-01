@@ -766,3 +766,114 @@ Estrutura de ensino e turmas.
 
 ### Canais de mensagem (`App\Contracts\CanalMensagem`)
 - **Não é tabela**, é uma abstração de código: `EmailCanal` (envia e registra em `email_logs`) e `FcmCanal` (push para os usuários vinculados à Pessoa), resolvidos por `CanalMensagemManager`.
+
+---
+
+## 16. Central de Ajuda — Vídeos Tutoriais
+
+### `lead_score_configuracao`
+- **Representa:** Personalização dos pesos/faixas do Lead Score feita na tela "Pesos do Lead Score" (sobrescreve `config/lead_score.php`).
+- **Campos Principais:** `valores` (JSON com as chaves de `config/lead_score.php` alteradas), `atualizado_por` (FK `users`, nullable).
+- **Relacionamentos:** BelongsTo `users` (`atualizadoPor`). Vale a linha mais recente; sem linhas, valem os padrões do arquivo.
+
+### `video_tutorial`
+- **Representa:** Vídeos curtos de treinamento exibidos na Central de Ajuda (`/admin/video-tutorials`) e, opcionalmente, dentro do modal de "Ajuda" de uma tela específica.
+- **Campos Principais:**
+  - `titulo`: Nome do vídeo.
+  - `descricao`: Texto curto explicando o que o vídeo ensina (nullable).
+  - `categoria`: Texto livre para agrupamento visual (ex: CRM, Secretaria, Acadêmico) — nullable.
+  - `chave_pagina`: Chave nullable/indexada que liga o vídeo ao modal de "Ajuda" de uma tela específica. Ver `App\Models\VideoTutorial::CHAVES_PAGINA` para a lista de chaves válidas (uma mesma chave pode ser reaproveitada por mais de uma página do mesmo fluxo).
+  - `arquivo`: Path no disco `public` (`storage/app/public/video-tutoriais/...`) do arquivo de vídeo enviado — nullable, tem prioridade sobre `url_externo` quando ambos estão preenchidos.
+  - `url_externo`: Link do YouTube/Vimeo, usado quando não há `arquivo` — nullable.
+  - `duracao_segundos`: Duração informada manualmente (não há detecção automática) — nullable.
+  - `ordem`: Inteiro para ordenação manual na listagem.
+  - `ativo`: Booleano; quando `false`, some tanto da Central de Ajuda quanto do modal de Ajuda da tela relacionada.
+- **Sem relacionamentos com outras tabelas** — é uma entidade independente, apenas linkada a telas do Filament via `chave_pagina` (string), não por FK.
+- **Acessores do Model:** `arquivo_url` (URL pública via `Storage::disk('public')`), `url_embed` (converte link do YouTube/Vimeo para URL de embed em iframe), `url_assistir` (`arquivo_url` ?? `url_externo`), `duracao_formatada` (ex: "1min 27s").
+- **Seeder:** `VideoTutorialSeeder` (não roda no `DatabaseSeeder` principal — é chamado sob demanda com `php artisan db:seed --class=VideoTutorialSeeder`, copiando os arquivos de vídeo para o disco `public` e criando os registros via `updateOrCreate` por `chave_pagina`).
+
+---
+
+## 17. Histórico Escolar Oficial Multi-Ano
+
+### `historico_escolars`
+- **Representa:** O cabeçalho e os metadados do Histórico Escolar Oficial de um estudante para uma determinada etapa/curso da Educação Básica (Ensino Fundamental ou Ensino Médio).
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Aluno).
+  - `curso_id`: FK `curso` (nullable — ex: Ensino Fundamental, Ensino Médio).
+  - `unidade_id`: FK `unidade` (Unidade escolar expedidora).
+  - `codigo_autenticidade`: Token hash criptográfico único (ex: `HIST-2026-ABCD-1234`) para conferência pública e QR Code.
+  - `situacao`: String/Enum (`em_curso`, `concluido`, `transferido`).
+  - `data_conclusao`: Data de término do ciclo/formatura (nullable).
+  - `data_emissao`: Data em que o documento oficial foi expedido.
+  - `titulo_certificacao`: Título do termo de conclusão (ex: "Certificado de Conclusão do Ensino Fundamental").
+  - `texto_certificacao`: Texto legal formal atestando a conclusão com base na LDB 9.394/96.
+  - `observacoes`: Amparo legal, observações de aproveitamento, convalidações ou transferências.
+  - `emitido_por_user_id`: FK `users` (operador que lavrou o documento).
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `Curso`, BelongsTo `Unidade`, BelongsTo `User` (`emitidoPor`), HasMany `anos` (`HistoricoEscolarAno`).
+
+### `historico_escolar_anos`
+- **Representa:** Cada coluna/série na matriz curricular do histórico escolar (cada ano letivo cursado pelo estudante, no Torre360 ou em outras instituições de ensino anteriores).
+- **Campos Principais:**
+  - `historico_escolar_id`: FK `historico_escolars`.
+  - `matricula_id`: FK `matricula` (nullable — vinculada à matrícula interna caso cursada no Torre360).
+  - `ano_letivo`: Ano civil do período letivo (ex: 2023, 2024, 2025).
+  - `serie_id`: FK `serie` (nullable).
+  - `serie_nome`: Nome amigável da série/ano (ex: "6º Ano", "1ª Série EM").
+  - `ordem`: Sequência numérica para ordenação da esquerda para a direita na matriz tabular.
+  - `tipo`: String (`interno` para cursado no Torre360, `externo` para cursado em outra escola antes da transferência).
+  - `escola_nome`: Nome do estabelecimento de ensino onde o ano foi cursado.
+  - `escola_cidade`, `escola_uf`: Município e Estado da instituição.
+  - `dias_letivos`: Total de dias letivos (padrão: 200).
+  - `carga_horaria_total`: Carga horária total cumprida no ano letivo (em horas).
+  - `frequencia_percentual`: Taxa percentual de frequência global no ano (ex: 98.50).
+  - `situacao_ano`: Resultado final do ano letivo (`Aprovado`, `Reprovado`, `Classificado`, `Transferido`, `Cursando`).
+  - `observacoes`: Anotações ou ressalvas específicas do ano escolar.
+- **Relacionamentos:** BelongsTo `HistoricoEscolar`, BelongsTo `Matricula`, BelongsTo `Serie`, HasMany `disciplinas` (`HistoricoEscolarDisciplina`).
+
+### `historico_escolar_disciplinas`
+- **Representa:** As notas e cargas horárias dos componentes curriculares obtidas pelo estudante em cada ano/série do histórico escolar.
+- **Campos Principais:**
+  - `historico_escolar_ano_id`: FK `historico_escolar_anos`.
+  - `disciplina_id`: FK `disciplina` (nullable).
+  - `disciplina_nome`: Nome do componente curricular (ex: "Língua Portuguesa", "Matemática", "História").
+  - `area_conhecimento`: Área do conhecimento conforme a BNCC (ex: "Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas", "Parte Diversificada").
+  - `carga_horaria`: Carga horária anual da disciplina (em horas).
+  - `nota_final`: Média final obtida no ano (decimal:2).
+  - `conceito`: Conceito avaliativo alternativo quando a avaliação não for puramente numérica.
+  - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`).
+  - `ordem`: Sequência de ordenação vertical.
+- **Relacionamentos:** BelongsTo `ano` (`HistoricoEscolarAno`), BelongsTo `disciplina` (`Disciplina`).
+
+---
+
+## 18. Secretaria Digital e Auto-Atendimento de Declarações Oficiais
+
+### `template_documentos`
+- **Representa:** Modelos e templates oficiais de declarações, certidões e atestados emitidos pela escola, com suporte a variáveis dinâmicas e macros de preenchimento.
+- **Campos Principais:**
+  - `nome`: Nome do modelo (ex: "Declaração de Matrícula Regular", "Declaração de Frequência Escolar", "Declaração para Passe Escolar e Transporte", "Declaração de Quitação de Débitos").
+  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_conclusao`, `declaracao_transferencia`, `declaracao_transporte`, `declaracao_horario`, `historico_escolar`, `personalizado`).
+  - `descricao`: Finalidade descritiva apresentada nos cartões do Portal.
+  - `conteudo`: HTML com macros dinâmicas (`{{ALUNO_NOME}}`, `{{ALUNO_CPF}}`, `{{HORARIO_AULAS}}`, `{{PROTOCOLO}}`, etc.).
+  - `validade_dias`: Prazo padrão em dias de validade do documento emitido (ex: 30, 60, 90).
+  - `is_ativo`: Booleano para disponibilizar no auto-atendimento.
+- **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+
+### `solicitacao_documentos`
+- **Representa:** Registros de emissões e certidões oficiais geradas com código de verificação rastreável e QR Code.
+- **Campos Principais:**
+  - `protocolo`: Número identificador único formatado (ex: `DOC-2026-000001`).
+  - `codigo_verificacao`: Token hash criptográfico de validação pública anti-raspagem LGPD (ex: `TR36-XXXX-XXXX-XXXX`).
+  - `matricula_id`: FK `matricula.id` (estudante titular do documento).
+  - `template_documento_id`: FK `template_documentos.id`.
+  - `solicitado_por_user_id`: FK `users.id` (usuário que solicitou via Portal ou equipe escolar).
+  - `atendido_por_user_id`: FK `users.id` (em caso de atendimento ou despacho manual).
+  - `status`: Enum `StatusSolicitacaoDocumento` (`solicitado`, `em_processamento`, `disponivel`, `rejeitado`).
+  - `arquivo_path`: Caminho no storage privado do PDF timbrado gerado (`documentos_emitidos/DOC-2026-XXXXXX.pdf`).
+  - `observacao_solicitante`: Texto de finalidade ou observação informado pela família.
+  - `justificativa_recusa`: Motivo caso o pedido seja rejeitado.
+  - `data_solicitacao`: Data/hora do requerimento.
+  - `data_emissao`: Data/hora em que o PDF oficial com QR Code foi processado e assinado.
+  - `data_validade`: Data limite de validade jurídica do documento.
+- **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `TemplateDocumento`, BelongsTo `User` (`solicitadoPor`), BelongsTo `User` (`atendidoPor`).

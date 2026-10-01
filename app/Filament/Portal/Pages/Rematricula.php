@@ -3,12 +3,14 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusRematricula;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Matricula;
 use App\Models\PeriodoRematricula;
 use App\Models\Rematricula as RematriculaModel;
 use App\Models\Serie;
 use App\Models\Turno;
 use App\Services\RematriculaService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -24,6 +26,7 @@ use UnitEnum;
 
 class Rematricula extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
@@ -179,5 +182,24 @@ class Rematricula extends Page implements HasTable
         return RematriculaModel::where('periodo_rematricula_id', $this->periodoAtivo->id)
             ->where('matricula_origem_id', $matricula->id)
             ->first();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Rematrícula Online', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🔄', 'Rematrícula Online', 'Garanta a vaga do aluno para o próximo período.')
+            ->passos('🚀 Como fazer', [
+                'Localize o estudante na lista e veja a situação da rematrícula.',
+                'Clique em "Realizar Rematrícula".',
+                'Escolha a série pretendida e o turno de preferência.',
+                'Se quiser, registre observações e confirme.',
+            ])
+            ->dica('Após confirmar, a data de confirmação aparece na lista.');
     }
 }

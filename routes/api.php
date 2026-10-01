@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
+})->middleware(['auth:sanctum', 'throttle:60,1']);
 
-Route::match(['get', 'post'], '/webhooks/assinafy', AssinafyWebhookController::class);
+Route::match(['get', 'post'], '/webhooks/assinafy', AssinafyWebhookController::class)
+    ->middleware('throttle:30,1');

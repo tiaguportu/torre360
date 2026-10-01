@@ -7,6 +7,7 @@ use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use App\Models\User;
+use App\Models\VideoTutorial;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -62,6 +63,7 @@ class KanbanInteressados extends Page
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'interessados-kanban')->orderBy('ordem')->first(),
                         ]),
                 ]),
         ];

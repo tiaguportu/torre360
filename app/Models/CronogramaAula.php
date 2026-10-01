@@ -13,7 +13,7 @@ class CronogramaAula extends Model
 
     protected $table = 'cronograma_aula';
 
-    protected $guarded = [];
+    protected $fillable = ['turma_id', 'disciplina_id', 'pessoa_id', 'data', 'hora_inicio', 'hora_fim', 'conteudo_ministrado', 'dever_casa', 'anexo_material'];
 
     protected function casts(): array
     {

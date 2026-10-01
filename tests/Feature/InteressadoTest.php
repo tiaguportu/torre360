@@ -9,6 +9,7 @@ use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class InteressadoTest extends TestCase
@@ -177,8 +178,8 @@ class InteressadoTest extends TestCase
     public function test_dias_no_funil_para_lead_antigo(): void
     {
         $interessado = $this->criarInteressado();
-        // Força a data de criação para 15 dias atrás
-        $interessado->update(['created_at' => now()->subDays(15)]);
+        // Força a data de criação para 15 dias atrás ('created_at' não é mass-assignable, por isso forceFill)
+        $interessado->forceFill(['created_at' => now()->subDays(15)])->save();
 
         $this->assertEquals(15, $interessado->fresh()->diasNoFunil());
     }
@@ -346,5 +347,21 @@ class InteressadoTest extends TestCase
         $this->assertFalse($perdido->is_ganho);
         $this->assertFalse($novo->is_final);
         $this->assertFalse($novo->is_ganho);
+    }
+
+    public function test_pagina_de_edicao_renderiza_o_resumo_do_lead(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $interessado = $this->criarInteressado();
+
+        $this->actingAs($admin)
+            ->get("/admin/interessados/{$interessado->id}/edit")
+            ->assertOk()
+            ->assertSee('Resumo do Lead')
+            ->assertSee('Detalhamento do score')
+            ->assertSee('Dias no funil');
     }
 }

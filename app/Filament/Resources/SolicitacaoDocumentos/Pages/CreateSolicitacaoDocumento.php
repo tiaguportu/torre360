@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SolicitacaoDocumentos\Pages;
 
 use App\Filament\Resources\SolicitacaoDocumentos\SolicitacaoDocumentoResource;
 use App\Models\SolicitacaoDocumento;
+use App\Models\VideoTutorial;
 use App\Services\DocumentoService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
@@ -63,6 +64,7 @@ class CreateSolicitacaoDocumento extends CreateRecord
                         ->view('filament.components.help-content')
                         ->viewData([
                             'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'solicitacao-documentos-emissao-qrcode')->first(),
                         ]),
                 ]),
         ];

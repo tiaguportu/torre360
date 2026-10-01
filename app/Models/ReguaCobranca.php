@@ -13,7 +13,7 @@ class ReguaCobranca extends Model
 
     protected $table = 'regua_cobrancas';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'dias_offset', 'tipo_gatilho', 'canal', 'assunto', 'mensagem', 'is_ativo', 'horario_envio', 'ordem'];
 
     protected function casts(): array
     {

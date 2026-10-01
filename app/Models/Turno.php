@@ -9,7 +9,7 @@ class Turno extends Model
 {
     protected $table = 'turno';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'hora_inicio', 'hora_fim'];
 
     public function turmas(): HasMany
     {

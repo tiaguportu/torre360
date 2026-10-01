@@ -10,6 +10,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class SolicitacaoDocumentoForm
 {
@@ -21,7 +22,12 @@ class SolicitacaoDocumentoForm
                     ->schema([
                         Select::make('matricula_id')
                             ->label('Matrícula / Aluno')
-                            ->relationship('matricula')
+                            ->relationship(
+                                name: 'matricula',
+                                modifyQueryUsing: fn (Builder $query) => $query
+                                    ->join('pessoa', 'pessoa.id', '=', 'matricula.pessoa_id')
+                                    ->select('matricula.*'),
+                            )
                             ->getOptionLabelFromRecordUsing(fn (Matricula $record) => "{$record->pessoa?->nome} — Turma: {$record->turma?->nome} ({$record->turma?->serie?->curso?->nome_interno})")
                             ->searchable(['pessoa.nome', 'pessoa.cpf'])
                             ->preload()

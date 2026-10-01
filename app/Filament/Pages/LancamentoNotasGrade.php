@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Avaliacao;
 use App\Models\Disciplina;
 use App\Models\Turma;
+use App\Models\VideoTutorial;
 use App\Services\NotaLancamentoService;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -13,6 +14,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -152,12 +154,41 @@ class LancamentoNotasGrade extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Lançamento de Notas em Grade')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                            'video' => VideoTutorial::query()->ativo()->where('chave_pagina', 'avaliacoes-notas')->orderBy('ordem')->first(),
+                        ]),
+                ]),
             Action::make('salvarNotas')
                 ->label('Salvar Notas')
                 ->color('primary')
                 ->visible(fn () => $this->avaliacaoAtual !== null)
                 ->action('salvarNotas'),
         ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<p>Esta página permite lançar notas de forma rápida, em formato de planilha, para todos os alunos de uma avaliação de uma só vez.</p>';
+        $html .= '<h3>Como usar?</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Turma → Disciplina → Avaliação:</strong> Selecione em sequência para carregar a grade de alunos. A Avaliação já precisa ter sido cadastrada antes, em "Avaliações".</li>';
+        $html .= '<li><strong>Grade de Notas:</strong> Digite a nota de cada aluno; o valor máximo é validado conforme a nota máxima configurada na avaliação.</li>';
+        $html .= '<li><strong>Salvar Notas:</strong> Clique no botão para gravar todas as notas lançadas de uma vez, ou pressione Enter em qualquer campo.</li>';
+        $html .= '<li><strong>Deixar em branco:</strong> Remove a nota do aluno, caso já exista uma lançada.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 
     /**

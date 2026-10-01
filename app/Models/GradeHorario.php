@@ -19,7 +19,7 @@ class GradeHorario extends Model
 
     protected $table = 'grade_horario';
 
-    protected $guarded = [];
+    protected $fillable = ['turma_id', 'disciplina_id', 'professor_id', 'sala_id', 'dia_semana', 'hora_inicio', 'hora_fim'];
 
     protected function casts(): array
     {

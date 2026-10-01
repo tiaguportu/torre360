@@ -37,6 +37,10 @@
                            class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
                             Boletim
                         </a>
+                        <a href="{{ \App\Filament\Portal\Pages\SolicitacoesDocumentos::getUrl(['aluno' => $matriculaAtual?->id]) }}"
+                           class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700 border border-primary-200 hover:bg-primary-100 dark:bg-primary-950/40 dark:border-primary-800 dark:text-primary-300">
+                            Declarações
+                        </a>
                         <a href="{{ \App\Filament\Portal\Pages\Financeiro::getUrl() }}"
                            class="fi-btn fi-btn-size-sm inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-200">
                             Financeiro

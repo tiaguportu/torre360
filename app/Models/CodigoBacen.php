@@ -9,7 +9,7 @@ class CodigoBacen extends Model
 {
     protected $table = 'codigo_bacens';
 
-    protected $guarded = [];
+    protected $fillable = ['codigo', 'nome_extenso', 'nome_reduzido', 'ispb'];
 
     public function bancos(): HasMany
     {

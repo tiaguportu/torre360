@@ -582,7 +582,7 @@
     const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     // Layout inicial do banco
-    const DADOS_INICIAIS = {!! json_encode($templateCrachaV3->dados_json) !!};
+    const DADOS_INICIAIS = {!! \Illuminate\Support\Js::from($templateCrachaV3->dados_json) !!};
 
     // =====================================================
     // ESTADO DA APLICAÇÃO E MONITOR DE ERROS

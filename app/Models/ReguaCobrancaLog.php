@@ -12,7 +12,7 @@ class ReguaCobrancaLog extends Model
 
     protected $table = 'regua_cobranca_logs';
 
-    protected $guarded = [];
+    protected $fillable = ['regua_cobranca_id', 'fatura_id', 'pessoa_id', 'canal', 'destinatario', 'mensagem_enviada', 'status_envio', 'erro', 'data_envio'];
 
     protected function casts(): array
     {

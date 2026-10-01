@@ -2,11 +2,13 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Portal\Concerns\InteractsWithMatriculaSelecionada;
 use App\Models\Matricula;
 use App\Models\NotaHabilidade;
 use App\Services\BoletimService;
 use App\Services\FrequenciaAlunoService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
@@ -18,6 +20,7 @@ use UnitEnum;
  */
 class Notas extends Page
 {
+    use HasAjudaAction;
     use InteractsWithMatriculaSelecionada;
 
     /**
@@ -75,5 +78,23 @@ class Notas extends Page
             'nota_aprovacao' => (float) ($matricula->periodoLetivo?->nota_aprovacao ?? self::NOTA_APROVACAO_PADRAO),
             'frequencia_minima' => FrequenciaAlunoService::FREQUENCIA_MINIMA,
         ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Notas', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('💯', 'Notas', 'Acompanhe o desempenho do aluno em cada etapa.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['👧', 'Escolher o aluno', 'Se houver mais de um aluno, selecione de quem quer ver as notas.'],
+                ['📚', 'Notas por etapa', 'Veja as notas lançadas em cada etapa avaliativa.'],
+                ['🌱', 'Habilidades', 'Para turmas avaliadas por habilidades, veja o desenvolvimento por etapa.'],
+            ])
+            ->dica('As notas aparecem assim que a escola as lança no sistema.');
     }
 }

@@ -9,7 +9,7 @@ class Coordenador extends Model
 {
     protected $table = 'coordenador';
 
-    protected $guarded = [];
+    protected $fillable = ['curso_id', 'pessoa_id', 'cargo', 'data_inicio', 'flag_somente_leitura'];
 
     public function curso(): BelongsTo
     {

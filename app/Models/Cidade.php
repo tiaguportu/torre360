@@ -10,7 +10,7 @@ class Cidade extends Model
 {
     protected $table = 'cidade';
 
-    protected $guarded = [];
+    protected $fillable = ['estado_id', 'nome', 'codigo_ibge'];
 
     public function estado(): BelongsTo
     {

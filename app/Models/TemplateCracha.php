@@ -12,7 +12,7 @@ class TemplateCracha extends Model
 
     protected $table = 'template_crachas';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'tipo_entidade', 'largura', 'altura', 'imagem_fundo', 'dados_layout'];
 
     protected function casts(): array
     {

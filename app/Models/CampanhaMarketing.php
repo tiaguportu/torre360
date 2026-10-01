@@ -16,7 +16,7 @@ class CampanhaMarketing extends Model
 
     protected $table = 'campanha_marketing';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'canal', 'codigo_utm', 'data_inicio', 'data_fim', 'custo', 'ativa', 'observacoes'];
 
     /**
      * Canais de aquisição disponíveis para classificar uma campanha.

@@ -3,7 +3,9 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusFatura;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Fatura;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
@@ -16,6 +18,7 @@ use UnitEnum;
 
 class Financeiro extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
@@ -76,5 +79,23 @@ class Financeiro extends Page implements HasTable
                     ->orWhereHas('responsaveisFinanceiros', fn (Builder $q) => $q->whereIn('pessoa_id', $idsAcessiveis));
             })
             ->with(['itens', 'transacoes', 'contrato.matricula.pessoa']);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Financeiro', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('💰', 'Financeiro', 'Faturas e pagamentos dos seus alunos.')
+            ->secao('🎯 O que você encontra aqui?', [
+                ['🧾', 'Faturas', 'Veja aluno, vencimento, valor, valor pago e saldo de cada fatura.'],
+                ['🚦', 'Situação', 'A coluna Status mostra se a fatura está Pendente, Paga, Atrasada, Paga Parcialmente ou Cancelada.'],
+                ['🔎', 'Filtro', 'Filtre as faturas por status.'],
+            ])
+            ->dica('Dúvidas sobre valores? Abra um chamado na Central de Atendimento.');
     }
 }
