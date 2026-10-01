@@ -13,6 +13,8 @@ class HelpContent
 {
     private string $html = '';
 
+    private int $cor = 0;
+
     private function __construct(
         private readonly string $icone,
         private readonly string $titulo,
@@ -45,7 +47,7 @@ class HelpContent
         }
 
         if ($li !== '') {
-            $this->html .= '<h3>'.e($titulo).'</h3><ul class="help-list">'.$li.'</ul>';
+            $this->html .= '<section class="help-sec help-c'.($this->cor++ % 6).'"><h3>'.e($titulo).'</h3><ul class="help-list">'.$li.'</ul></section>';
         }
 
         return $this;
@@ -65,7 +67,7 @@ class HelpContent
         }
 
         if ($li !== '') {
-            $this->html .= '<h3>'.e($titulo).'</h3><ol class="help-steps">'.$li.'</ol>';
+            $this->html .= '<section class="help-sec help-c'.($this->cor++ % 6).'"><h3>'.e($titulo).'</h3><ol class="help-steps">'.$li.'</ol></section>';
         }
 
         return $this;

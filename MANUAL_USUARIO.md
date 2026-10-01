@@ -1902,7 +1902,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 4. Clique em **Fechar** para voltar à tela.
 
 ### 39.2 Telas já cobertas
-- **Todas as telas que já tinham o botão** ganharam o novo visual (cartões, emojis, modo escuro).
+- **Todas as telas que já tinham o botão** ganharam o novo visual automaticamente: cabeçalho com resumo, seções coloridas, emojis nos títulos e tópicos, passos numerados e dicas em destaque (também em modo escuro).
 - **Acadêmico:** Cursos, Planos de Aula, Salas, Frequências Escolares e Fechamento do Ciclo Letivo.
 - **Secretaria:** Coordenadores e Matrículas (ajuda reescrita no novo formato, incluindo as abas Todas, Pendentes, Ativas e Canceladas).
 - **Avaliações e Currículo (BNCC):** Notas e Habilidades.

@@ -53,3 +53,11 @@ Usado nas tabelas auxiliares do grupo Configurações (fase 6).
 
 ## Telas legadas migradas
 Telas antigas (HTML montado à mão) ganham o visual novo automaticamente, mas podem ser migradas para `HelpContent` para ter hero com emoji e cartões. Já migradas: Cursos e Matrículas (`ListMatriculas`, que também passou a explicar as abas de situação).
+
+## Enriquecimento automático das ajudas antigas (`HelpEnricher`)
+As ~115 telas que montam o HTML da ajuda à mão (sem `HelpContent`) são enriquecidas em tempo de exibição por `app/Support/HelpEnricher.php`, chamado em `help-content.blade.php`. Sem editar nenhuma tela, cada modal ganha:
+- **Cabeçalho** (💡 "Guia rápido desta tela") usando o primeiro parágrafo como resumo;
+- **Seções coloridas** (paleta de 6 cores) a partir de `h2/h3/h4`; conteúdo sem título ganha a seção "📖 Sobre esta tela";
+- **Emoji automático** em títulos e tópicos (mapa por palavra-chave: criar 🆕, editar ✏️, filtro 🔎, boletim 📄, financeiro 💰…), listas numeradas viram passos e `<p><small>Dica: …</small>` / `<blockquote>` viram callouts 💡/⚠️.
+
+É idempotente: conteúdo que já usa `HelpContent` (marcas `help-item`/`help-sec`/`help-callout`) não é alterado. Para um emoji específico, migre a tela para `HelpContent`. As palavras-chave ficam em `HelpEnricher::EMOJIS`.
