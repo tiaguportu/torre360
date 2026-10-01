@@ -76,6 +76,7 @@ Estrutura curricular e planejamento pedagógico.
 | `Nota` | Nota individual — vincula uma Avaliacao a uma Matricula |
 | `CronogramaAula` | Diário de aulas datado por Turma, Disciplina e Professor |
 | `Coordenador` | Vincula uma Pessoa como coordenadora de um Curso |
+| `SituacaoFinalDisciplina` | Situação final (Aprovado/Recuperação/Reprovado) de uma matrícula numa disciplina, gerada pelo **Fechamento do Ciclo Letivo**. Suporta recuperação anual ou por etapa e exame final, ambos configuráveis por `PeriodoLetivo` — detalhes em `docs/recuperacao_etapa_exame_final.md`. |
 
 **Hierarquia pedagógica:**
 ```

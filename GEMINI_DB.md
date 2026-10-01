@@ -230,6 +230,17 @@ Estrutura de ensino e turmas.
 - **Situação (justificativa de ausência de nota):** Para avaliações aplicadas só a alunos específicos ou quando o aluno faltou, a nota é gravada com `valor = null` e `situacao` preenchida. Esse registro conta como **resolvido** em `Avaliacao::scopePendentes()`, `tem_pendencia` e `notas_pendentes_count` (resolvida = `valor` não nulo **ou** `situacao` não nula), mas **não entra em médias**, pois boletim e fechamento de ciclo consideram apenas `valor` não nulo. `situacao` e `valor` são mutuamente exclusivos (o serviço `NotaLancamentoService` zera um ao gravar o outro).
 - **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula` (Aluno).
 
+### `periodo_letivo` (colunas de fechamento do ciclo)
+- **Campos de corte:** `nota_aprovacao` (padrão 7.00), `nota_recuperacao_minima` (padrão 5.00) — usados por `FechamentoCicloService::classificarSituacao()`.
+- **Campos de recuperação/exame final:** `recuperacao_por_etapa` (boolean, padrão `false` — liga o modo "recuperação por etapa" em vez do modo anual, ver `situacao_final_disciplina` abaixo), `exame_final_habilitado` (boolean, padrão `false`), `nota_aprovacao_pos_exame` (decimal, padrão 5.00 — nota de corte após o exame final).
+
+### `situacao_final_disciplina`
+- **Representa:** Situação final (Aprovado/Recuperação/Reprovado) de uma matrícula numa disciplina, gerada pelo Fechamento do Ciclo Letivo (`FechamentoCicloService::fecharPeriodoLetivo()`). Um registro por `(matricula_id, disciplina_id, periodo_letivo_id)` — recalcular substitui o anterior.
+- **Campos Principais:** `matricula_id`, `disciplina_id`, `periodo_letivo_id`, `media_final` (nullable), `situacao` (Enum `SituacaoFinal`: aprovado/recuperacao/reprovado), `calculado_em`.
+- **Campos de exame final:** `nota_exame_final`, `media_final_pos_exame` (= média simples entre `media_final` e `nota_exame_final`), `situacao_final_pos_exame` (Enum `SituacaoFinal`, só aprovado/reprovado). Lançados via `FechamentoCicloService::registrarExameFinal()`, só permitido quando `situacao` é `recuperacao` e o período letivo tem `exame_final_habilitado`. Um recálculo do fechamento apaga esses três campos se a situação deixar de ser `recuperacao`, e preserva se continuar sendo.
+- **Recuperação anual vs. por etapa:** controlado por `periodo_letivo.recuperacao_por_etapa`. No modo anual (padrão), todas as avaliações de `categoria_avaliacao.eh_recuperacao=true` do período são somadas num único valor que substitui só a menor média de etapa. No modo por etapa, cada avaliação de recuperação (via seu próprio `etapa_avaliativa_id`) só substitui a média daquela mesma etapa, de forma independente.
+- **Relacionamentos:** BelongsTo `matricula`, `disciplina`, `periodoLetivo`.
+
 ### `campo_experiencias`
 - **Representa:** Categorias da BNCC para Educação Infantil (ex: "O eu, o outro e o nós").
 - **Campos Principais:** `nome`, `descricao`.
@@ -579,6 +590,7 @@ Estrutura de ensino e turmas.
   - `exige_autenticidade`: Boolean indicando se o documento deve receber código hash verificador e QR Code de autenticidade pública.
   - `ativo`: Flag booleana indicando disponibilidade do template.
 - **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+- **Macro `{{TABELA_HISTORICO}}`** (usada no tipo `historico_escolar`): desde a Onda 5, `DocumentoService::gerarTabelaHistoricoHtml()` busca a situação final real (`situacao_final_disciplina`) de todas as matrículas do aluno, uma tabela por ano/período letivo, já refletindo o resultado do exame final quando houver (`docs/recuperacao_etapa_exame_final.md`). Antes disso, a macro só mostrava as disciplinas da turma atual com situação fixa "Regular".
 
 ### `solicitacao_documentos`
 - **Representa:** Requerimento e emissão de declarações ou documentos oficiais solicitados por pais/responsáveis ou emitidos pela secretaria.
