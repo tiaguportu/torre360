@@ -212,7 +212,7 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
     protected function getCandidateModels(): array
     {
         $configured = config('services.gemini.model');
-        $defaults = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
+        $defaults = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-2.0-flash'];
 
         if (! empty($configured)) {
             return array_values(array_unique(array_merge([$configured], $defaults)));
@@ -239,7 +239,14 @@ Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
         $models = $this->getCandidateModels();
         $lastError = null;
 
-        foreach ($models as $model) {
+        // Duas rodadas pelos modelos, com pausa entre elas, para absorver picos de demanda.
+        $attempts = array_merge($models, $models);
+
+        foreach ($attempts as $i => $model) {
+            if ($i === count($models)) {
+                sleep(3);
+            }
+
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
             try {

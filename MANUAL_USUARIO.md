@@ -141,13 +141,14 @@ Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - A equipe interna é notificada automaticamente via sininho.
 
 ### 3.8 Importação e Extração Inteligente de Leads com IA (Google Gemini)
-Para agilizar a prospecção e evitar a digitação manual de formulários, o Torre360 possui integração nativa com a **IA da Google (Gemini 1.5 Flash)** com suporte multimodal (texto e imagens):
+Para agilizar a prospecção e evitar a digitação manual de formulários, o Torre360 possui integração nativa com a **IA da Google (Gemini 2.5 Flash)** com suporte multimodal (texto e imagens):
 1. **Onde Acessar:** Clique no botão de destaque **Importar Lead com IA** (ícone ✨ `sparkles`) disponível no topo da Listagem de Interessados, no Funil Kanban e na tela de Cadastro de Novo Lead.
 2. **Como Usar:** 
    - **Prints / Capturas de Tela:** Você pode anexar diretamente uma imagem com o print da conversa (WhatsApp, Direct do Instagram, print de e-mail ou foto de anotação). O sistema analisa a imagem e extrai os dados visuais.
    - **Mensagem Bruta / Texto:** Você pode colar qualquer mensagem bruta recebida de clientes ou adicionar observações textuais complementares à imagem.
    - Selecione o consultor responsável e a origem fallback (se a IA não inferir).
    - Clique em **Analisar e Criar Lead**.
+> **Alta demanda:** se aparecer a mensagem "servidores de IA do Gemini estão temporariamente com alta demanda", o sistema já tentou automaticamente vários modelos em duas rodadas. Aguarde alguns instantes e tente novamente.
 3. **O que a IA faz automaticamente:**
    - Lê e interpreta o print ou o texto recebido com alta precisão.
    - Extrai o Nome completo, E-mail, Telefone e CPF do responsável.
