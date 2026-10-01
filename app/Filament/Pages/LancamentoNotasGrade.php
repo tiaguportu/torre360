@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\SituacaoNota;
 use App\Models\Avaliacao;
 use App\Models\Disciplina;
 use App\Models\Turma;
@@ -21,6 +22,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
@@ -127,10 +129,19 @@ class LancamentoNotasGrade extends Page implements HasForms
                                 TextInput::make('aluno_nome')
                                     ->label('Aluno')
                                     ->disabled()
-                                    ->columnSpan(['default' => 2, 'md' => 3]),
+                                    ->columnSpan(['default' => 2, 'md' => 2]),
                                 Hidden::make('matricula_id'),
+                                Select::make('situacao')
+                                    ->label('Situação')
+                                    ->options(SituacaoNota::class)
+                                    ->placeholder('Com nota')
+                                    ->live()
+                                    ->afterStateUpdated(fn (Set $set, $state) => $state ? $set('valor', null) : null)
+                                    ->columnSpan(['default' => 2, 'md' => 1]),
                                 TextInput::make('valor')
                                     ->label('Nota')
+                                    ->disabled(fn (Get $get) => filled($get('situacao')))
+                                    ->dehydrated()
                                     ->numeric()
                                     ->inputMode('decimal')
                                     ->minValue(0)
@@ -185,7 +196,8 @@ class LancamentoNotasGrade extends Page implements HasForms
         $html .= '<li><strong>Turma → Disciplina → Avaliação:</strong> Selecione em sequência para carregar a grade de alunos. A Avaliação já precisa ter sido cadastrada antes, em "Avaliações".</li>';
         $html .= '<li><strong>Grade de Notas:</strong> Digite a nota de cada aluno; o valor máximo é validado conforme a nota máxima configurada na avaliação.</li>';
         $html .= '<li><strong>Salvar Notas:</strong> Clique no botão para gravar todas as notas lançadas de uma vez, ou pressione Enter em qualquer campo.</li>';
-        $html .= '<li><strong>Deixar em branco:</strong> Remove a nota do aluno, caso já exista uma lançada.</li>';
+        $html .= '<li><strong>Situação (Faltou / Não se aplica):</strong> Para avaliações aplicadas só a alguns alunos, ou quando o aluno faltou, escolha a situação no lugar de digitar a nota. O aluno deixa de constar como pendência de lançamento e a avaliação não entra na média dele.</li>';
+        $html .= '<li><strong>Deixar em branco:</strong> Remove a nota do aluno, caso já exista uma lançada. Sem nota e sem situação, o aluno continua como pendente.</li>';
         $html .= '</ul>';
 
         return $html;

@@ -412,6 +412,8 @@ Para agilizar o lançamento de uma avaliação já cadastrada, sem precisar nave
 3. Assim que uma avaliação é selecionada, o sistema exibe uma grade com todos os alunos matriculados na turma e um campo de nota para cada um, já preenchido com o valor existente (se houver).
 4. Digite as notas e pressione **Enter** em qualquer campo, ou clique em **Salvar Notas** no topo da página, para gravar tudo de uma vez.
 5. O sistema valida que nenhuma nota ultrapasse a **Nota Máxima** configurada na avaliação; deixar um campo em branco remove a nota daquele aluno, caso já exista uma.
+   - **Faltou / Não se aplica:** Ao lado de cada aluno há o campo **Situação**. Use **Faltou** quando o aluno não fez a avaliação, ou **Não se aplica** quando a avaliação é destinada apenas a alguns alunos (ex.: prova de adaptação ou de segunda chamada). Ao escolher uma situação, o campo de nota é limpo e bloqueado. O aluno deixa de aparecer como **pendência de lançamento** e a avaliação **não entra na média** dele. Para voltar a lançar nota, selecione **Com nota** no campo Situação. Se o aluno ficar sem nota e sem situação, ele continua como pendente.
+   - O mesmo campo **Situação** existe na tela **Lançar Notas** aberta a partir da listagem de Avaliações.
 6. **Visibilidade Restrita:** Assim como na listagem de Avaliações, professores só conseguem selecionar turmas, disciplinas e avaliações vinculadas a si mesmos. Administradores, secretaria e coordenação têm acesso a todas.
 
 ### 5.10 Fechamento do Ciclo Letivo e Situação Final

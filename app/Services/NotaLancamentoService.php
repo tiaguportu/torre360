@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\SituacaoNota;
 use App\Models\Avaliacao;
 use App\Models\Nota;
 
@@ -26,17 +27,19 @@ class NotaLancamentoService
             ->orderBy('pessoa.nome')
             ->get();
 
-        $notasExistentes = $avaliacao->notas()->pluck('valor', 'matricula_id')->toArray();
+        $notasExistentes = $avaliacao->notas()->get()->keyBy('matricula_id');
 
         return $matriculas->map(fn ($matricula) => [
             'matricula_id' => $matricula->id,
             'aluno_nome' => $matricula->aluno_nome ?? 'Sem Nome',
-            'valor' => $notasExistentes[$matricula->id] ?? null,
+            'valor' => $notasExistentes[$matricula->id]?->valor,
+            'situacao' => $notasExistentes[$matricula->id]?->situacao?->value,
         ])->all();
     }
 
     /**
-     * Persiste as notas da grade: cria/atualiza quando há valor, remove quando o campo foi esvaziado.
+     * Persiste as notas da grade: cria/atualiza quando há valor ou justificativa (faltou / não se aplica),
+     * remove quando ambos foram esvaziados.
      *
      * @param  array<int, array{matricula_id?: int, aluno_nome?: string, valor?: string|null}>  $notasAlunos
      *
@@ -49,7 +52,21 @@ class NotaLancamentoService
                 continue;
             }
 
-            if (isset($item['valor']) && $item['valor'] !== '' && $item['valor'] !== null) {
+            $situacao = SituacaoNota::tryFrom((string) ($item['situacao'] ?? ''));
+
+            if ($situacao) {
+                // Justificativa (faltou / não se aplica) prevalece e descarta qualquer valor digitado.
+                Nota::updateOrCreate(
+                    [
+                        'avaliacao_id' => $avaliacao->id,
+                        'matricula_id' => $item['matricula_id'],
+                    ],
+                    [
+                        'valor' => null,
+                        'situacao' => $situacao,
+                    ]
+                );
+            } elseif (isset($item['valor']) && $item['valor'] !== '' && $item['valor'] !== null) {
                 $valor = (float) str_replace(',', '.', (string) $item['valor']);
 
                 if ($valor > (float) $avaliacao->nota_maxima) {
@@ -67,6 +84,7 @@ class NotaLancamentoService
                     ],
                     [
                         'valor' => $valor,
+                        'situacao' => null,
                     ]
                 );
             } else {
