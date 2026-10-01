@@ -47,10 +47,17 @@ return new class extends Migration
                 }
             }
 
-            if (config('database.default') !== 'sqlite') {
+            try {
                 Schema::table('tipo_documento', function (Blueprint $table) {
                     $table->dropColumn('curso_id');
                 });
+            } catch (Exception $e) {
+                try {
+                    Schema::table('tipo_documento', function (Blueprint $table) {
+                        $table->unsignedBigInteger('curso_id')->nullable()->change();
+                    });
+                } catch (Exception $e2) {
+                }
             }
         }
 

@@ -1952,15 +1952,47 @@ O módulo de **Auto-Atendimento de Declarações e Documentos Oficiais** foi des
 8. 📊 **Boletim Escolar Atualizado:** Atalho direto para download do boletim com notas e faltas consolidadas.
 9. 🏛️ **Histórico Escolar Oficial Multi-Ano:** Integração direta com o módulo de Histórico Escolar Oficial Tabular para formandos e egressos.
 
-### 41.3 Como a Família Emite um Documento no Portal
-1. Acesse o **Portal da Família** (`/portal`) e clique em **Declarações e Documentos** no menu lateral (ou clique no botão **Declarações** no cartão do aluno no Início).
-2. Se você possuir mais de um dependente matriculado, selecione o estudante desejado no seletor de abas do topo.
-3. No painel de **Declarações Disponíveis para Emissão Imediata**, localize o tipo de documento desejado e clique no botão **Emitir Agora**.
-4. O sistema gera imediatamente o documento e exibe o botão **Abrir PDF** na notificação de confirmação.
-5. O documento fica registrado permanentemente no **Histórico de Documentos e Protocolos Emitidos** logo abaixo, onde é possível efetuar novo download ou conferir o código de verificação digital a qualquer momento.
-6. **Solicitações Personalizadas:** Caso a família necessite de um documento com finalidade específica não contemplada nos modelos rápidos, basta clicar no botão **"Outra Solicitação / Com Observação"**, selecionar o tipo e preencher a justificativa.
+---
+
+## 🚀 42. Matrícula Externa 100% Self-Service para Novos Alunos (`/matricular-online`)
+
+O módulo de **Matrícula Externa 100% Self-Service** permite que pais, mães e responsáveis legais realizem a matrícula integral de novos alunos diretamente pela internet, sem necessidade de deslocamento à secretaria escolar ou agendamento prévio. O processo é simples, rápido, seguro e atende rigorosamente às exigências da **LGPD (Lei Geral de Proteção de Dados)**.
+
+### 42.1 Principais Benefícios
+- **Captação Ativa 24h/7d:** A instituição passa a matricular estudantes a qualquer dia ou hora, aproveitando o momento de maior interesse das famílias.
+- **Validação de Vagas em Tempo Real:** O sistema consulta a lotação da turma selecionada e bloqueia tentativas de matrícula quando o limite máximo de vagas da turma for atingido, prevenindo ocorrências de *overbooking*.
+- **Assinatura Digital com Validade Jurídica:** Ao final do processo, o contrato de prestação de serviços educacionais é formalizado com registro de data/hora, endereço IP, dispositivo de origem e hash criptográfico SHA-256.
+- **Onboarding Automático no Portal da Família:** Ao concluir o cadastro, o responsável recebe imediatamente uma conta no Portal da Família com perfil de acesso e e-mail com as instruções de boas-vindas.
+- **Integração com o Funil de CRM:** Se o responsável ou estudante já tiver registrado interesse anteriormente no módulo de captação de leads (`/quero-matricular`), o lead é automaticamente convertido no CRM.
+
+### 42.2 Os 5 Passos do Assistente de Matrícula (Wizard)
+
+1. **Passo 1 — Escolha de Curso e Turma:**
+   - Seleção da Unidade Escolar e do Curso/Nível pretendido.
+   - Escolha da Série e da Turma desejada. O sistema exibe o turno e a disponibilidade de vagas em tempo real.
+2. **Passo 2 — Dados do Estudante:**
+   - Informações cadastrais do aluno: Nome completo, CPF, Data de Nascimento, Sexo, Cor/Raça e indicação de Necessidades Educacionais Especiais.
+3. **Passo 3 — Responsável Legal & Financeiro:**
+   - Dados do responsável: Nome, CPF, Telefone/WhatsApp, E-mail e Grau de Parentesco (Pai, Mãe, Responsável Legal).
+   - Endereço residencial com preenchimento automático via busca de CEP (ViaCEP).
+4. **Passo 4 — Upload de Documentos Digitais:**
+   - Anexação de arquivos comprobatórios (PDF ou imagem):
+     - Certidão de Nascimento ou RG do Aluno;
+     - Documento de Identidade com Foto do Responsável (RG/CNH);
+     - Comprovante de Residência Atualizado;
+     - Histórico Escolar Anterior ou Declaração de Transferência.
+5. **Passo 5 — Minuta Contratual e Aceites Digitais:**
+   - Leitura da minuta resumida do Contrato de Prestação de Serviços Educacionais.
+   - Marcação obrigatória de declaração de ciência dos termos contratuais, consentimento de tratamento de dados sob a LGPD e normas regimentais da escola.
+   - Clique em **"Concluir Matrícula Online"**.
+
+### 42.3 Confirmação e Protocolo
+- O responsável é direcionado para a página de sucesso com o **Protocolo Oficial de Matrícula**, detalhamento da turma, dados do contrato aceito e lista dos documentos sob análise.
+- A tela disponibiliza o botão **"Imprimir Comprovante"** para arquivo da família e um atalho direto para login no **Portal da Família** (`/portal`).
+- A equipe da secretaria escolar recebe uma notificação instantânea no painel administrativo para validação documental e homologação da matrícula.
 
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 

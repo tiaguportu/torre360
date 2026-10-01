@@ -101,6 +101,11 @@ class Matricula extends Model
         return $this->hasMany(DocumentoInserido::class, 'matricula_id');
     }
 
+    public function documentosInseridos(): HasMany
+    {
+        return $this->hasMany(DocumentoInserido::class, 'matricula_id');
+    }
+
     public function frequenciaEscolars(): HasMany
     {
         return $this->hasMany(FrequenciaEscolar::class);

@@ -11,15 +11,21 @@ use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ValidarDocumentoController;
+use App\Livewire\MatriculaOnline\MatriculaOnlineWizard;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('switch-role')->middleware('auth');
 
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
 Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->middleware('throttle:5,1')->name('solicitar-acesso');
+
+// Matrícula Externa 100% Self-Service para Novos Alunos
+Route::get('/matricular-online', MatriculaOnlineWizard::class)->name('matricular.online');
+Route::get('/matricular-online/sucesso/{matricula}', [MatriculaOnlineController::class, 'sucesso'])->name('matricular.online.sucesso');
 
 // Formulário público de captação de interessados
 Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');

@@ -562,6 +562,22 @@
         </div>
     </header>
 
+    {{-- ── BANNER MATRÍCULA ONLINE SELF-SERVICE ── --}}
+    <div style="max-width: 820px; margin: 18px auto 0; padding: 0 24px;">
+        <div style="background: linear-gradient(135deg, #064e3b, #047857); border-radius: 14px; padding: 14px 20px; color: white; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 12px rgba(6, 78, 59, 0.15);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">⚡</span>
+                <div>
+                    <strong style="display: block; font-size: 14px; font-weight: 700;">Deseja garantir a vaga agora mesmo sem filas?</strong>
+                    <span style="font-size: 12px; opacity: 0.9;">Realize a Matrícula 100% Online com envio de documentos e aceite digital do contrato.</span>
+                </div>
+            </div>
+            <a href="{{ route('matricular.online') }}" style="background: #ffffff; color: #065f46; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                Matricular Online Agora &rarr;
+            </a>
+        </div>
+    </div>
+
     {{-- ── PROGRESSO ── --}}
     <div class="progress-wrap">
         <div class="progress-bar-track">
