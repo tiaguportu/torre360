@@ -6,14 +6,18 @@ use App\Filament\Pages\FechamentoCicloLetivo;
 use App\Filament\Resources\CampanhaMarketings\Pages\ListCampanhaMarketings;
 use App\Filament\Resources\ComunicacaoEmMassas\Pages\ListComunicacaoEmMassas;
 use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
+use App\Filament\Resources\CicloPreceptorias\Pages\ListCicloPreceptorias;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
+use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
 use App\Filament\Resources\FrequenciaEscolars\Pages\ListFrequenciaEscolars;
 use App\Filament\Resources\Habilidades\Pages\ListHabilidades;
 use App\Filament\Resources\LandingLeads\Pages\ListLandingLeads;
 use App\Filament\Resources\MensagemWhatsappTemplates\Pages\ListMensagemWhatsappTemplates;
 use App\Filament\Resources\Notas\Pages\ListNotas;
 use App\Filament\Resources\PlanoAulas\Pages\ListPlanoAulas;
+use App\Filament\Resources\RelatorioPreceptorias\Pages\ListRelatorioPreceptorias;
 use App\Filament\Resources\Salas\Pages\ListSalas;
+use App\Filament\Resources\TemplateRelatorioPreceptorias\Pages\ListTemplateRelatorioPreceptorias;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,6 +49,10 @@ class AjudaCoberturaSidebarTest extends TestCase
             'Fechamento do Ciclo Letivo' => [FechamentoCicloLetivo::class],
             'Notas' => [ListNotas::class],
             'Habilidades' => [ListHabilidades::class],
+            'Ciclos de Preceptoria' => [ListCicloPreceptorias::class],
+            'Relatórios de Preceptoria' => [ListRelatorioPreceptorias::class],
+            'Templates de Relatório' => [ListTemplateRelatorioPreceptorias::class],
+            'Dias Não Letivos' => [ListDiaNaoLetivos::class],
         ];
     }
 
