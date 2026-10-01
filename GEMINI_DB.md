@@ -311,7 +311,8 @@ Estrutura de ensino e turmas.
     - `contrato_id`: FK `contrato`.
     - `vencimento`: Data de vencimento da fatura.
     - `status`: Enum (`App\Enums\StatusFatura`). Estados: `pendente` (amarelo), `pago` (verde), `atrasado` (vermelho), `cancelado` (cinza), `parcial` (azul - pago parcialmente).
-    - `pix_copia_e_cola`: Código ou chave PIX para pagamento.
+    - `pix_copia_e_cola`: Código ou chave PIX para pagamento (herdado da antiga `titulos`; desde a Onda 6, preenchido de verdade por `GatewayPagamento::criarCobranca()`, não mais um texto fixo).
+    - `gateway`, `gateway_id` (único), `status_gateway`, `linha_digitavel`, `boleto_url`, `link_pagamento`: campos da Onda 6 — dados da cobrança gerada no gateway configurado (`config('pagamentos.driver')`). `gateway_id` é o que o webhook de pagamento usa para localizar a fatura.
 - **Lógica de Negócio e Atributos Computados (Model `Fatura`):**
     - `valor_bruto`: Soma total dos itens sem descontos.
     - `valor`: Valor total líquido com descontos aplicados (absolutos ou percentuais).
@@ -334,6 +335,13 @@ Estrutura de ensino e turmas.
     - `conciliado`: Boolean que indica se a movimentação foi confirmada no extrato.
     - `external_id`: Identificador da transação no banco/OFX.
 - **Relacionamentos:** BelongsTo `banco`, BelongsTo `fatura`, BelongsTo `planoConta`, BelongsTo `centroCusto`, BelongsTo `fornecedor`.
+- **Conciliação automática (Onda 6):** `ConciliacaoBancariaService::conciliarCreditosComFaturas()` casa entradas ainda sem `fatura_id` com uma fatura em aberto, por identificador na descrição ou por valor + janela de data em torno do vencimento — só concilia automaticamente quando há exatamente uma candidata.
+
+### `conta_pagars`
+- **Representa:** Contas a pagar da instituição (Onda 6) — complementa `transacao_bancarias` (que registra o movimento já realizado) com o lado de obrigação futura/pendente.
+- **Campos Principais:** `descricao`, `valor`, `vencimento`, `status` (Enum `App\Enums\StatusContaPagar`: pendente/pago/atrasado/cancelado), `data_pagamento` (nullable), `fornecedor_id`/`plano_conta_id`/`centro_custo_id` (nullable), `transacao_bancaria_id` (nullable, preenchido ao dar baixa), `observacao`.
+- **Relacionamentos:** BelongsTo `fornecedor`, `planoConta`, `centroCusto`, `transacaoBancaria`.
+- **Atualização automática:** comando `financeiro:atualizar-contas-pagar-atrasadas` (diário, 07:00) marca como `atrasado` as contas `pendente` com vencimento passado.
 
 ### `regua_cobrancas`
 - **Representa:** Definição das etapas e regras automatizadas de notificação preventiva e cobrança de inadimplência escolar.

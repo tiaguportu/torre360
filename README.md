@@ -110,13 +110,17 @@ Operação de secretaria virtual e vínculo aluno–escola.
 ---
 
 ### 5. 💰 Financeiro
-Controle de tesouraria e cobrança.
+Controle de tesouraria e cobrança. Detalhes do gateway, webhook e conciliação em `docs/financeiro_gateway_conciliacao_relatorios.md`.
 
 | Recurso | Descrição |
 |---|---|
 | `ResponsavelFinanceiro` | Pessoa responsável pelos pagamentos de um contrato |
-| `Titulo` | Parcelas/cobranças vinculadas a um contrato |
+| `Fatura` | Parcelas/cobranças vinculadas a um contrato (tabela `faturas`, renomeada da antiga `titulos`). Tem PIX/boleto/link de pagamento via `GatewayPagamento` e baixa automática por webhook. |
 | `TributacaoCurso` | Natureza fiscal do curso para NFS-e |
+| `ReguaCobranca` | Lembretes automáticos por gatilho de dias antes/depois do vencimento, multicanal |
+| `ContaPagar` | Contas a pagar (fornecedor, plano de contas, centro de custo), com baixa manual |
+| `GatewayPagamento` (contrato) | Abstração de gateway de cobrança — driver `Fake` por padrão, resolvido por `GatewayPagamentoManager` |
+| Relatórios | Inadimplência (por turma/faixa de atraso/responsável) e Fluxo de Caixa consolidado mensal |
 
 ---
 

@@ -6,7 +6,9 @@ use App\Enums\StatusFatura;
 use App\Models\Banco;
 use App\Models\Fatura;
 use App\Models\ReguaCobranca;
-use App\Models\TransacaoBancaria;
+use App\Services\BaixaFaturaService;
+use App\Services\GatewayPagamentoManager;
+use App\Services\PagamentoConfirmacaoService;
 use App\Services\ReguaCobrancaService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -108,6 +110,9 @@ class FaturasTable
             ])
             ->recordActions([
                 self::darBaixaAction(),
+                self::gerarCobrancaAction(),
+                self::verDadosPagamentoAction(),
+                self::simularPagamentoAction(),
                 self::enviarCobrancaAction(),
                 self::historicoCobrancasAction(),
                 EditAction::make(),
@@ -271,31 +276,128 @@ class FaturasTable
             ->modalDescription(fn (Fatura $record) => "Fatura #{$record->id} — Saldo devedor: R$ ".number_format($record->valor_restante, 2, ',', '.'))
             ->modalSubmitActionLabel('Confirmar Pagamento')
             ->action(function (array $data, Fatura $record): void {
-                TransacaoBancaria::create([
+                app(BaixaFaturaService::class)->darBaixa($record, [
                     'banco_id' => $data['banco_id'],
-                    'fatura_id' => $record->id,
-                    'tipo' => 'entrada',
                     'valor' => $data['valor'],
                     'data_transacao' => $data['data_transacao'],
                     'descricao' => $data['descricao'] ?? "Baixa manual — Fatura #{$record->id}",
-                    'conciliado' => true,
                 ]);
 
-                // Recalcula o saldo devedor após inserção
-                $record->refresh();
-                $novoSaldo = $record->valor_restante;
-
-                if ($novoSaldo <= 0) {
-                    $record->update(['status' => StatusFatura::Pago]);
-                } elseif ($record->status === StatusFatura::Pendente || $record->status === StatusFatura::Atrasado) {
-                    $record->update(['status' => StatusFatura::Parcial]);
-                }
+                $novoSaldo = $record->refresh()->valor_restante;
 
                 Notification::make()
                     ->title('Baixa registrada com sucesso!')
                     ->body($novoSaldo <= 0 ? 'Fatura marcada como PAGA.' : 'Pagamento parcial registrado. Saldo restante: R$ '.number_format(max(0, $novoSaldo), 2, ',', '.'))
                     ->success()
                     ->send();
+            });
+    }
+
+    /**
+     * Gera a cobrança (PIX/boleto/link) no gateway configurado e grava os dados na
+     * fatura. Só aparece se ainda não houver uma cobrança gerada (gateway_id vazio) —
+     * gerar de novo depois de pago/cancelado não faz sentido.
+     */
+    public static function gerarCobrancaAction(): Action
+    {
+        return Action::make('gerar_cobranca')
+            ->label('Gerar Cobrança')
+            ->icon('heroicon-o-qr-code')
+            ->color('info')
+            ->visible(fn (Fatura $record): bool => ! $record->gateway_id
+                && ! in_array($record->status, [StatusFatura::Pago, StatusFatura::Cancelado]))
+            ->requiresConfirmation()
+            ->modalDescription(fn (Fatura $record): string => "Gera PIX/boleto para a fatura #{$record->id} (saldo R$ ".number_format($record->valor_restante, 2, ',', '.').') via '.GatewayPagamentoManager::resolver()->rotulo().'.')
+            ->action(function (Fatura $record): void {
+                $dados = GatewayPagamentoManager::resolver()->criarCobranca($record);
+                $record->update($dados);
+
+                Notification::make()
+                    ->title('Cobrança gerada com sucesso!')
+                    ->success()
+                    ->send();
+            });
+    }
+
+    /**
+     * Mostra os dados da cobrança já gerada (PIX copia-e-cola, linha digitável, links).
+     */
+    public static function verDadosPagamentoAction(): Action
+    {
+        return Action::make('ver_dados_pagamento')
+            ->label('Dados de Pagamento')
+            ->icon('heroicon-o-banknotes')
+            ->color('gray')
+            ->visible(fn (Fatura $record): bool => (bool) $record->gateway_id)
+            ->modalHeading(fn (Fatura $record): string => "Dados de Pagamento — Fatura #{$record->id}")
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fechar')
+            ->schema([
+                Placeholder::make('dados')
+                    ->label('')
+                    ->content(function (Fatura $record) {
+                        $html = '<div class="space-y-3 text-sm">';
+                        $html .= '<p><strong>Gateway:</strong> '.e($record->gateway).'</p>';
+                        $html .= '<p><strong>ID da Cobrança:</strong> '.e($record->gateway_id).'</p>';
+                        $html .= '<p><strong>Status no Gateway:</strong> '.e($record->status_gateway).'</p>';
+
+                        if ($record->pix_copia_e_cola) {
+                            $html .= '<div><strong>PIX Copia e Cola:</strong><textarea readonly class="w-full text-xs p-2 mt-1 border rounded font-mono" rows="3">'.e($record->pix_copia_e_cola).'</textarea></div>';
+                        }
+
+                        if ($record->linha_digitavel) {
+                            $html .= '<p><strong>Linha Digitável:</strong> '.e($record->linha_digitavel).'</p>';
+                        }
+
+                        if ($record->boleto_url) {
+                            $html .= '<p><a href="'.e($record->boleto_url).'" target="_blank" class="text-primary-600 underline">Baixar Boleto</a></p>';
+                        }
+
+                        if ($record->link_pagamento) {
+                            $html .= '<p><a href="'.e($record->link_pagamento).'" target="_blank" class="text-primary-600 underline">Abrir Link de Pagamento</a></p>';
+                        }
+
+                        $html .= '</div>';
+
+                        return new HtmlString($html);
+                    }),
+            ]);
+    }
+
+    /**
+     * Visível apenas com o driver "fake" ativo: simula a confirmação de pagamento que
+     * normalmente viria do webhook do gateway, usando a mesma lógica idempotente
+     * (`PagamentoConfirmacaoService`) — útil para testar/demonstrar o fluxo completo sem
+     * um gateway real configurado.
+     */
+    public static function simularPagamentoAction(): Action
+    {
+        return Action::make('simular_pagamento')
+            ->label('Simular Pagamento (Dev)')
+            ->icon('heroicon-o-beaker')
+            ->color('warning')
+            ->visible(fn (Fatura $record): bool => config('pagamentos.driver') === 'fake'
+                && (bool) $record->gateway_id
+                && ! in_array($record->status, [StatusFatura::Pago, StatusFatura::Cancelado]))
+            ->requiresConfirmation()
+            ->modalDescription('Simula a confirmação de pagamento vinda do gateway fake, como se o webhook tivesse chegado. Só aparece com o driver "fake" ativo.')
+            ->action(function (Fatura $record): void {
+                $resultado = app(PagamentoConfirmacaoService::class)->confirmar(
+                    $record,
+                    $record->valor_restante,
+                    now()->toDateString(),
+                    'sim_'.$record->gateway_id.'_'.now()->timestamp
+                );
+
+                $notification = Notification::make();
+
+                if ($resultado['processado']) {
+                    $notification->title('Pagamento simulado com sucesso!')->success();
+                } else {
+                    $notification->title('Não processado: '.$resultado['motivo'])->warning();
+                }
+
+                $notification->send();
             });
     }
 }

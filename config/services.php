@@ -54,6 +54,7 @@ return [
         'url' => env('ASSINAFY_API_URL', 'https://sandbox.assinafy.com.br/v1'),
         'key' => env('ASSINAFY_API_KEY'),
         'account_id' => env('ASSINAFY_ACCOUNT_ID'),
+        'webhook_secret' => env('ASSINAFY_WEBHOOK_SECRET'),
     ],
 
     'google_analytics' => [

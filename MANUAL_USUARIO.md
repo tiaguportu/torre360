@@ -1906,7 +1906,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 - **Secretaria:** Coordenadores e Matrículas (ajuda reescrita no novo formato, incluindo as abas Todas, Pendentes, Ativas e Canceladas).
 - **Avaliações e Currículo (BNCC):** Notas e Habilidades.
 - **Preceptoria e Calendário:** Ciclos de Preceptoria, Relatórios de Preceptoria, Templates de Relatório e Dias Não Letivos.
-- **Financeiro e Operacional:** Fornecedores, Transações Bancárias e Ordens de Serviço.
+- **Financeiro e Operacional:** Fornecedores, Transações Bancárias, Ordens de Serviço, Contas a Pagar, Relatório de Inadimplência e Fluxo de Caixa.
 - **Configurações (tabelas auxiliares):** Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipos de Vínculo, Tributações dos Cursos, Etapas Avaliativas, Categorias de Avaliação, Categorias de OS, Áreas de Conhecimento, Campos de Experiência, Configurações e Endereços.
 - **Sistema e Segurança e Início:** Logs de Atividade (somente Super Administrador), E-mails Enviados e a tela Início.
 - **Portal da Família/Aluno (`/portal`):** as 14 páginas (Início, Notas, Frequência, Horários, Calendário, Boletins, Documentos e Contratos, Solicitar Documentos Oficiais, Eventos e Atividades, Rematrícula Online, Financeiro, Ocorrências, Agendar Preceptoria e Central de Atendimento), com explicações em linguagem simples para as famílias.
@@ -2009,6 +2009,31 @@ O módulo de **Matrícula Externa 100% Self-Service** permite que pais, mães e 
 - O responsável é direcionado para a página de sucesso com o **Protocolo Oficial de Matrícula**, detalhamento da turma, dados do contrato aceito e lista dos documentos sob análise.
 - A tela disponibiliza o botão **"Imprimir Comprovante"** para arquivo da família e um atalho direto para login no **Portal da Família** (`/portal`).
 - A equipe da secretaria escolar recebe uma notificação instantânea no painel administrativo para validação documental e homologação da matrícula.
+
+---
+
+## 💳 42. Financeiro Automatizado: Gateway, Conciliação e Relatórios
+
+Completa a Régua de Cobrança (seção 35) com a geração real de PIX/boleto, baixa automática por webhook, conciliação bancária e relatórios consolidados. Detalhes técnicos em `docs/financeiro_gateway_conciliacao_relatorios.md`.
+
+### 39.1 Gerar Cobrança e Dados de Pagamento (`/admin/faturas`)
+1. Na listagem de **Faturas**, uma fatura ainda sem cobrança gerada mostra o botão **Gerar Cobrança** — cria o PIX/boleto no gateway configurado (por padrão, um gateway de testes "Fake", até a escola configurar um gateway real).
+2. Depois de gerada, o botão **Dados de Pagamento** mostra o código PIX copia-e-cola, a linha digitável e os links de pagamento/boleto para copiar ou repassar à família.
+3. Com o gateway de testes ativo, aparece também **Simular Pagamento (Dev)** — confirma o pagamento na hora, como se a confirmação tivesse vindo do gateway de verdade, útil para testar o fluxo completo antes de configurar um gateway real.
+
+### 39.2 Pagamento pelo Portal da Família (`/portal/financeiro`)
+Na listagem de faturas do Portal, o responsável financeiro vê o botão **Pagar** em qualquer fatura em aberto: ao clicar, o sistema gera a cobrança automaticamente (se ainda não existir) e mostra o PIX copia-e-cola e os links de pagamento — sem precisar passar pela secretaria.
+
+### 39.3 Conciliação Automática de Créditos (`/admin/transacao-bancarias`)
+Ao importar um extrato (seção 23.3), o sistema tenta automaticamente casar cada crédito importado com uma fatura em aberto, por um número de fatura mencionado na descrição ou por valor e data próxima do vencimento — só concilia sozinho quando há exatamente uma fatura candidata. O botão **Conciliar Créditos Pendentes** reprocessa créditos que ficaram sem par (por exemplo, quando a fatura só foi gerada depois do crédito chegar).
+
+### 39.4 Contas a Pagar (`/admin/conta-pagars`)
+Cadastro de obrigações da escola com fornecedores: descrição, valor, vencimento, fornecedor, plano de contas e centro de custo. O botão **Dar Baixa** registra a saída no banco escolhido e marca a conta como paga. Contas pendentes vencidas são marcadas automaticamente como **Atrasado** todos os dias às 07h.
+
+### 39.5 Relatórios
+
+- **Relatório de Inadimplência** (`/admin/financeiro/relatorio-inadimplencia`): faturas em atraso com aluno, turma, responsável(is) e dias de atraso, com filtro por turma e por faixa de atraso (1–7, 8–15, 16–30, mais de 30 dias). Resumo no topo com total de faturas, valor devido e responsáveis inadimplentes.
+- **Fluxo de Caixa** (`/admin/financeiro/fluxo-de-caixa`): entradas, saídas e saldo consolidados dos últimos 12 meses, a partir das transações bancárias já lançadas (baixas manuais, webhook e extratos importados).
 
 ---
 
