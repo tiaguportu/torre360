@@ -42,3 +42,11 @@ CRM 📣 · Secretaria 🗂️ · Acadêmico 🎓 · Avaliações 📝 · Currí
 Seções: 🎯 o que fazer · 🚀 passo a passo · 🔒 permissões · 💡 dica · ⚠️ atenção.
 
 Testes: `tests/Feature/AjudaModalTest.php`. Checklist de cobertura: `docs/ajuda_botoes_sidebar.md`.
+
+## Atalho para cadastros simples
+`ajudaCadastro()` (no mesmo trait) monta a ajuda padrão de telas de cadastro: Listagem + Novo registro + Editar, estes dois só aparecem com `Create:<Modelo>` / `Update:<Modelo>`.
+```php
+$this->ajudaCadastro('🏦', 'Bancos', 'Resumo.', 'Banco', 'Texto da listagem.', 'Texto do novo.', 'Texto do editar.',
+    extras: [['🌳', 'Item extra', 'Texto']], dica: 'Dica opcional');
+```
+Usado nas tabelas auxiliares do grupo Configurações (fase 6).

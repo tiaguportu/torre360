@@ -11,7 +11,7 @@ Design/uso: `docs/ajuda_modal_design.md`.
 | 3 | Avaliações + Currículo | Notas, Habilidades | ✅ |
 | 4 | Preceptoria + Calendário | Ciclos, Relatórios, Templates de Relatório, Dias Não Letivos | ✅ |
 | 5 | Financeiro + Operacional | Fornecedores, Transações Bancárias, Ordens de Serviço | ✅ |
-| 6 | Configurações | Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipo Vínculos, Tributações, Etapas Avaliativas, Categorias (Avaliação, OS, Aprendizagem, Necessidade Especial), Áreas de Conhecimento, Campos de Experiência, Configurações, Endereços | ⏳ |
+| 6 | Configurações | Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipos de Vínculo, Tributações dos Cursos, Etapas Avaliativas, Categorias de Avaliação, Categorias de OS, Áreas de Conhecimento, Campos de Experiência, Configurações, Endereços (as pastas CategoriaAprendizagemResource e CategoriaNecessidadeEspecialResource estão vazias, sem tela na sidebar) | ✅ |
 | 7 | Sistema + Dashboard | Logs de Atividade, E-mails Enviados, Início | ⏳ |
 | 8 | Portal | 13 páginas do Portal da Família/Aluno | ⏳ |
 | 9 | Fechamento | Teste de varredura + MANUAL_USUARIO.md | ⏳ |

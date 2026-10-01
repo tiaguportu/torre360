@@ -3,12 +3,24 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\FechamentoCicloLetivo;
+use App\Filament\Resources\AreaConhecimentos\Pages\ListAreaConhecimentos;
+use App\Filament\Resources\Bancos\Pages\ListBancos;
 use App\Filament\Resources\CampanhaMarketings\Pages\ListCampanhaMarketings;
-use App\Filament\Resources\ComunicacaoEmMassas\Pages\ListComunicacaoEmMassas;
-use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
+use App\Filament\Resources\CampoExperiencias\Pages\ManageCampoExperiencias;
+use App\Filament\Resources\CategoriaAvaliacaos\Pages\ListCategoriaAvaliacaos;
+use App\Filament\Resources\CategoriaOsResource\Pages\ManageCategoriaOs;
+use App\Filament\Resources\CentroCustos\Pages\ListCentroCustos;
 use App\Filament\Resources\CicloPreceptorias\Pages\ListCicloPreceptorias;
+use App\Filament\Resources\Cidades\Pages\ListCidades;
+use App\Filament\Resources\CodigoBacens\Pages\ListCodigoBacens;
+use App\Filament\Resources\ComunicacaoEmMassas\Pages\ListComunicacaoEmMassas;
+use App\Filament\Resources\Configuracaos\Pages\ListConfiguracaos;
+use App\Filament\Resources\Coordenadors\Pages\ListCoordenadors;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
 use App\Filament\Resources\DiaNaoLetivos\Pages\ListDiaNaoLetivos;
+use App\Filament\Resources\Enderecos\Pages\ListEnderecos;
+use App\Filament\Resources\Estados\Pages\ListEstados;
+use App\Filament\Resources\EtapaAvaliativas\Pages\ListEtapaAvaliativas;
 use App\Filament\Resources\Fornecedores\Pages\ListFornecedores;
 use App\Filament\Resources\FrequenciaEscolars\Pages\ListFrequenciaEscolars;
 use App\Filament\Resources\Habilidades\Pages\ListHabilidades;
@@ -17,10 +29,14 @@ use App\Filament\Resources\MensagemWhatsappTemplates\Pages\ListMensagemWhatsappT
 use App\Filament\Resources\Notas\Pages\ListNotas;
 use App\Filament\Resources\OrdemServicoResource\Pages\ListOrdemServicos;
 use App\Filament\Resources\PlanoAulas\Pages\ListPlanoAulas;
+use App\Filament\Resources\PlanoContas\Pages\ListPlanoContas;
 use App\Filament\Resources\RelatorioPreceptorias\Pages\ListRelatorioPreceptorias;
 use App\Filament\Resources\Salas\Pages\ListSalas;
 use App\Filament\Resources\TemplateRelatorioPreceptorias\Pages\ListTemplateRelatorioPreceptorias;
+use App\Filament\Resources\TipoVinculos\Pages\ManageTipoVinculos;
 use App\Filament\Resources\TransacaoBancarias\Pages\ListTransacaoBancarias;
+use App\Filament\Resources\TributacaoCursos\Pages\ListTributacaoCursos;
+use App\Filament\Resources\Turnos\Pages\ListTurnos;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,6 +75,22 @@ class AjudaCoberturaSidebarTest extends TestCase
             'Fornecedores' => [ListFornecedores::class],
             'Transações Bancárias' => [ListTransacaoBancarias::class],
             'Ordens de Serviço' => [ListOrdemServicos::class],
+            'Bancos' => [ListBancos::class],
+            'Cidades' => [ListCidades::class],
+            'Estados' => [ListEstados::class],
+            'Códigos BACEN' => [ListCodigoBacens::class],
+            'Centros de Custo' => [ListCentroCustos::class],
+            'Plano de Contas' => [ListPlanoContas::class],
+            'Turnos' => [ListTurnos::class],
+            'Tipos de Vínculo' => [ManageTipoVinculos::class],
+            'Tributações dos Cursos' => [ListTributacaoCursos::class],
+            'Etapas Avaliativas' => [ListEtapaAvaliativas::class],
+            'Categorias de Avaliação' => [ListCategoriaAvaliacaos::class],
+            'Categorias de OS' => [ManageCategoriaOs::class],
+            'Áreas de Conhecimento' => [ListAreaConhecimentos::class],
+            'Campos de Experiência' => [ManageCampoExperiencias::class],
+            'Configurações' => [ListConfiguracaos::class],
+            'Endereços' => [ListEnderecos::class],
         ];
     }
 

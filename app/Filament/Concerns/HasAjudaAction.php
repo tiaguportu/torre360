@@ -13,6 +13,40 @@ use Filament\Forms\Components\ViewField;
  */
 trait HasAjudaAction
 {
+    /**
+     * Ajuda padrão para cadastros simples (listagem + novo + editar).
+     * Novo/Editar só aparecem se o usuário tiver `Create:<modelo>` / `Update:<modelo>`.
+     *
+     * @param  string  $modelo  nome do modelo nas permissões Shield (ex: 'Banco')
+     * @param  array<int, array<int, string>|null>  $extras  itens adicionais da seção principal
+     */
+    protected function ajudaCadastro(
+        string $emoji,
+        string $titulo,
+        string $resumo,
+        string $modelo,
+        string $listagem,
+        string $novo,
+        string $editar,
+        array $extras = [],
+        ?string $dica = null,
+    ): Action {
+        $user = auth()->user();
+
+        $conteudo = HelpContent::make($emoji, $titulo, $resumo)
+            ->secao('🎯 O que você pode fazer?', array_merge([
+                ['📋', 'Listagem', $listagem],
+                $user?->can('Create:'.$modelo) ? ['🆕', 'Novo registro', $novo] : null,
+                $user?->can('Update:'.$modelo) ? ['✏️', 'Editar', $editar] : null,
+            ], $extras));
+
+        if ($dica) {
+            $conteudo->dica($dica);
+        }
+
+        return $this->ajudaAction($titulo, $conteudo);
+    }
+
     protected function ajudaAction(string $titulo, HelpContent|string $conteudo, ?string $chaveVideo = null): Action
     {
         $hero = $conteudo instanceof HelpContent
