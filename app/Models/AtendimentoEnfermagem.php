@@ -12,7 +12,7 @@ class AtendimentoEnfermagem extends Model
 
     protected $table = 'atendimento_enfermagems';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'atendido_por_user_id', 'data_hora', 'sintomas_queixa', 'procedimento_realizado', 'medicamento_ministrado', 'notificado_responsaveis', 'observacoes'];
 
     protected function casts(): array
     {

@@ -12,7 +12,7 @@ class PeriodoLetivo extends Model
 
     protected $table = 'periodo_letivo';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'data_inicio', 'data_fim', 'nota_aprovacao', 'nota_recuperacao_minima'];
 
     public function turmas(): HasMany
     {

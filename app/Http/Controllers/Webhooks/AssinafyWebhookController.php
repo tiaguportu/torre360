@@ -12,14 +12,17 @@ class AssinafyWebhookController extends Controller
 {
     public function __invoke(Request $request, AssinafyService $service, WebhookSignatureValidator $validator)
     {
+        $payload = $request->all();
+
         Log::info('Webhook Assinafy recebido', [
             'method' => $request->method(),
-            'payload' => $request->all(),
+            'event' => $payload['event'] ?? null,
+            'document_id' => $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null,
         ]);
 
         // Responde 200 para requisições vazias ou pings de validação (GET, corpo vazio) sem
         // exigir assinatura — não há payload assinável nesse caso.
-        if (empty($request->all())) {
+        if (empty($payload)) {
             return response()->json(['message' => 'Webhook endpoint is active'], 200);
         }
 
@@ -36,7 +39,7 @@ class AssinafyWebhookController extends Controller
             Log::warning('Webhook Assinafy processado sem validação de assinatura — configure ASSINAFY_WEBHOOK_SECRET antes de ir para produção.');
         }
 
-        $success = $service->handleWebhook($request->all());
+        $success = $service->handleWebhook($payload);
 
         if ($success) {
             return response()->json(['message' => 'Webhook processado com sucesso'], 200);
@@ -44,7 +47,10 @@ class AssinafyWebhookController extends Controller
 
         // Em webhooks, é recomendável retornar 200 mesmo que não encontre o registro interno
         // para que o serviço emissor não considere falha de rede/disponibilidade.
-        Log::warning('Webhook Assinafy: Contrato não encontrado ou payload inconsistente', ['payload' => $request->all()]);
+        Log::warning('Webhook Assinafy: Contrato não encontrado ou payload inconsistente', [
+            'event' => $payload['event'] ?? null,
+            'document_id' => $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null,
+        ]);
 
         return response()->json(['message' => 'Webhook recebido'], 200);
     }

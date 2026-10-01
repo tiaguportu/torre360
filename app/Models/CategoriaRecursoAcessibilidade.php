@@ -12,7 +12,7 @@ class CategoriaRecursoAcessibilidade extends Model
 
     protected $table = 'categoria_recurso_acessabilidades';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'descricao'];
 
     public function recursosAcessibilidade(): HasMany
     {

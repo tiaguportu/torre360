@@ -12,7 +12,7 @@ class ContatoEmergencia extends Model
 
     protected $table = 'contato_emergencias';
 
-    protected $guarded = [];
+    protected $fillable = ['ficha_medica_id', 'nome', 'parentesco_grau', 'telefone_principal', 'telefone_secundario', 'observacoes'];
 
     public function fichaMedica(): BelongsTo
     {

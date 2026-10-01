@@ -2,12 +2,14 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\CicloPreceptoria;
 use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria as PreceptoriaModel;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
+use App\Support\HelpContent;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -26,6 +28,7 @@ use UnitEnum;
 
 class Preceptoria extends Page implements HasForms
 {
+    use HasAjudaAction;
     use InteractsWithForms;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
@@ -338,5 +341,27 @@ class Preceptoria extends Page implements HasForms
         return ! PreceptoriaModel::where('matricula_id', $mid)
             ->where('ciclo_preceptoria_id', $cicloAtual->id)
             ->exists();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Agendar Preceptoria', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🤝', 'Agendar Preceptoria', 'Marque uma conversa com o professor do aluno.')
+            ->passos('🚀 Como agendar', [
+                'Escolha a matrícula (aluno).',
+                'Selecione o horário disponível.',
+                'Confirme o agendamento.',
+            ])
+            ->secao('🎯 Outras ações', [
+                ['👁️', 'Agendamento vigente', 'Veja o horário que já está marcado.'],
+                ['❌', 'Desagendar / Liberar Horário', 'Cancele o agendamento para liberar o horário.'],
+            ])
+            ->dica('Você será notificado quando o agendamento for feito ou cancelado.');
     }
 }

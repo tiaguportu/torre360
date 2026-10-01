@@ -9,7 +9,7 @@ class CentroCusto extends Model
 {
     protected $table = 'centro_custos';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'is_active'];
 
     public function transacoes(): HasMany
     {

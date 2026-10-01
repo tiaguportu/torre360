@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Services\FechamentoCicloService;
+use App\Support\HelpContent;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
@@ -23,6 +25,7 @@ use UnitEnum;
 
 class FechamentoCicloLetivo extends Page implements HasForms
 {
+    use HasAjudaAction;
     use HasPageShield;
     use InteractsWithForms;
 
@@ -96,6 +99,19 @@ class FechamentoCicloLetivo extends Page implements HasForms
                 ->requiresConfirmation()
                 ->modalDescription('Isso irá calcular e gravar a situação final de todas as disciplinas das matrículas ativas/concluídas das turmas selecionadas, substituindo qualquer cálculo anterior. Deseja continuar?')
                 ->action('calcularSituacaoFinal'),
+            $this->ajudaAction('Fechamento do Ciclo Letivo', HelpContent::make('🏁', 'Fechamento do Ciclo Letivo', 'Consolida as notas e define a situação final de cada aluno.')
+                ->passos('🚀 Passo a passo', [
+                    'Selecione o Período Letivo.',
+                    'Opcionalmente escolha uma turma; vazio significa todas as turmas do período.',
+                    'Clique em Calcular Situação Final e confirme.',
+                    'Confira a tabela de resultados exibida logo abaixo.',
+                ])
+                ->secao('📊 Como funciona?', [
+                    ['🧮', 'Consolidação', 'Reúne as etapas avaliativas de cada disciplina das matrículas ativas ou concluídas.'],
+                    ['🎓', 'Situação final', 'Cada disciplina fica como Aprovado, Recuperação ou Reprovado.'],
+                    ['📝', 'Turmas elegíveis', 'Aparecem apenas turmas com avaliação por notas ou híbrida.'],
+                ])
+                ->alerta('O cálculo substitui qualquer fechamento anterior do mesmo período. Execute apenas com todas as notas lançadas.')),
         ];
     }
 

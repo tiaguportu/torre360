@@ -3,9 +3,11 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusRsvp;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\EventoConfirmacao;
 use App\Models\EventoEscolar;
 use App\Models\Matricula;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -15,6 +17,8 @@ use UnitEnum;
 
 class EventosEscolares extends Page
 {
+    use HasAjudaAction;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
 
     protected static UnitEnum|string|null $navigationGroup = 'Meus Dados';
@@ -187,5 +191,23 @@ class EventosEscolares extends Page
             ->body($msg)
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Eventos e Atividades (RSVP)', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🎉', 'Eventos e Atividades', 'Confirme a presença do aluno nos eventos da escola.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['📅', 'Ver eventos', 'Consulte os eventos abertos para as turmas dos seus alunos.'],
+                ['🙋', 'Confirmar presença', 'Responda se o aluno vai participar (RSVP).'],
+                ['✍️', 'Autorizações', 'Alguns eventos exigem autorização expressa do responsável.'],
+            ])
+            ->alerta('Há prazo para responder, e alguns eventos têm vagas limitadas. Depois do prazo ou do encerramento, não é possível alterar a resposta.');
     }
 }

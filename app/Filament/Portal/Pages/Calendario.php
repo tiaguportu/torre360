@@ -2,11 +2,13 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Avaliacao;
 use App\Models\CronogramaAula;
 use App\Models\DiaNaoLetivo;
 use App\Models\Matricula;
 use App\Models\Turma;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
@@ -14,6 +16,8 @@ use UnitEnum;
 
 class Calendario extends Page
 {
+    use HasAjudaAction;
+
     /**
      * Janela de aulas exibida no calendário, em dias antes e depois de hoje.
      */
@@ -128,5 +132,23 @@ class Calendario extends Page
                     ],
                 ];
             });
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Calendário', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🗓️', 'Calendário', 'Provas, feriados e aulas das turmas dos seus alunos.')
+            ->secao('🎯 O que você encontra aqui?', [
+                ['📝', 'Provas', 'Avaliações marcadas para as turmas.'],
+                ['🎉', 'Dias não letivos', 'Feriados, recessos e dias sem aula.'],
+                ['🏫', 'Aulas', 'Aulas do cronograma em torno da data de hoje.'],
+            ])
+            ->dica('O calendário mostra apenas as turmas dos alunos que você acompanha.');
     }
 }

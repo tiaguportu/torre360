@@ -12,7 +12,7 @@ class CategoriaTranstornoAprendizagem extends Model
 
     protected $table = 'categoria_transtorno_aprendizagens';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'descricao'];
 
     public function transtornosAprendizagem(): HasMany
     {

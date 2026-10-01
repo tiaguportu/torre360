@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Banco extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['nome', 'agencia', 'conta', 'pix_key', 'is_active', 'codigo_bacen_id'];
 
     public function transacoes(): HasMany
     {

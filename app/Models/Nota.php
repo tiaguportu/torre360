@@ -9,7 +9,7 @@ class Nota extends Model
 {
     protected $table = 'nota';
 
-    protected $guarded = [];
+    protected $fillable = ['avaliacao_id', 'matricula_id', 'valor'];
 
     public function avaliacao(): BelongsTo
     {

@@ -11,6 +11,14 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
 4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes ou pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro).
 
+### 🔑 Recuperação de Senha
+Caso tenha esquecido sua senha:
+1. Na tela de login, clique no link **Esqueceu sua senha?**.
+2. Informe o **E-mail** cadastrado e confirme a verificação de segurança.
+3. Clique em **Enviar email**.
+4. Você receberá um e-mail contendo um **link seguro e temporário** de redefinição. Sua senha atual permanecerá funcionando até que a troca seja efetivamente confirmada por você.
+5. Acesse o link recebido no e-mail, informe e confirme sua nova senha para concluir o acesso.
+
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
 > Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
@@ -23,20 +31,24 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 | Grupo | O que você faz aqui |
 |---|---|
-| 🎯 **CRM / Comercial** | Gestão de Interessados e Kanban de Prospecção |
-| 🎓 **Acadêmico** | Matrículas, Alunos, Turmas, Cursos e Séries |
-| ✅ **Avaliações** | Lançamento de Notas e Avaliações |
-| 📅 **Calendário e Horários** | Cronograma de Aulas, Horários e Dias não letivos |
-| 💰 **Financeiro** | Faturas, Contratos, Fornecedores e Transações Bancárias |
-| 👥 **Pessoas** | Cadastro de Pessoas, Responsáveis e Coordenadores |
-| 📄 **Documentos** | Gestão de Documentos enviários e Tipos de Documentos |
+| 🏠 **Início** | Painel com indicadores, calendários e pendências |
+| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp |
+| 🗂️ **Secretaria** | Matrículas, Pessoas, Coordenadores, Documentos (modelos, emitidos com QR e inseridos), Crachás |
+| 🎓 **Acadêmico** | Cursos, Séries, Turmas, Ensalamento, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
+| ✅ **Avaliações** | Avaliações, Notas, Avaliação e Notas de Habilidades e Lançamento de Notas em Grade |
 | 📖 **Currículo (BNCC)** | Habilidades vinculadas à BNCC |
-| 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
+| 🤝 **Preceptoria** | Ciclos, Preceptorias (e agendamento), Relatórios e Templates de Relatório |
+| 📅 **Calendário e Horários** | Cronograma de Aulas, Dias não letivos e Períodos Letivos |
+| 📢 **Comunicação Escolar** | Eventos Escolares (RSVP) e Central de Atendimento |
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
+| 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
+| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato e DRE |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
-| 🛡️ **Sistema e Segurança** | Usuários, Permissões (Shield) e Logs de Auditoria |
+| 🛡️ **Sistema e Segurança** | Usuários, Logs de Atividade e E-mails Enviados |
+| ❓ **Ajuda** | Central de Ajuda — Vídeos Tutoriais |
+| 🔐 **Filament Shield** | Roles e permissões (Super Administrador) |
 
 ### 2.1 Barra Lateral Dinâmica (Perfil Responsável)
 
@@ -94,8 +106,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
-- **Resumo do Lead:** Seção no topo mostrando dias no funil, total de contatos realizados e temperatura calculada automaticamente.
-- **Temperatura:** Defina manualmente (Quente/Morno/Frio) ou deixe o sistema calcular automaticamente baseado na atividade.
+- **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.
+- **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
 
@@ -128,15 +140,28 @@ Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade.
 - A equipe interna é notificada automaticamente via sininho.
 
+### 3.7.1 Configurar os Pesos do Lead Score
+Acesse **CRM / Comercial → Pesos do Lead Score** (disponível para Administradores):
+1. **Pesos e Cores:** defina o peso máximo de cada um dos 12 fatores (a soma precisa ser **100**, conferida em tempo real; a **Percepção do consultor**, isto é, a Temperatura, é o fator de maior peso por padrão: 20) e os cortes de cor do score (quente/morno).
+2. **Perfil / Fit** e **Engajamento:** ajuste os pontos por temperatura (percepção do consultor), faixa de filhos, distância, transporte, profissão (palavras-chave), valor estimado, interações e recência do contato.
+3. **Origem:** defina os pontos por origem do lead e o valor para as demais.
+4. Clique em **Salvar configuração**. Para aplicar aos leads já cadastrados, clique em **Recalcular todos os leads**.
+5. **Restaurar padrão** descarta as personalizações e volta aos valores originais do sistema.
+
+> Os pontos de cada faixa não podem passar do peso do fator; o sistema avisa se algo estiver inconsistente.
+
 ### 3.8 Importação e Extração Inteligente de Leads com IA (Google Gemini)
-Para agilizar a prospecção e evitar a digitação manual de formulários, o Torre360 possui integração nativa com a **IA da Google (Gemini 1.5 Flash)** com suporte multimodal (texto e imagens):
+Para agilizar a prospecção e evitar a digitação manual de formulários, o Torre360 possui integração nativa com a **IA da Google (Gemini 2.5 Flash)** com suporte multimodal (texto e imagens):
 1. **Onde Acessar:** Clique no botão de destaque **Importar Lead com IA** (ícone ✨ `sparkles`) disponível no topo da Listagem de Interessados, no Funil Kanban e na tela de Cadastro de Novo Lead.
 2. **Como Usar:** 
    - **Prints / Capturas de Tela:** Você pode anexar diretamente uma imagem com o print da conversa (WhatsApp, Direct do Instagram, print de e-mail ou foto de anotação). O sistema analisa a imagem e extrai os dados visuais.
    - **Mensagem Bruta / Texto:** Você pode colar qualquer mensagem bruta recebida de clientes ou adicionar observações textuais complementares à imagem.
    - Selecione o consultor responsável e a origem fallback (se a IA não inferir).
    - Clique em **Analisar e Criar Lead**.
+> **Alta demanda:** se aparecer a mensagem "servidores de IA do Gemini estão temporariamente com alta demanda", o sistema já tentou automaticamente vários modelos em duas rodadas. Aguarde alguns instantes e tente novamente.
 3. **O que a IA faz automaticamente:**
+   - **Histórico de Contato:** registra automaticamente um contato com o relato da conversa, o canal (WhatsApp, Ligação, E-mail ou Presencial) e a data/hora em que ocorreu (quando identificada no texto/print; caso contrário, usa o momento da importação).
+   - **Observações com datas:** o resumo em Observações cita as datas disponíveis (conversa, visitas, prazos, previsão de matrícula) no formato DD/MM/AAAA (o sistema converte automaticamente qualquer data fora desse padrão). O histórico também começa com a linha "Contato em DD/MM/AAAA HH:MM via <canal>".
    - Lê e interpreta o print ou o texto recebido com alta precisão.
    - Extrai o Nome completo, E-mail, Telefone e CPF do responsável.
    - Extrai o Nome da criança/aluno, calcula a Data de Nascimento se uma idade for informada, e identifica o Vínculo (Pai, Mãe, Tutor).
@@ -530,7 +555,7 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 3. Para PDFs, o navegador utiliza seu visualizador nativo integrado à página.
 
 > [!NOTE]
-> A prévia de documentos é protegida por segurança. Apenas usuários autenticados com as devidas permissões podem visualizar os arquivos, garantindo a privacidade dos dados dos alunos.
+> **Armazenamento e Acesso Seguro (LGPD):** Todos os documentos emitidos oficialmente (declarações, certificados) e os arquivos anexados pelos estudantes são armazenados em disco privado protegido. O acesso é estritamente controlado por regras de autorização do sistema: apenas a equipe da escola e o próprio estudante ou seus responsáveis legais podem visualizá-los ou baixá-los, garantindo a privacidade dos dados e a conformidade legal.
 
 6.3 Assinatura Digital (Assinafy)
 O sistema é integrado à plataforma **Assinafy** para assinatura digital de contratos.
@@ -1609,7 +1634,10 @@ O módulo de **Secretaria Digital** elimina a burocracia do atendimento físico 
 
 ### 31.3 Validação Pública de Autenticidade (`/validar-documento/{codigo}`)
 1. Qualquer empresa, órgão público ou cartório que receba o documento pode apontar a câmera do smartphone para o QR Code impresso no rodapé ou acessar o link público: `http://seusistema/validar-documento`.
-2. O validador confere o código hash na base de dados e exibe uma tela amigável confirmando a autenticidade, nome do estudante, curso/série, data de lavratura e situação do documento.
+2. O validador confere o código alfanumérico na base de dados e exibe uma tela oficial confirmando a autenticidade, curso/série, data de lavratura e situação do documento.
+3. **Proteção contra Raspagem em Massa (Rate Limiting):** A rota pública conta com limitação automática de requisições por IP (`throttle: 15 req/min`), neutralizando tentativas de varredura automatizada por robôs.
+4. **Busca Estrita por Código de Alta Entropia:** A consulta aceita exclusivamente o *Código de Verificação* aleatório de 12 dígitos gerado no QR Code (ex: `TR36-XXXX-XXXX-XXXX`). Buscas por número de protocolo sequencial são bloqueadas na consulta pública para evitar ataques de enumeração de estudantes.
+5. **Conformidade com a LGPD e Proteção de Menores:** O nome do estudante é parcialmente mascarado na tela pública (ex: `B****** M*****`), permitindo a conferência por quem porta o documento físico sem expor dados pessoais completos a terceiros ou raspadores web.
 
 ---
 
@@ -1833,7 +1861,7 @@ A **Central de Ajuda** reúne vídeos curtos que ensinam a usar as principais fu
 4. **Ordem** define a posição de exibição na listagem; **Ativo** controla se o vídeo fica visível (um vídeo inativo some tanto da Central de Ajuda quanto do modal de Ajuda da tela relacionada).
 
 ### 38.3 Vídeo Dentro do Botão de Ajuda de Cada Tela
-Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamente dentro do próprio modal de **Ajuda** daquela página, acima do texto explicativo de sempre. Hoje isso já está configurado para: **Kanban de Interessados**, **Acompanhamento de Rematrículas**, **Lançamento de Frequência** e o fluxo de **Avaliações** (Gestão de Avaliações, Cadastrar Avaliação e Lançamento de Notas em Grade).
+Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamente dentro do próprio modal de **Ajuda** daquela página, acima do texto explicativo de sempre. Hoje isso já está configurado para: **Kanban de Interessados**, **Acompanhamento de Rematrículas**, **Lançamento de Frequência**, o fluxo de **Avaliações** (Gestão de Avaliações, Cadastrar Avaliação e Lançamento de Notas em Grade), o **Assistente de Matrícula (Wizard)**, o fluxo de **Emissão de Documentos com QR Code** na Secretaria Digital (Gestão de Documentos, Emitir Documento) e o **Cadastro de Novos Usuários**.
 
 ### 38.4 Permissões
 - **Ver e assistir:** Professor, Secretaria, Coordenador, Administrador e Super Administrador.
@@ -1841,7 +1869,98 @@ Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamen
 
 ---
 
-## 💳 39. Financeiro Automatizado: Gateway, Conciliação e Relatórios
+## ❓ 39. Botão de Ajuda em Todas as Telas
+
+Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícone ❓ cinza, no canto superior direito do cabeçalho da página).
+
+### 39.1 Como usar
+1. Abra qualquer tela e clique em **Ajuda**.
+2. O quadro mostra, de cima para baixo: o **título com emoji e um resumo da tela**, o **vídeo tutorial** (quando houver um vinculado, veja a seção 38), os **tópicos** (🎯 o que você pode fazer, 🚀 passo a passo), **dicas** 💡 e **alertas** ⚠️.
+3. Os tópicos se adaptam às suas permissões: ações que você não pode executar (ex.: criar ou editar) não aparecem na ajuda.
+4. Clique em **Fechar** para voltar à tela.
+
+### 39.2 Telas já cobertas
+- **Todas as telas que já tinham o botão** ganharam o novo visual (cartões, emojis, modo escuro).
+- **Acadêmico:** Cursos, Planos de Aula, Salas, Frequências Escolares e Fechamento do Ciclo Letivo.
+- **Secretaria:** Coordenadores e Matrículas (ajuda reescrita no novo formato, incluindo as abas Todas, Pendentes, Ativas e Canceladas).
+- **Avaliações e Currículo (BNCC):** Notas e Habilidades.
+- **Preceptoria e Calendário:** Ciclos de Preceptoria, Relatórios de Preceptoria, Templates de Relatório e Dias Não Letivos.
+- **Financeiro e Operacional:** Fornecedores, Transações Bancárias, Ordens de Serviço, Contas a Pagar, Relatório de Inadimplência e Fluxo de Caixa.
+- **Configurações (tabelas auxiliares):** Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipos de Vínculo, Tributações dos Cursos, Etapas Avaliativas, Categorias de Avaliação, Categorias de OS, Áreas de Conhecimento, Campos de Experiência, Configurações e Endereços.
+- **Sistema e Segurança e Início:** Logs de Atividade (somente Super Administrador), E-mails Enviados e a tela Início.
+- **Portal da Família/Aluno (`/portal`):** as 14 páginas (Início, Notas, Frequência, Horários, Calendário, Boletins, Documentos e Contratos, Solicitar Documentos Oficiais, Eventos e Atividades, Rematrícula Online, Financeiro, Ocorrências, Agendar Preceptoria e Central de Atendimento), com explicações em linguagem simples para as famílias.
+- **Menu do Responsável/Aluno:** os links "Dados Cadastrais", "Boletim Escolar", "Preceptorias", "Documentos" e "Agendar preceptoria" também abrem telas com o botão de Ajuda.
+- **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
+- **Cobertura completa:** todas as telas do menu lateral do painel administrativo e do Portal da Família têm o botão de Ajuda. A única exceção é **Filament Shield → Roles** (tela de papéis e permissões, fornecida pelo pacote Shield), que por ora não tem o botão. Um teste automático impede que novas telas entrem no menu sem Ajuda. A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
+
+### 39.3 Para a equipe de desenvolvimento
+O guia de como montar a ajuda de uma nova tela (construtor `HelpContent` e botão `HasAjudaAction`) está em `docs/ajuda_modal_design.md`.
+
+---
+
+## 📜 40. Histórico Escolar Oficial Multi-Ano (`/admin/historico-escolars`)
+
+O módulo de **Histórico Escolar Oficial Multi-Ano** atende a uma das exigências mais rigorosas da legislação educacional brasileira (Lei de Diretrizes e Bases da Educação Nacional - LDB nº 9.394/1996 e BNCC), permitindo consolidar toda a trajetória acadêmica do estudante em uma matriz curricular padronizada para **processos de transferência** ou **encerramento de ciclo (conclusão do Ensino Fundamental ou Ensino Médio)**.
+
+### 40.1 Visão Geral e Benefícios
+- **Matriz Curricular Tabular Oficial:** Apresenta todas as séries/anos cursados lado a lado em colunas, com os componentes curriculares organizados por Área do Conhecimento (Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Parte Diversificada).
+- **Histórico Híbrido (Interno + Externo):** Permite registrar anos letivos cursados no Torre360 e também lançar notas, cargas horárias e estabelecimentos de ensino onde o aluno estudou antes de se transferir para a escola.
+- **Sincronização com 1 Clique:** O sistema lê todas as matrículas ativas ou concluídas do estudante no Torre360, buscando as médias finais fechadas, cargas horárias da matriz curricular e taxas de frequência, montando a matriz automaticamente sem necessidade de digitação manual.
+- **Emissão Oficial em PDF (A4 Paisagem):** Gera o documento timbrado oficial com cabeçalho institucional, dados do estudante, tabela matricial de desempenho, resumo cronológico de estabelecimentos cursados, termo formal de certificação de conclusão e assinaturas da Secretaria e Direção Escolar.
+- **Carimbo Digital e QR Code de Autenticidade:** Cada histórico emitido possui um código alfanumérico único e QR Code criptográfico que permite a qualquer cartório, universidade ou escola de destino validar a autenticidade do documento em tempo real através do portal público (`/validar-documento`).
+
+### 40.2 Como Emitir um Histórico Escolar
+1. Acesse o menu lateral em **Secretaria → Histórico Escolar Multi-Ano** (`/admin/historico-escolars`).
+2. Clique no botão **Novo Histórico Escolar**.
+3. **Aba Dados Gerais:**
+   - Selecione o **Estudante (Aluno)**.
+   - Escolha o **Curso / Etapa** (ex: *Ensino Fundamental*, *Ensino Médio*).
+   - Defina a **Situação do Aluno**:
+     - *Em Curso:* para alunos que continuam estudando na instituição.
+     - *Concluído:* para formandos (habilita o campo de **Data de Conclusão** e o termo formal de Certificado de Conclusão).
+     - *Transferido:* para alunos em processo de transferência para outra escola.
+   - A **Unidade Escolar** e a **Data de Expedição** já vêm preenchidas, e o **Código de Autenticidade** exclusivo é gerado automaticamente.
+4. Clique em **Salvar**.
+   - O sistema detecta automaticamente se o estudante possui matrículas internas no Torre360 e importa todos os anos letivos, séries, disciplinas e médias finais diretamente para o histórico!
+5. **Aba Anos e Séries (Multi-Ano):**
+   - Visualize e edite cada coluna da matriz curricular.
+   - Para anos cursados em outra escola anterior, clique em **Adicionar Ano / Série**, selecione a origem como *Externo (Outra Escola)* e informe o nome do estabelecimento de ensino, cidade/UF, carga horária e as disciplinas com notas correspondentes.
+6. **Aba Certificação e Observações:**
+   - Personalize o texto oficial da certidão de conclusão ou adicione amparos legais específicos (ex: convalidações de estudos no exterior, exames de classificação, etc.).
+---
+
+## 🏛️ 41. Auto-Atendimento de Declarações e Documentos Oficiais no Portal da Família (`/portal/solicitacoes-documentos`)
+
+O módulo de **Auto-Atendimento de Declarações e Documentos Oficiais** foi desenvolvido especificamente para **desafogar a secretaria escolar**, transferindo a emissão de certidões rotineiras para o próprio estudante ou seus responsáveis legais no Portal da Família, com total segurança jurídica, validação por QR Code e verificação financeira automática.
+
+### 41.1 Benefícios para a Escola e as Famílias
+- **Emissão Instantânea em 1 Clique:** O responsável não precisa abrir chamados burocráticos ou aguardar dias pela impressão de um documento. Ao clicar em **"Emitir Agora"**, o PDF oficial timbrado é gerado e assinado digitalmente em poucos segundos.
+- **Régua de Segurança Financeira (Lei 12.007/2009):** O sistema impede automaticamente a emissão de **Declarações de Quitação de Débitos** caso a matrícula possua faturas em atraso ou vencidas em aberto, alertando com gentileza para regularização na aba Financeiro.
+- **Validação Pública com QR Code Anti-Raspagem (LGPD):** Terceiros (empresas de transporte público, clubes, planos de saúde, outras escolas ou universidades) podem confirmar a autenticidade apontando a câmera do celular para o QR Code impresso no rodapé, que exibe a validação em ambiente seguro com mascaramento de dados sensíveis.
+- **Atalhos Rápidos no Início (Dashboard):** Cada cartão de estudante na tela inicial do Portal possui o botão direto **"Declarações"**, permitindo que pais com múltiplos filhos alternem facilmente entre os dependentes.
+
+### 41.2 Modelos Oficiais Disponíveis para Auto-Emissão
+1. 🎓 **Declaração de Matrícula Regular:** Atesta o vínculo ativo do estudante, série, curso, turma, turno e período letivo.
+2. 📅 **Declaração de Frequência Escolar:** Comprova o cumprimento de carga horária e assiduidade às aulas conforme as normas da LDB.
+3. 🚌 **Declaração para Passe Escolar e Transporte Público:** Detalha endereço residencial, horários oficiais de entrada e saída das aulas para comprovação de itinerário junto a concessionárias e órgãos de trânsito.
+4. ⏰ **Declaração de Turno e Horário de Aulas:** Informa a jornada escolar para fins de compatibilização com estágios supervisionados, programas de menor aprendiz ou atividades extracurriculares.
+5. 💳 **Declaração de Quitação de Débitos:** Atesta a adimplência legal do período contratado, condicionada à verificação de quitação de todas as parcelas e faturas vencidas no sistema.
+6. 📜 **Declaração de Conclusão de Série/Ano Letivo:** Declaração provisória de aprovação ao final do ano letivo enquanto o histórico definitivo é finalizado.
+7. 🔄 **Declaração de Transferência e Reserva de Vaga:** Atesta a situação escolar provisória do estudante durante trâmites de transferência para outra unidade.
+8. 📊 **Boletim Escolar Atualizado:** Atalho direto para download do boletim com notas e faltas consolidadas.
+9. 🏛️ **Histórico Escolar Oficial Multi-Ano:** Integração direta com o módulo de Histórico Escolar Oficial Tabular para formandos e egressos.
+
+### 41.3 Como a Família Emite um Documento no Portal
+1. Acesse o **Portal da Família** (`/portal`) e clique em **Declarações e Documentos** no menu lateral (ou clique no botão **Declarações** no cartão do aluno no Início).
+2. Se você possuir mais de um dependente matriculado, selecione o estudante desejado no seletor de abas do topo.
+3. No painel de **Declarações Disponíveis para Emissão Imediata**, localize o tipo de documento desejado e clique no botão **Emitir Agora**.
+4. O sistema gera imediatamente o documento e exibe o botão **Abrir PDF** na notificação de confirmação.
+5. O documento fica registrado permanentemente no **Histórico de Documentos e Protocolos Emitidos** logo abaixo, onde é possível efetuar novo download ou conferir o código de verificação digital a qualquer momento.
+6. **Solicitações Personalizadas:** Caso a família necessite de um documento com finalidade específica não contemplada nos modelos rápidos, basta clicar no botão **"Outra Solicitação / Com Observação"**, selecionar o tipo e preencher a justificativa.
+
+---
+
+## 💳 42. Financeiro Automatizado: Gateway, Conciliação e Relatórios
 
 Completa a Régua de Cobrança (seção 35) com a geração real de PIX/boleto, baixa automática por webhook, conciliação bancária e relatórios consolidados. Detalhes técnicos em `docs/financeiro_gateway_conciliacao_relatorios.md`.
 
@@ -1867,3 +1986,4 @@ Cadastro de obrigações da escola com fornecedores: descrição, valor, vencime
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+

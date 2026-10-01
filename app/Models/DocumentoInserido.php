@@ -74,4 +74,13 @@ class DocumentoInserido extends Model
     {
         return $this->belongsTo(Matricula::class, 'matricula_id');
     }
+
+    public function isAccessibleBy(User $user): bool
+    {
+        if ($user->isStaff()) {
+            return true;
+        }
+
+        return $this->matricula?->isAccessibleBy($user) ?? false;
+    }
 }

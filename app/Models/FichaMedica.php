@@ -13,7 +13,7 @@ class FichaMedica extends Model
 
     protected $table = 'ficha_medicas';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'tipo_sanguineo', 'has_alergia_lactose', 'has_alergia_gluten', 'has_alergia_amendoim', 'outras_alergias_alimentares', 'observacoes_alimentares', 'plano_saude', 'numero_carteira_sus', 'hospital_preferencia', 'observacoes_gerais'];
 
     protected function casts(): array
     {

@@ -16,7 +16,7 @@ class VisitaInteressado extends Model
 
     protected $table = 'visita_interessado';
 
-    protected $guarded = [];
+    protected $fillable = ['interessado_id', 'interessado_dependente_id', 'usuario_id', 'data_hora', 'status', 'observacoes', 'lembrete_enviado_em'];
 
     protected function casts(): array
     {

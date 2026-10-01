@@ -15,7 +15,7 @@ class Disciplina extends Model
 
     protected $table = 'disciplina';
 
-    protected $guarded = [];
+    protected $fillable = ['area_id', 'nome', 'ordem_boletim', 'sigla', 'flag_matricula_automatica', 'carga_horaria_semanal', 'cor'];
 
     protected function casts(): array
     {

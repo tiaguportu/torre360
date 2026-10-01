@@ -11,7 +11,7 @@ class Endereco extends Model
 {
     protected $table = 'endereco';
 
-    protected $guarded = [];
+    protected $fillable = ['cidade_id', 'tipo', 'logradouro', 'numero', 'complemento', 'bairro', 'cep'];
 
     public function cidade(): BelongsTo
     {

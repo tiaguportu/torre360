@@ -19,7 +19,7 @@ class MatrizCurricular extends Model
 
     protected $table = 'matriz_curricular';
 
-    protected $guarded = [];
+    protected $fillable = ['serie_id', 'disciplina_id', 'carga_horaria_semanal', 'obrigatoria', 'ordem'];
 
     protected function casts(): array
     {

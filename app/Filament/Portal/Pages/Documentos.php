@@ -2,8 +2,10 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Contrato;
 use App\Services\AssinafyService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -17,6 +19,7 @@ use UnitEnum;
 
 class Documentos extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
@@ -109,5 +112,24 @@ class Documentos extends Page implements HasTable
                     ->orWhereHas('responsaveisFinanceiros', fn (Builder $q) => $q->whereIn('pessoa_id', $idsAcessiveis));
             })
             ->with(['matricula.pessoa']);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Documentos e Contratos', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('📑', 'Documentos e Contratos', 'Contratos de matrícula e assinatura digital.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['👁️', 'Ver Contrato', 'Leia o contrato na tela.'],
+                ['⬇️', 'Baixar PDF', 'Baixe uma cópia do contrato.'],
+                ['✍️', 'Assinar Contrato', 'Quando a assinatura estiver pendente, você é levado ao serviço de assinatura digital.'],
+                ['✅', 'Baixar Assinado', 'Depois de assinado, baixe a versão com as assinaturas.'],
+            ])
+            ->alerta('Leia o contrato com atenção antes de assinar.');
     }
 }
