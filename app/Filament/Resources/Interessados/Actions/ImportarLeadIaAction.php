@@ -164,9 +164,9 @@ class ImportarLeadIaAction
 
         $observacoes = [];
         if (! empty($extracted['observacoes'])) {
-            $observacoes[] = (string) $extracted['observacoes'];
+            $observacoes[] = static::normalizarDatas((string) $extracted['observacoes']);
         }
-        $observacoes[] = '✨ Lead importado via IA (Google Gemini).';
+        $observacoes[] = '✨ Lead importado via IA (Google Gemini) em '.now()->format('d/m/Y H:i').'.';
 
         $temperatura = isset($extracted['temperatura']) && in_array($extracted['temperatura'], ['quente', 'morno', 'frio'])
             ? $extracted['temperatura']
@@ -223,7 +223,7 @@ class ImportarLeadIaAction
         }
 
         // 6. Registra o Histórico de Contato com o relato da conversa
-        $relato = ! empty($extracted['relato_contato']) ? trim((string) $extracted['relato_contato']) : trim((string) ($extracted['observacoes'] ?? ''));
+        $relato = static::normalizarDatas(! empty($extracted['relato_contato']) ? trim((string) $extracted['relato_contato']) : trim((string) ($extracted['observacoes'] ?? '')));
         if ($relato === '') {
             $relato = 'Contato inicial registrado via importação com IA.';
         }
@@ -241,6 +241,8 @@ class ImportarLeadIaAction
             $dataContato = now();
         }
 
+        $relato = 'Contato em '.$dataContato->format('d/m/Y H:i').' via '.$tipoContato->nome.".\n".$relato;
+
         HistoricoContato::create([
             'interessado_id' => $interessado->id,
             'usuario_id' => $usuarioId,
@@ -252,5 +254,15 @@ class ImportarLeadIaAction
         LeadScoreService::recalcular($interessado);
 
         return $interessado;
+    }
+
+    /**
+     * Converte datas em ISO (AAAA-MM-DD) ou com hífen/ponto (DD-MM-AAAA) para DD/MM/AAAA.
+     */
+    public static function normalizarDatas(string $texto): string
+    {
+        $texto = preg_replace('/(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)/', '$3/$2/$1', $texto) ?? $texto;
+
+        return preg_replace('/(?<!\d)(\d{2})[-.](\d{2})[-.](\d{4})(?!\d)/', '$1/$2/$3', $texto) ?? $texto;
     }
 }

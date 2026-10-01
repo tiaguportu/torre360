@@ -130,7 +130,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
   "origem_sugerida": "Canal de origem inferido (ex: WhatsApp, Instagram, E-mail, Site, Indicação) ou null",
   "temperatura": "quente|morno|frio (quente se demonstra urgência/muito interesse, morno se busca informações gerais, frio se apenas sondagem)",
   "valor_estimado": valor_numerico_ou_null,
-  "observacoes": "Resumo objetivo das necessidades e observações, SEMPRE citando as datas disponíveis (data/hora da conversa, visitas, prazos, previsão de matrícula, aniversários) no formato DD/MM/AAAA",
+  "observacoes": "Resumo objetivo das necessidades e observações, SEMPRE citando as datas disponíveis (data/hora da conversa, visitas, prazos, previsão de matrícula, aniversários) no formato DD/MM/AAAA (nunca AAAA-MM-DD)",
   "tipo_contato": "Canal do contato registrado: Ligação|WhatsApp|E-mail|Presencial ou null",
   "data_contato": "Data/hora em que o contato ocorreu (YYYY-MM-DD HH:MM:SS; se só houver a data use 12:00:00) ou null",
   "relato_contato": "Relato detalhado e fiel da conversa/contato: o que o interessado perguntou, o que foi respondido e combinados",
@@ -143,7 +143,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
     }
   ]
 }
-Importante: Retorne APENAS o JSON válido sem marcações adicionais.';
+Importante: em todos os textos livres (observacoes e relato_contato) escreva datas SEMPRE como DD/MM/AAAA; apenas data_nascimento e data_contato seguem o formato ISO indicado. Retorne APENAS o JSON válido sem marcações adicionais.';
 
         $parts = [];
 

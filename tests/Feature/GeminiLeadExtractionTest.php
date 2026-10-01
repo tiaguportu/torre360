@@ -274,7 +274,7 @@ class GeminiLeadExtractionTest extends TestCase
             'origem_sugerida' => 'Instagram',
             'temperatura' => 'quente',
             'valor_estimado' => 2200.50,
-            'observacoes' => 'Procura vaga urgente para transferência.',
+            'observacoes' => 'Procura vaga urgente. Visita em 2026-10-05.',
             'tipo_contato' => 'WhatsApp',
             'data_contato' => '2026-09-28 14:30:00',
             'relato_contato' => 'Pai pediu valores e vaga para 2026.',
@@ -306,9 +306,11 @@ class GeminiLeadExtractionTest extends TestCase
         $this->assertDatabaseHas('historico_contato', [
             'interessado_id' => $interessado->id,
             'usuario_id' => $consultor->id,
-            'relato' => 'Pai pediu valores e vaga para 2026.',
             'data_contato' => '2026-09-28 14:30:00',
         ]);
+
+        $this->assertStringContainsString('Visita em 05/10/2026', $interessado->observacoes);
+        $this->assertStringContainsString('Contato em 28/09/2026 14:30 via WhatsApp', $interessado->historicos()->first()->relato);
 
         $this->assertDatabaseHas('interessado_dependente', [
             'interessado_id' => $interessado->id,
