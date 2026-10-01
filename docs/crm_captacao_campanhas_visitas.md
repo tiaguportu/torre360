@@ -158,6 +158,9 @@ já formatado (o botão de WhatsApp da tabela remove os não-dígitos antes de m
 Não há validação de quantidade de dígitos, para não bloquear leads antigos com telefone em
 outro formato.
 
+A mesma máscara vale na criação do interessado (mesmo formulário) e no cadastro de Pessoa
+(`PessoaForm`), inclusive no modal "criar pessoa" aberto a partir do select de Pessoa.
+
 ## 7. Migrations
 
 | Migration | O que faz |
