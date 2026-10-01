@@ -107,7 +107,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
 - **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.
-- **Temperatura:** Defina manualmente (Quente/Morno/Frio) ou deixe o sistema calcular automaticamente baseado na atividade.
+- **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
 
@@ -139,6 +139,16 @@ Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - Suporta múltiplos alunos por cadastro.
 - O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade.
 - A equipe interna é notificada automaticamente via sininho.
+
+### 3.7.1 Configurar os Pesos do Lead Score
+Acesse **CRM / Comercial → Pesos do Lead Score** (disponível para Administradores):
+1. **Pesos e Cores:** defina o peso máximo de cada um dos 12 fatores (a soma precisa ser **100**, conferida em tempo real; a **Percepção do consultor**, isto é, a Temperatura, é o fator de maior peso por padrão: 20) e os cortes de cor do score (quente/morno).
+2. **Perfil / Fit** e **Engajamento:** ajuste os pontos por temperatura (percepção do consultor), faixa de filhos, distância, transporte, profissão (palavras-chave), valor estimado, interações e recência do contato.
+3. **Origem:** defina os pontos por origem do lead e o valor para as demais.
+4. Clique em **Salvar configuração**. Para aplicar aos leads já cadastrados, clique em **Recalcular todos os leads**.
+5. **Restaurar padrão** descarta as personalizações e volta aos valores originais do sistema.
+
+> Os pontos de cada faixa não podem passar do peso do fator; o sistema avisa se algo estiver inconsistente.
 
 ### 3.8 Importação e Extração Inteligente de Leads com IA (Google Gemini)
 Para agilizar a prospecção e evitar a digitação manual de formulários, o Torre360 possui integração nativa com a **IA da Google (Gemini 2.5 Flash)** com suporte multimodal (texto e imagens):

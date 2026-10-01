@@ -33,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
+        \App\Models\LeadScoreConfiguracao::aplicar();
+
         Table::configureUsing(function (Table $table): void {
             $table
                 ->recordUrl(null)

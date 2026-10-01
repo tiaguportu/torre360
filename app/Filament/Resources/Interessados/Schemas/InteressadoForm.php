@@ -171,7 +171,7 @@ class InteressadoForm
                                         'frio' => '🔵 Frio',
                                     ])
                                     ->native(false)
-                                    ->helperText('Avaliação manual e subjetiva do consultor. Não é calculada automaticamente — use o "Lead Score" no resumo para o indicador automático.'),
+                                    ->helperText('Avaliação manual do consultor. Não é calculada automaticamente, mas entra no "Lead Score" com o maior peso.'),
 
                                 Select::make('faixa_distancia_escola')
                                     ->label('Distância até a Escola')

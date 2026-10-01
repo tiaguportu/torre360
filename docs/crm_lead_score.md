@@ -4,13 +4,14 @@ Model: `App\Models\Interessado` (tabela `interessado`)
 Serviço: `App\Services\LeadScoreService`
 Config: `config/lead_score.php`
 
-O CRM usa **dois indicadores complementares e independentes** para qualificar um
-lead. Eles não se substituem — cada um responde uma pergunta diferente:
+O CRM usa **dois indicadores complementares** para qualificar um lead. Cada um
+responde uma pergunta diferente, mas a `temperatura` (percepção do consultor)
+também **entra no cálculo do score**, como o fator de maior peso (20 de 100):
 
 | | `temperatura` | `lead_score` |
 |---|---|---|
 | O que responde | "Como o consultor **sente** esse lead?" | "O que os **dados** dizem sobre esse lead?" |
-| Quem define | 100% manual, no formulário do Interessado | 100% automático, recalculado pelo sistema |
+| Quem define | 100% manual, no formulário do Interessado | Automático, recalculado pelo sistema (inclui a temperatura como um dos fatores) |
 | Valores | `quente` / `morno` / `frio` (ou vazio) | Número de 0 a 100 |
 | Onde fica | Coluna "Temp. (consultor)" na tabela, campo no formulário, card do Kanban | Coluna "Score" na tabela, placeholder no formulário, badge no card do Kanban |
 
@@ -24,26 +25,35 @@ a ser do Lead Score, que é multifator e documentado nesta página.
 
 ## Como o Lead Score é calculado
 
-`LeadScoreService::calcular(Interessado $interessado): int` soma pontos de 11
-fatores, agrupados em 3 blocos. A soma dos pesos máximos é 100. Todos os pesos,
+`LeadScoreService::calcular(Interessado $interessado): int` soma pontos de 12
+fatores, agrupados em 4 blocos. A soma dos pesos máximos é 100. Todos os pesos,
 faixas e mapeamentos ficam em `config/lead_score.php` — **ajustar a fórmula não
 exige mexer no código**, só no config.
 
-### Perfil / Fit (até 55 pontos)
+### Percepção do consultor (até 20 pontos)
 
 | Fator | Peso máx. | Como é calculado |
 |---|---|---|
-| Nº de filhos em idade escolar | 15 | `dependentes()->count()`, por faixas (`config('lead_score.filhos')`) |
-| Distância até a escola | 15 | Campo manual `faixa_distancia_escola` (não há geocoding no sistema) |
+| Percepção do consultor | 20 | Campo manual `temperatura` do lead: quente = 20, morno = 10, frio = 0, não informada = 0 (`config('lead_score.percepcao_consultor')`). É o fator de maior peso |
+
+Como a temperatura é um campo do formulário, o score é recalculado ao salvar o
+lead (já faz parte do fluxo de edição).
+
+### Perfil / Fit (até 40 pontos)
+
+| Fator | Peso máx. | Como é calculado |
+|---|---|---|
+| Nº de filhos em idade escolar | 10 | `dependentes()->count()`, por faixas (`config('lead_score.filhos')`) |
+| Distância até a escola | 10 | Campo manual `faixa_distancia_escola` (não há geocoding no sistema) |
 | Meio de transporte | 5 | Campo manual `meio_transporte` |
-| Profissão | 10 | Palavra-chave sobre `pessoa.profissao` (texto livre), ver `config('lead_score.profissoes')` |
+| Profissão | 5 | Palavra-chave sobre `pessoa.profissao` (texto livre), ver `config('lead_score.profissoes')` |
 | Valor estimado | 10 | `valor_estimado`, por faixas (`config('lead_score.valor_estimado')`) |
 
-### Engajamento (até 35 pontos)
+### Engajamento (até 30 pontos)
 
 | Fator | Peso máx. | Como é calculado |
 |---|---|---|
-| Interações bem-sucedidas | 15 | Histórico de contato com `resultado` em `agendou_visita`/`matriculou` |
+| Interações bem-sucedidas | 10 | Histórico de contato com `resultado` em `agendou_visita`/`matriculou` |
 | Total de interações | 5 | Qualquer histórico de contato registrado |
 | Recência do contato | 10 | Dias desde o último histórico (ou desde a criação, se nunca houve contato) — decai com o tempo |
 | Completude do cadastro | 5 | Telefone, e-mail, profissão preenchidos + ao menos 1 dependente cadastrado |
@@ -87,8 +97,25 @@ nenhuma ação manual no lead.
 
 ## Ajustando os pesos
 
-Toda a fórmula fica em `config/lead_score.php`. Para mudar o peso de um fator,
-edite o valor correspondente em `pesos` (lembrando de manter a soma em 100 para
-o score continuar variando de 0 a 100) e, se necessário, as faixas/mapeamentos
-específicas daquele fator no mesmo arquivo. Depois de mudar o config, rode
-`php artisan crm:recalcular-lead-score` para atualizar os leads já existentes.
+**Pelo painel (recomendado):** menu CRM / Comercial → **Pesos do Lead Score**
+(`App\Filament\Pages\ConfiguracaoLeadScore`, permissão Shield
+`View:ConfiguracaoLeadScore`, concedida a `super_admin` e `admin`). A tela tem 4
+abas (Pesos e Cores, Perfil / Fit, Engajamento, Origem) e três ações:
+**Salvar configuração**, **Restaurar padrão** e **Recalcular todos os leads**.
+
+Regras validadas ao salvar: a soma dos 12 pesos deve ser 100; o corte "Morno"
+não pode superar o "Quente"; os pontos de cada faixa/opção não podem passar do
+peso do fator. As faixas (filhos, valor estimado, recência) são reordenadas
+automaticamente.
+
+**Como é guardado:** tabela `lead_score_configuracao` (uma linha por salvamento,
+vale a mais recente; `valores` em JSON). Em cada requisição,
+`AppServiceProvider::boot()` chama `LeadScoreConfiguracao::aplicar()`, que
+sobrescreve chave a chave a config em memória (`array_replace`) com o valor do
+cache `lead_score_configuracao`. Chaves ausentes continuam valendo
+`config/lead_score.php`, que permanece como padrão do sistema ("Restaurar
+padrão" apaga as sobrescritas). Salvar não altera scores já gravados: use
+"Recalcular todos os leads" ou `php artisan crm:recalcular-lead-score`.
+
+**Por arquivo:** ainda é possível editar `config/lead_score.php` (vira o novo
+padrão, mas só vale enquanto não houver personalização salva no painel).

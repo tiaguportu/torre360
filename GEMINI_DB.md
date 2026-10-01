@@ -759,6 +759,11 @@ Estrutura de ensino e turmas.
 
 ## 16. Central de Ajuda — Vídeos Tutoriais
 
+### `lead_score_configuracao`
+- **Representa:** Personalização dos pesos/faixas do Lead Score feita na tela "Pesos do Lead Score" (sobrescreve `config/lead_score.php`).
+- **Campos Principais:** `valores` (JSON com as chaves de `config/lead_score.php` alteradas), `atualizado_por` (FK `users`, nullable).
+- **Relacionamentos:** BelongsTo `users` (`atualizadoPor`). Vale a linha mais recente; sem linhas, valem os padrões do arquivo.
+
 ### `video_tutorial`
 - **Representa:** Vídeos curtos de treinamento exibidos na Central de Ajuda (`/admin/video-tutorials`) e, opcionalmente, dentro do modal de "Ajuda" de uma tela específica.
 - **Campos Principais:**
