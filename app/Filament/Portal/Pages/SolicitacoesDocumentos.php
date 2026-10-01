@@ -3,10 +3,12 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusSolicitacaoDocumento;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Matricula;
 use App\Models\SolicitacaoDocumento;
 use App\Models\TemplateDocumento;
 use App\Services\DocumentoService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -23,6 +25,7 @@ use UnitEnum;
 
 class SolicitacoesDocumentos extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-check';
@@ -170,5 +173,29 @@ class SolicitacoesDocumentos extends Page implements HasTable
                 return [$m->id => "{$nomeAluno}{$turma}"];
             })
             ->toArray();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Solicitar Documentos Oficiais', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🏛️', 'Solicitar Documentos Oficiais', 'Peça declarações e outros documentos da escola.')
+            ->passos('🚀 Como solicitar', [
+                'Clique em "Nova Solicitação de Documento".',
+                'Escolha o estudante e o tipo de documento desejado.',
+                'Informe a finalidade ou observações e confirme.',
+                'O documento é emitido na hora: baixe o PDF na lista.',
+            ])
+            ->secao('📋 Na lista de solicitações', [
+                ['🔢', 'Protocolo', 'Número que identifica seu pedido.'],
+                ['⬇️', 'Baixar PDF', 'Baixa o documento emitido.'],
+                ['🔍', 'Verificar QR Code', 'Confere a autenticidade do documento.'],
+            ])
+            ->dica('Os documentos têm data de validade, indicada na coluna "Válido até".');
     }
 }

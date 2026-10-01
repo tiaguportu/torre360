@@ -40,6 +40,7 @@ use App\Filament\Resources\TipoVinculos\Pages\ManageTipoVinculos;
 use App\Filament\Resources\TransacaoBancarias\Pages\ListTransacaoBancarias;
 use App\Filament\Resources\TributacaoCursos\Pages\ListTributacaoCursos;
 use App\Filament\Resources\Turnos\Pages\ListTurnos;
+use App\Models\Pessoa;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -109,6 +110,35 @@ class AjudaCoberturaSidebarTest extends TestCase
         $user->assignRole(Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']));
         Gate::before(fn () => true);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::actingAs($user)
+            ->test($pagina)
+            ->assertActionExists('ajuda')
+            ->mountAction('ajuda')
+            ->assertHasNoActionErrors();
+    }
+
+    public static function telasDoPortal(): array
+    {
+        $paginas = [
+            'Início' => 'Dashboard', 'Notas' => 'Notas', 'Frequência' => 'Frequencia', 'Horários' => 'Horarios',
+            'Calendário' => 'Calendario', 'Boletins' => 'Academico', 'Documentos e Contratos' => 'Documentos',
+            'Solicitar Documentos Oficiais' => 'SolicitacoesDocumentos', 'Eventos e Atividades' => 'EventosEscolares',
+            'Rematrícula Online' => 'Rematricula', 'Financeiro' => 'Financeiro', 'Ocorrências' => 'Ocorrencias',
+            'Agendar Preceptoria' => 'Preceptoria', 'Central de Atendimento' => 'CentralAtendimento',
+        ];
+
+        return array_map(fn (string $classe) => ['App\\Filament\\Portal\\Pages\\'.$classe], $paginas);
+    }
+
+    #[DataProvider('telasDoPortal')]
+    public function test_tela_do_portal_possui_botao_de_ajuda(string $pagina): void
+    {
+        $user = User::factory()->create(['activated_at' => now()->subDay(), 'email_verified_at' => now()]);
+        $user->assignRole(Role::firstOrCreate(['name' => 'aluno', 'guard_name' => 'web']));
+        Pessoa::factory()->create()->users()->save($user);
+        Gate::before(fn () => true);
+        Filament::setCurrentPanel(Filament::getPanel('portal'));
 
         Livewire::actingAs($user)
             ->test($pagina)

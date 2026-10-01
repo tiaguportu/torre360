@@ -3,10 +3,12 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusChamado;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\AtendimentoChamado;
 use App\Models\AtendimentoMensagem;
 use App\Models\AtendimentoSetor;
 use App\Models\Matricula;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -17,6 +19,7 @@ use UnitEnum;
 
 class CentralAtendimento extends Page
 {
+    use HasAjudaAction;
     use WithFileUploads;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
@@ -245,5 +248,26 @@ class CentralAtendimento extends Page
             ->body('Seu feedback é fundamental para o aprimoramento contínuo do nosso atendimento.')
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Central de Atendimento', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🎧', 'Central de Atendimento', 'Fale com os setores da escola.')
+            ->passos('🚀 Abrindo um chamado', [
+                'Abra um novo chamado e escolha o setor.',
+                'Descreva sua solicitação e envie.',
+                'Acompanhe a conversa em "Meus chamados" e responda quando necessário.',
+            ])
+            ->secao('⭐ Depois do atendimento', [
+                ['⭐', 'Avaliação', 'Quando o chamado for resolvido, dê uma nota de 1 a 5 estrelas.'],
+            ])
+            ->dica('Prefira um chamado por assunto, para facilitar o acompanhamento.');
     }
 }

@@ -2,8 +2,10 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Portal\Concerns\InteractsWithMatriculaSelecionada;
 use App\Services\HorarioAlunoService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Pages\Page;
@@ -15,6 +17,7 @@ use UnitEnum;
  */
 class Horarios extends Page
 {
+    use HasAjudaAction;
     use InteractsWithMatriculaSelecionada;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
@@ -76,5 +79,22 @@ class Horarios extends Page
         return $matricula
             ? app(HorarioAlunoService::class)->semana($matricula, $this->getInicioSemana())
             : null;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Horários', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🕒', 'Horários', 'A grade de aulas da semana.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['📅', 'Agenda semanal', 'Veja as aulas de cada dia da semana.'],
+                ['⬅️', 'Navegar', 'Use "Semana anterior", "Próxima semana" e "Semana atual" para mudar o período exibido.'],
+            ])
+            ->dica('A grade pode mudar durante o ano; consulte sempre a semana atual.');
     }
 }
