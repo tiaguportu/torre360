@@ -1852,4 +1852,25 @@ Além da Central de Ajuda, o vídeo relacionado a uma tela aparece automaticamen
 
 ---
 
+## ❓ 39. Botão de Ajuda em Todas as Telas
+
+Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícone ❓ cinza, no canto superior direito do cabeçalho da página).
+
+### 39.1 Como usar
+1. Abra qualquer tela e clique em **Ajuda**.
+2. O quadro mostra, de cima para baixo: o **título com emoji e um resumo da tela**, o **vídeo tutorial** (quando houver um vinculado, veja a seção 38), os **tópicos** (🎯 o que você pode fazer, 🚀 passo a passo), **dicas** 💡 e **alertas** ⚠️.
+3. Os tópicos se adaptam às suas permissões: ações que você não pode executar (ex.: criar ou editar) não aparecem na ajuda.
+4. Clique em **Fechar** para voltar à tela.
+
+### 39.2 Telas já cobertas
+- **Todas as telas que já tinham o botão** ganharam o novo visual (cartões, emojis, modo escuro).
+- **Acadêmico:** Cursos (texto no novo formato).
+- **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
+- As demais telas serão cobertas nas próximas etapas (Secretaria, Avaliações, Preceptoria, Financeiro, Configurações, Sistema e Portal da Família). A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
+
+### 39.3 Para a equipe de desenvolvimento
+O guia de como montar a ajuda de uma nova tela (construtor `HelpContent` e botão `HasAjudaAction`) está em `docs/ajuda_modal_design.md`.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
