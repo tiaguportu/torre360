@@ -831,3 +831,36 @@ Estrutura de ensino e turmas.
   - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`).
   - `ordem`: Sequência de ordenação vertical.
 - **Relacionamentos:** BelongsTo `ano` (`HistoricoEscolarAno`), BelongsTo `disciplina` (`Disciplina`).
+
+---
+
+## 18. Secretaria Digital e Auto-Atendimento de Declarações Oficiais
+
+### `template_documentos`
+- **Representa:** Modelos e templates oficiais de declarações, certidões e atestados emitidos pela escola, com suporte a variáveis dinâmicas e macros de preenchimento.
+- **Campos Principais:**
+  - `nome`: Nome do modelo (ex: "Declaração de Matrícula Regular", "Declaração de Frequência Escolar", "Declaração para Passe Escolar e Transporte", "Declaração de Quitação de Débitos").
+  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_conclusao`, `declaracao_transferencia`, `declaracao_transporte`, `declaracao_horario`, `historico_escolar`, `personalizado`).
+  - `descricao`: Finalidade descritiva apresentada nos cartões do Portal.
+  - `conteudo`: HTML com macros dinâmicas (`{{ALUNO_NOME}}`, `{{ALUNO_CPF}}`, `{{HORARIO_AULAS}}`, `{{PROTOCOLO}}`, etc.).
+  - `validade_dias`: Prazo padrão em dias de validade do documento emitido (ex: 30, 60, 90).
+  - `is_ativo`: Booleano para disponibilizar no auto-atendimento.
+- **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+
+### `solicitacao_documentos`
+- **Representa:** Registros de emissões e certidões oficiais geradas com código de verificação rastreável e QR Code.
+- **Campos Principais:**
+  - `protocolo`: Número identificador único formatado (ex: `DOC-2026-000001`).
+  - `codigo_verificacao`: Token hash criptográfico de validação pública anti-raspagem LGPD (ex: `TR36-XXXX-XXXX-XXXX`).
+  - `matricula_id`: FK `matricula.id` (estudante titular do documento).
+  - `template_documento_id`: FK `template_documentos.id`.
+  - `solicitado_por_user_id`: FK `users.id` (usuário que solicitou via Portal ou equipe escolar).
+  - `atendido_por_user_id`: FK `users.id` (em caso de atendimento ou despacho manual).
+  - `status`: Enum `StatusSolicitacaoDocumento` (`solicitado`, `em_processamento`, `disponivel`, `rejeitado`).
+  - `arquivo_path`: Caminho no storage privado do PDF timbrado gerado (`documentos_emitidos/DOC-2026-XXXXXX.pdf`).
+  - `observacao_solicitante`: Texto de finalidade ou observação informado pela família.
+  - `justificativa_recusa`: Motivo caso o pedido seja rejeitado.
+  - `data_solicitacao`: Data/hora do requerimento.
+  - `data_emissao`: Data/hora em que o PDF oficial com QR Code foi processado e assinado.
+  - `data_validade`: Data limite de validade jurídica do documento.
+- **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `TemplateDocumento`, BelongsTo `User` (`solicitadoPor`), BelongsTo `User` (`atendidoPor`).

@@ -1927,7 +1927,36 @@ O módulo de **Histórico Escolar Oficial Multi-Ano** atende a uma das exigênci
    - Para anos cursados em outra escola anterior, clique em **Adicionar Ano / Série**, selecione a origem como *Externo (Outra Escola)* e informe o nome do estabelecimento de ensino, cidade/UF, carga horária e as disciplinas com notas correspondentes.
 6. **Aba Certificação e Observações:**
    - Personalize o texto oficial da certidão de conclusão ou adicione amparos legais específicos (ex: convalidações de estudos no exterior, exames de classificação, etc.).
-7. Clique no botão **Emitir PDF Oficial** (ícone de impressora verde) no topo da página ou na listagem para visualizar e imprimir o documento em formato paisagem com alta fidelidade visual.
+---
+
+## 🏛️ 41. Auto-Atendimento de Declarações e Documentos Oficiais no Portal da Família (`/portal/solicitacoes-documentos`)
+
+O módulo de **Auto-Atendimento de Declarações e Documentos Oficiais** foi desenvolvido especificamente para **desafogar a secretaria escolar**, transferindo a emissão de certidões rotineiras para o próprio estudante ou seus responsáveis legais no Portal da Família, com total segurança jurídica, validação por QR Code e verificação financeira automática.
+
+### 41.1 Benefícios para a Escola e as Famílias
+- **Emissão Instantânea em 1 Clique:** O responsável não precisa abrir chamados burocráticos ou aguardar dias pela impressão de um documento. Ao clicar em **"Emitir Agora"**, o PDF oficial timbrado é gerado e assinado digitalmente em poucos segundos.
+- **Régua de Segurança Financeira (Lei 12.007/2009):** O sistema impede automaticamente a emissão de **Declarações de Quitação de Débitos** caso a matrícula possua faturas em atraso ou vencidas em aberto, alertando com gentileza para regularização na aba Financeiro.
+- **Validação Pública com QR Code Anti-Raspagem (LGPD):** Terceiros (empresas de transporte público, clubes, planos de saúde, outras escolas ou universidades) podem confirmar a autenticidade apontando a câmera do celular para o QR Code impresso no rodapé, que exibe a validação em ambiente seguro com mascaramento de dados sensíveis.
+- **Atalhos Rápidos no Início (Dashboard):** Cada cartão de estudante na tela inicial do Portal possui o botão direto **"Declarações"**, permitindo que pais com múltiplos filhos alternem facilmente entre os dependentes.
+
+### 41.2 Modelos Oficiais Disponíveis para Auto-Emissão
+1. 🎓 **Declaração de Matrícula Regular:** Atesta o vínculo ativo do estudante, série, curso, turma, turno e período letivo.
+2. 📅 **Declaração de Frequência Escolar:** Comprova o cumprimento de carga horária e assiduidade às aulas conforme as normas da LDB.
+3. 🚌 **Declaração para Passe Escolar e Transporte Público:** Detalha endereço residencial, horários oficiais de entrada e saída das aulas para comprovação de itinerário junto a concessionárias e órgãos de trânsito.
+4. ⏰ **Declaração de Turno e Horário de Aulas:** Informa a jornada escolar para fins de compatibilização com estágios supervisionados, programas de menor aprendiz ou atividades extracurriculares.
+5. 💳 **Declaração de Quitação de Débitos:** Atesta a adimplência legal do período contratado, condicionada à verificação de quitação de todas as parcelas e faturas vencidas no sistema.
+6. 📜 **Declaração de Conclusão de Série/Ano Letivo:** Declaração provisória de aprovação ao final do ano letivo enquanto o histórico definitivo é finalizado.
+7. 🔄 **Declaração de Transferência e Reserva de Vaga:** Atesta a situação escolar provisória do estudante durante trâmites de transferência para outra unidade.
+8. 📊 **Boletim Escolar Atualizado:** Atalho direto para download do boletim com notas e faltas consolidadas.
+9. 🏛️ **Histórico Escolar Oficial Multi-Ano:** Integração direta com o módulo de Histórico Escolar Oficial Tabular para formandos e egressos.
+
+### 41.3 Como a Família Emite um Documento no Portal
+1. Acesse o **Portal da Família** (`/portal`) e clique em **Declarações e Documentos** no menu lateral (ou clique no botão **Declarações** no cartão do aluno no Início).
+2. Se você possuir mais de um dependente matriculado, selecione o estudante desejado no seletor de abas do topo.
+3. No painel de **Declarações Disponíveis para Emissão Imediata**, localize o tipo de documento desejado e clique no botão **Emitir Agora**.
+4. O sistema gera imediatamente o documento e exibe o botão **Abrir PDF** na notificação de confirmação.
+5. O documento fica registrado permanentemente no **Histórico de Documentos e Protocolos Emitidos** logo abaixo, onde é possível efetuar novo download ou conferir o código de verificação digital a qualquer momento.
+6. **Solicitações Personalizadas:** Caso a família necessite de um documento com finalidade específica não contemplada nos modelos rápidos, basta clicar no botão **"Outra Solicitação / Com Observação"**, selecionar o tipo e preencher a justificativa.
 
 ---
 
@@ -1950,3 +1979,4 @@ A confirmação pelo convite **não efetiva a matrícula por si só** — ela s�
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
