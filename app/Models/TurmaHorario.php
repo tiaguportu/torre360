@@ -12,7 +12,7 @@ class TurmaHorario extends Model
 
     protected $table = 'turma_horario';
 
-    protected $guarded = [];
+    protected $fillable = ['turma_id', 'dia_semana', 'hora_inicio', 'hora_fim'];
 
     public function turma(): BelongsTo
     {

@@ -20,7 +20,7 @@ class PlanoAula extends Model
 
     protected $table = 'plano_aula';
 
-    protected $guarded = [];
+    protected $fillable = ['turma_id', 'disciplina_id', 'professor_id', 'data_prevista', 'objetivos', 'metodologia', 'recursos', 'avaliacao', 'anexo_material', 'cronograma_aula_id', 'executado_em'];
 
     protected function casts(): array
     {

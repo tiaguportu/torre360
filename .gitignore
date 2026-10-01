@@ -32,3 +32,8 @@ Thumbs.db
 
 # Firebase
 /storage/app/firebase-credentials.json
+
+# Backups de banco locais
+backup_banco_*/
+*.sql
+

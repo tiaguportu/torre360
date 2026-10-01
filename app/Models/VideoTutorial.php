@@ -10,7 +10,7 @@ class VideoTutorial extends Model
 {
     protected $table = 'video_tutorial';
 
-    protected $guarded = [];
+    protected $fillable = ['titulo', 'descricao', 'categoria', 'chave_pagina', 'arquivo', 'url_externo', 'duracao_segundos', 'ordem', 'ativo'];
 
     /**
      * Chaves de página usadas para linkar um vídeo ao modal de "Ajuda" de uma

@@ -9,7 +9,7 @@ class Pais extends Model
 {
     protected $table = 'pais';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'sigla', 'codigo'];
 
     public function estados(): HasMany
     {

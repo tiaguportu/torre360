@@ -18,7 +18,7 @@ class Preceptoria extends Model
 
     protected $table = 'preceptoria';
 
-    protected $guarded = [];
+    protected $fillable = ['ciclo_preceptoria_id', 'data', 'hora_inicio', 'hora_fim', 'professor_id', 'matricula_id'];
 
     protected function casts(): array
     {

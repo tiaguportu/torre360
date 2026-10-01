@@ -9,7 +9,7 @@ class AreaConhecimento extends Model
 {
     protected $table = 'area_conhecimento';
 
-    protected $guarded = [];
+    protected $fillable = ['nome'];
 
     public function disciplinas(): HasMany
     {

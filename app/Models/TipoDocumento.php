@@ -9,7 +9,7 @@ class TipoDocumento extends Model
 {
     protected $table = 'tipo_documento';
 
-    protected $guarded = [];
+    protected $fillable = ['curso_id', 'nome', 'flag_obrigatorio', 'modelo_arquivo', 'modelo_link'];
 
     protected function casts(): array
     {

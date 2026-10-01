@@ -9,7 +9,7 @@ class Fornecedor extends Model
 {
     protected $table = 'fornecedors';
 
-    protected $guarded = [];
+    protected $fillable = ['razao_social', 'nome_fantasia', 'cnpj', 'email', 'telefone'];
 
     public function transacoes(): HasMany
     {

@@ -9,7 +9,7 @@ class TransacaoBancaria extends Model
 {
     protected $table = 'transacao_bancarias';
 
-    protected $guarded = [];
+    protected $fillable = ['banco_id', 'fatura_id', 'plano_conta_id', 'centro_custo_id', 'fornecedor_id', 'tipo', 'valor', 'data_transacao', 'descricao', 'conciliado', 'external_id'];
 
     public function banco(): BelongsTo
     {

@@ -21,7 +21,7 @@ class Pessoa extends Model
 
     protected $table = 'pessoa';
 
-    protected $guarded = [];
+    protected $fillable = ['endereco_id', 'naturalidade_id', 'nacionalidade_id', 'nome', 'cpf', 'foto', 'telefone', 'email', 'user_id', 'data_nascimento', 'estado_civil', 'profissao', 'identidade', 'sexo', 'cor_raca', 'tipo_nacionalidade', 'aceita_comunicacao'];
 
     protected function cpf(): Attribute
     {

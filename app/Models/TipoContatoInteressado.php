@@ -8,5 +8,5 @@ class TipoContatoInteressado extends Model
 {
     protected $table = 'tipo_contato_interessado';
 
-    protected $guarded = [];
+    protected $fillable = ['nome'];
 }

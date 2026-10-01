@@ -16,7 +16,7 @@ class ComunicacaoEmMassa extends Model
 
     protected $table = 'comunicacao_em_massa';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'tipo_publico', 'filtros', 'canal', 'assunto', 'corpo', 'status', 'total_destinatarios', 'total_enviados', 'total_falhas', 'enviado_por_user_id', 'enviado_em'];
 
     protected function casts(): array
     {

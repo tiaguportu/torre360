@@ -23,7 +23,7 @@ class Sala extends Model
 
     protected $table = 'sala';
 
-    protected $guarded = [];
+    protected $fillable = ['unidade_id', 'nome', 'capacidade', 'tipo', 'ativa'];
 
     protected function casts(): array
     {

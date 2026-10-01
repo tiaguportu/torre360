@@ -59,9 +59,10 @@ class ContratoImporter extends Importer
         $contrato = null;
 
         if ($this->data['id'] ?? null) {
-            $contrato = Contrato::firstOrNew([
-                'id' => (int) $this->data['id'],
-            ]);
+            // 'id' não é mass-assignable; find-or-new manual preserva o comportamento
+            // de reimportar/atualizar um contrato por ID explícito do CSV.
+            $contrato = Contrato::find((int) $this->data['id']) ?? new Contrato;
+            $contrato->id = (int) $this->data['id'];
         } else {
             $contrato = new Contrato;
         }

@@ -23,7 +23,7 @@ class Contrato extends Model
 
     protected $table = 'contrato';
 
-    protected $guarded = [];
+    protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id'];
 
     public function matricula(): BelongsTo
     {

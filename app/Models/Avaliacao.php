@@ -17,7 +17,7 @@ class Avaliacao extends Model
 
     protected $table = 'avaliacao';
 
-    protected $guarded = [];
+    protected $fillable = ['etapa_avaliativa_id', 'data_ocorrencia', 'data_limite_lancamento', 'disciplina_id', 'turma_id', 'data_prevista', 'nota_maxima', 'peso_etapa_avaliativa', 'professor_id', 'categoria_avaliacao_id'];
 
     protected function casts(): array
     {

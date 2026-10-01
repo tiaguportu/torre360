@@ -14,7 +14,7 @@ class Turma extends Model
 
     protected $table = 'turma';
 
-    protected $guarded = [];
+    protected $fillable = ['serie_id', 'turno_id', 'codigo', 'tipo_mediacao_didatico_pedagogica', 'tipo_turma', 'local_funcionamento_diferenciado', 'forma_organizacao', 'modalidade_ensino', 'tipo_lingua_ministrada', 'codigo_lingua_indigena', 'turma_educacao_bilingue_surdos', 'flag_aee_ensino_libras', 'flag_aee_ensino_soroba', 'flag_aee_ensino_informatica_acessivel', 'flag_aee_ensino_caa', 'flag_aee_tecnologia_assistiva', 'flag_aee_processos_cognitivos', 'flag_aee_enriquecimento_curricular', 'flag_aee_portugues_segunda_lingua', 'flag_aee_orientacao_mobilidade', 'turma_educacao_especial', 'professor_conselheiro_id', 'vagas_maximas', 'carga_horaria_total', 'nome', 'periodo_letivo_id', 'cor', 'tipo_avaliacao', 'etapa_ensino_agregada_id', 'etapa_ensino_id'];
 
     public function serie(): BelongsTo
     {

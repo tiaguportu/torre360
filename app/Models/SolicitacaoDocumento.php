@@ -14,7 +14,7 @@ class SolicitacaoDocumento extends Model
 
     protected $table = 'solicitacao_documentos';
 
-    protected $guarded = [];
+    protected $fillable = ['protocolo', 'matricula_id', 'template_documento_id', 'solicitado_por_user_id', 'atendido_por_user_id', 'status', 'observacao_solicitante', 'justificativa_recusa', 'codigo_verificacao', 'data_solicitacao', 'data_emissao', 'data_validade', 'arquivo_path'];
 
     public function matricula(): BelongsTo
     {

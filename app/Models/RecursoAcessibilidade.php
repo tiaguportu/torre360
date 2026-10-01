@@ -12,7 +12,7 @@ class RecursoAcessibilidade extends Model
 
     protected $table = 'recurso_acessabilidades';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'categoria_recurso_acessabilidade_id', 'observacao'];
 
     public function pessoa(): BelongsTo
     {

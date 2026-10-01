@@ -12,7 +12,7 @@ class EtapaEnsinoAgregada extends Model
 
     protected $table = 'etapa_ensino_agregada';
 
-    protected $guarded = [];
+    protected $fillable = ['codigo', 'nome'];
 
     public function etapasEnsino(): HasMany
     {

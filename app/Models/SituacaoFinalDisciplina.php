@@ -10,7 +10,7 @@ class SituacaoFinalDisciplina extends Model
 {
     protected $table = 'situacao_final_disciplina';
 
-    protected $guarded = [];
+    protected $fillable = ['matricula_id', 'disciplina_id', 'periodo_letivo_id', 'media_final', 'situacao', 'calculado_em'];
 
     protected function casts(): array
     {

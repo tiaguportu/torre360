@@ -25,7 +25,7 @@ class Matricula extends Model
 
     protected $table = 'matricula';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id'];
 
     protected function casts(): array
     {

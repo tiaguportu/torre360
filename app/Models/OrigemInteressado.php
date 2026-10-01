@@ -12,7 +12,7 @@ class OrigemInteressado extends Model
 
     protected $table = 'origem_interessado';
 
-    protected $guarded = [];
+    protected $fillable = ['nome'];
 
     public function interessados(): HasMany
     {

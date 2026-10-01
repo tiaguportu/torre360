@@ -12,7 +12,7 @@ class EtapaEnsino extends Model
 
     protected $table = 'etapa_ensino';
 
-    protected $guarded = [];
+    protected $fillable = ['etapa_ensino_agregada_id', 'codigo', 'nome'];
 
     public function etapaEnsinoAgregada(): BelongsTo
     {

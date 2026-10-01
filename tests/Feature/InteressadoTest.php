@@ -177,8 +177,8 @@ class InteressadoTest extends TestCase
     public function test_dias_no_funil_para_lead_antigo(): void
     {
         $interessado = $this->criarInteressado();
-        // Força a data de criação para 15 dias atrás
-        $interessado->update(['created_at' => now()->subDays(15)]);
+        // Força a data de criação para 15 dias atrás ('created_at' não é mass-assignable, por isso forceFill)
+        $interessado->forceFill(['created_at' => now()->subDays(15)])->save();
 
         $this->assertEquals(15, $interessado->fresh()->diasNoFunil());
     }

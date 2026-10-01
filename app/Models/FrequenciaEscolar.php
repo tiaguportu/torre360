@@ -17,7 +17,7 @@ class FrequenciaEscolar extends Model
 
     protected $table = 'frequencia_escolar';
 
-    protected $guarded = [];
+    protected $fillable = ['matricula_id', 'cronograma_aula_id', 'situacao'];
 
     public function getActivitylogOptions(): LogOptions
     {
