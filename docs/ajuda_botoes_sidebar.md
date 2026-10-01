@@ -8,7 +8,7 @@ Design/uso: `docs/ajuda_modal_design.md`.
 | 0 | Base | Modal redesenhado, `HelpContent`, `HasAjudaAction`, ListCursos migrado | ✅ |
 | 1 | CRM / Comercial | Campanhas de Marketing, Comunicação em Massa, Leads da Landing, Modelos de WhatsApp | ✅ |
 | 2 | Secretaria + Acadêmico | Coordenadores, Frequências Escolares, Planos de Aula, Salas, Fechamento do Ciclo Letivo | ✅ |
-| 3 | Avaliações + Currículo | Notas, Habilidades | ⏳ |
+| 3 | Avaliações + Currículo | Notas, Habilidades | ✅ |
 | 4 | Preceptoria + Calendário | Ciclos, Relatórios, Templates de Relatório, Dias Não Letivos | ⏳ |
 | 5 | Financeiro + Operacional | Fornecedores, Transações Bancárias, Ordens de Serviço | ⏳ |
 | 6 | Configurações | Bancos, Cidades, Estados, Códigos BACEN, Centros de Custo, Plano de Contas, Turnos, Tipo Vínculos, Tributações, Etapas Avaliativas, Categorias (Avaliação, OS, Aprendizagem, Necessidade Especial), Áreas de Conhecimento, Campos de Experiência, Configurações, Endereços | ⏳ |
