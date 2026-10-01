@@ -229,7 +229,7 @@
 
         <div class="content">
             <form action="{{ url('/validar-documento') }}" method="GET" class="search-form">
-                <input type="text" name="codigo" class="search-input" placeholder="Digite o código (ex: TR36-XXXX-XXXX-XXXX) ou Protocolo" value="{{ $codigoBusca ?? '' }}" required>
+                <input type="text" name="codigo" class="search-input" placeholder="Digite o código verificador (ex: TR36-XXXX-XXXX-XXXX)" value="{{ $codigoBusca ?? '' }}" required>
                 <button type="submit" class="btn-search">Verificar</button>
             </form>
 
@@ -245,7 +245,7 @@
                         <div class="status-icon">✓</div>
                         <div class="status-text">
                             <h2>Documento Autêntico e Válido</h2>
-                            <p>O documento consultado foi emitido oficialmente pela instituição e possui registro no sistema Torre360.</p>
+                            <p>O documento consultado foi emitido oficialmente pela instituição e possui registro ativo de autenticidade no sistema Torre360.</p>
                         </div>
                     </div>
 
@@ -255,8 +255,13 @@
                             <td class="details-value"><strong>{{ $documento->templateDocumento?->nome ?? 'Declaração Escolar' }}</strong></td>
                         </tr>
                         <tr>
-                            <td class="details-label">Aluno:</td>
-                            <td class="details-value">{{ $aluno?->nome ?? '-' }}</td>
+                            <td class="details-label">Estudante:</td>
+                            <td class="details-value">
+                                <strong>{{ $nomeAlunoMascarado ?? '-' }}</strong>
+                                <span style="display: block; color: #64748b; font-size: 11px; margin-top: 2px;">
+                                    (Identificação protegida em conformidade com a LGPD)
+                                </span>
+                            </td>
                         </tr>
                         <tr>
                             <td class="details-label">Instituição / Unidade:</td>
@@ -267,11 +272,11 @@
                             <td class="details-value">{{ $turma?->nome ?? '-' }} / {{ $turma?->serie?->nome ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td class="details-label">Protocolo:</td>
+                            <td class="details-label">Protocolo de Emissão:</td>
                             <td class="details-value"><code>{{ $documento->protocolo }}</code></td>
                         </tr>
                         <tr>
-                            <td class="details-label">Código de Verificação:</td>
+                            <td class="details-label">Código de Autenticidade:</td>
                             <td class="details-value"><code>{{ $documento->codigo_verificacao }}</code></td>
                         </tr>
                         <tr>
@@ -291,6 +296,69 @@
                         </tr>
                     </table>
 
+                @elseif ($historico)
+                    @php
+                        $unidade = $historico->unidade ?? $historico->pessoa?->matriculas()->latest()->first()?->turma?->serie?->curso?->unidade;
+                        $cursoNome = $historico->curso?->nome_externo ?? $historico->curso?->nome_interno ?? 'Educação Básica';
+                        $situacaoLabel = match($historico->situacao) {
+                            'concluido' => 'Concluído',
+                            'transferido' => 'Transferido',
+                            default => 'Em Curso',
+                        };
+                    @endphp
+
+                    <div class="status-card success">
+                        <div class="status-icon">✓</div>
+                        <div class="status-text">
+                            <h2>Histórico Escolar Autêntico e Válido</h2>
+                            <p>O Histórico Escolar consultado foi lavrado oficialmente pela instituição de ensino e possui autenticidade confirmada no sistema Torre360.</p>
+                        </div>
+                    </div>
+
+                    <table class="details-table">
+                        <tr>
+                            <td class="details-label">Tipo de Documento:</td>
+                            <td class="details-value"><strong>HISTÓRICO ESCOLAR OFICIAL MULTI-ANO</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Estudante:</td>
+                            <td class="details-value">
+                                <strong>{{ $nomeAlunoMascarado ?? '-' }}</strong>
+                                <span style="display: block; color: #64748b; font-size: 11px; margin-top: 2px;">
+                                    (Identificação protegida em conformidade com a LGPD)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Instituição / Unidade:</td>
+                            <td class="details-value">{{ $unidade?->nome ?? config('app.name', 'Torre de Marfim') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Etapa / Curso:</td>
+                            <td class="details-value">{{ $cursoNome }}</td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Situação do Aluno:</td>
+                            <td class="details-value">
+                                <span class="badge-tag valid">{{ $situacaoLabel }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Código de Autenticidade:</td>
+                            <td class="details-value"><code>{{ $historico->codigo_autenticidade }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="details-label">Data de Expedição:</td>
+                            <td class="details-value">{{ $historico->data_emissao ? \Carbon\Carbon::parse($historico->data_emissao)->format('d/m/Y') : '-' }}</td>
+                        </tr>
+                        @if ($historico->data_conclusao)
+                            <tr>
+                                <td class="details-label">Data de Conclusão:</td>
+                                <td class="details-value">{{ \Carbon\Carbon::parse($historico->data_conclusao)->format('d/m/Y') }}</td>
+                            </tr>
+                        @endif
+                    </table>
+
                 @elseif ($documento && ! $documento->isValido())
                     <div class="status-card danger">
                         <div class="status-icon">!</div>
@@ -305,13 +373,13 @@
                         <div class="status-icon">✕</div>
                         <div class="status-text">
                             <h2>Documento Não Encontrado</h2>
-                            <p>Não foi localizado nenhum documento oficial com o código ou protocolo informado (<strong>{{ $codigoBusca }}</strong>). Verifique a digitação ou procure a secretaria escolar.</p>
+                            <p>Não foi localizado nenhum documento oficial com o código informado (<strong>{{ $codigoBusca }}</strong>). Verifique a digitação do código verificador ou aponte a câmera para o QR Code impresso no documento original.</p>
                         </div>
                     </div>
                 @endif
             @else
                 <div style="text-align: center; padding: 20px 0; color: #64748b; font-size: 14px;">
-                    Digite o código de verificação impresso no carimbo digital do documento ou o número de protocolo para atestar sua veracidade.
+                    Digite o código de verificação impresso no carimbo digital do documento ou aponte a câmera para o QR Code para atestar sua veracidade.
                 </div>
             @endif
         </div>

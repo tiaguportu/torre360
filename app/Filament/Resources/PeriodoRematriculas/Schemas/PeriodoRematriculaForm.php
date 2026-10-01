@@ -58,11 +58,28 @@ class PeriodoRematriculaForm
                             ->required(),
 
                         TextInput::make('valor_taxa')
-                            ->label('Valor da Taxa de Rematrícula / 1ª Parcela (R$)')
+                            ->label('Valor Total do Novo Contrato (R$)')
                             ->numeric()
                             ->default(0)
                             ->prefix('R$')
-                            ->helperText('Valor base para o novo contrato ou taxa de reserva.'),
+                            ->helperText('Valor total cobrado no novo contrato gerado pela rematrícula.'),
+
+                        TextInput::make('quantidade_parcelas_padrao')
+                            ->label('Quantidade de Parcelas')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
+                            ->default(12)
+                            ->required()
+                            ->helperText('As faturas são geradas automaticamente ao confirmar a rematrícula, com esse parcelamento.'),
+
+                        TextInput::make('valor_entrada_padrao')
+                            ->label('Valor de Entrada (R$)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->prefix('R$')
+                            ->helperText('Informe 0 caso não haja entrada.'),
 
                         Toggle::make('is_ativo')
                             ->label('Campanha Ativa')

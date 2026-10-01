@@ -10,7 +10,7 @@ class Estado extends Model
 {
     protected $table = 'estado';
 
-    protected $guarded = [];
+    protected $fillable = ['pais_id', 'nome', 'sigla'];
 
     public function pais(): BelongsTo
     {

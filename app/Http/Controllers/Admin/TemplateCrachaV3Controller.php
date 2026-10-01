@@ -15,8 +15,10 @@ class TemplateCrachaV3Controller extends Controller
     /**
      * Exibe o editor de canvas do crachá V3 (Moveable).
      */
-    public function editor(TemplateCrachaV3 $templateCrachaV3): View
+    public function editor(Request $request, TemplateCrachaV3 $templateCrachaV3): View
     {
+        abort_unless($request->user()->isStaff(), 403);
+
         $todasVariaveis = [
             'pessoa' => TemplateCrachaService::getVariaveisPorEntidade(TemplateCrachaEntidade::PESSOA),
             'turma' => TemplateCrachaService::getVariaveisPorEntidade(TemplateCrachaEntidade::TURMA),
@@ -30,6 +32,8 @@ class TemplateCrachaV3Controller extends Controller
      */
     public function save(Request $request, TemplateCrachaV3 $templateCrachaV3): JsonResponse
     {
+        abort_unless($request->user()->isStaff(), 403);
+
         $request->validate([
             'dados_json' => 'required|array',
         ]);

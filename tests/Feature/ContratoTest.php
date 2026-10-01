@@ -427,6 +427,49 @@ class ContratoTest extends TestCase
         $this->assertStringContainsString('Diretor Presidente - Diretor', $htmlResultBlade);
     }
 
+    public function test_dados_de_pessoa_com_html_sao_escapados_no_contrato(): void
+    {
+        // Regressão de segurança: nome de aluno/responsável vindo de formulário público
+        // (ex.: captação de leads) não pode injetar HTML/script no contrato renderizado.
+        TipoVinculo::updateOrCreate(['id' => 1], ['nome' => 'Pai']);
+
+        $payload = '<script>alert(1)</script>';
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => $payload,
+            'data_nascimento' => '2015-05-15',
+            'cpf' => '123.456.789-00',
+        ]);
+
+        $pai = Pessoa::factory()->create([
+            'nome' => $payload,
+            'cpf' => '111.111.111-11',
+        ]);
+
+        $aluno->responsaveis()->attach($pai->id, ['tipo_vinculo_id' => 1]);
+
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $aluno->id,
+        ]);
+
+        $contrato = Contrato::create([
+            'valor_total' => 12000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+
+        ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $pai->id,
+        ]);
+
+        $service = new ContractTemplateService;
+
+        $htmlResult = $service->process($contrato, 'Aluno: {{!! tabela_aluno !!}} | Responsaveis: {{!! info_responsaveis !!}} | Pai: {{!! assinatura_pai !!}}');
+
+        $this->assertStringNotContainsString($payload, $htmlResult);
+        $this->assertStringContainsString(e($payload), $htmlResult);
+    }
+
     public function test_action_gerar_contrato_na_matricula(): void
     {
         $adminUser = User::factory()->create([

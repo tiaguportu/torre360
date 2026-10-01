@@ -9,7 +9,7 @@ class TributacaoCurso extends Model
 {
     protected $table = 'tributacao_curso';
 
-    protected $guarded = [];
+    protected $fillable = ['curso_id', 'cnae', 'iss', 'pis', 'cofins', 'item_servico'];
 
     public function curso(): BelongsTo
     {

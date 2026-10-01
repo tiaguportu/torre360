@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 
 class PessoaForm
 {
@@ -104,6 +105,10 @@ class PessoaForm
 
                 TextInput::make('telefone')
                     ->tel()
+                    ->placeholder('(11) 98888-7777')
+                    ->mask(RawJs::make(<<<'JS'
+                        $input.replace(/\D/g, '').length > 10 ? '(99) 99999-9999' : '(99) 9999-99999'
+                        JS))
                     ->maxLength(20),
 
                 Select::make('sexo')

@@ -9,10 +9,13 @@ use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
+use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ValidarDocumentoController;
+use App\Livewire\MatriculaOnline\MatriculaOnlineWizard;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('switch-role')->middleware('auth');
@@ -20,13 +23,29 @@ Route::get('/switch-role/{role}', [RoleController::class, 'switch'])->name('swit
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
 Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->middleware('throttle:5,1')->name('solicitar-acesso');
 
+// Matrícula Externa 100% Self-Service para Novos Alunos
+Route::get('/matricular-online', MatriculaOnlineWizard::class)->name('matricular.online');
+Route::get('/matricular-online/sucesso/{matricula}', [MatriculaOnlineController::class, 'sucesso'])->name('matricular.online.sucesso');
+
 // Formulário público de captação de interessados
 Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');
 Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
-// Validação pública de autenticidade documental (QR Code)
-Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)->name('documentos.validar-autenticidade');
+// Convite de matrícula online: link único enviado a um lead já qualificado pelo CRM
+Route::get('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'convite'])
+    ->middleware('throttle:15,1')
+    ->name('captacao.interessado.convite');
+Route::post('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'confirmarConvite'])
+    ->middleware('throttle:15,1')
+    ->name('captacao.interessado.convite.confirmar');
+Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoController::class, 'conviteConfirmado'])
+    ->name('captacao.interessado.convite.sucesso');
+
+// Validação pública de autenticidade documental (QR Code com proteção contra raspagem)
+Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)
+    ->middleware('throttle:15,1')
+    ->name('documentos.validar-autenticidade');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
@@ -44,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contratos/{contrato}/gerar-assinatura', GerarAssinaturaController::class)->name('contratos.gerar-assinatura');
 
     Route::get('/matriculas/{record}/boletim/download', [BoletimPDFController::class, 'download'])->name('matriculas.boletim.download');
+    Route::get('/historicos-escolares/{record}/pdf', [HistoricoEscolarPDFController::class, 'stream'])->name('historicos-escolares.pdf');
+    Route::get('/historicos-escolares/{record}/download', [HistoricoEscolarPDFController::class, 'download'])->name('historicos-escolares.download');
     Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
 
     // Editor de Crachás V3 (Moveable)

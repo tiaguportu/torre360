@@ -4,8 +4,7 @@ namespace App\Filament\Resources\Contratos\Pages;
 
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Models\Contrato;
-use App\Models\Fatura;
-use App\Models\ItemFatura;
+use App\Services\GeracaoFaturasContratoService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -13,30 +12,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\DB;
 
 class EditContrato extends EditRecord
 {
     protected static string $resource = ContratoResource::class;
-
-    /**
-     * Avança N dias úteis a partir de uma data, pulando sábados e domingos.
-     */
-    private function adicionarDiasUteis(Carbon $data, int $dias): Carbon
-    {
-        $resultado = $data->copy();
-        $adicionados = 0;
-
-        while ($adicionados < $dias) {
-            $resultado->addDay();
-
-            if (! $resultado->isWeekend()) {
-                $adicionados++;
-            }
-        }
-
-        return $resultado;
-    }
 
     protected function getHeaderActions(): array
     {
@@ -68,92 +47,29 @@ class EditContrato extends EditRecord
                 ->modalSubmitActionLabel('Gerar Faturas')
                 ->action(function (array $data, EditRecord $livewire): void {
                     $contrato = $livewire->getRecord();
-
-                    if (! $contrato->data_aceite) {
-                        Notification::make()
-                            ->title('Erro')
-                            ->body('O contrato não possui data de aceite definida.')
-                            ->danger()
-                            ->send();
-
-                        return;
-                    }
-
                     $qtdParcelas = (int) $data['quantidade_parcelas'];
                     $valorEntrada = (float) $data['valor_entrada'];
-                    $valorTotal = (float) $contrato->valor_total;
-                    $valorRestante = $valorTotal - $valorEntrada;
 
-                    if ($valorRestante < 0) {
+                    try {
+                        $faturas = app(GeracaoFaturasContratoService::class)->gerar($contrato, $qtdParcelas, $valorEntrada);
+                    } catch (\InvalidArgumentException $e) {
                         Notification::make()
                             ->title('Erro')
-                            ->body('O valor de entrada não pode ser maior que o valor total do contrato.')
+                            ->body($e->getMessage())
                             ->danger()
                             ->send();
 
                         return;
                     }
 
-                    $valorParcela = $qtdParcelas > 0 ? round($valorRestante / $qtdParcelas, 2) : 0;
-
-                    // 1ª parcela: 5 dias úteis a partir do data_aceite (pula fins de semana)
-                    $dataAceite = Carbon::parse($contrato->data_aceite);
-                    $primeiroVencimento = $this->adicionarDiasUteis($dataAceite, 5);
-
-                    DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $qtdParcelas, $dataAceite, $primeiroVencimento): void {
-                        // Remove faturas existentes e seus itens
-                        $contrato->faturas()->each(function (Fatura $fatura): void {
-                            $fatura->itens()->delete();
-                            $fatura->delete();
-                        });
-
-                        // Fatura de entrada: vencimento no próprio data_aceite
-                        if ($valorEntrada > 0) {
-                            /** @var Fatura $faturaEntrada */
-                            $faturaEntrada = Fatura::create([
-                                'contrato_id' => $contrato->id,
-                                'vencimento' => $dataAceite->toDateString(),
-                                'status' => 'pendente',
-                            ]);
-
-                            ItemFatura::create([
-                                'fatura_id' => $faturaEntrada->id,
-                                'descricao' => 'Entrada',
-                                'valor_unitario' => $valorEntrada,
-                                'quantidade' => 1,
-                                'desconto' => 0,
-                                'tipo_desconto' => 'absoluto',
-                            ]);
-                        }
-
-                        // Parcelas: 1ª = 5 dias úteis após aceite, demais = +1 mês cada
-                        for ($i = 0; $i < $qtdParcelas; $i++) {
-                            $vencimento = $primeiroVencimento->copy()->addMonths($i);
-
-                            /** @var Fatura $fatura */
-                            $vencimentoStr = $vencimento->toDateString();
-                            $fatura = Fatura::create([
-                                'contrato_id' => $contrato->id,
-                                'vencimento' => $vencimentoStr,
-                                'status' => 'pendente',
-                            ]);
-
-                            ItemFatura::create([
-                                'fatura_id' => $fatura->id,
-                                'descricao' => 'Parcela '.($i + 1).' de '.$qtdParcelas,
-                                'valor_unitario' => $valorParcela,
-                                'quantidade' => 1,
-                                'desconto' => 0,
-                                'tipo_desconto' => 'absoluto',
-                            ]);
-                        }
-                    });
+                    $primeiraParcela = $faturas->skip($valorEntrada > 0 ? 1 : 0)->first();
 
                     Notification::make()
                         ->title('Faturas geradas com sucesso!')
                         ->body(
                             ($valorEntrada > 0 ? '1 fatura de entrada + ' : '').
-                                $qtdParcelas.' parcela(s) criada(s). 1ª parcela: '.$primeiroVencimento->format('d/m/Y').'.'
+                                $qtdParcelas.' parcela(s) criada(s).'.
+                                ($primeiraParcela ? ' 1ª parcela: '.Carbon::parse($primeiraParcela->vencimento)->format('d/m/Y').'.' : '')
                         )
                         ->success()
                         ->send();

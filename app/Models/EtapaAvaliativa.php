@@ -10,7 +10,7 @@ class EtapaAvaliativa extends Model
 {
     protected $table = 'etapa_avaliativa';
 
-    protected $guarded = [];
+    protected $fillable = ['turma_id', 'nome', 'data_inicio', 'data_fim', 'periodo_letivo_id'];
 
     public function periodoLetivo(): BelongsTo
     {

@@ -101,7 +101,9 @@ class AtendimentoChamadosTable
 
                         FileUpload::make('anexo_path')
                             ->label('Anexo Opcional (PDF, Imagem, Comprovante)')
-                            ->disk('public')
+                            ->disk('local')
+                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->maxSize(5120)
                             ->directory('atendimentos/anexos'),
                     ])
                     ->action(function (AtendimentoChamado $record, array $data) {

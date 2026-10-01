@@ -12,7 +12,7 @@ class TranstornoAprendizagem extends Model
 
     protected $table = 'transtorno_aprendizagens';
 
-    protected $guarded = [];
+    protected $fillable = ['pessoa_id', 'categoria_transtorno_aprendizagem_id', 'observacao'];
 
     public function pessoa(): BelongsTo
     {

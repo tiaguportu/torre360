@@ -14,7 +14,7 @@ class OcorrenciaEscolar extends Model
 
     protected $table = 'ocorrencia_escolars';
 
-    protected $guarded = [];
+    protected $fillable = ['matricula_id', 'tipo_ocorrencia_id', 'registrado_por_user_id', 'data_hora', 'descricao', 'providencias_tomadas', 'notificar_responsaveis', 'notificacao_enviada_em'];
 
     protected function casts(): array
     {

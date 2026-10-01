@@ -2,7 +2,9 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Matricula;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -15,6 +17,7 @@ use UnitEnum;
 
 class Academico extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
@@ -61,5 +64,22 @@ class Academico extends Page implements HasTable
         return Matricula::query()
             ->whereIn('pessoa_id', $idsAcessiveis)
             ->with(['pessoa', 'turma', 'periodoLetivo']);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Boletins', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('📄', 'Boletins', 'Boletim escolar de cada matrícula.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['📋', 'Lista de matrículas', 'Veja aluno, turma, período letivo e situação.'],
+                ['⬇️', 'Baixar Boletim', 'Baixe o boletim em PDF pelo botão "Baixar Boletim" de cada matrícula.'],
+            ])
+            ->dica('O boletim reflete as notas lançadas até o momento.');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
+use App\Models\LeadScoreConfiguracao;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
+        LeadScoreConfiguracao::aplicar();
+
         Table::configureUsing(function (Table $table): void {
             $table
                 ->recordUrl(null)
@@ -78,6 +83,14 @@ class AppServiceProvider extends ServiceProvider
 
         Queue::after(function (JobProcessed $event) {
             Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));
+        });
+
+        // Política de senha: tamanho + complexidade sempre; verificação de vazamento
+        // (HaveIBeenPwned) só em produção, para não depender de rede em dev/testes.
+        Password::defaults(function () {
+            $rule = Password::min(10)->mixedCase()->numbers()->symbols();
+
+            return app()->environment('production') ? $rule->uncompromised() : $rule;
         });
     }
 

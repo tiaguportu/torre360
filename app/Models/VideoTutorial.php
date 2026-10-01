@@ -10,7 +10,7 @@ class VideoTutorial extends Model
 {
     protected $table = 'video_tutorial';
 
-    protected $guarded = [];
+    protected $fillable = ['titulo', 'descricao', 'categoria', 'chave_pagina', 'arquivo', 'url_externo', 'duracao_segundos', 'ordem', 'ativo'];
 
     /**
      * Chaves de página usadas para linkar um vídeo ao modal de "Ajuda" de uma
@@ -23,6 +23,9 @@ class VideoTutorial extends Model
         'rematriculas-lista' => 'Secretaria: Acompanhamento de Rematrículas',
         'cronograma-aula-lancar-frequencia' => 'Acadêmico: Lançar Frequência (Chamada)',
         'avaliacoes-notas' => 'Avaliações: Criar Avaliação / Lançar Notas em Grade',
+        'enrollment-wizard-matricula' => 'Matrículas: Assistente de Matrícula (Wizard)',
+        'solicitacao-documentos-emissao-qrcode' => 'Secretaria Digital: Emitir Documento com QR Code',
+        'usuarios-cadastro' => 'Sistema e Segurança: Cadastrar Novo Usuário',
     ];
 
     protected function casts(): array

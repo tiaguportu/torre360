@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -23,7 +24,7 @@ class Contrato extends Model
 
     protected $table = 'contrato';
 
-    protected $guarded = [];
+    protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id'];
 
     public function matricula(): BelongsTo
     {
@@ -43,6 +44,11 @@ class Contrato extends Model
     public function templateContrato(): BelongsTo
     {
         return $this->belongsTo(TemplateContrato::class);
+    }
+
+    public function rematricula(): HasOne
+    {
+        return $this->hasOne(Rematricula::class);
     }
 
     /**

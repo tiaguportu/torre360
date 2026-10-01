@@ -27,7 +27,7 @@ class LandingLead extends Model
         self::STATUS_DESCARTADO => 'Descartado',
     ];
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'email', 'whatsapp', 'mensagem', 'status'];
 
     public function scopeNovos(Builder $query): Builder
     {

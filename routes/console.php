@@ -14,3 +14,4 @@ Schedule::command('queue:work --stop-when-empty --tries=3 --max-time=50')
 Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('crm:recalcular-lead-score')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('cobranca:executar-regua')->dailyAt('08:00')->withoutOverlapping();
+Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00')->withoutOverlapping();

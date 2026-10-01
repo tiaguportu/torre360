@@ -2,17 +2,21 @@
 
 namespace App\Filament\Resources\Avaliacaos\Pages;
 
+use App\Enums\SituacaoNota;
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Services\NotaLancamentoService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -90,10 +94,19 @@ class LancarNotas extends EditRecord
                                 TextInput::make('aluno_nome')
                                     ->label('Aluno')
                                     ->disabled()
-                                    ->columnSpan(3),
+                                    ->columnSpan(2),
                                 Hidden::make('matricula_id'),
+                                Select::make('situacao')
+                                    ->label('Situação')
+                                    ->options(SituacaoNota::class)
+                                    ->placeholder('Com nota')
+                                    ->live()
+                                    ->afterStateUpdated(fn (Set $set, $state) => $state ? $set('valor', null) : null)
+                                    ->columnSpan(1),
                                 TextInput::make('valor')
                                     ->label('Nota')
+                                    ->disabled(fn (Get $get) => filled($get('situacao')))
+                                    ->dehydrated()
                                     ->numeric()
                                     ->minValue(0)
                                     ->maxValue(fn () => $this->getRecord()->nota_maxima ?? 10)
@@ -168,6 +181,7 @@ class LancarNotas extends EditRecord
             $html .= '<li><strong>Salvar Notas:</strong> Clique no botão "Salvar Notas" no topo para consolidar as notas no sistema.</li>';
         }
 
+        $html .= '<li><strong>Situação (Faltou / Não se aplica):</strong> Use quando o aluno faltou ou a avaliação não se aplica a ele. Isso encerra a pendência de lançamento sem gerar nota nem afetar a média.</li>';
         $html .= '<li><strong>Validação:</strong> Notas maiores que a pontuação máxima definida para esta avaliação não serão permitidas.</li>';
         $html .= '</ul>';
 

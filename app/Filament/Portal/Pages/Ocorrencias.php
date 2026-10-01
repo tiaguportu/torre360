@@ -2,7 +2,9 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\OcorrenciaEscolar;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\IconColumn;
@@ -15,6 +17,7 @@ use UnitEnum;
 
 class Ocorrencias extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithTable;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-exclamation-triangle';
@@ -68,5 +71,23 @@ class Ocorrencias extends Page implements HasTable
         return OcorrenciaEscolar::query()
             ->whereHas('matricula', fn (Builder $q) => $q->whereIn('pessoa_id', $idsAcessiveis))
             ->with(['matricula.pessoa', 'tipoOcorrencia']);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Ocorrências', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('📢', 'Ocorrências', 'Registros da rotina escolar do aluno.')
+            ->secao('🎯 O que você encontra aqui?', [
+                ['🕒', 'Data e hora', 'Quando a ocorrência foi registrada.'],
+                ['🏷️', 'Tipo e relato', 'O tipo da ocorrência e a descrição feita pela escola.'],
+                ['🔔', 'Notificado', 'Indica se a família já foi avisada.'],
+            ])
+            ->dica('Quer conversar sobre um registro? Abra um chamado na Central de Atendimento.');
     }
 }

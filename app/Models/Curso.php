@@ -12,7 +12,7 @@ class Curso extends Model
 {
     protected $table = 'curso';
 
-    protected $guarded = [];
+    protected $fillable = ['unidade_id', 'nome_externo', 'nome_interno', 'portaria', 'data_final', 'minutos_por_periodo', 'cor'];
 
     public function getNomeAttribute(): string
     {

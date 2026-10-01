@@ -50,9 +50,12 @@ class PessoaImporter extends Importer
     public function resolveRecord(): Pessoa
     {
         if ($this->data['id'] ?? null) {
-            return Pessoa::firstOrNew([
-                'id' => $this->data['id'],
-            ]);
+            // 'id' não é mass-assignable; find-or-new manual preserva o comportamento
+            // de reimportar/atualizar uma pessoa por ID explícito do CSV.
+            $pessoa = Pessoa::find((int) $this->data['id']) ?? new Pessoa;
+            $pessoa->id = (int) $this->data['id'];
+
+            return $pessoa;
         }
 
         return new Pessoa;

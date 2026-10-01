@@ -47,13 +47,14 @@ return [
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 
     'assinafy' => [
         'url' => env('ASSINAFY_API_URL', 'https://sandbox.assinafy.com.br/v1'),
         'key' => env('ASSINAFY_API_KEY'),
         'account_id' => env('ASSINAFY_ACCOUNT_ID'),
+        'webhook_secret' => env('ASSINAFY_WEBHOOK_SECRET'),
     ],
 
     'google_analytics' => [

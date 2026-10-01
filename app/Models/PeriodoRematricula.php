@@ -14,7 +14,7 @@ class PeriodoRematricula extends Model
 
     protected $table = 'periodo_rematriculas';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'periodo_letivo_origem_id', 'periodo_letivo_destino_id', 'template_contrato_id', 'data_inicio', 'data_fim', 'is_ativo', 'mensagem_orientacao', 'valor_taxa', 'quantidade_parcelas_padrao', 'valor_entrada_padrao'];
 
     public function periodoLetivoOrigem(): BelongsTo
     {
@@ -54,6 +54,8 @@ class PeriodoRematricula extends Model
             'data_fim' => 'date',
             'is_ativo' => 'boolean',
             'valor_taxa' => 'decimal:2',
+            'quantidade_parcelas_padrao' => 'integer',
+            'valor_entrada_padrao' => 'decimal:2',
         ];
     }
 }

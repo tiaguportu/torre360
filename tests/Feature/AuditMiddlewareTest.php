@@ -143,16 +143,22 @@ class AuditMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function nao_deve_registrar_activity_log_para_outras_roles()
+    public function deve_registrar_activity_log_com_nome_da_role_para_outras_roles()
     {
-        $user = $this->createMock(User::class);
+        $user = $this->createPartialMock(User::class, ['hasRole']);
         $user->method('hasRole')->willReturn(false);
         $user->id = 1;
+        // Role fora das conhecidas: o middleware usa o nome da primeira role como rótulo
+        $user->setRelation('roles', collect([(object) ['name' => 'financeiro']]));
 
-        // O logger não deve receber nenhuma chamada de log
         $activityLogger = $this->mock(ActivityLogger::class);
         $activityLogger->shouldIgnoreMissing();
-        $activityLogger->shouldNotReceive('log');
+        $activityLogger->shouldReceive('withProperties')->once()->andReturnSelf();
+        $activityLogger->shouldReceive('log')
+            ->once()
+            ->with($this->callback(function ($message) {
+                return str_contains($message, 'Financeiro visualizou recurso: Test-Route-Audit');
+            }));
 
         $response = $this->actingAs($user)->get('/test-route-audit');
 

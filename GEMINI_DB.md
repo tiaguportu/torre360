@@ -226,7 +226,20 @@ Estrutura de ensino e turmas.
 
 ### `nota`
 - **Representa:** Notas individuais dos alunos em cada avaliação.
+- **Campos Principais:** `avaliacao_id`, `matricula_id`, `valor` (nullable), `situacao` (nullable, Enum `SituacaoNota`: `faltou`, `nao_se_aplica`).
+- **Situação (justificativa de ausência de nota):** Para avaliações aplicadas só a alunos específicos ou quando o aluno faltou, a nota é gravada com `valor = null` e `situacao` preenchida. Esse registro conta como **resolvido** em `Avaliacao::scopePendentes()`, `tem_pendencia` e `notas_pendentes_count` (resolvida = `valor` não nulo **ou** `situacao` não nula), mas **não entra em médias**, pois boletim e fechamento de ciclo consideram apenas `valor` não nulo. `situacao` e `valor` são mutuamente exclusivos (o serviço `NotaLancamentoService` zera um ao gravar o outro).
 - **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula` (Aluno).
+
+### `periodo_letivo` (colunas de fechamento do ciclo)
+- **Campos de corte:** `nota_aprovacao` (padrão 7.00), `nota_recuperacao_minima` (padrão 5.00) — usados por `FechamentoCicloService::classificarSituacao()`.
+- **Campos de recuperação/exame final:** `recuperacao_por_etapa` (boolean, padrão `false` — liga o modo "recuperação por etapa" em vez do modo anual, ver `situacao_final_disciplina` abaixo), `exame_final_habilitado` (boolean, padrão `false`), `nota_aprovacao_pos_exame` (decimal, padrão 5.00 — nota de corte após o exame final).
+
+### `situacao_final_disciplina`
+- **Representa:** Situação final (Aprovado/Recuperação/Reprovado) de uma matrícula numa disciplina, gerada pelo Fechamento do Ciclo Letivo (`FechamentoCicloService::fecharPeriodoLetivo()`). Um registro por `(matricula_id, disciplina_id, periodo_letivo_id)` — recalcular substitui o anterior.
+- **Campos Principais:** `matricula_id`, `disciplina_id`, `periodo_letivo_id`, `media_final` (nullable), `situacao` (Enum `SituacaoFinal`: aprovado/recuperacao/reprovado), `calculado_em`.
+- **Campos de exame final:** `nota_exame_final`, `media_final_pos_exame` (= média simples entre `media_final` e `nota_exame_final`), `situacao_final_pos_exame` (Enum `SituacaoFinal`, só aprovado/reprovado). Lançados via `FechamentoCicloService::registrarExameFinal()`, só permitido quando `situacao` é `recuperacao` e o período letivo tem `exame_final_habilitado`. Um recálculo do fechamento apaga esses três campos se a situação deixar de ser `recuperacao`, e preserva se continuar sendo.
+- **Recuperação anual vs. por etapa:** controlado por `periodo_letivo.recuperacao_por_etapa`. No modo anual (padrão), todas as avaliações de `categoria_avaliacao.eh_recuperacao=true` do período são somadas num único valor que substitui só a menor média de etapa. No modo por etapa, cada avaliação de recuperação (via seu próprio `etapa_avaliativa_id`) só substitui a média daquela mesma etapa, de forma independente.
+- **Relacionamentos:** BelongsTo `matricula`, `disciplina`, `periodoLetivo`.
 
 ### `campo_experiencias`
 - **Representa:** Categorias da BNCC para Educação Infantil (ex: "O eu, o outro e o nós").
@@ -298,7 +311,8 @@ Estrutura de ensino e turmas.
     - `contrato_id`: FK `contrato`.
     - `vencimento`: Data de vencimento da fatura.
     - `status`: Enum (`App\Enums\StatusFatura`). Estados: `pendente` (amarelo), `pago` (verde), `atrasado` (vermelho), `cancelado` (cinza), `parcial` (azul - pago parcialmente).
-    - `pix_copia_e_cola`: Código ou chave PIX para pagamento.
+    - `pix_copia_e_cola`: Código ou chave PIX para pagamento (herdado da antiga `titulos`; desde a Onda 6, preenchido de verdade por `GatewayPagamento::criarCobranca()`, não mais um texto fixo).
+    - `gateway`, `gateway_id` (único), `status_gateway`, `linha_digitavel`, `boleto_url`, `link_pagamento`: campos da Onda 6 — dados da cobrança gerada no gateway configurado (`config('pagamentos.driver')`). `gateway_id` é o que o webhook de pagamento usa para localizar a fatura.
 - **Lógica de Negócio e Atributos Computados (Model `Fatura`):**
     - `valor_bruto`: Soma total dos itens sem descontos.
     - `valor`: Valor total líquido com descontos aplicados (absolutos ou percentuais).
@@ -321,6 +335,13 @@ Estrutura de ensino e turmas.
     - `conciliado`: Boolean que indica se a movimentação foi confirmada no extrato.
     - `external_id`: Identificador da transação no banco/OFX.
 - **Relacionamentos:** BelongsTo `banco`, BelongsTo `fatura`, BelongsTo `planoConta`, BelongsTo `centroCusto`, BelongsTo `fornecedor`.
+- **Conciliação automática (Onda 6):** `ConciliacaoBancariaService::conciliarCreditosComFaturas()` casa entradas ainda sem `fatura_id` com uma fatura em aberto, por identificador na descrição ou por valor + janela de data em torno do vencimento — só concilia automaticamente quando há exatamente uma candidata.
+
+### `conta_pagars`
+- **Representa:** Contas a pagar da instituição (Onda 6) — complementa `transacao_bancarias` (que registra o movimento já realizado) com o lado de obrigação futura/pendente.
+- **Campos Principais:** `descricao`, `valor`, `vencimento`, `status` (Enum `App\Enums\StatusContaPagar`: pendente/pago/atrasado/cancelado), `data_pagamento` (nullable), `fornecedor_id`/`plano_conta_id`/`centro_custo_id` (nullable), `transacao_bancaria_id` (nullable, preenchido ao dar baixa), `observacao`.
+- **Relacionamentos:** BelongsTo `fornecedor`, `planoConta`, `centroCusto`, `transacaoBancaria`.
+- **Atualização automática:** comando `financeiro:atualizar-contas-pagar-atrasadas` (diário, 07:00) marca como `atrasado` as contas `pendente` com vencimento passado.
 
 ### `regua_cobrancas`
 - **Representa:** Definição das etapas e regras automatizadas de notificação preventiva e cobrança de inadimplência escolar.
@@ -356,6 +377,7 @@ Estrutura de ensino e turmas.
 ### `interessado`
 - **Representa:** Leads para novos alunos.
 - **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Convite de Matrícula Online (Onda 7):** `token_convite` (string nullable, único), `token_convite_expira_em` (datetime nullable), `token_convite_usado_em` (datetime nullable). Gerado por `ConviteMatriculaService::gerarConvite()`; `Interessado::conviteValido()` verifica existência + validade + não-uso. Rota pública `/quero-matricular/convite/{token}`.
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
     - BelongsTo `status_interessado`.
@@ -577,6 +599,7 @@ Estrutura de ensino e turmas.
   - `exige_autenticidade`: Boolean indicando se o documento deve receber código hash verificador e QR Code de autenticidade pública.
   - `ativo`: Flag booleana indicando disponibilidade do template.
 - **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+- **Macro `{{TABELA_HISTORICO}}`** (usada no tipo `historico_escolar`): desde a Onda 5, `DocumentoService::gerarTabelaHistoricoHtml()` busca a situação final real (`situacao_final_disciplina`) de todas as matrículas do aluno, uma tabela por ano/período letivo, já refletindo o resultado do exame final quando houver (`docs/recuperacao_etapa_exame_final.md`). Antes disso, a macro só mostrava as disciplinas da turma atual com situação fixa "Regular".
 
 ### `solicitacao_documentos`
 - **Representa:** Requerimento e emissão de declarações ou documentos oficiais solicitados por pais/responsáveis ou emitidos pela secretaria.
@@ -594,32 +617,30 @@ Estrutura de ensino e turmas.
 - **Relacionamentos:** BelongsTo `Pessoa` (aluno e solicitante), BelongsTo `TemplateDocumento`, BelongsTo `Matricula`, BelongsTo `User` (emitidoPor).
 
 ### `periodo_rematriculas`
-- **Representa:** Campanhas anuais ou semestrais de rematrícula online para as famílias.
+- **Representa:** Campanhas de rematrícula online para as famílias.
 - **Campos Principais:**
-  - `periodo_letivo_origem_id`: FK `periodo_letivo.id` (ano/semestre letivo corrente).
-  - `periodo_letivo_destino_id`: FK `periodo_letivo.id` (ano/semestre letivo de destino para renovação).
-  - `titulo`: Nome da campanha (ex: Rematrícula Online 2027).
-  - `data_inicio`, `data_fim`: Período de vigência em que o formulário fica aberto no Portal da Família.
-  - `instrucoes`: Texto explicativo e orientações exibidas no portal.
-  - `permite_inadimplentes`: Booleano para trava financeira (se `false`, bloqueia rematrícula para quem tiver mensalidades pendentes).
-  - `ativo`: Booleano que define a campanha em andamento.
-- **Relacionamentos:** BelongsTo `PeriodoLetivo` (origem e destino), HasMany `Rematricula`.
+  - `nome`: Nome da campanha (ex: Rematrícula 2027).
+  - `periodo_letivo_origem_id`, `periodo_letivo_destino_id`: FK `periodo_letivo` (ano/semestre atual e o de destino da renovação).
+  - `template_contrato_id`: FK `template_contratos` (nullable) — modelo usado para gerar o novo contrato; sem ele, a rematrícula só cria a nova Matrícula, sem Contrato/faturas.
+  - `valor_taxa`: Valor total do novo contrato gerado.
+  - `quantidade_parcelas_padrao` (padrão 12), `valor_entrada_padrao` (padrão 0) — Onda 7: usados por `GeracaoFaturasContratoService` para gerar a cobrança automaticamente ao efetivar.
+  - `data_inicio`, `data_fim`, `is_ativo`: vigência da campanha no Portal (`PeriodoRematricula::isAberto()`).
+  - `mensagem_orientacao`: texto livre exibido à família no Portal.
+- **Relacionamentos:** BelongsTo `periodoLetivoOrigem`/`periodoLetivoDestino` (`PeriodoLetivo`), BelongsTo `templateContrato`, HasMany `rematriculas`.
 
 ### `rematriculas`
-- **Representa:** O registro da manifestação de renovação/rematrícula de um aluno.
+- **Representa:** O processo de rematrícula de um aluno dentro de uma campanha.
 - **Campos Principais:**
-  - `periodo_rematricula_id`: FK `periodo_rematriculas.id`.
-  - `matricula_origem_id`: FK `matricula.id` (matrícula que está sendo renovada).
-  - `matricula_gerada_id`: FK `matricula.id` (nova matrícula gerada no período subsequente após aprovação/efetivação).
-  - `responsavel_financeiro_id`: FK `pessoa.id`.
-  - `serie_pretendida_id`: FK `serie.id`.
-  - `turno_pretendido_id`: FK `turno.id`.
-  - `status`: Enum `StatusRematricula` (`pendente`, `confirmada_responsavel`, `aprovada_secretaria`, `rejeitada`, `efetivada`).
-  - `data_confirmacao`: Data e hora em que a família enviou a confirmação pelo Portal.
-  - `ip_confirmacao`: Endereço IP do responsável para rastreabilidade de assinatura.
-  - `observacoes`: Observações pedagógicas ou observações da família.
-  - `contrato_gerado_id`: FK `contrato.id` (novo contrato financeiro formalizado na rematrícula).
-- **Relacionamentos:** BelongsTo `PeriodoRematricula`, BelongsTo `Matricula` (origem e gerada), BelongsTo `Pessoa` (responsável financeiro), BelongsTo `Serie`, BelongsTo `Turno`, BelongsTo `Contrato`.
+  - `periodo_rematricula_id`: FK `periodo_rematriculas`.
+  - `matricula_origem_id`: FK `matricula` (matrícula do ano corrente sendo renovada).
+  - `turma_destino_id` (nullable), `serie_destino_id` (nullable), `turno_pretendido_id` (nullable): preferências informadas pela família; se não houver turma específica, o sistema tenta achar uma pela série+turno no período de destino.
+  - `solicitante_user_id`: FK `users` (quem confirmou os dados pelo Portal).
+  - `status`: Enum `StatusRematricula`: `iniciada` → `dados_confirmados` → `aguardando_assinatura` (Onda 7: quando o contrato foi enviado ao Assinafy) → `confirmada` (Onda 7: só quando o contrato é efetivamente assinado — ver webhook do Assinafy) — ou `cancelada`.
+  - `contrato_id`: FK `contrato` (nullable, o novo contrato gerado).
+  - `nova_matricula_id`: FK `matricula` (nullable, a matrícula criada no período de destino).
+  - `observacoes`, `data_confirmacao`.
+- **Relacionamentos:** BelongsTo `periodoRematricula`, `matriculaOrigem`/`novaMatricula` (`Matricula`), `turmaDestino` (`Turma`), `serieDestino` (`Serie`), `turnoPretendido` (`Turno`), `solicitante` (`User`), `contrato` (`Contrato`).
+- **Fluxo completo (Onda 7):** `RematriculaService::efetivar()` cria a nova Matrícula e o Contrato (com `data_aceite = hoje`), gera as faturas via `GeracaoFaturasContratoService`, e envia o contrato para assinatura via `AssinafyService::enviarContrato()`. `AssinafyService::handleWebhook()` identifica o contrato pela nova relação `Contrato::rematricula()` e, ao receber a confirmação de assinatura, marca a `Rematricula` como `confirmada`.
 
 ---
 
@@ -759,6 +780,11 @@ Estrutura de ensino e turmas.
 
 ## 16. Central de Ajuda — Vídeos Tutoriais
 
+### `lead_score_configuracao`
+- **Representa:** Personalização dos pesos/faixas do Lead Score feita na tela "Pesos do Lead Score" (sobrescreve `config/lead_score.php`).
+- **Campos Principais:** `valores` (JSON com as chaves de `config/lead_score.php` alteradas), `atualizado_por` (FK `users`, nullable).
+- **Relacionamentos:** BelongsTo `users` (`atualizadoPor`). Vale a linha mais recente; sem linhas, valem os padrões do arquivo.
+
 ### `video_tutorial`
 - **Representa:** Vídeos curtos de treinamento exibidos na Central de Ajuda (`/admin/video-tutorials`) e, opcionalmente, dentro do modal de "Ajuda" de uma tela específica.
 - **Campos Principais:**
@@ -774,3 +800,89 @@ Estrutura de ensino e turmas.
 - **Sem relacionamentos com outras tabelas** — é uma entidade independente, apenas linkada a telas do Filament via `chave_pagina` (string), não por FK.
 - **Acessores do Model:** `arquivo_url` (URL pública via `Storage::disk('public')`), `url_embed` (converte link do YouTube/Vimeo para URL de embed em iframe), `url_assistir` (`arquivo_url` ?? `url_externo`), `duracao_formatada` (ex: "1min 27s").
 - **Seeder:** `VideoTutorialSeeder` (não roda no `DatabaseSeeder` principal — é chamado sob demanda com `php artisan db:seed --class=VideoTutorialSeeder`, copiando os arquivos de vídeo para o disco `public` e criando os registros via `updateOrCreate` por `chave_pagina`).
+
+---
+
+## 17. Histórico Escolar Oficial Multi-Ano
+
+### `historico_escolars`
+- **Representa:** O cabeçalho e os metadados do Histórico Escolar Oficial de um estudante para uma determinada etapa/curso da Educação Básica (Ensino Fundamental ou Ensino Médio).
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Aluno).
+  - `curso_id`: FK `curso` (nullable — ex: Ensino Fundamental, Ensino Médio).
+  - `unidade_id`: FK `unidade` (Unidade escolar expedidora).
+  - `codigo_autenticidade`: Token hash criptográfico único (ex: `HIST-2026-ABCD-1234`) para conferência pública e QR Code.
+  - `situacao`: String/Enum (`em_curso`, `concluido`, `transferido`).
+  - `data_conclusao`: Data de término do ciclo/formatura (nullable).
+  - `data_emissao`: Data em que o documento oficial foi expedido.
+  - `titulo_certificacao`: Título do termo de conclusão (ex: "Certificado de Conclusão do Ensino Fundamental").
+  - `texto_certificacao`: Texto legal formal atestando a conclusão com base na LDB 9.394/96.
+  - `observacoes`: Amparo legal, observações de aproveitamento, convalidações ou transferências.
+  - `emitido_por_user_id`: FK `users` (operador que lavrou o documento).
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `Curso`, BelongsTo `Unidade`, BelongsTo `User` (`emitidoPor`), HasMany `anos` (`HistoricoEscolarAno`).
+
+### `historico_escolar_anos`
+- **Representa:** Cada coluna/série na matriz curricular do histórico escolar (cada ano letivo cursado pelo estudante, no Torre360 ou em outras instituições de ensino anteriores).
+- **Campos Principais:**
+  - `historico_escolar_id`: FK `historico_escolars`.
+  - `matricula_id`: FK `matricula` (nullable — vinculada à matrícula interna caso cursada no Torre360).
+  - `ano_letivo`: Ano civil do período letivo (ex: 2023, 2024, 2025).
+  - `serie_id`: FK `serie` (nullable).
+  - `serie_nome`: Nome amigável da série/ano (ex: "6º Ano", "1ª Série EM").
+  - `ordem`: Sequência numérica para ordenação da esquerda para a direita na matriz tabular.
+  - `tipo`: String (`interno` para cursado no Torre360, `externo` para cursado em outra escola antes da transferência).
+  - `escola_nome`: Nome do estabelecimento de ensino onde o ano foi cursado.
+  - `escola_cidade`, `escola_uf`: Município e Estado da instituição.
+  - `dias_letivos`: Total de dias letivos (padrão: 200).
+  - `carga_horaria_total`: Carga horária total cumprida no ano letivo (em horas).
+  - `frequencia_percentual`: Taxa percentual de frequência global no ano (ex: 98.50).
+  - `situacao_ano`: Resultado final do ano letivo (`Aprovado`, `Reprovado`, `Classificado`, `Transferido`, `Cursando`).
+  - `observacoes`: Anotações ou ressalvas específicas do ano escolar.
+- **Relacionamentos:** BelongsTo `HistoricoEscolar`, BelongsTo `Matricula`, BelongsTo `Serie`, HasMany `disciplinas` (`HistoricoEscolarDisciplina`).
+
+### `historico_escolar_disciplinas`
+- **Representa:** As notas e cargas horárias dos componentes curriculares obtidas pelo estudante em cada ano/série do histórico escolar.
+- **Campos Principais:**
+  - `historico_escolar_ano_id`: FK `historico_escolar_anos`.
+  - `disciplina_id`: FK `disciplina` (nullable).
+  - `disciplina_nome`: Nome do componente curricular (ex: "Língua Portuguesa", "Matemática", "História").
+  - `area_conhecimento`: Área do conhecimento conforme a BNCC (ex: "Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas", "Parte Diversificada").
+  - `carga_horaria`: Carga horária anual da disciplina (em horas).
+  - `nota_final`: Média final obtida no ano (decimal:2).
+  - `conceito`: Conceito avaliativo alternativo quando a avaliação não for puramente numérica.
+  - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`).
+  - `ordem`: Sequência de ordenação vertical.
+- **Relacionamentos:** BelongsTo `ano` (`HistoricoEscolarAno`), BelongsTo `disciplina` (`Disciplina`).
+
+---
+
+## 18. Secretaria Digital e Auto-Atendimento de Declarações Oficiais
+
+### `template_documentos`
+- **Representa:** Modelos e templates oficiais de declarações, certidões e atestados emitidos pela escola, com suporte a variáveis dinâmicas e macros de preenchimento.
+- **Campos Principais:**
+  - `nome`: Nome do modelo (ex: "Declaração de Matrícula Regular", "Declaração de Frequência Escolar", "Declaração para Passe Escolar e Transporte", "Declaração de Quitação de Débitos").
+  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_conclusao`, `declaracao_transferencia`, `declaracao_transporte`, `declaracao_horario`, `historico_escolar`, `personalizado`).
+  - `descricao`: Finalidade descritiva apresentada nos cartões do Portal.
+  - `conteudo`: HTML com macros dinâmicas (`{{ALUNO_NOME}}`, `{{ALUNO_CPF}}`, `{{HORARIO_AULAS}}`, `{{PROTOCOLO}}`, etc.).
+  - `validade_dias`: Prazo padrão em dias de validade do documento emitido (ex: 30, 60, 90).
+  - `is_ativo`: Booleano para disponibilizar no auto-atendimento.
+- **Relacionamentos:** HasMany `SolicitacaoDocumento`.
+
+### `solicitacao_documentos`
+- **Representa:** Registros de emissões e certidões oficiais geradas com código de verificação rastreável e QR Code.
+- **Campos Principais:**
+  - `protocolo`: Número identificador único formatado (ex: `DOC-2026-000001`).
+  - `codigo_verificacao`: Token hash criptográfico de validação pública anti-raspagem LGPD (ex: `TR36-XXXX-XXXX-XXXX`).
+  - `matricula_id`: FK `matricula.id` (estudante titular do documento).
+  - `template_documento_id`: FK `template_documentos.id`.
+  - `solicitado_por_user_id`: FK `users.id` (usuário que solicitou via Portal ou equipe escolar).
+  - `atendido_por_user_id`: FK `users.id` (em caso de atendimento ou despacho manual).
+  - `status`: Enum `StatusSolicitacaoDocumento` (`solicitado`, `em_processamento`, `disponivel`, `rejeitado`).
+  - `arquivo_path`: Caminho no storage privado do PDF timbrado gerado (`documentos_emitidos/DOC-2026-XXXXXX.pdf`).
+  - `observacao_solicitante`: Texto de finalidade ou observação informado pela família.
+  - `justificativa_recusa`: Motivo caso o pedido seja rejeitado.
+  - `data_solicitacao`: Data/hora do requerimento.
+  - `data_emissao`: Data/hora em que o PDF oficial com QR Code foi processado e assinado.
+  - `data_validade`: Data limite de validade jurídica do documento.
+- **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `TemplateDocumento`, BelongsTo `User` (`solicitadoPor`), BelongsTo `User` (`atendidoPor`).

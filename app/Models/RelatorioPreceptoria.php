@@ -13,7 +13,7 @@ class RelatorioPreceptoria extends Model
 
     protected $table = 'relatorio_preceptoria';
 
-    protected $guarded = [];
+    protected $fillable = ['preceptoria_id', 'tipo', 'corpo', 'publico'];
 
     public function casts(): array
     {

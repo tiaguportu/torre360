@@ -2,6 +2,8 @@
 .DS_Store
 .env
 .env.backup
+.env.backup_realbkp
+.env.demo
 .env.production
 .phpactor.json
 .phpunit.result.cache
@@ -30,3 +32,8 @@ Thumbs.db
 
 # Firebase
 /storage/app/firebase-credentials.json
+
+# Backups de banco locais
+backup_banco_*/
+*.sql
+

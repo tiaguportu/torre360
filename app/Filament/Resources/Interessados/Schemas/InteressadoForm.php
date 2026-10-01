@@ -12,7 +12,6 @@ use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -24,7 +23,9 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 
 class InteressadoForm
 {
@@ -89,27 +90,17 @@ class InteressadoForm
 
                                 // Resumo Visual (somente na edição)
                                 Section::make('Resumo do Lead')
+                                    ->icon('heroicon-o-chart-bar')
                                     ->schema([
-                                        Placeholder::make('dias_funil')
-                                            ->label('Dias no Funil')
-                                            ->content(fn (Interessado $record): string => $record->diasNoFunil().' dias'),
-                                        Placeholder::make('total_contatos')
-                                            ->label('Total de Contatos')
-                                            ->content(fn (Interessado $record): string => $record->totalContatos().' contato(s)'),
-                                        Placeholder::make('lead_score')
-                                            ->label('Lead Score (automático)')
-                                            ->content(fn (Interessado $record): string => $record->lead_score !== null
-                                                ? "{$record->lead_score} / 100"
-                                                : 'Ainda não calculado'),
-                                        Placeholder::make('lead_score_detalhamento')
-                                            ->label('Detalhamento do Score')
-                                            ->columnSpanFull()
-                                            ->content(fn (Interessado $record): string => collect(LeadScoreService::detalhar($record))
-                                                ->map(fn (array $fator) => "{$fator['fator']}: {$fator['pontos']}/{$fator['maximo']}")
-                                                ->implode(' · ')),
+                                        View::make('filament.resources.interessados.resumo-lead')
+                                            ->viewData(fn (?Interessado $record): array => [
+                                                'record' => $record,
+                                                'fatores' => $record ? LeadScoreService::detalhar($record) : [],
+                                            ])
+                                            ->columnSpanFull(),
                                     ])
-                                    ->columns(3)
                                     ->collapsible()
+                                    ->columnSpanFull()
                                     ->visible(fn (?Interessado $record) => $record !== null),
 
                                 Select::make('pessoa_id')
@@ -140,6 +131,10 @@ class InteressadoForm
                                 TextInput::make('pessoa_telefone')
                                     ->label('Telefone')
                                     ->tel()
+                                    ->placeholder('(11) 98888-7777')
+                                    ->mask(RawJs::make(<<<'JS'
+                                        $input.replace(/\D/g, '').length > 10 ? '(99) 99999-9999' : '(99) 9999-99999'
+                                        JS))
                                     ->maxLength(20)
                                     ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone)),
 
@@ -181,7 +176,7 @@ class InteressadoForm
                                         'frio' => '🔵 Frio',
                                     ])
                                     ->native(false)
-                                    ->helperText('Avaliação manual e subjetiva do consultor. Não é calculada automaticamente — use o "Lead Score" no resumo para o indicador automático.'),
+                                    ->helperText('Avaliação manual do consultor. Não é calculada automaticamente, mas entra no "Lead Score" com o maior peso.'),
 
                                 Select::make('faixa_distancia_escola')
                                     ->label('Distância até a Escola')

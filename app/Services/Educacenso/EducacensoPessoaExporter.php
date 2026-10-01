@@ -25,8 +25,8 @@ class EducacensoPessoaExporter
                 'enderecos.cidade.estado',
                 'responsaveis.pivot.tipoVinculo',
                 'necessidadesEducacaoEspecial.categoria',
-                'transtornosAprendizagem',
-                'recursosAcessibilidade',
+                'transtornosAprendizagem.categoria',
+                'recursosAcessibilidade.categoria',
                 'matriculas.turma.serie.curso.unidade.instituicaoEnsino',
                 'unidadesRepresentadas.instituicaoEnsino',
             ]);
@@ -247,7 +247,7 @@ class EducacensoPessoaExporter
 
         // 18 a 28. Tipos de Deficiência (0 ou 1 quando f17==1, senão nulo)
         if ($f17 === '1') {
-            $necNames = mb_strtolower($pessoa->necessidadesEducacaoEspecial?->pluck('nome')->implode(' ') ?? '');
+            $necNames = mb_strtolower($pessoa->necessidadesEducacaoEspecial?->pluck('categoria.nome')->implode(' ') ?? '');
             $f18 = str_contains($necNames, 'cegueira') ? '1' : '0';
             $f19 = str_contains($necNames, 'baixa visão') ? '1' : '0';
             $f20 = str_contains($necNames, 'monocular') ? '1' : '0';
@@ -276,7 +276,7 @@ class EducacensoPessoaExporter
 
         // 30 a 35. Tipos de Transtorno (0 ou 1 quando f29==1, senão nulo)
         if ($f29 === '1') {
-            $traNames = mb_strtolower($pessoa->transtornosAprendizagem?->pluck('nome')->implode(' ') ?? '');
+            $traNames = mb_strtolower($pessoa->transtornosAprendizagem?->pluck('categoria.nome')->implode(' ') ?? '');
             $f30 = str_contains($traNames, 'discalculia') ? '1' : '0';
             $f31 = str_contains($traNames, 'disgrafia') ? '1' : '0';
             $f32 = str_contains($traNames, 'dislalia') ? '1' : '0';
@@ -289,7 +289,7 @@ class EducacensoPessoaExporter
 
         // 36 a 49. Recursos de Acessibilidade em Avaliações do INEP (0 ou 1 quando f17==1 ou f29==1 E houver vínculo no reg 60, senão nulo)
         if (($f17 === '1' || $f29 === '1') && $temVinculoRegistro60) {
-            $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('nome')->implode(' ') ?? '');
+            $recNames = mb_strtolower($pessoa->recursosAcessibilidade?->pluck('categoria.nome')->implode(' ') ?? '');
             $f36 = str_contains($recNames, 'ledor') ? '1' : '0';
             $f37 = str_contains($recNames, 'transcrição') ? '1' : '0';
             $f38 = str_contains($recNames, 'guia') ? '1' : '0';

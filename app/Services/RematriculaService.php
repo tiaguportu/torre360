@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
 
 class RematriculaService
 {
+    public function __construct(
+        private GeracaoFaturasContratoService $geracaoFaturasService,
+        private AssinafyService $assinafyService,
+    ) {}
+
     /**
      * Retorna o período de rematrícula aberto no momento (se houver).
      */
@@ -99,6 +104,7 @@ class RematriculaService
                 'matricula_id' => $novaMatricula->id,
                 'template_contrato_id' => $periodo->template_contrato_id,
                 'valor_total' => $periodo->valor_taxa ?? 0,
+                'data_aceite' => now()->toDateString(),
             ]);
 
             // Copia responsáveis financeiros do contrato anterior se existirem
@@ -113,11 +119,32 @@ class RematriculaService
             }
 
             $rematricula->contrato_id = $contrato->id;
+
+            // Gera a cobrança automaticamente (entrada + parcelas configuradas na campanha de rematrícula)
+            if ((float) $contrato->valor_total > 0) {
+                $this->geracaoFaturasService->gerar(
+                    $contrato,
+                    $periodo->quantidade_parcelas_padrao,
+                    (float) $periodo->valor_entrada_padrao
+                );
+            }
+
+            // Envia o contrato para assinatura digital; a rematrícula só é dada como
+            // Confirmada quando o webhook do Assinafy avisar que foi assinado
+            // (ver AssinafyService::handleWebhook()). Se o envio falhar (ex.: Assinafy
+            // não configurado), a rematrícula fica em DadosConfirmados para a secretaria
+            // resolver manualmente — não trava o processo da família.
+            $envio = $this->assinafyService->enviarContrato($contrato);
+
+            $rematricula->status = ($envio['success'] ?? false)
+                ? StatusRematricula::AguardandoAssinatura
+                : StatusRematricula::DadosConfirmados;
+        } else {
+            $rematricula->status = StatusRematricula::Confirmada;
+            $rematricula->data_confirmacao = now();
         }
 
         $rematricula->nova_matricula_id = $novaMatricula->id;
-        $rematricula->status = StatusRematricula::Confirmada;
-        $rematricula->data_confirmacao = now();
         $rematricula->save();
 
         return $novaMatricula;

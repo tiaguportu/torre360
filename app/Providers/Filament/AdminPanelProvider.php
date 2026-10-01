@@ -5,7 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Auth\CustomRequestPasswordReset;
-use App\Filament\Pages\Auth\Register;
+use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\AuditMiddleware;
 use App\Http\Middleware\EnsureActiveRole;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -15,7 +15,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -37,7 +36,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Torre360 Gestão Escolar')
             ->login(CustomLogin::class)
-            ->registration(Register::class)
             ->passwordReset(CustomRequestPasswordReset::class)
             ->emailVerification()
             ->profile(ChangePassword::class)
@@ -97,10 +95,6 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => view('filament.hooks.assistant-chat')->render(),
             )
             ->renderHook(
-                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn (): string => view('filament.hooks.register-link')->render(),
-            )
-            ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => '
                     <style>
@@ -110,6 +104,26 @@ class AdminPanelProvider extends PanelProvider
                             display: none !important; 
                         }
                     </style>
+                    <script>
+                        // Rede de segurança: o x-trap.noscroll do Alpine trava o scroll (overflow:hidden no <html>)
+                        // e às vezes não libera quando o modal some durante um re-render/navegação do Livewire.
+                        (() => {
+                            const destravar = () => {
+                                if (document.querySelector(".fi-modal-open")) return;
+                                const html = document.documentElement;
+                                if (html.style.overflow === "hidden") {
+                                    html.style.overflow = "";
+                                    html.style.paddingRight = "";
+                                }
+                                if (document.body.style.overflow === "hidden") document.body.style.overflow = "";
+                            };
+                            document.addEventListener("livewire:navigated", destravar);
+                            document.addEventListener("DOMContentLoaded", () => {
+                                new MutationObserver(() => setTimeout(destravar, 400))
+                                    .observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+                            });
+                        })();
+                    </script>
                     <link rel="stylesheet" href="'.asset('css/filament/admin/theme.css').'">
                     <link rel="manifest" href="/manifest.json">
                     <meta name="apple-mobile-web-app-capable" content="yes">

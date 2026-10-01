@@ -10,6 +10,7 @@
                                 <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Disciplina</th>
                                 <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Média Final</th>
                                 <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Situação</th>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Exame Final</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 dark:bg-white/5 dark:divide-white/10">
@@ -27,6 +28,17 @@
                                             </x-filament::badge>
                                         @else
                                             <span class="text-gray-400">Sem dados</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        @if($registro->situacao_final_pos_exame)
+                                            <x-filament::badge :color="$registro->situacao_final_pos_exame->getColor()">
+                                                {{ $registro->situacao_final_pos_exame->getLabel() }} ({{ number_format((float) $registro->media_final_pos_exame, 2, ',', '.') }})
+                                            </x-filament::badge>
+                                        @elseif($periodoLetivoSelecionado?->exame_final_habilitado && $registro->situacao?->value === 'recuperacao')
+                                            {{ ($lancarExameFinalAction)(['registro_id' => $registro->id]) }}
+                                        @else
+                                            <span class="text-gray-400">—</span>
                                         @endif
                                     </td>
                                 </tr>

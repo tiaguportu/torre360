@@ -2,10 +2,12 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Portal\Concerns\InteractsWithMatriculaSelecionada;
 use App\Models\CronogramaAula;
 use App\Models\FrequenciaEscolar;
 use App\Services\FrequenciaAlunoService;
+use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
@@ -21,6 +23,7 @@ use UnitEnum;
  */
 class Frequencia extends Page implements HasTable
 {
+    use HasAjudaAction;
     use InteractsWithMatriculaSelecionada;
     use InteractsWithTable;
 
@@ -106,5 +109,23 @@ class Frequencia extends Page implements HasTable
             ->selectRaw("{$aulas}.data as aula_data")
             ->selectRaw("{$aulas}.hora_inicio as aula_hora_inicio")
             ->with('cronogramaAula.disciplina');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Frequência', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('✅', 'Frequência', 'Presenças e faltas do aluno.')
+            ->secao('🎯 O que você pode fazer?', [
+                ['📊', 'Resumo', 'Veja o panorama geral de presenças e faltas.'],
+                ['📋', 'Lista de aulas', 'Consulte data, disciplina, horário e situação de cada aula.'],
+                ['🔎', 'Filtros', 'Filtre por situação ou por disciplina.'],
+            ])
+            ->dica('Em caso de dúvida sobre uma falta, abra um chamado na Central de Atendimento.');
     }
 }

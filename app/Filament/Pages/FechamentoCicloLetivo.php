@@ -2,14 +2,18 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
+use App\Models\SituacaoFinalDisciplina;
 use App\Models\Turma;
 use App\Services\FechamentoCicloService;
+use App\Support\HelpContent;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -19,10 +23,12 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use UnitEnum;
 
 class FechamentoCicloLetivo extends Page implements HasForms
 {
+    use HasAjudaAction;
     use HasPageShield;
     use InteractsWithForms;
 
@@ -39,6 +45,8 @@ class FechamentoCicloLetivo extends Page implements HasForms
     public ?array $data = [];
 
     public ?Collection $resultados = null;
+
+    public ?PeriodoLetivo $periodoLetivoSelecionado = null;
 
     public function mount(): void
     {
@@ -81,7 +89,11 @@ class FechamentoCicloLetivo extends Page implements HasForms
                     ->columns(2),
 
                 View::make('filament.pages.fechamento-ciclo-letivo-results')
-                    ->viewData(fn () => ['resultados' => $this->resultados]),
+                    ->viewData(fn () => [
+                        'resultados' => $this->resultados,
+                        'periodoLetivoSelecionado' => $this->periodoLetivoSelecionado,
+                        'lancarExameFinalAction' => $this->lancarExameFinalAction,
+                    ]),
             ])
             ->statePath('data');
     }
@@ -96,6 +108,19 @@ class FechamentoCicloLetivo extends Page implements HasForms
                 ->requiresConfirmation()
                 ->modalDescription('Isso irá calcular e gravar a situação final de todas as disciplinas das matrículas ativas/concluídas das turmas selecionadas, substituindo qualquer cálculo anterior. Deseja continuar?')
                 ->action('calcularSituacaoFinal'),
+            $this->ajudaAction('Fechamento do Ciclo Letivo', HelpContent::make('🏁', 'Fechamento do Ciclo Letivo', 'Consolida as notas e define a situação final de cada aluno.')
+                ->passos('🚀 Passo a passo', [
+                    'Selecione o Período Letivo.',
+                    'Opcionalmente escolha uma turma; vazio significa todas as turmas do período.',
+                    'Clique em Calcular Situação Final e confirme.',
+                    'Confira a tabela de resultados exibida logo abaixo.',
+                ])
+                ->secao('📊 Como funciona?', [
+                    ['🧮', 'Consolidação', 'Reúne as etapas avaliativas de cada disciplina das matrículas ativas ou concluídas.'],
+                    ['🎓', 'Situação final', 'Cada disciplina fica como Aprovado, Recuperação ou Reprovado.'],
+                    ['📝', 'Turmas elegíveis', 'Aparecem apenas turmas com avaliação por notas ou híbrida.'],
+                ])
+                ->alerta('O cálculo substitui qualquer fechamento anterior do mesmo período. Execute apenas com todas as notas lançadas.')),
         ];
     }
 
@@ -113,6 +138,7 @@ class FechamentoCicloLetivo extends Page implements HasForms
         }
 
         $periodoLetivo = PeriodoLetivo::findOrFail($state['periodo_letivo_id']);
+        $this->periodoLetivoSelecionado = $periodoLetivo;
 
         $this->resultados = app(FechamentoCicloService::class)
             ->fecharPeriodoLetivo($periodoLetivo, $state['turma_id'] ?? null)
@@ -128,5 +154,55 @@ class FechamentoCicloLetivo extends Page implements HasForms
             ->body("{$this->resultados->count()} situações finais calculadas e gravadas.")
             ->success()
             ->send();
+    }
+
+    public function lancarExameFinalAction(): Action
+    {
+        return Action::make('lancarExameFinal')
+            ->label('Lançar Exame Final')
+            ->icon('heroicon-o-pencil-square')
+            ->color('warning')
+            ->size('sm')
+            ->modalHeading('Lançar Nota do Exame Final')
+            ->modalSubmitActionLabel('Salvar')
+            ->form([
+                TextInput::make('nota_exame_final')
+                    ->label('Nota do Exame Final')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(10)
+                    ->step(0.01)
+                    ->required(),
+            ])
+            ->action(function (array $arguments, array $data): void {
+                $registroId = (int) ($arguments['registro_id'] ?? 0);
+
+                $registro = $this->resultados?->firstWhere('id', $registroId);
+
+                if (! $registro instanceof SituacaoFinalDisciplina) {
+                    Notification::make()
+                        ->title('Registro não encontrado. Recalcule a situação final e tente novamente.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                try {
+                    app(FechamentoCicloService::class)->registrarExameFinal($registro, (float) $data['nota_exame_final']);
+                } catch (InvalidArgumentException $e) {
+                    Notification::make()
+                        ->title($e->getMessage())
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                Notification::make()
+                    ->title('Exame final lançado com sucesso.')
+                    ->success()
+                    ->send();
+            });
     }
 }

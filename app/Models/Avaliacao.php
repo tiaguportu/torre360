@@ -17,7 +17,7 @@ class Avaliacao extends Model
 
     protected $table = 'avaliacao';
 
-    protected $guarded = [];
+    protected $fillable = ['etapa_avaliativa_id', 'data_ocorrencia', 'data_limite_lancamento', 'disciplina_id', 'turma_id', 'data_prevista', 'nota_maxima', 'peso_etapa_avaliativa', 'professor_id', 'categoria_avaliacao_id'];
 
     protected function casts(): array
     {
@@ -143,8 +143,18 @@ class Avaliacao extends Model
             $query->selectRaw('count(*)')
                 ->from('nota')
                 ->whereColumn('avaliacao_id', 'avaliacao.id')
-                ->whereNotNull('valor');
+                ->where(fn ($n) => $n->whereNotNull('valor')->orWhereNotNull('situacao'));
         });
+    }
+
+    /**
+     * Notas resolvidas: com valor lançado ou justificadas (faltou / não se aplica).
+     */
+    private function notasResolvidasCount(): int
+    {
+        return $this->notas()
+            ->where(fn ($q) => $q->whereNotNull('valor')->orWhereNotNull('situacao'))
+            ->count();
     }
 
     /**
@@ -153,9 +163,8 @@ class Avaliacao extends Model
     public function getTemPendenciaAttribute(): bool
     {
         $totalAlunos = $this->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
-        $totalNotas = $this->notas()->whereNotNull('valor')->count();
 
-        return $totalNotas < $totalAlunos;
+        return $this->notasResolvidasCount() < $totalAlunos;
     }
 
     /**
@@ -164,7 +173,7 @@ class Avaliacao extends Model
     public function getNotasPendentesCountAttribute(): int
     {
         $totalAlunos = $this->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
-        $totalNotas = $this->notas()->whereNotNull('valor')->count();
+        $totalNotas = $this->notasResolvidasCount();
 
         return max(0, $totalAlunos - $totalNotas);
     }

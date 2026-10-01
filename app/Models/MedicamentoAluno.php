@@ -12,7 +12,7 @@ class MedicamentoAluno extends Model
 
     protected $table = 'medicamento_alunos';
 
-    protected $guarded = [];
+    protected $fillable = ['ficha_medica_id', 'nome_medicamento', 'dosagem', 'horario_administracao', 'instrucoes', 'autorizado_responsaveis', 'arquivo_receita_path'];
 
     protected function casts(): array
     {

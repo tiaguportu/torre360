@@ -109,6 +109,19 @@ class LeadScoreServiceTest extends TestCase
         );
     }
 
+    public function test_percepcao_do_consultor_tem_o_maior_peso_do_score(): void
+    {
+        $this->assertSame(20, max(config('lead_score.pesos')));
+        $this->assertSame(100, array_sum(config('lead_score.pesos')));
+
+        $quente = LeadScoreService::calcular($this->criarInteressado(['temperatura' => 'quente']));
+        $morno = LeadScoreService::calcular($this->criarInteressado(['temperatura' => 'morno']));
+        $frio = LeadScoreService::calcular($this->criarInteressado(['temperatura' => 'frio']));
+
+        $this->assertSame(10, $quente - $morno);
+        $this->assertSame(10, $morno - $frio);
+    }
+
     public function test_recalcular_persiste_score_no_banco(): void
     {
         $interessado = $this->criarInteressado(['valor_estimado' => 5000]);

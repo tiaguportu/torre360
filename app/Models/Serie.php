@@ -10,7 +10,7 @@ class Serie extends Model
 {
     protected $table = 'serie';
 
-    protected $guarded = [];
+    protected $fillable = ['curso_id', 'nome', 'sistema_avaliacao', 'id_mec', 'idade_minima', 'emite_certificado'];
 
     public function curso(): BelongsTo
     {

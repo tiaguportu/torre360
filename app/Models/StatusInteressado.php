@@ -12,7 +12,7 @@ class StatusInteressado extends Model
 
     protected $table = 'status_interessado';
 
-    protected $guarded = [];
+    protected $fillable = ['nome', 'cor', 'ordem', 'is_final', 'is_ganho'];
 
     protected function casts(): array
     {

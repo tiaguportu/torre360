@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusRematricula;
 use App\Models\Contrato;
 use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -382,14 +383,11 @@ class AssinafyService
 
     public function handleWebhook(array $payload): bool
     {
-        Log::info('Payload: '.json_encode($payload));
         // Conforme documentação: object['id'] contém o ID do documento
         $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
         $event = $payload['event'] ?? null;
         $fileName = $payload['object']['name'] ?? null;
-        Log::info('idAssinafy: '.$idAssinafy);
-        Log::info('event: '.$event);
-        Log::info('fileName: '.$fileName);
+        Log::info('Processando webhook Assinafy', compact('idAssinafy', 'event', 'fileName'));
 
         // Mapeia eventos para status do contrato
         $eventLower = strtolower((string) $event);
@@ -447,6 +445,19 @@ class AssinafyService
             }
 
             $contrato->update($updateData);
+
+            // Se este contrato é de uma Rematrícula Online aguardando assinatura, a
+            // confirmação do documento assinado é o que efetivamente conclui o processo.
+            if (in_array($status, ['signed', 'completed'], true)) {
+                $rematricula = $contrato->rematricula;
+
+                if ($rematricula && $rematricula->status !== StatusRematricula::Confirmada) {
+                    $rematricula->update([
+                        'status' => StatusRematricula::Confirmada,
+                        'data_confirmacao' => now(),
+                    ]);
+                }
+            }
 
             return true;
         }

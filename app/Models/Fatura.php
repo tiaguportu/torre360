@@ -12,7 +12,18 @@ class Fatura extends Model
 {
     protected $table = 'faturas';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'contrato_id',
+        'vencimento',
+        'status',
+        'pix_copia_e_cola',
+        'gateway',
+        'gateway_id',
+        'status_gateway',
+        'linha_digitavel',
+        'boleto_url',
+        'link_pagamento',
+    ];
 
     protected function casts(): array
     {

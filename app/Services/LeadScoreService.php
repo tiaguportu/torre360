@@ -12,7 +12,8 @@ use Illuminate\Support\Str;
  * de um lead do CRM, combinando perfil sócio-demográfico, engajamento e intenção
  * comercial. Ver docs/crm_lead_score.md para a explicação de cada fator e pesos.
  *
- * Independente da "temperatura", que é a percepção manual do consultor.
+ * A "temperatura" (percepção manual do consultor) entra como um dos fatores, o de
+maior peso, mas o score continua sendo calculado em conjunto com os demais dados.
  */
 class LeadScoreService
 {
@@ -35,6 +36,7 @@ class LeadScoreService
         $pesos = config('lead_score.pesos');
 
         return [
+            ['fator' => 'Percepção do consultor', 'pontos' => self::pontosPercepcaoConsultor($interessado), 'maximo' => $pesos['percepcao_consultor']],
             ['fator' => 'Nº de filhos', 'pontos' => self::pontosFilhos($interessado), 'maximo' => $pesos['filhos']],
             ['fator' => 'Distância da escola', 'pontos' => self::pontosDistancia($interessado), 'maximo' => $pesos['distancia']],
             ['fator' => 'Meio de transporte', 'pontos' => self::pontosTransporte($interessado), 'maximo' => $pesos['transporte']],
@@ -85,6 +87,14 @@ class LeadScoreService
             $score >= $faixas['morno'] => 'warning',
             default => 'danger',
         };
+    }
+
+    private static function pontosPercepcaoConsultor(Interessado $interessado): int
+    {
+        $tabela = config('lead_score.percepcao_consultor');
+        $chave = in_array($interessado->temperatura, ['quente', 'morno', 'frio'], true) ? $interessado->temperatura : 'nao_informado';
+
+        return (int) ($tabela[$chave] ?? 0);
     }
 
     private static function pontosFilhos(Interessado $interessado): int

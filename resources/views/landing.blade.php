@@ -167,12 +167,19 @@
             <img src="/logo-adaptative.svg" alt="Torre360" class="h-10 w-auto">
             <span class="text-2xl font-bold tracking-tight text-[#312783]">Torre360</span>
         </a>
-        <div class="hidden md:flex gap-10">
+        <div class="hidden md:flex gap-10 items-center">
             <a href="#solucao" class="nav-link text-slate-600">Solução</a>
             <a href="#mobile" class="nav-link text-slate-600">Mobile</a>
+            <a href="{{ route('matricular.online') }}" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100 transition shadow-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Matrícula Online
+            </a>
             <a href="#contato" class="nav-link text-slate-600">Contato</a>
         </div>
         <div class="flex items-center gap-4">
+            <a href="{{ route('matricular.online') }}" class="hidden lg:inline-flex btn-gold px-5 py-2.5 rounded-full text-xs font-bold">
+                Matricular Aluno
+            </a>
             <a href="/admin" class="hidden sm:inline-flex btn-navy px-6 py-2.5 rounded-full text-sm font-semibold">
                 Painel Administrativo
             </a>
@@ -183,6 +190,10 @@
             </button>
         </div>
         <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-lg flex-col p-6 gap-5">
+            <a href="{{ route('matricular.online') }}" class="inline-flex items-center gap-2 text-emerald-700 font-bold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Matrícula 100% Online
+            </a>
             <a href="#solucao" class="nav-link text-slate-600">Solução</a>
             <a href="#mobile" class="nav-link text-slate-600">Mobile</a>
             <a href="#contato" class="nav-link text-slate-600">Contato</a>
@@ -206,12 +217,15 @@
                 <p class="text-xl text-slate-500 max-w-xl leading-relaxed">
                     Mais que um software, uma inteligência centralizada para transformar a rotina acadêmica, otimizar o financeiro e converter novos alunos com facilidade.
                 </p>
-                <div class="flex flex-wrap gap-5">
-                    <a href="#contato" class="btn-gold px-10 py-4 rounded-2xl font-bold text-lg">
-                        Solicitar Acesso Grátis
+                <div class="flex flex-wrap gap-4 items-center">
+                    <a href="{{ route('matricular.online') }}" class="btn-navy px-8 py-4 rounded-2xl font-bold text-base inline-flex items-center gap-2.5 shadow-lg hover:shadow-xl transition-all">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        Matrícula 100% Online
                     </a>
-                    <a href="#solucao" class="px-10 py-4 rounded-2xl border border-slate-300 font-bold text-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        Ver Recursos
+                    <a href="#contato" class="btn-gold px-8 py-4 rounded-2xl font-bold text-base">
+                        Solicitar Demonstração
                     </a>
                 </div>
             </div>

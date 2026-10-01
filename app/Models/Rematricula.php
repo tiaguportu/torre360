@@ -13,7 +13,7 @@ class Rematricula extends Model
 
     protected $table = 'rematriculas';
 
-    protected $guarded = [];
+    protected $fillable = ['periodo_rematricula_id', 'matricula_origem_id', 'turma_destino_id', 'serie_destino_id', 'turno_pretendido_id', 'solicitante_user_id', 'status', 'contrato_id', 'nova_matricula_id', 'observacoes', 'data_confirmacao'];
 
     public function periodoRematricula(): BelongsTo
     {
