@@ -1868,6 +1868,7 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 - **Secretaria:** Coordenadores.
 - **Avaliações e Currículo (BNCC):** Notas e Habilidades.
 - **Preceptoria e Calendário:** Ciclos de Preceptoria, Relatórios de Preceptoria, Templates de Relatório e Dias Não Letivos.
+- **Financeiro e Operacional:** Fornecedores, Transações Bancárias e Ordens de Serviço.
 - **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
 - As demais telas serão cobertas nas próximas etapas (Secretaria, Avaliações, Preceptoria, Financeiro, Configurações, Sistema e Portal da Família). A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
 
