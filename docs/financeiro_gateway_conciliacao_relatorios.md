@@ -173,3 +173,16 @@ falar com a secretaria.
 `BaixaFaturaServiceTest`, `GatewayPagamentoTest`, `PagamentoWebhookTest`,
 `ConciliacaoCreditoFaturaTest`, `ContaPagarTest`, `RelatorioInadimplenciaTest`,
 `RelatorioFluxoCaixaTest`, `PortalFinanceiroPagamentoTest`.
+
+## 10. Correção pós-merge: `$fillable` e botão de Ajuda
+
+Ao reconciliar esta onda com o `main`, dois problemas surgiram de mudanças paralelas:
+
+- O commit de segurança que trocou `$guarded = []` por `$fillable` explícito em todos os
+  models rodou **depois** desta onda ter sido escrita, e por isso `Fatura` e `ContaPagar`
+  ficaram com `$fillable` incompleto (faltavam os campos de gateway e, em `ContaPagar`,
+  todos os campos — ainda estava em `$guarded = []`). Corrigido para incluir todos os
+  campos das respectivas migrations.
+- O teste que garante botão de Ajuda em toda tela do admin (seção 39 do
+  `MANUAL_USUARIO.md`) passou a cobrir `ListContaPagars`, `RelatorioFluxoCaixa` e
+  `RelatorioInadimplencia`, que ainda não tinham o botão. Adicionado nas três.

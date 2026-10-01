@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\TransacaoBancaria;
+use App\Support\HelpContent;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Carbon\CarbonImmutable;
@@ -16,6 +18,7 @@ use UnitEnum;
  */
 class RelatorioFluxoCaixa extends Page
 {
+    use HasAjudaAction;
     use HasPageShield;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
@@ -87,5 +90,22 @@ class RelatorioFluxoCaixa extends Page
             'total_saidas' => $totalSaidas,
             'saldo_periodo' => $totalEntradas - $totalSaidas,
         ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Fluxo de Caixa', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('📊', 'Fluxo de Caixa', 'Entradas, saídas e saldo consolidados dos últimos 12 meses.')
+            ->secao('🎯 O que você encontra aqui?', [
+                ['📅', 'Meses', 'Um resumo mês a mês com o total de entradas e saídas.'],
+                ['💰', 'Saldo', 'A diferença entre entradas e saídas de cada mês e do período todo.'],
+            ])
+            ->dica('Os valores vêm das transações bancárias já lançadas (baixas manuais, webhook e extratos importados).');
     }
 }

@@ -3,8 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Enums\StatusFatura;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Fatura;
 use App\Models\Turma;
+use App\Support\HelpContent;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Carbon\Carbon;
@@ -26,6 +28,7 @@ use UnitEnum;
  */
 class RelatorioInadimplencia extends Page implements HasTable
 {
+    use HasAjudaAction;
     use HasPageShield;
     use InteractsWithTable;
 
@@ -141,5 +144,22 @@ class RelatorioInadimplencia extends Page implements HasTable
                 ->unique()
                 ->count(),
         ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Relatório de Inadimplência', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('⚠️', 'Relatório de Inadimplência', 'Faturas em atraso, consolidadas por turma, faixa de atraso e responsável.')
+            ->secao('🎯 O que você encontra aqui?', [
+                ['📋', 'Faturas em atraso', 'Aluno, turma, responsável(is), vencimento, dias em atraso e saldo devedor.'],
+                ['🔎', 'Filtros', 'Filtre por turma ou por faixa de dias de atraso.'],
+            ])
+            ->dica('Para lembretes automáticos de cobrança, use a Régua de Cobrança — este relatório só mostra o quadro consolidado.');
     }
 }

@@ -13,7 +13,18 @@ class ContaPagar extends Model
 
     protected $table = 'conta_pagars';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'descricao',
+        'valor',
+        'vencimento',
+        'status',
+        'data_pagamento',
+        'fornecedor_id',
+        'plano_conta_id',
+        'centro_custo_id',
+        'transacao_bancaria_id',
+        'observacao',
+    ];
 
     protected function casts(): array
     {
