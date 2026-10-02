@@ -212,7 +212,19 @@ Score de risco de evasão (0-100) para alunos matriculados, espelhando o Lead Sc
 
 ---
 
-### 12. 📦 Patrimônio Escolar
+### 12. 🎁 Bolsas e Descontos Educacionais
+Bolsas e descontos recorrentes concedidos a alunos matriculados, aplicados automaticamente no financeiro. Detalhes em `docs/bolsas_descontos_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `TipoBolsa` | Modelo de bolsa/desconto (nome, percentual máximo, se exige aprovação, critério de renovação) |
+| `BolsaConcedida` | Concessão para um aluno: percentual, vigência, status (Solicitada/Aprovada/Recusada/Encerrada) |
+| Aprovação | Tipos sem `exige_aprovacao` já nascem aprovados; os demais passam por Aprovar/Recusar |
+| Integração financeira | `GeracaoFaturasContratoService` aplica o percentual ativo automaticamente em cada item de fatura gerado |
+
+---
+
+### 13. 📦 Patrimônio Escolar
 Controle de bens patrimoniais (computadores, mobiliário, material de laboratório). Detalhes em `docs/patrimonio_estoque_roadmap.md`.
 
 | Recurso | Descrição |

@@ -225,6 +225,33 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Bolsas e Descontos — dado financeiro, restrito a
+        // secretaria/admin/super_admin.
+        $bolsaPermissions = [];
+        foreach (['TipoBolsa', 'BolsaConcedida'] as $modelName) {
+            foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+                $bolsaPermissions[] = "{$acao}:{$modelName}";
+            }
+        }
+
+        foreach ($bolsaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($bolsaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         // Permissões de Patrimônio Escolar — não é dado sensível, restrito a
         // secretaria/admin/super_admin (quem cuida do inventário físico).
         $patrimonioPermissions = [];
