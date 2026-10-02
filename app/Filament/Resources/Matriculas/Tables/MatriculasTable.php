@@ -122,6 +122,9 @@ class MatriculasTable
                     ->label('Pendências')
                     ->state(fn (Matricula $record): array => $record->pendencias->tipos() ?: ['em_dia'])
                     ->badge()
+                    // Um badge embaixo do outro: a coluna fica estreita e as ações da linha continuam visíveis sem rolagem lateral.
+                    ->listWithLineBreaks()
+                    ->extraAttributes(['style' => 'align-items: flex-start;'])
                     ->formatStateUsing(fn (mixed $state, Matricula $record): string => ($tipo = self::tipoPendencia($state))
                         ? $record->pendencias->rotulo($tipo)
                         : 'Em dia')

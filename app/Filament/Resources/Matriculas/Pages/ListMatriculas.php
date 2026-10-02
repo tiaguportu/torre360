@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Matriculas\Pages;
 use App\Enums\SituacaoMatricula;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Matriculas\MatriculaResource;
-use App\Filament\Resources\Matriculas\Widgets\MatriculasResumoStats;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Support\HelpContent;
@@ -13,7 +12,14 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\EmbeddedTable;
+use Filament\Schemas\Components\RenderHook;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
+use Filament\View\PanelsRenderHook;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListMatriculas extends ListRecords
@@ -22,16 +28,68 @@ class ListMatriculas extends ListRecords
 
     protected static string $resource = MatriculaResource::class;
 
-    protected function getHeaderWidgets(): array
+    /**
+     * Resumo no topo da lista (dentro da própria página, sem componente Livewire filho:
+     * assim acompanha aba, busca e filtros sem depender de props reativas entre componentes).
+     */
+    public function content(Schema $schema): Schema
     {
-        return [
-            MatriculasResumoStats::class,
-        ];
+        return $schema
+            ->components([
+                $this->getResumoContentComponent(),
+                $this->getTabsContentComponent(),
+                RenderHook::make(PanelsRenderHook::RESOURCE_PAGES_LIST_RECORDS_TABLE_BEFORE),
+                EmbeddedTable::make(),
+                RenderHook::make(PanelsRenderHook::RESOURCE_PAGES_LIST_RECORDS_TABLE_AFTER),
+            ]);
     }
 
-    public function getHeaderWidgetsColumns(): int|array
+    protected function getResumoContentComponent(): Component
     {
-        return ['default' => 2, 'lg' => 4];
+        return Section::make()
+            ->schema(fn (): array => $this->getResumoStats())
+            ->columns(['default' => 2, 'lg' => 5])
+            ->contained(false)
+            ->gridContainer();
+    }
+
+    /**
+     * Cartões de resumo do que está na lista no momento (aba, busca e filtros).
+     *
+     * @return array<int, Stat>
+     */
+    public function getResumoStats(): array
+    {
+        $query = $this->getFilteredTableQuery()->reorder();
+
+        $total = (clone $query)->count();
+        $comPendencias = (clone $query)->comPendencias()->count();
+        $semResponsavel = (clone $query)->semResponsavel()->count();
+        $contratoNaoGerado = (clone $query)->comContratoNaoGerado()->count();
+        $contratoNaoAssinado = (clone $query)->comContratoNaoAssinado()->count();
+
+        return [
+            Stat::make('Matrículas na lista', $total)
+                ->description('Conforme a aba, a busca e os filtros')
+                ->descriptionIcon('heroicon-m-identification')
+                ->color('primary'),
+            Stat::make('Com pendências', $comPendencias)
+                ->description('Responsável, cadastro, documentos ou contrato')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color($comPendencias > 0 ? 'danger' : 'success'),
+            Stat::make('Sem responsável', $semResponsavel)
+                ->description('Aluno sem Pai, Mãe ou Responsável')
+                ->descriptionIcon('heroicon-m-user-minus')
+                ->color($semResponsavel > 0 ? 'warning' : 'success'),
+            Stat::make('Contrato não gerado', $contratoNaoGerado)
+                ->description('Ativas ou pendentes sem contrato')
+                ->descriptionIcon('heroicon-m-document-plus')
+                ->color($contratoNaoGerado > 0 ? 'warning' : 'success'),
+            Stat::make('Contrato não assinado', $contratoNaoAssinado)
+                ->description('Contrato gerado e ainda sem assinatura')
+                ->descriptionIcon('heroicon-m-pencil-square')
+                ->color($contratoNaoAssinado > 0 ? 'info' : 'success'),
+        ];
     }
 
     public function getTabs(): array
@@ -144,7 +202,7 @@ class ListMatriculas extends ListRecords
 
         $conteudo = HelpContent::make('🎓', 'Gestão de Matrículas', 'Acompanhe, filtre e atue nas matrículas dos alunos.')
             ->secao('🧭 O que você encontra nesta tela', [
-                ['📊', 'Cartões de resumo (topo)', 'Mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm pendências, quantas estão sem responsável e quantas estão sem contrato.'],
+                ['📊', 'Cartões de resumo (topo)', 'Mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm pendências, quantas estão sem responsável, quantas estão com contrato não gerado e quantas estão com contrato não assinado.'],
                 ['🗂️', 'Abas de situação', 'Ativas (aba inicial), Pendentes, Com pendências, Trancadas, Concluídas, Canceladas, Reserva, Evasão e Todas. O número em cada aba mostra quantas matrículas há. Trancadas, Concluídas, Reserva e Evasão só aparecem quando existem matrículas nessa situação.'],
                 ['📋', 'Tabela de matrículas', 'Uma linha por matrícula, com as informações principais já resumidas (veja "Como ler a tabela").'],
                 ['🔎', 'Busca e filtros', 'A busca procura pelo nome do aluno ou da turma. Os filtros ficam recolhidos acima da tabela: Curso, Turma, Período Letivo, Pendências e Contrato.'],
@@ -153,13 +211,13 @@ class ListMatriculas extends ListRecords
             ->secao('🗂️ Para que serve cada aba', [
                 ['✅', 'Ativas', 'Matrículas em andamento. É a aba que abre por padrão.'],
                 ['⏳', 'Pendentes', 'Matrículas em processo, geralmente aguardando documentação ou pagamento.'],
-                ['🚨', 'Com pendências', 'Matrículas ativas ou pendentes que têm algum problema a resolver: aluno sem responsável, cadastro incompleto ou documentos obrigatórios faltando/rejeitados. É a sua lista de trabalho da secretaria.'],
+                ['🚨', 'Com pendências', 'Matrículas ativas ou pendentes que têm algum problema a resolver: aluno sem responsável, cadastro incompleto, documentos obrigatórios faltando/rejeitados, contrato não gerado ou contrato não assinado. É a sua lista de trabalho da secretaria.'],
                 ['📚', 'Demais abas', 'Trancadas, Concluídas, Canceladas, Reserva e Evasão agrupam as matrículas por situação. "Todas" mostra tudo, sem recorte.'],
             ])
             ->secao('📋 Como ler a tabela', [
                 ['👤', 'Aluno', 'Nome do aluno e, logo abaixo, a turma e o curso. Clique no nome para abrir a ficha da pessoa (se você tiver permissão).'],
                 ['🏷️', 'Situação', 'Badge colorido com a situação da matrícula.'],
-                ['⚠️', 'Pendências', 'Badges com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando e N documentos rejeitados. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
+                ['⚠️', 'Pendências', 'Badges, um embaixo do outro, com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando, N documentos rejeitados, Contrato não gerado e Contrato não assinado. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
                 ['🗓️', 'Período Letivo', 'Período ao qual a matrícula pertence.'],
                 ['📄', 'Contrato', 'Ícone verde quando a matrícula já tem contrato gerado; cinza quando ainda não tem.'],
                 ['⚙️', 'Colunas opcionais', 'Pelo ícone de colunas da tabela você pode exibir Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.'],
@@ -177,7 +235,7 @@ class ListMatriculas extends ListRecords
 
         $conteudo->secao('🔎 Filtros disponíveis', [
             ['🎓', 'Curso, Turma e Período Letivo', 'Turma e Período Letivo aceitam mais de uma opção ao mesmo tempo.'],
-            ['⚠️', 'Pendências', 'Escolha um ou mais tipos (Sem responsável, Cadastro incompleto, Documentos faltando, Documentos rejeitados). A lista mostra as matrículas que têm qualquer um dos tipos escolhidos.'],
+            ['⚠️', 'Pendências', 'Escolha um ou mais tipos (Sem responsável, Cadastro incompleto, Documentos faltando, Documentos rejeitados, Contrato não gerado, Contrato não assinado). A lista mostra as matrículas que têm qualquer um dos tipos escolhidos.'],
             ['📄', 'Contrato', 'Mostra somente matrículas com contrato ou somente as sem contrato.'],
         ]);
 

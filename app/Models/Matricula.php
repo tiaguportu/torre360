@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
 
@@ -28,6 +29,13 @@ class Matricula extends Model
     use HasFactory;
 
     protected $table = 'matricula';
+
+    /**
+     * Situações em que se espera que a matrícula tenha contrato gerado e assinado.
+     *
+     * @var array<int, SituacaoMatricula>
+     */
+    public const SITUACOES_QUE_EXIGEM_CONTRATO = [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE];
 
     protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id'];
 
@@ -449,7 +457,7 @@ class Matricula extends Model
                 if ($resp->hasIncompleteCadastro()) {
                     $vinculoNome = 'Responsável';
                     if ($resp->pivot && $resp->pivot->tipo_vinculo_id) {
-                        $vinculoNome = TipoVinculo::find($resp->pivot->tipo_vinculo_id)?->nome ?? 'Responsável';
+                        $vinculoNome = self::nomesTiposVinculo()[$resp->pivot->tipo_vinculo_id] ?? 'Responsável';
                     }
 
                     $incompletas->push([
@@ -481,6 +489,21 @@ class Matricula extends Model
         }
 
         return $incompletas;
+    }
+
+    /**
+     * Nomes dos tipos de vínculo por id, carregados uma única vez (e não uma query por responsável).
+     * Usa o cache em memória do processo, com validade curta para não ficar defasado em workers longos.
+     *
+     * @return array<int, string>
+     */
+    private static function nomesTiposVinculo(): array
+    {
+        return Cache::store('array')->remember(
+            'matricula.nomes_tipos_vinculo',
+            30,
+            fn (): array => TipoVinculo::query()->pluck('nome', 'id')->all(),
+        );
     }
 
     /**
@@ -539,7 +562,17 @@ class Matricula extends Model
             cadastrosIncompletos: $this->getPessoasComCadastroIncompleto(),
             documentosFaltantes: $this->getMissingMandatoryDocuments(),
             documentosRejeitados: $this->getRejectedDocuments(),
+            contratoNaoGerado: $this->exigeContrato() && $this->contrato === null,
+            contratoNaoAssinado: $this->exigeContrato() && $this->contrato !== null && ! $this->contrato->estaAssinado(),
         ));
+    }
+
+    /**
+     * Verifica se, pela situação atual, a matrícula deve ter contrato gerado e assinado.
+     */
+    public function exigeContrato(): bool
+    {
+        return in_array($this->situacao, self::SITUACOES_QUE_EXIGEM_CONTRATO, true);
     }
 
     /**
@@ -596,6 +629,31 @@ class Matricula extends Model
     }
 
     /**
+     * Scope para matrículas em situação que exige contrato (ativas e pendentes).
+     */
+    public function scopeExigindoContrato(Builder $query): Builder
+    {
+        return $query->whereIn('situacao', self::SITUACOES_QUE_EXIGEM_CONTRATO);
+    }
+
+    /**
+     * Scope para matrículas que exigem contrato e ainda não têm nenhum gerado.
+     */
+    public function scopeComContratoNaoGerado(Builder $query): Builder
+    {
+        return $query->exigindoContrato()->doesntHave('contrato');
+    }
+
+    /**
+     * Scope para matrículas que exigem contrato e cujo contrato gerado ainda não foi assinado.
+     */
+    public function scopeComContratoNaoAssinado(Builder $query): Builder
+    {
+        return $query->exigindoContrato()
+            ->whereHas('contrato', fn (Builder $contrato) => $contrato->naoAssinado());
+    }
+
+    /**
      * Scope para matrículas com um tipo específico de pendência.
      */
     public function scopeComPendencia(Builder $query, TipoPendenciaMatricula $tipo): Builder
@@ -605,6 +663,8 @@ class Matricula extends Model
             TipoPendenciaMatricula::CADASTRO_INCOMPLETO => $query->comCadastroIncompleto(),
             TipoPendenciaMatricula::DOCUMENTOS_FALTANDO => $query->comDocumentosFaltando(),
             TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS => $query->comDocumentosRejeitados(),
+            TipoPendenciaMatricula::CONTRATO_NAO_GERADO => $query->comContratoNaoGerado(),
+            TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO => $query->comContratoNaoAssinado(),
         };
     }
 

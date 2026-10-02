@@ -177,7 +177,19 @@ Canais de mensagem e disparo em massa. Detalhes em `docs/comunicacao_canais_aler
 
 ---
 
-### 9. 📚 Biblioteca Escolar
+### 9. 🧑‍💼 RH e Gestão de Funcionários
+Cadastro de funcionários, contratos de trabalho e férias. Detalhes em `docs/rh_funcionarios_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `Funcionario` | Cargo, regime (CLT/Estatutário/PJ/Estágio), admissão/desligamento, carga horária, unidade de lotação — ligado a `Pessoa` |
+| `ContratoTrabalho` | Histórico de vigências salariais (append-only); "Registrar Aditivo" encerra a vigência atual e cria a próxima com o novo salário |
+| `PeriodoFerias` | Período aquisitivo, dias de direito/gozados, status; ação "Registrar Gozo" |
+| `SubstituicaoProfessor` | Professor titular × substituto por turma/disciplina e período |
+
+---
+
+### 10. 📚 Biblioteca Escolar
 Acervo de livros e controle de empréstimo/devolução. Detalhes em `docs/biblioteca_escolar_roadmap.md`.
 
 | Recurso | Descrição |
@@ -310,6 +322,5 @@ autorizada:
 |---|---|
 | Provas online com correção automática | `docs/provas_online_roadmap.md` |
 | Controle de saída/retirada de alunos | `docs/controle_saida_alunos_roadmap.md` |
-| RH e gestão de funcionários | `docs/rh_funcionarios_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Risco de evasão escolar | `docs/risco_evasao_roadmap.md` |
