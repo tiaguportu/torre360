@@ -186,6 +186,7 @@ class ImportarLeadIaAction
             'valor_estimado' => $valorEstimado,
             'data_proximo_contato' => now()->addDays(1),
             'observacoes' => implode("\n\n", $observacoes),
+            'redes_sociais' => static::normalizarRedesSociais($extracted['redes_sociais'] ?? []),
         ]);
 
         // 5. Cadastra os Alunos / Dependentes
@@ -254,6 +255,39 @@ class ImportarLeadIaAction
         LeadScoreService::recalcular($interessado);
 
         return $interessado;
+    }
+
+    /**
+     * Mantém só redes conhecidas com link http(s) válido; devolve null se não sobrar nenhuma.
+     *
+     * @return array<int, array{rede: string, url: string}>|null
+     */
+    public static function normalizarRedesSociais(mixed $redes): ?array
+    {
+        if (! is_array($redes)) {
+            return null;
+        }
+
+        $resultado = [];
+        foreach ($redes as $item) {
+            $url = trim((string) ($item['url'] ?? ''));
+            $rede = mb_strtolower(trim((string) ($item['rede'] ?? '')));
+
+            if ($url !== '' && ! preg_match('#^https?://#i', $url) && str_contains($url, '.')) {
+                $url = 'https://'.ltrim($url, '/');
+            }
+
+            if (! filter_var($url, FILTER_VALIDATE_URL)) {
+                continue;
+            }
+
+            $resultado[] = [
+                'rede' => array_key_exists($rede, Interessado::REDES_SOCIAIS) ? $rede : 'outra',
+                'url' => $url,
+            ];
+        }
+
+        return $resultado === [] ? null : $resultado;
     }
 
     /**

@@ -127,6 +127,7 @@ Você DEVE retornar a resposta estritamente no formato JSON válido com a seguin
   "responsavel_email": "E-mail do responsável ou null",
   "responsavel_telefone": "Telefone com DDD ou null",
   "responsavel_cpf": "CPF (apenas dígitos) ou null",
+  "redes_sociais": [{"rede": "instagram|facebook|linkedin|tiktok|x|youtube|outra", "url": "Link completo do perfil (https://...) ou null"}] (apenas perfis do interessado/responsável citados no texto ou imagem; lista vazia se não houver),
   "origem_sugerida": "Canal de origem inferido (ex: WhatsApp, Instagram, E-mail, Site, Indicação) ou null",
   "temperatura": "quente|morno|frio (quente se demonstra urgência/muito interesse, morno se busca informações gerais, frio se apenas sondagem)",
   "valor_estimado": valor_numerico_ou_null,

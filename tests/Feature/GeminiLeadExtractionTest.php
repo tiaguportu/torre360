@@ -278,6 +278,11 @@ class GeminiLeadExtractionTest extends TestCase
             'tipo_contato' => 'WhatsApp',
             'data_contato' => '2026-09-28 14:30:00',
             'relato_contato' => 'Pai pediu valores e vaga para 2026.',
+            'redes_sociais' => [
+                ['rede' => 'Instagram', 'url' => 'https://instagram.com/roberto.alves'],
+                ['rede' => 'blog', 'url' => 'roberto.com.br/perfil'],
+                ['rede' => 'facebook', 'url' => 'não é link'],
+            ],
             'alunos' => [
                 [
                     'nome' => 'Matheus Alves',
@@ -311,6 +316,11 @@ class GeminiLeadExtractionTest extends TestCase
 
         $this->assertStringContainsString('Visita em 05/10/2026', $interessado->observacoes);
         $this->assertStringContainsString('Contato em 28/09/2026 14:30 via WhatsApp', $interessado->historicos()->first()->relato);
+
+        $this->assertSame([
+            ['rede' => 'instagram', 'url' => 'https://instagram.com/roberto.alves'],
+            ['rede' => 'outra', 'url' => 'https://roberto.com.br/perfil'],
+        ], $interessado->fresh()->redes_sociais);
 
         $this->assertDatabaseHas('interessado_dependente', [
             'interessado_id' => $interessado->id,

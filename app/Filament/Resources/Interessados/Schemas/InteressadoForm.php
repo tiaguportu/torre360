@@ -213,6 +213,28 @@ class InteressadoForm
                                     ->visible(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
                                     ->columnSpanFull(),
 
+                                Repeater::make('redes_sociais')
+                                    ->label('Redes Sociais')
+                                    ->schema([
+                                        Select::make('rede')
+                                            ->label('Rede')
+                                            ->options(Interessado::REDES_SOCIAIS)
+                                            ->native(false)
+                                            ->required(),
+                                        TextInput::make('url')
+                                            ->label('Link do perfil')
+                                            ->url()
+                                            ->placeholder('https://instagram.com/usuario')
+                                            ->maxLength(255)
+                                            ->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->addActionLabel('Adicionar rede social')
+                                    ->defaultItems(0)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string => Interessado::REDES_SOCIAIS[$state['rede'] ?? ''] ?? null)
+                                    ->columnSpanFull(),
+
                                 Textarea::make('observacoes')
                                     ->label('Observações')
                                     ->columnSpanFull(),

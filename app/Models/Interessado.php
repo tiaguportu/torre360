@@ -18,7 +18,18 @@ class Interessado extends Model
 
     protected $table = 'interessado';
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'data_proximo_contato', 'observacoes', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em'];
+    /** Redes sociais aceitas em `redes_sociais` (chave => rótulo). */
+    public const REDES_SOCIAIS = [
+        'instagram' => 'Instagram',
+        'facebook' => 'Facebook',
+        'linkedin' => 'LinkedIn',
+        'tiktok' => 'TikTok',
+        'x' => 'X (Twitter)',
+        'youtube' => 'YouTube',
+        'outra' => 'Outra',
+    ];
+
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em'];
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -46,6 +57,7 @@ class Interessado extends Model
             'data_conversao' => 'datetime',
             'lead_score_atualizado_em' => 'datetime',
             'valor_estimado' => 'decimal:2',
+            'redes_sociais' => 'array',
             'token_convite_expira_em' => 'datetime',
             'token_convite_usado_em' => 'datetime',
         ];
