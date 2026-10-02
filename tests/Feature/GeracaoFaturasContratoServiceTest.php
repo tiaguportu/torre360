@@ -8,6 +8,7 @@ use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Services\GeracaoFaturasContratoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class GeracaoFaturasContratoServiceTest extends TestCase
@@ -81,6 +82,24 @@ class GeracaoFaturasContratoServiceTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         app(GeracaoFaturasContratoService::class)->gerar($contrato, 12, 0.0);
+    }
+
+    public function test_data_base_informada_dispensa_data_aceite_e_tem_precedencia_sobre_ela(): void
+    {
+        $service = app(GeracaoFaturasContratoService::class);
+
+        // Sem data_aceite: a data-base explícita basta (sábado -> 1ª parcela na sexta seguinte)
+        $semAceite = $this->criarContrato(1200.0, null);
+        $faturas = $service->gerar($semAceite, 11, 100.0, Carbon::parse('2026-01-10'));
+
+        $this->assertSame('2026-01-10', $faturas[0]->vencimento->toDateString()); // entrada
+        $this->assertSame('2026-01-16', $faturas[1]->vencimento->toDateString()); // 1ª parcela
+
+        // Com data_aceite diferente: vale a data-base informada
+        $comAceite = $this->criarContrato(1200.0, '2026-03-02');
+        $faturas = $service->gerar($comAceite, 12, 0.0, Carbon::parse('2026-01-10'));
+
+        $this->assertSame('2026-01-16', $faturas->first()->vencimento->toDateString());
     }
 
     public function test_lanca_excecao_quando_entrada_maior_que_total(): void

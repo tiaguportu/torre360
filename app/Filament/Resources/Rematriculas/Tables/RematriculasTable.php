@@ -80,7 +80,7 @@ class RematriculasTable
                     ->requiresConfirmation()
                     ->modalHeading('Efetivar Rematrícula do Estudante')
                     ->modalDescription('Esta ação criará a nova matrícula definitiva para o próximo período letivo e gerará o contrato correspondente.')
-                    ->visible(fn (Rematricula $record) => $record->status !== StatusRematricula::Confirmada)
+                    ->visible(fn (Rematricula $record) => $record->status !== StatusRematricula::Confirmada && ! $record->nova_matricula_id)
                     ->action(function (Rematricula $record, RematriculaService $service) {
                         try {
                             $novaMatricula = $service->efetivar($record);

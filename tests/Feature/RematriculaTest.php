@@ -12,11 +12,22 @@ use App\Models\Turma;
 use App\Models\User;
 use App\Services\RematriculaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class RematriculaTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // O .env local pode ter credenciais reais do Assinafy (inclusive de produção): efetivar() envia o
+        // contrato para assinatura, e o teste não pode chamar a API de verdade.
+        Http::preventStrayRequests();
+        config(['services.assinafy.key' => '']);
+    }
 
     public function test_periodo_rematricula_detecta_vigencia_corretamente(): void
     {
