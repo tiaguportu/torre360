@@ -67,6 +67,15 @@ casos:
   endereço);
 - lead **sem consultor**: o modal avisa que não há para quem enviar.
 
+Além do e-mail, o modal traz o link **"Abrir o WhatsApp de {consultor} com a
+mensagem pronta"** (`target="_blank"`), montado por
+`ConsultorWhatsappService::urlParaInteressado()`: é a mesma mensagem da ação
+"Enviar ao consultor" (seção 3), com o contato direto do lead, o próximo contato
+marcado como "(atrasado)" e o resumo dos últimos contatos. O link independe do
+e-mail e do clique em "Sim, enviar alerta": serve para avisar também (ou só)
+pelo WhatsApp. Se o consultor não tem telefone cadastrado, o link continua
+disponível, abre o WhatsApp sem destinatário e o modal avisa isso.
+
 O bloco de ações recebeu a chave `alertaContato` para a ação poder ser montada
 em testes (`TestAction::make('alerta_contato')->schemaComponent('alertaContato')`).
 

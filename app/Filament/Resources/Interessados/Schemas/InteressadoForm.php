@@ -7,7 +7,9 @@ use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Models\Interessado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
+use App\Models\User;
 use App\Notifications\AcompanhamentoInteressadoNotification;
+use App\Services\ConsultorWhatsappService;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -31,7 +33,8 @@ use Illuminate\Support\HtmlString;
 class InteressadoForm
 {
     /**
-     * Texto de confirmação do alerta de acompanhamento, com o e-mail que vai receber a mensagem.
+     * Texto de confirmação do alerta de acompanhamento: o e-mail que vai receber a mensagem e um link do
+     * WhatsApp do consultor, já com a mensagem do lead pronta (a mesma da ação "Enviar ao consultor").
      * O e-mail sai para o endereço do usuário consultor (canal `mail` da notificação, sem override de rota).
      */
     public static function descricaoDoAlerta(Interessado $record): HtmlString
@@ -42,15 +45,33 @@ class InteressadoForm
             return new HtmlString(e('Este interessado não tem consultor responsável, então não há para quem enviar o alerta.'));
         }
 
-        $introducao = e('Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.');
+        $emails = blank($consultor->email)
+            ? e("O consultor {$consultor->name} não tem e-mail cadastrado: só a notificação no sistema será enviada.")
+            : e('E-mail que será enviado para:').'<br><strong>'.e($consultor->email).'</strong> ('.e($consultor->name).')';
 
-        if (blank($consultor->email)) {
-            return new HtmlString($introducao.'<br><br>'.e("O consultor {$consultor->name} não tem e-mail cadastrado: só a notificação no sistema será enviada."));
-        }
+        return new HtmlString(implode('<br><br>', [
+            e('Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.'),
+            $emails,
+            self::linkWhatsappDoAlerta($record, $consultor),
+        ]));
+    }
 
-        return new HtmlString(
-            $introducao.'<br><br>'.e('E-mail que será enviado para:').'<br><strong>'.e($consultor->email).'</strong> ('.e($consultor->name).')'
-        );
+    /**
+     * Link `wa.me` para o consultor com a mensagem do lead; sem telefone cadastrado, o WhatsApp abre sem
+     * destinatário e quem clica escolhe o contato.
+     */
+    private static function linkWhatsappDoAlerta(Interessado $record, User $consultor): string
+    {
+        $whatsapp = app(ConsultorWhatsappService::class);
+
+        $link = '<a href="'.e($whatsapp->urlParaInteressado($record)).'" target="_blank" rel="noopener" style="font-weight: 600; text-decoration: underline;">'
+            .e("Abrir o WhatsApp de {$consultor->name} com a mensagem pronta").'</a>';
+
+        $aviso = $whatsapp->consultorTemTelefone($record)
+            ? ''
+            : '<br>'.e("{$consultor->name} está sem telefone cadastrado: o WhatsApp abrirá para você escolher o contato.");
+
+        return e('Se preferir, avise também pelo WhatsApp:').'<br>'.$link.$aviso;
     }
 
     public static function configure(Schema $schema): Schema
