@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BolsaConcedida;
 use App\Models\Contrato;
 use App\Models\Fatura;
 use App\Models\ItemFatura;
@@ -45,8 +46,9 @@ class GeracaoFaturasContratoService
 
         $dataAceite = Carbon::parse($contrato->data_aceite);
         $primeiroVencimento = $this->adicionarDiasUteis($dataAceite, 5);
+        $percentualBolsa = $this->percentualBolsaAtiva($contrato);
 
-        return DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $quantidadeParcelas, $dataAceite, $primeiroVencimento): Collection {
+        return DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $quantidadeParcelas, $dataAceite, $primeiroVencimento, $percentualBolsa): Collection {
             $contrato->faturas()->each(function (Fatura $fatura): void {
                 $fatura->itens()->delete();
                 $fatura->delete();
@@ -66,8 +68,8 @@ class GeracaoFaturasContratoService
                     'descricao' => 'Entrada',
                     'valor_unitario' => $valorEntrada,
                     'quantidade' => 1,
-                    'desconto' => 0,
-                    'tipo_desconto' => 'absoluto',
+                    'desconto' => $percentualBolsa,
+                    'tipo_desconto' => $percentualBolsa > 0 ? 'percentual' : 'absoluto',
                 ]);
 
                 $faturas->push($faturaEntrada);
@@ -87,8 +89,8 @@ class GeracaoFaturasContratoService
                     'descricao' => 'Parcela '.($i + 1).' de '.$quantidadeParcelas,
                     'valor_unitario' => $valorParcela,
                     'quantidade' => 1,
-                    'desconto' => 0,
-                    'tipo_desconto' => 'absoluto',
+                    'desconto' => $percentualBolsa,
+                    'tipo_desconto' => $percentualBolsa > 0 ? 'percentual' : 'absoluto',
                 ]);
 
                 $faturas->push($fatura);
@@ -96,6 +98,22 @@ class GeracaoFaturasContratoService
 
             return $faturas;
         });
+    }
+
+    /**
+     * Percentual de bolsa vigente hoje para a matrícula do contrato (0 se não houver
+     * matrícula vinculada ou nenhuma bolsa aprovada ativa). Aplicado automaticamente em
+     * cada item de fatura gerado, para o financeiro não precisar lançar o desconto à mão.
+     */
+    private function percentualBolsaAtiva(Contrato $contrato): int
+    {
+        $matricula = $contrato->matricula;
+
+        if (! $matricula) {
+            return 0;
+        }
+
+        return BolsaConcedida::percentualAtivoPara($matricula);
     }
 
     /**
