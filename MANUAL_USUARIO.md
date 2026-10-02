@@ -131,7 +131,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
 ### 3.5 Alertas e Notificações
 1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos recebem um alerta instantâneo.
 2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde com a quantidade de leads com status "Novo".
-3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema.
+3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema. Antes de enviar, o modal de confirmação ("Enviar Alerta de Acompanhamento?") mostra o **e-mail para o qual a mensagem será enviada** (o do consultor responsável). Se o consultor não tiver e-mail cadastrado, o modal avisa que só a notificação no sistema será enviada; se o lead não tiver consultor, avisa que não há para quem enviar.
 4. **Notificação Automática Diária:** O sistema envia automaticamente (às 8h) notificações por e-mail e sininho para consultores com leads pendentes de contato.
 5. **Lembrete de Visita:** No mesmo disparo das 8h, o consultor recebe um aviso no sininho das visitas agendadas para as próximas 24 horas (um aviso por visita).
 

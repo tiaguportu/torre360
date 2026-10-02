@@ -26,9 +26,33 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
+use Illuminate\Support\HtmlString;
 
 class InteressadoForm
 {
+    /**
+     * Texto de confirmação do alerta de acompanhamento, com o e-mail que vai receber a mensagem.
+     * O e-mail sai para o endereço do usuário consultor (canal `mail` da notificação, sem override de rota).
+     */
+    public static function descricaoDoAlerta(Interessado $record): HtmlString
+    {
+        $consultor = $record->loadMissing('usuario')->usuario;
+
+        if (! $consultor) {
+            return new HtmlString(e('Este interessado não tem consultor responsável, então não há para quem enviar o alerta.'));
+        }
+
+        $introducao = e('Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.');
+
+        if (blank($consultor->email)) {
+            return new HtmlString($introducao.'<br><br>'.e("O consultor {$consultor->name} não tem e-mail cadastrado: só a notificação no sistema será enviada."));
+        }
+
+        return new HtmlString(
+            $introducao.'<br><br>'.e('E-mail que será enviado para:').'<br><strong>'.e($consultor->email).'</strong> ('.e($consultor->name).')'
+        );
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -79,12 +103,13 @@ class InteressadoForm
                                         })
                                         ->requiresConfirmation()
                                         ->modalHeading('Enviar Alerta de Acompanhamento?')
-                                        ->modalDescription('Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.')
+                                        ->modalDescription(fn (Interessado $record): HtmlString => self::descricaoDoAlerta($record))
                                         ->modalSubmitActionLabel('Sim, enviar alerta')
                                         ->extraAttributes([
                                             'class' => 'w-full justify-center py-4 text-lg font-bold animate-pulse',
                                         ]),
                                 ])
+                                    ->key('alertaContato')
                                     ->columnSpanFull()
                                     ->visible(fn (?Interessado $record) => $record?->precisaDeContato() ?? false),
 

@@ -48,6 +48,28 @@ Na tabela de Interessados (`InteressadosTable`), há uma coluna "Sem Interação
 filtro "Estagnado (7+ dias sem interação)", ambos usando os mesmos
 scopes/métodos do model — não há lógica duplicada entre backend e UI.
 
+### Alerta manual na ficha do lead
+
+Na tela de edição (`InteressadoForm`), quando `Interessado::precisaDeContato()`
+é verdadeiro, aparece o botão vermelho pulsante `alerta_contato`, que dispara na
+hora a mesma `AcompanhamentoInteressadoNotification` (e-mail) e a notificação do
+sino para o consultor responsável.
+
+O modal de confirmação ("Enviar Alerta de Acompanhamento?") mostra **para qual
+e-mail a mensagem será enviada**: o `email` do usuário consultor
+(`Interessado::usuario`), já que a notificação usa o canal `mail` padrão e o
+`User` não sobrescreve `routeNotificationForMail`. O texto vem de
+`InteressadoForm::descricaoDoAlerta()`, que escapa nome e e-mail e trata dois
+casos:
+
+- consultor **sem e-mail** cadastrado: o modal avisa que só a notificação no
+  sistema será enviada (o canal `mail` ignora a notificação quando não há
+  endereço);
+- lead **sem consultor**: o modal avisa que não há para quem enviar.
+
+O bloco de ações recebeu a chave `alertaContato` para a ação poder ser montada
+em testes (`TestAction::make('alerta_contato')->schemaComponent('alertaContato')`).
+
 ## 2. Mensagens rápidas de WhatsApp
 
 Modelos de mensagem ficam na tabela `mensagem_whatsapp_template`
