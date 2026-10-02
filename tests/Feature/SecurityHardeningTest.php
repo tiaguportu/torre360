@@ -16,10 +16,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class SecurityHardeningTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     protected function setUp(): void

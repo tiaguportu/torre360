@@ -196,6 +196,7 @@ class ConciliacaoBancariaService
                 $dataTransacao->copy()->subDays(45)->toDateString(),
                 $dataTransacao->copy()->addDays(10)->toDateString(),
             ])
+            ->with(['itens', 'transacoes'])
             ->get()
             ->filter(fn (Fatura $f) => abs($f->valor_restante - $transacao->valor) < 0.01);
 

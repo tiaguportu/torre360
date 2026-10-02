@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Models\Interessado;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
@@ -9,11 +10,14 @@ use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class InteressadoTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     private function criarStatusBasicos(): array
@@ -367,7 +371,7 @@ class InteressadoTest extends TestCase
 
     public function test_listagem_renderiza_com_abas_e_filtra_por_situacao(): void
     {
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         $admin = User::factory()->create(['activated_at' => now()]);
         $admin->assignRole('super_admin');
 
@@ -381,7 +385,7 @@ class InteressadoTest extends TestCase
             ->assertSee('Precisa de contato')
             ->assertSee('Estagnados');
 
-        \Livewire\Livewire::test(\App\Filament\Resources\Interessados\Pages\ListInteressados::class)
+        Livewire::test(ListInteressados::class)
             ->set('activeTab', 'precisa_contato')
             ->assertCanSeeTableRecords([$atrasado])
             ->assertCanNotSeeTableRecords([$emDia])
@@ -392,20 +396,20 @@ class InteressadoTest extends TestCase
 
     public function test_modal_de_ajuda_da_listagem_explica_abas_colunas_e_acoes(): void
     {
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         $admin = User::factory()->create(['activated_at' => now()]);
         $admin->assignRole('super_admin');
 
         $this->actingAs($admin);
 
-        $pagina = new \App\Filament\Resources\Interessados\Pages\ListInteressados;
+        $pagina = new ListInteressados;
         $html = (new \ReflectionMethod($pagina, 'getHelpContent'))->invoke($pagina)->render();
 
         foreach (['Para que serve cada aba', 'Como ler a tabela', 'Ações em cada linha', 'Rotina sugerida', 'Precisa de contato', 'Estagnados'] as $trecho) {
             $this->assertStringContainsString($trecho, $html);
         }
 
-        \Livewire\Livewire::test(\App\Filament\Resources\Interessados\Pages\ListInteressados::class)
+        Livewire::test(ListInteressados::class)
             ->mountAction('ajuda')
             ->assertHasNoErrors();
     }

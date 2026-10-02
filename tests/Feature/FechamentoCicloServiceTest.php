@@ -16,10 +16,12 @@ use App\Models\Turma;
 use App\Services\FechamentoCicloService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class FechamentoCicloServiceTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     private function criarCenario(bool $recuperacaoPorEtapa, bool $exameFinalHabilitado = false): array

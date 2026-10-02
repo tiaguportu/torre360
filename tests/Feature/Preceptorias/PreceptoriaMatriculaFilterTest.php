@@ -12,10 +12,12 @@ use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class PreceptoriaMatriculaFilterTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     public function test_responsavel_ve_apenas_preceptorias_dos_seus_dependentes_e_filtra_por_matricula(): void

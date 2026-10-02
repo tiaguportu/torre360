@@ -13,10 +13,12 @@ use App\Models\Pessoa;
 use App\Models\TransacaoBancaria;
 use App\Services\ConciliacaoBancariaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class ConciliacaoCreditoFaturaTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     private Banco $banco;
