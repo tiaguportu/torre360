@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\StatusFatura;
 use App\Models\Fatura;
 use App\Models\TransacaoBancaria;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Confirma o pagamento de uma fatura vindo de um gateway — usado pelo
@@ -31,16 +32,18 @@ class PagamentoConfirmacaoService
             return ['processado' => false, 'motivo' => 'fatura está cancelada'];
         }
 
-        $this->baixaFaturaService->darBaixa($fatura, [
-            'valor' => $valor,
-            'data_transacao' => $dataPagamento,
-            'descricao' => $descricao ?? "Pagamento via gateway ({$fatura->gateway}) — Fatura #{$fatura->id}",
-            'conciliado' => true,
-            'external_id' => $eventId,
-        ]);
+        return DB::transaction(function () use ($fatura, $valor, $dataPagamento, $eventId, $descricao): array {
+            $this->baixaFaturaService->darBaixa($fatura, [
+                'valor' => $valor,
+                'data_transacao' => $dataPagamento,
+                'descricao' => $descricao ?? "Pagamento via gateway ({$fatura->gateway}) — Fatura #{$fatura->id}",
+                'conciliado' => true,
+                'external_id' => $eventId,
+            ]);
 
-        $fatura->update(['status_gateway' => 'pago']);
+            $fatura->update(['status_gateway' => 'pago']);
 
-        return ['processado' => true, 'motivo' => null];
+            return ['processado' => true, 'motivo' => null];
+        });
     }
 }

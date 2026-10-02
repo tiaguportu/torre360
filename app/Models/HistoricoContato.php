@@ -7,6 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HistoricoContato extends Model
 {
+    /**
+     * Resultado do contato, como gravado no banco => rótulo exibido.
+     *
+     * @var array<string, string>
+     */
+    public const RESULTADOS = [
+        'agendou_visita' => 'Agendou Visita',
+        'retornar' => 'Retornar depois',
+        'sem_interesse' => 'Sem Interesse',
+        'matriculou' => 'Efetuou Matrícula',
+        'outro' => 'Outro',
+    ];
+
     protected $table = 'historico_contato';
 
     protected $fillable = ['interessado_id', 'usuario_id', 'tipo_contato_interessado_id', 'relato', 'data_contato', 'duracao_minutos', 'resultado'];

@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\SituacaoFinalDisciplina;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class FechamentoCicloService
@@ -235,43 +236,45 @@ class FechamentoCicloService
             ->with(['pessoa', 'turma.disciplinas'])
             ->get();
 
-        $resultados = collect();
+        return DB::transaction(function () use ($matriculas, $periodoLetivo): Collection {
+            $resultados = collect();
 
-        foreach ($matriculas as $matricula) {
-            foreach ($matricula->turma->disciplinas as $disciplina) {
-                $calculo = $this->calcularSituacaoFinal($matricula, $disciplina, $periodoLetivo);
+            foreach ($matriculas as $matricula) {
+                foreach ($matricula->turma->disciplinas as $disciplina) {
+                    $calculo = $this->calcularSituacaoFinal($matricula, $disciplina, $periodoLetivo);
 
-                $chave = [
-                    'matricula_id' => $matricula->id,
-                    'disciplina_id' => $disciplina->id,
-                    'periodo_letivo_id' => $periodoLetivo->id,
-                ];
+                    $chave = [
+                        'matricula_id' => $matricula->id,
+                        'disciplina_id' => $disciplina->id,
+                        'periodo_letivo_id' => $periodoLetivo->id,
+                    ];
 
-                $dadosAtualizacao = [
-                    'media_final' => $calculo['media_final'],
-                    'situacao' => $calculo['situacao'],
-                    'calculado_em' => now(),
-                ];
+                    $dadosAtualizacao = [
+                        'media_final' => $calculo['media_final'],
+                        'situacao' => $calculo['situacao'],
+                        'calculado_em' => now(),
+                    ];
 
-                $existente = SituacaoFinalDisciplina::where($chave)->first();
+                    $existente = SituacaoFinalDisciplina::where($chave)->first();
 
-                if ($existente && $existente->situacao === SituacaoFinal::RECUPERACAO && $calculo['situacao'] !== SituacaoFinal::RECUPERACAO) {
-                    $dadosAtualizacao['nota_exame_final'] = null;
-                    $dadosAtualizacao['media_final_pos_exame'] = null;
-                    $dadosAtualizacao['situacao_final_pos_exame'] = null;
+                    if ($existente && $existente->situacao === SituacaoFinal::RECUPERACAO && $calculo['situacao'] !== SituacaoFinal::RECUPERACAO) {
+                        $dadosAtualizacao['nota_exame_final'] = null;
+                        $dadosAtualizacao['media_final_pos_exame'] = null;
+                        $dadosAtualizacao['situacao_final_pos_exame'] = null;
+                    }
+
+                    $registro = SituacaoFinalDisciplina::updateOrCreate($chave, $dadosAtualizacao);
+
+                    $registro->setRelation('matricula', $matricula);
+                    $registro->setRelation('disciplina', $disciplina);
+                    $registro->setRelation('periodoLetivo', $periodoLetivo);
+
+                    $resultados->push($registro);
                 }
-
-                $registro = SituacaoFinalDisciplina::updateOrCreate($chave, $dadosAtualizacao);
-
-                $registro->setRelation('matricula', $matricula);
-                $registro->setRelation('disciplina', $disciplina);
-                $registro->setRelation('periodoLetivo', $periodoLetivo);
-
-                $resultados->push($registro);
             }
-        }
 
-        return $resultados;
+            return $resultados;
+        });
     }
 
     /**
@@ -299,28 +302,30 @@ class FechamentoCicloService
      */
     public function registrarExameFinal(SituacaoFinalDisciplina $registro, float $notaExameFinal): SituacaoFinalDisciplina
     {
-        $periodoLetivo = $registro->relationLoaded('periodoLetivo')
-            ? $registro->periodoLetivo
-            : PeriodoLetivo::findOrFail($registro->periodo_letivo_id);
+        return DB::transaction(function () use ($registro, $notaExameFinal): SituacaoFinalDisciplina {
+            $periodoLetivo = $registro->relationLoaded('periodoLetivo')
+                ? $registro->periodoLetivo
+                : PeriodoLetivo::findOrFail($registro->periodo_letivo_id);
 
-        if (! $periodoLetivo->exame_final_habilitado) {
-            throw new InvalidArgumentException('Este período letivo não tem o exame final habilitado.');
-        }
+            if (! $periodoLetivo->exame_final_habilitado) {
+                throw new InvalidArgumentException('Este período letivo não tem o exame final habilitado.');
+            }
 
-        if ($registro->situacao !== SituacaoFinal::RECUPERACAO) {
-            throw new InvalidArgumentException('Só é possível lançar exame final para disciplinas em situação de recuperação.');
-        }
+            if ($registro->situacao !== SituacaoFinal::RECUPERACAO) {
+                throw new InvalidArgumentException('Só é possível lançar exame final para disciplinas em situação de recuperação.');
+            }
 
-        $mediaFinalPosExame = round(((float) $registro->media_final + $notaExameFinal) / 2, 2);
-        $notaAprovacaoPosExame = (float) ($periodoLetivo->nota_aprovacao_pos_exame ?? 5.0);
+            $mediaFinalPosExame = round(((float) $registro->media_final + $notaExameFinal) / 2, 2);
+            $notaAprovacaoPosExame = (float) ($periodoLetivo->nota_aprovacao_pos_exame ?? 5.0);
 
-        $registro->nota_exame_final = $notaExameFinal;
-        $registro->media_final_pos_exame = $mediaFinalPosExame;
-        $registro->situacao_final_pos_exame = $mediaFinalPosExame >= $notaAprovacaoPosExame
-            ? SituacaoFinal::APROVADO
-            : SituacaoFinal::REPROVADO;
-        $registro->save();
+            $registro->nota_exame_final = $notaExameFinal;
+            $registro->media_final_pos_exame = $mediaFinalPosExame;
+            $registro->situacao_final_pos_exame = $mediaFinalPosExame >= $notaAprovacaoPosExame
+                ? SituacaoFinal::APROVADO
+                : SituacaoFinal::REPROVADO;
+            $registro->save();
 
-        return $registro;
+            return $registro;
+        });
     }
 }

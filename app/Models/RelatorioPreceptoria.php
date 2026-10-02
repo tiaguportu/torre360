@@ -15,7 +15,7 @@ class RelatorioPreceptoria extends Model
 
     protected $fillable = ['preceptoria_id', 'tipo', 'corpo', 'publico'];
 
-    public function casts(): array
+    protected function casts(): array
     {
         return [
             'publico' => 'boolean',

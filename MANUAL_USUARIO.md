@@ -98,13 +98,15 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Precisa de Contato:** Filtre leads com contato atrasado.
    - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
    - Os filtros ficam recolhidos acima da tabela e são lembrados durante a sessão.
-3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
+3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp*, *Enviar ao consultor* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
    - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo.
+   - **Enviar ao consultor (ícone de compartilhar):** Abre o WhatsApp do consultor responsável pelo lead com a mensagem pronta: link direto para falar com o interessado (o consultor só clica), alunos, status, origem, temperatura, próximo contato, visita agendada e um resumo dos **3 últimos contatos** registrados. O ícone fica **verde** quando o consultor tem telefone cadastrado e **amarelo** quando não tem — nesse caso o WhatsApp abre com a mensagem pronta, sem destinatário, e você escolhe o contato. Só aparece para leads que têm consultor. Para o envio ir direto ao consultor, o telefone dele precisa estar preenchido no cadastro da **Pessoa** vinculada ao usuário.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que apenas move o lead para o status de matrícula.
    - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro).
 4. **Ações em Lote:**
    - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
+   - **Enviar aos consultores (WhatsApp):** Selecione vários leads e veja um botão do WhatsApp para cada consultor, já com a lista dos leads dele (nome, link direto e status) numa única mensagem. Leads sem consultor aparecem num aviso e ficam de fora — use *Atribuir Consultor* para defini-lo. Se a lista for muito grande, a mensagem é encurtada e indica quantos leads ficaram de fora.
    - **Excluir:** Exclua múltiplos leads selecionados.
 
 5. **Botão Ajuda:** No topo da listagem, o botão **Ajuda** abre um guia da tela: para que serve cada aba, como ler cada coluna (inclusive o Score e a faixa vermelha), as ações por linha e em lote, os filtros, como entram novos leads, uma rotina diária sugerida e como o Score é calculado. Os itens variam conforme as suas permissões.
@@ -129,7 +131,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
 ### 3.5 Alertas e Notificações
 1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos recebem um alerta instantâneo.
 2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde com a quantidade de leads com status "Novo".
-3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema.
+3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema. Antes de enviar, o modal de confirmação ("Enviar Alerta de Acompanhamento?") mostra o **e-mail para o qual a mensagem será enviada** (o do consultor responsável). Se o consultor não tiver e-mail cadastrado, o modal avisa que só a notificação no sistema será enviada; se o lead não tiver consultor, avisa que não há para quem enviar. O modal também traz o link **Abrir o WhatsApp do consultor com a mensagem pronta**, que abre o WhatsApp com o lead resumido (contato direto do interessado e últimos contatos registrados), para avisar também por lá; se o consultor não tiver telefone cadastrado, o WhatsApp abre para você escolher o contato.
 4. **Notificação Automática Diária:** O sistema envia automaticamente (às 8h) notificações por e-mail e sininho para consultores com leads pendentes de contato.
 5. **Lembrete de Visita:** No mesmo disparo das 8h, o consultor recebe um aviso no sininho das visitas agendadas para as próximas 24 horas (um aviso por visita).
 
@@ -216,11 +218,37 @@ Envie um mesmo e-mail para um grupo de pessoas de uma só vez, sem precisar sele
    - **Interessados (CRM):** filtre por **status** do lead e/ou **origem**. É preciso escolher ao menos um filtro, para evitar enviar para "todos os leads" sem querer.
    - **Responsáveis por turma:** escolha uma ou mais turmas; o e-mail vai para os responsáveis dos alunos com matrícula ativa nelas.
 3. Escreva o **assunto** e a **mensagem**. Use `[Nome]` para inserir automaticamente o primeiro nome de cada destinatário.
-4. Salve como rascunho. A lista mostra a quantidade estimada de **destinatários**. Clique em **Enviar** para confirmar (a tela mostra quantas pessoas vão receber antes de você confirmar) — o envio roda em fila e, ao terminar, você recebe um aviso no sininho com o total enviado e eventuais falhas.
+4. Salve como rascunho. A lista mostra a quantidade estimada de **destinatários**. Clique em **Enviar** para confirmar (a tela mostra quantas pessoas vão receber antes de você confirmar) — o envio roda em fila em segundo plano com tempo limite estendido (até 10 minutos) e isolamento de falhas por destinatário: se um e-mail individual for rejeitado pelo provedor SMTP ou falhar, o disparo continua para os demais normalmente.
 5. **Quem não recebe:** pessoas sem e-mail cadastrado e pessoas que desativaram o campo **"Aceita receber comunicações da escola"** no próprio cadastro (ficha de Pessoa) — veja a seção 4.1. Isso não afeta notificações individuais obrigatórias (boletim, ocorrências, financeiro), que continuam sendo enviadas normalmente.
-6. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
+6. Ao terminar o processamento, o remetente recebe uma notificação no sininho com o resumo (total de enviados e falhas). Em caso de interrupção inesperada do job, o status é alterado para **Falhou** e o remetente é alertado imediatamente. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
+
+### 3.14 Inteligência Artificial para Vendas Educacionais (Gemini)
+O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Generativa alimentadas pelo Google Gemini, atuando como um copiloto para a equipe comercial e de admissões:
+
+1. **✨ Dossiê IA do Lead:**
+   - **Onde acessar:** Disponível no menu de ações de cada lead na tabela de Interessados (`...` → **Dossiê IA do Lead**) ou no cabeçalho da tela de edição do lead.
+   - **O que faz:** Analisa em tempo real todo o histórico cadastral, dados dos filhos (idade e séries pretendidas), notas de contatos anteriores, ligações e visitas agendadas.
+   - **Diagnóstico Gerado:**
+     - **Perfil & Momento da Família:** Síntese de quem são os pais, perfil dos alunos e motivações declaradas.
+     - **Dores e Objeções Identificadas:** Principais preocupações (metodologia pedagógica, acolhimento, línguas, segurança, valores).
+     - **Termômetro Comercial:** Avaliação da temperatura real e nível de prontidão da matrícula (🔥 Quente, 🟡 Morno, 🔵 Frio).
+     - **Roteiro Estratégico de Abordagem:** O que o consultor deve falar, argumentos personalizados para aquela família e pergunta aberta recomendada para conduzir o próximo contato.
+   - O consultor pode revisar e clicar em **Salvar no Histórico do Lead** para registrar o dossiê permanentemente no histórico de interações.
+
+2. **💬 Copiloto WhatsApp IA:**
+   - **Onde acessar:** Disponível no menu de ações de cada lead (`...` → **Copiloto WhatsApp IA**) e no cabeçalho de edição.
+   - **Como funciona:** Redige uma mensagem de WhatsApp sob medida para a família, sem textos genéricos ou robóticos, adaptando-se ao objetivo escolhido:
+     - *👋 Primeiro Contato (Boas-vindas acolhedoras)*
+     - *🏫 Convite para Tour Pedagógico Presencial*
+     - *🛡️ Superar Dúvidas / Objeções (Metodologia, Preço, etc.)*
+     - *🔄 Reativar Família Sumida (Follow-up carinhoso)*
+     - *🎓 Fechamento de Matrícula (Garantia de vaga)*
+   - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
+   - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
+   - **Disparo em 1-Clique:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada, registrando opcionalmente a ação no histórico do lead.
 
 ---
+
 
 ## 📍 13. Gestão de Unidades e Canais Digitais
 
@@ -447,7 +475,7 @@ Rotina de fechamento que consolida as etapas avaliativas de cada disciplina e de
    - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota substitui média(s) de etapa conforme o modo de recuperação configurado no Período Letivo (item 5.10.1 abaixo).
    - Classificar o resultado conforme as notas de corte configuradas no cadastro do **Período Letivo** (campos **Nota Mínima para Aprovação**, padrão 7,0, e **Nota Mínima para Recuperação**, padrão 5,0): média igual ou acima da nota de aprovação = **Aprovado**; entre a nota de recuperação e a de aprovação = **Recuperação**; abaixo da nota de recuperação = **Reprovado**.
 4. O resultado é exibido na própria página, agrupado por turma, com aluno, disciplina, média final e um selo colorido de situação (verde = Aprovado, amarelo = Recuperação, vermelho = Reprovado).
-5. **Gravação:** Cada cálculo é salvo (um registro por aluno/disciplina/período letivo). Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior — útil após correção de notas.
+5. **Gravação Atômica:** Cada cálculo é processado e persistido dentro de uma transação protegida (`DB::transaction`). Um registro é salvo por aluno/disciplina/período letivo. Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior de forma integral (com rollback automático se houver erro imprevisto durante o processamento em lote) — garantindo consistência total após correções de notas. O registro de exame final também segue o mesmo padrão transacional seguro.
 6. **Turmas por Habilidades:** Turmas configuradas com Tipo de Avaliação `Habilidades` não entram no fechamento, pois não possuem notas numéricas — apenas turmas `Notas` ou `Híbrido`.
 
 #### 5.10.1 Recuperação Anual ou por Etapa
@@ -1078,10 +1106,10 @@ Após a finalização bem-sucedida, o sistema dispara um e-mail automático para
 - O histórico e preferências ficam salvos no cadastro para facilitar a abordagem consultiva pela equipe de vendas.
 - Uma notificação via "Sininho" é disparada para todos os colaboradores administrativos do sistema informando a chegada do novo lead.
 
-### 17.4 Proteção Contra Bot (reCAPTCHA)
-Para garantir que seu e-mail e painel não sejam inundados de SPAM, a página utiliza proteção invisível **Google reCAPTCHA v3**.
-- Ao longo da inscrição, o sistema analisa o comportamento de navegação. Sem pedir cliques adicionais em "Semáforos", ele julga se é um preenchimento humano válido.
-- Se configurado pelos administradores, scripts automatizados que tentarem disparar cadastros serão prontamente bloqueados pelo sistema de forma invisível.
+### 17.5 Proteção Contra Bot e Flood (reCAPTCHA v3 e Rate Limiting)
+Para garantir que seu e-mail e painel não sejam inundados de SPAM ou ataques automatizados, a página utiliza camadas complementares de segurança:
+- **Google reCAPTCHA v3:** Analisa o comportamento de navegação de forma invisível para avaliar se o preenchimento é humano legítimo, bloqueando scripts maliciosos.
+- **Proteção de Taxa (Rate Limiting):** A submissão do formulário possui limitação estrita de 15 envios por minuto por endereço IP (`throttle:15,1`), prevenindo ataques de negação de serviço, tentativas de submissão em massa (*flooding*) e consumo abusivo do envio de e-mails.
 
 ---
 
@@ -1521,10 +1549,10 @@ Acesse **Financeiro → Contratos**.
   - 🔴 **Atrasado:** Fatura com vencimento expirado sem quitação.
   - 🔵 **Pago Parcialmente:** Foi dada baixa em valor inferior ao saldo devedor.
   - ⚪ **Cancelado:** Fatura anulada.
-- **Ação "Dar Baixa" em 1-Clique:** Diretamente na listagem de **Faturas** ou no gerenciador de faturas dentro do **Contrato**, a ação **Dar Baixa** permite registrar pagamentos instantaneamente:
+- **Ação "Dar Baixa" em 1-Clique com Garantia Transacional:** Diretamente na listagem de **Faturas** ou no gerenciador de faturas dentro do **Contrato**, a ação **Dar Baixa** permite registrar pagamentos instantaneamente:
   - Abre um modal pré-preenchido com o saldo devedor atual da fatura.
   - Solicita a seleção do **Banco**, valor recebido, data do pagamento e observações.
-  - Ao confirmar, o sistema gera automaticamente a **Transação Bancária** de entrada vinculada à fatura e atualiza seu status para *Pago* (ou *Pago Parcialmente* caso restem valores).
+  - Ao confirmar, o sistema executa a operação em uma transação de banco de dados atômica (`DB::transaction`): gera automaticamente a **Transação Bancária** de entrada vinculada à fatura e atualiza seu status para *Pago* (ou *Pago Parcialmente* caso restem valores), garantindo que nenhuma inconsistência financeira ou lançamento parcial órfão ocorra em caso de interrupção ou falha de rede.
 - **Filtros por Período e Status de Faturas:** É possível filtrar faturas por status (ex: somente em aberto) e definir faixas de vencimento.
 - **Interface de Transações Bancárias Legível:** A tela de transações bancárias exibe o nome do Banco, o Aluno/Contrato vinculado, o Plano de Contas, o Fornecedor e traz badges coloridos identificando **↑ Entrada (verde)** e **↓ Saída (vermelho)** com valores formatados em moeda (R$).
 

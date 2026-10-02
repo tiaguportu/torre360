@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Captacao;
 use App\Enums\Sexo;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Captacao\ConfirmarConviteMatriculaRequest;
+use App\Http\Requests\Captacao\StoreCaptacaoInteressadoRequest;
 use App\Mail\AgradecimentoInteresseMail;
 use App\Models\EmailLog;
 use App\Models\Interessado;
@@ -17,7 +19,6 @@ use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
-use App\Rules\Cpf;
 use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\UtmTracker;
@@ -25,7 +26,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
@@ -45,45 +46,14 @@ class CaptacaoInteressadoController extends Controller
             ->orderBy('nome')
             ->get();
 
-        return view('captacao.interessado', compact('unidades', 'series', 'turmas'));
+        $origens = OrigemInteressado::orderBy('nome')->get();
+
+        return view('captacao.interessado', compact('unidades', 'series', 'turmas', 'origens'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCaptacaoInteressadoRequest $request): RedirectResponse
     {
-        // Verifica reCAPTCHA v3
-        $this->verificarRecaptcha($request);
-
-        $validated = $request->validate([
-            // Quem preenche
-            'tipo_preenchimento' => ['required', 'in:proprio,responsavel'],
-
-            // Dados do responsável
-            'responsavel_nome' => ['required_if:tipo_preenchimento,responsavel', 'nullable', 'string', 'max:255'],
-            'responsavel_cpf' => ['nullable', 'string', 'max:20'],
-            'responsavel_telefone' => ['required', 'string', 'max:30'],
-            'responsavel_email' => ['required', 'email', 'max:255'],
-
-            // Múltiplos alunos
-            'alunos' => ['required', 'array', 'min:1'],
-            'alunos.*.nome' => ['required', 'string', 'max:255'],
-            'alunos.*.data_nascimento' => ['nullable', 'date'],
-            'alunos.*.vinculo' => ['nullable', 'string', 'max:100'],
-            'alunos.*.unidade_id' => ['nullable', 'exists:unidade,id'],
-            'alunos.*.serie_id' => ['nullable', 'exists:serie,id'],
-            'alunos.*.turno_preferencia' => ['nullable', 'string', 'in:Manhã,Tarde,Integral,Sem preferência'],
-
-            // Extras
-            'observacoes' => ['nullable', 'string', 'max:2000'],
-            'como_conheceu' => ['nullable', 'exists:origem_interessado,id'],
-        ], [
-            'tipo_preenchimento.required' => 'Informe quem está preenchendo.',
-            'responsavel_nome.required_if' => 'Informe o nome do responsável.',
-            'responsavel_telefone.required' => 'O telefone / WhatsApp para contato é obrigatório.',
-            'responsavel_email.required' => 'O e-mail para contato é obrigatório.',
-            'responsavel_email.email' => 'Informe um e-mail válido.',
-            'alunos.required' => 'Informe os dados de ao menos um aluno.',
-            'alunos.*.nome.required' => 'Informe o nome completo do aluno.',
-        ]);
+        $validated = $request->validated();
 
         $nomeInteressado = $validated['tipo_preenchimento'] === 'responsavel'
             ? $validated['responsavel_nome']
@@ -189,6 +159,8 @@ class CaptacaoInteressadoController extends Controller
         $interessado->dependentes()->delete();
 
         $alunos = $data['alunos'] ?? [];
+        $turmaIds = array_values(array_filter(array_column($alunos, 'turma_id')));
+        $turmasPorId = ! empty($turmaIds) ? Turma::whereIn('id', $turmaIds)->pluck('serie_id', 'id') : collect();
 
         foreach ($alunos as $alunoData) {
             if (empty($alunoData['nome'])) {
@@ -199,8 +171,7 @@ class CaptacaoInteressadoController extends Controller
             $serieId = $alunoData['serie_id'] ?? null;
 
             if (! $serieId && ! empty($alunoData['turma_id'])) {
-                $turma = Turma::find($alunoData['turma_id']);
-                $serieId = $turma?->serie_id;
+                $serieId = $turmasPorId[$alunoData['turma_id']] ?? null;
             }
 
             InteressadoDependente::create([
@@ -239,7 +210,7 @@ class CaptacaoInteressadoController extends Controller
                 'sent_at' => now(),
             ]);
         } catch (\Exception $e) {
-            \Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: ".$e->getMessage());
+            Log::error("Falha ao enviar e-mail de agradecimento para {$pessoa->email}: ".$e->getMessage());
         }
     }
 
@@ -276,59 +247,15 @@ class CaptacaoInteressadoController extends Controller
         ]);
     }
 
-    public function confirmarConvite(Request $request, string $token, ConviteMatriculaService $service): RedirectResponse
+    public function confirmarConvite(ConfirmarConviteMatriculaRequest $request, string $token, ConviteMatriculaService $service): RedirectResponse
     {
-        $interessado = $service->validarToken($token);
+        $interessado = $request->getInteressado();
 
         if (! $interessado) {
             return redirect()->route('captacao.interessado.convite', $token);
         }
 
-        $dependentesIds = $interessado->dependentes()->pluck('id')->all();
-
-        $validated = $request->validate([
-            'responsavel.nome' => ['required', 'string', 'max:255'],
-            'responsavel.cpf' => ['required', new Cpf],
-            'responsavel.data_nascimento' => ['required', 'date', 'before:today'],
-            'responsavel.telefone' => ['required', 'string', 'max:30'],
-            'responsavel.email' => ['nullable', 'email', 'max:255'],
-            'responsavel.tipo_vinculo_id' => ['required', 'exists:tipo_vinculos,id'],
-            'responsavel.is_financeiro' => ['nullable', 'boolean'],
-            'responsavel.cep' => ['required', 'string', 'max:10'],
-            'responsavel.logradouro' => ['required', 'string', 'max:255'],
-            'responsavel.numero' => ['required', 'string', 'max:20'],
-            'responsavel.complemento' => ['nullable', 'string', 'max:100'],
-            'responsavel.bairro' => ['required', 'string', 'max:100'],
-            'responsavel.cidade_ibge' => ['nullable', 'string', 'max:10'],
-
-            'segundo_responsavel.nome' => ['nullable', 'string', 'max:255'],
-            'segundo_responsavel.cpf' => ['nullable', 'required_with:segundo_responsavel.nome', new Cpf],
-            'segundo_responsavel.tipo_vinculo_id' => ['nullable', 'required_with:segundo_responsavel.nome', 'exists:tipo_vinculos,id'],
-            'segundo_responsavel.telefone' => ['nullable', 'string', 'max:30'],
-            'segundo_responsavel.email' => ['nullable', 'email', 'max:255'],
-            'segundo_responsavel.is_financeiro' => ['nullable', 'boolean'],
-            'segundo_responsavel.percentual' => ['nullable', 'integer', 'between:1,99'],
-
-            'dependentes' => ['required', 'array', 'min:1'],
-            'dependentes.*.id' => ['required', 'integer', 'in:'.implode(',', $dependentesIds ?: [0])],
-            'dependentes.*.serie_id' => ['required', 'exists:serie,id'],
-            'dependentes.*.turno_preferencia' => ['nullable', 'string', 'in:Manhã,Tarde,Integral,Sem preferência'],
-            'dependentes.*.data_nascimento' => ['required', 'date', 'before:today'],
-            'dependentes.*.cpf' => ['nullable', new Cpf],
-            'dependentes.*.sexo' => ['nullable', 'in:'.implode(',', array_column(Sexo::cases(), 'value'))],
-
-            'lgpd_aceite' => ['accepted'],
-        ], [
-            'lgpd_aceite.accepted' => 'É necessário concordar com o tratamento dos dados para continuar.',
-        ], [
-            'responsavel.cpf' => 'CPF do responsável',
-            'segundo_responsavel.cpf' => 'CPF do segundo responsável',
-            'dependentes.*.cpf' => 'CPF do aluno',
-            'responsavel.data_nascimento' => 'data de nascimento do responsável',
-            'dependentes.*.data_nascimento' => 'data de nascimento do aluno',
-            'dependentes.*.serie_id' => 'série do aluno',
-        ]);
-
+        $validated = $request->validated();
         $responsavel = $validated['responsavel'];
 
         $service->confirmar(
@@ -347,23 +274,32 @@ class CaptacaoInteressadoController extends Controller
     }
 
     /**
-     * Monta texto de observações consolidando os dados do formulário.
+     * Monta texto de observações consolidando os dados do formulário sem N+1.
      *
      * @param  array<string, mixed>  $data
      */
     private function montarObservacoes(array $data): string
     {
         $obs = [];
+        $alunos = $data['alunos'] ?? [];
 
-        foreach ($data['alunos'] ?? [] as $i => $aluno) {
+        $unidadeIds = array_values(array_filter(array_column($alunos, 'unidade_id')));
+        $serieIds = array_values(array_filter(array_column($alunos, 'serie_id')));
+
+        $unidadesPorId = ! empty($unidadeIds) ? Unidade::whereIn('id', $unidadeIds)->pluck('nome', 'id') : collect();
+        $seriesPorId = ! empty($serieIds) ? Serie::whereIn('id', $serieIds)->pluck('nome', 'id') : collect();
+
+        foreach ($alunos as $i => $aluno) {
             $label = 'Aluno '.($i + 1).': '.($aluno['nome'] ?? '-');
 
             if (! empty($aluno['unidade_id'])) {
-                $label .= ' | Unidade: '.(Unidade::find($aluno['unidade_id'])?->nome ?? '-');
+                $nomeUnidade = $unidadesPorId[$aluno['unidade_id']] ?? '-';
+                $label .= ' | Unidade: '.$nomeUnidade;
             }
 
             if (! empty($aluno['serie_id'])) {
-                $label .= ' | Série: '.(Serie::find($aluno['serie_id'])?->nome ?? '-');
+                $nomeSerie = $seriesPorId[$aluno['serie_id']] ?? '-';
+                $label .= ' | Série: '.$nomeSerie;
             }
 
             if (! empty($aluno['turno_preferencia'])) {
@@ -380,50 +316,5 @@ class CaptacaoInteressadoController extends Controller
         $obs[] = 'Origem: Formulário público (site)';
 
         return implode("\n", $obs);
-    }
-
-    /**
-     * Verifica o token reCAPTCHA v3 com a API do Google.
-     */
-    private function verificarRecaptcha(Request $request): void
-    {
-        $siteKey = config('services.recaptcha.site_key');
-        $secret = config('services.recaptcha.secret');
-
-        if (empty($siteKey) || empty($secret)) {
-            \Log::info('reCAPTCHA ignorado: Chaves não configuradas no .env');
-
-            return;
-        }
-
-        $token = $request->input('recaptcha_token');
-
-        if (empty($token)) {
-            if (! empty($siteKey) && ! empty($secret)) {
-                \Log::warning('reCAPTCHA falhou: Token ausente no request com chaves configuradas');
-                abort(422, 'Verificação de segurança ausente. Por favor, tente novamente.');
-            }
-
-            \Log::info('reCAPTCHA ignorado: Token ausente e chaves não configuradas');
-
-            return;
-        }
-
-        try {
-            $response = Http::asForm()->timeout(5)->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => $secret,
-                'response' => $token,
-                'remoteip' => $request->ip(),
-            ]);
-
-            $result = $response->json();
-
-            if (! ($result['success'] ?? false) || ($result['score'] ?? 0) < 0.3) {
-                \Log::warning('reCAPTCHA falhou: Score baixo ou erro na API', ['result' => $result]);
-                abort(422, 'O sistema detectou uma atividade suspeita. Por favor, tente preencher o formulário novamente.');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Erro ao conectar com API do reCAPTCHA: '.$e->getMessage());
-        }
     }
 }

@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
 
@@ -494,17 +493,13 @@ class Matricula extends Model
 
     /**
      * Nomes dos tipos de vínculo por id, carregados uma única vez (e não uma query por responsável).
-     * Usa o cache em memória do processo, com validade curta para não ficar defasado em workers longos.
+     * Usa o helper once() do Laravel para memoização no ciclo de vida da requisição.
      *
      * @return array<int, string>
      */
     private static function nomesTiposVinculo(): array
     {
-        return Cache::store('array')->remember(
-            'matricula.nomes_tipos_vinculo',
-            30,
-            fn (): array => TipoVinculo::query()->pluck('nome', 'id')->all(),
-        );
+        return once(fn (): array => TipoVinculo::query()->pluck('nome', 'id')->all());
     }
 
     /**

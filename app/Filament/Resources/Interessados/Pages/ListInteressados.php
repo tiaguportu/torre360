@@ -118,6 +118,7 @@ class ListInteressados extends ListRecords
             ->secao('⚡ Ações em cada linha', [
                 ['💬', 'Atendimento (ícone de balão)', 'Registra um contato: tipo, relato, duração, resultado e a data do próximo contato. Atualiza o histórico, o score e o prazo do lead.'],
                 ['🟢', 'WhatsApp', 'Abre o WhatsApp com uma mensagem pronta a partir de um modelo. Só aparece se o lead tem telefone.'],
+                ['📤', 'Enviar ao consultor (ícone de compartilhar)', 'Abre o WhatsApp do consultor responsável com o lead já resumido: link direto para falar com o interessado e os últimos contatos registrados. Fica verde quando o consultor tem telefone cadastrado e amarelo quando não tem (nesse caso o WhatsApp abre sem destinatário e você escolhe o contato). Só aparece se o lead tem consultor.'],
                 $canUpdate ? ['✏️', 'Editar (lápis)', 'Abre a ficha completa: dados do negócio, redes sociais, dependentes, histórico e visitas.'] : null,
                 ['⋮', 'Menu "Mais ações"', 'Agendar visita, Matricular (abre o Assistente de Matrícula já preenchido) ou Marcar matriculado, Gerar link de pré-matrícula online (a família preenche responsáveis, alunos e endereço, e os dados chegam prontos no Assistente de Matrícula) e marcar como Perdido (com o motivo).'],
             ])
@@ -129,6 +130,7 @@ class ListInteressados extends ListRecords
             ])
             ->secao('📦 Ações em lote (selecione várias linhas)', [
                 ['👥', 'Atribuir consultor', 'Define o consultor responsável de todos os leads selecionados de uma vez.'],
+                ['📤', 'Enviar aos consultores (WhatsApp)', 'Mostra um botão do WhatsApp para cada consultor, já com a lista dos leads dele numa única mensagem. Leads sem consultor aparecem num aviso e ficam de fora.'],
                 $canEmail ? ['✉️', 'Enviar comunicação por e-mail', 'Dispara um e-mail em massa para os selecionados (use [Nome] para personalizar). Só recebem quem tem e-mail e não pediu para ficar de fora.'] : null,
                 $canDelete ? ['🗑️', 'Excluir', 'Remove os leads selecionados.'] : null,
             ])

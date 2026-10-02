@@ -6,6 +6,7 @@ use App\Enums\StatusFatura;
 use App\Models\Banco;
 use App\Models\Fatura;
 use App\Models\TransacaoBancaria;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
@@ -22,20 +23,22 @@ class BaixaFaturaService
      */
     public function darBaixa(Fatura $fatura, array $dados): TransacaoBancaria
     {
-        $transacao = TransacaoBancaria::create([
-            'banco_id' => $dados['banco_id'] ?? $this->bancoIdPadrao(),
-            'fatura_id' => $fatura->id,
-            'tipo' => 'entrada',
-            'valor' => $dados['valor'],
-            'data_transacao' => $dados['data_transacao'],
-            'descricao' => $dados['descricao'] ?? "Baixa — Fatura #{$fatura->id}",
-            'conciliado' => $dados['conciliado'] ?? true,
-            'external_id' => $dados['external_id'] ?? null,
-        ]);
+        return DB::transaction(function () use ($fatura, $dados): TransacaoBancaria {
+            $transacao = TransacaoBancaria::create([
+                'banco_id' => $dados['banco_id'] ?? $this->bancoIdPadrao(),
+                'fatura_id' => $fatura->id,
+                'tipo' => 'entrada',
+                'valor' => $dados['valor'],
+                'data_transacao' => $dados['data_transacao'],
+                'descricao' => $dados['descricao'] ?? "Baixa — Fatura #{$fatura->id}",
+                'conciliado' => $dados['conciliado'] ?? true,
+                'external_id' => $dados['external_id'] ?? null,
+            ]);
 
-        $this->atualizarStatusFatura($fatura);
+            $this->atualizarStatusFatura($fatura);
 
-        return $transacao;
+            return $transacao;
+        });
     }
 
     /**

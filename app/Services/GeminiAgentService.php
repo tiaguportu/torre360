@@ -235,7 +235,7 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    protected function callGeminiApi(array $payload): array
+    public function callGeminiApi(array $payload): array
     {
         $apiKey = config('services.gemini.key');
 

@@ -715,7 +715,7 @@
                         <label for="como_conheceu">Como conheceu nossa escola?</label>
                         <select id="como_conheceu" name="como_conheceu">
                             <option value="">Prefiro não informar</option>
-                            @foreach(\App\Models\OrigemInteressado::orderBy('nome')->get() as $origem)
+                            @foreach($origens as $origem)
                                 <option value="{{ $origem->id }}" {{ old('como_conheceu') == $origem->id ? 'selected' : '' }}>
                                     {{ $origem->nome }}
                                 </option>

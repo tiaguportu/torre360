@@ -8,14 +8,21 @@ use App\Models\Pessoa;
 use App\Services\CanalMensagemManager;
 use App\Services\ComunicacaoEmMassaService;
 use Filament\Notifications\Notification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class EnviarComunicacaoEmMassaJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
+
+    public int $timeout = 600;
 
     public function __construct(public ComunicacaoEmMassa $comunicacao) {}
 
@@ -34,13 +41,22 @@ class EnviarComunicacaoEmMassaJob implements ShouldQueue
         $falhas = 0;
 
         foreach ($destinatarios as $pessoa) {
-            $sucesso = $canal->enviar(
-                $pessoa,
-                $this->personalizar($this->comunicacao->assunto, $pessoa),
-                $this->personalizar($this->comunicacao->corpo, $pessoa),
-            );
+            try {
+                $sucesso = $canal->enviar(
+                    $pessoa,
+                    $this->personalizar($this->comunicacao->assunto, $pessoa),
+                    $this->personalizar($this->comunicacao->corpo, $pessoa),
+                );
 
-            $sucesso ? $enviados++ : $falhas++;
+                $sucesso ? $enviados++ : $falhas++;
+            } catch (Throwable $e) {
+                $falhas++;
+                Log::warning("Falha ao enviar comunicação em massa #{$this->comunicacao->id} para destinatário #{$pessoa->id}: {$e->getMessage()}", [
+                    'comunicacao_id' => $this->comunicacao->id,
+                    'pessoa_id' => $pessoa->id,
+                    'exception' => $e,
+                ]);
+            }
         }
 
         $this->comunicacao->update([
@@ -54,9 +70,25 @@ class EnviarComunicacaoEmMassaJob implements ShouldQueue
         $this->notificarConclusao($enviados, $falhas, $destinatarios->count());
     }
 
-    public function failed(\Throwable $e): void
+    public function failed(Throwable $e): void
     {
+        Log::error("Falha inesperada no processamento da comunicação em massa #{$this->comunicacao->id}: {$e->getMessage()}", [
+            'comunicacao_id' => $this->comunicacao->id,
+            'exception' => $e,
+        ]);
+
         $this->comunicacao->update(['status' => StatusComunicacaoEmMassa::Falhou]);
+
+        $destinatario = $this->comunicacao->enviadoPor;
+        if (! $destinatario) {
+            return;
+        }
+
+        Notification::make()
+            ->title('Falha no envio da comunicação em massa')
+            ->body("Ocorreu um erro ao processar a comunicação \"{$this->comunicacao->nome}\".")
+            ->color('danger')
+            ->sendToDatabase($destinatario);
     }
 
     /**

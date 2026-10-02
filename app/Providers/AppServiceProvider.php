@@ -36,10 +36,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Modo estrito de lazy loading (N+1 vira exceção): ligado nos testes ou, em outros ambientes, só por opt-in
-        // explícito (DB_PREVENT_LAZY_LOADING=true). Não depende de APP_ENV=production: o servidor pode rodar com
-        // outro APP_ENV e um N+1 não pode derrubar a página dos usuários.
-        Model::preventLazyLoading(app()->environment('testing') || (bool) config('database.prevent_lazy_loading'));
+        // Modo estrito de lazy loading (N+1 vira exceção): ativo em testes e desenvolvimento,
+        // ou por opt-in explícito via DB_PREVENT_LAZY_LOADING. Em produção, permanece desativado por padrão.
+        Model::preventLazyLoading(app()->environment('testing') || (bool) config('database.prevent_lazy_loading', ! app()->isProduction()));
 
         // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
         LeadScoreConfiguracao::aplicar();
