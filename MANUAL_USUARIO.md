@@ -1077,10 +1077,10 @@ Após a finalização bem-sucedida, o sistema dispara um e-mail automático para
 - O histórico e preferências ficam salvos no cadastro para facilitar a abordagem consultiva pela equipe de vendas.
 - Uma notificação via "Sininho" é disparada para todos os colaboradores administrativos do sistema informando a chegada do novo lead.
 
-### 17.4 Proteção Contra Bot (reCAPTCHA)
-Para garantir que seu e-mail e painel não sejam inundados de SPAM, a página utiliza proteção invisível **Google reCAPTCHA v3**.
-- Ao longo da inscrição, o sistema analisa o comportamento de navegação. Sem pedir cliques adicionais em "Semáforos", ele julga se é um preenchimento humano válido.
-- Se configurado pelos administradores, scripts automatizados que tentarem disparar cadastros serão prontamente bloqueados pelo sistema de forma invisível.
+### 17.5 Proteção Contra Bot e Flood (reCAPTCHA v3 e Rate Limiting)
+Para garantir que seu e-mail e painel não sejam inundados de SPAM ou ataques automatizados, a página utiliza camadas complementares de segurança:
+- **Google reCAPTCHA v3:** Analisa o comportamento de navegação de forma invisível para avaliar se o preenchimento é humano legítimo, bloqueando scripts maliciosos.
+- **Proteção de Taxa (Rate Limiting):** A submissão do formulário possui limitação estrita de 15 envios por minuto por endereço IP (`throttle:15,1`), prevenindo ataques de negação de serviço, tentativas de submissão em massa (*flooding*) e consumo abusivo do envio de e-mails.
 
 ---
 

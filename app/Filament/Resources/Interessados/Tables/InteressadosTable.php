@@ -8,11 +8,13 @@ use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
 use App\Models\ComunicacaoEmMassa;
+use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\MensagemWhatsappTemplate;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
+use App\Services\ConsultorWhatsappService;
 use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\VisitaInteressadoService;
@@ -27,6 +29,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -40,6 +43,8 @@ class InteressadosTable
     public static function configure(Table $table): Table
     {
         return $table
+            // A ação "Enviar ao consultor" monta a mensagem de cada linha no render.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(ConsultorWhatsappService::RELACOES))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
             ->paginated([10, 25, 50])
@@ -248,13 +253,7 @@ class InteressadosTable
                             ->minValue(1),
                         Select::make('resultado')
                             ->label('Resultado do Contato')
-                            ->options([
-                                'agendou_visita' => 'Agendou Visita',
-                                'retornar' => 'Retornar depois',
-                                'sem_interesse' => 'Sem Interesse',
-                                'matriculou' => 'Efetuou Matrícula',
-                                'outro' => 'Outro',
-                            ]),
+                            ->options(HistoricoContato::RESULTADOS),
                         DateTimePicker::make('data_proximo_contato')
                             ->label('Data Próximo Contato')
                             ->default(now()->addDays(2)),
@@ -321,15 +320,24 @@ class InteressadosTable
                             '[Horário de Visita Agendada]' => ($record->proximaVisita?->data_hora ?? $record->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir',
                         ]);
 
-                        $telefone = preg_replace('/\D/', '', (string) $record->pessoa->telefone);
-                        if (strlen($telefone) <= 11) {
-                            $telefone = '55'.$telefone;
-                        }
+                        $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa->telefone);
 
                         $url = 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
 
                         $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),
+
+                Action::make('enviarAoConsultor')
+                    ->label('Enviar ao consultor')
+                    ->icon('heroicon-o-share')
+                    ->color(fn (Interessado $record): string => app(ConsultorWhatsappService::class)->consultorTemTelefone($record) ? 'success' : 'warning')
+                    ->iconButton()
+                    ->tooltip(fn (Interessado $record): string => app(ConsultorWhatsappService::class)->consultorTemTelefone($record)
+                        ? "Enviar este lead para {$record->usuario->name} no WhatsApp"
+                        : "{$record->usuario->name} está sem telefone cadastrado — o WhatsApp abrirá para você escolher o contato")
+                    ->visible(fn (Interessado $record): bool => $record->usuario !== null)
+                    ->url(fn (Interessado $record): string => app(ConsultorWhatsappService::class)->urlParaInteressado($record))
+                    ->openUrlInNewTab(),
 
                 ActionGroup::make([
                     Action::make('agendarVisita')
@@ -524,6 +532,18 @@ class InteressadosTable
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('enviarAosConsultores')
+                        ->label('Enviar aos consultores (WhatsApp)')
+                        ->icon('heroicon-o-share')
+                        ->color('success')
+                        ->modalHeading('Enviar leads aos consultores')
+                        ->modalWidth(Width::Large)
+                        ->modalContent(fn (Collection $records) => view(
+                            'filament.interessados.mensagem-consultores',
+                            app(ConsultorWhatsappService::class)->agruparPorConsultor($records),
+                        ))
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Fechar'),
                     DeleteBulkAction::make(),
                 ]),
             ])

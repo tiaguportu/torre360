@@ -29,7 +29,9 @@ Route::get('/matricular-online/sucesso/{matricula}', [MatriculaOnlineController:
 
 // Formulário público de captação de interessados
 Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');
-Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])->name('captacao.interessado.store');
+Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store'])
+    ->middleware('throttle:15,1')
+    ->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
 // Convite de matrícula online: link único enviado a um lead já qualificado pelo CRM

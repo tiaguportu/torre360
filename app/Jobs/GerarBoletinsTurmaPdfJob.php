@@ -13,14 +13,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class GerarBoletinsTurmaPdfJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
+    public int $timeout = 300;
 
     public array $backoff = [30, 120, 300];
 
@@ -76,6 +80,26 @@ class GerarBoletinsTurmaPdfJob implements ShouldQueue
             actionUrl: route('documentos.visualizar', ['path' => $path]),
             actionLabel: 'Baixar PDF',
             type: 'success',
+        ));
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('Falha ao gerar boletins da turma em lote: '.$exception->getMessage(), [
+            'turma_ids' => $this->turmaIds,
+            'etapa_id' => $this->etapaId,
+            'user_id' => $this->userId,
+        ]);
+
+        $user = User::find($this->userId);
+        if (! $user) {
+            return;
+        }
+
+        $user->notify(new SystemNotification(
+            title: 'Falha ao processar os boletins',
+            body: 'Ocorreu um erro inesperado ao gerar os boletins da turma. Por favor, tente novamente.',
+            type: 'danger',
         ));
     }
 }

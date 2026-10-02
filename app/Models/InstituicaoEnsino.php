@@ -15,7 +15,7 @@ class InstituicaoEnsino extends Model
 
     protected $fillable = ['endereco_id', 'nome', 'cnpj', 'codigo_inep', 'orgao_vinculado_escola_publica', 'flag_secretaria_educacao_mec', 'flag_seguranca_publica_forcas_armadas', 'flag_secretaria_saude', 'flag_outro_orgao_publico', 'logo', 'celular_whatsapp', 'instagram', 'facebook', 'youtube', 'flag_ativo'];
 
-    public function casts(): array
+    protected function casts(): array
     {
         return [
             'flag_ativo' => 'boolean',

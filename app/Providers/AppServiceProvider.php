@@ -10,6 +10,7 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Cache;
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading(! app()->isProduction());
+
         // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
         LeadScoreConfiguracao::aplicar();
 
