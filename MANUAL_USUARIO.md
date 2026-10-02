@@ -1702,7 +1702,7 @@ Automatize o processo de rematrícula entre períodos letivos: a família confir
 ### 32.2 Acompanhamento (`/admin/rematriculas`)
 A secretaria acompanha o status de cada rematrícula:
 - **Iniciada:** a família abriu o processo, mas ainda não confirmou os dados.
-- **Dados Confirmados:** a família confirmou, mas o contrato não foi enviado para assinatura (geralmente porque a campanha não tem modelo de contrato configurado, ou o envio ao Assinafy falhou — nesse caso, a secretaria resolve manualmente na tela do Contrato gerado).
+- **Dados Confirmados:** a família confirmou e a nova matrícula, o contrato e as faturas já foram gerados, mas o contrato não chegou a ser enviado para assinatura porque o envio ao Assinafy falhou. A secretaria resolve na tela do Contrato gerado (**Assinar Contrato**), ou a própria família tenta em *Documentos e Contratos*. Esse status só muda quando o contrato é assinado. (Se a campanha não tem modelo de contrato, a rematrícula vai direto para *Confirmada*.)
 - **Aguardando Assinatura do Contrato:** tudo certo — nova matrícula, contrato e faturas já gerados, contrato enviado para o Assinafy.
 - **Rematrícula Confirmada:** o contrato foi assinado (confirmação automática via webhook do Assinafy) — processo concluído.
 - **Cancelada.**
@@ -1710,7 +1710,9 @@ A secretaria acompanha o status de cada rematrícula:
 ### 32.3 Rematrícula pelo Portal da Família (`/portal/rematricula`)
 1. Durante uma campanha ativa, a família vê a lista de dependentes elegíveis e o botão **Realizar Rematrícula**.
 2. O responsável escolhe a série pretendida e o turno de preferência para o próximo período, pode deixar observações, e confirma.
-3. **Nos bastidores, tudo acontece automaticamente:** o sistema cria a nova matrícula no período de destino, gera o contrato a partir do modelo configurado na campanha (copiando os responsáveis financeiros do contrato anterior), gera as faturas (entrada + parcelas) e envia o contrato para assinatura digital via Assinafy. A família recebe o link de assinatura pelo mesmo processo já usado na matrícula original (seção 23.3).
+3. **Nos bastidores, tudo acontece automaticamente:** o sistema cria a nova matrícula no período de destino, gera o contrato a partir do modelo configurado na campanha (copiando os responsáveis financeiros do contrato anterior), gera as faturas (entrada + parcelas, com vencimentos a partir do dia da rematrícula, não da assinatura) e envia o contrato para assinatura digital via Assinafy. A família recebe o link de assinatura pelo mesmo processo já usado na matrícula original (seção 23.3).
+4. **O aviso na tela reflete o estado real:** *Rematrícula Confirmada!* só aparece quando a campanha não tem contrato a assinar. Com o contrato enviado, a família vê *Falta assinar o contrato* (a rematrícula só é confirmada depois da assinatura); se o envio falhou, vê *Dados registrados — contrato ainda não enviado*. As duas últimas mensagens ficam fixas e levam a *Documentos e Contratos*.
+5. Depois que a nova matrícula é gerada, o botão **Realizar Rematrícula** some para aquele estudante e, na secretaria, a ação **Efetivar Rematrícula** também deixa de aparecer — assim não há risco de gerar matrícula, contrato e cobrança em duplicidade.
 
 ---
 

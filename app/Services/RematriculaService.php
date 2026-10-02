@@ -11,6 +11,7 @@ use App\Models\Rematricula;
 use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RematriculaService
 {
@@ -66,86 +67,120 @@ class RematriculaService
     /**
      * Efetiva a rematrícula no sistema:
      * Cria a nova matrícula no período subsequente, gera o contrato se houver template e conclui o processo.
+     *
+     * Idempotente: se a rematrícula já foi efetivada, devolve a matrícula já criada sem gerar
+     * matrícula, contrato, faturas nem documento no Assinafy em duplicidade.
      */
     public function efetivar(Rematricula $rematricula): Matricula
     {
-        $matriculaOrigem = $rematricula->matriculaOrigem;
-        $periodo = $rematricula->periodoRematricula;
+        $contrato = null;
 
-        // Determina a turma de destino
-        $turmaDestinoId = $rematricula->turma_destino_id;
+        // Tudo que é gravado fica numa transação: se algum passo falhar (ex.: entrada maior que o
+        // valor do contrato) nada é mantido pela metade, e uma nova tentativa não duplica registros.
+        $novaMatricula = DB::transaction(function () use ($rematricula, &$contrato): Matricula {
+            // Trava a linha para que duas efetivações simultâneas (duas abas, Portal + admin)
+            // não passem juntas pela checagem de "já efetivada".
+            $atual = Rematricula::query()->lockForUpdate()->findOrFail($rematricula->getKey());
 
-        if (! $turmaDestinoId && $rematricula->serie_destino_id) {
-            // Tenta encontrar uma turma na série pretendida com o turno pretendido no período de destino
-            $turmaQuery = Turma::query()
-                ->where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)
-                ->where('serie_id', $rematricula->serie_destino_id);
-
-            if ($rematricula->turno_pretendido_id) {
-                $turmaQuery->where('turno_id', $rematricula->turno_pretendido_id);
+            if ($matriculaExistente = $atual->novaMatricula) {
+                return $matriculaExistente;
             }
 
-            $turmaDestino = $turmaQuery->first();
-            $turmaDestinoId = $turmaDestino?->id;
-        }
+            $matriculaOrigem = $atual->matriculaOrigem;
+            $periodo = $atual->periodoRematricula;
 
-        // Se ainda não tiver turma específica de destino, mantém a turma equivalente ou cria sem turma
-        $novaMatricula = Matricula::create([
-            'pessoa_id' => $matriculaOrigem->pessoa_id,
-            'turma_id' => $turmaDestinoId,
-            'periodo_letivo_id' => $periodo->periodo_letivo_destino_id,
-            'situacao' => SituacaoMatricula::ATIVA,
-            'data_ativacao' => now()->toDateString(),
-        ]);
+            // Determina a turma de destino
+            $turmaDestinoId = $atual->turma_destino_id;
 
-        // Se houver template de contrato configurado, cria o contrato do novo período letivo
-        if ($periodo->template_contrato_id) {
-            $contrato = Contrato::create([
-                'matricula_id' => $novaMatricula->id,
-                'template_contrato_id' => $periodo->template_contrato_id,
-                'valor_total' => $periodo->valor_taxa ?? 0,
-                'data_aceite' => now()->toDateString(),
+            if (! $turmaDestinoId && $atual->serie_destino_id) {
+                // Tenta encontrar uma turma na série pretendida com o turno pretendido no período de destino
+                $turmaQuery = Turma::query()
+                    ->where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)
+                    ->where('serie_id', $atual->serie_destino_id);
+
+                if ($atual->turno_pretendido_id) {
+                    $turmaQuery->where('turno_id', $atual->turno_pretendido_id);
+                }
+
+                $turmaDestino = $turmaQuery->first();
+                $turmaDestinoId = $turmaDestino?->id;
+            }
+
+            // Se ainda não tiver turma específica de destino, mantém a turma equivalente ou cria sem turma
+            $novaMatricula = Matricula::create([
+                'pessoa_id' => $matriculaOrigem->pessoa_id,
+                'turma_id' => $turmaDestinoId,
+                'periodo_letivo_id' => $periodo->periodo_letivo_destino_id,
+                'situacao' => SituacaoMatricula::ATIVA,
+                'data_ativacao' => now()->toDateString(),
             ]);
 
-            // Copia responsáveis financeiros do contrato anterior se existirem
-            $contratoAnterior = Contrato::where('matricula_id', $matriculaOrigem->id)->first();
-            if ($contratoAnterior) {
-                foreach ($contratoAnterior->responsaveisFinanceiros as $rf) {
-                    $contrato->responsaveisFinanceiros()->create([
-                        'pessoa_id' => $rf->pessoa_id,
-                        'percentual' => $rf->percentual,
-                    ]);
+            // Se houver template de contrato configurado, cria o contrato do novo período letivo
+            if ($periodo->template_contrato_id) {
+                // Sem data_aceite: ela só passa a existir quando o contrato é assinado
+                // (ver AssinafyService::aplicarStatus()).
+                $contrato = Contrato::create([
+                    'matricula_id' => $novaMatricula->id,
+                    'template_contrato_id' => $periodo->template_contrato_id,
+                    'valor_total' => $periodo->valor_taxa ?? 0,
+                ]);
+
+                // Copia responsáveis financeiros do contrato anterior se existirem
+                $contratoAnterior = Contrato::where('matricula_id', $matriculaOrigem->id)->first();
+                if ($contratoAnterior) {
+                    foreach ($contratoAnterior->responsaveisFinanceiros as $rf) {
+                        $contrato->responsaveisFinanceiros()->create([
+                            'pessoa_id' => $rf->pessoa_id,
+                            'percentual' => $rf->percentual,
+                        ]);
+                    }
                 }
+
+                $atual->contrato_id = $contrato->id;
+
+                // Gera a cobrança automaticamente (entrada + parcelas configuradas na campanha de rematrícula).
+                // Os vencimentos partem do dia da rematrícula, não da assinatura: as faturas já existem
+                // (e podem estar à vista da família) quando o contrato ainda aguarda assinatura.
+                if ((float) $contrato->valor_total > 0) {
+                    $this->geracaoFaturasService->gerar(
+                        $contrato,
+                        $periodo->quantidade_parcelas_padrao,
+                        (float) $periodo->valor_entrada_padrao,
+                        today()
+                    );
+                }
+
+                // Só vira AguardandoAssinatura depois que o contrato for de fato enviado (abaixo).
+                $atual->status = StatusRematricula::DadosConfirmados;
+            } else {
+                $atual->status = StatusRematricula::Confirmada;
+                $atual->data_confirmacao = now();
             }
 
-            $rematricula->contrato_id = $contrato->id;
+            $atual->nova_matricula_id = $novaMatricula->id;
+            $atual->save();
 
-            // Gera a cobrança automaticamente (entrada + parcelas configuradas na campanha de rematrícula)
-            if ((float) $contrato->valor_total > 0) {
-                $this->geracaoFaturasService->gerar(
-                    $contrato,
-                    $periodo->quantidade_parcelas_padrao,
-                    (float) $periodo->valor_entrada_padrao
-                );
-            }
+            return $novaMatricula;
+        });
 
-            // Envia o contrato para assinatura digital; a rematrícula só é dada como
-            // Confirmada quando o webhook do Assinafy avisar que foi assinado
-            // (ver AssinafyService::handleWebhook()). Se o envio falhar (ex.: Assinafy
-            // não configurado), a rematrícula fica em DadosConfirmados para a secretaria
-            // resolver manualmente — não trava o processo da família.
+        // Envia o contrato para assinatura digital fora da transação (são várias chamadas HTTP e o
+        // lock da linha não deve ficar preso nelas). A rematrícula só é dada como Confirmada quando o
+        // webhook do Assinafy avisar que foi assinado (ver AssinafyService::handleWebhook()). Se o envio
+        // falhar (ex.: Assinafy não configurado), ela fica em DadosConfirmados para a secretaria — ou a
+        // própria família, em Documentos e Contratos — enviar depois, sem travar o processo.
+        if ($contrato) {
             $envio = $this->assinafyService->enviarContrato($contrato);
 
-            $rematricula->status = ($envio['success'] ?? false)
-                ? StatusRematricula::AguardandoAssinatura
-                : StatusRematricula::DadosConfirmados;
-        } else {
-            $rematricula->status = StatusRematricula::Confirmada;
-            $rematricula->data_confirmacao = now();
+            if ($envio['success'] ?? false) {
+                // Condicional para não desfazer a confirmação caso o webhook da assinatura já tenha chegado.
+                Rematricula::query()
+                    ->whereKey($rematricula->getKey())
+                    ->where('status', StatusRematricula::DadosConfirmados->value)
+                    ->update(['status' => StatusRematricula::AguardandoAssinatura->value]);
+            }
         }
 
-        $rematricula->nova_matricula_id = $novaMatricula->id;
-        $rematricula->save();
+        $rematricula->refresh();
 
         return $novaMatricula;
     }
