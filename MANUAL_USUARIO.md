@@ -448,7 +448,7 @@ Rotina de fechamento que consolida as etapas avaliativas de cada disciplina e de
    - Se existir uma categoria de avaliação marcada como **"É recuperação final?"** (configurável em **Avaliações → Categorias de Avaliação**) com nota lançada para o aluno, essa nota substitui média(s) de etapa conforme o modo de recuperação configurado no Período Letivo (item 5.10.1 abaixo).
    - Classificar o resultado conforme as notas de corte configuradas no cadastro do **Período Letivo** (campos **Nota Mínima para Aprovação**, padrão 7,0, e **Nota Mínima para Recuperação**, padrão 5,0): média igual ou acima da nota de aprovação = **Aprovado**; entre a nota de recuperação e a de aprovação = **Recuperação**; abaixo da nota de recuperação = **Reprovado**.
 4. O resultado é exibido na própria página, agrupado por turma, com aluno, disciplina, média final e um selo colorido de situação (verde = Aprovado, amarelo = Recuperação, vermelho = Reprovado).
-5. **Gravação:** Cada cálculo é salvo (um registro por aluno/disciplina/período letivo). Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior — útil após correção de notas.
+5. **Gravação Atômica:** Cada cálculo é processado e persistido dentro de uma transação protegida (`DB::transaction`). Um registro é salvo por aluno/disciplina/período letivo. Rodar o fechamento novamente para o mesmo período **recalcula e substitui** o resultado anterior de forma integral (com rollback automático se houver erro imprevisto durante o processamento em lote) — garantindo consistência total após correções de notas. O registro de exame final também segue o mesmo padrão transacional seguro.
 6. **Turmas por Habilidades:** Turmas configuradas com Tipo de Avaliação `Habilidades` não entram no fechamento, pois não possuem notas numéricas — apenas turmas `Notas` ou `Híbrido`.
 
 #### 5.10.1 Recuperação Anual ou por Etapa
@@ -1521,10 +1521,10 @@ Acesse **Financeiro → Contratos**.
   - 🔴 **Atrasado:** Fatura com vencimento expirado sem quitação.
   - 🔵 **Pago Parcialmente:** Foi dada baixa em valor inferior ao saldo devedor.
   - ⚪ **Cancelado:** Fatura anulada.
-- **Ação "Dar Baixa" em 1-Clique:** Diretamente na listagem de **Faturas** ou no gerenciador de faturas dentro do **Contrato**, a ação **Dar Baixa** permite registrar pagamentos instantaneamente:
+- **Ação "Dar Baixa" em 1-Clique com Garantia Transacional:** Diretamente na listagem de **Faturas** ou no gerenciador de faturas dentro do **Contrato**, a ação **Dar Baixa** permite registrar pagamentos instantaneamente:
   - Abre um modal pré-preenchido com o saldo devedor atual da fatura.
   - Solicita a seleção do **Banco**, valor recebido, data do pagamento e observações.
-  - Ao confirmar, o sistema gera automaticamente a **Transação Bancária** de entrada vinculada à fatura e atualiza seu status para *Pago* (ou *Pago Parcialmente* caso restem valores).
+  - Ao confirmar, o sistema executa a operação em uma transação de banco de dados atômica (`DB::transaction`): gera automaticamente a **Transação Bancária** de entrada vinculada à fatura e atualiza seu status para *Pago* (ou *Pago Parcialmente* caso restem valores), garantindo que nenhuma inconsistência financeira ou lançamento parcial órfão ocorra em caso de interrupção ou falha de rede.
 - **Filtros por Período e Status de Faturas:** É possível filtrar faturas por status (ex: somente em aberto) e definir faixas de vencimento.
 - **Interface de Transações Bancárias Legível:** A tela de transações bancárias exibe o nome do Banco, o Aluno/Contrato vinculado, o Plano de Contas, o Fornecedor e traz badges coloridos identificando **↑ Entrada (verde)** e **↓ Saída (vermelho)** com valores formatados em moeda (R$).
 

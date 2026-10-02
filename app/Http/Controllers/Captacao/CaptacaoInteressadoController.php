@@ -46,7 +46,9 @@ class CaptacaoInteressadoController extends Controller
             ->orderBy('nome')
             ->get();
 
-        return view('captacao.interessado', compact('unidades', 'series', 'turmas'));
+        $origens = OrigemInteressado::orderBy('nome')->get();
+
+        return view('captacao.interessado', compact('unidades', 'series', 'turmas', 'origens'));
     }
 
     public function store(StoreCaptacaoInteressadoRequest $request): RedirectResponse

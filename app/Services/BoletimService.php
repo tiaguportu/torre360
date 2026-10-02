@@ -53,7 +53,7 @@ class BoletimService
             $avaliacoes = Avaliacao::query()
                 ->where('turma_id', $turmaId)
                 ->where('etapa_avaliativa_id', $etapa->id)
-                ->with(['categoria'])
+                ->with(['categoria.substituidas'])
                 ->get();
 
             $categorias = $avaliacoes->map(fn ($av) => $av->categoria)
