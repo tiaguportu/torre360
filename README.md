@@ -224,6 +224,17 @@ Bolsas e descontos recorrentes concedidos a alunos matriculados, aplicados autom
 
 ---
 
+### 13. 📦 Patrimônio Escolar
+Controle de bens patrimoniais (computadores, mobiliário, material de laboratório). Detalhes em `docs/patrimonio_estoque_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `BemPatrimonial` | Descrição, número de patrimônio, categoria, valor/data de aquisição, unidade/sala, fornecedor, status |
+| `MovimentacaoPatrimonio` | Histórico somente leitura de transferências e mudanças de status |
+| Ações | "Transferir" (muda unidade/sala) e "Mudar Status" (em uso/em manutenção/baixado), ambas registrando histórico |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos

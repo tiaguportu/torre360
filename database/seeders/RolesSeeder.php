@@ -252,6 +252,31 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Patrimônio Escolar — não é dado sensível, restrito a
+        // secretaria/admin/super_admin (quem cuida do inventário físico).
+        $patrimonioPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $patrimonioPermissions[] = "{$acao}:BemPatrimonial";
+        }
+
+        foreach ($patrimonioPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($patrimonioPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
