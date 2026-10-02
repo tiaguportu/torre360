@@ -217,9 +217,9 @@ Envie um mesmo e-mail para um grupo de pessoas de uma só vez, sem precisar sele
    - **Interessados (CRM):** filtre por **status** do lead e/ou **origem**. É preciso escolher ao menos um filtro, para evitar enviar para "todos os leads" sem querer.
    - **Responsáveis por turma:** escolha uma ou mais turmas; o e-mail vai para os responsáveis dos alunos com matrícula ativa nelas.
 3. Escreva o **assunto** e a **mensagem**. Use `[Nome]` para inserir automaticamente o primeiro nome de cada destinatário.
-4. Salve como rascunho. A lista mostra a quantidade estimada de **destinatários**. Clique em **Enviar** para confirmar (a tela mostra quantas pessoas vão receber antes de você confirmar) — o envio roda em fila e, ao terminar, você recebe um aviso no sininho com o total enviado e eventuais falhas.
+4. Salve como rascunho. A lista mostra a quantidade estimada de **destinatários**. Clique em **Enviar** para confirmar (a tela mostra quantas pessoas vão receber antes de você confirmar) — o envio roda em fila em segundo plano com tempo limite estendido (até 10 minutos) e isolamento de falhas por destinatário: se um e-mail individual for rejeitado pelo provedor SMTP ou falhar, o disparo continua para os demais normalmente.
 5. **Quem não recebe:** pessoas sem e-mail cadastrado e pessoas que desativaram o campo **"Aceita receber comunicações da escola"** no próprio cadastro (ficha de Pessoa) — veja a seção 4.1. Isso não afeta notificações individuais obrigatórias (boletim, ocorrências, financeiro), que continuam sendo enviadas normalmente.
-6. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
+6. Ao terminar o processamento, o remetente recebe uma notificação no sininho com o resumo (total de enviados e falhas). Em caso de interrupção inesperada do job, o status é alterado para **Falhou** e o remetente é alertado imediatamente. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
 
 ---
 

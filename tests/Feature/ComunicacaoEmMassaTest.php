@@ -14,6 +14,7 @@ use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
+use App\Models\User;
 use App\Services\ComunicacaoEmMassaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -212,5 +213,25 @@ class ComunicacaoEmMassaTest extends TestCase
         $this->assertTrue($falhou->podeSerEnviada());
         $this->assertFalse($enviando->podeSerEnviada());
         $this->assertFalse($concluida->podeSerEnviada());
+    }
+
+    public function test_job_failed_marca_como_falhou_e_notifica_remetente(): void
+    {
+        $remetente = User::factory()->create();
+
+        $comunicacao = ComunicacaoEmMassa::factory()->create([
+            'status' => StatusComunicacaoEmMassa::Enviando,
+            'enviado_por_user_id' => $remetente->id,
+            'nome' => 'Campanha Especial',
+        ]);
+
+        $job = new EnviarComunicacaoEmMassaJob($comunicacao);
+        $job->failed(new \RuntimeException('Falha no gateway SMTP'));
+
+        $this->assertSame(StatusComunicacaoEmMassa::Falhou, $comunicacao->fresh()->status);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $remetente->id,
+            'notifiable_type' => User::class,
+        ]);
     }
 }
