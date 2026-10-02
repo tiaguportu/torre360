@@ -146,6 +146,58 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de RH (Funcionários, Contratos de Trabalho, Férias) — dados sensíveis
+        // (salário), restritas a admin/super_admin.
+        $rhPermissions = [];
+        foreach (['Funcionario', 'ContratoTrabalho', 'PeriodoFerias'] as $modelName) {
+            foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+                $rhPermissions[] = "{$acao}:{$modelName}";
+            }
+        }
+
+        foreach ($rhPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($rhPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
+        // Permissões de Substituição de Professor — não é dado sensível (financeiro), então
+        // secretaria e coordenador também podem gerenciar.
+        $substituicaoPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $substituicaoPermissions[] = "{$acao}:SubstituicaoProfessor";
+        }
+
+        foreach ($substituicaoPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'coordenador', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($substituicaoPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

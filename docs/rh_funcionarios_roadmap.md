@@ -1,8 +1,8 @@
-# RH e Gestão de Funcionários (Onda 10) — Proposta para o Futuro
+# RH e Gestão de Funcionários (Onda 10)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementado** (10a, 10b e 10c completas). Este documento descreve o escopo e
+> as decisões de modelagem; detalhes de uso ficam nos textos de Ajuda das telas
+> (**Funcionários** e **Substituições de Professor**, grupo **RH** do menu).
 
 ## Contexto
 
@@ -52,3 +52,26 @@ sub-ondas, no mesmo espírito da Onda 8.
   + teste Feature, como em `app/Filament/Resources/Coordenadors/`).
 - Papéis de acesso (`professor`, `coordenador`) já existem; RH só precisa de permissões
   novas no mesmo padrão `Ação:Modelo` do Shield.
+
+## Como foi implementado
+
+- `Funcionario` (`app/Models/Funcionario.php`): `pessoa_id`, `cargo`, `regime` (enum
+  `RegimeContratacao`: CLT/Estatutário/PJ/Estágio), `data_admissao`, `data_desligamento`,
+  `carga_horaria_semanal`, `unidade_id`. Resource em `/admin/funcionarios` (grupo **RH**).
+- **Aditivos simplificados:** em vez de um model `AditivoContratoTrabalho` separado,
+  `ContratoTrabalho` é uma tabela *append-only* — cada linha é uma vigência (admissão ou
+  reajuste). A ação "Registrar Aditivo" encerra a vigência atual (`vigencia_fim`) e cria
+  uma nova linha com o novo salário a partir do dia seguinte
+  (`ContratoTrabalho::registrarAditivo()`). O salário vigente é sempre a linha sem
+  `vigencia_fim`. Gerenciado via aba "Contratos de Trabalho" dentro do funcionário.
+- **Férias:** `PeriodoFerias` (período aquisitivo, dias de direito/gozados, status
+  Pendente/Parcial/Gozado/Vencido). Ação "Registrar Gozo" soma os dias informados e marca
+  Gozado quando atinge o total. Aba "Férias" dentro do funcionário.
+- **Substituição de professor:** `SubstituicaoProfessor` (turma, disciplina opcional,
+  professor titular/substituto, período, motivo) como Resource próprio em
+  `/admin/substituicao-professors`, já que não se limita a um único funcionário.
+- **Permissões:** `Funcionario`/`ContratoTrabalho`/`PeriodoFerias` restritos a
+  `admin`/`super_admin` (dado de salário é sensível). `SubstituicaoProfessor` também
+  liberado para `secretaria`/`coordenador` (é só agenda, não dado financeiro).
+- Testes em `tests/Feature/FuncionarioTest.php` e
+  `tests/Feature/SubstituicaoProfessorTest.php`.
