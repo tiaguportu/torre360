@@ -21,6 +21,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Modo estrito de lazy loading
+    |--------------------------------------------------------------------------
+    |
+    | Quando verdadeiro, carregar uma relação sob demanda (N+1) lança
+    | LazyLoadingViolationException. Sempre ligado nos testes; nos demais
+    | ambientes só com DB_PREVENT_LAZY_LOADING=true (útil em desenvolvimento).
+    |
+    */
+
+    'prevent_lazy_loading' => (bool) env('DB_PREVENT_LAZY_LOADING', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
     |

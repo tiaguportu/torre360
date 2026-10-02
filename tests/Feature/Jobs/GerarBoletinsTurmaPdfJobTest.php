@@ -90,4 +90,23 @@ class GerarBoletinsTurmaPdfJobTest extends TestCase
             return $notification->type === 'warning';
         });
     }
+
+    public function test_notifica_erro_quando_job_falha(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $job = new GerarBoletinsTurmaPdfJob(
+            turmaIds: [1],
+            etapaId: null,
+            userId: $user->id,
+        );
+
+        $job->failed(new \RuntimeException('Erro simulado'));
+
+        Notification::assertSentTo($user, SystemNotification::class, function (SystemNotification $notification) {
+            return $notification->type === 'danger';
+        });
+    }
 }
