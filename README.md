@@ -359,3 +359,6 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
+| Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
+| Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
+| Avaliação de desempenho docente | `docs/avaliacao_desempenho_docente_roadmap.md` |
