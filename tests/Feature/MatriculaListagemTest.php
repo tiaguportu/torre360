@@ -7,7 +7,6 @@ use App\Enums\Sexo;
 use App\Enums\SituacaoDocumento;
 use App\Enums\TipoPendenciaMatricula;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
-use App\Filament\Resources\Matriculas\Widgets\MatriculasResumoStats;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\RelationManagers\MatriculasRelationManager;
 use App\Models\Cidade;
@@ -18,6 +17,7 @@ use App\Models\Matricula;
 use App\Models\Pais;
 use App\Models\Pessoa;
 use App\Models\TipoDocumento;
+use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -333,14 +333,34 @@ class MatriculaListagemTest extends TestCase
         $this->criarMatriculaComPendencia();
         $this->criarMatriculaComPendencia('cancelada');
 
-        $widget = Livewire::test(MatriculasResumoStats::class, ['pageClass' => ListMatriculas::class, 'activeTab' => 'ativas'])->instance();
-        $stats = (new \ReflectionMethod($widget, 'getStats'))->invoke($widget);
+        $lista = Livewire::test(ListMatriculas::class)
+            ->assertSee('Matrículas na lista')
+            ->assertSee('Sem contrato');
+
+        // O resumo é renderizado na própria página (sem componente Livewire filho com props reativas)
+        $this->assertStringNotContainsString('MatriculasResumoStats', $lista->html());
 
         // Aba padrão (Ativas): a cancelada fica de fora
+        $stats = $lista->instance()->getResumoStats();
         $this->assertEquals(2, $stats[0]->getValue());
         $this->assertEquals(1, $stats[1]->getValue());
         $this->assertEquals(1, $stats[2]->getValue());
         $this->assertEquals(2, $stats[3]->getValue());
+
+        // Acompanha a aba selecionada
+        $lista->set('activeTab', 'canceladas');
+        $this->assertEquals(1, $lista->instance()->getResumoStats()[0]->getValue());
+    }
+
+    #[Test]
+    public function clicar_na_celula_de_pendencias_abre_o_detalhe_sem_erro(): void
+    {
+        $comPendencia = $this->criarMatriculaComPendencia();
+
+        Livewire::test(ListMatriculas::class)
+            ->mountTableAction('detalharPendencias', $comPendencia)
+            ->call('$refresh')
+            ->assertSee('Matrículas na lista');
     }
 
     #[Test]
@@ -416,10 +436,15 @@ class MatriculaListagemTest extends TestCase
     public function listagem_nao_dispara_queries_por_linha(): void
     {
         $tipo = TipoDocumento::create(['nome' => 'Comprovante', 'flag_obrigatorio' => true]);
+        $vinculo = TipoVinculo::create(['nome' => 'Mãe']);
 
-        $criar = function (int $quantidade) use ($tipo): void {
+        $criar = function (int $quantidade) use ($tipo, $vinculo): void {
             for ($i = 0; $i < $quantidade; $i++) {
                 $matricula = $this->criarMatriculaComPendencia();
+                $matricula->pessoa->responsaveis()->attach(
+                    Pessoa::factory()->create(['cpf' => null])->id,
+                    ['tipo_vinculo_id' => $vinculo->id],
+                );
                 $matricula->tiposDocumentos()->attach($tipo->id);
                 DocumentoInserido::create([
                     'tipo_documento_id' => $tipo->id,
@@ -440,10 +465,11 @@ class MatriculaListagemTest extends TestCase
             return $total;
         };
 
-        // Aquecimento: papéis/permissões do usuário são consultados só na primeira renderização
+        // Aquecimento: papéis/permissões do usuário e nomes dos vínculos são consultados só na primeira renderização
+        $criar(1);
         $contarQueries();
 
-        $criar(3);
+        $criar(2);
         $comTres = $contarQueries();
 
         $criar(9);

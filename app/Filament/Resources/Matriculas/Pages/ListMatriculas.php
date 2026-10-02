@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Matriculas\Pages;
 use App\Enums\SituacaoMatricula;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Matriculas\MatriculaResource;
-use App\Filament\Resources\Matriculas\Widgets\MatriculasResumoStats;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Support\HelpContent;
@@ -13,7 +12,14 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\EmbeddedTable;
+use Filament\Schemas\Components\RenderHook;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
+use Filament\View\PanelsRenderHook;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListMatriculas extends ListRecords
@@ -22,16 +28,63 @@ class ListMatriculas extends ListRecords
 
     protected static string $resource = MatriculaResource::class;
 
-    protected function getHeaderWidgets(): array
+    /**
+     * Resumo no topo da lista (dentro da própria página, sem componente Livewire filho:
+     * assim acompanha aba, busca e filtros sem depender de props reativas entre componentes).
+     */
+    public function content(Schema $schema): Schema
     {
-        return [
-            MatriculasResumoStats::class,
-        ];
+        return $schema
+            ->components([
+                $this->getResumoContentComponent(),
+                $this->getTabsContentComponent(),
+                RenderHook::make(PanelsRenderHook::RESOURCE_PAGES_LIST_RECORDS_TABLE_BEFORE),
+                EmbeddedTable::make(),
+                RenderHook::make(PanelsRenderHook::RESOURCE_PAGES_LIST_RECORDS_TABLE_AFTER),
+            ]);
     }
 
-    public function getHeaderWidgetsColumns(): int|array
+    protected function getResumoContentComponent(): Component
     {
-        return ['default' => 2, 'lg' => 4];
+        return Section::make()
+            ->schema(fn (): array => $this->getResumoStats())
+            ->columns(['default' => 2, 'lg' => 4])
+            ->contained(false)
+            ->gridContainer();
+    }
+
+    /**
+     * Cartões de resumo do que está na lista no momento (aba, busca e filtros).
+     *
+     * @return array<int, Stat>
+     */
+    public function getResumoStats(): array
+    {
+        $query = $this->getFilteredTableQuery()->reorder();
+
+        $total = (clone $query)->count();
+        $comPendencias = (clone $query)->comPendencias()->count();
+        $semResponsavel = (clone $query)->semResponsavel()->count();
+        $semContrato = (clone $query)->doesntHave('contrato')->count();
+
+        return [
+            Stat::make('Matrículas na lista', $total)
+                ->description('Conforme a aba, a busca e os filtros')
+                ->descriptionIcon('heroicon-m-identification')
+                ->color('primary'),
+            Stat::make('Com pendências', $comPendencias)
+                ->description('Responsável, cadastro ou documentos')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color($comPendencias > 0 ? 'danger' : 'success'),
+            Stat::make('Sem responsável', $semResponsavel)
+                ->description('Aluno sem Pai, Mãe ou Responsável')
+                ->descriptionIcon('heroicon-m-user-minus')
+                ->color($semResponsavel > 0 ? 'warning' : 'success'),
+            Stat::make('Sem contrato', $semContrato)
+                ->description('Matrículas sem contrato gerado')
+                ->descriptionIcon('heroicon-m-document-minus')
+                ->color($semContrato > 0 ? 'warning' : 'success'),
+        ];
     }
 
     public function getTabs(): array

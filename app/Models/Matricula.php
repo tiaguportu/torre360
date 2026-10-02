@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
 
@@ -449,7 +450,7 @@ class Matricula extends Model
                 if ($resp->hasIncompleteCadastro()) {
                     $vinculoNome = 'Responsável';
                     if ($resp->pivot && $resp->pivot->tipo_vinculo_id) {
-                        $vinculoNome = TipoVinculo::find($resp->pivot->tipo_vinculo_id)?->nome ?? 'Responsável';
+                        $vinculoNome = self::nomesTiposVinculo()[$resp->pivot->tipo_vinculo_id] ?? 'Responsável';
                     }
 
                     $incompletas->push([
@@ -481,6 +482,21 @@ class Matricula extends Model
         }
 
         return $incompletas;
+    }
+
+    /**
+     * Nomes dos tipos de vínculo por id, carregados uma única vez (e não uma query por responsável).
+     * Usa o cache em memória do processo, com validade curta para não ficar defasado em workers longos.
+     *
+     * @return array<int, string>
+     */
+    private static function nomesTiposVinculo(): array
+    {
+        return Cache::store('array')->remember(
+            'matricula.nomes_tipos_vinculo',
+            30,
+            fn (): array => TipoVinculo::query()->pluck('nome', 'id')->all(),
+        );
     }
 
     /**
