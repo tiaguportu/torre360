@@ -285,6 +285,21 @@ Canais de mensagem e disparo em massa. Detalhes em `docs/comunicacao_canais_aler
 
 - Autenticação via guard nativo do Laravel (`config/auth.php`).
 - Autorização por recurso via **Filament Shield** (Spatie Permission).
-- Proteção contra mass assignment via `$guarded = []` em cada Model.
+- Proteção contra mass assignment via `$fillable` explícito em cada Model.
 - Senhas armazenadas com **bcrypt** (`password` cast `hashed`).
 - Validação de campos críticos (CPF único, e-mail único) nos Schemas dos formulários.
+
+## 🗺️ Roadmap — Próximas Melhorias
+
+Propostas documentadas, mas **ainda não implementadas** (sem código, migration ou teste).
+Cada uma tem um doc próprio com contexto, escopo e dependências, para quando for
+autorizada:
+
+| Tema | Doc |
+|---|---|
+| Provas online com correção automática | `docs/provas_online_roadmap.md` |
+| Controle de saída/retirada de alunos | `docs/controle_saida_alunos_roadmap.md` |
+| RH e gestão de funcionários | `docs/rh_funcionarios_roadmap.md` |
+| Biblioteca escolar | `docs/biblioteca_escolar_roadmap.md` |
+| Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
+| Risco de evasão escolar | `docs/risco_evasao_roadmap.md` |
