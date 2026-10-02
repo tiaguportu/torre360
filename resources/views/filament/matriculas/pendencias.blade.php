@@ -1,4 +1,5 @@
 @php
+    use App\Filament\Resources\Contratos\ContratoResource;
     use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
     use App\Filament\Resources\Pessoas\PessoaResource;
 @endphp
@@ -91,6 +92,53 @@
                     icon="heroicon-m-arrow-top-right-on-square"
                 >
                     Gerenciar os documentos da matrícula
+                </x-filament::link>
+            </div>
+        </div>
+    @endif
+
+    @if ($pendencias->contratoNaoGerado)
+        <div class="p-4 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 dark:text-warning-400">
+            <div class="flex items-center gap-2 font-bold mb-1">
+                <x-filament::icon icon="heroicon-m-document-plus" class="h-5 w-5" />
+                <span>Contrato não gerado</span>
+            </div>
+            <p class="text-sm">
+                Esta matrícula ainda não tem contrato. Use a ação <strong>Gerar contrato</strong> no menu
+                <strong>⋮ Mais ações</strong> da linha (disponível quando o aluno tem responsável) ou crie o contrato manualmente.
+            </p>
+            <div class="mt-2">
+                <x-filament::link
+                    :href="ContratoResource::getUrl('create')"
+                    target="_blank"
+                    size="sm"
+                    color="warning"
+                    icon="heroicon-m-arrow-top-right-on-square"
+                >
+                    Criar contrato manualmente
+                </x-filament::link>
+            </div>
+        </div>
+    @endif
+
+    @if ($pendencias->contratoNaoAssinado && $matricula->contrato)
+        <div class="p-4 bg-info-500/10 border border-info-500/20 rounded-lg text-info-700 dark:text-info-400">
+            <div class="flex items-center gap-2 font-bold mb-1">
+                <x-filament::icon icon="heroicon-m-pencil-square" class="h-5 w-5" />
+                <span>Contrato não assinado</span>
+            </div>
+            <p class="text-sm">
+                O contrato foi gerado, mas ainda não foi assinado pelos responsáveis.
+            </p>
+            <div class="mt-2">
+                <x-filament::link
+                    :href="ContratoResource::getUrl('edit', ['record' => $matricula->contrato])"
+                    target="_blank"
+                    size="sm"
+                    color="info"
+                    icon="heroicon-m-arrow-top-right-on-square"
+                >
+                    Abrir o contrato
                 </x-filament::link>
             </div>
         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,6 +24,13 @@ class Contrato extends Model
     }
 
     protected $table = 'contrato';
+
+    /**
+     * Status do Assinafy que indicam contrato assinado por todos os signatários.
+     *
+     * @var array<int, string>
+     */
+    public const STATUS_ASSINADO = ['signed', 'completed'];
 
     protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id'];
 
@@ -76,6 +84,22 @@ class Contrato extends Model
             'assinafy_request_log' => 'array',
             'data_aceite' => 'datetime',
         ];
+    }
+
+    /**
+     * Verifica se o contrato já foi assinado (qualquer outro status, como 'pendente' ou 'enviado', conta como não assinado).
+     */
+    public function estaAssinado(): bool
+    {
+        return in_array($this->assinafy_status, self::STATUS_ASSINADO, true);
+    }
+
+    /**
+     * Scope para contratos ainda não assinados (status diferente de assinado/concluído).
+     */
+    public function scopeNaoAssinado(Builder $query): Builder
+    {
+        return $query->whereNotIn('assinafy_status', self::STATUS_ASSINADO);
     }
 
     /**

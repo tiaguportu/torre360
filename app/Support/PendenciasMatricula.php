@@ -25,6 +25,8 @@ final readonly class PendenciasMatricula
         public Collection $cadastrosIncompletos,
         public Collection $documentosFaltantes,
         public Collection $documentosRejeitados,
+        public bool $contratoNaoGerado = false,
+        public bool $contratoNaoAssinado = false,
     ) {}
 
     public function total(): int
@@ -32,7 +34,9 @@ final readonly class PendenciasMatricula
         return (int) $this->semResponsavel
             + $this->cadastrosIncompletos->count()
             + $this->documentosFaltantes->count()
-            + $this->documentosRejeitados->count();
+            + $this->documentosRejeitados->count()
+            + (int) $this->contratoNaoGerado
+            + (int) $this->contratoNaoAssinado;
     }
 
     public function temPendencias(): bool
@@ -55,6 +59,8 @@ final readonly class PendenciasMatricula
             $this->cadastrosIncompletos->isNotEmpty() ? TipoPendenciaMatricula::CADASTRO_INCOMPLETO : null,
             $this->documentosFaltantes->isNotEmpty() ? TipoPendenciaMatricula::DOCUMENTOS_FALTANDO : null,
             $this->documentosRejeitados->isNotEmpty() ? TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS : null,
+            $this->contratoNaoGerado ? TipoPendenciaMatricula::CONTRATO_NAO_GERADO : null,
+            $this->contratoNaoAssinado ? TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO : null,
         ]));
     }
 
@@ -64,7 +70,9 @@ final readonly class PendenciasMatricula
     public function rotulo(TipoPendenciaMatricula $tipo): string
     {
         return match ($tipo) {
-            TipoPendenciaMatricula::SEM_RESPONSAVEL => $tipo->getLabel(),
+            TipoPendenciaMatricula::SEM_RESPONSAVEL,
+            TipoPendenciaMatricula::CONTRATO_NAO_GERADO,
+            TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO => $tipo->getLabel(),
             TipoPendenciaMatricula::CADASTRO_INCOMPLETO => $this->cadastrosIncompletos->count() > 1
                 ? $tipo->getLabel().' ('.$this->cadastrosIncompletos->count().')'
                 : $tipo->getLabel(),
@@ -96,6 +104,14 @@ final readonly class PendenciasMatricula
 
         if ($this->documentosRejeitados->isNotEmpty()) {
             $linhas[] = 'Documentos rejeitados: '.$this->documentosRejeitados->map(fn ($doc) => $doc->tipoDocumento?->nome)->filter()->implode(', ').'.';
+        }
+
+        if ($this->contratoNaoGerado) {
+            $linhas[] = 'Contrato ainda não gerado para esta matrícula.';
+        }
+
+        if ($this->contratoNaoAssinado) {
+            $linhas[] = 'Contrato gerado, mas ainda não assinado.';
         }
 
         return implode("\n", $linhas);

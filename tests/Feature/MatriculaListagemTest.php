@@ -87,14 +87,21 @@ class MatriculaListagemTest extends TestCase
     }
 
     /**
-     * Matrícula sem nenhuma pendência: aluno e responsável com cadastro completo.
+     * Matrícula sem nenhuma pendência: aluno e responsável com cadastro completo e contrato assinado
+     * (use $comContrato = false para uma matrícula completa, porém sem contrato gerado).
      */
-    private function criarMatriculaEmDia(string $situacao = 'ativa'): Matricula
+    private function criarMatriculaEmDia(string $situacao = 'ativa', bool $comContrato = true): Matricula
     {
         $aluno = $this->criarPessoaCompleta('Aluno Em Dia');
         $aluno->responsaveis()->attach($this->criarPessoaCompleta('Responsavel Em Dia')->id);
 
-        return Matricula::factory()->create(['pessoa_id' => $aluno->id, 'situacao' => $situacao]);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id, 'situacao' => $situacao]);
+
+        if ($comContrato) {
+            $matricula->contrato()->create(['valor_total' => 0, 'assinafy_status' => 'signed']);
+        }
+
+        return $matricula;
     }
 
     /**
@@ -287,11 +294,104 @@ class MatriculaListagemTest extends TestCase
         foreach ([$lazy, $eager] as $pendencias) {
             $this->assertSame(1, $pendencias->documentosFaltantes->count());
             $this->assertSame(1, $pendencias->documentosRejeitados->count());
-            $this->assertSame(TipoPendenciaMatricula::cases(), $pendencias->tipos());
+            $this->assertSame([
+                TipoPendenciaMatricula::SEM_RESPONSAVEL,
+                TipoPendenciaMatricula::CADASTRO_INCOMPLETO,
+                TipoPendenciaMatricula::DOCUMENTOS_FALTANDO,
+                TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS,
+                TipoPendenciaMatricula::CONTRATO_NAO_GERADO,
+            ], $pendencias->tipos());
         }
 
         $this->assertSame('1 documento faltando', $eager->rotulo(TipoPendenciaMatricula::DOCUMENTOS_FALTANDO));
         $this->assertSame('1 documento rejeitado', $eager->rotulo(TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS));
+    }
+
+    #[Test]
+    public function pendencias_de_contrato_dependem_da_situacao_e_do_status_de_assinatura(): void
+    {
+        // Ativa/pendente sem contrato: contrato não gerado
+        foreach (['ativa', 'pendente'] as $situacao) {
+            $matricula = $this->criarMatriculaEmDia($situacao, comContrato: false);
+
+            $this->assertSame([TipoPendenciaMatricula::CONTRATO_NAO_GERADO], Matricula::find($matricula->id)->pendencias->tipos());
+        }
+
+        // Contrato gerado sem assinatura concluída: contrato não assinado
+        foreach (['pendente', 'pending', 'enviado'] as $status) {
+            $matricula = $this->criarMatriculaEmDia(comContrato: false);
+            $matricula->contrato()->create(['valor_total' => 0, 'assinafy_status' => $status]);
+
+            $this->assertSame([TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO], Matricula::find($matricula->id)->pendencias->tipos());
+        }
+
+        // Assinado: sem pendência de contrato
+        foreach (['signed', 'completed'] as $status) {
+            $matricula = $this->criarMatriculaEmDia(comContrato: false);
+            $matricula->contrato()->create(['valor_total' => 0, 'assinafy_status' => $status]);
+
+            $this->assertSame([], Matricula::find($matricula->id)->pendencias->tipos());
+        }
+
+        // Situações que não exigem contrato não geram pendência de contrato
+        foreach (['cancelada', 'concluido', 'trancada', 'reserva', 'evasao'] as $situacao) {
+            $matricula = $this->criarMatriculaEmDia($situacao, comContrato: false);
+
+            $this->assertSame([], Matricula::find($matricula->id)->pendencias->tipos(), $situacao);
+        }
+    }
+
+    #[Test]
+    public function scopes_e_filtro_de_contrato_concordam_com_o_resumo(): void
+    {
+        $naoGerado = $this->criarMatriculaEmDia(comContrato: false);
+        $naoAssinado = $this->criarMatriculaEmDia(comContrato: false);
+        $naoAssinado->contrato()->create(['valor_total' => 0, 'assinafy_status' => 'pending']);
+        $assinado = $this->criarMatriculaEmDia();
+        $canceladaSemContrato = $this->criarMatriculaEmDia('cancelada', comContrato: false);
+
+        $this->assertSame([$naoGerado->id], Matricula::comContratoNaoGerado()->pluck('id')->all());
+        $this->assertSame([$naoAssinado->id], Matricula::comContratoNaoAssinado()->pluck('id')->all());
+        $this->assertEqualsCanonicalizing(
+            [$naoGerado->id, $naoAssinado->id],
+            Matricula::comPendencias()->pluck('id')->all(),
+        );
+
+        Livewire::test(ListMatriculas::class)
+            ->filterTable('pendencias', [TipoPendenciaMatricula::CONTRATO_NAO_GERADO])
+            ->assertCanSeeTableRecords([$naoGerado])
+            ->assertCanNotSeeTableRecords([$naoAssinado, $assinado, $canceladaSemContrato])
+            ->filterTable('pendencias', [TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO])
+            ->assertCanSeeTableRecords([$naoAssinado])
+            ->assertCanNotSeeTableRecords([$naoGerado, $assinado, $canceladaSemContrato])
+            ->assertSee('Contrato não assinado');
+    }
+
+    #[Test]
+    public function modal_de_pendencias_orienta_sobre_contrato_nao_gerado_e_nao_assinado(): void
+    {
+        $semContrato = $this->criarMatriculaEmDia(comContrato: false);
+        $naoAssinado = $this->criarMatriculaEmDia(comContrato: false);
+        $naoAssinado->contrato()->create(['valor_total' => 0, 'assinafy_status' => 'pending']);
+
+        $htmlNaoGerado = view('filament.matriculas.pendencias', [
+            'matricula' => $semContrato,
+            'pendencias' => Matricula::find($semContrato->id)->pendencias,
+        ])->render();
+
+        $this->assertStringContainsString('Contrato não gerado', $htmlNaoGerado);
+        $this->assertStringContainsString('Gerar contrato', $htmlNaoGerado);
+        $this->assertStringNotContainsString('Contrato não assinado', $htmlNaoGerado);
+
+        $recarregada = Matricula::with('contrato')->find($naoAssinado->id);
+        $htmlNaoAssinado = view('filament.matriculas.pendencias', [
+            'matricula' => $recarregada,
+            'pendencias' => $recarregada->pendencias,
+        ])->render();
+
+        $this->assertStringContainsString('Contrato não assinado', $htmlNaoAssinado);
+        $this->assertStringContainsString('Abrir o contrato', $htmlNaoAssinado);
+        $this->assertStringNotContainsString('Contrato não gerado', $htmlNaoAssinado);
     }
 
     #[Test]
@@ -309,6 +409,7 @@ class MatriculaListagemTest extends TestCase
         $this->assertStringContainsString('Responsável não informado', $html);
         $this->assertStringContainsString('Cadastro incompleto (Aluno)', $html);
         $this->assertStringContainsString('Documentos pendentes', $html);
+        $this->assertStringContainsString('Contrato não gerado', $html);
         $this->assertStringContainsString('&lt;b&gt;Certidão&lt;/b&gt;', $html);
         $this->assertStringNotContainsString('<b>Certidão</b>', $html);
     }
@@ -335,7 +436,8 @@ class MatriculaListagemTest extends TestCase
 
         $lista = Livewire::test(ListMatriculas::class)
             ->assertSee('Matrículas na lista')
-            ->assertSee('Sem contrato');
+            ->assertSee('Contrato não gerado')
+            ->assertSee('Contrato não assinado');
 
         // O resumo é renderizado na própria página (sem componente Livewire filho com props reativas)
         $this->assertStringNotContainsString('MatriculasResumoStats', $lista->html());
@@ -345,7 +447,8 @@ class MatriculaListagemTest extends TestCase
         $this->assertEquals(2, $stats[0]->getValue());
         $this->assertEquals(1, $stats[1]->getValue());
         $this->assertEquals(1, $stats[2]->getValue());
-        $this->assertEquals(2, $stats[3]->getValue());
+        $this->assertEquals(1, $stats[3]->getValue()); // só a com pendência está sem contrato
+        $this->assertEquals(0, $stats[4]->getValue()); // a em dia tem contrato assinado
 
         // Acompanha a aba selecionada
         $lista->set('activeTab', 'canceladas');
@@ -366,10 +469,9 @@ class MatriculaListagemTest extends TestCase
     #[Test]
     public function acoes_secundarias_ficam_no_menu_agrupado_e_obedecem_as_regras_de_visibilidade(): void
     {
-        $semContrato = $this->criarMatriculaEmDia();
+        $semContrato = $this->criarMatriculaEmDia(comContrato: false);
         $semResponsavel = $this->criarMatriculaComPendencia();
         $comContrato = $this->criarMatriculaEmDia();
-        $comContrato->contrato()->create(['valor_total' => 0]);
 
         Livewire::test(ListMatriculas::class)
             ->assertSee('Mais ações')
@@ -445,6 +547,7 @@ class MatriculaListagemTest extends TestCase
                     Pessoa::factory()->create(['cpf' => null])->id,
                     ['tipo_vinculo_id' => $vinculo->id],
                 );
+                $matricula->contrato()->create(['valor_total' => 0]);
                 $matricula->tiposDocumentos()->attach($tipo->id);
                 DocumentoInserido::create([
                     'tipo_documento_id' => $tipo->id,

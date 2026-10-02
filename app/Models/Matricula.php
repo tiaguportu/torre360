@@ -30,6 +30,13 @@ class Matricula extends Model
 
     protected $table = 'matricula';
 
+    /**
+     * Situações em que se espera que a matrícula tenha contrato gerado e assinado.
+     *
+     * @var array<int, SituacaoMatricula>
+     */
+    public const SITUACOES_QUE_EXIGEM_CONTRATO = [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE];
+
     protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id'];
 
     protected function casts(): array
@@ -555,7 +562,17 @@ class Matricula extends Model
             cadastrosIncompletos: $this->getPessoasComCadastroIncompleto(),
             documentosFaltantes: $this->getMissingMandatoryDocuments(),
             documentosRejeitados: $this->getRejectedDocuments(),
+            contratoNaoGerado: $this->exigeContrato() && $this->contrato === null,
+            contratoNaoAssinado: $this->exigeContrato() && $this->contrato !== null && ! $this->contrato->estaAssinado(),
         ));
+    }
+
+    /**
+     * Verifica se, pela situação atual, a matrícula deve ter contrato gerado e assinado.
+     */
+    public function exigeContrato(): bool
+    {
+        return in_array($this->situacao, self::SITUACOES_QUE_EXIGEM_CONTRATO, true);
     }
 
     /**
@@ -612,6 +629,31 @@ class Matricula extends Model
     }
 
     /**
+     * Scope para matrículas em situação que exige contrato (ativas e pendentes).
+     */
+    public function scopeExigindoContrato(Builder $query): Builder
+    {
+        return $query->whereIn('situacao', self::SITUACOES_QUE_EXIGEM_CONTRATO);
+    }
+
+    /**
+     * Scope para matrículas que exigem contrato e ainda não têm nenhum gerado.
+     */
+    public function scopeComContratoNaoGerado(Builder $query): Builder
+    {
+        return $query->exigindoContrato()->doesntHave('contrato');
+    }
+
+    /**
+     * Scope para matrículas que exigem contrato e cujo contrato gerado ainda não foi assinado.
+     */
+    public function scopeComContratoNaoAssinado(Builder $query): Builder
+    {
+        return $query->exigindoContrato()
+            ->whereHas('contrato', fn (Builder $contrato) => $contrato->naoAssinado());
+    }
+
+    /**
      * Scope para matrículas com um tipo específico de pendência.
      */
     public function scopeComPendencia(Builder $query, TipoPendenciaMatricula $tipo): Builder
@@ -621,6 +663,8 @@ class Matricula extends Model
             TipoPendenciaMatricula::CADASTRO_INCOMPLETO => $query->comCadastroIncompleto(),
             TipoPendenciaMatricula::DOCUMENTOS_FALTANDO => $query->comDocumentosFaltando(),
             TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS => $query->comDocumentosRejeitados(),
+            TipoPendenciaMatricula::CONTRATO_NAO_GERADO => $query->comContratoNaoGerado(),
+            TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO => $query->comContratoNaoAssinado(),
         };
     }
 
