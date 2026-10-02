@@ -364,4 +364,29 @@ class InteressadoTest extends TestCase
             ->assertSee('Detalhamento do score')
             ->assertSee('Dias no funil');
     }
+
+    public function test_listagem_renderiza_com_abas_e_filtra_por_situacao(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $atrasado = $this->criarInteressado(['data_proximo_contato' => now()->subDays(3)]);
+        $emDia = $this->criarInteressado(['data_proximo_contato' => now()->addDays(3), 'temperatura' => 'quente']);
+
+        $this->actingAs($admin);
+
+        $this->get('/admin/interessados')
+            ->assertOk()
+            ->assertSee('Precisa de contato')
+            ->assertSee('Estagnados');
+
+        \Livewire\Livewire::test(\App\Filament\Resources\Interessados\Pages\ListInteressados::class)
+            ->set('activeTab', 'precisa_contato')
+            ->assertCanSeeTableRecords([$atrasado])
+            ->assertCanNotSeeTableRecords([$emDia])
+            ->set('activeTab', 'quentes')
+            ->assertCanSeeTableRecords([$emDia])
+            ->assertCanNotSeeTableRecords([$atrasado]);
+    }
 }

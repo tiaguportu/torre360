@@ -17,6 +17,7 @@ use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\VisitaInteressadoService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -27,9 +28,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class InteressadosTable
@@ -38,42 +41,72 @@ class InteressadosTable
     {
         return $table
             ->defaultSort('data_proximo_contato', 'asc')
+            ->striped()
+            ->paginated([10, 25, 50])
+            ->defaultPaginationPageOption(25)
+            ->persistFiltersInSession()
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->recordClasses(fn (Interessado $record): ?string => $record->precisaDeContato()
+                ? 'border-s-4 border-s-danger-500 bg-danger-50/40 dark:bg-danger-400/5'
+                : null)
+            ->emptyStateIcon('heroicon-o-user-plus')
+            ->emptyStateHeading('Nenhum interessado encontrado')
+            ->emptyStateDescription('Cadastre um novo lead, importe com IA ou ajuste os filtros e a aba selecionada.')
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Interessado')
-                    ->searchable()
+                    ->description(fn (Interessado $record): ?string => $record->pessoa?->telefone)
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas('pessoa', fn (Builder $q) => $q
+                        ->where('nome', 'like', "%{$search}%")
+                        ->orWhere('telefone', 'like', "%{$search}%")))
                     ->sortable()
                     ->weight('bold'),
-                TextColumn::make('pessoa.telefone')
-                    ->label('Telefone')
-                    ->searchable()
-                    ->copyable()
-                    ->icon('heroicon-o-phone'),
-                TextColumn::make('usuario.name')
-                    ->label('Consultor')
-                    ->searchable()
-                    ->icon('heroicon-o-user'),
+                TextColumn::make('status.nome')
+                    ->label('Status / Consultor')
+                    ->badge()
+                    ->color(fn ($state, $record) => $record->status?->cor ?? 'gray')
+                    ->description(fn (Interessado $record): ?string => $record->usuario?->name)
+                    ->sortable(),
+                TextColumn::make('lead_score')
+                    ->label('Qualificação')
+                    ->badge()
+                    ->color(fn (?int $state): string => LeadScoreService::cor($state))
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "Score {$state}" : 'Score —')
+                    ->description(fn (Interessado $record): string => match ($record->temperatura) {
+                        'quente' => '🔥 Quente',
+                        'morno' => '🟡 Morno',
+                        'frio' => '🔵 Frio',
+                        default => 'Temperatura não avaliada',
+                    })
+                    ->sortable()
+                    ->tooltip('Score: indicador automático 0-100. Abaixo, a temperatura definida pelo consultor.'),
+                TextColumn::make('data_proximo_contato')
+                    ->label('Próximo contato')
+                    ->dateTime('d/m/Y H:i')
+                    ->description(fn (Interessado $record): ?string => $record->data_proximo_contato?->diffForHumans())
+                    ->sortable()
+                    ->color(fn ($record) => $record->precisaDeContato() ? 'danger' : null)
+                    ->icon(fn ($record) => $record->precisaDeContato() ? 'heroicon-o-exclamation-triangle' : null),
                 TextColumn::make('origem.nome')
                     ->label('Origem')
                     ->sortable()
                     ->toggleable(),
+                TextColumn::make('pessoa.telefone')
+                    ->label('Telefone')
+                    ->searchable()
+                    ->copyable()
+                    ->icon('heroicon-o-phone')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('usuario.name')
+                    ->label('Consultor')
+                    ->searchable()
+                    ->icon('heroicon-o-user')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('campanha.nome')
                     ->label('Campanha')
                     ->placeholder('—')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('status.nome')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn ($state, $record) => $record->status?->cor ?? 'gray')
-                    ->sortable(),
-                TextColumn::make('lead_score')
-                    ->label('Score')
-                    ->badge()
-                    ->color(fn (?int $state): string => LeadScoreService::cor($state))
-                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}" : '—')
-                    ->sortable()
-                    ->tooltip('Indicador automático 0-100, calculado a partir de perfil, engajamento e intenção do lead.'),
                 TextColumn::make('temperatura_display')
                     ->label('Temp. (consultor)')
                     ->state(fn (Interessado $record): string => match ($record->temperatura) {
@@ -84,7 +117,7 @@ class InteressadosTable
                     })
                     ->sortable(query: fn ($query, $direction) => $query->orderBy('temperatura', $direction))
                     ->tooltip('Percepção manual do consultor sobre o lead.')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('dias_funil')
                     ->label('Dias no Funil')
                     ->state(fn (Interessado $record): string => $record->diasNoFunil().'d')
@@ -95,18 +128,12 @@ class InteressadosTable
                     })
                     ->badge()
                     ->sortable(query: fn ($query, $direction) => $query->orderBy('created_at', $direction === 'asc' ? 'desc' : 'asc'))
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('valor_estimado')
                     ->label('Valor Est.')
                     ->money('BRL')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('data_proximo_contato')
-                    ->label('Prox. Contato')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->color(fn ($record) => $record->precisaDeContato() ? 'danger' : null)
-                    ->icon(fn ($record) => $record->precisaDeContato() ? 'heroicon-o-exclamation-triangle' : null),
                 TextColumn::make('historicos_count')
                     ->label('Contatos')
                     ->counts('historicos')
@@ -121,6 +148,15 @@ class InteressadosTable
                     ->icon(fn (Interessado $record) => $record->estaEstagnado() ? 'heroicon-o-exclamation-circle' : null)
                     ->tooltip('Dias desde a última interação registrada com o lead.')
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('redes_sociais')
+                    ->label('Redes Sociais')
+                    ->state(fn (Interessado $record): array => collect($record->redes_sociais ?? [])
+                        ->map(fn (array $rede): string => Interessado::REDES_SOCIAIS[$rede['rede'] ?? ''] ?? 'Outra')
+                        ->all())
+                    ->url(fn (Interessado $record): ?string => $record->redes_sociais[0]['url'] ?? null, shouldOpenInNewTab: true)
+                    ->badge()
+                    ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('faixa_distancia_escola')
                     ->label('Distância')
@@ -195,6 +231,8 @@ class InteressadosTable
                     ->label('Atendimento')
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->color('info')
+                    ->iconButton()
+                    ->tooltip('Registrar atendimento')
                     ->modalHeading('Registrar Atendimento')
                     ->form([
                         Select::make('tipo_contato_interessado_id')
@@ -254,6 +292,8 @@ class InteressadosTable
                     ->label('WhatsApp')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
+                    ->iconButton()
+                    ->tooltip('Enviar WhatsApp')
                     ->visible(fn (Interessado $record) => filled($record->pessoa?->telefone))
                     ->modalHeading('Enviar Mensagem via WhatsApp')
                     ->form([
@@ -291,131 +331,139 @@ class InteressadosTable
                         $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),
 
-                Action::make('agendarVisita')
-                    ->label('Agendar Visita')
-                    ->icon('heroicon-o-calendar-days')
-                    ->color('info')
-                    ->visible(fn (Interessado $record) => ! $record->status?->is_final)
-                    ->modalHeading('Agendar Visita à Escola')
-                    ->form([
-                        DateTimePicker::make('data_hora')
-                            ->label('Data e Hora')
-                            ->seconds(false)
-                            ->native(false)
-                            ->displayFormat('d/m/Y H:i')
-                            ->minDate(now())
-                            ->required(),
-                        Select::make('interessado_dependente_id')
-                            ->label('Aluno')
-                            ->options(fn (Interessado $record) => $record->dependentes->pluck('nome_crianca', 'id'))
-                            ->placeholder('Toda a família')
-                            ->visible(fn (Interessado $record) => $record->dependentes->count() > 1),
-                        Textarea::make('observacoes')
-                            ->label('Observações')
-                            ->rows(2),
-                    ])
-                    ->action(function (array $data, Interessado $record) {
-                        VisitaInteressadoService::agendar(
-                            $record,
-                            $data['data_hora'],
-                            $record->usuario_id ?? auth()->id(),
-                            $data['interessado_dependente_id'] ?? null,
-                            $data['observacoes'] ?? null,
-                        );
+                ActionGroup::make([
+                    Action::make('agendarVisita')
+                        ->label('Agendar Visita')
+                        ->icon('heroicon-o-calendar-days')
+                        ->color('info')
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_final)
+                        ->modalHeading('Agendar Visita à Escola')
+                        ->form([
+                            DateTimePicker::make('data_hora')
+                                ->label('Data e Hora')
+                                ->seconds(false)
+                                ->native(false)
+                                ->displayFormat('d/m/Y H:i')
+                                ->minDate(now())
+                                ->required(),
+                            Select::make('interessado_dependente_id')
+                                ->label('Aluno')
+                                ->options(fn (Interessado $record) => $record->dependentes->pluck('nome_crianca', 'id'))
+                                ->placeholder('Toda a família')
+                                ->visible(fn (Interessado $record) => $record->dependentes->count() > 1),
+                            Textarea::make('observacoes')
+                                ->label('Observações')
+                                ->rows(2),
+                        ])
+                        ->action(function (array $data, Interessado $record) {
+                            VisitaInteressadoService::agendar(
+                                $record,
+                                $data['data_hora'],
+                                $record->usuario_id ?? auth()->id(),
+                                $data['interessado_dependente_id'] ?? null,
+                                $data['observacoes'] ?? null,
+                            );
 
-                        Notification::make()
-                            ->title('Visita agendada com sucesso!')
-                            ->success()
-                            ->send();
-                    }),
+                            Notification::make()
+                                ->title('Visita agendada com sucesso!')
+                                ->success()
+                                ->send();
+                        }),
 
-                Action::make('matricular')
-                    ->label('Matricular')
-                    ->icon('heroicon-o-academic-cap')
-                    ->color('success')
-                    ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && EnrollmentWizard::canAccess())
-                    ->url(fn (Interessado $record) => EnrollmentWizard::getUrl(['interessado' => $record->id])),
+                    Action::make('matricular')
+                        ->label('Matricular')
+                        ->icon('heroicon-o-academic-cap')
+                        ->color('success')
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && EnrollmentWizard::canAccess())
+                        ->url(fn (Interessado $record) => EnrollmentWizard::getUrl(['interessado' => $record->id])),
 
-                Action::make('finalizarMatricula')
-                    ->label('Marcar matriculado')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => ! $record->status?->is_ganho && ! EnrollmentWizard::canAccess())
-                    ->action(function (Interessado $record) {
-                        $statusMatriculado = StatusInteressado::where('nome', 'Matriculado')->first();
+                    Action::make('finalizarMatricula')
+                        ->label('Marcar matriculado')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn ($record) => ! $record->status?->is_ganho && ! EnrollmentWizard::canAccess())
+                        ->action(function (Interessado $record) {
+                            $statusMatriculado = StatusInteressado::where('nome', 'Matriculado')->first();
 
-                        $record->update([
-                            'status_interessado_id' => $statusMatriculado?->id,
-                            'data_conversao' => now(),
-                        ]);
-
-                        LeadScoreService::recalcular($record);
-
-                        Notification::make()
-                            ->title('Matrícula finalizada!')
-                            ->success()
-                            ->send();
-                    }),
-
-                Action::make('gerarConvite')
-                    ->label('Gerar Link de Convite')
-                    ->icon('heroicon-o-link')
-                    ->color('info')
-                    ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
-                    ->modalHeading('Convite de Matrícula Online')
-                    ->modalDescription('Envie este link ao responsável para que ele mesmo confirme os dados antes de você efetivar a matrícula. Válido por 7 dias e de uso único.')
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Fechar')
-                    ->form(function (Interessado $record) {
-                        $link = app(ConviteMatriculaService::class)->gerarConvite($record);
-
-                        return [
-                            TextInput::make('link')
-                                ->label('Link do Convite (copie e envie ao responsável)')
-                                ->default($link)
-                                ->readOnly(),
-                        ];
-                    }),
-
-                Action::make('marcarPerdido')
-                    ->label('Perdido')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->form([
-                        Select::make('motivo_perda')
-                            ->label('Motivo da Perda')
-                            ->options([
-                                'Preço' => 'Preço / Questão financeira',
-                                'Concorrência' => 'Escolheu outra escola',
-                                'Distância' => 'Distância / Localização',
-                                'Mudança' => 'Mudou de cidade',
-                                'Desistência' => 'Desistiu de matricular',
-                                'Sem retorno' => 'Sem retorno aos contatos',
-                                'Outro' => 'Outro',
-                            ])
-                            ->required(),
-                    ])
-                    ->visible(fn ($record) => ! $record->status?->is_final)
-                    ->action(function (array $data, Interessado $record) {
-                        $statusPerdido = StatusInteressado::where('nome', 'Perdido')->first()
-                            ?? StatusInteressado::where('is_final', true)->where('is_ganho', false)->first();
-
-                        if ($statusPerdido) {
                             $record->update([
-                                'status_interessado_id' => $statusPerdido->id,
-                                'motivo_perda' => $data['motivo_perda'],
+                                'status_interessado_id' => $statusMatriculado?->id,
+                                'data_conversao' => now(),
                             ]);
 
                             LeadScoreService::recalcular($record);
-                        }
 
-                        Notification::make()
-                            ->title('Lead marcado como perdido.')
-                            ->warning()
-                            ->send();
-                    }),
-                EditAction::make(),
+                            Notification::make()
+                                ->title('Matrícula finalizada!')
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('gerarConvite')
+                        ->label('Gerar Link de Convite')
+                        ->icon('heroicon-o-link')
+                        ->color('info')
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
+                        ->modalHeading('Convite de Matrícula Online')
+                        ->modalDescription('Envie este link ao responsável para que ele mesmo confirme os dados antes de você efetivar a matrícula. Válido por 7 dias e de uso único.')
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Fechar')
+                        ->form(function (Interessado $record) {
+                            $link = app(ConviteMatriculaService::class)->gerarConvite($record);
+
+                            return [
+                                TextInput::make('link')
+                                    ->label('Link do Convite (copie e envie ao responsável)')
+                                    ->default($link)
+                                    ->readOnly(),
+                            ];
+                        }),
+
+                    Action::make('marcarPerdido')
+                        ->label('Perdido')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->form([
+                            Select::make('motivo_perda')
+                                ->label('Motivo da Perda')
+                                ->options([
+                                    'Preço' => 'Preço / Questão financeira',
+                                    'Concorrência' => 'Escolheu outra escola',
+                                    'Distância' => 'Distância / Localização',
+                                    'Mudança' => 'Mudou de cidade',
+                                    'Desistência' => 'Desistiu de matricular',
+                                    'Sem retorno' => 'Sem retorno aos contatos',
+                                    'Outro' => 'Outro',
+                                ])
+                                ->required(),
+                        ])
+                        ->visible(fn ($record) => ! $record->status?->is_final)
+                        ->action(function (array $data, Interessado $record) {
+                            $statusPerdido = StatusInteressado::where('nome', 'Perdido')->first()
+                                ?? StatusInteressado::where('is_final', true)->where('is_ganho', false)->first();
+
+                            if ($statusPerdido) {
+                                $record->update([
+                                    'status_interessado_id' => $statusPerdido->id,
+                                    'motivo_perda' => $data['motivo_perda'],
+                                ]);
+
+                                LeadScoreService::recalcular($record);
+                            }
+
+                            Notification::make()
+                                ->title('Lead marcado como perdido.')
+                                ->warning()
+                                ->send();
+                        }),
+                ])
+                    ->label('Mais ações')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->color('gray')
+                    ->tooltip('Mais ações'),
+                EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Editar'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

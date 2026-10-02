@@ -86,7 +86,9 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 
 ### 3.2 Listagem de Interessados (Tabela)
 1. Na página de listagem, você encontra uma tabela completa com:
-   - **Colunas:** Nome, Telefone (com cópia rápida), Consultor, Origem, Status (badge colorido), Temperatura, Dias no Funil, Valor Estimado, Próximo Contato e Total de Contatos.
+   - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos).
+   - **Colunas visíveis:** **Interessado** (nome e telefone logo abaixo), **Status / Consultor** (status em badge e o consultor abaixo), **Qualificação** (Score em badge e a temperatura do consultor abaixo), **Próximo contato** (data e "em/há X dias") e **Origem**. Leads com contato atrasado aparecem com uma faixa vermelha na linha.
+   - **Colunas opcionais (seletor de colunas):** Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
    - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
 2. **Filtros Avançados:**
    - **Status:** Filtre por múltiplos status simultaneamente.
@@ -95,7 +97,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Consultor:** Filtre por consultor responsável.
    - **Precisa de Contato:** Filtre leads com contato atrasado.
    - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
-3. **Ações Rápidas na Tabela:**
+   - Os filtros ficam recolhidos acima da tabela e são lembrados durante a sessão.
+3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
    - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que apenas move o lead para o status de matrícula.
@@ -109,6 +112,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
 - **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
+- **Redes Sociais:** Na aba *Dados do Negócio*, em **Redes Sociais**, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis.
 - **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
 - **Telefone:** O campo tem máscara no padrão Brasil com DDD, aceitando fixo `(11) 3333-4444` ou celular `(11) 98888-7777`. A máscara se ajusta sozinha conforme a quantidade de dígitos digitada.
 
@@ -165,6 +169,7 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - **Observações com datas:** o resumo em Observações cita as datas disponíveis (conversa, visitas, prazos, previsão de matrícula) no formato DD/MM/AAAA (o sistema converte automaticamente qualquer data fora desse padrão). O histórico também começa com a linha "Contato em DD/MM/AAAA HH:MM via <canal>".
    - Lê e interpreta o print ou o texto recebido com alta precisão.
    - Extrai o Nome completo, E-mail, Telefone e CPF do responsável.
+   - Identifica **perfis de redes sociais** citados na mensagem ou no print e os cadastra em Redes Sociais (só links válidos; o `https://` é acrescentado quando faltar).
    - Extrai o Nome da criança/aluno, calcula a Data de Nascimento se uma idade for informada, e identifica o Vínculo (Pai, Mãe, Tutor).
    - Mapeia automaticamente a **Série de Interesse** do aluno relacionando com os cursos cadastrados no sistema.
    - Infere a **Origem do Lead** (ex: WhatsApp, Instagram, Indicação).
