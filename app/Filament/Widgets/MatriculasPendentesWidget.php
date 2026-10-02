@@ -53,6 +53,10 @@ class MatriculasPendentesWidget extends BaseWidget
             ->comCadastroIncompleto()
             ->count();
 
+        // 4. Matrículas ativas ou pendentes sem contrato gerado e com contrato ainda não assinado
+        $contratoNaoGeradoCount = Matricula::query()->comContratoNaoGerado()->count();
+        $contratoNaoAssinadoCount = Matricula::query()->comContratoNaoAssinado()->count();
+
         return [
             Stat::make('Pendência de Responsáveis', $semResponsavelCount)
                 ->description('Matrículas sem responsável associado')
@@ -79,6 +83,25 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->url(MatriculaResource::getUrl('index', [
                     'activeTab' => 'ativas',
                     'filters[pendencias][values][0]' => TipoPendenciaMatricula::CADASTRO_INCOMPLETO->value,
+                ])),
+
+            // Valem para matrículas ativas e pendentes, por isso levam à aba "Com pendências"
+            Stat::make('Contrato não gerado', $contratoNaoGeradoCount)
+                ->description('Matrículas ativas ou pendentes sem contrato')
+                ->descriptionIcon('heroicon-m-document-plus')
+                ->color($contratoNaoGeradoCount > 0 ? 'warning' : 'success')
+                ->url(MatriculaResource::getUrl('index', [
+                    'activeTab' => 'com_pendencias',
+                    'filters[pendencias][values][0]' => TipoPendenciaMatricula::CONTRATO_NAO_GERADO->value,
+                ])),
+
+            Stat::make('Contrato não assinado', $contratoNaoAssinadoCount)
+                ->description('Contrato gerado e ainda sem assinatura')
+                ->descriptionIcon('heroicon-m-pencil-square')
+                ->color($contratoNaoAssinadoCount > 0 ? 'info' : 'success')
+                ->url(MatriculaResource::getUrl('index', [
+                    'activeTab' => 'com_pendencias',
+                    'filters[pendencias][values][0]' => TipoPendenciaMatricula::CONTRATO_NAO_ASSINADO->value,
                 ])),
         ];
     }

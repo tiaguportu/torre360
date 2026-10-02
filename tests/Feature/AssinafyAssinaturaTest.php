@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionMethod;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -391,6 +392,41 @@ class AssinafyAssinaturaTest extends TestCase
         foreach ($contratos as $s => $contrato) {
             $this->assertSame(in_array($s, $assinados, true), $contrato->estaAssinado(), $s);
         }
+    }
+
+    #[Test]
+    public function ajuda_da_lista_de_contratos_explica_cada_status_de_assinatura(): void
+    {
+        $admin = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'email_verified_at' => now(),
+        ]);
+        $admin->assignRole(Role::firstOrCreate(['name' => 'super_admin']));
+        session(['active_role' => 'super_admin']);
+        $this->actingAs($admin);
+
+        $pagina = Livewire::test(ListContratos::class)->instance();
+        $ajuda = (new ReflectionMethod($pagina, 'getHelpContent'))->invoke($pagina);
+
+        // Os rótulos explicados na ajuda são os mesmos exibidos na coluna (vêm do enum)
+        foreach ([
+            StatusAssinaturaContrato::PENDENTE,
+            StatusAssinaturaContrato::ENVIADO,
+            StatusAssinaturaContrato::READY,
+            StatusAssinaturaContrato::CERTIFICATING,
+            StatusAssinaturaContrato::CERTIFICATED,
+            StatusAssinaturaContrato::REJECTED,
+            StatusAssinaturaContrato::CANCELED,
+            StatusAssinaturaContrato::EXPIRED,
+            StatusAssinaturaContrato::ERRO_ENVIO,
+        ] as $status) {
+            $this->assertStringContainsStringIgnoringCase((string) $status->getLabel(), $ajuda, $status->value);
+        }
+
+        $this->assertStringContainsString('Sincronizar Assinaturas', $ajuda);
+        $this->assertStringContainsString('última assinatura', $ajuda);
+        $this->assertStringContainsString('Contrato não assinado', $ajuda);
     }
 
     #[Test]

@@ -77,6 +77,24 @@ class ListContratos extends ListRecords
         $html .= '<li><strong>Faturas:</strong> Os contratos são a base para a geração automática das faturas mensais.</li>';
         $html .= '</ul>';
 
+        $html .= '<h3>Coluna "Assinatura" (assinatura digital)</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Não enviado:</strong> o contrato foi criado, mas ainda não foi enviado para assinatura.</li>';
+        $html .= '<li><strong>Pendente:</strong> enviado ao Assinafy, aguardando as assinaturas.</li>';
+        $html .= '<li><strong>Todos assinaram:</strong> todas as assinaturas foram coletadas. É a primeira etapa depois da última assinatura.</li>';
+        $html .= '<li><strong>Certificando:</strong> o certificado digital do documento está sendo gerado.</li>';
+        $html .= '<li><strong>Certificado:</strong> etapa final, com o certificado gerado e o documento assinado pronto para download.</li>';
+        $html .= '<li><strong>Recusado, Cancelado, Expirado e Erro no envio:</strong> o processo foi interrompido; o contrato precisa ser enviado novamente.</li>';
+        $html .= '</ul>';
+        $html .= '<p><strong>Todos assinaram</strong>, <strong>Certificando</strong> e <strong>Certificado</strong> contam como contrato <strong>assinado</strong>: a ação passa a ser "Ver Contrato Assinado", o contrato sai da lista de pendentes e a matrícula deixa de ter a pendência "Contrato não assinado".</p>';
+
+        $html .= '<h3>Data de aceite e atualização do status</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>Data de aceite:</strong> é o dia em que a <strong>última assinatura</strong> foi coletada (quando todos assinaram), e não o dia em que o contrato foi criado.</li>';
+        $html .= '<li><strong>Atualização automática:</strong> o Assinafy avisa o sistema a cada assinatura e o sistema também o consulta de hora em hora para recuperar avisos que não chegaram.</li>';
+        $html .= '<li><strong>Sincronizar Assinaturas:</strong> use esta ação na linha do contrato para consultar o Assinafy na hora e atualizar o status e quem já assinou.</li>';
+        $html .= '</ul>';
+
         return $html;
     }
 }

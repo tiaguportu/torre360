@@ -90,3 +90,12 @@ O `.env` do ambiente local pode ter credenciais reais do Assinafy. Testes que pa
 neutralizar a chave (`config(['services.assinafy.key' => ''])`) e usar `Http::preventStrayRequests()`; veja
 `AssinafyAssinaturaTest`. Em `Http::fake()` a primeira resposta que casa vale (as definições se acumulam), então
 redefina com um `Http` novo ao trocar a resposta no meio do teste.
+
+## Onde isso aparece para o usuário
+- **Coluna Assinatura** (`/admin/contratos` e `Documentos` do portal), com rótulo e cor de `StatusAssinaturaContrato`.
+- **Pendência "Contrato não assinado"** na lista de matrículas (coluna Pendências, filtro, aba "Com pendências" e cartões).
+- **Widget "Matrículas com Pendências"** do dashboard (`MatriculasPendentesWidget`): cartões **Contrato não gerado** e
+  **Contrato não assinado**, que abrem a lista de matrículas na aba "Com pendências" já filtrada pelo tipo.
+- **Ajuda da lista de contratos** (`ListContratos::getHelpContent()`): explica cada status, a data de aceite e a ação
+  **Sincronizar Assinaturas**. `AssinafyAssinaturaTest` amarra os textos aos rótulos do enum; ao criar ou renomear um
+  status, atualize o enum, a Ajuda e o `MANUAL_USUARIO.md`.

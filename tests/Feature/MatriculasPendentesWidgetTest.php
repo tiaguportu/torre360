@@ -14,6 +14,7 @@ use App\Models\Pais;
 use App\Models\Pessoa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class MatriculasPendentesWidgetTest extends TestCase
@@ -231,6 +232,49 @@ class MatriculasPendentesWidgetTest extends TestCase
             $url = urldecode($stats[$indice]->getUrl());
 
             $this->assertStringContainsString('activeTab=ativas', $url);
+            $this->assertStringContainsString($filtro, $url);
+        }
+    }
+
+    #[Test]
+    public function deve_contar_pendencias_de_contrato_de_matriculas_ativas_e_pendentes(): void
+    {
+        Matricula::factory()->create(['situacao' => 'ativa']); // sem contrato
+        Matricula::factory()->create(['situacao' => 'pendente']); // sem contrato
+        Matricula::factory()->create(['situacao' => 'cancelada']); // sem contrato, mas não exige contrato
+
+        $naoAssinada = Matricula::factory()->create(['situacao' => 'ativa']);
+        Contrato::create(['matricula_id' => $naoAssinada->id, 'valor_total' => 0, 'assinafy_status' => 'enviado']);
+
+        foreach (['ready', 'certificating', 'certificated'] as $statusAssinado) {
+            $assinada = Matricula::factory()->create(['situacao' => 'ativa']);
+            Contrato::create(['matricula_id' => $assinada->id, 'valor_total' => 0, 'assinafy_status' => $statusAssinado]);
+        }
+
+        $widget = new MatriculasPendentesWidget;
+        $stats = (new ReflectionMethod($widget, 'getStats'))->invoke($widget);
+
+        $this->assertSame('Contrato não gerado', $stats[3]->getLabel());
+        $this->assertEquals(2, $stats[3]->getValue());
+        $this->assertSame('Contrato não assinado', $stats[4]->getLabel());
+        $this->assertEquals(1, $stats[4]->getValue());
+    }
+
+    #[Test]
+    public function cartoes_de_contrato_levam_a_lista_na_aba_com_pendencias_ja_filtrada(): void
+    {
+        $widget = new MatriculasPendentesWidget;
+        $stats = (new ReflectionMethod($widget, 'getStats'))->invoke($widget);
+
+        $esperados = [
+            3 => 'filters[pendencias][values][0]=contrato_nao_gerado',
+            4 => 'filters[pendencias][values][0]=contrato_nao_assinado',
+        ];
+
+        foreach ($esperados as $indice => $filtro) {
+            $url = urldecode($stats[$indice]->getUrl());
+
+            $this->assertStringContainsString('activeTab=com_pendencias', $url);
             $this->assertStringContainsString($filtro, $url);
         }
     }
