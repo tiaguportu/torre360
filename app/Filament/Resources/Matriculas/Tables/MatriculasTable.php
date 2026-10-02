@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Matriculas\Tables;
 
-use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Enums\TipoPendenciaMatricula;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
@@ -13,6 +13,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\ResponsavelFinanceiro;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -20,8 +21,11 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -31,27 +35,64 @@ use Illuminate\Support\HtmlString;
 
 class MatriculasTable
 {
-    public static function hasIncompleteCadastro($pessoa): bool
+    /**
+     * @param  bool  $comFiltroSituacao  Inclui o filtro de Situação (padrão: Ativa). A listagem principal
+     *                                   dispensa o filtro porque usa abas por situação; quem não tem abas
+     *                                   (ex.: relation manager de Turmas) deve ativá-lo.
+     */
+    public static function configure(Table $table, bool $comFiltroSituacao = false): Table
     {
-        if (! $pessoa) {
-            return false;
-        }
+        // Janelas de preceptoria independem da matrícula: consulta uma única vez por renderização.
+        $haJanelasDePreceptoria = null;
+        $consultaJanelasDePreceptoria = function (Matricula $record) use (&$haJanelasDePreceptoria): bool {
+            return $haJanelasDePreceptoria ??= $record->hasAvailablePreceptoriaWindows();
+        };
 
-        return $pessoa->hasIncompleteCadastro();
-    }
-
-    public static function configure(Table $table): Table
-    {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['pessoa', 'turma', 'periodoLetivo']))
-            ->recordClasses(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'bg-danger-500/10 dark:bg-danger-500/20' : null)
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->with([
+                    'serie',
+                    'periodoLetivo',
+                    'turma.serie.curso.documentos',
+                    'turma.tiposDocumentos',
+                    'tiposDocumentos',
+                    'documentoInseridos.tipoDocumento',
+                    'pessoa.nacionalidade',
+                    'pessoa.enderecos',
+                    'pessoa.responsaveis.nacionalidade',
+                    'pessoa.responsaveis.enderecos',
+                    'contrato.responsaveisFinanceiros.pessoa.nacionalidade',
+                    'contrato.responsaveisFinanceiros.pessoa.enderecos',
+                ])
+                ->withExists([
+                    'notas as tem_notas' => fn (Builder $notas) => $notas->whereNotNull('valor'),
+                    'preceptorias as tem_preceptoria_ciclo_vigente' => fn (Builder $preceptorias) => $preceptorias
+                        ->whereHas('cicloPreceptoria', fn (Builder $ciclo) => $ciclo->vigentes()),
+                ]))
+            ->paginated([10, 25, 50])
+            ->defaultPaginationPageOption(25)
+            ->persistFiltersInSession()
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->emptyStateIcon(Heroicon::OutlinedIdentification)
+            ->emptyStateHeading('Nenhuma matrícula encontrada')
+            ->emptyStateDescription('Ajuste a aba e os filtros ou cadastre uma nova matrícula.')
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
-                    ->searchable()
+                    ->description(function (Matricula $record): string {
+                        $turma = $record->turma?->nome;
+
+                        if (blank($turma)) {
+                            return $record->serie_nome ? "{$record->serie_nome} · sem turma" : 'Sem turma';
+                        }
+
+                        return implode(' · ', array_filter([$turma, $record->turma?->serie?->curso?->nome]));
+                    })
+                    ->weight('bold')
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $q) => $q
+                        ->whereHas('pessoa', fn (Builder $pessoa) => $pessoa->where('nome', 'like', "%{$search}%"))
+                        ->orWhereHas('turma', fn (Builder $turma) => $turma->where('nome', 'like', "%{$search}%"))))
                     ->sortable()
-                    ->weight(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'bold' : null)
-                    ->color(fn (Matricula $record) => ($record->hasMissingMandatoryDocuments() || ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) || $record->hasIncompleteCadastro()) ? 'danger' : null)
                     ->url(function (Matricula $record) {
                         if (! $record->pessoa) {
                             return null;
@@ -73,18 +114,56 @@ class MatriculasTable
 
                         return null;
                     }),
-                TextColumn::make('turma.nome')
-                    ->label('Turma')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('periodoLetivo.nome')
-                    ->label('Período Letivo')
-                    ->searchable()
-                    ->sortable(),
                 TextColumn::make('situacao')
                     ->label('Situação')
                     ->badge()
                     ->sortable(),
+                TextColumn::make('pendencias')
+                    ->label('Pendências')
+                    ->state(fn (Matricula $record): array => $record->pendencias->tipos() ?: ['em_dia'])
+                    ->badge()
+                    ->formatStateUsing(fn (mixed $state, Matricula $record): string => ($tipo = self::tipoPendencia($state))
+                        ? $record->pendencias->rotulo($tipo)
+                        : 'Em dia')
+                    ->color(fn (mixed $state): string|array|null => self::tipoPendencia($state)?->getColor() ?? 'success')
+                    ->icon(fn (mixed $state): ?string => self::tipoPendencia($state)?->getIcon() ?? 'heroicon-m-check-circle')
+                    ->tooltip(fn (Matricula $record): ?string => $record->pendencias->temPendencias()
+                        ? $record->pendencias->detalhes()."\n\nClique para ver os detalhes."
+                        : null)
+                    ->disabledClick(fn (Matricula $record): bool => ! $record->pendencias->temPendencias())
+                    ->action(
+                        Action::make('detalharPendencias')
+                            ->modalHeading(fn (Matricula $record): string => 'Pendências de '.($record->pessoa?->nome ?? 'matrícula'))
+                            ->modalIcon(Heroicon::OutlinedExclamationTriangle)
+                            ->modalIconColor('danger')
+                            ->modalWidth(Width::Large)
+                            ->modalContent(fn (Matricula $record) => view('filament.matriculas.pendencias', [
+                                'matricula' => $record,
+                                'pendencias' => $record->pendencias,
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelActionLabel('Fechar')
+                            ->visible(fn (Matricula $record): bool => $record->pendencias->temPendencias())
+                    ),
+                TextColumn::make('periodoLetivo.nome')
+                    ->label('Período Letivo')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(),
+                IconColumn::make('contrato')
+                    ->label('Contrato')
+                    ->state(fn (Matricula $record): bool => $record->contrato !== null)
+                    ->boolean()
+                    ->trueIcon(Heroicon::OutlinedDocumentCheck)
+                    ->falseIcon(Heroicon::OutlinedDocumentMinus)
+                    ->trueColor('success')
+                    ->falseColor('gray')
+                    ->tooltip(fn (Matricula $record): string => $record->contrato ? 'Contrato gerado' : 'Sem contrato')
+                    ->toggleable(),
+                TextColumn::make('turma.nome')
+                    ->label('Turma')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('data_ativacao')
                     ->label('Data de Ativação')
                     ->date('d/m/Y')
@@ -96,18 +175,21 @@ class MatriculasTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Criada em')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Atualizada em')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('curso')
                     ->label('Curso')
-                    ->options(Curso::all()->pluck('nome_interno', 'id'))
+                    ->options(fn () => Curso::query()->orderBy('nome_interno')->pluck('nome_interno', 'id'))
+                    ->searchable()
                     ->query(function (Builder $query, array $data): Builder {
                         if (empty($data['value'])) {
                             return $query;
@@ -119,402 +201,238 @@ class MatriculasTable
                     }),
                 SelectFilter::make('turma')
                     ->relationship('turma', 'nome')
+                    ->multiple()
                     ->preload()
                     ->searchable()
                     ->label('Turma'),
                 SelectFilter::make('periodoLetivo')
                     ->relationship('periodoLetivo', 'nome')
+                    ->multiple()
                     ->preload()
                     ->searchable()
                     ->label('Período Letivo'),
-                SelectFilter::make('situacao')
-                    ->options(SituacaoMatricula::class)
-                    ->label('Situação')
-                    ->default(SituacaoMatricula::ATIVA->value),
-                TernaryFilter::make('sem_responsavel')
-                    ->label('Responsável Pendente')
+                ...($comFiltroSituacao ? [
+                    SelectFilter::make('situacao')
+                        ->options(SituacaoMatricula::class)
+                        ->label('Situação')
+                        ->default(SituacaoMatricula::ATIVA->value),
+                ] : []),
+                SelectFilter::make('pendencias')
+                    ->label('Pendências')
+                    ->options(TipoPendenciaMatricula::class)
+                    ->multiple()
+                    ->query(function (Builder $query, array $data): Builder {
+                        $tipos = collect($data['values'] ?? [])
+                            ->map(fn (string $valor) => TipoPendenciaMatricula::tryFrom($valor))
+                            ->filter();
+
+                        if ($tipos->isEmpty()) {
+                            return $query;
+                        }
+
+                        return $query->where(function (Builder $q) use ($tipos) {
+                            foreach ($tipos as $tipo) {
+                                $q->orWhere(fn (Builder $sub) => $sub->comPendencia($tipo));
+                            }
+                        });
+                    }),
+                TernaryFilter::make('contrato')
+                    ->label('Contrato')
+                    ->placeholder('Todos')
+                    ->trueLabel('Com contrato')
+                    ->falseLabel('Sem contrato')
                     ->queries(
-                        true: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
-                            $q->whereDoesntHave('responsaveis');
-                        }),
-                        false: fn (Builder $query) => $query->whereHas('pessoa', function ($q) {
-                            $q->whereHas('responsaveis');
-                        }),
-                    ),
-                TernaryFilter::make('documentos_pendentes')
-                    ->label('Documento Pendente')
-                    ->queries(
-                        true: fn (Builder $query) => $query->where(function (Builder $q) {
-                            $q->whereHas('turma.serie.curso.documentos', function ($qSub) {
-                                $qSub->where('flag_obrigatorio', true)
-                                    ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                            })
-                                ->orWhereHas('turma.tiposDocumentos', function ($qSub) {
-                                    $qSub->where('flag_obrigatorio', true)
-                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                                })
-                                ->orWhereHas('tiposDocumentos', function ($qSub) {
-                                    $qSub->where('flag_obrigatorio', true)
-                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                                });
-                        }),
-                        false: fn (Builder $query) => $query->where(function (Builder $q) {
-                            $q->whereDoesntHave('turma.serie.curso.documentos', function ($qSub) {
-                                $qSub->where('flag_obrigatorio', true)
-                                    ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                            })
-                                ->whereDoesntHave('turma.tiposDocumentos', function ($qSub) {
-                                    $qSub->where('flag_obrigatorio', true)
-                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                                })
-                                ->whereDoesntHave('tiposDocumentos', function ($qSub) {
-                                    $qSub->where('flag_obrigatorio', true)
-                                        ->whereRaw('tipo_documento.id NOT IN (SELECT tipo_documento_id FROM documento_inserido WHERE documento_inserido.matricula_id = matricula.id AND documento_inserido.status != ?)', [SituacaoDocumento::REJEITADO->value]);
-                                });
-                        }),
-                    ),
-                TernaryFilter::make('dados_pendentes')
-                    ->label('Cadastro Pendente')
-                    ->queries(
-                        true: fn (Builder $query) => $query->comCadastroIncompleto(),
-                        false: fn (Builder $query) => $query->comCadastroCompleto(),
+                        true: fn (Builder $query) => $query->has('contrato'),
+                        false: fn (Builder $query) => $query->doesntHave('contrato'),
+                        blank: fn (Builder $query) => $query,
                     ),
             ])
             ->actions([
-                EditAction::make(),
-                Action::make('pendencias')
-                    ->label('Pendências')
-                    ->hiddenLabel()
-                    ->tooltip('Ver Pendências da Matrícula')
-                    ->icon(Heroicon::OutlinedExclamationTriangle)
-                    ->color('danger')
-                    ->badge(function (Matricula $record) {
-                        $count = 0;
-                        if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
-                            $count++;
-                        }
-                        $incompletas = $record->getPessoasComCadastroIncompleto();
-                        $count += $incompletas->count();
-                        $count += $record->getMissingMandatoryDocumentsCount();
-                        $count += $record->getRejectedDocuments()->count();
-
-                        return $count ?: null;
-                    })
-                    ->badgeColor('danger')
-                    ->visible(fn (Matricula $record) => ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) ||
-                        $record->hasIncompleteCadastro() ||
-                        $record->hasPendingIssues()
-                    )
-                    ->modalHeading('Pendências da Matrícula')
-                    ->modalDescription(function (Matricula $record) {
-                        $html = '<div class="space-y-4 text-left">';
-
-                        // Alerta de Falta de Responsáveis
-                        if ($record->pessoa && ! $record->pessoa->responsaveis()->exists()) {
-                            $html .= '
-                            <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
-                                <div class="flex items-center gap-2 font-bold mb-1">
-                                    <span>⚠️ Alerta de Cadastro</span>
-                                </div>
-                                <p class="text-sm">Este aluno não possui nenhum <strong>Pai, Mãe ou Responsável</strong> associado ao seu cadastro de pessoa.</p>
-                                <div class="mt-2">
-                                    <a href="'.PessoaResource::getUrl('edit', ['record' => $record->pessoa_id]).'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
-                                        Clique aqui para associar responsáveis na ficha do aluno
-                                    </a>
-                                </div>
-                            </div>';
-                        }
-
-                        // Alerta de Dados Cadastrais Faltantes
-                        $incompletas = $record->getPessoasComCadastroIncompleto();
-                        if ($incompletas->isNotEmpty()) {
-                            foreach ($incompletas as $item) {
-                                $tipoPessoa = $item['tipo'];
-                                $pessoa = $item['pessoa'];
-                                $camposFormatados = collect($item['campos'])->map(fn ($c) => "<strong>{$c}</strong>")->join(', ', ' e ');
-
-                                $editUrl = PessoaResource::getUrl('edit', ['record' => $pessoa->id]);
-
-                                $html .= '
-                                <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
-                                    <div class="flex items-center gap-2 font-bold mb-1">
-                                        <span>⚠️ Dados Cadastrais Incompletos ('.$tipoPessoa.')</span>
-                                    </div>
-                                    <p class="text-sm">O cadastro de <strong>'.e($pessoa->nome ?: 'Sem nome').'</strong> possui campos sem informação: '.$camposFormatados.'.</p>
-                                    <div class="mt-2">
-                                        <a href="'.$editUrl.'" class="text-xs font-bold underline text-danger-800 dark:text-danger-300 hover:text-danger-900" target="_blank">
-                                            Clique aqui para editar os dados cadastrais desta pessoa
-                                        </a>
-                                    </div>
-                                </div>';
-                            }
-                        }
-
-                        // Alerta de Documentos Faltantes / Rejeitados
-                        if ($record->hasPendingIssues()) {
-                            $faltantes = $record->getMissingMandatoryDocuments();
-                            $rejeitados = $record->getRejectedDocuments();
-
-                            $html .= '
-                            <div class="p-4 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 dark:text-warning-400">
-                                <div class="flex items-center gap-2 font-bold mb-1">
-                                    <span>📄 Documentos Pendentes</span>
-                                </div>';
-
-                            if ($faltantes->isNotEmpty()) {
-                                $html .= '<p class="text-sm font-semibold mt-2">Documentos Faltantes:</p>';
-                                $html .= '<ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 mt-1">';
-                                foreach ($faltantes as $doc) {
-                                    $html .= "<li>{$doc->nome}</li>";
-                                }
-                                $html .= '</ul>';
-                            }
-
-                            if ($rejeitados->isNotEmpty()) {
-                                $html .= '<p class="text-sm font-semibold mt-2">Documentos Rejeitados:</p>';
-                                $html .= '<ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 mt-1">';
-                                foreach ($rejeitados as $docInserido) {
-                                    $docNome = $docInserido->tipoDocumento->nome;
-                                    $obs = $docInserido->observacoes ? " (Motivo: <span class='italic'>{$docInserido->observacoes}</span>)" : '';
-                                    $html .= "<li>{$docNome}{$obs}</li>";
-                                }
-                                $html .= '</ul>';
-                            }
-
-                            $html .= '
-                                <div class="mt-3">
-                                    <a href="'.DocumentosMatricula::getUrl(['record' => $record]).'" class="text-xs font-bold underline text-warning-800 dark:text-warning-300 hover:text-warning-900" target="_blank">
-                                        Clique aqui para gerenciar os documentos da matrícula
-                                    </a>
-                                </div>
-                            </div>';
-                        }
-
-                        $html .= '</div>';
-
-                        return new HtmlString($html);
-                    })
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Fechar'),
-                Action::make('boletim')
-                    ->label('Boletim')
-                    ->tooltip('Ver Boletim Escolar')
-                    ->icon(Heroicon::OutlinedAcademicCap)
-                    ->color('info')
-                    ->url(fn (Matricula $record) => BoletimMatricula::getUrl(['record' => $record]))
-                    ->visible(fn (Matricula $record) => auth()->user()->can('boletim', $record) && $record->notas()->whereNotNull('valor')->exists()),
+                EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Editar matrícula'),
                 Action::make('inserir_documentos')
                     ->label('Documentos')
-                    ->tooltip('Gerenciar Documentos Obrigatórios')
+                    ->tooltip('Gerenciar documentos obrigatórios')
                     ->icon(Heroicon::OutlinedDocumentPlus)
-                    ->color(fn (Matricula $record) => $record->hasMissingMandatoryDocuments() ? 'danger' : 'primary')
-                    ->badge(fn (Matricula $record) => $record->getMissingMandatoryDocumentsCount() ?: null)
+                    ->iconButton()
+                    ->color(fn (Matricula $record) => $record->pendencias->documentosFaltantes->isNotEmpty() ? 'danger' : 'primary')
+                    ->badge(fn (Matricula $record) => $record->pendencias->documentosFaltantes->count() ?: null)
                     ->badgeColor('danger')
                     ->url(fn (Matricula $record) => DocumentosMatricula::getUrl(['record' => $record])),
-                Action::make('enviar_email_pendencia')
-                    ->label('Avisar Pendência')
-                    ->tooltip(fn (Matricula $record) => $record->getLastPendingNotificationDate()
-                        ? 'Último envio: '.$record->getLastPendingNotificationDate()->format('d/m/Y H:i').' - Clique para enviar novamente.'
-                        : 'Enviar e-mail de aviso de documentos pendentes ao Responsável (Nenhum envio anterior)')
-                    ->icon(Heroicon::OutlinedEnvelope)
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Confirmar Envio de Aviso')
-                    ->modalDescription(function (Matricula $record) {
-                        $emails = $record->getNotificationRecipients()->pluck('email');
-                        $faltantes = $record->getMissingMandatoryDocuments();
-                        $rejeitados = $record->getRejectedDocuments();
+                ActionGroup::make([
+                    ActionGroup::make([
+                        Action::make('boletim')
+                            ->label('Boletim')
+                            ->icon(Heroicon::OutlinedAcademicCap)
+                            ->color('info')
+                            ->url(fn (Matricula $record) => BoletimMatricula::getUrl(['record' => $record]))
+                            ->visible(fn (Matricula $record) => auth()->user()->can('boletim', $record)
+                                && ($record->tem_notas ?? $record->notas()->whereNotNull('valor')->exists())),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        Action::make('enviar_email_pendencia')
+                            ->label('Avisar pendência por e-mail')
+                            ->icon(Heroicon::OutlinedEnvelope)
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('Confirmar envio de aviso')
+                            ->modalDescription('Confira os destinatários e as pendências antes de confirmar.')
+                            ->modalContent(fn (Matricula $record) => view('filament.matriculas.confirmar-aviso', [
+                                'destinatarios' => $record->getNotificationRecipients()->pluck('email'),
+                                'ultimoEnvio' => $record->getLastPendingNotificationDate(),
+                                'mensagem' => null,
+                                'faltantes' => $record->pendencias->documentosFaltantes,
+                                'rejeitados' => $record->pendencias->documentosRejeitados,
+                                'cor' => 'warning',
+                            ]))
+                            ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula')
+                                && $record->pendencias->temPendenciaDocumental())
+                            ->action(function (Matricula $record) {
+                                if (! $record->pendencias->temPendenciaDocumental()) {
+                                    Notification::make()
+                                        ->title('Sem pendências')
+                                        ->body('Esta matrícula não possui documentos obrigatórios pendentes no momento.')
+                                        ->info()
+                                        ->send();
 
-                        if ($emails->isEmpty()) {
-                            return new HtmlString('<span class="text-danger-600 font-bold">Erro: Nenhum e-mail encontrado para o aluno ou responsáveis desta matrícula.</span>');
-                        }
+                                    return;
+                                }
 
-                        $html = '<div class="space-y-4">';
+                                $destinatarios = $record->getNotificationRecipients();
 
-                        $lastNotification = $record->getLastPendingNotificationDate();
-                        if ($lastNotification) {
-                            $html .= '<div class="p-2 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 text-sm italic">';
-                            $html .= '<strong>Última notificação enviada em:</strong> '.$lastNotification->format('d/m/Y H:i');
-                            $html .= '</div>';
-                        }
+                                if ($destinatarios->isEmpty()) {
+                                    Notification::make()
+                                        ->title('Erro ao enviar')
+                                        ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
+                                        ->danger()
+                                        ->send();
 
-                        $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
+                                    return;
+                                }
 
-                        if ($faltantes->isNotEmpty()) {
-                            $html .= '<div><strong class="text-danger-600">Documentos Faltantes:</strong><ul class="list-disc list-inside text-sm text-gray-500">';
-                            foreach ($faltantes as $doc) {
-                                $html .= "<li>{$doc->nome}</li>";
-                            }
-                            $html .= '</ul></div>';
-                        }
+                                $result = $record->notifyMissingMandatoryDocuments();
+                                $countSent = $result['enviados'];
+                                $falhas = $result['falhas'];
 
-                        if ($rejeitados->isNotEmpty()) {
-                            $html .= '<div><strong class="text-warning-600">Documentos Rejeitados (necessário reenvio):</strong><ul class="list-disc list-inside text-sm text-gray-500">';
-                            foreach ($rejeitados as $docInserido) {
-                                $docNome = $docInserido->tipoDocumento->nome;
-                                $obs = $docInserido->observacoes ? " (<span class='italic'>Motivo: {$docInserido->observacoes}</span>)" : '';
-                                $html .= "<li>{$docNome}{$obs}</li>";
-                            }
-                            $html .= '</ul></div>';
-                        }
+                                if ($countSent > 0) {
+                                    Notification::make()
+                                        ->title('Aviso de Pendência Enviado')
+                                        ->body("O aviso foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
+                                        ->success()
+                                        ->send()
+                                        ->sendToDatabase(auth()->user());
+                                }
 
-                        $html .= '</div>';
+                                if (! empty($falhas)) {
+                                    foreach ($falhas as $email => $erro) {
+                                        Notification::make()
+                                            ->title("Falha no envio: {$email}")
+                                            ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
+                                            ->send();
+                                    }
+                                }
+                            }),
+                        Action::make('avisar_possibilidade_preceptoria')
+                            ->label('Avisar preceptoria por e-mail')
+                            ->icon(Heroicon::OutlinedCalendarDays)
+                            ->color('success')
+                            ->requiresConfirmation()
+                            ->modalHeading('Confirmar envio de aviso de preceptoria')
+                            ->modalDescription('Confira os destinatários antes de confirmar.')
+                            ->modalContent(fn (Matricula $record) => view('filament.matriculas.confirmar-aviso', [
+                                'destinatarios' => $record->getNotificationRecipients()->pluck('email'),
+                                'ultimoEnvio' => $record->getLastPreceptoriaNotificationDate(),
+                                'mensagem' => 'Gostaria de enviar um aviso de que existem horários disponíveis para agendamento de preceptoria?',
+                                'faltantes' => collect(),
+                                'rejeitados' => collect(),
+                                'cor' => 'success',
+                            ]))
+                            ->visible(fn (Matricula $record) => auth()->user()->can('avisarPossibilidadePreceptoria:Matricula')
+                                && ! ($record->tem_preceptoria_ciclo_vigente ?? $record->hasPreceptoriaInActiveCycles())
+                                && $consultaJanelasDePreceptoria($record)
+                            )
+                            ->action(function (Matricula $record) {
+                                $destinatarios = $record->getNotificationRecipients();
 
-                        return new HtmlString($html);
-                    })
-                    ->visible(fn (Matricula $record) => auth()->user()->can('AvisarPendencia:Matricula') && $record->hasPendingIssues())
-                    ->action(function (Matricula $record) {
-                        if (! $record->hasPendingIssues()) {
-                            Notification::make()
-                                ->title('Sem pendências')
-                                ->body('Esta matrícula não possui documentos obrigatórios pendentes no momento.')
-                                ->info()
-                                ->send();
+                                if ($destinatarios->isEmpty()) {
+                                    Notification::make()
+                                        ->title('Erro ao enviar')
+                                        ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
+                                        ->danger()
+                                        ->send();
 
-                            return;
-                        }
+                                    return;
+                                }
 
-                        $destinatarios = $record->getNotificationRecipients();
+                                $result = $record->notifyPossibilityPreceptoria();
+                                $countSent = $result['enviados'];
+                                $falhas = $result['falhas'];
 
-                        if ($destinatarios->isEmpty()) {
-                            Notification::make()
-                                ->title('Erro ao enviar')
-                                ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
-                                ->danger()
-                                ->send();
+                                if ($countSent > 0) {
+                                    Notification::make()
+                                        ->title('Aviso de Preceptoria Enviado')
+                                        ->body("O aviso de possibilidade de agendamento foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
+                                        ->success()
+                                        ->send()
+                                        ->sendToDatabase(auth()->user());
+                                }
 
-                            return;
-                        }
+                                if (! empty($falhas)) {
+                                    foreach ($falhas as $email => $erro) {
+                                        Notification::make()
+                                            ->title("Falha no envio: {$email}")
+                                            ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
+                                            ->danger()
+                                            ->persistent()
+                                            ->send();
+                                    }
+                                }
+                            }),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        Action::make('gerarContrato')
+                            ->label('Gerar contrato')
+                            ->icon(Heroicon::OutlinedDocumentPlus)
+                            ->color('success')
+                            ->visible(fn (Matricula $record) => $record->contrato === null
+                                && $record->pessoa !== null
+                                && ! $record->estaSemResponsavel())
+                            ->requiresConfirmation()
+                            ->modalHeading('Gerar Contrato?')
+                            ->modalDescription('As pessoas responsáveis pelo aluno serão vinculadas ao contrato com valor R$ 0,00.')
+                            ->modalSubmitActionLabel('Sim, gerar contrato')
+                            ->action(function (Matricula $record) {
+                                $contrato = Contrato::create([
+                                    'matricula_id' => $record->id,
+                                    'valor_total' => 0,
+                                    'data_aceite' => now(),
+                                ]);
 
-                        $result = $record->notifyMissingMandatoryDocuments();
-                        $countSent = $result['enviados'];
-                        $falhas = $result['falhas'];
+                                $responsaveis = $record->pessoa->responsaveis;
+                                $count = $responsaveis->count();
 
-                        if ($countSent > 0) {
-                            Notification::make()
-                                ->title('Aviso de Pendência Enviado')
-                                ->body("O aviso foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
-                                ->success()
-                                ->send()
-                                ->sendToDatabase(auth()->user());
-                        }
+                                foreach ($responsaveis as $responsavel) {
+                                    ResponsavelFinanceiro::create([
+                                        'contrato_id' => $contrato->id,
+                                        'pessoa_id' => $responsavel->id,
+                                        'percentual' => 100 / $count,
+                                    ]);
+                                }
 
-                        if (! empty($falhas)) {
-                            foreach ($falhas as $email => $erro) {
                                 Notification::make()
-                                    ->title("Falha no envio: {$email}")
-                                    ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
+                                    ->title('Contrato gerado com sucesso!')
+                                    ->success()
                                     ->send();
-                            }
-                        }
-                    }),
-                Action::make('avisar_possibilidade_preceptoria')
-                    ->label('Avisar Preceptoria')
-                    ->tooltip(fn (Matricula $record) => $record->getLastPreceptoriaNotificationDate()
-                        ? 'Último envio: '.$record->getLastPreceptoriaNotificationDate()->format('d/m/Y H:i').' - Clique para enviar novamente.'
-                        : 'Avisar sobre disponibilidade de horários de preceptoria (Nenhum envio anterior)')
-                    ->icon(Heroicon::OutlinedCalendarDays)
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading('Confirmar Envio de Aviso de Preceptoria')
-                    ->modalDescription(function (Matricula $record) {
-                        $emails = $record->getNotificationRecipients()->pluck('email');
 
-                        if ($emails->isEmpty()) {
-                            return new HtmlString('<span class="text-danger-600 font-bold">Erro: Nenhum e-mail encontrado para o aluno ou responsáveis desta matrícula.</span>');
-                        }
-
-                        $html = '<div class="space-y-4">';
-
-                        $lastNotification = $record->getLastPreceptoriaNotificationDate();
-                        if ($lastNotification) {
-                            $html .= '<div class="p-2 bg-success-500/10 border border-success-500/20 rounded-lg text-success-700 text-sm italic">';
-                            $html .= '<strong>Última notificação enviada em:</strong> '.$lastNotification->format('d/m/Y H:i');
-                            $html .= '</div>';
-                        }
-
-                        $html .= '<div>Gostaria de enviar um aviso de que existem <strong>horários disponíveis</strong> para agendamento de preceptoria?</div>';
-                        $html .= '<div><strong>Destinatários:</strong><br><span class="text-gray-500">'.$emails->join(', ').'</span></div>';
-                        $html .= '</div>';
-
-                        return new HtmlString($html);
-                    })
-                    ->visible(fn (Matricula $record) => auth()->user()->can('avisarPossibilidadePreceptoria:Matricula')
-                        && ! $record->hasPreceptoriaInActiveCycles()
-                        && $record->hasAvailablePreceptoriaWindows()
-                    )
-                    ->action(function (Matricula $record) {
-                        $destinatarios = $record->getNotificationRecipients();
-
-                        if ($destinatarios->isEmpty()) {
-                            Notification::make()
-                                ->title('Erro ao enviar')
-                                ->body('Não foi possível localizar e-mails para o aluno ou responsáveis desta matrícula.')
-                                ->danger()
-                                ->send();
-
-                            return;
-                        }
-
-                        $result = $record->notifyPossibilityPreceptoria();
-                        $countSent = $result['enviados'];
-                        $falhas = $result['falhas'];
-
-                        if ($countSent > 0) {
-                            Notification::make()
-                                ->title('Aviso de Preceptoria Enviado')
-                                ->body("O aviso de possibilidade de agendamento foi enviado para {$countSent} destinatário(s) da matrícula de **{$record->pessoa->nome}**.")
-                                ->success()
-                                ->send()
-                                ->sendToDatabase(auth()->user());
-                        }
-
-                        if (! empty($falhas)) {
-                            foreach ($falhas as $email => $erro) {
-                                Notification::make()
-                                    ->title("Falha no envio: {$email}")
-                                    ->body("O provedor de e-mail retornou o seguinte erro: {$erro}")
-                                    ->danger()
-                                    ->persistent()
-                                    ->send();
-                            }
-                        }
-                    }),
-                Action::make('gerarContrato')
-                    ->label('Gerar Contrato')
-                    ->tooltip('Gerar Contrato para esta Matrícula')
-                    ->icon(Heroicon::OutlinedDocumentPlus)
-                    ->color('success')
-                    ->visible(fn (Matricula $record) => ! $record->contrato()->exists() && $record->pessoa->responsaveis()->exists())
-                    ->requiresConfirmation()
-                    ->modalHeading('Gerar Contrato?')
-                    ->modalDescription('As pessoas responsáveis pelo aluno serão vinculadas ao contrato com valor R$ 0,00.')
-                    ->modalSubmitActionLabel('Sim, gerar contrato')
-                    ->action(function (Matricula $record) {
-                        $contrato = Contrato::create([
-                            'matricula_id' => $record->id,
-                            'valor_total' => 0,
-                            'data_aceite' => now(),
-                        ]);
-
-                        $responsaveis = $record->pessoa->responsaveis;
-                        $count = $responsaveis->count();
-
-                        foreach ($responsaveis as $responsavel) {
-                            ResponsavelFinanceiro::create([
-                                'contrato_id' => $contrato->id,
-                                'pessoa_id' => $responsavel->id,
-                                'percentual' => 100 / $count,
-                            ]);
-                        }
-
-                        Notification::make()
-                            ->title('Contrato gerado com sucesso!')
-                            ->success()
-                            ->send();
-
-                        return redirect(ContratoResource::getUrl('edit', ['record' => $contrato->id]));
-                    }),
+                                return redirect(ContratoResource::getUrl('edit', ['record' => $contrato->id]));
+                            }),
+                    ])->dropdown(false),
+                ])
+                    ->label('Mais ações')
+                    ->icon(Heroicon::EllipsisVertical)
+                    ->color('gray')
+                    ->tooltip('Mais ações'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -533,7 +451,7 @@ class MatriculasTable
                             $todasFalhas = [];
 
                             foreach ($records as $record) {
-                                if ($record->hasPendingIssues()) {
+                                if ($record->pendencias->temPendenciaDocumental()) {
                                     $destinatarios = $record->getNotificationRecipients();
 
                                     if ($destinatarios->isEmpty()) {
@@ -566,7 +484,7 @@ class MatriculasTable
                             if (! empty($todasFalhas)) {
                                 Notification::make()
                                     ->title('Alguns e-mails falharam')
-                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', $todasFalhas)))
+                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', array_map('e', $todasFalhas))))
                                     ->danger()
                                     ->persistent()
                                     ->send();
@@ -588,7 +506,8 @@ class MatriculasTable
                                     ->info()
                                     ->send();
                             }
-                        }),
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('enviar_avisos_preceptoria_lote')
                         ->label('Avisar Preceptoria em Lote')
                         ->icon(Heroicon::OutlinedCalendarDays)
@@ -597,7 +516,7 @@ class MatriculasTable
                         ->modalHeading('Confirmar Envio de Avisos de Preceptoria em Lote')
                         ->modalDescription('Esta ação enviará avisos de disponibilidade de horários para agendamento de preceptoria para todas as matrículas selecionadas que ainda não possuem preceptoria agendada nos ciclos vigentes.')
                         ->visible(fn () => auth()->user()->can('AvisarPossibilidadePreceptoria:Matricula') || auth()->user()->can('avisarPossibilidadePreceptoria:Matricula'))
-                        ->action(function (Collection $records) {
+                        ->action(function (Collection $records) use ($consultaJanelasDePreceptoria) {
                             $totalSent = 0;
                             $countMatriculasNotificadas = 0;
                             $matriculasJaAgendadas = [];
@@ -608,13 +527,13 @@ class MatriculasTable
                             foreach ($records as $record) {
                                 $alunoNome = $record->pessoa?->nome ?? "Matrícula #{$record->id}";
 
-                                if ($record->hasPreceptoriaInActiveCycles()) {
+                                if ($record->tem_preceptoria_ciclo_vigente ?? $record->hasPreceptoriaInActiveCycles()) {
                                     $matriculasJaAgendadas[] = $alunoNome;
 
                                     continue;
                                 }
 
-                                if (! $record->hasAvailablePreceptoriaWindows()) {
+                                if (! $consultaJanelasDePreceptoria($record)) {
                                     $matriculasSemJanelas[] = $alunoNome;
 
                                     continue;
@@ -655,7 +574,7 @@ class MatriculasTable
                                 $count = count($matriculasJaAgendadas);
                                 Notification::make()
                                     ->title('Matrículas com Agendamento Existente')
-                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) foram ignoradas por já possuírem preceptoria agendada:<br>• ".implode('<br>• ', $matriculasJaAgendadas)))
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) foram ignoradas por já possuírem preceptoria agendada:<br>• ".implode('<br>• ', array_map('e', $matriculasJaAgendadas))))
                                     ->info()
                                     ->send();
                             }
@@ -664,7 +583,7 @@ class MatriculasTable
                                 $count = count($matriculasSemJanelas);
                                 Notification::make()
                                     ->title('Sem Janelas Disponíveis')
-                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não foram notificadas pois não há janelas disponíveis:<br>• ".implode('<br>• ', $matriculasSemJanelas)))
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não foram notificadas pois não há janelas disponíveis:<br>• ".implode('<br>• ', array_map('e', $matriculasSemJanelas))))
                                     ->warning()
                                     ->send();
                             }
@@ -673,7 +592,7 @@ class MatriculasTable
                                 $count = count($matriculasSemEmail);
                                 Notification::make()
                                     ->title('Sem E-mail Cadastrado')
-                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não puderam ser notificadas por falta de e-mail cadastrado:<br>• ".implode('<br>• ', $matriculasSemEmail)))
+                                    ->body(new HtmlString("As seguintes {$count} matrícula(s) não puderam ser notificadas por falta de e-mail cadastrado:<br>• ".implode('<br>• ', array_map('e', $matriculasSemEmail))))
                                     ->warning()
                                     ->persistent()
                                     ->send();
@@ -682,7 +601,7 @@ class MatriculasTable
                             if (! empty($todasFalhas)) {
                                 Notification::make()
                                     ->title('Alguns e-mails falharam')
-                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', $todasFalhas)))
+                                    ->body(new HtmlString('As seguintes falhas foram reportadas:<br>'.implode('<br>', array_map('e', $todasFalhas))))
                                     ->danger()
                                     ->persistent()
                                     ->send();
@@ -697,7 +616,6 @@ class MatriculasTable
                             }
                         })
                         ->deselectRecordsAfterCompletion(),
-                    DeleteBulkAction::make(),
                     BulkAction::make('editar_lote')
                         ->label('Editar em Lote')
                         ->icon(Heroicon::OutlinedPencilSquare)
@@ -751,8 +669,23 @@ class MatriculasTable
                         ->modalHeading('Editar Matrículas em Lote')
                         ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
                         ->modalSubmitActionLabel('Atualizar Selecionadas'),
+                    DeleteBulkAction::make()
+                        ->color('danger'),
                 ]),
             ])
             ->stackedOnMobile();
+    }
+
+    /**
+     * Converte o estado de uma célula da coluna "Pendências" no tipo correspondente
+     * (nulo para o marcador "em dia").
+     */
+    private static function tipoPendencia(mixed $state): ?TipoPendenciaMatricula
+    {
+        return match (true) {
+            $state instanceof TipoPendenciaMatricula => $state,
+            is_string($state) => TipoPendenciaMatricula::tryFrom($state),
+            default => null,
+        };
     }
 }

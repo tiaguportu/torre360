@@ -26,7 +26,7 @@ class MatriculasRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return MatriculasTable::configure($table)
+        return MatriculasTable::configure($table, comFiltroSituacao: true)
             ->headerActions([
                 CreateAction::make()
                     ->fillForm(fn ($livewire): array => [

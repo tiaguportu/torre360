@@ -5,9 +5,12 @@ namespace App\Models;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusFatura;
+use App\Enums\TipoPendenciaMatricula;
 use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
+use App\Support\PendenciasMatricula;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -204,10 +207,16 @@ class Matricula extends Model
         }
 
         // IDS dos documentos que já estão inseridos e NÃO REJEITADOS
-        $inseridosIds = $this->documentoInseridos()
-            ->where('status', '!=', SituacaoDocumento::REJEITADO)
-            ->pluck('tipo_documento_id')
-            ->toArray();
+        // (usa a relação já carregada, quando houver, para evitar uma query por matrícula)
+        $inseridosIds = $this->relationLoaded('documentoInseridos')
+            ? $this->documentoInseridos
+                ->reject(fn (DocumentoInserido $doc) => $doc->status === SituacaoDocumento::REJEITADO)
+                ->pluck('tipo_documento_id')
+                ->all()
+            : $this->documentoInseridos()
+                ->where('status', '!=', SituacaoDocumento::REJEITADO)
+                ->pluck('tipo_documento_id')
+                ->all();
 
         return $obrigatorios->reject(function ($doc) use ($inseridosIds) {
             return in_array($doc->id, $inseridosIds);
@@ -219,6 +228,19 @@ class Matricula extends Model
      */
     public function getRejectedDocuments(): Collection
     {
+        if ($this->relationLoaded('documentoInseridos')) {
+            $rejeitados = $this->documentoInseridos
+                ->filter(fn (DocumentoInserido $doc) => $doc->status === SituacaoDocumento::REJEITADO);
+
+            if ($rejeitados->isEmpty()) {
+                return collect();
+            }
+
+            return $rejeitados->loadMissing('tipoDocumento')
+                ->filter(fn (DocumentoInserido $doc) => (bool) $doc->tipoDocumento?->flag_obrigatorio)
+                ->values();
+        }
+
         return $this->documentoInseridos()
             ->where('status', SituacaoDocumento::REJEITADO)
             ->whereHas('tipoDocumento', fn ($query) => $query->where('flag_obrigatorio', true))
@@ -489,6 +511,127 @@ class Matricula extends Model
         return $query->whereHas('pessoa', fn ($sub) => $sub->completo())
             ->whereDoesntHave('pessoa.responsaveis', fn ($sub) => $sub->incompleto())
             ->whereDoesntHave('contrato.responsaveisFinanceiros.pessoa', fn ($sub) => $sub->incompleto());
+    }
+
+    /**
+     * Verifica se o aluno da matrícula não possui nenhum Pai, Mãe ou Responsável associado.
+     * Aproveita a relação já carregada, quando houver.
+     */
+    public function estaSemResponsavel(): bool
+    {
+        if (! $this->pessoa) {
+            return false;
+        }
+
+        return $this->pessoa->relationLoaded('responsaveis')
+            ? $this->pessoa->responsaveis->isEmpty()
+            : ! $this->pessoa->responsaveis()->exists();
+    }
+
+    /**
+     * Resumo consolidado das pendências (responsáveis, cadastro e documentos).
+     * Memoizado por instância: colunas, ações e modais da listagem compartilham o mesmo cálculo.
+     */
+    protected function pendencias(): Attribute
+    {
+        return Attribute::get(fn (): PendenciasMatricula => new PendenciasMatricula(
+            semResponsavel: $this->estaSemResponsavel(),
+            cadastrosIncompletos: $this->getPessoasComCadastroIncompleto(),
+            documentosFaltantes: $this->getMissingMandatoryDocuments(),
+            documentosRejeitados: $this->getRejectedDocuments(),
+        ));
+    }
+
+    /**
+     * Scope para matrículas cujo aluno não tem responsável associado.
+     */
+    public function scopeSemResponsavel(Builder $query): Builder
+    {
+        return $query->whereHas('pessoa', fn (Builder $sub) => $sub->whereDoesntHave('responsaveis'));
+    }
+
+    /**
+     * Scope para matrículas cujo aluno tem ao menos um responsável associado.
+     */
+    public function scopeComResponsavel(Builder $query): Builder
+    {
+        return $query->whereHas('pessoa', fn (Builder $sub) => $sub->whereHas('responsaveis'));
+    }
+
+    /**
+     * Scope para matrículas com algum documento obrigatório (do curso, da turma ou da matrícula)
+     * ainda não inserido (documentos rejeitados contam como não inseridos).
+     */
+    public function scopeComDocumentosFaltando(Builder $query): Builder
+    {
+        $faltante = self::restricaoDocumentoObrigatorioFaltante();
+
+        return $query->where(fn (Builder $q) => $q
+            ->whereHas('turma.serie.curso.documentos', $faltante)
+            ->orWhereHas('turma.tiposDocumentos', $faltante)
+            ->orWhereHas('tiposDocumentos', $faltante));
+    }
+
+    /**
+     * Scope para matrículas sem nenhum documento obrigatório faltando.
+     */
+    public function scopeSemDocumentosFaltando(Builder $query): Builder
+    {
+        $faltante = self::restricaoDocumentoObrigatorioFaltante();
+
+        return $query
+            ->whereDoesntHave('turma.serie.curso.documentos', $faltante)
+            ->whereDoesntHave('turma.tiposDocumentos', $faltante)
+            ->whereDoesntHave('tiposDocumentos', $faltante);
+    }
+
+    /**
+     * Scope para matrículas com documento obrigatório rejeitado (aguardando reenvio).
+     */
+    public function scopeComDocumentosRejeitados(Builder $query): Builder
+    {
+        return $query->whereHas('documentoInseridos', fn (Builder $sub) => $sub
+            ->where('status', SituacaoDocumento::REJEITADO)
+            ->whereHas('tipoDocumento', fn (Builder $tipo) => $tipo->where('flag_obrigatorio', true)));
+    }
+
+    /**
+     * Scope para matrículas com um tipo específico de pendência.
+     */
+    public function scopeComPendencia(Builder $query, TipoPendenciaMatricula $tipo): Builder
+    {
+        return match ($tipo) {
+            TipoPendenciaMatricula::SEM_RESPONSAVEL => $query->semResponsavel(),
+            TipoPendenciaMatricula::CADASTRO_INCOMPLETO => $query->comCadastroIncompleto(),
+            TipoPendenciaMatricula::DOCUMENTOS_FALTANDO => $query->comDocumentosFaltando(),
+            TipoPendenciaMatricula::DOCUMENTOS_REJEITADOS => $query->comDocumentosRejeitados(),
+        };
+    }
+
+    /**
+     * Scope para matrículas com qualquer tipo de pendência.
+     */
+    public function scopeComPendencias(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            foreach (TipoPendenciaMatricula::cases() as $tipo) {
+                $q->orWhere(fn (Builder $sub) => $sub->comPendencia($tipo));
+            }
+        });
+    }
+
+    /**
+     * Restrição aplicada ao tipo de documento: obrigatório e sem documento válido inserido na matrícula externa.
+     */
+    private static function restricaoDocumentoObrigatorioFaltante(): \Closure
+    {
+        return fn (Builder $tipo) => $tipo
+            ->where('tipo_documento.flag_obrigatorio', true)
+            ->whereNotExists(fn ($existente) => $existente
+                ->from('documento_inserido')
+                ->whereColumn('documento_inserido.tipo_documento_id', 'tipo_documento.id')
+                ->whereColumn('documento_inserido.matricula_id', 'matricula.id')
+                ->where('documento_inserido.status', '!=', SituacaoDocumento::REJEITADO->value));
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\SituacaoMatricula;
+use App\Enums\TipoPendenciaMatricula;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\Matricula;
 use App\Traits\HasCustomWidgetShield;
@@ -58,8 +59,8 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-minus')
                 ->color($semResponsavelCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
-                    'filters[sem_responsavel][value]' => '1',
-                    'filters[situacao][value]' => SituacaoMatricula::ATIVA->value,
+                    'activeTab' => 'ativas',
+                    'filters[pendencias][values][0]' => TipoPendenciaMatricula::SEM_RESPONSAVEL->value,
                 ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
@@ -67,8 +68,8 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
-                    'filters[documentos_pendentes][value]' => '1',
-                    'filters[situacao][value]' => SituacaoMatricula::ATIVA->value,
+                    'activeTab' => 'ativas',
+                    'filters[pendencias][values][0]' => TipoPendenciaMatricula::DOCUMENTOS_FALTANDO->value,
                 ])),
 
             Stat::make('Pendência de Cadastro', $cadastroPendenteCount)
@@ -76,8 +77,8 @@ class MatriculasPendentesWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-identification')
                 ->color($cadastroPendenteCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [
-                    'filters[dados_pendentes][value]' => '1',
-                    'filters[situacao][value]' => SituacaoMatricula::ATIVA->value,
+                    'activeTab' => 'ativas',
+                    'filters[pendencias][values][0]' => TipoPendenciaMatricula::CADASTRO_INCOMPLETO->value,
                 ])),
         ];
     }

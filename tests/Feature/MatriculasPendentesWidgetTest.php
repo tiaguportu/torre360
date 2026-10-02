@@ -220,19 +220,18 @@ class MatriculasPendentesWidgetTest extends TestCase
         $method->setAccessible(true);
         $stats = $method->invoke($widget);
 
-        // Verifica que a URL do primeiro card contém o filtro 'sem_responsavel' e o de situação ativa
-        $url0 = urldecode($stats[0]->getUrl());
-        $this->assertStringContainsString('sem_responsavel', $url0);
-        $this->assertStringContainsString('filters[situacao][value]=ativa', $url0);
+        // Cada card leva à aba "Ativas" já filtrada pelo tipo de pendência correspondente
+        $esperados = [
+            0 => 'filters[pendencias][values][0]=sem_responsavel',
+            1 => 'filters[pendencias][values][0]=documentos_faltando',
+            2 => 'filters[pendencias][values][0]=cadastro_incompleto',
+        ];
 
-        // Verifica que a URL do segundo card contém o filtro 'documentos_pendentes' e o de situação ativa
-        $url1 = urldecode($stats[1]->getUrl());
-        $this->assertStringContainsString('documentos_pendentes', $url1);
-        $this->assertStringContainsString('filters[situacao][value]=ativa', $url1);
+        foreach ($esperados as $indice => $filtro) {
+            $url = urldecode($stats[$indice]->getUrl());
 
-        // Verifica que a URL do terceiro card contém o filtro 'dados_pendentes' e o de situação ativa
-        $url2 = urldecode($stats[2]->getUrl());
-        $this->assertStringContainsString('dados_pendentes', $url2);
-        $this->assertStringContainsString('filters[situacao][value]=ativa', $url2);
+            $this->assertStringContainsString('activeTab=ativas', $url);
+            $this->assertStringContainsString($filtro, $url);
+        }
     }
 }

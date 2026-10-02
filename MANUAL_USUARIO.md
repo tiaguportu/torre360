@@ -9,7 +9,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
-4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes ou pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro).
+4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes ou pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro); cada cartão abre a lista de Matrículas já filtrada pelo tipo de pendência.
 
 ### 🔑 Recuperação de Senha
 Caso tenha esquecido sua senha:
@@ -295,7 +295,7 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 6. **Alerta de Falta ao Responsável:** Ao marcar um aluno como **Ausente** (na chamada individual ou em lote), o(s) responsável(is) cadastrado(s) recebem automaticamente um aviso por e-mail, sininho e push, com a disciplina e a data da falta. O alerta não é enviado para faltas lançadas em datas fora do período em que a matrícula estava ativa (ex: antes da ativação ou após o desligamento do aluno).
 
 ### 5.3 Boletim do Aluno
-1. Na visualização de **Matrículas**, use a ação **Boletim**.
+1. Na listagem de **Matrículas**, abra o menu **⋮ Mais ações** da linha e use a ação **Boletim** (aparece apenas quando o aluno já tem notas lançadas).
 2. **Impressão de Boletim:** Na visualização do boletim de uma matrícula, agora é possível exportar o documento em PDF. Você pode escolher imprimir uma etapa específica (ex: 1º Bimestre) ou todas as etapas que já possuem notas registradas. O PDF gerado inclui uma **legenda detalhada das avaliações** (explicando o significado de cada coluna/categoria) e, logo abaixo, a **lista de datas das faltas** consolidadas daquela etapa para conferência da família.
 3. O sistema gera uma tabela dinâmica por Etapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
 4. Notas abaixo da média aparecem destacadas em vermelho.
@@ -354,6 +354,20 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 - **Permissão de Chamada do Professor Regente:** O professor regente/conselheiro da turma (definido no cadastro da turma) possui autorização total para visualizar pendências e realizar o lançamento de frequência para **todas as aulas da sua turma**, mesmo quando a aula estiver cadastrada no nome de outro professor ou ministrada por um docente convidado/substituto.
 
 **Edição em Lote:** Na listagem de Matrículas (`/admin/matriculas`), é possível selecionar múltiplas matrículas e acionar a ação **Editar em Lote** para atualizar simultaneamente os campos de **Turma**, **Período Letivo**, **Situação**, **Data de Ativação** e **Data de Desativação**.
+
+### 5.7.1 Listagem de Matrículas (`/admin/matriculas`)
+1. **Cartões de resumo (topo):** mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm **pendências**, quantas estão **sem responsável** e quantas estão **sem contrato**.
+2. **Abas de situação, com contador:** *Ativas* (aba que abre por padrão), *Pendentes*, *Com pendências*, *Trancadas*, *Concluídas*, *Canceladas*, *Reserva*, *Evasão* e *Todas*. *Trancadas*, *Concluídas*, *Reserva* e *Evasão* só aparecem quando existem matrículas nessa situação. A aba **Com pendências** reúne as matrículas ativas ou pendentes com algum problema a resolver (aluno sem responsável, cadastro incompleto ou documentos obrigatórios faltando/rejeitados) e é a lista de trabalho da secretaria. Não há mais filtro de situação separado: as abas fazem esse papel.
+3. **Colunas visíveis:**
+   - **Aluno:** nome e, logo abaixo, a turma e o curso. O nome leva à ficha da pessoa (conforme a permissão do usuário). A busca procura pelo nome do aluno ou da turma.
+   - **Situação:** badge colorido com ícone.
+   - **Pendências:** um badge para cada tipo de problema (*Sem responsável*, *Cadastro incompleto*, *N documentos faltando*, *N documentos rejeitados*) ou **Em dia** (verde). Passe o mouse para ver o resumo e clique para abrir o detalhe, com links diretos para corrigir (veja a seção 6.3.1). A linha **não** muda de cor.
+   - **Período Letivo** e **Contrato** (ícone verde quando a matrícula já tem contrato gerado; cinza quando não tem).
+   - **Colunas opcionais (seletor de colunas):** Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.
+4. **Filtros** (recolhidos acima da tabela e lembrados durante a sessão): **Curso**, **Turma** e **Período Letivo** (os dois últimos aceitam várias opções), **Pendências** (escolha um ou mais tipos; aparecem as matrículas que tenham qualquer um deles) e **Contrato** (com/sem contrato).
+5. **Ações em cada linha:** *Editar* e *Documentos* (com o número de documentos faltando em um badge vermelho) aparecem como ícones; as demais ficam no menu **⋮ Mais ações**, agrupadas por assunto: *Boletim*; *Avisar pendência por e-mail* e *Avisar preceptoria por e-mail*; e *Gerar contrato*. Cada ação só aparece quando se aplica à matrícula e ao perfil do usuário.
+6. **Ações em lote:** avisar pendências, avisar preceptoria, **Editar em Lote** e excluir (a exclusão fica por último, em vermelho).
+7. **Tela de Matrículas dentro da Turma:** a aba *Matrículas* da edição de uma turma usa a mesma tabela e mantém o filtro **Situação** (padrão: *Ativa*), pois ali não há abas.
 
 ### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
 1. Vá em **Acadêmico → Turmas**.
@@ -530,7 +544,7 @@ Ao criar um novo contrato ou salvar as alterações em um contrato existente, o 
 
 ### 6.5 Alerta de Preceptoria Disponível
 Para garantir que todos os alunos aproveitem os momentos de preceptoria, o sistema monitora a agenda dos professores.
-1. **Aviso Individual:** Na lista de **Matrículas**, o sistema exibirá automaticamente o botão **Avisar Preceptoria** (ícone de calendário verde) se:
+1. **Aviso Individual:** Na lista de **Matrículas**, o sistema exibirá automaticamente a ação **Avisar preceptoria por e-mail** (ícone de calendário verde, no menu **⋮ Mais ações** da linha) se:
    - A matrícula do aluno não possuir nenhuma preceptoria agendada dentro dos **ciclos de preceptoria vigentes** (aqueles cuja data atual esteja entre o início e o fim do ciclo).
    - Existirem horários vagos (janelas) cadastrados por professores no sistema.
 2. Ao clicar no botão, o sistema solicitará confirmação, exibirá a **data e hora do último envio realizado** (se houver) e listará os e-mails do aluno e responsáveis que receberão o alerta.
@@ -561,7 +575,7 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 4. As transições de estado são controladas; por exemplo, um documento *Aprovado* não pode voltar para *Pendente* sem passar por uma revisão, garantindo a integridade do processo.
 
 ### 6.3 Aviso de Pendência de Documentos
-1. Na lista de **Matrículas**, caso o aluno possua documentos obrigatórios pendentes ou rejeitados, você verá o botão **Avisar Pendência** (ícone de envelope amarelo).
+1. Na lista de **Matrículas**, caso o aluno possua documentos obrigatórios pendentes ou rejeitados, você verá a ação **Avisar pendência por e-mail** (ícone de envelope amarelo, no menu **⋮ Mais ações** da linha).
 2. Ao clicar no botão, um modal de confirmação exibirá:
    - A **data e hora do último envio** de aviso realizado (se houver).
    - A lista de e-mails dos destinatários.
@@ -569,12 +583,13 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 3. Esta funcionalidade permite manter a família informada sobre a necessidade de regularização documental para efetivação da matrícula.
 
 ### 6.3.1 Consulta de Pendências da Matrícula
-1. Na lista de **Matrículas**, se houver pendência de responsáveis (aluno sem Pai/Mãe/Responsável), pendência de documentos obrigatórios (faltantes ou rejeitados) ou **pendência de cadastro** (dados básicos incompletos ou falta de endereço no **Aluno**, nos **Responsáveis** ou no **Responsável Financeiro** do contrato), um botão vermelho de **Pendências** (ícone de triângulo de alerta) aparecerá na respectiva linha da tabela, exibindo a contagem total de pendências em um badge.
-2. Ao clicar no botão, um modal se abrirá listando em destaque todas as pendências daquela matrícula:
-   - **Falta de Responsáveis:** Um alerta se houver ausência de responsáveis vinculados à ficha do aluno, acompanhado de um atalho para edição rápida do cadastro de pessoa.
-   - **Dados Cadastrais Incompletos:** Detalhamento específico para cada pessoa vinculada (identificando claramente se é o Aluno, o Pai, a Mãe ou o Responsável Financeiro), listando todos os campos ou endereço ausentes, acompanhado de link direto para abrir a ficha de edição daquela pessoa.
-   - **Documentos Pendentes:** Detalhamento dos documentos obrigatórios que estão faltando ou foram rejeitados, com um link rápido para ir direto à gestão de documentos da matrícula.
-3. Além disso, as linhas que possuem pendências são pintadas com fundo avermelhado e o nome do aluno é exibido em negrito e vermelho para chamar a atenção da equipe da secretaria. A tabela também dispõe do filtro **Cadastro Pendente** para listar rapidamente todas as matrículas nessa condição.
+1. Na lista de **Matrículas**, a coluna **Pendências** mostra um badge para cada problema da matrícula: **Sem responsável** (aluno sem Pai/Mãe/Responsável), **Cadastro incompleto** (dados básicos incompletos ou falta de endereço no **Aluno**, nos **Responsáveis** ou no **Responsável Financeiro** do contrato), **documentos faltando** e **documentos rejeitados**. Matrículas sem nenhum problema mostram **Em dia**. Ao passar o mouse, um resumo textual das pendências é exibido.
+2. Ao clicar na coluna, um modal se abre listando em destaque todas as pendências daquela matrícula:
+   - **Responsável não informado:** alerta de que não há responsáveis vinculados à ficha do aluno, com atalho para a edição rápida do cadastro de pessoa.
+   - **Cadastro incompleto:** detalhamento para cada pessoa vinculada (identificando se é o Aluno, o Pai, a Mãe ou o Responsável Financeiro), listando os campos ou o endereço ausentes, com link direto para abrir a ficha de edição daquela pessoa.
+   - **Documentos pendentes:** os documentos obrigatórios que estão faltando e os rejeitados (com o motivo), com um link rápido para a gestão de documentos da matrícula.
+3. Para tratar um tipo de problema por vez, use a aba **Com pendências** e o filtro **Pendências** (veja a seção 5.7.1). O fundo da linha não é mais pintado de vermelho: a indicação fica concentrada na coluna **Pendências**.
+4. No painel inicial, os cartões do widget **Matrículas com Pendências** levam à lista de Matrículas já na aba *Ativas* e com o filtro do tipo de pendência correspondente.
 
 ### 6.4 Visualização e Prévia de Documentos
 1. Ao acessar a edição de um documento, o sistema exibe automaticamente uma **Prévia do Documento** (imagem ou PDF) logo abaixo do campo de upload.
