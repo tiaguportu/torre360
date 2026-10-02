@@ -6,6 +6,8 @@ use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Enums\StatusComunicacaoEmMassa;
 use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
+use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
+use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
 use App\Models\ComunicacaoEmMassa;
 use App\Models\HistoricoContato;
@@ -341,6 +343,9 @@ class InteressadosTable
                     ->openUrlInNewTab(),
 
                 ActionGroup::make([
+                    DossieIaAction::make(),
+                    CopilotoMensagemIaAction::make(),
+
                     Action::make('agendarVisita')
                         ->label('Agendar Visita')
                         ->icon('heroicon-o-calendar-days')

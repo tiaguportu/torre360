@@ -221,7 +221,33 @@ Envie um mesmo e-mail para um grupo de pessoas de uma só vez, sem precisar sele
 5. **Quem não recebe:** pessoas sem e-mail cadastrado e pessoas que desativaram o campo **"Aceita receber comunicações da escola"** no próprio cadastro (ficha de Pessoa) — veja a seção 4.1. Isso não afeta notificações individuais obrigatórias (boletim, ocorrências, financeiro), que continuam sendo enviadas normalmente.
 6. Ao terminar o processamento, o remetente recebe uma notificação no sininho com o resumo (total de enviados e falhas). Em caso de interrupção inesperada do job, o status é alterado para **Falhou** e o remetente é alertado imediatamente. Uma comunicação já enviada não pode ser reenviada nem editada; para repetir o envio, crie uma nova.
 
+### 3.14 Inteligência Artificial para Vendas Educacionais (Gemini)
+O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Generativa alimentadas pelo Google Gemini, atuando como um copiloto para a equipe comercial e de admissões:
+
+1. **✨ Dossiê IA do Lead:**
+   - **Onde acessar:** Disponível no menu de ações de cada lead na tabela de Interessados (`...` → **Dossiê IA do Lead**) ou no cabeçalho da tela de edição do lead.
+   - **O que faz:** Analisa em tempo real todo o histórico cadastral, dados dos filhos (idade e séries pretendidas), notas de contatos anteriores, ligações e visitas agendadas.
+   - **Diagnóstico Gerado:**
+     - **Perfil & Momento da Família:** Síntese de quem são os pais, perfil dos alunos e motivações declaradas.
+     - **Dores e Objeções Identificadas:** Principais preocupações (metodologia pedagógica, acolhimento, línguas, segurança, valores).
+     - **Termômetro Comercial:** Avaliação da temperatura real e nível de prontidão da matrícula (🔥 Quente, 🟡 Morno, 🔵 Frio).
+     - **Roteiro Estratégico de Abordagem:** O que o consultor deve falar, argumentos personalizados para aquela família e pergunta aberta recomendada para conduzir o próximo contato.
+   - O consultor pode revisar e clicar em **Salvar no Histórico do Lead** para registrar o dossiê permanentemente no histórico de interações.
+
+2. **💬 Copiloto WhatsApp IA:**
+   - **Onde acessar:** Disponível no menu de ações de cada lead (`...` → **Copiloto WhatsApp IA**) e no cabeçalho de edição.
+   - **Como funciona:** Redige uma mensagem de WhatsApp sob medida para a família, sem textos genéricos ou robóticos, adaptando-se ao objetivo escolhido:
+     - *👋 Primeiro Contato (Boas-vindas acolhedoras)*
+     - *🏫 Convite para Tour Pedagógico Presencial*
+     - *🛡️ Superar Dúvidas / Objeções (Metodologia, Preço, etc.)*
+     - *🔄 Reativar Família Sumida (Follow-up carinhoso)*
+     - *🎓 Fechamento de Matrícula (Garantia de vaga)*
+   - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
+   - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
+   - **Disparo em 1-Clique:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada, registrando opcionalmente a ação no histórico do lead.
+
 ---
+
 
 ## 📍 13. Gestão de Unidades e Canais Digitais
 

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
+use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Pessoa;
 use App\Services\LeadScoreService;
@@ -36,6 +38,8 @@ class EditInteressado extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            DossieIaAction::make(),
+            CopilotoMensagemIaAction::make(),
             DeleteAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
@@ -61,6 +65,8 @@ class EditInteressado extends EditRecord
         $html = '<p>Nesta página você pode editar os dados de um interessado (lead) no sistema CRM.</p>';
         $html .= '<h3>O que você pode fazer:</h3>';
         $html .= '<ul>';
+        $html .= '<li><strong>✨ Dossiê IA do Lead:</strong> Clique no botão roxo no cabeçalho para gerar uma análise profunda em tempo real com o Gemini, avaliando dores, momento familiar, temperatura e plano de ação comercial.</li>';
+        $html .= '<li><strong>💬 Copiloto WhatsApp IA:</strong> Redija mensagens persuasivas sob medida para este lead com base em objetivos (primeiro contato, tour presencial, superar objeção, fechamento) e envie no WhatsApp com 1 clique.</li>';
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
         $html .= '<li><strong>Resumo:</strong> Visualize os dias no funil, total de contatos e temperatura calculada automaticamente.</li>';
         $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
