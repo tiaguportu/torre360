@@ -16,3 +16,4 @@ Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlappi
 Schedule::command('crm:recalcular-lead-score')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('cobranca:executar-regua')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00')->withoutOverlapping();
+Schedule::command('biblioteca:atualizar-emprestimos-atrasados')->dailyAt('07:00')->withoutOverlapping();
