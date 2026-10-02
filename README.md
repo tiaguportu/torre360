@@ -200,6 +200,18 @@ Acervo de livros e controle de empréstimo/devolução. Detalhes em `docs/biblio
 
 ---
 
+### 11. ⚠️ Risco de Evasão Escolar
+Score de risco de evasão (0-100) para alunos matriculados, espelhando o Lead Score do CRM. Detalhes em `docs/risco_evasao_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `RiscoEvasaoService` | Calcula o score a partir de frequência (40 pts), desempenho (35 pts) e inadimplência (25 pts) |
+| `Matricula.risco_evasao_score` | Exibido como badge colorido na listagem de Matrículas (verde/âmbar/vermelho) |
+| `ConfiguracaoRiscoEvasao` | Página de pesos em `/admin/secretaria/pesos-risco-evasao` (admin/super_admin) |
+| Recálculo | Comando agendado diário `academico:recalcular-risco-evasao` (06h30) + ação manual "Recalcular todas as matrículas" |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -323,4 +335,3 @@ autorizada:
 | Provas online com correção automática | `docs/provas_online_roadmap.md` |
 | Controle de saída/retirada de alunos | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
-| Risco de evasão escolar | `docs/risco_evasao_roadmap.md` |

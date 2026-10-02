@@ -37,7 +37,7 @@ class Matricula extends Model
      */
     public const SITUACOES_QUE_EXIGEM_CONTRATO = [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE];
 
-    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id'];
+    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id', 'risco_evasao_score', 'risco_evasao_atualizado_em'];
 
     protected function casts(): array
     {
@@ -45,6 +45,7 @@ class Matricula extends Model
             'situacao' => SituacaoMatricula::class,
             'data_ativacao' => 'date',
             'data_desativacao' => 'date',
+            'risco_evasao_atualizado_em' => 'datetime',
         ];
     }
 

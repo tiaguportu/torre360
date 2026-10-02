@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
 use App\Models\LeadScoreConfiguracao;
+use App\Models\RiscoEvasaoConfiguracao;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
@@ -36,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
         LeadScoreConfiguracao::aplicar();
+
+        // Parâmetros do Risco de Evasão editados no painel sobrescrevem config/risco_evasao.php.
+        RiscoEvasaoConfiguracao::aplicar();
 
         Table::configureUsing(function (Table $table): void {
             $table
