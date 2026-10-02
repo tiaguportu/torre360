@@ -43,8 +43,9 @@ class InteressadosTable
     public static function configure(Table $table): Table
     {
         return $table
-            // A ação "Enviar ao consultor" monta a mensagem de cada linha no render.
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(ConsultorWhatsappService::RELACOES))
+            // Eager loading do render: a ação "Enviar ao consultor" monta a mensagem de cada linha
+            // e `precisaDeContato()` (destaque da linha) consulta o último histórico.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico']))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
             ->paginated([10, 25, 50])

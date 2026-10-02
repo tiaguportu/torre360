@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
+use App\Models\MensagemWhatsappTemplate;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
@@ -199,6 +200,10 @@ class InteressadoConsultorWhatsappTest extends TestCase
     {
         $lead = $this->lead($this->consultor(), atributos: ['observacoes' => str_repeat('o', 400)]);
 
+        foreach (range(1, 12) as $n) {
+            InteressadoDependente::create(['interessado_id' => $lead->id, 'nome_crianca' => "Aluno número {$n} com sobrenome bem comprido"]);
+        }
+
         foreach ([8, 6, 4] as $dias) {
             $this->registrarContato($lead, "Contato de {$dias} dias atrás ".str_repeat('y', 170), now()->subDays($dias));
         }
@@ -217,6 +222,19 @@ class InteressadoConsultorWhatsappTest extends TestCase
         $semTelefone = $this->service()->urlParaInteressado($this->lead($this->consultor(null))->fresh());
         $this->assertStringStartsWith('https://wa.me/?text=', $semTelefone);
         $this->assertStringContainsString('Maria Responsável', $this->mensagemDaUrl($semTelefone));
+    }
+
+    public function test_botao_whatsapp_do_interessado_continua_abrindo_o_wa_me_com_telefone_normalizado(): void
+    {
+        $lead = $this->lead($this->consultor());
+        $template = MensagemWhatsappTemplate::create(['nome' => 'Boas-vindas', 'conteudo' => 'Olá [Nome do Responsável]!', 'ativo' => true]);
+
+        $url = 'https://wa.me/5521999991111?text='.urlencode('Olá Maria Responsável!');
+
+        Livewire::actingAs($this->admin())
+            ->test(ListInteressados::class)
+            ->callTableAction('enviarWhatsapp', $lead, data: ['mensagem_whatsapp_template_id' => $template->id])
+            ->assertJs('window.open('.json_encode($url).", '_blank')");
     }
 
     public function test_acao_da_linha_abre_o_whatsapp_do_consultor_em_nova_aba(): void
@@ -313,13 +331,31 @@ class InteressadoConsultorWhatsappTest extends TestCase
         Livewire::actingAs($this->admin())
             ->test(ListInteressados::class)
             ->mountTableBulkAction('enviarAosConsultores', [$leadDaCarla, $leadDoBruno, $leadSemConsultor])
-            ->assertSee('Carla Souza')
-            ->assertSee('Bruno Lima')
-            ->assertSee('Lead da Carla')
-            ->assertSee('Lead do Bruno')
-            ->assertSee('Lead Sem Dono')
-            ->assertSee('1 lead sem consultor')
-            ->assertSee('sem telefone cadastrado')
-            ->assertSee('https://wa.me/5511988887777?text=', escape: false);
+            ->assertMountedActionModalSee([
+                'Enviar leads aos consultores',
+                'Carla Souza',
+                'Bruno Lima',
+                'Lead da Carla',
+                'Lead do Bruno',
+                'Lead Sem Dono',
+                '1 lead sem consultor',
+                'sem telefone cadastrado',
+                'href="https://wa.me/5511988887777?text=',
+                'href="https://wa.me/?text=',
+            ], escape: false);
+    }
+
+    public function test_acao_em_lote_avisa_quando_nenhum_lead_selecionado_tem_consultor(): void
+    {
+        $leadSemConsultor = $this->lead(null, ['nome' => 'Lead Sem Dono']);
+
+        Livewire::actingAs($this->admin())
+            ->test(ListInteressados::class)
+            ->mountTableBulkAction('enviarAosConsultores', [$leadSemConsultor])
+            ->assertMountedActionModalSee([
+                'Nenhum dos leads selecionados tem consultor responsável.',
+                '1 lead sem consultor',
+            ], escape: false)
+            ->assertMountedActionModalDontSee('Abrir WhatsApp');
     }
 }

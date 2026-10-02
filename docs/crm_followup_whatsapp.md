@@ -1,4 +1,4 @@
-# Alertas de Estagnação e Mensagens Rápidas de WhatsApp
+# Alertas de Estagnação, Mensagens Rápidas de WhatsApp e Repasse ao Consultor
 
 Model: `App\Models\Interessado` (tabela `interessado`)
 Comando: `App\Console\Commands\NotificarInteressadosPendentesCommand`
@@ -74,3 +74,52 @@ dígitos ou menos (DDD + número).
 
 A ação só aparece para leads com telefone cadastrado
 (`filled($record->pessoa?->telefone)`).
+
+## 3. Repasse do lead ao consultor por WhatsApp
+
+Quem opera o CRM (secretaria/gestão) pode encaminhar um lead ao consultor
+responsável (`Interessado::usuario`) por um link `wa.me`, com o contato direto
+do interessado e um resumo do que já foi conversado. Toda a regra fica em
+`App\Services\ConsultorWhatsappService`.
+
+**Telefone do consultor.** O `User` não tem telefone próprio: o número vem da
+`Pessoa` vinculada ao usuário (`pessoa_user`), preferindo a Pessoa cujo
+`user_id` é o próprio consultor e, na falta dela, a primeira vinculada que tenha
+telefone. Sem telefone, o link vira `https://wa.me/?text=...` (o WhatsApp abre
+com a mensagem pronta e quem envia escolhe o contato) e a interface sinaliza em
+amarelo. Para o envio ir direto ao consultor, basta preencher o telefone da
+Pessoa dele.
+
+**Ação por linha — "Enviar ao consultor"** (`enviarAoConsultor`, ao lado de
+"WhatsApp"): link nativo em nova aba (`->url()->openUrlInNewTab()`, sem modal,
+então não sofre bloqueio de pop-up). Só aparece para leads com consultor. A
+mensagem traz:
+
+- link `https://wa.me/<telefone do lead>` (o consultor só clica para conversar);
+- alunos (com a série, quando houver), status, origem, temperatura e score;
+- próximo contato (com "(atrasado)" quando já passou) e visita agendada;
+- "Resumo do que já foi conversado": os **3 contatos mais recentes** do
+  `HistoricoContato` (data, tipo, relato em uma linha truncada em 160
+  caracteres e resultado), ou "Ainda sem contatos registrados";
+- observações do lead (truncadas em 300 caracteres).
+
+**Ação em lote — "Enviar aos consultores (WhatsApp)"** (`enviarAosConsultores`):
+agrupa os leads selecionados por consultor e mostra, num modal, um botão do
+WhatsApp por consultor com todos os leads dele numa só mensagem compacta (uma
+linha por lead, sem histórico). Leads sem consultor aparecem num aviso e ficam
+fora das mensagens (use "Atribuir Consultor").
+
+**Limite de tamanho.** A mensagem é limitada a 1.500 caracteres antes do
+`rawurlencode`, para o link `wa.me` não estourar o tamanho de URL: na mensagem
+de um lead, os contatos mais antigos são descartados primeiro; na do lote, os
+últimos leads são omitidos com o aviso "... e mais N lead(s)".
+
+**Eager loading.** A mensagem é montada no render de cada linha, então a tabela
+carrega as relações de `ConsultorWhatsappService::RELACOES` (mais
+`ultimoHistorico`, usado no destaque da linha) com `modifyQueryUsing`. Com
+`Model::preventLazyLoading` ativo fora de produção, qualquer relação não
+carregada quebraria a listagem em dev/teste.
+
+Não há registro automático de `HistoricoContato` ao enviar: o link nativo não
+passa pelo servidor. Quem fala com o interessado registra o atendimento pela
+ação "Atendimento".
