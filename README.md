@@ -333,5 +333,8 @@ autorizada:
 | Tema | Doc |
 |---|---|
 | Provas online com correção automática | `docs/provas_online_roadmap.md` |
-| Controle de saída/retirada de alunos | `docs/controle_saida_alunos_roadmap.md` |
+| Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
+| Bolsas e descontos educacionais | `docs/bolsas_descontos_roadmap.md` |
+| Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
+| Patrimônio e estoque escolar | `docs/patrimonio_estoque_roadmap.md` |
