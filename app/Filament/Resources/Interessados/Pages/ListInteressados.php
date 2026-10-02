@@ -2,18 +2,21 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Widgets\CrmFollowUpCalendarWidget;
+use App\Support\HelpContent;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListInteressados extends ListRecords
 {
+    use HasAjudaAction;
+
     protected static string $resource = InteressadoResource::class;
 
     protected function getFooterWidgets(): array
@@ -73,46 +76,79 @@ class ListInteressados extends ListRecords
                 ->icon('heroicon-o-view-columns')
                 ->color('info')
                 ->url(InteressadoResource::getUrl('kanban')),
-            Action::make('ajuda')
-                ->label('Ajuda')
-                ->icon('heroicon-o-question-mark-circle')
-                ->color('gray')
-                ->modalHeading('Ajuda: CRM (Interessados)')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Fechar')
-                ->form([
-                    ViewField::make('help_content')
-                        ->view('filament.components.help-content')
-                        ->viewData([
-                            'content' => $this->getHelpContent(),
-                        ]),
-                ]),
+            $this->ajudaAction('CRM (Interessados)', $this->getHelpContent()),
         ];
     }
 
-    private function getHelpContent(): string
+    private function getHelpContent(): HelpContent
     {
         $user = auth()->user();
 
         $canCreate = $user->can('Create:Interessado');
         $canUpdate = $user->can('Update:Interessado');
+        $canDelete = $user->can('DeleteAny:Interessado');
+        $canEmail = $user->can('Create:ComunicacaoEmMassa') && $user->can('Enviar:ComunicacaoEmMassa');
+        $canPesos = $user->can('View:ConfiguracaoLeadScore');
 
-        $html = '<p>Nesta página você faz a gestão dos contatos interessados na escola (prospecção).</p>';
-        $html .= '<h3>O que você pode fazer?</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Prospecção:</strong> Visualize a lista de pessoas que entraram em contato demonstrando interesse.</li>';
-
-        if ($canCreate) {
-            $html .= '<li><strong>Novo Interessado:</strong> Registre um novo contato vindo do site ou presencial.</li>';
-        }
-
-        if ($canUpdate) {
-            $html .= '<li><strong>Seguimento:</strong> Atualize o status do interessado (ex: Agendou visita, Matriculado, Desistiu).</li>';
-        }
-
-        $html .= '<li><strong>Histórico:</strong> Registre as interações e observações de cada contato para não perder o fio da meada.</li>';
-        $html .= '</ul>';
-
-        return $html;
+        return HelpContent::make('🎯', 'CRM: Interessados', 'Central de prospecção da escola: acompanhe cada lead do primeiro contato até a matrícula.')
+            ->secao('🧭 O que você encontra nesta tela', [
+                ['🗂️', 'Abas de situação (topo)', 'Cada aba mostra um recorte da lista, com a quantidade de leads ao lado: Todos, Precisa de contato, Estagnados, Quentes, Em andamento e Finalizados.'],
+                ['📋', 'Tabela de leads', 'Uma linha por interessado, com as informações principais já resumidas (veja "Como ler a tabela").'],
+                ['🔎', 'Busca e filtros', 'A busca procura por nome ou telefone. Os filtros ficam recolhidos acima da tabela.'],
+                ['📅', 'Calendário de follow-up (rodapé)', 'Agenda com os próximos contatos e visitas dos leads, filtrável por consultor, com opção de ver só os atrasados.'],
+                ['🔘', 'Botões do topo', 'Novo (cadastro manual), Importar Lead com IA, Ver Kanban (o mesmo funil em formato de quadro) e Ajuda.'],
+            ])
+            ->secao('🗂️ Para que serve cada aba', [
+                ['👥', 'Todos', 'Todos os leads cadastrados, sem filtro.'],
+                ['⏰', 'Precisa de contato', 'Leads em andamento cuja data de próximo contato já passou. É a sua lista de prioridades do dia.'],
+                ['🕸️', 'Estagnados', 'Leads em andamento sem nenhuma interação registrada há 7 dias ou mais. Risco de esfriar.'],
+                ['🔥', 'Quentes', 'Leads em andamento que o consultor marcou como "Quente" ou que têm score alto (a partir do corte configurado, 70 por padrão).'],
+                ['🔄', 'Em andamento', 'Leads que ainda não chegaram a um status final (nem matriculados, nem perdidos).'],
+                ['🏁', 'Finalizados', 'Leads já encerrados: matriculados ou perdidos.'],
+            ])
+            ->secao('📋 Como ler a tabela', [
+                ['👤', 'Interessado', 'Nome do responsável e, logo abaixo, o telefone. Clique no cabeçalho para ordenar por nome.'],
+                ['🏷️', 'Status / Consultor', 'Etapa atual do lead no funil (badge colorido) e, abaixo, o consultor responsável.'],
+                ['📊', 'Qualificação', 'O badge mostra o Score (0 a 100, calculado automaticamente: verde = alto, âmbar = médio, vermelho = baixo). Abaixo aparece a temperatura (Quente, Morno ou Frio), que é a percepção do consultor e também pesa no score.'],
+                ['📆', 'Próximo contato', 'Data combinada para o próximo contato e quanto falta ou quanto está atrasado. Fica em vermelho, com ícone de alerta, quando está atrasado.'],
+                ['📍', 'Origem', 'De onde o lead veio (site, indicação, Instagram etc.).'],
+                ['🟥', 'Faixa vermelha na linha', 'Indica que o lead precisa de contato agora.'],
+                ['⚙️', 'Colunas opcionais', 'Pelo ícone de colunas da tabela você pode exibir Telefone, Consultor, Campanha, Temperatura, Dias no funil, Valor estimado, Total de contatos, Sem interação, Distância, Transporte, Redes sociais e Data de criação.'],
+            ])
+            ->secao('⚡ Ações em cada linha', [
+                ['💬', 'Atendimento (ícone de balão)', 'Registra um contato: tipo, relato, duração, resultado e a data do próximo contato. Atualiza o histórico, o score e o prazo do lead.'],
+                ['🟢', 'WhatsApp', 'Abre o WhatsApp com uma mensagem pronta a partir de um modelo. Só aparece se o lead tem telefone.'],
+                $canUpdate ? ['✏️', 'Editar (lápis)', 'Abre a ficha completa: dados do negócio, redes sociais, dependentes, histórico e visitas.'] : null,
+                ['⋮', 'Menu "Mais ações"', 'Agendar visita, Matricular (abre o Assistente de Matrícula já preenchido) ou Marcar matriculado, Gerar link de convite de matrícula online e marcar como Perdido (com o motivo).'],
+            ])
+            ->secao('🔎 Filtros disponíveis', [
+                ['🏷️', 'Status, Origem e Campanha', 'Aceitam mais de uma opção ao mesmo tempo.'],
+                ['🧑‍💼', 'Consultor', 'Mostra apenas os leads de um consultor.'],
+                ['⏰', 'Precisa de contato e Estagnado', 'Complementam as abas e podem ser combinados com elas.'],
+                ['🌡️', 'Temperatura', 'Quente, morno ou frio.'],
+            ])
+            ->secao('📦 Ações em lote (selecione várias linhas)', [
+                ['👥', 'Atribuir consultor', 'Define o consultor responsável de todos os leads selecionados de uma vez.'],
+                $canEmail ? ['✉️', 'Enviar comunicação por e-mail', 'Dispara um e-mail em massa para os selecionados (use [Nome] para personalizar). Só recebem quem tem e-mail e não pediu para ficar de fora.'] : null,
+                $canDelete ? ['🗑️', 'Excluir', 'Remove os leads selecionados.'] : null,
+            ])
+            ->secao('➕ Como entram novos leads', [
+                $canCreate ? ['🆕', 'Novo', 'Cadastro manual do lead.'] : null,
+                ['✨', 'Importar Lead com IA', 'Cole uma mensagem ou anexe um print de conversa; a IA preenche responsável, alunos, redes sociais e temperatura, e já registra o primeiro contato no histórico.'],
+                ['🌐', 'Captação automática', 'Leads do formulário público e da landing page chegam sozinhos nesta lista.'],
+            ])
+            ->passos('🚀 Rotina sugerida', [
+                'Abra a aba "Precisa de contato" e atenda primeiro os leads com faixa vermelha.',
+                'Registre cada conversa em "Atendimento", definindo a data do próximo contato.',
+                'Use "Agendar visita" quando o responsável quiser conhecer a escola.',
+                'Revise a aba "Estagnados" para retomar leads que ficaram sem interação.',
+                'Quando fechar, use "Matricular"; se desistir, marque como "Perdido" informando o motivo.',
+            ])
+            ->secao('🧮 Sobre o Score', [
+                ['📈', 'De onde vem', 'Soma automática de fatores: percepção do consultor (maior peso), perfil da família, engajamento e origem do lead. Atualiza quando o lead é salvo ou recebe um atendimento, e diariamente.'],
+                $canPesos ? ['🎚️', 'Ajustar os pesos', 'Em CRM / Comercial, Pesos do Lead Score, é possível mudar a importância de cada fator.'] : null,
+            ])
+            ->dica('Mantenha a temperatura atualizada na ficha do lead: ela é o fator de maior peso no score e ajuda a aba "Quentes" a refletir a realidade.')
+            ->alerta('Leads finalizados (matriculados ou perdidos) não aparecem em "Precisa de contato", "Estagnados" nem "Quentes".');
     }
 }

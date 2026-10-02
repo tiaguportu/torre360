@@ -107,6 +107,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
    - **Excluir:** Exclua múltiplos leads selecionados.
 
+5. **Botão Ajuda:** No topo da listagem, o botão **Ajuda** abre um guia da tela: para que serve cada aba, como ler cada coluna (inclusive o Score e a faixa vermelha), as ações por linha e em lote, os filtros, como entram novos leads, uma rotina diária sugerida e como o Score é calculado. Os itens variam conforme as suas permissões.
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
 - **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.

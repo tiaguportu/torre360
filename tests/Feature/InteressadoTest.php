@@ -389,4 +389,24 @@ class InteressadoTest extends TestCase
             ->assertCanSeeTableRecords([$emDia])
             ->assertCanNotSeeTableRecords([$atrasado]);
     }
+
+    public function test_modal_de_ajuda_da_listagem_explica_abas_colunas_e_acoes(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $this->actingAs($admin);
+
+        $pagina = new \App\Filament\Resources\Interessados\Pages\ListInteressados;
+        $html = (new \ReflectionMethod($pagina, 'getHelpContent'))->invoke($pagina)->render();
+
+        foreach (['Para que serve cada aba', 'Como ler a tabela', 'Ações em cada linha', 'Rotina sugerida', 'Precisa de contato', 'Estagnados'] as $trecho) {
+            $this->assertStringContainsString($trecho, $html);
+        }
+
+        \Livewire\Livewire::test(\App\Filament\Resources\Interessados\Pages\ListInteressados::class)
+            ->mountAction('ajuda')
+            ->assertHasNoErrors();
+    }
 }
