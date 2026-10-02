@@ -60,7 +60,7 @@ class ImportarLeadIaAction
                     ->options(fn () => OrigemInteressado::pluck('nome', 'id'))
                     ->searchable(),
             ])
-            ->action(function (array $data) {
+            ->action(function (array $data, $livewire) {
                 $mensagemBruta = ! empty($data['mensagem_bruta']) ? trim((string) $data['mensagem_bruta']) : null;
                 $imagemRelPath = ! empty($data['imagem_print']) ? $data['imagem_print'] : null;
 
@@ -93,13 +93,9 @@ class ImportarLeadIaAction
                         ->title('✨ Lead importado com sucesso via IA!')
                         ->body("Interessado **{$interessado->pessoa->nome}** cadastrado com ".$interessado->dependentes()->count().' dependente(s).')
                         ->success()
-                        ->actions([
-                            Action::make('editar')
-                                ->label('Ver/Editar Lead')
-                                ->url(InteressadoResource::getUrl('edit', ['record' => $interessado]))
-                                ->button(),
-                        ])
                         ->send();
+
+                    $livewire->redirect(InteressadoResource::getUrl('edit', ['record' => $interessado]));
                 } catch (\Exception $e) {
                     Notification::make()
                         ->title('Falha ao Importar Lead com IA')

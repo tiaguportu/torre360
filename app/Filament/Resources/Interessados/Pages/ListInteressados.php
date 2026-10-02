@@ -134,7 +134,7 @@ class ListInteressados extends ListRecords
             ])
             ->secao('➕ Como entram novos leads', [
                 $canCreate ? ['🆕', 'Novo', 'Cadastro manual do lead.'] : null,
-                ['✨', 'Importar Lead com IA', 'Cole uma mensagem ou anexe um print de conversa; a IA preenche responsável, alunos, redes sociais e temperatura, e já registra o primeiro contato no histórico.'],
+                ['✨', 'Importar Lead com IA', 'Cole uma mensagem ou anexe um print de conversa; a IA preenche responsável, alunos, redes sociais e temperatura, e já registra o primeiro contato no histórico. Ao terminar, você é levado direto para a edição do lead criado.'],
                 ['🌐', 'Captação automática', 'Leads do formulário público e da landing page chegam sozinhos nesta lista.'],
             ])
             ->passos('🚀 Rotina sugerida', [
