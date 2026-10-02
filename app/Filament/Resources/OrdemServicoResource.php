@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrdemServicoResource\Pages;
 use App\Filament\Resources\OrdemServicoResource\RelationManagers;
-use App\Filament\Resources\OrdemServicoResource\Widgets;
 use App\Models\OrdemServico;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
@@ -187,13 +186,6 @@ class OrdemServicoResource extends Resource
     {
         return [
             RelationManagers\AnotacoesRelationManager::class,
-        ];
-    }
-
-    public static function getWidgets(): array
-    {
-        return [
-            Widgets\OrdemServicoStats::class,
         ];
     }
 
