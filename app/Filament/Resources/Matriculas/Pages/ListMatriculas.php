@@ -159,7 +159,7 @@ class ListMatriculas extends ListRecords
             ->secao('📋 Como ler a tabela', [
                 ['👤', 'Aluno', 'Nome do aluno e, logo abaixo, a turma e o curso. Clique no nome para abrir a ficha da pessoa (se você tiver permissão).'],
                 ['🏷️', 'Situação', 'Badge colorido com a situação da matrícula.'],
-                ['⚠️', 'Pendências', 'Badges com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando e N documentos rejeitados. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
+                ['⚠️', 'Pendências', 'Badges, um embaixo do outro, com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando e N documentos rejeitados. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
                 ['🗓️', 'Período Letivo', 'Período ao qual a matrícula pertence.'],
                 ['📄', 'Contrato', 'Ícone verde quando a matrícula já tem contrato gerado; cinza quando ainda não tem.'],
                 ['⚙️', 'Colunas opcionais', 'Pelo ícone de colunas da tabela você pode exibir Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.'],

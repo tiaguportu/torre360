@@ -361,7 +361,7 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 3. **Colunas visíveis:**
    - **Aluno:** nome e, logo abaixo, a turma e o curso. O nome leva à ficha da pessoa (conforme a permissão do usuário). A busca procura pelo nome do aluno ou da turma.
    - **Situação:** badge colorido com ícone.
-   - **Pendências:** um badge para cada tipo de problema (*Sem responsável*, *Cadastro incompleto*, *N documentos faltando*, *N documentos rejeitados*) ou **Em dia** (verde). Passe o mouse para ver o resumo e clique para abrir o detalhe, com links diretos para corrigir (veja a seção 6.3.1). A linha **não** muda de cor.
+   - **Pendências:** um badge para cada tipo de problema (*Sem responsável*, *Cadastro incompleto*, *N documentos faltando*, *N documentos rejeitados*), **empilhados um embaixo do outro** para a coluna ficar estreita e as ações da linha continuarem visíveis sem rolar a tabela para o lado, ou **Em dia** (verde). Passe o mouse para ver o resumo e clique para abrir o detalhe, com links diretos para corrigir (veja a seção 6.3.1). A linha **não** muda de cor.
    - **Período Letivo** e **Contrato** (ícone verde quando a matrícula já tem contrato gerado; cinza quando não tem).
    - **Colunas opcionais (seletor de colunas):** Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.
 4. **Filtros** (recolhidos acima da tabela e lembrados durante a sessão): **Curso**, **Turma** e **Período Letivo** (os dois últimos aceitam várias opções), **Pendências** (escolha um ou mais tipos; aparecem as matrículas que tenham qualquer um deles) e **Contrato** (com/sem contrato).

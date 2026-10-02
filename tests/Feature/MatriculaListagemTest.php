@@ -174,6 +174,10 @@ class MatriculaListagemTest extends TestCase
 
         $lista = Livewire::test(ListMatriculas::class);
 
+        // Badges empilhados (um embaixo do outro), alinhados à esquerda
+        $lista->assertSeeHtml('fi-ta-text-has-line-breaks')
+            ->assertSeeHtml('align-items: flex-start;');
+
         $lista->assertCanSeeTableRecords([$emDia, $comPendencia])
             ->assertSee('Em dia')
             ->assertSee('Sem responsável')
