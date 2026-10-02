@@ -177,6 +177,17 @@ Canais de mensagem e disparo em massa. Detalhes em `docs/comunicacao_canais_aler
 
 ---
 
+### 9. 📚 Biblioteca Escolar
+Acervo de livros e controle de empréstimo/devolução. Detalhes em `docs/biblioteca_escolar_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `Livro` | Título, autor, ISBN, categoria, editora, quantidade total/disponível de exemplares |
+| `Emprestimo` | Livro × matrícula, data de empréstimo, devolução prevista/real, status (Emprestado/Devolvido/Atrasado) |
+| Atraso automático | `biblioteca:atualizar-emprestimos-atrasados` (diário, 07h) marca empréstimos vencidos como Atrasado |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -300,6 +311,5 @@ autorizada:
 | Provas online com correção automática | `docs/provas_online_roadmap.md` |
 | Controle de saída/retirada de alunos | `docs/controle_saida_alunos_roadmap.md` |
 | RH e gestão de funcionários | `docs/rh_funcionarios_roadmap.md` |
-| Biblioteca escolar | `docs/biblioteca_escolar_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Risco de evasão escolar | `docs/risco_evasao_roadmap.md` |

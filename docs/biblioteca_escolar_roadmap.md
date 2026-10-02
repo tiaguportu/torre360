@@ -1,8 +1,8 @@
-# Biblioteca Escolar (Onda 11) — Proposta para o Futuro
+# Biblioteca Escolar (Onda 11)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementado.** Este documento descreve o escopo e as decisões de modelagem;
+> detalhes de uso ficam no texto de Ajuda das telas (**Livros** e **Empréstimos**, grupo
+> **Biblioteca** do menu).
 
 ## Contexto
 
@@ -31,3 +31,20 @@ Torre360.
 - Nenhuma onda anterior é pré-requisito técnico — pode ser implementada de forma
   independente a qualquer momento. `Matricula` já existe como referência para "quem pegou
   emprestado".
+
+## Como foi implementado
+
+- `Livro` (`app/Models/Livro.php`) e `Emprestimo` (`app/Models/Emprestimo.php`), Resources
+  em `/admin/livros` e `/admin/emprestimos` (grupo **Biblioteca**).
+- Ao registrar empréstimo, `quantidade_disponivel` do livro é decrementada
+  (`CreateEmprestimo::handleRecordCreation()`); só aparecem no seletor livros com
+  exemplar disponível. Ao devolver (`Emprestimo::registrarDevolucao()`), o exemplar volta
+  ao acervo e o status muda para Devolvido.
+- Comando `biblioteca:atualizar-emprestimos-atrasados` (agendado diariamente às 07h, mesmo
+  princípio do `financeiro:atualizar-contas-pagar-atrasadas`) marca como Atrasado qualquer
+  empréstimo ainda não devolvido com devolução prevista vencida.
+- Não é dado sensível: permissões liberadas para `secretaria`, `coordenador`, `professor`,
+  além de `admin`/`super_admin`.
+- Testes em `tests/Feature/BibliotecaTest.php`.
+- Página do portal do aluno para ver os próprios empréstimos (item opcional do escopo
+  original) não foi incluída nesta entrega — pode ser um incremento futuro.

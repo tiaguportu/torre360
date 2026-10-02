@@ -146,6 +146,33 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Biblioteca Escolar — não é dado sensível, acessível a secretaria,
+        // coordenador e professor também.
+        $bibliotecaPermissions = [];
+        foreach (['Livro', 'Emprestimo'] as $modelName) {
+            foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+                $bibliotecaPermissions[] = "{$acao}:{$modelName}";
+            }
+        }
+
+        foreach ($bibliotecaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'coordenador', 'professor', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($bibliotecaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
