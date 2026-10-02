@@ -10,10 +10,12 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class InteressadoTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     private function criarStatusBasicos(): array

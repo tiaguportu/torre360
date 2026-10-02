@@ -15,10 +15,12 @@ use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 class InteressadoComunicacaoBulkActionTest extends TestCase
 {
+    use ProibeLazyLoading;
     use RefreshDatabase;
 
     /**

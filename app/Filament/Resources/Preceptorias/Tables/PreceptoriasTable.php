@@ -101,6 +101,9 @@ class PreceptoriasTable
                         'matricula',
                         'id',
                         function (Builder $query) {
+                            // O rótulo de cada opção (label_exibicao) usa período letivo, turma e aluno
+                            $query->with(['periodoLetivo', 'turma', 'pessoa']);
+
                             $user = auth()->user();
                             $activeRole = session('active_role');
 
