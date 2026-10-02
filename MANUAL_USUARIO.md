@@ -164,6 +164,7 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - **Mensagem Bruta / Texto:** Você pode colar qualquer mensagem bruta recebida de clientes ou adicionar observações textuais complementares à imagem.
    - Selecione o consultor responsável e a origem fallback (se a IA não inferir).
    - Clique em **Analisar e Criar Lead**.
+   - Ao terminar, o sistema abre automaticamente a **tela de edição do lead criado**, para você revisar e completar os dados (a notificação de sucesso aparece nessa tela). Isso vale a partir da Listagem, do Funil Kanban e do Cadastro de Novo Lead. Se a IA falhar, você permanece na tela atual com o aviso de erro e nenhum lead é criado.
 > **Alta demanda:** se aparecer a mensagem "servidores de IA do Gemini estão temporariamente com alta demanda", o sistema já tentou automaticamente vários modelos em duas rodadas. Aguarde alguns instantes e tente novamente.
 3. **O que a IA faz automaticamente:**
    - **Histórico de Contato:** registra automaticamente um contato com o relato da conversa, o canal (WhatsApp, Ligação, E-mail ou Presencial) e a data/hora em que ocorreu (quando identificada no texto/print; caso contrário, usa o momento da importação).

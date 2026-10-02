@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
+use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Models\Curso;
 use App\Models\Interessado;
 use App\Models\Pessoa;
@@ -13,6 +15,8 @@ use App\Models\User;
 use App\Services\GeminiAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class GeminiLeadExtractionTest extends TestCase
@@ -328,6 +332,43 @@ class GeminiLeadExtractionTest extends TestCase
             'serie_id' => $serie->id,
             'vinculo' => 'Pai',
         ]);
+    }
+
+    public function test_importar_lead_com_ia_redireciona_para_edicao_do_interessado_criado(): void
+    {
+        config(['services.gemini.key' => 'fake-gemini-key']);
+
+        $admin = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
+        $admin->assignRole(Role::firstOrCreate(['name' => 'super_admin']));
+        session(['active_role' => 'super_admin']);
+        StatusInteressado::create(['nome' => 'Novo', 'cor' => 'info', 'ordem' => 1]);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => json_encode([
+                            'responsavel_nome' => 'Carla Souza',
+                            'responsavel_email' => 'carla@gmail.com',
+                            'responsavel_telefone' => '(11) 98888-5555',
+                            'alunos' => [],
+                        ]),
+                    ]]],
+                ]],
+            ], 200),
+        ]);
+
+        $component = Livewire::actingAs($admin)
+            ->test(ListInteressados::class)
+            ->callAction('importarComIA', [
+                'mensagem_bruta' => 'Olá, sou a Carla Souza, carla@gmail.com.',
+                'usuario_id' => $admin->id,
+            ])
+            ->assertHasNoActionErrors();
+
+        $interessado = Interessado::firstOrFail();
+
+        $component->assertRedirect(InteressadoResource::getUrl('edit', ['record' => $interessado]));
     }
 
     public function test_salvar_lead_extraido_reutiliza_pessoa_existente_por_email(): void
