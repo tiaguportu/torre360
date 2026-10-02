@@ -99,7 +99,9 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
             Notification::make()
                 ->title('Dados do lead carregados')
-                ->body("Formulário pré-preenchido com os dados de {$interessado->pessoa?->nome}. Revise e complete as informações.")
+                ->body("Formulário pré-preenchido com os dados de {$interessado->pessoa?->nome}"
+                    .(filled($interessado->dados_pre_matricula) ? ' e com a pré-matrícula online preenchida pela família (responsáveis, alunos e endereço)' : '')
+                    .'. Revise e complete as informações.')
                 ->info()
                 ->send();
         }

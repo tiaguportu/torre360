@@ -119,7 +119,7 @@ class ListInteressados extends ListRecords
                 ['💬', 'Atendimento (ícone de balão)', 'Registra um contato: tipo, relato, duração, resultado e a data do próximo contato. Atualiza o histórico, o score e o prazo do lead.'],
                 ['🟢', 'WhatsApp', 'Abre o WhatsApp com uma mensagem pronta a partir de um modelo. Só aparece se o lead tem telefone.'],
                 $canUpdate ? ['✏️', 'Editar (lápis)', 'Abre a ficha completa: dados do negócio, redes sociais, dependentes, histórico e visitas.'] : null,
-                ['⋮', 'Menu "Mais ações"', 'Agendar visita, Matricular (abre o Assistente de Matrícula já preenchido) ou Marcar matriculado, Gerar link de convite de matrícula online e marcar como Perdido (com o motivo).'],
+                ['⋮', 'Menu "Mais ações"', 'Agendar visita, Matricular (abre o Assistente de Matrícula já preenchido) ou Marcar matriculado, Gerar link de pré-matrícula online (a família preenche responsáveis, alunos e endereço, e os dados chegam prontos no Assistente de Matrícula) e marcar como Perdido (com o motivo).'],
             ])
             ->secao('🔎 Filtros disponíveis', [
                 ['🏷️', 'Status, Origem e Campanha', 'Aceitam mais de uma opção ao mesmo tempo.'],

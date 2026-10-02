@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Captacao;
 
+use App\Enums\Sexo;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Http\Controllers\Controller;
 use App\Mail\AgradecimentoInteresseMail;
@@ -12,9 +13,11 @@ use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\Serie;
 use App\Models\StatusInteressado;
+use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Rules\Cpf;
 use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
 use App\Services\UtmTracker;
@@ -267,6 +270,9 @@ class CaptacaoInteressadoController extends Controller
         return view('captacao.convite', [
             'interessado' => $interessado,
             'series' => Serie::with('curso')->orderBy('nome')->get(),
+            'tiposVinculo' => TipoVinculo::orderBy('nome')->pluck('nome', 'id'),
+            'sexos' => Sexo::cases(),
+            'dados' => $interessado->dados_pre_matricula ?? [],
         ]);
     }
 
@@ -281,18 +287,55 @@ class CaptacaoInteressadoController extends Controller
         $dependentesIds = $interessado->dependentes()->pluck('id')->all();
 
         $validated = $request->validate([
-            'telefone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'responsavel.nome' => ['required', 'string', 'max:255'],
+            'responsavel.cpf' => ['required', new Cpf],
+            'responsavel.data_nascimento' => ['required', 'date', 'before:today'],
+            'responsavel.telefone' => ['required', 'string', 'max:30'],
+            'responsavel.email' => ['nullable', 'email', 'max:255'],
+            'responsavel.tipo_vinculo_id' => ['required', 'exists:tipo_vinculos,id'],
+            'responsavel.is_financeiro' => ['nullable', 'boolean'],
+            'responsavel.cep' => ['required', 'string', 'max:10'],
+            'responsavel.logradouro' => ['required', 'string', 'max:255'],
+            'responsavel.numero' => ['required', 'string', 'max:20'],
+            'responsavel.complemento' => ['nullable', 'string', 'max:100'],
+            'responsavel.bairro' => ['required', 'string', 'max:100'],
+            'responsavel.cidade_ibge' => ['nullable', 'string', 'max:10'],
+
+            'segundo_responsavel.nome' => ['nullable', 'string', 'max:255'],
+            'segundo_responsavel.cpf' => ['nullable', 'required_with:segundo_responsavel.nome', new Cpf],
+            'segundo_responsavel.tipo_vinculo_id' => ['nullable', 'required_with:segundo_responsavel.nome', 'exists:tipo_vinculos,id'],
+            'segundo_responsavel.telefone' => ['nullable', 'string', 'max:30'],
+            'segundo_responsavel.email' => ['nullable', 'email', 'max:255'],
+            'segundo_responsavel.is_financeiro' => ['nullable', 'boolean'],
+            'segundo_responsavel.percentual' => ['nullable', 'integer', 'between:1,99'],
+
             'dependentes' => ['required', 'array', 'min:1'],
             'dependentes.*.id' => ['required', 'integer', 'in:'.implode(',', $dependentesIds ?: [0])],
-            'dependentes.*.serie_id' => ['nullable', 'exists:serie,id'],
+            'dependentes.*.serie_id' => ['required', 'exists:serie,id'],
             'dependentes.*.turno_preferencia' => ['nullable', 'string', 'in:Manhã,Tarde,Integral,Sem preferência'],
+            'dependentes.*.data_nascimento' => ['required', 'date', 'before:today'],
+            'dependentes.*.cpf' => ['nullable', new Cpf],
+            'dependentes.*.sexo' => ['nullable', 'in:'.implode(',', array_column(Sexo::cases(), 'value'))],
+
+            'lgpd_aceite' => ['accepted'],
+        ], [
+            'lgpd_aceite.accepted' => 'É necessário concordar com o tratamento dos dados para continuar.',
+        ], [
+            'responsavel.cpf' => 'CPF do responsável',
+            'segundo_responsavel.cpf' => 'CPF do segundo responsável',
+            'dependentes.*.cpf' => 'CPF do aluno',
+            'responsavel.data_nascimento' => 'data de nascimento do responsável',
+            'dependentes.*.data_nascimento' => 'data de nascimento do aluno',
+            'dependentes.*.serie_id' => 'série do aluno',
         ]);
+
+        $responsavel = $validated['responsavel'];
 
         $service->confirmar(
             $interessado,
-            ['telefone' => $validated['telefone'] ?? null, 'email' => $validated['email'] ?? null],
-            $validated['dependentes']
+            ['telefone' => $responsavel['telefone'], 'email' => $responsavel['email'] ?? null],
+            $validated['dependentes'],
+            $service->montarPreMatricula($validated, $request->ip())
         );
 
         return redirect()->route('captacao.interessado.convite.sucesso', $token);

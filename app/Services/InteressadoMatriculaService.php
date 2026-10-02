@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Interessado;
+use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use Carbon\Carbon;
 
@@ -35,7 +36,10 @@ class InteressadoMatriculaService
         $contatoEhAluno = $pessoa !== null
             && in_array(mb_strtolower(trim((string) $pessoa->nome)), $nomesDependentes, true);
 
-        $alunos = $dependentes->map(function ($dependente) use ($pessoa, $contatoEhAluno) {
+        // Dados completos preenchidos pela família no convite de pré-matrícula online (se houver).
+        $pre = $interessado->dados_pre_matricula ?? [];
+
+        $alunos = $dependentes->map(function ($dependente) use ($pessoa, $contatoEhAluno, $pre) {
             $aluno = [
                 'pessoa_id_existente' => null,
                 'nome' => $dependente->nome_crianca,
@@ -49,6 +53,16 @@ class InteressadoMatriculaService
                     'telefone' => $pessoa->telefone,
                     'pessoa_id_existente' => $pessoa->id,
                 ]);
+            }
+
+            $dadosAluno = $pre['alunos'][$dependente->id] ?? null;
+
+            if ($dadosAluno) {
+                $aluno = array_merge($aluno, array_filter($dadosAluno, fn ($valor) => filled($valor)));
+
+                if (filled($dadosAluno['cpf'] ?? null)) {
+                    $aluno['pessoa_id_existente'] = Pessoa::where('cpf', $dadosAluno['cpf'])->value('id') ?? $aluno['pessoa_id_existente'];
+                }
             }
 
             return $aluno;
@@ -66,6 +80,19 @@ class InteressadoMatriculaService
                 'is_financeiro' => true,
                 'percentual' => 100,
             ];
+        }
+
+        if (! empty($pre['responsaveis'])) {
+            $responsaveis = collect($pre['responsaveis'])
+                ->map(function (array $responsavel, int $indice) use ($pessoa, $contatoEhAluno) {
+                    $responsavel['pessoa_id_existente'] = (filled($responsavel['cpf'] ?? null)
+                        ? Pessoa::where('cpf', $responsavel['cpf'])->value('id')
+                        : null) ?? ($indice === 0 && $pessoa && ! $contatoEhAluno ? $pessoa->id : null);
+
+                    return $responsavel;
+                })
+                ->values()
+                ->all();
         }
 
         $dados = [];
@@ -104,6 +131,11 @@ class InteressadoMatriculaService
 
         if ($statusGanho && $interessado->status_interessado_id !== $statusGanho->id) {
             $atualizacoes['status_interessado_id'] = $statusGanho->id;
+        }
+
+        // Minimização de dados (LGPD): a pré-matrícula já virou cadastro, o rascunho não é mais necessário.
+        if ($interessado->dados_pre_matricula !== null) {
+            $atualizacoes['dados_pre_matricula'] = null;
         }
 
         if ($atualizacoes !== []) {

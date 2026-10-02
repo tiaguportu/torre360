@@ -400,12 +400,12 @@ class InteressadosTable
                         }),
 
                     Action::make('gerarConvite')
-                        ->label('Gerar Link de Convite')
+                        ->label('Gerar Link de Pré-matrícula')
                         ->icon('heroicon-o-link')
                         ->color('info')
                         ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
-                        ->modalHeading('Convite de Matrícula Online')
-                        ->modalDescription('Envie este link ao responsável para que ele mesmo confirme os dados antes de você efetivar a matrícula. Válido por 7 dias e de uso único.')
+                        ->modalHeading('Pré-matrícula Online')
+                        ->modalDescription('Envie este link ao responsável para que a própria família preencha a pré-matrícula (responsáveis, alunos e endereço). Os dados chegam pré-preenchidos no Assistente de Matrícula. Válido por 7 dias e de uso único. Atenção: gerar de novo invalida o link anterior.')
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Fechar')
                         ->form(function (Interessado $record) {

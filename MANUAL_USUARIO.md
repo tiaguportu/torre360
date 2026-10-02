@@ -2044,21 +2044,29 @@ Cadastro de obrigações da escola com fornecedores: descrição, valor, vencime
 
 ---
 
-## ✉️ 44. Convite de Matrícula Online
+## ✉️ 44. Pré-matrícula Online (Convite de Matrícula)
 
-Link único enviado a um lead já qualificado pelo CRM para que a própria família confirme/complete os dados — sem precisar passar pelo formulário público completo nem ver qualquer outro cadastro.
+Link único enviado a um lead já qualificado pelo CRM para que a **própria família preencha a pré-matrícula**: dados do(s) responsável(is), do(s) aluno(s) e endereço. Esses dados chegam **já preenchidos no Assistente de Matrícula**, reduzindo muito o trabalho da secretaria. O link não permite ver nem navegar por nenhum outro cadastro.
 
-### 44.1 Gerando o Convite (`/admin/interessados`)
-1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra a ação **Gerar Link de Convite**.
+### 44.1 Gerando o Link (`/admin/interessados`)
+1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra, no menu **⋮ Mais ações**, a ação **Gerar Link de Pré-matrícula**.
 2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.).
+3. **Atenção:** abrir a ação de novo gera um link novo e **invalida o anterior** daquele lead.
 
-### 44.2 O que a Família Vê
-1. Ao abrir o link, a família vê uma página simples com seus próprios dados: telefone, e-mail, e cada dependente já cadastrado com os campos **Série de Interesse** e **Turno de Preferência**.
-2. Depois de confirmar, uma tela de agradecimento avisa que a secretaria vai entrar em contato — o link não pode mais ser usado a partir daí.
-3. Um link expirado, já usado ou inválido mostra um aviso claro, com atalho para o formulário público completo.
+### 44.2 O que a Família Preenche
+1. **Responsável (você):** nome, CPF, data de nascimento, telefone, e-mail, vínculo com o aluno (Pai, Mãe etc.) e se é o responsável financeiro.
+2. **Endereço da família:** CEP (o endereço é completado automaticamente), número e complemento.
+3. **Segundo responsável (opcional):** nome, CPF, vínculo, contatos e se também é financeiro. Se os dois forem financeiros, informa-se o percentual do contrato de cada um.
+4. **Cada aluno:** data de nascimento, CPF (se tiver), sexo, série de interesse e turno de preferência. O endereço dos alunos segue o da família.
+5. **Aceite LGPD (obrigatório):** a família concorda com o uso dos dados para a matrícula. A data/hora e o IP do aceite ficam registrados.
+6. O CPF é validado pelos dígitos verificadores. Depois de enviar, aparece a tela de agradecimento e o link não pode mais ser usado. Link expirado, já usado ou inválido mostra um aviso claro, com atalho para o formulário público completo.
 
 ### 44.3 O que Muda para a Secretaria
-A confirmação pelo convite **não efetiva a matrícula por si só** — ela só atualiza os dados do lead (telefone, e-mail, série de cada dependente) e registra no histórico do CRM que a família confirmou online. A secretaria continua usando a ação **Matricular** (já existente) para efetivamente abrir o Assistente de Matrícula pré-preenchido e concluir o processo — só que agora com os dados já confirmados pela própria família, sem precisar ligar para confirmar cada informação.
+- O envio **não efetiva a matrícula por si só.** O histórico do lead recebe o registro "A família preencheu a pré-matrícula online…" e o Lead Score é recalculado.
+- Ao clicar em **Matricular**, o **Assistente de Matrícula** abre com responsáveis (inclusive percentual financeiro), alunos, CPF, data de nascimento, sexo e endereço já preenchidos. A secretaria revisa, escolhe unidade, turma e plano, e conclui.
+- Se o CPF informado já existe no sistema, o cadastro existente é reaproveitado.
+- **Privacidade:** os dados da pré-matrícula ficam guardados no lead apenas até a matrícula ser efetivada; ao converter o lead, o rascunho é apagado.
+- **Fora do escopo desta versão:** envio de documentos (RG, certidão, comprovante) e endereço diferente por aluno. A secretaria pode ajustar o endereço no assistente.
 
 ---
 

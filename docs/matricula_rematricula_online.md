@@ -59,19 +59,24 @@ nem permitir navegar por nenhum outro registro do sistema.
 - **Gerar o convite:** botão **"Gerar Link de Convite"** na listagem de Interessados
   (só aparece para leads com ao menos um dependente cadastrado). Gera um token aleatório
   de 48 caracteres, válido por 7 dias e de uso único.
-- **A página do convite** (`/quero-matricular/convite/{token}`): mostra só os dados do
-  próprio interessado — nome, e cada dependente já cadastrado com os campos **Série de
-  Interesse** e **Turno de Preferência**. A validação do formulário (`confirmarConvite()`)
-  rejeita explicitamente qualquer `id` de dependente que não pertença ao interessado do
-  token — é isso que impede o link de um lead de alterar o cadastro de outro.
-- **Ao confirmar:** atualiza telefone/e-mail do responsável e a série de cada dependente,
-  marca o token como usado (`token_convite_usado_em`), registra um
-  `HistoricoContato` ("Confirmação via Convite Online") e recalcula o lead score
-  (`LeadScoreService`) — o preenchimento é, em si, um sinal de engajamento.
-- **O convite não efetiva a matrícula sozinho.** A secretaria continua usando a ação
-  **"Matricular"** já existente (abre o `EnrollmentWizard` pré-preenchido via
-  `InteressadoMatriculaService::dadosParaWizard()`) — o convite só resolve a coleta de
-  dados, reduzindo a ida e volta por telefone antes desse passo.
+- **A página do convite** (`/quero-matricular/convite/{token}`): formulário de **pré-matrícula**
+  restrito ao próprio interessado. Coleta responsável (nome, CPF, nascimento, contato, vínculo,
+  financeiro), endereço (CEP com ViaCEP no navegador; a cidade é resolvida no servidor por
+  `cidade.codigo_ibge`), segundo responsável opcional (com divisão de percentual), e, por aluno,
+  nascimento, CPF opcional, sexo, série e turno. Exige aceite LGPD. A validação
+  (`confirmarConvite()`, regra `App\Rules\Cpf` para CPF) rejeita qualquer `id` de dependente que
+  não pertença ao interessado do token — é isso que impede o link de um lead de alterar o cadastro
+  de outro.
+- **Ao confirmar:** atualiza telefone/e-mail do responsável e série/nascimento de cada dependente,
+  grava o payload completo em `interessado.dados_pre_matricula` (JSON, montado por
+  `ConviteMatriculaService::montarPreMatricula()`, com `lgpd_aceite_em` e `lgpd_ip`), marca o token
+  como usado (`token_convite_usado_em`), registra um `HistoricoContato` ("Confirmação via Convite
+  Online") e recalcula o lead score (`LeadScoreService`).
+- **O convite não efetiva a matrícula sozinho.** A secretaria usa a ação **"Matricular"**, que abre o
+  `EnrollmentWizard` pré-preenchido via `InteressadoMatriculaService::dadosParaWizard()`: essa função
+  mescla `dados_pre_matricula` (responsáveis com endereço e percentual, alunos com CPF/nascimento/
+  sexo/endereço; `pessoa_id_existente` resolvido por CPF). Em `registrarConversao()` o campo é
+  zerado (minimização de dados, LGPD). Fora do escopo: upload de documentos e endereço por aluno.
 - **Link expirado/usado/inexistente:** mostra uma página de aviso (`convite-invalido`)
   em vez de erro técnico, com um atalho para o formulário público completo.
 
@@ -80,6 +85,7 @@ nem permitir navegar por nenhum outro registro do sistema.
 | Migration | O que faz |
 |---|---|
 | `add_token_convite_to_interessado_table` | Colunas `token_convite` (único), `token_convite_expira_em`, `token_convite_usado_em`. |
+| `add_dados_pre_matricula_to_interessado_table` | Coluna JSON `dados_pre_matricula` (rascunho da pré-matrícula preenchida pela família). |
 | `add_parcelamento_padrao_to_periodo_rematriculas_table` | Colunas `quantidade_parcelas_padrao` (padrão 12), `valor_entrada_padrao` (padrão 0). |
 
 ## 4. Testes
