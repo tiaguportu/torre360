@@ -12,6 +12,7 @@ use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\ResponsavelFinanceiro;
+use App\Services\RiscoEvasaoService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -148,6 +149,13 @@ class MatriculasTable
                             ->modalCancelActionLabel('Fechar')
                             ->visible(fn (Matricula $record): bool => $record->pendencias->temPendencias())
                     ),
+                TextColumn::make('risco_evasao_score')
+                    ->label('Risco de Evasão')
+                    ->badge()
+                    ->color(fn (?int $state): string => RiscoEvasaoService::cor($state))
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "Score {$state}" : 'Score —')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('periodoLetivo.nome')
                     ->label('Período Letivo')
                     ->badge()

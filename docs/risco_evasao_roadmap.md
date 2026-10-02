@@ -1,8 +1,8 @@
-# Risco de Evasão Escolar (Onda 13) — Proposta para o Futuro
+# Risco de Evasão Escolar (Onda 13)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementado.** Este documento descreve o escopo e as decisões de modelagem;
+> detalhes de uso ficam no texto de Ajuda da tela **Pesos do Risco de Evasão**
+> (`/admin/secretaria/pesos-risco-evasao`).
 
 ## Contexto
 
@@ -51,3 +51,37 @@ saiu — não é preditivo).
   `Matricula::hasDebitosVencidos()` (Onda 7) já existem e cobrem os 3 fatores principais.
 - O padrão inteiro de configuração/cálculo/recálculo já está implementado e testado para
   o Lead Score — é reaproveitar a receita, não desenhar algo novo do zero.
+
+## Como foi implementado
+
+- `RiscoEvasaoService` (`app/Services/RiscoEvasaoService.php`): espelha o
+  `LeadScoreService` método a método (`calcular()`, `detalhar()`, `recalcular()` via
+  `DB::table()->update()` direto, `cor()`). Única inversão de semântica: aqui pontuação
+  **alta** é **ruim** (mais risco), então `cor()` mapeia para danger/warning/success em vez
+  de success/warning/danger.
+- **3 fatores, 100 pontos no total** (ver `config/risco_evasao.php`):
+  - **Frequência (40 pts):** % de faltas nos últimos 30 dias sobre as aulas com
+    frequência lançada no período; sem aulas registradas, 0 pontos. Faixas configuráveis.
+  - **Desempenho (35 pts):** pior situação final (`SituacaoFinalDisciplina`) entre as
+    disciplinas do período letivo mais recente que já teve fechamento de ciclo
+    registrado para a matrícula — reprovado > recuperação > aprovado.
+  - **Inadimplência (25 pts):** `Matricula::hasDebitosVencidos()` (Onda 7), reaproveitado
+    diretamente — sem pontos parciais, é tudo ou nada.
+  - O quarto fator opcional do escopo original (tempo desde o último contato) **não foi
+    implementado** nesta entrega, para manter o escopo no mesmo tamanho do que o Lead
+    Score original antes de crescer com fatores adicionais.
+- `RiscoEvasaoConfiguracao` + `ConfiguracaoRiscoEvasao`
+  (`/admin/secretaria/pesos-risco-evasao`): mesma mecânica de override persistido em
+  banco, aplicado no boot via `AppServiceProvider`. Ações "Salvar configuração",
+  "Restaurar padrão" e "Recalcular todas as matrículas".
+- **Recálculo:** só o comando agendado diário (`academico:recalcular-risco-evasao`,
+  06h30) e a ação manual "Recalcular todas as matrículas" — ao contrário do Lead Score,
+  não há recálculo automático em ~10 pontos de código diferentes (ações do CRM); isso
+  pode ser adicionado depois caso o recálculo diário não seja granular o suficiente.
+- **Exibição:** nova coluna "Risco de Evasão" (badge colorido, mesmo padrão da coluna
+  "Qualificação" do Lead Score) na listagem de Matrículas já existente
+  (`/admin/matriculas`), `toggleable` para não forçar quem não usa o recurso.
+- Permissão de visualização da página de configuração (`View:ConfiguracaoRiscoEvasao`)
+  restrita a `admin`/`super_admin`, mesmo padrão do Lead Score.
+- Testes em `tests/Feature/RiscoEvasaoServiceTest.php` e
+  `tests/Feature/ConfiguracaoRiscoEvasaoTest.php`.
