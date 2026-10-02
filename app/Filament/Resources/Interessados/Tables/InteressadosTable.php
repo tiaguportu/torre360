@@ -40,6 +40,8 @@ class InteressadosTable
     public static function configure(Table $table): Table
     {
         return $table
+            // A descrição do consultor e as regras de contato/estagnação leem estas relações em cada linha
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['usuario', 'ultimoHistorico']))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
             ->paginated([10, 25, 50])

@@ -98,6 +98,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function pessoasAcessiveis(): Collection
     {
         $pessoas = $this->pessoas;
+        $pessoas->loadMissing('alunos');
         $dependentes = $pessoas->flatMap(fn (Pessoa $pessoa) => $pessoa->alunos);
 
         return $pessoas->merge($dependentes)->unique('id')->values();

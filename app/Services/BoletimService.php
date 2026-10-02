@@ -10,6 +10,7 @@ use App\Models\FrequenciaEscolar;
 use App\Models\Matricula;
 use App\Models\Nota;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 class BoletimService
@@ -53,7 +54,7 @@ class BoletimService
             $avaliacoes = Avaliacao::query()
                 ->where('turma_id', $turmaId)
                 ->where('etapa_avaliativa_id', $etapa->id)
-                ->with(['categoria'])
+                ->with(['categoria.substituidas'])
                 ->get();
 
             $categorias = $avaliacoes->map(fn ($av) => $av->categoria)
@@ -127,7 +128,7 @@ class BoletimService
             return null;
         }
 
-        $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $this->categoriasDasAvaliacoes($avs);
 
         $dadosCategorias = [];
         foreach ($categorias as $cat) {
@@ -207,10 +208,23 @@ class BoletimService
         return $somaPesos > 0 ? $somaProdutos / $somaPesos : null;
     }
 
+    /**
+     * Categorias distintas das avaliações, já com as categorias que cada uma substitui carregadas
+     * (evita uma query por categoria ao consultar `substituidas`).
+     */
+    private function categoriasDasAvaliacoes(Collection $avaliacoes): Collection
+    {
+        $categorias = $avaliacoes->map(fn ($av) => $av->categoria)->filter()->unique('id');
+
+        EloquentCollection::make($categorias->values()->all())->loadMissing('substituidas');
+
+        return $categorias;
+    }
+
     public function isCategoriaIgnorada(int $categoriaId, int $disciplinaId, Collection $avaliacoesEtapa, Collection $notasAluno): bool
     {
         $avs = $avaliacoesEtapa->where('disciplina_id', $disciplinaId);
-        $categorias = $avs->map(fn ($av) => $av->categoria)->filter()->unique('id');
+        $categorias = $this->categoriasDasAvaliacoes($avs);
 
         $dados = [];
         foreach ($categorias as $cat) {

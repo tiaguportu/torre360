@@ -641,7 +641,7 @@ Estrutura de ensino e turmas.
   - `nova_matricula_id`: FK `matricula` (nullable, a matrícula criada no período de destino).
   - `observacoes`, `data_confirmacao`.
 - **Relacionamentos:** BelongsTo `periodoRematricula`, `matriculaOrigem`/`novaMatricula` (`Matricula`), `turmaDestino` (`Turma`), `serieDestino` (`Serie`), `turnoPretendido` (`Turno`), `solicitante` (`User`), `contrato` (`Contrato`).
-- **Fluxo completo (Onda 7):** `RematriculaService::efetivar()` cria a nova Matrícula e o Contrato (com `data_aceite = hoje`), gera as faturas via `GeracaoFaturasContratoService`, e envia o contrato para assinatura via `AssinafyService::enviarContrato()`. `AssinafyService::handleWebhook()` identifica o contrato pela nova relação `Contrato::rematricula()` e, ao receber a confirmação de assinatura, marca a `Rematricula` como `confirmada`.
+- **Fluxo completo (Onda 7):** `RematriculaService::efetivar()` cria a nova Matrícula e o Contrato (sem `data_aceite`, que só é gravada quando o contrato é assinado), gera as faturas via `GeracaoFaturasContratoService` (vencimentos a partir do dia da rematrícula, informado como data-base) e envia o contrato para assinatura via `AssinafyService::enviarContrato()`. A efetivação roda em transação com lock da linha e é idempotente: se `nova_matricula_id` já existe, devolve a matrícula criada sem gerar nada de novo. `AssinafyService::handleWebhook()` identifica o contrato pela nova relação `Contrato::rematricula()` e, ao receber a confirmação de assinatura, marca a `Rematricula` como `confirmada`.
 
 ---
 

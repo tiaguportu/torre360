@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\Facades\Cache;
@@ -35,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Modo estrito de lazy loading (N+1 vira exceção): ligado nos testes ou, em outros ambientes, só por opt-in
+        // explícito (DB_PREVENT_LAZY_LOADING=true). Não depende de APP_ENV=production: o servidor pode rodar com
+        // outro APP_ENV e um N+1 não pode derrubar a página dos usuários.
+        Model::preventLazyLoading(app()->environment('testing') || (bool) config('database.prevent_lazy_loading'));
+
         // Parâmetros do Lead Score editados no painel sobrescrevem config/lead_score.php.
         LeadScoreConfiguracao::aplicar();
 

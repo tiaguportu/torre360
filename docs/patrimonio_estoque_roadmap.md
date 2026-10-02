@@ -1,35 +1,43 @@
-# Patrimônio e Estoque Escolar (Onda 16) — Proposta para o Futuro
+# Patrimônio e Estoque Escolar (Onda 16)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementado** (patrimônio). Este documento descreve o escopo e as decisões de
+> modelagem; detalhes de uso ficam no texto de Ajuda da tela **Bens Patrimoniais**, grupo
+> **Patrimônio** do menu. O estoque de consumíveis (fase 2 do escopo original) **não foi
+> implementado** nesta entrega.
 
 ## Contexto
 
 Módulo clássico de sistemas de gestão escolar completos (controle de bens — computadores,
 mobiliário, material de laboratório — e estoque de consumíveis), não coberto pela lista de
-marketing do Sponte nem pelas Ondas 1-8. Confirmado: não existe hoje nenhum model,
-migration ou tela relacionada a patrimônio/estoque no Torre360.
+marketing do Sponte nem pelas Ondas 1-8.
 
-## Escopo
+## Como foi implementado
 
-### Modelos novos
-- `BemPatrimonial`: descrição, número de patrimônio, categoria (equipamento de
-  informática, mobiliário, material pedagógico etc.), data de aquisição, valor de
-  aquisição, unidade/sala onde está alocado, status (em uso/em manutenção/baixado).
-- `MovimentacaoPatrimonio`: histórico de transferência entre unidades/salas ou mudança de
-  status, para saber "onde está" e "o que já aconteceu" com o bem.
-- Opcional, fase 2: `ItemEstoque`/`MovimentacaoEstoque` para consumíveis (material de
-  limpeza, papelaria), separado do patrimônio (bens duráveis) por ter lógica de
-  entrada/saída por quantidade, não por item único.
+- `BemPatrimonial` (`app/Models/BemPatrimonial.php`): descrição, número de patrimônio
+  (único), categoria, data e valor de aquisição, unidade/sala de alocação, fornecedor,
+  status (`StatusBemPatrimonial`: Em Uso/Em Manutenção/Baixado). Resource em
+  `/admin/bem-patrimonials` (grupo **Patrimônio**).
+- `MovimentacaoPatrimonio` (`app/Models/MovimentacaoPatrimonio.php`): histórico de
+  transferências (unidade/sala anterior → nova) e mudanças de status (status anterior →
+  novo), com quem registrou e quando. Exibido como relation manager somente leitura
+  ("Movimentações") dentro do cadastro do bem — os registros só são criados pelas ações
+  abaixo, não por um formulário próprio.
+- **Ação "Transferir"** (`BemPatrimonial::transferir()`): move o bem para outra
+  unidade/sala e grava a movimentação com o histórico de onde ele estava.
+- **Ação "Mudar Status"** (`BemPatrimonial::mudarStatus()`): altera o status (ex.: marcar
+  em manutenção ou dar baixa) e grava a movimentação com o status anterior/novo.
+- Reaproveita `Unidade`/`Sala` (Onda 4) e `Fornecedor` (já existente) como referências —
+  nenhum cadastro novo para essas entidades.
+- Não é dado sensível: permissões restritas a `secretaria`/`admin`/`super_admin` (quem
+  cuida do inventário físico), mesmo nível de acesso do restante da secretaria.
+- Testes em `tests/Feature/BemPatrimonialTest.php` (model, as duas ações e o relation
+  manager de histórico).
 
-### Telas
-- Cadastro de bens patrimoniais, com histórico de movimentação.
-- Relatório por unidade/sala (útil para inventário físico periódico).
-- Ação "Dar baixa" (bem descartado/vendido/perdido), com motivo.
+## Não incluído nesta entrega
 
-## Dependências já satisfeitas
-
-- `Unidade`/`Sala` (Onda 4) já existem como referência de onde um bem está alocado.
-- `Fornecedor` (já existente) pode ser reaproveitado para registrar de quem o bem foi
-  comprado, sem precisar de um cadastro de fornecedor próprio para este módulo.
+- **Estoque de consumíveis** (`ItemEstoque`/`MovimentacaoEstoque` do escopo original): já
+  estava marcado como "fase 2 opcional" na proposta original, por ter lógica de
+  entrada/saída por quantidade, diferente da lógica de item único do patrimônio. Fica para
+  quando houver demanda real por controlar consumíveis (material de limpeza, papelaria).
+- Relatório de inventário por unidade/sala: a listagem já filtra por unidade e por status,
+  mas uma tela de "inventário físico periódico" dedicada não foi incluída.

@@ -1,49 +1,55 @@
-# Bolsas e Descontos Educacionais (Onda 14) — Proposta para o Futuro
+# Bolsas e Descontos Educacionais (Onda 14)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementado.** Este documento descreve o escopo e as decisões de modelagem;
+> detalhes de uso ficam nos textos de Ajuda das telas (**Tipos de Bolsa** e **Bolsas
+> Concedidas**, grupo **Financeiro** do menu).
 
 ## Contexto
 
 Módulo financeiro comum em escolas particulares brasileiras (bolsa de estudo, desconto por
 convênio com empresa, desconto família/irmãos), não coberto pela lista de marketing do
-Sponte nem pelas Ondas 1-8. Tem peso financeiro real — hoje o desconto só existe lançado
-manualmente, fatura a fatura, sem critério, aprovação ou rastreabilidade.
+Sponte nem pelas Ondas 1-8. Tem peso financeiro real — antes desta onda o desconto só
+existia lançado manualmente, fatura a fatura, sem critério, aprovação ou rastreabilidade.
 
-## O que já existe (ponto de partida)
+## O que já existia (ponto de partida)
 
-- `ItemFatura` já tem `tipo_desconto` (`absoluto` ou `percentual`) e `desconto`, usados no
-  cálculo de `Fatura::valor()` — mas é um desconto solto por item/fatura, lançado à mão,
-  sem vínculo com um motivo, um percentual recorrente ou uma aprovação.
-- Não existe nenhuma entidade "Bolsa" ou "Convênio" — nada que relacione um aluno/contrato
-  a um desconto recorrente com critério de concessão e renovação.
+- `ItemFatura` já tinha `tipo_desconto` (`absoluto` ou `percentual`) e `desconto`, usados
+  no cálculo de `Fatura::valor()` — mas era um desconto solto por item/fatura, lançado à
+  mão, sem vínculo com um motivo, um percentual recorrente ou uma aprovação.
+- Não existia nenhuma entidade "Bolsa" ou "Convênio" — nada que relacionasse um
+  aluno/contrato a um desconto recorrente com critério de concessão e renovação.
 
-## Escopo
+## Como foi implementado
 
-### Modelos novos
-- `TipoBolsa` (ou `TipoConvenio`): nome (ex.: "Bolsa Filantrópica", "Convênio Empresa X",
-  "Desconto Irmãos"), percentual máximo, exige aprovação (boolean), critério de renovação
-  em texto livre (frequência mínima, nota mínima etc. — texto descritivo, não uma regra
-  automática nesta primeira versão).
-- `BolsaConcedida`: `matricula_id` (ou `contrato_id`), `tipo_bolsa_id`, percentual
-  concedido, data de início, data de fim (nullable — null = enquanto durar a matrícula),
-  status (solicitada/aprovada/recusada/encerrada), aprovado_por_user_id, observação.
+- `TipoBolsa` (`app/Models/TipoBolsa.php`): nome, percentual máximo, `exige_aprovacao`
+  (boolean), critério de renovação em texto livre. Resource em `/admin/tipo-bolsas`.
+- `BolsaConcedida` (`app/Models/BolsaConcedida.php`): `matricula_id`, `tipo_bolsa_id`,
+  percentual, vigência (`data_inicio`/`data_fim`, nullable = enquanto durar a matrícula),
+  status (`StatusBolsa`: Solicitada/Aprovada/Recusada/Encerrada), aprovador, observação.
+  Resource em `/admin/bolsa-concedidas`.
+- **Fluxo de aprovação:** ao criar uma concessão, se o `TipoBolsa` **não** exige aprovação
+  (`exige_aprovacao = false`), ela já nasce com status Aprovada
+  (`CreateBolsaConcedida::mutateFormDataBeforeCreate()`). Caso contrário, nasce Solicitada
+  e aparecem as ações **Aprovar** (registra `aprovado_por_user_id`) e **Recusar** (com
+  motivo) na listagem. Uma bolsa aprovada tem a ação **Encerrar**, que fecha a vigência.
+- `BolsaConcedida::isAtiva()`: aprovada, já começou e ainda não terminou (ou sem fim
+  definido). `BolsaConcedida::percentualAtivoPara(Matricula $matricula)`: soma o
+  percentual de todas as bolsas ativas da matrícula, limitado a 100.
+- **Integração automática com o financeiro:** `GeracaoFaturasContratoService::gerar()`
+  (Onda 7) consulta `BolsaConcedida::percentualAtivoPara()` do contrato e aplica o
+  percentual em `tipo_desconto`/`desconto` de **cada** item de fatura gerado (entrada e
+  parcelas) — o financeiro não precisa lançar o desconto à mão fatura a fatura. Sem bolsa
+  ativa, o comportamento é idêntico ao anterior (desconto 0, absoluto).
+- Permissões (`TipoBolsa`/`BolsaConcedida`) restritas a `secretaria`/`admin`/`super_admin`
+  — é dado financeiro.
+- Testes em `tests/Feature/BolsaConcedidaTest.php` (model + fluxo de aprovação) e
+  `tests/Feature/GeracaoFaturasComBolsaTest.php` (integração com a geração de faturas).
 
-### Integração com o financeiro já existente
-- Ao gerar as faturas do contrato (`GeracaoFaturasContratoService`, Onda 7), aplicar
-  automaticamente o percentual de qualquer `BolsaConcedida` ativa no período, em vez de o
-  financeiro lançar o desconto à mão em cada fatura gerada.
-- Relatório de bolsas concedidas (quantidade, percentual médio, impacto no valor total
-  faturado) — útil para a direção acompanhar o custo da política de bolsas.
+## Não incluído nesta entrega
 
-### Telas
-- Cadastro de `TipoBolsa` (tabela auxiliar simples).
-- Resource de `BolsaConcedida` com fluxo de aprovação (solicitar → aprovar/recusar).
-
-## Dependências já satisfeitas
-
-- `ItemFatura.tipo_desconto`/`desconto` já resolvem o cálculo do valor com desconto — a
-  bolsa só precisa gerar esses itens automaticamente, não reimplementar o cálculo.
-- `GeracaoFaturasContratoService` (Onda 7) já é o ponto certo para plugar a aplicação
-  automática do desconto na geração de cada fatura.
+- Relatório dedicado de bolsas concedidas (quantidade, percentual médio, impacto no valor
+  total faturado) — a listagem já permite filtrar por status, mas um relatório/dashboard
+  próprio fica para um incremento futuro, se a direção sentir falta.
+- Validação automática do critério de renovação (frequência mínima, nota mínima etc.) — o
+  campo existe como texto livre informativo; não há checagem automática que suspenda uma
+  bolsa quando o critério deixa de ser cumprido.

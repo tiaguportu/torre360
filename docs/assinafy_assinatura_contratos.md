@@ -53,7 +53,9 @@ Regras:
   `document_ready`; na consulta ativa usa a data da última assinatura informada pelo Assinafy (se não houver, a hora da
   conclusão detectada). É gravada ao passar a "assinado" e, na consulta ativa, corrigida pela data real das assinaturas.
   Obs.: contratos criados pelo Assistente de Matrícula ou pela ação **Gerar contrato** recebem `data_aceite = agora` na
-  criação; ao serem assinados esse valor é substituído pela data da conclusão das assinaturas.
+  criação; ao serem assinados esse valor é substituído pela data da conclusão das assinaturas. Os contratos da
+  **Rematrícula Online** já nascem **sem** `data_aceite` (ela só passa a existir na assinatura); as faturas deles partem
+  do dia da rematrícula, então a assinatura não altera os vencimentos.
 - **O webhook do Assinafy não é assinado** ("The envelopes do not have cryptographic signature"). Por isso, quando há
   credenciais da API, a conclusão só é aceita **depois de consultar o documento na API**; se a API não confirmar (ou
   estiver fora do ar), o status é mantido e a reconciliação resolve depois. O HMAC (`ASSINAFY_WEBHOOK_SECRET`) só é

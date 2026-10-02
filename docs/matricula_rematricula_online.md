@@ -38,12 +38,26 @@ campanha tinha um `template_contrato_id`), e já marcava `Rematricula.status` co
    (`PeriodoRematricula.quantidade_parcelas_padrao`, `valor_entrada_padrao`). Esse
    serviço foi extraído da ação manual "Gerar Faturas Automaticamente" de
    `Contratos > Editar` (que continua existindo e funcionando do mesmo jeito, agora só
-   chamando o serviço em vez de ter a lógica duplicada).
+   chamando o serviço em vez de ter a lógica duplicada). Os vencimentos partem do **dia
+   da rematrícula** (data-base passada a `gerar()`): o contrato nasce sem `data_aceite`,
+   que só é gravada quando ele é assinado, então a assinatura não desalinha as faturas
+   já geradas.
 2. **Envio automático para assinatura:** logo depois, `AssinafyService::enviarContrato()`
    é chamado automaticamente. Se o envio for bem-sucedido, `Rematricula.status` vira
    `AguardandoAssinatura` (não `Confirmada`). Se falhar (ex.: Assinafy não configurado,
    ou alguma falha de API), a rematrícula fica em `DadosConfirmados` — a secretaria
    resolve manualmente pela tela de Contrato, sem travar o processo da família.
+   **Idempotência:** `efetivar()` roda numa transação com lock da linha da `Rematricula`
+   e, se `nova_matricula_id` já existe, devolve a matrícula criada sem gerar matrícula,
+   contrato, faturas nem novo documento no Assinafy. Falhas no meio (ex.: entrada maior
+   que o valor do contrato) desfazem tudo, então uma nova tentativa não duplica nada. O
+   envio ao Assinafy acontece depois da transação, para não segurar o lock durante as
+   chamadas HTTP. As ações "Realizar Rematrícula" (Portal) e "Efetivar Rematrícula"
+   (admin) só aparecem enquanto não há nova matrícula.
+   **Aviso à família:** o Portal informa o estado real após efetivar — "Rematrícula
+   Confirmada!" só quando não há contrato a assinar; com o contrato enviado, "Falta
+   assinar o contrato"; se o envio falhou, "Dados registrados — contrato ainda não
+   enviado". As duas últimas ficam fixas na tela e levam a Documentos e Contratos.
 3. **Confirmação pelo webhook:** `AssinafyService::handleWebhook()` agora também verifica
    se o contrato assinado pertence a uma `Rematricula` (`Contrato::rematricula()`, nova
    relação) — se sim, e o evento é de assinatura concluída, marca
@@ -90,8 +104,29 @@ nem permitir navegar por nenhum outro registro do sistema.
 
 ## 4. Testes
 
-`GeracaoFaturasContratoServiceTest`, `EditContratoGerarFaturasTest` (regressão da ação
-manual após a extração), `RematriculaAssinaturaTest` (envio automático + confirmação via
-webhook + idempotência), `ConviteMatriculaTest` (serviço), `ConviteMatriculaHttpTest`
-(rotas públicas + ação admin). `RematriculaTest` (já existente) foi atualizado para
-refletir que a rematrícula não fica mais `Confirmada` até a assinatura.
+`GeracaoFaturasContratoServiceTest` (inclui a data-base explícita), `EditContratoGerarFaturasTest`
+(regressão da ação manual após a extração), `RematriculaAssinaturaTest`, `ConviteMatriculaTest`
+(serviço), `ConviteMatriculaHttpTest` (rotas públicas + ação admin). `RematriculaTest` (já
+existente) foi atualizado para refletir que a rematrícula não fica mais `Confirmada` até a
+assinatura.
+
+`RematriculaAssinaturaTest` cobre: envio automático, confirmação via webhook, `efetivar()`
+idempotente (chamadas repetidas não duplicam matrícula/contrato/faturas/envio), rollback
+quando a geração de faturas falha, vencimentos estáveis após a assinatura e, no Portal, a
+visibilidade da ação "Realizar Rematrícula" e as três mensagens de resultado.
+
+**Atenção ao rodar testes que passam por `efetivar()`:** o `.env` local pode trazer
+credenciais reais do Assinafy (inclusive de produção), e o `phpunit.xml` não as zera. Todo
+teste que efetiva uma rematrícula com template de contrato deve bloquear HTTP real
+(`Http::preventStrayRequests()`) e esvaziar `services.assinafy.key` no `setUp`, como fazem
+`RematriculaTest` e `RematriculaAssinaturaTest`; senão `enviarContrato()` chama a API de verdade.
+
+## 5. Limitações conhecidas
+
+- O lock de linha de `efetivar()` (`lockForUpdate`) não é exercitado pela suíte: ela roda em
+  SQLite em memória, onde o lock não tem efeito. Os testes cobrem a idempotência sequencial e o rollback.
+- `AguardandoAssinatura` só é gravado no primeiro envio, dentro de `efetivar()`. Se esse envio
+  falhar e o contrato for enviado depois (tela de Contratos ou Documentos e Contratos), a
+  rematrícula continua em `DadosConfirmados` até a assinatura, quando vai para `Confirmada`.
+- O Portal grava `data_confirmacao` já na confirmação dos dados pela família, então a coluna
+  aparece preenchida enquanto a rematrícula ainda aguarda a assinatura.

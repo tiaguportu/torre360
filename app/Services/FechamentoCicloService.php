@@ -34,7 +34,7 @@ class FechamentoCicloService
             ->where('turma_id', $matricula->turma_id)
             ->where('disciplina_id', $disciplina->id)
             ->whereHas('etapaAvaliativa', fn ($q) => $q->where('periodo_letivo_id', $periodoLetivo->id))
-            ->with(['categoria', 'etapaAvaliativa'])
+            ->with(['categoria.substituidas', 'etapaAvaliativa'])
             ->get();
 
         $notasAluno = $matricula->notas()->whereNotNull('valor')->get()->keyBy('avaliacao_id');
