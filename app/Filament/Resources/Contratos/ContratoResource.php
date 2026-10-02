@@ -43,7 +43,7 @@ class ContratoResource extends Resource
         $emailsClean = $emails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
 
         $count = static::getModel()::query()
-            ->whereNotIn('assinafy_status', ['signed', 'completed'])
+            ->naoAssinado()
             ->get()
             ->filter(function (Contrato $contrato) use ($emailsClean) {
                 $statusSignatarios = $contrato->getStatusSignatarios();

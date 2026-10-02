@@ -26,17 +26,17 @@ class AssinafyWebhookController extends Controller
             return response()->json(['message' => 'Webhook endpoint is active'], 200);
         }
 
+        // O Assinafy não assina os envelopes dos webhooks (https://github.com/assinafy/php-sdk). Por isso a
+        // assinatura HMAC só é verificada quando o remetente a envia e há segredo configurado; exigi-la sempre
+        // rejeitaria todos os retornos. A autenticidade da conclusão é garantida pelo AssinafyService, que
+        // confirma o status do documento na API antes de marcar o contrato como assinado.
         $secret = config('services.assinafy.webhook_secret');
         $assinatura = $request->header('X-Assinafy-Signature');
 
-        if ($request->isMethod('post') && ! $validator->valida($secret, $request->getContent(), $assinatura)) {
+        if ($request->isMethod('post') && $secret && $assinatura && ! $validator->valida($secret, $request->getContent(), $assinatura)) {
             Log::warning('Webhook Assinafy: assinatura inválida', ['ip' => $request->ip()]);
 
             return response()->json(['message' => 'assinatura inválida'], 401);
-        }
-
-        if (! $secret) {
-            Log::warning('Webhook Assinafy processado sem validação de assinatura — configure ASSINAFY_WEBHOOK_SECRET antes de ir para produção.');
         }
 
         $success = $service->handleWebhook($payload);

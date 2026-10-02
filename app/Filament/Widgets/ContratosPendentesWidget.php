@@ -46,7 +46,7 @@ class ContratosPendentesWidget extends Widget
 
         return Contrato::query()
             ->with(['templateContrato', 'matricula.pessoa', 'matricula.turma.serie'])
-            ->whereNotIn('assinafy_status', ['signed', 'completed'])
+            ->naoAssinado()
             ->where(function ($query) use ($pessoasIds) {
                 $query->whereHas('matricula', function ($qMat) use ($pessoasIds) {
                     $qMat->whereIn('pessoa_id', $pessoasIds)

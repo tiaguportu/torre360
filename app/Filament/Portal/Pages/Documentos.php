@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Enums\StatusAssinaturaContrato;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Contrato;
 use App\Services\AssinafyService;
@@ -47,20 +48,8 @@ class Documentos extends Page implements HasTable
                 TextColumn::make('assinafy_status')
                     ->label('Assinatura')
                     ->badge()
-                    ->color(fn (?string $state): string => match ($state) {
-                        'signed', 'completed' => 'success',
-                        'enviado', 'pending' => 'warning',
-                        'erro_envio', 'rejected', 'canceled' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'signed', 'completed' => 'Assinado',
-                        'enviado', 'pending' => 'Pendente',
-                        'erro_envio' => 'Erro no Envio',
-                        'rejected' => 'Recusado',
-                        'canceled' => 'Cancelado',
-                        default => 'Não enviado',
-                    }),
+                    ->color(fn (?string $state): string => StatusAssinaturaContrato::corDe($state))
+                    ->formatStateUsing(fn (?string $state): string => StatusAssinaturaContrato::rotuloDe($state, 'Não enviado')),
             ])
             ->recordActions([
                 Action::make('visualizar')
@@ -79,12 +68,12 @@ class Documentos extends Page implements HasTable
                     ->color('success')
                     ->url(fn (Contrato $record) => route('contratos.download', $record))
                     ->openUrlInNewTab()
-                    ->visible(fn (Contrato $record) => in_array($record->assinafy_status, ['signed', 'completed'])),
+                    ->visible(fn (Contrato $record) => $record->estaAssinado()),
                 Action::make('assinar')
                     ->label('Assinar Contrato')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning')
-                    ->visible(fn (Contrato $record) => ! in_array($record->assinafy_status, ['signed', 'completed']))
+                    ->visible(fn (Contrato $record) => ! $record->estaAssinado())
                     ->action(function (Contrato $record, AssinafyService $service) {
                         $result = $service->enviarContrato($record);
 

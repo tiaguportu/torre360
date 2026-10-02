@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StatusAssinaturaContrato;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,11 +27,13 @@ class Contrato extends Model
     protected $table = 'contrato';
 
     /**
-     * Status do Assinafy que indicam contrato assinado por todos os signatários.
+     * Status que indicam que TODAS as assinaturas foram coletadas. `ready`, `certificating` e
+     * `certificated` são as etapas do Assinafy após a última assinatura (mantidas como status
+     * distintos); `signed` e `completed` são valores legados.
      *
      * @var array<int, string>
      */
-    public const STATUS_ASSINADO = ['signed', 'completed'];
+    public const STATUS_ASSINADO = ['ready', 'certificating', 'certificated', 'signed', 'completed'];
 
     protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id'];
 
@@ -87,11 +90,27 @@ class Contrato extends Model
     }
 
     /**
-     * Verifica se o contrato já foi assinado (qualquer outro status, como 'pendente' ou 'enviado', conta como não assinado).
+     * Verifica se todas as assinaturas já foram coletadas (qualquer outro status, como 'pendente' ou 'enviado', conta como não assinado).
      */
     public function estaAssinado(): bool
     {
         return in_array($this->assinafy_status, self::STATUS_ASSINADO, true);
+    }
+
+    /**
+     * Status de assinatura como enum (nulo quando o valor gravado não é um dos conhecidos).
+     */
+    public function statusAssinatura(): ?StatusAssinaturaContrato
+    {
+        return filled($this->assinafy_status) ? StatusAssinaturaContrato::tryFrom($this->assinafy_status) : null;
+    }
+
+    /**
+     * Scope para contratos com todas as assinaturas coletadas.
+     */
+    public function scopeAssinado(Builder $query): Builder
+    {
+        return $query->whereIn('assinafy_status', self::STATUS_ASSINADO);
     }
 
     /**
@@ -191,7 +210,7 @@ class Contrato extends Model
         $signatarios = $this->getSignatarios();
         $log = $this->assinafy_request_log ?? [];
         $logStatus = $log['signers_status'] ?? [];
-        $contratoConcluido = in_array($this->assinafy_status, ['signed', 'completed']);
+        $contratoConcluido = $this->estaAssinado();
 
         // Extrai dados de assinatura gravados no histórico de logs se disponíveis
         $extraSigners = [];

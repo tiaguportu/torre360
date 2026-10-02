@@ -8,6 +8,7 @@ use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +19,60 @@ class AssinafyService
     protected ?string $apiKey = null;
 
     protected ?string $accountId = null;
+
+    /**
+     * Status do contrato correspondente a cada evento do webhook do Assinafy; eventos fora desta lista são
+     * apenas informativos e não alteram o status. Catálogo oficial: docs/API_REFERENCE.md do SDK do Assinafy.
+     *
+     * @var array<string, string>
+     */
+    private const EVENTO_PARA_STATUS = [
+        'document_uploaded' => 'enviado',
+        'signature_requested' => 'enviado',
+        'signer_signed_document' => 'enviado', // assinatura individual: o documento segue pendente até document_ready
+        'document_ready' => 'ready', // todos os signatários assinaram
+        'signer_rejected_document' => 'rejected',
+        'user_rejected_document' => 'canceled',
+        'document_processing_failed' => 'erro_envio',
+        // Nomes legados (não constam no catálogo atual do Assinafy), mantidos por compatibilidade
+        'signer_signed' => 'enviado',
+        'signature_completed' => 'enviado',
+        'document_signed' => 'signed',
+        'document_completed' => 'signed',
+        'document_refused' => 'rejected',
+    ];
+
+    /**
+     * Status do documento na API do Assinafy → status do contrato (ausente = não altera o status).
+     *
+     * @var array<string, string>
+     */
+    private const STATUS_API_PARA_STATUS = [
+        'pending_signature' => 'enviado',
+        'ready' => 'ready',
+        'certificating' => 'certificating',
+        'certificated' => 'certificated',
+        'rejected_by_signer' => 'rejected',
+        'rejected_by_user' => 'canceled',
+        'expired' => 'expired',
+        'failed' => 'erro_envio',
+    ];
+
+    /**
+     * Ordem das etapas até a conclusão; um contrato já assinado nunca volta para uma etapa anterior.
+     *
+     * @var array<string, int>
+     */
+    private const ORDEM_ETAPAS = [
+        'pendente' => 0,
+        'pending' => 0,
+        'enviado' => 1,
+        'ready' => 2,
+        'certificating' => 3,
+        'certificated' => 4,
+        'signed' => 4,
+        'completed' => 4,
+    ];
 
     public function __construct()
     {
@@ -381,30 +436,73 @@ class AssinafyService
         }
     }
 
+    /**
+     * Processa um webhook do Assinafy.
+     *
+     * O Assinafy NÃO assina os envelopes dos webhooks; por isso a conclusão das assinaturas só é aceita
+     * depois de consultar o documento na API (veja confirmarConclusaoNaApi). Eventos informativos
+     * (visualização, verificação de e-mail etc.) apenas enriquecem o histórico e não alteram o status.
+     */
     public function handleWebhook(array $payload): bool
     {
-        // Conforme documentação: object['id'] contém o ID do documento
-        $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? $payload['id'] ?? null;
+        // Conforme documentação: object['id'] contém o ID do documento ($payload['id'] é o ID da atividade)
+        $idAssinafy = $payload['object']['id'] ?? $payload['document_id'] ?? null;
         $event = $payload['event'] ?? null;
         $fileName = $payload['object']['name'] ?? null;
         Log::info('Processando webhook Assinafy', compact('idAssinafy', 'event', 'fileName'));
 
-        // Mapeia eventos para status do contrato
-        $eventLower = strtolower((string) $event);
-
-        $status = match ($eventLower) {
-            'document_signed', 'document_completed' => 'signed',
-            'signer_signed_document', 'signer_signed', 'signature_completed' => 'enviado',
-            'document_refused' => 'refused',
-            'document_ready' => 'ready',
-            'document_uploaded', 'signature_requested' => 'enviado',
-            default => $event ?? 'unknown'
-        };
-
-        if (! $idAssinafy || ! $status) {
+        if (! $idAssinafy) {
             return false;
         }
 
+        $eventLower = strtolower((string) $event);
+        $status = self::EVENTO_PARA_STATUS[$eventLower] ?? null;
+
+        $contrato = $this->localizarContrato((string) $idAssinafy, $fileName);
+
+        if (! $contrato) {
+            return false;
+        }
+
+        $requestLog = $this->registrarEventoNoHistorico($contrato, $payload, $eventLower);
+
+        // Evento informativo: só o histórico é atualizado
+        if ($status === null) {
+            $contrato->update(['assinafy_id' => $idAssinafy, 'assinafy_request_log' => $requestLog]);
+
+            return true;
+        }
+
+        $concluidoEm = null;
+
+        if (in_array($status, Contrato::STATUS_ASSINADO, true)) {
+            $confirmacao = $this->confirmarConclusaoNaApi($contrato);
+
+            if (! $confirmacao['confirmado']) {
+                Log::warning('Webhook Assinafy: conclusão não confirmada pela API; o status será reconciliado depois.', [
+                    'contrato_id' => $contrato->id,
+                    'event' => $event,
+                ]);
+                $contrato->update(['assinafy_id' => $idAssinafy, 'assinafy_request_log' => $requestLog]);
+
+                return true;
+            }
+
+            $status = $confirmacao['status'] ?? $status;
+            $concluidoEm = $this->momentoDoEvento($payload);
+        }
+
+        $contrato->assinafy_id = $idAssinafy;
+        $this->aplicarStatus($contrato, $status, $requestLog, $concluidoEm);
+
+        return true;
+    }
+
+    /**
+     * Localiza o contrato pelo ID do documento no Assinafy ou, como alternativa, pelo número no nome do arquivo.
+     */
+    private function localizarContrato(string $idAssinafy, ?string $fileName): ?Contrato
+    {
         $contrato = Contrato::where('assinafy_id', $idAssinafy)->first();
 
         // Fallback: se não achar pelo assinafy_id, tenta extrair ID do nome do arquivo (ex: Contrato - Escola Torre de Marfim - Aluno - 136.pdf)
@@ -412,61 +510,187 @@ class AssinafyService
             $contrato = Contrato::find($matches[1]);
         }
 
-        if ($contrato) {
-            $requestLog = $contrato->assinafy_request_log ?? [];
-            $signerEmail = $payload['object']['signer']['email']
-                ?? $payload['signer']['email']
-                ?? $payload['email']
-                ?? null;
-
-            if ($signerEmail) {
-                $signerEmailClean = strtolower(trim($signerEmail));
-                $signersStatus = $requestLog['signers_status'] ?? [];
-
-                // Se o evento é de um signatário individual assinando, grava como 'signed' para aquele signatário
-                $isSignerSignedEvent = in_array($eventLower, ['signer_signed_document', 'signer_signed', 'document_signed', 'document_completed']);
-                $signersStatus[$signerEmailClean] = [
-                    'status' => $isSignerSignedEvent ? 'signed' : (in_array($status, ['signed', 'completed']) ? 'signed' : $status),
-                    'signed_at' => now()->toDateTimeString(),
-                ];
-                $requestLog['signers_status'] = $signersStatus;
-            }
-
-            $requestLog['webhook_last'] = $payload;
-
-            $updateData = [
-                'assinafy_id' => $idAssinafy,
-                'assinafy_status' => $status,
-                'assinafy_request_log' => $requestLog,
-            ];
-
-            if ($status === 'signed' || $status === 'completed') {
-                $updateData['data_aceite'] = now();
-            }
-
-            $contrato->update($updateData);
-
-            // Se este contrato é de uma Rematrícula Online aguardando assinatura, a
-            // confirmação do documento assinado é o que efetivamente conclui o processo.
-            if (in_array($status, ['signed', 'completed'], true)) {
-                $rematricula = $contrato->rematricula;
-
-                if ($rematricula && $rematricula->status !== StatusRematricula::Confirmada) {
-                    $rematricula->update([
-                        'status' => StatusRematricula::Confirmada,
-                        'data_confirmacao' => now(),
-                    ]);
-                }
-            }
-
-            return true;
-        }
-
-        return false;
+        return $contrato;
     }
 
     /**
-     * Consulta o documento na API da Assinafy e atualiza os status individuais dos signatários no contrato com fallback multi-ambiente.
+     * Grava o último webhook e o status individual do signatário (quando o evento é de assinatura/recusa).
+     *
+     * @return array<string, mixed> histórico atualizado (ainda não salvo)
+     */
+    private function registrarEventoNoHistorico(Contrato $contrato, array $payload, string $evento): array
+    {
+        $requestLog = $contrato->assinafy_request_log ?? [];
+
+        $emailDoSignatario = $payload['subject']['email']
+            ?? $payload['object']['signer']['email']
+            ?? $payload['signer']['email']
+            ?? $payload['payload']['signer_email']
+            ?? $payload['email']
+            ?? null;
+
+        $statusDoSignatario = match ($evento) {
+            'signer_signed_document', 'signer_signed' => 'signed',
+            'signer_rejected_document' => 'refused',
+            default => null,
+        };
+
+        if ($emailDoSignatario && $statusDoSignatario) {
+            $emailLimpo = strtolower(trim($emailDoSignatario));
+            $requestLog['signers_status'][$emailLimpo] = [
+                'status' => $statusDoSignatario,
+                'signed_at' => $this->momentoDoEvento($payload)->toDateTimeString(),
+            ];
+        }
+
+        $requestLog['webhook_last'] = $payload;
+
+        return $requestLog;
+    }
+
+    /**
+     * Confirma, consultando o documento na API, que todas as assinaturas foram coletadas e devolve a etapa real
+     * (ready, certificating ou certificated). Sem credenciais da API (ambiente sem integração) o payload é aceito.
+     *
+     * @return array{confirmado: bool, status: ?string}
+     */
+    private function confirmarConclusaoNaApi(Contrato $contrato): array
+    {
+        if (empty($this->apiKey)) {
+            return ['confirmado' => true, 'status' => null];
+        }
+
+        try {
+            $consulta = $this->consultarDocumento($contrato);
+        } catch (\Throwable $e) {
+            Log::error("Falha ao confirmar assinatura no Assinafy para Contrato #{$contrato->id}: ".$e->getMessage());
+
+            return ['confirmado' => false, 'status' => null];
+        }
+
+        $statusDoContrato = $consulta['ok']
+            ? (self::STATUS_API_PARA_STATUS[$consulta['dados']['status'] ?? ''] ?? null)
+            : null;
+
+        if ($statusDoContrato && in_array($statusDoContrato, Contrato::STATUS_ASSINADO, true)) {
+            return ['confirmado' => true, 'status' => $statusDoContrato];
+        }
+
+        return ['confirmado' => false, 'status' => null];
+    }
+
+    /**
+     * Momento do evento (campo created_at do envelope, em segundos Unix) ou, se ausente, agora.
+     */
+    private function momentoDoEvento(array $payload): Carbon
+    {
+        $criadoEm = $payload['created_at'] ?? null;
+
+        return is_numeric($criadoEm) && (int) $criadoEm > 0
+            ? Carbon::createFromTimestamp((int) $criadoEm, config('app.timezone'))
+            : now();
+    }
+
+    /**
+     * Aplica o novo status ao contrato respeitando a ordem das etapas (um contrato assinado nunca "volta")
+     * e define data_aceite como o momento em que a última assinatura foi coletada.
+     *
+     * @param  array<string, mixed>  $requestLog  histórico já atualizado, gravado junto
+     * @param  Carbon|null  $concluidoEm  quando todas as assinaturas foram coletadas (se conhecido)
+     * @param  bool  $sincronizarAceite  também corrige data_aceite de um contrato já assinado, usando $concluidoEm
+     */
+    private function aplicarStatus(Contrato $contrato, string $novoStatus, array $requestLog, ?Carbon $concluidoEm = null, bool $sincronizarAceite = false): void
+    {
+        $statusAtual = $contrato->assinafy_status;
+        $assinadoAntes = in_array($statusAtual, Contrato::STATUS_ASSINADO, true);
+        $dados = ['assinafy_request_log' => $requestLog];
+
+        if ($this->etapaPermitida($statusAtual, $novoStatus)) {
+            $dados['assinafy_status'] = $novoStatus;
+
+            if (! $assinadoAntes && in_array($novoStatus, Contrato::STATUS_ASSINADO, true)) {
+                $dados['data_aceite'] = $concluidoEm ?? now();
+            }
+        }
+
+        $statusFinal = $dados['assinafy_status'] ?? $statusAtual;
+        $assinadoAgora = in_array($statusFinal, Contrato::STATUS_ASSINADO, true);
+
+        if ($sincronizarAceite && $concluidoEm && $assinadoAgora) {
+            $dados['data_aceite'] = $concluidoEm;
+        }
+
+        $contrato->update($dados);
+
+        // Se este contrato é de uma Rematrícula Online aguardando assinatura, a
+        // confirmação do documento assinado é o que efetivamente conclui o processo.
+        if ($assinadoAgora) {
+            $this->confirmarRematricula($contrato);
+        }
+    }
+
+    /**
+     * Regra de progressão: antes da conclusão qualquer status pode ser aplicado; depois, só etapas mais avançadas.
+     */
+    private function etapaPermitida(?string $statusAtual, string $novoStatus): bool
+    {
+        if ($statusAtual === $novoStatus) {
+            return false;
+        }
+
+        if (in_array($statusAtual, Contrato::STATUS_ASSINADO, true)) {
+            return (self::ORDEM_ETAPAS[$novoStatus] ?? -1) > (self::ORDEM_ETAPAS[$statusAtual] ?? PHP_INT_MAX);
+        }
+
+        return true;
+    }
+
+    private function confirmarRematricula(Contrato $contrato): void
+    {
+        $rematricula = $contrato->rematricula;
+
+        if ($rematricula && $rematricula->status !== StatusRematricula::Confirmada) {
+            $rematricula->update([
+                'status' => StatusRematricula::Confirmada,
+                'data_confirmacao' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Consulta o documento na API do Assinafy (tentando os ambientes configurados e o fallback).
+     *
+     * @return array{ok: bool, dados: array<string, mixed>, url: ?string, erro: ?string}
+     */
+    private function consultarDocumento(Contrato $contrato): array
+    {
+        $ultimoErro = null;
+
+        foreach ($this->getApiUrlsToTry($contrato) as $url) {
+            $res = Http::withHeaders([
+                'X-Api-Key' => $this->apiKey,
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->get("{$url}/documents/{$contrato->assinafy_id}");
+
+            if ($res->successful()) {
+                return ['ok' => true, 'dados' => $res->json('data') ?? $res->json() ?? [], 'url' => $url, 'erro' => null];
+            }
+
+            $ultimoErro = $res->json('message') ?? $res->body();
+        }
+
+        return [
+            'ok' => false,
+            'dados' => [],
+            'url' => null,
+            'erro' => $ultimoErro ?? 'Documento não encontrado nos ambientes da Assinafy.',
+        ];
+    }
+
+    /**
+     * Consulta o documento na API do Assinafy e atualiza o status do contrato (ready, certificating, certificated...)
+     * e os status individuais dos signatários, com fallback multi-ambiente.
      */
     public function consultarEAtualizarStatusSignatarios(Contrato $contrato): array
     {
@@ -478,35 +702,17 @@ class AssinafyService
         }
 
         try {
-            $urlsToTry = $this->getApiUrlsToTry($contrato);
-            $response = null;
-            $usedUrl = null;
+            $consulta = $this->consultarDocumento($contrato);
 
-            foreach ($urlsToTry as $url) {
-                $res = Http::withHeaders([
-                    'X-Api-Key' => $this->apiKey,
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])->get("{$url}/documents/{$contrato->assinafy_id}");
-
-                if ($res->successful()) {
-                    $response = $res;
-                    $usedUrl = $url;
-                    break;
-                }
-            }
-
-            if (! $response || ! $response->successful()) {
-                $lastErr = $response ? ($response->json('message') ?? $response->body()) : 'Documento não encontrado nos ambientes da Assinafy.';
-
+            if (! $consulta['ok']) {
                 return [
                     'success' => false,
-                    'message' => 'Erro ao consultar documento no Assinafy: '.$lastErr,
+                    'message' => 'Erro ao consultar documento no Assinafy: '.$consulta['erro'],
                 ];
             }
 
-            $docData = $response->json('data') ?? $response->json();
-            $docStatus = $docData['status'] ?? $contrato->assinafy_status;
+            $docData = $consulta['dados'];
+            $docStatus = $docData['status'] ?? null;
 
             $signersStatus = [];
 
@@ -552,22 +758,22 @@ class AssinafyService
             $requestLog = $contrato->assinafy_request_log ?? [];
             $requestLog['signers_status'] = array_merge($requestLog['signers_status'] ?? [], $signersStatus);
             $requestLog['last_check'] = now()->toDateTimeString();
-            if ($usedUrl) {
-                $requestLog['environment_url'] = $usedUrl;
+            $requestLog['api_status'] = $docStatus;
+            if ($consulta['url']) {
+                $requestLog['environment_url'] = $consulta['url'];
             }
 
-            $updateData = [
-                'assinafy_request_log' => $requestLog,
-            ];
+            $novoStatus = self::STATUS_API_PARA_STATUS[$docStatus ?? ''] ?? null;
 
-            if ($docStatus === 'signed' || $docStatus === 'completed') {
-                $updateData['assinafy_status'] = $docStatus;
-                if (! $contrato->data_aceite) {
-                    $updateData['data_aceite'] = now();
-                }
+            if ($novoStatus) {
+                $concluidoEm = in_array($novoStatus, Contrato::STATUS_ASSINADO, true)
+                    ? $this->dataDaUltimaAssinatura($signersStatus)
+                    : null;
+
+                $this->aplicarStatus($contrato, $novoStatus, $requestLog, $concluidoEm, sincronizarAceite: true);
+            } else {
+                $contrato->update(['assinafy_request_log' => $requestLog]);
             }
-
-            $contrato->update($updateData);
 
             return [
                 'success' => true,
@@ -581,6 +787,36 @@ class AssinafyService
                 'success' => false,
                 'message' => $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Data da última assinatura entre os signatários que já assinaram (nulo se nenhuma data estiver disponível).
+     *
+     * @param  array<string, array{status?: string, signed_at?: mixed}>  $signersStatus
+     */
+    private function dataDaUltimaAssinatura(array $signersStatus): ?Carbon
+    {
+        $datas = collect($signersStatus)
+            ->filter(fn (array $signatario): bool => ($signatario['status'] ?? null) === 'signed')
+            ->map(fn (array $signatario): ?Carbon => $this->interpretarData($signatario['signed_at'] ?? null))
+            ->filter();
+
+        return $datas->isEmpty() ? null : $datas->max();
+    }
+
+    private function interpretarData(mixed $valor): ?Carbon
+    {
+        if (blank($valor)) {
+            return null;
+        }
+
+        try {
+            $data = is_numeric($valor) ? Carbon::createFromTimestamp((int) $valor) : Carbon::parse($valor);
+
+            return $data->setTimezone(config('app.timezone'));
+        } catch (\Throwable) {
+            return null;
         }
     }
 

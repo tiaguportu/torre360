@@ -14,11 +14,21 @@ use App\Models\User;
 use App\Services\AssinafyService;
 use App\Services\RematriculaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class RematriculaAssinaturaTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // O .env local pode ter credenciais reais do Assinafy: o webhook não pode consultar a API de verdade.
+        Http::preventStrayRequests();
+        config(['services.assinafy.key' => '']);
+    }
 
     /**
      * @return array{rematricula: Rematricula}
@@ -93,7 +103,7 @@ class RematriculaAssinaturaTest extends TestCase
         $contrato->update(['assinafy_id' => 'DOC-TESTE-123']);
 
         $processado = app(AssinafyService::class)->handleWebhook([
-            'event' => 'document_signed',
+            'event' => 'document_ready',
             'object' => ['id' => 'DOC-TESTE-123'],
         ]);
 
@@ -112,10 +122,10 @@ class RematriculaAssinaturaTest extends TestCase
         $contrato = $rematricula->contrato;
         $contrato->update(['assinafy_id' => 'DOC-TESTE-456']);
 
-        app(AssinafyService::class)->handleWebhook(['event' => 'document_signed', 'object' => ['id' => 'DOC-TESTE-456']]);
+        app(AssinafyService::class)->handleWebhook(['event' => 'document_ready', 'object' => ['id' => 'DOC-TESTE-456']]);
         $primeiraConfirmacao = $rematricula->fresh()->data_confirmacao;
 
-        app(AssinafyService::class)->handleWebhook(['event' => 'document_signed', 'object' => ['id' => 'DOC-TESTE-456']]);
+        app(AssinafyService::class)->handleWebhook(['event' => 'document_ready', 'object' => ['id' => 'DOC-TESTE-456']]);
         $segundaConfirmacao = $rematricula->fresh()->data_confirmacao;
 
         $this->assertTrue($primeiraConfirmacao->equalTo($segundaConfirmacao));

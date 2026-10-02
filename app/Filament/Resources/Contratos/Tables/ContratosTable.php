@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Contratos\Tables;
 
+use App\Enums\StatusAssinaturaContrato;
 use App\Filament\Exports\ContratoExporter;
 use App\Models\Contrato;
 use App\Services\AssinafyService;
@@ -57,20 +58,9 @@ class ContratosTable
                 TextColumn::make('assinafy_status')
                     ->label('Assinatura')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'signed', 'completed' => 'success',
-                        'enviado', 'pending' => 'warning',
-                        'erro_envio', 'rejected', 'canceled' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'signed', 'completed' => 'Assinado',
-                        'enviado', 'pending' => 'Pendente',
-                        'erro_envio' => 'Erro no Envio',
-                        'rejected' => 'Recusado',
-                        'canceled' => 'Cancelado',
-                        default => ucfirst($state),
-                    })
+                    ->color(fn (?string $state): string => StatusAssinaturaContrato::corDe($state))
+                    ->icon(fn (?string $state): ?string => filled($state) ? StatusAssinaturaContrato::tryFrom($state)?->getIcon() : null)
+                    ->formatStateUsing(fn (?string $state): string => StatusAssinaturaContrato::rotuloDe($state))
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -96,11 +86,11 @@ class ContratosTable
             ->recordActions([
                 EditAction::make(),
                 Action::make('visualizar_contrato')
-                    ->label(fn (?Contrato $record) => $record && in_array($record->assinafy_status, ['signed', 'completed']) ? 'Ver Contrato Assinado' : 'Assinar Contrato')
-                    ->icon(fn (?Contrato $record) => $record && in_array($record->assinafy_status, ['signed', 'completed']) ? 'heroicon-o-document-magnifying-glass' : 'heroicon-o-document-check')
-                    ->color(fn (?Contrato $record) => $record && in_array($record->assinafy_status, ['signed', 'completed']) ? 'success' : 'warning')
+                    ->label(fn (?Contrato $record) => $record?->estaAssinado() ? 'Ver Contrato Assinado' : 'Assinar Contrato')
+                    ->icon(fn (?Contrato $record) => $record?->estaAssinado() ? 'heroicon-o-document-magnifying-glass' : 'heroicon-o-document-check')
+                    ->color(fn (?Contrato $record) => $record?->estaAssinado() ? 'success' : 'warning')
                     ->action(function (Contrato $record, AssinafyService $service) {
-                        if (in_array($record->assinafy_status, ['signed', 'completed'])) {
+                        if ($record->estaAssinado()) {
                             return redirect()->away(route('contratos.visualizar', $record));
                         }
 
