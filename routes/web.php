@@ -9,6 +9,7 @@ use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Crm\PesquisaVisitaController;
+use App\Http\Controllers\Crm\PortalDocumentosCandidatoController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
@@ -57,6 +58,15 @@ Route::post('/pesquisa-visita/{token}', [PesquisaVisitaController::class, 'store
     ->middleware('throttle:15,1')
     ->name('pesquisa-visita.store');
 Route::get('/pesquisa-visita/{token}/obrigado', [PesquisaVisitaController::class, 'sucesso'])->name('pesquisa-visita.sucesso');
+
+// Portal de Pré-Admissão & Checklist de Documentos do Candidato
+Route::get('/admissao/{token}', [PortalDocumentosCandidatoController::class, 'show'])
+    ->name('candidato.documentos.show');
+Route::post('/admissao/{token}/enviar', [PortalDocumentosCandidatoController::class, 'upload'])
+    ->middleware('throttle:30,1')
+    ->name('candidato.documentos.upload');
+Route::delete('/admissao/{token}/remover/{documento}', [PortalDocumentosCandidatoController::class, 'remover'])
+    ->name('candidato.documentos.remover');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');

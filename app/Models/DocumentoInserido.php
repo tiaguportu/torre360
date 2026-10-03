@@ -17,6 +17,8 @@ class DocumentoInserido extends Model
     protected $fillable = [
         'tipo_documento_id',
         'matricula_id',
+        'interessado_id',
+        'interessado_dependente_id',
         'status',
         'observacoes',
         'arquivo_path',
@@ -75,12 +77,30 @@ class DocumentoInserido extends Model
         return $this->belongsTo(Matricula::class, 'matricula_id');
     }
 
+    public function interessado(): BelongsTo
+    {
+        return $this->belongsTo(Interessado::class, 'interessado_id');
+    }
+
+    public function dependente(): BelongsTo
+    {
+        return $this->belongsTo(InteressadoDependente::class, 'interessado_dependente_id');
+    }
+
     public function isAccessibleBy(User $user): bool
     {
         if ($user->isStaff()) {
             return true;
         }
 
-        return $this->matricula?->isAccessibleBy($user) ?? false;
+        if ($this->matricula) {
+            return $this->matricula->isAccessibleBy($user);
+        }
+
+        if ($this->interessado) {
+            return $this->interessado->usuario_id === $user->id || $user->can('View:Interessado');
+        }
+
+        return false;
     }
 }

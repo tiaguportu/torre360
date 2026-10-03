@@ -115,6 +115,18 @@
                                     @endif
 
                                     <div class="flex flex-wrap gap-1 mb-3">
+                                        @if($record->indicacao)
+                                            <x-filament::badge color="success" size="sm" class="text-[10px] px-1.5 py-0" title="Indicação: {{ $record->indicacao->quemIndicou?->nome }}">
+                                                🤝 Indicação
+                                            </x-filament::badge>
+                                        @endif
+
+                                        @if($record->documentosInseridos && $record->documentosInseridos->isNotEmpty())
+                                            <x-filament::badge color="primary" size="sm" class="text-[10px] px-1.5 py-0" title="{{ $record->documentosInseridos->count() }} documento(s) anexados">
+                                                🗂️ {{ $record->documentosInseridos->count() }} doc(s)
+                                            </x-filament::badge>
+                                        @endif
+
                                         @if($record->origem)
                                             <x-filament::badge color="info" size="sm" class="text-[10px] px-1.5 py-0">
                                                 {{ $record->origem->nome }}

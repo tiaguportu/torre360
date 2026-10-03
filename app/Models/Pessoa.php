@@ -21,7 +21,7 @@ class Pessoa extends Model
 
     protected $table = 'pessoa';
 
-    protected $fillable = ['endereco_id', 'naturalidade_id', 'nacionalidade_id', 'nome', 'cpf', 'foto', 'telefone', 'email', 'user_id', 'data_nascimento', 'estado_civil', 'profissao', 'identidade', 'sexo', 'cor_raca', 'tipo_nacionalidade', 'aceita_comunicacao'];
+    protected $fillable = ['endereco_id', 'naturalidade_id', 'nacionalidade_id', 'nome', 'cpf', 'codigo_indicacao', 'foto', 'telefone', 'email', 'user_id', 'data_nascimento', 'estado_civil', 'profissao', 'identidade', 'sexo', 'cor_raca', 'tipo_nacionalidade', 'aceita_comunicacao'];
 
     protected function cpf(): Attribute
     {
@@ -321,5 +321,29 @@ class Pessoa extends Model
                     ->orWhereNotNull('naturalidade_id');
             })
             ->whereHas('enderecos');
+    }
+
+    public function indicacoesFeitas(): HasMany
+    {
+        return $this->hasMany(IndicacaoInteressado::class, 'indicador_pessoa_id');
+    }
+
+    public function obterOuCriarCodigoIndicacao(): string
+    {
+        if (filled($this->codigo_indicacao)) {
+            return $this->codigo_indicacao;
+        }
+
+        $codigo = IndicacaoInteressado::gerarCodigoParaPessoa($this);
+        $this->update(['codigo_indicacao' => $codigo]);
+
+        return $codigo;
+    }
+
+    public function linkIndicacao(): string
+    {
+        $codigo = $this->obterOuCriarCodigoIndicacao();
+
+        return url('/quero-matricular?indicacao='.$codigo);
     }
 }

@@ -350,6 +350,59 @@ O **Termômetro de Vagas por Série** fornece à equipe de admissões e consulto
 6. **Enriquecimento do Copiloto WhatsApp e Dossiê IA:**
    - Os dados reais de ocupação são injetados automaticamente no contexto do **Gemini**, orientando a inteligência artificial a formular abordagens autênticas de urgência para visitas e matrículas sem soar agressiva ou artificial.
 
+### 3.18 Programa "Família Indica Família" (Member Get Member / MGM)
+O **Programa "Família Indica Família"** potencializa a captação de novos estudantes através do canal de maior conversão da educação: a recomendação genuína entre famílias da escola.
+
+1. **Código Exclusivo da Família:**
+   - Cada pessoa cadastrada no sistema (responsáveis de alunos matriculados) possui um código alfanumérico único e amigável de indicação (ex: `SILV-A7K2`).
+   - O link promocional ou código pode ser compartilhado diretamente pela família com amigos e parentes.
+2. **Gestão de Indicações no CRM:**
+   - Acesse **CRM / Comercial → Indicações MGM**.
+   - Acompanhe cada indicação registrada com quem indicou, o lead indicado, código utilizado, status atual e valor/tipo de recompensa.
+   - **Fluxo de Estados:**
+     - 🟡 **Pendente:** Indicação recebida, lead em atendimento ou visitação.
+     - 🎓 **Matriculado:** Aluno efetivamente matriculado na instituição. O sistema detecta a conversão e atualiza esse status de forma 100% automática quando a matrícula é concluída.
+     - 🎁 **Recompensado:** Bonificação concedida à família indicadora (ex: desconto na mensalidade, isenção de material, brinde). O sistema registra o valor, a data da concessão e o usuário responsável pela liberação.
+     - ❌ **Cancelado:** Indicação cancelada ou lead desqualificado.
+3. **Visibilidade no Funil (Kanban) e Ficha do Lead:**
+   - Cards de leads que vieram por recomendação exibem o selo verde **🤝 Indicação** no Kanban e tabela de interessados, garantindo um tratamento comercial VIP e priorizado.
+
+### 3.19 Portal de Pré-Admissão & Checklist de Documentos do Candidato
+O **Portal de Pré-Admissão** moderniza e agiliza a etapa burocrática de coleta documental, permitindo que os pais enviem certidões, comprovantes e fotos de documentos antes mesmo da assinatura do contrato:
+
+1. **Acesso Seguro sem Login para a Família:**
+   - Cada interessado possui um link exclusivo protegido por token seguro de alta entropia (`/admissao/{token}`).
+   - Os pais acessam pelo celular ou computador sem necessidade de criar conta ou lembrar senhas.
+2. **Reaproveitamento Nativo da Arquitetura do Sistema:**
+   - O portal utiliza diretamente o catálogo oficial de documentos da instituição (`tipo_documento` e `documento_inserido`), respeitando as exigências por curso/série e as regras do enum de situações (`Em Análise`, `Verificado`, `Rejeitado`).
+   - A família visualiza o checklist completo de documentos exigidos, status em tempo real de cada arquivo enviado e orientações da secretaria.
+3. **Conferência e Análise pela Secretaria:**
+   - Na ficha do interessado, a aba **Documentos de Pré-Admissão** permite à equipe:
+     - Visualizar os arquivos enviados com visualizador seguro anti-vazamento.
+     - **Aprovar** o documento em 1 clique (situação passa para *Verificado*).
+     - **Rejeitar** indicando o motivo com texto claro (ex: *"Foto cortada ou ilegível, favor reenviar a frente do RG"*). A família vê o motivo no portal e pode reenviar imediatamente.
+     - **Copiar Link do Portal** ou **Enviar Portal por WhatsApp** com mensagem pronta em 1 clique.
+4. **Migração Automática para a Matrícula:**
+   - No momento em que o lead é matriculado (seja pelo Assistente de Matrícula ou conclusão do processo), todos os documentos enviados e aprovados na pré-admissão são automaticamente associados à nova **Matrícula** (`matricula_id`).
+   - Os arquivos físicos e aprovações já realizadas são preservados na íntegra, ficando imediatamente visíveis na tela de documentos da matrícula sem qualquer trabalho manual ou reenvio pela família.
+
+### 3.20 Resumo IA de Conversas Longas do WhatsApp
+O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar conversas extensas trocadas com as famílias no WhatsApp, transformando diálogos soltos em inteligência comercial prática:
+
+1. **Como utilizar:**
+   - Na tela de edição do lead (cabeçalho) ou no menu de ações rápidas da tabela de interessados, clique no botão **🤖 Resumo IA de Conversa**.
+   - Cole o histórico ou trecho da conversa do WhatsApp (pode conter marcação de hora e remetente ou ser apenas o texto corrido).
+2. **Síntese Executiva Gerada pelo Gemini:**
+   - A IA analisa o diálogo em segundos e estrutura:
+     - 💬 **Síntese da Conversa:** Resumo executivo dos pontos centrais debatidos.
+     - 🎯 **Dores e Critérios da Família:** Motivações reais de troca de escola, expectativas pedagógicas e prioridades.
+     - ❓ **Dúvidas e Objeções Levantadas:** Aspectos financeiros, turno, metodologia ou adaptação.
+     - 🤝 **Acordos Firmados & Próximo Passo:** O que ficou combinado entre as partes e datas mencionadas.
+3. **Automações em 1 Clique:**
+   - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead.
+   - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
+   - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
+
 ---
 
 

@@ -9,6 +9,7 @@ use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
+use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
 use App\Models\CampanhaMarketing;
 use App\Models\ComunicacaoEmMassa;
@@ -508,6 +509,22 @@ class InteressadosTable
                 ActionGroup::make([
                     DossieIaAction::make(),
                     CopilotoMensagemIaAction::make(),
+                    ResumoConversaIaAction::make(),
+
+                    Action::make('portalDocumentos')
+                        ->label('Portal de Pré-Admissão')
+                        ->icon('heroicon-o-document-check')
+                        ->color('success')
+                        ->modalHeading('Portal de Documentos do Candidato')
+                        ->modalDescription('Envie este link seguro para a família anexar a documentação de matrícula sem necessidade de login.')
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Fechar')
+                        ->form(fn (Interessado $record) => [
+                            TextInput::make('url_portal')
+                                ->label('Link Seguro do Portal de Admissão')
+                                ->default($record->urlPortalDocumentos())
+                                ->readOnly(),
+                        ]),
 
                     Action::make('agendarVisita')
                         ->label('Agendar Visita')

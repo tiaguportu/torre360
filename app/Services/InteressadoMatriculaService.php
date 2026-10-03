@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Interessado;
+use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Ponte entre o CRM e o Assistente de Matrícula: monta os dados iniciais do
@@ -117,9 +119,12 @@ class InteressadoMatriculaService
 
     /**
      * Marca o lead como convertido: data de conversão, status "ganho" e novo lead score.
+     * Atualiza indicação MGM se houver e migra documentos de pré-admissão para a matrícula.
      * Idempotente: um lead já convertido mantém a data original.
+     *
+     * @param  array<int, Matricula>|Collection<int, Matricula>  $matriculas
      */
-    public static function registrarConversao(Interessado $interessado): void
+    public static function registrarConversao(Interessado $interessado, array|Collection $matriculas = []): void
     {
         $atualizacoes = [];
 
@@ -140,6 +145,39 @@ class InteressadoMatriculaService
 
         if ($atualizacoes !== []) {
             $interessado->update($atualizacoes);
+        }
+
+        // Se o lead veio de uma indicação (Família Indica Família), atualiza o status da indicação
+        if ($interessado->indicacao) {
+            $interessado->indicacao->marcarMatriculado();
+        }
+
+        // Migração suave de documentos de pré-admissão para a nova matrícula
+        $matriculasCol = collect($matriculas);
+
+        if ($matriculasCol->isNotEmpty() && $interessado->documentosInseridos()->whereNull('matricula_id')->exists()) {
+            $documentosPendentes = $interessado->documentosInseridos()->whereNull('matricula_id')->with('dependente')->get();
+
+            foreach ($documentosPendentes as $doc) {
+                $matriculaAlvo = null;
+
+                // Tenta associar pela correspondência do nome do dependente
+                if ($doc->dependente) {
+                    $nomeDependente = mb_strtolower(trim((string) $doc->dependente->nome_crianca));
+                    $matriculaAlvo = $matriculasCol->first(function ($m) use ($nomeDependente) {
+                        return mb_strtolower(trim((string) ($m->pessoa?->nome ?? ''))) === $nomeDependente;
+                    });
+                }
+
+                // Fallback: primeira matrícula criada no processo
+                $matriculaAlvo ??= $matriculasCol->first();
+
+                if ($matriculaAlvo) {
+                    $doc->update([
+                        'matricula_id' => $matriculaAlvo->id,
+                    ]);
+                }
+            }
         }
 
         LeadScoreService::recalcular($interessado);

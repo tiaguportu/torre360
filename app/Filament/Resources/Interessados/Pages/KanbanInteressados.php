@@ -86,7 +86,7 @@ class KanbanInteressados extends Page
 
     public function getInteressados(): Collection
     {
-        $query = Interessado::with(['pessoa', 'status', 'origem', 'usuario', 'dependentes.serie', 'ultimoHistorico', 'visitas.pesquisa']);
+        $query = Interessado::with(['pessoa', 'status', 'origem', 'usuario', 'dependentes.serie', 'ultimoHistorico', 'visitas.pesquisa', 'indicacao.quemIndicou', 'documentosInseridos']);
 
         if ($this->filtroConsultorId) {
             $query->where('usuario_id', $this->filtroConsultorId);

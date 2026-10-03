@@ -672,7 +672,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 $interessadoOrigem = Interessado::find($this->interessadoId);
 
                 if ($interessadoOrigem) {
-                    InteressadoMatriculaService::registrarConversao($interessadoOrigem);
+                    $matriculasCriadas = collect($alunosPessoa)->pluck('matricula')->filter()->all();
+                    InteressadoMatriculaService::registrarConversao($interessadoOrigem, $matriculasCriadas);
                 }
             }
 

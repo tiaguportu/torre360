@@ -342,4 +342,105 @@ Diretrizes obrigatórias da mensagem:
             ->setOption('isHtml5ParserEnabled', true)
             ->setOption('defaultFont', 'DejaVu Sans');
     }
+
+    /**
+     * Analisa uma conversa longa de WhatsApp colada pelo consultor, sintetizando
+     * perfil, dores, dúvidas levantadas, acordos firmados, temperatura e próximo passo.
+     *
+     * @return array{
+     *     resumo_markdown: string,
+     *     temperatura_sugerida: string,
+     *     data_retorno_sugerida: ?string,
+     *     proximo_passo_sugerido: string,
+     * }
+     */
+    public function resumirConversaWhatsapp(Interessado $interessado, string $conversaTexto): array
+    {
+        $interessado->loadMissing(['pessoa', 'dependentes.serie']);
+
+        $nomeLead = $interessado->pessoa?->nome ?? 'Responsável';
+        $dependentes = $interessado->dependentes->map(fn ($d) => "{$d->nome_crianca} ({$d->serie?->nome})")->join(', ');
+
+        $systemInstruction = 'Você é um especialista em atendimento comercial e admissões escolares da Escola Torre de Marfim.
+Sua missão é analisar o diálogo/histórico de conversa de WhatsApp colado pelo consultor e extrair uma síntese executiva impecável para a equipe pedagógica e de captação.
+
+Você DEVE retornar estritamente um JSON válido com a seguinte estrutura:
+{
+  "temperatura_sugerida": "quente|morno|frio",
+  "data_retorno_sugerida": "YYYY-MM-DD ou null se não houver prazo/data combinada",
+  "proximo_passo_sugerido": "Frase direta com o próximo compromisso ou ação acordada",
+  "resumo_markdown": "Relatório conciso e claro formatado em Markdown:
+### 💬 Síntese da Conversa
+(Resumo em 2 a 3 frases dos principais pontos tratados)
+
+### 🎯 Principais Dores & Critérios da Família
+- Item 1...
+- Item 2...
+
+### ❓ Dúvidas e Objeções Levantadas
+- Dúvidas sobre valores, turno, adaptação, etc.
+
+### 🤝 Acordos Firmados & Próximo Passo
+- O que ficou combinado entre as partes e quando.
+"
+}';
+
+        $payload = [
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => "DADOS CADASTRAIS DO LEAD:
+- Responsável: {$nomeLead}
+- Dependentes/Séries: {$dependentes}
+
+HISTÓRICO DA CONVERSA DE WHATSAPP COLADO PELO CONSULTOR:
+---
+{$conversaTexto}
+---
+
+Analise a conversa e gere a resposta estritamente no formato JSON requisitado."],
+                    ],
+                ],
+            ],
+            'systemInstruction' => [
+                'parts' => [
+                    ['text' => $systemInstruction],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0.2,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
+
+        try {
+            $response = $this->gemini->callGeminiApi($payload);
+            $jsonText = $response['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $jsonClean = trim(preg_replace('/^```(?:json)?|```$/m', '', $jsonText));
+            $dados = json_decode($jsonClean, true);
+
+            if (! is_array($dados) || empty($dados['resumo_markdown'])) {
+                throw new \RuntimeException('Resposta da IA em formato inválido.');
+            }
+
+            return [
+                'resumo_markdown' => (string) $dados['resumo_markdown'],
+                'temperatura_sugerida' => in_array($dados['temperatura_sugerida'] ?? '', ['quente', 'morno', 'frio'], true)
+                    ? $dados['temperatura_sugerida']
+                    : ($interessado->temperatura ?? 'morno'),
+                'data_retorno_sugerida' => ! empty($dados['data_retorno_sugerida']) && strtotime($dados['data_retorno_sugerida']) !== false
+                    ? date('Y-m-d', strtotime($dados['data_retorno_sugerida']))
+                    : null,
+                'proximo_passo_sugerido' => (string) ($dados['proximo_passo_sugerido'] ?? 'Acompanhar retorno da família.'),
+            ];
+        } catch (Throwable $e) {
+            return [
+                'resumo_markdown' => "### 💬 Síntese da Conversa (Fallback)\n\nNão foi possível processar o resumo automático com a IA: {$e->getMessage()}\n\n**Trecho registrado:**\n".Str::limit($conversaTexto, 300),
+                'temperatura_sugerida' => $interessado->temperatura ?? 'morno',
+                'data_retorno_sugerida' => null,
+                'proximo_passo_sugerido' => 'Retomar contato com o responsável.',
+            ];
+        }
+    }
 }

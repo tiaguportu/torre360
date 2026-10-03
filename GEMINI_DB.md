@@ -925,8 +925,35 @@ Estrutura de ensino e turmas.
 
 ### `interessados`
 - **Representa:** Leads e famílias interessadas em vagas na instituição de ensino.
-- **Campos Principais:** `pessoa_id`, `usuario_id` (consultor), `origem_interessado_id`, `status_interessado_id`, `data_primeiro_contato`, `data_proximo_contato`, `temperatura`, `score_engajamento`, `valor_estimado`.
-- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `User` (consultor), HasMany `dependentes`, HasMany `visitas`, HasMany `historicoContatos`.
+- **Campos Principais:** `pessoa_id`, `usuario_id` (consultor), `origem_interessado_id`, `status_interessado_id`, `data_primeiro_contato`, `data_proximo_contato`, `temperatura`, `score_engajamento`, `valor_estimado`, `token_documentos` (String 48 chars - Token aleatório para acesso seguro da família ao Portal de Pré-Admissão e checklist de documentos).
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `User` (consultor), HasMany `dependentes`, HasMany `visitas`, HasMany `historicoContatos`, HasOne `indicacao` (`IndicacaoInteressado`), HasMany `documentosInseridos` (`DocumentoInserido`).
+
+### `indicacao_interessados` (Programa "Família Indica Família" / MGM)
+- **Representa:** Registro de indicações de novos alunos feitas por responsáveis e famílias de alunos da escola.
+- **Campos Principais:**
+  - `indicador_pessoa_id`: FK `pessoa.id` (família que fez a indicação).
+  - `interessado_id`: FK `interessados.id` (lead/candidato indicado).
+  - `codigo_indicacao`: String (ex: `SILV-A7K2`) - Código promocional da família utilizado na indicação.
+  - `status`: String/Enum (`pendente`, `matriculado`, `recompensado`, `cancelado`).
+  - `recompensa_tipo`: String (ex: `desconto_mensalidade`, `brinde`, `bolsa`).
+  - `recompensa_detalhe`: String/Text - Descrição da bonificação acordada.
+  - `valor_recompensa`: Decimal (8,2) - Valor financeiro do benefício.
+  - `data_conversao`: Datetime - Preenchido automaticamente quando o lead é matriculado.
+  - `data_recompensa`: Datetime - Preenchido quando o benefício é liberado à família.
+  - `recompensado_por_usuario_id`: FK `users.id` - Colaborador que aprovou/concedeu a recompensa.
+  - `observacoes`: Text - Anotações internas da equipe de captação e financeiro.
+- **Relacionamentos:** BelongsTo `Pessoa` (`indicador` / `quemIndicou`), BelongsTo `Interessado`, BelongsTo `User` (`recompensadoPor`).
+
+### `documento_inserido` (Extensão para Pré-Admissão)
+- **Representa:** Documentos enviados por alunos, famílias ou candidatos para comprovação cadastral.
+- **Campos Estendidos:**
+  - `matricula_id`: FK `matricula.id` (tornado nullable para permitir envio prévio na fase de pré-admissão antes da formalização da matrícula).
+  - `interessado_id`: FK `interessados.id` (vincula o documento ao lead candidato).
+  - `interessado_dependente_id`: FK `interessado_dependente.id` (nullable - vincula a um dependente específico caso o lead tenha mais de um filho).
+  - `tipo_documento_id`: FK `tipo_documento.id`.
+  - `status`: Enum `SituacaoDocumento` (`EM_ANALISE`, `VERIFICADO`, `REJEITADO`).
+  - `arquivo_path`, `nome_arquivo_original`, `hash_arquivo`, `observacoes` (motivo de rejeição).
+- **Lógica de Transição e Herança:** Quando o lead é matriculado, os registros de `documento_inserido` são automaticamente associados à nova `matricula_id`, mantendo integridade com a auditoria e evitando qualquer reenvio documental pela família.
 
 ### `visita_interessado`
 - **Representa:** Agendamentos de visitas presenciais (tour escolar) realizadas pelas famílias candidatas.

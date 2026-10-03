@@ -52,8 +52,8 @@ class VisualizarDocumentoController extends Controller
                 $autorizado = true;
             }
         }
-        // Contexto B: Documento de aluno inserido (RG, CPF, Certidão)
-        elseif (str_starts_with($path, 'documentos_alunos/')) {
+        // Contexto B: Documento de aluno/candidato inserido (RG, CPF, Certidão)
+        elseif (str_starts_with($path, 'documentos_alunos/') || str_starts_with($path, 'documentos_candidatos/') || str_starts_with($path, 'matriculas_online/')) {
             $documentoInserido = DocumentoInserido::where('arquivo_path', $path)->first();
             if ($documentoInserido && $documentoInserido->isAccessibleBy($user)) {
                 $autorizado = true;

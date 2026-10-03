@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SituacaoDocumento;
 use App\Enums\StatusVisitaInteressado;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -30,7 +33,7 @@ class Interessado extends Model
         'outra' => 'Outra',
     ];
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -258,5 +261,98 @@ class Interessado extends Model
             && $this->token_convite_usado_em === null
             && $this->token_convite_expira_em !== null
             && $this->token_convite_expira_em->isFuture();
+    }
+
+    public function indicacao(): HasOne
+    {
+        return $this->hasOne(IndicacaoInteressado::class, 'interessado_id');
+    }
+
+    public function documentosInseridos(): HasMany
+    {
+        return $this->hasMany(DocumentoInserido::class, 'interessado_id');
+    }
+
+    /**
+     * Retorna a coleção de tipos de documentos requeridos para este interessado.
+     * Considera os tipos vinculados aos cursos das séries pretendidas ou marcados como obrigatórios.
+     */
+    public function documentosRequeridos(): Collection
+    {
+        $cursosIds = $this->dependentes->map(fn ($d) => $d->serie?->curso_id)->filter()->unique();
+
+        $query = TipoDocumento::query();
+
+        if ($cursosIds->isNotEmpty()) {
+            $query->where(function ($q) use ($cursosIds) {
+                $q->whereHas('cursos', fn ($cq) => $cq->whereIn('curso.id', $cursosIds))
+                    ->orWhere('flag_obrigatorio', true);
+            });
+        } else {
+            $query->where('flag_obrigatorio', true);
+        }
+
+        $docs = $query->orderBy('nome')->get();
+
+        if ($docs->isEmpty()) {
+            $docs = TipoDocumento::orderBy('nome')->get();
+        }
+
+        return $docs;
+    }
+
+    /**
+     * Retorna ou gera o token exclusivo para o portal de pré-admissão / documentos do candidato.
+     */
+    public function obterOuCriarTokenDocumentos(): string
+    {
+        if (filled($this->token_documentos)) {
+            return $this->token_documentos;
+        }
+
+        do {
+            $token = Str::random(48);
+        } while (static::where('token_documentos', $token)->exists());
+
+        $this->update(['token_documentos' => $token]);
+
+        return $token;
+    }
+
+    /**
+     * Retorna a URL pública completa do portal de pré-admissão / documentos do candidato.
+     */
+    public function urlPortalDocumentos(): string
+    {
+        $token = $this->obterOuCriarTokenDocumentos();
+
+        return route('candidato.documentos.show', ['token' => $token]);
+    }
+
+    /**
+     * Retorna estatísticas de progresso dos documentos do candidato.
+     */
+    public function progressoDocumentos(): array
+    {
+        $requeridos = $this->documentosRequeridos();
+        $totalRequeridos = $requeridos->count();
+
+        $inseridos = $this->documentosInseridos()->with('tipoDocumento')->get();
+        $aprovados = $inseridos->where('status', SituacaoDocumento::VERIFICADO)->count();
+        $emAnalise = $inseridos->where('status', SituacaoDocumento::EM_ANALISE)->count();
+        $rejeitados = $inseridos->where('status', SituacaoDocumento::REJEITADO)->count();
+
+        $percentual = $totalRequeridos > 0 ? round(($aprovados / $totalRequeridos) * 100) : 0;
+
+        return [
+            'total' => $totalRequeridos,
+            'enviados' => $inseridos->count(),
+            'aprovados' => $aprovados,
+            'em_analise' => $emAnalise,
+            'rejeitados' => $rejeitados,
+            'pendentes' => max(0, $totalRequeridos - $aprovados),
+            'percentual' => min(100, (int) $percentual),
+            'completo' => $totalRequeridos > 0 && $aprovados >= $totalRequeridos,
+        ];
     }
 }
