@@ -95,7 +95,13 @@ class ConsultorWhatsappService
 
     public function url(?string $telefoneDoConsultor, string $mensagem): string
     {
-        return 'https://wa.me/'.$telefoneDoConsultor.'?text='.rawurlencode($mensagem);
+        $params = [];
+        if (filled($telefoneDoConsultor)) {
+            $params['phone'] = $telefoneDoConsultor;
+        }
+        $params['text'] = $mensagem;
+
+        return 'https://api.whatsapp.com/send?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     /**

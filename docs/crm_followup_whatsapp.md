@@ -97,9 +97,9 @@ variáveis, substituídas automaticamente no envio:
 A ação "WhatsApp" na tabela de Interessados (`InteressadosTable`, ao lado de
 "Atendimento") abre um formulário para escolher o modelo (e o aluno, se o
 lead tiver mais de um dependente cadastrado) e, ao confirmar, monta a URL
-`https://wa.me/<telefone>?text=<mensagem>` e abre em nova aba — não há
-integração com API de WhatsApp Business, é o mesmo padrão de link `wa.me` já
-usado no restante do sistema (landing page, formulário de captação). O
+canônica `https://api.whatsapp.com/send?phone=<telefone>&text=<mensagem>` e abre em nova aba — utiliza
+codificação RFC 3986 (`PHP_QUERY_RFC3986`) para preservar 100% dos emojis UTF-8 sem risco de corrupção
+(o encurtador `wa.me` sofre de bug na Meta ao fazer redirect 302 que corrompe emojis para ``). O
 telefone é normalizado (somente dígitos) e recebe o DDI `55` quando tem 11
 dígitos ou menos (DDD + número).
 
@@ -109,14 +109,14 @@ A ação só aparece para leads com telefone cadastrado
 ## 3. Repasse do lead ao consultor por WhatsApp
 
 Quem opera o CRM (secretaria/gestão) pode encaminhar um lead ao consultor
-responsável (`Interessado::usuario`) por um link `wa.me`, com o contato direto
+responsável (`Interessado::usuario`) por um link `https://api.whatsapp.com/send`, com o contato direto
 do interessado e um resumo do que já foi conversado. Toda a regra fica em
 `App\Services\ConsultorWhatsappService`.
 
 **Telefone do consultor.** O `User` não tem telefone próprio: o número vem da
 `Pessoa` vinculada ao usuário (`pessoa_user`), preferindo a Pessoa cujo
 `user_id` é o próprio consultor e, na falta dela, a primeira vinculada que tenha
-telefone. Sem telefone, o link vira `https://wa.me/?text=...` (o WhatsApp abre
+telefone. Sem telefone, o link vira `https://api.whatsapp.com/send?text=...` (o WhatsApp abre
 com a mensagem pronta e quem envia escolhe o contato) e a interface sinaliza em
 amarelo. Para o envio ir direto ao consultor, basta preencher o telefone da
 Pessoa dele.
@@ -140,8 +140,8 @@ WhatsApp por consultor com todos os leads dele numa só mensagem compacta (uma
 linha por lead, sem histórico). Leads sem consultor aparecem num aviso e ficam
 fora das mensagens (use "Atribuir Consultor").
 
-**Limite de tamanho.** A mensagem é limitada a 1.500 caracteres antes do
-`rawurlencode`, para o link `wa.me` não estourar o tamanho de URL: na mensagem
+**Limite de tamanho e Codificação de Emojis.** A mensagem é limitada a 1.500 caracteres antes da
+codificação RFC 3986 (`PHP_QUERY_RFC3986`), evitando estourar a URL e mantendo emojis intactos: na mensagem
 de um lead, os contatos mais antigos são descartados primeiro; na do lote, os
 últimos leads são omitidos com o aviso "... e mais N lead(s)".
 

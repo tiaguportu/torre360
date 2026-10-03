@@ -74,7 +74,7 @@ class InteressadoAlertaAcompanhamentoTest extends TestCase
         $descricao = (string) InteressadoForm::descricaoDoAlerta($lead->fresh());
 
         $this->assertStringContainsString('Se preferir, avise também pelo WhatsApp:', $descricao);
-        $this->assertStringContainsString('href="https://wa.me/5511988887777?text=', $descricao);
+        $this->assertStringContainsString('href="https://api.whatsapp.com/send?phone=5511988887777&amp;text=', $descricao);
         $this->assertStringContainsString('target="_blank"', $descricao);
         $this->assertStringContainsString('Abrir o WhatsApp de Carla Souza com a mensagem pronta', $descricao);
         $this->assertStringNotContainsString('sem telefone cadastrado', $descricao);
@@ -92,7 +92,7 @@ class InteressadoAlertaAcompanhamentoTest extends TestCase
 
         $descricao = (string) InteressadoForm::descricaoDoAlerta($this->lead($consultor)->fresh());
 
-        $this->assertStringContainsString('href="https://wa.me/?text=', $descricao);
+        $this->assertStringContainsString('href="https://api.whatsapp.com/send?text=', $descricao);
         $this->assertStringContainsString('Carla Souza está sem telefone cadastrado', $descricao);
     }
 
@@ -104,7 +104,7 @@ class InteressadoAlertaAcompanhamentoTest extends TestCase
         $descricao = (string) InteressadoForm::descricaoDoAlerta($this->lead($consultor)->fresh());
 
         $this->assertStringContainsString('não tem e-mail cadastrado', $descricao);
-        $this->assertStringContainsString('href="https://wa.me/5511988887777?text=', $descricao);
+        $this->assertStringContainsString('href="https://api.whatsapp.com/send?phone=5511988887777&amp;text=', $descricao);
     }
 
     public function test_descricao_do_alerta_escapa_html_do_nome_e_do_email(): void
@@ -134,7 +134,7 @@ class InteressadoAlertaAcompanhamentoTest extends TestCase
 
         $this->assertStringContainsString('não tem consultor responsável', $descricao);
         $this->assertStringNotContainsString('@', $descricao);
-        $this->assertStringNotContainsString('wa.me', $descricao);
+        $this->assertStringNotContainsString('whatsapp', $descricao);
     }
 
     public function test_modal_de_confirmacao_na_edicao_exibe_o_email_e_o_link_do_whatsapp(): void
@@ -148,7 +148,7 @@ class InteressadoAlertaAcompanhamentoTest extends TestCase
                 'Enviar Alerta de Acompanhamento?',
                 'Uma notificação será enviada ao sistema e ao e-mail do consultor responsável.',
                 'carla@escola.com.br',
-                'href="https://wa.me/5511988887777?text=',
+                'href="https://api.whatsapp.com/send?phone=5511988887777&amp;text=',
                 'Abrir o WhatsApp de Carla Souza com a mensagem pronta',
             ], escape: false);
     }

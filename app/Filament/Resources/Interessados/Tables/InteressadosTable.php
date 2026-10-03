@@ -323,9 +323,15 @@ class InteressadosTable
                             '[Horário de Visita Agendada]' => ($record->proximaVisita?->data_hora ?? $record->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir',
                         ]);
 
-                        $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa->telefone);
+                        $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa?->telefone);
 
-                        $url = 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
+                        $params = [];
+                        if (filled($telefone)) {
+                            $params['phone'] = $telefone;
+                        }
+                        $params['text'] = $mensagem;
+
+                        $url = 'https://api.whatsapp.com/send?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 
                         $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),

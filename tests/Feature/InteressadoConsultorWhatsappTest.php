@@ -217,10 +217,10 @@ class InteressadoConsultorWhatsappTest extends TestCase
 
     public function test_url_usa_o_telefone_do_consultor_ou_abre_sem_destinatario(): void
     {
-        $this->assertStringStartsWith('https://wa.me/5511988887777?text=', $this->service()->urlParaInteressado($this->lead($this->consultor())->fresh()));
+        $this->assertStringStartsWith('https://api.whatsapp.com/send?phone=5511988887777&text=', $this->service()->urlParaInteressado($this->lead($this->consultor())->fresh()));
 
         $semTelefone = $this->service()->urlParaInteressado($this->lead($this->consultor(null))->fresh());
-        $this->assertStringStartsWith('https://wa.me/?text=', $semTelefone);
+        $this->assertStringStartsWith('https://api.whatsapp.com/send?text=', $semTelefone);
         $this->assertStringContainsString('Maria Responsável', $this->mensagemDaUrl($semTelefone));
     }
 
@@ -229,7 +229,10 @@ class InteressadoConsultorWhatsappTest extends TestCase
         $lead = $this->lead($this->consultor());
         $template = MensagemWhatsappTemplate::create(['nome' => 'Boas-vindas', 'conteudo' => 'Olá [Nome do Responsável]!', 'ativo' => true]);
 
-        $url = 'https://wa.me/5521999991111?text='.urlencode('Olá Maria Responsável!');
+        $url = 'https://api.whatsapp.com/send?'.http_build_query([
+            'phone' => '5521999991111',
+            'text' => 'Olá Maria Responsável!',
+        ], '', '&', PHP_QUERY_RFC3986);
 
         Livewire::actingAs($this->admin())
             ->test(ListInteressados::class)
@@ -244,7 +247,7 @@ class InteressadoConsultorWhatsappTest extends TestCase
 
         $url = $this->service()->urlParaInteressado($lead->fresh());
 
-        $this->assertStringStartsWith('https://wa.me/5511988887777?text=', $url);
+        $this->assertStringStartsWith('https://api.whatsapp.com/send?phone=5511988887777&text=', $url);
         $this->assertStringContainsString('https://wa.me/5521999991111', $this->mensagemDaUrl($url));
         $this->assertStringContainsString('Quer conhecer a escola', $this->mensagemDaUrl($url));
 
@@ -295,7 +298,7 @@ class InteressadoConsultorWhatsappTest extends TestCase
         $grupoCarla = $resultado['grupos']->firstWhere('consultor.id', $carla->id);
         $this->assertCount(2, $grupoCarla['interessados']);
         $this->assertTrue($grupoCarla['temTelefone']);
-        $this->assertStringStartsWith('https://wa.me/5511988887777?text=', $grupoCarla['url']);
+        $this->assertStringStartsWith('https://api.whatsapp.com/send?phone=5511988887777&text=', $grupoCarla['url']);
         $mensagemCarla = $this->mensagemDaUrl($grupoCarla['url']);
         $this->assertStringContainsString('Seguem 2 lead(s)', $mensagemCarla);
         $this->assertStringContainsString('Lead Um', $mensagemCarla);
@@ -304,7 +307,7 @@ class InteressadoConsultorWhatsappTest extends TestCase
 
         $grupoBruno = $resultado['grupos']->firstWhere('consultor.id', $bruno->id);
         $this->assertFalse($grupoBruno['temTelefone']);
-        $this->assertStringStartsWith('https://wa.me/?text=', $grupoBruno['url']);
+        $this->assertStringStartsWith('https://api.whatsapp.com/send?text=', $grupoBruno['url']);
     }
 
     public function test_mensagem_em_lote_respeita_o_teto_e_avisa_quantos_ficaram_de_fora(): void
@@ -340,8 +343,8 @@ class InteressadoConsultorWhatsappTest extends TestCase
                 'Lead Sem Dono',
                 '1 lead sem consultor',
                 'sem telefone cadastrado',
-                'href="https://wa.me/5511988887777?text=',
-                'href="https://wa.me/?text=',
+                'href="https://api.whatsapp.com/send?phone=5511988887777&amp;text=',
+                'href="https://api.whatsapp.com/send?text=',
             ], escape: false);
     }
 

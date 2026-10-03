@@ -98,7 +98,13 @@ class CopilotoMensagemIaAction
                     ]);
                 }
 
-                $url = 'https://wa.me/'.$telefone.'?text='.urlencode($mensagem);
+                $params = [];
+                if (filled($telefone)) {
+                    $params['phone'] = $telefone;
+                }
+                $params['text'] = $mensagem;
+
+                $url = 'https://api.whatsapp.com/send?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 
                 $livewire->js('window.open('.json_encode($url).", '_blank')");
 

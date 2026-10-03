@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Interessados\Pages\EditInteressado;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
@@ -15,7 +16,9 @@ use App\Models\User;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Mockery;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class CrmIaVendasTest extends TestCase
@@ -61,6 +64,71 @@ class CrmIaVendasTest extends TestCase
         ]);
 
         return $interessado;
+    }
+
+    private function admin(): User
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        return $admin;
+    }
+
+    private function mockGeminiComDossie(string $markdown): void
+    {
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->atLeast()->once()
+            ->andReturn([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => json_encode([
+                            'resumo_executivo' => 'Família engajada.',
+                            'temperatura_sugerida' => 'quente',
+                            'proxima_acao_sugerida' => 'Convidar para o tour.',
+                            'dossie_markdown' => $markdown,
+                        ]),
+                    ]]],
+                ]],
+            ]);
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+    }
+
+    public function test_modal_do_dossie_renderiza_o_markdown_como_html_formatado(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+
+        $this->mockGeminiComDossie("### 🎯 Dores e Objeções\n\n- **Preço:** quer entender o investimento\n- Metodologia\n\n<script>alert('xss')</script>");
+
+        Livewire::actingAs($this->admin())
+            ->test(EditInteressado::class, ['record' => $interessado->getKey()])
+            ->mountAction('dossieIa')
+            ->assertMountedActionModalSee([
+                '<h3>🎯 Dores e Objeções</h3>',
+                '<li><strong>Preço:</strong> quer entender o investimento</li>',
+            ], escape: false)
+            ->assertMountedActionModalDontSee(['### ', '**Preço:**', "<script>alert('xss')</script>"], escape: false);
+    }
+
+    public function test_dossie_salva_no_historico_o_markdown_original(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+        $markdown = "### 🚀 Roteiro\n\n- **Destacar** o projeto bilíngue";
+
+        $this->mockGeminiComDossie($markdown);
+
+        Livewire::actingAs($this->admin())
+            ->test(EditInteressado::class, ['record' => $interessado->getKey()])
+            ->callAction('dossieIa', ['registrar_historico' => true])
+            ->assertHasNoActionErrors();
+
+        $this->assertDatabaseHas('historico_contato', [
+            'interessado_id' => $interessado->id,
+            'relato' => "✨ Dossiê Estratégico gerado com IA:\n\n".$markdown,
+        ]);
     }
 
     public function test_crm_ia_vendas_service_gera_dossie_com_sucesso(): void

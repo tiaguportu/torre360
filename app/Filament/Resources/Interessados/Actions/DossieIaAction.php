@@ -9,8 +9,8 @@ use App\Models\Interessado;
 use App\Models\TipoContatoInteressado;
 use App\Services\CrmIaVendasService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
@@ -59,12 +59,19 @@ HTML;
                         ->label('')
                         ->content(new HtmlString($headerHtml)),
 
-                    Textarea::make('dossie_conteudo')
+                    Placeholder::make('dossie_visual')
                         ->label('Relatório Completo do Dossiê')
-                        ->default($dossie['dossie_markdown'])
-                        ->rows(14)
-                        ->helperText('Você pode revisar o texto abaixo antes de salvar ou copiar para seu planejamento comercial.')
+                        ->content($dossie['dossie_markdown'])
+                        ->markdown()
+                        ->prose()
+                        ->extraAttributes([
+                            'style' => 'max-height: 28rem; overflow-y: auto; padding: 1rem; border-radius: 0.75rem; border: 1px solid color-mix(in oklab, currentColor 15%, transparent);',
+                        ])
                         ->columnSpanFull(),
+
+                    // Guarda o markdown original para gravar no histórico do lead.
+                    Hidden::make('dossie_conteudo')
+                        ->default($dossie['dossie_markdown']),
 
                     Toggle::make('atualizar_temperatura')
                         ->label("Atualizar temperatura do lead no funil para \"{$dossie['temperatura_sugerida']}\"")
