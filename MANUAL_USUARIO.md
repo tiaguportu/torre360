@@ -32,7 +32,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | Grupo | O que você faz aqui |
 |---|---|
 | 🏠 **Início** | Painel com indicadores, calendários e pendências |
-| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp |
+| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Campanhas de Marketing, Comunicação em Massa, Régua de Follow-up, Leads da Landing Page e Modelos de WhatsApp |
 | 🗂️ **Secretaria** | Matrículas, Pessoas, Coordenadores, Documentos (modelos, emitidos com QR e inseridos), Crachás |
 | 🎓 **Acadêmico** | Cursos, Séries, Turmas, Ensalamento, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
 | ✅ **Avaliações** | Avaliações, Notas, Avaliação e Notas de Habilidades e Lançamento de Notas em Grade |
@@ -249,6 +249,27 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
    - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
    - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
    - **Disparo em 1-Clique e Fidelidade de Emojis:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada. O sistema utiliza codificação RFC 3986 e o endpoint canônico `api.whatsapp.com/send`, garantindo que todos os emojis e formatações cheguem perfeitamente legíveis (sem caracteres corrompidos), com registro opcional no histórico de atendimentos do lead.
+
+### 3.15 Régua de Automação de Follow-up (Triggers & Workflows)
+A **Régua de Follow-up** automatiza o relacionamento e a comunicação com famílias interessadas em matricular seus filhos, garantindo que nenhum lead esfrie ou seja esquecido por falta de retorno.
+
+1. **Onde acessar:** Vá em **CRM / Comercial → Régua de Follow-up**.
+2. **Gatilhos Automáticos (Triggers):**
+   - **Novo Lead Cadastrado (Boas-vindas):** Dispara e-mail acolhedor de boas-vindas imediatamente após o cadastro do lead pelo site ou painel (offset 0), apresentando o projeto da escola e convidando para conhecer as instalações.
+   - **Lembrete de Visita Agendada (D-X):** Dispara e-mail para a família X dias antes da visita agendada (ex: 1 dia antes), reforçando o horário, o consultor que irá atendê-los e orientações de portaria e estacionamento.
+   - **Pós-Visita Realizada (Agradecimento):** Dispara e-mail carinhoso no dia seguinte à visita presencial (offset 1), agradecendo o comparecimento, colhendo impressões sobre a infraestrutura e abrindo espaço para simulação e matrícula.
+   - **Recuperação de Falta na Visita (No-Show):** Se a visita for marcada como "Não compareceu", dispara uma mensagem compreensiva 1 dia após, oferecendo novos horários para remarcação.
+   - **Lead Estagnado (Sem Interação há X dias):** Alerta a equipe interna quando um lead passa 7 dias ou mais sem qualquer contato registrado.
+   - **Retorno de Contato Atrasado:** Emite aviso quando a data de retorno combinada com o interessado já expirou há X dias.
+3. **Canais de Envio:**
+   - **E-mail para a Família:** Mensagens ricas e personalizadas enviadas diretamente para a caixa de entrada dos pais. O sistema respeita estritamente a LGPD (respeitando o opt-out caso a família tenha desmarcado o recebimento de comunicações).
+   - **Alerta no Painel (Sininho) para o Consultor:** Notificação interna na barra superior com atalho direto para a ficha do lead.
+4. **Histórico Integrado:** Todo e-mail disparado pela régua é registrado automaticamente na linha do tempo (**Histórico de Contatos**) do interessado, mantendo a equipe 100% ciente de tudo que foi comunicado.
+5. **Tags Dinâmicas:** Você pode usar tags automáticas como `{{NOME_RESPONSAVEL}}` ou `[Nome]`, `{{NOME_ALUNO}}` ou `[Aluno]`, `{{SERIE_INTERESSE}}` ou `[Serie]`, `{{NOME_CONSULTOR}}` ou `[Consultor]`, `{{DATA_VISITA}}` ou `[DataVisita]`, `{{HORARIO_VISITA}}` ou `[HorarioVisita]` e `{{ESCOLA_NOME}}` ou `[Escola]`.
+6. **Execução Automática e Simulação:**
+   - A régua é processada diariamente às 08:00 de forma automática via rotina agendada no servidor (`crm:executar-regua-follow-up`).
+   - No topo da listagem, o botão **Executar Régua do Dia** permite acionar a verificação sob demanda ou rodar em **Modo Simulação (Dry-run)** para pré-visualizar quantos e-mails seriam gerados sem disparar mensagens reais.
+   - Na tabela, o botão **Testar** em cada automação permite escolher um lead de exemplo para testar o envio com dados reais antes de ativar a regra para todos.
 
 ---
 

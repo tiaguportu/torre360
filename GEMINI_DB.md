@@ -431,6 +431,37 @@ Estrutura de ensino e turmas.
 - **Representa:** Pedidos de demonstração recebidos pela landing page do produto (`/`). São leads **B2B** (escolas), independentes de `interessado`.
 - **Campos Principais:** `nome`, `email`, `whatsapp` (nullable), `mensagem` (nullable), `status` (`novo` padrão, `em_contato`, `descartado`).
 
+### `regua_follow_ups`
+- **Representa:** Regras automatizadas de follow-up, triggers e workflows de comunicação do CRM escolar.
+- **Campos Principais:**
+    - `nome`: Título identificador da automação.
+    - `gatilho`: Enum `App\Enums\GatilhoReguaFollowUp` (`lead_criado`, `visita_lembrete`, `visita_realizada`, `visita_faltou`, `lead_estagnado`, `contato_atrasado`).
+    - `dias_offset`: Número inteiro representando o intervalo em dias em relação ao momento do evento (ex: 1 para 1 dia antes da visita agendada, 1 para 1 dia após a visita realizada, 7 para 7 dias sem interação).
+    - `canal`: Enum `App\Enums\CanalReguaFollowUp` (`email`, `notificacao_sistema`).
+    - `assunto`: Assunto do e-mail ou título do alerta no painel com interpolação de tags dinâmicas.
+    - `mensagem`: Corpo da mensagem com suporte a formatação rica e tags (`{{NOME_RESPONSAVEL}}`, `{{NOME_ALUNO}}`, `{{SERIE_INTERESSE}}`, `{{NOME_CONSULTOR}}`, `{{DATA_VISITA}}`, `{{HORARIO_VISITA}}`, `{{ESCOLA_NOME}}`).
+    - `origem_interessado_id`: FK opcional para `origem_interessado` (segmentação de disparo).
+    - `status_interessado_id`: FK opcional para `status_interessado` (segmentação de etapa do funil).
+    - `is_ativo`: Boolean indicando se a automação está em execução.
+    - `horario_envio`: Horário diário preferencial de disparo.
+    - `ordem`: Ordenação numérica de prioridade.
+- **Relacionamentos:** HasMany `logs` (`regua_follow_up_logs`), BelongsTo `origem` (`origem_interessado`), BelongsTo `status` (`status_interessado`).
+
+### `regua_follow_up_logs`
+- **Representa:** Trilha histórica de auditoria dos disparos realizados pela régua de follow-up, assegurando idempotência e evitando envios duplicados.
+- **Campos Principais:**
+    - `regua_follow_up_id`: FK `regua_follow_ups` (deleção em cascata).
+    - `interessado_id`: FK `interessado` (deleção em cascata).
+    - `visita_interessado_id`: FK opcional `visita_interessado` (null on delete).
+    - `canal`: Canal utilizado (`email`, `notificacao_sistema`).
+    - `destinatario`: E-mail ou identificador do usuário notificado.
+    - `assunto_enviado`: Assunto gerado pós-interpolação.
+    - `mensagem_enviada`: Corpo completo do texto enviado.
+    - `status_envio`: Situação da entrega (`sucesso`, `falha`).
+    - `erro`: Mensagem de erro em caso de falha de transporte ou opt-out de LGPD.
+    - `data_envio`: Data de referência do envio.
+- **Relacionamentos:** BelongsTo `regua` (`regua_follow_ups`), BelongsTo `interessado`, BelongsTo `visita` (`visita_interessado`).
+
 ---
 
 ## 7. Documentação
