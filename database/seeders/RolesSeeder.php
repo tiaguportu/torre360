@@ -277,6 +277,31 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Materiais de Aula — não é dado sensível, professor pode publicar
+        // o próprio material; coordenador/secretaria tambem gerenciam.
+        $materialAulaPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $materialAulaPermissions[] = "{$acao}:MaterialAula";
+        }
+
+        foreach ($materialAulaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['professor', 'coordenador', 'secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($materialAulaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
