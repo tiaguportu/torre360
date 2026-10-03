@@ -246,6 +246,21 @@ class CrmIaVendasTest extends TestCase
         $this->assertStringStartsWith('%PDF', $conteudoPdf);
     }
 
+    public function test_sanitizacao_remove_emojis_para_evitar_caracteres_quebrados_no_pdf(): void
+    {
+        $service = app(CrmIaVendasService::class);
+        $textoComEmojis = "### 👨‍👩‍👧 Perfil da Família\n\n- 🔥 Urgência alta\n- 🎯 Foco em línguas\n- 🚀 Próximo passo\n- ✨ Excelente";
+        $sanitizado = $service->sanitizarTextoParaPdf($textoComEmojis);
+
+        $this->assertStringNotContainsString('👨‍👩‍👧', $sanitizado);
+        $this->assertStringNotContainsString('🔥', $sanitizado);
+        $this->assertStringNotContainsString('🎯', $sanitizado);
+        $this->assertStringNotContainsString('🚀', $sanitizado);
+        $this->assertStringNotContainsString('✨', $sanitizado);
+        $this->assertStringContainsString('### Perfil da Família', $sanitizado);
+        $this->assertStringContainsString('- Urgência alta', $sanitizado);
+    }
+
     public function test_rota_dossie_pdf_permite_download_para_usuario_com_permissao(): void
     {
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);

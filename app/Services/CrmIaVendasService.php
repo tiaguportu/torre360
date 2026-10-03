@@ -264,6 +264,28 @@ Diretrizes obrigatórias da mensagem:
     }
 
     /**
+     * Remove emojis e glifos gráficos não suportados pelas fontes de renderização do DomPDF,
+     * evitando que apareçam como "?????" no documento gerado.
+     */
+    public function sanitizarTextoParaPdf(?string $texto): string
+    {
+        if (blank($texto)) {
+            return '';
+        }
+
+        // 1. Remove emojis e sequências Unicode estendidas (incluindo seletores de variação FE0E/FE0F e conectores ZWJ)
+        $limpo = preg_replace('/(?:\x{FE0E}|\x{FE0F}|\x{200D}|\p{Extended_Pictographic})+/u', '', $texto);
+
+        // 2. Remove espaços extras deixados após a remoção de emojis em títulos Markdown (ex: "###  Dores" -> "### Dores")
+        $limpo = preg_replace('/^(#{1,6})[ \t]+/m', '$1 ', (string) $limpo);
+
+        // 3. Normaliza espaços múltiplos
+        $limpo = preg_replace('/[ \t]{2,}/', ' ', (string) $limpo);
+
+        return trim((string) $limpo);
+    }
+
+    /**
      * Gera o documento PDF do Dossiê Estratégico IA pronto para visualização ou download.
      *
      * @param array{
@@ -293,13 +315,25 @@ Diretrizes obrigatórias da mensagem:
             }
         }
 
-        $dossieMarkdown = $dadosDossie['dossie_markdown'] ?? 'Dossiê não disponível.';
-        $dossieHtml = Str::markdown($dossieMarkdown);
+        $resumoLimpo = $this->sanitizarTextoParaPdf($dadosDossie['resumo_executivo'] ?? '');
+        $proximaAcaoLimpa = $this->sanitizarTextoParaPdf($dadosDossie['proxima_acao_sugerida'] ?? '');
+        $markdownLimpo = $this->sanitizarTextoParaPdf($dadosDossie['dossie_markdown'] ?? 'Dossiê não disponível.');
+
+        $dadosDossieLimpo = array_merge($dadosDossie, [
+            'resumo_executivo' => $resumoLimpo,
+            'proxima_acao_sugerida' => $proximaAcaoLimpa,
+            'dossie_markdown' => $markdownLimpo,
+        ]);
+
+        $dossieHtml = Str::markdown($markdownLimpo);
 
         return Pdf::loadView('pdfs.dossie-estrategico', [
             'interessado' => $interessado,
-            'dossie' => $dadosDossie,
+            'dossie' => $dadosDossieLimpo,
             'dossieHtml' => $dossieHtml,
-        ])->setPaper('a4', 'portrait');
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('defaultFont', 'DejaVu Sans');
     }
 }
