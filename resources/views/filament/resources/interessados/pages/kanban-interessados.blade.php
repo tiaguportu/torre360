@@ -76,7 +76,40 @@
 
                                     @php
                                         $dependentesPorSerie = $record->dependentes->groupBy('serie.nome');
+                                        $ultimaVisitaRealizada = $record->visitas->where('status', \App\Enums\StatusVisitaInteressado::Realizada)->sortByDesc('data_hora')->first();
+                                        $proximaVisitaAgendada = ! $ultimaVisitaRealizada ? $record->visitas->where('status', \App\Enums\StatusVisitaInteressado::Agendada)->sortBy('data_hora')->first() : null;
                                     @endphp
+
+                                    @if($ultimaVisitaRealizada)
+                                        @php
+                                            $pesquisa = $ultimaVisitaRealizada->pesquisa;
+                                            $notaNps = $pesquisa?->isRespondida() ? $pesquisa->nota_nps : null;
+                                            $dataVisitaFormatada = $ultimaVisitaRealizada->data_hora ? $ultimaVisitaRealizada->data_hora->format('d/m') : '';
+                                        @endphp
+                                        <div class="mb-2">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-xs
+                                                {{ $notaNps >= 9 ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800' : '' }}
+                                                {{ $notaNps !== null && $notaNps >= 7 && $notaNps < 9 ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800' : '' }}
+                                                {{ $notaNps !== null && $notaNps < 7 ? 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800' : '' }}
+                                                {{ $notaNps === null ? 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800' : '' }}
+                                            " title="Tour presencial realizado em {{ $ultimaVisitaRealizada->data_hora ? $ultimaVisitaRealizada->data_hora->format('d/m/Y') : '' }}{{ $notaNps !== null ? ' - NPS: ' . $notaNps . '/10 (' . $pesquisa->classificacaoNps() . ')' : ' - Avaliação Pendente' }}">
+                                                <span>🏫</span>
+                                                <span>Tour Realizado ({{ $dataVisitaFormatada }})</span>
+                                                @if($notaNps !== null)
+                                                    <span class="font-extrabold ml-0.5 px-1 py-0.2 rounded text-[10px] {{ $notaNps >= 9 ? 'bg-emerald-200 text-emerald-950' : ($notaNps >= 7 ? 'bg-amber-200 text-amber-950' : 'bg-rose-200 text-rose-950') }}">
+                                                        NPS {{ $notaNps }}
+                                                    </span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @elseif($proximaVisitaAgendada)
+                                        <div class="mb-2">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800 shadow-xs" title="Visita agendada para {{ $proximaVisitaAgendada->data_hora ? $proximaVisitaAgendada->data_hora->format('d/m/Y H:i') : '' }}">
+                                                <span>📅</span>
+                                                <span>Visita Agendada: {{ $proximaVisitaAgendada->data_hora ? $proximaVisitaAgendada->data_hora->format('d/m') : '' }}</span>
+                                            </span>
+                                        </div>
+                                    @endif
 
                                     <div class="flex flex-wrap gap-1 mb-3">
                                         @if($record->origem)

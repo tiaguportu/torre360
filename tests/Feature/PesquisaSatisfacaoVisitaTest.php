@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\StatusVisitaInteressado;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
+use App\Models\MensagemWhatsappTemplate;
 use App\Models\PesquisaSatisfacaoVisita;
 use App\Models\Pessoa;
 use App\Models\ReguaFollowUp;
@@ -162,5 +163,78 @@ class PesquisaSatisfacaoVisitaTest extends TestCase
         $this->assertStringContainsString('/pesquisa-visita/', $interpolado['mensagem']);
         $this->assertStringNotContainsString('{{LINK_PESQUISA}}', $interpolado['mensagem']);
         $this->assertStringNotContainsString('[LinkPesquisa]', $interpolado['mensagem']);
+    }
+
+    public function test_gerar_mensagem_whatsapp_utiliza_template_cadastrado_no_banco(): void
+    {
+        MensagemWhatsappTemplate::create([
+            'nome' => 'Pesquisa de Satisfação Pós-Visita',
+            'conteudo' => 'Olá, [Nome do Responsável]! Avalie o tour de [Nome do Aluno]: [Link da Pesquisa da Visita]',
+            'ativo' => true,
+        ]);
+
+        $pessoa = Pessoa::factory()->create(['nome' => 'Juliana Mendes']);
+        $lead = Interessado::factory()->create(['pessoa_id' => $pessoa->id]);
+        $visita = VisitaInteressado::create([
+            'interessado_id' => $lead->id,
+            'data_hora' => now(),
+            'status' => StatusVisitaInteressado::Realizada,
+        ]);
+
+        $pesquisa = $visita->obterOuCriarPesquisa();
+        $mensagem = $pesquisa->gerarMensagemWhatsapp();
+
+        $this->assertStringContainsString('Olá, Juliana Mendes!', $mensagem);
+        $this->assertStringContainsString($pesquisa->url_publica, $mensagem);
+        $this->assertStringNotContainsString('[Nome do Responsável]', $mensagem);
+        $this->assertStringNotContainsString('[Link da Pesquisa da Visita]', $mensagem);
+    }
+
+    public function test_filtro_situacao_visita_e_relacionamento_ultima_visita(): void
+    {
+        // Lead 1: Realizou visita
+        $leadRealizado = Interessado::factory()->create();
+        $visitaRealizada = VisitaInteressado::create([
+            'interessado_id' => $leadRealizado->id,
+            'data_hora' => now()->subDay(),
+            'status' => StatusVisitaInteressado::Realizada,
+        ]);
+        $pesquisa = $visitaRealizada->obterOuCriarPesquisa();
+        $pesquisa->update(['nota_nps' => 10, 'respondido_em' => now()]);
+
+        // Lead 2: Tem visita agendada futura
+        $leadAgendado = Interessado::factory()->create();
+        VisitaInteressado::create([
+            'interessado_id' => $leadAgendado->id,
+            'data_hora' => now()->addDays(2),
+            'status' => StatusVisitaInteressado::Agendada,
+        ]);
+
+        // Lead 3: Sem nenhuma visita
+        $leadSemVisita = Interessado::factory()->create();
+
+        // Testa relacionamentos do model
+        $this->assertNotNull($leadRealizado->ultimaVisitaRealizada);
+        $this->assertSame($visitaRealizada->id, $leadRealizado->ultimaVisitaRealizada->id);
+        $this->assertSame($visitaRealizada->id, $leadRealizado->ultimaVisita->id);
+        $this->assertNull($leadAgendado->ultimaVisitaRealizada);
+        $this->assertNotNull($leadAgendado->ultimaVisita);
+        $this->assertNull($leadSemVisita->ultimaVisita);
+
+        // Testa queries do filtro
+        $realizados = Interessado::whereHas('visitas', fn ($q) => $q->where('status', StatusVisitaInteressado::Realizada))->pluck('id');
+        $this->assertTrue($realizados->contains($leadRealizado->id));
+        $this->assertFalse($realizados->contains($leadAgendado->id));
+        $this->assertFalse($realizados->contains($leadSemVisita->id));
+
+        $agendados = Interessado::whereHas('visitas', fn ($q) => $q->where('status', StatusVisitaInteressado::Agendada)->where('data_hora', '>=', now()))->pluck('id');
+        $this->assertTrue($agendados->contains($leadAgendado->id));
+        $this->assertFalse($agendados->contains($leadRealizado->id));
+        $this->assertFalse($agendados->contains($leadSemVisita->id));
+
+        $semVisitas = Interessado::whereDoesntHave('visitas')->pluck('id');
+        $this->assertTrue($semVisitas->contains($leadSemVisita->id));
+        $this->assertFalse($semVisitas->contains($leadRealizado->id));
+        $this->assertFalse($semVisitas->contains($leadAgendado->id));
     }
 }

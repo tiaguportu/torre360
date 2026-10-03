@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Interessados\Tables;
 
 use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Enums\StatusComunicacaoEmMassa;
+use App\Enums\StatusVisitaInteressado;
 use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
@@ -49,7 +50,7 @@ class InteressadosTable
         return $table
             // Eager loading do render: a ação "Enviar ao consultor" monta a mensagem de cada linha
             // e `precisaDeContato()` (destaque da linha) consulta o último histórico.
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico', 'visitas.pesquisa', 'visitas.usuario']))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
             ->paginated([10, 25, 50])
@@ -101,6 +102,81 @@ class InteressadosTable
                     ->label('Origem')
                     ->sortable()
                     ->toggleable(),
+                TextColumn::make('ultima_visita_nps')
+                    ->label('Última Visita / NPS')
+                    ->state(function (Interessado $record): string {
+                        $visita = $record->visitas->sortByDesc('data_hora')->first();
+                        if (! $visita) {
+                            return '—';
+                        }
+
+                        $data = $visita->data_hora ? $visita->data_hora->format('d/m') : '';
+
+                        if ($visita->status === StatusVisitaInteressado::Realizada) {
+                            $pesquisa = $visita->pesquisa;
+                            if ($pesquisa && $pesquisa->isRespondida()) {
+                                return "🏫 {$data} (NPS {$pesquisa->nota_nps})";
+                            }
+
+                            return "🏫 {$data} (Pendente)";
+                        }
+
+                        if ($visita->status === StatusVisitaInteressado::Agendada) {
+                            return "📅 {$data} (Agendada)";
+                        }
+
+                        if ($visita->status === StatusVisitaInteressado::Faltou) {
+                            return "❌ {$data} (Faltou)";
+                        }
+
+                        return "{$data} ({$visita->status->getLabel()})";
+                    })
+                    ->badge()
+                    ->color(function (Interessado $record): string {
+                        $visita = $record->visitas->sortByDesc('data_hora')->first();
+                        if (! $visita) {
+                            return 'gray';
+                        }
+
+                        if ($visita->status === StatusVisitaInteressado::Realizada) {
+                            $pesquisa = $visita->pesquisa;
+                            if ($pesquisa && $pesquisa->isRespondida()) {
+                                return $pesquisa->corBadge();
+                            }
+
+                            return 'gray';
+                        }
+
+                        if ($visita->status === StatusVisitaInteressado::Agendada) {
+                            return 'info';
+                        }
+
+                        if ($visita->status === StatusVisitaInteressado::Faltou) {
+                            return 'danger';
+                        }
+
+                        return 'gray';
+                    })
+                    ->tooltip(function (Interessado $record): ?string {
+                        $visita = $record->visitas->sortByDesc('data_hora')->first();
+                        if (! $visita) {
+                            return null;
+                        }
+
+                        $texto = 'Data: '.($visita->data_hora ? $visita->data_hora->format('d/m/Y H:i') : '—');
+                        if ($visita->usuario) {
+                            $texto .= " | Consultor: {$visita->usuario->name}";
+                        }
+                        if ($visita->pesquisa?->isRespondida()) {
+                            $texto .= " | NPS: {$visita->pesquisa->nota_nps}/10 ({$visita->pesquisa->classificacaoNps()})";
+                            if (filled($visita->pesquisa->comentario)) {
+                                $texto .= " | \"{$visita->pesquisa->comentario}\"";
+                            }
+                        }
+
+                        return $texto;
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('pessoa.telefone')
                     ->label('Telefone')
                     ->searchable()
@@ -235,6 +311,26 @@ class InteressadosTable
                         true: fn ($query) => $query->estagnados(),
                         false: fn ($query) => $query->whereNotIn('id', Interessado::estagnados()->pluck('id')),
                     ),
+                SelectFilter::make('situacao_visita')
+                    ->label('Visitas à Escola')
+                    ->options([
+                        'realizada' => '🏫 Já realizaram visita',
+                        'agendada' => '📅 Possuem visita agendada',
+                        'sem_visita' => '⚪ Ainda não visitaram',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $valor = $data['value'] ?? null;
+                        if (blank($valor)) {
+                            return $query;
+                        }
+
+                        return match ($valor) {
+                            'realizada' => $query->whereHas('visitas', fn (Builder $q) => $q->where('status', StatusVisitaInteressado::Realizada)),
+                            'agendada' => $query->whereHas('visitas', fn (Builder $q) => $q->where('status', StatusVisitaInteressado::Agendada)->where('data_hora', '>=', now())),
+                            'sem_visita' => $query->whereDoesntHave('visitas'),
+                            default => $query,
+                        };
+                    }),
             ])
             ->actions([
                 Action::make('registrarAtendimento')
@@ -319,10 +415,21 @@ class InteressadosTable
                             ? $record->dependentes->firstWhere('id', $data['interessado_dependente_id'])
                             : $record->dependentes->first();
 
+                        $linkPesquisa = '';
+                        $ultimaVisita = $record->visitas()->where('status', StatusVisitaInteressado::Realizada)->latest('data_hora')->first()
+                            ?? $record->visitas()->latest('data_hora')->first();
+
+                        if ($ultimaVisita) {
+                            $linkPesquisa = $ultimaVisita->obterOuCriarPesquisa()->url_publica;
+                        }
+
                         $mensagem = strtr($template?->conteudo ?? '', [
                             '[Nome do Responsável]' => $record->pessoa->nome,
                             '[Nome do Aluno]' => $dependente?->nome_crianca ?? 'aluno(a)',
                             '[Horário de Visita Agendada]' => ($record->proximaVisita?->data_hora ?? $record->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir',
+                            '[Link da Pesquisa da Visita]' => $linkPesquisa,
+                            '[Link da Pesquisa]' => $linkPesquisa,
+                            '[Link]' => $linkPesquisa,
                         ]);
 
                         $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa?->telefone);

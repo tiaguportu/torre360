@@ -15,7 +15,7 @@ class MensagemWhatsappTemplateForm
         return $schema
             ->components([
                 Section::make('Modelo de Mensagem')
-                    ->description('Use as variáveis abaixo no texto que serão substituídas automaticamente ao enviar: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada].')
+                    ->description('Use as variáveis abaixo no texto que serão substituídas automaticamente ao enviar: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada], [Link da Pesquisa da Visita].')
                     ->schema([
                         TextInput::make('nome')
                             ->label('Nome do Modelo')
@@ -23,7 +23,7 @@ class MensagemWhatsappTemplateForm
                             ->maxLength(255),
                         Textarea::make('conteudo')
                             ->label('Mensagem')
-                            ->helperText('Variáveis disponíveis: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada].')
+                            ->helperText('Variáveis disponíveis: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada], [Link da Pesquisa da Visita].')
                             ->required()
                             ->rows(5)
                             ->columnSpanFull(),

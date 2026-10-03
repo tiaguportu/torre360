@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StatusVisitaInteressado;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -121,6 +122,26 @@ class Interessado extends Model
                 ['data_hora' => 'min'],
                 fn (Builder $query) => $query->agendadas()->where('data_hora', '>=', now())
             );
+    }
+
+    /**
+     * Última visita realizada pelo interessado.
+     */
+    public function ultimaVisitaRealizada(): HasOne
+    {
+        return $this->hasOne(VisitaInteressado::class)
+            ->ofMany(
+                ['data_hora' => 'max'],
+                fn (Builder $query) => $query->where('status', StatusVisitaInteressado::Realizada)
+            );
+    }
+
+    /**
+     * Última visita registrada (qualquer status).
+     */
+    public function ultimaVisita(): HasOne
+    {
+        return $this->hasOne(VisitaInteressado::class)->latestOfMany('data_hora');
     }
 
     // ─── Scopes ─────────────────────────────────────────────────

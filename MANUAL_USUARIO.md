@@ -82,15 +82,17 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
      - **Contagem:** O topo de cada coluna mostra o número total de interessados naquela etapa.
      - **Alertas de Data:** As datas de "Próximo Contato" mudam de cor automaticamente: **Vermelho** se estiverem atrasadas, **Amarelo** se forem para hoje.
      - **Cards em Vermelho:** Se a data do "Próximo Contato" estiver no passado, o card ganha borda e fundo vermelhos de alerta. O tooltip mostra o resumo do último contato.
+     - **Selo de Tour Realizado & Visita Agendada:** Cards de interessados que já visitaram a instituição exibem um selo destacado com a data da visita e o score NPS recebido (ex: `🏫 Tour Realizado (15/09) [NPS 10]`, com cores verde para Promotores, amarelo para Neutros e vermelho para Detratores), ou `📅 Visita Agendada: DD/MM` para visitas futuras.
    - **Acesso Rápido:** Clique no ícone de lápis no card para editar as informações completas ou ver o histórico de contatos.
 
 ### 3.2 Listagem de Interessados (Tabela)
 1. Na página de listagem, você encontra uma tabela completa com:
    - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos).
    - **Colunas visíveis:** **Interessado** (nome e telefone logo abaixo), **Status / Consultor** (status em badge e o consultor abaixo), **Qualificação** (Score em badge e a temperatura do consultor abaixo), **Próximo contato** (data e "em/há X dias") e **Origem**. Leads com contato atrasado aparecem com uma faixa vermelha na linha.
-   - **Colunas opcionais (seletor de colunas):** Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
+   - **Colunas opcionais (seletor de colunas):** Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
    - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
 2. **Filtros Avançados:**
+   - **Visitas à Escola:** Filtre rapidamente famílias que *"Já realizaram visita"*, *"Possuem visita agendada"* ou *"Ainda não visitaram"*.
    - **Status:** Filtre por múltiplos status simultaneamente.
    - **Origem:** Filtre por fonte de captação.
    - **Campanha:** Filtre pela campanha de marketing que originou o lead (a coluna **Campanha** pode ser exibida pelo seletor de colunas).
@@ -278,10 +280,20 @@ A **Pesquisa NPS Pós-Tour Escolar** é uma ferramenta estratégica de retençã
    - Sempre que uma visita agendada for marcada como **Realizada** (pelo botão verde na tabela de visitas do lead), o sistema gera imediatamente um token criptográfico exclusivo e seguro para aquela visita.
    - Uma notificação é disparada na tela do consultor oferecendo a opção de **Enviar pelo WhatsApp** no mesmo instante.
 
-2. **Disparo Simplificado via WhatsApp:**
+2. **Template Personalizável de WhatsApp:**
+   - O sistema já vem de fábrica com o modelo **"Pesquisa de Satisfação Pós-Visita"** cadastrado em **CRM / Comercial → Modelos de WhatsApp**.
+   - Você pode editar o texto desse modelo livremente no painel administrativo para deixá-lo com a linguagem e o tom de voz da sua escola.
+   - **Variáveis suportadas no template:**
+     - `[Nome do Responsável]` ou `[Primeiro Nome]`: Nome do pai, mãe ou responsável.
+     - `[Nome do Aluno]`: Nome do estudante ou filho(a).
+     - `[Horário de Visita Agendada]` ou `[Data da Visita]`: Data e hora em que a visita ocorreu.
+     - `[Link da Pesquisa da Visita]`: URL única e exclusiva da família para avaliação.
+     - `[Nome da Escola]`: Nome da instituição ou unidade de ensino.
+   - Tanto o botão **Pesquisa WhatsApp** na aba de Visitas quanto a ação rápida de WhatsApp na tabela principal de Interessados utilizam esse template automaticamente.
+
+3. **Disparo Simplificado via WhatsApp:**
    - Na aba **Visitas à Escola** da ficha do interessado, cada visita realizada conta com a ação **Pesquisa WhatsApp** (ícone de balão verde).
-   - Ao clicar, o WhatsApp abre automaticamente com uma mensagem carinhosa e personalizada direcionada ao responsável:
-     > *"Olá, [Nome]! 😊 Ficamos muito felizes com a sua visita à [Nome da Escola]. Para continuarmos melhorando nosso acolhimento, gostaríamos muito de saber como foi sua experiência! Você poderia nos avaliar rapidinho? Leva menos de 1 minuto: 👉 [Link Seguro]..."*
+   - Ao clicar, o WhatsApp abre imediatamente com a mensagem interpolada conforme o template configurado.
 
 3. **Experiência da Família (Mobile First e sem Login):**
    - Os pais acessam a pesquisa diretamente pelo celular, sem necessidade de login, senha ou cadastro prévio.

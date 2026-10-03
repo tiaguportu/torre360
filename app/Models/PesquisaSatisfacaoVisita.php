@@ -137,6 +137,7 @@ class PesquisaSatisfacaoVisita extends Model
 
     /**
      * Monta a mensagem para envio no WhatsApp com link da pesquisa.
+     * Busca preferencialmente o template ativo cadastrado em MensagemWhatsappTemplate.
      */
     public function gerarMensagemWhatsapp(): string
     {
@@ -144,6 +145,35 @@ class PesquisaSatisfacaoVisita extends Model
         $primeiroNome = explode(' ', trim($nomeResponsavel))[0];
         $escola = Unidade::first()?->nome ?? InstituicaoEnsino::first()?->nome ?? 'nossa escola';
         $url = $this->urlPublica();
+
+        $aluno = $this->visita?->dependente?->nome_crianca
+            ?? $this->interessado?->dependentes?->first()?->nome_crianca
+            ?? 'seu filho(a)';
+
+        $dataHoraVisita = $this->visita?->data_hora ? $this->visita->data_hora->format('d/m/Y \à\s H:i\h') : 'recente';
+
+        $template = MensagemWhatsappTemplate::ativos()
+            ->where(function ($query) {
+                $query->where('nome', 'Pesquisa de Satisfação Pós-Visita')
+                    ->orWhere('nome', 'like', '%Pesquisa%Visita%')
+                    ->orWhere('nome', 'like', '%Pós-Visita%');
+            })
+            ->first();
+
+        if ($template && filled($template->conteudo)) {
+            return strtr($template->conteudo, [
+                '[Nome do Responsável]' => $nomeResponsavel,
+                '[Primeiro Nome]' => $primeiroNome,
+                '[Nome do Aluno]' => $aluno,
+                '[Horário de Visita Agendada]' => $dataHoraVisita,
+                '[Data da Visita]' => $dataHoraVisita,
+                '[Link da Pesquisa da Visita]' => $url,
+                '[Link da Pesquisa]' => $url,
+                '[Link]' => $url,
+                '[Nome da Escola]' => $escola,
+                '[Escola]' => $escola,
+            ]);
+        }
 
         return "Olá, {$primeiroNome}! 😊 Ficamos muito felizes com a sua visita ao {$escola}.\n\nPara continuarmos melhorando nosso acolhimento, gostaríamos muito de saber como foi sua experiência! Você poderia nos avaliar rapidinho? Leva menos de 1 minuto:\n\n👉 {$url}\n\nAgradecemos muito pelo seu carinho e tempo!";
     }
