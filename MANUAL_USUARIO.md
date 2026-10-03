@@ -245,7 +245,7 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - *🎓 Fechamento de Matrícula (Garantia de vaga)*
    - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
    - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
-   - **Disparo em 1-Clique:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada, registrando opcionalmente a ação no histórico do lead.
+   - **Disparo em 1-Clique e Fidelidade de Emojis:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada. O sistema utiliza codificação RFC 3986 e o endpoint canônico `api.whatsapp.com/send`, garantindo que todos os emojis e formatações cheguem perfeitamente legíveis (sem caracteres corrompidos), com registro opcional no histórico de atendimentos do lead.
 
 ---
 
