@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class VisitaInteressado extends Model
 {
@@ -43,6 +44,40 @@ class VisitaInteressado extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    /**
+     * Pesquisa de satisfação pós-tour respondida pela família.
+     */
+    public function pesquisa(): HasOne
+    {
+        return $this->hasOne(PesquisaSatisfacaoVisita::class, 'visita_interessado_id');
+    }
+
+    /**
+     * Retorna a pesquisa existente ou cria uma nova com token exclusivo para a visita.
+     */
+    public function obterOuCriarPesquisa(): PesquisaSatisfacaoVisita
+    {
+        if ($this->relationLoaded('pesquisa') && $this->pesquisa !== null) {
+            return $this->pesquisa;
+        }
+
+        $pesquisa = $this->pesquisa()->first();
+        if ($pesquisa) {
+            $this->setRelation('pesquisa', $pesquisa);
+
+            return $pesquisa;
+        }
+
+        $nova = $this->pesquisa()->create([
+            'interessado_id' => $this->interessado_id,
+            'token' => PesquisaSatisfacaoVisita::gerarToken(),
+        ]);
+
+        $this->setRelation('pesquisa', $nova);
+
+        return $nova;
     }
 
     public function scopeAgendadas(Builder $query): Builder

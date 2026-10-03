@@ -16,8 +16,11 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -63,6 +66,7 @@ class VisitasRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('data_hora')
             ->defaultSort('data_hora', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with(['pesquisa', 'dependente', 'usuario']))
             ->columns([
                 TextColumn::make('data_hora')
                     ->label('Data e Hora')
@@ -72,6 +76,33 @@ class VisitasRelationManager extends RelationManager
                 TextColumn::make('status')
                     ->label('Situação')
                     ->badge(),
+                TextColumn::make('pesquisa.nota_nps')
+                    ->label('NPS')
+                    ->state(function (VisitaInteressado $record): string {
+                        $pesquisa = $record->pesquisa;
+                        if (! $pesquisa || ! $pesquisa->isRespondida()) {
+                            return $record->status === StatusVisitaInteressado::Realizada ? 'Pendente' : '—';
+                        }
+
+                        return "{$pesquisa->nota_nps}/10 ({$pesquisa->classificacaoNps()})";
+                    })
+                    ->badge()
+                    ->color(function (VisitaInteressado $record): string {
+                        $pesquisa = $record->pesquisa;
+                        if (! $pesquisa || ! $pesquisa->isRespondida()) {
+                            return 'gray';
+                        }
+
+                        return $pesquisa->corBadge();
+                    })
+                    ->icon(function (VisitaInteressado $record): ?string {
+                        $pesquisa = $record->pesquisa;
+                        if (! $pesquisa || ! $pesquisa->isRespondida()) {
+                            return null;
+                        }
+
+                        return $pesquisa->iconeBadge();
+                    }),
                 TextColumn::make('usuario.name')
                     ->label('Consultor')
                     ->placeholder('—')
@@ -112,6 +143,32 @@ class VisitasRelationManager extends RelationManager
                     ->color('danger')
                     ->visible(fn (VisitaInteressado $record): bool => $record->status === StatusVisitaInteressado::Agendada)
                     ->action(fn (VisitaInteressado $record) => $this->alterarStatus($record, StatusVisitaInteressado::Faltou)),
+                Action::make('enviarPesquisaWhatsapp')
+                    ->label('Pesquisa WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->tooltip('Enviar pesquisa de satisfação pós-tour para a família pelo WhatsApp')
+                    ->visible(fn (VisitaInteressado $record): bool => $record->status === StatusVisitaInteressado::Realizada)
+                    ->url(function (VisitaInteressado $record): ?string {
+                        $pesquisa = $record->obterOuCriarPesquisa();
+
+                        return $pesquisa->linkWhatsapp();
+                    })
+                    ->openUrlInNewTab(),
+                Action::make('verAvaliacao')
+                    ->label('Ver Avaliação')
+                    ->icon('heroicon-o-star')
+                    ->color('warning')
+                    ->tooltip('Visualizar avaliação e depoimento da família')
+                    ->visible(fn (VisitaInteressado $record): bool => (bool) $record->pesquisa?->isRespondida())
+                    ->modalHeading('Avaliação da Família - Tour Escolar')
+                    ->modalWidth(Width::Large)
+                    ->modalContent(fn (VisitaInteressado $record) => view(
+                        'filament.crm.modal-avaliacao-pesquisa',
+                        ['pesquisa' => $record->pesquisa]
+                    ))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
                 EditAction::make()
                     ->after(fn () => $this->sincronizarProximoContato()),
                 DeleteAction::make()
@@ -130,6 +187,28 @@ class VisitasRelationManager extends RelationManager
         $visita->update(['status' => $status]);
 
         LeadScoreService::recalcular($this->getOwnerRecord());
+
+        if ($status === StatusVisitaInteressado::Realizada) {
+            $pesquisa = $visita->obterOuCriarPesquisa();
+            $linkWhatsapp = $pesquisa->linkWhatsapp();
+
+            $notification = Notification::make()
+                ->title('Visita marcada como Realizada!')
+                ->body('A pesquisa de satisfação pós-tour (NPS) foi gerada. Deseja enviar o convite para a família agora?')
+                ->success();
+
+            if ($linkWhatsapp) {
+                $notification->actions([
+                    NotificationAction::make('whatsapp')
+                        ->label('Enviar pelo WhatsApp')
+                        ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                        ->color('success')
+                        ->url($linkWhatsapp, shouldOpenInNewTab: true),
+                ]);
+            }
+
+            $notification->send();
+        }
     }
 
     /**

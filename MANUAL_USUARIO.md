@@ -265,11 +265,48 @@ A **Régua de Follow-up** automatiza o relacionamento e a comunicação com fam�
    - **E-mail para a Família:** Mensagens ricas e personalizadas enviadas diretamente para a caixa de entrada dos pais. O sistema respeita estritamente a LGPD (respeitando o opt-out caso a família tenha desmarcado o recebimento de comunicações).
    - **Alerta no Painel (Sininho) para o Consultor:** Notificação interna na barra superior com atalho direto para a ficha do lead.
 4. **Histórico Integrado:** Todo e-mail disparado pela régua é registrado automaticamente na linha do tempo (**Histórico de Contatos**) do interessado, mantendo a equipe 100% ciente de tudo que foi comunicado.
-5. **Tags Dinâmicas:** Você pode usar tags automáticas como `{{NOME_RESPONSAVEL}}` ou `[Nome]`, `{{NOME_ALUNO}}` ou `[Aluno]`, `{{SERIE_INTERESSE}}` ou `[Serie]`, `{{NOME_CONSULTOR}}` ou `[Consultor]`, `{{DATA_VISITA}}` ou `[DataVisita]`, `{{HORARIO_VISITA}}` ou `[HorarioVisita]` e `{{ESCOLA_NOME}}` ou `[Escola]`.
+5. **Tags Dinâmicas:** Você pode usar tags automáticas como `{{NOME_RESPONSAVEL}}` ou `[Nome]`, `{{NOME_ALUNO}}` ou `[Aluno]`, `{{SERIE_INTERESSE}}` ou `[Serie]`, `{{NOME_CONSULTOR}}` ou `[Consultor]`, `{{DATA_VISITA}}` ou `[DataVisita]`, `{{HORARIO_VISITA}}` ou `[HorarioVisita]`, `{{LINK_PESQUISA}}` ou `[LinkPesquisa]` e `{{ESCOLA_NOME}}` ou `[Escola]`.
 6. **Execução Automática e Simulação:**
    - A régua é processada diariamente às 08:00 de forma automática via rotina agendada no servidor (`crm:executar-regua-follow-up`).
    - No topo da listagem, o botão **Executar Régua do Dia** permite acionar a verificação sob demanda ou rodar em **Modo Simulação (Dry-run)** para pré-visualizar quantos e-mails seriam gerados sem disparar mensagens reais.
    - Na tabela, o botão **Testar** em cada automação permite escolher um lead de exemplo para testar o envio com dados reais antes de ativar a regra para todos.
+
+### 3.16 Pesquisa NPS e Satisfação Pós-Tour Escolar
+A **Pesquisa NPS Pós-Tour Escolar** é uma ferramenta estratégica de retenção e conversão de matrículas que afere a percepção das famílias logo após a experiência presencial na instituição:
+
+1. **Geração Automática do Link:**
+   - Sempre que uma visita agendada for marcada como **Realizada** (pelo botão verde na tabela de visitas do lead), o sistema gera imediatamente um token criptográfico exclusivo e seguro para aquela visita.
+   - Uma notificação é disparada na tela do consultor oferecendo a opção de **Enviar pelo WhatsApp** no mesmo instante.
+
+2. **Disparo Simplificado via WhatsApp:**
+   - Na aba **Visitas à Escola** da ficha do interessado, cada visita realizada conta com a ação **Pesquisa WhatsApp** (ícone de balão verde).
+   - Ao clicar, o WhatsApp abre automaticamente com uma mensagem carinhosa e personalizada direcionada ao responsável:
+     > *"Olá, [Nome]! 😊 Ficamos muito felizes com a sua visita à [Nome da Escola]. Para continuarmos melhorando nosso acolhimento, gostaríamos muito de saber como foi sua experiência! Você poderia nos avaliar rapidinho? Leva menos de 1 minuto: 👉 [Link Seguro]..."*
+
+3. **Experiência da Família (Mobile First e sem Login):**
+   - Os pais acessam a pesquisa diretamente pelo celular, sem necessidade de login, senha ou cadastro prévio.
+   - **Net Promoter Score (NPS 0 a 10):** *"De 0 a 10, qual a probabilidade de você recomendar nossa escola para um amigo ou familiar?"*
+   - **Pilares Avaliativos Estruturados (1 a 5 estrelas):**
+     - 🤝 *Acolhimento & Recepção*
+     - 🏫 *Espaço, Limpeza e Infraestrutura*
+     - 📖 *Clareza da Proposta Pedagógica e Metodologia*
+   - **Comentários Abertos:** Espaço opcional para dúvidas, elogios ou ponderações da família.
+   - **Página de Confirmação:** Tela calorosa de agradecimento com confirmação do feedback.
+
+4. **Registro Imediato na Linha do Tempo do Lead:**
+   - No momento em que os pais enviam a resposta, o sistema cria automaticamente um novo registro no **Histórico de Contatos** do lead.
+   - O consultor visualiza o score NPS, a classificação da família e o depoimento deixado sem precisar abrir planilhas ou relatórios externos.
+
+5. **Acompanhamento no Painel do Consultor:**
+   - **Coluna NPS na Tabela de Visitas:** Exibe badges intuitivos:
+     - 🟢 **Promotor (9 ou 10):** Alta probabilidade de conversão e recomendação.
+     - 🟡 **Neutro (7 ou 8):** Família interessada, mas com dúvidas pendentes.
+     - 🔴 **Detrator (0 a 6):** Alerta comercial imediato para contato e superação de objeções.
+     - ⚪ **Pendente:** Visita realizada, aguardando resposta da família.
+   - **Ação "Ver Avaliação":** Abre uma janela modal com o diagnóstico completo: nota NPS, estrelas de cada um dos 3 pilares, depoimento textual, data/hora da submissão e endereço IP auditável.
+
+6. **Integração com a Régua de Follow-up:**
+   - Use a tag `{{LINK_PESQUISA}}` ou `[LinkPesquisa]` nos modelos de e-mail e follow-up pós-visita para convidar os pais de forma 100% automatizada.
 
 ---
 

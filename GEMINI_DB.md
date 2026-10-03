@@ -918,3 +918,35 @@ Estrutura de ensino e turmas.
   - `data_emissao`: Data/hora em que o PDF oficial com QR Code foi processado e assinado.
   - `data_validade`: Data limite de validade jurídica do documento.
 - **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `TemplateDocumento`, BelongsTo `User` (`solicitadoPor`), BelongsTo `User` (`atendidoPor`).
+
+---
+
+## 19. CRM de Admissões, Tour Escolar e Pesquisa NPS
+
+### `interessados`
+- **Representa:** Leads e famílias interessadas em vagas na instituição de ensino.
+- **Campos Principais:** `pessoa_id`, `usuario_id` (consultor), `origem_interessado_id`, `status_interessado_id`, `data_primeiro_contato`, `data_proximo_contato`, `temperatura`, `score_engajamento`, `valor_estimado`.
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `User` (consultor), HasMany `dependentes`, HasMany `visitas`, HasMany `historicoContatos`.
+
+### `visita_interessado`
+- **Representa:** Agendamentos de visitas presenciais (tour escolar) realizadas pelas famílias candidatas.
+- **Campos Principais:** `interessado_id`, `interessado_dependente_id`, `usuario_id` (consultor), `data_hora`, `status` (Enum `StatusVisitaInteressado`: `Agendada`, `Realizada`, `Cancelada`, `Faltou`), `observacoes`, `lembrete_enviado_em`.
+- **Relacionamentos:** BelongsTo `Interessado`, BelongsTo `InteressadoDependente`, BelongsTo `User`, HasOne `pesquisa` (`PesquisaSatisfacaoVisita`).
+
+### `visita_pesquisa_satisfacao`
+- **Representa:** Pesquisa de satisfação e Net Promoter Score (NPS) pós-tour escolar respondida pelas famílias.
+- **Campos Principais:**
+  - `visita_interessado_id`: FK única `visita_interessado.id`.
+  - `interessado_id`: FK `interessados.id`.
+  - `token`: String (40 chars) - Token aleatório criptográfico e seguro para acesso público da família sem autenticação.
+  - `nota_nps`: Integer (0 a 10, nullable até ser respondido) - Escala NPS.
+  - `nota_atendimento`: Integer (1 a 5, nullable) - Pilar de acolhimento e recepção.
+  - `nota_infraestrutura`: Integer (1 a 5, nullable) - Pilar de estrutura física e instalações.
+  - `nota_proposta_pedagogica`: Integer (1 a 5, nullable) - Pilar de clareza da proposta pedagógica e metodologia.
+  - `comentario`: Text (nullable) - Observações, elogios e feedbacks abertos da família.
+  - `respondido_em`: Datetime (nullable) - Timestamp do envio da avaliação pela família.
+  - `ip`: String (45 chars, nullable) - Endereço IP de origem para auditoria.
+- **Relacionamentos:** BelongsTo `VisitaInteressado`, BelongsTo `Interessado`.
+
+### `regua_follow_ups` e `regua_follow_up_logs`
+- **Representa:** Regras automatizadas e esteira de follow-up do funil comercial de captação (WhatsApp e E-mail), com interpolação de tags dinâmicas (`{{LINK_PESQUISA}}`, `{{PRIMEIRO_NOME}}`, `{{DATA_VISITA}}`, etc.).

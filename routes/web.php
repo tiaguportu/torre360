@@ -8,6 +8,7 @@ use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
+use App\Http\Controllers\Crm\PesquisaVisitaController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
@@ -49,6 +50,13 @@ Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoCon
 Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)
     ->middleware('throttle:15,1')
     ->name('documentos.validar-autenticidade');
+
+// Pesquisa NPS e Satisfação Pós-Tour Escolar
+Route::get('/pesquisa-visita/{token}', [PesquisaVisitaController::class, 'show'])->name('pesquisa-visita.show');
+Route::post('/pesquisa-visita/{token}', [PesquisaVisitaController::class, 'store'])
+    ->middleware('throttle:15,1')
+    ->name('pesquisa-visita.store');
+Route::get('/pesquisa-visita/{token}/obrigado', [PesquisaVisitaController::class, 'sucesso'])->name('pesquisa-visita.sucesso');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');

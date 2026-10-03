@@ -107,6 +107,21 @@ class ReguaFollowUp extends Model
         $dataVisita = $visita?->data_hora ? $visita->data_hora->format('d/m/Y') : '';
         $horarioVisita = $visita?->data_hora ? $visita->data_hora->format('H:i') : '';
 
+        // Link da Pesquisa NPS de Visita (se houver visita associada ou realizada)
+        $linkPesquisa = '';
+        if ($visita) {
+            $linkPesquisa = $visita->obterOuCriarPesquisa()->url_publica;
+        } elseif ($interessado->visitas()->where('status', 'Realizada')->exists()) {
+            $visitaRealizada = $interessado->visitas()->where('status', 'Realizada')->latest('data_hora')->first();
+            if ($visitaRealizada) {
+                $linkPesquisa = $visitaRealizada->obterOuCriarPesquisa()->url_publica;
+                if (empty($dataVisita) && $visitaRealizada->data_hora) {
+                    $dataVisita = $visitaRealizada->data_hora->format('d/m/Y');
+                    $horarioVisita = $visitaRealizada->data_hora->format('H:i');
+                }
+            }
+        }
+
         $placeholders = [
             '{{NOME_RESPONSAVEL}}' => $nomeResponsavel,
             '{{PRIMEIRO_NOME}}' => $primeiroNome,
@@ -123,6 +138,8 @@ class ReguaFollowUp extends Model
             '[DataVisita]' => $dataVisita,
             '{{HORARIO_VISITA}}' => $horarioVisita,
             '[HorarioVisita]' => $horarioVisita,
+            '{{LINK_PESQUISA}}' => $linkPesquisa,
+            '[LinkPesquisa]' => $linkPesquisa,
             '{{EMAIL_RESPONSAVEL}}' => $pessoa?->email ?? '',
             '{{TELEFONE_RESPONSAVEL}}' => $pessoa?->telefone_formatado ?? $pessoa?->telefone ?? '',
         ];

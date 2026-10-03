@@ -70,6 +70,7 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
         $html .= '<li><strong>Resumo:</strong> Visualize os dias no funil, total de contatos e temperatura calculada automaticamente.</li>';
         $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
+        $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
         $html .= '<li><strong>Histórico:</strong> Na aba inferior, registre e visualize todas as interações com este lead.</li>';
 
         if ($user->can('Delete:Interessado')) {
