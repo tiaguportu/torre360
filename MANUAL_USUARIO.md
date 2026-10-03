@@ -72,7 +72,14 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 1. Vá em **CRM → Interessados**.
 2. Utilize a visualização em **Funil de Vendas (CRM)**:
    - **Interface:** O layout é inspirado no Trello, com colunas coloridas que facilitam a distinção visual entre as etapas do funil (ex: *Novo Contato*, *Agendamento*, *Matrícula*).
-   - **Drag & Drop:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real. Ao mover para um status de "Matriculado", a data de conversão é registrada automaticamente.
+   - **Drag & Drop e Stage Gate de Perda:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real.
+     - **Conversão Automática:** Ao mover para um status de "Matriculado", a data de conversão é registrada automaticamente.
+     - **Modal Obrigatório de Motivo de Perda (Stage Gate):** Ao arrastar um card para uma etapa de encerramento ou perda (ex: *Desistente*, *Perdido*), o sistema intercepta o movimento e abre imediatamente uma janela modal obrigatória solicitando:
+       - **Motivo da Perda (obrigatório):** Seleção padronizada entre opções estratégicas (*Preço / Questão financeira*, *Concorrência*, *Distância / Localização*, *Mudança*, *Vagas Esgotadas*, *Metodologia pedagógica*, *Sem retorno*, *Desistência* ou *Outro*).
+       - **Escola Concorrente:** Campo dinâmico exibido quando o motivo selecionado for *Concorrência*, permitindo registrar qual instituição a família escolheu.
+       - **Observações / Objeções:** Campo para anotações detalhadas do consultor comercial sobre os relatos dos pais.
+       - **Auditoria Automática:** Ao confirmar, o sistema atualiza o status, grava o motivo e insere automaticamente um novo registro no **Histórico de Contatos** do lead com data, hora e consultor responsável. Se a operação for cancelada, o card permanece intacto na coluna anterior.
+     - **Reativação Inteligente:** Se um lead que estava marcado como perdido for arrastado de volta para uma etapa ativa (ex: *Em Negociação*, *Contato Realizado*), o sistema limpa o motivo de perda ativo e registra na linha do tempo que o lead foi reativado no processo comercial.
    - **Filtro por Consultor:** Use o botão "Filtrar Consultor" no topo para visualizar apenas os leads de um consultor específico.
    - **Indicadores Visuais nos Cards:**
      - **Temperatura:** Cada card exibe um indicador visual: 🔥 Quente, 🟡 Morno, 🔵 Frio. Se nenhuma temperatura foi definida manualmente, o sistema calcula automaticamente baseado na atividade recente.

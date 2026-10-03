@@ -620,16 +620,13 @@ class InteressadosTable
                         ->form([
                             Select::make('motivo_perda')
                                 ->label('Motivo da Perda')
-                                ->options([
-                                    'Preço' => 'Preço / Questão financeira',
-                                    'Concorrência' => 'Escolheu outra escola',
-                                    'Distância' => 'Distância / Localização',
-                                    'Mudança' => 'Mudou de cidade',
-                                    'Desistência' => 'Desistiu de matricular',
-                                    'Sem retorno' => 'Sem retorno aos contatos',
-                                    'Outro' => 'Outro',
-                                ])
+                                ->options(Interessado::MOTIVOS_PERDA)
+                                ->searchable()
                                 ->required(),
+                            Textarea::make('observacoes_perda')
+                                ->label('Observações / Objeções')
+                                ->rows(2)
+                                ->placeholder('Detalhes adicionais sobre o encerramento...'),
                         ])
                         ->visible(fn ($record) => ! $record->status?->is_final)
                         ->action(function (array $data, Interessado $record) {
@@ -640,6 +637,20 @@ class InteressadosTable
                                 $record->update([
                                     'status_interessado_id' => $statusPerdido->id,
                                     'motivo_perda' => $data['motivo_perda'],
+                                ]);
+
+                                $relato = "Lead marcado como perdido via tabela ({$statusPerdido->nome}). Motivo: {$data['motivo_perda']}.";
+                                if (filled($data['observacoes_perda'] ?? null)) {
+                                    $relato .= ' Detalhes: '.trim($data['observacoes_perda']);
+                                }
+
+                                HistoricoContato::create([
+                                    'interessado_id' => $record->id,
+                                    'tipo_contato_interessado_id' => TipoContatoInteressado::where('nome', 'like', '%Presencial%')->value('id') ?? 1,
+                                    'data_contato' => now(),
+                                    'usuario_id' => auth()->id(),
+                                    'relato' => $relato,
+                                    'resultado' => 'sem_interesse',
                                 ]);
 
                                 LeadScoreService::recalcular($record);
@@ -755,12 +766,11 @@ class InteressadosTable
                                     'van_escolar' => 'Van escolar',
                                     'transporte_publico' => 'Transporte público',
                                     'a_pe_ou_bicicleta' => 'A pé / Bicicleta',
-                                ])
-                                ->native(false),
-                            TextInput::make('motivo_perda')
+                                ]),
+                            Select::make('motivo_perda')
                                 ->label('Motivo da Perda')
-                                ->placeholder('Ex: Preço, Concorrência, Mudança...')
-                                ->maxLength(255),
+                                ->options(Interessado::MOTIVOS_PERDA)
+                                ->searchable(),
                         ])
                         ->action(function (Collection $records, array $data): void {
                             $updateData = array_filter([

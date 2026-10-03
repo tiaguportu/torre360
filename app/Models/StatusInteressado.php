@@ -26,4 +26,29 @@ class StatusInteressado extends Model
     {
         return $this->hasMany(Interessado::class, 'status_interessado_id');
     }
+
+    /**
+     * Indica se este status representa um encerramento por perda/descarte (stage gate).
+     */
+    public function isPerda(): bool
+    {
+        if ($this->is_final && ! $this->is_ganho) {
+            return true;
+        }
+
+        $nomeLower = mb_strtolower(trim($this->nome));
+
+        return in_array($nomeLower, [
+            'perdido',
+            'perda',
+            'desistente',
+            'desistência',
+            'desistencia',
+            'cancelado',
+            'sem interesse',
+            'descarte',
+            'não matriculado',
+            'nao matriculado',
+        ]);
+    }
 }

@@ -376,7 +376,8 @@ Estrutura de ensino e turmas.
 ## 6. CRM e Prospecção
 ### `interessado`
 - **Representa:** Leads para novos alunos.
-- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable — padronizado pelas opções de `Interessado::MOTIVOS_PERDA`), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Motivos de Perda:** Padronizados na constante `Interessado::MOTIVOS_PERDA` (`Preço`, `Concorrência`, `Distância`, `Mudança`, `Vagas Esgotadas`, `Metodologia`, `Sem retorno`, `Desistência`, `Outro`).
 - **Redes sociais:** `redes_sociais` (JSON nullable, cast `array`) — lista de `{rede, url}`. Redes aceitas em `Interessado::REDES_SOCIAIS` (instagram, facebook, linkedin, tiktok, x, youtube, outra). Editável no Repeater "Redes Sociais" da aba Dados do Negócio e preenchido pela importação com IA.
 - **Convite de Matrícula Online (Onda 7):** `token_convite` (string nullable, único), `token_convite_expira_em` (datetime nullable), `token_convite_usado_em` (datetime nullable), `dados_pre_matricula` (JSON nullable — responsáveis, alunos, endereço e aceite LGPD preenchidos pela família; usado para pré-preencher o `EnrollmentWizard` e zerado em `registrarConversao()`). Gerado por `ConviteMatriculaService::gerarConvite()`; `Interessado::conviteValido()` verifica existência + validade + não-uso. Rota pública `/quero-matricular/convite/{token}`.
 - **Relacionamentos:** 
@@ -406,6 +407,7 @@ Estrutura de ensino e turmas.
 ### `status_interessado`
 - **Representa:** Etapas do funil de vendas.
 - **Campos Principais:** `nome`, `cor`, `ordem`, `is_final` (boolean — indica status de encerramento), `is_ganho` (boolean — indica conversão/matrícula).
+- **Lógica de Negócio (Modelo):** `isPerda(): bool` identifica se o status representa encerramento por perda/descarte (`is_final && !is_ganho` ou nomes de perda), ativando o Stage Gate obrigatório de motivo de perda no Kanban.
 - **Relacionamentos:** HasMany `interessado`.
 
 ### `origem_interessado`

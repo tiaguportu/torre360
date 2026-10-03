@@ -33,6 +33,19 @@ class Interessado extends Model
         'outra' => 'Outra',
     ];
 
+    /** Motivos padronizados de encerramento por perda/descarte. */
+    public const MOTIVOS_PERDA = [
+        'Preço' => 'Preço / Questão financeira',
+        'Concorrência' => 'Escolheu outra escola',
+        'Distância' => 'Distância / Localização / Transporte',
+        'Mudança' => 'Mudança de endereço / cidade',
+        'Vagas Esgotadas' => 'Sem vagas na série ou turno pretendido',
+        'Metodologia' => 'Incompatibilidade pedagógica / proposta de ensino',
+        'Sem retorno' => 'Sem retorno aos contatos da escola',
+        'Desistência' => 'Desistiu do processo de matrícula',
+        'Outro' => 'Outro motivo',
+    ];
+
     protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
 
     public function getActivitylogOptions(): LogOptions

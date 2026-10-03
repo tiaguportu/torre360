@@ -193,6 +193,94 @@
         @endforeach
     </div>
 
+    {{-- Modal Obrigatório de Motivo de Perda (Stage Gate) --}}
+    <x-filament::modal
+        id="modal-motivo-perda"
+        :heading="'Registrar Motivo da Perda'"
+        :description="'Para mover este lead para ' . ($statusPerdaNome ?? 'Perdido') . ', informe a razão do encerramento comercial.'"
+        icon="heroicon-o-x-circle"
+        icon-color="danger"
+        width="md"
+        :close-by-clicking-away="false"
+        :close-by-escaping="true"
+    >
+        <form wire:submit.prevent="confirmarPerda" class="space-y-4 py-2">
+            <div class="p-3 bg-danger-50 dark:bg-danger-950/40 border border-danger-200 dark:border-danger-800 rounded-lg text-sm text-danger-900 dark:text-danger-200 flex items-center gap-3">
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6 text-danger-600 dark:text-danger-400 shrink-0" />
+                <div>
+                    <p class="font-semibold text-gray-900 dark:text-white">{{ $leadPerdaNome }}</p>
+                    <p class="text-xs text-danger-700 dark:text-danger-300">O registro da razão da perda é obrigatório para qualificar os relatórios e métricas de conversão da escola.</p>
+                </div>
+            </div>
+
+            <div>
+                <label for="motivoPerda" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Motivo da Perda <span class="text-danger-500 font-bold">*</span>
+                </label>
+                <select
+                    id="motivoPerda"
+                    wire:model.live="motivoPerda"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                    required
+                >
+                    <option value="">Selecione o motivo da perda...</option>
+                    @foreach(\App\Models\Interessado::MOTIVOS_PERDA as $chave => $rotulo)
+                        <option value="{{ $chave }}">{{ $rotulo }}</option>
+                    @endforeach
+                </select>
+                @error('motivoPerda')
+                    <span class="text-xs text-danger-600 dark:text-danger-400 mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+
+            @if($motivoPerda === 'Concorrência')
+                <div x-transition>
+                    <label for="concorrentePerda" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Escola Concorrente Escolhida <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                    </label>
+                    <input
+                        id="concorrentePerda"
+                        type="text"
+                        wire:model="concorrentePerda"
+                        placeholder="Ex: Colégio Santo Agostinho, Escola Dom Bosco..."
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                    />
+                </div>
+            @endif
+
+            <div>
+                <label for="observacoesPerda" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Observações / Objeções Relatadas <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <textarea
+                    id="observacoesPerda"
+                    wire:model="observacoesPerda"
+                    rows="3"
+                    placeholder="Descreva o que a família informou, dificuldades ou se há interesse em rematricular em outro momento..."
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                ></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <x-filament::button
+                    type="button"
+                    color="gray"
+                    wire:click="fecharModalPerda"
+                >
+                    Cancelar
+                </x-filament::button>
+
+                <x-filament::button
+                    type="submit"
+                    color="danger"
+                    icon="heroicon-o-check"
+                >
+                    Confirmar e Marcar como Perdido
+                </x-filament::button>
+            </div>
+        </form>
+    </x-filament::modal>
+
     <style>
         .kanban-container {
             display: flex !important;

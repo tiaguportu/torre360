@@ -254,9 +254,12 @@ class InteressadoForm
                                     ->label('Próximo Contato')
                                     ->native(false),
 
-                                TextInput::make('motivo_perda')
+                                Select::make('motivo_perda')
                                     ->label('Motivo da Perda')
+                                    ->options(Interessado::MOTIVOS_PERDA)
+                                    ->searchable()
                                     ->visible(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
+                                    ->required(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
                                     ->columnSpanFull(),
 
                                 Repeater::make('redes_sociais')
@@ -331,6 +334,6 @@ class InteressadoForm
 
         $status = StatusInteressado::find($statusId);
 
-        return $status && $status->is_final && ! $status->is_ganho;
+        return $status?->isPerda() ?? false;
     }
 }
