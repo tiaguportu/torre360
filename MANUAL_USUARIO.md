@@ -233,7 +233,8 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - **Dores e Objeções Identificadas:** Principais preocupações (metodologia pedagógica, acolhimento, línguas, segurança, valores).
      - **Termômetro Comercial:** Avaliação da temperatura real e nível de prontidão da matrícula (🔥 Quente, 🟡 Morno, 🔵 Frio).
      - **Roteiro Estratégico de Abordagem:** O que o consultor deve falar, argumentos personalizados para aquela família e pergunta aberta recomendada para conduzir o próximo contato.
-   - O consultor pode revisar e clicar em **Salvar no Histórico do Lead** para registrar o dossiê permanentemente no histórico de interações.
+   - **Relatório formatado:** o **Relatório Completo do Dossiê** é exibido já formatado (títulos, negrito e listas), em uma caixa com rolagem para relatórios longos. O texto é somente leitura.
+   - O consultor pode ler o relatório e clicar em **Salvar no Histórico do Lead** para registrar o dossiê permanentemente no histórico de interações (o histórico guarda o texto original gerado pela IA).
 
 2. **💬 Copiloto WhatsApp IA:**
    - **Onde acessar:** Disponível no menu de ações de cada lead (`...` → **Copiloto WhatsApp IA**) e no cabeçalho de edição.
