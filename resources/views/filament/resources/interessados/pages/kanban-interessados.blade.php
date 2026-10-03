@@ -1,4 +1,7 @@
 <x-filament-panels::page>
+    @php
+        $todasVagasSeries = app(\App\Services\TermometroVagasService::class)->calcularVagasPorSerie();
+    @endphp
     <div class="kanban-container" x-data="{
         draggingRecordId: null,
         draggingOverStatusId: null,
@@ -120,8 +123,9 @@
 
                                         @foreach($dependentesPorSerie as $serieNome => $dependentes)
                                             @php
-                                                $serieObj = $dependentes->first()?->serie;
-                                                $dadosVagas = $serieObj ? app(\App\Services\TermometroVagasService::class)->calcularVagasPorSerie($serieObj->id)->first() : null;
+                                                $depColecao = collect($dependentes);
+                                                $serieObj = $depColecao->first()?->serie;
+                                                $dadosVagas = $serieObj ? $todasVagasSeries->firstWhere('serie_id', $serieObj->id) : null;
                                                 $temAlertaVaga = $dadosVagas && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico', 'alerta'], true);
                                                 $corBadgeSerie = match(true) {
                                                     $temAlertaVaga && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico'], true) => 'danger',
@@ -135,7 +139,7 @@
                                                 class="text-[10px] px-1.5 py-0"
                                                 :title="$dadosVagas ? 'Vagas na Série: ' . $dadosVagas['vagas_restantes'] . ' livres de ' . $dadosVagas['capacidade_total'] . ' (' . $dadosVagas['taxa_ocupacao'] . '% ocupada)' : null"
                                             >
-                                                {{ $dependentes->count() }}x {{ $serieNome ?? 'Série não def.' }}
+                                                {{ $depColecao->count() }}x {{ $serieNome ?? 'Série não def.' }}
                                                 @if($temAlertaVaga)
                                                     @if($dadosVagas['nivel_escassez'] === 'esgotado')
                                                         (⛔ 0 vagas)

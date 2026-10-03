@@ -6,11 +6,15 @@ use App\Models\Curso;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\Matricula;
+use App\Models\OrigemInteressado;
 use App\Models\Serie;
+use App\Models\StatusInteressado;
 use App\Models\Turma;
 use App\Models\Unidade;
+use App\Models\User;
 use App\Services\TermometroVagasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TermometroVagasTest extends TestCase
@@ -193,5 +197,59 @@ class TermometroVagasTest extends TestCase
         $this->assertSame(TermometroVagasService::VAGAS_PADRAO_TURMA, $dados['vagas_restantes']);
         $this->assertEquals(0.0, $dados['taxa_ocupacao']);
         $this->assertSame(TermometroVagasService::STATUS_DISPONIVEL, $dados['nivel_escassez']);
+    }
+
+    public function test_kanban_renderiza_com_sucesso_com_alertas_de_vagas(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $status = StatusInteressado::create(['nome' => 'Novo', 'ordem' => 1]);
+        $origem = OrigemInteressado::create(['nome' => 'Instagram']);
+
+        $serie = $this->criarSerie('1º Ano');
+        $turma = Turma::factory()->create([
+            'serie_id' => $serie->id,
+            'vagas_maximas' => 10,
+        ]);
+        for ($i = 0; $i < 9; $i++) {
+            Matricula::factory()->create([
+                'turma_id' => $turma->id,
+                'situacao' => 'ativa',
+            ]);
+        }
+
+        // Lead 1: com dependente em série crítica
+        $lead1 = Interessado::factory()->create([
+            'status_interessado_id' => $status->id,
+            'origem_interessado_id' => $origem->id,
+            'usuario_id' => $admin->id,
+        ]);
+        InteressadoDependente::create([
+            'interessado_id' => $lead1->id,
+            'nome_crianca' => 'Criança 1',
+            'serie_id' => $serie->id,
+        ]);
+
+        // Lead 2: dependente sem série definida
+        $lead2 = Interessado::factory()->create([
+            'status_interessado_id' => $status->id,
+            'origem_interessado_id' => $origem->id,
+            'usuario_id' => $admin->id,
+        ]);
+        InteressadoDependente::create([
+            'interessado_id' => $lead2->id,
+            'nome_crianca' => 'Criança Sem Série',
+            'serie_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get('/admin/interessados/kanban');
+
+        $response->assertOk();
+        $response->assertSee('Funil de Vendas (CRM)');
+        $response->assertSee('1º Ano');
+        $response->assertSee('🔥 1 vagas');
     }
 }
