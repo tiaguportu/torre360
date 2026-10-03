@@ -11,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListInteressados extends ListRecords
@@ -71,6 +72,15 @@ class ListInteressados extends ListRecords
         return [
             CreateAction::make(),
             ImportarLeadIaAction::make(),
+            Action::make('termometroVagas')
+                ->label('Termômetro de Vagas')
+                ->icon('heroicon-o-chart-bar')
+                ->color('warning')
+                ->modalHeading('📊 Termômetro de Ocupação e Vagas por Série')
+                ->modalWidth(Width::Large)
+                ->modalContent(fn () => view('filament.crm.modal-termometro-vagas'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar'),
             Action::make('kanban')
                 ->label('Ver Kanban')
                 ->icon('heroicon-o-view-columns')

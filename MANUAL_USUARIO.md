@@ -320,6 +320,36 @@ A **Pesquisa NPS Pós-Tour Escolar** é uma ferramenta estratégica de retençã
 6. **Integração com a Régua de Follow-up:**
    - Use a tag `{{LINK_PESQUISA}}` ou `[LinkPesquisa]` nos modelos de e-mail e follow-up pós-visita para convidar os pais de forma 100% automatizada.
 
+### 3.17 Termômetro de Vagas por Série & Alerta de Escassez (Tempo Real)
+O **Termômetro de Vagas por Série** fornece à equipe de admissões e consultores educacionais visibilidade instantânea da capacidade de cada turma e nível de ensino, calculando em tempo real as vagas disponíveis e ativando gatilhos legítimos de escassez e urgência nas negociações:
+
+1. **Cálculo em Tempo Real:**
+   - **Capacidade Máxima:** Soma da capacidade das turmas ativas de cada série (ou padrão de 25 vagas por turma caso a capacidade máxima não esteja estipulada).
+   - **Matrículas Ocupadas:** Contabiliza alunos com matrículas ativas, pendentes ou reservas (sem data de desativação ou com desativação futura).
+   - **Vagas Restantes:** Calculado por `Capacidade Total - Matrículas Ocupadas`.
+   - **Taxa de Ocupação:** Percentual exato preenchido da capacidade.
+
+2. **Classificação Multinível de Escassez:**
+   - ⛔ **Esgotado (0 vagas):** Turma/série 100% preenchida. Alerta para abertura de fila de espera ou remanejamento de turnos.
+   - 🔥 **Crítico / Últimas Vagas (<= 3 vagas restantes ou >= 90% ocupação):** Nível de urgência máxima para fechamento imediato.
+   - 🟡 **Alerta / Vagas Limitadas (<= 6 vagas restantes ou >= 75% ocupação):** Vagas em ritmo acelerado de preenchimento.
+   - 🟢 **Disponível:** Vagas abertas para captação padrão.
+
+3. **Modal Executivo "Termômetro de Vagas":**
+   - **Onde acessar:** Disponível no topo da listagem de Interessados, no topo do Funil de Vendas (Kanban) e no cabeçalho de Edição do Lead através do botão amarelo **Termômetro de Vagas** (ícone `📊`).
+   - **Indicadores Globais:** Exibe cartões com *Capacidade Total*, *Matrículas Ativas*, *Vagas Restantes* e *Ocupação Geral da Escola*.
+   - **Visão por Série:** Barra de progresso visual com percentual de ocupação, total de turmas e detalhamento individual de cada turma (capacidade, alunos matriculados, turno e vagas livres).
+
+4. **Sinais Visuais no Funil de Vendas (Kanban):**
+   - Os cards do Kanban exibem automaticamente badges de escassez ao lado de cada série de interesse dos dependentes da família (ex: `1x 1º Ano (🔥 2 vagas)` ou `1x Infantil 4 (⛔ Esgotado)`), permitindo que os consultores identifiquem na hora quais famílias precisam de prioridade máxima no atendimento telefônico ou presencial.
+
+5. **Coluna e Filtro na Tabela de Interessados:**
+   - **Coluna "Vagas na Série":** Coluna opcional (ativável pelo seletor de colunas) que exibe o diagnóstico resumido e badge colorido com tooltip explicativo.
+   - **Filtro Rápido de Vagas:** Permite filtrar a lista por *Séries com últimas vagas (crítico)*, *Séries com vagas limitadas* ou *Séries com vagas abertas*.
+
+6. **Enriquecimento do Copiloto WhatsApp e Dossiê IA:**
+   - Os dados reais de ocupação são injetados automaticamente no contexto do **Gemini**, orientando a inteligência artificial a formular abordagens autênticas de urgência para visitas e matrículas sem soar agressiva ou artificial.
+
 ---
 
 

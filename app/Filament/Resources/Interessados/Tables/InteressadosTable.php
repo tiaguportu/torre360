@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Services\ConsultorWhatsappService;
 use App\Services\ConviteMatriculaService;
 use App\Services\LeadScoreService;
+use App\Services\TermometroVagasService;
 use App\Services\VisitaInteressadoService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -177,6 +178,28 @@ class InteressadosTable
                         return $texto;
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('vagas_serie_interesse')
+                    ->label('Vagas na Série')
+                    ->state(function (Interessado $record): string {
+                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+
+                        return $resumo['texto_destaque'] ?? '—';
+                    })
+                    ->badge()
+                    ->color(function (Interessado $record): string {
+                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+
+                        return $resumo['badge_cor'] ?? 'gray';
+                    })
+                    ->tooltip(function (Interessado $record): ?string {
+                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+                        if (empty($resumo['series'])) {
+                            return null;
+                        }
+
+                        return collect($resumo['series'])->map(fn ($s) => "{$s['serie_nome']}: {$s['vagas_restantes']} vagas livres de {$s['capacidade_total']} ({$s['taxa_ocupacao']}%)")->join(' | ');
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('pessoa.telefone')
                     ->label('Telefone')
                     ->searchable()
@@ -330,6 +353,31 @@ class InteressadosTable
                             'sem_visita' => $query->whereDoesntHave('visitas'),
                             default => $query,
                         };
+                    }),
+                SelectFilter::make('escassez_vagas')
+                    ->label('Disponibilidade de Vagas')
+                    ->options([
+                        'critico' => '🔥 Séries com últimas vagas (crítico)',
+                        'alerta' => '🟡 Séries com vagas limitadas',
+                        'disponivel' => '🟢 Séries com vagas abertas',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $valor = $data['value'] ?? null;
+                        if (blank($valor)) {
+                            return $query;
+                        }
+
+                        $service = app(TermometroVagasService::class);
+                        $series = $service->calcularVagasPorSerie();
+
+                        $seriesIds = match ($valor) {
+                            'critico' => $series->whereIn('nivel_escassez', ['critico', 'esgotado'])->pluck('serie_id'),
+                            'alerta' => $series->where('nivel_escassez', 'alerta')->pluck('serie_id'),
+                            'disponivel' => $series->where('nivel_escassez', 'disponivel')->pluck('serie_id'),
+                            default => collect(),
+                        };
+
+                        return $query->whereHas('dependentes', fn ($q) => $q->whereIn('serie_id', $seriesIds));
                     }),
             ])
             ->actions([

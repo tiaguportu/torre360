@@ -11,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\Width;
 
 class EditInteressado extends EditRecord
 {
@@ -38,6 +39,17 @@ class EditInteressado extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('termometroVagas')
+                ->label('Termômetro de Vagas')
+                ->icon('heroicon-o-chart-bar')
+                ->color('warning')
+                ->modalHeading('📊 Termômetro de Ocupação e Vagas por Série')
+                ->modalWidth(Width::Large)
+                ->modalContent(fn () => view('filament.crm.modal-termometro-vagas', [
+                    'destaqueSerieId' => $this->record->dependentes()->first()?->serie_pretendida_id,
+                ]))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar'),
             DossieIaAction::make(),
             CopilotoMensagemIaAction::make(),
             DeleteAction::make(),
@@ -65,6 +77,7 @@ class EditInteressado extends EditRecord
         $html = '<p>Nesta página você pode editar os dados de um interessado (lead) no sistema CRM.</p>';
         $html .= '<h3>O que você pode fazer:</h3>';
         $html .= '<ul>';
+        $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Consulte a ocupação real de cada série/turma em tempo real e o nível de escassez para negociar com urgência e segurança.</li>';
         $html .= '<li><strong>✨ Dossiê IA do Lead:</strong> Clique no botão roxo no cabeçalho para gerar uma análise profunda em tempo real com o Gemini, avaliando dores, momento familiar, temperatura e plano de ação comercial.</li>';
         $html .= '<li><strong>💬 Copiloto WhatsApp IA:</strong> Redija mensagens persuasivas sob medida para este lead com base em objetivos (primeiro contato, tour presencial, superar objeção, fechamento) e envie no WhatsApp com 1 clique.</li>';
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';

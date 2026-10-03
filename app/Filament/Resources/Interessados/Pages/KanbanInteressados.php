@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Collection;
 
 class KanbanInteressados extends Page
@@ -46,6 +47,15 @@ class KanbanInteressados extends Page
                 ->action(function (array $data) {
                     $this->filtroConsultorId = $data['consultor_id'] ?? null;
                 }),
+            Action::make('termometroVagas')
+                ->label('Termômetro de Vagas')
+                ->icon('heroicon-o-chart-bar')
+                ->color('warning')
+                ->modalHeading('📊 Termômetro de Ocupação e Vagas por Série')
+                ->modalWidth(Width::Large)
+                ->modalContent(fn () => view('filament.crm.modal-termometro-vagas'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar'),
             Action::make('list')
                 ->label('Ver Lista')
                 ->icon('heroicon-o-list-bullet')
@@ -117,6 +127,8 @@ class KanbanInteressados extends Page
         $html = '<p>O <strong>Funil de Vendas</strong> (Kanban) permite visualizar e gerenciar seus leads de forma visual, arrastando os cards entre as etapas do processo comercial.</p>';
         $html .= '<h3>Como usar:</h3>';
         $html .= '<ul>';
+        $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Consulte o botão no topo para ver a ocupação real de cada série e turma em tempo real.</li>';
+        $html .= '<li><strong>🔥 Alertas de Escassez nos Cards:</strong> As séries pretendidas nos cards mostram alertas dinâmicos de vagas restantes (ex: <em>Esgotado</em>, <em>Últimas vagas</em>, <em>Vagas limitadas</em>).</li>';
         $html .= '<li><strong>Visualização:</strong> Cada coluna representa um status do funil. Os cards mostram o interessado, origem, dependentes e próximo contato.</li>';
         $html .= '<li><strong>Arrastar e Soltar:</strong> Mova os cards entre colunas para atualizar o status do lead.</li>';
         $html .= '<li><strong>Cards em Vermelho:</strong> Indicam leads com contato atrasado (urgente!).</li>';

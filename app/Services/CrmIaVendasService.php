@@ -260,6 +260,12 @@ Diretrizes obrigatórias da mensagem:
             }
         }
 
+        $vagasTexto = app(TermometroVagasService::class)->gerarPromptEscassez($interessado);
+        if ($vagasTexto) {
+            $linhas[] = "\n=== DISPONIBILIDADE REAL DE VAGAS NA ESCOLA ===";
+            $linhas[] = $vagasTexto;
+        }
+
         return implode("\n", $linhas);
     }
 

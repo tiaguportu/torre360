@@ -119,8 +119,32 @@
                                         @endif
 
                                         @foreach($dependentesPorSerie as $serieNome => $dependentes)
-                                            <x-filament::badge color="success" size="sm" class="text-[10px] px-1.5 py-0 border border-success-600/20">
+                                            @php
+                                                $serieObj = $dependentes->first()?->serie;
+                                                $dadosVagas = $serieObj ? app(\App\Services\TermometroVagasService::class)->calcularVagasPorSerie($serieObj->id)->first() : null;
+                                                $temAlertaVaga = $dadosVagas && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico', 'alerta'], true);
+                                                $corBadgeSerie = match(true) {
+                                                    $temAlertaVaga && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico'], true) => 'danger',
+                                                    $temAlertaVaga => 'warning',
+                                                    default => 'success',
+                                                };
+                                            @endphp
+                                            <x-filament::badge 
+                                                :color="$corBadgeSerie" 
+                                                size="sm" 
+                                                class="text-[10px] px-1.5 py-0"
+                                                :title="$dadosVagas ? 'Vagas na Série: ' . $dadosVagas['vagas_restantes'] . ' livres de ' . $dadosVagas['capacidade_total'] . ' (' . $dadosVagas['taxa_ocupacao'] . '% ocupada)' : null"
+                                            >
                                                 {{ $dependentes->count() }}x {{ $serieNome ?? 'Série não def.' }}
+                                                @if($temAlertaVaga)
+                                                    @if($dadosVagas['nivel_escassez'] === 'esgotado')
+                                                        (⛔ 0 vagas)
+                                                    @elseif($dadosVagas['nivel_escassez'] === 'critico')
+                                                        (🔥 {{ $dadosVagas['vagas_restantes'] }} vagas)
+                                                    @else
+                                                        (🟡 {{ $dadosVagas['vagas_restantes'] }} restam)
+                                                    @endif
+                                                @endif
                                             </x-filament::badge>
                                         @endforeach
                                     </div>
