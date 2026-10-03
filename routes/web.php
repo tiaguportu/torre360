@@ -9,6 +9,7 @@ use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
+use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
@@ -68,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/historicos-escolares/{record}/pdf', [HistoricoEscolarPDFController::class, 'stream'])->name('historicos-escolares.pdf');
     Route::get('/historicos-escolares/{record}/download', [HistoricoEscolarPDFController::class, 'download'])->name('historicos-escolares.download');
     Route::get('/questionario-respostas/comparar/pdf', [QuestionarioRespostaPDFController::class, 'download'])->name('questionario-respostas.comparar.pdf');
+
+    // Dossiê Estratégico IA do Lead (PDF)
+    Route::get('/crm/interessados/{record}/dossie-pdf', [DossieIaPdfController::class, 'download'])->name('crm.interessados.dossie-pdf');
+    Route::get('/crm/interessados/{record}/dossie-pdf/stream', [DossieIaPdfController::class, 'stream'])->name('crm.interessados.dossie-pdf.stream');
 
     // Editor de Crachás V3 (Moveable)
     Route::get('/admin/template-crachas-v3/{templateCrachaV3}/editor', [TemplateCrachaV3Controller::class, 'editor'])->name('template-crachas-v3.editor');

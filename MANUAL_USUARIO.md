@@ -234,6 +234,7 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - **Termômetro Comercial:** Avaliação da temperatura real e nível de prontidão da matrícula (🔥 Quente, 🟡 Morno, 🔵 Frio).
      - **Roteiro Estratégico de Abordagem:** O que o consultor deve falar, argumentos personalizados para aquela família e pergunta aberta recomendada para conduzir o próximo contato.
    - **Relatório formatado:** o **Relatório Completo do Dossiê** é exibido já formatado (títulos, negrito e listas), em uma caixa com rolagem para relatórios longos. O texto é somente leitura.
+   - **Exportar para PDF:** Tanto no topo do card executivo quanto no rodapé da janela do modal, o botão **Exportar para PDF** gera um documento A4 diagramado em padrão corporativo oficial com a marca da escola, metadados do lead e dependentes, termômetro comercial, síntese e o roteiro estratégico completo, ideal para impressão ou compartilhamento interno entre a coordenação e os consultores.
    - O consultor pode ler o relatório e clicar em **Salvar no Histórico do Lead** para registrar o dossiê permanentemente no histórico de interações (o histórico guarda o texto original gerado pela IA).
 
 2. **💬 Copiloto WhatsApp IA:**

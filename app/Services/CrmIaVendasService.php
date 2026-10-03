@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Interessado;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CrmIaVendasService
@@ -258,5 +261,45 @@ Diretrizes obrigatórias da mensagem:
         }
 
         return implode("\n", $linhas);
+    }
+
+    /**
+     * Gera o documento PDF do Dossiê Estratégico IA pronto para visualização ou download.
+     *
+     * @param array{
+     *     resumo_executivo?: ?string,
+     *     dossie_markdown?: ?string,
+     *     temperatura_sugerida?: ?string,
+     *     proxima_acao_sugerida?: ?string,
+     * }|null $dadosDossie
+     */
+    public function gerarPdfDossie(Interessado $interessado, ?array $dadosDossie = null): DomPdf
+    {
+        $interessado->loadMissing([
+            'pessoa',
+            'dependentes.serie',
+            'status',
+            'origem',
+            'campanha',
+            'usuario',
+        ]);
+
+        if (empty($dadosDossie['dossie_markdown'])) {
+            $cached = cache()->get("dossie_ia_lead_{$interessado->id}");
+            if (is_array($cached) && ! empty($cached['dossie_markdown'])) {
+                $dadosDossie = $cached;
+            } else {
+                $dadosDossie = $this->gerarDossie($interessado);
+            }
+        }
+
+        $dossieMarkdown = $dadosDossie['dossie_markdown'] ?? 'Dossiê não disponível.';
+        $dossieHtml = Str::markdown($dossieMarkdown);
+
+        return Pdf::loadView('pdfs.dossie-estrategico', [
+            'interessado' => $interessado,
+            'dossie' => $dadosDossie,
+            'dossieHtml' => $dossieHtml,
+        ])->setPaper('a4', 'portrait');
     }
 }

@@ -15,6 +15,7 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Mockery;
@@ -224,5 +225,56 @@ class CrmIaVendasTest extends TestCase
         $mensagem = $service->gerarMensagemCopiloto($interessado, 'primeiro_contato');
         $this->assertStringContainsString('Mariana', $mensagem);
         $this->assertStringContainsString('Lucas', $mensagem);
+    }
+
+    public function test_crm_ia_vendas_gerar_pdf_dossie_retorna_pdf_valido(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+
+        $service = app(CrmIaVendasService::class);
+        $pdf = $service->gerarPdfDossie($interessado, [
+            'resumo_executivo' => 'Família com grande apreço por formação humana e acolhimento.',
+            'temperatura_sugerida' => 'quente',
+            'proxima_acao_sugerida' => 'Agendar visita com o consultor.',
+            'dossie_markdown' => "### 🎯 Dores e Objeções\n\nPreocupação com adaptação ao currículo.\n\n### 🚀 Roteiro de Abordagem\n\n- Destacar o programa de tutoria.",
+        ]);
+
+        $this->assertInstanceOf(PDF::class, $pdf);
+
+        $conteudoPdf = $pdf->output();
+        $this->assertNotEmpty($conteudoPdf);
+        $this->assertStringStartsWith('%PDF', $conteudoPdf);
+    }
+
+    public function test_rota_dossie_pdf_permite_download_para_usuario_com_permissao(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create();
+        $admin->assignRole('super_admin');
+
+        $interessado = $this->criarInteressadoCompleto();
+
+        // Alimenta o cache como se tivesse sido gerado na modal
+        cache()->put("dossie_ia_lead_{$interessado->id}", [
+            'resumo_executivo' => 'Resumo de teste para download de PDF.',
+            'temperatura_sugerida' => 'quente',
+            'proxima_acao_sugerida' => 'Realizar contato de fechamento.',
+            'dossie_markdown' => '### Relatório de Teste',
+        ], now()->addMinutes(10));
+
+        $response = $this->actingAs($admin)->get(route('crm.interessados.dossie-pdf', $interessado));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+        $this->assertStringContainsString('Dossie_Estrategico', (string) $response->headers->get('content-disposition'));
+    }
+
+    public function test_rota_dossie_pdf_exige_autenticacao(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+
+        $response = $this->get(route('crm.interessados.dossie-pdf', $interessado));
+
+        $response->assertRedirect(route('filament.admin.auth.login'));
     }
 }
