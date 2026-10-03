@@ -127,6 +127,17 @@ class InteressadoConsultorWhatsappTest extends TestCase
         $this->assertSame('5511977770000', $this->service()->telefoneDoConsultor($consultor->fresh()));
     }
 
+    public function test_telefone_do_consultor_encontra_pessoa_por_email_quando_pivot_sem_telefone(): void
+    {
+        $consultor = $this->consultor(null);
+        Pessoa::factory()->create([
+            'email' => $consultor->email,
+            'telefone' => '(85) 98183-3323',
+        ]);
+
+        $this->assertSame('5585981833323', $this->service()->telefoneDoConsultor($consultor->fresh()));
+    }
+
     public function test_mensagem_traz_contato_direto_do_lead_e_resumo_dos_ultimos_tres_contatos(): void
     {
         $lead = $this->lead($this->consultor(), atributos: ['observacoes' => 'Prefere conversar à noite.']);

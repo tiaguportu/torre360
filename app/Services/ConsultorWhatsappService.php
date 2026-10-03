@@ -83,6 +83,15 @@ class ConsultorWhatsappService
         $comTelefone = $consultor->pessoas->filter(fn (Pessoa $pessoa): bool => filled($pessoa->telefone));
         $pessoa = $comTelefone->firstWhere('user_id', $consultor->id) ?? $comTelefone->first();
 
+        // Fallback inteligente: se as pessoas associadas na pivot não tiverem telefone,
+        // busca por qualquer Pessoa com o mesmo e-mail do consultor que possua telefone cadastrado.
+        if (! $pessoa && filled($consultor->email)) {
+            $pessoa = Pessoa::where('email', $consultor->email)
+                ->whereNotNull('telefone')
+                ->where('telefone', '!=', '')
+                ->first();
+        }
+
         return $this->normalizarTelefone($pessoa?->telefone);
     }
 
