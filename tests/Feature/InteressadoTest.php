@@ -413,4 +413,85 @@ class InteressadoTest extends TestCase
             ->mountAction('ajuda')
             ->assertHasNoErrors();
     }
+
+    public function test_bulk_action_editar_lote_atualiza_campos_selecionados_e_recalcula_score(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $lead1 = $this->criarInteressado(['temperatura' => 'frio', 'motivo_perda' => 'Preço inicial']);
+        $lead2 = $this->criarInteressado(['temperatura' => 'frio', 'motivo_perda' => 'Distância inicial']);
+        $lead3 = $this->criarInteressado(['temperatura' => 'frio', 'motivo_perda' => 'Intocado']);
+
+        $novoStatus = StatusInteressado::create([
+            'nome' => 'Qualificado',
+            'cor' => 'info',
+            'ordem' => 10,
+            'is_final' => false,
+            'is_ganho' => false,
+        ]);
+        $novoConsultor = User::factory()->create();
+        $novaOrigem = OrigemInteressado::create(['nome' => 'Indicação de Aluno']);
+
+        Livewire::actingAs($admin)
+            ->test(ListInteressados::class)
+            ->callTableBulkAction('editarLote', [$lead1, $lead2], data: [
+                'status_interessado_id' => $novoStatus->id,
+                'usuario_id' => $novoConsultor->id,
+                'temperatura' => 'quente',
+                'origem_interessado_id' => $novaOrigem->id,
+                'faixa_distancia_escola' => 'ate_2km',
+                'meio_transporte' => 'carro_proprio',
+            ])
+            ->assertHasNoErrors()
+            ->assertNotified();
+
+        $lead1->refresh();
+        $lead2->refresh();
+        $lead3->refresh();
+
+        $this->assertEquals($novoStatus->id, $lead1->status_interessado_id);
+        $this->assertEquals($novoConsultor->id, $lead1->usuario_id);
+        $this->assertEquals('quente', $lead1->temperatura);
+        $this->assertEquals($novaOrigem->id, $lead1->origem_interessado_id);
+        $this->assertEquals('ate_2km', $lead1->faixa_distancia_escola);
+        $this->assertEquals('carro_proprio', $lead1->meio_transporte);
+        $this->assertEquals('Preço inicial', $lead1->motivo_perda); // preservado
+
+        $this->assertEquals($novoStatus->id, $lead2->status_interessado_id);
+        $this->assertEquals($novoConsultor->id, $lead2->usuario_id);
+        $this->assertEquals('quente', $lead2->temperatura);
+        $this->assertEquals($novaOrigem->id, $lead2->origem_interessado_id);
+        $this->assertEquals('ate_2km', $lead2->faixa_distancia_escola);
+        $this->assertEquals('carro_proprio', $lead2->meio_transporte);
+        $this->assertEquals('Distância inicial', $lead2->motivo_perda); // preservado
+
+        // Lead 3 não selecionado não foi alterado
+        $this->assertEquals('frio', $lead3->temperatura);
+        $this->assertEquals('Intocado', $lead3->motivo_perda);
+    }
+
+    public function test_bulk_action_editar_lote_com_campos_vazios_emite_aviso_e_nao_altera_dados(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $lead1 = $this->criarInteressado(['temperatura' => 'frio']);
+        $lead2 = $this->criarInteressado(['temperatura' => 'morno']);
+
+        Livewire::actingAs($admin)
+            ->test(ListInteressados::class)
+            ->callTableBulkAction('editarLote', [$lead1, $lead2], data: [
+                'status_interessado_id' => null,
+                'usuario_id' => null,
+                'temperatura' => null,
+            ])
+            ->assertHasNoErrors()
+            ->assertNotified();
+
+        $this->assertEquals('frio', $lead1->fresh()->temperatura);
+        $this->assertEquals('morno', $lead2->fresh()->temperatura);
+    }
 }

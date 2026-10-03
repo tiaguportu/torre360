@@ -129,6 +129,7 @@ class ListInteressados extends ListRecords
                 ['🌡️', 'Temperatura', 'Quente, morno ou frio.'],
             ])
             ->secao('📦 Ações em lote (selecione várias linhas)', [
+                $canUpdate ? ['✏️', 'Editar em lote', 'Altere em conjunto Status, Consultor, Temperatura, Origem, Campanha, Próximo Contato, Distância ou Transporte dos leads selecionados. Campos em branco permanecem inalterados.'] : null,
                 ['👥', 'Atribuir consultor', 'Define o consultor responsável de todos os leads selecionados de uma vez.'],
                 ['📤', 'Enviar aos consultores (WhatsApp)', 'Mostra um botão do WhatsApp para cada consultor, já com a lista dos leads dele numa única mensagem. Leads sem consultor aparecem num aviso e ficam de fora.'],
                 $canEmail ? ['✉️', 'Enviar comunicação por e-mail', 'Dispara um e-mail em massa para os selecionados (use [Nome] para personalizar). Só recebem quem tem e-mail e não pediu para ficar de fora.'] : null,

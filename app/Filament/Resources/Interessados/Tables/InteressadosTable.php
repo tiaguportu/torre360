@@ -9,10 +9,12 @@ use App\Filament\Pages\EnrollmentWizard;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
+use App\Models\CampanhaMarketing;
 use App\Models\ComunicacaoEmMassa;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\MensagemWhatsappTemplate;
+use App\Models\OrigemInteressado;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
@@ -523,6 +525,106 @@ class InteressadosTable
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('editarLote')
+                        ->label('Editar em Lote')
+                        ->icon('heroicon-o-pencil-square')
+                        ->modalHeading('Editar Interessados em Lote')
+                        ->modalDescription('Preencha apenas os campos que deseja alterar nos leads selecionados. Campos deixados em branco permanecerão inalterados.')
+                        ->modalWidth(Width::Large)
+                        ->form([
+                            Select::make('status_interessado_id')
+                                ->label('Status / Etapa do Funil')
+                                ->options(StatusInteressado::orderBy('ordem')->pluck('nome', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->native(false),
+                            Select::make('usuario_id')
+                                ->label('Consultor Responsável')
+                                ->options(User::orderBy('name')->pluck('name', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->native(false),
+                            Select::make('temperatura')
+                                ->label('Temperatura')
+                                ->options([
+                                    'quente' => '🔥 Quente',
+                                    'morno' => '🟡 Morno',
+                                    'frio' => '🔵 Frio',
+                                ])
+                                ->native(false),
+                            Select::make('origem_interessado_id')
+                                ->label('Origem do Lead')
+                                ->options(OrigemInteressado::orderBy('nome')->pluck('nome', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->native(false),
+                            Select::make('campanha_marketing_id')
+                                ->label('Campanha de Marketing')
+                                ->options(CampanhaMarketing::orderBy('nome')->pluck('nome', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->native(false),
+                            DateTimePicker::make('data_proximo_contato')
+                                ->label('Data do Próximo Contato')
+                                ->native(false),
+                            Select::make('faixa_distancia_escola')
+                                ->label('Distância até a Escola')
+                                ->options([
+                                    'ate_2km' => 'Até 2km',
+                                    'de_2_a_5km' => '2 a 5km',
+                                    'de_5_a_10km' => '5 a 10km',
+                                    'mais_de_10km' => 'Mais de 10km',
+                                ])
+                                ->native(false),
+                            Select::make('meio_transporte')
+                                ->label('Meio de Transporte')
+                                ->options([
+                                    'carro_proprio' => 'Carro próprio',
+                                    'van_escolar' => 'Van escolar',
+                                    'transporte_publico' => 'Transporte público',
+                                    'a_pe_ou_bicicleta' => 'A pé / Bicicleta',
+                                ])
+                                ->native(false),
+                            TextInput::make('motivo_perda')
+                                ->label('Motivo da Perda')
+                                ->placeholder('Ex: Preço, Concorrência, Mudança...')
+                                ->maxLength(255),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $updateData = array_filter([
+                                'status_interessado_id' => $data['status_interessado_id'] ?? null,
+                                'usuario_id' => $data['usuario_id'] ?? null,
+                                'temperatura' => $data['temperatura'] ?? null,
+                                'origem_interessado_id' => $data['origem_interessado_id'] ?? null,
+                                'campanha_marketing_id' => $data['campanha_marketing_id'] ?? null,
+                                'data_proximo_contato' => $data['data_proximo_contato'] ?? null,
+                                'faixa_distancia_escola' => $data['faixa_distancia_escola'] ?? null,
+                                'meio_transporte' => $data['meio_transporte'] ?? null,
+                                'motivo_perda' => $data['motivo_perda'] ?? null,
+                            ], fn ($value) => filled($value));
+
+                            if (empty($updateData)) {
+                                Notification::make()
+                                    ->title('Nenhum campo foi preenchido')
+                                    ->body('Nenhuma alteração foi realizada porque todos os campos foram deixados em branco.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $records->each(function (Interessado $record) use ($updateData) {
+                                $record->update($updateData);
+                                LeadScoreService::recalcular($record);
+                            });
+
+                            Notification::make()
+                                ->title("{$records->count()} lead(s) atualizado(s) com sucesso!")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('Update:Interessado')),
                     BulkAction::make('atribuirConsultor')
                         ->label('Atribuir Consultor')
                         ->icon('heroicon-o-user-plus')

@@ -105,6 +105,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que apenas move o lead para o status de matrícula.
    - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro).
 4. **Ações em Lote:**
+   - **Editar em Lote:** Selecione múltiplos leads e altere simultaneamente campos como Status, Consultor Responsável, Temperatura (Quente, Morno, Frio), Origem do Lead, Campanha de Marketing, Data do Próximo Contato, Distância até a Escola, Meio de Transporte e Motivo da Perda. Campos deixados em branco no formulário permanecem inalterados nos registros selecionados. Ao concluir, o Lead Score de cada lead modificado é recalculado automaticamente.
    - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
    - **Enviar aos consultores (WhatsApp):** Selecione vários leads e veja um botão do WhatsApp para cada consultor, já com a lista dos leads dele (nome, link direto e status) numa única mensagem. Leads sem consultor aparecem num aviso e ficam de fora — use *Atribuir Consultor* para defini-lo. Se a lista for muito grande, a mensagem é encurtada e indica quantos leads ficaram de fora.
    - **Excluir:** Exclua múltiplos leads selecionados.
