@@ -62,6 +62,12 @@ Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automati
     - **Documentos:** Consulta e envio de documentos obrigatórios, exibindo um **indicador numérico (badge)** em vermelho sempre que houver documentos pendentes de envio ou regularização.
 - **Grupo Principal:** O Dashboard e as funções gerais do sistema continuam disponíveis no grupo "Principal".
 
+### 2.2 Estabilidade Visual em Janelas Modais (Zero Layout Shift)
+
+Ao abrir qualquer janela modal no sistema (como assistentes, confirmações, filtros, botões de ajuda ou formulários rápidos):
+- **Barra de Rolagem Fixa e Contínua:** A barra de rolagem vertical da página principal/fundo permanece preservada e estável (`scrollbar-gutter: stable`), evitando que a página sofra o efeito indesejado de "pulo" ou deslocamento horizontal (*layout shift*).
+- **Rolagem Independente:** O conteúdo do modal rola de forma autônoma e protegida em sua própria camada sobreposta, proporcionando uma experiência visual suave e consistente em todos os navegadores, monitores e resoluções.
+
 ---
 
 ## 🎯 3. CRM — Gestão de Leads e Interessados
