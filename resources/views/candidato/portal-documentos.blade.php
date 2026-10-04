@@ -101,6 +101,17 @@
             </div>
         </div>
 
+        <!-- Aviso de Transparência e LGPD: Validação Inteligente -->
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 text-xs text-indigo-950 shadow-xs">
+            <span class="text-xl">🤖</span>
+            <div class="space-y-1">
+                <span class="font-bold text-indigo-900 block">Validação Inteligente & Proteção de Dados (LGPD)</span>
+                <p class="text-indigo-800 leading-relaxed">
+                    Para agilizar a sua matrícula e evitar retrabalho, nosso sistema conta com pré-análise assistida por inteligência artificial para verificar a legibilidade e nitidez do arquivo em segundo plano. Os dados são tratados com sigilo absoluto para fins pré-contratuais (Art. 7º, V da LGPD) e a aprovação final é sempre confirmada pela Secretaria Escolar.
+                </p>
+            </div>
+        </div>
+
         <!-- Lista de Documentos -->
         <div class="space-y-4">
             <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -174,6 +185,40 @@
                                 {{ $inserido->observacoes }}
                             </div>
                         </div>
+                    @endif
+
+                    <!-- Retorno da Pré-análise por IA -->
+                    @if($inserido && $status !== \App\Enums\SituacaoDocumento::VERIFICADO)
+                        @if($inserido->temAnaliseIa())
+                            @php
+                                $legivel = $inserido->isLegivelIa();
+                                $tipoOk = $inserido->confereTipoIa();
+                                $score = data_get($inserido->dados_ia, 'score_confianca', 100);
+                                $alerta = data_get($inserido->dados_ia, 'mensagem_para_familia') ?? data_get($inserido->dados_ia, 'alerta_para_familia');
+                            @endphp
+
+                            @if(! $legivel || ! $tipoOk || $score < 70)
+                                <div class="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+                                    <span class="text-base">⚡</span>
+                                    <div class="space-y-1">
+                                        <span class="font-bold block text-amber-950">Atenção ao documento enviado:</span>
+                                        <p class="text-amber-800">
+                                            {{ $alerta ?: 'A imagem parece com pouca nitidez ou pode não corresponder exatamente ao documento solicitado. Se preferir, você pode clicar em "Remover e trocar" para enviar uma versão mais legível antes da aprovação da secretaria.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="mt-3 px-3 py-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 text-emerald-800 text-xs flex items-center gap-2">
+                                    <span>✨</span>
+                                    <span><strong>Pré-conferência IA:</strong> Documento identificado com boa legibilidade. Aguarde a validação formal da secretaria.</span>
+                                </div>
+                            @endif
+                        @elseif($inserido->created_at && $inserido->created_at->gt(now()->subMinutes(3)))
+                            <div class="mt-3 px-3 py-2 rounded-xl bg-indigo-50/50 border border-indigo-100 text-indigo-700 text-xs flex items-center gap-2 animate-pulse">
+                                <span>🤖</span>
+                                <span>IA analisando nitidez e legibilidade em segundo plano...</span>
+                            </div>
+                        @endif
                     @endif
 
                     <!-- Detalhes do arquivo enviado -->

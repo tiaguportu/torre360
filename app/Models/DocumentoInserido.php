@@ -24,13 +24,58 @@ class DocumentoInserido extends Model
         'arquivo_path',
         'nome_arquivo_original',
         'hash_arquivo',
+        'dados_ia',
+        'analisado_ia_em',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => SituacaoDocumento::class,
+            'dados_ia' => 'array',
+            'analisado_ia_em' => 'datetime',
         ];
+    }
+
+    /**
+     * Indica se o documento já passou pela análise por IA.
+     */
+    public function temAnaliseIa(): bool
+    {
+        return ! empty($this->dados_ia) && $this->analisado_ia_em !== null;
+    }
+
+    /**
+     * Retorna se a IA considerou a imagem do documento nítida e legível.
+     */
+    public function isLegivelIa(): bool
+    {
+        return (bool) ($this->dados_ia['qualidade']['legivel'] ?? ($this->dados_ia['legivel'] ?? false));
+    }
+
+    /**
+     * Retorna se o documento identificado confere com o tipo esperado.
+     */
+    public function confereTipoIa(): bool
+    {
+        return (bool) ($this->dados_ia['confere_com_solicitado'] ?? ($this->dados_ia['tipo_confere'] ?? false));
+    }
+
+    /**
+     * Retorna um resumo textual do parecer da IA.
+     */
+    public function resumoIa(): string
+    {
+        if (! $this->temAnaliseIa()) {
+            return 'Aguardando processamento por IA';
+        }
+
+        $tipo = $this->dados_ia['documento_identificado'] ?? ($this->dados_ia['tipo_detectado'] ?? 'Não identificado');
+        $legivel = $this->isLegivelIa() ? 'Legível' : 'Baixa nitidez / Cortado';
+        $score = $this->dados_ia['score_confianca'] ?? null;
+        $scoreText = $score ? " ({$score}%)" : '';
+
+        return "{$tipo} • {$legivel}{$scoreText}";
     }
 
     public function getActivitylogOptions(): LogOptions

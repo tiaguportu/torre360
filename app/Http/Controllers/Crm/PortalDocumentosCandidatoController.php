@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Crm;
 
 use App\Enums\SituacaoDocumento;
 use App\Http\Controllers\Controller;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\DocumentoInserido;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
@@ -84,6 +85,9 @@ class PortalDocumentosCandidatoController extends Controller
             ]
         );
 
+        // Dispara a validação inteligente em segundo plano sem travar a navegação da família
+        ValidarDocumentoComIaJob::dispatch($doc->id);
+
         // Registra histórico na timeline do lead
         $tipoContato = TipoContatoInteressado::firstOrCreate(['nome' => 'Portal de Admissão']);
         HistoricoContato::create([
@@ -94,7 +98,7 @@ class PortalDocumentosCandidatoController extends Controller
             'data_contato' => now(),
         ]);
 
-        return back()->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa secretaria irá analisá-lo.");
+        return back()->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa equipe e IA estão processando a validação em segundo plano.");
     }
 
     /**

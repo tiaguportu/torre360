@@ -946,7 +946,7 @@ Estrutura de ensino e turmas.
   - `observacoes`: Text - Anotações internas da equipe de captação e financeiro.
 - **Relacionamentos:** BelongsTo `Pessoa` (`indicador` / `quemIndicou`), BelongsTo `Interessado`, BelongsTo `User` (`recompensadoPor`).
 
-### `documento_inserido` (Extensão para Pré-Admissão)
+### `documento_inserido` (Extensão para Pré-Admissão com Validador IA)
 - **Representa:** Documentos enviados por alunos, famílias ou candidatos para comprovação cadastral.
 - **Campos Estendidos:**
   - `matricula_id`: FK `matricula.id` (tornado nullable para permitir envio prévio na fase de pré-admissão antes da formalização da matrícula).
@@ -955,6 +955,9 @@ Estrutura de ensino e turmas.
   - `tipo_documento_id`: FK `tipo_documento.id`.
   - `status`: Enum `SituacaoDocumento` (`EM_ANALISE`, `VERIFICADO`, `REJEITADO`).
   - `arquivo_path`, `nome_arquivo_original`, `hash_arquivo`, `observacoes` (motivo de rejeição).
+  - `dados_ia`: JSON (nullable) - Parecer estruturado pericial do Gemini Vision com score de confiança (0-100), aferição de nitidez/enquadramento, verificação de correspondência com o tipo solicitado, extração segura de campos (nome do titular, CPF, RG, data de nascimento, filiação, endereço) e orientações em caso de divergência.
+  - `analisado_ia_em`: Timestamp (nullable) - Registro cronológico da execução assíncrona do job de validação por IA.
+- **Validação Inteligente e OCR Efêmero:** Os uploads despacham o job assíncrono `ValidarDocumentoComIaJob`, realizando análise de imagem em segundo plano sem travar a interface da família nem reter imagens para treinamento (em conformidade com o Art. 7º, V e Art. 14 da LGPD). Os dados extraídos podem ser sincronizados com 1 clique para a ficha cadastral do aluno/responsável no painel administrativo.
 - **Lógica de Transição e Herança:** Quando o lead é matriculado, os registros de `documento_inserido` são automaticamente associados à nova `matricula_id`, mantendo integridade com a auditoria e evitando qualquer reenvio documental pela família.
 
 ### `visita_interessado`

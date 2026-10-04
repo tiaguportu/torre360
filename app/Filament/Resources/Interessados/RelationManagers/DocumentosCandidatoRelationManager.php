@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Interessados\RelationManagers;
 
 use App\Enums\SituacaoDocumento;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\DocumentoInserido;
 use App\Models\TipoDocumento;
 use Filament\Actions\Action;
@@ -16,9 +17,11 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -68,8 +71,6 @@ class DocumentosCandidatoRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $progresso = $this->getOwnerRecord()->progressoDocumentos();
-
         return $table
             ->recordTitleAttribute('nome_arquivo_original')
             ->defaultSort('created_at', 'desc')
@@ -118,7 +119,25 @@ class DocumentosCandidatoRelationManager extends RelationManager
                         $data['nome_arquivo_original'] = basename($data['arquivo_path'] ?? 'documento.pdf');
 
                         return $data;
+                    })
+                    ->after(function (DocumentoInserido $record) {
+                        ValidarDocumentoComIaJob::dispatch($record->id);
                     }),
+
+                Action::make('ajuda')
+                    ->label('Ajuda')
+                    ->icon('heroicon-o-question-mark-circle')
+                    ->color('gray')
+                    ->modalHeading('Ajuda: Documentos de Pré-Admissão')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar')
+                    ->form([
+                        ViewField::make('help_content')
+                            ->view('filament.components.help-content')
+                            ->viewData([
+                                'content' => $this->getHelpContent(),
+                            ]),
+                    ]),
             ])
             ->columns([
                 TextColumn::make('tipoDocumento.nome')
@@ -143,6 +162,38 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->label('Situação')
                     ->badge(),
 
+                TextColumn::make('analise_ia')
+                    ->label('Análise IA')
+                    ->state(function (DocumentoInserido $record): string {
+                        if (! $record->temAnaliseIa()) {
+                            return $record->created_at?->gt(now()->subMinutes(3)) ? 'Processando...' : 'Não analisado';
+                        }
+
+                        $confianca = (int) data_get($record->dados_ia, 'score_confianca', 0);
+                        $legivel = $record->isLegivelIa();
+                        $confere = $record->confereTipoIa();
+
+                        if ($legivel && $confere && $confianca >= 70) {
+                            return "Válido ({$confianca}%)";
+                        }
+
+                        return "Atenção ({$confianca}%)";
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match (true) {
+                        str_starts_with($state, 'Válido') => 'success',
+                        str_starts_with($state, 'Atenção') => 'warning',
+                        str_starts_with($state, 'Processando') => 'info',
+                        default => 'gray',
+                    })
+                    ->icon(fn (string $state): string => match (true) {
+                        str_starts_with($state, 'Válido') => 'heroicon-o-check-badge',
+                        str_starts_with($state, 'Atenção') => 'heroicon-o-exclamation-triangle',
+                        str_starts_with($state, 'Processando') => 'heroicon-o-arrow-path',
+                        default => 'heroicon-o-minus-circle',
+                    })
+                    ->tooltip(fn (DocumentoInserido $record) => $record->resumoIa()),
+
                 TextColumn::make('observacoes')
                     ->label('Observações')
                     ->limit(30)
@@ -160,6 +211,88 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->options(SituacaoDocumento::class),
             ])
             ->actions([
+                Action::make('diagnosticoIa')
+                    ->label('Diagnóstico IA')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('purple')
+                    ->modalHeading(fn (DocumentoInserido $record) => 'Diagnóstico IA: '.($record->tipoDocumento?->nome ?? 'Documento'))
+                    ->modalWidth(Width::Large)
+                    ->modalContent(fn (DocumentoInserido $record) => view('filament.crm.modal-diagnostico-ia', ['record' => $record]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar')
+                    ->extraModalActions([
+                        Action::make('sincronizarCadastro')
+                            ->label('Sincronizar com Cadastro')
+                            ->icon('heroicon-o-arrow-path-rounded-square')
+                            ->color('success')
+                            ->requiresConfirmation()
+                            ->modalDescription('Deseja preencher os dados cadastrais (CPF, RG, Data de Nascimento) a partir dos dados extraídos pela IA deste documento?')
+                            ->action(function (DocumentoInserido $record) {
+                                $extraidos = $record->dados_ia['dados_extraidos'] ?? [];
+                                if (empty($extraidos)) {
+                                    Notification::make()->title('Nenhum dado extraído disponível para sincronização.')->warning()->send();
+
+                                    return;
+                                }
+
+                                $alterados = [];
+
+                                if ($record->interessado_dependente_id && $record->dependente) {
+                                    $dep = $record->dependente;
+                                    if (! empty($extraidos['data_nascimento']) && empty($dep->data_nascimento)) {
+                                        $dep->update(['data_nascimento' => $extraidos['data_nascimento']]);
+                                        $alterados[] = 'Data de nascimento do aluno ('.$extraidos['data_nascimento'].')';
+                                    }
+                                } else {
+                                    $pessoa = $record->interessado?->pessoa;
+                                    if ($pessoa) {
+                                        $updates = [];
+                                        if (! empty($extraidos['cpf']) && empty($pessoa->cpf)) {
+                                            $updates['cpf'] = $extraidos['cpf'];
+                                            $alterados[] = 'CPF ('.$extraidos['cpf'].')';
+                                        }
+                                        if (! empty($extraidos['rg']) && empty($pessoa->identidade)) {
+                                            $updates['identidade'] = $extraidos['rg'];
+                                            $alterados[] = 'RG ('.$extraidos['rg'].')';
+                                        }
+                                        if (! empty($extraidos['data_nascimento']) && empty($pessoa->data_nascimento)) {
+                                            $updates['data_nascimento'] = $extraidos['data_nascimento'];
+                                            $alterados[] = 'Data de nascimento ('.$extraidos['data_nascimento'].')';
+                                        }
+                                        if (! empty($updates)) {
+                                            $pessoa->update($updates);
+                                        }
+                                    }
+                                }
+
+                                if (! empty($alterados)) {
+                                    Notification::make()
+                                        ->title('Cadastro sincronizado com sucesso!')
+                                        ->body('Campos atualizados: '.implode(', ', $alterados))
+                                        ->success()
+                                        ->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Os campos correspondentes já estavam preenchidos no cadastro.')
+                                        ->info()
+                                        ->send();
+                                }
+                            }),
+
+                        Action::make('reanalisar')
+                            ->label('Reanalisar com IA')
+                            ->icon('heroicon-o-sparkles')
+                            ->color('warning')
+                            ->action(function (DocumentoInserido $record) {
+                                ValidarDocumentoComIaJob::dispatch($record->id);
+                                Notification::make()
+                                    ->title('Reanálise enviada para a IA em segundo plano!')
+                                    ->body('O parecer será atualizado em instantes.')
+                                    ->info()
+                                    ->send();
+                            }),
+                    ]),
+
                 Action::make('aprovar')
                     ->label('Aprovar')
                     ->icon('heroicon-o-check-circle')
@@ -212,5 +345,28 @@ class DocumentosCandidatoRelationManager extends RelationManager
                 ]),
             ])
             ->stackedOnMobile();
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+
+        $html = '<p>Este módulo gerencia o checklist de documentos de pré-admissão e matrícula do candidato.</p>';
+        $html .= '<h3>Recursos e Funcionalidades:</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>🔗 Portal do Candidato:</strong> Clique em "Copiar Link do Portal" ou "Enviar Portal por WhatsApp" para compartilhar o link seguro exclusivo onde os pais enviam fotos e PDFs.</li>';
+        $html .= '<li><strong>📑 Validador Inteligente com OCR & IA:</strong> Todos os documentos enviados passam por análise em segundo plano pelo Gemini 2.5 Flash, que afere nitidez, correspondência do tipo, extrai dados cruciais (CPF, RG, Filiação) e aponta eventuais divergências.</li>';
+        $html .= '<li><strong>✨ Diagnóstico IA:</strong> Clique no botão roxo "Diagnóstico IA" em qualquer documento para inspecionar o parecer pericial completo, score de confiança e alertas.</li>';
+        $html .= '<li><strong>🔄 Sincronização Cadastral com 1 Clique:</strong> No modal de Diagnóstico da IA, use o botão "Sincronizar com Cadastro" para preencher automaticamente CPF, RG e Data de Nascimento na ficha cadastral com os dados originais extraídos.</li>';
+        $html .= '<li><strong>✅ Aprovação / ❌ Rejeição:</strong> Você tem controle total. Se rejeitar, insira a orientação que será exibida para os pais no portal para que reenviem uma foto melhor.</li>';
+
+        if ($user && $user->can('Create:Interessado')) {
+            $html .= '<li><strong>Anexar Manualmente:</strong> A secretaria pode incluir arquivos recebidos por e-mail ou presencialmente.</li>';
+        }
+
+        $html .= '</ul>';
+        $html .= '<p><strong>Conformidade LGPD:</strong> As análises por IA utilizam endpoints corporativos efêmeros sem retenção para treino, garantindo segurança para dados de menores e responsáveis (Art. 7º, V e Art. 14 da LGPD).</p>';
+
+        return $html;
     }
 }

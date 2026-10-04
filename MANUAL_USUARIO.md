@@ -2282,7 +2282,41 @@ Link único enviado a um lead já qualificado pelo CRM para que a **própria fam
 - Ao clicar em **Matricular**, o **Assistente de Matrícula** abre com responsáveis (inclusive percentual financeiro), alunos, CPF, data de nascimento, sexo e endereço já preenchidos. A secretaria revisa, escolhe unidade, turma e plano, e conclui.
 - Se o CPF informado já existe no sistema, o cadastro existente é reaproveitado.
 - **Privacidade:** os dados da pré-matrícula ficam guardados no lead apenas até a matrícula ser efetivada; ao converter o lead, o rascunho é apagado.
-- **Fora do escopo desta versão:** envio de documentos (RG, certidão, comprovante) e endereço diferente por aluno. A secretaria pode ajustar o endereço no assistente.
+---
+
+## 📑 45. Validador Inteligente de Documentos de Pré-Admissão com OCR & IA
+
+O **Validador Inteligente de Documentos** integra o módulo de CRM e Admissões ao motor de visão computacional da Google (Gemini 2.5 Flash), permitindo que a escola confira a documentação de pré-matrícula de forma automatizada, ágil e segura, sem sobrecarregar a equipe da secretaria nem gerar atrito para a família.
+
+### 45.1 Análise em Segundo Plano (Fluxo 100% Assíncrono)
+- **Zero Bloqueio para a Família:** O envio de arquivos pelo Portal do Candidato (`/admissao/{token}`) libera a família instantaneamente em milissegundos. A análise pesada de imagem, leitura OCR e validação lógica são enfileiradas via Job assíncrono (`ValidarDocumentoComIaJob`).
+- **Resiliência e Retentativas:** Caso ocorra oscilação momentânea de rede externa com a API de IA, o sistema realiza até 3 retentativas automáticas com espera exponencial (*backoff*).
+- **Sem Custos Excessivos:** O processamento consome em média ~800 tokens de entrada e ~200 tokens de saída por documento (~R$ 0,00065 por análise), operando dentro da cota gratuita diária da API corporativa do Google AI Studio.
+
+### 45.2 Transparência, Convivência e Conformidade com a LGPD
+- **Aviso Informativo no Portal:** Antes da lista de documentos, o portal exibe banner explícito de transparência informando que o sistema utiliza validação assistida por inteligência artificial exclusivamente para pré-checagem de nitidez e conformidade pré-contratual (Art. 7º, V e Art. 14 da LGPD para proteção dos dados de menores).
+- **Processamento Efêmero:** As imagens não são compartilhadas publicamente nem retidas para treinamento de modelos de terceiros. Os arquivos físicos permanecem criptografados e salvos estritamente no armazenamento privado (`Storage::disk('local')`) da instituição.
+- **Feedback Educativo Instantâneo:** Se a IA detectar que uma foto está cortada, borrada ou ilegível, o portal exibe um aviso amigável sugerindo que a família envie uma foto mais nítida antes mesmo da conferência formal pela secretaria, eliminando esperas e retrabalho.
+
+### 45.3 Painel da Secretaria: Diagnóstico Pericial e Sincronização em 1 Clique
+No painel administrativo (`/admin/interessados`), na aba inferior **Documentos de Pré-Admissão**:
+1. **Coluna Análise IA:** Exibe imediatamente o status da pré-checagem com badge dinâmico:
+   - `✨ Válido (Score %)`: Documento legível e condizente com o solicitado.
+   - `⚠️ Atenção (Score %)`: Imagem de baixa nitidez, cortada ou divergente do solicitado.
+   - `⏳ Processando...`: Análise sendo executada em segundo plano.
+2. **Ação "Diagnóstico IA" (Botão Roxo):** Abre o modal pericial completo contendo:
+   - Indicador de legibilidade e correspondência com o documento requerido;
+   - Score de confiança percentual (0 a 100%);
+   - Dados extraídos com precisão: Nome do Titular/Aluno, CPF, RG/Identidade, Data de Nascimento, Filiação (Nome da Mãe e do Pai) e Endereço;
+   - Lista de eventuais divergências ou alertas apontados pelo perito IA;
+   - Parecer resumido e recomendação do status sugerido.
+3. **Sincronização Cadastral com 1 Clique:**
+   - No próprio modal do diagnóstico pericial, a secretaria pode acionar o botão **"Sincronizar com Cadastro"**.
+   - O sistema transfere automaticamente os dados oficiais extraídos do documento (CPF, RG e Data de Nascimento) para o cadastro da `Pessoa` ou do dependente, dispensando digitação manual e prevenindo erros humanos.
+4. **Reanálise sob Demanda:** Caso necessário, a ação secundária **"Reanalisar com IA"** permite forçar um novo ciclo de conferência pericial a qualquer momento.
+
+### 45.4 Herança Direta na Matrícula
+Assim que a secretaria conclui a captação e homologa a matrícula do aluno, todos os documentos validados e seus respectivos metadados de auditoria e IA são vinculados automaticamente à `matricula_id` gerada, mantendo o histórico intacto e sem exigir novo envio pela família.
 
 ---
 

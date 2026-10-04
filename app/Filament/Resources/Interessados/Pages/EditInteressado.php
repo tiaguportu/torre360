@@ -86,7 +86,7 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
         $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
         $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
-        $html .= '<li><strong>🗂️ Documentos de Pré-Admissão:</strong> Na aba inferior, acompanhe o checklist de documentos enviados pela família pelo portal seguro, com aprovação e solicitação de correções.</li>';
+        $html .= '<li><strong>📑 Documentos de Pré-Admissão com Validador IA:</strong> Na aba inferior, acompanhe o checklist de documentos. O sistema conta com pré-análise assíncrona por IA (OCR pericial com Gemini Vision) que afere legibilidade, extrai dados cruciais (CPF, RG, Data de Nascimento, Filiação), aponta divergências e permite sincronizar os dados cadastrais da família com 1 único clique, sem travamentos e em total conformidade com a LGPD.</li>';
         $html .= '<li><strong>Histórico:</strong> Na aba inferior, registre e visualize todas as interações com este lead.</li>';
 
         if ($user->can('Delete:Interessado')) {
