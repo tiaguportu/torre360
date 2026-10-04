@@ -1,5 +1,16 @@
 /* Custom Filament Theme: The Academic Curator for Torre360 */
 
+/* Previne layout shift e mantém a barra de rolagem vertical da página principal fixa ao abrir modais */
+html {
+    overflow-y: scroll !important;
+    scrollbar-gutter: stable;
+    padding-right: 0px !important;
+}
+
+body {
+    scrollbar-gutter: stable;
+}
+
 :root {
     --fi-primary: 0, 32, 69; /* #002045 - Deep Navy */
     --fi-secondary: 45, 106, 79; /* #2D6A4F - Forest Green */

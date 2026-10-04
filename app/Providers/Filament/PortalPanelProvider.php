@@ -14,6 +14,7 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -45,6 +46,21 @@ class PortalPanelProvider extends PanelProvider
                 'gray' => Color::Slate,
             ])
             ->font('Inter')
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => '
+                    <style>
+                        html {
+                            overflow-y: scroll !important;
+                            scrollbar-gutter: stable;
+                            padding-right: 0px !important;
+                        }
+                        body {
+                            scrollbar-gutter: stable;
+                        }
+                    </style>
+                ',
+            )
             ->discoverPages(in: app_path('Filament/Portal/Pages'), for: 'App\Filament\Portal\Pages')
             ->middleware([
                 EncryptCookies::class,

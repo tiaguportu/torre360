@@ -98,6 +98,14 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn (): string => '
                     <style>
+                        html {
+                            overflow-y: scroll !important;
+                            scrollbar-gutter: stable;
+                            padding-right: 0px !important;
+                        }
+                        body {
+                            scrollbar-gutter: stable;
+                        }
                         .fi-simple-header-heading, 
                         .fi-simple-header-subheading, 
                         .fi-simple-header-action { 
