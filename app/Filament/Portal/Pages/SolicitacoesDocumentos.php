@@ -143,7 +143,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
                 ->body("A {$template->nome} (Protocolo: {$solicitacao->protocolo}) foi gerada com carimbo digital e QR Code.")
                 ->success()
                 ->actions([
-                    \Filament\Notifications\Actions\Action::make('baixar')
+                    Action::make('baixar')
                         ->label('Abrir PDF')
                         ->url($downloadUrl, shouldOpenInNewTab: true)
                         ->button(),
@@ -212,7 +212,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
                                 ->body("Protocolo {$solicitacao->protocolo} disponível para download imediato.")
                                 ->success()
                                 ->actions([
-                                    \Filament\Notifications\Actions\Action::make('baixar')
+                                    Action::make('baixar')
                                         ->label('Abrir PDF')
                                         ->url($downloadUrl, shouldOpenInNewTab: true)
                                         ->button(),

@@ -20,7 +20,7 @@ use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\User;
 use App\Notifications\WelcomeUserMail;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;

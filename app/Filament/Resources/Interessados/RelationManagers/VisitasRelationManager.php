@@ -16,7 +16,6 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -199,7 +198,7 @@ class VisitasRelationManager extends RelationManager
 
             if ($linkWhatsapp) {
                 $notification->actions([
-                    NotificationAction::make('whatsapp')
+                    Action::make('whatsapp')
                         ->label('Enviar pelo WhatsApp')
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')
                         ->color('success')
