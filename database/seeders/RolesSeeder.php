@@ -277,6 +277,31 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Lista de Espera — mesma restrição de Matrícula/EnrollmentWizard:
+        // quem matricula também gerencia a fila de espera (secretaria/coordenação/admin).
+        $listaEsperaPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $listaEsperaPermissions[] = "{$acao}:ListaEsperaMatricula";
+        }
+
+        foreach ($listaEsperaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'coordenador', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($listaEsperaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

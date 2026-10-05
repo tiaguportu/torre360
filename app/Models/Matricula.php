@@ -8,7 +8,9 @@ use App\Enums\StatusFatura;
 use App\Enums\TipoPendenciaMatricula;
 use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
+use App\Observers\MatriculaVagaObserver;
 use App\Support\PendenciasMatricula;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +25,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
 
+#[ObservedBy(MatriculaVagaObserver::class)]
 class Matricula extends Model
 {
     use HasFactory;

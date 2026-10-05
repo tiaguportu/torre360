@@ -560,7 +560,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     $disponiveis = max(0, $turma->vagas_maximas - $matriculadas);
                     Notification::make()
                         ->title('Turma sem vagas suficientes')
-                        ->body("A turma \"{$turma->nome}\" possui apenas {$disponiveis} vaga(s) disponível(is) e você tentou matricular {$alunosCount} aluno(s).")
+                        ->body("A turma \"{$turma->nome}\" possui apenas {$disponiveis} vaga(s) disponível(is) e você tentou matricular {$alunosCount} aluno(s). Use a tela \"Lista de Espera\" (Secretaria) para registrar o interesse e ser avisado quando abrir vaga.")
                         ->danger()
                         ->send();
 
