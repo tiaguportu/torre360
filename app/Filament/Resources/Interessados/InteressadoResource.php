@@ -73,6 +73,7 @@ class InteressadoResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
+            RelationManagers\TimelineRelationManager::class,
             RelationManagers\HistoricosRelationManager::class,
             RelationManagers\VisitasRelationManager::class,
             RelationManagers\DocumentosCandidatoRelationManager::class,

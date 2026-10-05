@@ -39,7 +39,7 @@ class StoreCaptacaoInteressadoRequest extends FormRequest
             // Extras
             'observacoes' => ['nullable', 'string', 'max:2000'],
             'como_conheceu' => ['nullable', 'exists:origem_interessado,id'],
-            'recaptcha_token' => ['nullable', new RecaptchaV3($this->ip())],
+            'recaptcha_token' => [new RecaptchaV3($this->ip())],
         ];
     }
 

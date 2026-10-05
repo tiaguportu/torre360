@@ -63,6 +63,10 @@ class DossieIaAction
 
                 $urlPdf = route('crm.interessados.dossie-pdf', $record);
 
+                // O texto da IA parte de dados de terceiros (formulário público): vai escapado para o HTML.
+                $resumoExecutivo = e($dossie['resumo_executivo']);
+                $proximaAcao = e($dossie['proxima_acao_sugerida']);
+
                 $tempBadge = match ($dossie['temperatura_sugerida']) {
                     'quente' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">🔥 Quente (Alta Probabilidade)</span>',
                     'morno' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">🟡 Morno (Em Avaliação)</span>',
@@ -82,10 +86,10 @@ class DossieIaAction
         </div>
     </div>
     <p class="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
-        <strong>💡 Síntese:</strong> {$dossie['resumo_executivo']}
+        <strong>💡 Síntese:</strong> {$resumoExecutivo}
     </p>
     <p class="text-xs text-purple-900 dark:text-purple-300 bg-purple-100/60 dark:bg-purple-900/30 p-2 rounded-lg">
-        <strong>🚀 Próxima Ação Recomendada:</strong> {$dossie['proxima_acao_sugerida']}
+        <strong>🚀 Próxima Ação Recomendada:</strong> {$proximaAcao}
     </p>
 </div>
 HTML;

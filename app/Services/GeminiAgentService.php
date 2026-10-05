@@ -6,6 +6,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 
 class GeminiAgentService
 {
@@ -95,8 +96,10 @@ Diretrizes obrigatórias de resposta:
             $data = $this->callGeminiApi($payload);
 
             return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Desculpe, não consegui obter uma resposta válida do assistente de IA.';
-        } catch (\Exception $e) {
-            return 'Ocorreu uma falha na conexão com o serviço de IA: '.$e->getMessage();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return 'Ocorreu uma falha na conexão com o serviço de IA. Tente novamente em instantes.';
         }
     }
 
@@ -251,15 +254,18 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
 
         foreach ($attempts as $i => $model) {
             if ($i === count($models)) {
-                sleep(3);
+                Sleep::sleep(3);
             }
 
-            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+            // A chave vai no header (e não na query string): mensagens de erro de rede (cURL) trazem a URL
+            // completa e acabariam expondo a chave em logs, notificações e telas.
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
             try {
                 $response = Http::timeout(45)
                     ->withHeaders([
                         'Content-Type' => 'application/json',
+                        'x-goog-api-key' => $apiKey,
                     ])
                     ->post($endpoint, $payload);
 
@@ -272,7 +278,7 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
 
                 $statusCode = $response->status();
                 $errorMsg = (string) ($response->json('error.message') ?? $response->body());
-                $lastError = $errorMsg;
+                $lastError = self::sanitizarMensagemDeErro($errorMsg);
 
                 // Se for erro de demanda, rate limit ou sobrecarga temporária, tenta o próximo modelo
                 $isTemporaryIssue = str_contains(strtolower($errorMsg), 'demand')
@@ -283,17 +289,34 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
 
                 if (! $isTemporaryIssue) {
                     // Erro estrutural ou de parâmetros: lança imediatamente
-                    throw new \Exception("Erro na API do Gemini: {$errorMsg}");
+                    throw new \Exception("Erro na API do Gemini: {$lastError}");
                 }
-            } catch (\Exception $e) {
-                $lastError = $e->getMessage();
-                if (str_contains(strtolower($e->getMessage()), 'chave') || str_contains(strtolower($e->getMessage()), 'invalid')) {
-                    throw $e;
+            } catch (\Throwable $e) {
+                $lastError = self::sanitizarMensagemDeErro($e->getMessage());
+                if (str_contains(strtolower($lastError), 'chave') || str_contains(strtolower($lastError), 'invalid')) {
+                    throw new \Exception($lastError);
                 }
             }
         }
 
         throw new \Exception("Os servidores de IA do Gemini estão temporariamente com alta demanda. Por favor, tente novamente em instantes. (Detalhes: {$lastError})");
+    }
+
+    /**
+     * Remove de uma mensagem de erro tudo que possa expor credenciais: a chave configurada, o
+     * parâmetro `key=` de URLs e qualquer token no formato das chaves de API do Google.
+     */
+    public static function sanitizarMensagemDeErro(string $mensagem): string
+    {
+        $chave = (string) config('services.gemini.key');
+
+        if ($chave !== '') {
+            $mensagem = str_replace($chave, '[chave-oculta]', $mensagem);
+        }
+
+        $mensagem = preg_replace('/([?&]key=)[^&\s"\')]+/i', '$1[chave-oculta]', $mensagem) ?? $mensagem;
+
+        return preg_replace('/AIza[0-9A-Za-z_\-]{20,}/', '[chave-oculta]', $mensagem) ?? $mensagem;
     }
 
     /**

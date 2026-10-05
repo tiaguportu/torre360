@@ -61,11 +61,13 @@ Route::get('/pesquisa-visita/{token}/obrigado', [PesquisaVisitaController::class
 
 // Portal de Pré-Admissão & Checklist de Documentos do Candidato
 Route::get('/admissao/{token}', [PortalDocumentosCandidatoController::class, 'show'])
+    ->middleware('throttle:60,1')
     ->name('candidato.documentos.show');
 Route::post('/admissao/{token}/enviar', [PortalDocumentosCandidatoController::class, 'upload'])
     ->middleware('throttle:30,1')
     ->name('candidato.documentos.upload');
 Route::delete('/admissao/{token}/remover/{documento}', [PortalDocumentosCandidatoController::class, 'remover'])
+    ->middleware('throttle:30,1')
     ->name('candidato.documentos.remover');
 
 Route::get('/login', function () {

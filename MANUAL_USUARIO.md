@@ -416,6 +416,36 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
    - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
    - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
 
+### 3.21 Linha do Tempo Omnichannel Interativa (Unified Customer 360 Feed)
+A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento escolar ao consolidar todos os pontos de contato da família em um feed cronológico único, interativo e ultra-responsivo:
+
+1. **Onde Acessar:**
+   - Ao abrir qualquer Interessado/Lead no painel administrativo, a **Linha do Tempo 360°** é a primeira aba em destaque.
+
+2. **Fontes de Dados Unificadas no Feed:**
+   - 💬 **Contatos & Mensagens:** Registros de ligações, e-mails, conversas de WhatsApp geradas pelos copilotos de IA ou consultores, com duração, consultor responsável e resultado (ex: *Agendou Visita*, *Retornar*).
+   - 🏫 **Tours Escolares & Pesquisa NPS:** Data e status da visitação presencial. Se a visita foi concluída, o card exibe em destaque a nota NPS (0 a 10), as notas individuais (Atendimento, Infraestrutura, Pedagógico) e o depoimento da família. Se a pesquisa ainda estiver pendente, botões de atalho permitem enviar ou copiar o link com 1 clique.
+   - 📑 **Documentos & Parecer Gemini Vision:** Registros de envio de certidões, RG e comprovantes com o parecer pericial de IA (score de confiança, nitidez, tipologia e dados cadastrais extraídos).
+   - 🔄 **Auditoria de Etapas & Funil:** Mudanças de status no Kanban, registros de descarte/motivo de perda, transferências de consultor e ajustes na temperatura comercial auditados automaticamente pelo sistema.
+
+3. **⚡ Barra de Registro Rápido de Interação (Quick Note):**
+   - No topo do feed, registre uma nova interação em segundos sem precisar navegar entre abas ou abrir janelas pesadas:
+     - Escolha o canal com 1 clique (WhatsApp, Ligação, E-mail, Presencial, Anotação).
+     - Digite o que foi conversado ou acordado com os pais.
+     - Defina o resultado e agende o próximo retorno.
+     - Ao clicar em **Gravar Interação**, o sistema salva o registro, atualiza a data de retorno do lead e **recalcula o Lead Score instantaneamente**!
+
+4. **Painel de Indicadores 360° no Cabeçalho:**
+   - Indicador visual de temperatura comercial (🔥 Quente, 🌤️ Morno, ❄️ Frio).
+   - Pontuação atual do **Lead Score** em pontos.
+   - Alerta inteligente de **Próximo Contato**: destaca em vermelho com sinal pulsante e contagem de dias se o retorno estiver atrasado.
+   - Contador total de interações e botão oficial de **Ajuda** com orientações da tela.
+
+5. **Filtros Interativos & Busca em Tempo Real:**
+   - Filtre o feed com botões rápidos: *Todos os Eventos*, *Contatos & Mensagens*, *Visitas & NPS*, *Documentos & IA* ou *Etapas & Funil*.
+   - Campo de busca instantânea com filtro por palavras-chave em relatos, nomes e observações.
+   - Botão direto para **Retornar no WhatsApp** com número pré-formatado nos cards de contato e visitação.
+
 ---
 
 

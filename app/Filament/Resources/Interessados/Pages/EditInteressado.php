@@ -85,9 +85,10 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>🤖 Resumir WhatsApp IA:</strong> Cole conversas longas trocadas no WhatsApp com a família. O Gemini sintetiza perfil, dores, acordos e temperatura, gravando na timeline e agendando o retorno ideal.</li>';
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
         $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
+        $html .= '<li><strong>📱 Linha do Tempo Omnichannel 360°:</strong> Visualize a jornada completa da família em um feed interativo unificado (contatos, WhatsApp, visitas escolares, NPS, documentos periciados por IA e mudanças no funil). Permite gravar interações rápidas no topo e recalcula o Lead Score na hora!</li>';
         $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
         $html .= '<li><strong>📑 Documentos de Pré-Admissão com Validador IA:</strong> Na aba inferior, acompanhe o checklist de documentos. O sistema conta com pré-análise assíncrona por IA (OCR pericial com Gemini Vision) que afere legibilidade, extrai dados cruciais (CPF, RG, Data de Nascimento, Filiação), aponta divergências e permite sincronizar os dados cadastrais da família com 1 único clique, sem travamentos e em total conformidade com a LGPD.</li>';
-        $html .= '<li><strong>Histórico:</strong> Na aba inferior, registre e visualize todas as interações com este lead.</li>';
+        $html .= '<li><strong>Histórico Tradicional:</strong> Na aba "Histórico de Contatos", acesse a listagem tabular detalhada de todas as interações do lead.</li>';
 
         if ($user->can('Delete:Interessado')) {
             $html .= '<li><strong>Excluir:</strong> Use o botão vermelho "Excluir" para remover o lead.</li>';

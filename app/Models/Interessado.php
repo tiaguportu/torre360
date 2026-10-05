@@ -46,7 +46,7 @@ class Interessado extends Model
         'Outro' => 'Outro motivo',
     ];
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -77,6 +77,7 @@ class Interessado extends Model
             'redes_sociais' => 'array',
             'token_convite_expira_em' => 'datetime',
             'token_convite_usado_em' => 'datetime',
+            'token_documentos_expira_em' => 'datetime',
             'dados_pre_matricula' => 'array',
         ];
     }
@@ -315,11 +316,38 @@ class Interessado extends Model
     }
 
     /**
-     * Retorna ou gera o token exclusivo para o portal de pré-admissão / documentos do candidato.
+     * Dias de validade do link do portal de pré-admissão. Cada vez que a equipe gera/copia o
+     * link, a validade é renovada (janela deslizante); links esquecidos expiram sozinhos.
+     */
+    public const DIAS_VALIDADE_TOKEN_DOCUMENTOS = 90;
+
+    /**
+     * Leads cujo link do portal de documentos corresponde ao token e ainda não expirou.
+     * Token sem data de expiração (legado) segue válido até ser renovado pela equipe.
+     */
+    public function scopeComTokenDocumentosValido(Builder $query, string $token): Builder
+    {
+        return $query
+            ->where('token_documentos', $token)
+            ->where(fn (Builder $q) => $q
+                ->whereNull('token_documentos_expira_em')
+                ->orWhere('token_documentos_expira_em', '>', now()));
+    }
+
+    /**
+     * Retorna ou gera o token exclusivo para o portal de pré-admissão / documentos do candidato,
+     * renovando a validade do link.
      */
     public function obterOuCriarTokenDocumentos(): string
     {
+        $validade = now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
+
         if (filled($this->token_documentos)) {
+            // Evita escrita a cada abertura de modal: só renova quando a validade já encurtou um dia.
+            if ($this->token_documentos_expira_em === null || $this->token_documentos_expira_em->lt($validade->copy()->subDay())) {
+                $this->update(['token_documentos_expira_em' => $validade]);
+            }
+
             return $this->token_documentos;
         }
 
@@ -327,7 +355,7 @@ class Interessado extends Model
             $token = Str::random(48);
         } while (static::where('token_documentos', $token)->exists());
 
-        $this->update(['token_documentos' => $token]);
+        $this->update(['token_documentos' => $token, 'token_documentos_expira_em' => $validade]);
 
         return $token;
     }

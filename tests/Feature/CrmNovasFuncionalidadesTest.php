@@ -13,6 +13,7 @@ use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\TipoDocumento;
 use App\Models\Turma;
 use App\Services\CrmIaVendasService;
@@ -20,6 +21,8 @@ use App\Services\GeminiAgentService;
 use App\Services\InteressadoMatriculaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
 use Tests\TestCase;
@@ -32,6 +35,9 @@ class CrmNovasFuncionalidadesTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
+
+        // O .env local tem a chave real do Gemini: qualquer chamada sem fake deve falhar em vez de sair para a rede.
+        Http::preventStrayRequests();
     }
 
     public function test_programa_familia_indica_familia_gera_codigo_e_vincula_ao_lead(): void
@@ -88,6 +94,9 @@ class CrmNovasFuncionalidadesTest extends TestCase
 
     public function test_portal_de_pre_admissao_upload_documento_com_token(): void
     {
+        // Sem a fila falsa o job de IA rodaria na hora (QUEUE_CONNECTION=sync) e chamaria o Gemini de verdade.
+        Queue::fake();
+
         $status = StatusInteressado::create(['nome' => 'Novo Lead', 'ordem' => 1]);
         $origem = OrigemInteressado::create(['nome' => 'Site']);
         $pessoa = Pessoa::create(['nome' => 'João Responsável', 'telefone' => '11999998888']);
@@ -121,6 +130,7 @@ class CrmNovasFuncionalidadesTest extends TestCase
 
         $uploadResponse->assertRedirect();
         $uploadResponse->assertSessionHas('sucesso');
+        Queue::assertPushed(ValidarDocumentoComIaJob::class);
 
         $this->assertDatabaseHas('documento_inserido', [
             'interessado_id' => $interessado->id,

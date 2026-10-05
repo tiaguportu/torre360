@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Log;
  */
 class RecaptchaV3 implements ValidationRule
 {
+    /**
+     * Regra implícita: o Laravel só executa regras de classe em campos presentes e não vazios.
+     * Sem isto, omitir `recaptcha_token` (ou enviá-lo vazio) pularia a verificação inteira.
+     */
+    public bool $implicit = true;
+
     public function __construct(
         public ?string $ip = null,
         public float $minScore = 0.3
