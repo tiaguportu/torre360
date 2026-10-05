@@ -360,3 +360,5 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
+| Reserva de espaços e recursos (auditório, quadra, laboratório) | `docs/reserva_espacos_roadmap.md` |
+| Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
