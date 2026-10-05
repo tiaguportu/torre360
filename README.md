@@ -360,3 +360,5 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
+| Autorização de uso de imagem e consentimentos (LGPD/ECA) | `docs/autorizacao_uso_imagem_roadmap.md` |
+| Agenda diária / rotina (Educação Infantil) | `docs/agenda_diaria_educacao_infantil_roadmap.md` |
