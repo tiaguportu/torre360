@@ -7,12 +7,14 @@ use App\Enums\StatusComunicacaoEmMassa;
 use App\Enums\StatusVisitaInteressado;
 use App\Enums\TipoPublicoComunicacao;
 use App\Filament\Pages\EnrollmentWizard;
+use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
 use App\Models\CampanhaMarketing;
 use App\Models\ComunicacaoEmMassa;
+use App\Models\Concorrente;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\MensagemWhatsappTemplate;
@@ -36,6 +38,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -507,6 +510,7 @@ class InteressadosTable
                     ->openUrlInNewTab(),
 
                 ActionGroup::make([
+                    BattlecardAction::make(),
                     DossieIaAction::make(),
                     CopilotoMensagemIaAction::make(),
                     ResumoConversaIaAction::make(),
@@ -622,7 +626,20 @@ class InteressadosTable
                                 ->label('Motivo da Perda')
                                 ->options(Interessado::MOTIVOS_PERDA)
                                 ->searchable()
+                                ->live()
                                 ->required(),
+                            Select::make('concorrente_id')
+                                ->label('Escola Concorrente Escolhida')
+                                ->options(fn () => Concorrente::ativos()->pluck('nome', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Get $get): bool => in_array($get('motivo_perda'), ['Concorrência', 'Preço', 'Metodologia', 'Distância'], true))
+                                ->placeholder('Selecione a escola concorrente (se aplicável)'),
+                            Select::make('fator_decisivo_concorrente')
+                                ->label('Fator Decisivo da Família')
+                                ->options(Concorrente::FATORES_DECISAO)
+                                ->visible(fn (Get $get): bool => filled($get('concorrente_id')) || $get('motivo_perda') === 'Concorrência')
+                                ->placeholder('Qual diferencial pesou na decisão dos pais?'),
                             Textarea::make('observacoes_perda')
                                 ->label('Observações / Objeções')
                                 ->rows(2)
@@ -637,9 +654,22 @@ class InteressadosTable
                                 $record->update([
                                     'status_interessado_id' => $statusPerdido->id,
                                     'motivo_perda' => $data['motivo_perda'],
+                                    'concorrente_id' => $data['concorrente_id'] ?? null,
+                                    'fator_decisivo_concorrente' => $data['fator_decisivo_concorrente'] ?? null,
+                                    'detalhes_concorrencia' => $data['observacoes_perda'] ?? null,
                                 ]);
 
+                                $concorrenteNome = ! empty($data['concorrente_id'])
+                                    ? Concorrente::find($data['concorrente_id'])?->nome
+                                    : null;
+
                                 $relato = "Lead marcado como perdido via tabela ({$statusPerdido->nome}). Motivo: {$data['motivo_perda']}.";
+                                if ($concorrenteNome) {
+                                    $relato .= " Escola concorrente: {$concorrenteNome}.";
+                                }
+                                if (! empty($data['fator_decisivo_concorrente'])) {
+                                    $relato .= " Fator decisivo: {$data['fator_decisivo_concorrente']}.";
+                                }
                                 if (filled($data['observacoes_perda'] ?? null)) {
                                     $relato .= ' Detalhes: '.trim($data['observacoes_perda']);
                                 }
@@ -657,7 +687,7 @@ class InteressadosTable
                             }
 
                             Notification::make()
-                                ->title('Lead marcado como perdido.')
+                                ->title('Lead marcado como perdido e registrado no radar de inteligência.')
                                 ->warning()
                                 ->send();
                         }),

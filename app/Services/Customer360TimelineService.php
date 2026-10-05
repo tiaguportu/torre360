@@ -17,13 +17,6 @@ use Spatie\Activitylog\Models\Activity;
 class Customer360TimelineService
 {
     /**
-     * Mapeamento de status para nomes legíveis em cache de execução.
-     *
-     * @var array<int, string>|null
-     */
-    protected ?array $statusMap = null;
-
-    /**
      * Retorna a lista unificada e normalizada de todos os eventos da Linha do Tempo 360°.
      *
      * @return Collection<int, array<string, mixed>>
@@ -86,12 +79,19 @@ class Customer360TimelineService
     public function obterResumoMetricas(Interessado $interessado): array
     {
         $interessado->loadMissing(['status', 'usuario', 'dependentes', 'pessoa']);
+        $interessado->loadCount(['historicos', 'visitas']);
 
-        $totalContatos = $interessado->historicos()->count();
-        $totalVisitas = $interessado->visitas()->count();
-        $totalDocumentos = $interessado->documentosInseridos()->count();
-        $docsAprovados = $interessado->documentosInseridos()->where('status', SituacaoDocumento::VERIFICADO)->count();
-        $docsComIa = $interessado->documentosInseridos()->whereNotNull('analisado_ia_em')->count();
+        $totalContatos = (int) ($interessado->historicos_count ?? 0);
+        $totalVisitas = (int) ($interessado->visitas_count ?? 0);
+
+        /** @var object|null $statsDocs */
+        $statsDocs = $interessado->documentosInseridos()
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as aprovados, SUM(CASE WHEN analisado_ia_em IS NOT NULL THEN 1 ELSE 0 END) as com_ia', [SituacaoDocumento::VERIFICADO->value])
+            ->first();
+
+        $totalDocumentos = (int) ($statsDocs->total ?? 0);
+        $docsAprovados = (int) ($statsDocs->aprovados ?? 0);
+        $docsComIa = (int) ($statsDocs->com_ia ?? 0);
 
         /** @var HistoricoContato|null $ultimoContato */
         $ultimoContato = $interessado->historicos()->latest('data_contato')->first();
@@ -150,12 +150,12 @@ class Customer360TimelineService
             $tipoNome = $contato->tipoContato?->nome ?? 'Contato';
             $tipoSlug = mb_strtolower($tipoNome, 'UTF-8');
 
-            [$icone, $corIcone, $bgIcone] = match (true) {
-                str_contains($tipoSlug, 'whatsapp') => ['heroicon-o-chat-bubble-left-ellipsis', 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800'],
-                str_contains($tipoSlug, 'liga') || str_contains($tipoSlug, 'telef') => ['heroicon-o-phone', 'text-sky-600 dark:text-sky-400', 'bg-sky-100 dark:bg-sky-950/60 border-sky-300 dark:border-sky-800'],
-                str_contains($tipoSlug, 'mail') => ['heroicon-o-envelope', 'text-purple-600 dark:text-purple-400', 'bg-purple-100 dark:bg-purple-950/60 border-purple-300 dark:border-purple-800'],
-                str_contains($tipoSlug, 'presen') => ['heroicon-o-user-group', 'text-amber-600 dark:text-amber-400', 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800'],
-                default => ['heroicon-o-chat-bubble-bottom-center-text', 'text-indigo-600 dark:text-indigo-400', 'bg-indigo-100 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-800'],
+            [$icone, $corIcone, $bgIcone, $tom] = match (true) {
+                str_contains($tipoSlug, 'whatsapp') => ['heroicon-o-chat-bubble-left-ellipsis', 'text-emerald-600 dark:text-emerald-400', 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800', 'emerald'],
+                str_contains($tipoSlug, 'liga') || str_contains($tipoSlug, 'telef') => ['heroicon-o-phone', 'text-sky-600 dark:text-sky-400', 'bg-sky-100 dark:bg-sky-950/60 border-sky-300 dark:border-sky-800', 'sky'],
+                str_contains($tipoSlug, 'mail') => ['heroicon-o-envelope', 'text-purple-600 dark:text-purple-400', 'bg-purple-100 dark:bg-purple-950/60 border-purple-300 dark:border-purple-800', 'purple'],
+                str_contains($tipoSlug, 'presen') => ['heroicon-o-user-group', 'text-amber-600 dark:text-amber-400', 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800', 'amber'],
+                default => ['heroicon-o-chat-bubble-bottom-center-text', 'text-indigo-600 dark:text-indigo-400', 'bg-indigo-100 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-800', 'indigo'],
             };
 
             $resultadoLabel = $contato->resultado ? (HistoricoContato::RESULTADOS[$contato->resultado] ?? ucfirst($contato->resultado)) : null;
@@ -183,6 +183,7 @@ class Customer360TimelineService
                 'icone' => $icone,
                 'cor_icone' => $corIcone,
                 'bg_icone' => $bgIcone,
+                'tom' => $tom,
                 'badge' => $resultadoLabel,
                 'badge_cor' => $resultadoCor,
                 'detalhes' => [
@@ -232,6 +233,7 @@ class Customer360TimelineService
                 'icone' => 'heroicon-o-academic-cap',
                 'cor_icone' => 'text-teal-600 dark:text-teal-400',
                 'bg_icone' => 'bg-teal-100 dark:bg-teal-950/60 border-teal-300 dark:border-teal-800',
+                'tom' => 'teal',
                 'badge' => $statusLabel,
                 'badge_cor' => $statusCor,
                 'detalhes' => [
@@ -289,6 +291,7 @@ class Customer360TimelineService
                 'icone' => 'heroicon-o-document-check',
                 'cor_icone' => 'text-violet-600 dark:text-violet-400',
                 'bg_icone' => 'bg-violet-100 dark:bg-violet-950/60 border-violet-300 dark:border-violet-800',
+                'tom' => 'violet',
                 'badge' => $statusLabel,
                 'badge_cor' => $statusCor,
                 'detalhes' => [
@@ -352,6 +355,7 @@ class Customer360TimelineService
                     'icone' => 'heroicon-o-arrows-right-left',
                     'cor_icone' => 'text-blue-600 dark:text-blue-400',
                     'bg_icone' => 'bg-blue-100 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800',
+                    'tom' => 'blue',
                     'badge' => 'Etapa do Funil',
                     'badge_cor' => 'info',
                     'detalhes' => [
@@ -381,6 +385,7 @@ class Customer360TimelineService
                     'icone' => 'heroicon-o-x-circle',
                     'cor_icone' => 'text-rose-600 dark:text-rose-400',
                     'bg_icone' => 'bg-rose-100 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800',
+                    'tom' => 'rose',
                     'badge' => 'Lead Perdido',
                     'badge_cor' => 'danger',
                     'detalhes' => [
@@ -409,6 +414,7 @@ class Customer360TimelineService
                     'icone' => 'heroicon-o-fire',
                     'cor_icone' => 'text-amber-600 dark:text-amber-400',
                     'bg_icone' => 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800',
+                    'tom' => 'amber',
                     'badge' => 'Termômetro',
                     'badge_cor' => 'warning',
                     'detalhes' => [
@@ -422,7 +428,7 @@ class Customer360TimelineService
     }
 
     /**
-     * Auxiliar com cache para obter nome do status a partir do ID.
+     * Auxiliar com memoização para obter nome do status a partir do ID.
      */
     protected function obterNomeStatus(?int $statusId): ?string
     {
@@ -430,10 +436,8 @@ class Customer360TimelineService
             return null;
         }
 
-        if ($this->statusMap === null) {
-            $this->statusMap = StatusInteressado::pluck('nome', 'id')->all();
-        }
+        $statusMap = once(fn () => StatusInteressado::pluck('nome', 'id')->all());
 
-        return $this->statusMap[$statusId] ?? (string) $statusId;
+        return $statusMap[$statusId] ?? (string) $statusId;
     }
 }

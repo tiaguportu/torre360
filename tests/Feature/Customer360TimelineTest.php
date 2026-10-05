@@ -22,6 +22,7 @@ use App\Services\Customer360TimelineService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class Customer360TimelineTest extends TestCase
@@ -40,7 +41,9 @@ class Customer360TimelineTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $this->user = User::factory()->create(['activated_at' => now()]);
+        $this->user->assignRole('super_admin');
         $this->actingAs($this->user);
 
         $statusNovo = StatusInteressado::create(['nome' => 'Novo', 'ordem' => 1]);
@@ -262,5 +265,20 @@ class Customer360TimelineTest extends TestCase
             ->set('novoRelato', '')
             ->call('registrarContatoRapido')
             ->assertHasErrors(['novoTipoContatoId', 'novoRelato']);
+    }
+
+    public function test_usuario_sem_permissao_nao_consegue_registrar_interacao_rapida(): void
+    {
+        $usuarioSemPermissao = User::factory()->create(['activated_at' => now()]);
+
+        Livewire::actingAs($usuarioSemPermissao)
+            ->test(TimelineRelationManager::class, [
+                'ownerRecord' => $this->interessado,
+                'pageClass' => EditInteressado::class,
+            ])
+            ->set('novoTipoContatoId', $this->tipoWhatsapp->id)
+            ->set('novoRelato', 'Tentativa de gravar relato sem permissao')
+            ->call('registrarContatoRapido')
+            ->assertForbidden();
     }
 }

@@ -236,18 +236,59 @@
                 @enderror
             </div>
 
-            @if($motivoPerda === 'Concorrência')
-                <div x-transition>
-                    <label for="concorrentePerda" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Escola Concorrente Escolhida <span class="text-xs text-gray-400 font-normal">(opcional)</span>
-                    </label>
-                    <input
-                        id="concorrentePerda"
-                        type="text"
-                        wire:model="concorrentePerda"
-                        placeholder="Ex: Colégio Santo Agostinho, Escola Dom Bosco..."
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
-                    />
+            @if(in_array($motivoPerda, ['Concorrência', 'Preço', 'Metodologia', 'Distância'], true))
+                @php
+                    $concorrentesCadastrados = \App\Models\Concorrente::ativos()->orderBy('nome')->get();
+                @endphp
+                <div class="space-y-3" x-transition>
+                    <div>
+                        <label for="concorrenteId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Escola Concorrente Escolhida <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                        </label>
+                        <select
+                            id="concorrenteId"
+                            wire:model.live="concorrenteId"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                        >
+                            <option value="">Selecione na lista ou digite abaixo se for nova...</option>
+                            @foreach($concorrentesCadastrados as $concorrenteItem)
+                                <option value="{{ $concorrenteItem->id }}">
+                                    {{ $concorrenteItem->nome }} {{ $concorrenteItem->sigla ? '('.$concorrenteItem->sigla.')' : '' }} {{ $concorrenteItem->bairro ? '— ' . $concorrenteItem->bairro : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @if(empty($concorrenteId))
+                        <div>
+                            <label for="concorrentePerda" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                Ou digite o nome de outro colégio concorrente
+                            </label>
+                            <input
+                                id="concorrentePerda"
+                                type="text"
+                                wire:model="concorrentePerda"
+                                placeholder="Ex: Colégio Santo Agostinho, Escola Dom Bosco..."
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                            />
+                        </div>
+                    @endif
+
+                    <div>
+                        <label for="fatorDecisivoConcorrente" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Principal Fator Decisivo da Família <span class="text-xs text-gray-400 font-normal">(opcional)</span>
+                        </label>
+                        <select
+                            id="fatorDecisivoConcorrente"
+                            wire:model="fatorDecisivoConcorrente"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm shadow-xs focus:ring-danger-500 focus:border-danger-500"
+                        >
+                            <option value="">Selecione o que pesou na decisão...</option>
+                            @foreach(\App\Models\Concorrente::FATORES_DECISAO as $chaveFator => $rotuloFator)
+                                <option value="{{ $chaveFator }}">{{ $rotuloFator }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             @endif
 

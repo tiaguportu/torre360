@@ -929,8 +929,38 @@ Estrutura de ensino e turmas.
 
 ### `interessados`
 - **Representa:** Leads e famílias interessadas em vagas na instituição de ensino.
-- **Campos Principais:** `pessoa_id`, `usuario_id` (consultor), `origem_interessado_id`, `status_interessado_id`, `data_primeiro_contato`, `data_proximo_contato`, `temperatura`, `score_engajamento`, `valor_estimado`, `token_documentos` (String 48 chars - Token aleatório para acesso seguro da família ao Portal de Pré-Admissão e checklist de documentos).
-- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `User` (consultor), HasMany `dependentes`, HasMany `visitas`, HasMany `historicoContatos`, HasOne `indicacao` (`IndicacaoInteressado`), HasMany `documentosInseridos` (`DocumentoInserido`).
+- **Campos Principais:** `pessoa_id`, `usuario_id` (consultor), `origem_interessado_id`, `status_interessado_id`, `data_primeiro_contato`, `data_proximo_contato`, `temperatura`, `score_engajamento`, `valor_estimado`, `token_documentos` (String 48 chars - Token aleatório para acesso seguro da família ao Portal de Pré-Admissão e checklist de documentos), `motivo_perda`, `concorrente_id` (FK `crm_concorrentes.id` - nullable), `fator_decisivo_concorrente` (String - nullable), `detalhes_concorrencia` (Text - nullable).
+- **Relacionamentos:** BelongsTo `Pessoa`, BelongsTo `User` (consultor), BelongsTo `Concorrente` (`crm_concorrentes`), HasMany `dependentes`, HasMany `visitas`, HasMany `historicoContatos`, HasOne `indicacao` (`IndicacaoInteressado`), HasMany `documentosInseridos` (`DocumentoInserido`).
+
+### `crm_concorrentes` (Battlecards de Concorrentes & Inteligência de Mercado)
+- **Representa:** Escolas e colégios concorrentes mapeados na região para subsidiar a equipe comercial com diferenciais de valor e registrar perdas competitivas.
+- **Campos Principais:**
+  - `nome`: Nome oficial do colégio concorrente (indexado).
+  - `sigla`: Sigla usual ou apelido da instituição (ex: CDB, IEV).
+  - `cidade_id`: FK `cidade.id` (nullable).
+  - `bairro`: Bairro ou região geográfica de atuação.
+  - `faixa_preco`: Enum/String (`mais_barato`, `equivalente`, `mais_caro`).
+  - `mensalidade_estimada`: Decimal (10,2) - Valor estimado da mensalidade cobrada por eles.
+  - `proposta_pedagogica`: String - Linha pedagógica (ex: Tradicional, Construtivista, Bilíngue).
+  - `pontos_fortes`: JSON (Array) - Argumentos e atributos que atraem famílias para eles.
+  - `pontos_fracos`: JSON (Array) - Vulnerabilidades e pontos onde deixam a desejar (turmas cheias, frieza, rotatividade).
+  - `diferenciais_nossos`: Text - Argumentos comprovados por que a nossa escola é superior a eles.
+  - `estrategia_abordagem`: Text - Dicas de ouro e postura tática para o consultor negociar eticamente sem criticar a outra escola.
+  - `observacoes`: Text - Anotações gerais de inteligência de mercado.
+  - `is_ativo`: Boolean (default true) - Se a escola está ativa no radar competitivo.
+- **Relacionamentos:** BelongsTo `Cidade`, HasMany `interessadosPerdidos` (`Interessado`).
+
+### `crm_objecoes` (Matriz de Objeções Comerciais & Scripts de Contorno)
+- **Representa:** Repositório oficial de contorno de dúvidas e resistências das famílias para treinamento e consulta rápida da equipe de admissões.
+- **Campos Principais:**
+  - `titulo`: Identificação clara da objeção (ex: "Mensalidade acima do orçamento", "Distância de casa", "Dúvidas sobre o método").
+  - `categoria`: String (`preco`, `distancia`, `pedagogico`, `estrutura`, `vagas`, `outro`).
+  - `descricao`: Text (nullable) - Como a família expressa a dúvida no atendimento.
+  - `resposta_sugerida`: Text - Roteiro verbal pronto, empático e de alto valor educacional para o consultor falar.
+  - `pergunta_virada`: Text (nullable) - Pergunta aberta para devolver a reflexão aos pais e avançar o fechamento.
+  - `dicas_postura`: Text (nullable) - Raciocínio psicológico e postura recomendada para o consultor não ficar na defensiva.
+  - `ordem`: Integer (default 0) - Prioridade de exibição na matriz.
+  - `is_ativo`: Boolean (default true) - Se a objeção deve aparecer nos battlecards e consultas.
 
 ### `indicacao_interessados` (Programa "Família Indica Família" / MGM)
 - **Representa:** Registro de indicações de novos alunos feitas por responsáveis e famílias de alunos da escola.

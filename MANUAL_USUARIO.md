@@ -436,15 +436,56 @@ A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento es
      - Ao clicar em **Gravar Interação**, o sistema salva o registro, atualiza a data de retorno do lead e **recalcula o Lead Score instantaneamente**!
 
 4. **Painel de Indicadores 360° no Cabeçalho:**
-   - Indicador visual de temperatura comercial (🔥 Quente, 🌤️ Morno, ❄️ Frio).
-   - Pontuação atual do **Lead Score** em pontos.
-   - Alerta inteligente de **Próximo Contato**: destaca em vermelho com sinal pulsante e contagem de dias se o retorno estiver atrasado.
-   - Contador total de interações e botão oficial de **Ajuda** com orientações da tela.
+   - Seis indicadores em cartões: **Temperatura** comercial (🔥 Quente, 🌤️ Morno, ❄️ Frio), **Lead Score** (pontos e total de interações), **Próximo Contato**, **Último Contato**, **NPS da Visita** e **Documentos** (verificados / enviados, com quantos já passaram pela IA).
+   - Alerta inteligente de **Retorno em Atraso**: o cartão fica vermelho e mostra há quanto tempo o retorno deveria ter acontecido.
+   - Botão **Retornar no WhatsApp** (número já formatado) e botão oficial de **Ajuda** com orientações da tela, ambos no topo do cabeçalho.
+   - O layout se adapta ao tamanho da tela (celular, tablet e desktop) e ao modo claro/escuro.
 
 5. **Filtros Interativos & Busca em Tempo Real:**
-   - Filtre o feed com botões rápidos: *Todos os Eventos*, *Contatos & Mensagens*, *Visitas & NPS*, *Documentos & IA* ou *Etapas & Funil*.
-   - Campo de busca instantânea com filtro por palavras-chave em relatos, nomes e observações.
-   - Botão direto para **Retornar no WhatsApp** com número pré-formatado nos cards de contato e visitação.
+   - Filtre o feed com botões rápidos: *Todos*, *Contatos & Mensagens*, *Visitas & NPS*, *Documentos & IA* ou *Etapas & Funil* (os três primeiros mostram a quantidade de registros).
+   - Campo de busca instantânea com filtro por palavras-chave em relatos, nomes e observações; com filtro ativo, aparece o total de eventos encontrados e o atalho **Limpar filtros**.
+
+6. **Feed Agrupado por Dia:**
+   - Os eventos aparecem em ordem cronológica (do mais recente ao mais antigo), separados por dia (*Hoje*, *Ontem* ou a data por extenso). Visitas futuras ganham a marca **Agendado**.
+   - Cada tipo de evento tem cor e ícone próprios (WhatsApp, ligação, e-mail, visita, documento, etapa do funil, temperatura) e mostra o horário e o tempo decorrido.
+   - Mudanças de etapa exibem a transição visual (*Etapa anterior → Nova etapa*); contatos mostram a duração da conversa; visitas realizadas exibem o NPS com estrelas por dimensão; documentos exibem o parecer da IA com medidor de confiança, dados extraídos e divergências.
+
+### 3.22 🛡️ Battlecards Comerciais & Inteligência Competitiva de Objeções
+Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consultores de admissões e a coordenação comercial com argumentação de alto valor educacional, orientações éticas e respostas prontas para lidar com comparações de colégios concorrentes e resistências das famílias durante todo o ciclo de negociação:
+
+1. **Onde Acessar:**
+   - **No Funil de Vendas (Kanban):** Botão **Battlecards & Objeções** (ícone `🛡️`) na barra superior do quadro de etapas.
+   - **Na Edição do Interessado:** Ação de cabeçalho **Battlecards & Objeções** disponível em qualquer lead, com dados contextuais da negociação (aluno, temperatura e score de engajamento).
+   - **Na Tabela de Interessados:** Menu de ações de cada linha (`...` → **Battlecards & Objeções**).
+   - **Menu Lateral Dedicado:** Acesse **CRM / Comercial → Escolas Concorrentes** para gerenciar o mapeamento de colégios e **CRM / Comercial → Matriz de Objeções** para editar os roteiros e perguntas de virada.
+
+2. **Abas Interativas do Modal Executivo:**
+   - **🛡️ Colégios Concorrentes (Battlecards):**
+     - Selecione qualquer escola concorrente cadastrada no painel lateral.
+     - **Visão 360° do Concorrente:** Bairro/cidade, faixa de preço (*Mais acessível*, *Equivalente*, *Mais caro/Premium*), mensalidade estimada e linha pedagógica.
+     - **Análise Competitiva:**
+       - *O que atrai as famílias neles (Pontos Fortes):* O que a concorrência vende bem.
+       - *Vulnerabilidades & Onde Eles Falham:* Fragilidades operacionais ou metodológicas (turmas superlotadas, falta de acolhimento, alta rotatividade).
+       - *Nossos Diferenciais Competitivos:* Por que o Torre de Marfim é comprovadamente a melhor escolha para o desenvolvimento do filho.
+       - *Roteiro de Abordagem para o Consultor:* Dica tática em primeira pessoa para orientar os pais com ética, sem nunca atacar o concorrente.
+   - **🎯 Matriz de Objeções & Respostas Prontas:**
+     - Filtros rápidos em pílulas: *Todas*, *Preço / Financeiro*, *Distância / Localização*, *Proposta Pedagógica*, *Estrutura Física* e *Vagas*.
+     - Para cada objeção:
+       - **Fala da Família:** Como os pais costumam expressar a dúvida ou resistência.
+       - **Raciocínio & Postura:** Como o consultor deve pensar antes de responder, evitando reações defensivas.
+       - **Roteiro Verbal Sugerido:** Resposta formulada com tom acolhedor e seguro, com botão de **Copiar** em 1 clique para facilidade de uso ou envio no WhatsApp.
+       - **Pergunta de Ouro para Virar o Diálogo:** Pergunta aberta e reflexiva para devolver a reflexão aos pais e avançar o fechamento.
+   - **📊 Radar de Perdas da Escola (Inteligência de Mercado):**
+     - **Painel de Métricas:** Total de concorrentes monitorados, total de alunos perdidos para outras escolas e principal fator decisivo apontado pelas famílias.
+     - **Ranking dos Concorrentes:** Escolas que mais captaram leads descartados no período, com contagem e percentual em barras de progresso.
+     - **Motivos Decisivos Mais Frequentes:** Distribuição proporcional dos fatores alegados pelos pais (*Preço / Bolsa*, *Localização*, *Metodologia*, *Estrutura*, etc.).
+   - **💡 Regras de Ouro na Venda Consultiva Escolar:**
+     - Princípios éticos inegociáveis: nunca criticar o concorrente, vender a transformação do estudante em vez de paredes e focar nas dores emocionais da família.
+     - Matriz de posicionamento da escola: Proximidade, Formação Integral, Segurança e Continuidade de Ciclos.
+
+3. **Alimentação Contínua e Automática do Radar:**
+   - Ao mover um card para uma etapa de perda no **Kanban** ou acionar a ação **Perdido** na **Tabela de Interessados**, o formulário disponibiliza a seleção da **Escola Concorrente Escolhida** e o **Fator Decisivo da Família**.
+   - As informações são registradas estruturadamente no banco de dados e auditadas no Histórico de Contatos, alimentando automaticamente os rankings e gráficos do Radar de Perdas em tempo real para tomada de decisão da direção.
 
 ---
 

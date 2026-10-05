@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Models\Concorrente;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
@@ -56,13 +58,18 @@ class KanbanInteressados extends Page
 
     public string $motivoPerda = '';
 
+    public ?int $concorrenteId = null;
+
     public ?string $concorrentePerda = null;
+
+    public ?string $fatorDecisivoConcorrente = null;
 
     public ?string $observacoesPerda = null;
 
     protected function getHeaderActions(): array
     {
         return [
+            BattlecardAction::make(),
             ImportarLeadIaAction::make(),
             Action::make('filtroConsultor')
                 ->label('Filtrar Consultor')
@@ -199,7 +206,9 @@ class KanbanInteressados extends Page
         $this->leadPerdaNome = $record->pessoa?->nome ?? 'Interessado';
         $this->statusPerdaNome = $novoStatus->nome;
         $this->motivoPerda = $record->motivo_perda ?? '';
+        $this->concorrenteId = $record->concorrente_id;
         $this->concorrentePerda = null;
+        $this->fatorDecisivoConcorrente = $record->fator_decisivo_concorrente;
         $this->observacoesPerda = null;
         $this->modalPerdaAberto = true;
 
@@ -213,7 +222,9 @@ class KanbanInteressados extends Page
     {
         $this->validate([
             'motivoPerda' => ['required', 'string', Rule::in(array_keys(Interessado::MOTIVOS_PERDA))],
+            'concorrenteId' => ['nullable', 'integer', 'exists:crm_concorrentes,id'],
             'concorrentePerda' => ['nullable', 'string', 'max:255'],
+            'fatorDecisivoConcorrente' => ['nullable', 'string', 'max:255'],
             'observacoesPerda' => ['nullable', 'string', 'max:1000'],
         ], [
             'motivoPerda.required' => 'O motivo da perda é obrigatório para registrar o descarte do lead.',
@@ -236,13 +247,19 @@ class KanbanInteressados extends Page
             return;
         }
 
+        $concorrenteModel = $this->concorrenteId ? Concorrente::find($this->concorrenteId) : null;
+        $nomeConcorrenteTexto = $concorrenteModel?->nome ?? (filled($this->concorrentePerda) ? trim($this->concorrentePerda) : null);
+
         // Monta o texto do motivo da perda
         $motivoFinal = $this->motivoPerda;
-        if ($this->motivoPerda === 'Concorrência' && filled($this->concorrentePerda)) {
-            $motivoFinal .= ': '.trim($this->concorrentePerda);
+        if ($this->motivoPerda === 'Concorrência' && filled($nomeConcorrenteTexto)) {
+            $motivoFinal .= ': '.$nomeConcorrenteTexto;
         }
 
         $relatoHistorico = "Lead marcado como perdido no Funil de Vendas ({$novoStatus->nome}). Motivo: {$motivoFinal}.";
+        if (filled($this->fatorDecisivoConcorrente)) {
+            $relatoHistorico .= " Fator decisivo: {$this->fatorDecisivoConcorrente}.";
+        }
         if (filled($this->observacoesPerda)) {
             $relatoHistorico .= ' Detalhes: '.trim($this->observacoesPerda);
         }
@@ -250,6 +267,9 @@ class KanbanInteressados extends Page
         $record->update([
             'status_interessado_id' => $novoStatus->id,
             'motivo_perda' => $motivoFinal,
+            'concorrente_id' => $this->concorrenteId,
+            'fator_decisivo_concorrente' => $this->fatorDecisivoConcorrente,
+            'detalhes_concorrencia' => $this->observacoesPerda,
         ]);
 
         // Registra histórico de atendimento para auditoria e relatórios de perdas
@@ -320,6 +340,7 @@ class KanbanInteressados extends Page
         $html .= '<h3>Como usar:</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Consulte o botão no topo para ver a ocupação real de cada série e turma em tempo real.</li>';
+        $html .= '<li><strong>🛡️ Battlecards & Objeções:</strong> Acesse no topo a inteligência comparativa com colégios concorrentes, matriz de contorno de objeções com roteiros verbais, perguntas de virada e radar de perdas.</li>';
         $html .= '<li><strong>🔥 Alertas de Escassez nos Cards:</strong> As séries pretendidas nos cards mostram alertas dinâmicos de vagas restantes (ex: <em>Esgotado</em>, <em>Últimas vagas</em>, <em>Vagas limitadas</em>).</li>';
         $html .= '<li><strong>Visualização:</strong> Cada coluna representa um status do funil. Os cards mostram o interessado, origem, dependentes e próximo contato.</li>';
         $html .= '<li><strong>Arrastar e Soltar:</strong> Mova os cards entre colunas para atualizar o status do lead.</li>';

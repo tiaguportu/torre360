@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
@@ -51,6 +52,7 @@ class EditInteressado extends EditRecord
                 ]))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar'),
+            BattlecardAction::make(),
             DossieIaAction::make(),
             CopilotoMensagemIaAction::make(),
             ResumoConversaIaAction::make(),
@@ -80,6 +82,7 @@ class EditInteressado extends EditRecord
         $html .= '<h3>O que você pode fazer:</h3>';
         $html .= '<ul>';
         $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Consulte a ocupação real de cada série/turma em tempo real e o nível de escassez para negociar com urgência e segurança.</li>';
+        $html .= '<li><strong>🛡️ Battlecards & Objeções:</strong> Acesse a inteligência competitiva da escola contra colégios concorrentes, matriz de contorno de objeções com scripts verbais, perguntas de virada e o radar de motivos de perda.</li>';
         $html .= '<li><strong>✨ Dossiê IA do Lead:</strong> Clique no botão roxo no cabeçalho para gerar uma análise profunda em tempo real com o Gemini, avaliando dores, momento familiar, temperatura e plano de ação comercial.</li>';
         $html .= '<li><strong>💬 Copiloto WhatsApp IA:</strong> Redija mensagens persuasivas sob medida para este lead com base em objetivos (primeiro contato, tour presencial, superar objeção, fechamento) e envie no WhatsApp com 1 clique.</li>';
         $html .= '<li><strong>🤖 Resumir WhatsApp IA:</strong> Cole conversas longas trocadas no WhatsApp com a família. O Gemini sintetiza perfil, dores, acordos e temperatura, gravando na timeline e agendando o retorno ideal.</li>';

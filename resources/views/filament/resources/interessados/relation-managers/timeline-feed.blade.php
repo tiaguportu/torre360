@@ -3,524 +3,766 @@
     $metricas = $livewire->metricas;
     $eventos = $livewire->timeline;
     $tiposContato = $livewire->tiposContato;
+
     $telefonePessoa = preg_replace('/\D/', '', $metricas['telefone_contato'] ?? '');
-    if (!empty($telefonePessoa) && strlen($telefonePessoa) <= 11 && !str_starts_with($telefonePessoa, '55')) {
-        $telefoneWhatsapp = '55' . $telefonePessoa;
-    } else {
-        $telefoneWhatsapp = $telefonePessoa;
-    }
+    $telefoneWhatsapp = (! empty($telefonePessoa) && strlen($telefonePessoa) <= 11 && ! str_starts_with($telefonePessoa, '55'))
+        ? '55'.$telefonePessoa
+        : $telefonePessoa;
+
+    [$tomTemperatura, $iconeTemperatura] = match (mb_strtolower((string) $metricas['temperatura'])) {
+        'quente' => ['rose', '🔥'],
+        'frio' => ['sky', '❄️'],
+        default => ['amber', '🌤️'],
+    };
+
+    $proximo = $metricas['proximo_contato_em'];
+    $emAtraso = (bool) $metricas['esta_em_atraso'];
+    $nps = $metricas['nps_visita'];
+    $tomNps = $nps ? ($nps['nota'] >= 9 ? 'emerald' : ($nps['nota'] >= 7 ? 'amber' : 'rose')) : 'gray';
+
+    $filtrando = $livewire->filtroCategoria !== 'todos' || filled($livewire->termoBusca);
+
+    $categorias = [
+        'todos' => ['label' => 'Todos', 'icone' => 'heroicon-m-squares-2x2', 'total' => null],
+        'contatos' => ['label' => 'Contatos & Mensagens', 'icone' => 'heroicon-m-chat-bubble-left-right', 'total' => $metricas['total_contatos']],
+        'visitas' => ['label' => 'Visitas & NPS', 'icone' => 'heroicon-m-academic-cap', 'total' => $metricas['total_visitas']],
+        'documentos' => ['label' => 'Documentos & IA', 'icone' => 'heroicon-m-document-text', 'total' => $metricas['total_documentos']],
+        'etapas' => ['label' => 'Etapas & Funil', 'icone' => 'heroicon-m-arrows-right-left', 'total' => null],
+    ];
+
+    // Cor do badge Filament a partir das cores (Tailwind ou semânticas) devolvidas pelo serviço.
+    $corBadge = fn (?string $cor): string => match ($cor) {
+        'emerald', 'success' => 'success',
+        'amber', 'warning' => 'warning',
+        'rose', 'danger' => 'danger',
+        'info', 'blue', 'sky' => 'info',
+        'primary' => 'primary',
+        default => 'gray',
+    };
+
+    $rotuloDia = function (\Carbon\CarbonInterface $dia): string {
+        if ($dia->isToday()) {
+            return 'Hoje';
+        }
+        if ($dia->isYesterday()) {
+            return 'Ontem';
+        }
+        if ($dia->isTomorrow()) {
+            return 'Amanhã';
+        }
+
+        return \Illuminate\Support\Str::ucfirst($dia->copy()->locale('pt_BR')->isoFormat('dddd, D [de] MMMM [de] YYYY'));
+    };
+
+    $dias = $eventos->groupBy(fn (array $evento): string => $evento['data_hora']->format('Y-m-d'));
+
+    $atalhosRetorno = [
+        'Amanhã' => now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i'),
+        'Em 3 dias' => now()->addDays(3)->setTime(9, 0)->format('Y-m-d\TH:i'),
+        'Em 1 semana' => now()->addWeek()->setTime(9, 0)->format('Y-m-d\TH:i'),
+    ];
 @endphp
 
-<div class="space-y-6 text-sm text-gray-700 dark:text-gray-200">
-    
-    <!-- ========================================== -->
-    <!-- 1. BARRA SUPERIOR DE INDICADORES 360°      -->
-    <!-- ========================================== -->
-    <div class="rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 sm:p-5 shadow-xs">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            
-            <!-- Resumo do Lead e Temperatura -->
-            <div class="flex items-center gap-3.5">
-                <div class="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20 font-black text-lg">
-                    <span>360°</span>
-                </div>
-                <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white">
-                            Linha do Tempo Omnichannel
-                        </h3>
-                        
-                        <!-- Badge Temperatura -->
-                        @php
-                            $tempClasses = match(mb_strtolower($metricas['temperatura'])) {
-                                'quente' => 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-                                'frio' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
-                                default => 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-                            };
-                            $tempIcon = match(mb_strtolower($metricas['temperatura'])) {
-                                'quente' => '🔥',
-                                'frio' => '❄️',
-                                default => '🌤️',
-                            };
-                        @endphp
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $tempClasses }}">
-                            <span>{{ $tempIcon }}</span> {{ ucfirst($metricas['temperatura']) }}
-                        </span>
+<div class="tl360">
+    <style>
+        .tl360 {
+            --tl-surface: #fff;
+            --tl-sunken: var(--gray-50);
+            --tl-border: var(--gray-200);
+            --tl-text: var(--gray-950);
+            --tl-muted: var(--gray-500);
+            --tl-faint: var(--gray-400);
+            --tl-accent: #243468;
+            --tl-accent-on: #fff;
+            --tl-on: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            font-size: .875rem;
+            line-height: 1.45;
+            color: var(--tl-text);
+        }
+        .dark .tl360 {
+            --tl-surface: var(--gray-900);
+            --tl-sunken: rgba(255, 255, 255, .04);
+            --tl-border: rgba(255, 255, 255, .1);
+            --tl-text: #fff;
+            --tl-muted: var(--gray-400);
+            --tl-faint: var(--gray-500);
+            --tl-accent: #93a7ff;
+            --tl-accent-on: #0f172a;
+            --tl-on: #0f172a;
+        }
 
-                        <!-- Lead Score -->
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                            ⭐ Score: {{ $metricas['lead_score'] }} pts
-                        </span>
-                    </div>
+        /* Tons semânticos: cada elemento recebe --tl-c (cor), --tl-bg (fundo suave) e --tl-bd (borda) */
+        .tl360-tone-emerald { --tl-rgb: 5 150 105; }
+        .tl360-tone-sky { --tl-rgb: 2 132 199; }
+        .tl360-tone-purple { --tl-rgb: 147 51 234; }
+        .tl360-tone-amber { --tl-rgb: 217 119 6; }
+        .tl360-tone-indigo { --tl-rgb: 79 70 229; }
+        .tl360-tone-teal { --tl-rgb: 13 148 136; }
+        .tl360-tone-violet { --tl-rgb: 124 58 237; }
+        .tl360-tone-blue { --tl-rgb: 37 99 235; }
+        .tl360-tone-rose { --tl-rgb: 225 29 72; }
+        .tl360-tone-gray { --tl-rgb: 100 116 139; }
+        .dark .tl360-tone-emerald { --tl-rgb: 52 211 153; }
+        .dark .tl360-tone-sky { --tl-rgb: 56 189 248; }
+        .dark .tl360-tone-purple { --tl-rgb: 192 132 252; }
+        .dark .tl360-tone-amber { --tl-rgb: 251 191 36; }
+        .dark .tl360-tone-indigo { --tl-rgb: 129 140 248; }
+        .dark .tl360-tone-teal { --tl-rgb: 45 212 191; }
+        .dark .tl360-tone-violet { --tl-rgb: 167 139 250; }
+        .dark .tl360-tone-blue { --tl-rgb: 96 165 250; }
+        .dark .tl360-tone-rose { --tl-rgb: 251 113 133; }
+        .dark .tl360-tone-gray { --tl-rgb: 148 163 184; }
+        [class*="tl360-tone-"] {
+            --tl-c: rgb(var(--tl-rgb));
+            --tl-bg: rgb(var(--tl-rgb) / .12);
+            --tl-bd: rgb(var(--tl-rgb) / .3);
+        }
 
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Consultor: <strong class="text-gray-700 dark:text-gray-300">{{ $metricas['consultor_nome'] }}</strong> • Status: <span class="font-medium">{{ $metricas['status_nome'] }}</span>
+        .tl360 svg.fi-icon { width: 1rem; height: 1rem; flex: none; }
+        .tl360-card {
+            background: var(--tl-surface);
+            border: 1px solid var(--tl-border);
+            border-radius: .875rem;
+            box-shadow: 0 1px 2px rgb(16 24 40 / .05);
+        }
+        .tl360-cq { container-type: inline-size; }
+
+        /* ---------- 1. Cabeçalho + indicadores ---------- */
+        .tl360-hero { padding: 1.125rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+        .tl360-hero-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; }
+        .tl360-id { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+        .tl360-logo {
+            flex: none; width: 3rem; height: 3rem; border-radius: .875rem; display: grid; place-items: center;
+            color: #fff; font-weight: 800; font-size: .95rem; letter-spacing: -.02em;
+            background: linear-gradient(135deg, #243468, #3d58b0);
+            box-shadow: 0 8px 16px -8px rgb(36 52 104 / .7);
+        }
+        .tl360-title { font-size: 1.0625rem; font-weight: 700; letter-spacing: -.01em; color: var(--tl-text); }
+        .tl360-sub { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .625rem; margin-top: .25rem; font-size: .8125rem; color: var(--tl-muted); }
+        .tl360-sub strong { font-weight: 600; color: var(--tl-text); }
+        .tl360-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+
+        .tl360-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .625rem; }
+        @container (min-width: 34rem) { .tl360-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @container (min-width: 60rem) { .tl360-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+        .tl360-kpi {
+            display: flex; align-items: flex-start; gap: .625rem; min-width: 0; padding: .75rem .875rem;
+            background: var(--tl-sunken); border: 1px solid var(--tl-border); border-radius: .75rem;
+        }
+        .tl360-kpi.is-alert { background: var(--tl-bg); border-color: var(--tl-bd); }
+        .tl360-kpi-ico { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .5rem; background: var(--tl-bg); color: var(--tl-c); font-size: 1rem; }
+        .tl360-kpi-ico svg.fi-icon { color: var(--tl-c); width: 1.125rem; height: 1.125rem; }
+        .tl360-kpi-body { min-width: 0; }
+        .tl360-kpi-label { font-size: .6875rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-muted); }
+        .tl360-kpi-value { font-size: 1.125rem; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--tl-text); white-space: nowrap; }
+        .tl360-kpi.is-alert .tl360-kpi-value { color: var(--tl-c); }
+        .tl360-kpi-hint { overflow: hidden; font-size: .75rem; color: var(--tl-muted); text-overflow: ellipsis; white-space: nowrap; }
+        @container (max-width: 33.99rem) { .tl360-kpi { padding: .625rem .75rem; } .tl360-kpi-ico { display: none; } }
+
+        /* ---------- 2. Registro rápido ---------- */
+        .tl360-compose-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .875rem 1.125rem; }
+        .tl360-compose-id { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+        .tl360-compose-ico { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .625rem; background: var(--tl-bg); color: var(--tl-c); }
+        .tl360-compose-ico svg.fi-icon { color: var(--tl-c); width: 1.25rem; height: 1.25rem; }
+        .tl360-h4 { font-size: .9375rem; font-weight: 650; color: var(--tl-text); }
+        .tl360-desc { font-size: .8125rem; color: var(--tl-muted); }
+        .tl360-compose-body { display: flex; flex-direction: column; gap: .875rem; padding: 0 1.125rem 1.125rem; border-top: 1px solid var(--tl-border); padding-top: 1rem; }
+        .tl360-label { display: block; margin-bottom: .375rem; font-size: .8125rem; font-weight: 500; color: var(--tl-text); }
+        .tl360-chans { display: flex; flex-wrap: wrap; gap: .5rem; }
+        .tl360-chan {
+            display: inline-flex; align-items: center; gap: .4375rem; padding: .4375rem .875rem; cursor: pointer;
+            font-size: .8125rem; font-weight: 500; color: var(--tl-text);
+            background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 999px;
+            transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
+        }
+        .tl360-chan svg.fi-icon { color: var(--tl-c); }
+        .tl360-chan:hover { background: var(--tl-bg); border-color: var(--tl-bd); }
+        .tl360-chan.is-active { color: var(--tl-on); background: var(--tl-c); border-color: var(--tl-c); box-shadow: 0 4px 10px -4px var(--tl-c); }
+        .tl360-chan.is-active svg.fi-icon { color: var(--tl-on); }
+        .tl360-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: .875rem; }
+        @container (min-width: 40rem) { .tl360-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .tl360-quick { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .375rem; }
+        .tl360-pill {
+            padding: .125rem .5rem; cursor: pointer; font-size: .75rem; font-weight: 500; color: var(--tl-accent);
+            background: transparent; border: 1px dashed var(--tl-border); border-radius: 999px; transition: background-color .15s, border-color .15s;
+        }
+        .tl360-pill:hover { background: var(--tl-sunken); border-color: var(--tl-accent); }
+        .tl360-submit { display: flex; align-items: center; justify-content: flex-end; }
+        .tl360-error { margin-top: .25rem; font-size: .75rem; color: var(--danger-600); }
+        .dark .tl360-error { color: var(--danger-400); }
+
+        /* ---------- 3. Filtros e busca ---------- */
+        .tl360-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem .875rem; }
+        .tl360-filters { display: flex; flex-wrap: wrap; gap: .375rem; }
+        .tl360-filter {
+            display: inline-flex; flex: none; align-items: center; gap: .375rem; padding: .375rem .75rem; cursor: pointer;
+            font-size: .8125rem; font-weight: 500; color: var(--tl-muted);
+            background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 999px;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .tl360-filter:hover { color: var(--tl-text); border-color: var(--tl-faint); }
+        .tl360-filter svg.fi-icon { color: currentColor; }
+        .tl360-filter.is-active { color: var(--tl-accent-on); background: var(--tl-accent); border-color: var(--tl-accent); }
+        .tl360-count {
+            min-width: 1.25rem; padding: 0 .375rem; font-size: .6875rem; font-weight: 700; line-height: 1.25rem; text-align: center;
+            background: rgb(127 127 127 / .16); border-radius: 999px;
+        }
+        .tl360-filter.is-active .tl360-count { background: color-mix(in srgb, var(--tl-accent-on) 22%, transparent); }
+        .tl360-search { flex: 1 1 16rem; min-width: 14rem; }
+        .tl360-search-row { display: flex; align-items: center; gap: .25rem; width: 100%; }
+        .tl360-search-row .fi-input { flex: 1; min-width: 0; }
+        .tl360-clear { display: grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; margin-inline-end: .375rem; cursor: pointer; color: var(--tl-faint); background: transparent; border: 0; border-radius: 999px; }
+        .tl360-clear:hover { color: var(--tl-text); background: var(--tl-sunken); }
+        .tl360-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .8125rem; color: var(--tl-muted); }
+        .tl360-link { padding: 0; cursor: pointer; font-size: .8125rem; font-weight: 600; color: var(--tl-accent); background: none; border: 0; }
+        .tl360-link:hover { text-decoration: underline; }
+
+        /* ---------- 4. Feed ---------- */
+        .tl360-feed { position: relative; display: flex; flex-direction: column; gap: .875rem; padding-top: .25rem; transition: opacity .15s; }
+        .tl360-feed.is-loading { opacity: .55; }
+        .tl360-feed::before {
+            content: ""; position: absolute; top: .75rem; bottom: .75rem; left: calc(1.25rem - 1px); width: 2px; border-radius: 2px;
+            background: var(--tl-border);
+        }
+        .tl360-day { position: relative; display: flex; align-items: center; gap: .75rem; margin-top: .5rem; }
+        .tl360-day:first-child { margin-top: 0; }
+        .tl360-day-dot { flex: none; display: grid; place-items: center; width: 2.5rem; }
+        .tl360-day-dot i { width: .75rem; height: .75rem; background: var(--tl-surface); border: 2px solid var(--tl-faint); border-radius: 999px; }
+        .tl360-day.is-today .tl360-day-dot i { background: var(--tl-accent); border-color: var(--tl-accent); }
+        .tl360-day-label {
+            display: inline-flex; align-items: center; gap: .5rem; padding: .25rem .75rem; font-size: .75rem; font-weight: 650; color: var(--tl-muted);
+            background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 999px;
+        }
+        .tl360-day.is-today .tl360-day-label { color: var(--tl-accent); border-color: var(--tl-accent); }
+        .tl360-day-flag { padding: 0 .375rem; font-size: .625rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-c); background: var(--tl-bg); border-radius: 999px; }
+
+        .tl360-item { position: relative; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+        .tl360-node {
+            position: relative; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; color: var(--tl-c);
+            background: linear-gradient(var(--tl-bg), var(--tl-bg)), var(--tl-surface);
+            border: 1px solid var(--tl-bd); border-radius: .75rem; transition: transform .15s;
+        }
+        .tl360-node svg.fi-icon { width: 1.25rem; height: 1.25rem; color: var(--tl-c); }
+        .tl360-item:hover .tl360-node { transform: scale(1.06); }
+        .tl360-ev {
+            container-type: inline-size; padding: .875rem 1rem; background: var(--tl-surface); border: 1px solid var(--tl-border);
+            border-radius: .875rem; box-shadow: 0 1px 2px rgb(16 24 40 / .05); transition: border-color .15s, box-shadow .15s;
+        }
+        .tl360-item:hover .tl360-ev { border-color: var(--tl-bd); box-shadow: 0 8px 20px -10px rgb(16 24 40 / .25); }
+        .tl360-ev-head { display: flex; flex-direction: column; gap: .25rem; }
+        @container (min-width: 30rem) {
+            .tl360-ev-head { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+            .tl360-when { text-align: right; }
+        }
+        .tl360-ev-title { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .5rem; font-size: .9375rem; font-weight: 650; line-height: 1.35; color: var(--tl-text); }
+        .tl360-ev-sub { margin-top: .125rem; font-size: .8125rem; color: var(--tl-muted); }
+        .tl360-when { flex: none; line-height: 1.3; }
+        .tl360-when strong { display: block; font-size: .8125rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--tl-text); }
+        .tl360-when span { font-size: .75rem; color: var(--tl-faint); }
+
+        .tl360-note {
+            margin-top: .625rem; padding: .625rem .75rem; overflow-wrap: anywhere; white-space: pre-line;
+            background: var(--tl-sunken); border-left: 3px solid var(--tl-c); border-radius: .25rem .625rem .625rem .25rem;
+        }
+        .tl360-tags { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .625rem; }
+        .tl360-tag {
+            display: inline-flex; align-items: center; gap: .25rem; padding: .125rem .5rem; font-size: .75rem; color: var(--tl-muted);
+            background: var(--tl-sunken); border: 1px solid var(--tl-border); border-radius: 999px;
+        }
+        .tl360-tag svg.fi-icon { width: .875rem; height: .875rem; }
+        .tl360-flow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .625rem; }
+        .tl360-flow svg.fi-icon { color: var(--tl-faint); }
+        .tl360-step { padding: .25rem .625rem; font-size: .8125rem; font-weight: 600; color: var(--tl-muted); background: var(--tl-sunken); border: 1px solid var(--tl-border); border-radius: .5rem; }
+        .tl360-step.is-to { color: var(--tl-c); background: var(--tl-bg); border-color: var(--tl-bd); }
+
+        .tl360-panel { margin-top: .75rem; padding: .75rem .875rem; background: var(--tl-bg); border: 1px solid var(--tl-bd); border-radius: .75rem; }
+        .tl360-panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+        .tl360-panel-title { display: inline-flex; align-items: center; gap: .375rem; font-size: .8125rem; font-weight: 700; color: var(--tl-c); }
+        .tl360-panel-title svg.fi-icon { color: var(--tl-c); }
+        .tl360-panel-text { margin-top: .5rem; font-size: .8125rem; color: var(--tl-text); }
+        .tl360-nps { display: flex; flex-wrap: wrap; align-items: center; gap: .875rem 1.25rem; margin-top: .625rem; }
+        .tl360-nps-score {
+            display: grid; flex: none; place-items: center; width: 3.5rem; height: 3.5rem; line-height: 1; color: var(--tl-c);
+            background: var(--tl-surface); border: 2px solid var(--tl-c); border-radius: 999px;
+        }
+        .tl360-nps-score b { font-size: 1.25rem; font-weight: 800; }
+        .tl360-nps-score small { margin-top: -.5rem; font-size: .625rem; font-weight: 600; opacity: .8; }
+        .tl360-rates { display: grid; flex: 1 1 14rem; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem .875rem; }
+        .tl360-rate-label { display: block; font-size: .6875rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--tl-muted); }
+        .tl360-stars { display: flex; align-items: center; gap: .0625rem; margin-top: .125rem; }
+        .tl360-stars svg.fi-icon { width: .9375rem; height: .9375rem; color: var(--tl-faint); opacity: .45; }
+        .tl360-stars svg.fi-icon.is-on { color: #f59e0b; opacity: 1; }
+        .tl360-stars em { margin-left: .375rem; font-size: .75rem; font-style: normal; font-weight: 700; color: var(--tl-text); }
+        .tl360-quote { margin: .625rem 0 0; padding-top: .5rem; font-style: italic; color: var(--tl-text); border-top: 1px dashed var(--tl-bd); }
+        .tl360-meter { display: inline-flex; align-items: center; gap: .5rem; font-size: .75rem; font-weight: 700; color: var(--tl-c); }
+        .tl360-meter-bar { width: 4.5rem; height: .375rem; overflow: hidden; background: rgb(127 127 127 / .2); border-radius: 999px; }
+        .tl360-meter-bar i { display: block; height: 100%; background: var(--tl-c); border-radius: 999px; }
+        .tl360-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .375rem .875rem; margin: .625rem 0 0; padding-top: .5rem; border-top: 1px dashed var(--tl-bd); }
+        .tl360-dl dt { font-size: .6875rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--tl-muted); }
+        .tl360-dl dd { margin: 0; overflow-wrap: anywhere; font-size: .8125rem; font-weight: 600; color: var(--tl-text); }
+        .tl360-warn { display: flex; align-items: flex-start; gap: .5rem; margin-top: .625rem; padding: .5rem .625rem; font-size: .8125rem; font-weight: 500; color: var(--tl-c); background: linear-gradient(var(--tl-bg), var(--tl-bg)), var(--tl-surface); border: 1px solid var(--tl-bd); border-radius: .625rem; }
+        .tl360-warn svg.fi-icon { margin-top: .125rem; color: var(--tl-c); }
+        .tl360-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem .875rem; margin-top: .75rem; padding: .625rem .75rem; font-size: .8125rem; color: var(--tl-text); background: var(--tl-bg); border: 1px solid var(--tl-bd); border-radius: .75rem; }
+        .tl360-cta-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+        .tl360-empty { padding: 2.5rem 1.25rem; text-align: center; background: var(--tl-surface); border: 1px dashed var(--tl-border); border-radius: .875rem; }
+        .tl360-empty-ico { display: inline-grid; place-items: center; width: 3.25rem; height: 3.25rem; margin-bottom: .75rem; color: var(--tl-c); background: var(--tl-bg); border-radius: 1rem; }
+        .tl360-empty-ico svg.fi-icon { width: 1.5rem; height: 1.5rem; color: var(--tl-c); }
+        .tl360-empty p { max-width: 28rem; margin: .25rem auto 1rem; font-size: .8125rem; color: var(--tl-muted); }
+
+        @media (max-width: 640px) {
+            .tl360-hero { padding: 1rem; }
+            .tl360-filters { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: thin; }
+            .tl360-search { flex-basis: 100%; }
+            .tl360-feed::before { left: calc(1rem - 1px); }
+            .tl360-item { grid-template-columns: 2rem minmax(0, 1fr); gap: .5rem; }
+            .tl360-node { width: 2rem; height: 2rem; border-radius: .625rem; }
+            .tl360-node svg.fi-icon { width: 1rem; height: 1rem; }
+            .tl360-day-dot { width: 2rem; }
+            .tl360-ev { padding: .75rem; }
+        }
+    </style>
+
+    {{-- ============ 1. CABEÇALHO E INDICADORES 360° ============ --}}
+    <section class="tl360-card tl360-hero">
+        <div class="tl360-hero-top">
+            <div class="tl360-id">
+                <div class="tl360-logo" aria-hidden="true">360°</div>
+                <div class="min-w-0">
+                    <h3 class="tl360-title">Linha do Tempo Omnichannel</h3>
+                    <p class="tl360-sub">
+                        <span>Consultor: <strong>{{ $metricas['consultor_nome'] }}</strong></span>
+                        <span aria-hidden="true">•</span>
+                        <span>Status: <x-filament::badge :color="$metricas['status_cor'] ?: 'primary'" size="sm">{{ $metricas['status_nome'] }}</x-filament::badge></span>
                     </p>
                 </div>
             </div>
 
-            <!-- Chips de Métricas e Ações Rápidas -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <!-- Próximo Retorno / Alerta Atraso -->
-                @if($metricas['proximo_contato_em'])
-                    <div class="px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-2 {{ $metricas['esta_em_atraso'] ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300' }}">
-                        <span class="flex h-2 w-2 rounded-full {{ $metricas['esta_em_atraso'] ? 'bg-rose-600 animate-ping' : 'bg-emerald-500' }}"></span>
-                        <span>
-                            Próximo Contato:
-                            <strong>{{ $metricas['proximo_contato_em']->format('d/m/Y H:i') }}</strong>
-                            @if($metricas['esta_em_atraso'])
-                                <span class="font-bold underline ml-1">({{ $metricas['dias_atraso'] }}d em atraso)</span>
-                            @endif
-                        </span>
-                    </div>
+            <div class="tl360-actions">
+                @if(! empty($telefoneWhatsapp))
+                    <x-filament::button
+                        tag="a"
+                        :href="'https://wa.me/'.$telefoneWhatsapp"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        color="success"
+                        size="sm"
+                        icon="heroicon-m-chat-bubble-left-ellipsis"
+                    >
+                        Retornar no WhatsApp
+                    </x-filament::button>
                 @endif
 
-                <!-- Total de Eventos -->
-                <div class="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
-                    Total: <strong class="text-gray-900 dark:text-white">{{ $metricas['total_interacoes'] }}</strong> interações
-                </div>
-
-                <!-- Botão de Ajuda do Header -->
                 {{ ($livewire->ajudaAction)(['class' => 'cursor-pointer']) }}
             </div>
         </div>
-    </div>
 
-    <!-- ========================================== -->
-    <!-- 2. BARRA DE REGISTRO RÁPIDO DE INTERAÇÃO   -->
-    <!-- ========================================== -->
-    <div class="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-indigo-950/20 dark:via-gray-900 dark:to-purple-950/20 p-4 sm:p-5 shadow-xs transition-all">
-        
-        <div class="flex items-center justify-between gap-3 mb-3">
-            <div class="flex items-center gap-2">
-                <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-600 text-white text-xs font-bold">
-                    ⚡
-                </span>
-                <h4 class="font-bold text-sm text-gray-900 dark:text-white">
-                    Registrar Nova Interação Rápida
-                </h4>
+        <div class="tl360-cq">
+            <div class="tl360-kpis">
+                <div class="tl360-kpi tl360-tone-{{ $tomTemperatura }}">
+                    <span class="tl360-kpi-ico" aria-hidden="true">{{ $iconeTemperatura }}</span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">Temperatura</div>
+                        <div class="tl360-kpi-value">{{ ucfirst((string) $metricas['temperatura']) }}</div>
+                        <div class="tl360-kpi-hint">Termômetro comercial</div>
+                    </div>
+                </div>
+
+                <div class="tl360-kpi tl360-tone-indigo">
+                    <span class="tl360-kpi-ico"><x-filament::icon icon="heroicon-m-star" /></span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">Lead Score</div>
+                        <div class="tl360-kpi-value">{{ $metricas['lead_score'] }} <span class="tl360-desc">pts</span></div>
+                        <div class="tl360-kpi-hint">{{ $metricas['total_interacoes'] }} interações no total</div>
+                    </div>
+                </div>
+
+                <div class="tl360-kpi tl360-tone-{{ $emAtraso ? 'rose' : 'emerald' }} {{ $emAtraso ? 'is-alert' : '' }}" @if($proximo) title="{{ $proximo->format('d/m/Y H:i') }}" @endif>
+                    <span class="tl360-kpi-ico"><x-filament::icon :icon="$emAtraso ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-calendar-days'" /></span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">{{ $emAtraso ? 'Retorno em atraso' : 'Próximo contato' }}</div>
+                        <div class="tl360-kpi-value">{{ $proximo ? $proximo->format('d/m H:i') : '—' }}</div>
+                        <div class="tl360-kpi-hint">{{ $proximo ? $proximo->diffForHumans() : 'Nenhum retorno agendado' }}</div>
+                    </div>
+                </div>
+
+                <div class="tl360-kpi tl360-tone-sky">
+                    <span class="tl360-kpi-ico"><x-filament::icon icon="heroicon-m-chat-bubble-left-right" /></span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">Último contato</div>
+                        <div class="tl360-kpi-value">{{ $metricas['ultimo_contato_em'] ? $metricas['ultimo_contato_em']->format('d/m H:i') : '—' }}</div>
+                        <div class="tl360-kpi-hint">{{ $metricas['ultimo_contato_relativo'] ?? 'Nenhum contato registrado' }}</div>
+                    </div>
+                </div>
+
+                <div class="tl360-kpi tl360-tone-{{ $tomNps }}">
+                    <span class="tl360-kpi-ico"><x-filament::icon icon="heroicon-m-face-smile" /></span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">NPS da visita</div>
+                        <div class="tl360-kpi-value">{{ $nps ? $nps['nota'].'/10' : '—' }}</div>
+                        <div class="tl360-kpi-hint">{{ $nps ? $nps['classificacao'] : 'Sem pesquisa respondida' }}</div>
+                    </div>
+                </div>
+
+                <div class="tl360-kpi tl360-tone-violet">
+                    <span class="tl360-kpi-ico"><x-filament::icon icon="heroicon-m-document-check" /></span>
+                    <div class="tl360-kpi-body">
+                        <div class="tl360-kpi-label">Documentos</div>
+                        <div class="tl360-kpi-value">{{ $metricas['total_documentos'] > 0 ? $metricas['docs_aprovados'].'/'.$metricas['total_documentos'] : '—' }}</div>
+                        <div class="tl360-kpi-hint">{{ $metricas['total_documentos'] > 0 ? 'verificados • '.$metricas['docs_com_ia'].' com IA' : 'Nenhum documento enviado' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============ 2. REGISTRO RÁPIDO DE INTERAÇÃO ============ --}}
+    @if($livewire->podeRegistrar)
+    <section class="tl360-card tl360-cq tl360-tone-indigo">
+        <div class="tl360-compose-head">
+            <div class="tl360-compose-id">
+                <span class="tl360-compose-ico"><x-filament::icon icon="heroicon-m-pencil-square" /></span>
+                <div class="min-w-0">
+                    <h4 class="tl360-h4">Registrar nova interação</h4>
+                    <p class="tl360-desc">Grave o contato e o Lead Score é recalculado na hora.</p>
+                </div>
             </div>
 
-            <button 
-                type="button" 
+            <x-filament::button
+                type="button"
+                color="gray"
+                size="sm"
+                :icon="$livewire->mostrarFormularioRapido ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down'"
+                icon-position="after"
                 wire:click="toggleFormularioRapido"
-                class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
             >
-                @if($livewire->mostrarFormularioRapido)
-                    <span>Recolher</span>
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                @else
-                    <span>Expandir Formulário</span>
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                @endif
-            </button>
+                {{ $livewire->mostrarFormularioRapido ? 'Recolher' : 'Expandir' }}
+            </x-filament::button>
         </div>
 
         @if($livewire->mostrarFormularioRapido)
-            <form wire:submit="registrarContatoRapido" class="space-y-3.5 mt-2">
-                
-                <!-- Seleção Rápida de Canal (Pills) -->
+            <form wire:submit="registrarContatoRapido" class="tl360-compose-body">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                        Canal da Interação:
-                    </label>
-                    <div class="flex flex-wrap items-center gap-2">
+                    <span class="tl360-label">Canal da interação</span>
+                    <div class="tl360-chans" role="group" aria-label="Canal da interação">
                         @foreach($tiposContato as $tipo)
                             @php
-                                $selecionado = (int)$livewire->novoTipoContatoId === (int)$tipo->id;
                                 $slug = mb_strtolower($tipo->nome);
-                                $corBtn = match(true) {
-                                    str_contains($slug, 'whatsapp') => $selecionado ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50',
-                                    str_contains($slug, 'liga') || str_contains($slug, 'telef') => $selecionado ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-white dark:bg-gray-800 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800 hover:bg-sky-50',
-                                    str_contains($slug, 'mail') => $selecionado ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-50',
-                                    str_contains($slug, 'presen') => $selecionado ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50',
-                                    default => $selecionado ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50',
+                                [$iconeCanal, $tomCanal] = match (true) {
+                                    str_contains($slug, 'whatsapp') => ['heroicon-m-chat-bubble-left-ellipsis', 'emerald'],
+                                    str_contains($slug, 'liga') || str_contains($slug, 'telef') => ['heroicon-m-phone', 'sky'],
+                                    str_contains($slug, 'mail') => ['heroicon-m-envelope', 'purple'],
+                                    str_contains($slug, 'presen') => ['heroicon-m-user-group', 'amber'],
+                                    default => ['heroicon-m-chat-bubble-bottom-center-text', 'indigo'],
                                 };
+                                $selecionado = (int) $livewire->novoTipoContatoId === (int) $tipo->id;
                             @endphp
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
+                                wire:key="tl-canal-{{ $tipo->id }}"
                                 wire:click="$set('novoTipoContatoId', {{ $tipo->id }})"
-                                class="px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all {{ $corBtn }}"
+                                aria-pressed="{{ $selecionado ? 'true' : 'false' }}"
+                                class="tl360-chan tl360-tone-{{ $tomCanal }} {{ $selecionado ? 'is-active' : '' }}"
                             >
+                                <x-filament::icon :icon="$iconeCanal" />
                                 {{ $tipo->nome }}
                             </button>
                         @endforeach
                     </div>
-                    @error('novoTipoContatoId') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                    @error('novoTipoContatoId') <p class="tl360-error">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Campo de Resumo do Atendimento -->
                 <div>
-                    <label for="novoRelato" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        O que foi conversado ou acordado com a família?
-                    </label>
-                    <textarea 
-                        id="novoRelato"
-                        wire:model="novoRelato"
-                        rows="2"
-                        placeholder="Ex: Família adorou os laboratórios de robótica e solicitou simulação da anuidade do 7º ano. Combinado retorno na próxima terça..."
-                        class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3.5 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden transition-colors"
-                        required
-                    ></textarea>
-                    @error('novoRelato') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                    <label for="tl360-relato" class="tl360-label">O que foi conversado ou acordado com a família?</label>
+                    <x-filament::input.wrapper class="fi-fo-textarea">
+                        <textarea
+                            id="tl360-relato"
+                            wire:model="novoRelato"
+                            rows="3"
+                            required
+                            placeholder="Ex.: Família adorou os laboratórios de robótica e pediu a simulação da anuidade do 7º ano. Combinado retorno na terça…"
+                        ></textarea>
+                    </x-filament::input.wrapper>
+                    @error('novoRelato') <p class="tl360-error">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Parâmetros Adicionais (Resultado, Próximo Contato, Duração) -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <!-- Resultado -->
+                <div class="tl360-fields">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                            Resultado:
-                        </label>
-                        <select 
-                            wire:model="novoResultado"
-                            class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
-                        >
-                            <option value="retornar">Retornar depois</option>
-                            <option value="agendou_visita">Agendou Visita</option>
-                            <option value="matriculou">Efetuou Matrícula</option>
-                            <option value="sem_interesse">Sem Interesse</option>
-                            <option value="outro">Outro</option>
-                        </select>
+                        <label for="tl360-resultado" class="tl360-label">Resultado</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select id="tl360-resultado" wire:model="novoResultado">
+                                <option value="retornar">Retornar depois</option>
+                                <option value="agendou_visita">Agendou visita</option>
+                                <option value="matriculou">Efetuou matrícula</option>
+                                <option value="sem_interesse">Sem interesse</option>
+                                <option value="outro">Outro</option>
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
                     </div>
 
-                    <!-- Agendar Próximo Contato -->
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                            Agendar Próximo Retorno:
-                        </label>
-                        <input 
-                            type="datetime-local" 
-                            wire:model="novaDataProximoContato"
-                            class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
-                        />
+                        <label for="tl360-retorno" class="tl360-label">Agendar próximo retorno</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input id="tl360-retorno" type="datetime-local" wire:model="novaDataProximoContato" />
+                        </x-filament::input.wrapper>
+                        <div class="tl360-quick">
+                            @foreach($atalhosRetorno as $rotulo => $valor)
+                                <button type="button" class="tl360-pill" wire:click="$set('novaDataProximoContato', '{{ $valor }}')">{{ $rotulo }}</button>
+                            @endforeach
+                        </div>
                     </div>
 
-                    <!-- Duração em Minutos -->
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                            Duração (minutos):
-                        </label>
-                        <input 
-                            type="number" 
-                            min="1"
-                            wire:model="novaDuracaoMinutos"
-                            placeholder="Ex: 15"
-                            class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden"
-                        />
+                        <label for="tl360-duracao" class="tl360-label">Duração</label>
+                        <x-filament::input.wrapper suffix="min">
+                            <x-filament::input id="tl360-duracao" type="number" min="1" placeholder="Ex.: 15" wire:model="novaDuracaoMinutos" />
+                        </x-filament::input.wrapper>
                     </div>
                 </div>
 
-                <!-- Botão de Registro -->
-                <div class="flex items-center justify-end gap-2 pt-1">
-                    <button 
-                        type="submit"
-                        wire:loading.attr="disabled"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 cursor-pointer shadow-sm transition-colors disabled:opacity-50"
-                    >
-                        <span wire:loading.remove wire:target="registrarContatoRapido">⚡ Gravar Interação & Recalcular Score</span>
-                        <span wire:loading wire:target="registrarContatoRapido" class="inline-flex items-center gap-1">
-                            <svg class="animate-spin -ml-1 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                            Gravando...
-                        </span>
-                    </button>
+                <div class="tl360-submit">
+                    <x-filament::button type="submit" icon="heroicon-m-bolt" wire:target="registrarContatoRapido">
+                        Gravar interação e recalcular score
+                    </x-filament::button>
                 </div>
             </form>
         @endif
-    </div>
+    </section>
+    @endif
 
-    <!-- ========================================== -->
-    <!-- 3. BARRA DE FILTROS E BUSCA TEMPO REAL     -->
-    <!-- ========================================== -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2">
-        
-        <!-- Categorias (Pills) -->
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            @php
-                $categorias = [
-                    'todos' => ['label' => 'Todos os Eventos', 'icone' => '📋'],
-                    'contatos' => ['label' => 'Contatos & Mensagens', 'icone' => '💬'],
-                    'visitas' => ['label' => 'Visitas & NPS', 'icone' => '🏫'],
-                    'documentos' => ['label' => 'Documentos & IA', 'icone' => '📑'],
-                    'etapas' => ['label' => 'Etapas & Funil', 'icone' => '🔄'],
-                ];
-            @endphp
-
-            @foreach($categorias as $catChave => $catInfo)
-                @php
-                    $ativa = $livewire->filtroCategoria === $catChave;
-                @endphp
-                <button 
-                    type="button" 
-                    wire:click="filtrar('{{ $catChave }}')"
-                    class="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all border {{ $ativa ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700' }}"
+    {{-- ============ 3. FILTROS E BUSCA ============ --}}
+    <div class="tl360-toolbar">
+        <div class="tl360-filters" role="group" aria-label="Filtrar eventos por categoria">
+            @foreach($categorias as $chave => $info)
+                <button
+                    type="button"
+                    wire:key="tl-filtro-{{ $chave }}"
+                    wire:click="filtrar('{{ $chave }}')"
+                    aria-pressed="{{ $livewire->filtroCategoria === $chave ? 'true' : 'false' }}"
+                    class="tl360-filter {{ $livewire->filtroCategoria === $chave ? 'is-active' : '' }}"
                 >
-                    <span class="mr-1">{{ $catInfo['icone'] }}</span>
-                    {{ $catInfo['label'] }}
+                    <x-filament::icon :icon="$info['icone']" />
+                    {{ $info['label'] }}
+                    @if($info['total'] !== null)
+                        <span class="tl360-count">{{ $info['total'] }}</span>
+                    @endif
                 </button>
             @endforeach
         </div>
 
-        <!-- Campo de Busca Textual -->
-        <div class="relative w-full md:w-72">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </div>
-            <input 
-                type="text" 
-                wire:model.live.debounce.300ms="termoBusca"
-                placeholder="Buscar palavra ou relato..."
-                class="w-full pl-9 pr-8 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-hidden transition-colors"
-            />
-            @if(!empty($livewire->termoBusca))
-                <button 
-                    type="button" 
-                    wire:click="$set('termoBusca', '')"
-                    class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            @endif
+        <div class="tl360-search">
+            <x-filament::input.wrapper prefix-icon="heroicon-m-magnifying-glass">
+                <div class="tl360-search-row">
+                    <x-filament::input type="search" wire:model.live.debounce.300ms="termoBusca" placeholder="Buscar palavra ou relato…" aria-label="Buscar na linha do tempo" />
+                    @if(filled($livewire->termoBusca))
+                        <button type="button" class="tl360-clear" wire:click="$set('termoBusca', '')" aria-label="Limpar busca">
+                            <x-filament::icon icon="heroicon-m-x-mark" />
+                        </button>
+                    @endif
+                </div>
+            </x-filament::input.wrapper>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 4. FEED VISUAL DA LINHA DO TEMPO 360°      -->
-    <!-- ========================================== -->
-    <div class="relative pt-3 pb-6">
-        
-        @if($eventos->isEmpty())
-            <!-- Estado Vazio (Empty State) -->
-            <div class="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 p-8 sm:p-12 text-center">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-2xl mb-3">
-                    🔍
-                </div>
-                <h4 class="font-bold text-base text-gray-900 dark:text-white mb-1">
-                    Nenhum evento encontrado
-                </h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-4">
-                    Não encontramos nenhuma interação para a categoria ou termo de busca selecionado. Tente alterar o filtro ou registre o primeiro contato acima!
-                </p>
-                <button 
-                    type="button" 
-                    wire:click="limparFiltros"
-                    class="px-3.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                >
-                    Ver Todos os Eventos
-                </button>
-            </div>
-        @else
-            <!-- Linha Conectora Vertical -->
-            <div class="absolute left-6 sm:left-7 top-6 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
+    @if($filtrando && $eventos->isNotEmpty())
+        <div class="tl360-summary">
+            <span>{{ $eventos->count() }} {{ $eventos->count() === 1 ? 'evento encontrado' : 'eventos encontrados' }}</span>
+            <span aria-hidden="true">•</span>
+            <button type="button" class="tl360-link" wire:click="limparFiltros">Limpar filtros</button>
+        </div>
+    @endif
 
-            <div class="space-y-6">
-                @foreach($eventos as $evento)
-                    <div class="relative flex items-start gap-4 sm:gap-5 group">
-                        
-                        <!-- Nó da Timeline (Ícone Flutuante) -->
-                        <div class="relative z-10 flex items-center justify-center w-12 h-12 rounded-2xl border shadow-xs shrink-0 ring-4 ring-gray-50 dark:ring-gray-950 transition-transform group-hover:scale-105 {{ $evento['bg_icone'] }} {{ $evento['cor_icone'] }}">
-                            @if($evento['icone'] === 'heroicon-o-chat-bubble-left-ellipsis')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-phone')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-academic-cap')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-document-check')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-envelope')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-fire')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
-                            @elseif($evento['icone'] === 'heroicon-o-x-circle')
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            @else
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                            @endif
+    {{-- ============ 4. FEED DA LINHA DO TEMPO ============ --}}
+    @if($eventos->isEmpty())
+        <div class="tl360-empty tl360-tone-indigo">
+            <span class="tl360-empty-ico"><x-filament::icon :icon="$filtrando ? 'heroicon-o-magnifying-glass' : 'heroicon-o-clock'" /></span>
+            <h4 class="tl360-h4">{{ $filtrando ? 'Nenhum evento encontrado' : 'A jornada ainda não começou' }}</h4>
+            <p>
+                {{ $filtrando
+                    ? 'Não há interações para a categoria ou o termo de busca selecionado. Tente outro filtro.'
+                    : 'Nenhum contato, visita ou documento registrado para este interessado. Use o formulário acima para gravar a primeira interação.' }}
+            </p>
+            @if($filtrando)
+                <x-filament::button type="button" color="gray" size="sm" wire:click="limparFiltros">Ver todos os eventos</x-filament::button>
+            @endif
+        </div>
+    @else
+        <div class="tl360-feed" wire:loading.class="is-loading" wire:target="filtrar, termoBusca, limparFiltros">
+            @foreach($dias as $chaveDia => $eventosDoDia)
+                @php
+                    $dia = $eventosDoDia->first()['data_hora'];
+                    $diaFuturo = $dia->copy()->startOfDay()->isFuture();
+                @endphp
+
+                <div class="tl360-day tl360-tone-blue {{ $dia->isToday() ? 'is-today' : '' }}" wire:key="tl-dia-{{ $chaveDia }}">
+                    <span class="tl360-day-dot" aria-hidden="true"><i></i></span>
+                    <span class="tl360-day-label">
+                        {{ $rotuloDia($dia) }}
+                        @if($diaFuturo)
+                            <span class="tl360-day-flag">Agendado</span>
+                        @endif
+                    </span>
+                </div>
+
+                @foreach($eventosDoDia as $evento)
+                    @php $det = $evento['detalhes'] ?? []; @endphp
+
+                    <article class="tl360-item tl360-tone-{{ $evento['tom'] ?? 'indigo' }}" wire:key="tl-ev-{{ $evento['id'] }}">
+                        <div class="tl360-node" aria-hidden="true">
+                            <x-filament::icon :icon="$evento['icone']" />
                         </div>
 
-                        <!-- Card de Conteúdo do Evento -->
-                        <div class="flex-1 rounded-2xl border border-gray-200/90 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-5 shadow-xs hover:border-gray-300 dark:hover:border-gray-700 transition-all">
-                            
-                            <!-- Header do Card -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 mb-2.5">
-                                <div>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <h5 class="text-sm font-bold text-gray-900 dark:text-white">
-                                            {{ $evento['titulo'] }}
-                                        </h5>
-
-                                        @if(!empty($evento['badge']))
-                                            @php
-                                                $badgeCor = $evento['badge_cor'] ?? 'gray';
-                                                $bClasses = match($badgeCor) {
-                                                    'emerald', 'success' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-                                                    'amber', 'warning' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-                                                    'rose', 'danger' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-                                                    'info', 'blue' => 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
-                                                    default => 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700',
-                                                };
-                                            @endphp
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold border {{ $bClasses }}">
-                                                {{ $evento['badge'] }}
-                                            </span>
+                        <div class="tl360-ev">
+                            <header class="tl360-ev-head">
+                                <div class="min-w-0">
+                                    <div class="tl360-ev-title">
+                                        <span>{{ $evento['titulo'] }}</span>
+                                        @if(! empty($evento['badge']))
+                                            <x-filament::badge :color="$corBadge($evento['badge_cor'] ?? null)" size="sm">{{ $evento['badge'] }}</x-filament::badge>
                                         @endif
                                     </div>
-
-                                    @if(!empty($evento['subtitulo']))
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                            {{ $evento['subtitulo'] }}
-                                        </p>
+                                    @if(! empty($evento['subtitulo']))
+                                        <p class="tl360-ev-sub">{{ $evento['subtitulo'] }}</p>
                                     @endif
                                 </div>
 
-                                <div class="text-left sm:text-right shrink-0">
-                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block">
-                                        {{ $evento['data_relativa'] }}
-                                    </span>
-                                    <span class="text-[11px] text-gray-400 block" title="{{ $evento['data_formatada'] }}">
-                                        {{ $evento['data_formatada'] }}
-                                    </span>
+                                <div class="tl360-when" title="{{ $evento['data_formatada'] }} • Registro #{{ $evento['registro_id'] }}">
+                                    <strong>{{ $evento['data_hora']->format('H:i') }}</strong>
+                                    <span>{{ $evento['data_relativa'] }}</span>
                                 </div>
-                            </div>
+                            </header>
 
-                            <!-- Corpo do Relato / Observação Principal -->
-                            @if(!empty($evento['conteudo']))
-                                <div class="text-xs text-gray-700 dark:text-gray-300 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-800 leading-relaxed whitespace-pre-line mb-3">
-                                    {{ $evento['conteudo'] }}
+                            {{-- Etapa do funil: de → para --}}
+                            @if($evento['tipo'] === 'etapa' && ! empty($det['status_novo']))
+                                <div class="tl360-flow">
+                                    @if(! empty($det['status_anterior']))
+                                        <span class="tl360-step">{{ $det['status_anterior'] }}</span>
+                                        <x-filament::icon icon="heroicon-m-arrow-long-right" />
+                                    @else
+                                        <span class="tl360-desc">Status inicial</span>
+                                    @endif
+                                    <span class="tl360-step is-to">{{ $det['status_novo'] }}</span>
+                                </div>
+                            @elseif(! empty($evento['conteudo']))
+                                <div class="tl360-note">{{ $evento['conteudo'] }}</div>
+                            @endif
+
+                            {{-- Contato: duração --}}
+                            @if($evento['tipo'] === 'contato' && ! empty($det['duracao_minutos']))
+                                <div class="tl360-tags">
+                                    <span class="tl360-tag"><x-filament::icon icon="heroicon-m-clock" /> {{ $det['duracao_minutos'] }} min de conversa</span>
                                 </div>
                             @endif
 
-                            <!-- ========================================== -->
-                            <!-- SE FOR VISITA: BLOCO NPS & PESQUISA        -->
-                            <!-- ========================================== -->
-                            @if($evento['tipo'] === 'visita' && !empty($evento['detalhes']))
-                                @php $det = $evento['detalhes']; @endphp
-                                
+                            {{-- Visita: avaliação pós-tour (NPS) --}}
+                            @if($evento['tipo'] === 'visita' && ! empty($det))
                                 @if($det['pesquisa_respondida'])
-                                    <div class="rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/20 p-3 text-xs space-y-2 mb-2">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-bold text-teal-900 dark:text-teal-200 flex items-center gap-1.5">
-                                                <span>⭐</span> Avaliação Pós-Tour (NPS: <strong>{{ $det['nota_nps'] }}/10</strong>)
-                                            </span>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $det['nota_nps'] >= 9 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' : ($det['nota_nps'] >= 7 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200') }}">
-                                                {{ $det['classificacao_nps'] }}
-                                            </span>
+                                    @php
+                                        $tomVisitaNps = $det['nota_nps'] >= 9 ? 'emerald' : ($det['nota_nps'] >= 7 ? 'amber' : 'rose');
+                                        $dimensoes = [
+                                            'Atendimento' => $det['nota_atendimento'],
+                                            'Infraestrutura' => $det['nota_infraestrutura'],
+                                            'Pedagógico' => $det['nota_proposta_pedagogica'],
+                                        ];
+                                    @endphp
+                                    <div class="tl360-panel tl360-tone-teal">
+                                        <div class="tl360-panel-head">
+                                            <span class="tl360-panel-title"><x-filament::icon icon="heroicon-m-star" /> Avaliação pós-tour</span>
+                                            <x-filament::badge :color="$corBadge($tomVisitaNps)" size="sm">{{ $det['classificacao_nps'] }}</x-filament::badge>
                                         </div>
 
-                                        <!-- Dimensões Avaliadas -->
-                                        <div class="grid grid-cols-3 gap-2 text-center pt-1 border-t border-teal-200/60 dark:border-teal-900/40">
-                                            <div>
-                                                <span class="text-[10px] text-teal-700 dark:text-teal-400 block">Atendimento</span>
-                                                <span class="font-bold text-teal-950 dark:text-white">{{ $det['nota_atendimento'] ?? '—' }} ⭐</span>
+                                        <div class="tl360-nps">
+                                            <div class="tl360-nps-score tl360-tone-{{ $tomVisitaNps }}" title="Nota NPS">
+                                                <b>{{ $det['nota_nps'] }}</b>
+                                                <small>/10</small>
                                             </div>
-                                            <div>
-                                                <span class="text-[10px] text-teal-700 dark:text-teal-400 block">Infraestrutura</span>
-                                                <span class="font-bold text-teal-950 dark:text-white">{{ $det['nota_infraestrutura'] ?? '—' }} ⭐</span>
-                                            </div>
-                                            <div>
-                                                <span class="text-[10px] text-teal-700 dark:text-teal-400 block">Pedagógico</span>
-                                                <span class="font-bold text-teal-950 dark:text-white">{{ $det['nota_proposta_pedagogica'] ?? '—' }} ⭐</span>
+
+                                            <div class="tl360-rates">
+                                                @foreach($dimensoes as $dimensao => $nota)
+                                                    <div>
+                                                        <span class="tl360-rate-label">{{ $dimensao }}</span>
+                                                        <div class="tl360-stars" aria-label="{{ $dimensao }}: {{ $nota ?? 'sem nota' }} de 5">
+                                                            @for($i = 1; $i <= 5; $i++)
+                                                                <x-filament::icon icon="heroicon-s-star" :class="$i <= (int) $nota ? 'is-on' : ''" />
+                                                            @endfor
+                                                            <em>{{ $nota ?? '—' }}</em>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                             </div>
                                         </div>
 
-                                        @if(!empty($det['comentario_pesquisa']))
-                                            <p class="italic text-teal-800 dark:text-teal-300 pt-1 border-t border-teal-200/60 dark:border-teal-900/40">
-                                                “{{ $det['comentario_pesquisa'] }}”
-                                            </p>
+                                        @if(! empty($det['comentario_pesquisa']))
+                                            <blockquote class="tl360-quote">“{{ $det['comentario_pesquisa'] }}”</blockquote>
                                         @endif
                                     </div>
                                 @elseif($det['status'] === 'realizada')
-                                    <!-- Visita realizada mas sem pesquisa -->
-                                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+                                    <div class="tl360-cta tl360-tone-amber">
                                         <span>Pesquisa de satisfação pós-tour ainda não foi preenchida pela família.</span>
-                                        <div class="flex items-center gap-1.5 shrink-0">
-                                            @if(!empty($det['link_whatsapp']))
-                                                <a 
-                                                    href="{{ $det['link_whatsapp'] }}" 
-                                                    target="_blank" 
-                                                    class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700"
-                                                >
-                                                    Enviar WhatsApp ↗
-                                                </a>
+                                        <div class="tl360-cta-actions">
+                                            @if(! empty($det['link_whatsapp']))
+                                                <x-filament::button tag="a" :href="$det['link_whatsapp']" target="_blank" rel="noopener noreferrer" color="success" size="xs" icon="heroicon-m-paper-airplane">Enviar por WhatsApp</x-filament::button>
                                             @endif
-                                            @if(!empty($det['link_pesquisa']))
-                                                <a 
-                                                    href="{{ $det['link_pesquisa'] }}" 
-                                                    target="_blank" 
-                                                    class="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-semibold text-[11px] hover:bg-amber-700"
-                                                >
-                                                    Link da Pesquisa ↗
-                                                </a>
+                                            @if(! empty($det['link_pesquisa']))
+                                                <x-filament::button tag="a" :href="$det['link_pesquisa']" target="_blank" rel="noopener noreferrer" color="gray" size="xs" icon="heroicon-m-arrow-top-right-on-square">Abrir pesquisa</x-filament::button>
                                             @endif
                                         </div>
                                     </div>
                                 @endif
                             @endif
 
-                            <!-- ========================================== -->
-                            <!-- SE FOR DOCUMENTO: PARECER DE IA GEMINI     -->
-                            <!-- ========================================== -->
-                            @if($evento['tipo'] === 'documento' && !empty($evento['detalhes']))
-                                @php $detDoc = $evento['detalhes']; @endphp
-                                
-                                @if($detDoc['tem_analise_ia'])
-                                    <div class="rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/20 p-3 text-xs space-y-1.5 mb-2">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-bold text-violet-900 dark:text-violet-200 flex items-center gap-1.5">
-                                                <span>✨</span> Parecer Gemini Vision OCR
-                                            </span>
-                                            @if(!empty($detDoc['score_confianca']))
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-200 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
-                                                    Confiança: {{ $detDoc['score_confianca'] }}%
+                            {{-- Documento: parecer de IA --}}
+                            @if($evento['tipo'] === 'documento' && ! empty($det))
+                                @if($det['tem_analise_ia'])
+                                    <div class="tl360-panel tl360-tone-violet">
+                                        <div class="tl360-panel-head">
+                                            <span class="tl360-panel-title"><x-filament::icon icon="heroicon-m-sparkles" /> Parecer Gemini Vision OCR</span>
+                                            @if(! empty($det['score_confianca']))
+                                                <span class="tl360-meter" title="Confiança da análise">
+                                                    <span class="tl360-meter-bar"><i style="width: {{ min(100, max(0, (int) $det['score_confianca'])) }}%"></i></span>
+                                                    {{ $det['score_confianca'] }}%
                                                 </span>
                                             @endif
                                         </div>
 
-                                        <p class="text-violet-800 dark:text-violet-300 font-medium">
-                                            {{ $detDoc['resumo_ia'] }}
-                                        </p>
-
-                                        @if(!empty($detDoc['dados_extraidos']))
-                                            <div class="pt-1.5 border-t border-violet-200/60 dark:border-violet-900/40 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-violet-900 dark:text-violet-200">
-                                                @foreach($detDoc['dados_extraidos'] as $campo => $valor)
-                                                    @if(!is_array($valor) && !blank($valor))
-                                                        <span><strong>{{ ucfirst(str_replace('_', ' ', $campo)) }}:</strong> {{ $valor }}</span>
-                                                    @endif
-                                                @endforeach
-                                            </div>
+                                        @if(! empty($det['resumo_ia']))
+                                            <p class="tl360-panel-text">{{ $det['resumo_ia'] }}</p>
                                         @endif
 
-                                        @if(!empty($detDoc['alertas']))
-                                            <div class="pt-1 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
-                                                ⚠️ Divergências: {{ implode(' • ', $detDoc['alertas']) }}
+                                        @php
+                                            $dadosExtraidos = collect($det['dados_extraidos'] ?? [])->filter(fn ($valor) => ! is_array($valor) && ! blank($valor));
+                                        @endphp
+                                        @if($dadosExtraidos->isNotEmpty())
+                                            <dl class="tl360-dl">
+                                                @foreach($dadosExtraidos as $campo => $valor)
+                                                    <div>
+                                                        <dt>{{ ucfirst(str_replace('_', ' ', (string) $campo)) }}</dt>
+                                                        <dd>{{ $valor }}</dd>
+                                                    </div>
+                                                @endforeach
+                                            </dl>
+                                        @endif
+
+                                        @if(! empty($det['alertas']))
+                                            <div class="tl360-warn tl360-tone-amber">
+                                                <x-filament::icon icon="heroicon-m-exclamation-triangle" />
+                                                <span><strong>Divergências:</strong> {{ implode(' • ', $det['alertas']) }}</span>
                                             </div>
                                         @endif
                                     </div>
+                                @else
+                                    <div class="tl360-tags">
+                                        <span class="tl360-tag"><x-filament::icon icon="heroicon-m-sparkles" /> Sem análise de IA</span>
+                                    </div>
                                 @endif
                             @endif
-
-                            <!-- Ações Rápidas de Rodapé do Card -->
-                            <div class="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800 text-[11px]">
-                                <span class="text-gray-400">
-                                    ID do Registro: #{{ $evento['registro_id'] }}
-                                </span>
-
-                                @if(!empty($telefoneWhatsapp) && ($evento['tipo'] === 'contato' || $evento['tipo'] === 'visita'))
-                                    <a 
-                                        href="https://wa.me/{{ $telefoneWhatsapp }}" 
-                                        target="_blank"
-                                        class="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-                                    >
-                                        <span>💬 Retornar no WhatsApp</span>
-                                    </a>
-                                @endif
-                            </div>
-
                         </div>
-                    </div>
+                    </article>
                 @endforeach
-            </div>
-        @endif
-    </div>
-
+            @endforeach
+        </div>
+    @endif
 </div>

@@ -21,6 +21,8 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 
 class TimelineRelationManager extends RelationManager
 {
@@ -110,11 +112,12 @@ class TimelineRelationManager extends RelationManager
     }
 
     /**
-     * Retorna os eventos da timeline usando o serviço agregador.
+     * Retorna os eventos da timeline usando o serviço agregador (com memoização por request).
      *
      * @return Collection<int, array<string, mixed>>
      */
-    public function getTimelineProperty(): Collection
+    #[Computed]
+    public function timeline(): Collection
     {
         /** @var Interessado $interessado */
         $interessado = $this->getOwnerRecord();
@@ -131,7 +134,8 @@ class TimelineRelationManager extends RelationManager
      *
      * @return array<string, mixed>
      */
-    public function getMetricasProperty(): array
+    #[Computed]
+    public function metricas(): array
     {
         /** @var Interessado $interessado */
         $interessado = $this->getOwnerRecord();
@@ -144,9 +148,29 @@ class TimelineRelationManager extends RelationManager
      *
      * @return Collection<int, TipoContatoInteressado>
      */
-    public function getTiposContatoProperty(): Collection
+    #[Computed]
+    public function tiposContato(): Collection
     {
         return TipoContatoInteressado::orderBy('nome')->get();
+    }
+
+    /**
+     * Indica se o usuário atual tem permissão para registrar novas interações.
+     */
+    #[Computed]
+    public function podeRegistrar(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->can('Update:Interessado') || $user->can('Create:HistoricoContato');
     }
 
     /**
@@ -179,6 +203,12 @@ class TimelineRelationManager extends RelationManager
      */
     public function registrarContatoRapido(): void
     {
+        abort_unless(
+            $this->podeRegistrar(),
+            403,
+            'Você não possui permissão para registrar interações neste lead.'
+        );
+
         $this->validate([
             'novoTipoContatoId' => ['required', 'exists:tipo_contato_interessado,id'],
             'novoRelato' => ['required', 'string', 'min:3'],
@@ -194,26 +224,28 @@ class TimelineRelationManager extends RelationManager
         /** @var Interessado $interessado */
         $interessado = $this->getOwnerRecord();
 
-        // 1. Grava no Histórico de Contatos
-        HistoricoContato::create([
-            'interessado_id' => $interessado->id,
-            'usuario_id' => auth()->id(),
-            'tipo_contato_interessado_id' => $this->novoTipoContatoId,
-            'relato' => trim($this->novoRelato),
-            'data_contato' => now(),
-            'resultado' => $this->novoResultado,
-            'duracao_minutos' => $this->novaDuracaoMinutos,
-        ]);
-
-        // 2. Se informada nova data de próximo contato, atualiza no Interessado
-        if (! empty($this->novaDataProximoContato)) {
-            $interessado->update([
-                'data_proximo_contato' => Carbon::parse($this->novaDataProximoContato),
+        DB::transaction(function () use ($interessado): void {
+            // 1. Grava no Histórico de Contatos
+            HistoricoContato::create([
+                'interessado_id' => $interessado->id,
+                'usuario_id' => auth()->id(),
+                'tipo_contato_interessado_id' => $this->novoTipoContatoId,
+                'relato' => trim($this->novoRelato),
+                'data_contato' => now(),
+                'resultado' => $this->novoResultado,
+                'duracao_minutos' => $this->novaDuracaoMinutos,
             ]);
-        }
 
-        // 3. Recalcula o Lead Score com base na nova interação
-        LeadScoreService::recalcular($interessado);
+            // 2. Se informada nova data de próximo contato, atualiza no Interessado
+            if (! empty($this->novaDataProximoContato)) {
+                $interessado->update([
+                    'data_proximo_contato' => Carbon::parse($this->novaDataProximoContato),
+                ]);
+            }
+
+            // 3. Recalcula o Lead Score com base na nova interação
+            LeadScoreService::recalcular($interessado);
+        });
 
         // 4. Limpa campos do formulário
         $this->novoRelato = '';
