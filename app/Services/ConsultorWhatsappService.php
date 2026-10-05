@@ -269,6 +269,7 @@ class ConsultorWhatsappService
     private function linhasDoHistorico(Interessado $interessado): array
     {
         return $interessado->historicos
+            ->where('automatico', false)
             ->sortByDesc('data_contato')
             ->take(self::MAX_CONTATOS_NO_RESUMO)
             ->map(function (HistoricoContato $contato): string {

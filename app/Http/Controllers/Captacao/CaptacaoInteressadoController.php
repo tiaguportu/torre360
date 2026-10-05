@@ -20,6 +20,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\ConviteMatriculaService;
+use App\Services\IndicacaoCaptacaoService;
 use App\Services\LeadScoreService;
 use App\Services\UtmTracker;
 use Filament\Actions\Action;
@@ -32,9 +33,12 @@ use Illuminate\View\View;
 
 class CaptacaoInteressadoController extends Controller
 {
+    public function __construct(private readonly IndicacaoCaptacaoService $indicacoes) {}
+
     public function show(Request $request): View
     {
         UtmTracker::capturar($request);
+        $this->indicacoes->capturar($request);
 
         $unidades = Unidade::orderBy('nome')->get();
 
@@ -71,7 +75,16 @@ class CaptacaoInteressadoController extends Controller
 
         $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
         $origemSite = OrigemInteressado::firstOrCreate(['nome' => 'Site']);
-        $origemId = $request->como_conheceu ?? $origemSite->id;
+
+        // Link "Família Indica Família": o indicador é resolvido antes de gravar o lead (auto-indicação é ignorada).
+        $codigoIndicacao = $this->indicacoes->codigoDaRequisicao($request);
+        $indicador = $this->indicacoes->localizarIndicador($codigoIndicacao, $pessoa);
+
+        // Quem veio por indicação e não informou outra origem entra como "Indicação" (e não como "Site").
+        $origemPadraoId = $indicador
+            ? OrigemInteressado::firstOrCreate(['nome' => 'Indicação'])->id
+            : $origemSite->id;
+        $origemId = $request->como_conheceu ?? $origemPadraoId;
 
         $interessado = Interessado::updateOrCreate(
             ['pessoa_id' => $pessoa->id],
@@ -80,11 +93,17 @@ class CaptacaoInteressadoController extends Controller
                 'origem_interessado_id' => $origemId,
                 'data_primeiro_contato' => now(),
                 'data_proximo_contato' => now()->addDays(1),
-                'observacoes' => $this->montarObservacoes($validated),
+                'observacoes' => $this->montarObservacoes($validated, $indicador),
             ]
         );
 
         $this->registrarAtribuicao($interessado, UtmTracker::atribuicao($request));
+
+        if ($indicador && $codigoIndicacao) {
+            $this->indicacoes->registrar($interessado, $indicador, $codigoIndicacao);
+        }
+
+        $this->indicacoes->esquecer($request);
 
         $this->salvarDependentes($interessado, $validated);
 
@@ -93,7 +112,7 @@ class CaptacaoInteressadoController extends Controller
         $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
         $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId);
 
-        $this->notificarEquipeInterna($interessado, $pessoa);
+        $this->notificarEquipeInterna($interessado, $pessoa, $indicador);
 
         // Redireciona com dados para personalizar a página de sucesso
         $primeiraUnidade = $primeiraUnidadeId ? Unidade::find($primeiraUnidadeId) : Unidade::where('flag_ativo', true)->first();
@@ -125,7 +144,7 @@ class CaptacaoInteressadoController extends Controller
     /**
      * Notifica a equipe administrativa sobre o novo lead.
      */
-    private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa): void
+    private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa, ?Pessoa $indicador = null): void
     {
         $destinatarios = User::permission('View:Interessado')->get();
 
@@ -139,7 +158,8 @@ class CaptacaoInteressadoController extends Controller
 
         Notification::make()
             ->title('Novo Interessado Cadastrado!')
-            ->body("**{$pessoa->nome}** acaba de preencher o formulário de interesse via site.")
+            ->body("**{$pessoa->nome}** acaba de preencher o formulário de interesse via site."
+                .($indicador ? " Veio por indicação da família **{$indicador->nome}**." : ''))
             ->icon('heroicon-o-user-plus')
             ->color('success')
             ->actions([
@@ -278,7 +298,7 @@ class CaptacaoInteressadoController extends Controller
      *
      * @param  array<string, mixed>  $data
      */
-    private function montarObservacoes(array $data): string
+    private function montarObservacoes(array $data, ?Pessoa $indicador = null): string
     {
         $obs = [];
         $alunos = $data['alunos'] ?? [];
@@ -311,6 +331,10 @@ class CaptacaoInteressadoController extends Controller
 
         if (! empty($data['observacoes'])) {
             $obs[] = 'Observações: '.$data['observacoes'];
+        }
+
+        if ($indicador) {
+            $obs[] = "Indicação: família de {$indicador->nome} (Família Indica Família)";
         }
 
         $obs[] = 'Origem: Formulário público (site)';

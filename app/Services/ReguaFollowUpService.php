@@ -148,6 +148,8 @@ class ReguaFollowUpService
                     'usuario_id' => null, // Envio do sistema
                     'relato' => "E-mail automático enviado pela Régua de Follow-up ({$regra->nome}): \"{$interpolado['assunto']}\"",
                     'resultado' => 'contato_realizado',
+                    // Disparo do sistema: não conta como interação (senão zera o "lead estagnado" sem ninguém ter falado com a família).
+                    'automatico' => true,
                 ]);
 
                 $this->registrarLog($regra, $interessado, $visita, 'email', $destinatario, $interpolado, 'sucesso', null, $dataEnvio);

@@ -18,6 +18,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 
 class KanbanInteressados extends Page
 {
@@ -31,15 +33,25 @@ class KanbanInteressados extends Page
 
     public ?int $filtroConsultorId = null;
 
-    /** Propriedades de controle do Modal Obrigatório de Motivo de Perda (Stage Gate) */
+    /**
+     * Propriedades de controle do Modal Obrigatório de Motivo de Perda (Stage Gate).
+     *
+     * O lead e o status em jogo são `#[Locked]`: só o servidor os define (em `abrirModalPerda`, depois de
+     * autorizar). Sem isso, o cliente poderia trocar os ids antes de `confirmarPerda` e alterar qualquer lead.
+     */
+    #[Locked]
     public bool $modalPerdaAberto = false;
 
+    #[Locked]
     public ?int $leadPerdaId = null;
 
+    #[Locked]
     public ?int $statusPerdaId = null;
 
+    #[Locked]
     public ?string $leadPerdaNome = null;
 
+    #[Locked]
     public ?string $statusPerdaNome = null;
 
     public string $motivoPerda = '';
@@ -114,12 +126,26 @@ class KanbanInteressados extends Page
         return $query->get();
     }
 
+    /**
+     * Quem pode mover cards (e, portanto, arrastá-los): mesma permissão de editar o lead.
+     */
+    public function podeMoverLeads(): bool
+    {
+        return (bool) auth()->user()?->can('Update:Interessado');
+    }
+
     public function updateRecordStatus($recordId, $statusId): void
     {
-        $record = Interessado::with(['pessoa', 'status'])->find($recordId);
-        $novoStatus = StatusInteressado::find($statusId);
+        $record = Interessado::with(['pessoa', 'status'])->find((int) $recordId);
+        $novoStatus = StatusInteressado::find((int) $statusId);
 
         if (! $record || ! $novoStatus) {
+            return;
+        }
+
+        if (! $this->podeAlterar($record)) {
+            $this->notificarSemPermissao();
+
             return;
         }
 
@@ -164,8 +190,9 @@ class KanbanInteressados extends Page
 
     /**
      * Abre e inicializa o modal de motivo de perda para o lead selecionado.
+     * Protegido: só é chamado por `updateRecordStatus`, que já autorizou a alteração.
      */
-    public function abrirModalPerda(Interessado $record, StatusInteressado $novoStatus): void
+    protected function abrirModalPerda(Interessado $record, StatusInteressado $novoStatus): void
     {
         $this->leadPerdaId = $record->id;
         $this->statusPerdaId = $novoStatus->id;
@@ -185,18 +212,26 @@ class KanbanInteressados extends Page
     public function confirmarPerda(): void
     {
         $this->validate([
-            'motivoPerda' => ['required', 'string'],
+            'motivoPerda' => ['required', 'string', Rule::in(array_keys(Interessado::MOTIVOS_PERDA))],
             'concorrentePerda' => ['nullable', 'string', 'max:255'],
             'observacoesPerda' => ['nullable', 'string', 'max:1000'],
         ], [
             'motivoPerda.required' => 'O motivo da perda é obrigatório para registrar o descarte do lead.',
+            'motivoPerda.in' => 'Selecione um dos motivos de perda da lista.',
         ]);
 
         $record = Interessado::find($this->leadPerdaId);
         $novoStatus = StatusInteressado::find($this->statusPerdaId);
 
-        if (! $record || ! $novoStatus) {
+        if (! $record || ! $novoStatus || ! $novoStatus->isPerda()) {
             $this->fecharModalPerda();
+
+            return;
+        }
+
+        if (! $this->podeAlterar($record)) {
+            $this->fecharModalPerda();
+            $this->notificarSemPermissao();
 
             return;
         }
@@ -236,6 +271,24 @@ class KanbanInteressados extends Page
             ->title('Lead marcado como perdido!')
             ->body("O motivo \"{$motivoFinal}\" foi registrado no histórico do interessado.")
             ->warning()
+            ->send();
+    }
+
+    /**
+     * Autorização por registro (policy): o Kanban expõe métodos Livewire públicos, então a checagem
+     * não pode depender de o botão estar escondido na tela.
+     */
+    private function podeAlterar(Interessado $record): bool
+    {
+        return (bool) auth()->user()?->can('update', $record);
+    }
+
+    private function notificarSemPermissao(): void
+    {
+        Notification::make()
+            ->title('Sem permissão')
+            ->body('Você não tem permissão para alterar leads no funil de vendas.')
+            ->danger()
             ->send();
     }
 

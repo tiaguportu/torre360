@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,13 +23,23 @@ class HistoricoContato extends Model
 
     protected $table = 'historico_contato';
 
-    protected $fillable = ['interessado_id', 'usuario_id', 'tipo_contato_interessado_id', 'relato', 'data_contato', 'duracao_minutos', 'resultado'];
+    protected $fillable = ['interessado_id', 'usuario_id', 'tipo_contato_interessado_id', 'relato', 'data_contato', 'duracao_minutos', 'resultado', 'automatico'];
 
     protected function casts(): array
     {
         return [
             'data_contato' => 'datetime',
+            'automatico' => 'boolean',
         ];
+    }
+
+    /**
+     * Contatos que contam como interação com a família: exclui o que o próprio sistema gerou
+     * (e-mails da régua, análises de IA), que registra atividade mas não é conversa nem acompanhamento.
+     */
+    public function scopeInteracoes(Builder $query): Builder
+    {
+        return $query->where('automatico', false);
     }
 
     public function interessado(): BelongsTo

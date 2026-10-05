@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $todasVagasSeries = app(\App\Services\TermometroVagasService::class)->calcularVagasPorSerie();
+        $podeMover = $this->podeMoverLeads();
     @endphp
     <div class="kanban-container" x-data="{
         draggingRecordId: null,
@@ -44,9 +45,11 @@
                     <div class="kanban-cards-container custom-scrollbar">
                         @foreach($statusInteressados as $record)
                             <div 
-                                draggable="true"
-                                @dragstart="draggingRecordId = {{ $record->id }}"
-                                @dragend="draggingRecordId = null; draggingOverStatusId = null"
+                                @if($podeMover)
+                                    draggable="true"
+                                    @dragstart="draggingRecordId = {{ $record->id }}"
+                                    @dragend="draggingRecordId = null; draggingOverStatusId = null"
+                                @endif
                                 class="kanban-card-wrapper"
                                 :class="draggingRecordId === {{ $record->id }} ? 'opacity-40' : ''"
                             >

@@ -157,6 +157,7 @@ PROMPT;
                     'tipo_contato_interessado_id' => $tipoContato->id,
                     'relato' => $relato,
                     'data_contato' => now(),
+                    'automatico' => true,
                 ]);
             }
 

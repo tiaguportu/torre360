@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\DocumentoInserido;
 use App\Models\HistoricoContato;
 use App\Models\IndicacaoInteressado;
@@ -13,7 +14,6 @@ use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
-use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\TipoDocumento;
 use App\Models\Turma;
 use App\Services\CrmIaVendasService;

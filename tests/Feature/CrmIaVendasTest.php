@@ -129,6 +129,7 @@ class CrmIaVendasTest extends TestCase
         $this->assertDatabaseHas('historico_contato', [
             'interessado_id' => $interessado->id,
             'relato' => "✨ Dossiê Estratégico gerado com IA:\n\n".$markdown,
+            'automatico' => true,
         ]);
     }
 

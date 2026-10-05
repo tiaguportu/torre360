@@ -110,6 +110,7 @@ class ReguaFollowUpTest extends TestCase
         $this->assertDatabaseHas('historico_contato', [
             'interessado_id' => $lead->id,
             'resultado' => 'contato_realizado',
+            'automatico' => true,
         ]);
     }
 

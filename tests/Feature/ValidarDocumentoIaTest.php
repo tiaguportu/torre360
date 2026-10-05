@@ -182,6 +182,7 @@ class ValidarDocumentoIaTest extends TestCase
 
         $ultimoContato = HistoricoContato::where('interessado_id', $interessado->id)->latest()->first();
         $this->assertStringContainsString('IA analisou', $ultimoContato->relato);
+        $this->assertTrue($ultimoContato->automatico, 'A análise da IA é registro automático e não conta como interação.');
     }
 
     public function test_portal_exibe_aviso_lgpd_e_status_de_ia(): void

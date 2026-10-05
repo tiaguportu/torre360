@@ -114,9 +114,22 @@ class Interessado extends Model
         return $this->hasMany(HistoricoContato::class);
     }
 
+    /**
+     * Contatos que contam como interação (exclui os registros automáticos do sistema/IA).
+     */
+    public function interacoes(): HasMany
+    {
+        return $this->hasMany(HistoricoContato::class)->interacoes();
+    }
+
+    /**
+     * Última interação registrada. Ignora registros automáticos (régua, análises de IA): se contassem,
+     * um e-mail disparado pelo sistema zeraria o "sem interação" e esconderia um lead parado.
+     */
     public function ultimoHistorico(): HasOne
     {
-        return $this->hasOne(HistoricoContato::class)->latestOfMany();
+        return $this->hasOne(HistoricoContato::class)
+            ->ofMany(['id' => 'max'], fn (Builder $query) => $query->interacoes());
     }
 
     public function campanha(): BelongsTo
@@ -196,9 +209,9 @@ class Interessado extends Model
         $limite = now()->subDays($dias);
 
         return $query
-            ->whereDoesntHave('historicos', fn (Builder $q) => $q->where('data_contato', '>=', $limite))
+            ->whereDoesntHave('historicos', fn (Builder $q) => $q->interacoes()->where('data_contato', '>=', $limite))
             ->where(function (Builder $q) use ($limite) {
-                $q->whereHas('historicos')
+                $q->whereHas('historicos', fn (Builder $h) => $h->interacoes())
                     ->orWhere('created_at', '<=', $limite);
             });
     }
@@ -258,11 +271,11 @@ class Interessado extends Model
     }
 
     /**
-     * Retorna o total de contatos realizados com este lead.
+     * Retorna o total de contatos (interações) realizados com este lead, sem os registros automáticos.
      */
     public function totalContatos(): int
     {
-        return $this->historicos()->count();
+        return $this->interacoes()->count();
     }
 
     /**

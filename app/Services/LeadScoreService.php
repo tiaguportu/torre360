@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -157,7 +159,7 @@ class LeadScoreService
         $config = config('lead_score.interacoes_sucesso');
         $maximo = config('lead_score.pesos.interacoes_sucesso');
 
-        $total = $interessado->historicos
+        $total = self::interacoes($interessado)
             ->whereIn('resultado', $config['resultados'])
             ->count();
 
@@ -169,12 +171,23 @@ class LeadScoreService
         $config = config('lead_score.total_interacoes');
         $maximo = config('lead_score.pesos.total_interacoes');
 
-        return min($maximo, $interessado->historicos->count() * $config['pontos_por_interacao']);
+        return min($maximo, self::interacoes($interessado)->count() * $config['pontos_por_interacao']);
+    }
+
+    /**
+     * Histórico que conta como interação: registros automáticos do sistema/IA não indicam engajamento
+     * da família nem trabalho do consultor, então não pontuam (nem zeram a recência).
+     *
+     * @return Collection<int, HistoricoContato>
+     */
+    private static function interacoes(Interessado $interessado): Collection
+    {
+        return $interessado->historicos->where('automatico', false);
     }
 
     private static function pontosRecencia(Interessado $interessado): int
     {
-        $referencia = $interessado->historicos->max('data_contato') ?? $interessado->created_at;
+        $referencia = self::interacoes($interessado)->max('data_contato') ?? $interessado->created_at;
         $diasSemContato = (int) $referencia->diffInDays(now());
 
         foreach (config('lead_score.recencia') as $faixa) {

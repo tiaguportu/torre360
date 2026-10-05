@@ -72,6 +72,13 @@ class HistoricosRelationManager extends RelationManager
                     ->label('Registrado por')
                     ->placeholder('—')
                     ->icon('heroicon-o-user'),
+                TextColumn::make('automatico')
+                    ->label('Registro')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Automático' : 'Manual')
+                    ->color(fn (bool $state): string => $state ? 'gray' : 'success')
+                    ->tooltip('Registros automáticos (régua de e-mails, análises de IA) não contam como interação nem zeram o "Sem interação".')
+                    ->toggleable(),
                 TextColumn::make('resultado')
                     ->label('Resultado')
                     ->badge()

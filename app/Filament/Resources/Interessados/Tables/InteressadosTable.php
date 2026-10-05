@@ -246,7 +246,7 @@ class InteressadosTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('historicos_count')
                     ->label('Contatos')
-                    ->counts('historicos')
+                    ->counts(['historicos' => fn (Builder $query) => $query->interacoes()])
                     ->badge()
                     ->color('gray')
                     ->sortable()

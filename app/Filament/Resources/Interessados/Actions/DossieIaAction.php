@@ -145,6 +145,8 @@ HTML;
                         'tipo_contato_interessado_id' => $tipoIa->id,
                         'data_contato' => now(),
                         'relato' => "✨ Dossiê Estratégico gerado com IA:\n\n".$data['dossie_conteudo'],
+                        // Análise da IA sobre o lead, não um contato com a família.
+                        'automatico' => true,
                     ]);
 
                     Notification::make()
