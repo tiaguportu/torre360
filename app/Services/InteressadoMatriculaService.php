@@ -148,6 +148,8 @@ class InteressadoMatriculaService
         }
 
         // Se o lead veio de uma indicação (Família Indica Família), atualiza o status da indicação
+        $interessado->loadMissing('indicacao');
+
         if ($interessado->indicacao) {
             $interessado->indicacao->marcarMatriculado();
         }
@@ -185,7 +187,6 @@ class InteressadoMatriculaService
 
     private static function statusGanho(): ?StatusInteressado
     {
-        return StatusInteressado::where('nome', 'Matriculado')->first()
-            ?? StatusInteressado::where('is_ganho', true)->orderBy('ordem')->first();
+        return StatusInteressado::ganho();
     }
 }

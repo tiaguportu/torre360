@@ -2,17 +2,17 @@
 
 namespace App\Filament\Resources\Interessados\Pages;
 
+use App\Filament\Pages\EnrollmentWizard;
 use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Concorrente;
-use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
-use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Models\VideoTutorial;
-use App\Services\LeadScoreService;
+use App\Services\LeadFunilService;
+use DomainException;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
@@ -78,7 +78,7 @@ class KanbanInteressados extends Page
                 ->form([
                     Select::make('consultor_id')
                         ->label('Consultor')
-                        ->options(User::pluck('name', 'id'))
+                        ->options(fn () => User::consultoresCrm()->orderBy('name')->pluck('name', 'id'))
                         ->searchable()
                         ->placeholder('Todos os consultores'),
                 ])
@@ -156,6 +156,18 @@ class KanbanInteressados extends Page
             return;
         }
 
+        // Soltar no mesmo status em que o card já está não é uma movimentação.
+        if ($record->status_interessado_id === $novoStatus->id) {
+            return;
+        }
+
+        // Lead matriculado só sai do estado de ganho pelo módulo de Matrículas: a matrícula continua existindo.
+        if ($record->status?->is_ganho) {
+            $this->notificarBloqueio('Lead já matriculado', 'Este lead já foi matriculado. Alterações são feitas no módulo de Matrículas.');
+
+            return;
+        }
+
         // Se o novo status é de perda, intercepta e abre o modal obrigatório (Stage Gate)
         if ($novoStatus->isPerda()) {
             $this->abrirModalPerda($record, $novoStatus);
@@ -163,35 +175,66 @@ class KanbanInteressados extends Page
             return;
         }
 
-        $updateData = ['status_interessado_id' => $statusId];
+        // Arrastar para "Matriculado" não é uma matrícula: leva ao Assistente de Matrícula (que converte o
+        // lead ao concluir). Quem não tem acesso ao assistente usa o mesmo atalho "Marcar matriculado" da tabela.
+        if ($novoStatus->is_ganho) {
+            $this->concluirMatricula($record);
 
-        // Se o status anterior era de perda e agora foi reativado para um status ativo
-        if ($record->status?->isPerda()) {
-            $updateData['motivo_perda'] = null;
-
-            $tipoContatoId = TipoContatoInteressado::where('nome', 'like', '%Presencial%')->value('id') ?? 1;
-            HistoricoContato::create([
-                'interessado_id' => $record->id,
-                'tipo_contato_interessado_id' => $tipoContatoId,
-                'data_contato' => now(),
-                'usuario_id' => auth()->id(),
-                'relato' => "Lead reativado no Funil de Vendas: movido de '{$record->status->nome}' para '{$novoStatus->nome}'.",
-                'resultado' => 'retornar',
-            ]);
+            return;
         }
 
-        // Se moveu para status de ganho, registra data de conversão
-        if ($novoStatus->is_ganho && ! $record->data_conversao) {
-            $updateData['data_conversao'] = now();
+        try {
+            app(LeadFunilService::class)->moverParaEtapaAtiva($record, $novoStatus, auth()->id());
+        } catch (DomainException $e) {
+            $this->notificarBloqueio('Não foi possível mover o lead', $e->getMessage());
+
+            return;
         }
-
-        $record->update($updateData);
-
-        LeadScoreService::recalcular($record);
 
         Notification::make()
             ->title('Status atualizado!')
             ->success()
+            ->send();
+    }
+
+    /**
+     * Destino de um card solto numa etapa de ganho: Assistente de Matrícula pré-preenchido com o lead,
+     * ou — sem acesso ao assistente — o atalho que apenas marca o lead como matriculado.
+     */
+    private function concluirMatricula(Interessado $record): void
+    {
+        if (EnrollmentWizard::canAccess()) {
+            Notification::make()
+                ->title('Conclua a matrícula')
+                ->body('O lead só vira "Matriculado" quando a matrícula é concluída. O assistente foi aberto com os dados dele.')
+                ->info()
+                ->send();
+
+            $this->redirect(EnrollmentWizard::getUrl(['interessado' => $record->id]));
+
+            return;
+        }
+
+        try {
+            app(LeadFunilService::class)->marcarMatriculado($record);
+        } catch (DomainException $e) {
+            $this->notificarBloqueio('Não foi possível matricular', $e->getMessage());
+
+            return;
+        }
+
+        Notification::make()
+            ->title('Lead marcado como matriculado!')
+            ->success()
+            ->send();
+    }
+
+    private function notificarBloqueio(string $titulo, string $mensagem): void
+    {
+        Notification::make()
+            ->title($titulo)
+            ->body($mensagem)
+            ->warning()
             ->send();
     }
 
@@ -247,43 +290,31 @@ class KanbanInteressados extends Page
             return;
         }
 
+        // Escola concorrente: a cadastrada em Battlecards (FK) ou, na falta, o nome digitado à mão.
         $concorrenteModel = $this->concorrenteId ? Concorrente::find($this->concorrenteId) : null;
-        $nomeConcorrenteTexto = $concorrenteModel?->nome ?? (filled($this->concorrentePerda) ? trim($this->concorrentePerda) : null);
+        $nomeConcorrente = $concorrenteModel?->nome ?? (filled($this->concorrentePerda) ? trim($this->concorrentePerda) : null);
 
-        // Monta o texto do motivo da perda
-        $motivoFinal = $this->motivoPerda;
-        if ($this->motivoPerda === 'Concorrência' && filled($nomeConcorrenteTexto)) {
-            $motivoFinal .= ': '.$nomeConcorrenteTexto;
+        try {
+            $motivoFinal = app(LeadFunilService::class)->marcarComoPerdido(
+                $record,
+                $novoStatus,
+                $this->motivoPerda,
+                $nomeConcorrente,
+                $this->observacoesPerda,
+                auth()->id(),
+                atributosExtras: [
+                    'concorrente_id' => $this->concorrenteId,
+                    'fator_decisivo_concorrente' => $this->fatorDecisivoConcorrente,
+                    'detalhes_concorrencia' => $this->observacoesPerda,
+                ],
+                relatoExtra: filled($this->fatorDecisivoConcorrente) ? "Fator decisivo: {$this->fatorDecisivoConcorrente}." : null,
+            );
+        } catch (DomainException $e) {
+            $this->fecharModalPerda();
+            $this->notificarBloqueio('Não foi possível marcar como perdido', $e->getMessage());
+
+            return;
         }
-
-        $relatoHistorico = "Lead marcado como perdido no Funil de Vendas ({$novoStatus->nome}). Motivo: {$motivoFinal}.";
-        if (filled($this->fatorDecisivoConcorrente)) {
-            $relatoHistorico .= " Fator decisivo: {$this->fatorDecisivoConcorrente}.";
-        }
-        if (filled($this->observacoesPerda)) {
-            $relatoHistorico .= ' Detalhes: '.trim($this->observacoesPerda);
-        }
-
-        $record->update([
-            'status_interessado_id' => $novoStatus->id,
-            'motivo_perda' => $motivoFinal,
-            'concorrente_id' => $this->concorrenteId,
-            'fator_decisivo_concorrente' => $this->fatorDecisivoConcorrente,
-            'detalhes_concorrencia' => $this->observacoesPerda,
-        ]);
-
-        // Registra histórico de atendimento para auditoria e relatórios de perdas
-        $tipoContatoId = TipoContatoInteressado::where('nome', 'like', '%Presencial%')->value('id') ?? 1;
-        HistoricoContato::create([
-            'interessado_id' => $record->id,
-            'tipo_contato_interessado_id' => $tipoContatoId,
-            'data_contato' => now(),
-            'usuario_id' => auth()->id(),
-            'relato' => $relatoHistorico,
-            'resultado' => 'sem_interesse',
-        ]);
-
-        LeadScoreService::recalcular($record);
 
         $this->fecharModalPerda();
 
@@ -344,6 +375,7 @@ class KanbanInteressados extends Page
         $html .= '<li><strong>🔥 Alertas de Escassez nos Cards:</strong> As séries pretendidas nos cards mostram alertas dinâmicos de vagas restantes (ex: <em>Esgotado</em>, <em>Últimas vagas</em>, <em>Vagas limitadas</em>).</li>';
         $html .= '<li><strong>Visualização:</strong> Cada coluna representa um status do funil. Os cards mostram o interessado, origem, dependentes e próximo contato.</li>';
         $html .= '<li><strong>Arrastar e Soltar:</strong> Mova os cards entre colunas para atualizar o status do lead.</li>';
+        $html .= '<li><strong>🎓 Matrícula:</strong> Arrastar um card para <em>Matriculado</em> abre o Assistente de Matrícula já preenchido com os dados do lead (quem não tem acesso ao assistente usa o atalho "Marcar matriculado"). O lead só vira matriculado quando a matrícula é concluída, e um lead matriculado não volta no funil.</li>';
         $html .= '<li><strong>🛑 Motivo de Perda Obrigatório (Stage Gate):</strong> Ao arrastar um lead para uma coluna de encerramento/perda (ex: <em>Desistente</em>, <em>Perdido</em>), o sistema abre obrigatoriamente um modal para registro da razão da perda, concorrente e anotações, qualificando a inteligência comercial da instituição.</li>';
         $html .= '<li><strong>Cards em Vermelho:</strong> Indicam leads com contato atrasado (urgente!).</li>';
         $html .= '<li><strong>Filtro de Consultor:</strong> Use o botão "Filtrar Consultor" para ver apenas os leads de um consultor específico.</li>';

@@ -54,9 +54,15 @@ lead (já faz parte do fluxo de edição).
 | Fator | Peso máx. | Como é calculado |
 |---|---|---|
 | Interações bem-sucedidas | 10 | Histórico de contato com `resultado` em `agendou_visita`/`matriculou` |
-| Total de interações | 5 | Qualquer histórico de contato registrado |
-| Recência do contato | 10 | Dias desde o último histórico (ou desde a criação, se nunca houve contato) — decai com o tempo |
+| Total de interações | 5 | Qualquer histórico de contato registrado **que não seja automático** |
+| Recência do contato | 10 | Dias desde o último contato não automático (ou desde a criação, se nunca houve contato) — decai com o tempo |
 | Completude do cadastro | 5 | Telefone, e-mail, profissão preenchidos + ao menos 1 dependente cadastrado |
+
+> **Registros automáticos não pontuam.** `historico_contato.automatico = true` marca o que o próprio
+> sistema gerou (e-mail da régua de follow-up, análise de documento por IA, dossiê da IA salvo no
+> histórico). Eles aparecem na linha do tempo, mas não contam como interação: não somam em
+> "Total de interações" nem renovam a "Recência". O mesmo vale para "Estagnado" e "Sem interação".
+> Ações da família (reenvio do formulário, envio de documento, resposta à pesquisa) **contam**.
 
 ### Intenção comercial (até 10 pontos)
 
@@ -84,8 +90,9 @@ para poder ser ordenado/filtrado na tabela do Filament. Ele é recalculado via
   `EditInteressado::afterSave()`).
 - Registrar, editar ou excluir um histórico de contato
   (`HistoricosRelationManager`, ação rápida "Atendimento" na tabela).
-- Mudar o status do lead (ações "Matricular"/"Perdido" na tabela, ou arrastar o
-  card no Kanban).
+- Mudar o status do lead (ações "Marcar matriculado"/"Perdido" na tabela, edição em lote, ou
+  arrastar o card no Kanban) — todas passam por `LeadFunilService`; a conversão por matrícula,
+  inclusive a matrícula online, vem de `InteressadoMatriculaService::registrarConversao()`.
 - Novo lead capturado pela landing page pública
   (`CaptacaoInteressadoController::store()`).
 

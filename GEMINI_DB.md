@@ -376,11 +376,11 @@ Estrutura de ensino e turmas.
 ## 6. CRM e Prospecção
 ### `interessado`
 - **Representa:** Leads para novos alunos.
-- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable — padronizado pelas opções de `Interessado::MOTIVOS_PERDA`), `data_primeiro_contato` (datetime nullable), `data_conversao` (datetime nullable).
+- **Campos Principais:** `pessoa_id`, `status_interessado_id`, `origem_interessado_id`, `campanha_marketing_id` (FK nullable, `nullOnDelete`), `utm_source`/`utm_medium`/`utm_campaign` (string nullable — atribuição de campanha, first touch), `usuario_id` (opcional/nullable), `observacoes`, `data_proximo_contato` (datetime nullable), `valor_estimado` (decimal nullable), `temperatura` (string nullable: quente/morno/frio), `motivo_perda` (string nullable — padronizado pelas opções de `Interessado::MOTIVOS_PERDA`; na perda para concorrente grava "Concorrência: Nome da escola"), `data_primeiro_contato` (datetime nullable — primeiro contato da ESCOLA com a família, preenchido pelo primeiro atendimento registrado; o cadastro pelo formulário público não a preenche), `data_conversao` (datetime nullable), `ultimo_alerta_em` (timestamp nullable — último aviso de atraso/estagnação ao consultor, controla o intervalo entre alertas).
 - **Motivos de Perda:** Padronizados na constante `Interessado::MOTIVOS_PERDA` (`Preço`, `Concorrência`, `Distância`, `Mudança`, `Vagas Esgotadas`, `Metodologia`, `Sem retorno`, `Desistência`, `Outro`).
 - **Redes sociais:** `redes_sociais` (JSON nullable, cast `array`) — lista de `{rede, url}`. Redes aceitas em `Interessado::REDES_SOCIAIS` (instagram, facebook, linkedin, tiktok, x, youtube, outra). Editável no Repeater "Redes Sociais" da aba Dados do Negócio e preenchido pela importação com IA.
 - **Convite de Matrícula Online (Onda 7):** `token_convite` (string nullable, único), `token_convite_expira_em` (datetime nullable), `token_convite_usado_em` (datetime nullable), `dados_pre_matricula` (JSON nullable — responsáveis, alunos, endereço e aceite LGPD preenchidos pela família; usado para pré-preencher o `EnrollmentWizard` e zerado em `registrarConversao()`). Gerado por `ConviteMatriculaService::gerarConvite()`; `Interessado::conviteValido()` verifica existência + validade + não-uso. Rota pública `/quero-matricular/convite/{token}`.
-- **Portal de Pré-Admissão & Documentos:** `token_documentos` (string nullable, token seguro de acesso sem login), `token_documentos_expira_em` (datetime nullable, validade de segurança do link).
+- **Portal de Pré-Admissão & Documentos:** `token_documentos` (string nullable, token seguro de acesso sem login), `token_documentos_expira_em` (datetime nullable, validade do link: 90 dias renovados sempre que a equipe gera/copia o link; link vencido responde 410).
 - **Linha do Tempo 360° Omnichannel:** Visão agregada unificada consumida pelo `Customer360TimelineService` e `TimelineRelationManager`.
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
@@ -391,25 +391,28 @@ Estrutura de ensino e turmas.
     - HasMany `dependentes` (InteressadoDependente).
     - HasMany `historico_contato`.
     - HasMany `visita_interessado` (`visitas`).
-    - HasOne `ultimoHistorico` (Latest of Many).
+    - HasMany `interacoes` (histórico sem os registros automáticos).
+    - HasOne `ultimoHistorico` (última interação, ignorando registros automáticos).
     - HasOne `proximaVisita` (visita agendada futura mais próxima).
 - **Auditoria:** Trilha de auditoria via `activity_log` com `log_name: crm`, rastreando mudanças em status, temperatura, consultor e valor.
-- **Scopes:** `ativos()` (não finalizados), `precisaContato()` (contato atrasado), `doConsultor($id)`.
-- **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `temperaturaCalculada()`, `totalContatos()`.
+- **Scopes:** `ativos()` (não finalizados), `precisaContato()` (contato atrasado), `doConsultor($id)`, `estagnados($dias)` (sem interação humana/da família nos últimos N dias), `comTokenDocumentosValido($token)`.
+- **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `totalContatos()` (sem registros automáticos), `diasSemInteracao()`, `estaEstagnado()`.
+- **Regras de movimentação:** feitas por `LeadFunilService` (mover etapa ativa, perder com motivo, marcar matriculado, registrar atendimento); a conversão por matrícula vem de `InteressadoMatriculaService::registrarConversao()` (também usada pela matrícula 100% online). Cadastro pelo formulário público: `CaptacaoInteressadoService` (reenvio não sobrescreve o lead).
 
 ### `interessado_dependente` (Alunos Vinculados)
 - **Representa:** Os potenciais alunos vinculados a um interessado principal.
-- **Campos Principais:** `interessado_id`, `nome_crianca`, `serie_id`, `vinculo` (Pai, Mãe, Parente, Tutor), `data_nascimento`.
+- **Campos Principais:** `interessado_id`, `nome_crianca`, `serie_id` (nullable), `unidade_id` (FK `unidade`, nullable — unidade de preferência), `turno_preferencia` (string nullable: Manhã, Tarde, Integral, Sem preferência), `vinculo` (Pai, Mãe, Parente, Tutor), `data_nascimento` (cast `date`).
+- **Reenvio do formulário:** o dependente é reconhecido pelo nome normalizado (`InteressadoDependente::nomeNormalizado()`) e só recebe campos vazios; nenhum dependente é apagado.
 
 ### `historico_contato`
 - **Representa:** Registro de cada interação com o interessado (ligação, visita, etc).
-- **Campos Principais:** `relato`, `data_contato`, `usuario_id` (FK `users`, nullable — quem registrou), `duracao_minutos` (integer nullable), `resultado` (string nullable: agendou_visita, retornar, sem_interesse, matriculou, outro).
+- **Campos Principais:** `relato`, `data_contato`, `usuario_id` (FK `users`, nullable — quem registrou), `duracao_minutos` (integer nullable), `resultado` (string nullable: agendou_visita, retornar, sem_interesse, matriculou, outro), `automatico` (boolean, padrão false — registro gerado pelo sistema/IA: e-mail da régua, análise de documento, dossiê da IA; **não conta como interação** para estagnação, Lead Score e resumo ao consultor). Tipos de contato do sistema: `Movimentação no Funil`, `Formulário do Site`, `Portal de Admissão`, `Análise de IA`.
 - **Relacionamentos:** BelongsTo `interessado`, BelongsTo `tipo_contato_interessado`, BelongsTo `users` (usuário que registrou).
 
 ### `status_interessado`
 - **Representa:** Etapas do funil de vendas.
 - **Campos Principais:** `nome`, `cor`, `ordem`, `is_final` (boolean — indica status de encerramento), `is_ganho` (boolean — indica conversão/matrícula).
-- **Lógica de Negócio (Modelo):** `isPerda(): bool` identifica se o status representa encerramento por perda/descarte (`is_final && !is_ganho` ou nomes de perda), ativando o Stage Gate obrigatório de motivo de perda no Kanban.
+- **Lógica de Negócio (Modelo):** `isPerda(): bool` identifica se o status representa encerramento por perda/descarte (`is_final && !is_ganho` ou nomes de perda), ativando o Stage Gate obrigatório de motivo de perda no Kanban. Atalhos por flag/nome: `StatusInteressado::inicial()` (etapa de entrada), `::ganho()` (matrícula), `::perdido()` (perda padrão).
 - **Relacionamentos:** HasMany `interessado`.
 
 ### `origem_interessado`

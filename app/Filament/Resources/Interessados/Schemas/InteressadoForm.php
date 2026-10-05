@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Interessados\Schemas;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Models\Interessado;
+use App\Models\InteressadoDependente;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\User;
@@ -28,6 +29,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class InteressadoForm
@@ -206,9 +208,16 @@ class InteressadoForm
                                         ? 'UTM capturado: '.collect([$record->utm_source, $record->utm_medium, $record->utm_campaign])->filter()->implode(' / ')
                                         : null),
 
+                                // Só quem pode atender leads aparece (contas de famílias, professores etc. ficam de fora);
+                                // o consultor atual segue na lista mesmo que tenha perdido a permissão depois.
                                 Select::make('usuario_id')
                                     ->label('Consultor Responsável')
-                                    ->relationship('usuario', 'name')
+                                    ->relationship(
+                                        'usuario',
+                                        'name',
+                                        modifyQueryUsing: fn (Builder $query, ?Interessado $record) => $query
+                                            ->where(fn (Builder $q) => $q->consultoresCrm()->orWhere($q->getModel()->getQualifiedKeyName(), $record?->usuario_id)),
+                                    )
                                     ->searchable()
                                     ->preload()
                                     ->required()
@@ -297,10 +306,17 @@ class InteressadoForm
                                         TextInput::make('nome_crianca')
                                             ->label('Nome da Criança')
                                             ->required(),
+                                        // Opcional: o formulário público também aceita aluno sem série definida.
                                         Select::make('serie_id')
                                             ->label('Série de Interesse')
-                                            ->relationship('serie', 'nome')
-                                            ->required(),
+                                            ->relationship('serie', 'nome'),
+                                        Select::make('unidade_id')
+                                            ->label('Unidade de Preferência')
+                                            ->relationship('unidade', 'nome'),
+                                        Select::make('turno_preferencia')
+                                            ->label('Turno de Preferência')
+                                            ->options(array_combine(InteressadoDependente::TURNOS_PREFERENCIA, InteressadoDependente::TURNOS_PREFERENCIA))
+                                            ->native(false),
                                         DatePicker::make('data_nascimento')
                                             ->label('Data de Nascimento')
                                             ->native(false),

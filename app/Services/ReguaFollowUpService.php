@@ -175,7 +175,7 @@ class ReguaFollowUpService
                 $destinatarios->push($interessado->usuario);
             } else {
                 // Notifica administradores caso o lead não tenha consultor
-                $admins = User::role(['super_admin', 'admin'])->where('is_active', true)->get();
+                $admins = User::role(['super_admin', 'admin'])->ativos()->get();
                 $destinatarios = $destinatarios->merge($admins);
             }
 

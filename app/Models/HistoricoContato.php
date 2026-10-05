@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\CrmIaVendasService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class HistoricoContato extends Model
 {
@@ -23,6 +25,13 @@ class HistoricoContato extends Model
 
     protected $table = 'historico_contato';
 
+    /**
+     * Valor padrão também na instância recém-criada (o do banco só aparece após recarregar o registro).
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['automatico' => false];
+
     protected $fillable = ['interessado_id', 'usuario_id', 'tipo_contato_interessado_id', 'relato', 'data_contato', 'duracao_minutos', 'resultado', 'automatico'];
 
     protected function casts(): array
@@ -31,6 +40,18 @@ class HistoricoContato extends Model
             'data_contato' => 'datetime',
             'automatico' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // O dossiê da IA em cache (CrmIaVendasService::dossieDoLead) descreve o histórico do lead: qualquer
+        // mudança nele o torna desatualizado.
+        $descartarDossie = static function (self $historico): void {
+            Cache::forget(CrmIaVendasService::chaveCacheDossie($historico->interessado_id));
+        };
+
+        static::saved($descartarDossie);
+        static::deleted($descartarDossie);
     }
 
     /**

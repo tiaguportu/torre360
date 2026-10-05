@@ -8,6 +8,7 @@ use App\Models\Interessado;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -118,8 +119,43 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                 'temperatura_sugerida' => $interessado->temperatura ?? 'morno',
                 'proxima_acao_sugerida' => 'Entrar em contato para verificar o interesse da família.',
                 'dossie_markdown' => "### ⚠️ Dossiê Básico (Fallback)\n\nNão foi possível processar a análise com IA neste momento. Tente novamente em instantes.\n\n**Dados do Lead:**\n- **Responsável:** {$interessado->pessoa?->nome}\n- **Telefone:** {$interessado->pessoa?->telefone}\n- **Etapa atual:** {$interessado->status?->nome}",
+                // Marca a resposta de contingência: ela nunca deve ser guardada em cache como se fosse o dossiê.
+                'fallback' => true,
             ];
         }
+    }
+
+    /** Minutos em que o dossiê gerado fica reaproveitável (modal, reexibições e exportação em PDF). */
+    public const MINUTOS_CACHE_DOSSIE = 15;
+
+    public static function chaveCacheDossie(int|string $interessadoId): string
+    {
+        return "dossie_ia_lead_{$interessadoId}";
+    }
+
+    /**
+     * Dossiê do lead com reaproveitamento: o modal do Filament monta seu formulário a cada interação, e
+     * gerar na hora refazia a chamada ao Gemini (custo e demora de até minutos) a cada clique. A chave é
+     * descartada quando o histórico do lead muda (`HistoricoContato`), e respostas de contingência não são guardadas.
+     *
+     * @return array<string, mixed>
+     */
+    public function dossieDoLead(Interessado $interessado): array
+    {
+        $chave = self::chaveCacheDossie($interessado->id);
+        $guardado = Cache::get($chave);
+
+        if (is_array($guardado) && ! empty($guardado['dossie_markdown'])) {
+            return $guardado;
+        }
+
+        $dossie = $this->gerarDossie($interessado);
+
+        if (! ($dossie['fallback'] ?? false)) {
+            Cache::put($chave, $dossie, now()->addMinutes(self::MINUTOS_CACHE_DOSSIE));
+        }
+
+        return $dossie;
     }
 
     /**
@@ -354,12 +390,7 @@ Diretrizes obrigatórias da mensagem:
         ]);
 
         if (empty($dadosDossie['dossie_markdown'])) {
-            $cached = cache()->get("dossie_ia_lead_{$interessado->id}");
-            if (is_array($cached) && ! empty($cached['dossie_markdown'])) {
-                $dadosDossie = $cached;
-            } else {
-                $dadosDossie = $this->gerarDossie($interessado);
-            }
+            $dadosDossie = $this->dossieDoLead($interessado);
         }
 
         $resumoLimpo = $this->sanitizarTextoParaPdf($dadosDossie['resumo_executivo'] ?? '');

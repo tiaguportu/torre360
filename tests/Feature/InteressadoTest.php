@@ -11,6 +11,7 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
@@ -431,7 +432,9 @@ class InteressadoTest extends TestCase
             'is_final' => false,
             'is_ganho' => false,
         ]);
-        $novoConsultor = User::factory()->create();
+        // Só usuários ativos com permissão de atender leads podem ser consultor (ver `User::consultoresCrm()`).
+        $novoConsultor = User::factory()->create(['activated_at' => now()->subDay()]);
+        $novoConsultor->givePermissionTo(Permission::firstOrCreate(['name' => 'Update:Interessado', 'guard_name' => 'web']));
         $novaOrigem = OrigemInteressado::create(['nome' => 'Indicação de Aluno']);
 
         Livewire::actingAs($admin)

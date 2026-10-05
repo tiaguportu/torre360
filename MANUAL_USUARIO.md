@@ -79,7 +79,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 2. Utilize a visualização em **Funil de Vendas (CRM)**:
    - **Interface:** O layout é inspirado no Trello, com colunas coloridas que facilitam a distinção visual entre as etapas do funil (ex: *Novo Contato*, *Agendamento*, *Matrícula*).
    - **Drag & Drop e Stage Gate de Perda:** Arraste e solte os cards entre as colunas para atualizar o status do interessado em tempo real.
-     - **Conversão Automática:** Ao mover para um status de "Matriculado", a data de conversão é registrada automaticamente.
+     - **Matrícula pelo Funil:** Arrastar um card para a etapa "Matriculado" **não matricula o lead por conta própria**. Quem tem acesso ao **Assistente de Matrícula** é levado a ele, já com os dados do lead preenchidos; o lead só vira "Matriculado" (e a data de conversão é registrada) quando a matrícula é concluída. Quem não tem acesso ao assistente usa o mesmo atalho **Marcar matriculado** da tabela. Um lead já matriculado não pode ser arrastado de volta nem para "Perdido": ajustes na matrícula são feitos no módulo de Matrículas.
+     - **Permissão:** Só quem pode editar leads consegue arrastar os cards; os demais apenas visualizam o funil.
      - **Modal Obrigatório de Motivo de Perda (Stage Gate):** Ao arrastar um card para uma etapa de encerramento ou perda (ex: *Desistente*, *Perdido*), o sistema intercepta o movimento e abre imediatamente uma janela modal obrigatória solicitando:
        - **Motivo da Perda (obrigatório):** Seleção padronizada entre opções estratégicas (*Preço / Questão financeira*, *Concorrência*, *Distância / Localização*, *Mudança*, *Vagas Esgotadas*, *Metodologia pedagógica*, *Sem retorno*, *Desistência* ou *Outro*).
        - **Escola Concorrente:** Campo dinâmico exibido quando o motivo selecionado for *Concorrência*, permitindo registrar qual instituição a família escolheu.
@@ -88,7 +89,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
      - **Reativação Inteligente:** Se um lead que estava marcado como perdido for arrastado de volta para uma etapa ativa (ex: *Em Negociação*, *Contato Realizado*), o sistema limpa o motivo de perda ativo e registra na linha do tempo que o lead foi reativado no processo comercial.
    - **Filtro por Consultor:** Use o botão "Filtrar Consultor" no topo para visualizar apenas os leads de um consultor específico.
    - **Indicadores Visuais nos Cards:**
-     - **Temperatura:** Cada card exibe um indicador visual: 🔥 Quente, 🟡 Morno, 🔵 Frio. Se nenhuma temperatura foi definida manualmente, o sistema calcula automaticamente baseado na atividade recente.
+     - **Temperatura:** Cada card exibe um indicador visual: 🔥 Quente, 🟡 Morno, 🔵 Frio, conforme a percepção definida pelo consultor. O indicador automático é o **Lead Score**, exibido ao lado.
      - **Valor Estimado:** Quando preenchido, o valor potencial da matrícula é exibido no card em verde.
      - **Total por Coluna:** O cabeçalho de cada coluna mostra o valor total estimado dos leads daquela etapa.
      - **Dias no Funil:** Leads com mais de 30 dias no funil exibem um alerta vermelho no card.
@@ -110,18 +111,20 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Origem:** Filtre por fonte de captação.
    - **Campanha:** Filtre pela campanha de marketing que originou o lead (a coluna **Campanha** pode ser exibida pelo seletor de colunas).
    - **Consultor:** Filtre por consultor responsável.
+   - **Sem consultor responsável:** Mostra os leads que ainda não foram atribuídos a ninguém (os que chegam pelo site entram assim). Leads sem consultor não geram alertas de acompanhamento, então atribua um consultor o quanto antes — a gestão recebe um resumo diário com a quantidade e um atalho para esta lista.
    - **Precisa de Contato:** Filtre leads com contato atrasado.
    - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
    - Os filtros ficam recolhidos acima da tabela e são lembrados durante a sessão.
 3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp*, *Enviar ao consultor* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
-   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo.
+   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo da escola com a família (a data do cadastro do lead não conta como contato).
    - **Enviar ao consultor (ícone de compartilhar):** Abre o WhatsApp do consultor responsável pelo lead com a mensagem pronta: link direto para falar com o interessado (o consultor só clica), alunos, status, origem, temperatura, próximo contato, visita agendada e um resumo dos **3 últimos contatos** registrados. O ícone fica **verde** quando o consultor tem telefone cadastrado e **amarelo** quando não tem — nesse caso o WhatsApp abre com a mensagem pronta, sem destinatário, e você escolhe o contato. Só aparece para leads que têm consultor. Para o envio ir direto ao consultor, o telefone dele precisa estar preenchido no cadastro da **Pessoa** vinculada ao usuário.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
-   - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que apenas move o lead para o status de matrícula.
-   - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro).
+   - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que conclui o lead como matriculado do mesmo modo que o assistente (status, data de conversão, indicação e documentos). Se a escola ainda não tiver uma etapa de matrícula cadastrada em *Status de Interessado*, o sistema avisa em vez de deixar o lead sem status.
+   - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro). Em *Concorrência* (e também em *Preço*, *Metodologia* e *Distância*) aparecem **Escola Concorrente Escolhida** (lista dos concorrentes cadastrados em *Battlecards*) e **Fator Decisivo da Família**; na perda por *Concorrência* o nome da escola também fica no motivo. A perda feita aqui, no Kanban ou em lote segue a mesma regra e entra na linha do tempo do lead.
+   - **Gerar Link de Pré-matrícula:** Abre o link único da família (seção 44). Abrir a ação de novo mostra **o mesmo link** enquanto ele for válido; para invalidá-lo e criar outro use **Gerar novo link de pré-matrícula**.
 4. **Ações em Lote:**
-   - **Editar em Lote:** Selecione múltiplos leads e altere simultaneamente campos como Status, Consultor Responsável, Temperatura (Quente, Morno, Frio), Origem do Lead, Campanha de Marketing, Data do Próximo Contato, Distância até a Escola, Meio de Transporte e Motivo da Perda. Campos deixados em branco no formulário permanecem inalterados nos registros selecionados. Ao concluir, o Lead Score de cada lead modificado é recalculado automaticamente.
-   - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez.
+   - **Editar em Lote:** Selecione múltiplos leads e altere simultaneamente campos como Status, Consultor Responsável, Temperatura (Quente, Morno, Frio), Origem do Lead, Campanha de Marketing, Data do Próximo Contato, Distância até a Escola, Meio de Transporte e Motivo da Perda. Campos deixados em branco no formulário permanecem inalterados nos registros selecionados. Ao concluir, o Lead Score de cada lead modificado é recalculado automaticamente. **As mesmas travas do funil valem em lote:** mover para uma etapa de perda exige o **Motivo da Perda** (e deixa o registro na linha do tempo de cada lead); a etapa "Matriculado" não é oferecida (a matrícula é concluída lead a lead, pelo assistente); informar só o motivo, sem mudar a etapa, corrige apenas leads que já estão perdidos; e, quando a etapa é alterada, leads já matriculados são pulados, com aviso de quantos não foram alterados.
+   - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez. Só aparecem usuários com permissão para atender leads (contas de famílias e professores ficam de fora) e o consultor escolhido **recebe um aviso no sininho** com a quantidade de leads que recebeu.
    - **Enviar aos consultores (WhatsApp):** Selecione vários leads e veja um botão do WhatsApp para cada consultor, já com a lista dos leads dele (nome, link direto e status) numa única mensagem. Leads sem consultor aparecem num aviso e ficam de fora — use *Atribuir Consultor* para defini-lo. Se a lista for muito grande, a mensagem é encurtada e indica quantos leads ficaram de fora.
    - **Excluir:** Exclua múltiplos leads selecionados.
 
@@ -143,17 +146,18 @@ O formulário de edição do interessado oferece ferramentas de qualificação:
    - **Duração:** Tempo em minutos do atendimento.
    - **Resultado:** Agendou Visita, Retornar, Sem Interesse, Efetuou Matrícula, Outro.
 3. O sistema registra automaticamente quem realizou o contato e a data.
+4. **Registros manuais e automáticos:** a coluna **Registro** indica se a linha foi feita por uma pessoa (*Manual*) ou gerada pelo sistema (*Automático*: e-mail disparado pela Régua de Follow-up, análise de documento por IA, dossiê da IA salvo no histórico). Os automáticos aparecem na linha do tempo, mas **não contam como contato**: não tiram o lead de "Estagnado", não somam no Lead Score e não entram no resumo enviado ao consultor. Ações da própria família (reenviar o formulário, anexar documento, responder à pesquisa) contam como interação.
 
 ### 3.5 Alertas e Notificações
-1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos recebem um alerta instantâneo.
+1. **Notificação no Sininho:** Sempre que um novo interessado preenche o formulário no site, todos os usuários administrativos (e o consultor do lead, se já houver) recebem um alerta instantâneo. Se uma família que já está no CRM preencher o formulário de novo, o aviso diz isso: *reenvio do formulário*, *lead perdido que voltou a procurar a escola* (o lead é reaberto) ou *família já matriculada com possível novo aluno*.
 2. **Badge na Barra Lateral:** O menu **CRM → Interessados / Leads** exibe um círculo verde com a quantidade de leads com status "Novo".
 3. **Follow-up Pulsante:** Quando um interessado precisa de contato urgente (atraso no agendamento), um botão vermelho pulsante aparece no topo da tela de edição para alertar o consultor por e-mail e sistema. Antes de enviar, o modal de confirmação ("Enviar Alerta de Acompanhamento?") mostra o **e-mail para o qual a mensagem será enviada** (o do consultor responsável). Se o consultor não tiver e-mail cadastrado, o modal avisa que só a notificação no sistema será enviada; se o lead não tiver consultor, avisa que não há para quem enviar. O modal também traz o link **Abrir o WhatsApp do consultor com a mensagem pronta**, que abre o WhatsApp com o lead resumido (contato direto do interessado e últimos contatos registrados), para avisar também por lá; se o consultor não tiver telefone cadastrado, o WhatsApp abre para você escolher o contato.
-4. **Notificação Automática Diária:** O sistema envia automaticamente (às 8h) notificações por e-mail e sininho para consultores com leads pendentes de contato.
+4. **Notificação Automática Diária:** O sistema verifica todo dia (às 8h) e envia e-mail e sininho aos consultores com leads atrasados ou estagnados. **Cada lead é avisado no máximo a cada 3 dias** enquanto continuar pendente (o intervalo é configurável pela equipe técnica), em vez de todo dia. Leads parados há muito tempo (atrasados há 7 dias ou mais) e leads **sem consultor** há mais de 24 horas aparecem num **resumo único para a gestão** (administradores), com atalho para a lista.
 5. **Lembrete de Visita:** No mesmo disparo das 8h, o consultor recebe um aviso no sininho das visitas agendadas para as próximas 24 horas (um aviso por visita).
 
 ### 3.6 Dependentes (Alunos Vinculados)
 O sistema permite registrar os potenciais alunos vinculados ao interessado:
-- **Dados:** Nome da criança, Série de interesse, Data de nascimento.
+- **Dados:** Nome da criança, Série de interesse (opcional), **Unidade e Turno de preferência** (informados no formulário público ou editáveis na ficha), Data de nascimento.
 - **Vínculo:** Pai, Mãe, Parente ou Tutor.
 - **Flexibilidade:** Cadastre múltiplos alunos para o mesmo interessado.
 
@@ -161,8 +165,11 @@ O sistema permite registrar os potenciais alunos vinculados ao interessado:
 Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - O formulário permite cadastro como responsável ou próprio aluno.
 - Suporta múltiplos alunos por cadastro.
-- O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade.
+- O interessado recebe um e-mail de agradecimento personalizado com os dados da unidade (no máximo um por pessoa a cada 24 horas).
 - A equipe interna é notificada automaticamente via sininho.
+- **Quem já está no CRM não é sobrescrito.** A família é reconhecida pelo e-mail, CPF ou telefone. Se ela preencher o formulário de novo, o lead **não** volta para "Novo", as observações do consultor e o consultor responsável são mantidos e nenhum aluno é apagado: o reenvio vira um registro *Formulário do Site* na linha do tempo, alunos novos são acrescentados, dados que estavam vazios são completados e o próximo contato é antecipado (nunca adiado). Lead que estava como perdido é **reaberto** na etapa inicial.
+- **Link de indicação:** o link `.../quero-matricular?indicacao=CODIGO` (seção 3.18) registra automaticamente a indicação como *Pendente* e a origem como *Indicação*. A auto-indicação (mesma pessoa, e-mail, CPF ou telefone) é ignorada.
+- **Proteção contra robôs:** quando o reCAPTCHA está configurado, o envio sem a verificação é recusado.
 
 ### 3.7.1 Configurar os Pesos do Lead Score
 Acesse **CRM / Comercial → Pesos do Lead Score** (disponível para Administradores):
@@ -2343,8 +2350,9 @@ Link único enviado a um lead já qualificado pelo CRM para que a **própria fam
 
 ### 44.1 Gerando o Link (`/admin/interessados`)
 1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra, no menu **⋮ Mais ações**, a ação **Gerar Link de Pré-matrícula**.
-2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.).
-3. **Atenção:** abrir a ação de novo gera um link novo e **invalida o anterior** daquele lead.
+2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.). A data de validade aparece na descrição da janela.
+3. Abrir a ação de novo mostra **o mesmo link**, enquanto ele ainda for válido (não usado e não expirado): ver o link não invalida o que já foi enviado à família.
+4. Para invalidar o link anterior e criar outro (por exemplo, se expirou ou foi enviado à pessoa errada), use **Gerar novo link de pré-matrícula** no mesmo menu ⋮, que pede confirmação.
 
 ### 44.2 O que a Família Preenche
 1. **Responsável (você):** nome, CPF, data de nascimento, telefone, e-mail, vínculo com o aluno (Pai, Mãe etc.) e se é o responsável financeiro.

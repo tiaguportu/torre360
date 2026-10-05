@@ -51,7 +51,7 @@ class ImportarLeadIaAction
                     ->columnSpanFull(),
                 Select::make('usuario_id')
                     ->label('Consultor Responsável')
-                    ->options(fn () => User::pluck('name', 'id'))
+                    ->options(fn () => User::consultoresCrm()->orderBy('name')->pluck('name', 'id'))
                     ->default(fn () => auth()->id())
                     ->searchable()
                     ->required(),

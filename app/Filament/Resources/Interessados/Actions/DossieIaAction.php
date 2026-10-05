@@ -55,11 +55,10 @@ class DossieIaAction
                     }),
             ])
             ->form(function (Interessado $record): array {
-                $service = app(CrmIaVendasService::class);
-                $dossie = $service->gerarDossie($record);
-
-                // Guarda em cache por 15 minutos para permitir download instantâneo via URL direta
-                cache()->put("dossie_ia_lead_{$record->id}", $dossie, now()->addMinutes(15));
+                // Este closure roda a cada render do modal: o dossiê vem do cache (15 min, descartado quando o
+                // histórico do lead muda) em vez de chamar o Gemini de novo a cada interação. O mesmo cache serve
+                // o download instantâneo do PDF pela URL direta.
+                $dossie = app(CrmIaVendasService::class)->dossieDoLead($record);
 
                 $urlPdf = route('crm.interessados.dossie-pdf', $record);
 

@@ -42,6 +42,20 @@ class ConviteMatriculaService
     }
 
     /**
+     * URL do convite em vigor: reaproveita o link se ainda for válido (existe, não expirou, não foi usado) e
+     * só gera um novo quando não há link utilizável. Abrir a tela do link não pode invalidar, por efeito
+     * colateral, um link que a equipe já enviou à família.
+     */
+    public function obterOuGerarConvite(Interessado $interessado, int $diasValidade = self::DIAS_VALIDADE_PADRAO): string
+    {
+        if ($interessado->conviteValido()) {
+            return route('captacao.interessado.convite', ['token' => $interessado->token_convite]);
+        }
+
+        return $this->gerarConvite($interessado, $diasValidade);
+    }
+
+    /**
      * Resolve um token para o Interessado correspondente, só se o convite ainda for
      * válido (existe, não expirou, ainda não foi usado).
      */

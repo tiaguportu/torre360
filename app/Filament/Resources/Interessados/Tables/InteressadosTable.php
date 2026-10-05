@@ -11,6 +11,7 @@ use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
+use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Jobs\EnviarComunicacaoEmMassaJob;
 use App\Models\CampanhaMarketing;
 use App\Models\ComunicacaoEmMassa;
@@ -24,9 +25,11 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\ConsultorWhatsappService;
 use App\Services\ConviteMatriculaService;
+use App\Services\LeadFunilService;
 use App\Services\LeadScoreService;
 use App\Services\TermometroVagasService;
 use App\Services\VisitaInteressadoService;
+use DomainException;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -39,6 +42,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -316,6 +320,12 @@ class InteressadosTable
                     ->label('Consultor')
                     ->searchable()
                     ->preload(),
+                TernaryFilter::make('sem_consultor')
+                    ->label('Sem consultor responsável')
+                    ->queries(
+                        true: fn ($query) => $query->whereNull('usuario_id'),
+                        false: fn ($query) => $query->whereNotNull('usuario_id'),
+                    ),
                 TernaryFilter::make('precisa_contato')
                     ->label('Precisa de Contato')
                     ->queries(
@@ -395,7 +405,16 @@ class InteressadosTable
                     ->form([
                         Select::make('tipo_contato_interessado_id')
                             ->label('Tipo de Contato')
-                            ->options(TipoContatoInteressado::pluck('nome', 'id'))
+                            ->options(fn () => TipoContatoInteressado::query()
+                                ->whereNotIn('nome', [TipoContatoInteressado::FUNIL, TipoContatoInteressado::FORMULARIO_SITE])
+                                ->pluck('nome', 'id'))
+                            ->required(),
+                        DateTimePicker::make('data_contato')
+                            ->label('Quando aconteceu')
+                            ->helperText('Deixe o horário atual, ou ajuste se o contato foi mais cedo/em outro dia.')
+                            ->default(now())
+                            ->maxDate(now())
+                            ->seconds(false)
                             ->required(),
                         Textarea::make('relato')
                             ->label('Relato')
@@ -412,27 +431,7 @@ class InteressadosTable
                             ->default(now()->addDays(2)),
                     ])
                     ->action(function (array $data, Interessado $record) {
-                        $record->historicos()->create([
-                            'tipo_contato_interessado_id' => $data['tipo_contato_interessado_id'],
-                            'relato' => $data['relato'],
-                            'data_contato' => now(),
-                            'usuario_id' => auth()->id(),
-                            'duracao_minutos' => $data['duracao_minutos'] ?? null,
-                            'resultado' => $data['resultado'] ?? null,
-                        ]);
-
-                        $updateData = [
-                            'data_proximo_contato' => $data['data_proximo_contato'],
-                        ];
-
-                        // Registra primeiro contato se ainda não tiver
-                        if (! $record->data_primeiro_contato) {
-                            $updateData['data_primeiro_contato'] = now();
-                        }
-
-                        $record->update($updateData);
-
-                        LeadScoreService::recalcular($record);
+                        app(LeadFunilService::class)->registrarAtendimento($record, $data, auth()->id());
 
                         Notification::make()
                             ->title('Atendimento registrado com sucesso!')
@@ -581,15 +580,19 @@ class InteressadosTable
                         ->color('success')
                         ->requiresConfirmation()
                         ->visible(fn ($record) => ! $record->status?->is_ganho && ! EnrollmentWizard::canAccess())
+                        ->authorize('update')
                         ->action(function (Interessado $record) {
-                            $statusMatriculado = StatusInteressado::where('nome', 'Matriculado')->first();
+                            try {
+                                app(LeadFunilService::class)->marcarMatriculado($record);
+                            } catch (DomainException $e) {
+                                Notification::make()
+                                    ->title('Não foi possível marcar como matriculado')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
 
-                            $record->update([
-                                'status_interessado_id' => $statusMatriculado?->id,
-                                'data_conversao' => now(),
-                            ]);
-
-                            LeadScoreService::recalcular($record);
+                                return;
+                            }
 
                             Notification::make()
                                 ->title('Matrícula finalizada!')
@@ -597,24 +600,47 @@ class InteressadosTable
                                 ->send();
                         }),
 
+                    // O link é gerado ao abrir o modal (`mountUsing`, uma única vez) e reaproveitado enquanto
+                    // estiver válido. Antes, gerar dentro do `form()` trocava o token a cada renderização e
+                    // invalidava o link que a equipe acabara de copiar.
                     Action::make('gerarConvite')
                         ->label('Gerar Link de Pré-matrícula')
                         ->icon('heroicon-o-link')
                         ->color('info')
                         ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
                         ->modalHeading('Pré-matrícula Online')
-                        ->modalDescription('Envie este link ao responsável para que a própria família preencha a pré-matrícula (responsáveis, alunos e endereço). Os dados chegam pré-preenchidos no Assistente de Matrícula. Válido por 7 dias e de uso único. Atenção: gerar de novo invalida o link anterior.')
+                        ->modalDescription(fn (Interessado $record): string => 'Envie este link ao responsável para que a própria família preencha a pré-matrícula (responsáveis, alunos e endereço). Os dados chegam pré-preenchidos no Assistente de Matrícula. Uso único'
+                            .($record->token_convite_expira_em ? ', válido até '.$record->token_convite_expira_em->format('d/m/Y').'.' : '.')
+                            .' O mesmo link é reaproveitado enquanto estiver válido; para invalidá-lo e gerar outro, use "Gerar novo link de pré-matrícula".')
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Fechar')
-                        ->form(function (Interessado $record) {
+                        ->form([
+                            TextInput::make('link')
+                                ->label('Link do Convite (copie e envie ao responsável)')
+                                ->readOnly(),
+                        ])
+                        ->mountUsing(function (Schema $schema, Interessado $record): void {
+                            $schema->fill(['link' => app(ConviteMatriculaService::class)->obterOuGerarConvite($record)]);
+                        }),
+
+                    Action::make('regenerarConvite')
+                        ->label('Gerar novo link de pré-matrícula')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && filled($record->token_convite) && $record->dependentes()->exists())
+                        ->authorize('update')
+                        ->requiresConfirmation()
+                        ->modalHeading('Gerar novo link de pré-matrícula?')
+                        ->modalDescription('O link anterior deixa de funcionar. Use quando ele expirou ou foi enviado à pessoa errada.')
+                        ->action(function (Interessado $record): void {
                             $link = app(ConviteMatriculaService::class)->gerarConvite($record);
 
-                            return [
-                                TextInput::make('link')
-                                    ->label('Link do Convite (copie e envie ao responsável)')
-                                    ->default($link)
-                                    ->readOnly(),
-                            ];
+                            Notification::make()
+                                ->title('Novo link gerado')
+                                ->body($link)
+                                ->success()
+                                ->persistent()
+                                ->send();
                         }),
 
                     Action::make('marcarPerdido')
@@ -646,44 +672,53 @@ class InteressadosTable
                                 ->placeholder('Detalhes adicionais sobre o encerramento...'),
                         ])
                         ->visible(fn ($record) => ! $record->status?->is_final)
+                        ->authorize('update')
                         ->action(function (array $data, Interessado $record) {
-                            $statusPerdido = StatusInteressado::where('nome', 'Perdido')->first()
-                                ?? StatusInteressado::where('is_final', true)->where('is_ganho', false)->first();
+                            $statusPerdido = StatusInteressado::perdido();
 
-                            if ($statusPerdido) {
-                                $record->update([
-                                    'status_interessado_id' => $statusPerdido->id,
-                                    'motivo_perda' => $data['motivo_perda'],
-                                    'concorrente_id' => $data['concorrente_id'] ?? null,
-                                    'fator_decisivo_concorrente' => $data['fator_decisivo_concorrente'] ?? null,
-                                    'detalhes_concorrencia' => $data['observacoes_perda'] ?? null,
-                                ]);
+                            if (! $statusPerdido) {
+                                Notification::make()
+                                    ->title('Não há etapa de perda cadastrada')
+                                    ->body('Cadastre um status final de perda (ex.: "Perdido") em Status de Interessado.')
+                                    ->danger()
+                                    ->send();
 
-                                $concorrenteNome = ! empty($data['concorrente_id'])
-                                    ? Concorrente::find($data['concorrente_id'])?->nome
-                                    : null;
+                                return;
+                            }
 
-                                $relato = "Lead marcado como perdido via tabela ({$statusPerdido->nome}). Motivo: {$data['motivo_perda']}.";
-                                if ($concorrenteNome) {
-                                    $relato .= " Escola concorrente: {$concorrenteNome}.";
-                                }
-                                if (! empty($data['fator_decisivo_concorrente'])) {
-                                    $relato .= " Fator decisivo: {$data['fator_decisivo_concorrente']}.";
-                                }
-                                if (filled($data['observacoes_perda'] ?? null)) {
-                                    $relato .= ' Detalhes: '.trim($data['observacoes_perda']);
-                                }
+                            // Inteligência competitiva (Battlecards): a escola concorrente escolhida e o fator decisivo
+                            // entram como colunas extras e no relato, sem duplicar o fluxo de perda do LeadFunilService.
+                            $concorrente = filled($data['concorrente_id'] ?? null) ? Concorrente::find($data['concorrente_id']) : null;
+                            $fatorDecisivo = $data['fator_decisivo_concorrente'] ?? null;
 
-                                HistoricoContato::create([
-                                    'interessado_id' => $record->id,
-                                    'tipo_contato_interessado_id' => TipoContatoInteressado::where('nome', 'like', '%Presencial%')->value('id') ?? 1,
-                                    'data_contato' => now(),
-                                    'usuario_id' => auth()->id(),
-                                    'relato' => $relato,
-                                    'resultado' => 'sem_interesse',
-                                ]);
+                            $relatoExtra = collect([
+                                $concorrente && $data['motivo_perda'] !== LeadFunilService::MOTIVO_CONCORRENCIA ? "Escola concorrente: {$concorrente->nome}." : null,
+                                filled($fatorDecisivo) ? "Fator decisivo: {$fatorDecisivo}." : null,
+                            ])->filter()->implode(' ');
 
-                                LeadScoreService::recalcular($record);
+                            try {
+                                app(LeadFunilService::class)->marcarComoPerdido(
+                                    $record,
+                                    $statusPerdido,
+                                    $data['motivo_perda'],
+                                    $concorrente?->nome,
+                                    $data['observacoes_perda'] ?? null,
+                                    auth()->id(),
+                                    atributosExtras: [
+                                        'concorrente_id' => $concorrente?->id,
+                                        'fator_decisivo_concorrente' => $fatorDecisivo,
+                                        'detalhes_concorrencia' => $data['observacoes_perda'] ?? null,
+                                    ],
+                                    relatoExtra: $relatoExtra !== '' ? $relatoExtra : null,
+                                );
+                            } catch (DomainException $e) {
+                                Notification::make()
+                                    ->title('Não foi possível marcar como perdido')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+
+                                return;
                             }
 
                             Notification::make()
@@ -747,13 +782,14 @@ class InteressadosTable
                         ->form([
                             Select::make('status_interessado_id')
                                 ->label('Status / Etapa do Funil')
-                                ->options(StatusInteressado::orderBy('ordem')->pluck('nome', 'id'))
+                                ->helperText('Etapas de perda exigem o motivo abaixo. "Matriculado" não está na lista: a matrícula é concluída lead a lead, pelo assistente.')
+                                ->options(fn () => StatusInteressado::query()->where('is_ganho', false)->orderBy('ordem')->pluck('nome', 'id'))
                                 ->searchable()
                                 ->preload()
                                 ->native(false),
                             Select::make('usuario_id')
                                 ->label('Consultor Responsável')
-                                ->options(User::orderBy('name')->pluck('name', 'id'))
+                                ->options(fn () => User::consultoresCrm()->orderBy('name')->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload()
                                 ->native(false),
@@ -799,12 +835,12 @@ class InteressadosTable
                                 ]),
                             Select::make('motivo_perda')
                                 ->label('Motivo da Perda')
+                                ->helperText('Obrigatório ao mover para uma etapa de perda. Sem mudar a etapa, só corrige o motivo de leads que já estão perdidos.')
                                 ->options(Interessado::MOTIVOS_PERDA)
                                 ->searchable(),
                         ])
                         ->action(function (Collection $records, array $data): void {
-                            $updateData = array_filter([
-                                'status_interessado_id' => $data['status_interessado_id'] ?? null,
+                            $camposSimples = array_filter([
                                 'usuario_id' => $data['usuario_id'] ?? null,
                                 'temperatura' => $data['temperatura'] ?? null,
                                 'origem_interessado_id' => $data['origem_interessado_id'] ?? null,
@@ -812,10 +848,14 @@ class InteressadosTable
                                 'data_proximo_contato' => $data['data_proximo_contato'] ?? null,
                                 'faixa_distancia_escola' => $data['faixa_distancia_escola'] ?? null,
                                 'meio_transporte' => $data['meio_transporte'] ?? null,
-                                'motivo_perda' => $data['motivo_perda'] ?? null,
                             ], fn ($value) => filled($value));
 
-                            if (empty($updateData)) {
+                            $statusAlvo = filled($data['status_interessado_id'] ?? null)
+                                ? StatusInteressado::find($data['status_interessado_id'])
+                                : null;
+                            $motivo = $data['motivo_perda'] ?? null;
+
+                            if ($camposSimples === [] && ! $statusAlvo && blank($motivo)) {
                                 Notification::make()
                                     ->title('Nenhum campo foi preenchido')
                                     ->body('Nenhuma alteração foi realizada porque todos os campos foram deixados em branco.')
@@ -825,32 +865,111 @@ class InteressadosTable
                                 return;
                             }
 
-                            $records->each(function (Interessado $record) use ($updateData) {
-                                $record->update($updateData);
-                                LeadScoreService::recalcular($record);
-                            });
+                            // As travas do funil valem em lote: perder exige motivo e matricular exige a matrícula.
+                            if ($statusAlvo?->is_ganho) {
+                                Notification::make()
+                                    ->title('Matrícula não pode ser feita em lote')
+                                    ->body('Para marcar leads como matriculados conclua a matrícula de cada um pelo Assistente de Matrícula.')
+                                    ->danger()
+                                    ->send();
 
-                            Notification::make()
-                                ->title("{$records->count()} lead(s) atualizado(s) com sucesso!")
-                                ->success()
-                                ->send();
+                                return;
+                            }
+
+                            if ($statusAlvo?->isPerda() && blank($motivo)) {
+                                Notification::make()
+                                    ->title('Informe o motivo da perda')
+                                    ->body('Para mover leads a uma etapa de perda o motivo é obrigatório.')
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $funil = app(LeadFunilService::class);
+                            $atualizados = 0;
+                            $recusados = 0;
+
+                            foreach ($records as $record) {
+                                try {
+                                    $atualizacoes = $camposSimples;
+
+                                    if ($statusAlvo?->isPerda()) {
+                                        $funil->marcarComoPerdido($record, $statusAlvo, $motivo, null, null, auth()->id());
+                                    } elseif ($statusAlvo) {
+                                        $funil->moverParaEtapaAtiva($record, $statusAlvo, auth()->id());
+                                    } elseif (filled($motivo) && $record->status?->isPerda()) {
+                                        $atualizacoes['motivo_perda'] = $motivo;
+                                    }
+
+                                    if ($atualizacoes !== []) {
+                                        $record->update($atualizacoes);
+                                    }
+
+                                    LeadScoreService::recalcular($record);
+                                    $atualizados++;
+                                } catch (DomainException) {
+                                    $recusados++;
+                                }
+                            }
+
+                            $notificacao = Notification::make()
+                                ->title("{$atualizados} lead(s) atualizado(s) com sucesso!");
+
+                            if ($recusados > 0) {
+                                $notificacao
+                                    ->body("{$recusados} lead(s) não foram alterados porque já estão matriculados.")
+                                    ->warning();
+                            } else {
+                                $notificacao->success();
+                            }
+
+                            $notificacao->send();
                         })
                         ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()?->can('Update:Interessado')),
                     BulkAction::make('atribuirConsultor')
                         ->label('Atribuir Consultor')
                         ->icon('heroicon-o-user-plus')
+                        ->visible(fn () => auth()->user()?->can('Update:Interessado'))
                         ->form([
                             Select::make('usuario_id')
                                 ->label('Consultor')
-                                ->options(User::pluck('name', 'id'))
+                                ->options(fn () => User::consultoresCrm()->orderBy('name')->pluck('name', 'id'))
                                 ->searchable()
                                 ->required(),
                         ])
                         ->action(function (Collection $records, array $data) {
+                            $consultor = User::consultoresCrm()->find($data['usuario_id']);
+
+                            if (! $consultor) {
+                                Notification::make()
+                                    ->title('Consultor inválido')
+                                    ->body('Selecione um usuário com permissão para atender leads.')
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
                             $records->each(fn (Interessado $record) => $record->update([
-                                'usuario_id' => $data['usuario_id'],
+                                'usuario_id' => $consultor->id,
                             ]));
+
+                            // Quem recebe leads precisa saber: antes a atribuição era silenciosa.
+                            if ($consultor->id !== auth()->id()) {
+                                Notification::make()
+                                    ->title($records->count() === 1 ? 'Um lead foi atribuído a você' : $records->count().' leads foram atribuídos a você')
+                                    ->body('Atribuição feita por '.(auth()->user()?->name ?? 'a equipe').'.')
+                                    ->icon('heroicon-o-user-plus')
+                                    ->actions([
+                                        Action::make('ver')
+                                            ->label('Ver meus leads')
+                                            ->url(InteressadoResource::getUrl('index', ['tableFilters' => ['consultor' => ['value' => $consultor->id]]]))
+                                            ->button(),
+                                    ])
+                                    ->sendToDatabase($consultor);
+                            }
 
                             Notification::make()
                                 ->title('Consultor atribuído a '.$records->count().' lead(s)!')

@@ -19,25 +19,51 @@ próximo contato agendada.
 - `Interessado::scopeEstagnados(int $dias = 7)`: filtra leads sem
   `historico_contato` nos últimos N dias — considerando tanto quem já teve
   contato antes (mas parou) quanto quem nunca teve contato e já passou desse
-  prazo desde a criação.
+  prazo desde a criação. **Registros automáticos** (`historico_contato.automatico`:
+  e-mails da régua, análises de IA) não contam como contato — ver
+  `docs/crm_funil_e_captacao.md`.
 - `Interessado::diasSemInteracao()`: dias desde a última interação registrada
-  (`ultimoHistorico()->data_contato`) ou desde a criação do lead, se nunca
-  houve contato.
+  (`ultimoHistorico()->data_contato`, que também ignora automáticos) ou desde a
+  criação do lead, se nunca houve contato.
 - `Interessado::estaEstagnado(int $dias = 7)`: atalho booleano usado na UI.
 
-O comando busca primeiro os leads atrasados (`precisaContato()`) e, entre os
+A lógica vive em `App\Services\AlertaLeadsService` (o comando só a chama e imprime o resumo).
+Ela busca primeiro os leads atrasados (`precisaContato()`) e, entre os
 demais, os estagnados (`estagnados()`), evitando notificar o mesmo lead duas
-vezes no mesmo disparo. Para cada lead com consultor responsável, ele:
+vezes no mesmo disparo. Para cada lead com consultor responsável, ela:
 
 1. Envia e-mail (`AcompanhamentoInteressadoNotification` para atraso,
    `LeadEstagnadoNotification` para estagnação).
 2. Envia notificação para o sino do Filament
    (`Notification::make()->sendToDatabase($consultor)`), com botão "Ver Lead".
 3. Registra um evento no activity log (`log name` `crm`).
+4. Grava `interessado.ultimo_alerta_em` (por `DB::table`, sem eventos do Eloquent: não gera
+   activity log de atualização nem muda `updated_at`).
 
 > Notificações do sino do Filament (`Filament\Notifications\DatabaseNotification`)
 > implementam `ShouldQueue` — elas só aparecem depois que a fila for
 > processada (`queue:work`, já agendado a cada minuto em `routes/console.php`).
+
+### Sem repetição diária, escalonamento e leads sem consultor
+
+Antes, o mesmo aviso era reenviado todo dia enquanto o lead continuasse atrasado/estagnado, e leads
+**sem consultor** (todos os que entram pelo formulário do site) nunca geravam alerta. Agora
+(`config/crm.php`, bloco `alertas`):
+
+| Regra | Padrão | Variável de ambiente |
+|---|---|---|
+| Intervalo mínimo entre dois avisos do mesmo lead ao consultor (`ultimo_alerta_em`) | 3 dias | `CRM_ALERTA_INTERVALO_DIAS` |
+| Lead atrasado (ou estagnado além do limite de 7 dias) há tantos dias vai também à gestão | 7 dias | `CRM_ALERTA_ESCALONAR_APOS_DIAS` |
+| Lead ativo sem consultor há mais de X horas entra no resumo diário da gestão | 24 h | `CRM_ALERTA_SEM_CONSULTOR_HORAS` |
+
+- **Gestão** = usuários com conta ativa (`User::ativos()`) e papel `admin` ou `super_admin`.
+- O que vai à gestão é **um resumo por execução** (não um aviso por lead): "Leads parados exigem
+  atenção da gestão" (com atalho para a aba *Precisa de contato*) e "Leads sem consultor responsável"
+  (com atalho para a lista filtrada por **Sem consultor responsável**). No máximo um resumo por dia,
+  mesmo que o comando rode mais de uma vez (`Cache::add('crm:alertas:gestao:{data}')`).
+- A saída do comando informa quantos leads foram avisados (atrasados/estagnados), quantos foram
+  levados à gestão e quantos estão sem consultor.
+- Migration: `2026_10_04_230100_add_ultimo_alerta_em_to_interessado_table`.
 
 O mesmo comando também envia, antes dos alertas acima, o **lembrete de visitas**
 agendadas para as próximas 24 horas (só no sino, uma única vez por visita). Detalhes em
@@ -46,7 +72,8 @@ agendadas para as próximas 24 horas (só no sino, uma única vez por visita). D
 Na tabela de Interessados (`InteressadosTable`), há uma coluna "Sem Interação"
 (dias desde a última interação, com destaque vermelho quando estagnado) e um
 filtro "Estagnado (7+ dias sem interação)", ambos usando os mesmos
-scopes/métodos do model — não há lógica duplicada entre backend e UI.
+scopes/métodos do model — não há lógica duplicada entre backend e UI. O filtro
+**Sem consultor responsável** lista os leads com `usuario_id` nulo.
 
 ### Alerta manual na ficha do lead
 

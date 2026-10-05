@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -69,6 +70,36 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
                    $this->activated_at <= $now &&
                    ($this->deactivated_at === null || $this->deactivated_at > $now);
         });
+    }
+
+    /**
+     * Contas ativas agora. `is_active` é um acessor calculado (`activated_at`/`deactivated_at`), não uma
+     * coluna: `where('is_active', true)` quebraria a consulta, então a regra é repetida aqui em SQL.
+     */
+    public function scopeAtivos(Builder $query): Builder
+    {
+        return $query
+            ->whereNotNull('activated_at')
+            ->where('activated_at', '<=', now())
+            ->where(fn (Builder $q) => $q->whereNull('deactivated_at')->orWhere('deactivated_at', '>', now()));
+    }
+
+    /**
+     * Quem pode ser consultor responsável por um lead: contas ativas com a permissão de editar leads
+     * (direta ou por papel — `config('crm.permissao_consultor')`) mais admin e super_admin, que a têm
+     * por padrão. Contas de famílias, professores etc. ficam fora das listas de consultor.
+     */
+    public function scopeConsultoresCrm(Builder $query): Builder
+    {
+        $permissao = (string) config('crm.permissao_consultor');
+
+        return $query
+            ->ativos()
+            ->where(fn (Builder $q) => $q
+                ->whereHas('permissions', fn (Builder $p) => $p->where('name', $permissao))
+                ->orWhereHas('roles', fn (Builder $r) => $r
+                    ->whereIn('name', ['super_admin', 'admin'])
+                    ->orWhereHas('permissions', fn (Builder $p) => $p->where('name', $permissao))));
     }
 
     public function pessoas(): BelongsToMany

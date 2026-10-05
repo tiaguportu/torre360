@@ -11,6 +11,7 @@ use App\Models\DocumentoInserido;
 use App\Models\Endereco;
 use App\Models\Estado;
 use App\Models\Interessado;
+use App\Models\InteressadoDependente;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\ResponsavelFinanceiro;
@@ -121,7 +122,7 @@ class MatriculaOnlineService
             $this->garantirUsuarioPortal($responsavel);
 
             // 11. Conversão automática no CRM se existir lead
-            $this->marcarConversaoCrm($responsavel, $aluno);
+            $this->marcarConversaoCrm($responsavel, $aluno, $matricula);
 
             // 12. Notificação interna para a equipe escolar
             $this->notificarEquipeEscolar($matricula, $aluno, $responsavel, $turma);
@@ -287,22 +288,55 @@ class MatriculaOnlineService
         return $user;
     }
 
-    private function marcarConversaoCrm(Pessoa $responsavel, Pessoa $aluno): void
+    /**
+     * Converte o lead de origem (se houver) pelo mesmo caminho do Assistente de Matrícula: status de ganho,
+     * data de conversão, indicação "Família Indica Família", migração dos documentos e limpeza do rascunho
+     * de pré-matrícula. Antes só a data era preenchida, e o lead seguia ativo (recebendo régua e alertas).
+     */
+    private function marcarConversaoCrm(Pessoa $responsavel, Pessoa $aluno, Matricula $matricula): void
     {
-        $interessado = Interessado::query()
-            ->where(function ($q) use ($responsavel, $aluno) {
-                $q->where('pessoa_id', $responsavel->id)
-                    ->orWhere('pessoa_id', $aluno->id)
-                    ->orWhereHas('dependentes', fn ($d) => $d->where('nome_crianca', 'like', "%{$aluno->nome}%"));
-            })
-            ->whereNull('data_conversao')
-            ->first();
+        $interessado = $this->localizarLeadParaConversao($responsavel, $aluno);
 
-        if ($interessado) {
-            $interessado->update([
-                'data_conversao' => now(),
-            ]);
+        if (! $interessado) {
+            return;
         }
+
+        // O vínculo dos documentos com a matrícula usa o nome do aluno: evita consulta preguiçosa.
+        $matricula->setRelation('pessoa', $aluno);
+
+        InteressadoMatriculaService::registrarConversao($interessado, [$matricula]);
+    }
+
+    /**
+     * Lead que originou a matrícula. Procura pelo cadastro do responsável ou do aluno; se não achar, pelo
+     * dependente de nome idêntico (sem caixa/acento) cujo contato é o mesmo responsável (e-mail ou CPF).
+     * Nunca por nome parcial: "Ana" não pode converter o lead de uma família com "Mariana".
+     */
+    private function localizarLeadParaConversao(Pessoa $responsavel, Pessoa $aluno): ?Interessado
+    {
+        $candidatos = Interessado::query()
+            ->whereIn('pessoa_id', [$responsavel->id, $aluno->id])
+            ->orderByDesc('id')
+            ->get();
+
+        if ($candidatos->isEmpty()) {
+            $nomeAluno = InteressadoDependente::nomeNormalizado($aluno->nome);
+
+            $candidatos = Interessado::query()
+                ->whereHas('pessoa', fn ($pessoa) => $pessoa->where(function ($q) use ($responsavel) {
+                    $q->when(filled($responsavel->email), fn ($qq) => $qq->orWhereRaw('LOWER(email) = ?', [mb_strtolower($responsavel->email)]))
+                        ->when(filled($responsavel->cpf), fn ($qq) => $qq->orWhere('cpf', $responsavel->cpf));
+                }))
+                ->whereHas('dependentes')
+                ->with('dependentes')
+                ->orderByDesc('id')
+                ->get()
+                ->filter(fn (Interessado $lead): bool => $lead->dependentes
+                    ->contains(fn (InteressadoDependente $d): bool => InteressadoDependente::nomeNormalizado($d->nome_crianca) === $nomeAluno));
+        }
+
+        // Prefere um lead ainda não convertido; reconverter é idempotente, mas não deve "gastar" a conversão de outro irmão.
+        return $candidatos->first(fn (Interessado $lead): bool => $lead->data_conversao === null) ?? $candidatos->first();
     }
 
     private function notificarEquipeEscolar(Matricula $matricula, Pessoa $aluno, Pessoa $responsavel, Turma $turma): void

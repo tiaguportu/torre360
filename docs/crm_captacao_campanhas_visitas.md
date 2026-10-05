@@ -35,6 +35,10 @@ Serviço: `App\Services\UtmTracker`
 A campanha pode ser ajustada manualmente na ficha do lead (aba **Dados do Negócio**).
 Na tabela de Interessados há a coluna (oculta por padrão) e o filtro **Campanha**.
 
+> O cadastro em si (pessoa, lead, dependentes, reenvio do formulário) é feito por
+> `App\Services\CaptacaoInteressadoService`; o `registrarAtribuicao()` acima vive nele. As regras de
+> reconhecimento da família e de reenvio estão em `docs/crm_funil_e_captacao.md`.
+
 ## 2. Indicadores de conversão
 
 Serviço: `App\Services\CrmConversaoService`. "Matriculado" é o lead com `data_conversao`
@@ -96,7 +100,15 @@ Serviço: `App\Services\InteressadoMatriculaService`
 
 A ação **Matricular** da tabela de Interessados abre o Assistente de Matrícula com
 `?interessado={id}` (visível a quem tem `View:EnrollmentWizard`). Quem não tem acesso ao
-assistente vê **Marcar matriculado**, o atalho anterior que só altera o status.
+assistente vê **Marcar matriculado**, atalho que agora aplica a **mesma conversão** do assistente
+(`LeadFunilService::marcarMatriculado()` → `registrarConversao()`: status de ganho, data, indicação,
+documentos, limpeza do rascunho). Se não existir etapa de ganho cadastrada, a ação avisa em vez de
+deixar o lead sem status (antes gravava `status_interessado_id = null`).
+
+**No Kanban**, arrastar um card para uma etapa de ganho não converte o lead por conta própria: quem
+tem acesso ao assistente é levado a ele (com o lead pré-preenchido); os demais usam o atalho acima.
+Um lead já matriculado não pode ser arrastado de volta a uma etapa ativa nem para perda. Na edição em
+lote, etapas de ganho não são oferecidas e, quando a etapa é alterada, leads já matriculados são pulados.
 
 `EnrollmentWizard::mount()` pré-preenche o formulário com `dadosParaWizard()`:
 
@@ -114,6 +126,21 @@ Livewire `#[Locked]`): define `data_conversao` se ainda vazia, muda o status par
 mesmo serviço passou a ser usado pelo vínculo antigo por `pessoa_id`
 (`marcarConversaoCRM`), que antes só preenchia `data_conversao` e deixava o status
 inalterado.
+
+### Matrícula 100% online (`MatriculaOnlineService`)
+
+Ao concluir uma matrícula pelo fluxo externo, o lead de origem também é convertido por
+`registrarConversao($lead, [$matricula])`. Antes, só `data_conversao` era preenchida: o lead seguia
+"ativo" (recebendo régua e alertas), a indicação não virava `matriculado` e o rascunho de pré-matrícula
+(CPF/endereço) ficava no banco. O lead é localizado assim (`localizarLeadParaConversao`):
+
+1. lead cujo contato é o **responsável** ou o **próprio aluno** (mesmo cadastro de `Pessoa`);
+2. senão, lead com **dependente de nome idêntico** (sem caixa, acento ou espaços repetidos) **e** cujo
+   contato tem o mesmo e-mail ou CPF do responsável.
+
+Nunca por nome parcial: a busca anterior (`like %nome%`) convertia o lead de outra família quando o
+nome do aluno era parte do nome de outra criança ("Ana" × "Mariana"). Havendo mais de um candidato,
+prefere-se um lead ainda não convertido.
 
 ### Correção no assistente
 
@@ -169,9 +196,16 @@ A mesma máscara vale na criação do interessado (mesmo formulário) e no cadas
 | `create_visita_interessado_table` | Tabela `visita_interessado` (FK para `interessado`, `interessado_dependente`, `users`). |
 | `add_campanha_e_utm_to_interessado_table` | `campanha_marketing_id` (FK, `nullOnDelete`), `utm_source`, `utm_medium`, `utm_campaign` em `interessado`. |
 | `create_crm_captacao_permissions` | Permissões e concessões da seção 6. |
+| `2026_10_04_210000_add_expiracao_token_documentos_to_interessado_table` | `interessado.token_documentos_expira_em` (validade do link do portal de documentos; links já emitidos ganham 90 dias). |
+| `2026_10_04_210100_add_automatico_to_historico_contato_table` | `historico_contato.automatico` + índice `(interessado_id, automatico, data_contato)`; classifica os registros automáticos antigos pelo texto que o sistema grava. |
+| `2026_10_04_230000_add_unidade_e_turno_to_interessado_dependente_table` | `interessado_dependente.unidade_id` (FK, `nullOnDelete`) e `turno_preferencia`. |
+| `2026_10_04_230100_add_ultimo_alerta_em_to_interessado_table` | `interessado.ultimo_alerta_em` (controle do intervalo entre alertas). |
 
 ## 8. Testes
 
 `CampanhaUtmCaptacaoTest`, `ConversaoCrmTest`, `VisitaInteressadoTest`,
 `InteressadoMatriculaWizardTest`, `LandingLeadResourceTest`, `CrmCaptacaoPermissoesTest`
-e a lista de widgets em `ShieldWidgetsTest`.
+e a lista de widgets em `ShieldWidgetsTest`. Cobertura do funil e da captação:
+`CaptacaoReenvioTest`, `CaptacaoIndicacaoTest`, `CaptacaoRecaptchaTest`, `MatriculaOnlineConversaoCrmTest`,
+`LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `AlertaLeadsTest`, `ConsultoresCrmTest`,
+`CrmIaDossieCacheTest` (ver `docs/crm_funil_e_captacao.md`).

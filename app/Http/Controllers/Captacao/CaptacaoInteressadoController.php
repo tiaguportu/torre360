@@ -10,26 +10,27 @@ use App\Http\Requests\Captacao\StoreCaptacaoInteressadoRequest;
 use App\Mail\AgradecimentoInteresseMail;
 use App\Models\EmailLog;
 use App\Models\Interessado;
-use App\Models\InteressadoDependente;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\Serie;
-use App\Models\StatusInteressado;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\CaptacaoInteressadoService;
 use App\Services\ConviteMatriculaService;
 use App\Services\IndicacaoCaptacaoService;
-use App\Services\LeadScoreService;
 use App\Services\UtmTracker;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 class CaptacaoInteressadoController extends Controller
 {
@@ -55,64 +56,22 @@ class CaptacaoInteressadoController extends Controller
         return view('captacao.interessado', compact('unidades', 'series', 'turmas', 'origens'));
     }
 
-    public function store(StoreCaptacaoInteressadoRequest $request): RedirectResponse
+    public function store(StoreCaptacaoInteressadoRequest $request, CaptacaoInteressadoService $captacao): RedirectResponse
     {
         $validated = $request->validated();
+        $resultado = $captacao->registrar($validated, $request);
 
-        $nomeInteressado = $validated['tipo_preenchimento'] === 'responsavel'
+        // Na página de agradecimento vai o nome como a pessoa acabou de digitar, não o já gravado no cadastro.
+        $nomeInformado = $validated['tipo_preenchimento'] === 'responsavel'
             ? $validated['responsavel_nome']
             : $validated['alunos'][0]['nome'];
 
-        // Cria ou localiza a Pessoa pelo e-mail
-        $pessoa = Pessoa::firstOrCreate(
-            ['email' => $validated['responsavel_email']],
-            [
-                'nome' => $nomeInteressado,
-                'cpf' => $validated['responsavel_cpf'] ?? null,
-                'telefone' => $validated['responsavel_telefone'],
-            ]
-        );
+        $pessoa = $resultado['pessoa'];
+        $primeiraUnidadeId = $resultado['primeira_unidade_id'];
 
-        $statusNovo = StatusInteressado::where('nome', 'Novo')->first();
-        $origemSite = OrigemInteressado::firstOrCreate(['nome' => 'Site']);
-
-        // Link "Família Indica Família": o indicador é resolvido antes de gravar o lead (auto-indicação é ignorada).
-        $codigoIndicacao = $this->indicacoes->codigoDaRequisicao($request);
-        $indicador = $this->indicacoes->localizarIndicador($codigoIndicacao, $pessoa);
-
-        // Quem veio por indicação e não informou outra origem entra como "Indicação" (e não como "Site").
-        $origemPadraoId = $indicador
-            ? OrigemInteressado::firstOrCreate(['nome' => 'Indicação'])->id
-            : $origemSite->id;
-        $origemId = $request->como_conheceu ?? $origemPadraoId;
-
-        $interessado = Interessado::updateOrCreate(
-            ['pessoa_id' => $pessoa->id],
-            [
-                'status_interessado_id' => $statusNovo?->id ?? 1,
-                'origem_interessado_id' => $origemId,
-                'data_primeiro_contato' => now(),
-                'data_proximo_contato' => now()->addDays(1),
-                'observacoes' => $this->montarObservacoes($validated, $indicador),
-            ]
-        );
-
-        $this->registrarAtribuicao($interessado, UtmTracker::atribuicao($request));
-
-        if ($indicador && $codigoIndicacao) {
-            $this->indicacoes->registrar($interessado, $indicador, $codigoIndicacao);
-        }
-
-        $this->indicacoes->esquecer($request);
-
-        $this->salvarDependentes($interessado, $validated);
-
-        LeadScoreService::recalcular($interessado);
-
-        $primeiraUnidadeId = $validated['alunos'][0]['unidade_id'] ?? null;
         $this->enviarEmailERegistrarLog($pessoa, $primeiraUnidadeId);
 
-        $this->notificarEquipeInterna($interessado, $pessoa, $indicador);
+        $this->notificarEquipeInterna($resultado);
 
         // Redireciona com dados para personalizar a página de sucesso
         $primeiraUnidade = $primeiraUnidadeId ? Unidade::find($primeiraUnidadeId) : Unidade::where('flag_ativo', true)->first();
@@ -120,96 +79,115 @@ class CaptacaoInteressadoController extends Controller
         return redirect()
             ->route('captacao.interessado.sucesso')
             ->with([
-                'nome_responsavel' => $nomeInteressado,
+                'nome_responsavel' => $nomeInformado,
                 'whatsapp_unidade' => $primeiraUnidade?->celular_whatsapp ?? null,
                 'nome_unidade' => $primeiraUnidade?->nome ?? null,
             ]);
     }
 
     /**
-     * Grava a atribuição de campanha/UTM apenas se o lead ainda não tiver uma
-     * (first touch: um novo envio do mesmo contato não reescreve a origem).
+     * Notifica a equipe (e o consultor do lead, se houver) sobre o novo lead ou sobre o retorno de um lead existente.
      *
-     * @param  array<string, mixed>  $atribuicao
+     * @param  array{interessado: Interessado, pessoa: Pessoa, indicador: ?Pessoa, novo: bool, reaberto: bool, ja_matriculado: bool}  $resultado
      */
-    private function registrarAtribuicao(Interessado $interessado, array $atribuicao): void
+    private function notificarEquipeInterna(array $resultado): void
     {
-        if ($atribuicao === [] || filled($interessado->utm_source) || filled($interessado->utm_campaign) || filled($interessado->campanha_marketing_id)) {
-            return;
-        }
+        $interessado = $resultado['interessado'];
+        $pessoa = $resultado['pessoa'];
+        $indicador = $resultado['indicador'];
 
-        $interessado->update($atribuicao);
-    }
+        $destinatarios = $this->destinatariosDaEquipe();
 
-    /**
-     * Notifica a equipe administrativa sobre o novo lead.
-     */
-    private function notificarEquipeInterna(Interessado $interessado, Pessoa $pessoa, ?Pessoa $indicador = null): void
-    {
-        $destinatarios = User::permission('View:Interessado')->get();
+        if ($interessado->usuario_id && ! $destinatarios->contains('id', $interessado->usuario_id)) {
+            $consultor = User::query()->find($interessado->usuario_id);
 
-        if ($destinatarios->isEmpty()) {
-            $destinatarios = User::role(['admin', 'super_admin'])->get();
+            if ($consultor) {
+                $destinatarios->push($consultor);
+            }
         }
 
         if ($destinatarios->isEmpty()) {
             return;
+        }
+
+        [$titulo, $corpo, $icone, $cor] = match (true) {
+            $resultado['novo'] => [
+                'Novo Interessado Cadastrado!',
+                "**{$pessoa->nome}** acaba de preencher o formulário de interesse via site.",
+                'heroicon-o-user-plus',
+                'success',
+            ],
+            $resultado['reaberto'] => [
+                'Lead perdido voltou a procurar a escola!',
+                "**{$pessoa->nome}** estava como perdido e preencheu o formulário de interesse novamente. O lead foi reaberto.",
+                'heroicon-o-arrow-path',
+                'warning',
+            ],
+            $resultado['ja_matriculado'] => [
+                'Família matriculada enviou novo interesse',
+                "**{$pessoa->nome}**, que já é família matriculada, preencheu o formulário de interesse novamente (possível novo aluno).",
+                'heroicon-o-academic-cap',
+                'info',
+            ],
+            default => [
+                'Interessado reenviou o formulário',
+                "**{$pessoa->nome}** preencheu o formulário de interesse novamente. Confira os dados novos na linha do tempo.",
+                'heroicon-o-arrow-uturn-left',
+                'info',
+            ],
+        };
+
+        if ($indicador && $resultado['novo']) {
+            $corpo .= " Veio por indicação da família **{$indicador->nome}**.";
         }
 
         Notification::make()
-            ->title('Novo Interessado Cadastrado!')
-            ->body("**{$pessoa->nome}** acaba de preencher o formulário de interesse via site."
-                .($indicador ? " Veio por indicação da família **{$indicador->nome}**." : ''))
-            ->icon('heroicon-o-user-plus')
-            ->color('success')
+            ->title($titulo)
+            ->body($corpo)
+            ->icon($icone)
+            ->color($cor)
             ->actions([
                 Action::make('view')
                     ->label('Ver Leads')
-                    ->url(InteressadoResource::getUrl('index'))
+                    ->url(InteressadoResource::getUrl('edit', ['record' => $interessado]))
                     ->button(),
             ])
             ->sendToDatabase($destinatarios);
     }
 
     /**
-     * Salva os dependentes vinculados ao interessado.
+     * @return Collection<int, User>
      */
-    private function salvarDependentes(Interessado $interessado, array $data): void
+    private function destinatariosDaEquipe(): Collection
     {
-        $interessado->dependentes()->delete();
-
-        $alunos = $data['alunos'] ?? [];
-        $turmaIds = array_values(array_filter(array_column($alunos, 'turma_id')));
-        $turmasPorId = ! empty($turmaIds) ? Turma::whereIn('id', $turmaIds)->pluck('serie_id', 'id') : collect();
-
-        foreach ($alunos as $alunoData) {
-            if (empty($alunoData['nome'])) {
-                continue;
-            }
-
-            // Prioriza serie_id do formulário novo, fallback para turma (legado)
-            $serieId = $alunoData['serie_id'] ?? null;
-
-            if (! $serieId && ! empty($alunoData['turma_id'])) {
-                $serieId = $turmasPorId[$alunoData['turma_id']] ?? null;
-            }
-
-            InteressadoDependente::create([
-                'interessado_id' => $interessado->id,
-                'nome_crianca' => $alunoData['nome'],
-                'data_nascimento' => $alunoData['data_nascimento'] ?? null,
-                'vinculo' => $alunoData['vinculo'] ?? 'Parente',
-                'serie_id' => $serieId,
-            ]);
+        // `User::permission()` lança exceção se a permissão ainda não foi criada (instalação nova): o formulário
+        // público não pode cair por isso, então recorre direto aos administradores.
+        try {
+            $destinatarios = User::permission('View:Interessado')->get();
+        } catch (PermissionDoesNotExist) {
+            $destinatarios = collect();
         }
+
+        if ($destinatarios->isEmpty()) {
+            $destinatarios = User::role(['admin', 'super_admin'])->get();
+        }
+
+        return $destinatarios->values();
     }
 
     /**
-     * Envia e-mail de agradecimento e registra no log.
+     * Envia e-mail de agradecimento e registra no log. No máximo um por pessoa na janela configurada: o
+     * formulário é público e sem login, então sem isso serviria para encher a caixa de entrada de terceiros.
      */
     private function enviarEmailERegistrarLog(Pessoa $pessoa, ?int $unidadeId = null): void
     {
         if (! $pessoa->email) {
+            return;
+        }
+
+        $janelaHoras = (int) config('crm.captacao.agradecimento_janela_horas', 24);
+
+        if (! Cache::add("captacao:agradecimento:{$pessoa->id}", true, now()->addHours($janelaHoras))) {
             return;
         }
 
@@ -291,54 +269,5 @@ class CaptacaoInteressadoController extends Controller
     public function conviteConfirmado(string $token): View
     {
         return view('captacao.convite-sucesso');
-    }
-
-    /**
-     * Monta texto de observações consolidando os dados do formulário sem N+1.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    private function montarObservacoes(array $data, ?Pessoa $indicador = null): string
-    {
-        $obs = [];
-        $alunos = $data['alunos'] ?? [];
-
-        $unidadeIds = array_values(array_filter(array_column($alunos, 'unidade_id')));
-        $serieIds = array_values(array_filter(array_column($alunos, 'serie_id')));
-
-        $unidadesPorId = ! empty($unidadeIds) ? Unidade::whereIn('id', $unidadeIds)->pluck('nome', 'id') : collect();
-        $seriesPorId = ! empty($serieIds) ? Serie::whereIn('id', $serieIds)->pluck('nome', 'id') : collect();
-
-        foreach ($alunos as $i => $aluno) {
-            $label = 'Aluno '.($i + 1).': '.($aluno['nome'] ?? '-');
-
-            if (! empty($aluno['unidade_id'])) {
-                $nomeUnidade = $unidadesPorId[$aluno['unidade_id']] ?? '-';
-                $label .= ' | Unidade: '.$nomeUnidade;
-            }
-
-            if (! empty($aluno['serie_id'])) {
-                $nomeSerie = $seriesPorId[$aluno['serie_id']] ?? '-';
-                $label .= ' | Série: '.$nomeSerie;
-            }
-
-            if (! empty($aluno['turno_preferencia'])) {
-                $label .= ' | Turno: '.$aluno['turno_preferencia'];
-            }
-
-            $obs[] = $label;
-        }
-
-        if (! empty($data['observacoes'])) {
-            $obs[] = 'Observações: '.$data['observacoes'];
-        }
-
-        if ($indicador) {
-            $obs[] = "Indicação: família de {$indicador->nome} (Família Indica Família)";
-        }
-
-        $obs[] = 'Origem: Formulário público (site)';
-
-        return implode("\n", $obs);
     }
 }
