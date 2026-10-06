@@ -303,6 +303,33 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Lei da Mensalidade Escolar (Lei 9.870/99) e Acordos de Inadimplência
+        $financeiroNovoPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny', 'Homologar'] as $acao) {
+            $financeiroNovoPermissions[] = "{$acao}:PlanilhaLeiMensalidade";
+        }
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny', 'Aprovar'] as $acao) {
+            $financeiroNovoPermissions[] = "{$acao}:AcordoInadimplencia";
+        }
+
+        foreach ($financeiroNovoPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($financeiroNovoPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

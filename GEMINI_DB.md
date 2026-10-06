@@ -1054,3 +1054,83 @@ Estrutura de ensino e turmas.
   - Propostas dentro da alçada do consultor são auto-aprovadas instantaneamente; propostas acima disparam notificação interna aos aprovadores com permissão `Aprovar:PropostaComercial`.
   - Visualização timbrada (espelho da proposta comercial em modal), disparo instantâneo via WhatsApp e herança transparente de condições no **Assistente de Matrícula** (`/admin/enrollment-wizard?proposta_id=...`).
 
+### `planilha_lei_mensalidades` (Planilha de Variação de Custos e Reajuste Anual - Lei Federal 9.870/1999)
+- **Representa:** Memória de cálculo oficial exigida pela Lei Federal 9.870/99 e Decreto 3.274/99 para embasamento de reajustes anuais de anuidade escolar, com prazo de publicação prévia de 45 dias antes da matrícula.
+- **Campos Principais:**
+  - `ano_base`: Ano corrente/anterior de referência contábil (ex: 2026).
+  - `ano_letivo_destino`: Ano seguinte planejado com a nova anuidade (ex: 2027).
+  - `titulo`: Identificação formal do demonstrativo.
+  - `unidade_id`: FK `unidade.id` (nullable - escopo por unidade ou geral).
+  - `curso_id`: FK `curso.id` (nullable - escopo por curso/nível ou geral).
+  - `alunos_base`: Quantidade de alunos pagantes no ano base.
+  - `mensalidade_media_base`: Valor médio praticado no exercício base.
+  - `receita_anual_base`: Projeção de faturamento anual do ano base.
+  - `custo_pessoal_base`: Total folha salarial de professores e administrativos + encargos.
+  - `custo_custeio_base`: Total de despesas operacionais e manutenção geral.
+  - `custo_investimento_base`: Investimentos e melhorias físicas/tecnológicas realizadas no ano base.
+  - `custo_total_base`: Consolidação dos 3 grupos de custo no ano base.
+  - `percentual_dissidio_pessoal`: Variação salarial da convenção coletiva / dissídio docente.
+  - `variacao_pessoal_valor`: Acréscimo financeiro em pessoal.
+  - `custo_pessoal_projetado`: Folha projetada do exercício seguinte.
+  - `percentual_inflacao_custeio`: Variação de inflação/insumos para custeio geral.
+  - `variacao_custeio_valor`: Acréscimo financeiro em custeio.
+  - `custo_custeio_projetado`: Custeio projetado do exercício seguinte.
+  - `valor_novos_investimentos`: Aporte em melhorias pedagógicas e infraestrutura autorizadas pelo Art. 1º, § 3º.
+  - `custo_investimento_projetado`: Custo projetado de investimentos.
+  - `custo_total_projetado`: Montante total de despesas projetadas.
+  - `variacao_custo_total_percentual`: Índice matemático resultante da fórmula oficial da lei.
+  - `percentual_reajuste_sugerido`: Índice de reajuste recomendado.
+  - `percentual_reajuste_adotado`: Índice efetivamente homologado pela diretoria.
+  - `mensalidade_projetada`: Nova mensalidade fixada por aluno.
+  - `anuidade_projetada`: Novo valor da anuidade anual (12 parcelas).
+  - `meta_alunos_projetada`: Projeção de estudantes no exercício seguinte.
+  - `status`: Enum `StatusPlanilhaLei` (`rascunho`, `em_analise`, `homologada`, `publicada`).
+  - `justificativa_pedagogica`: Descrição formal das melhorias e inovações didáticas (exigência PROCON).
+  - `data_afixacao`: Data em que a planilha foi tornada pública no mural/portal.
+  - `responsavel_user_id`: FK `users.id` (elaborador).
+  - `homologado_por_user_id`: FK `users.id` (diretor que homologou).
+  - `homologado_em`: Data e hora da homologação.
+- **Relacionamentos:** BelongsTo `Unidade`, BelongsTo `Curso`, BelongsTo `User` (`responsavel` e `homologador`).
+
+### `acordo_inadimplencias` e `acordo_parcelas` (Central de Acordos Online & Confissão de Dívida)
+- **Representa:** Renegociação formal de faturas vencidas com emissão de Termo de Acordo e Confissão de Dívida com eficácia de Título Executivo Extrajudicial (Art. 784, III do CPC).
+- **Campos Principais (`acordo_inadimplencias`):**
+  - `codigo`: Identificador sequencial auditável (ex: `ACD-2026-00001`).
+  - `contrato_id`: FK `contrato.id` (nullable).
+  - `matricula_id`: FK `matricula.id` (estudante vinculado).
+  - `responsavel_pessoa_id`: FK `pessoa.id` (responsável financeiro devedor).
+  - `criado_por_user_id`: FK `users.id` (operador do financeiro).
+  - `valor_original_total`: Soma histórica das mensalidades em atraso.
+  - `valor_multa_original`: Multa moratória acumulada das faturas.
+  - `valor_juros_original`: Juros de mora acumulados.
+  - `quantidade_faturas_originais`: Contagem de mensalidades refinanciadas.
+  - `faturas_originais_ids`: Array JSON contendo os IDs das faturas originais.
+  - `percentual_desconto_concedido`: Abatimento concedido sobre encargos/dívida para estimular quitação.
+  - `valor_desconto`: Valor nominal do desconto aplicado.
+  - `valor_total_acordo`: Montante líquido consolidado a ser pago pela família.
+  - `valor_entrada`: Sinal/entrada exigido no acordo.
+  - `data_vencimento_entrada`: Prazo para pagamento da entrada.
+  - `quantidade_parcelas`: Número de parcelas do acordo (1 a 24).
+  - `valor_parcela`: Valor nominal de cada parcela mensal.
+  - `dia_vencimento_parcelas`: Dia fixo do mês para os vencimentos subsequentes.
+  - `primeiro_vencimento`: Data de vencimento da primeira parcela mensal.
+  - `token_publico`: Token hash seguro (64 caracteres) para acesso e assinatura digital pela família sem login.
+  - `status`: Enum `StatusAcordoInadimplencia` (`simulado`, `aguardando_aceite`, `ativo`, `cumprido`, `quebrado`, `cancelado`).
+  - `termo_confissao_texto`: Minuta jurídica completa da confissão de dívida e cláusula resolutiva expressa.
+  - `aceito_em`: Timestamp do aceite online formal da família.
+  - `ip_aceite`: Endereço IP do dispositivo no momento da assinatura eletrônica.
+  - `user_agent_aceite`: Identificador do navegador/dispositivo do devedor.
+  - `observacoes`: Anotações internas do financeiro.
+- **Campos Principais (`acordo_parcelas`):**
+  - `acordo_inadimplencia_id`: FK `acordo_inadimplencias.id` (cascade).
+  - `numero_parcela`: 0 para entrada facilitada, 1..N para parcelas mensais.
+  - `valor`: Valor da parcela.
+  - `data_vencimento`: Data de vencimento da parcela.
+  - `data_pagamento`: Data em que a parcela foi quitada.
+  - `valor_pago`: Montante efetivamente recebido.
+  - `status`: String (`pendente`, `pago`, `atrasado`, `cancelado`).
+  - `forma_pagamento`: Meio de pagamento (`pix`, `dinheiro`, `cartao`, `boleto`).
+  - `fatura_gerada_id`: FK `faturas.id` (nullable).
+- **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `Contrato`, BelongsTo `Pessoa` (`responsavelPessoa`), BelongsTo `User` (`criadoPor`), HasMany `parcelas`.
+
+

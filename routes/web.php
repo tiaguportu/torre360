@@ -12,6 +12,7 @@ use App\Http\Controllers\Crm\PesquisaVisitaController;
 use App\Http\Controllers\Crm\PortalDocumentosCandidatoController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
+use App\Http\Controllers\Financeiro\AcordoPublicoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
@@ -69,6 +70,14 @@ Route::post('/admissao/{token}/enviar', [PortalDocumentosCandidatoController::cl
 Route::delete('/admissao/{token}/remover/{documento}', [PortalDocumentosCandidatoController::class, 'remover'])
     ->middleware('throttle:30,1')
     ->name('candidato.documentos.remover');
+
+// Central de Acordos Online & Confissão de Dívida (Família)
+Route::get('/acordo/{token}', [AcordoPublicoController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('acordo.publico.show');
+Route::post('/acordo/{token}/aceitar', [AcordoPublicoController::class, 'aceitar'])
+    ->middleware('throttle:20,1')
+    ->name('acordo.publico.aceitar');
 
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');

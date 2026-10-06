@@ -42,7 +42,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 📢 **Comunicação Escolar** | Eventos Escolares (RSVP) e Central de Atendimento |
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
 | 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
-| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato, DRE e Controladoria Escolar (Rentabilidade & Ponto de Equilíbrio por Turma) |
+| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato, DRE, Controladoria Escolar (Rentabilidade & Ponto de Equilíbrio por Turma), Planilha da Lei da Mensalidade (Lei 9.870/99) e Acordos & Renegociação de Inadimplência |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
@@ -2482,7 +2482,64 @@ O sistema calcula o percentual de desconto concedido e classifica automaticament
 
 ---
 
+## ⚖️ 48. Planilha da Lei da Mensalidade Escolar (Lei Federal nº 9.870/99) & Simulador de Reajuste Anual (`/admin/planilha-lei-mensalidades`)
+
+O módulo da **Lei da Mensalidade Escolar** blinda juridicamente a instituição perante o PROCON, Ministério Público e órgãos reguladores, gerando a memória contábil oficial que autoriza e comprova os reajustes anuais de anuidade escolar.
+
+### 48.1 Embasamento Legal & Prazos Obrigatórios
+- **Art. 1º da Lei 9.870/1999 e Decreto 3.274/1999:** O reajuste da anuidade deve ser lastreado em variação comprovada de:
+  1. Folha de pagamento e encargos de pessoal docente e técnico-administrativo (dissídios e convenções coletivas);
+  2. Custeio geral (manutenção predial, insumos, serviços de terceiros e tarifas públicas);
+  3. Investimentos em melhorias didático-pedagógicas e inovações de infraestrutura.
+- **Prazo de Publicação Prévia:** O demonstrativo de custos e o texto da proposta de contrato devem ser afixados em local de fácil acesso ou portal oficial com no mínimo **45 dias de antecedência** da data final de matrícula.
+
+### 48.2 Recursos e Ferramentas do Módulo
+1. **Importação Automática do Sistema:**
+   - Ao criar uma nova planilha, o botão **Importar Dados do Sistema** puxa automaticamente o número de alunos ativos matriculados, a mensalidade média praticada e os custos docentes/operacionais das turmas do Torre360, poupando horas de levantamento manual.
+2. **Cálculo Reativo em Tempo Real:**
+   - À medida que o gestor altera o dissídio estimado (ex: 6%), a inflação de custeio (ex: 4,5%) ou o aporte em novos laboratórios e tecnologia (ex: R$ 60.000), o sistema calcula instantaneamente:
+     - Total de despesas projetadas;
+     - Índice matemático oficial da Lei 9.870/99;
+     - Nova mensalidade sugerida e anuidade anualizada (12 parcelas);
+     - **Parecer de Conformidade PROCON:** Alerta visual verde se o reajuste adotado é suportado pela planilha, ou amarelo se exige justificativas complementares.
+3. **Espelho Oficial Imprimível (Modal Timbrado):**
+   - O botão **Espelho Oficial** gera em tela o demonstrativo completo formatado conforme os padrões do MEC/SDE/PROCON, pronto para impressão, afixação física no mural escolar ou envio digital aos órgãos de fiscalização.
+4. **Ciclo de Homologação e Publicação:**
+   - A planilha percorre os estados `Rascunho` ➔ `Em Análise` ➔ `Homologada pela Diretoria` ➔ `Publicada Oficialmente`, garantindo governança auditada sobre quem autorizou o reajuste e em qual data.
+
+---
+
+## 💳 49. Central de Acordos Online & Confissão de Dívida Automatizada (`/admin/acordo-inadimplencias` e `/acordo/{token}`)
+
+A **Central de Acordos e Recuperação de Inadimplência** profissionaliza a negociação de mensalidades em atraso. Transforma atritos desgastantes na secretaria em acordos amigáveis, rápidos e respaldados juridicamente como Títulos Executivos Extrajudiciais.
+
+### 49.1 Como Funciona a Negociação
+1. **Identificação das Pendências:**
+   - O operador seleciona o estudante ou matrícula no formulário. O sistema localiza automaticamente as faturas em atraso no financeiro, calculando a soma original, multa e juros.
+2. **Simulação do Parcelamento Amigável:**
+   - Defina o percentual de desconto concedido sobre juros/multa para incentivar o pagamento (ex: 100% de isenção de mora).
+   - Defina o valor da entrada facilitada (opcional) e o número de parcelas mensais (de 1 a 24 parcelas).
+   - O sistema gera o cronograma exato com datas de vencimento e valores equilibrados.
+3. **Geração do Termo de Confissão de Dívida:**
+   - O sistema gera automaticamente o texto legal do **Instrumento Particular de Confissão, Parcelamento e Transação de Dívida**, qualificado expressamente como **Título Executivo Extrajudicial (Art. 784, inciso III do Código de Processo Civil)** com cláusula resolutiva expressa e perda de desconto em caso de inadimplemento.
+
+### 49.2 Envio por WhatsApp e Assinatura Eletrônica sem Senha
+1. **Disparo com 1 Clique via WhatsApp:**
+   - O botão **WhatsApp** abre a mensagem pronta com o nome do responsável, valor com desconto, número de parcelas e o **link exclusivo de autoatendimento**.
+2. **Portal do Acordo da Família (`/acordo/{token}`):**
+   - Os pais acessam pelo celular através de link protegido por token de 48 caracteres criptográficos (sem necessidade de login ou senha).
+   - Visualizam o resumo da dívida, a economia conquistada e o cronograma de vencimentos.
+   - Leem a minuta legal e clicam em **"Confirmar e Assinar Acordo Digitalmente"**.
+   - O sistema registra o aceite eletrônico com data, hora, IP do devedor e user-agent do dispositivo, ativando o acordo instantaneamente no financeiro.
+
+### 49.3 Gestão e Baixa de Pagamentos
+- **Baixa Rápida:** Na tabela de acordos, a ação **Baixar Parcela** permite registrar recebimentos efetuados na secretaria (Pix, dinheiro, cartão ou boleto).
+- **Quitação Automática:** Quando todas as parcelas são baixadas, o status do acordo migra automaticamente para `Cumprido / Quitado`.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 
