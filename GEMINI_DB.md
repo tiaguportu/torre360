@@ -132,8 +132,8 @@ Estrutura de ensino e turmas.
 
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
-- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `etapa_ensino_agregada_id`, `etapa_ensino_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean), `forma_organizacao` (1-Série/Ano, 2-Semestral, 3-Ciclos, 4-Grupos não seriados, 5-Módulos, 6-Alternância), `modalidade_ensino` (1-Regular, 2-Especial, 3-EJA, 4-Profissional), `tipo_lingua_ministrada` (1-Português, 2-Indígena+Português, 3-Indígena), `codigo_lingua_indigena`, `turma_educacao_bilingue_surdos` (boolean) e flags de AEE (`flag_aee_*`).
-- **Relacionamentos:** BelongsTo `etapaEnsinoAgregada` (`etapa_ensino_agregada`), BelongsTo `etapaEnsino` (`etapa_ensino`), HasMany `horariosFuncionamento` (`turma_horario`).
+- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `etapa_ensino_agregada_id`, `etapa_ensino_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean), `forma_organizacao` (1-Série/Ano, 2-Semestral, 3-Ciclos, 4-Grupos não seriados, 5-Módulos, 6-Alternância), `modalidade_ensino` (1-Regular, 2-Especial, 3-EJA, 4-Profissional), `tipo_lingua_ministrada` (1-Português, 2-Indígena+Português, 3-Indígena), `codigo_lingua_indigena`, `turma_educacao_bilingue_surdos` (boolean), flags de AEE (`flag_aee_*`) e **Controladoria Escolar**: `mensalidade_base` (Decimal 10,2 - mensalidade de tabela de referência), `custo_docente_mensal` (Decimal 10,2 - custo mensal direto da folha docente da turma), `custo_operacional_rateado` (Decimal 10,2 - rateio fixo de infraestrutura e suporte para a turma), `meta_margem_lucro` (Decimal 5,2 - meta percentual esperada de margem líquida).
+- **Relacionamentos:** BelongsTo `etapaEnsinoAgregada` (`etapa_ensino_agregada`), BelongsTo `etapaEnsino` (`etapa_ensino`), HasMany `horariosFuncionamento` (`turma_horario`), HasMany `propostasComerciais` (`proposta_comercials`).
 
 ### `matricula`
 - **Representa:** Registro de matrícula acadêmica de um estudante na instituição de ensino.
@@ -1017,3 +1017,40 @@ Estrutura de ensino e turmas.
 
 ### `regua_follow_ups` e `regua_follow_up_logs`
 - **Representa:** Regras automatizadas e esteira de follow-up do funil comercial de captação (WhatsApp e E-mail), com interpolação de tags dinâmicas (`{{LINK_PESQUISA}}`, `{{PRIMEIRO_NOME}}`, `{{DATA_VISITA}}`, etc.).
+
+### `proposta_comercials` (Simulador de Propostas Comerciais & Revenue Management com Alçadas de Desconto)
+- **Representa:** Simulações e propostas comerciais formais emitidas pela equipe de admissões para famílias interessadas, com governança de alçadas de desconto por hierarquia corporativa.
+- **Campos Principais:**
+  - `codigo`: String única (ex: `PROP-2026-ABC123`) para identificação e citação segura.
+  - `interessado_id`: FK `interessados.id` (lead/família solicitante).
+  - `interessado_dependente_id`: FK `interessado_dependente.id` (nullable - aluno/candidato quando especificado).
+  - `serie_id`: FK `serie.id` (série/ano de ingresso pretendido).
+  - `turma_id`: FK `turma.id` (nullable - turma específica simulada).
+  - `periodo_letivo_id`: FK `periodo_letivo.id` (ano/semestre letivo da proposta).
+  - `turno_id`: FK `turno.id` (nullable - turno pretendido).
+  - `consultor_id`: FK `users.id` (consultor comercial que elaborou a proposta).
+  - `aprovado_por_id`: FK `users.id` (nullable - gestor que autorizou a proposta caso tenha entrado em alçada).
+  - `valor_mensalidade_tabela`: Decimal (10,2) - Valor cheio de tabela da mensalidade.
+  - `percentual_desconto_mensalidade`: Decimal (5,2) - Desconto pretendido na mensalidade (ex: 12.50%).
+  - `valor_mensalidade_com_desconto`: Decimal (10,2) - Valor líquido calculado por parcela.
+  - `quantidade_parcelas`: Integer (default 12) - Número de mensalidades contratuais.
+  - `valor_anuidade_total`: Decimal (10,2) - Montante anual total contratado com desconto.
+  - `valor_taxa_matricula_tabela`: Decimal (10,2) - Taxa de matrícula cheia de tabela.
+  - `percentual_desconto_matricula`: Decimal (5,2) - Desconto concedido na matrícula.
+  - `valor_taxa_matricula_com_desconto`: Decimal (10,2) - Taxa de matrícula líquida negociada.
+  - `nivel_alcada`: Enum `NivelAlcadaComercial` (`consultor` até 7%, `coordenacao` de 7.01% a 15%, `diretoria` acima de 15%).
+  - `status`: Enum `StatusPropostaComercial` (`rascunho`, `pendente_aprovacao`, `aprovada`, `recusada`, `expirada`, `convertida`).
+  - `justificativa_comercial`: Text (nullable) - Motivo da concessão do desconto (ex: irmãos, transferência tardia, pagamento pontual).
+  - `motivo_recusa`: Text (nullable) - Justificativa formal registrada pelo gestor ao reprovar a alçada.
+  - `termos_condicoes`: Text (nullable) - Cláusulas e condições especiais acordadas.
+  - `data_validade`: Date - Limite temporal de vigência da proposta comercial.
+  - `aprovado_em`: Datetime (nullable) - Timestamp da liberação da alçada.
+  - `recusado_em`: Datetime (nullable) - Timestamp de eventual recusa.
+  - `convertido_em`: Datetime (nullable) - Data da conversão em matrícula.
+  - `matricula_id`: FK `matricula.id` (nullable) - Matrícula efetivada originada por esta proposta.
+- **Relacionamentos:** BelongsTo `Interessado`, BelongsTo `InteressadoDependente`, BelongsTo `Serie`, BelongsTo `Turma`, BelongsTo `PeriodoLetivo`, BelongsTo `Turno`, BelongsTo `User` (`consultor` e `aprovador`), BelongsTo `Matricula`.
+- **Governança & Integrações:** 
+  - Cálculo instantâneo via `RevenueManagementService` com bloqueio contra estouro de margem sem alçada.
+  - Propostas dentro da alçada do consultor são auto-aprovadas instantaneamente; propostas acima disparam notificação interna aos aprovadores com permissão `Aprovar:PropostaComercial`.
+  - Visualização timbrada (espelho da proposta comercial em modal), disparo instantâneo via WhatsApp e herança transparente de condições no **Assistente de Matrícula** (`/admin/enrollment-wizard?proposta_id=...`).
+

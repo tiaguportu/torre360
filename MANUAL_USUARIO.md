@@ -32,7 +32,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | Grupo | O que você faz aqui |
 |---|---|
 | 🏠 **Início** | Painel com indicadores, calendários e pendências |
-| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Campanhas de Marketing, Comunicação em Massa, Régua de Follow-up, Leads da Landing Page e Modelos de WhatsApp |
+| 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Simulador de Propostas Comerciais com Alçadas de Desconto, Campanhas de Marketing, Comunicação em Massa, Régua de Follow-up, Leads da Landing Page e Modelos de WhatsApp |
 | 🗂️ **Secretaria** | Matrículas, Pessoas, Coordenadores, Documentos (modelos, emitidos com QR e inseridos), Crachás |
 | 🎓 **Acadêmico** | Cursos, Séries, Turmas, Ensalamento, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
 | ✅ **Avaliações** | Avaliações, Notas, Avaliação e Notas de Habilidades e Lançamento de Notas em Grade |
@@ -42,7 +42,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 📢 **Comunicação Escolar** | Eventos Escolares (RSVP) e Central de Atendimento |
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
 | 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
-| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato e DRE |
+| 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato, DRE e Controladoria Escolar (Rentabilidade & Ponto de Equilíbrio por Turma) |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
@@ -2405,6 +2405,84 @@ Assim que a secretaria conclui a captação e homologa a matrícula do aluno, to
 
 ---
 
+## 📈 46. Controladoria Escolar: Ponto de Equilíbrio e Rentabilidade por Turma (`/admin/financeiro/rentabilidade-turmas`)
+
+O módulo de **Controladoria Escolar por Turma** capacita diretores e gestores financeiros a enxergar a viabilidade econômica de cada sala de aula em tempo real, eliminando a dependência de planilhas manuais e antecipando decisões de agrupamento, fechamento ou investimento pedagógico.
+
+### 46.1 O Que a Ferramenta Apura
+1. **Ocupação e Lotação:**
+   - Compara o total de matrículas ativas em relação à capacidade máxima de alunos da turma (`vagas_maximas`).
+   - Apresenta taxa percentual de ocupação física e vagas ociosas.
+2. **Receita Mensal Efetiva:**
+   - Considera as mensalidades reais contratadas dos alunos ativos.
+   - Deduz bolsas de estudo vigentes concedidas (`BolsaConcedida`), refletindo a real arrecadação líquida da turma.
+3. **Estrutura de Custos:**
+   - **Custo Docente:** Folha mensal direta de professores e encargos alocados à turma.
+   - **Custo Operacional:** Rateio de despesas indiretas e infraestrutura predial da unidade.
+4. **Resultado Líquido e Margem (%):**
+   - Apura o superávit ou déficit mensal gerado por cada turma (`Receita Líquida - Custos Totais`).
+   - Calcula a **Margem de Contribuição (%)** e compara com a meta estipulada pela escola.
+5. **Ponto de Equilíbrio (Break-Even de Alunos):**
+   - Indica a quantidade exata de alunos necessária para que a turma pague todos os seus custos sem gerar prejuízo.
+   - Aponta a folga ou o déficit em relação à quantidade atual de alunos.
+
+### 46.2 Diagnóstico Visual e Status da Turma
+- 🟢 **Lucrativa (Meta Atingida):** Turma gerando superávit igual ou superior à meta de margem estabelecida.
+- 🟡 **Atenção (Lucro Abaixo da Meta):** Turma opera com resultado positivo, porém abaixo da meta esperada.
+- 🔴 **Prejuízo (Abaixo do Break-Even):** Turma operando em déficit financeiro. Alerta imediato para ações da coordenação.
+
+### 46.3 Funcionalidades e Ações Interativas
+1. **Cards de KPIs Consolidados no Topo:**
+   - Total de turmas ativas, receita líquida global, custos totais consolidados, resultado líquido geral e quantidade de turmas deficitárias.
+2. **Parametrização Rápida de Custos (Modal):**
+   - Na tabela de rentabilidade, o botão **Parametrizar Custos** permite ao gestor com permissão (`Manage:ControladoriaTurmas`) ajustar a qualquer momento a mensalidade base, custo docente, custo rateado e a margem meta da turma.
+3. **Simulador de Cenários ("E se?"):**
+   - O botão de cabeçalho **Simular Cenário** permite projetar impactos imediatos no resultado antes de tomar decisões:
+     - *"E se ingressarem mais 4 alunos na turma?"*
+     - *"E se concedermos um reajuste de R$ 150 na mensalidade?"*
+     - *"E se o custo docente aumentar em 10%?"*
+   - O simulador calcula instantaneamente a nova receita, o novo resultado, a nova margem e a variação em relação ao cenário atual.
+4. **Filtros Globais:**
+   - Filtragem dinâmica por Curso, Série, Turno e Situação Financeira (Todas, Lucrativas, Em Atenção, Em Prejuízo).
+
+---
+
+## 🎯 47. Simulador de Propostas Comerciais com Alçadas de Desconto (Revenue Management) (`/admin/proposta-comercials`)
+
+O **Simulador de Propostas Comerciais com Governança de Alçadas** profissionaliza as negociações de admissão e matrícula. A instituição ganha agilidade para fechar novos alunos sem correr o risco de concessão desordenada de descontos por consultores de captação.
+
+### 47.1 Hierarquia de Alçadas de Desconto
+O sistema calcula o percentual de desconto concedido e classifica automaticamente o nível de governança exigido:
+- 🟢 **Alçada do Consultor (Até 7.00% de desconto):**
+  - A proposta é **Auto-Aprovada** imediatamente na criação. O consultor já pode emitir a proposta e negociar com a família no mesmo instante.
+- 🟡 **Alçada da Coordenação (De 7.01% até 15.00% de desconto):**
+  - A proposta é gravada como **Pendente de Aprovação**.
+  - Notifica a coordenação comercial/pedagógica e bloqueia a emissão final até a deliberação formal.
+- 🔴 **Alçada da Diretoria (Acima de 15.00% de desconto):**
+  - Casos excepcionais ou bolsas especiais de alto impacto financeiro.
+  - Requer aprovação privativa da Diretoria Geral/Mantenedora.
+
+### 47.2 Ciclo de Vida da Proposta Comercial
+1. **Rascunho / Criação:** O consultor seleciona o lead (`interessado_id`), série/turma pretendida e preenche o desconto negociado. O formulário exibe em tempo real o valor da mensalidade líquida, economia anual e o nível de alçada necessário.
+2. **Pendente de Aprovação:** Quando o desconto ultrapassa a alçada do consultor, exige preenchimento obrigatório da **Justificativa Comercial**. Os aprovadores recebem alerta no sistema.
+3. **Aprovada:** Usuários com a permissão `Aprovar:PropostaComercial` podem aprovar a solicitação com 1 clique. O sistema registra quem aprovou, data e horário.
+4. **Recusada:** O gestor pode reprovar a solicitação informando o **Motivo da Recusa**, que fica gravado no histórico de auditoria.
+5. **Convertida:** Ao ser matriculado, o status passa para convertido e a proposta vincula a `matricula_id` correspondente.
+
+### 47.3 Recursos e Ações Disponíveis
+1. **Integração com WhatsApp:**
+   - Botão **WhatsApp** com texto persuasivo pronto contendo número da proposta, série, mensalidade com desconto, taxa de matrícula, economia anual e prazo de validade.
+2. **Espelho Timbrado da Proposta (Modal):**
+   - Botão **Visualizar Proposta** abre um espelho executivo pronto para leitura ou impressão com dados da instituição, nome do candidato, série/turno, cronograma financeiro e condições comerciais.
+3. **Conversão Direta no Assistente de Matrícula:**
+   - Botão **Converter em Matrícula** redireciona diretamente para o Wizard de Matrícula (`/admin/enrollment-wizard?proposta_id=...`).
+   - O assistente herda os dados da proposta aprovada, pré-selecionando o lead, responsável, série, turma e percentual de desconto contratado.
+4. **Atalho na Ficha do Lead:**
+   - Na listagem de **Interessados** (`/admin/interessados`), o menu de ações rápidas conta com o atalho **Simular Proposta Comercial**, que abre a criação já com o lead e dados pré-preenchidos.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 

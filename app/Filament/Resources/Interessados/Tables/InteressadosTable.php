@@ -643,6 +643,13 @@ class InteressadosTable
                                 ->send();
                         }),
 
+                    Action::make('propostaComercial')
+                        ->label('Simular Proposta Comercial')
+                        ->icon('heroicon-o-calculator')
+                        ->color('success')
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho)
+                        ->url(fn (Interessado $record) => url("/admin/proposta-comercials/create?interessado_id={$record->id}")),
+
                     Action::make('marcarPerdido')
                         ->label('Perdido')
                         ->icon('heroicon-o-x-circle')

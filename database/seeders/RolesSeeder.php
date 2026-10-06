@@ -277,6 +277,32 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Propostas Comerciais e Revenue Management
+        $propostaPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny', 'Aprovar'] as $acao) {
+            $propostaPermissions[] = "{$acao}:PropostaComercial";
+        }
+        $propostaPermissions[] = 'View:ControladoriaTurmas';
+        $propostaPermissions[] = 'Manage:ControladoriaTurmas';
+
+        foreach ($propostaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'coordenador', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($propostaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

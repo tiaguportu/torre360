@@ -15,6 +15,7 @@ use App\Models\Matricula;
 use App\Models\Pais;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\PropostaComercial;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
@@ -104,6 +105,43 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     .'. Revise e complete as informações.')
                 ->info()
                 ->send();
+        }
+
+        $propostaId = request()->integer('proposta_id');
+        if ($propostaId && ! $interessado) {
+            $proposta = PropostaComercial::find($propostaId);
+            if ($proposta) {
+                if ($proposta->interessado_id) {
+                    $this->interessadoId = $proposta->interessado_id;
+                }
+                $dados['unidade_id'] = $proposta->unidade_id;
+                $dados['curso_id'] = $proposta->curso_id;
+                if ($proposta->turma_id) {
+                    $dados['turma_id'] = $proposta->turma_id;
+                }
+                $dados['responsaveis'] = [
+                    [
+                        'nome' => $proposta->responsavel_nome,
+                        'telefone' => $proposta->responsavel_telefone,
+                        'email' => $proposta->responsavel_email,
+                        'responsavel_financeiro' => true,
+                        'tipo_vinculo' => 'Responsável Legal',
+                    ],
+                ];
+                if ($proposta->aluno_nome) {
+                    $dados['alunos'] = [
+                        [
+                            'nome' => $proposta->aluno_nome,
+                        ],
+                    ];
+                }
+
+                Notification::make()
+                    ->title("Proposta {$proposta->codigo} Carregada")
+                    ->body('Formulário pré-preenchido com os dados da Proposta Comercial aprovada (Mensalidade Líquida: R$ '.number_format((float) $proposta->valor_liquido_mensal, 2, ',', '.').').')
+                    ->success()
+                    ->send();
+            }
         }
 
         $this->form->fill($dados);
