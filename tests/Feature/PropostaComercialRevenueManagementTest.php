@@ -4,10 +4,15 @@ namespace Tests\Feature;
 
 use App\Enums\NivelAlcadaComercial;
 use App\Enums\StatusPropostaComercial;
+use App\Filament\Resources\PropostaComercials\Pages\CreatePropostaComercial;
 use App\Filament\Resources\PropostaComercials\Pages\ListPropostaComercials;
 use App\Models\Curso;
+use App\Models\Interessado;
+use App\Models\OrigemInteressado;
+use App\Models\Pessoa;
 use App\Models\PropostaComercial;
 use App\Models\Serie;
+use App\Models\StatusInteressado;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\RevenueManagementService;
@@ -265,5 +270,35 @@ class PropostaComercialRevenueManagementTest extends TestCase
         Livewire::test(ListPropostaComercials::class)
             ->assertSuccessful()
             ->assertSee('Cliente Teste');
+    }
+
+    public function test_pagina_de_criacao_de_proposta_comercial_carrega_com_sucesso(): void
+    {
+        $this->autenticarComo('admin');
+        [$unidade, $curso, $serie] = $this->criarEstrutura();
+
+        $pessoa = Pessoa::create([
+            'nome' => 'Responsável Lead Teste',
+            'email' => 'lead@exemplo.com',
+            'telefone' => '11999998888',
+        ]);
+
+        $origem = OrigemInteressado::create(['nome' => 'Site']);
+        $status = StatusInteressado::create(['nome' => 'Novo', 'cor' => 'info', 'ordem' => 1]);
+
+        $lead = Interessado::create([
+            'pessoa_id' => $pessoa->id,
+            'origem_interessado_id' => $origem->id,
+            'status_interessado_id' => $status->id,
+        ]);
+
+        Livewire::test(CreatePropostaComercial::class)
+            ->assertSuccessful();
+
+        Livewire::withQueryParams(['interessado_id' => $lead->id])
+            ->test(CreatePropostaComercial::class)
+            ->assertSuccessful()
+            ->assertSet('data.responsavel_nome', 'Responsável Lead Teste')
+            ->assertSet('data.responsavel_email', 'lead@exemplo.com');
     }
 }

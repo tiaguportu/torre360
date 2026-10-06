@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PropostaComercials\Pages;
 
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\PropostaComercials\PropostaComercialResource;
+use App\Models\Interessado;
 use App\Models\PropostaComercial;
 use App\Services\RevenueManagementService;
 use App\Support\HelpContent;
@@ -15,6 +16,40 @@ class CreatePropostaComercial extends CreateRecord
     use HasAjudaAction;
 
     protected static string $resource = PropostaComercialResource::class;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        $interessadoId = request()->query('interessado_id');
+        if ($interessadoId) {
+            $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($interessadoId);
+            if ($lead) {
+                $dados = [
+                    'interessado_id' => $lead->id,
+                ];
+                if ($lead->pessoa) {
+                    $dados['responsavel_nome'] = $lead->pessoa->nome;
+                    $dados['responsavel_telefone'] = $lead->pessoa->telefone;
+                    $dados['responsavel_email'] = $lead->pessoa->email;
+                }
+                $dep = $lead->dependentes->first();
+                if ($dep) {
+                    $dados['aluno_nome'] = $dep->nome_crianca;
+                    if ($dep->unidade_id) {
+                        $dados['unidade_id'] = $dep->unidade_id;
+                    }
+                    if ($dep->serie?->curso_id) {
+                        $dados['curso_id'] = $dep->serie->curso_id;
+                    }
+                    if ($dep->serie_id) {
+                        $dados['serie_id'] = $dep->serie_id;
+                    }
+                }
+                $this->form->fill(array_merge($this->data ?? [], $dados));
+            }
+        }
+    }
 
     protected function getHeaderActions(): array
     {

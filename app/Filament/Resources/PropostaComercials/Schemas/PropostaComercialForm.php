@@ -32,25 +32,62 @@ class PropostaComercialForm
                     ->schema([
                         Select::make('interessado_id')
                             ->label('Lead do CRM (Opcional)')
-                            ->options(fn () => Interessado::latest()->limit(50)->pluck('nome', 'id'))
+                            ->options(function (): array {
+                                return Interessado::with('pessoa')
+                                    ->latest()
+                                    ->limit(50)
+                                    ->get()
+                                    ->mapWithKeys(fn (Interessado $lead) => [
+                                        $lead->id => ($lead->pessoa?->nome ?? "Lead #{$lead->id}").($lead->pessoa?->telefone ? " ({$lead->pessoa->telefone})" : ''),
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getSearchResultsUsing(function (string $search): array {
+                                return Interessado::query()
+                                    ->whereHas('pessoa', fn ($q) => $q->where('nome', 'like', "%{$search}%")->orWhere('telefone', 'like', "%{$search}%"))
+                                    ->orWhere('id', 'like', "%{$search}%")
+                                    ->with('pessoa')
+                                    ->limit(30)
+                                    ->get()
+                                    ->mapWithKeys(fn (Interessado $lead) => [
+                                        $lead->id => ($lead->pessoa?->nome ?? "Lead #{$lead->id}").($lead->pessoa?->telefone ? " ({$lead->pessoa->telefone})" : ''),
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $lead = Interessado::with('pessoa')->find($value);
+                                if (! $lead) {
+                                    return null;
+                                }
+
+                                return ($lead->pessoa?->nome ?? "Lead #{$lead->id}").($lead->pessoa?->telefone ? " ({$lead->pessoa->telefone})" : '');
+                            })
                             ->searchable()
-                            ->preload()
                             ->default(request()->query('interessado_id'))
                             ->live()
                             ->afterStateHydrated(function (?string $state, Set $set): void {
                                 if (! $state) {
                                     return;
                                 }
-                                $lead = Interessado::with('dependentes')->find($state);
+                                $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
                                 if ($lead) {
-                                    $set('responsavel_nome', $lead->nome);
-                                    $set('responsavel_telefone', $lead->telefone);
-                                    $set('responsavel_email', $lead->email);
-                                    if ($lead->dependentes->isNotEmpty()) {
-                                        $set('aluno_nome', $lead->dependentes->first()->nome);
+                                    if ($lead->pessoa) {
+                                        $set('responsavel_nome', $lead->pessoa->nome);
+                                        $set('responsavel_telefone', $lead->pessoa->telefone);
+                                        $set('responsavel_email', $lead->pessoa->email);
                                     }
-                                    if ($lead->unidade_id) {
-                                        $set('unidade_id', $lead->unidade_id);
+                                    $dependente = $lead->dependentes->first();
+                                    if ($dependente) {
+                                        $set('aluno_nome', $dependente->nome_crianca);
+                                        if ($dependente->unidade_id) {
+                                            $set('unidade_id', $dependente->unidade_id);
+                                        }
+                                        if ($dependente->serie?->curso_id) {
+                                            $set('curso_id', $dependente->serie->curso_id);
+                                        }
+                                        if ($dependente->serie_id) {
+                                            $set('serie_id', $dependente->serie_id);
+                                        }
                                     }
                                 }
                             })
@@ -58,16 +95,25 @@ class PropostaComercialForm
                                 if (! $state) {
                                     return;
                                 }
-                                $lead = Interessado::with('dependentes')->find($state);
+                                $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
                                 if ($lead) {
-                                    $set('responsavel_nome', $lead->nome);
-                                    $set('responsavel_telefone', $lead->telefone);
-                                    $set('responsavel_email', $lead->email);
-                                    if ($lead->dependentes->isNotEmpty()) {
-                                        $set('aluno_nome', $lead->dependentes->first()->nome);
+                                    if ($lead->pessoa) {
+                                        $set('responsavel_nome', $lead->pessoa->nome);
+                                        $set('responsavel_telefone', $lead->pessoa->telefone);
+                                        $set('responsavel_email', $lead->pessoa->email);
                                     }
-                                    if ($lead->unidade_id) {
-                                        $set('unidade_id', $lead->unidade_id);
+                                    $dependente = $lead->dependentes->first();
+                                    if ($dependente) {
+                                        $set('aluno_nome', $dependente->nome_crianca);
+                                        if ($dependente->unidade_id) {
+                                            $set('unidade_id', $dependente->unidade_id);
+                                        }
+                                        if ($dependente->serie?->curso_id) {
+                                            $set('curso_id', $dependente->serie->curso_id);
+                                        }
+                                        if ($dependente->serie_id) {
+                                            $set('serie_id', $dependente->serie_id);
+                                        }
                                     }
                                 }
                             })
