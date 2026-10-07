@@ -7,6 +7,7 @@ use App\Filament\Resources\PropostaComercials\PropostaComercialResource;
 use App\Services\RevenueManagementService;
 use App\Support\HelpContent;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -32,22 +33,30 @@ class EditPropostaComercial extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        $service = app(RevenueManagementService::class);
+        $statusAntes = $record->status;
 
-        $calc = $service->calcularValores(
-            (float) ($data['valor_tabela_mensal'] ?? 0),
-            (string) ($data['tipo_desconto'] ?? 'percentual'),
-            (float) ($data['desconto_solicitado'] ?? 0),
-            (int) ($data['quantidade_alunos'] ?? 1),
-            (int) ($data['quantidade_parcelas'] ?? 12)
-        );
+        try {
+            $record = app(RevenueManagementService::class)->atualizar($record, $data, auth()->user());
+        } catch (\DomainException $e) {
+            Notification::make()
+                ->danger()
+                ->title('Condição comercial bloqueada')
+                ->body($e->getMessage())
+                ->persistent()
+                ->send();
 
-        $data['valor_desconto_mensal'] = $calc['valor_desconto_mensal'];
-        $data['valor_liquido_mensal'] = $calc['valor_liquido_mensal'];
-        $data['valor_total_anual'] = $calc['valor_total_anual'];
-        $data['nivel_alcada_necessario'] = $calc['nivel_alcada']->value;
+            $this->halt();
+        }
 
-        $record->update($data);
+        // A edição elevou o desconto acima da alçada já aprovada: o consultor precisa saber por que o status mudou.
+        if ($record->isPendente() && $statusAntes !== $record->status) {
+            Notification::make()
+                ->warning()
+                ->title('Proposta enviada para nova aprovação')
+                ->body("A nova condição exige alçada {$record->nivel_alcada_necessario->getLabel()}. A aprovação anterior deixou de valer e os aprovadores foram avisados.")
+                ->persistent()
+                ->send();
+        }
 
         return $record;
     }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\NivelAlcadaComercial;
 use App\Enums\StatusPropostaComercial;
 use App\Filament\Resources\PropostaComercials\Pages\CreatePropostaComercial;
+use App\Filament\Resources\PropostaComercials\Pages\EditPropostaComercial;
 use App\Filament\Resources\PropostaComercials\Pages\ListPropostaComercials;
 use App\Models\Curso;
 use App\Models\Interessado;
@@ -300,5 +301,207 @@ class PropostaComercialRevenueManagementTest extends TestCase
             ->assertSuccessful()
             ->assertSet('data.responsavel_nome', 'Responsável Lead Teste')
             ->assertSet('data.responsavel_email', 'lead@exemplo.com');
+    }
+
+    /**
+     * Cria uma proposta de R$ 1.000,00/mês passando pela regra de alçada, como no formulário de criação.
+     */
+    private function criarPropostaProcessada(User $autor, float $desconto): PropostaComercial
+    {
+        [$unidade, $curso, $serie] = $this->criarEstrutura();
+        $service = app(RevenueManagementService::class);
+        $calc = $service->calcularValores(1000.0, 'percentual', $desconto, 1, 12);
+
+        $proposta = new PropostaComercial([
+            'codigo' => PropostaComercial::gerarCodigo(),
+            'responsavel_nome' => 'Maria Silva',
+            'unidade_id' => $unidade->id,
+            'curso_id' => $curso->id,
+            'serie_id' => $serie->id,
+            'quantidade_alunos' => 1,
+            'quantidade_parcelas' => 12,
+            'valor_tabela_mensal' => 1000.00,
+            'tipo_desconto' => 'percentual',
+            'desconto_solicitado' => $desconto,
+            'valor_desconto_mensal' => $calc['valor_desconto_mensal'],
+            'valor_liquido_mensal' => $calc['valor_liquido_mensal'],
+            'valor_total_anual' => $calc['valor_total_anual'],
+            'nivel_alcada_necessario' => $calc['nivel_alcada'],
+            'solicitado_por_user_id' => $autor->id,
+            'validade' => now()->addDays(7),
+        ]);
+
+        return $service->processarCriacao($proposta, $autor);
+    }
+
+    public function test_aumentar_desconto_de_proposta_aprovada_automaticamente_exige_nova_aprovacao(): void
+    {
+        $consultor = $this->autenticarComo('secretaria');
+        $proposta = $this->criarPropostaProcessada($consultor, 5.0);
+        $this->assertSame(StatusPropostaComercial::AprovadaAutomatica, $proposta->status);
+
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, ['desconto_solicitado' => 40], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $atualizada->status);
+        $this->assertSame(NivelAlcadaComercial::Diretoria, $atualizada->nivel_alcada_necessario);
+        $this->assertNull($atualizada->aprovado_por_user_id);
+        $this->assertNull($atualizada->aprovado_em);
+        $this->assertEquals(600.00, (float) $atualizada->valor_liquido_mensal);
+        $this->assertEquals(7200.00, (float) $atualizada->valor_total_anual);
+
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $proposta->fresh()->status);
+    }
+
+    public function test_aumentar_desconto_so_dentro_da_propria_alcada_reaprova_na_hora(): void
+    {
+        $admin = $this->autenticarComo('admin');
+        $proposta = $this->criarPropostaProcessada($admin, 5.0);
+
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, ['desconto_solicitado' => 12], $admin);
+
+        $this->assertSame(StatusPropostaComercial::Aprovada, $atualizada->status);
+        $this->assertSame(NivelAlcadaComercial::Coordenacao, $atualizada->nivel_alcada_necessario);
+        $this->assertSame($admin->id, $atualizada->aprovado_por_user_id);
+    }
+
+    public function test_editar_campos_sem_efeito_comercial_preserva_a_aprovacao(): void
+    {
+        $consultor = $this->autenticarComo('secretaria');
+        $proposta = $this->criarPropostaProcessada($consultor, 5.0);
+        $aprovadoEm = $proposta->aprovado_em;
+
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, [
+            'responsavel_nome' => 'Maria Souza Silva',
+            'responsavel_telefone' => '11988887777',
+            // Mesmos valores, em outro formato (o formulário devolve números como string).
+            'desconto_solicitado' => '5.00',
+            'valor_tabela_mensal' => '1000',
+        ], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::AprovadaAutomatica, $atualizada->status);
+        $this->assertSame($consultor->id, $atualizada->aprovado_por_user_id);
+        $this->assertTrue($aprovadoEm->equalTo($atualizada->fresh()->aprovado_em));
+        $this->assertSame('Maria Souza Silva', $atualizada->fresh()->responsavel_nome);
+    }
+
+    public function test_reduzir_desconto_mantem_a_aprovacao_ja_concedida(): void
+    {
+        $admin = $this->autenticarComo('admin');
+        $proposta = $this->criarPropostaProcessada($admin, 12.0);
+        $this->assertSame(StatusPropostaComercial::Aprovada, $proposta->status);
+
+        // O consultor reduz o desconto: a condição ficou menos generosa que a aprovada.
+        $consultor = $this->autenticarComo('secretaria');
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, ['desconto_solicitado' => 8], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::Aprovada, $atualizada->status);
+        $this->assertSame($admin->id, $atualizada->aprovado_por_user_id);
+        $this->assertEquals(920.00, (float) $atualizada->valor_liquido_mensal);
+    }
+
+    public function test_reduzir_mensalidade_de_tabela_com_mesmo_percentual_conta_como_condicao_mais_generosa(): void
+    {
+        $admin = $this->autenticarComo('admin');
+        $proposta = $this->criarPropostaProcessada($admin, 12.0);
+        $this->assertSame(StatusPropostaComercial::Aprovada, $proposta->status);
+
+        // Mesmos 12%, porém sobre uma tabela menor: a mensalidade líquida cai de 880 para 792.
+        $consultor = $this->autenticarComo('secretaria');
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, ['valor_tabela_mensal' => 900], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $atualizada->status);
+        $this->assertEquals(792.00, (float) $atualizada->valor_liquido_mensal);
+        $this->assertNull($atualizada->aprovado_por_user_id);
+    }
+
+    public function test_proposta_recusada_reeditada_volta_para_a_fila_de_aprovacao(): void
+    {
+        $consultor = $this->autenticarComo('secretaria');
+        $proposta = $this->criarPropostaProcessada($consultor, 30.0);
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $proposta->status);
+
+        app(RevenueManagementService::class)->recusar($proposta, $consultor, 'Desconto acima da política');
+        $this->assertSame(StatusPropostaComercial::Recusada, $proposta->fresh()->status);
+
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta->fresh(), ['desconto_solicitado' => 20], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $atualizada->status);
+        $this->assertNull($atualizada->motivo_recusa);
+        $this->assertNull($atualizada->aprovado_por_user_id);
+    }
+
+    public function test_status_e_aprovacao_nao_podem_ser_forcados_pelos_dados_do_formulario(): void
+    {
+        $consultor = $this->autenticarComo('secretaria');
+        $proposta = $this->criarPropostaProcessada($consultor, 30.0);
+
+        $atualizada = app(RevenueManagementService::class)->atualizar($proposta, [
+            'responsavel_nome' => 'Maria Silva',
+            'status' => StatusPropostaComercial::Aprovada->value,
+            'aprovado_por_user_id' => $consultor->id,
+            'nivel_alcada_necessario' => NivelAlcadaComercial::Consultor->value,
+        ], $consultor);
+
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $atualizada->fresh()->status);
+        $this->assertNull($atualizada->fresh()->aprovado_por_user_id);
+        $this->assertSame(NivelAlcadaComercial::Diretoria, $atualizada->fresh()->nivel_alcada_necessario);
+    }
+
+    public function test_proposta_aceita_ou_convertida_bloqueia_mudanca_de_condicao_mas_permite_dados_cadastrais(): void
+    {
+        $admin = $this->autenticarComo('admin');
+        $service = app(RevenueManagementService::class);
+
+        foreach ([StatusPropostaComercial::AceitaPelaFamilia, StatusPropostaComercial::Convertida] as $status) {
+            $proposta = $this->criarPropostaProcessada($admin, 5.0);
+            $proposta->update(['status' => $status]);
+
+            $atualizada = $service->atualizar($proposta->fresh(), ['responsavel_telefone' => '11977776666'], $admin);
+            $this->assertSame('11977776666', $atualizada->fresh()->responsavel_telefone);
+            $this->assertSame($status, $atualizada->fresh()->status);
+
+            try {
+                $service->atualizar($proposta->fresh(), ['desconto_solicitado' => 40], $admin);
+                $this->fail("A condição comercial de uma proposta {$status->value} não pode ser alterada.");
+            } catch (\DomainException $e) {
+                $this->assertStringContainsString('não pode ser alterada', $e->getMessage());
+            }
+
+            $this->assertEquals(5.00, (float) $proposta->fresh()->desconto_solicitado);
+            $this->assertSame($status, $proposta->fresh()->status);
+        }
+    }
+
+    public function test_pagina_de_edicao_devolve_proposta_para_aprovacao_e_avisa_o_consultor(): void
+    {
+        $consultor = $this->autenticarComo('secretaria');
+        $proposta = $this->criarPropostaProcessada($consultor, 5.0);
+
+        Livewire::test(EditPropostaComercial::class, ['record' => $proposta->getKey()])
+            ->fillForm(['desconto_solicitado' => 40])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified('Proposta enviada para nova aprovação');
+
+        $proposta->refresh();
+        $this->assertSame(StatusPropostaComercial::AguardandoAprovacao, $proposta->status);
+        $this->assertSame(NivelAlcadaComercial::Diretoria, $proposta->nivel_alcada_necessario);
+        $this->assertNull($proposta->aprovado_por_user_id);
+    }
+
+    public function test_pagina_de_edicao_bloqueia_condicao_de_proposta_convertida(): void
+    {
+        $admin = $this->autenticarComo('admin');
+        $proposta = $this->criarPropostaProcessada($admin, 5.0);
+        $proposta->update(['status' => StatusPropostaComercial::Convertida]);
+
+        Livewire::test(EditPropostaComercial::class, ['record' => $proposta->getKey()])
+            ->fillForm(['desconto_solicitado' => 40])
+            ->call('save')
+            ->assertNotified('Condição comercial bloqueada');
+
+        $proposta->refresh();
+        $this->assertEquals(5.00, (float) $proposta->desconto_solicitado);
+        $this->assertSame(StatusPropostaComercial::Convertida, $proposta->status);
     }
 }

@@ -7,6 +7,7 @@ use App\Enums\StatusPropostaComercial;
 use App\Models\PropostaComercial;
 use App\Models\User;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Arr;
 
 class RevenueManagementService
 {
@@ -76,6 +77,105 @@ class RevenueManagementService
      */
     public function processarCriacao(PropostaComercial $proposta, User $autor): PropostaComercial
     {
+        $pendente = $this->aplicarAlcada($proposta, $autor);
+
+        $proposta->save();
+
+        if ($pendente) {
+            $this->notificarAprovadores($proposta);
+        }
+
+        return $proposta;
+    }
+
+    /**
+     * Atualiza uma proposta existente reavaliando a alçada quando a condição comercial muda.
+     *
+     * Sem isso, editar o desconto de uma proposta já aprovada (ex.: de 5% para 40%) mantinha a aprovação
+     * automática original e liberava a conversão em matrícula sem passar pela alçada competente.
+     *
+     *  - Aprovada / AprovadaAutomatica: a aprovação continua valendo se a edição não deixou a condição mais
+     *    generosa (desconto % maior ou mensalidade líquida menor); caso contrário volta para a alçada.
+     *  - Rascunho / AguardandoAprovacao / Recusada: a alçada é sempre reavaliada (reenvio após recusa).
+     *  - AceitaPelaFamilia / Convertida: a condição comercial é imutável (a família já aceitou ou o contrato foi gerado).
+     *  - Expirada / Cancelada: a edição é gravada, mas nenhuma aprovação é concedida.
+     *
+     * @param  array<string, mixed>  $dados  campos do formulário; status, aprovação e código nunca são aceitos daqui
+     *
+     * @throws \DomainException quando a condição comercial não pode mais ser alterada
+     */
+    public function atualizar(PropostaComercial $proposta, array $dados, User $autor): PropostaComercial
+    {
+        $antes = $this->condicaoComercial($proposta);
+
+        $proposta->fill(Arr::except($dados, [
+            'codigo', 'status', 'nivel_alcada_necessario', 'solicitado_por_user_id',
+            'aprovado_por_user_id', 'aprovado_em', 'motivo_recusa',
+        ]));
+
+        $depois = $this->condicaoComercial($proposta);
+        $condicaoMudou = $antes !== $depois;
+
+        if ($condicaoMudou && in_array($proposta->status, [StatusPropostaComercial::AceitaPelaFamilia, StatusPropostaComercial::Convertida], true)) {
+            throw new \DomainException('A condição comercial não pode ser alterada: a família já aceitou a proposta ou ela já foi convertida em matrícula. Crie uma nova proposta.');
+        }
+
+        $calculo = $this->calcularValores(
+            $depois['valor_tabela_mensal'],
+            $depois['tipo_desconto'],
+            $depois['desconto_solicitado'],
+            $depois['quantidade_alunos'],
+            $depois['quantidade_parcelas'],
+        );
+
+        $proposta->valor_desconto_mensal = $calculo['valor_desconto_mensal'];
+        $proposta->valor_liquido_mensal = $calculo['valor_liquido_mensal'];
+        $proposta->valor_total_anual = $calculo['valor_total_anual'];
+        $proposta->nivel_alcada_necessario = $calculo['nivel_alcada'];
+
+        $pendente = false;
+
+        if ($condicaoMudou) {
+            $anterior = $this->calcularValores(
+                $antes['valor_tabela_mensal'],
+                $antes['tipo_desconto'],
+                $antes['desconto_solicitado'],
+                $antes['quantidade_alunos'],
+                $antes['quantidade_parcelas'],
+            );
+
+            $ficouMaisGenerosa = $calculo['percentual_desconto'] > $anterior['percentual_desconto']
+                || $calculo['valor_liquido_mensal'] < $anterior['valor_liquido_mensal'];
+
+            $reavaliar = match ($proposta->status) {
+                StatusPropostaComercial::Aprovada,
+                StatusPropostaComercial::AprovadaAutomatica => $ficouMaisGenerosa,
+                StatusPropostaComercial::Rascunho,
+                StatusPropostaComercial::AguardandoAprovacao,
+                StatusPropostaComercial::Recusada => true,
+                default => false,
+            };
+
+            if ($reavaliar) {
+                $pendente = $this->aplicarAlcada($proposta, $autor);
+            }
+        }
+
+        $proposta->save();
+
+        if ($pendente) {
+            $this->notificarAprovadores($proposta);
+        }
+
+        return $proposta;
+    }
+
+    /**
+     * Define o status da proposta pela alçada exigida: aprova na hora quando o autor tem poder para a própria
+     * alçada, senão deixa aguardando aprovação. Não grava nem notifica. Retorna true se ficou pendente.
+     */
+    private function aplicarAlcada(PropostaComercial $proposta, User $autor): bool
+    {
         $alcada = $proposta->nivel_alcada_necessario;
 
         // Se o usuário tem poder para aprovar a própria alçada ou é Super Admin
@@ -90,14 +190,34 @@ class RevenueManagementService
                 : StatusPropostaComercial::Aprovada;
             $proposta->aprovado_por_user_id = $autor->id;
             $proposta->aprovado_em = now();
-        } else {
-            $proposta->status = StatusPropostaComercial::AguardandoAprovacao;
-            $this->notificarAprovadores($proposta);
+            $proposta->motivo_recusa = null;
+
+            return false;
         }
 
-        $proposta->save();
+        $proposta->status = StatusPropostaComercial::AguardandoAprovacao;
+        // Aprovação e recusa anteriores valiam para a condição antiga.
+        $proposta->aprovado_por_user_id = null;
+        $proposta->aprovado_em = null;
+        $proposta->motivo_recusa = null;
 
-        return $proposta;
+        return true;
+    }
+
+    /**
+     * Campos que definem a condição comercial, normalizados para comparação antes/depois de uma edição.
+     *
+     * @return array{valor_tabela_mensal: float, tipo_desconto: string, desconto_solicitado: float, quantidade_alunos: int, quantidade_parcelas: int}
+     */
+    private function condicaoComercial(PropostaComercial $proposta): array
+    {
+        return [
+            'valor_tabela_mensal' => round((float) $proposta->valor_tabela_mensal, 2),
+            'tipo_desconto' => (string) ($proposta->tipo_desconto ?: 'percentual'),
+            'desconto_solicitado' => round((float) $proposta->desconto_solicitado, 2),
+            'quantidade_alunos' => max(1, (int) $proposta->quantidade_alunos),
+            'quantidade_parcelas' => max(1, (int) ($proposta->quantidade_parcelas ?: 12)),
+        ];
     }
 
     /**
