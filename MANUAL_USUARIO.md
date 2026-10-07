@@ -2550,6 +2550,8 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
    - **Aba 1 — Dados Cadastrais:** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
    - **Aba 2 — Envio de Documentos:** Checklist digital inteligente que separa claramente os documentos exigidos para emissão de contrato, documentos acadêmicos do histórico e documentos facultativos.
    - **Aba 3 — Situação do Contrato:** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
+3. **Ação Unificada no CRM (`admin/interessados`):**
+   - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
 
 ### 50.2 Nova Classificação dos Tipos de Documentos (`/admin/tipo-documentos`)
 Para garantir segurança jurídica sem burocracia excessiva, os documentos escolares foram organizados em 4 categorias estratégicas:

@@ -514,21 +514,6 @@ class InteressadosTable
                     CopilotoMensagemIaAction::make(),
                     ResumoConversaIaAction::make(),
 
-                    Action::make('portalDocumentos')
-                        ->label('Link de Admissão & Matrícula')
-                        ->icon('heroicon-o-document-check')
-                        ->color('success')
-                        ->modalHeading('Portal de Admissão & Matrícula Online')
-                        ->modalDescription('Envie este link seguro e exclusivo para a família preencher os dados cadastrais e anexar a documentação pelo celular sem necessidade de login.')
-                        ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Fechar')
-                        ->form(fn (Interessado $record) => [
-                            TextInput::make('url_portal')
-                                ->label('Link Único do Candidato')
-                                ->default($record->urlPortalDocumentos())
-                                ->readOnly(),
-                        ]),
-
                     Action::make('agendarVisita')
                         ->label('Agendar Visita')
                         ->icon('heroicon-o-calendar-days')
@@ -600,16 +585,15 @@ class InteressadosTable
                                 ->send();
                         }),
 
-                    // O link é gerado ao abrir o modal (`mountUsing`, uma única vez) e reaproveitado enquanto
-                    // estiver válido. Antes, gerar dentro do `form()` trocava o token a cada renderização e
-                    // invalidava o link que a equipe acabara de copiar.
+                    // Link único do candidato para preenchimento de pré-matrícula e upload de documentos.
+                    // O link é gerado no mountUsing (uma única vez) e reaproveitado enquanto for válido.
                     Action::make('gerarConvite')
-                        ->label('Copiar Link de Admissão')
+                        ->label('Link de Admissão & Matrícula')
                         ->icon('heroicon-o-link')
-                        ->color('info')
+                        ->color('success')
                         ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
-                        ->modalHeading('Admissão & Matrícula Online')
-                        ->modalDescription(fn (Interessado $record): string => 'Envie este link seguro ao responsável para que a própria família preencha o cadastro (responsáveis, alunos e endereço) e anexe a documentação. Válido por 90 dias.')
+                        ->modalHeading('Portal de Admissão & Matrícula Online')
+                        ->modalDescription(fn (Interessado $record): string => "Envie este link seguro e exclusivo para {$record->pessoa?->nome} preencher os dados cadastrais da família e anexar a documentação pelo celular.")
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Fechar')
                         ->form([
@@ -618,7 +602,8 @@ class InteressadosTable
                                 ->readOnly(),
                         ])
                         ->mountUsing(function (Schema $schema, Interessado $record): void {
-                            $schema->fill(['link' => $record->urlPortalDocumentos()]);
+                            $link = app(ConviteMatriculaService::class)->obterOuGerarConvite($record);
+                            $schema->fill(['link' => $link]);
                         }),
 
                     Action::make('regenerarConvite')
