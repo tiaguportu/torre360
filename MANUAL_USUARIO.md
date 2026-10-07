@@ -2622,6 +2622,38 @@ Para simplificar a manutenção e configuração em escala dos tipos de document
 
 ---
 
+## 51. Biblioteca Escolar e Acervo de Livros (`/admin/livros`)
+
+O módulo de Biblioteca Escolar gerencia o acervo literário e didático da instituição, controlando os exemplares disponíveis e o fluxo de empréstimos.
+
+### 51.1 Cadastro de Livros com Foto e Busca por ISBN (`/admin/livros/create`)
+Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livro** (`/admin/livros/create`):
+
+1. **Busca Automática por ISBN (10 ou 13 dígitos):**
+   - **No cabeçalho:** Clique no botão **"Buscar por ISBN"** e informe o código da obra (ex: `9788576082675`).
+   - **Ou diretamente no campo ISBN:** Digite o ISBN no formulário e clique no ícone da lupa (`Buscar por ISBN`).
+   - O sistema realiza uma consulta inteligente em cascata nas principais bases bibliográficas (Open Library, BrasilAPI e Google Books).
+   - Ao localizar a obra, o sistema preenche automaticamente:
+     - **Título completo**
+     - **Autor(es)**
+     - **Editora**
+     - **Categoria / Assunto**
+     - **Foto da Capa:** O sistema faz o download automático da imagem oficial da capa em alta resolução e a armazena com segurança no storage da instituição, exibindo a pré-visualização imediata no formulário.
+
+2. **Foto da Capa do Livro:**
+   - **Upload Manual:** Você pode clicar na área **Foto da Capa** para enviar qualquer imagem personalizada a partir do seu dispositivo (com suporte a recorte e ajuste de proporção no editor integrado).
+   - **Capa Automática:** Se você utilizou a busca por ISBN, a capa já estará preenchida e salva no acervo, podendo ser substituída a qualquer momento se desejado.
+
+3. **Exemplares do Acervo:**
+   - **Quantidade Total:** Quantidade física de cópias que a biblioteca possui.
+   - **Quantidade Disponível:** Quantidade livre para empréstimos imediatos (atualizada automaticamente conforme os empréstimos e devoluções forem registrados).
+
+### 51.2 Visualização e Listagem (`/admin/livros`)
+- A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, ISBN e o saldo de exemplares disponíveis sobre o total (com destaque visual em verde/vermelho).
+- Em dispositivos móveis, a listagem se adapta em formato de cards responsivos (`stackedOnMobile`).
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

@@ -18,7 +18,19 @@ class Livro extends Model
         'editora',
         'quantidade_total',
         'quantidade_disponivel',
+        'capa',
     ];
+
+    public function getCapaUrlAttribute(): ?string
+    {
+        if (! $this->capa) {
+            return null;
+        }
+
+        return str_starts_with($this->capa, 'http')
+            ? $this->capa
+            : asset('storage/'.$this->capa);
+    }
 
     public function emprestimos(): HasMany
     {

@@ -1172,4 +1172,37 @@ Gestão de tipos de documentos, anexos comprobatórios da família e checklist d
   - BelongsTo `interessado`.
   - BelongsTo `matricula`.
 
+---
+
+## 11. Módulo de Biblioteca
+Gestão do acervo de livros e controle de empréstimos e devoluções para a comunidade escolar.
+
+### `livros`
+- **Representa:** Obras e títulos disponíveis no acervo bibliográfico da instituição.
+- **Campos Principais:**
+  - `titulo`: Título completo da obra.
+  - `autor`: Nome do autor ou autores principais.
+  - `isbn`: Código padrão internacional de identificação do livro (10 ou 13 dígitos).
+  - `editora`: Casa publicadora da edição.
+  - `categoria`: Classificação temática / assunto da obra.
+  - `capa`: Caminho da imagem da capa armazenada no disco público (`livros/capas/...`). Suporta upload manual e download automático via APIs (Open Library, BrasilAPI e Google Books).
+  - `quantidade_total`: Total de cópias físicas pertencentes ao acervo.
+  - `quantidade_disponivel`: Quantidade de exemplares livres para novos empréstimos.
+- **Relacionamentos:**
+  - HasMany `emprestimos`.
+
+### `emprestimos`
+- **Representa:** Empréstimos físicos de livros realizados por alunos, professores e responsáveis.
+- **Campos Principais:**
+  - `livro_id`: FK `livros.id` (cascade on delete).
+  - `pessoa_id`: FK `pessoa.id` (usuário que realizou o empréstimo).
+  - `data_emprestimo`: Data de retirada da obra.
+  - `data_previsao_devolucao`: Prazo limite para devolução.
+  - `data_devolucao`: Data efetiva de entrega da obra.
+  - `status`: Situação do empréstimo (`ativo`, `devolvido`, `atrasado`).
+  - `observacoes`: Informações adicionais ou notas de conservação do exemplar.
+- **Relacionamentos:**
+  - BelongsTo `livro`.
+  - BelongsTo `pessoa`.
+
 

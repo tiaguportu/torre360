@@ -91,4 +91,9 @@ class MatriculaPolicy
     {
         return $authUser->can('BoletimEditar:Matricula');
     }
+
+    public function avisarPossibilidadePreceptoria(AuthUser $authUser, ?Matricula $matricula = null): bool
+    {
+        return $authUser->can('AvisarPossibilidadePreceptoria:Matricula');
+    }
 }

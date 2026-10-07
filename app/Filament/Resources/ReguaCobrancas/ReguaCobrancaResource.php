@@ -41,6 +41,7 @@ class ReguaCobrancaResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'execute',
         ];
     }
 

@@ -11,6 +11,8 @@ use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Filament\Resources\PlanoContas\PlanoContaResource;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
+use App\Filament\Resources\ReguaCobrancas\ReguaCobrancaResource;
+use App\Filament\Resources\ReguaFollowUps\ReguaFollowUpResource;
 use App\Filament\Resources\TransacaoBancarias\TransacaoBancariaResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
@@ -208,6 +210,7 @@ return [
             MatriculaResource::class => [
                 'documentos',
                 'avisarPendencia',
+                'avisarPossibilidadePreceptoria',
                 'boletim',
                 'boletim_editar',
             ],
@@ -227,6 +230,12 @@ return [
             ],
             PreceptoriaResource::class => [
                 'agendar',
+            ],
+            ReguaCobrancaResource::class => [
+                'execute',
+            ],
+            ReguaFollowUpResource::class => [
+                'execute',
             ],
             BancoResource::class => [],
 
@@ -291,7 +300,7 @@ return [
     */
 
     'custom_permissions' => [
-        'use_assistant',
+        'UseAssistant',
     ],
 
     /*

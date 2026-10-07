@@ -6,6 +6,7 @@ use App\Models\Livro;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -15,6 +16,13 @@ class LivrosTable
     {
         return $table
             ->columns([
+                ImageColumn::make('capa')
+                    ->label('Capa')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->square()
+                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=Livro&background=e2e8f0&color=64748b')
+                    ->toggleable(),
                 TextColumn::make('titulo')
                     ->label('Título')
                     ->searchable()
@@ -22,6 +30,10 @@ class LivrosTable
                 TextColumn::make('autor')
                     ->label('Autor')
                     ->searchable(),
+                TextColumn::make('editora')
+                    ->label('Editora')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('categoria')
                     ->label('Categoria')
                     ->placeholder('—')

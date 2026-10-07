@@ -80,6 +80,9 @@ class PortalDocumentosCandidatoController extends Controller
         $dadosPreenchidos = filled($interessado->dados_pre_matricula);
         $abaPadrao = $dadosPreenchidos ? 'documentos' : 'dados';
         $abaAtiva = $request->get('aba', $abaPadrao);
+        if (! in_array($abaAtiva, ['dados', 'documentos'], true)) {
+            $abaAtiva = 'documentos';
+        }
         $statusAbas = $interessado->resumoPendenciasPortal();
 
         return view('candidato.portal-documentos', [
