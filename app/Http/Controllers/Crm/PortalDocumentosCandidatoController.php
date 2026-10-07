@@ -237,7 +237,7 @@ class PortalDocumentosCandidatoController extends Controller
 
         return redirect()
             ->route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos'])
-            ->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa equipe e IA estão processando a validação em segundo plano.");
+            ->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa equipe da secretaria já está conferindo o arquivo.");
     }
 
     /**

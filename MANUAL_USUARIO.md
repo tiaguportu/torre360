@@ -411,7 +411,7 @@ O **Portal de Pré-Admissão** moderniza e agiliza a etapa burocrática de colet
    - **Aba "Documentos":** Checklist visual com separação clara entre **Documentos Obrigatórios para Contrato**, **Documentos para Histórico Escolar** e **Documentos Opcionais**, com indicadores numéricos de pendências e barra de progresso.
 3. **Reaproveitamento Nativo da Arquitetura do Sistema:**
    - O portal utiliza diretamente o catálogo oficial de documentos da instituição (`tipo_documento` e `documento_inserido`), respeitando as exigências por curso/série e as regras do enum de situações (`Em Análise`, `Verificado`, `Rejeitado`).
-   - A família visualiza o checklist completo de documentos exigidos, status em tempo real de cada arquivo enviado, orientações da secretaria e retorno imediato da pré-conferência por IA (qualidade e legibilidade da imagem).
+   - A família visualiza o checklist completo de documentos exigidos, status em tempo real de cada arquivo enviado, orientações da secretaria e status de conferência.
 4. **Conferência e Análise pela Secretaria:**
    - Na ficha do interessado, a aba **Documentos de Pré-Admissão** permite à equipe:
      - Visualizar os arquivos enviados com visualizador seguro anti-vazamento.
@@ -2574,6 +2574,7 @@ O **Portal Unificado de Admissão** consolida em um único link seguro o acolhim
        - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
        - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
    - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para a efetivação da pré-matrícula:
+     - **Banner de Conclusão & Próximos Passos:** Ao concluir o envio de todos os documentos obrigatórios, a família visualiza um card comemorativo em destaque no topo informando o recebimento completo, os próximos passos do atendimento (conferência detalhada, apresentação das opções de anuidade escolar e formalização da matrícula) e atalho direto para o WhatsApp da Secretaria.
      - **Progresso dos Documentos Alinhado aos Obrigatórios de Contrato:** O indicador visual no topo (*"X de Y enviados"* e barra percentual) considera **estritamente os documentos obrigatórios para contrato** (atingindo 100% / *Documentos OK ✅* sem que itens facultativos ou de histórico reduzam o progresso da família).
      - **Contagem de Pendências:** O badge da aba exibe apenas o **número de documentos obrigatórios** que ainda faltam entregar (ex: `1`), ou o símbolo `✓` quando todos os documentos obrigatórios estiverem entregues. Documentos de histórico ou opcionais não inflam essa contagem.
      - **Seção de Documentos Obrigatórios em Destaque:** Os documentos indispensáveis são exibidos abertos e destacados no topo.

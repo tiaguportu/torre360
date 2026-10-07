@@ -76,32 +76,7 @@
         </div>
     @endif
 
-    <!-- Retorno da Pré-análise por IA -->
-    @if($inserido && $status !== \App\Enums\SituacaoDocumento::VERIFICADO)
-        @if($inserido->temAnaliseIa())
-            @php
-                $legivel = $inserido->isLegivelIa();
-                $tipoOk = $inserido->confereTipoIa();
-                $alerta = data_get($inserido->dados_ia, 'mensagem_para_familia') ?? data_get($inserido->dados_ia, 'alerta_para_familia');
-            @endphp
 
-            <div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                <div class="flex items-center justify-between text-[11px] font-semibold">
-                    <span class="text-slate-500">Pré-análise Automática (IA):</span>
-                    <span class="{{ $legivel && $tipoOk ? 'text-emerald-700' : 'text-amber-700' }}">
-                        {{ $legivel && $tipoOk ? 'Arquivo legível e conforme' : 'Atenção na qualidade' }}
-                    </span>
-                </div>
-                @if($alerta)
-                    <p class="text-slate-700 text-[11px] leading-relaxed">{{ $alerta }}</p>
-                @endif
-            </div>
-        @else
-            <div class="mt-2 text-[11px] text-amber-600 flex items-center gap-1">
-                <span>⚡</span> Análise de legibilidade em processamento...
-            </div>
-        @endif
-    @endif
 
     <!-- Ações e Formulário de Upload -->
     <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

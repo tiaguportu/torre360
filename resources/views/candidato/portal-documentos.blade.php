@@ -413,20 +413,56 @@
         @if($abaAtiva === 'documentos')
             <div class="space-y-6">
                 @if(! $statusAbas['documentos']['tem_pendencia'])
-                    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-3 text-xs shadow-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="text-base">✅</span>
-                            <span class="font-bold">Todos os documentos obrigatórios para o contrato já foram enviados!</span>
+                    <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50 border border-emerald-200 shadow-xs space-y-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs font-bold">
+                                ✓
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-snug">
+                                        Documentação Recebida com Sucesso! 🎉
+                                    </h3>
+                                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} obrigatórios enviados
+                                    </span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                    Recebemos todos os seus dados cadastrais e documentos obrigatórios para a pré-matrícula. Nossa <strong>Secretaria Escolar</strong> já iniciou a conferência das informações.
+                                </p>
+                            </div>
                         </div>
-                        <span class="font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} enviados
-                        </span>
+
+                        <div class="bg-white/90 rounded-xl border border-emerald-100 p-4 space-y-2 text-xs">
+                            <span class="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                                <span>📋</span> Próximos Passos:
+                            </span>
+                            <ol class="list-decimal list-inside space-y-1.5 text-slate-600 leading-relaxed">
+                                <li>Nossa equipe realizará a conferência detalhada dos documentos enviados.</li>
+                                <li>Em breve entraremos em contato para apresentar as opções de anuidade escolar e parcelamento.</li>
+                                <li>Você receberá as orientações finais para a formalização do contrato e matrícula.</li>
+                            </ol>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs border-t border-emerald-100/80">
+                            <div class="flex items-center gap-2 text-slate-500">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Status atual: <strong class="text-emerald-700">Aguardando Análise da Secretaria</strong></span>
+                            </div>
+                            @if(filled($interessado->unidade?->celular_whatsapp))
+                                <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade->celular_whatsapp) }}"
+                                   target="_blank"
+                                   class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-2xs">
+                                    <span>💬 Falar com a Secretaria no WhatsApp</span>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 @else
                     <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between gap-3 text-xs shadow-xs">
                         <div class="flex items-center gap-2">
                             <span class="text-base">⏳</span>
-                            <span>Restam <strong>{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s) para o contrato</strong> a serem anexados.</span>
+                            <span>Restam <strong>{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s)</strong> a serem anexados para a pré-matrícula.</span>
                         </div>
                         <span class="font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
                             {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} enviados

@@ -726,5 +726,12 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response2->assertSee('1 de 1 enviados');
         $response2->assertSee('style="width: 100%"', false);
         $response2->assertSee('(Documentos OK ✅)');
+
+        // Banner de Conclusão e Próximos Passos
+        $response2->assertSee('Documentação Recebida com Sucesso! 🎉');
+        $response2->assertSee('Próximos Passos:');
+        $response2->assertSee('Aguardando Análise da Secretaria');
+        $response2->assertDontSee('Pré-análise Automática (IA)');
+        $response2->assertDontSee('IA estão processando');
     }
 }
