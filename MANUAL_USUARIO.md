@@ -2560,8 +2560,8 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
    - O sistema unificou os antigos links (`/quero-matricular/convite/{token}` e `/admissao/{token}`) em uma experiência única e moderna em `/admissao/{token}`.
    - **Compatibilidade Retroativa:** Links de convite já compartilhados por WhatsApp ou e-mail continuam funcionando perfeitamente, sendo redirecionados de forma transparente para o portal unificado do candidato.
 2. **Navegação Intuitiva por Abas com Indicadores em Tempo Real:**
-   - **Aba 'Cadastro':** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
-     - **Indicador de Status:** Exibe um selo em tempo real com a quantidade de dados pendentes (ex: `⏳ X pendências`) ou o selo de conclusão (`✓ Concluído`) quando todos os dados cadastrais obrigatórios estiverem confirmados.
+   - **Aba '1. Cadastro':** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+     - **Indicador de Status Minimalista:** Exibe um badge circular/pílula apenas com o número de itens pendentes (ex: `3`) ou apenas o símbolo de check (`✓`) quando todos os dados cadastrais obrigatórios estiverem confirmados.
      - **Máscaras de Entrada Inteligentes:**
        - **Telefone:** Máscara dinâmica no padrão nacional com DDD `(00) 00000-0000` (celular) ou `(00) 0000-0000` (fixo), adaptando-se em tempo real na digitação ou colagem.
        - **CPF:** Máscara padronizada `000.000.000-00` com restrição de caracteres não numéricos.
@@ -2571,11 +2571,11 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
        - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
        - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
    - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para emissão do contrato:
-     - **Contagem de Pendências Vinculada ao Contrato:** O indicador da aba contabiliza estritamente os **documentos obrigatórios para liberação do Contrato Escolar** (ex: `⏳ X pendentes` ou `✓ Concluído`). Documentos de histórico ou opcionais não inflam a contagem de pendências da aba.
+     - **Contagem de Pendências Vinculada ao Contrato:** O badge da aba exibe apenas o **número de documentos obrigatórios para liberação do Contrato Escolar** que ainda faltam (ex: `1`), ou o símbolo `✓` quando todos os documentos de contrato estiverem entregues. Documentos de histórico ou opcionais não inflam essa contagem.
      - **Seção de Contrato em Destaque:** Os documentos indispensáveis para o contrato são exibidos abertos e destacados no topo.
      - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (não bloqueiam contrato) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação da matrícula. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
    - **Aba '3. Contrato':** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
-     - **Indicador de Status:** Exibe `⏳ X pendência(s)` listando os requisitos impeditivos faltantes (documentos de contrato pendentes ou dados cadastrais não preenchidos) ou `✓ Liberado` quando todos os critérios contratuais estiverem cumpridos.
+     - **Indicador de Status:** Exibe o número de requisitos impeditivos faltantes (ex: `2`) ou `✓` quando todos os critérios contratuais estiverem cumpridos.
 3. **Ação Unificada no CRM (`admin/interessados`):**
    - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
 

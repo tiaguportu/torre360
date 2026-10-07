@@ -114,19 +114,17 @@
 
         <!-- Abas de Navegação Unificada -->
         <div class="flex flex-wrap sm:flex-nowrap border-b border-slate-200 gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
-            <!-- Aba 1: Cadastro -->
+            <!-- Aba 1: 1. Cadastro -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}"
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'dados' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
-                <span>Cadastro</span>
+                <span>1. Cadastro</span>
                 @if($statusAbas['dados']['tem_pendencia'])
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" title="{{ implode(', ', $statusAbas['dados']['pendencias']) }}">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        <span>{{ $statusAbas['dados']['quantidade'] }} {{ $statusAbas['dados']['quantidade'] === 1 ? 'pendência' : 'pendências' }}</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ implode(', ', $statusAbas['dados']['pendencias']) }}">
+                        {{ $statusAbas['dados']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span class="text-emerald-600 font-extrabold">✓</span>
-                        <span>Concluído</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Cadastro concluído">
+                        ✓
                     </span>
                 @endif
             </a>
@@ -136,14 +134,12 @@
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'documentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
                 <span>2. Documentos</span>
                 @if($statusAbas['documentos']['tem_pendencia'])
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        <span>{{ $statusAbas['documentos']['quantidade'] }} {{ $statusAbas['documentos']['quantidade'] === 1 ? 'pendente' : 'pendentes' }}</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ $statusAbas['documentos']['quantidade'] }} documento(s) de contrato pendente(s)">
+                        {{ $statusAbas['documentos']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span class="text-emerald-600 font-extrabold">✓</span>
-                        <span>Concluído</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Documentos de contrato concluídos">
+                        ✓
                     </span>
                 @endif
             </a>
@@ -153,14 +149,12 @@
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'status' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
                 <span>3. Contrato</span>
                 @if($statusAbas['contrato']['tem_pendencia'])
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" title="{{ implode(', ', $statusAbas['contrato']['pendencias']) }}">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        <span>{{ $statusAbas['contrato']['quantidade'] }} {{ $statusAbas['contrato']['quantidade'] === 1 ? 'pendência' : 'pendências' }}</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ implode(', ', $statusAbas['contrato']['pendencias']) }}">
+                        {{ $statusAbas['contrato']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span class="text-emerald-600 font-extrabold">✓</span>
-                        <span>Liberado</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Contrato liberado">
+                        ✓
                     </span>
                 @endif
             </a>
@@ -575,7 +569,7 @@
                         <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
                             @if($statusAbas['dados']['tem_pendencia'])
                                 <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900">
-                                    <span>Ir para Cadastro</span>
+                                    <span>Ir para 1. Cadastro</span>
                                     <span>→</span>
                                 </a>
                             @endif

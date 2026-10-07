@@ -624,7 +624,7 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response->assertOk();
 
         // Verifica os novos nomes das abas
-        $response->assertSee('Cadastro');
+        $response->assertSee('1. Cadastro');
         $response->assertSee('2. Documentos');
         $response->assertSee('3. Contrato');
 
@@ -642,7 +642,8 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $this->assertSame(1, $statusAbas['documentos']['quantidade']); // apenas o doc de contrato
         $this->assertTrue($statusAbas['contrato']['tem_pendencia']);
 
-        $response->assertSee('1 pendente');
+        // Badge exibe apenas o número da pendência
+        $response->assertSee('title="1 documento(s) de contrato pendente(s)"', false);
 
         // 2. Envia o documento obrigatório para contrato
         DocumentoInserido::create([
@@ -684,7 +685,6 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
 
         $response2 = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $response2->assertOk();
-        $response2->assertSee('Concluído');
-        $response2->assertSee('Liberado');
+        $response2->assertSee('✓');
     }
 }
