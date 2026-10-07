@@ -60,11 +60,19 @@ class DocumentosMatricula extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $cursoId = $this->record->turma?->serie?->curso_id ?? $this->record->serie?->curso_id;
+
         return $table
             ->query(
                 TipoDocumento::query()
-                    ->where(function ($query) {
-                        $query->whereHas('cursos', fn ($q) => $q->where('curso.id', $this->record->turma?->serie?->curso_id))
+                    ->where(function ($query) use ($cursoId) {
+                        $query->where(function ($sub) use ($cursoId) {
+                            if ($cursoId) {
+                                $sub->paraCursos($cursoId);
+                            } else {
+                                $sub->whereDoesntHave('cursos');
+                            }
+                        })
                             ->orWhereHas('turmas', fn ($q) => $q->where('turma.id', $this->record->turma_id))
                             ->orWhereHas('matriculas', fn ($q) => $q->where('matricula.id', $this->record->id));
                     })
@@ -72,7 +80,7 @@ class DocumentosMatricula extends Page implements HasTable
             ->columns([
                 TextColumn::make('nome')
                     ->label('Tipo de Documento')
-                    ->description(fn (TipoDocumento $record) => $record->flag_obrigatorio ? 'Obrigatório' : 'Opcional')
+                    ->description(fn (TipoDocumento $record) => $record->categoria_exigencia?->getLabel() ?? ($record->flag_obrigatorio ? 'Obrigatório' : 'Opcional'))
                     ->weight('bold'),
 
                 TextColumn::make('modelo')
@@ -319,27 +327,28 @@ class DocumentosMatricula extends Page implements HasTable
     {
         $user = auth()->user();
 
-        $canExport = $user->can('Documentos:Matricula'); // Usando a permissão base de documentos
+        $canExport = $user?->can('Documentos:Matricula');
 
-        $html = '<p>Esta página é dedicada ao controle dos documentos obrigatórios e opcionais do aluno para esta matrícula específica.</p>';
-        $html .= '<h3>Funcionalidades:</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Lista de Documentos:</strong> Veja quais documentos são exigidos com base no Curso e Turma do aluno.</li>';
+        $html = '<div class="space-y-3 text-sm">';
+        $html .= '<p>Esta página é dedicada ao controle dos documentos exigidos e opcionais do aluno para esta matrícula específica.</p>';
+        $html .= '<p><strong>Cursos Vinculados:</strong> Apenas são listados os documentos aplicáveis ao curso da turma/série do aluno ou documentos gerais da instituição. Documentos restritos exclusivamente a outros cursos não são cobrados.</p>';
+        $html .= '<ul class="list-disc pl-5 space-y-1">';
+        $html .= '<li><strong>Obrigatório para Contrato:</strong> Bloqueia a emissão do contrato e a ativação da matrícula até sua entrega.</li>';
+        $html .= '<li><strong>Obrigatório para Histórico:</strong> Exigido para a vida acadêmica e histórico (MEC), sem bloquear o contrato.</li>';
+        $html .= '<li><strong>Opcional:</strong> Documentos adicionais ou facultativos.</li>';
+        $html .= '</ul>';
+        $html .= '<h4 class="font-bold pt-2">Funcionalidades:</h4>';
+        $html .= '<ul class="list-disc pl-5 space-y-1">';
         $html .= '<li><strong>Status:</strong> Acompanhe se o documento está "Em Análise", "Verificado" ou "Rejeitado".</li>';
-        $html .= '<li><strong>Envio de Arquivos:</strong>
-            <ul>
-                <li><strong>Upload Rápido:</strong> Arraste e solte arquivos diretamente na coluna "Upload Rápido".</li>
-                <li><strong>Botão Enviar:</strong> Use o botão "Enviar" para selecionar um arquivo manualmente e adicionar observações.</li>
-            </ul>
-        </li>';
-        $html .= '<li><strong>Modelos:</strong> Se a escola disponibilizou um modelo (PDF ou Link), você pode baixá-lo na coluna "Modelo".</li>';
+        $html .= '<li><strong>Upload Rápido:</strong> Arraste e solte arquivos diretamente na coluna "Upload Rápido".</li>';
+        $html .= '<li><strong>Modelos:</strong> Acesse arquivos de modelo disponibilizados pela instituição.</li>';
 
         if ($canExport) {
-            $html .= '<li><strong>Exportar ZIP:</strong> Baixe todos os documentos já enviados em um único arquivo compactado.</li>';
+            $html .= '<li><strong>Exportar ZIP:</strong> Baixe todos os documentos enviados em um arquivo compactado.</li>';
         }
 
         $html .= '</ul>';
-        $html .= '<p><small>Dica: Certifique-se de que os documentos estejam legíveis para evitar rejeições pela secretaria.</small></p>';
+        $html .= '</div>';
 
         return $html;
     }

@@ -84,15 +84,28 @@ class ConviteMatriculaService
         $segundo = $validated['segundo_responsavel'] ?? [];
         $temSegundo = filled($segundo['nome'] ?? null);
 
+        $cidadeId = null;
+        if (filled($principal['cidade_ibge'] ?? null)) {
+            $cidadeId = Cidade::where('codigo_ibge', $principal['cidade_ibge'])->value('id');
+        }
+
+        if (! $cidadeId && filled($principal['cidade'] ?? null)) {
+            $cidadeQuery = Cidade::where('nome', 'like', $principal['cidade']);
+            if (filled($principal['uf'] ?? null)) {
+                $cidadeQuery->whereHas('estado', fn ($q) => $q->where('sigla', $principal['uf']));
+            }
+            $cidadeId = $cidadeQuery->value('id');
+        }
+
         $endereco = [
             'cep' => $principal['cep'],
             'logradouro' => $principal['logradouro'],
             'numero' => $principal['numero'],
             'complemento' => $principal['complemento'] ?? null,
             'bairro' => $principal['bairro'],
-            'cidade_id' => filled($principal['cidade_ibge'] ?? null)
-                ? Cidade::where('codigo_ibge', $principal['cidade_ibge'])->value('id')
-                : null,
+            'cidade_id' => $cidadeId,
+            'cidade_nome' => $principal['cidade'] ?? null,
+            'uf' => $principal['uf'] ?? null,
         ];
 
         $principalFinanceiro = (bool) ($principal['is_financeiro'] ?? false);

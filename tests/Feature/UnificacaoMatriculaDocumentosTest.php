@@ -128,19 +128,29 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         ]));
     }
 
-    public function test_portal_unificado_salva_dados_cadastrais_da_familia(): void
+    public function test_portal_unificado_salva_dados_cadastrais_com_mascaras_e_formato_brasileiro(): void
     {
         $lead = $this->criarLead();
         $token = $lead->obterOuCriarTokenDocumentos();
         $vinculo = TipoVinculo::firstOrCreate(['nome' => 'Mãe']);
         $dependente = $lead->dependentes->first();
 
+        // 1. Verifica se a view renderiza os atributos data-mask e scripts de CEP
+        $viewResponse = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']));
+        $viewResponse->assertOk();
+        $viewResponse->assertSee('data-mask="cpf"', false);
+        $viewResponse->assertSee('data-mask="telefone"', false);
+        $viewResponse->assertSee('data-mask="data"', false);
+        $viewResponse->assertSee('data-mask="cep"', false);
+        $viewResponse->assertSee('viacep.com.br/ws/', false);
+
+        // 2. Envia os dados com pontuação de máscara e formato DD/MM/AAAA
         $payload = [
             'responsavel' => [
                 'nome' => 'Ana Paula da Silva',
-                'cpf' => '12345678909',
-                'data_nascimento' => '1985-04-12',
-                'telefone' => '11988887777',
+                'cpf' => '123.456.789-09',
+                'data_nascimento' => '12/04/1985',
+                'telefone' => '(11) 98888-7777',
                 'email' => 'ana.silva@example.com',
                 'tipo_vinculo_id' => $vinculo->id,
                 'is_financeiro' => 1,
@@ -148,14 +158,17 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
                 'logradouro' => 'Avenida Paulista',
                 'numero' => '1000',
                 'bairro' => 'Bela Vista',
+                'cidade' => 'São Paulo',
+                'uf' => 'SP',
+                'cidade_ibge' => '3550308',
             ],
             'dependentes' => [
                 [
                     'id' => $dependente->id,
                     'serie_id' => $dependente->serie_id,
                     'turno_preferencia' => 'Manhã',
-                    'data_nascimento' => '2018-05-10',
-                    'cpf' => '98765432100',
+                    'data_nascimento' => '10/05/2018',
+                    'cpf' => '987.654.321-00',
                     'sexo' => 'masculino',
                 ],
             ],
@@ -170,6 +183,10 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $lead->refresh();
         $this->assertNotNull($lead->dados_pre_matricula);
         $this->assertSame('Ana Paula da Silva', $lead->dados_pre_matricula['responsaveis'][0]['nome']);
+        $this->assertSame('12345678909', $lead->dados_pre_matricula['responsaveis'][0]['cpf']);
+        $this->assertSame('1985-04-12', $lead->dados_pre_matricula['responsaveis'][0]['data_nascimento']);
+        $this->assertSame('São Paulo', $lead->dados_pre_matricula['responsaveis'][0]['cidade_nome']);
+        $this->assertSame('SP', $lead->dados_pre_matricula['responsaveis'][0]['uf']);
     }
 
     public function test_portal_unificado_exibe_secoes_e_oculta_documentos_internos(): void
@@ -517,5 +534,68 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $faltantes = $matricula->getMissingMandatoryDocuments();
         $this->assertTrue($faltantes->contains('id', $docA->id), 'Deveria acusar pendência do documento do Curso A');
         $this->assertFalse($faltantes->contains('id', $docB->id), 'NÃO deveria acusar pendência do documento do Curso B');
+    }
+
+    public function test_matricula_get_missing_contract_documents_e_bloqueio_levam_em_conta_cursos_vinculados(): void
+    {
+        $unidade = Unidade::first() ?? Unidade::create(['nome' => 'Unidade Teste 2', 'flag_ativo' => true]);
+        $periodo = PeriodoLetivo::first() ?? PeriodoLetivo::create([
+            'nome' => '2026',
+            'data_inicio' => '2026-02-01',
+            'data_fim' => '2026-12-15',
+        ]);
+        $cursoA = Curso::create(['nome_externo' => 'Curso A Bloqueio', 'nome_interno' => 'CAB', 'unidade_id' => $unidade->id]);
+        $cursoB = Curso::create(['nome_externo' => 'Curso B Bloqueio', 'nome_interno' => 'CBB', 'unidade_id' => $unidade->id]);
+        $serieA = Serie::create(['nome' => 'Série A Bloqueio', 'curso_id' => $cursoA->id, 'sistema_avaliacao' => 'Nota']);
+        $turmaA = Turma::create([
+            'nome' => 'Turma A Bloqueio',
+            'serie_id' => $serieA->id,
+            'periodo_letivo_id' => $periodo->id,
+        ]);
+
+        $docContratoA = TipoDocumento::create([
+            'nome' => 'Doc Contrato Curso A',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docContratoA->cursos()->attach($cursoA->id);
+
+        $docContratoB = TipoDocumento::create([
+            'nome' => 'Doc Contrato Curso B',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docContratoB->cursos()->attach($cursoB->id);
+
+        $aluno = Pessoa::create([
+            'nome' => 'Aluno Bloqueio Teste',
+            'cpf' => '55566677788',
+        ]);
+
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turmaA->id,
+            'serie_id' => $serieA->id,
+            'periodo_letivo_id' => $periodo->id,
+            'situacao' => SituacaoMatricula::PENDENTE,
+        ]);
+
+        // Inicialmente, falta o doc do Curso A, logo deve acusar pendência e bloquear contrato
+        $this->assertTrue($matricula->hasMissingContractDocuments());
+        $docsFaltantesContrato = $matricula->getMissingContractDocuments();
+        $this->assertTrue($docsFaltantesContrato->contains('id', $docContratoA->id));
+        $this->assertFalse($docsFaltantesContrato->contains('id', $docContratoB->id));
+
+        // Envia o documento do Curso A
+        DocumentoInserido::create([
+            'matricula_id' => $matricula->id,
+            'tipo_documento_id' => $docContratoA->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'docs/a.pdf',
+            'nome_arquivo_original' => 'a.pdf',
+        ]);
+
+        // Agora não falta mais nenhum documento de contrato para o Curso A, liberando contrato mesmo com Curso B pendente
+        $matricula->refresh();
+        $this->assertFalse($matricula->hasMissingContractDocuments());
+        $this->assertEmpty($matricula->getMissingContractDocuments());
     }
 }

@@ -170,17 +170,23 @@
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">CPF *</label>
-                                <input type="text" name="responsavel[cpf]" value="{{ $respOld['cpf'] ?? $interessado->pessoa?->cpf }}" required placeholder="000.000.000-00" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[cpf]" id="input-resp-cpf" data-mask="cpf" inputmode="numeric" value="{{ $respOld['cpf'] ?? $interessado->pessoa?->cpf }}" required placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
                             </div>
 
+                            @php
+                                $dataNascResp = $respOld['data_nascimento'] ?? ($interessado->pessoa?->data_nascimento ? $interessado->pessoa->data_nascimento->format('d/m/Y') : '');
+                                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$dataNascResp)) {
+                                    $dataNascResp = \Carbon\Carbon::parse($dataNascResp)->format('d/m/Y');
+                                }
+                            @endphp
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
-                                <input type="date" name="responsavel[data_nascimento]" value="{{ $respOld['data_nascimento'] ?? ($interessado->pessoa?->data_nascimento ? $interessado->pessoa->data_nascimento->format('Y-m-d') : '') }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[data_nascimento]" id="input-resp-data-nascimento" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascResp }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Telefone / WhatsApp *</label>
-                                <input type="text" name="responsavel[telefone]" value="{{ $respOld['telefone'] ?? $interessado->pessoa?->telefone }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[telefone]" id="input-resp-telefone" data-mask="telefone" inputmode="tel" value="{{ $respOld['telefone'] ?? $interessado->pessoa?->telefone }}" required placeholder="(00) 00000-0000" maxlength="15" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
                             </div>
 
                             <div>
@@ -193,7 +199,7 @@
                                 <select name="responsavel[tipo_vinculo_id]" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
                                     @foreach($tiposVinculo as $vinculoId => $vinculoNome)
                                         <option value="{{ $vinculoId }}" {{ (string)($respOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
-                                            {{ $vinculoNome }}
+                                             {{ $vinculoNome }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -211,24 +217,37 @@
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">CEP *</label>
-                                    <input type="text" name="responsavel[cep]" value="{{ $respOld['cep'] ?? '' }}" required placeholder="00000-000" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <div class="relative">
+                                        <input type="text" name="responsavel[cep]" id="input-cep" data-mask="cep" inputmode="numeric" value="{{ $respOld['cep'] ?? '' }}" required placeholder="00000-000" maxlength="9" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 pr-8">
+                                        <span id="cep-loading" class="hidden absolute right-2.5 top-2.5 text-xs text-indigo-600 animate-spin font-bold">⏳</span>
+                                    </div>
+                                    <span id="cep-feedback" class="text-[11px] text-slate-500 block mt-1"></span>
                                 </div>
                                 <div class="sm:col-span-2">
                                     <label class="block font-semibold text-slate-600 mb-1">Logradouro / Rua *</label>
-                                    <input type="text" name="responsavel[logradouro]" value="{{ $respOld['logradouro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <input type="text" name="responsavel[logradouro]" id="input-logradouro" value="{{ $respOld['logradouro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Número *</label>
-                                    <input type="text" name="responsavel[numero]" value="{{ $respOld['numero'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <input type="text" name="responsavel[numero]" id="input-numero" value="{{ $respOld['numero'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Bairro *</label>
-                                    <input type="text" name="responsavel[bairro]" value="{{ $respOld['bairro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <input type="text" name="responsavel[bairro]" id="input-bairro" value="{{ $respOld['bairro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block font-semibold text-slate-600 mb-1">Complemento</label>
-                                    <input type="text" name="responsavel[complemento]" value="{{ $respOld['complemento'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <label class="block font-semibold text-slate-600 mb-1">Cidade *</label>
+                                    <input type="text" name="responsavel[cidade]" id="input-cidade" value="{{ $respOld['cidade'] ?? $respOld['cidade_nome'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                                 </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-600 mb-1">Estado (UF) *</label>
+                                    <input type="text" name="responsavel[uf]" id="input-uf" maxlength="2" value="{{ $respOld['uf'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 uppercase focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block font-semibold text-slate-600 mb-1">Complemento</label>
+                                    <input type="text" name="responsavel[complemento]" id="input-complemento" value="{{ $respOld['complemento'] ?? '' }}" placeholder="Apto, Bloco..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <input type="hidden" name="responsavel[cidade_ibge]" id="input-cidade-ibge" value="{{ $respOld['cidade_ibge'] ?? '' }}">
                             </div>
                         </div>
                     </fieldset>
@@ -245,11 +264,11 @@
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">CPF</label>
-                                <input type="text" name="segundo_responsavel[cpf]" value="{{ $segundoOld['cpf'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                <input type="text" name="segundo_responsavel[cpf]" data-mask="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" value="{{ $segundoOld['cpf'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Telefone</label>
-                                <input type="text" name="segundo_responsavel[telefone]" value="{{ $segundoOld['telefone'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                <input type="text" name="segundo_responsavel[telefone]" data-mask="telefone" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15" value="{{ $segundoOld['telefone'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Grau de Vínculo</label>
@@ -304,14 +323,20 @@
                                         </select>
                                     </div>
 
+                                    @php
+                                        $dataNascDep = $depOld['data_nascimento'] ?? ($dependente->data_nascimento ? \Carbon\Carbon::parse($dependente->data_nascimento)->format('d/m/Y') : '');
+                                        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$dataNascDep)) {
+                                            $dataNascDep = \Carbon\Carbon::parse($dataNascDep)->format('d/m/Y');
+                                        }
+                                    @endphp
                                     <div>
                                         <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
-                                        <input type="date" name="dependentes[{{ $index }}][data_nascimento]" value="{{ $depOld['data_nascimento'] ?? ($dependente->data_nascimento ? \Carbon\Carbon::parse($dependente->data_nascimento)->format('Y-m-d') : '') }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                        <input type="text" name="dependentes[{{ $index }}][data_nascimento]" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascDep }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
                                     </div>
 
                                     <div>
                                         <label class="block font-semibold text-slate-700 mb-1">CPF do Aluno (se possuir)</label>
-                                        <input type="text" name="dependentes[{{ $index }}][cpf]" value="{{ $depOld['cpf'] ?? '' }}" placeholder="000.000.000-00" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                        <input type="text" name="dependentes[{{ $index }}][cpf]" data-mask="cpf" inputmode="numeric" value="{{ $depOld['cpf'] ?? '' }}" placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
                                     </div>
 
                                     <div>
@@ -460,5 +485,128 @@
             </div>
         @endif
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function formatCpf(v) {
+                v = (v || '').replace(/\D/g, '').slice(0, 11);
+                if (v.length > 9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+                if (v.length > 6) return v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+                if (v.length > 3) return v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+                return v;
+            }
+
+            function formatPhone(v) {
+                v = (v || '').replace(/\D/g, '').slice(0, 11);
+                if (v.length > 10) return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                if (v.length > 6) return v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                if (v.length > 2) return v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+                return v;
+            }
+
+            function formatDate(v) {
+                v = (v || '').replace(/\D/g, '').slice(0, 8);
+                if (v.length > 4) return v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+                if (v.length > 2) return v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+                return v;
+            }
+
+            function formatCep(v) {
+                v = (v || '').replace(/\D/g, '').slice(0, 8);
+                if (v.length > 5) return v.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+                return v;
+            }
+
+            function applyMask(el) {
+                const mask = el.getAttribute('data-mask');
+                if (!mask) return;
+
+                if (mask === 'cpf') el.value = formatCpf(el.value);
+                else if (mask === 'telefone') el.value = formatPhone(el.value);
+                else if (mask === 'data') el.value = formatDate(el.value);
+                else if (mask === 'cep') el.value = formatCep(el.value);
+            }
+
+            // Aplica máscaras nos inputs existentes
+            document.querySelectorAll('[data-mask]').forEach(function (el) {
+                applyMask(el);
+                el.addEventListener('input', function () { applyMask(el); });
+                el.addEventListener('blur', function () { applyMask(el); });
+            });
+
+            // Autocomplete de CEP via ViaCEP
+            const cepInput = document.getElementById('input-cep');
+            if (cepInput) {
+                let ultimoCepConsultado = '';
+
+                async function handleConsultaCep() {
+                    const raw = (cepInput.value || '').replace(/\D/g, '');
+                    if (raw.length !== 8 || raw === ultimoCepConsultado) {
+                        return;
+                    }
+                    ultimoCepConsultado = raw;
+
+                    const loading = document.getElementById('cep-loading');
+                    const feedback = document.getElementById('cep-feedback');
+                    const inputLogradouro = document.getElementById('input-logradouro');
+                    const inputBairro = document.getElementById('input-bairro');
+                    const inputCidade = document.getElementById('input-cidade');
+                    const inputUf = document.getElementById('input-uf');
+                    const inputIbge = document.getElementById('input-cidade-ibge');
+                    const inputNumero = document.getElementById('input-numero');
+
+                    if (loading) loading.classList.remove('hidden');
+                    if (feedback) {
+                        feedback.innerText = 'Buscando CEP...';
+                        feedback.className = 'text-[11px] text-indigo-600 font-medium block mt-1';
+                    }
+
+                    try {
+                        const response = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
+                        const data = await response.json();
+
+                        if (data.erro) {
+                            if (feedback) {
+                                feedback.innerText = 'CEP não encontrado. Por favor, digite os dados manualmente.';
+                                feedback.className = 'text-[11px] text-amber-600 block mt-1';
+                            }
+                            return;
+                        }
+
+                        if (inputLogradouro && data.logradouro) inputLogradouro.value = data.logradouro;
+                        if (inputBairro && data.bairro) inputBairro.value = data.bairro;
+                        if (inputCidade && data.localidade) inputCidade.value = data.localidade;
+                        if (inputUf && data.uf) inputUf.value = data.uf;
+                        if (inputIbge && data.ibge) inputIbge.value = data.ibge;
+
+                        if (feedback) {
+                            feedback.innerText = `✓ ${data.localidade} - ${data.uf} (${data.bairro || 'Endereço localizado'})`;
+                            feedback.className = 'text-[11px] text-emerald-600 font-semibold block mt-1';
+                        }
+
+                        if (inputNumero) {
+                            inputNumero.focus();
+                        }
+                    } catch (error) {
+                        if (feedback) {
+                            feedback.innerText = 'Não foi possível buscar o endereço automaticamente. Preencha manualmente.';
+                            feedback.className = 'text-[11px] text-slate-500 block mt-1';
+                        }
+                    } finally {
+                        if (loading) loading.classList.add('hidden');
+                    }
+                }
+
+                cepInput.addEventListener('input', function () {
+                    const raw = this.value.replace(/\D/g, '');
+                    if (raw.length === 8) {
+                        handleConsultaCep();
+                    }
+                });
+
+                cepInput.addEventListener('blur', handleConsultaCep);
+            }
+        });
+    </script>
 </body>
 </html>

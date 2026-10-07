@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\CategoriaExigenciaDocumento;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusFatura;
@@ -193,42 +192,50 @@ class Matricula extends Model
      */
     public function getMissingMandatoryDocuments(): Collection
     {
-        $cursoId = $this->turma?->serie?->curso_id ?? $this->serie?->curso_id;
+        $documentosRequeridos = collect();
 
-        // 1. Documentos obrigatórios (Contrato ou Histórico) aplicáveis ao curso da matrícula (ou gerais)
-        $obrigatoriosCurso = TipoDocumento::query()
-            ->where(function (Builder $q) {
-                $q->whereIn('categoria_exigencia', [
-                    CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
-                    CategoriaExigenciaDocumento::OBRIGATORIO_HISTORICO,
-                ])->orWhere('flag_obrigatorio', true);
-            })
-            ->when(
-                $cursoId,
-                fn ($q) => $q->paraCursos($cursoId),
-                fn ($q) => $q->whereDoesntHave('cursos')
-            )
-            ->get();
-
-        $documentosRequeridos = collect($obrigatoriosCurso);
-
-        // 2. Documentos vinculados especificamente à Turma
-        if ($this->turma) {
-            $documentosRequeridos = $documentosRequeridos->concat($this->turma->tiposDocumentos->filter(fn ($d) => $d->flag_obrigatorio));
+        // 1. Documentos vinculados ao Curso da matrícula
+        $curso = null;
+        if ($this->relationLoaded('turma') && $this->turma) {
+            $serie = $this->turma->relationLoaded('serie') ? $this->turma->serie : null;
+            $curso = $serie && $serie->relationLoaded('curso') ? $serie->curso : $this->turma->serie?->curso;
+        } elseif (! $this->relationLoaded('turma')) {
+            $curso = $this->turma?->serie?->curso ?? ($this->relationLoaded('serie') ? $this->serie?->curso : $this->serie?->curso);
         }
 
-        // 3. Documentos vinculados especificamente à Matrícula
-        $documentosRequeridos = $documentosRequeridos->concat($this->tiposDocumentos->filter(fn ($d) => $d->flag_obrigatorio));
+        if ($curso) {
+            $docsCurso = $curso->relationLoaded('documentos')
+                ? $curso->documentos
+                : $curso->documentos()->get();
+            $documentosRequeridos = $documentosRequeridos->concat($docsCurso);
+        }
 
-        // Remover duplicados por ID
-        $obrigatorios = $documentosRequeridos->unique('id');
+        // 2. Documentos vinculados especificamente à Turma
+        if ($this->relationLoaded('turma') && $this->turma) {
+            $docsTurma = $this->turma->relationLoaded('tiposDocumentos')
+                ? $this->turma->tiposDocumentos
+                : $this->turma->tiposDocumentos()->get();
+            $documentosRequeridos = $documentosRequeridos->concat($docsTurma);
+        } elseif (! $this->relationLoaded('turma') && $this->turma) {
+            $documentosRequeridos = $documentosRequeridos->concat($this->turma->tiposDocumentos);
+        }
+
+        // 3. Documentos vinculados diretamente à Matrícula
+        $docsMatricula = $this->relationLoaded('tiposDocumentos')
+            ? $this->tiposDocumentos
+            : $this->tiposDocumentos()->get();
+        $documentosRequeridos = $documentosRequeridos->concat($docsMatricula);
+
+        // Remover duplicados por ID e filtrar apenas os obrigatórios
+        $obrigatorios = $documentosRequeridos
+            ->unique('id')
+            ->filter(fn (TipoDocumento $doc) => (bool) $doc->flag_obrigatorio);
 
         if ($obrigatorios->isEmpty()) {
             return collect();
         }
 
         // IDS dos documentos que já estão inseridos e NÃO REJEITADOS
-        // (usa a relação já carregada, quando houver, para evitar uma query por matrícula)
         $inseridosIds = $this->relationLoaded('documentoInseridos')
             ? $this->documentoInseridos
                 ->reject(fn (DocumentoInserido $doc) => $doc->status === SituacaoDocumento::REJEITADO)
@@ -242,6 +249,27 @@ class Matricula extends Model
         return $obrigatorios->reject(function ($doc) use ($inseridosIds) {
             return in_array($doc->id, $inseridosIds);
         })->values();
+    }
+
+    /**
+     * Retorna os documentos obrigatórios especificamente para geração do Contrato Escolar
+     * que ainda não foram entregues ou estão rejeitados, considerando os cursos vinculados.
+     *
+     * @return Collection<TipoDocumento>
+     */
+    public function getMissingContractDocuments(): Collection
+    {
+        return $this->getMissingMandatoryDocuments()
+            ->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioContrato() || ($doc->flag_obrigatorio && $doc->categoria_exigencia === null))
+            ->values();
+    }
+
+    /**
+     * Informa se há pendência de documentos que bloqueiam a emissão do contrato.
+     */
+    public function hasMissingContractDocuments(): bool
+    {
+        return $this->getMissingContractDocuments()->isNotEmpty();
     }
 
     /**

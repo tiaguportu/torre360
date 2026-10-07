@@ -38,7 +38,16 @@ class DocumentosCandidatoRelationManager extends RelationManager
             ->components([
                 Select::make('tipo_documento_id')
                     ->label('Tipo de Documento')
-                    ->options(TipoDocumento::orderBy('nome')->pluck('nome', 'id'))
+                    ->options(function () {
+                        $lead = $this->getOwnerRecord();
+                        $cursosIds = $lead->cursosPretendidosIds();
+
+                        return TipoDocumento::query()
+                            ->visivelPortalFamilia()
+                            ->paraCursos($cursosIds)
+                            ->orderBy('nome')
+                            ->pluck('nome', 'id');
+                    })
                     ->searchable()
                     ->required(),
 

@@ -405,7 +405,16 @@ class MatriculasTable
                         Action::make('gerarContrato')
                             ->label('Gerar contrato')
                             ->icon(Heroicon::OutlinedDocumentPlus)
-                            ->color('success')
+                            ->color(fn (Matricula $record) => $record->hasMissingContractDocuments() ? 'gray' : 'success')
+                            ->disabled(fn (Matricula $record) => $record->hasMissingContractDocuments())
+                            ->tooltip(function (Matricula $record) {
+                                $faltantes = $record->getMissingContractDocuments();
+                                if ($faltantes->isNotEmpty()) {
+                                    return 'Bloqueado: faltam documentos obrigatórios de contrato para este curso ('.$faltantes->pluck('nome')->implode(', ').')';
+                                }
+
+                                return null;
+                            })
                             ->visible(fn (Matricula $record) => $record->contrato === null
                                 && $record->pessoa !== null
                                 && ! $record->estaSemResponsavel())
@@ -414,6 +423,17 @@ class MatriculasTable
                             ->modalDescription('As pessoas responsáveis pelo aluno serão vinculadas ao contrato com valor R$ 0,00.')
                             ->modalSubmitActionLabel('Sim, gerar contrato')
                             ->action(function (Matricula $record) {
+                                $faltantes = $record->getMissingContractDocuments();
+                                if ($faltantes->isNotEmpty()) {
+                                    Notification::make()
+                                        ->title('Emissão de Contrato Bloqueada')
+                                        ->body('Não é possível emitir o contrato. Os seguintes documentos obrigatórios do curso estão pendentes: '.$faltantes->pluck('nome')->implode(', ').'.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+
                                 $contrato = Contrato::create([
                                     'matricula_id' => $record->id,
                                     'valor_total' => 0,

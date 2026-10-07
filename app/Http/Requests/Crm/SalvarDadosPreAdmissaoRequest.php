@@ -32,6 +32,43 @@ class SalvarDadosPreAdmissaoRequest extends FormRequest
     /**
      * @return array<string, mixed>
      */
+    protected function prepareForValidation(): void
+    {
+        $dados = $this->all();
+
+        if (! empty($dados['responsavel']['data_nascimento'])) {
+            $dados['responsavel']['data_nascimento'] = $this->normalizarDataParaIso($dados['responsavel']['data_nascimento']);
+        }
+
+        if (! empty($dados['dependentes']) && is_array($dados['dependentes'])) {
+            foreach ($dados['dependentes'] as $k => $dep) {
+                if (! empty($dep['data_nascimento'])) {
+                    $dados['dependentes'][$k]['data_nascimento'] = $this->normalizarDataParaIso($dep['data_nascimento']);
+                }
+            }
+        }
+
+        $this->replace($dados);
+    }
+
+    private function normalizarDataParaIso(?string $valor): ?string
+    {
+        if (! $valor) {
+            return null;
+        }
+
+        $trimmed = trim($valor);
+
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $trimmed, $m)) {
+            return "{$m[3]}-{$m[2]}-{$m[1]}";
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         $dependentesIds = $this->getInteressado()?->dependentes()->pluck('id')->all() ?? [];
@@ -49,6 +86,8 @@ class SalvarDadosPreAdmissaoRequest extends FormRequest
             'responsavel.numero' => ['required', 'string', 'max:20'],
             'responsavel.complemento' => ['nullable', 'string', 'max:100'],
             'responsavel.bairro' => ['required', 'string', 'max:100'],
+            'responsavel.cidade' => ['nullable', 'string', 'max:100'],
+            'responsavel.uf' => ['nullable', 'string', 'max:2'],
             'responsavel.cidade_ibge' => ['nullable', 'string', 'max:10'],
 
             'segundo_responsavel.nome' => ['nullable', 'string', 'max:255'],

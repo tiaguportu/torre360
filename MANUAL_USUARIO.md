@@ -2560,7 +2560,15 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
    - O sistema unificou os antigos links (`/quero-matricular/convite/{token}` e `/admissao/{token}`) em uma experiência única e moderna em `/admissao/{token}`.
    - **Compatibilidade Retroativa:** Links de convite já compartilhados por WhatsApp ou e-mail continuam funcionando perfeitamente, sendo redirecionados de forma transparente para o portal unificado do candidato.
 2. **Navegação Intuitiva por Abas:**
-   - **Aba 1 — Dados Cadastrais:** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+   - **Aba 1 — Dados Cadastrais com Preenchimento Guiado:** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+     - **Máscaras de Entrada Inteligentes:**
+       - **Telefone:** Máscara dinâmica no padrão nacional com DDD `(00) 00000-0000` (celular) ou `(00) 0000-0000` (fixo), adaptando-se em tempo real na digitação ou colagem.
+       - **CPF:** Máscara padronizada `000.000.000-00` com restrição de caracteres não numéricos.
+       - **Data de Nascimento:** Máscara no formato brasileiro `00/00/0000` (DD/MM/AAAA) tanto para o responsável quanto para os dependentes, normalizada para persistência segura no banco.
+     - **Autocomplete de Endereço via CEP (ViaCEP):**
+       - Ao preencher os 8 dígitos do CEP (ou desfocar o campo), o portal consulta automaticamente o serviço ViaCEP.
+       - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
+       - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
    - **Aba 2 — Envio de Documentos:** Checklist digital inteligente que separa claramente os documentos exigidos para emissão de contrato, documentos acadêmicos do histórico e documentos facultativos.
    - **Aba 3 — Situação do Contrato:** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
 3. **Ação Unificada no CRM (`admin/interessados`):**
@@ -2587,6 +2595,12 @@ No painel administrativo, o Assistente de Matrícula foi aprimorado com uma etap
   - Se todos os documentos obrigatórios para contrato **do curso do estudante** estiverem entregues, o assistente emite o Contrato Escolar e ativa a matrícula (`Ativa`).
   - Documentos obrigatórios pertencentes a outros cursos são ignorados, garantindo que o contrato de um aluno não seja indevidamente travado por regras de outros segmentos educacionais.
   - Se faltar algum documento obrigatório de contrato do curso pretendido, a matrícula é salva com segurança na situação `Pendente`, sem emitir o contrato, até a regularização da documentação.
+
+### 50.3.1 Emissão de Contrato na Tabela de Matrículas (`/admin/matriculas`)
+Na listagem geral de Matrículas da Secretaria:
+- O botão **'Gerar Contrato'** realiza a verificação em tempo real de documentos obrigatórios de contrato (`hasMissingContractDocuments()`).
+- Se houver pendência de documentos de contrato específicos do curso da matrícula, a ação é desabilitada com um aviso em tooltip listando nominalmente os documentos faltantes, prevenindo a formalização indevida de matrículas com pendência documental crítica.
+- Documentos obrigatórios de outros cursos não interferem na matrícula do aluno.
 
 ### 50.4 Edição em Lote de Tipos de Documentos (`/admin/tipo-documentos`)
 Para simplificar a manutenção e configuração em escala dos tipos de documentos escolares:
