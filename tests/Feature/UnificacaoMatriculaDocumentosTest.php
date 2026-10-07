@@ -623,27 +623,31 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $response->assertOk();
 
-        // Verifica os novos nomes das abas
+        // Verifica os novos nomes das abas e ausência da aba contrato
         $response->assertSee('1. Cadastro');
         $response->assertSee('2. Documentos');
-        $response->assertSee('3. Contrato');
+        $response->assertDontSee('3. Contrato');
+
+        // Acessar com ?aba=status faz fallback gracioso para a aba de documentos
+        $responseStatus = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'status']));
+        $responseStatus->assertOk();
+        $responseStatus->assertSee('Documentos Obrigatórios');
 
         // Verifica que seções de histórico e opcionais estão colapsadas em tags <details>
         $response->assertSee('<details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">', false);
         $response->assertSee('Documentos para o Histórico Escolar');
-        $response->assertSee('Não bloqueiam o contrato');
+        $response->assertSee('Documentação acadêmica');
         $response->assertSee('Documentos Opcionais / Complementares');
         $response->assertSee('Envio facultativo');
 
-        // Na aba "2. Documentos", a contagem de pendências refere-se aos obrigatórios para CONTRATO (1 pendente, e não 2)
+        // Na aba "2. Documentos", a contagem de pendências refere-se aos documentos obrigatórios
         $statusAbas = $interessado->resumoPendenciasPortal();
         $this->assertTrue($statusAbas['dados']['tem_pendencia']);
         $this->assertTrue($statusAbas['documentos']['tem_pendencia']);
-        $this->assertSame(1, $statusAbas['documentos']['quantidade']); // apenas o doc de contrato
-        $this->assertTrue($statusAbas['contrato']['tem_pendencia']);
+        $this->assertSame(1, $statusAbas['documentos']['quantidade']);
 
         // Badge exibe apenas o número da pendência
-        $response->assertSee('title="1 documento(s) de contrato pendente(s)"', false);
+        $response->assertSee('title="1 documento(s) obrigatório(s) pendente(s)"', false);
 
         // 2. Envia o documento obrigatório para contrato
         DocumentoInserido::create([

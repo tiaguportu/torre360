@@ -93,9 +93,9 @@
                     <span class="{{ $todosDocsContratoEntregues ? 'text-emerald-600' : 'text-indigo-600' }}">
                         {{ $progresso['aprovados'] + $progresso['em_analise'] }} de {{ $progresso['total'] }} enviados
                         @if($todosDocsContratoEntregues)
-                            <span class="ml-1 text-emerald-700 font-bold">(Docs de Contrato OK ✅)</span>
+                            <span class="ml-1 text-emerald-700 font-bold">(Documentos OK ✅)</span>
                         @else
-                            <span class="ml-1 text-amber-700">(Contrato pendente ⏳)</span>
+                            <span class="ml-1 text-amber-700">(Documentos pendentes ⏳)</span>
                         @endif
                     </span>
                 </div>
@@ -134,26 +134,11 @@
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'documentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
                 <span>2. Documentos</span>
                 @if($statusAbas['documentos']['tem_pendencia'])
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ $statusAbas['documentos']['quantidade'] }} documento(s) de contrato pendente(s)">
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s) pendente(s)">
                         {{ $statusAbas['documentos']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Documentos de contrato concluídos">
-                        ✓
-                    </span>
-                @endif
-            </a>
-
-            <!-- Aba 3: 3. Contrato -->
-            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'status']) }}"
-               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'status' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
-                <span>3. Contrato</span>
-                @if($statusAbas['contrato']['tem_pendencia'])
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ implode(', ', $statusAbas['contrato']['pendencias']) }}">
-                        {{ $statusAbas['contrato']['quantidade'] }}
-                    </span>
-                @else
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Contrato liberado">
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Documentos obrigatórios concluídos">
                         ✓
                     </span>
                 @endif
@@ -431,22 +416,22 @@
                     </div>
                 @endif
 
-                <!-- Seção 1: Documentos Obrigatórios para o Contrato (Em Destaque) -->
+                <!-- Seção 1: Documentos Obrigatórios (Em Destaque) -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                                <span class="text-rose-600">🔴</span> Documentos para Liberação do Contrato
+                                <span class="text-rose-600">🔴</span> Documentos Obrigatórios
                             </h3>
                             <p class="text-xs text-slate-500">
-                                <strong>Indispensáveis:</strong> Enquanto estes documentos não forem validados, o Contrato Escolar não pode ser emitido.
+                                <strong>Indispensáveis:</strong> Documentos essenciais para a conferência e efetivação da pré-matrícula.
                             </p>
                         </div>
                     </div>
 
                     @if($docsContrato->isEmpty())
                         <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
-                            Nenhum documento bloqueante de contrato configurado para esta série.
+                            Nenhum documento obrigatório configurado para esta série.
                         </div>
                     @else
                         @foreach($docsContrato as $tipo)
@@ -463,10 +448,10 @@
                             <div>
                                 <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
                                     <span>Documentos para o Histórico Escolar</span>
-                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Não bloqueiam o contrato</span>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Documentação acadêmica</span>
                                 </h3>
                                 <p class="text-xs text-slate-500 mt-0.5">
-                                    Exigidos para a conformidade com o MEC e pasta acadêmica (envio facultado neste momento).
+                                    Exigidos para a pasta pedagógica do aluno (envio facultado neste momento inicial).
                                 </p>
                             </div>
                         </div>
@@ -526,62 +511,8 @@
                         @endif
                     </div>
                 </details>
-            </div>
-        @endif
 
-        <!-- CONTEÚDO DA ABA 3: SITUAÇÃO DO CONTRATO E PRÓXIMOS PASSOS -->
-        @if($abaAtiva === 'status')
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
-                <div class="text-center space-y-3 py-4">
-                    @if(! $statusAbas['contrato']['tem_pendencia'])
-                        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto">
-                            ✓
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900">Documentos e Requisitos em Dia!</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                            Todos os requisitos necessários para a formalização do <strong>Contrato Escolar</strong> já foram cumpridos. A Secretaria Escolar está concluindo os preparativos para disponibilizar o contrato para assinatura.
-                        </p>
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 mt-2">
-                            <span>Status:</span> Pronto para Emissão do Contrato
-                        </div>
-                    @else
-                        <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto">
-                            ⏳
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900">Aguardando Requisitos Obrigatórios</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                            Ainda constam pendências obrigatórias para a liberação do <strong>Contrato Escolar</strong>. O contrato só pode ser emitido após a regularização desses itens.
-                        </p>
-
-                        @if(!empty($statusAbas['contrato']['pendencias']))
-                            <div class="max-w-md mx-auto text-left bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 space-y-1.5">
-                                <span class="font-bold block text-amber-950 flex items-center gap-1.5">
-                                    <span>⚠️</span> Pendências para liberação do contrato:
-                                </span>
-                                <ul class="list-disc list-inside space-y-0.5 text-amber-800">
-                                    @foreach($statusAbas['contrato']['pendencias'] as $pend)
-                                        <li>{{ $pend }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
-                        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-                            @if($statusAbas['dados']['tem_pendencia'])
-                                <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900">
-                                    <span>Ir para 1. Cadastro</span>
-                                    <span>→</span>
-                                </a>
-                            @endif
-                            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700">
-                                <span>Ir para 2. Documentos</span>
-                                <span>→</span>
-                            </a>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                     <span>Em caso de dúvidas, fale diretamente com nossa Secretaria:</span>
                     <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade?->celular_whatsapp ?? '') }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 inline-flex items-center gap-1.5">
                         <span>💬 WhatsApp da Escola</span>

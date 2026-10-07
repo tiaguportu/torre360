@@ -2551,9 +2551,9 @@ A **Central de Acordos e Recuperação de Inadimplência** profissionaliza a neg
 
 ---
 
-## 📋 50. Portal Unificado de Admissão & Classificação Inteligente de Documentos (`/admissao/{token}`)
+## 📋 50. Portal Unificado de Admissão & Pré-Matrícula (`/admissao/{token}`)
 
-O **Portal Unificado de Admissão** consolida em um único link seguro toda a jornada de entrada de uma nova família na escola: desde o preenchimento dos dados cadastrais preliminares até o upload dos comprovantes e acompanhamento da liberação do Contrato Escolar.
+O **Portal Unificado de Admissão** consolida em um único link seguro o acolhimento e a coleta preliminar de dados de uma nova família na escola: preenchimento dos dados cadastrais completos e upload dos comprovantes obrigatórios para validação pela secretaria escolar.
 
 ### 50.1 Link Único do Candidato e Navegação por Abas
 1. **Unificação dos Links Externos:**
@@ -2561,7 +2561,7 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
    - **Compatibilidade Retroativa:** Links de convite já compartilhados por WhatsApp ou e-mail continuam funcionando perfeitamente, sendo redirecionados de forma transparente para o portal unificado do candidato.
 2. **Navegação Intuitiva por Abas com Indicadores em Tempo Real:**
    - **Aba '1. Cadastro':** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
-     - **Indicador de Status Minimalista:** Exibe um badge circular/pílula apenas com o número de itens pendentes (ex: `3`) ou apenas o símbolo de check (`✓`) quando todos os dados cadastrais obrigatórios estiverem confirmados.
+     - **Indicador de Status Minimalista:** Exibe um badge apenas com o número de itens pendentes (ex: `3`) ou apenas o símbolo de check (`✓`) quando todos os dados cadastrais obrigatórios estiverem confirmados.
      - **Máscaras de Entrada Inteligentes:**
        - **Telefone:** Máscara dinâmica no padrão nacional com DDD `(00) 00000-0000` (celular) ou `(00) 0000-0000` (fixo), adaptando-se em tempo real na digitação ou colagem.
        - **CPF:** Máscara padronizada `000.000.000-00` com restrição de caracteres não numéricos.
@@ -2570,12 +2570,11 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
        - Ao preencher os 8 dígitos do CEP (ou desfocar o campo), o portal consulta automaticamente o serviço ViaCEP.
        - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
        - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
-   - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para emissão do contrato:
-     - **Contagem de Pendências Vinculada ao Contrato:** O badge da aba exibe apenas o **número de documentos obrigatórios para liberação do Contrato Escolar** que ainda faltam (ex: `1`), ou o símbolo `✓` quando todos os documentos de contrato estiverem entregues. Documentos de histórico ou opcionais não inflam essa contagem.
-     - **Seção de Contrato em Destaque:** Os documentos indispensáveis para o contrato são exibidos abertos e destacados no topo.
-     - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (não bloqueiam contrato) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação da matrícula. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
-   - **Aba '3. Contrato':** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
-     - **Indicador de Status:** Exibe o número de requisitos impeditivos faltantes (ex: `2`) ou `✓` quando todos os critérios contratuais estiverem cumpridos.
+   - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para a efetivação da pré-matrícula:
+     - **Contagem de Pendências:** O badge da aba exibe apenas o **número de documentos obrigatórios** que ainda faltam entregar (ex: `1`), ou o símbolo `✓` quando todos os documentos obrigatórios estiverem entregues. Documentos de histórico ou opcionais não inflam essa contagem.
+     - **Seção de Documentos Obrigatórios em Destaque:** Os documentos indispensáveis são exibidos abertos e destacados no topo.
+     - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (documentação acadêmica) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação inicial. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
+   - **Contrato Escolar (Fase Posterior da Secretaria/Financeiro):** A etapa e aba de contrato foi deliberadamente mantida fora deste link de pré-matrícula por enquanto, aguardando a parametrização dos planos de anuidade escolar e parcelas financeiras pela secretaria/financeiro. O portal concentra a família estritamente no envio cadastral e documental.
 3. **Ação Unificada no CRM (`admin/interessados`):**
    - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
 
@@ -2651,6 +2650,24 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 ### 51.2 Visualização e Listagem (`/admin/livros`)
 - A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, ISBN e o saldo de exemplares disponíveis sobre o total (com destaque visual em verde/vermelho).
 - Em dispositivos móveis, a listagem se adapta em formato de cards responsivos (`stackedOnMobile`).
+
+---
+
+## 🛡️ 52. Cobertura Abrangente de Permissões no Filament Shield (`/admin/shield/roles`)
+
+Todas as entidades e páginas operacionais do sistema estão integradas às Políticas de Autorização (Policies) do Laravel e ao **Filament Shield**:
+
+1. **Novos Módulos e Cadastros com Políticas Ativas:**
+   - **CRM e Vendas:** Concorrentes (`Concorrente`), Indicação de Interessados (`IndicacaoInteressado`), Modelos de WhatsApp (`MensagemWhatsappTemplate`) e Objeções Comerciais (`Objecao`).
+   - **Convivência:** Tipos de Ocorrência Escolar (`TipoOcorrencia`).
+   - **Automações e Réguas:** Réguas de Cobrança (`ReguaCobranca`) e Réguas de Follow-up (`ReguaFollowUp`), incluindo a permissão específica de execução manual/simulação (`Execute:ReguaCobranca` / `Execute:ReguaFollowUp`).
+   - **Relatórios Financeiros:** Fluxo de Caixa Consolidado (`View:RelatorioFluxoCaixa`) e Relatório de Inadimplência (`View:RelatorioInadimplencia`).
+   - **Secretaria e Matrículas:** Ações pontuais de disparo de comunicados, como o aviso de disponibilidade de horários para preceptoria (`AvisarPossibilidadePreceptoria:Matricula`).
+
+2. **Como configurar permissões por papel:**
+   - Acesse **Sistema e Segurança → Papéis (Shield)** e selecione o perfil desejado.
+   - Nas abas **Recursos**, **Páginas** e **Widgets**, marque os privilégios apropriados para cada função da instituição.
+   - Usuários com papéis de equipe visualizam apenas os botões, abas e telas para os quais possuem permissão expressa.
 
 ---
 
