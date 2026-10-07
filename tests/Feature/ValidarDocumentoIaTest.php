@@ -91,7 +91,7 @@ class ValidarDocumentoIaTest extends TestCase
                 'arquivo' => $file,
             ]);
 
-        $response->assertRedirect(route('candidato.documentos.show', ['token' => $interessado->token_documentos]));
+        $response->assertRedirect(route('candidato.documentos.show', ['token' => $interessado->token_documentos, 'aba' => 'documentos']));
         $response->assertSessionHas('sucesso');
 
         $this->assertDatabaseHas('documento_inserido', [
@@ -210,11 +210,10 @@ class ValidarDocumentoIaTest extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('candidato.documentos.show', ['token' => $interessado->token_documentos]));
+        $response = $this->get(route('candidato.documentos.show', ['token' => $interessado->token_documentos, 'aba' => 'documentos']));
 
         $response->assertOk();
-        $response->assertSeeText('Validação Inteligente');
-        $response->assertSeeText('Proteção de Dados (LGPD)');
-        $response->assertSeeText('Pré-conferência IA:');
+        $response->assertSeeText('Pré-análise Automática (IA):');
+        $response->assertSeeText('Arquivo legível e conforme');
     }
 }

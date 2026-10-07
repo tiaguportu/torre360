@@ -196,9 +196,16 @@
                             </div>
 
                             @php
-                                $dataNascResp = $respOld['data_nascimento'] ?? ($interessado->pessoa?->data_nascimento ? $interessado->pessoa->data_nascimento->format('d/m/Y') : '');
-                                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$dataNascResp)) {
-                                    $dataNascResp = \Carbon\Carbon::parse($dataNascResp)->format('d/m/Y');
+                                $dataNascRespRaw = $respOld['data_nascimento'] ?? $interessado->pessoa?->data_nascimento;
+                                $dataNascResp = '';
+                                if (filled($dataNascRespRaw)) {
+                                    if ($dataNascRespRaw instanceof \DateTimeInterface) {
+                                        $dataNascResp = $dataNascRespRaw->format('d/m/Y');
+                                    } elseif (preg_match('/^\d{4}-\d{2}-\d{2}/', (string) $dataNascRespRaw)) {
+                                        $dataNascResp = \Carbon\Carbon::parse($dataNascRespRaw)->format('d/m/Y');
+                                    } else {
+                                        $dataNascResp = (string) $dataNascRespRaw;
+                                    }
                                 }
                             @endphp
                             <div>
@@ -346,9 +353,16 @@
                                     </div>
 
                                     @php
-                                        $dataNascDep = $depOld['data_nascimento'] ?? ($dependente->data_nascimento ? \Carbon\Carbon::parse($dependente->data_nascimento)->format('d/m/Y') : '');
-                                        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$dataNascDep)) {
-                                            $dataNascDep = \Carbon\Carbon::parse($dataNascDep)->format('d/m/Y');
+                                        $dataNascDepRaw = $depOld['data_nascimento'] ?? $dependente->data_nascimento;
+                                        $dataNascDep = '';
+                                        if (filled($dataNascDepRaw)) {
+                                            if ($dataNascDepRaw instanceof \DateTimeInterface) {
+                                                $dataNascDep = $dataNascDepRaw->format('d/m/Y');
+                                            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}/', (string) $dataNascDepRaw)) {
+                                                $dataNascDep = \Carbon\Carbon::parse($dataNascDepRaw)->format('d/m/Y');
+                                            } else {
+                                                $dataNascDep = (string) $dataNascDepRaw;
+                                            }
                                         }
                                     @endphp
                                     <div>

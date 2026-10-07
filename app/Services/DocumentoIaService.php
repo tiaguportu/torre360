@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\DocumentoInserido;
 use App\Models\HistoricoContato;
 use App\Models\TipoContatoInteressado;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -44,7 +45,9 @@ class DocumentoIaService
         $dependente = $documento->dependente;
 
         $nomeEsperado = $dependente?->nome_crianca ?? $interessado?->pessoa?->nome ?? 'Não informado';
-        $nascimentoEsperado = $dependente?->data_nascimento?->format('d/m/Y') ?? $interessado?->pessoa?->data_nascimento?->format('d/m/Y') ?? 'Não informada';
+        $nascimentoEsperado = $this->formatarDataNascimento($dependente?->data_nascimento)
+            ?? $this->formatarDataNascimento($interessado?->pessoa?->data_nascimento)
+            ?? 'Não informada';
         $cpfEsperado = $interessado?->pessoa?->cpf ?? 'Não informado';
 
         $systemInstruction = <<<PROMPT
@@ -169,6 +172,23 @@ PROMPT;
             ]);
 
             throw $e;
+        }
+    }
+
+    private function formatarDataNascimento(mixed $data): ?string
+    {
+        if (blank($data)) {
+            return null;
+        }
+
+        if ($data instanceof \DateTimeInterface) {
+            return $data->format('d/m/Y');
+        }
+
+        try {
+            return Carbon::parse($data)->format('d/m/Y');
+        } catch (Throwable) {
+            return (string) $data;
         }
     }
 }

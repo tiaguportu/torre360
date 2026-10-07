@@ -128,6 +128,20 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         ]));
     }
 
+    public function test_portal_unificado_renderiza_sem_erro_quando_pessoa_possui_data_nascimento_no_banco(): void
+    {
+        $lead = $this->criarLead();
+        $lead->pessoa->update([
+            'data_nascimento' => '1985-04-12',
+        ]);
+        $token = $lead->obterOuCriarTokenDocumentos();
+
+        $response = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']));
+
+        $response->assertOk();
+        $response->assertSee('value="12/04/1985"', false);
+    }
+
     public function test_portal_unificado_salva_dados_cadastrais_com_mascaras_e_formato_brasileiro(): void
     {
         $lead = $this->criarLead();

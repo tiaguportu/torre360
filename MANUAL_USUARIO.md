@@ -401,21 +401,24 @@ O **Programa "Família Indica Família"** potencializa a captação de novos est
    - Cards de leads que vieram por recomendação exibem o selo verde **🤝 Indicação** no Kanban e tabela de interessados, garantindo um tratamento comercial VIP e priorizado.
 
 ### 3.19 Portal de Pré-Admissão & Checklist de Documentos do Candidato
-O **Portal de Pré-Admissão** moderniza e agiliza a etapa burocrática de coleta documental, permitindo que os pais enviem certidões, comprovantes e fotos de documentos antes mesmo da assinatura do contrato:
+O **Portal de Pré-Admissão** moderniza e agiliza a etapa burocrática de coleta cadastral e documental, permitindo que os pais confirmem seus dados e enviem certidões, comprovantes e fotos de documentos antes mesmo da assinatura do contrato:
 
 1. **Acesso Seguro sem Login para a Família:**
    - Cada interessado possui um link exclusivo protegido por token seguro de alta entropia (`/admissao/{token}`).
    - Os pais acessam pelo celular ou computador sem necessidade de criar conta ou lembrar senhas.
-2. **Reaproveitamento Nativo da Arquitetura do Sistema:**
+2. **Experiência Unificada em Abas (Dados Cadastrais & Documentos):**
+   - **Aba "Dados Cadastrais":** Coleta e confirmação dos dados essenciais do responsável financeiro (Nome, CPF, Data de Nascimento, Telefone, Grau de Parentesco e Endereço com busca automática de CEP pelo ViaCEP) e dos dependentes/alunos (Série pretendida, Turno e Data de Nascimento). Possui integração inteligente e resiliente com o histórico já cadastrado no CRM, aplicando máscaras brasileiras automáticas e termo de consentimento LGPD.
+   - **Aba "Documentos":** Checklist visual com separação clara entre **Documentos Obrigatórios para Contrato**, **Documentos para Histórico Escolar** e **Documentos Opcionais**, com indicadores numéricos de pendências e barra de progresso.
+3. **Reaproveitamento Nativo da Arquitetura do Sistema:**
    - O portal utiliza diretamente o catálogo oficial de documentos da instituição (`tipo_documento` e `documento_inserido`), respeitando as exigências por curso/série e as regras do enum de situações (`Em Análise`, `Verificado`, `Rejeitado`).
-   - A família visualiza o checklist completo de documentos exigidos, status em tempo real de cada arquivo enviado e orientações da secretaria.
-3. **Conferência e Análise pela Secretaria:**
+   - A família visualiza o checklist completo de documentos exigidos, status em tempo real de cada arquivo enviado, orientações da secretaria e retorno imediato da pré-conferência por IA (qualidade e legibilidade da imagem).
+4. **Conferência e Análise pela Secretaria:**
    - Na ficha do interessado, a aba **Documentos de Pré-Admissão** permite à equipe:
      - Visualizar os arquivos enviados com visualizador seguro anti-vazamento.
      - **Aprovar** o documento em 1 clique (situação passa para *Verificado*).
      - **Rejeitar** indicando o motivo com texto claro (ex: *"Foto cortada ou ilegível, favor reenviar a frente do RG"*). A família vê o motivo no portal e pode reenviar imediatamente.
      - **Copiar Link do Portal** ou **Enviar Portal por WhatsApp** com mensagem pronta em 1 clique.
-4. **Migração Automática para a Matrícula:**
+5. **Migração Automática para a Matrícula:**
    - No momento em que o lead é matriculado (seja pelo Assistente de Matrícula ou conclusão do processo), todos os documentos enviados e aprovados na pré-admissão são automaticamente associados à nova **Matrícula** (`matricula_id`).
    - Os arquivos físicos e aprovações já realizadas são preservados na íntegra, ficando imediatamente visíveis na tela de documentos da matrícula sem qualquer trabalho manual ou reenvio pela família.
 
