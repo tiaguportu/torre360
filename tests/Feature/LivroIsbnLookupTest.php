@@ -293,4 +293,56 @@ class LivroIsbnLookupTest extends TestCase
 
         Storage::disk('public')->assertExists($resultado['dados']['capa']);
     }
+
+    public function test_isbn_busca_amazon_recupera_autores_quando_omitidos_por_outras_apis(): void
+    {
+        Storage::fake('public');
+
+        $fakeIsbn13 = '9788574121871';
+        $fakeIsbn10 = '8574121878';
+        $fakeHtmlAmazon = <<<'HTML'
+        <html>
+            <head><title>O ratinho, o morango vermelho maduro : Wood, Audrey, Wood, Don: Amazon.com.br</title></head>
+            <body>
+                <span id="productTitle">O Ratinho, o Morango Vermelho Maduro e o Grande Urso Esfomeado</span>
+                <div id="bylineInfo">
+                    <span class="author">
+                        <a href="#">Audrey Wood</a>
+                        <span class="contribution">(Autor)</span>
+                    </span>
+                    <span class="author">
+                        <a href="#">Gilda de Aquino</a>
+                        <span class="contribution">(Tradutor)</span>
+                    </span>
+                    <span class="author">
+                        <a href="#">Don Wood</a>
+                        <span class="contribution">(Ilustrador)</span>
+                    </span>
+                </div>
+            </body>
+        </html>
+        HTML;
+
+        Http::fake([
+            'https://openlibrary.org/api/books*' => Http::response([], 200),
+            'https://brasilapi.com.br/api/isbn/v1/*' => Http::response([
+                'isbn' => $fakeIsbn13,
+                'title' => 'O RATINHO, O MORANGO VERMELHO MADURO E O GRANDE URSO ESFOMEADO',
+                'authors' => [],
+                'publisher' => 'Brinque-Book',
+                'cover_url' => null,
+            ], 200),
+            'https://www.googleapis.com/books/v1/volumes*' => Http::response([], 200),
+            "https://www.amazon.com.br/dp/{$fakeIsbn10}" => Http::response($fakeHtmlAmazon, 200),
+            "https://covers.openlibrary.org/b/isbn/{$fakeIsbn13}-L.jpg*" => Http::response('', 404),
+            "https://images-na.ssl-images-amazon.com/images/P/{$fakeIsbn10}.01.L.jpg" => Http::response(str_repeat('imagem_capa_', 100), 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $service = app(LivroLookupService::class);
+        $resultado = $service->buscarPorIsbn($fakeIsbn13);
+
+        $this->assertTrue($resultado['sucesso']);
+        $this->assertEquals('Audrey Wood, Don Wood', $resultado['dados']['autor']);
+        $this->assertEquals('Brinque-Book', $resultado['dados']['editora']);
+    }
 }

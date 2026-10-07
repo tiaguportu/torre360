@@ -83,12 +83,22 @@ class LivroLookupService
             }
         }
 
-        // 4. Se ainda não tem capaUrl, verifica se existe capa direta no OpenLibrary Covers
+        // 4. Se ainda faltar autor, título ou editora, consulta a página de detalhes da obra na Amazon
+        if (! $titulo || ! $autor || ! $editora) {
+            $amazonDados = $this->consultarAmazon($cleanIsbn);
+            if ($amazonDados) {
+                $titulo = $titulo ?: ($amazonDados['titulo'] ?? null);
+                $autor = $autor ?: ($amazonDados['autor'] ?? null);
+                $editora = $editora ?: ($amazonDados['editora'] ?? null);
+            }
+        }
+
+        // 5. Se ainda não tem capaUrl, verifica se existe capa direta no OpenLibrary Covers
         if (! $capaUrl) {
             $capaUrl = $this->verificarCapaOpenLibrary($cleanIsbn);
         }
 
-        // 5. Se ainda não tem capaUrl, verifica na Amazon Covers (com conversão para ISBN-10)
+        // 6. Se ainda não tem capaUrl, verifica na Amazon Covers (com conversão para ISBN-10)
         if (! $capaUrl) {
             $capaUrl = $this->verificarCapaAmazon($cleanIsbn);
         }
@@ -394,6 +404,95 @@ class LivroLookupService
 
             return null;
         } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Consulta a página de detalhes da obra na Amazon para extrair autores, título e editora.
+     *
+     * @return array{
+     *     titulo: ?string,
+     *     autor: ?string,
+     *     editora: ?string
+     * }|null
+     */
+    protected function consultarAmazon(string $isbn): ?array
+    {
+        try {
+            $isbn10 = strlen($isbn) === 10 ? $isbn : $this->converterIsbn13ParaIsbn10($isbn);
+            if (! $isbn10) {
+                return null;
+            }
+
+            $response = Http::timeout(6)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept-Language' => 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                ])
+                ->get("https://www.amazon.com.br/dp/{$isbn10}");
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $html = $response->body();
+
+            // 1. Título
+            $titulo = null;
+            if (preg_match('/<span id="productTitle"[^>]*>(.*?)<\/span>/si', $html, $m)) {
+                $titulo = trim(strip_tags(html_entity_decode($m[1])));
+            }
+
+            // 2. Autores e Ilustradores
+            preg_match_all('/<span class="author[^"]*"[^>]*>(.*?)<\/span>\s*(?=<\/div>|<span class="author|<span class="more)/si', $html, $matches);
+            $autores = [];
+            foreach ($matches[0] as $block) {
+                if (preg_match('/<a[^>]*>(.*?)<\/a>/si', $block, $nm)) {
+                    $nome = trim(strip_tags(html_entity_decode($nm[1])));
+                    if (empty($nome) || in_array($nome, ['Capa comum', 'Kindle', 'Livro digital'], true)) {
+                        continue;
+                    }
+
+                    $textoBloco = mb_strtolower(trim(strip_tags(html_entity_decode($block))));
+                    if (str_contains($textoBloco, 'tradutor') || str_contains($textoBloco, 'prefácio')) {
+                        continue;
+                    }
+
+                    $autores[] = $nome;
+                }
+            }
+
+            $autor = ! empty($autores) ? implode(', ', array_unique($autores)) : null;
+
+            // Fallback para autores se o span author não encontrou
+            if (! $autor && preg_match('/<title>(.*?): Amazon\.com\.br/si', $html, $m)) {
+                $parts = explode(':', $m[1]);
+                if (count($parts) > 1) {
+                    $rawAuthors = trim($parts[1]);
+                    if (! empty($rawAuthors)) {
+                        $autor = $rawAuthors;
+                    }
+                }
+            }
+
+            // 3. Editora
+            $editora = null;
+            if (preg_match('/(?:Editora|Publisher)\s*<\/span>\s*<span[^>]*>\s*:\s*<\/span>\s*<span[^>]*>(.*?)<\/span>/si', $html, $em)) {
+                $rawEd = trim(strip_tags(html_entity_decode($em[1])));
+                if (! empty($rawEd)) {
+                    $editora = $rawEd;
+                }
+            }
+
+            return [
+                'titulo' => $titulo,
+                'autor' => $autor,
+                'editora' => $editora,
+            ];
+        } catch (\Throwable $e) {
+            report($e);
+
             return null;
         }
     }

@@ -2643,6 +2643,7 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
      - **BrasilAPI (Câmara Brasileira do Livro - CBL):** Fonte primária de dados oficiais do registro nacional.
      - **Google Books API (com suporte a `GOOGLE_BOOKS_API_KEY`):** Complementa automaticamente autores, sinopses e categorias caso o catálogo oficial da editora esteja incompleto.
      - **Open Library:** Base colaborativa internacional para títulos acadêmicos e mundiais.
+      - **Amazon Books (Detalhamento da Obra e Autores):** Se o registro nacional omitir os autores (como na CBL para certas edições), o sistema consulta a página de detalhes da obra na Amazon para recuperar com precisão os autores e ilustradores principais.
      - **Amazon Covers (CDN de Alta Resolução via ISBN-10):** Caso a editora não tenha fornecido a capa na CBL, o sistema calcula matematicamente o ISBN-10 correspondente e recupera a imagem oficial em alta resolução da Amazon.
    - Ao localizar a obra, o sistema preenche automaticamente:
      - **Título completo**
