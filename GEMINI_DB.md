@@ -1131,6 +1131,42 @@ Estrutura de ensino e turmas.
   - `status`: String (`pendente`, `pago`, `atrasado`, `cancelado`).
   - `forma_pagamento`: Meio de pagamento (`pix`, `dinheiro`, `cartao`, `boleto`).
   - `fatura_gerada_id`: FK `faturas.id` (nullable).
-- **Relacionamentos:** BelongsTo `Matricula`, BelongsTo `Contrato`, BelongsTo `Pessoa` (`responsavelPessoa`), BelongsTo `User` (`criadoPor`), HasMany `parcelas`.
+---
+
+## 10. Módulo de Documentos e Secretaria Escolar
+Gestão de tipos de documentos, anexos comprobatórios da família e checklist de admissão e matrícula.
+
+### `tipo_documento`
+- **Representa:** Categorias e tipos de documentos exigidos pela instituição escolar para admissão, formalização contratual e vida acadêmica.
+- **Campos Principais:**
+  - `nome`: Nome oficial do documento (ex: Certidão de Nascimento, RG do Responsável, Histórico Escolar Anterior).
+  - `categoria_exigencia`: Enum `CategoriaExigenciaDocumento` com as opções:
+    - `obrigatorio_contrato`: Documento bloqueante para emissão do Contrato Escolar e ativação da matrícula. Sem ele, a matrícula permanece como `pendente`.
+    - `obrigatorio_historico`: Exigido para conformidade com a vida acadêmica e órgãos educacionais (MEC). Não bloqueia a emissão do contrato.
+    - `opcional`: Documento complementar (ex: laudo médico, cartão de vacina, convênio). Aparece no Portal da Família / Admissão para envio facultativo.
+    - `interno_secretaria`: Documento de uso exclusivo e arquivo interno da secretaria. Oculto dos portais externos da família e dos wizards de matrícula.
+  - `flag_obrigatorio`: Boolean legado mantido e sincronizado automaticamente via evento `saving` do Model (true para `obrigatorio_contrato` e `obrigatorio_historico`, false para os demais).
+  - `modelo_arquivo`: Caminho de arquivo PDF com modelo/termo para download pelo responsável.
+  - `modelo_link`: Link externo com orientações ou formulário oficial.
+- **Relacionamentos:**
+  - BelongsToMany `curso` (tabela pivô `curso_tipo_documento`).
+  - BelongsToMany `turma` (tabela pivô `tipo_documento_turma`).
+  - HasMany `documento_inserido`.
+
+### `documento_inserido`
+- **Representa:** Arquivos e comprovantes digitais enviados pelos candidatos/famílias ou arquivados pela secretaria escolar.
+- **Campos Principais:**
+  - `tipo_documento_id`: FK `tipo_documento.id`.
+  - `interessado_id`: FK `interessados.id` (nullable, quando anexado durante a etapa de prospecção/admissão pelo CRM).
+  - `matricula_id`: FK `matricula.id` (nullable, quando vinculado à matrícula definitiva do estudante).
+  - `arquivo_path`: Caminho do arquivo armazenado no storage.
+  - `nome_arquivo_original`: Nome do arquivo enviado pelo usuário.
+  - `status`: Enum `SituacaoDocumento` (`pendente`, `em_analise`, `verificado`, `rejeitado`).
+  - `observacoes`: Parecer da secretaria ou motivo de rejeição.
+  - `metadados_ia`: JSON com validações automáticas por OCR e Inteligência Artificial (`ValidarDocumentoComIaJob`).
+- **Relacionamentos:**
+  - BelongsTo `tipo_documento`.
+  - BelongsTo `interessado`.
+  - BelongsTo `matricula`.
 
 

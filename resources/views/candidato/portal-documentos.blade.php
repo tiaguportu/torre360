@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>Portal de Pré-Admissão | Documentos do Candidato</title>
+    <title>Portal de Pré-Admissão & Matrícula Online | Torre360</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,8 +21,8 @@
             <div class="flex items-center gap-2.5">
                 <span class="text-2xl">🏫</span>
                 <div>
-                    <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Portal de Admissão</h1>
-                    <p class="text-xs text-slate-500">Envio de Documentos do Candidato</p>
+                    <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Portal de Pré-Admissão</h1>
+                    <p class="text-xs text-slate-500">Matrícula & Checklist Digital de Documentos</p>
                 </div>
             </div>
             <div class="text-right">
@@ -51,7 +51,7 @@
 
         @if($errors->any())
             <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm space-y-1">
-                <span class="font-bold block mb-1">Por favor, verifique os erros abaixo:</span>
+                <span class="font-bold block mb-1">Por favor, verifique os campos abaixo:</span>
                 <ul class="list-disc list-inside">
                     @foreach($errors->all() as $err)
                         <li>{{ $err }}</li>
@@ -60,7 +60,7 @@
             </div>
         @endif
 
-        <!-- Card de Boas-vindas e Identificação -->
+        <!-- Card de Identificação e Resumo do Candidato -->
         <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
@@ -86,219 +86,379 @@
                 @endif
             </div>
 
-            <!-- Progresso Geral -->
+            <!-- Progresso Geral dos Documentos -->
             <div class="pt-4 space-y-2">
                 <div class="flex justify-between items-center text-xs font-semibold">
-                    <span class="text-slate-600">Progresso do Checklist:</span>
-                    <span class="{{ $progresso['completo'] ? 'text-emerald-600' : 'text-indigo-600' }}">
-                        {{ $progresso['aprovados'] }} de {{ $progresso['total'] }} validados ({{ $progresso['percentual'] }}%)
+                    <span class="text-slate-600">Progresso dos Documentos:</span>
+                    <span class="{{ $todosDocsContratoEntregues ? 'text-emerald-600' : 'text-indigo-600' }}">
+                        {{ $progresso['aprovados'] + $progresso['em_analise'] }} de {{ $progresso['total'] }} enviados
+                        @if($todosDocsContratoEntregues)
+                            <span class="ml-1 text-emerald-700 font-bold">(Docs de Contrato OK ✅)</span>
+                        @else
+                            <span class="ml-1 text-amber-700">(Contrato pendente ⏳)</span>
+                        @endif
                     </span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                    <div class="h-2.5 rounded-full transition-all duration-500 {{ $progresso['completo'] ? 'bg-emerald-500' : 'bg-indigo-600' }}" style="width: {{ $progresso['percentual'] }}%"></div>
+                    <div class="h-2.5 rounded-full transition-all duration-500 {{ $todosDocsContratoEntregues ? 'bg-emerald-500' : 'bg-indigo-600' }}" style="width: {{ $progresso['percentual'] }}%"></div>
                 </div>
                 <p class="text-[11px] text-slate-400">
-                    Você pode fotografar os documentos originais pelo celular ou enviar arquivos em PDF.
+                    Você pode fotografar os documentos pelo celular ou anexar arquivos em PDF.
                 </p>
             </div>
         </div>
 
-        <!-- Aviso de Transparência e LGPD: Validação Inteligente -->
-        <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 text-xs text-indigo-950 shadow-xs">
-            <span class="text-xl">🤖</span>
-            <div class="space-y-1">
-                <span class="font-bold text-indigo-900 block">Validação Inteligente & Proteção de Dados (LGPD)</span>
-                <p class="text-indigo-800 leading-relaxed">
-                    Para agilizar a sua matrícula e evitar retrabalho, nosso sistema conta com pré-análise assistida por inteligência artificial para verificar a legibilidade e nitidez do arquivo em segundo plano. Os dados são tratados com sigilo absoluto para fins pré-contratuais (Art. 7º, V da LGPD) e a aprovação final é sempre confirmada pela Secretaria Escolar.
-                </p>
-            </div>
+        <!-- Abas de Navegação Unificada -->
+        <div class="flex border-b border-slate-200 gap-2 sm:gap-4 text-sm font-semibold">
+            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}"
+               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'dados' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
+                <span>1.</span>
+                <span>Dados Cadastrais</span>
+                @if(filled($dadosPreMatricula))
+                    <span class="text-xs text-emerald-600">✓</span>
+                @endif
+            </a>
+
+            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}"
+               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'documentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
+                <span>2.</span>
+                <span>Checklist de Documentos</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $progresso['enviados'] }}/{{ $progresso['total'] }}</span>
+            </a>
+
+            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'status']) }}"
+               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'status' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
+                <span>3.</span>
+                <span>Situação do Contrato</span>
+                @if($todosDocsContratoEntregues)
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                @else
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                @endif
+            </a>
         </div>
 
-        <!-- Lista de Documentos -->
-        <div class="space-y-4">
-            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                <span>📋</span> Checklist de Documentação
-            </h3>
+        <!-- CONTEÚDO DA ABA 1: DADOS CADASTRAIS -->
+        @if($abaAtiva === 'dados')
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-6">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <span>📝</span> Confirmação dos Dados da Família e dos Alunos
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Estes dados alimentam diretamente a ficha cadastral e o contrato de prestação de serviços educacionais.
+                    </p>
+                </div>
 
-            @forelse($tiposRequeridos as $tipo)
-                @php
-                    $inserido = $documentosInseridos->firstWhere('tipo_documento_id', $tipo->id);
-                    $status = $inserido?->status;
-                @endphp
+                <form method="POST" action="{{ route('candidato.documentos.dados', ['token' => $token]) }}" class="space-y-6">
+                    @csrf
 
-                <div class="bg-white rounded-2xl border transition-all duration-200 p-5 shadow-xs
-                    {{ $status === \App\Enums\SituacaoDocumento::VERIFICADO ? 'border-emerald-200 bg-emerald-50/20' : '' }}
-                    {{ $status === \App\Enums\SituacaoDocumento::EM_ANALISE ? 'border-amber-200 bg-amber-50/20' : '' }}
-                    {{ $status === \App\Enums\SituacaoDocumento::REJEITADO ? 'border-rose-200 bg-rose-50/30' : '' }}
-                    {{ ! $status ? 'border-slate-200 hover:border-slate-300' : '' }}
-                ">
-                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">{{ $tipo->nome }}</h4>
-                                @if($tipo->flag_obrigatorio)
-                                    <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                                        Obrigatório
-                                    </span>
-                                @else
-                                    <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                                        Opcional
-                                    </span>
-                                @endif
+                    @php
+                        $respOld = old('responsavel', $dadosPreMatricula['responsaveis'][0] ?? []);
+                        $segundoOld = old('segundo_responsavel', $dadosPreMatricula['responsaveis'][1] ?? []);
+                    @endphp
+
+                    <!-- Responsável Principal -->
+                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4">
+                        <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Responsável Principal (Financeiro)</legend>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div class="sm:col-span-2">
+                                <label class="block font-semibold text-slate-700 mb-1">Nome Completo *</label>
+                                <input type="text" name="responsavel[nome]" value="{{ $respOld['nome'] ?? $interessado->pessoa?->nome }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
                             </div>
 
-                            @if($tipo->modelo_link || $tipo->modelo_arquivo)
-                                <div class="pt-0.5">
-                                    <a href="{{ $tipo->modelo_link ?: asset('storage/' . $tipo->modelo_arquivo) }}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-1">
-                                        <span>📥</span> Baixar modelo / instruções
-                                    </a>
-                                </div>
-                            @endif
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">CPF *</label>
+                                <input type="text" name="responsavel[cpf]" value="{{ $respOld['cpf'] ?? $interessado->pessoa?->cpf }}" required placeholder="000.000.000-00" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
+                                <input type="date" name="responsavel[data_nascimento]" value="{{ $respOld['data_nascimento'] ?? ($interessado->pessoa?->data_nascimento ? $interessado->pessoa->data_nascimento->format('Y-m-d') : '') }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Telefone / WhatsApp *</label>
+                                <input type="text" name="responsavel[telefone]" value="{{ $respOld['telefone'] ?? $interessado->pessoa?->telefone }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">E-mail</label>
+                                <input type="email" name="responsavel[email]" value="{{ $respOld['email'] ?? $interessado->pessoa?->email }}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Grau de Parentesco / Vínculo *</label>
+                                <select name="responsavel[tipo_vinculo_id]" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                    @foreach($tiposVinculo as $vinculoId => $vinculoNome)
+                                        <option value="{{ $vinculoId }}" {{ (string)($respOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
+                                            {{ $vinculoNome }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex items-center gap-2 pt-5">
+                                <input type="hidden" name="responsavel[is_financeiro]" value="1">
+                                <span class="text-xs font-semibold text-emerald-700">✓ Responsável Financeiro pelo Contrato</span>
+                            </div>
                         </div>
 
-                        <!-- Status Badge -->
+                        <!-- Endereço Residencial -->
+                        <div class="pt-3 border-t border-slate-100">
+                            <span class="text-xs font-bold text-slate-700 block mb-3">Endereço Residencial</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div>
+                                    <label class="block font-semibold text-slate-600 mb-1">CEP *</label>
+                                    <input type="text" name="responsavel[cep]" value="{{ $respOld['cep'] ?? '' }}" required placeholder="00000-000" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block font-semibold text-slate-600 mb-1">Logradouro / Rua *</label>
+                                    <input type="text" name="responsavel[logradouro]" value="{{ $respOld['logradouro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-600 mb-1">Número *</label>
+                                    <input type="text" name="responsavel[numero]" value="{{ $respOld['numero'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-600 mb-1">Bairro *</label>
+                                    <input type="text" name="responsavel[bairro]" value="{{ $respOld['bairro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-600 mb-1">Complemento</label>
+                                    <input type="text" name="responsavel[complemento]" value="{{ $respOld['complemento'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Segundo Responsável (Opcional) -->
+                    <details class="border border-slate-200 rounded-xl p-4 text-xs" {{ filled($segundoOld['nome'] ?? null) ? 'open' : '' }}>
+                        <summary class="font-bold text-slate-700 cursor-pointer hover:text-indigo-600">
+                            + Adicionar Segundo Responsável (opcional)
+                        </summary>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-3 border-t border-slate-100">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Nome Completo</label>
+                                <input type="text" name="segundo_responsavel[nome]" value="{{ $segundoOld['nome'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">CPF</label>
+                                <input type="text" name="segundo_responsavel[cpf]" value="{{ $segundoOld['cpf'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Telefone</label>
+                                <input type="text" name="segundo_responsavel[telefone]" value="{{ $segundoOld['telefone'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Grau de Vínculo</label>
+                                <select name="segundo_responsavel[tipo_vinculo_id]" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                    <option value="">Selecione...</option>
+                                    @foreach($tiposVinculo as $vinculoId => $vinculoNome)
+                                        <option value="{{ $vinculoId }}" {{ (string)($segundoOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
+                                            {{ $vinculoNome }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Aluno(s) / Dependente(s) -->
+                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4">
+                        <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Aluno(s) Pretendente(s)</legend>
+
+                        @foreach($interessado->dependentes as $index => $dependente)
+                            @php
+                                $depOld = old("dependentes.{$index}", $dadosPreMatricula['alunos'][$dependente->id] ?? []);
+                            @endphp
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-3 text-xs">
+                                <input type="hidden" name="dependentes[{{ $index }}][id]" value="{{ $dependente->id }}">
+
+                                <div class="font-bold text-slate-800 text-sm flex items-center justify-between">
+                                    <span>Estudante: {{ $dependente->nome_crianca }}</span>
+                                    <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Aluno #{{ $index + 1 }}</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Série / Ano Pretendido *</label>
+                                        <select name="dependentes[{{ $index }}][serie_id]" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                            @foreach($series as $s)
+                                                <option value="{{ $s->id }}" {{ (string)($depOld['serie_id'] ?? $dependente->serie_id) === (string)$s->id ? 'selected' : '' }}>
+                                                    {{ $s->curso?->nome_interno }} - {{ $s->nome }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Turno de Preferência</label>
+                                        <select name="dependentes[{{ $index }}][turno_preferencia]" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                            @foreach(['Manhã', 'Tarde', 'Integral', 'Sem preferência'] as $turno)
+                                                <option value="{{ $turno }}" {{ ($depOld['turno_preferencia'] ?? '') === $turno ? 'selected' : '' }}>
+                                                    {{ $turno }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
+                                        <input type="date" name="dependentes[{{ $index }}][data_nascimento]" value="{{ $depOld['data_nascimento'] ?? ($dependente->data_nascimento ? \Carbon\Carbon::parse($dependente->data_nascimento)->format('Y-m-d') : '') }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                    </div>
+
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">CPF do Aluno (se possuir)</label>
+                                        <input type="text" name="dependentes[{{ $index }}][cpf]" value="{{ $depOld['cpf'] ?? '' }}" placeholder="000.000.000-00" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                    </div>
+
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Sexo</label>
+                                        <select name="dependentes[{{ $index }}][sexo]" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                            <option value="">Selecione...</option>
+                                            @foreach($sexos as $sexo)
+                                                <option value="{{ $sexo->value }}" {{ ($depOld['sexo'] ?? '') === $sexo->value ? 'selected' : '' }}>
+                                                    {{ $sexo->getLabel() }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </fieldset>
+
+                    <!-- Aceite LGPD -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
+                        <label class="flex items-start gap-2.5 font-medium cursor-pointer">
+                            <input type="checkbox" name="lgpd_aceite" value="1" required {{ filled($dadosPreMatricula) ? 'checked' : '' }} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                            <span>
+                                Declaro que as informações acima são verdadeiras e autorizo o tratamento dos dados pessoais fornecidos para fins de cadastro, formalização de proposta pré-contratual e procedimentos de matrícula escolar, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
+                            </span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-sm transition-colors flex items-center justify-center gap-2">
+                        <span>Salvar Dados e Avançar para Documentos</span>
+                        <span>→</span>
+                    </button>
+                </form>
+            </div>
+        @endif
+
+        <!-- CONTEÚDO DA ABA 2: CHECKLIST DE DOCUMENTOS -->
+        @if($abaAtiva === 'documentos')
+            <div class="space-y-6">
+                <!-- Seção 1: Documentos Obrigatórios para o Contrato -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
                         <div>
-                            @if($status === \App\Enums\SituacaoDocumento::VERIFICADO)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                    <span>✓</span> Aprovado pela Secretaria
-                                </span>
-                            @elseif($status === \App\Enums\SituacaoDocumento::EM_ANALISE)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                                    <span>⏳</span> Em Análise
-                                </span>
-                            @elseif($status === \App\Enums\SituacaoDocumento::REJEITADO)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
-                                    <span>⚠️</span> Necessita Correção
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                    Pendente de Envio
-                                </span>
-                            @endif
+                            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                                <span class="text-rose-600">🔴</span> Documentos para Liberação do Contrato
+                            </h3>
+                            <p class="text-xs text-slate-500">
+                                <strong>Indispensáveis:</strong> Enquanto estes documentos não forem validados, o Contrato Escolar não pode ser emitido.
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Mensagem de Rejeição / Justificativa da Secretaria -->
-                    @if($status === \App\Enums\SituacaoDocumento::REJEITADO && filled($inserido->observacoes))
-                        <div class="mt-3 p-3 rounded-xl bg-rose-100/70 border border-rose-200 text-rose-900 text-xs flex items-start gap-2">
-                            <span class="text-sm">📌</span>
-                            <div>
-                                <span class="font-bold block">Motivo informado pela secretaria:</span>
-                                {{ $inserido->observacoes }}
-                            </div>
+                    @if($docsContrato->isEmpty())
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                            Nenhum documento bloqueante de contrato configurado para esta série.
                         </div>
-                    @endif
-
-                    <!-- Retorno da Pré-análise por IA -->
-                    @if($inserido && $status !== \App\Enums\SituacaoDocumento::VERIFICADO)
-                        @if($inserido->temAnaliseIa())
-                            @php
-                                $legivel = $inserido->isLegivelIa();
-                                $tipoOk = $inserido->confereTipoIa();
-                                $score = data_get($inserido->dados_ia, 'score_confianca', 100);
-                                $alerta = data_get($inserido->dados_ia, 'mensagem_para_familia') ?? data_get($inserido->dados_ia, 'alerta_para_familia');
-                            @endphp
-
-                            @if(! $legivel || ! $tipoOk || $score < 70)
-                                <div class="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
-                                    <span class="text-base">⚡</span>
-                                    <div class="space-y-1">
-                                        <span class="font-bold block text-amber-950">Atenção ao documento enviado:</span>
-                                        <p class="text-amber-800">
-                                            {{ $alerta ?: 'A imagem parece com pouca nitidez ou pode não corresponder exatamente ao documento solicitado. Se preferir, você pode clicar em "Remover e trocar" para enviar uma versão mais legível antes da aprovação da secretaria.' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="mt-3 px-3 py-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 text-emerald-800 text-xs flex items-center gap-2">
-                                    <span>✨</span>
-                                    <span><strong>Pré-conferência IA:</strong> Documento identificado com boa legibilidade. Aguarde a validação formal da secretaria.</span>
-                                </div>
-                            @endif
-                        @elseif($inserido->created_at && $inserido->created_at->gt(now()->subMinutes(3)))
-                            <div class="mt-3 px-3 py-2 rounded-xl bg-indigo-50/50 border border-indigo-100 text-indigo-700 text-xs flex items-center gap-2 animate-pulse">
-                                <span>🤖</span>
-                                <span>IA analisando nitidez e legibilidade em segundo plano...</span>
-                            </div>
-                        @endif
-                    @endif
-
-                    <!-- Detalhes do arquivo enviado -->
-                    @if($inserido && $inserido->nome_arquivo_original)
-                        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                            <span class="truncate max-w-[280px]">
-                                📎 {{ $inserido->nome_arquivo_original }}
-                                @if($inserido->created_at)
-                                    ({{ $inserido->created_at->format('d/m/Y H:i') }})
-                                @endif
-                            </span>
-
-                            @if($status !== \App\Enums\SituacaoDocumento::VERIFICADO)
-                                <form action="{{ route('candidato.documentos.remover', ['token' => $token, 'documento' => $inserido->id]) }}" method="POST" onsubmit="return confirm('Deseja remover este documento e enviar outro?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-rose-600 hover:text-rose-800 font-semibold text-xs ml-2">
-                                        Remover e trocar
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    @endif
-
-                    <!-- Formulário de Upload (quando ainda não foi enviado ou foi rejeitado) -->
-                    @if(! $inserido || $status === \App\Enums\SituacaoDocumento::REJEITADO)
-                        <div class="mt-4 pt-3 border-t border-slate-100">
-                            <form action="{{ route('candidato.documentos.upload', ['token' => $token]) }}" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                                @csrf
-                                <input type="hidden" name="tipo_documento_id" value="{{ $tipo->id }}">
-
-                                @if($interessado->dependentes->count() > 1)
-                                    <select name="interessado_dependente_id" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                        <option value="">Documento Geral da Família</option>
-                                        @foreach($interessado->dependentes as $dep)
-                                            <option value="{{ $dep->id }}">Para: {{ $dep->nome_crianca }}</option>
-                                        @endforeach
-                                    </select>
-                                @elseif($interessado->dependentes->count() === 1)
-                                    <input type="hidden" name="interessado_dependente_id" value="{{ $interessado->dependentes->first()->id }}">
-                                @endif
-
-                                <div class="flex-1 relative">
-                                    <input 
-                                        type="file" 
-                                        name="arquivo" 
-                                        id="arquivo_{{ $tipo->id }}"
-                                        accept=".pdf,image/jpeg,image/png,image/webp" 
-                                        class="text-xs file:mr-2.5 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer w-full"
-                                        required
-                                        onchange="this.form.submit()"
-                                    >
-                                </div>
-
-                                <button 
-                                    type="submit" 
-                                    class="text-xs font-semibold px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors text-center whitespace-nowrap shadow-xs"
-                                >
-                                    Enviar Arquivo ⬆️
-                                </button>
-                            </form>
-                        </div>
+                    @else
+                        @foreach($docsContrato as $tipo)
+                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'contrato'])
+                        @endforeach
                     @endif
                 </div>
-            @empty
-                <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
-                    Nenhum documento obrigatório configurado no momento. A secretaria entrará em contato.
-                </div>
-            @endforelse
-        </div>
 
-        <!-- Dúvidas / Suporte -->
-        <div class="bg-indigo-50/60 rounded-2xl border border-indigo-100 p-5 text-center text-xs text-indigo-950 space-y-1">
-            <p class="font-bold">Precisa de ajuda com o envio dos documentos?</p>
-            <p class="text-indigo-800">
-                Nossa equipe de admissões está à disposição para tirar qualquer dúvida. Entre em contato pelo WhatsApp da escola.
-            </p>
-        </div>
+                <!-- Seção 2: Documentos para o Histórico Escolar -->
+                <div class="space-y-3 pt-4 border-t border-slate-200">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <span class="text-amber-500">🟡</span> Documentos para o Histórico Escolar
+                        </h3>
+                        <p class="text-xs text-slate-500">
+                            Exigidos para a conformidade com o MEC e pasta acadêmica do aluno (não impedem a assinatura do contrato).
+                        </p>
+                    </div>
+
+                    @if($docsHistorico->isEmpty())
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                            Nenhum documento de histórico específico requerido para esta série no momento.
+                        </div>
+                    @else
+                        @foreach($docsHistorico as $tipo)
+                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'historico'])
+                        @endforeach
+                    @endif
+                </div>
+
+                <!-- Seção 3: Documentos Opcionais / Complementares -->
+                <div class="space-y-3 pt-4 border-t border-slate-200">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <span class="text-emerald-500">🟢</span> Documentos Opcionais / Complementares
+                        </h3>
+                        <p class="text-xs text-slate-500">
+                            Envio facultativo caso o aluno possua (ex: carteirinha de convênio médico, laudos, declarações específicas).
+                        </p>
+                    </div>
+
+                    @if($docsOpcionais->isEmpty())
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                            Nenhum documento opcional listado para esta série.
+                        </div>
+                    @else
+                        @foreach($docsOpcionais as $tipo)
+                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'opcional'])
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        <!-- CONTEÚDO DA ABA 3: SITUAÇÃO DO CONTRATO E PRÓXIMOS PASSOS -->
+        @if($abaAtiva === 'status')
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+                <div class="text-center space-y-2 py-4">
+                    @if($todosDocsContratoEntregues)
+                        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto">
+                            ✓
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Documentos Obrigatórios Enviados!</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                            Todos os documentos necessários para a formalização do <strong>Contrato Escolar</strong> já foram recebidos pela nossa equipe. A Secretaria Escolar está concluindo a conferência para disponibilizar o contrato para assinatura.
+                        </p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 mt-2">
+                            <span>Status:</span> Pronto para Emissão do Contrato
+                        </div>
+                    @else
+                        <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto">
+                            ⏳
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Aguardando Documentos Obrigatórios</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                            Ainda constam documentos obrigatórios pendentes na aba <strong>Checklist de Documentos</strong>. O Contrato de Matrícula só pode ser emitido após o envio desses arquivos essenciais.
+                        </p>
+                        <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 mt-2">
+                            <span>Ir para Checklist de Documentos</span>
+                            <span>→</span>
+                        </a>
+                    @endif
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                    <span>Em caso de dúvidas, fale diretamente com nossa Secretaria:</span>
+                    <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade?->celular_whatsapp ?? '') }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 inline-flex items-center gap-1.5">
+                        <span>💬 WhatsApp da Escola</span>
+                    </a>
+                </div>
+            </div>
+        @endif
     </main>
 </body>
 </html>

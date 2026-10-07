@@ -2538,6 +2538,35 @@ A **Central de Acordos e Recuperação de Inadimplência** profissionaliza a neg
 
 ---
 
+## 📋 50. Portal Unificado de Admissão & Classificação Inteligente de Documentos (`/admissao/{token}`)
+
+O **Portal Unificado de Admissão** consolida em um único link seguro toda a jornada de entrada de uma nova família na escola: desde o preenchimento dos dados cadastrais preliminares até o upload dos comprovantes e acompanhamento da liberação do Contrato Escolar.
+
+### 50.1 Link Único do Candidato e Navegação por Abas
+1. **Unificação dos Links Externos:**
+   - O sistema unificou os antigos links (`/quero-matricular/convite/{token}` e `/admissao/{token}`) em uma experiência única e moderna em `/admissao/{token}`.
+   - **Compatibilidade Retroativa:** Links de convite já compartilhados por WhatsApp ou e-mail continuam funcionando perfeitamente, sendo redirecionados de forma transparente para o portal unificado do candidato.
+2. **Navegação Intuitiva por Abas:**
+   - **Aba 1 — Dados Cadastrais:** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+   - **Aba 2 — Envio de Documentos:** Checklist digital inteligente que separa claramente os documentos exigidos para emissão de contrato, documentos acadêmicos do histórico e documentos facultativos.
+   - **Aba 3 — Situação do Contrato:** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
+
+### 50.2 Nova Classificação dos Tipos de Documentos (`/admin/tipo-documentos`)
+Para garantir segurança jurídica sem burocracia excessiva, os documentos escolares foram organizados em 4 categorias estratégicas:
+- **🔴 Obrigatório para Contrato:** Documentos indispensáveis para formalização legal e financeira (ex: RG/CPF do responsável financeiro, comprovante de residência). A ausência desses documentos impede a geração do Contrato Escolar e mantém a matrícula como `Pendente`.
+- **🟡 Obrigatório para Histórico do Aluno:** Documentos essenciais para a pasta pedagógica e conformidade com o MEC (ex: Histórico Escolar anterior, declaração de transferência). Não bloqueiam o contrato: a matrícula pode ter contrato emitido e ser `Ativada` com pendência sinalizada.
+- **🟢 Opcional / Complementar:** Documentos complementares (ex: laudos médicos, carteirinha do convênio, atestado de vacinação). Ficam visíveis na aba de documentos do Portal da Família para envio facultativo.
+- **⚪ Uso Interno da Secretaria:** Arquivos confidenciais ou administrativos da instituição (ex: sindicâncias, fichas internas). Ficam ocultos dos portais da família e dos wizards de matrícula externa.
+
+### 50.3 Assistente de Matrícula da Secretaria (`EnrollmentWizard`)
+No painel administrativo, o Assistente de Matrícula foi aprimorado com uma etapa dedicada à conferência documental:
+- **Step 4 — Documentos da Matrícula:** A secretaria visualiza em tempo real os arquivos enviados pela família no CRM, com status de validação por Inteligência Artificial (OCR) e opção de anexar documentos entregues fisicamente no balcão.
+- **Emissão Condicionada do Contrato:**
+  - Se todos os documentos obrigatórios para contrato estiverem entregues, o assistente emite o Contrato Escolar e ativa a matrícula (`Ativa`).
+  - Se faltar algum documento obrigatório de contrato, a matrícula é salva com segurança na situação `Pendente`, sem emitir o contrato, até a regularização da documentação.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

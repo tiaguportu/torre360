@@ -4,11 +4,13 @@ namespace App\Filament\Pages;
 
 use App\Enums\CorRaca;
 use App\Enums\Sexo;
+use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Models\AlunoResponsavel;
 use App\Models\Cidade;
 use App\Models\Contrato;
 use App\Models\Curso;
+use App\Models\DocumentoInserido;
 use App\Models\Endereco;
 use App\Models\Interessado;
 use App\Models\Matricula;
@@ -17,6 +19,7 @@ use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\PropostaComercial;
 use App\Models\ResponsavelFinanceiro;
+use App\Models\TipoDocumento;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
@@ -29,6 +32,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -46,6 +50,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 
@@ -84,7 +89,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
     #[Locked]
     public ?int $interessadoId = null;
 
-    public function mount(): void
+    public function mount(?int $interessado = null): void
     {
         $dados = [
             'data_ativacao' => now()->toDateString(),
@@ -92,7 +97,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             'periodo_letivo_id' => PeriodoLetivo::latest('id')->value('id'),
         ];
 
-        $interessado = Interessado::with(['pessoa', 'dependentes.serie.curso'])->find(request()->integer('interessado'));
+        $interessadoIdAlvo = $interessado ?: request()->integer('interessado');
+        $interessado = $interessadoIdAlvo ? Interessado::with(['pessoa', 'dependentes.serie.curso'])->find($interessadoIdAlvo) : null;
 
         if ($interessado) {
             $this->interessadoId = $interessado->id;
@@ -170,19 +176,20 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
     private function getHelpContent(): string
     {
-        $html = '<p>O <strong>Assistente de Matrícula</strong> guia você em 3 etapas para cadastrar um ou mais alunos de uma mesma família, criando automaticamente as matrículas, contratos e vínculos de responsabilidade.</p>';
+        $html = '<p>O <strong>Assistente de Matrícula</strong> guia você em 4 etapas para cadastrar um ou mais alunos de uma mesma família, criando automaticamente as matrículas, contratos e vínculos de responsabilidade.</p>';
 
         $html .= '<h3>Etapas</h3><ol>';
         $html .= '<li><strong>Dados do(s) Aluno(s):</strong> Adicione quantos filhos forem necessários. Digite o CPF para buscar automaticamente um cadastro já existente. Preencha nome, data de nascimento, endereço e, se desejar, crie um acesso de portal para o aluno.</li>';
         $html .= '<li><strong>Pais / Responsáveis:</strong> Cadastre os responsáveis da família. O CPF também busca cadastros existentes. Defina o vínculo (Pai, Mãe, Avó, etc.) e se é responsável financeiro. Os responsáveis serão vinculados a <em>todos</em> os alunos adicionados na etapa anterior.</li>';
-        $html .= '<li><strong>Plano e Matrícula:</strong> Selecione a unidade, o período letivo, o curso e a turma. Defina a situação inicial (Ativa ou Pendente) e a data de ativação. As turmas são filtradas automaticamente pela unidade e pelo curso escolhidos.</li>';
+        $html .= '<li><strong>Plano e Matrícula:</strong> Selecione a unidade, o período letivo, o curso e a turma. As turmas são filtradas automaticamente pela unidade e pelo curso escolhidos.</li>';
+        $html .= '<li><strong>Documentos da Matrícula:</strong> Confira os documentos enviados pela família no Portal de Admissão ou anexe novos documentos recebidos presencialmente.</li>';
         $html .= '</ol>';
 
-        $html .= '<h3>Dicas importantes</h3><ul>';
-        $html .= '<li>Se o CPF já está cadastrado, os dados são preenchidos automaticamente — você só precisa revisar.</li>';
-        $html .= '<li>Se o aluno ou responsável já era um <strong>Interessado no CRM</strong>, a conversão será registrada automaticamente.</li>';
-        $html .= '<li>A turma mostra a quantidade de vagas disponíveis. Não é possível matricular em turma lotada.</li>';
-        $html .= '<li>O campo <strong>Percentual</strong> do responsável financeiro define a divisão do contrato (ex: dois responsáveis com 50% cada).</li>';
+        $html .= '<h3>Regra de Liberação do Contrato Escolar</h3><ul>';
+        $html .= '<li>A matrícula pode ser criada normalmente a qualquer momento.</li>';
+        $html .= '<li><strong>Emissão de Contrato:</strong> O Contrato Escolar só será gerado e a matrícula <strong>Ativada</strong> se todos os documentos classificados como <em>Obrigatórios para Contrato</em> estiverem presentes e válidos.</li>';
+        $html .= '<li>Se faltar algum documento obrigatório de contrato, a matrícula será salva na situação <strong>Pendente</strong>, sem emissão de contrato, até a regularização.</li>';
+        $html .= '<li>Documentos de <em>Histórico do Aluno</em> não bloqueiam a emissão do contrato (a matrícula tem contrato gerado e fica Ativa com pendência de histórico).</li>';
         $html .= '</ul>';
 
         return $html;
@@ -568,6 +575,50 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                         ->default(now()->toDateString()),
                                 ]),
                         ]),
+
+                    // ═══════════════════════════════════════════════════
+                    // STEP 4 — Documentos da Matrícula & Liberação de Contrato
+                    // ═══════════════════════════════════════════════════
+                    Step::make('Documentos da Matrícula')
+                        ->description('Conferência de documentos e liberação do contrato escolar')
+                        ->icon('heroicon-m-document-text')
+                        ->components([
+                            Placeholder::make('info_regra_contrato')
+                                ->label('')
+                                ->content(new HtmlString('
+                                    <div class="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-950 dark:text-indigo-200 space-y-1 mb-3">
+                                        <span class="font-bold text-indigo-900 dark:text-indigo-100 block">Regra de Liberação do Contrato Escolar:</span>
+                                        <p class="leading-relaxed">
+                                            A matrícula pode ser cadastrada a qualquer momento. No entanto, o <strong>Contrato Escolar só será emitido e a matrícula Ativada</strong> se todos os documentos classificados como <strong>Obrigatórios para Contrato</strong> estiverem entregues. Caso falte algum documento obrigatório de contrato, a matrícula será salva na situação <strong>Pendente</strong>.
+                                        </p>
+                                    </div>
+                                ')),
+
+                            ViewField::make('docs_lead')
+                                ->view('filament.components.wizard-docs-lead')
+                                ->viewData(fn () => [
+                                    'interessado' => $this->interessadoId ? Interessado::find($this->interessadoId) : null,
+                                ]),
+
+                            Repeater::make('documentos_anexados')
+                                ->label('Anexar Novos Documentos (Entregues Presencialmente)')
+                                ->schema([
+                                    Select::make('tipo_documento_id')
+                                        ->label('Tipo de Documento')
+                                        ->options(fn () => TipoDocumento::visivelPortalFamilia()->pluck('nome', 'id'))
+                                        ->required()
+                                        ->searchable(),
+
+                                    FileUpload::make('arquivo')
+                                        ->label('Arquivo (PDF ou Imagem)')
+                                        ->directory('documentos_matricula')
+                                        ->maxSize(10240)
+                                        ->required(),
+                                ])
+                                ->columns(2)
+                                ->addActionLabel('+ Anexar Documento Presencial')
+                                ->collapsible(),
+                        ]),
                 ])
                     ->submitAction(
                         Action::make('save')
@@ -606,7 +657,40 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 }
             }
 
-            /** @var list<array{aluno: Pessoa, contrato: Contrato}> $alunosPessoa */
+            // ── Checagem de Documentos Obrigatórios para Emissão do Contrato ──
+            $cursoAlvoId = $raw['curso_id'] ?? $turma?->serie?->curso_id;
+            $tiposObrigatoriosContrato = TipoDocumento::obrigatoriosParaContrato()
+                ->when($cursoAlvoId, fn ($q) => $q->where(function ($query) use ($cursoAlvoId) {
+                    $query->whereHas('cursos', fn ($cq) => $cq->where('curso.id', $cursoAlvoId))
+                        ->orWhereDoesntHave('cursos');
+                }))
+                ->get();
+
+            // Mapeamento dos tipos já entregues (do lead no CRM ou anexados no formulário)
+            $tiposEntreguesIds = collect();
+            if ($this->interessadoId) {
+                $docsLead = DocumentoInserido::where('interessado_id', $this->interessadoId)
+                    ->whereIn('status', [SituacaoDocumento::EM_ANALISE, SituacaoDocumento::VERIFICADO])
+                    ->pluck('tipo_documento_id');
+                $tiposEntreguesIds = $tiposEntreguesIds->merge($docsLead);
+            }
+            if (! empty($raw['documentos_anexados'])) {
+                $docsNovos = collect($raw['documentos_anexados'])->pluck('tipo_documento_id')->filter();
+                $tiposEntreguesIds = $tiposEntreguesIds->merge($docsNovos);
+            }
+
+            $todosDocsContratoOk = $tiposObrigatoriosContrato->every(fn ($tipo) => $tiposEntreguesIds->contains($tipo->id));
+
+            // Regra Contratual: sem os documentos obrigatórios, a matrícula DEVE ser Pendente e sem contrato
+            $situacaoFinal = $todosDocsContratoOk
+                ? ($raw['situacao'] ?? SituacaoMatricula::ATIVA->value)
+                : SituacaoMatricula::PENDENTE->value;
+
+            $dataAtivacaoFinal = ($situacaoFinal === SituacaoMatricula::ATIVA->value)
+                ? ($raw['data_ativacao'] ?? now()->toDateString())
+                : null;
+
+            /** @var list<array{aluno: Pessoa, contrato: ?Contrato, matricula: Matricula}> $alunosPessoa */
             $alunosPessoa = [];
 
             foreach ($raw['alunos'] as $alunoData) {
@@ -636,18 +720,36 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 $matricula = Matricula::create([
                     'pessoa_id' => $aluno->id,
                     'turma_id' => $raw['turma_id'],
-                    'situacao' => $raw['situacao'] ?? SituacaoMatricula::ATIVA->value,
+                    'situacao' => $situacaoFinal,
                     'periodo_letivo_id' => $raw['periodo_letivo_id'] ?? $turma?->periodo_letivo_id,
-                    'data_ativacao' => $raw['data_ativacao'] ?? null,
+                    'data_ativacao' => $dataAtivacaoFinal,
                 ]);
 
-                // ── Criar Contrato para a Matrícula ─────────────────────
-                $contrato = Contrato::create([
-                    'matricula_id' => $matricula->id,
-                    'valor_total' => 0,
-                    'data_aceite' => now(),
-                    'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula',
-                ]);
+                // ── Salvar novos documentos anexados no assistente ──────
+                if (! empty($raw['documentos_anexados'])) {
+                    foreach ($raw['documentos_anexados'] as $docItem) {
+                        if (! empty($docItem['arquivo']) && ! empty($docItem['tipo_documento_id'])) {
+                            DocumentoInserido::create([
+                                'matricula_id' => $matricula->id,
+                                'tipo_documento_id' => (int) $docItem['tipo_documento_id'],
+                                'arquivo_path' => $docItem['arquivo'],
+                                'nome_arquivo_original' => basename((string) $docItem['arquivo']),
+                                'status' => SituacaoDocumento::EM_ANALISE,
+                            ]);
+                        }
+                    }
+                }
+
+                // ── Criar Contrato APENAS se os documentos obrigatórios estão presentes ──
+                $contrato = null;
+                if ($todosDocsContratoOk) {
+                    $contrato = Contrato::create([
+                        'matricula_id' => $matricula->id,
+                        'valor_total' => 0,
+                        'data_aceite' => now(),
+                        'log_assinatura' => 'Gerado automaticamente pelo Assistente de Matrícula (Docs Obrigatórios Validados)',
+                    ]);
+                }
 
                 // ── Integração CRM: marcar conversão ────────────────────
                 $this->marcarConversaoCRM($aluno);
@@ -696,7 +798,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         ]);
                     }
 
-                    if ($respData['is_financeiro'] ?? false) {
+                    // Se o contrato foi emitido, vincula o responsável financeiro ao contrato
+                    if ($contratoObj && ($respData['is_financeiro'] ?? false)) {
                         ResponsavelFinanceiro::create([
                             'pessoa_id' => $responsavelPessoa->id,
                             'contrato_id' => $contratoObj->id,
@@ -720,13 +823,22 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             $count = count($alunosPessoa);
             $primeiraMatricula = $alunosPessoa[0]['matricula'] ?? null;
 
-            Notification::make()
-                ->title('Matrícula realizada com sucesso!')
-                ->body($count > 1
-                    ? "{$count} alunos matriculados com sucesso."
-                    : 'Aluno matriculado com sucesso.')
-                ->success()
-                ->send();
+            if ($todosDocsContratoOk) {
+                Notification::make()
+                    ->title('Matrícula realizada e Contrato emitido!')
+                    ->body($count > 1
+                        ? "{$count} alunos matriculados e contratos escolares gerados com sucesso (Matrícula Ativa)."
+                        : 'Aluno matriculado e contrato escolar gerado com sucesso (Matrícula Ativa).')
+                    ->success()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Matrícula cadastrada como PENDENTE')
+                    ->body('A matrícula foi salva na situação PENDENTE. O Contrato Escolar NÃO foi gerado devido à ausência de documentos obrigatórios de contrato. A matrícula será ativada e o contrato emitido assim que a documentação for completada.')
+                    ->warning()
+                    ->persistent()
+                    ->send();
+            }
 
             // Redirecionar para a edição da primeira matrícula criada
             if ($primeiraMatricula) {

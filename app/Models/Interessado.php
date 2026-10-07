@@ -308,31 +308,74 @@ class Interessado extends Model
     }
 
     /**
-     * Retorna a coleção de tipos de documentos requeridos para este interessado.
-     * Considera os tipos vinculados aos cursos das séries pretendidas ou marcados como obrigatórios.
+     * Retorna a coleção de tipos de documentos visíveis no portal da família para este interessado.
+     * Considera os tipos vinculados aos cursos das séries pretendidas ou gerais (sem curso vinculado),
+     * excluindo documentos com categoria de uso interno.
      */
     public function documentosRequeridos(): Collection
     {
         $cursosIds = $this->dependentes->map(fn ($d) => $d->serie?->curso_id)->filter()->unique();
 
-        $query = TipoDocumento::query();
+        $query = TipoDocumento::query()->visivelPortalFamilia();
 
         if ($cursosIds->isNotEmpty()) {
-            $query->where(function ($q) use ($cursosIds) {
+            $query->where(function (Builder $q) use ($cursosIds) {
                 $q->whereHas('cursos', fn ($cq) => $cq->whereIn('curso.id', $cursosIds))
-                    ->orWhere('flag_obrigatorio', true);
+                    ->orWhereDoesntHave('cursos');
             });
-        } else {
-            $query->where('flag_obrigatorio', true);
         }
 
         $docs = $query->orderBy('nome')->get();
 
         if ($docs->isEmpty()) {
-            $docs = TipoDocumento::orderBy('nome')->get();
+            $docs = TipoDocumento::query()->visivelPortalFamilia()->orderBy('nome')->get();
         }
 
         return $docs;
+    }
+
+    /**
+     * Tipos de documentos obrigatórios para emitir o Contrato Escolar e ativar a matrícula.
+     */
+    public function documentosContrato(): Collection
+    {
+        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioContrato());
+    }
+
+    /**
+     * Tipos de documentos obrigatórios para a vida acadêmica e histórico do aluno.
+     */
+    public function documentosHistorico(): Collection
+    {
+        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioHistorico());
+    }
+
+    /**
+     * Tipos de documentos opcionais/complementares disponibilizados para envio facultativo.
+     */
+    public function documentosOpcionais(): Collection
+    {
+        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isOpcional());
+    }
+
+    /**
+     * Verifica se todos os documentos obrigatórios para a liberação do contrato já foram enviados
+     * pela família (em análise ou aprovados).
+     */
+    public function todosDocsContratoEntregues(): bool
+    {
+        $docsObrigatorios = $this->documentosContrato();
+
+        if ($docsObrigatorios->isEmpty()) {
+            return true;
+        }
+
+        $docsEnviadosIds = $this->documentosInseridos()
+            ->whereIn('status', [SituacaoDocumento::EM_ANALISE, SituacaoDocumento::VERIFICADO])
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        return $docsObrigatorios->every(fn (TipoDocumento $tipo) => $docsEnviadosIds->contains($tipo->id));
     }
 
     /**

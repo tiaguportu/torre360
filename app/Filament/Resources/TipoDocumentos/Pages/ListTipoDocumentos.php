@@ -40,21 +40,25 @@ class ListTipoDocumentos extends ListRecords
         $canCreate = $user->can('Create:TipoDocumento');
         $canUpdate = $user->can('Update:TipoDocumento');
 
-        $html = '<p>Nesta página você configura quais tipos de documentos o sistema deve exigir ou permitir o envio.</p>';
+        $html = '<p>Nesta página você configura as regras de exigência e visibilidade de cada tipo de documento do sistema.</p>';
+        $html .= '<h3>Classificação dos Documentos</h3>';
+        $html .= '<ul>';
+        $html .= '<li><strong>🔴 Obrigatório para Contrato:</strong> Documento indispensável para emitir o Contrato Escolar e ativar a matrícula. Sem ele, a matrícula é registrada como Pendente.</li>';
+        $html .= '<li><strong>🟡 Obrigatório para Histórico do Aluno:</strong> Exigido para a vida acadêmica e conformidade com o MEC. Não impede a emissão do contrato.</li>';
+        $html .= '<li><strong>🟢 Opcional / Complementar:</strong> Aparece no Portal da Família e nos formulários para envio facultativo (ex: laudos médicos, carteirinha de convênio).</li>';
+        $html .= '<li><strong>⚪ Uso Interno da Secretaria:</strong> Restrito à secretaria e arquivo escolar (não aparece no Portal da Família).</li>';
+        $html .= '</ul>';
+
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Definição de Regras:</strong> Configure se um documento é obrigatório, se gera pendência de matrícula e para quais cursos/turmas ele se aplica.</li>';
-
         if ($canCreate) {
-            $html .= '<li><strong>Novo Tipo:</strong> Crie uma nova categoria de documento (ex: RG, CPF, Histórico Escolar).</li>';
+            $html .= '<li><strong>Novo Tipo:</strong> Cadastre novos tipos de documentos com regras específicas de exigência e cursos vinculados.</li>';
         }
 
         if ($canUpdate) {
-            $html .= '<li><strong>Modelos:</strong> Você pode anexar um arquivo PDF ou um link que servirá de modelo para o aluno baixar e preencher.</li>';
-            $html .= '<li><strong>Editar:</strong> Altere as regras de obrigatoriedade ou visibilidade do documento.</li>';
+            $html .= '<li><strong>Modelos:</strong> Anexe arquivos PDF ou links de instruções/modelos que a família pode consultar e baixar.</li>';
+            $html .= '<li><strong>Editar:</strong> Altere as regras de obrigatoriedade, cursos vinculados ou visibilidade do documento.</li>';
         }
-
-        $html .= '<li><strong>Importante:</strong> Alterar a obrigatoriedade aqui impactará imediatamente o status de "Pendência" de todas as matrículas ativas.</li>';
         $html .= '</ul>';
 
         return $html;

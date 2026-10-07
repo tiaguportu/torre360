@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\AlunoResponsavel;
 use App\Models\Cidade;
 use App\Models\Contrato;
@@ -232,15 +233,23 @@ class MatriculaOnlineService
                 continue;
             }
 
-            $nomeTipo = $mapaTipos[$campo] ?? 'Documento Comprobatório';
-            $tipoDoc = TipoDocumento::firstOrCreate(['nome' => $nomeTipo]);
+            if (is_numeric($campo)) {
+                $tipoDoc = TipoDocumento::find((int) $campo);
+            } else {
+                $nomeTipo = $mapaTipos[$campo] ?? 'Documento Comprobatório';
+                $tipoDoc = TipoDocumento::firstOrCreate(['nome' => $nomeTipo]);
+            }
+
+            if (! $tipoDoc) {
+                continue;
+            }
 
             if ($arquivo instanceof UploadedFile) {
                 $path = $arquivo->store('matriculas_online/'.$matricula->id, 'local');
                 $nomeOriginal = $arquivo->getClientOriginalName();
                 $hash = hash_file('sha256', $arquivo->getRealPath());
 
-                DocumentoInserido::create([
+                $doc = DocumentoInserido::create([
                     'tipo_documento_id' => $tipoDoc->id,
                     'matricula_id' => $matricula->id,
                     'status' => SituacaoDocumento::EM_ANALISE,
@@ -249,6 +258,8 @@ class MatriculaOnlineService
                     'hash_arquivo' => $hash,
                     'observacoes' => 'Enviado pelo responsável no processo de Matrícula 100% Online.',
                 ]);
+
+                ValidarDocumentoComIaJob::dispatch($doc->id);
             }
         }
     }

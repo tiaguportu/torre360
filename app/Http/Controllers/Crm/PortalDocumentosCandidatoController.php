@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Crm;
 
+use App\Enums\Sexo;
 use App\Enums\SituacaoDocumento;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Crm\SalvarDadosPreAdmissaoRequest;
 use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\DocumentoInserido;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
+use App\Models\Serie;
 use App\Models\TipoContatoInteressado;
 use App\Models\TipoDocumento;
+use App\Models\TipoVinculo;
+use App\Services\ConviteMatriculaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -23,15 +28,32 @@ use Illuminate\View\View;
 class PortalDocumentosCandidatoController extends Controller
 {
     /**
-     * Máximo de envios por candidato por hora: cada arquivo dispara uma análise paga por IA,
+     * Máximo de envios por candidato por hora: cada arquivo dispara uma análise por IA,
      * então um link vazado não pode ser usado para esgotar a cota/custo do Gemini.
      */
     private const MAX_ENVIOS_POR_HORA = 30;
 
     /**
-     * Exibe o portal público de envio e acompanhamento de documentos do candidato.
+     * Redirecionamento permanente/suave de links legados de convite (/quero-matricular/convite/{token})
+     * para a experiência unificada do portal de admissão (/admissao/{token}).
      */
-    public function show(string $token): View|Response
+    public function redirecionarLegadoConvite(string $token): RedirectResponse|Response
+    {
+        $interessado = $this->localizarInteressado($token);
+
+        if (! $interessado) {
+            return $this->linkInvalido();
+        }
+
+        $tokenAlvo = $interessado->obterOuCriarTokenDocumentos();
+
+        return redirect()->route('candidato.documentos.show', ['token' => $tokenAlvo]);
+    }
+
+    /**
+     * Exibe o portal público unificado de pré-admissão, confirmação de dados e checklist de documentos.
+     */
+    public function show(Request $request, string $token): View|Response
     {
         $interessado = $this->localizarInteressado($token);
 
@@ -46,16 +68,65 @@ class PortalDocumentosCandidatoController extends Controller
         ]);
 
         $tiposRequeridos = $interessado->documentosRequeridos();
+        $docsContrato = $interessado->documentosContrato();
+        $docsHistorico = $interessado->documentosHistorico();
+        $docsOpcionais = $interessado->documentosOpcionais();
+
         $documentosInseridos = $interessado->documentosInseridos;
         $progresso = $interessado->progressoDocumentos();
+        $todosDocsContratoEntregues = $interessado->todosDocsContratoEntregues();
+
+        // Se a família já preencheu a pré-matrícula anteriormente, a aba padrão é documentos
+        $dadosPreenchidos = filled($interessado->dados_pre_matricula);
+        $abaPadrao = $dadosPreenchidos ? 'documentos' : 'dados';
+        $abaAtiva = $request->get('aba', $abaPadrao);
 
         return view('candidato.portal-documentos', [
             'interessado' => $interessado,
             'tiposRequeridos' => $tiposRequeridos,
+            'docsContrato' => $docsContrato,
+            'docsHistorico' => $docsHistorico,
+            'docsOpcionais' => $docsOpcionais,
             'documentosInseridos' => $documentosInseridos,
             'progresso' => $progresso,
+            'todosDocsContratoEntregues' => $todosDocsContratoEntregues,
             'token' => $token,
+            'abaAtiva' => $abaAtiva,
+            'series' => Serie::with('curso')->orderBy('nome')->get(),
+            'tiposVinculo' => TipoVinculo::orderBy('nome')->pluck('nome', 'id'),
+            'sexos' => Sexo::cases(),
+            'dadosPreMatricula' => $interessado->dados_pre_matricula ?? [],
         ]);
+    }
+
+    /**
+     * Salva ou atualiza os dados cadastrais da família (responsáveis, endereço, dependentes)
+     * e avança para o checklist de documentos.
+     */
+    public function salvarDadosCadastrais(
+        SalvarDadosPreAdmissaoRequest $request,
+        string $token,
+        ConviteMatriculaService $conviteService
+    ): RedirectResponse {
+        $interessado = $request->getInteressado();
+
+        if (! $interessado) {
+            return redirect()->route('candidato.documentos.show', ['token' => $token]);
+        }
+
+        $validated = $request->validated();
+        $responsavel = $validated['responsavel'];
+
+        $conviteService->confirmar(
+            $interessado,
+            ['telefone' => $responsavel['telefone'], 'email' => $responsavel['email'] ?? null],
+            $validated['dependentes'],
+            $conviteService->montarPreMatricula($validated, $request->ip())
+        );
+
+        return redirect()
+            ->route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos'])
+            ->with('sucesso', 'Dados cadastrais confirmados com sucesso! Agora anexe os documentos solicitados abaixo.');
     }
 
     /**
@@ -71,7 +142,6 @@ class PortalDocumentosCandidatoController extends Controller
 
         $validated = $request->validate([
             'tipo_documento_id' => ['required', 'exists:tipo_documento,id'],
-            // O dependente precisa pertencer a este candidato: um id de outra família não pode ser aceito.
             'interessado_dependente_id' => ['nullable', Rule::exists('interessado_dependente', 'id')->where('interessado_id', $interessado->id)],
             'arquivo' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'], // Max 10MB
         ], [
@@ -98,7 +168,7 @@ class PortalDocumentosCandidatoController extends Controller
             ->whereNull('matricula_id')
             ->first();
 
-        // Documento já conferido pela secretaria não pode ser trocado pela família (mesma regra de `remover`).
+        // Documento já conferido pela secretaria não pode ser trocado pela família
         if ($existente?->status === SituacaoDocumento::VERIFICADO) {
             return back()->with('erro', "O documento '{$tipoDoc->nome}' já foi verificado pela secretaria e não pode ser substituído. Em caso de dúvida, fale com a secretaria.");
         }
@@ -115,8 +185,7 @@ class PortalDocumentosCandidatoController extends Controller
             'nome_arquivo_original' => $file->getClientOriginalName(),
             'hash_arquivo' => $hash,
             'status' => SituacaoDocumento::EM_ANALISE,
-            'observacoes' => null, // Limpa qualquer rejeição anterior
-            // O parecer da IA pertencia ao arquivo anterior; o novo será analisado em seguida.
+            'observacoes' => null,
             'dados_ia' => null,
             'analisado_ia_em' => null,
         ];
@@ -126,7 +195,6 @@ class PortalDocumentosCandidatoController extends Controller
             $existente->update($atributos);
             $doc = $existente;
 
-            // Não deixa o arquivo substituído (com dados pessoais) órfão no disco.
             if ($arquivoAnterior && $arquivoAnterior !== $path && Storage::disk('local')->exists($arquivoAnterior)) {
                 Storage::disk('local')->delete($arquivoAnterior);
             }
@@ -138,7 +206,7 @@ class PortalDocumentosCandidatoController extends Controller
             ]);
         }
 
-        // Dispara a validação inteligente em segundo plano sem travar a navegação da família
+        // Dispara validação inteligente em segundo plano
         ValidarDocumentoComIaJob::dispatch($doc->id);
 
         // Registra histórico na timeline do lead
@@ -151,7 +219,9 @@ class PortalDocumentosCandidatoController extends Controller
             'data_contato' => now(),
         ]);
 
-        return back()->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa equipe e IA estão processando a validação em segundo plano.");
+        return redirect()
+            ->route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos'])
+            ->with('sucesso', "Documento '{$tipoDoc->nome}' enviado com sucesso! Nossa equipe e IA estão processando a validação em segundo plano.");
     }
 
     /**
@@ -180,7 +250,9 @@ class PortalDocumentosCandidatoController extends Controller
 
         $documento->delete();
 
-        return back()->with('sucesso', 'Documento removido.');
+        return redirect()
+            ->route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos'])
+            ->with('sucesso', 'Documento removido.');
     }
 
     /**
@@ -188,7 +260,8 @@ class PortalDocumentosCandidatoController extends Controller
      */
     private function localizarInteressado(string $token): ?Interessado
     {
-        return Interessado::comTokenDocumentosValido($token)->first();
+        return Interessado::comTokenDocumentosValido($token)->first()
+            ?? Interessado::where('token_convite', $token)->first();
     }
 
     /**

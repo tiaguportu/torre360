@@ -38,14 +38,14 @@ Route::post('/quero-matricular', [CaptacaoInteressadoController::class, 'store']
     ->name('captacao.interessado.store');
 Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 'sucesso'])->name('captacao.interessado.sucesso');
 
-// Convite de matrícula online: link único enviado a um lead já qualificado pelo CRM
-Route::get('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'convite'])
+// Convite de matrícula online: redirecionamento para o fluxo unificado no Portal de Admissão
+Route::get('/quero-matricular/convite/{token}', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
     ->middleware('throttle:15,1')
     ->name('captacao.interessado.convite');
-Route::post('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'confirmarConvite'])
+Route::post('/quero-matricular/convite/{token}', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
     ->middleware('throttle:15,1')
     ->name('captacao.interessado.convite.confirmar');
-Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoController::class, 'conviteConfirmado'])
+Route::get('/quero-matricular/convite/{token}/obrigado', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
     ->name('captacao.interessado.convite.sucesso');
 
 // Validação pública de autenticidade documental (QR Code com proteção contra raspagem)
@@ -60,10 +60,13 @@ Route::post('/pesquisa-visita/{token}', [PesquisaVisitaController::class, 'store
     ->name('pesquisa-visita.store');
 Route::get('/pesquisa-visita/{token}/obrigado', [PesquisaVisitaController::class, 'sucesso'])->name('pesquisa-visita.sucesso');
 
-// Portal de Pré-Admissão & Checklist de Documentos do Candidato
+// Portal Unificado de Pré-Admissão & Checklist de Documentos do Candidato
 Route::get('/admissao/{token}', [PortalDocumentosCandidatoController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('candidato.documentos.show');
+Route::post('/admissao/{token}/dados', [PortalDocumentosCandidatoController::class, 'salvarDadosCadastrais'])
+    ->middleware('throttle:15,1')
+    ->name('candidato.documentos.dados');
 Route::post('/admissao/{token}/enviar', [PortalDocumentosCandidatoController::class, 'upload'])
     ->middleware('throttle:30,1')
     ->name('candidato.documentos.upload');
