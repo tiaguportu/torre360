@@ -108,32 +108,60 @@
             </div>
         </div>
 
+        @php
+            $statusAbas = $statusAbas ?? $interessado->resumoPendenciasPortal();
+        @endphp
+
         <!-- Abas de Navegação Unificada -->
-        <div class="flex border-b border-slate-200 gap-2 sm:gap-4 text-sm font-semibold">
+        <div class="flex flex-wrap sm:flex-nowrap border-b border-slate-200 gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
+            <!-- Aba 1: Cadastro -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}"
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'dados' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
-                <span>1.</span>
-                <span>Dados Cadastrais</span>
-                @if(filled($dadosPreMatricula))
-                    <span class="text-xs text-emerald-600">✓</span>
+                <span>Cadastro</span>
+                @if($statusAbas['dados']['tem_pendencia'])
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" title="{{ implode(', ', $statusAbas['dados']['pendencias']) }}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span>{{ $statusAbas['dados']['quantidade'] }} {{ $statusAbas['dados']['quantidade'] === 1 ? 'pendência' : 'pendências' }}</span>
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="text-emerald-600 font-extrabold">✓</span>
+                        <span>Concluído</span>
+                    </span>
                 @endif
             </a>
 
+            <!-- Aba 2: 2. Documentos -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}"
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'documentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
-                <span>2.</span>
-                <span>Checklist de Documentos</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $progresso['enviados'] }}/{{ $progresso['total'] }}</span>
+                <span>2. Documentos</span>
+                @if($statusAbas['documentos']['tem_pendencia'])
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span>{{ $statusAbas['documentos']['quantidade'] }} {{ $statusAbas['documentos']['quantidade'] === 1 ? 'pendente' : 'pendentes' }}</span>
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="text-emerald-600 font-extrabold">✓</span>
+                        <span>Concluído</span>
+                    </span>
+                @endif
             </a>
 
+            <!-- Aba 3: 3. Contrato -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'status']) }}"
                class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'status' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
-                <span>3.</span>
-                <span>Situação do Contrato</span>
-                @if($todosDocsContratoEntregues)
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>3. Contrato</span>
+                @if($statusAbas['contrato']['tem_pendencia'])
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" title="{{ implode(', ', $statusAbas['contrato']['pendencias']) }}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span>{{ $statusAbas['contrato']['quantidade'] }} {{ $statusAbas['contrato']['quantidade'] === 1 ? 'pendência' : 'pendências' }}</span>
+                    </span>
                 @else
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="text-emerald-600 font-extrabold">✓</span>
+                        <span>Liberado</span>
+                    </span>
                 @endif
             </a>
         </div>
@@ -141,13 +169,24 @@
         <!-- CONTEÚDO DA ABA 1: DADOS CADASTRAIS -->
         @if($abaAtiva === 'dados')
             <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-6">
-                <div class="border-b border-slate-100 pb-3">
-                    <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                        <span>📝</span> Confirmação dos Dados da Família e dos Alunos
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-1">
-                        Estes dados alimentam diretamente a ficha cadastral e o contrato de prestação de serviços educacionais.
-                    </p>
+                <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <span>📝</span> Cadastro dos Dados da Família e dos Alunos
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Estes dados alimentam diretamente a ficha cadastral e o contrato de prestação de serviços educacionais.
+                        </p>
+                    </div>
+                    @if(! $statusAbas['dados']['tem_pendencia'])
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
+                            <span>✓</span> Cadastro Concluído
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 self-start sm:self-auto">
+                            <span>⏳</span> {{ $statusAbas['dados']['quantidade'] }} {{ $statusAbas['dados']['quantidade'] === 1 ? 'pendência' : 'pendências' }}
+                        </span>
+                    @endif
                 </div>
 
                 <form method="POST" action="{{ route('candidato.documentos.dados', ['token' => $token]) }}" class="space-y-6">
@@ -373,10 +412,32 @@
             </div>
         @endif
 
-        <!-- CONTEÚDO DA ABA 2: CHECKLIST DE DOCUMENTOS -->
+        <!-- CONTEÚDO DA ABA 2: DOCUMENTOS -->
         @if($abaAtiva === 'documentos')
             <div class="space-y-6">
-                <!-- Seção 1: Documentos Obrigatórios para o Contrato -->
+                @if(! $statusAbas['documentos']['tem_pendencia'])
+                    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-3 text-xs shadow-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">✅</span>
+                            <span class="font-bold">Todos os documentos obrigatórios para o contrato já foram enviados!</span>
+                        </div>
+                        <span class="font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} enviados
+                        </span>
+                    </div>
+                @else
+                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between gap-3 text-xs shadow-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">⏳</span>
+                            <span>Restam <strong>{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s) para o contrato</strong> a serem anexados.</span>
+                        </div>
+                        <span class="font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                            {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} enviados
+                        </span>
+                    </div>
+                @endif
+
+                <!-- Seção 1: Documentos Obrigatórios para o Contrato (Em Destaque) -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
@@ -400,63 +461,91 @@
                     @endif
                 </div>
 
-                <!-- Seção 2: Documentos para o Histórico Escolar -->
-                <div class="space-y-3 pt-4 border-t border-slate-200">
-                    <div>
-                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                            <span class="text-amber-500">🟡</span> Documentos para o Histórico Escolar
-                        </h3>
-                        <p class="text-xs text-slate-500">
-                            Exigidos para a conformidade com o MEC e pasta acadêmica do aluno (não impedem a assinatura do contrato).
-                        </p>
-                    </div>
-
-                    @if($docsHistorico->isEmpty())
-                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
-                            Nenhum documento de histórico específico requerido para esta série no momento.
+                <!-- Seção 2: Documentos para o Histórico Escolar (Colapsado) -->
+                <details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">
+                    <summary class="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50 transition-colors list-none">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-amber-500 text-lg">🟡</span>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                                    <span>Documentos para o Histórico Escolar</span>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Não bloqueiam o contrato</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Exigidos para a conformidade com o MEC e pasta acadêmica (envio facultado neste momento).
+                                </p>
+                            </div>
                         </div>
-                    @else
-                        @foreach($docsHistorico as $tipo)
-                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'historico'])
-                        @endforeach
-                    @endif
-                </div>
-
-                <!-- Seção 3: Documentos Opcionais / Complementares -->
-                <div class="space-y-3 pt-4 border-t border-slate-200">
-                    <div>
-                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                            <span class="text-emerald-500">🟢</span> Documentos Opcionais / Complementares
-                        </h3>
-                        <p class="text-xs text-slate-500">
-                            Envio facultativo caso o aluno possua (ex: carteirinha de convênio médico, laudos, declarações específicas).
-                        </p>
-                    </div>
-
-                    @if($docsOpcionais->isEmpty())
-                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
-                            Nenhum documento opcional listado para esta série.
+                        <div class="flex items-center gap-2 text-slate-400 group-open:rotate-180 transition-transform duration-200">
+                            <span class="text-xs font-semibold hidden sm:inline text-slate-500">{{ $docsHistorico->count() }} {{ $docsHistorico->count() === 1 ? 'documento' : 'documentos' }}</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
                         </div>
-                    @else
-                        @foreach($docsOpcionais as $tipo)
-                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'opcional'])
-                        @endforeach
-                    @endif
-                </div>
+                    </summary>
+
+                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/50">
+                        @if($docsHistorico->isEmpty())
+                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                                Nenhum documento de histórico específico requerido para esta série no momento.
+                            </div>
+                        @else
+                            @foreach($docsHistorico as $tipo)
+                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'historico'])
+                            @endforeach
+                        @endif
+                    </div>
+                </details>
+
+                <!-- Seção 3: Documentos Opcionais / Complementares (Colapsado) -->
+                <details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">
+                    <summary class="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50 transition-colors list-none">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-emerald-500 text-lg">🟢</span>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                                    <span>Documentos Opcionais / Complementares</span>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Envio facultativo</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Envio caso o aluno possua (ex: carteirinha de convênio, laudos, declarações).
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-400 group-open:rotate-180 transition-transform duration-200">
+                            <span class="text-xs font-semibold hidden sm:inline text-slate-500">{{ $docsOpcionais->count() }} {{ $docsOpcionais->count() === 1 ? 'documento' : 'documentos' }}</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </summary>
+
+                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/50">
+                        @if($docsOpcionais->isEmpty())
+                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                                Nenhum documento opcional listado para esta série.
+                            </div>
+                        @else
+                            @foreach($docsOpcionais as $tipo)
+                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'opcional'])
+                            @endforeach
+                        @endif
+                    </div>
+                </details>
             </div>
         @endif
 
         <!-- CONTEÚDO DA ABA 3: SITUAÇÃO DO CONTRATO E PRÓXIMOS PASSOS -->
         @if($abaAtiva === 'status')
             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
-                <div class="text-center space-y-2 py-4">
-                    @if($todosDocsContratoEntregues)
+                <div class="text-center space-y-3 py-4">
+                    @if(! $statusAbas['contrato']['tem_pendencia'])
                         <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto">
                             ✓
                         </div>
-                        <h3 class="text-lg font-bold text-slate-900">Documentos Obrigatórios Enviados!</h3>
+                        <h3 class="text-lg font-bold text-slate-900">Documentos e Requisitos em Dia!</h3>
                         <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                            Todos os documentos necessários para a formalização do <strong>Contrato Escolar</strong> já foram recebidos pela nossa equipe. A Secretaria Escolar está concluindo a conferência para disponibilizar o contrato para assinatura.
+                            Todos os requisitos necessários para a formalização do <strong>Contrato Escolar</strong> já foram cumpridos. A Secretaria Escolar está concluindo os preparativos para disponibilizar o contrato para assinatura.
                         </p>
                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 mt-2">
                             <span>Status:</span> Pronto para Emissão do Contrato
@@ -465,14 +554,36 @@
                         <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto">
                             ⏳
                         </div>
-                        <h3 class="text-lg font-bold text-slate-900">Aguardando Documentos Obrigatórios</h3>
+                        <h3 class="text-lg font-bold text-slate-900">Aguardando Requisitos Obrigatórios</h3>
                         <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                            Ainda constam documentos obrigatórios pendentes na aba <strong>Checklist de Documentos</strong>. O Contrato de Matrícula só pode ser emitido após o envio desses arquivos essenciais.
+                            Ainda constam pendências obrigatórias para a liberação do <strong>Contrato Escolar</strong>. O contrato só pode ser emitido após a regularização desses itens.
                         </p>
-                        <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 mt-2">
-                            <span>Ir para Checklist de Documentos</span>
-                            <span>→</span>
-                        </a>
+
+                        @if(!empty($statusAbas['contrato']['pendencias']))
+                            <div class="max-w-md mx-auto text-left bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 space-y-1.5">
+                                <span class="font-bold block text-amber-950 flex items-center gap-1.5">
+                                    <span>⚠️</span> Pendências para liberação do contrato:
+                                </span>
+                                <ul class="list-disc list-inside space-y-0.5 text-amber-800">
+                                    @foreach($statusAbas['contrato']['pendencias'] as $pend)
+                                        <li>{{ $pend }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+                            @if($statusAbas['dados']['tem_pendencia'])
+                                <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900">
+                                    <span>Ir para Cadastro</span>
+                                    <span>→</span>
+                                </a>
+                            @endif
+                            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700">
+                                <span>Ir para 2. Documentos</span>
+                                <span>→</span>
+                            </a>
+                        </div>
                     @endif
                 </div>
 

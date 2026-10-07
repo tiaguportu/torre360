@@ -598,4 +598,93 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $this->assertFalse($matricula->hasMissingContractDocuments());
         $this->assertEmpty($matricula->getMissingContractDocuments());
     }
+
+    public function test_portal_admissao_nomes_abas_e_indicadores_de_pendencia(): void
+    {
+        $interessado = $this->criarLead('Carla Mendes');
+        $token = $interessado->obterOuCriarTokenDocumentos();
+
+        $curso = Curso::first();
+
+        // Cria 1 documento de contrato e 1 de histórico para o curso
+        $docContrato = TipoDocumento::create([
+            'nome' => 'Comprovante de Renda Contratual',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docContrato->cursos()->attach($curso->id);
+
+        $docHistorico = TipoDocumento::create([
+            'nome' => 'Histórico Anterior Aluno',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_HISTORICO,
+        ]);
+        $docHistorico->cursos()->attach($curso->id);
+
+        // 1. Acesso inicial: dados não confirmados e documentos não enviados
+        $response = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $response->assertOk();
+
+        // Verifica os novos nomes das abas
+        $response->assertSee('Cadastro');
+        $response->assertSee('2. Documentos');
+        $response->assertSee('3. Contrato');
+
+        // Verifica que seções de histórico e opcionais estão colapsadas em tags <details>
+        $response->assertSee('<details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">', false);
+        $response->assertSee('Documentos para o Histórico Escolar');
+        $response->assertSee('Não bloqueiam o contrato');
+        $response->assertSee('Documentos Opcionais / Complementares');
+        $response->assertSee('Envio facultativo');
+
+        // Na aba "2. Documentos", a contagem de pendências refere-se aos obrigatórios para CONTRATO (1 pendente, e não 2)
+        $statusAbas = $interessado->resumoPendenciasPortal();
+        $this->assertTrue($statusAbas['dados']['tem_pendencia']);
+        $this->assertTrue($statusAbas['documentos']['tem_pendencia']);
+        $this->assertSame(1, $statusAbas['documentos']['quantidade']); // apenas o doc de contrato
+        $this->assertTrue($statusAbas['contrato']['tem_pendencia']);
+
+        $response->assertSee('1 pendente');
+
+        // 2. Envia o documento obrigatório para contrato
+        DocumentoInserido::create([
+            'interessado_id' => $interessado->id,
+            'tipo_documento_id' => $docContrato->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'docs/renda.pdf',
+            'nome_arquivo_original' => 'renda.pdf',
+        ]);
+
+        // Simula preenchimento dos dados cadastrais
+        $interessado->update([
+            'dados_pre_matricula' => [
+                'responsaveis' => [
+                    [
+                        'nome' => 'Carla Mendes',
+                        'cpf' => '12345678901',
+                        'tipo_vinculo_id' => 1,
+                        'is_financeiro' => true,
+                    ],
+                ],
+                'alunos' => [
+                    $interessado->dependentes->first()->id => [
+                        'serie_id' => $interessado->dependentes->first()->serie_id,
+                    ],
+                ],
+            ],
+        ]);
+
+        $interessado->refresh();
+        $statusAtualizado = $interessado->resumoPendenciasPortal();
+
+        // Como o doc de contrato foi enviado e dados preenchidos:
+        $this->assertFalse($statusAtualizado['dados']['tem_pendencia']);
+        $this->assertFalse($statusAtualizado['documentos']['tem_pendencia']);
+        $this->assertSame(0, $statusAtualizado['documentos']['quantidade']);
+        $this->assertFalse($statusAtualizado['contrato']['tem_pendencia']);
+        $this->assertSame(0, $statusAtualizado['contrato']['quantidade']);
+
+        $response2 = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $response2->assertOk();
+        $response2->assertSee('Concluído');
+        $response2->assertSee('Liberado');
+    }
 }

@@ -2559,8 +2559,9 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
 1. **Unificação dos Links Externos:**
    - O sistema unificou os antigos links (`/quero-matricular/convite/{token}` e `/admissao/{token}`) em uma experiência única e moderna em `/admissao/{token}`.
    - **Compatibilidade Retroativa:** Links de convite já compartilhados por WhatsApp ou e-mail continuam funcionando perfeitamente, sendo redirecionados de forma transparente para o portal unificado do candidato.
-2. **Navegação Intuitiva por Abas:**
-   - **Aba 1 — Dados Cadastrais com Preenchimento Guiado:** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+2. **Navegação Intuitiva por Abas com Indicadores em Tempo Real:**
+   - **Aba 'Cadastro':** A família preenche ou complementa dados pessoais do responsável (CPF, RG, e-mail, telefone, estado civil, profissão, endereço completo) e de cada um dos alunos/filhos (nome, data de nascimento, CPF, RG, certidão de nascimento). Os dados são salvos instantaneamente e ficam disponíveis no CRM e no assistente de matrícula da secretaria.
+     - **Indicador de Status:** Exibe um selo em tempo real com a quantidade de dados pendentes (ex: `⏳ X pendências`) ou o selo de conclusão (`✓ Concluído`) quando todos os dados cadastrais obrigatórios estiverem confirmados.
      - **Máscaras de Entrada Inteligentes:**
        - **Telefone:** Máscara dinâmica no padrão nacional com DDD `(00) 00000-0000` (celular) ou `(00) 0000-0000` (fixo), adaptando-se em tempo real na digitação ou colagem.
        - **CPF:** Máscara padronizada `000.000.000-00` com restrição de caracteres não numéricos.
@@ -2569,8 +2570,12 @@ O **Portal Unificado de Admissão** consolida em um único link seguro toda a jo
        - Ao preencher os 8 dígitos do CEP (ou desfocar o campo), o portal consulta automaticamente o serviço ViaCEP.
        - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
        - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
-   - **Aba 2 — Envio de Documentos:** Checklist digital inteligente que separa claramente os documentos exigidos para emissão de contrato, documentos acadêmicos do histórico e documentos facultativos.
-   - **Aba 3 — Situação do Contrato:** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
+   - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para emissão do contrato:
+     - **Contagem de Pendências Vinculada ao Contrato:** O indicador da aba contabiliza estritamente os **documentos obrigatórios para liberação do Contrato Escolar** (ex: `⏳ X pendentes` ou `✓ Concluído`). Documentos de histórico ou opcionais não inflam a contagem de pendências da aba.
+     - **Seção de Contrato em Destaque:** Os documentos indispensáveis para o contrato são exibidos abertos e destacados no topo.
+     - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (não bloqueiam contrato) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação da matrícula. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
+   - **Aba '3. Contrato':** Painel explicativo em tempo real que informa à família se a documentação já permite a emissão do contrato e a formalização da matrícula.
+     - **Indicador de Status:** Exibe `⏳ X pendência(s)` listando os requisitos impeditivos faltantes (documentos de contrato pendentes ou dados cadastrais não preenchidos) ou `✓ Liberado` quando todos os critérios contratuais estiverem cumpridos.
 3. **Ação Unificada no CRM (`admin/interessados`):**
    - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
 

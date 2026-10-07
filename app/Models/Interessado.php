@@ -470,4 +470,161 @@ class Interessado extends Model
             'completo' => $totalRequeridos > 0 && $aprovados >= $totalRequeridos,
         ];
     }
+
+    /**
+     * Retorna a lista descritiva de dados cadastrais pendentes para a pré-admissão.
+     *
+     * @return list<string>
+     */
+    public function pendenciasDadosCadastrais(): array
+    {
+        if (filled($this->dados_pre_matricula) && ! empty($this->dados_pre_matricula['responsaveis'])) {
+            return [];
+        }
+
+        $pendencias = [];
+
+        $pessoa = $this->pessoa;
+        if (blank($pessoa?->cpf)) {
+            $pendencias[] = 'CPF do responsável';
+        }
+        if (blank($pessoa?->data_nascimento)) {
+            $pendencias[] = 'Data de nascimento do responsável';
+        }
+        if (blank($pessoa?->telefone)) {
+            $pendencias[] = 'Telefone do responsável';
+        }
+
+        $temEndereco = $pessoa && ($pessoa->relationLoaded('enderecos')
+            ? $pessoa->enderecos->isNotEmpty()
+            : $pessoa->enderecos()->exists());
+
+        if (! $temEndereco) {
+            $pendencias[] = 'Endereço residencial completo';
+        }
+
+        $temVinculo = is_array($this->dados_pre_matricula)
+            && ! empty($this->dados_pre_matricula['responsaveis'][0]['tipo_vinculo_id']);
+
+        if (! $temVinculo) {
+            $pendencias[] = 'Grau de parentesco / vínculo';
+        }
+
+        foreach ($this->dependentes as $idx => $dependente) {
+            $nome = $dependente->nome_crianca ?: ('Aluno #'.($idx + 1));
+            if (blank($dependente->data_nascimento)) {
+                $pendencias[] = "Data de nascimento de {$nome}";
+            }
+            if (blank($dependente->serie_id)) {
+                $pendencias[] = "Série pretendida de {$nome}";
+            }
+        }
+
+        if ($pendencias === []) {
+            $pendencias[] = 'Confirmação e aceite da pré-admissão';
+        }
+
+        return $pendencias;
+    }
+
+    /**
+     * Retorna os tipos de documentos obrigatórios para CONTRATO que ainda não foram
+     * entregues pela família ou que foram rejeitados pela secretaria.
+     */
+    public function documentosContratoPendentes(?int $cursoId = null): Collection
+    {
+        $docsContrato = $this->documentosContrato($cursoId);
+
+        if ($docsContrato->isEmpty()) {
+            return collect();
+        }
+
+        $docsEnviadosValidosIds = $this->documentosInseridos()
+            ->whereIn('status', [SituacaoDocumento::EM_ANALISE, SituacaoDocumento::VERIFICADO])
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        return $docsContrato->filter(fn (TipoDocumento $tipo) => ! $docsEnviadosValidosIds->contains($tipo->id))->values();
+    }
+
+    /**
+     * Retorna os tipos de documentos obrigatórios (contrato e histórico) que ainda não foram
+     * entregues pela família ou que foram rejeitados pela secretaria.
+     */
+    public function documentosObrigatoriosPendentes(?int $cursoId = null): Collection
+    {
+        $docsObrigatorios = $this->documentosRequeridos($cursoId)
+            ->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioContrato() || $doc->isObrigatorioHistorico());
+
+        if ($docsObrigatorios->isEmpty()) {
+            return collect();
+        }
+
+        $docsEnviadosValidosIds = $this->documentosInseridos()
+            ->whereIn('status', [SituacaoDocumento::EM_ANALISE, SituacaoDocumento::VERIFICADO])
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        return $docsObrigatorios->filter(fn (TipoDocumento $tipo) => ! $docsEnviadosValidosIds->contains($tipo->id))->values();
+    }
+
+    /**
+     * Retorna as pendências impeditivas para a liberação do Contrato Escolar.
+     *
+     * @return list<string>
+     */
+    public function pendenciasContrato(?int $cursoId = null): array
+    {
+        $pendencias = [];
+
+        if (empty($this->dados_pre_matricula)) {
+            $pendencias[] = 'Confirmação dos dados cadastrais';
+        }
+
+        $docsContratoPendentes = $this->documentosContratoPendentes($cursoId);
+
+        foreach ($docsContratoPendentes as $doc) {
+            $pendencias[] = "Documento: {$doc->nome}";
+        }
+
+        return $pendencias;
+    }
+
+    /**
+     * Retorna um resumo estruturado de pendências para as abas do portal de admissão.
+     * A aba 'documentos' contabiliza especificamente os documentos obrigatórios para contrato.
+     *
+     * @return array{
+     *     dados: array{tem_pendencia: bool, quantidade: int, pendencias: list<string>},
+     *     documentos: array{tem_pendencia: bool, quantidade: int, total_obrigatorios: int, enviados: int, pendencias: Collection},
+     *     contrato: array{tem_pendencia: bool, quantidade: int, pendencias: list<string>}
+     * }
+     */
+    public function resumoPendenciasPortal(?int $cursoId = null): array
+    {
+        $pendenciasDados = $this->pendenciasDadosCadastrais();
+        $docsContratoPendentes = $this->documentosContratoPendentes($cursoId);
+        $totalDocsContrato = $this->documentosContrato($cursoId)->count();
+        $pendenciasContrato = $this->pendenciasContrato($cursoId);
+
+        return [
+            'dados' => [
+                'tem_pendencia' => $pendenciasDados !== [],
+                'quantidade' => count($pendenciasDados),
+                'pendencias' => $pendenciasDados,
+            ],
+            'documentos' => [
+                'tem_pendencia' => $docsContratoPendentes->isNotEmpty(),
+                'quantidade' => $docsContratoPendentes->count(),
+                'total_obrigatorios' => $totalDocsContrato,
+                'enviados' => max(0, $totalDocsContrato - $docsContratoPendentes->count()),
+                'pendencias' => $docsContratoPendentes,
+            ],
+            'contrato' => [
+                'tem_pendencia' => $pendenciasContrato !== [],
+                'quantidade' => count($pendenciasContrato),
+                'pendencias' => $pendenciasContrato,
+            ],
+        ];
+    }
 }

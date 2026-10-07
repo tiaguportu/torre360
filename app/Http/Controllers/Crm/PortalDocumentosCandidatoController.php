@@ -80,6 +80,7 @@ class PortalDocumentosCandidatoController extends Controller
         $dadosPreenchidos = filled($interessado->dados_pre_matricula);
         $abaPadrao = $dadosPreenchidos ? 'documentos' : 'dados';
         $abaAtiva = $request->get('aba', $abaPadrao);
+        $statusAbas = $interessado->resumoPendenciasPortal();
 
         return view('candidato.portal-documentos', [
             'interessado' => $interessado,
@@ -92,6 +93,7 @@ class PortalDocumentosCandidatoController extends Controller
             'todosDocsContratoEntregues' => $todosDocsContratoEntregues,
             'token' => $token,
             'abaAtiva' => $abaAtiva,
+            'statusAbas' => $statusAbas,
             'series' => Serie::with('curso')->orderBy('nome')->get(),
             'tiposVinculo' => TipoVinculo::orderBy('nome')->pluck('nome', 'id'),
             'sexos' => Sexo::cases(),
