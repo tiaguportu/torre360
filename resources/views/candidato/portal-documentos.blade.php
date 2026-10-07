@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>Portal de Pré-Admissão & Matrícula Online | Torre360</title>
+    <title>Portal de Pré-Admissão | Torre360</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('logo-adaptative.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('icon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icon.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,8 +22,8 @@
     <!-- Topbar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <span class="text-2xl">🏫</span>
+            <div class="flex items-center gap-3">
+                <img src="{{ asset('logo-adaptative.svg') }}" alt="Torre360" class="w-10 h-10 rounded-xl shadow-xs object-contain border border-slate-100 p-0.5 bg-white shrink-0">
                 <div>
                     <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Portal de Pré-Admissão</h1>
                     <p class="text-xs text-slate-500">Matrícula & Checklist Digital de Documentos</p>

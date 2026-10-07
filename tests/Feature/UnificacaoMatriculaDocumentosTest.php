@@ -621,7 +621,11 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
 
         // 1. Acesso inicial: dados não confirmados e documentos não enviados
         $response = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
-        $response->assertOk();
+        // Verifica title, favicon e logo oficial Torre360 no header (sem emoji de escola)
+        $response->assertSee('<title>Portal de Pré-Admissão | Torre360</title>', false);
+        $response->assertSee('logo-adaptative.svg');
+        $response->assertSee('rel="icon"', false);
+        $response->assertDontSee('🏫');
 
         // Verifica os novos nomes das abas e ausência da aba contrato
         $response->assertSee('1. Cadastro');
@@ -640,11 +644,20 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response->assertSee('Documentos Opcionais / Complementares');
         $response->assertSee('Envio facultativo');
 
-        // Na aba "2. Documentos", a contagem de pendências refere-se aos documentos obrigatórios
+        // Na aba "2. Documentos", a contagem de pendências e o progresso referem-se aos documentos obrigatórios para contrato
         $statusAbas = $interessado->resumoPendenciasPortal();
         $this->assertTrue($statusAbas['dados']['tem_pendencia']);
         $this->assertTrue($statusAbas['documentos']['tem_pendencia']);
         $this->assertSame(1, $statusAbas['documentos']['quantidade']);
+
+        // Progresso considera estritamente os obrigatórios para contrato (1 e não 2)
+        $progressoInicial = $interessado->progressoDocumentos();
+        $this->assertSame(1, $progressoInicial['total']);
+        $this->assertSame(0, $progressoInicial['enviados']);
+        $this->assertSame(0, $progressoInicial['percentual']);
+        $response->assertSee('0 de 1 enviados');
+        $response->assertSee('style="width: 0%"', false);
+        $response->assertSee('(Documentos pendentes ⏳)');
 
         // Badge exibe apenas o número da pendência
         $response->assertSee('title="1 documento(s) obrigatório(s) pendente(s)"', false);
@@ -657,6 +670,12 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
             'arquivo_path' => 'docs/renda.pdf',
             'nome_arquivo_original' => 'renda.pdf',
         ]);
+
+        // Progresso atualizado: 1 de 1 enviado (100%), mesmo com documento de histórico ainda não entregue
+        $progressoFinal = $interessado->progressoDocumentos();
+        $this->assertSame(1, $progressoFinal['total']);
+        $this->assertSame(1, $progressoFinal['enviados']);
+        $this->assertSame(100, $progressoFinal['percentual']);
 
         // Simula preenchimento dos dados cadastrais
         $interessado->update([
@@ -690,5 +709,8 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response2 = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $response2->assertOk();
         $response2->assertSee('✓');
+        $response2->assertSee('1 de 1 enviados');
+        $response2->assertSee('style="width: 100%"', false);
+        $response2->assertSee('(Documentos OK ✅)');
     }
 }

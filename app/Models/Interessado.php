@@ -446,28 +446,77 @@ class Interessado extends Model
 
     /**
      * Retorna estatísticas de progresso dos documentos do candidato.
+     * Considera na contagem estritamente os documentos obrigatórios para contrato.
+     *
+     * @return array{
+     *     total: int,
+     *     enviados: int,
+     *     aprovados: int,
+     *     em_analise: int,
+     *     rejeitados: int,
+     *     pendentes: int,
+     *     percentual: int,
+     *     completo: bool
+     * }
      */
-    public function progressoDocumentos(): array
+    public function progressoDocumentos(?int $cursoId = null): array
     {
-        $requeridos = $this->documentosRequeridos();
-        $totalRequeridos = $requeridos->count();
+        $docsContrato = $this->documentosContrato($cursoId);
+        $totalDocsContrato = $docsContrato->count();
 
-        $inseridos = $this->documentosInseridos()->with('tipoDocumento')->get();
-        $aprovados = $inseridos->where('status', SituacaoDocumento::VERIFICADO)->count();
-        $emAnalise = $inseridos->where('status', SituacaoDocumento::EM_ANALISE)->count();
-        $rejeitados = $inseridos->where('status', SituacaoDocumento::REJEITADO)->count();
+        if ($totalDocsContrato === 0) {
+            return [
+                'total' => 0,
+                'enviados' => 0,
+                'aprovados' => 0,
+                'em_analise' => 0,
+                'rejeitados' => 0,
+                'pendentes' => 0,
+                'percentual' => 100,
+                'completo' => true,
+            ];
+        }
 
-        $percentual = $totalRequeridos > 0 ? round(($aprovados / $totalRequeridos) * 100) : 0;
+        $docsContratoIds = $docsContrato->pluck('id')->all();
+
+        $inseridos = $this->documentosInseridos()
+            ->whereIn('tipo_documento_id', $docsContratoIds)
+            ->get();
+
+        $aprovadosIds = $inseridos
+            ->where('status', SituacaoDocumento::VERIFICADO)
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        $emAnaliseIds = $inseridos
+            ->where('status', SituacaoDocumento::EM_ANALISE)
+            ->reject(fn (DocumentoInserido $doc) => $aprovadosIds->contains($doc->tipo_documento_id))
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        $rejeitadosIds = $inseridos
+            ->where('status', SituacaoDocumento::REJEITADO)
+            ->reject(fn (DocumentoInserido $doc) => $aprovadosIds->contains($doc->tipo_documento_id) || $emAnaliseIds->contains($doc->tipo_documento_id))
+            ->pluck('tipo_documento_id')
+            ->unique();
+
+        $aprovadosCount = $aprovadosIds->count();
+        $emAnaliseCount = $emAnaliseIds->count();
+        $rejeitadosCount = $rejeitadosIds->count();
+        $enviadosCount = $aprovadosCount + $emAnaliseCount;
+        $pendentesCount = max(0, $totalDocsContrato - $enviadosCount);
+
+        $percentual = round(($enviadosCount / $totalDocsContrato) * 100);
 
         return [
-            'total' => $totalRequeridos,
-            'enviados' => $inseridos->count(),
-            'aprovados' => $aprovados,
-            'em_analise' => $emAnalise,
-            'rejeitados' => $rejeitados,
-            'pendentes' => max(0, $totalRequeridos - $aprovados),
+            'total' => $totalDocsContrato,
+            'enviados' => $enviadosCount,
+            'aprovados' => $aprovadosCount,
+            'em_analise' => $emAnaliseCount,
+            'rejeitados' => $rejeitadosCount,
+            'pendentes' => $pendentesCount,
             'percentual' => min(100, (int) $percentual),
-            'completo' => $totalRequeridos > 0 && $aprovados >= $totalRequeridos,
+            'completo' => $enviadosCount >= $totalDocsContrato,
         ];
     }
 

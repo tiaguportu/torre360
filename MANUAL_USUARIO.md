@@ -2571,11 +2571,16 @@ O **Portal Unificado de Admissão** consolida em um único link seguro o acolhim
        - Preenchimento instantâneo de **Logradouro**, **Bairro**, **Cidade**, **Estado (UF)** e código **IBGE**.
        - Foco automático direto no campo **Número**, proporcionando agilidade máxima para a família.
    - **Aba '2. Documentos':** Checklist digital inteligente focado nos documentos indispensáveis para a efetivação da pré-matrícula:
+     - **Progresso dos Documentos Alinhado aos Obrigatórios de Contrato:** O indicador visual no topo (*"X de Y enviados"* e barra percentual) considera **estritamente os documentos obrigatórios para contrato** (atingindo 100% / *Documentos OK ✅* sem que itens facultativos ou de histórico reduzam o progresso da família).
      - **Contagem de Pendências:** O badge da aba exibe apenas o **número de documentos obrigatórios** que ainda faltam entregar (ex: `1`), ou o símbolo `✓` quando todos os documentos obrigatórios estiverem entregues. Documentos de histórico ou opcionais não inflam essa contagem.
      - **Seção de Documentos Obrigatórios em Destaque:** Os documentos indispensáveis são exibidos abertos e destacados no topo.
      - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (documentação acadêmica) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação inicial. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
    - **Contrato Escolar (Fase Posterior da Secretaria/Financeiro):** A etapa e aba de contrato foi deliberadamente mantida fora deste link de pré-matrícula por enquanto, aguardando a parametrização dos planos de anuidade escolar e parcelas financeiras pela secretaria/financeiro. O portal concentra a família estritamente no envio cadastral e documental.
-3. **Ação Unificada no CRM (`admin/interessados`):**
+3. **Identidade Visual Torre360 no Portal:**
+   - **Logo Oficial:** O header exibe a logo oficial do Torre360 (`logo-adaptative.svg`), reforçando a confiabilidade visual da instituição.
+   - **Favicon Multi-dispositivo:** Configurado favicon SVG e PNG nas abas dos navegadores.
+   - **Título Otimizado para Abas:** Ajustado para `Portal de Pré-Admissão | Torre360`, facilitando a navegação entre múltiplas abas abertas pelos responsáveis.
+4. **Ação Unificada no CRM (`admin/interessados`):**
    - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
 
 ### 50.2 Nova Classificação dos Tipos de Documentos (`/admin/tipo-documentos`)
