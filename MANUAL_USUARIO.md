@@ -2496,6 +2496,20 @@ O sistema calcula o percentual de desconto concedido e classifica automaticament
 4. **Recusada:** O gestor pode reprovar a solicitação informando o **Motivo da Recusa**, que fica gravado no histórico de auditoria.
 5. **Convertida:** Ao ser matriculado, o status passa para convertido e a proposta vincula a `matricula_id` correspondente.
 
+#### 47.2.1 Editando uma Proposta Já Criada
+Alterar a **condição comercial** (mensalidade de tabela, tipo ou valor do desconto, quantidade de alunos ou de parcelas) reavalia a alçada. Isso impede que um desconto pequeno aprovado automaticamente seja elevado depois, sem passar pela aprovação competente:
+
+| Status da proposta | O que acontece ao editar a condição comercial |
+| --- | --- |
+| **Aprovada / Aprovada Automática** | Se a edição deixar a condição **mais generosa** (percentual de desconto maior ou mensalidade líquida menor), a alçada é reavaliada: o autor com poder para a própria alçada reaprova na hora; caso contrário a proposta volta para **Aguardando Aprovação**, a aprovação anterior deixa de valer e os aprovadores são avisados. Se a edição **reduzir** o desconto, a aprovação já concedida é mantida. |
+| **Rascunho / Aguardando Aprovação / Recusada** | A alçada é sempre reavaliada. Uma proposta **Recusada** que é editada volta para a fila de aprovação (o motivo da recusa anterior é limpo). |
+| **Aceita pela Família / Convertida** | A condição comercial fica **bloqueada**: o sistema exibe o aviso "Condição comercial bloqueada" e nada é gravado. Para negociar de novo, crie uma nova proposta. |
+| **Expirada / Cancelada** | A edição é gravada, mas nenhuma aprovação é concedida. |
+
+- Editar apenas dados cadastrais (nome, telefone, e-mail, justificativa, validade) **não** altera o status nem a aprovação.
+- Quando a edição devolve a proposta para aprovação, o consultor vê o aviso persistente **"Proposta enviada para nova aprovação"** com o nível de alçada exigido.
+- O status, o aprovador e o nível de alçada nunca são aceitos diretamente do formulário: são sempre recalculados pelo sistema.
+
 ### 47.3 Recursos e Ações Disponíveis
 1. **Integração com WhatsApp:**
    - Botão **WhatsApp** com texto persuasivo pronto contendo número da proposta, série, mensalidade com desconto, taxa de matrícula, economia anual e prazo de validade.
@@ -2547,8 +2561,11 @@ A **Central de Acordos e Recuperação de Inadimplência** profissionaliza a neg
    - Defina o percentual de desconto concedido sobre juros/multa para incentivar o pagamento (ex: 100% de isenção de mora).
    - Defina o valor da entrada facilitada (opcional) e o número de parcelas mensais (de 1 a 24 parcelas).
    - O sistema gera o cronograma exato com datas de vencimento e valores equilibrados.
+   - **Regra das datas:** a **1ª parcela vence na data informada em "Primeiro Vencimento"** (a mesma que o termo imprime); as demais vencem no **Dia de Vencimento** (de 1 a 28) dos meses seguintes. Um primeiro vencimento nos dias 29, 30 ou 31 não pula nenhum mês nem repete mês (ex.: 31/01 → 10/02 → 10/03 → 10/04). A entrada, quando houver, vence em 2 dias.
+   - Se o "Primeiro Vencimento" não for informado, a simulação usa o mês seguinte no Dia de Vencimento.
 3. **Geração do Termo de Confissão de Dívida:**
    - O sistema gera automaticamente o texto legal do **Instrumento Particular de Confissão, Parcelamento e Transação de Dívida**, qualificado expressamente como **Título Executivo Extrajudicial (Art. 784, inciso III do Código de Processo Civil)** com cláusula resolutiva expressa e perda de desconto em caso de inadimplemento.
+   - O termo traz os valores já formatados em reais (ex.: `3 parcela(s) no valor de R$ 533,33;` e `Entrada: R$ 500,00;`), o dia de vencimento e a data do primeiro vencimento. Confira sempre a pré-visualização antes de enviar o link à família.
 
 ### 49.2 Envio por WhatsApp e Assinatura Eletrônica sem Senha
 1. **Disparo com 1 Clique via WhatsApp:**
@@ -2558,6 +2575,8 @@ A **Central de Acordos e Recuperação de Inadimplência** profissionaliza a neg
    - Visualizam o resumo da dívida, a economia conquistada e o cronograma de vencimentos.
    - Leem a minuta legal e clicam em **"Confirmar e Assinar Acordo Digitalmente"**.
    - O sistema registra o aceite eletrônico com data, hora, IP do devedor e user-agent do dispositivo, ativando o acordo instantaneamente no financeiro.
+   - **Texto do termo:** enquanto o acordo não é aceito, a minuta exibida (no portal da família e no modal **Ver Termo** da secretaria) é sempre gerada na hora a partir dos dados atuais do acordo; por isso, ajustes nos valores aparecem no termo e acordos criados com um texto antigo saem corretos. No momento do aceite, o texto exato que a família leu é gravado e **não muda mais**.
+   - Acordos já **aceitos** antes da correção de formatação mantêm o texto gravado na época. Se algum deles tiver trechos como `{number_format(...)}` no termo, avise o administrador: o texto precisa ser corrigido manualmente no banco, porque um termo aceito não é regerado.
 
 ### 49.3 Gestão e Baixa de Pagamentos
 - **Baixa Rápida:** Na tabela de acordos, a ação **Baixar Parcela** permite registrar recebimentos efetuados na secretaria (Pix, dinheiro, cartão ou boleto).
