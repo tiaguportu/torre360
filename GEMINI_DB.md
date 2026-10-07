@@ -38,6 +38,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Representa:** Sistema de controle de acesso baseado em papéis (RBAC).
 - **Propósito:** Define permissões granulares para os recursos do painel administrativo (Resources, Pages, Widgets e Ações Customizadas).
 - **Convenção de Nomenclatura:** Formato `PascalCase` com dois-pontos `:` (ex.: `ViewAny:Matricula`, `Create:Aluno`, `Execute:ReguaCobranca`).
+- **Higienização:** Permissões legadas com formato obsoleto `::` e sintaxe mista foram completamente removidas e consolidadas no padrão oficial.
 - **Mapeamento de Policies:** Cada Resource do Filament possui uma Policy correspondente em `App\Policies\{Model}Policy` consumindo as permissões associadas.
 - **Papéis Padrão:** `super_admin`, `admin`, `secretaria`, `professor`, `coordenador`, `responsavel`, `aluno`.
 - **Configuração:** Gerenciado via `config/filament-shield.php` e plugin `FilamentShieldPlugin`.
