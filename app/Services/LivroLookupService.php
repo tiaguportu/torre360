@@ -71,8 +71,8 @@ class LivroLookupService
             $capaUrl = $capaUrl ?: ($brasilApiDados['capa_url'] ?? null);
         }
 
-        // 3. Tenta Google Books como fallback caso ainda falte título
-        if (! $titulo) {
+        // 3. Tenta Google Books para preencher ou enriquecer dados faltantes (autor, categoria, capa)
+        if (! $titulo || ! $autor || ! $capaUrl) {
             $googleDados = $this->consultarGoogleBooks($cleanIsbn);
             if ($googleDados) {
                 $titulo = $titulo ?: ($googleDados['titulo'] ?? null);
@@ -247,17 +247,36 @@ class LivroLookupService
     protected function consultarGoogleBooks(string $isbn): ?array
     {
         try {
+            $params = [
+                'q' => "isbn:{$isbn}",
+            ];
+
+            $apiKey = config('services.google_books.key') ?? env('GOOGLE_BOOKS_API_KEY');
+            if ($apiKey) {
+                $params['key'] = $apiKey;
+            }
+
             $response = Http::timeout(6)
                 ->withHeaders(['User-Agent' => 'Torre360/1.0'])
-                ->get('https://www.googleapis.com/books/v1/volumes', [
-                    'q' => "isbn:{$isbn}",
-                ]);
+                ->get('https://www.googleapis.com/books/v1/volumes', $params);
 
             if (! $response->successful()) {
                 return null;
             }
 
             $json = $response->json();
+            if (empty($json['items'][0]['volumeInfo'])) {
+                // Tenta com ISBN-10 se disponível
+                $isbn10 = strlen($isbn) === 13 ? $this->converterIsbn13ParaIsbn10($isbn) : null;
+                if ($isbn10) {
+                    $params['q'] = "isbn:{$isbn10}";
+                    $response = Http::timeout(6)
+                        ->withHeaders(['User-Agent' => 'Torre360/1.0'])
+                        ->get('https://www.googleapis.com/books/v1/volumes', $params);
+                    $json = $response->json();
+                }
+            }
+
             if (empty($json['items'][0]['volumeInfo'])) {
                 return null;
             }

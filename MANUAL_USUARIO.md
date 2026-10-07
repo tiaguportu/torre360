@@ -2636,7 +2636,11 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 1. **Busca Automática por ISBN (10 ou 13 dígitos):**
    - **No cabeçalho:** Clique no botão **"Buscar por ISBN"** e informe o código da obra (ex: `9788576082675`).
    - **Ou diretamente no campo ISBN:** Digite o ISBN no formulário e clique no ícone da lupa (`Buscar por ISBN`).
-   - O sistema realiza uma consulta inteligente em cascata nas principais bases bibliográficas (Open Library, BrasilAPI e Google Books).
+   - O sistema realiza uma consulta inteligente em cascata e enriquecimento multi-base:
+     - **BrasilAPI (Câmara Brasileira do Livro - CBL):** Fonte primária de dados oficiais do registro nacional.
+     - **Google Books API (com suporte a `GOOGLE_BOOKS_API_KEY`):** Complementa automaticamente autores, sinopses e categorias caso o catálogo oficial da editora esteja incompleto.
+     - **Open Library:** Base colaborativa internacional para títulos acadêmicos e mundiais.
+     - **Amazon Covers (CDN de Alta Resolução via ISBN-10):** Caso a editora não tenha fornecido a capa na CBL, o sistema calcula matematicamente o ISBN-10 correspondente e recupera a imagem oficial em alta resolução da Amazon.
    - Ao localizar a obra, o sistema preenche automaticamente:
      - **Título completo**
      - **Autor(es)**
