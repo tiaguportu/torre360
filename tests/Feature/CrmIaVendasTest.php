@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\StatusVisitaInteressado;
 use App\Filament\Resources\Interessados\Pages\EditInteressado;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
@@ -14,6 +15,7 @@ use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
+use App\Models\VisitaInteressado;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use Barryvdh\DomPDF\PDF;
@@ -328,6 +330,41 @@ class CrmIaVendasTest extends TestCase
         );
 
         $this->assertSame($textoGerado, $mensagem);
+    }
+
+    public function test_contexto_da_ia_inclui_visitas_com_status_legivel(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+
+        VisitaInteressado::create([
+            'interessado_id' => $interessado->id,
+            'data_hora' => now()->addDays(2),
+            'status' => StatusVisitaInteressado::Faltou,
+            'observacoes' => 'Família avisou que não conseguiria ir.',
+        ]);
+
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->once()
+            ->withArgs(function (array $payload) {
+                $contexto = $payload['contents'][0]['parts'][0]['text'] ?? '';
+
+                return str_contains($contexto, '(Status: Não compareceu)');
+            })
+            ->andReturn([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Olá Mariana!']]],
+                ]],
+            ]);
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+
+        $mensagem = app(CrmIaVendasService::class)->gerarMensagemCopiloto(
+            interessado: $interessado,
+            objetivo: 'convite_visita',
+        );
+
+        $this->assertSame('Olá Mariana!', $mensagem);
     }
 
     public function test_crm_ia_vendas_fallback_com_template_base_substitui_tags(): void

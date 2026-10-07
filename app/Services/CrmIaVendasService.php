@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\StatusVisitaInteressado;
 use App\Models\Interessado;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
@@ -356,7 +357,7 @@ Diretrizes obrigatórias da mensagem:
         } else {
             foreach ($interessado->visitas as $v) {
                 $dataVisita = $v->data_hora ? Carbon::parse($v->data_hora)->format('d/m/Y H:i') : 'Data não informada';
-                $statusVisita = $v->status ?? 'agendada';
+                $statusVisita = ($v->status ?? StatusVisitaInteressado::Agendada)->getLabel();
                 $linhas[] = "- Visita em {$dataVisita} (Status: {$statusVisita}) — Obs: ".($v->observacoes ?: 'Sem observações adicionais.');
             }
         }

@@ -146,6 +146,12 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   a cada interação e gerar dentro dele chamava o Gemini de novo a cada clique. A chave é descartada quando o
   histórico do lead muda (`HistoricoContato` saved/deleted) e respostas de contingência (`fallback = true`)
   nunca são guardadas. O PDF reaproveita o mesmo cache.
+- **Contexto do lead em texto puro:** `CrmIaVendasService::montarContextoLead()` monta o texto enviado ao Gemini
+  (dossiê e copiloto). `VisitaInteressado::status` é um enum (`StatusVisitaInteressado`) e não pode ser
+  interpolado em string — usar `getLabel()` ("Agendada", "Realizada", "Não compareceu", "Cancelada"). Interpolar
+  o enum direto derrubava com `Object of class … could not be converted to string` qualquer lead que tivesse
+  visita registrada, ao abrir o Dossiê IA ou o Copiloto WhatsApp IA. Ao incluir outro campo com cast de enum
+  nesse contexto, converter da mesma forma.
 - Testes que passam por IA devem usar `Queue::fake()`/`Http::fake()` e `Http::preventStrayRequests()`: o `.env`
   local tem a chave real e o `phpunit.xml` não a sobrescreve.
 
@@ -179,7 +185,7 @@ acima são opcionais.
 Testes: `LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `CaptacaoReenvioTest`, `CaptacaoIndicacaoTest`,
 `CaptacaoRecaptchaTest`, `MatriculaOnlineConversaoCrmTest`, `AlertaLeadsTest`, `ConsultoresCrmTest`,
 `InteracoesAutomaticasTest`, `KanbanInteressadosAutorizacaoTest`, `CrmIaSegurancaTest`, `CrmIaDossieCacheTest`,
-`PortalDocumentosCandidatoSegurancaTest`.
+`CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`.
 
 ## 11. Fora do escopo destes lotes
 
