@@ -308,63 +308,74 @@ class Interessado extends Model
     }
 
     /**
-     * Retorna a coleção de tipos de documentos visíveis no portal da família para este interessado.
-     * Considera os tipos vinculados aos cursos das séries pretendidas ou gerais (sem curso vinculado),
-     * excluindo documentos com categoria de uso interno.
+     * Retorna os IDs de cursos pretendidos pela família, consultando os dependentes
+     * vinculados e as escolhas preliminares na pré-matrícula.
+     *
+     * @return list<int>
      */
-    public function documentosRequeridos(): Collection
+    public function cursosPretendidosIds(): array
     {
-        $cursosIds = $this->dependentes->map(fn ($d) => $d->serie?->curso_id)->filter()->unique();
+        $cursosIds = $this->dependentes->map(fn ($d) => $d->serie?->curso_id)->filter();
 
-        $query = TipoDocumento::query()->visivelPortalFamilia();
-
-        if ($cursosIds->isNotEmpty()) {
-            $query->where(function (Builder $q) use ($cursosIds) {
-                $q->whereHas('cursos', fn ($cq) => $cq->whereIn('curso.id', $cursosIds))
-                    ->orWhereDoesntHave('cursos');
-            });
+        if (is_array($this->dados_pre_matricula) && ! empty($this->dados_pre_matricula['dependentes'])) {
+            $seriesPreMatricula = collect($this->dados_pre_matricula['dependentes'])->pluck('serie_id')->filter();
+            if ($seriesPreMatricula->isNotEmpty()) {
+                $cursosPreMatricula = Serie::whereIn('id', $seriesPreMatricula)->pluck('curso_id')->filter();
+                $cursosIds = $cursosIds->concat($cursosPreMatricula);
+            }
         }
 
-        $docs = $query->orderBy('nome')->get();
+        return $cursosIds->unique()->values()->all();
+    }
 
-        if ($docs->isEmpty()) {
-            $docs = TipoDocumento::query()->visivelPortalFamilia()->orderBy('nome')->get();
-        }
+    /**
+     * Retorna a coleção de tipos de documentos visíveis no portal da família para este interessado.
+     * Considera estritamente os tipos vinculados aos cursos das séries pretendidas ou gerais (sem curso vinculado),
+     * excluindo documentos com categoria de uso interno e documentos vinculados exclusivamente a outros cursos.
+     */
+    public function documentosRequeridos(?int $cursoId = null): Collection
+    {
+        $cursosIds = $cursoId ? [$cursoId] : $this->cursosPretendidosIds();
 
-        return $docs;
+        $query = TipoDocumento::query()
+            ->visivelPortalFamilia()
+            ->paraCursos($cursosIds)
+            ->with('cursos');
+
+        return $query->orderBy('nome')->get();
     }
 
     /**
      * Tipos de documentos obrigatórios para emitir o Contrato Escolar e ativar a matrícula.
      */
-    public function documentosContrato(): Collection
+    public function documentosContrato(?int $cursoId = null): Collection
     {
-        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioContrato());
+        return $this->documentosRequeridos($cursoId)->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioContrato());
     }
 
     /**
      * Tipos de documentos obrigatórios para a vida acadêmica e histórico do aluno.
      */
-    public function documentosHistorico(): Collection
+    public function documentosHistorico(?int $cursoId = null): Collection
     {
-        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioHistorico());
+        return $this->documentosRequeridos($cursoId)->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioHistorico());
     }
 
     /**
      * Tipos de documentos opcionais/complementares disponibilizados para envio facultativo.
      */
-    public function documentosOpcionais(): Collection
+    public function documentosOpcionais(?int $cursoId = null): Collection
     {
-        return $this->documentosRequeridos()->filter(fn (TipoDocumento $doc) => $doc->isOpcional());
+        return $this->documentosRequeridos($cursoId)->filter(fn (TipoDocumento $doc) => $doc->isOpcional());
     }
 
     /**
      * Verifica se todos os documentos obrigatórios para a liberação do contrato já foram enviados
      * pela família (em análise ou aprovados).
      */
-    public function todosDocsContratoEntregues(): bool
+    public function todosDocsContratoEntregues(?int $cursoId = null): bool
     {
-        $docsObrigatorios = $this->documentosContrato();
+        $docsObrigatorios = $this->documentosContrato($cursoId);
 
         if ($docsObrigatorios->isEmpty()) {
             return true;

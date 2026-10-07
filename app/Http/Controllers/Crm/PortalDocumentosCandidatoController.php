@@ -158,6 +158,17 @@ class PortalDocumentosCandidatoController extends Controller
         }
 
         $tipoDoc = TipoDocumento::findOrFail($validated['tipo_documento_id']);
+
+        if ($tipoDoc->isInterno()) {
+            return back()->with('erro', 'Este documento é de uso interno da secretaria e não pode ser enviado pelo portal.');
+        }
+
+        $cursosDoLead = $interessado->cursosPretendidosIds();
+        $temVinculoCursos = $tipoDoc->cursos()->exists();
+        if ($temVinculoCursos && ! empty($cursosDoLead) && ! $tipoDoc->cursos()->whereIn('curso.id', $cursosDoLead)->exists()) {
+            return back()->with('erro', "O documento '{$tipoDoc->nome}' não é aplicável aos cursos selecionados para esta inscrição.");
+        }
+
         $dependenteId = $validated['interessado_dependente_id'] ?? null;
 
         // Só considera documentos ainda da pré-admissão: os já migrados para uma matrícula pertencem a ela.

@@ -343,4 +343,179 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $contrato = Contrato::where('matricula_id', $matricula->id)->first();
         $this->assertNull($contrato, 'O Contrato NÃO deveria ser gerado quando faltam documentos obrigatórios de contrato.');
     }
+
+    public function test_documentos_obrigatorios_consideram_cursos_vinculados_no_model_interessado(): void
+    {
+        $unidade = Unidade::first() ?? Unidade::create(['nome' => 'Unidade Teste', 'flag_ativo' => true]);
+        $cursoA = Curso::create(['nome_externo' => 'Ensino Fundamental', 'nome_interno' => 'EF', 'unidade_id' => $unidade->id]);
+        $cursoB = Curso::create(['nome_externo' => 'Ensino Médio', 'nome_interno' => 'EM', 'unidade_id' => $unidade->id]);
+
+        $serieA = Serie::create(['nome' => '5º Ano', 'curso_id' => $cursoA->id, 'sistema_avaliacao' => 'Nota']);
+
+        // Documento exclusivo do Curso A
+        $docCursoA = TipoDocumento::create([
+            'nome' => 'RG do Aluno (Fundamental)',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docCursoA->cursos()->attach($cursoA->id);
+
+        // Documento exclusivo do Curso B
+        $docCursoB = TipoDocumento::create([
+            'nome' => 'Certificado de Conclusão (Médio)',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docCursoB->cursos()->attach($cursoB->id);
+
+        // Documento Geral (sem curso vinculado)
+        $docGeral = TipoDocumento::create([
+            'nome' => 'Comprovante de Endereço Geral',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+
+        $lead = $this->criarLead();
+        $lead->dependentes()->delete();
+        InteressadoDependente::create([
+            'interessado_id' => $lead->id,
+            'nome_crianca' => 'Ana Beatriz',
+            'serie_id' => $serieA->id,
+        ]);
+
+        $docsRequeridos = $lead->documentosRequeridos();
+        $this->assertTrue($docsRequeridos->contains('id', $docCursoA->id), 'Deveria exigir documento do Curso A');
+        $this->assertTrue($docsRequeridos->contains('id', $docGeral->id), 'Deveria exigir documento Geral');
+        $this->assertFalse($docsRequeridos->contains('id', $docCursoB->id), 'NÃO deveria exigir documento do Curso B');
+
+        // Envia apenas os docs do Curso A e Geral
+        DocumentoInserido::create([
+            'interessado_id' => $lead->id,
+            'tipo_documento_id' => $docCursoA->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'docs/a.pdf',
+        ]);
+        DocumentoInserido::create([
+            'interessado_id' => $lead->id,
+            'tipo_documento_id' => $docGeral->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'docs/geral.pdf',
+        ]);
+
+        // Deve considerar todos os documentos do contrato entregues, sem exigir o documento do Curso B!
+        $this->assertTrue($lead->todosDocsContratoEntregues());
+    }
+
+    public function test_enrollment_wizard_ignora_doc_obrigatorio_de_outro_curso_ao_liberar_contrato(): void
+    {
+        $unidade = Unidade::first() ?? Unidade::create(['nome' => 'Unidade Teste', 'flag_ativo' => true]);
+        $periodo = PeriodoLetivo::first() ?? PeriodoLetivo::create([
+            'nome' => '2026',
+            'data_inicio' => '2026-02-01',
+            'data_fim' => '2026-12-15',
+        ]);
+
+        $cursoFundamental = Curso::create(['nome_externo' => 'Ensino Fundamental', 'nome_interno' => 'EF', 'unidade_id' => $unidade->id]);
+        $cursoMedio = Curso::create(['nome_externo' => 'Ensino Médio', 'nome_interno' => 'EM', 'unidade_id' => $unidade->id]);
+
+        $serieFundamental = Serie::create(['nome' => '6º Ano', 'curso_id' => $cursoFundamental->id, 'sistema_avaliacao' => 'Nota']);
+        $turma = Turma::create([
+            'nome' => '6º Ano A',
+            'serie_id' => $serieFundamental->id,
+            'periodo_letivo_id' => $periodo->id,
+            'vagas_maximas' => 30,
+        ]);
+        $vinculo = TipoVinculo::firstOrCreate(['nome' => 'Pai']);
+
+        // Cria documento obrigatório EXCLUSIVO para o Ensino Médio
+        $docExclusivoMedio = TipoDocumento::create([
+            'nome' => 'Histórico do Fundamental (Exigido apenas no Médio)',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docExclusivoMedio->cursos()->attach($cursoMedio->id);
+
+        $lead = $this->criarLead();
+
+        $user = User::factory()->create();
+        $user->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        // Matrícula no Ensino Fundamental: NÃO deve ser bloqueada pelo documento exclusivo do Médio
+        Livewire::actingAs($user)
+            ->test(EnrollmentWizard::class, ['interessado' => $lead->id])
+            ->set('data.alunos', [
+                [
+                    'nome' => 'Aluno Fundamental',
+                    'cpf' => '98765432103',
+                    'data_nascimento' => '2015-05-10',
+                ],
+            ])
+            ->set('data.responsaveis', [
+                [
+                    'nome' => 'Responsável Fundamental',
+                    'cpf' => '12345678903',
+                    'telefone' => '11999998888',
+                    'tipo_vinculo_id' => $vinculo->id,
+                    'is_financeiro' => true,
+                    'percentual' => 100,
+                ],
+            ])
+            ->set('data.unidade_id', $unidade->id)
+            ->set('data.periodo_letivo_id', $periodo->id)
+            ->set('data.curso_id', $cursoFundamental->id)
+            ->set('data.turma_id', $turma->id)
+            ->set('data.situacao', SituacaoMatricula::ATIVA->value)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $matricula = Matricula::latest('id')->first();
+        $this->assertNotNull($matricula);
+        $this->assertSame(SituacaoMatricula::ATIVA, $matricula->situacao);
+
+        $contrato = Contrato::where('matricula_id', $matricula->id)->first();
+        $this->assertNotNull($contrato, 'O contrato deveria ter sido gerado pois o documento faltante era de outro curso.');
+    }
+
+    public function test_matricula_get_missing_mandatory_documents_considera_cursos_vinculados(): void
+    {
+        $unidade = Unidade::first() ?? Unidade::create(['nome' => 'Unidade Teste', 'flag_ativo' => true]);
+        $periodo = PeriodoLetivo::first() ?? PeriodoLetivo::create([
+            'nome' => '2026',
+            'data_inicio' => '2026-02-01',
+            'data_fim' => '2026-12-15',
+        ]);
+        $cursoA = Curso::create(['nome_externo' => 'Curso A', 'nome_interno' => 'CA', 'unidade_id' => $unidade->id]);
+        $cursoB = Curso::create(['nome_externo' => 'Curso B', 'nome_interno' => 'CB', 'unidade_id' => $unidade->id]);
+        $serieA = Serie::create(['nome' => 'Série A', 'curso_id' => $cursoA->id, 'sistema_avaliacao' => 'Nota']);
+        $turmaA = Turma::create([
+            'nome' => 'Turma A',
+            'serie_id' => $serieA->id,
+            'periodo_letivo_id' => $periodo->id,
+        ]);
+
+        $docA = TipoDocumento::create([
+            'nome' => 'Doc Obrigatório Curso A',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docA->cursos()->attach($cursoA->id);
+
+        $docB = TipoDocumento::create([
+            'nome' => 'Doc Obrigatório Curso B',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docB->cursos()->attach($cursoB->id);
+
+        $aluno = Pessoa::create([
+            'nome' => 'Aluno Matriculado Teste',
+            'cpf' => '11122233344',
+        ]);
+
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turmaA->id,
+            'serie_id' => $serieA->id,
+            'periodo_letivo_id' => $periodo->id,
+            'situacao' => SituacaoMatricula::ATIVA,
+        ]);
+
+        $faltantes = $matricula->getMissingMandatoryDocuments();
+        $this->assertTrue($faltantes->contains('id', $docA->id), 'Deveria acusar pendência do documento do Curso A');
+        $this->assertFalse($faltantes->contains('id', $docB->id), 'NÃO deveria acusar pendência do documento do Curso B');
+    }
 }

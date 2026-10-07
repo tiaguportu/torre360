@@ -26,6 +26,12 @@
                         Opcional
                     </span>
                 @endif
+
+                @if($tipo->relationLoaded('cursos') ? $tipo->cursos->isNotEmpty() : $tipo->cursos()->exists())
+                    <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        🎓 Curso: {{ ($tipo->relationLoaded('cursos') ? $tipo->cursos : $tipo->cursos)->pluck('nome_externo')->filter()->join(', ') ?: 'Específico' }}
+                    </span>
+                @endif
             </div>
 
             @if($tipo->modelo_link || $tipo->modelo_arquivo)

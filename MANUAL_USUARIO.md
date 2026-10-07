@@ -2558,12 +2558,33 @@ Para garantir segurança jurídica sem burocracia excessiva, os documentos escol
 - **🟢 Opcional / Complementar:** Documentos complementares (ex: laudos médicos, carteirinha do convênio, atestado de vacinação). Ficam visíveis na aba de documentos do Portal da Família para envio facultativo.
 - **⚪ Uso Interno da Secretaria:** Arquivos confidenciais ou administrativos da instituição (ex: sindicâncias, fichas internas). Ficam ocultos dos portais da família e dos wizards de matrícula externa.
 
+#### 50.2.1 Regra de Cursos Vinculados (Documentos por Etapa de Ensino)
+Cada tipo de documento pode ser associado a cursos específicos (ex: Ensino Fundamental, Ensino Médio, Técnico) ou deixado sem nenhum curso (geral/universal):
+- **Documentos de Cursos Específicos:** Se um documento obrigatório estiver vinculado apenas ao *Ensino Médio* (ex: Certificado de Conclusão do Ensino Fundamental), ele **somente será exigido de alunos do Ensino Médio**. Candidatos e matrículas do *Ensino Fundamental* ou *Educação Infantil* **não visualizam e não são bloqueados** por esse documento.
+- **Documentos Gerais / Universais:** Documentos sem nenhum curso selecionado aplicam-se a todos os cursos da escola (ex: Certidão de Nascimento, Comprovante de Endereço).
+- **No Portal de Admissão:** O sistema identifica automaticamente as séries/cursos pretendidos para os dependentes da família e exibe apenas os documentos aplicáveis a eles, incluindo uma etiqueta visual indicando a qual curso cada documento se destina.
+
 ### 50.3 Assistente de Matrícula da Secretaria (`EnrollmentWizard`)
 No painel administrativo, o Assistente de Matrícula foi aprimorado com uma etapa dedicada à conferência documental:
-- **Step 4 — Documentos da Matrícula:** A secretaria visualiza em tempo real os arquivos enviados pela família no CRM, com status de validação por Inteligência Artificial (OCR) e opção de anexar documentos entregues fisicamente no balcão.
+- **Step 4 — Documentos da Matrícula:** A secretaria visualiza em tempo real o **Checklist Dinâmico de Contrato** filtrado exatamente para o curso selecionado na matrícula, com indicação visual de quais documentos já foram entregues pela família e quais ainda estão pendentes.
+- **Filtragem Inteligente de Anexos:** O seletor de novos documentos presenciais lista apenas os tipos de documentos aplicáveis ao curso do estudante ou documentos gerais.
 - **Emissão Condicionada do Contrato:**
-  - Se todos os documentos obrigatórios para contrato estiverem entregues, o assistente emite o Contrato Escolar e ativa a matrícula (`Ativa`).
-  - Se faltar algum documento obrigatório de contrato, a matrícula é salva com segurança na situação `Pendente`, sem emitir o contrato, até a regularização da documentação.
+  - Se todos os documentos obrigatórios para contrato **do curso do estudante** estiverem entregues, o assistente emite o Contrato Escolar e ativa a matrícula (`Ativa`).
+  - Documentos obrigatórios pertencentes a outros cursos são ignorados, garantindo que o contrato de um aluno não seja indevidamente travado por regras de outros segmentos educacionais.
+  - Se faltar algum documento obrigatório de contrato do curso pretendido, a matrícula é salva com segurança na situação `Pendente`, sem emitir o contrato, até a regularização da documentação.
+
+### 50.4 Edição em Lote de Tipos de Documentos (`/admin/tipo-documentos`)
+Para simplificar a manutenção e configuração em escala dos tipos de documentos escolares:
+- **Seleção Múltipla e Ação Coletiva:** Na listagem de `/admin/tipo-documentos`, marque as caixas de seleção dos tipos de documentos que deseja ajustar simultaneamente e selecione **Editar em Lote** na barra de ações em massa.
+- **Campos Disponíveis para Alteração em Lote:**
+  - **Exigência e Visibilidade:** Altere a classificação regulatória (`Obrigatório para Contrato`, `Obrigatório para Histórico do Aluno`, `Opcional / Complementar` ou `Uso Interno da Secretaria`). A sincronização da flag de obrigatoriedade ocorre automaticamente.
+  - **Cursos Vinculados:** Gerencie as restrições com as opções:
+    - *Manter cursos inalterados*: preserva as atribuições atuais.
+    - *Definir cursos específicos*: associa exclusivamente aos cursos indicados no seletor múltiplo.
+    - *Remover restrições*: remove as associações de cursos, tornando os documentos selecionados válidos para todos os cursos.
+  - **Turmas Vinculadas:** Permite definir turmas específicas ou remover restrições de turma em lote.
+  - **Link Externo para Modelo ou Instrução:** Atualize simultaneamente a URL de orientações ou modelos de download.
+- **Segurança (Shield):** A ação respeita a permissão `Update:TipoDocumento`. Usuários que possuem apenas permissão de visualização não visualizam a opção de edição em lote.
 
 ---
 

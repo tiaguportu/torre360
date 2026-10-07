@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CategoriaExigenciaDocumento;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusFatura;
@@ -192,23 +193,35 @@ class Matricula extends Model
      */
     public function getMissingMandatoryDocuments(): Collection
     {
-        $documentosRequeridos = collect();
+        $cursoId = $this->turma?->serie?->curso_id ?? $this->serie?->curso_id;
 
-        // 1. Documentos vinculados ao Curso
-        if ($curso = $this->turma?->serie?->curso) {
-            $documentosRequeridos = $documentosRequeridos->concat($curso->documentos);
-        }
+        // 1. Documentos obrigatórios (Contrato ou Histórico) aplicáveis ao curso da matrícula (ou gerais)
+        $obrigatoriosCurso = TipoDocumento::query()
+            ->where(function (Builder $q) {
+                $q->whereIn('categoria_exigencia', [
+                    CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+                    CategoriaExigenciaDocumento::OBRIGATORIO_HISTORICO,
+                ])->orWhere('flag_obrigatorio', true);
+            })
+            ->when(
+                $cursoId,
+                fn ($q) => $q->paraCursos($cursoId),
+                fn ($q) => $q->whereDoesntHave('cursos')
+            )
+            ->get();
 
-        // 2. Documentos vinculados à Turma
+        $documentosRequeridos = collect($obrigatoriosCurso);
+
+        // 2. Documentos vinculados especificamente à Turma
         if ($this->turma) {
-            $documentosRequeridos = $documentosRequeridos->concat($this->turma->tiposDocumentos);
+            $documentosRequeridos = $documentosRequeridos->concat($this->turma->tiposDocumentos->filter(fn ($d) => $d->flag_obrigatorio));
         }
 
-        // 3. Documentos vinculados à Matrícula
-        $documentosRequeridos = $documentosRequeridos->concat($this->tiposDocumentos);
+        // 3. Documentos vinculados especificamente à Matrícula
+        $documentosRequeridos = $documentosRequeridos->concat($this->tiposDocumentos->filter(fn ($d) => $d->flag_obrigatorio));
 
-        // Remover duplicados por ID e filtrar apenas obrigatórios
-        $obrigatorios = $documentosRequeridos->unique('id')->filter(fn ($doc) => $doc->flag_obrigatorio);
+        // Remover duplicados por ID
+        $obrigatorios = $documentosRequeridos->unique('id');
 
         if ($obrigatorios->isEmpty()) {
             return collect();
@@ -228,7 +241,7 @@ class Matricula extends Model
 
         return $obrigatorios->reject(function ($doc) use ($inseridosIds) {
             return in_array($doc->id, $inseridosIds);
-        });
+        })->values();
     }
 
     /**

@@ -91,6 +91,44 @@ class TipoDocumento extends Model
         return $query->where('categoria_exigencia', CategoriaExigenciaDocumento::OPCIONAL->value);
     }
 
+    /**
+     * Escopo para filtrar documentos aplicáveis a determinados cursos (ou gerais).
+     * Se IDs de cursos forem fornecidos, retorna documentos vinculados a esses cursos OU gerais (sem cursos vinculados).
+     * Se nenhum curso for fornecido, retorna apenas documentos gerais (sem nenhum curso vinculado).
+     */
+    public function scopeParaCursos(Builder $query, mixed $cursoIds): Builder
+    {
+        $ids = collect($cursoIds)->filter()->values()->all();
+
+        if (empty($ids)) {
+            return $query->whereDoesntHave('cursos');
+        }
+
+        return $query->where(function (Builder $q) use ($ids): void {
+            $q->whereHas('cursos', fn (Builder $cq) => $cq->whereIn('curso.id', $ids))
+                ->orWhereDoesntHave('cursos');
+        });
+    }
+
+    /**
+     * Verifica se o tipo de documento se aplica a um curso específico.
+     * Retorna true se estiver vinculado ao curso ou se for geral (sem cursos vinculados).
+     */
+    public function aplicaAoCurso(?int $cursoId): bool
+    {
+        if (! $cursoId) {
+            return $this->relationLoaded('cursos')
+                ? $this->cursos->isEmpty()
+                : ! $this->cursos()->exists();
+        }
+
+        if ($this->relationLoaded('cursos')) {
+            return $this->cursos->isEmpty() || $this->cursos->contains('id', $cursoId);
+        }
+
+        return ! $this->cursos()->exists() || $this->cursos()->where('curso.id', $cursoId)->exists();
+    }
+
     public function cursos(): BelongsToMany
     {
         return $this->belongsToMany(Curso::class, 'tipo_documento_curso');

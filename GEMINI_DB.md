@@ -1148,8 +1148,11 @@ Gestão de tipos de documentos, anexos comprobatórios da família e checklist d
   - `flag_obrigatorio`: Boolean legado mantido e sincronizado automaticamente via evento `saving` do Model (true para `obrigatorio_contrato` e `obrigatorio_historico`, false para os demais).
   - `modelo_arquivo`: Caminho de arquivo PDF com modelo/termo para download pelo responsável.
   - `modelo_link`: Link externo com orientações ou formulário oficial.
-- **Relacionamentos:**
-  - BelongsToMany `curso` (tabela pivô `curso_tipo_documento`).
+- **Relacionamentos & Regras de Abrangência por Curso:**
+  - BelongsToMany `curso` (tabela pivô `tipo_documento_curso`):
+    - **Cursos Específicos:** Quando um tipo de documento é vinculado a um ou mais cursos específicos, sua exigência (para contrato ou histórico) restringe-se exclusivamente aos alunos e interessados matriculados ou pretendentes desses cursos.
+    - **Documentos Globais / Gerais:** Quando nenhum curso é vinculado (relação pivô vazia), o documento possui abrangência universal e é cobrado de todos os cursos da instituição.
+    - **Isolamento de Pendências:** Documentos vinculados a outros cursos não são exibidos nos portais de admissão de candidatos de cursos distintos, não bloqueiam a geração de contrato no `EnrollmentWizard` e não são contabilizados em `getMissingMandatoryDocuments()` de matrículas não relacionadas.
   - BelongsToMany `turma` (tabela pivô `tipo_documento_turma`).
   - HasMany `documento_inserido`.
 

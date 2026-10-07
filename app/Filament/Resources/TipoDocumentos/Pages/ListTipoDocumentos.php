@@ -56,6 +56,7 @@ class ListTipoDocumentos extends ListRecords
         }
 
         if ($canUpdate) {
+            $html .= '<li><strong>Editar em Lote:</strong> Selecione múltiplos tipos de documentos na tabela para alterar simultaneamente a exigência, cursos vinculados, turmas vinculadas e link de modelo.</li>';
             $html .= '<li><strong>Modelos:</strong> Anexe arquivos PDF ou links de instruções/modelos que a família pode consultar e baixar.</li>';
             $html .= '<li><strong>Editar:</strong> Altere as regras de obrigatoriedade, cursos vinculados ou visibilidade do documento.</li>';
         }

@@ -596,8 +596,9 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
                             ViewField::make('docs_lead')
                                 ->view('filament.components.wizard-docs-lead')
-                                ->viewData(fn () => [
+                                ->viewData(fn (Get $get) => [
                                     'interessado' => $this->interessadoId ? Interessado::find($this->interessadoId) : null,
+                                    'cursoId' => $get('curso_id') ?: (Turma::find($get('turma_id'))?->serie?->curso_id),
                                 ]),
 
                             Repeater::make('documentos_anexados')
@@ -605,7 +606,21 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                 ->schema([
                                     Select::make('tipo_documento_id')
                                         ->label('Tipo de Documento')
-                                        ->options(fn () => TipoDocumento::visivelPortalFamilia()->pluck('nome', 'id'))
+                                        ->options(function (Get $get) {
+                                            $cursoId = $get('../../curso_id');
+                                            $turmaId = $get('../../turma_id');
+                                            if (! $cursoId && $turmaId) {
+                                                $cursoId = Turma::find($turmaId)?->serie?->curso_id;
+                                            }
+
+                                            return TipoDocumento::visivelPortalFamilia()
+                                                ->when(
+                                                    $cursoId,
+                                                    fn ($q) => $q->paraCursos($cursoId),
+                                                    fn ($q) => $q->whereDoesntHave('cursos')
+                                                )
+                                                ->pluck('nome', 'id');
+                                        })
                                         ->required()
                                         ->searchable(),
 
@@ -660,10 +675,11 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             // ── Checagem de Documentos Obrigatórios para Emissão do Contrato ──
             $cursoAlvoId = $raw['curso_id'] ?? $turma?->serie?->curso_id;
             $tiposObrigatoriosContrato = TipoDocumento::obrigatoriosParaContrato()
-                ->when($cursoAlvoId, fn ($q) => $q->where(function ($query) use ($cursoAlvoId) {
-                    $query->whereHas('cursos', fn ($cq) => $cq->where('curso.id', $cursoAlvoId))
-                        ->orWhereDoesntHave('cursos');
-                }))
+                ->when(
+                    $cursoAlvoId,
+                    fn ($q) => $q->paraCursos($cursoAlvoId),
+                    fn ($q) => $q->whereDoesntHave('cursos')
+                )
                 ->get();
 
             // Mapeamento dos tipos já entregues (do lead no CRM ou anexados no formulário)
