@@ -249,4 +249,48 @@ class LivroIsbnLookupTest extends TestCase
         Livewire::test(EditLivro::class, ['record' => $livro->id])
             ->assertActionExists('ajuda');
     }
+
+    public function test_conversao_isbn13_para_isbn10(): void
+    {
+        $service = app(LivroLookupService::class);
+
+        // 978-8574121871 -> 8574121878
+        $this->assertEquals('8574121878', $service->converterIsbn13ParaIsbn10('9788574121871'));
+
+        // 978-8576082675 -> 8576082675
+        $this->assertEquals('8576082675', $service->converterIsbn13ParaIsbn10('9788576082675'));
+    }
+
+    public function test_isbn_busca_capa_amazon_como_fallback(): void
+    {
+        Storage::fake('public');
+
+        $fakeIsbn13 = '9788574121871';
+        $fakeIsbn10 = '8574121878';
+        $fakeImgBinary = str_repeat('imagem_capa_valida_teste_', 50); // mais de 1000 bytes
+
+        Http::fake([
+            'https://openlibrary.org/api/books*' => Http::response([], 200),
+            'https://brasilapi.com.br/api/isbn/v1/*' => Http::response([
+                'isbn' => $fakeIsbn13,
+                'title' => 'O Ratinho, o Morango Vermelho Maduro e o Grande Urso Esfomeado',
+                'authors' => [],
+                'publisher' => 'Brinque-Book',
+                'subjects' => [],
+                'cover_url' => null,
+            ], 200),
+            "https://covers.openlibrary.org/b/isbn/{$fakeIsbn13}-L.jpg*" => Http::response('', 404),
+            "https://images-na.ssl-images-amazon.com/images/P/{$fakeIsbn10}.01.L.jpg" => Http::response($fakeImgBinary, 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $service = app(LivroLookupService::class);
+        $resultado = $service->buscarPorIsbn($fakeIsbn13);
+
+        $this->assertTrue($resultado['sucesso']);
+        $this->assertEquals('O Ratinho, o Morango Vermelho Maduro e o Grande Urso Esfomeado', $resultado['dados']['titulo']);
+        $this->assertEquals('Brinque-Book', $resultado['dados']['editora']);
+        $this->assertNotNull($resultado['dados']['capa']);
+
+        Storage::disk('public')->assertExists($resultado['dados']['capa']);
+    }
 }

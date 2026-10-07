@@ -88,6 +88,11 @@ class LivroLookupService
             $capaUrl = $this->verificarCapaOpenLibrary($cleanIsbn);
         }
 
+        // 5. Se ainda não tem capaUrl, verifica na Amazon Covers (com conversão para ISBN-10)
+        if (! $capaUrl) {
+            $capaUrl = $this->verificarCapaAmazon($cleanIsbn);
+        }
+
         if (! $titulo && ! $autor) {
             return [
                 'sucesso' => false,
@@ -344,5 +349,60 @@ class LivroLookupService
 
             return null;
         }
+    }
+
+    /**
+     * Verifica se existe capa na Amazon via ISBN-10 (ou convertendo de ISBN-13).
+     */
+    protected function verificarCapaAmazon(string $isbn): ?string
+    {
+        try {
+            $isbn10 = strlen($isbn) === 10 ? $isbn : $this->converterIsbn13ParaIsbn10($isbn);
+            if (! $isbn10) {
+                return null;
+            }
+
+            $url = "https://images-na.ssl-images-amazon.com/images/P/{$isbn10}.01.L.jpg";
+            $response = Http::timeout(5)
+                ->withHeaders(['User-Agent' => 'Torre360/1.0'])
+                ->get($url);
+
+            // A Amazon retorna um pixel transparente de ~43 bytes quando o livro não tem imagem.
+            // Capas reais possuem mais de 1.000 bytes.
+            if ($response->successful() && strlen($response->body()) > 1000) {
+                return $url;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Converte um ISBN-13 iniciado em 978 para seu ISBN-10 correspondente.
+     */
+    public function converterIsbn13ParaIsbn10(string $isbn13): ?string
+    {
+        if (strlen($isbn13) !== 13 || ! str_starts_with($isbn13, '978')) {
+            return null;
+        }
+
+        $noveDigitos = substr($isbn13, 3, 9);
+        $soma = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $soma += ((int) $noveDigitos[$i]) * (10 - $i);
+        }
+
+        $resto = $soma % 11;
+        $dvCalculado = 11 - $resto;
+
+        $dv = match ($dvCalculado) {
+            10 => 'X',
+            11 => '0',
+            default => (string) $dvCalculado,
+        };
+
+        return $noveDigitos.$dv;
     }
 }
