@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Interessados\Actions;
 
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
+use App\Models\MensagemWhatsappTemplate;
 use App\Models\TipoContatoInteressado;
 use App\Services\ConsultorWhatsappService;
 use App\Services\CrmIaVendasService;
@@ -31,6 +32,13 @@ class CopilotoMensagemIaAction
             ->modalSubmitActionLabel('Gerar e Abrir no WhatsApp 🚀')
             ->modalCancelActionLabel('Cancelar')
             ->form([
+                Select::make('mensagem_whatsapp_template_id')
+                    ->label('Modelo Institucional de Referência (Opcional)')
+                    ->placeholder('Nenhum (Redigir mensagem 100% livre com IA)')
+                    ->options(fn () => MensagemWhatsappTemplate::ativos()->pluck('nome', 'id'))
+                    ->searchable()
+                    ->helperText('Selecione um modelo oficial da escola para o Copiloto IA adaptar e humanizar conforme o contexto deste lead.'),
+
                 Select::make('objetivo')
                     ->label('Objetivo da Mensagem')
                     ->options([
@@ -79,22 +87,28 @@ class CopilotoMensagemIaAction
                     return;
                 }
 
+                $template = filled($data['mensagem_whatsapp_template_id'] ?? null)
+                    ? MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id'])
+                    : null;
+
                 $mensagem = $service->gerarMensagemCopiloto(
                     interessado: $record,
                     objetivo: $data['objetivo'],
                     tom: $data['tom'],
-                    instrucoesExtras: ! empty($data['instrucoes_extras']) ? $data['instrucoes_extras'] : null
+                    instrucoesExtras: ! empty($data['instrucoes_extras']) ? $data['instrucoes_extras'] : null,
+                    templateBase: $template?->conteudo
                 );
 
                 if (! empty($data['registrar_historico'])) {
                     $tipoWpp = TipoContatoInteressado::firstOrCreate(['nome' => 'WhatsApp']);
+                    $baseTexto = $template ? " com base no modelo '{$template->nome}'" : '';
 
                     HistoricoContato::create([
                         'interessado_id' => $record->id,
                         'usuario_id' => auth()->id() ?? $record->usuario_id,
                         'tipo_contato_interessado_id' => $tipoWpp->id,
                         'data_contato' => now(),
-                        'relato' => "💬 Mensagem redigida pelo Copiloto IA (Objetivo: {$data['objetivo']}):\n\n{$mensagem}",
+                        'relato' => "💬 Mensagem redigida pelo Copiloto IA (Objetivo: {$data['objetivo']}{$baseTexto}):\n\n{$mensagem}",
                     ]);
                 }
 

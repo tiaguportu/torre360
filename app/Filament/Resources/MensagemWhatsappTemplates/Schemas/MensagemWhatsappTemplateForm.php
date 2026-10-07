@@ -14,23 +14,24 @@ class MensagemWhatsappTemplateForm
     {
         return $schema
             ->components([
-                Section::make('Modelo de Mensagem')
-                    ->description('Use as variáveis abaixo no texto que serão substituídas automaticamente ao enviar: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada], [Link da Pesquisa da Visita].')
+                Section::make('Modelo de Comunicação Oficial')
+                    ->description('Modelos padronizados para comunicados oficiais, rotinas operacionais (0s de latência) e links transacionais (pesquisa de satisfação). Também podem servir como base para o Copiloto IA.')
                     ->schema([
                         TextInput::make('nome')
                             ->label('Nome do Modelo')
+                            ->placeholder('Ex: Pesquisa de Satisfação Pós-Visita, Lembrete de Matrícula, Confirmação de Agendamento')
                             ->required()
                             ->maxLength(255),
                         Textarea::make('conteudo')
-                            ->label('Mensagem')
-                            ->helperText('Variáveis disponíveis: [Nome do Responsável], [Nome do Aluno], [Horário de Visita Agendada], [Link da Pesquisa da Visita].')
+                            ->label('Mensagem Padrão')
+                            ->helperText('Variáveis substituídas automaticamente: [Nome do Responsável], [Primeiro Nome], [Nome do Aluno], [Horário de Visita Agendada], [Link da Pesquisa da Visita], [Nome da Escola].')
                             ->required()
-                            ->rows(5)
+                            ->rows(6)
                             ->columnSpanFull(),
                         Toggle::make('ativo')
-                            ->label('Ativo')
+                            ->label('Ativo para Atendimento')
                             ->default(true)
-                            ->helperText('Modelos inativos não aparecem na lista de envio rápido.'),
+                            ->helperText('Modelos ativos aparecem no disparo rápido e como referência no Copiloto IA.'),
                     ])
                     ->columnSpanFull(),
             ]);

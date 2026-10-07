@@ -8,6 +8,7 @@ use App\Filament\Resources\Interessados\Pages\EditInteressado;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
+use App\Models\MensagemWhatsappTemplate;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
@@ -292,5 +293,105 @@ class CrmIaVendasTest extends TestCase
         $response = $this->get(route('crm.interessados.dossie-pdf', $interessado));
 
         $response->assertRedirect(route('filament.admin.auth.login'));
+    }
+
+    public function test_crm_ia_vendas_gerar_mensagem_copiloto_com_template_base(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+        $textoGerado = 'Olá Mariana! Como combinado no modelo oficial, gostaríamos de convidá-la para o tour do Lucas!';
+
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->once()
+            ->withArgs(function (array $payload) {
+                $userContent = $payload['contents'][0]['parts'][0]['text'] ?? '';
+                $systemContent = $payload['systemInstruction']['parts'][0]['text'] ?? '';
+
+                return str_contains($userContent, 'Convite Formal de Visita')
+                    && str_contains($systemContent, 'MODELO INSTITUCIONAL DE REFERÊNCIA');
+            })
+            ->andReturn([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => $textoGerado,
+                    ]]],
+                ]],
+            ]);
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+
+        $service = app(CrmIaVendasService::class);
+        $mensagem = $service->gerarMensagemCopiloto(
+            interessado: $interessado,
+            objetivo: 'convite_visita',
+            templateBase: 'Convite Formal de Visita: [Nome do Responsável], venha conhecer o colégio!'
+        );
+
+        $this->assertSame($textoGerado, $mensagem);
+    }
+
+    public function test_crm_ia_vendas_fallback_com_template_base_substitui_tags(): void
+    {
+        $interessado = $this->criarInteressadoCompleto();
+
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->andThrow(new \RuntimeException('Erro de API'));
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+
+        $service = app(CrmIaVendasService::class);
+        $template = 'Olá [Nome do Responsável] ([Primeiro Nome]), vaga para [Nome do Aluno] no [Nome da Escola]!';
+
+        $mensagem = $service->gerarMensagemCopiloto(
+            interessado: $interessado,
+            objetivo: 'primeiro_contato',
+            templateBase: $template
+        );
+
+        $this->assertStringContainsString('Mariana Oliveira', $mensagem);
+        $this->assertStringContainsString('Mariana', $mensagem);
+        $this->assertStringContainsString('Lucas Oliveira', $mensagem);
+        $this->assertStringContainsString('Escola Torre de Marfim', $mensagem);
+        $this->assertStringNotContainsString('[Nome do Responsável]', $mensagem);
+    }
+
+    public function test_copiloto_ia_action_com_template_base_registra_historico_com_referencia(): void
+    {
+        $admin = $this->admin();
+        $interessado = $this->criarInteressadoCompleto();
+        $template = MensagemWhatsappTemplate::create([
+            'nome' => 'Boas-vindas Oficial',
+            'conteudo' => 'Olá [Nome do Responsável]!',
+            'ativo' => true,
+        ]);
+
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->once()
+            ->andReturn([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => 'Olá Mariana, seja bem-vinda com o Lucas!',
+                    ]]],
+                ]],
+            ]);
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+
+        Livewire::actingAs($admin)
+            ->test(EditInteressado::class, ['record' => $interessado->id])
+            ->callAction('copilotoIa', [
+                'mensagem_whatsapp_template_id' => $template->id,
+                'objetivo' => 'primeiro_contato',
+                'tom' => 'acolhedor',
+                'registrar_historico' => true,
+            ])
+            ->assertNotified();
+
+        $historico = HistoricoContato::where('interessado_id', $interessado->id)->latest('id')->first();
+        $this->assertNotNull($historico);
+        $this->assertStringContainsString("com base no modelo 'Boas-vindas Oficial'", $historico->relato);
+        $this->assertStringContainsString('Olá Mariana, seja bem-vinda com o Lucas!', $historico->relato);
     }
 }

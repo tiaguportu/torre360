@@ -25,6 +25,7 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\ConsultorWhatsappService;
 use App\Services\ConviteMatriculaService;
+use App\Services\CrmIaVendasService;
 use App\Services\LeadFunilService;
 use App\Services\LeadScoreService;
 use App\Services\TermometroVagasService;
@@ -40,6 +41,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -458,6 +460,10 @@ class InteressadosTable
                             ->options(fn (Interessado $record) => $record->dependentes->pluck('nome_crianca', 'id'))
                             ->visible(fn (Interessado $record) => $record->dependentes->count() > 1)
                             ->required(fn (Interessado $record) => $record->dependentes->count() > 1),
+                        Toggle::make('adaptar_com_ia')
+                            ->label('Personalizar com Copiloto IA (Gemini) ✨')
+                            ->default(false)
+                            ->helperText('O Gemini adapta este modelo ao histórico e perfil do lead, mantendo a mensagem institucional.'),
                     ])
                     ->action(function (array $data, Interessado $record, $livewire) {
                         $template = MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id']);
@@ -482,6 +488,19 @@ class InteressadosTable
                             '[Link da Pesquisa]' => $linkPesquisa,
                             '[Link]' => $linkPesquisa,
                         ]);
+
+                        if (! empty($data['adaptar_com_ia'])) {
+                            $mensagem = app(CrmIaVendasService::class)->gerarMensagemCopiloto(
+                                interessado: $record,
+                                objetivo: 'primeiro_contato',
+                                tom: 'acolhedor',
+                                templateBase: $mensagem
+                            );
+
+                            if (filled($linkPesquisa) && ! str_contains($mensagem, $linkPesquisa)) {
+                                $mensagem .= "\n\n👉 {$linkPesquisa}";
+                            }
+                        }
 
                         $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa?->telefone);
 

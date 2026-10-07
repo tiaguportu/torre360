@@ -262,7 +262,8 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
 
 2. **💬 Copiloto WhatsApp IA:**
    - **Onde acessar:** Disponível no menu de ações de cada lead (`...` → **Copiloto WhatsApp IA**) e no cabeçalho de edição.
-   - **Como funciona:** Redige uma mensagem de WhatsApp sob medida para a família, sem textos genéricos ou robóticos, adaptando-se ao objetivo escolhido:
+   - **Modelo Institucional de Referência (Opcional):** Você pode selecionar um dos **Modelos de WhatsApp** cadastrados na escola como ponto de partida oficial. A IA mantém a diretriz ou comunicado institucional aprovado pela escola, mas reescreve e humaniza o texto sob medida para o perfil e momento da família.
+   - **Como funciona:** Redige uma mensagem de WhatsApp personalizada, sem textos genéricos ou robóticos, adaptando-se ao objetivo escolhido:
      - *👋 Primeiro Contato (Boas-vindas acolhedoras)*
      - *🏫 Convite para Tour Pedagógico Presencial*
      - *🛡️ Superar Dúvidas / Objeções (Metodologia, Preço, etc.)*
@@ -271,6 +272,18 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
    - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
    - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
    - **Disparo em 1-Clique e Fidelidade de Emojis:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada. O sistema utiliza codificação RFC 3986 e o endpoint canônico `api.whatsapp.com/send`, garantindo que todos os emojis e formatações cheguem perfeitamente legíveis (sem caracteres corrompidos), com registro opcional no histórico de atendimentos do lead.
+   - **Contingência Inteligente (Fallback):** Caso a conexão com a IA oscile ou a cota de tokens atinja o limite, o sistema automaticamente aplica as variáveis dinâmicas no modelo de referência selecionado como plano de contingência, assegurando que o consultor nunca fique sem atendimento.
+
+3. **📱 Modelos de WhatsApp (Comunicações Oficiais & Disparo Instantâneo):**
+   - **Onde acessar:** Em **CRM / Comercial → Modelos de WhatsApp**.
+   - **Propósito:** Cadastrar textos oficiais padronizados para comunicados formais da secretaria, confirmações com 0 segundos de latência (sem custo de IA) e envio de links dinâmicos e transacionais.
+   - **Variáveis Dinâmicas Automáticas:**
+     - `[Nome do Responsável]` e `[Primeiro Nome]`
+     - `[Nome do Aluno]`
+     - `[Horário de Visita Agendada]` (ou `[Data da Visita]`)
+     - `[Link da Pesquisa da Visita]` (link seguro da pesquisa NPS pós-tour)
+     - `[Nome da Escola]`
+   - **Disparo na Tabela de Interessados:** No botão verde de WhatsApp da linha do lead, selecione o modelo para envio imediato. Se desejar, ative a opção **Personalizar com Copiloto IA (Gemini) ✨** para que a IA adapte o texto do modelo aos relatos e dores da família antes de abrir o aplicativo.
 
 ### 3.15 Régua de Automação de Follow-up (Triggers & Workflows)
 A **Régua de Follow-up** automatiza o relacionamento e a comunicação com famílias interessadas em matricular seus filhos, garantindo que nenhum lead esfrie ou seja esquecido por falta de retorno.

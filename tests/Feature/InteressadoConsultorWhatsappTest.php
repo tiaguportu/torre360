@@ -13,8 +13,10 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Models\VisitaInteressado;
 use App\Services\ConsultorWhatsappService;
+use App\Services\GeminiAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Mockery;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -248,6 +250,40 @@ class InteressadoConsultorWhatsappTest extends TestCase
         Livewire::actingAs($this->admin())
             ->test(ListInteressados::class)
             ->callTableAction('enviarWhatsapp', $lead, data: ['mensagem_whatsapp_template_id' => $template->id])
+            ->assertJs('window.open('.json_encode($url).", '_blank')");
+    }
+
+    public function test_botao_whatsapp_com_adaptar_com_ia_ativo_gera_texto_adaptado_pelo_gemini(): void
+    {
+        $lead = $this->lead($this->consultor());
+        $template = MensagemWhatsappTemplate::create(['nome' => 'Boas-vindas', 'conteudo' => 'Olá [Nome do Responsável]!', 'ativo' => true]);
+
+        $textoAdaptado = 'Olá Maria Responsável! Preparamos um plano acolhedor para a sua família na Escola Torre de Marfim.';
+
+        $geminiMock = Mockery::mock(GeminiAgentService::class);
+        $geminiMock->shouldReceive('callGeminiApi')
+            ->once()
+            ->andReturn([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => $textoAdaptado,
+                    ]]],
+                ]],
+            ]);
+
+        $this->app->instance(GeminiAgentService::class, $geminiMock);
+
+        $url = 'https://api.whatsapp.com/send?'.http_build_query([
+            'phone' => '5521999991111',
+            'text' => $textoAdaptado,
+        ], '', '&', PHP_QUERY_RFC3986);
+
+        Livewire::actingAs($this->admin())
+            ->test(ListInteressados::class)
+            ->callTableAction('enviarWhatsapp', $lead, data: [
+                'mensagem_whatsapp_template_id' => $template->id,
+                'adaptar_com_ia' => true,
+            ])
             ->assertJs('window.open('.json_encode($url).", '_blank')");
     }
 

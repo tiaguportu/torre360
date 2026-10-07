@@ -106,27 +106,32 @@ disponível, abre o WhatsApp sem destinatário e o modal avisa isso.
 O bloco de ações recebeu a chave `alertaContato` para a ação poder ser montada
 em testes (`TestAction::make('alerta_contato')->schemaComponent('alertaContato')`).
 
-## 2. Mensagens rápidas de WhatsApp
+## 2. Mensagens rápidas de WhatsApp e Integração com Copiloto IA (Gemini)
 
 Modelos de mensagem ficam na tabela `mensagem_whatsapp_template`
 (`nome`, `conteudo`, `ativo`), gerenciáveis pelo Filament em
-**CRM / Comercial → Modelos de WhatsApp**. O texto do modelo aceita três
-variáveis, substituídas automaticamente no envio:
+**CRM / Comercial → Modelos de WhatsApp**.
 
+### Propósito dos Modelos vs. Copiloto IA
+Os modelos oficiais e o Copiloto IA atuam de forma **complementar**:
+1. **Modelos Oficiais (0s de latência & custo zero):** Ideais para mensagens transacionais, comunicados que exigem conformidade jurídica rígida e envio de links dinâmicos e rastreáveis (como a Pesquisa de Satisfação Pós-Visita com NPS).
+2. **Copiloto IA (Personalização contextual):** Ideal para follow-ups consultivos, quebra de objeções específicas (preço, metodologia) e reativação calorosa de famílias estagnadas.
+3. **Sinergia Híbrida (Modelo + IA):** No modal do *Copiloto WhatsApp IA*, o consultor pode escolher um **Modelo Institucional de Referência (Opcional)** para que a IA adapte e enriqueça o comunicado oficial com o perfil e momento da família. Da mesma forma, na ação rápida "WhatsApp" da tabela, há a opção **Personalizar com Copiloto IA (Gemini) ✨** para humanizar o modelo escolhido antes de abrir o mensageiro.
+4. **Contingência Inteligente (Fallback):** Se a API do Gemini estiver instável ou a cota esgotar, o fallback do serviço automaticamente pré-preenche as variáveis dinâmicas do modelo base, garantindo que o atendimento nunca seja interrompido.
+
+### Variáveis dinâmicas substituídas automaticamente:
 - `[Nome do Responsável]` → `interessado.pessoa.nome`
-- `[Nome do Aluno]` → `nome_crianca` do dependente selecionado (ou o único
-  dependente, se houver apenas um)
-- `[Horário de Visita Agendada]` → data da próxima visita agendada do lead
-  (`Interessado::proximaVisita`, ver `docs/crm_captacao_campanhas_visitas.md`),
-  com fallback para `interessado.data_proximo_contato`, formatada como
-  `d/m/Y às H:i h`, ou "a definir" se não houver nenhuma das duas
+- `[Primeiro Nome]` → primeiro nome do responsável
+- `[Nome do Aluno]` → `nome_crianca` do dependente selecionado (ou o primeiro da lista)
+- `[Horário de Visita Agendada]` (ou `[Data da Visita]`) → data e hora da próxima visita agendada do lead (`Interessado::proximaVisita`), com fallback para `interessado.data_proximo_contato` formatada como `d/m/Y às H:i h`, ou "a definir" se não houver
+- `[Link da Pesquisa da Visita]` (ou `[Link da Pesquisa]`, `[Link]`) → URL pública da pesquisa de satisfação da visita (`PesquisaSatisfacaoVisita`)
+- `[Nome da Escola]` (ou `[Escola]`) → Nome oficial da instituição
 
 A ação "WhatsApp" na tabela de Interessados (`InteressadosTable`, ao lado de
 "Atendimento") abre um formulário para escolher o modelo (e o aluno, se o
 lead tiver mais de um dependente cadastrado) e, ao confirmar, monta a URL
 canônica `https://api.whatsapp.com/send?phone=<telefone>&text=<mensagem>` e abre em nova aba — utiliza
-codificação RFC 3986 (`PHP_QUERY_RFC3986`) para preservar 100% dos emojis UTF-8 sem risco de corrupção
-(o encurtador `wa.me` sofre de bug na Meta ao fazer redirect 302 que corrompe emojis para ``). O
+codificação RFC 3986 (`PHP_QUERY_RFC3986`) para preservar 100% dos emojis UTF-8 sem risco de corrupção. O
 telefone é normalizado (somente dígitos) e recebe o DDI `55` quando tem 11
 dígitos ou menos (DDD + número).
 
