@@ -2639,9 +2639,10 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
      - **Categoria / Assunto**
      - **Foto da Capa:** O sistema faz o download automático da imagem oficial da capa em alta resolução e a armazena com segurança no storage da instituição, exibindo a pré-visualização imediata no formulário.
 
-2. **Foto da Capa do Livro:**
+2. **Foto da Capa do Livro Integrada ao Formulário:**
+   - O formulário foi unificado em um box de largura total (**Informações do Livro**), integrando o campo de **Foto da Capa** diretamente ao lado dos dados cadastrais da obra.
    - **Upload Manual:** Você pode clicar na área **Foto da Capa** para enviar qualquer imagem personalizada a partir do seu dispositivo (com suporte a recorte e ajuste de proporção no editor integrado).
-   - **Capa Automática:** Se você utilizou a busca por ISBN, a capa já estará preenchida e salva no acervo, podendo ser substituída a qualquer momento se desejado.
+   - **Capa Automática:** Se você utilizou a busca por ISBN, a capa oficial é importada e exibida imediatamente na pré-visualização, podendo ser substituída ou ajustada a qualquer momento.
 
 3. **Exemplares do Acervo:**
    - **Quantidade Total:** Quantidade física de cópias que a biblioteca possui.

@@ -40,7 +40,7 @@ class ListAlunos extends ListRecords
         $canCreate = $user->can('Create:Aluno');
         $canUpdate = $user->can('Update:Aluno');
         $canView = $user->can('View:Aluno');
-        $canBoletim = $user->can('Boletim:Aluno');
+        $canBoletim = $user->can('Boletim:Matricula');
 
         $html = '<p>Nesta página você gerencia o cadastro base dos alunos da instituição.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';

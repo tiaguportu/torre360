@@ -19,86 +19,84 @@ class LivroForm
     {
         return $schema
             ->components([
-                Grid::make(['default' => 1, 'md' => 3])
+                Section::make('Informações do Livro')
+                    ->columnSpanFull()
+                    ->columns(['default' => 1, 'md' => 3])
                     ->schema([
-                        Section::make('Capa do Livro')
-                            ->columnSpan(['default' => 1, 'md' => 1])
-                            ->schema([
-                                FileUpload::make('capa')
-                                    ->label('Foto da Capa')
-                                    ->image()
-                                    ->directory('livros/capas')
-                                    ->disk('public')
-                                    ->visibility('public')
-                                    ->imageResizeMode('cover')
-                                    ->maxSize(5120)
-                                    ->helperText('Envie uma foto da capa ou utilize a busca por ISBN para preencher automaticamente.')
-                                    ->imageEditor(),
-                            ]),
-                        Section::make('Informações do Livro')
+                        TextInput::make('isbn')
+                            ->label('ISBN')
+                            ->placeholder('Ex: 9788576082675')
+                            ->maxLength(255)
+                            ->helperText('Digite o código ISBN e clique na lupa para buscar título, autor, editora e foto da capa automaticamente.')
+                            ->columnSpanFull()
+                            ->suffixAction(
+                                Action::make('buscarPorIsbn')
+                                    ->label('Buscar por ISBN')
+                                    ->icon('heroicon-m-magnifying-glass')
+                                    ->color('primary')
+                                    ->tooltip('Buscar dados e foto da capa automaticamente pelo ISBN')
+                                    ->action(function (Get $get, Set $set, LivroLookupService $service) {
+                                        $isbn = (string) $get('isbn');
+                                        if (blank($isbn)) {
+                                            Notification::make()
+                                                ->title('ISBN não informado')
+                                                ->body('Digite um código ISBN no campo antes de buscar.')
+                                                ->warning()
+                                                ->send();
+
+                                            return;
+                                        }
+
+                                        $resultado = $service->buscarPorIsbn($isbn);
+                                        if (! $resultado['sucesso']) {
+                                            Notification::make()
+                                                ->title('Livro não encontrado')
+                                                ->body($resultado['mensagem'])
+                                                ->warning()
+                                                ->send();
+
+                                            return;
+                                        }
+
+                                        $dados = $resultado['dados'];
+                                        if (! empty($dados['titulo'])) {
+                                            $set('titulo', $dados['titulo']);
+                                        }
+                                        if (! empty($dados['autor'])) {
+                                            $set('autor', $dados['autor']);
+                                        }
+                                        if (! empty($dados['editora'])) {
+                                            $set('editora', $dados['editora']);
+                                        }
+                                        if (! empty($dados['categoria'])) {
+                                            $set('categoria', $dados['categoria']);
+                                        }
+                                        if (! empty($dados['capa'])) {
+                                            $set('capa', $dados['capa']);
+                                        }
+
+                                        $detalheCapa = ! empty($dados['capa']) ? ' com foto da capa!' : '!';
+                                        Notification::make()
+                                            ->title('Livro encontrado!')
+                                            ->body("Dados de \"{$dados['titulo']}\" preenchidos com sucesso{$detalheCapa}")
+                                            ->success()
+                                            ->send();
+                                    })
+                            ),
+                        FileUpload::make('capa')
+                            ->label('Foto da Capa')
+                            ->image()
+                            ->directory('livros/capas')
+                            ->disk('public')
+                            ->visibility('public')
+                            ->imageResizeMode('cover')
+                            ->maxSize(5120)
+                            ->imageEditor()
+                            ->helperText('Envie uma foto da capa ou utilize a busca por ISBN para preencher automaticamente.')
+                            ->columnSpan(['default' => 1, 'md' => 1]),
+                        Grid::make(['default' => 1, 'md' => 2])
                             ->columnSpan(['default' => 1, 'md' => 2])
-                            ->columns(2)
                             ->schema([
-                                TextInput::make('isbn')
-                                    ->label('ISBN')
-                                    ->placeholder('Ex: 9788576082675')
-                                    ->maxLength(255)
-                                    ->helperText('Digite o código ISBN e clique na lupa para buscar título, autor, editora e foto da capa.')
-                                    ->columnSpanFull()
-                                    ->suffixAction(
-                                        Action::make('buscarPorIsbn')
-                                            ->label('Buscar por ISBN')
-                                            ->icon('heroicon-m-magnifying-glass')
-                                            ->color('primary')
-                                            ->tooltip('Buscar dados e foto da capa automaticamente pelo ISBN')
-                                            ->action(function (Get $get, Set $set, LivroLookupService $service) {
-                                                $isbn = (string) $get('isbn');
-                                                if (blank($isbn)) {
-                                                    Notification::make()
-                                                        ->title('ISBN não informado')
-                                                        ->body('Digite um código ISBN no campo antes de buscar.')
-                                                        ->warning()
-                                                        ->send();
-
-                                                    return;
-                                                }
-
-                                                $resultado = $service->buscarPorIsbn($isbn);
-                                                if (! $resultado['sucesso']) {
-                                                    Notification::make()
-                                                        ->title('Livro não encontrado')
-                                                        ->body($resultado['mensagem'])
-                                                        ->warning()
-                                                        ->send();
-
-                                                    return;
-                                                }
-
-                                                $dados = $resultado['dados'];
-                                                if (! empty($dados['titulo'])) {
-                                                    $set('titulo', $dados['titulo']);
-                                                }
-                                                if (! empty($dados['autor'])) {
-                                                    $set('autor', $dados['autor']);
-                                                }
-                                                if (! empty($dados['editora'])) {
-                                                    $set('editora', $dados['editora']);
-                                                }
-                                                if (! empty($dados['categoria'])) {
-                                                    $set('categoria', $dados['categoria']);
-                                                }
-                                                if (! empty($dados['capa'])) {
-                                                    $set('capa', $dados['capa']);
-                                                }
-
-                                                $detalheCapa = ! empty($dados['capa']) ? ' com foto da capa!' : '!';
-                                                Notification::make()
-                                                    ->title('Livro encontrado!')
-                                                    ->body("Dados de \"{$dados['titulo']}\" preenchidos com sucesso{$detalheCapa}")
-                                                    ->success()
-                                                    ->send();
-                                            })
-                                    ),
                                 TextInput::make('titulo')
                                     ->label('Título')
                                     ->required()
@@ -113,7 +111,8 @@ class LivroForm
                                     ->maxLength(255),
                                 TextInput::make('categoria')
                                     ->label('Categoria')
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
                                 TextInput::make('quantidade_total')
                                     ->label('Quantidade Total de Exemplares')
                                     ->numeric()

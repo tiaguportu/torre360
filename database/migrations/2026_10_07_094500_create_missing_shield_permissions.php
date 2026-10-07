@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -44,52 +45,59 @@ return new class extends Migration
 
     public function up(): void
     {
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-        $createdPermissions = [];
+        $permIdsByName = [];
 
         // 1. Criar permissões CRUD para os models faltantes
         foreach ($this->models as $model) {
             foreach ($this->crudActions as $action) {
                 $name = "{$action}:{$model}";
-                $createdPermissions[] = Permission::firstOrCreate([
+                $perm = Permission::firstOrCreate([
                     'name' => $name,
                     'guard_name' => 'web',
                 ]);
+                $permIdsByName[$name] = $perm->id;
             }
         }
 
         // 2. Criar permissões customizadas e de páginas
-        foreach ($this->customPermissions as $permName) {
-            $createdPermissions[] = Permission::firstOrCreate([
-                'name' => $permName,
+        foreach ($this->customPermissions as $name) {
+            $perm = Permission::firstOrCreate([
+                'name' => $name,
                 'guard_name' => 'web',
             ]);
+            $permIdsByName[$name] = $perm->id;
         }
 
-        // 3. Atribuir ao super_admin (todas)
-        $superAdmin = Role::where('name', 'super_admin')->first();
-        if ($superAdmin) {
-            foreach ($createdPermissions as $permission) {
-                if (! $superAdmin->hasPermissionTo($permission)) {
-                    $superAdmin->givePermissionTo($permission);
-                }
+        // Mapear IDs de Roles
+        $roles = Role::whereIn('name', ['super_admin', 'admin', 'secretaria', 'coordenador'])->pluck('id', 'name');
+
+        $rolePermissions = [];
+
+        // 3. super_admin recebe todas as permissões
+        if (isset($roles['super_admin'])) {
+            $superAdminId = $roles['super_admin'];
+            foreach ($permIdsByName as $permId) {
+                $rolePermissions[] = [
+                    'permission_id' => $permId,
+                    'role_id' => $superAdminId,
+                ];
             }
         }
 
-        // 4. Atribuir ao admin (todas operacionais)
-        $admin = Role::where('name', 'admin')->first();
-        if ($admin) {
-            foreach ($createdPermissions as $permission) {
-                if (! $admin->hasPermissionTo($permission)) {
-                    $admin->givePermissionTo($permission);
-                }
+        // 4. admin recebe todas as permissões operacionais
+        if (isset($roles['admin'])) {
+            $adminId = $roles['admin'];
+            foreach ($permIdsByName as $permId) {
+                $rolePermissions[] = [
+                    'permission_id' => $permId,
+                    'role_id' => $adminId,
+                ];
             }
         }
 
-        // 5. Atribuir papéis operacionais específicos
-        $secretaria = Role::where('name', 'secretaria')->first();
-        if ($secretaria) {
+        // 5. secretaria recebe permissões operacionais pertinentes
+        if (isset($roles['secretaria'])) {
+            $secretariaId = $roles['secretaria'];
             $secretariaPerms = [
                 'View:RelatorioInadimplencia',
                 'AvisarPossibilidadePreceptoria:Matricula',
@@ -103,15 +111,18 @@ return new class extends Migration
                 'Create:IndicacaoInteressado',
             ];
             foreach ($secretariaPerms as $sp) {
-                $perm = Permission::where('name', $sp)->first();
-                if ($perm && ! $secretaria->hasPermissionTo($perm)) {
-                    $secretaria->givePermissionTo($perm);
+                if (isset($permIdsByName[$sp])) {
+                    $rolePermissions[] = [
+                        'permission_id' => $permIdsByName[$sp],
+                        'role_id' => $secretariaId,
+                    ];
                 }
             }
         }
 
-        $coordenador = Role::where('name', 'coordenador')->first();
-        if ($coordenador) {
+        // 6. coordenador recebe permissões pedagógicas pertinentes
+        if (isset($roles['coordenador'])) {
+            $coordenadorId = $roles['coordenador'];
             $coordenadorPerms = [
                 'AvisarPossibilidadePreceptoria:Matricula',
                 'ViewAny:TipoOcorrencia',
@@ -120,11 +131,17 @@ return new class extends Migration
                 'Update:TipoOcorrencia',
             ];
             foreach ($coordenadorPerms as $cp) {
-                $perm = Permission::where('name', $cp)->first();
-                if ($perm && ! $coordenador->hasPermissionTo($perm)) {
-                    $coordenador->givePermissionTo($perm);
+                if (isset($permIdsByName[$cp])) {
+                    $rolePermissions[] = [
+                        'permission_id' => $permIdsByName[$cp],
+                        'role_id' => $coordenadorId,
+                    ];
                 }
             }
+        }
+
+        if (! empty($rolePermissions)) {
+            DB::table('role_has_permissions')->insertOrIgnore($rolePermissions);
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

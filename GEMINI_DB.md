@@ -33,11 +33,14 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
     - `subject_type`, `subject_id`: Registro afetado.
     - `causer_type`, `causer_id`: Usuário/Sistema que causou a ação.
 - `properties`: JSON com metadados e alterações (valores antigos e novos). Registra também tentativas e respostas de disparos de notificações (e-mail/push).
-+
-+### `roles`, `permissions`, `model_has_roles` (Spatie/Shield)
-+- **Representa:** Sistema de controle de acesso baseado em papéis.
-+- **Propósito:** Define permissões granulares para os recursos do painel administrativo (Resources, Pages e Widgets).
-+- **Configuração:** Gerenciado via `filament-shield`.
+
+### `roles`, `permissions`, `role_has_permissions`, `model_has_roles` (Spatie Permission & Filament Shield)
+- **Representa:** Sistema de controle de acesso baseado em papéis (RBAC).
+- **Propósito:** Define permissões granulares para os recursos do painel administrativo (Resources, Pages, Widgets e Ações Customizadas).
+- **Convenção de Nomenclatura:** Formato `PascalCase` com dois-pontos `:` (ex.: `ViewAny:Matricula`, `Create:Aluno`, `Execute:ReguaCobranca`).
+- **Mapeamento de Policies:** Cada Resource do Filament possui uma Policy correspondente em `App\Policies\{Model}Policy` consumindo as permissões associadas.
+- **Papéis Padrão:** `super_admin`, `admin`, `secretaria`, `professor`, `coordenador`, `responsavel`, `aluno`.
+- **Configuração:** Gerenciado via `config/filament-shield.php` e plugin `FilamentShieldPlugin`.
 
 ---
 

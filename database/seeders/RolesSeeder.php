@@ -330,6 +330,77 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de CRM, Ocorrências, Relatórios e Réguas do Filament Shield
+        $novasShieldPermissions = [];
+        $modelsNovos = ['Concorrente', 'IndicacaoInteressado', 'MensagemWhatsappTemplate', 'Objecao', 'TipoOcorrencia'];
+        $acoesCrud = ['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'];
+
+        foreach ($modelsNovos as $modelName) {
+            foreach ($acoesCrud as $acao) {
+                $novasShieldPermissions[] = "{$acao}:{$modelName}";
+            }
+        }
+
+        $customShieldPerms = [
+            'View:RelatorioFluxoCaixa',
+            'View:RelatorioInadimplencia',
+            'AvisarPossibilidadePreceptoria:Matricula',
+            'Create:HistoricoContato',
+            'Execute:ReguaCobranca',
+            'Execute:ReguaFollowUp',
+            'UseAssistant',
+        ];
+
+        foreach (array_merge($novasShieldPermissions, $customShieldPerms) as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        // super_admin e admin recebem todas
+        foreach (['admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach (array_merge($novasShieldPermissions, $customShieldPerms) as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
+        // secretaria recebe operacionais de atendimento, relatórios e matrículas
+        $secretaria = Role::where('name', 'secretaria')->first();
+        if ($secretaria) {
+            $secretariaExtraPerms = [
+                'View:RelatorioInadimplencia',
+                'AvisarPossibilidadePreceptoria:Matricula',
+                'Create:HistoricoContato',
+                'ViewAny:TipoOcorrencia', 'View:TipoOcorrencia', 'Create:TipoOcorrencia', 'Update:TipoOcorrencia',
+                'ViewAny:IndicacaoInteressado', 'View:IndicacaoInteressado', 'Create:IndicacaoInteressado',
+            ];
+            foreach ($secretariaExtraPerms as $permName) {
+                if (! $secretaria->hasPermissionTo($permName)) {
+                    $secretaria->givePermissionTo($permName);
+                }
+            }
+        }
+
+        // coordenador recebe pedagógicas e de acompanhamento
+        $coordenador = Role::where('name', 'coordenador')->first();
+        if ($coordenador) {
+            $coordenadorExtraPerms = [
+                'AvisarPossibilidadePreceptoria:Matricula',
+                'ViewAny:TipoOcorrencia', 'View:TipoOcorrencia', 'Create:TipoOcorrencia', 'Update:TipoOcorrencia',
+            ];
+            foreach ($coordenadorExtraPerms as $permName) {
+                if (! $coordenador->hasPermissionTo($permName)) {
+                    $coordenador->givePermissionTo($permName);
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
