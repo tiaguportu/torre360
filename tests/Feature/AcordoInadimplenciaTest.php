@@ -15,6 +15,7 @@ use App\Models\Turno;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\AcordoInadimplenciaService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -234,5 +235,199 @@ class AcordoInadimplenciaTest extends TestCase
         Livewire::test(ListAcordoInadimplencias::class)
             ->assertSuccessful()
             ->assertSee($acordo->codigo);
+    }
+
+    /**
+     * @param  array<int, array{numero_parcela: int, vencimento: string}>  $cronograma
+     * @return list<string>
+     */
+    private function vencimentosDasParcelas(array $cronograma): array
+    {
+        return array_values(array_map(
+            fn (array $p): string => $p['vencimento'],
+            array_filter($cronograma, fn (array $p): bool => $p['numero_parcela'] > 0),
+        ));
+    }
+
+    public function test_cronograma_com_primeiro_vencimento_no_fim_do_mes_nao_pula_nem_repete_meses(): void
+    {
+        $service = app(AcordoInadimplenciaService::class);
+
+        $simulacao = $service->simularAcordo(1200.0, 0.0, 0.0, 0.0, 0.0, 4, 10, '2027-01-31');
+
+        // Antes: 31/01, 10/03, 10/03, 10/05 (fevereiro pulado, março repetido).
+        $this->assertSame(
+            ['2027-01-31', '2027-02-10', '2027-03-10', '2027-04-10'],
+            $this->vencimentosDasParcelas($simulacao['cronograma_parcelas']),
+        );
+    }
+
+    public function test_cronograma_cruza_fevereiro_e_virada_de_ano_com_dia_28(): void
+    {
+        $service = app(AcordoInadimplenciaService::class);
+
+        $simulacao = $service->simularAcordo(1200.0, 0.0, 0.0, 0.0, 0.0, 5, 28, '2026-12-29');
+
+        $this->assertSame(
+            ['2026-12-29', '2027-01-28', '2027-02-28', '2027-03-28', '2027-04-28'],
+            $this->vencimentosDasParcelas($simulacao['cronograma_parcelas']),
+        );
+    }
+
+    public function test_primeira_parcela_vence_na_data_informada_e_as_demais_no_dia_de_vencimento(): void
+    {
+        $service = app(AcordoInadimplenciaService::class);
+
+        $simulacao = $service->simularAcordo(900.0, 0.0, 0.0, 0.0, 0.0, 3, 10, '2026-11-20');
+
+        // O termo imprime "primeiro vencimento em 20/11/2026": a 1ª parcela não pode vencer em 10/11.
+        $this->assertSame('2026-11-20', $simulacao['primeiro_vencimento']);
+        $this->assertSame(
+            ['2026-11-20', '2026-12-10', '2027-01-10'],
+            $this->vencimentosDasParcelas($simulacao['cronograma_parcelas']),
+        );
+    }
+
+    public function test_sem_primeiro_vencimento_o_padrao_e_o_proximo_mes_mesmo_no_dia_31(): void
+    {
+        $this->travelTo(Carbon::parse('2027-01-31 10:00:00'));
+        $service = app(AcordoInadimplenciaService::class);
+
+        $simulacao = $service->simularAcordo(1200.0, 0.0, 0.0, 0.0, 0.0, 3, 10, null);
+
+        // Antes: 31/01 + 1 mês estourava para março.
+        $this->assertSame('2027-02-10', $simulacao['primeiro_vencimento']);
+        $this->assertSame(
+            ['2027-02-10', '2027-03-10', '2027-04-10'],
+            $this->vencimentosDasParcelas($simulacao['cronograma_parcelas']),
+        );
+    }
+
+    public function test_parcelas_persistidas_seguem_o_cronograma_sem_meses_repetidos(): void
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $acordo = app(AcordoInadimplenciaService::class)->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 900.00,
+            'quantidade_parcelas' => 3,
+            'dia_vencimento_parcelas' => 10,
+            'primeiro_vencimento' => '2027-01-30',
+        ], $user);
+
+        $datas = $acordo->parcelas->map(fn ($p) => $p->data_vencimento->toDateString())->all();
+
+        $this->assertSame(['2027-01-30', '2027-02-10', '2027-03-10'], $datas);
+        $this->assertSame('2027-01-30', $acordo->primeiro_vencimento->toDateString());
+    }
+
+    public function test_termo_de_confissao_imprime_valores_formatados_sem_codigo_php_literal(): void
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $acordo = app(AcordoInadimplenciaService::class)->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 2000.00,
+            'valor_multa_original' => 100.00,
+            'valor_juros_original' => 100.00,
+            'percentual_desconto_concedido' => 50.0,
+            'valor_entrada' => 500.00,
+            'quantidade_parcelas' => 3,
+            'dia_vencimento_parcelas' => 10,
+            'primeiro_vencimento' => '2026-11-10',
+        ], $user);
+
+        $termo = $acordo->termo_confissao_texto;
+
+        // 2.200 bruto - 100 de desconto (50% dos encargos) = 2.100; (2.100 - 500 de entrada) / 3 = 533,33.
+        $this->assertStringContainsString('3 parcela(s) no valor de R$ 533,33;', $termo);
+        $this->assertStringContainsString('Entrada: R$ 500,00;', $termo);
+        $this->assertStringContainsString('com primeiro vencimento em 10/11/2026.', $termo);
+        $this->assertStringContainsString('fixando-se o valor final e consolidado do acordo em R$ 2.100,00', $termo);
+
+        $this->assertStringNotContainsString('number_format', $termo);
+        $this->assertStringNotContainsString('{$', $termo);
+        $this->assertDoesNotMatchRegularExpression('/\{[^}]*\(/', $termo);
+    }
+
+    public function test_termo_sem_entrada_mostra_entrada_zerada(): void
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $acordo = app(AcordoInadimplenciaService::class)->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 1500.00,
+            'quantidade_parcelas' => 2,
+            'primeiro_vencimento' => '2026-11-10',
+        ], $user);
+
+        $this->assertStringContainsString('2 parcela(s) no valor de R$ 750,00;', $acordo->termo_confissao_texto);
+        $this->assertStringContainsString('Entrada: R$ 0,00;', $acordo->termo_confissao_texto);
+    }
+
+    /**
+     * Reproduz um acordo criado antes da correção: o texto gravado traz o código PHP literal.
+     */
+    private function criarAcordoComTermoLegadoDefeituoso(): AcordoInadimplencia
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $acordo = app(AcordoInadimplenciaService::class)->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 1500.00,
+            'quantidade_parcelas' => 2,
+            'primeiro_vencimento' => '2026-11-10',
+        ], $user);
+
+        $acordo->update(['termo_confissao_texto' => "Entrada: R$ {number_format((float) 0.00, 2, ',', '.')};"]);
+
+        return $acordo->fresh();
+    }
+
+    public function test_pagina_publica_mostra_termo_regerado_para_acordo_criado_com_texto_defeituoso(): void
+    {
+        $acordo = $this->criarAcordoComTermoLegadoDefeituoso();
+
+        $this->get(route('acordo.publico.show', ['token' => $acordo->token_publico]))
+            ->assertSuccessful()
+            ->assertSee('2 parcela(s) no valor de R$ 750,00;', false)
+            ->assertDontSee('number_format', false);
+    }
+
+    public function test_aceite_grava_o_termo_corrigido_e_o_congela(): void
+    {
+        $acordo = $this->criarAcordoComTermoLegadoDefeituoso();
+        $service = app(AcordoInadimplenciaService::class);
+
+        $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), ['concordo' => '1'])
+            ->assertRedirect();
+
+        $aceito = $acordo->fresh();
+        $this->assertSame(StatusAcordoInadimplencia::Ativo, $aceito->status);
+        $this->assertStringContainsString('2 parcela(s) no valor de R$ 750,00;', $aceito->termo_confissao_texto);
+        $this->assertStringNotContainsString('number_format', $aceito->termo_confissao_texto);
+
+        // Depois do aceite o texto vale como gravado, mesmo que os dados do acordo mudem.
+        $aceito->update(['valor_parcela' => 999.99]);
+        $this->assertSame($aceito->termo_confissao_texto, $service->termoParaExibicao($aceito->fresh()));
+        $this->assertStringContainsString('R$ 750,00;', $service->termoParaExibicao($aceito->fresh()));
+    }
+
+    public function test_antes_do_aceite_o_termo_acompanha_alteracoes_nos_valores(): void
+    {
+        $acordo = $this->criarAcordoComTermoLegadoDefeituoso();
+        $acordo->update(['valor_parcela' => 612.34]);
+
+        $termo = app(AcordoInadimplenciaService::class)->termoParaExibicao($acordo->fresh());
+
+        $this->assertStringContainsString('2 parcela(s) no valor de R$ 612,34;', $termo);
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 class AcordoPublicoController extends Controller
 {
-    public function show(string $token): View
+    public function show(string $token, AcordoInadimplenciaService $service): View
     {
         $acordo = AcordoInadimplencia::with(['matricula.pessoa', 'responsavelPessoa', 'parcelas'])
             ->where('token_publico', $token)
@@ -19,6 +19,7 @@ class AcordoPublicoController extends Controller
 
         return view('financeiro.acordo-publico', [
             'acordo' => $acordo,
+            'termo' => $service->termoParaExibicao($acordo),
         ]);
     }
 

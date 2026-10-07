@@ -30,7 +30,7 @@
 
     <!-- Minuta Jurídica Completa -->
     <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 font-mono text-xs whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
-        {{ $acordo->termo_confissao_texto }}
+        {{ app(\App\Services\AcordoInadimplenciaService::class)->termoParaExibicao($acordo) }}
     </div>
 
     <!-- Cronograma de Parcelas -->

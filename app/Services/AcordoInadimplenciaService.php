@@ -58,7 +58,16 @@ class AcordoInadimplenciaService
         $somaParcelas = $valorParcela * $quantidadeParcelas;
         $diferencaCentavos = round($saldoParcelar - $somaParcelas, 2);
 
-        $dtPrimeiroVenc = $primeiroVencimento ? Carbon::parse($primeiroVencimento) : now()->addMonth()->day(min(28, $diaVencimento));
+        // Os demais vencimentos caem sempre entre os dias 1 e 28, para existirem em todos os meses.
+        $diaParcelas = max(1, min(28, $diaVencimento));
+
+        $dtPrimeiroVenc = $primeiroVencimento
+            ? Carbon::parse($primeiroVencimento)->startOfDay()
+            : now()->startOfDay()->addMonthNoOverflow()->day($diaParcelas);
+
+        // Âncora no dia 1 do mês da primeira parcela: somar meses a partir de um dia 29–31 estourava o mês
+        // (31/01 + 1 mês = 03/03), pulando fevereiro e repetindo março.
+        $mesBase = $dtPrimeiroVenc->copy()->startOfMonth();
 
         $parcelasProjetadas = [];
         if ($valorEntrada > 0) {
@@ -76,7 +85,10 @@ class AcordoInadimplenciaService
                 $valorItem += $diferencaCentavos;
             }
 
-            $venc = $dtPrimeiroVenc->copy()->addMonths($i - 1)->day(min(28, $diaVencimento));
+            // A 1ª parcela vence na data informada (a mesma que o termo imprime como "primeiro vencimento").
+            $venc = $i === 1
+                ? $dtPrimeiroVenc->copy()
+                : $mesBase->copy()->addMonthsNoOverflow($i - 1)->day($diaParcelas);
 
             $parcelasProjetadas[] = [
                 'numero_parcela' => $i,
@@ -178,7 +190,23 @@ class AcordoInadimplenciaService
             'aceito_em' => now(),
             'ip_aceite' => $ip,
             'user_agent_aceite' => $userAgent,
+            // Congela o texto que a família acabou de ler: a partir daqui o termo aceito não é mais regerado.
+            'termo_confissao_texto' => $this->gerarMinutaConfissaoDivida($acordo),
         ]);
+    }
+
+    /**
+     * Termo a exibir: enquanto não há aceite, é sempre gerado na hora a partir dos dados atuais do acordo (assim
+     * acordos criados com um texto antigo ou defeituoso saem corretos e edições nos valores são refletidas);
+     * depois do aceite, vale o texto gravado, que não pode mais mudar.
+     */
+    public function termoParaExibicao(AcordoInadimplencia $acordo): string
+    {
+        if ($acordo->aceito_em === null) {
+            return $this->gerarMinutaConfissaoDivida($acordo);
+        }
+
+        return (string) ($acordo->termo_confissao_texto ?: $this->gerarMinutaConfissaoDivida($acordo));
     }
 
     /**
@@ -215,6 +243,8 @@ class AcordoInadimplenciaService
      */
     public function gerarMinutaConfissaoDivida(AcordoInadimplencia $acordo): string
     {
+        $acordo->loadMissing(['matricula.pessoa', 'responsavelPessoa']);
+
         $alunoNome = $acordo->matricula?->pessoa?->nome ?? 'Aluno';
         $responsavel = $acordo->responsavelPessoa;
         $respNome = $responsavel?->nome ?? 'Responsável';
@@ -223,6 +253,9 @@ class AcordoInadimplenciaService
         $totalFmt = number_format((float) $acordo->valor_total_acordo, 2, ',', '.');
         $origFmt = number_format((float) $acordo->valor_original_total, 2, ',', '.');
         $descFmt = number_format((float) $acordo->valor_desconto, 2, ',', '.');
+        // Chamadas de função não são interpoladas em heredoc: formatadas aqui, antes do texto.
+        $parcelaFmt = number_format((float) $acordo->valor_parcela, 2, ',', '.');
+        $entradaFmt = number_format((float) $acordo->valor_entrada, 2, ',', '.');
 
         return <<<TEXT
 INSTRUMENTO PARTICULAR DE CONFISSÃO, PARCELAMENTO E TRANSAÇÃO DE DÍVIDA ESCOLAR
@@ -236,8 +269,8 @@ O(A) DEVEDOR(A) reconhece expressamente, de forma líquida, certa e exigível, a
 
 CLÁUSULA SEGUNDA - DA TRANSAÇÃO E CONDIÇÕES DE PAGAMENTO:
 Por mera liberalidade da CREDORA e com a finalidade de viabilizar a adimplência, concede-se um desconto financeiro de R$ {$descFmt}, fixando-se o valor final e consolidado do acordo em R$ {$totalFmt}, a ser quitado nas seguintes condições:
-- Quantidade de parcelas: {$acordo->quantidade_parcelas} parcela(s) no valor de R$ {number_format((float) $acordo->valor_parcela, 2, ',', '.')};
-- Entrada: R$ {number_format((float) $acordo->valor_entrada, 2, ',', '.')};
+- Quantidade de parcelas: {$acordo->quantidade_parcelas} parcela(s) no valor de R$ {$parcelaFmt};
+- Entrada: R$ {$entradaFmt};
 - Dia de vencimento: {$acordo->dia_vencimento_parcelas} de cada mês, com primeiro vencimento em {$acordo->primeiro_vencimento?->format('d/m/Y')}.
 
 CLÁUSULA TERCEIRA - DA CLÁUSULA RESOLUTIVA E PERDA DO DESCONTO:

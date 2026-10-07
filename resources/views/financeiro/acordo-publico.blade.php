@@ -131,7 +131,7 @@
                 <div class="p-6 sm:p-8 border-t border-slate-200 bg-white">
                     <h3 class="text-sm font-bold text-slate-900 mb-2">Termo de Confissão de Dívida e Transação</h3>
                     <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 max-h-48 overflow-y-auto mb-6 whitespace-pre-line leading-relaxed font-mono">
-                        {{ $acordo->termo_confissao_texto }}
+                        {{ $termo }}
                     </div>
 
                     <form action="{{ route('acordo.publico.aceitar', ['token' => $acordo->token_publico]) }}" method="POST">
