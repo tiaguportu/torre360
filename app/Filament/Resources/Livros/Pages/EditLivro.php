@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Livros\Pages;
 
 use App\Filament\Resources\Livros\LivroResource;
+use App\Models\Livro;
 use App\Models\VideoTutorial;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -13,10 +14,29 @@ class EditLivro extends EditRecord
 {
     protected static string $resource = LivroResource::class;
 
+    /**
+     * A disponibilidade é sempre derivada (total − empréstimos em aberto): editar o total reajusta o estoque
+     * sem deixar o campo divergir dos empréstimos reais.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        /** @var Livro $livro */
+        $livro = $this->getRecord();
+
+        $data['quantidade_disponivel'] = $livro->disponibilidadeCalculada((int) ($data['quantidade_total'] ?? $livro->quantidade_total));
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->modalDescription('O histórico de empréstimos já devolvidos desta obra também será excluído. Obras com empréstimos em aberto não podem ser excluídas.')
+                ->failureNotificationTitle('Não foi possível excluir: há empréstimos em aberto desta obra. Registre as devoluções antes.'),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Livros\Schemas;
 
+use App\Models\Livro;
 use App\Services\LivroLookupService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -13,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class LivroForm
 {
@@ -150,16 +152,25 @@ class LivroForm
                                 TextInput::make('quantidade_total')
                                     ->label('Quantidade Total de Exemplares')
                                     ->numeric()
-                                    ->minValue(1)
+                                    ->integer()
+                                    // Não dá para ter menos exemplares do que os que estão emprestados agora.
+                                    ->minValue(fn (?Model $record): int => max(1, $record instanceof Livro ? $record->emprestimosEmAberto()->count() : 1))
                                     ->default(1)
-                                    ->required(),
+                                    ->required()
+                                    ->helperText(function (?Model $record): ?string {
+                                        $emAberto = $record instanceof Livro ? $record->emprestimosEmAberto()->count() : 0;
+
+                                        return $emAberto > 0
+                                            ? "Há {$emAberto} exemplar(es) emprestado(s) no momento; o total não pode ser menor que isso."
+                                            : 'Ao cadastrar, todos os exemplares ficam disponíveis para empréstimo.';
+                                    }),
                                 TextInput::make('quantidade_disponivel')
                                     ->label('Quantidade Disponível')
                                     ->numeric()
-                                    ->minValue(0)
-                                    ->default(1)
-                                    ->required()
-                                    ->helperText('Diminui a cada empréstimo e volta ao normal quando o livro é devolvido.'),
+                                    ->visibleOn('edit')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->helperText('Calculada automaticamente: total de exemplares menos os empréstimos em aberto. Muda a cada empréstimo e devolução.'),
                             ]),
                     ]),
             ]);

@@ -39,6 +39,7 @@ class EmprestimoForm
                             ->label('Devolução Prevista')
                             ->native(false)
                             ->default(now()->addDays(14))
+                            ->afterOrEqual('data_emprestimo')
                             ->required(),
                     ]),
             ]);

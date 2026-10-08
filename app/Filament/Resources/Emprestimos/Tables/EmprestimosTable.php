@@ -48,7 +48,8 @@ class EmprestimosTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->modalDescription('Os empréstimos selecionados e seu histórico serão excluídos. Os que ainda estão em aberto devolvem o exemplar ao acervo disponível.'),
                 ]),
             ])
             ->defaultSort('data_prevista_devolucao')
@@ -65,7 +66,16 @@ class EmprestimosTable
             ->requiresConfirmation()
             ->modalDescription(fn (Emprestimo $record): string => "Confirma a devolução de \"{$record->livro->titulo}\"?")
             ->action(function (Emprestimo $record): void {
-                $record->registrarDevolucao();
+                // false = já estava devolvido (outra aba ou duplo clique): o exemplar não é devolvido duas vezes.
+                if (! $record->registrarDevolucao()) {
+                    Notification::make()
+                        ->title('Este empréstimo já havia sido devolvido')
+                        ->body('Nenhuma alteração foi feita no estoque.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
 
                 Notification::make()
                     ->title('Devolução registrada com sucesso!')

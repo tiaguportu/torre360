@@ -15,6 +15,20 @@ class CreateLivro extends CreateRecord
 {
     protected static string $resource = LivroResource::class;
 
+    /**
+     * Obra nova: todos os exemplares nascem disponíveis (antes a "Quantidade Disponível" tinha padrão 1,
+     * independente do total, e cadastrar 10 exemplares deixava só 1 emprestável).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['quantidade_disponivel'] = (int) ($data['quantidade_total'] ?? 1);
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

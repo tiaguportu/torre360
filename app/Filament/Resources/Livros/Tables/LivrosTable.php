@@ -97,7 +97,11 @@ class LivrosTable
 
                             return redirect()->away(route('biblioteca.etiquetas.imprimir', ['livros' => $ids, 'autoprint' => 1]));
                         }),
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->modalDescription('O histórico de empréstimos já devolvidos das obras selecionadas também será excluído. Obras com empréstimos em aberto são mantidas.')
+                        ->failureNotificationTitle(fn (int $successCount, int $totalCount): string => $successCount > 0
+                            ? "{$successCount} de {$totalCount} obra(s) excluída(s); as demais têm empréstimos em aberto (registre as devoluções antes)."
+                            : 'Nenhuma obra excluída: todas as selecionadas têm empréstimos em aberto. Registre as devoluções antes.'),
                 ]),
             ])
             ->defaultSort('titulo')

@@ -178,15 +178,19 @@ class CirculacaoBiblioteca extends Page implements HasForms
 
         $dataPrevista = $this->data_prevista_devolucao ?: now()->addDays(14)->format('Y-m-d');
 
-        $emprestimo = Emprestimo::create([
-            'livro_id' => $livro->id,
-            'matricula_id' => $matricula->id,
-            'data_emprestimo' => now()->toDateString(),
-            'data_prevista_devolucao' => $dataPrevista,
-            'status' => StatusEmprestimo::Emprestado,
-        ]);
+        // A reserva do exemplar é atômica e só cria o empréstimo se deu certo: a checagem de disponibilidade acima
+        // é só a mensagem amigável; quem decide é o decremento condicional dentro de Emprestimo::emprestar().
+        try {
+            Emprestimo::emprestar($livro->id, $matricula->id, now()->toDateString(), $dataPrevista);
+        } catch (\DomainException $e) {
+            Notification::make()
+                ->title('Empréstimo não registrado')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
 
-        $livro->decrement('quantidade_disponivel');
+            return;
+        }
 
         $this->codigo_livro_emprestimo = null;
 
@@ -258,7 +262,19 @@ class CirculacaoBiblioteca extends Page implements HasForms
         }
 
         $nomeAluno = $emprestimo->matricula->pessoa->nome ?? 'Aluno';
-        $emprestimo->registrarDevolucao();
+
+        // false = outro balcão acabou de devolver este mesmo empréstimo: não devolve o exemplar duas vezes.
+        if (! $emprestimo->registrarDevolucao()) {
+            $this->codigo_livro_devolucao = null;
+
+            Notification::make()
+                ->title('Empréstimo já devolvido')
+                ->body("A devolução de \"{$livro->titulo}\" por {$nomeAluno} já havia sido registrada. O estoque não foi alterado.")
+                ->warning()
+                ->send();
+
+            return;
+        }
 
         $this->codigo_livro_devolucao = null;
 
