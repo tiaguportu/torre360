@@ -80,13 +80,20 @@ class MatriculasTable
             ->columns([
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
-                    ->description(function (Matricula $record): string {
-                        return implode(' · ', array_filter([$record->turma?->nome, $record->turma?->serie?->curso?->nome]));
-                    })
+                    // Abaixo do nome: ano letivo · curso · série · turma (tudo vem da turma, já carregada na consulta).
+                    ->description(fn (Matricula $record): string => implode(' · ', array_filter([
+                        $record->periodoLetivo?->nome,
+                        $record->turma?->serie?->curso?->nome,
+                        $record->turma?->serie?->nome,
+                        $record->turma?->nome,
+                    ])))
                     ->weight('bold')
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $q) => $q
                         ->whereHas('pessoa', fn (Builder $pessoa) => $pessoa->where('nome', 'like', "%{$search}%"))
-                        ->orWhereHas('turma', fn (Builder $turma) => $turma->where('nome', 'like', "%{$search}%"))))
+                        ->orWhereHas('turma', fn (Builder $turma) => $turma
+                            ->where('nome', 'like', "%{$search}%")
+                            ->orWhereHas('periodoLetivo', fn (Builder $periodo) => $periodo->where('nome', 'like', "%{$search}%"))
+                            ->orWhereHas('serie', fn (Builder $serie) => $serie->where('nome', 'like', "%{$search}%")))))
                     ->sortable()
                     ->url(function (Matricula $record) {
                         if (! $record->pessoa) {
@@ -150,11 +157,6 @@ class MatriculasTable
                     ->formatStateUsing(fn (?int $state): string => $state !== null ? "Score {$state}" : 'Score —')
                     ->sortable()
                     ->toggleable(),
-                TextColumn::make('periodoLetivo.nome')
-                    ->label('Período Letivo')
-                    ->badge()
-                    ->color('gray')
-                    ->sortable(),
                 IconColumn::make('contrato')
                     ->label('Contrato')
                     ->state(fn (Matricula $record): bool => $record->contrato !== null)

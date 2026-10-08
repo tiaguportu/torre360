@@ -10,15 +10,19 @@ use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Filament\Resources\Turmas\RelationManagers\MatriculasRelationManager;
 use App\Models\Cidade;
+use App\Models\Curso;
 use App\Models\DocumentoInserido;
 use App\Models\Endereco;
 use App\Models\Estado;
 use App\Models\Matricula;
 use App\Models\Pais;
+use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\Serie;
 use App\Models\TipoDocumento;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
+use App\Models\Unidade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -254,6 +258,45 @@ class MatriculaListagemTest extends TestCase
             ->searchTable('Turma Alfa')
             ->assertCanSeeTableRecords([$porTurma])
             ->assertCanNotSeeTableRecords([$porAluno]);
+    }
+
+    private function turmaCompleta(string $periodoNome, string $serieNome, string $turmaNome): Turma
+    {
+        $unidade = Unidade::firstOrCreate(['nome' => 'Sede']);
+        $curso = Curso::firstOrCreate(['nome_interno' => 'EF'], ['unidade_id' => $unidade->id, 'nome_externo' => 'Ensino Fundamental']);
+        $serie = Serie::create(['nome' => $serieNome, 'curso_id' => $curso->id, 'sistema_avaliacao' => 'Nota']);
+        $periodo = PeriodoLetivo::factory()->create(['nome' => $periodoNome]);
+
+        return Turma::factory()->create(['nome' => $turmaNome, 'serie_id' => $serie->id, 'periodo_letivo_id' => $periodo->id]);
+    }
+
+    #[Test]
+    public function abaixo_do_nome_do_aluno_aparecem_ano_letivo_curso_serie_e_turma(): void
+    {
+        $turma = $this->turmaCompleta('2031', '3º Ano', 'Turma Delta');
+        $matricula = Matricula::factory()->create(['turma_id' => $turma->id]);
+
+        $lista = Livewire::test(ListMatriculas::class)
+            ->assertCanSeeTableRecords([$matricula])
+            ->assertSee('2031 · Ensino Fundamental · 3º Ano · Turma Delta');
+
+        // O ano letivo deixou de ter coluna própria: agora fica junto do nome do aluno
+        $this->assertNull($lista->instance()->getTable()->getColumn('periodoLetivo.nome'));
+    }
+
+    #[Test]
+    public function busca_tambem_encontra_pelo_ano_letivo_e_pela_serie(): void
+    {
+        $matriculaDe2031 = Matricula::factory()->create(['turma_id' => $this->turmaCompleta('2031', 'Série Alfa', 'Turma A')->id]);
+        $matriculaDe2032 = Matricula::factory()->create(['turma_id' => $this->turmaCompleta('2032', 'Série Beta', 'Turma B')->id]);
+
+        Livewire::test(ListMatriculas::class)
+            ->searchTable('2031')
+            ->assertCanSeeTableRecords([$matriculaDe2031])
+            ->assertCanNotSeeTableRecords([$matriculaDe2032])
+            ->searchTable('Série Beta')
+            ->assertCanSeeTableRecords([$matriculaDe2032])
+            ->assertCanNotSeeTableRecords([$matriculaDe2031]);
     }
 
     #[Test]

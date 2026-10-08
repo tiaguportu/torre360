@@ -205,7 +205,7 @@ class ListMatriculas extends ListRecords
                 ['📊', 'Cartões de resumo (topo)', 'Mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm pendências, quantas estão sem responsável, quantas estão com contrato não gerado e quantas estão com contrato não assinado.'],
                 ['🗂️', 'Abas de situação', 'Ativas (aba inicial), Pendentes, Com pendências, Trancadas, Concluídas, Canceladas, Reserva, Evasão e Todas. O número em cada aba mostra quantas matrículas há. Trancadas, Concluídas, Reserva e Evasão só aparecem quando existem matrículas nessa situação.'],
                 ['📋', 'Tabela de matrículas', 'Uma linha por matrícula, com as informações principais já resumidas (veja "Como ler a tabela").'],
-                ['🔎', 'Busca e filtros', 'A busca procura pelo nome do aluno ou da turma. Os filtros ficam recolhidos acima da tabela: Curso, Turma, Período Letivo, Pendências e Contrato.'],
+                ['🔎', 'Busca e filtros', 'A busca procura pelo nome do aluno, da turma, da série ou do ano letivo. Os filtros ficam recolhidos acima da tabela: Curso, Turma, Período Letivo, Pendências e Contrato.'],
                 $canCreate ? ['👥', 'Matrícula em Lote', 'Use o botão "Matrícula em Lote" para matricular vários alunos de uma vez em uma turma, definindo a situação.'] : null,
             ])
             ->secao('🗂️ Para que serve cada aba', [
@@ -215,10 +215,9 @@ class ListMatriculas extends ListRecords
                 ['📚', 'Demais abas', 'Trancadas, Concluídas, Canceladas, Reserva e Evasão agrupam as matrículas por situação. "Todas" mostra tudo, sem recorte.'],
             ])
             ->secao('📋 Como ler a tabela', [
-                ['👤', 'Aluno', 'Nome do aluno e, logo abaixo, a turma e o curso. Clique no nome para abrir a ficha da pessoa (se você tiver permissão).'],
+                ['👤', 'Aluno', 'Nome do aluno e, logo abaixo, o ano letivo, o curso, a série e a turma (ex.: 2026 · Ensino Fundamental · 3º Ano · Turma A). Clique no nome para abrir a ficha da pessoa (se você tiver permissão).'],
                 ['🏷️', 'Situação', 'Badge colorido com a situação da matrícula.'],
                 ['⚠️', 'Pendências', 'Badges, um embaixo do outro, com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando, N documentos rejeitados, Contrato não gerado e Contrato não assinado. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
-                ['🗓️', 'Período Letivo', 'Período ao qual a matrícula pertence.'],
                 ['📄', 'Contrato', 'Ícone verde quando a matrícula já tem contrato gerado; cinza quando ainda não tem.'],
                 ['⚙️', 'Colunas opcionais', 'Pelo ícone de colunas da tabela você pode exibir Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.'],
             ]);
