@@ -676,7 +676,8 @@ Estrutura de ensino e turmas.
 - **Campos Principais:**
   - `periodo_rematricula_id`: FK `periodo_rematriculas`.
   - `matricula_origem_id`: FK `matricula` (matrícula do ano corrente sendo renovada).
-  - `turma_destino_id` (nullable), `serie_destino_id` (nullable), `turno_pretendido_id` (nullable): preferências informadas pela família; se não houver turma específica, o sistema tenta achar uma pela série+turno no período de destino.
+  - `serie_destino_id` (nullable), `turno_pretendido_id` (nullable): preferências informadas pela família no Portal. `turma_destino_id` (nullable até efetivar): turma escolhida **pela secretaria** ao efetivar (obrigatória em `RematriculaService::efetivar()`; não há mais busca automática nem matrícula sem turma). Ao efetivar, os três são gravados a partir da turma escolhida.
+  - Índice único `(periodo_rematricula_id, matricula_origem_id)` (`rematriculas_campanha_matricula_origem_unique`, criado se não houver duplicatas).
   - `solicitante_user_id`: FK `users` (quem confirmou os dados pelo Portal).
   - `status`: Enum `StatusRematricula`: `iniciada` → `dados_confirmados` → `aguardando_assinatura` (Onda 7: quando o contrato foi enviado ao Assinafy) → `confirmada` (Onda 7: só quando o contrato é efetivamente assinado — ver webhook do Assinafy) — ou `cancelada`.
   - `contrato_id`: FK `contrato` (nullable, o novo contrato gerado).

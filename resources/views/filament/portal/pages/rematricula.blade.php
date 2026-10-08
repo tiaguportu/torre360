@@ -8,7 +8,7 @@
                     </span>
                     <h2 class="text-lg font-bold mt-2">{{ $this->periodoAtivo->nome }}</h2>
                     <p class="text-xs text-primary-100 mt-1 max-w-xl">
-                        {{ $this->periodoAtivo->mensagem_orientacao ?? 'Garanta a vaga do seu filho para o próximo ano letivo com antecedência. Confirme os dados e as preferências de turno abaixo.' }}
+                        {{ $this->periodoAtivo->mensagem_orientacao ?? 'Garanta a vaga do seu filho para o próximo ano letivo com antecedência. Informe a série e o turno de preferência abaixo; a secretaria define a turma e envia o contrato para assinatura.' }}
                     </p>
                 </div>
                 <div class="text-xs bg-white/10 px-3 py-2 rounded-xl border border-white/20 whitespace-nowrap">

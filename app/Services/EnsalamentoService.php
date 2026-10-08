@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Sexo;
+use App\Exceptions\TurmaIndisponivelException;
 use App\Models\Matricula;
 use App\Models\Turma;
 use Illuminate\Database\Eloquent\Builder;
@@ -109,21 +110,26 @@ class EnsalamentoService
      */
     public function alocarAlunosEmTurma(array $matriculaIds, int $turmaId): void
     {
-        $turma = Turma::findOrFail($turmaId);
+        DB::transaction(function () use ($matriculaIds, $turmaId) {
+            // Só quem ainda não está na turma consome vaga nova (mover para a mesma turma não conta em dobro).
+            $novos = Matricula::query()
+                ->whereIn('id', $matriculaIds)
+                ->where(fn (Builder $query) => $query->whereNull('turma_id')->orWhere('turma_id', '!=', $turmaId))
+                ->count();
 
-        $vagas = $turma->vagas_maximas ?: 0;
-        $atuais = $turma->matriculas()->count();
-        $novos = count($matriculaIds);
+            try {
+                $turma = $novos > 0
+                    ? app(TurmaVagasService::class)->garantirVaga($turmaId, $novos)
+                    : Turma::findOrFail($turmaId);
+            } catch (TurmaIndisponivelException $e) {
+                throw new InvalidArgumentException($e->getMessage(), 0, $e);
+            }
 
-        if ($vagas > 0 && ($atuais + $novos) > $vagas) {
-            $excedente = ($atuais + $novos) - $vagas;
-            throw new InvalidArgumentException("A Turma '{$turma->nome}' possui capacidade para {$vagas} alunos. A alocação selecionada excederia o limite em {$excedente} vaga(s).");
-        }
-
-        Matricula::whereIn('id', $matriculaIds)->update([
-            'turma_id' => $turma->id,
-            'serie_id' => $turma->serie_id,
-        ]);
+            Matricula::whereIn('id', $matriculaIds)->update([
+                'turma_id' => $turma->id,
+                'serie_id' => $turma->serie_id,
+            ]);
+        });
     }
 
     /**

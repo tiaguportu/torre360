@@ -4,12 +4,15 @@ namespace App\Filament\Resources\PeriodoRematriculas\Schemas;
 
 use App\Models\PeriodoLetivo;
 use App\Models\TemplateContrato;
+use App\Models\Turma;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class PeriodoRematriculaForm
@@ -36,7 +39,9 @@ class PeriodoRematriculaForm
                             ->label('Período Letivo Alvo (Destino)')
                             ->options(PeriodoLetivo::pluck('nome', 'id'))
                             ->required()
-                            ->helperText('Período para o qual as novas matrículas serão geradas.'),
+                            ->different('periodo_letivo_origem_id')
+                            ->validationMessages(['different' => 'O período de destino deve ser diferente do período de origem.'])
+                            ->helperText('Período para o qual as novas matrículas serão geradas. As turmas dele precisam estar cadastradas (Acadêmico → Turmas) antes da secretaria efetivar as rematrículas.'),
 
                         Select::make('template_contrato_id')
                             ->label('Modelo de Contrato para o Novo Período')
@@ -84,7 +89,20 @@ class PeriodoRematriculaForm
                         Toggle::make('is_ativo')
                             ->label('Campanha Ativa')
                             ->default(true)
-                            ->helperText('Define se o banner e o formulário de rematrícula ficam disponíveis no Portal da Família.'),
+                            ->rules([
+                                fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                    $destino = $get('periodo_letivo_destino_id');
+
+                                    if (! $value || ! $destino) {
+                                        return;
+                                    }
+
+                                    if (! Turma::abertasParaMatricula()->where('periodo_letivo_id', $destino)->exists()) {
+                                        $fail('Cadastre ao menos uma turma (Planejada ou Ativa) no período de destino antes de ativar a campanha: a secretaria escolhe a turma de cada rematrícula. Use "Duplicar para outro período" em Acadêmico → Turmas.');
+                                    }
+                                },
+                            ])
+                            ->helperText('Define se o banner e o formulário de rematrícula ficam disponíveis no Portal da Família. Exige turmas abertas no período de destino.'),
 
                         Textarea::make('mensagem_orientacao')
                             ->label('Mensagem e Orientações para os Pais no Portal')

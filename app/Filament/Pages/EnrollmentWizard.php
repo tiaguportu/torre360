@@ -6,6 +6,7 @@ use App\Enums\CorRaca;
 use App\Enums\Sexo;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Exceptions\TurmaIndisponivelException;
 use App\Models\AlunoResponsavel;
 use App\Models\Cidade;
 use App\Models\Contrato;
@@ -27,6 +28,7 @@ use App\Models\User;
 use App\Models\VideoTutorial;
 use App\Notifications\WelcomeUserMail;
 use App\Services\InteressadoMatriculaService;
+use App\Services\TurmaVagasService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
@@ -659,24 +661,23 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         try {
             DB::beginTransaction();
 
-            $turma = Turma::with('serie')->find($raw['turma_id']);
+            // ── Validação de status e de vagas ──────────────────────────
+            // Trava a turma na transação: dois atendentes matriculando na última vaga passam um de cada vez.
+            try {
+                app(TurmaVagasService::class)->garantirVaga((int) $raw['turma_id'], count($raw['alunos']));
+            } catch (TurmaIndisponivelException $e) {
+                DB::rollBack();
 
-            // ── Validação de vagas ──────────────────────────────────────
-            if ($turma && $turma->vagas_maximas) {
-                $alunosCount = count($raw['alunos']);
-                $matriculadas = $turma->matriculas()->count();
+                Notification::make()
+                    ->title($e->turmaSemVaga() ? 'Turma sem vagas suficientes' : 'Turma indisponível')
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
 
-                if (($matriculadas + $alunosCount) > $turma->vagas_maximas) {
-                    $disponiveis = max(0, $turma->vagas_maximas - $matriculadas);
-                    Notification::make()
-                        ->title('Turma sem vagas suficientes')
-                        ->body("A turma \"{$turma->nome}\" possui apenas {$disponiveis} vaga(s) disponível(is) e você tentou matricular {$alunosCount} aluno(s).")
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
+                return;
             }
+
+            $turma = Turma::with('serie')->find($raw['turma_id']);
 
             // ── Checagem de Documentos Obrigatórios para Emissão do Contrato ──
             $cursoAlvoId = $raw['curso_id'] ?? $turma?->serie?->curso_id;

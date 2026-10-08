@@ -43,7 +43,8 @@ class ListRematriculas extends ListRecords
         $html .= '<ul>';
         $html .= '<li><strong>Status dos Alunos:</strong> Veja quem já iniciou a rematrícula, quem confirmou dados, quem está aguardando assinatura de contrato ou já teve a rematrícula concluída.</li>';
         if ($canUpdate) {
-            $html .= '<li><strong>Efetivar Rematrícula:</strong> Acione o botão <em>"Efetivar Rematrícula"</em> na linha do aluno para gerar a nova matrícula ativa no próximo período e o contrato automaticamente.</li>';
+            $html .= '<li><strong>Efetivar Rematrícula:</strong> Acione o botão <em>"Efetivar Rematrícula"</em> na linha do aluno e <strong>escolha a turma de destino</strong> (só aparecem turmas do período de destino abertas para matrícula; as lotadas não podem ser escolhidas). O sistema cria a nova matrícula ativa nessa turma e o contrato automaticamente. A família só informa série e turno de preferência — a turma é sempre definida pela secretaria.</li>';
+            $html .= '<li><strong>Efetivar na mesma turma (lote):</strong> Selecione várias rematrículas da mesma campanha e escolha uma turma para efetivar todas de uma vez; se a turma lotar, as restantes continuam pendentes.</li>';
         }
         $html .= '<li><strong>Ver Contrato:</strong> Acesse o contrato gerado com as faturas e dados de assinatura digital.</li>';
         $html .= '</ul>';

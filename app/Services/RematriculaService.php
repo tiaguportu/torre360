@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusRematricula;
+use App\Exceptions\TurmaIndisponivelException;
 use App\Models\Contrato;
 use App\Models\Matricula;
 use App\Models\PeriodoRematricula;
@@ -18,6 +19,7 @@ class RematriculaService
     public function __construct(
         private GeracaoFaturasContratoService $geracaoFaturasService,
         private AssinafyService $assinafyService,
+        private TurmaVagasService $vagasService,
     ) {}
 
     /**
@@ -48,6 +50,62 @@ class RematriculaService
     }
 
     /**
+     * Turmas que podem receber a rematrícula: do período letivo de destino da campanha, abertas para
+     * matrícula (Planejada ou Ativa) e, quando a família informou a série pretendida, dessa série.
+     *
+     * @return Collection<int, Turma>
+     */
+    public function turmasParaEscolha(PeriodoRematricula $periodo, ?int $serieId = null): Collection
+    {
+        return Turma::query()
+            ->abertasParaMatricula()
+            ->where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)
+            ->when($serieId, fn ($query) => $query->where('serie_id', $serieId))
+            ->with('turno')
+            ->orderBy('nome')
+            ->get();
+    }
+
+    /**
+     * Opções para o Select de turma: rótulos com ocupação ("12/30 vagas") e a lista das lotadas
+     * (para desabilitá-las na tela).
+     *
+     * @return array{opcoes: array<int, string>, lotadas: list<int>}
+     */
+    public function opcoesDeTurma(PeriodoRematricula $periodo, ?int $serieId = null): array
+    {
+        $opcoes = [];
+        $lotadas = [];
+
+        foreach ($this->turmasParaEscolha($periodo, $serieId) as $turma) {
+            $opcoes[$turma->id] = $this->vagasService->rotulo($turma, $turma->turno?->nome);
+
+            if ($this->vagasService->estaLotada($turma)) {
+                $lotadas[] = $turma->id;
+            }
+        }
+
+        return ['opcoes' => $opcoes, 'lotadas' => $lotadas];
+    }
+
+    /**
+     * Turma sugerida para pré-selecionar: a já definida na rematrícula ou, se só existir uma turma
+     * com vaga na série e no turno que a família pediu, essa.
+     */
+    public function turmaSugerida(Rematricula $rematricula, PeriodoRematricula $periodo): ?int
+    {
+        if ($rematricula->turma_destino_id) {
+            return (int) $rematricula->turma_destino_id;
+        }
+
+        $candidatas = $this->turmasParaEscolha($periodo, $rematricula->serie_destino_id)
+            ->when($rematricula->turno_pretendido_id, fn (Collection $turmas) => $turmas->where('turno_id', $rematricula->turno_pretendido_id))
+            ->reject(fn (Turma $turma) => $this->vagasService->estaLotada($turma));
+
+        return $candidatas->count() === 1 ? (int) $candidatas->first()->id : null;
+    }
+
+    /**
      * Inicia ou recupera um processo de rematrícula para uma matrícula de origem.
      */
     public function iniciarOuObter(Matricula $matricula, PeriodoRematricula $periodo, User $user): Rematricula
@@ -68,16 +126,24 @@ class RematriculaService
      * Efetiva a rematrícula no sistema:
      * Cria a nova matrícula no período subsequente, gera o contrato se houver template e conclui o processo.
      *
+     * A turma de destino é obrigatória: vem do argumento `$turmaId` (escolhida pela secretaria) ou,
+     * se omitido, de `turma_destino_id` da própria rematrícula. Ela precisa ser do período letivo de
+     * destino da campanha, da série pretendida (quando informada), estar aberta para matrículas
+     * (Planejada ou Ativa) e ter vaga — a checagem de vaga trava a turma na transação.
+     *
      * Idempotente: se a rematrícula já foi efetivada, devolve a matrícula já criada sem gerar
      * matrícula, contrato, faturas nem documento no Assinafy em duplicidade.
+     *
+     * @throws TurmaIndisponivelException turma de outro período/série, fechada ou lotada
+     * @throws \DomainException turma de destino não informada
      */
-    public function efetivar(Rematricula $rematricula): Matricula
+    public function efetivar(Rematricula $rematricula, ?int $turmaId = null): Matricula
     {
         $contrato = null;
 
         // Tudo que é gravado fica numa transação: se algum passo falhar (ex.: entrada maior que o
         // valor do contrato) nada é mantido pela metade, e uma nova tentativa não duplica registros.
-        $novaMatricula = DB::transaction(function () use ($rematricula, &$contrato): Matricula {
+        $novaMatricula = DB::transaction(function () use ($rematricula, $turmaId, &$contrato): Matricula {
             // Trava a linha para que duas efetivações simultâneas (duas abas, Portal + admin)
             // não passem juntas pela checagem de "já efetivada".
             $atual = Rematricula::query()->lockForUpdate()->findOrFail($rematricula->getKey());
@@ -89,27 +155,32 @@ class RematriculaService
             $matriculaOrigem = $atual->matriculaOrigem;
             $periodo = $atual->periodoRematricula;
 
-            // Determina a turma de destino
-            $turmaDestinoId = $atual->turma_destino_id;
+            $turmaDestinoId = $turmaId ?? $atual->turma_destino_id;
 
-            if (! $turmaDestinoId && $atual->serie_destino_id) {
-                // Tenta encontrar uma turma na série pretendida com o turno pretendido no período de destino
-                $turmaQuery = Turma::query()
-                    ->where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)
-                    ->where('serie_id', $atual->serie_destino_id);
-
-                if ($atual->turno_pretendido_id) {
-                    $turmaQuery->where('turno_id', $atual->turno_pretendido_id);
-                }
-
-                $turmaDestino = $turmaQuery->first();
-                $turmaDestinoId = $turmaDestino?->id;
+            if (! $turmaDestinoId) {
+                throw new \DomainException('Escolha a turma de destino antes de efetivar a rematrícula.');
             }
 
-            // Se ainda não tiver turma específica de destino, mantém a turma equivalente ou cria sem turma
+            // Trava a turma (depois da rematrícula, sempre nessa ordem) e confere status e vaga.
+            $turma = $this->vagasService->garantirVaga($turmaDestinoId);
+
+            if ((int) $turma->periodo_letivo_id !== (int) $periodo->periodo_letivo_destino_id) {
+                throw TurmaIndisponivelException::periodoDiferente($turma);
+            }
+
+            if ($atual->serie_destino_id && (int) $turma->serie_id !== (int) $atual->serie_destino_id) {
+                throw TurmaIndisponivelException::serieDiferente($turma);
+            }
+
+            // A turma escolhida passa a ser a fonte da verdade da rematrícula.
+            $atual->turma_destino_id = $turma->id;
+            $atual->serie_destino_id = $turma->serie_id;
+            $atual->turno_pretendido_id ??= $turma->turno_id;
+
             $novaMatricula = Matricula::create([
                 'pessoa_id' => $matriculaOrigem->pessoa_id,
-                'turma_id' => $turmaDestinoId,
+                'turma_id' => $turma->id,
+                'serie_id' => $turma->serie_id,
                 'periodo_letivo_id' => $periodo->periodo_letivo_destino_id,
                 'situacao' => SituacaoMatricula::ATIVA,
                 'data_ativacao' => now()->toDateString(),

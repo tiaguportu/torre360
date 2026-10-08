@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Rematriculas\Schemas;
 
 use App\Enums\StatusRematricula;
+use App\Models\PeriodoRematricula;
+use App\Models\Rematricula;
 use App\Models\Serie;
-use App\Models\Turma;
 use App\Models\Turno;
+use App\Services\RematriculaService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
@@ -32,9 +34,17 @@ class RematriculaForm
 
                         Select::make('turma_destino_id')
                             ->label('Turma de Destino')
-                            ->options(Turma::pluck('nome', 'id'))
+                            ->options(function (?Rematricula $record, RematriculaService $service): array {
+                                if (! $record) {
+                                    return [];
+                                }
+
+                                $periodo = PeriodoRematricula::find($record->periodo_rematricula_id);
+
+                                return $periodo ? $service->opcoesDeTurma($periodo, $record->serie_destino_id)['opcoes'] : [];
+                            })
                             ->searchable()
-                            ->preload(),
+                            ->helperText('Só turmas do período de destino da campanha, abertas para matrícula. A turma também é escolhida ao efetivar a rematrícula.'),
 
                         Select::make('turno_pretendido_id')
                             ->label('Turno Pretendido')

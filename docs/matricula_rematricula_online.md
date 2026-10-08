@@ -25,6 +25,55 @@ primeiro upload self-service do sistema é uma mudança de padrão maior do que 
 um fluxo já existente, então ficou fora do escopo — a família ainda entrega os
 documentos à secretaria pelos canais já existentes (Central de Atendimento, presencial).
 
+## 0. Rematrícula com turma obrigatória (secretaria escolhe a turma)
+
+Toda matrícula nasce numa turma (`matricula.turma_id` passa a ser obrigatório na fase
+seguinte). Por isso o fluxo da rematrícula foi dividido em duas etapas:
+
+1. **Família (Portal):** a ação "Realizar Rematrícula" só **registra a intenção** —
+   `serie_destino_id`, `turno_pretendido_id`, `observacoes` — e deixa a rematrícula em
+   `DadosConfirmados`. Não cria matrícula, contrato, faturas nem chama o Assinafy.
+2. **Secretaria (admin):** `RematriculaService::efetivar(Rematricula, ?int $turmaId)`.
+   A turma é **obrigatória** (argumento ou `turma_destino_id`); sem ela lança
+   `DomainException`. O antigo "tenta achar uma turma pela série+turno" e o "cria
+   matrícula sem turma" foram removidos.
+
+Validações em `efetivar()` (dentro da transação, na ordem de locks Rematricula → Turma):
+- turma no `periodo_letivo_destino_id` da campanha (`TurmaIndisponivelException::periodoDiferente`);
+- turma da série pretendida, quando a família informou (`serieDiferente`);
+- turma **aberta para matrícula** — status Planejada ou Ativa (`fechada`);
+- **vaga disponível**, com `lockForUpdate` na turma (`lotada`).
+
+A turma escolhida passa a ser a fonte da verdade: `turma_destino_id`, `serie_destino_id` e
+(se vazio) `turno_pretendido_id` da rematrícula são gravados a partir dela, e a nova
+matrícula recebe `turma_id`, `serie_id` e `periodo_letivo_id` coerentes.
+
+### Regra única de vagas — `App\Services\TurmaVagasService`
+- Ocupa vaga a matrícula **Ativa, Pendente ou Reserva** sem `data_desativacao` vencida
+  (mesma regra do Termômetro de Vagas). `vagas_maximas` nulo/0 = turma sem limite.
+- `garantirVaga($turma, $quantidade = 1)` exige estar **dentro de `DB::transaction()`**
+  (`LogicException` caso contrário), trava a linha da turma e lança
+  `TurmaIndisponivelException` (extends `DomainException`; `turmaSemVaga()` indica que
+  lotes devem parar). No SQLite dos testes o lock não tem efeito.
+- Usado por: `RematriculaService`, `MatriculaOnlineService`, `EnrollmentWizard::save()` e
+  `EnsalamentoService::alocarAlunosEmTurma()` (este continua lançando
+  `InvalidArgumentException`, com a mensagem da regra nova; mover alguém para a turma onde
+  já está não conta vaga em dobro).
+- `RematriculaService::opcoesDeTurma()`/`turmaSugerida()` alimentam o Select de turma da
+  ação **Efetivar** (individual e em lote, lotadas desabilitadas) e o formulário de edição.
+
+### Outras mudanças
+- Campanha (`PeriodoRematriculaForm`): destino ≠ origem; ativar exige ao menos uma turma
+  Planejada/Ativa no período de destino.
+- Migration `add_unique_index_to_rematriculas_table`: índice único
+  `(periodo_rematricula_id, matricula_origem_id)`. Se já houver duplicatas a migration
+  **não derruba o deploy**: grava um aviso no log (`Log::warning`) e deixa o índice para
+  depois de limpar as linhas repetidas. Com o índice, o `firstOrCreate` de
+  `iniciarOuObter()` passa a ser seguro contra cliques duplos.
+- Ação **Efetivar** do admin passou a exigir a permissão `Update:Rematricula`.
+- Testes: `RematriculaTurmaObrigatoriaTest` (regras da turma, vagas, ações da secretaria,
+  campanha, índice único) e `RematriculaAssinaturaTest` (Portal só registra a intenção).
+
 ## 1. Rematrícula: Assinatura e Cobrança Automáticas
 
 ### Antes desta onda

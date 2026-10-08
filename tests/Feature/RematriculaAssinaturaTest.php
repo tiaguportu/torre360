@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\StatusRematricula;
+use App\Enums\StatusTurma;
 use App\Filament\Portal\Pages\Rematricula as PaginaRematricula;
 use App\Models\Contrato;
 use App\Models\Curso;
@@ -232,7 +233,7 @@ class RematriculaAssinaturaTest extends TestCase
     // --- Portal: ação "Realizar Rematrícula" ---
 
     /**
-     * @return array{user: User, matricula: Matricula, serie: Serie, turno: Turno}
+     * @return array{user: User, matricula: Matricula, serie: Serie, turno: Turno, turmaDestino: Turma, campanha: PeriodoRematricula}
      */
     private function prepararPortal(bool $comTemplate = true): array
     {
@@ -242,7 +243,7 @@ class RematriculaAssinaturaTest extends TestCase
         $origem = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
         $destino = PeriodoLetivo::create(['nome' => '2027', 'data_inicio' => '2027-02-01', 'data_fim' => '2027-12-15']);
 
-        PeriodoRematricula::create([
+        $campanha = PeriodoRematricula::create([
             'nome' => 'Rematrícula 2027',
             'periodo_letivo_origem_id' => $origem->id,
             'periodo_letivo_destino_id' => $destino->id,
@@ -277,7 +278,17 @@ class RematriculaAssinaturaTest extends TestCase
         $serie = Serie::create(['nome' => '5º Ano', 'curso_id' => $curso->id, 'sistema_avaliacao' => 'Nota']);
         $turno = Turno::create(['nome' => 'Manhã', 'hora_inicio' => '07:00:00', 'hora_fim' => '12:00:00']);
 
-        return compact('user', 'matricula', 'serie', 'turno');
+        // Turma já cadastrada para o período de destino (a secretaria a escolhe ao efetivar).
+        $turmaDestino = Turma::create([
+            'nome' => '5º Ano A',
+            'serie_id' => $serie->id,
+            'turno_id' => $turno->id,
+            'periodo_letivo_id' => $destino->id,
+            'status' => StatusTurma::Planejada,
+            'vagas_maximas' => 25,
+        ]);
+
+        return compact('user', 'matricula', 'serie', 'turno', 'turmaDestino', 'campanha');
     }
 
     /**
@@ -288,65 +299,78 @@ class RematriculaAssinaturaTest extends TestCase
         return ['serie_destino_id' => $serie->id, 'turno_pretendido_id' => $turno->id];
     }
 
-    public function test_portal_avisa_que_falta_assinar_quando_o_contrato_foi_enviado(): void
+    public function test_portal_so_registra_a_intencao_e_nao_cria_matricula_nem_contrato(): void
+    {
+        // A família não escolhe turma: nada de matrícula, contrato ou envio ao Assinafy neste passo.
+        $this->mock(AssinafyService::class, function ($mock) {
+            $mock->shouldNotReceive('enviarContrato');
+        });
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+
+        Livewire::actingAs($user)
+            ->test(PaginaRematricula::class)
+            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno))
+            ->assertNotified('Preferências registradas!')
+            ->assertNotNotified('Rematrícula Confirmada!');
+
+        $rematricula = Rematricula::firstOrFail();
+        $this->assertEquals(StatusRematricula::DadosConfirmados, $rematricula->status);
+        $this->assertSame($serie->id, $rematricula->serie_destino_id);
+        $this->assertSame($turno->id, $rematricula->turno_pretendido_id);
+        $this->assertNull($rematricula->turma_destino_id);
+        $this->assertNull($rematricula->nova_matricula_id);
+        $this->assertSame(1, Matricula::count(), 'Só a matrícula de origem existe.');
+        $this->assertSame(0, Contrato::count());
+    }
+
+    public function test_portal_permite_atualizar_as_preferencias_enquanto_a_secretaria_nao_efetivar(): void
+    {
+        $this->mock(AssinafyService::class, fn ($mock) => $mock->shouldNotReceive('enviarContrato'));
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+        $outroTurno = Turno::create(['nome' => 'Tarde', 'hora_inicio' => '13:00:00', 'hora_fim' => '17:00:00']);
+
+        $pagina = Livewire::actingAs($user)->test(PaginaRematricula::class);
+        $pagina->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno));
+        $pagina->assertTableActionVisible('iniciar_rematricula', $matricula)
+            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $outroTurno));
+
+        $this->assertSame(1, Rematricula::count());
+        $this->assertSame($outroTurno->id, Rematricula::first()->turno_pretendido_id);
+    }
+
+    public function test_secretaria_efetiva_a_intencao_da_familia_numa_turma_e_o_portal_esconde_a_acao(): void
     {
         $this->mock(AssinafyService::class, function ($mock) {
             $mock->shouldReceive('enviarContrato')->once()->andReturn(['success' => true]);
         });
-        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
-
-        Livewire::actingAs($user)
-            ->test(PaginaRematricula::class)
-            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno))
-            ->assertNotified('Falta assinar o contrato')
-            ->assertNotNotified('Rematrícula Confirmada!');
-
-        $this->assertEquals(StatusRematricula::AguardandoAssinatura, Rematricula::first()->status);
-    }
-
-    public function test_portal_avisa_que_o_contrato_nao_foi_enviado_quando_o_envio_falha(): void
-    {
-        $this->mock(AssinafyService::class, function ($mock) {
-            $mock->shouldReceive('enviarContrato')->once()->andReturn(['success' => false, 'message' => 'Assinafy fora do ar']);
-        });
-        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
-
-        Livewire::actingAs($user)
-            ->test(PaginaRematricula::class)
-            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno))
-            ->assertNotified('Dados registrados — contrato ainda não enviado')
-            ->assertNotNotified('Rematrícula Confirmada!');
-
-        $this->assertEquals(StatusRematricula::DadosConfirmados, Rematricula::first()->status);
-    }
-
-    public function test_portal_confirma_direto_quando_a_campanha_nao_tem_contrato(): void
-    {
-        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal(comTemplate: false);
-
-        Livewire::actingAs($user)
-            ->test(PaginaRematricula::class)
-            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno))
-            ->assertNotified('Rematrícula Confirmada!');
-
-        $this->assertEquals(StatusRematricula::Confirmada, Rematricula::first()->status);
-    }
-
-    public function test_portal_esconde_realizar_rematricula_depois_de_efetivada(): void
-    {
-        $this->mock(AssinafyService::class, function ($mock) {
-            $mock->shouldReceive('enviarContrato')->once()->andReturn(['success' => true]);
-        });
-        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno, 'turmaDestino' => $turmaDestino] = $this->prepararPortal();
 
         Livewire::actingAs($user)
             ->test(PaginaRematricula::class)
             ->assertTableActionVisible('iniciar_rematricula', $matricula)
             ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno));
 
+        $novaMatricula = app(RematriculaService::class)->efetivar(Rematricula::firstOrFail(), $turmaDestino->id);
+
+        $this->assertSame($turmaDestino->id, $novaMatricula->turma_id);
+        $this->assertEquals(StatusRematricula::AguardandoAssinatura, Rematricula::first()->status);
+
         Livewire::actingAs($user)
             ->test(PaginaRematricula::class)
             ->assertTableActionHidden('iniciar_rematricula', $matricula);
+    }
+
+    public function test_efetivar_sem_contrato_na_campanha_confirma_direto(): void
+    {
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno, 'turmaDestino' => $turmaDestino] = $this->prepararPortal(comTemplate: false);
+
+        Livewire::actingAs($user)
+            ->test(PaginaRematricula::class)
+            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno));
+
+        app(RematriculaService::class)->efetivar(Rematricula::firstOrFail(), $turmaDestino->id);
+
+        $this->assertEquals(StatusRematricula::Confirmada, Rematricula::first()->status);
     }
 
     public function test_portal_nao_reexecuta_a_acao_por_requisicao_direta_depois_de_efetivada(): void
@@ -355,17 +379,18 @@ class RematriculaAssinaturaTest extends TestCase
         $this->mock(AssinafyService::class, function ($mock) {
             $mock->shouldReceive('enviarContrato')->once()->andReturn(['success' => true]);
         });
-        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno, 'turmaDestino' => $turmaDestino] = $this->prepararPortal();
         $dados = $this->dadosDoFormulario($serie, $turno);
 
         $pagina = Livewire::actingAs($user)->test(PaginaRematricula::class);
 
         // callTableAction() recusa ação escondida; mount + callMounted reproduzem uma chamada direta ao servidor.
-        // Controle: com a ação visível esse caminho executa normalmente.
+        // Controle: com a ação visível esse caminho registra a intenção normalmente.
         $pagina->mountTableAction('iniciar_rematricula', $matricula)->setTableActionData($dados)->callMountedTableAction();
-
         $this->assertSame(1, Rematricula::count());
-        $this->assertEquals(StatusRematricula::AguardandoAssinatura, Rematricula::first()->status);
+        $this->assertEquals(StatusRematricula::DadosConfirmados, Rematricula::first()->status);
+
+        app(RematriculaService::class)->efetivar(Rematricula::firstOrFail(), $turmaDestino->id);
 
         // Depois de efetivada o servidor não monta mais a ação (o Filament também aplica visible() ali)
         $pagina->mountTableAction('iniciar_rematricula', $matricula)->setTableActionData($dados)->callMountedTableAction();

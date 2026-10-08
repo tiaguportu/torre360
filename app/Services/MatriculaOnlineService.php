@@ -42,19 +42,11 @@ class MatriculaOnlineService
     public function processarMatricula(array $dados, array $arquivos = []): Matricula
     {
         return DB::transaction(function () use ($dados, $arquivos) {
+            // 1. Validação de status e de vagas: trava a turma na transação, então duas matrículas
+            //    simultâneas para a última vaga passam uma de cada vez.
+            app(TurmaVagasService::class)->garantirVaga((int) $dados['turma_id']);
+
             $turma = Turma::with(['serie.curso', 'periodoLetivo'])->findOrFail($dados['turma_id']);
-
-            if (! $turma->status->abertaParaMatricula()) {
-                throw new \DomainException("A turma '{$turma->nome}' não está aberta para matrículas.");
-            }
-
-            // 1. Validação de vagas
-            if ($turma->vagas_maximas) {
-                $matriculadas = $turma->matriculas()->count();
-                if ($matriculadas >= $turma->vagas_maximas) {
-                    throw new \DomainException("A turma '{$turma->nome}' atingiu a lotação máxima de {$turma->vagas_maximas} vagas.");
-                }
-            }
 
             // 2. Busca ou criação da Pessoa Aluno
             $aluno = $this->buscarOuCriarPessoaAluno($dados['aluno']);

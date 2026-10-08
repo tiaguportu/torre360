@@ -113,7 +113,7 @@ class Rematricula extends Page implements HasTable
                             || ($rematricula->status !== StatusRematricula::Confirmada && ! $rematricula->nova_matricula_id);
                     })
                     ->modalHeading(fn (Matricula $record) => "Rematrícula: {$record->pessoa?->nome}")
-                    ->modalDescription('Confirme as preferências para o próximo ano letivo. Ao prosseguir, os dados serão encaminhados para a secretaria.')
+                    ->modalDescription('Informe as preferências para o próximo ano letivo. A secretaria define a turma do seu filho e, em seguida, envia o contrato para assinatura.')
                     ->form([
                         Select::make('serie_destino_id')
                             ->label('Série / Ano Pretendido para o Próximo Período')
@@ -135,6 +135,8 @@ class Rematricula extends Page implements HasTable
                         try {
                             $rematricula = $service->iniciarOuObter($record, $this->periodoAtivo, auth()->user());
 
+                            // A família só registra a intenção (série, turno e observações). A turma é
+                            // definida pela secretaria ao efetivar, que também cria a matrícula e o contrato.
                             $rematricula->update([
                                 'serie_destino_id' => $data['serie_destino_id'],
                                 'turno_pretendido_id' => $data['turno_pretendido_id'],
@@ -142,9 +144,6 @@ class Rematricula extends Page implements HasTable
                                 'status' => StatusRematricula::DadosConfirmados,
                                 'data_confirmacao' => now(),
                             ]);
-
-                            // Efetiva a rematrícula gerando os registros de destino
-                            $service->efetivar($rematricula);
 
                             $this->notificarResultado($rematricula, (string) $record->pessoa?->nome);
                         } catch (\Throwable $e) {
@@ -160,8 +159,9 @@ class Rematricula extends Page implements HasTable
     }
 
     /**
-     * Avisa a família com base no status real depois de efetivar: só é "Confirmada" quando não há
-     * contrato a assinar; com contrato, a confirmação só vem após a assinatura.
+     * Avisa a família com base no status real. Normalmente a rematrícula fica em "Dados Confirmados"
+     * (aguardando a secretaria definir a turma); só passa a "Confirmada" quando não há contrato a
+     * assinar, e com contrato a confirmação só vem após a assinatura.
      */
     private function notificarResultado(RematriculaModel $rematricula, string $nomeAluno): void
     {
@@ -171,6 +171,12 @@ class Rematricula extends Page implements HasTable
             ->url(Documentos::getUrl());
 
         $notificacao = match ($rematricula->status) {
+            StatusRematricula::DadosConfirmados => Notification::make()
+                ->title('Preferências registradas!')
+                ->body("Recebemos as preferências de rematrícula do(a) estudante {$nomeAluno}. A secretaria vai definir a turma e enviar o contrato para assinatura; você será avisado(a) e poderá assinar em Documentos e Contratos.")
+                ->success()
+                ->persistent(),
+
             StatusRematricula::Confirmada => Notification::make()
                 ->title('Rematrícula Confirmada!')
                 ->body("A rematrícula do(a) estudante {$nomeAluno} foi registrada com sucesso!")
@@ -233,7 +239,8 @@ class Rematricula extends Page implements HasTable
                 'Clique em "Realizar Rematrícula".',
                 'Escolha a série pretendida e o turno de preferência.',
                 'Se quiser, registre observações e confirme.',
+                'Aguarde a secretaria definir a turma: o contrato é enviado para assinatura em seguida (Documentos e Contratos).',
             ])
-            ->dica('Após confirmar, a data de confirmação aparece na lista.');
+            ->dica('Depois de confirmar, a situação muda para "Dados Confirmados". A rematrícula só é concluída depois que a secretaria escolhe a turma e o contrato é assinado.');
     }
 }
