@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusEmprestimo;
+use App\Services\LivroCapaService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,6 +47,24 @@ class Livro extends Model
         // Excluir a obra apagaria em cascata os empréstimos e sacolas em aberto. Retornar false cancela a exclusão.
         static::deleting(function (Livro $livro): bool {
             return ! $livro->temEmprestimosEmAberto() && ! $livro->temSacolasEmAberto();
+        });
+
+        // Capa: a baixada pela busca por ISBN fica "pendente" até o livro ser salvo; aí vira um arquivo próprio.
+        static::saving(function (Livro $livro): void {
+            if ($livro->isDirty('capa')) {
+                app(LivroCapaService::class)->promoverPendente($livro);
+            }
+        });
+
+        // Trocar a capa ou excluir o livro apaga o arquivo antigo (se nenhum outro livro o usa).
+        static::updated(function (Livro $livro): void {
+            if ($livro->wasChanged('capa')) {
+                app(LivroCapaService::class)->descartar($livro->getOriginal('capa'), $livro->id);
+            }
+        });
+
+        static::deleted(function (Livro $livro): void {
+            app(LivroCapaService::class)->descartar($livro->capa, $livro->id);
         });
     }
 

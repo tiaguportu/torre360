@@ -50,6 +50,22 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 
+    // Chave da API do Google Books (busca de livros por ISBN). Opcional: sem ela a cota anônima é bem menor.
+    // Precisa estar aqui: `env()` fora dos arquivos de config devolve null quando a configuração está em cache.
+    'google_books' => [
+        'key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
+    // Busca de livros por ISBN (App\Services\LivroLookupService).
+    'livros' => [
+        // A raspagem do HTML da Amazon e o CDN de capas deles são não oficiais e contrários aos termos de uso do site.
+        // Desligado por padrão; a escola só liga assumindo esse risco (LIVROS_AMAZON_HABILITADO=true).
+        'amazon_habilitado' => (bool) env('LIVROS_AMAZON_HABILITADO', false),
+
+        // Resolve o DNS da URL da capa e recusa endereços internos/privados (proteção contra SSRF).
+        'validar_dns' => (bool) env('LIVROS_VALIDAR_DNS', true),
+    ],
+
     'assinafy' => [
         'url' => env('ASSINAFY_API_URL', 'https://sandbox.assinafy.com.br/v1'),
         'key' => env('ASSINAFY_API_KEY'),

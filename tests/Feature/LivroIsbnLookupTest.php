@@ -22,6 +22,40 @@ class LivroIsbnLookupTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Sem rede nos testes: nada fora do que foi declarado em fakeHttp() pode sair para a internet.
+        Http::preventStrayRequests();
+        // O DNS real não é consultado (os hosts dos testes são fictícios); a proteção contra SSRF é testada em LivroLookupCapaTest.
+        config(['services.livros.validar_dns' => false]);
+    }
+
+    /**
+     * Imagem real (a busca recusa arquivos que não sejam imagens de verdade).
+     */
+    private function imagemBinaria(int $largura = 120, int $altura = 180, string $formato = 'png'): string
+    {
+        $imagem = imagecreatetruecolor($largura, $altura);
+        imagefill($imagem, 0, 0, imagecolorallocate($imagem, 30, 90, 160));
+
+        ob_start();
+        $formato === 'jpeg' ? imagejpeg($imagem) : imagepng($imagem);
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Declara as respostas das fontes; tudo que não foi declarado responde 404 (a busca consulta as três fontes em paralelo).
+     *
+     * @param  array<string, mixed>  $respostas
+     */
+    private function fakeHttp(array $respostas): void
+    {
+        Http::fake($respostas + ['*' => Http::response('', 404)]);
+    }
+
     private function autenticarComoAdmin(): User
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -56,9 +90,9 @@ class LivroIsbnLookupTest extends TestCase
 
         $fakeIsbn = '9788576082675';
         $fakeImgUrl = 'https://covers.openlibrary.org/b/id/12345-L.jpg';
-        $fakeImgBinary = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $fakeImgBinary = $this->imagemBinaria();
 
-        Http::fake([
+        $this->fakeHttp([
             'https://openlibrary.org/api/books*' => Http::response([
                 "ISBN:{$fakeIsbn}" => [
                     'title' => 'Código Limpo',
@@ -98,9 +132,9 @@ class LivroIsbnLookupTest extends TestCase
 
         $fakeIsbn = '9788535902778';
         $fakeImgUrl = 'https://brasilapi.com.br/capa.jpg';
-        $fakeImgBinary = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $fakeImgBinary = $this->imagemBinaria();
 
-        Http::fake([
+        $this->fakeHttp([
             'https://openlibrary.org/api/books*' => Http::response([], 200),
             'https://brasilapi.com.br/api/isbn/v1/*' => Http::response([
                 'isbn' => $fakeIsbn,
@@ -127,7 +161,7 @@ class LivroIsbnLookupTest extends TestCase
 
     public function test_isbn_quando_nao_encontrado(): void
     {
-        Http::fake([
+        $this->fakeHttp([
             '*' => Http::response([], 404),
         ]);
 
@@ -187,9 +221,9 @@ class LivroIsbnLookupTest extends TestCase
 
         $fakeIsbn = '9788576082675';
         $fakeImgUrl = 'https://covers.openlibrary.org/b/id/99999-L.jpg';
-        $fakeImgBinary = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $fakeImgBinary = $this->imagemBinaria();
 
-        Http::fake([
+        $this->fakeHttp([
             'https://openlibrary.org/api/books*' => Http::response([
                 "ISBN:{$fakeIsbn}" => [
                     'title' => 'Código Limpo',
@@ -264,12 +298,13 @@ class LivroIsbnLookupTest extends TestCase
     public function test_isbn_busca_capa_amazon_como_fallback(): void
     {
         Storage::fake('public');
+        config(['services.livros.amazon_habilitado' => true]);
 
         $fakeIsbn13 = '9788574121871';
         $fakeIsbn10 = '8574121878';
-        $fakeImgBinary = str_repeat('imagem_capa_valida_teste_', 50); // mais de 1000 bytes
+        $fakeImgBinary = $this->imagemBinaria(200, 300, 'jpeg');
 
-        Http::fake([
+        $this->fakeHttp([
             'https://openlibrary.org/api/books*' => Http::response([], 200),
             'https://brasilapi.com.br/api/isbn/v1/*' => Http::response([
                 'isbn' => $fakeIsbn13,
@@ -297,6 +332,7 @@ class LivroIsbnLookupTest extends TestCase
     public function test_isbn_busca_amazon_recupera_autores_quando_omitidos_por_outras_apis(): void
     {
         Storage::fake('public');
+        config(['services.livros.amazon_habilitado' => true]);
 
         $fakeIsbn13 = '9788574121871';
         $fakeIsbn10 = '8574121878';
@@ -323,7 +359,7 @@ class LivroIsbnLookupTest extends TestCase
         </html>
         HTML;
 
-        Http::fake([
+        $this->fakeHttp([
             'https://openlibrary.org/api/books*' => Http::response([], 200),
             'https://brasilapi.com.br/api/isbn/v1/*' => Http::response([
                 'isbn' => $fakeIsbn13,
@@ -335,7 +371,7 @@ class LivroIsbnLookupTest extends TestCase
             'https://www.googleapis.com/books/v1/volumes*' => Http::response([], 200),
             "https://www.amazon.com.br/dp/{$fakeIsbn10}" => Http::response($fakeHtmlAmazon, 200),
             "https://covers.openlibrary.org/b/isbn/{$fakeIsbn13}-L.jpg*" => Http::response('', 404),
-            "https://images-na.ssl-images-amazon.com/images/P/{$fakeIsbn10}.01.L.jpg" => Http::response(str_repeat('imagem_capa_', 100), 200, ['Content-Type' => 'image/jpeg']),
+            "https://images-na.ssl-images-amazon.com/images/P/{$fakeIsbn10}.01.L.jpg" => Http::response($this->imagemBinaria(200, 300, 'jpeg'), 200, ['Content-Type' => 'image/jpeg']),
         ]);
 
         $service = app(LivroLookupService::class);
