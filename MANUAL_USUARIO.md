@@ -121,7 +121,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que conclui o lead como matriculado do mesmo modo que o assistente (status, data de conversão, indicação e documentos). Se a escola ainda não tiver uma etapa de matrícula cadastrada em *Status de Interessado*, o sistema avisa em vez de deixar o lead sem status.
    - **Marcar como Perdido:** Registre o motivo da perda (Preço, Concorrência, Distância, Mudança, Desistência, Sem retorno, Outro). Em *Concorrência* (e também em *Preço*, *Metodologia* e *Distância*) aparecem **Escola Concorrente Escolhida** (lista dos concorrentes cadastrados em *Battlecards*) e **Fator Decisivo da Família**; na perda por *Concorrência* o nome da escola também fica no motivo. A perda feita aqui, no Kanban ou em lote segue a mesma regra e entra na linha do tempo do lead.
-   - **Gerar Link de Pré-matrícula:** Abre o link único da família (seção 44). Abrir a ação de novo mostra **o mesmo link** enquanto ele for válido; para invalidá-lo e criar outro use **Gerar novo link de pré-matrícula**.
+   - **Link de Admissão & Matrícula:** Abre o link único da família (seções 44 e 50). Abrir a ação de novo mostra **o mesmo link** enquanto ele for válido, e cada vez que você o abre, copia ou envia a validade é renovada para **7 dias**. Para **revogar na hora** o link anterior e criar outro (enviado à pessoa errada, vazou) use **Gerar novo link (revoga o anterior)**: a URL antiga passa a mostrar "link expirado".
+   - **Permissões das ações:** ações com efeito sobre o lead (registrar atendimento, WhatsApp, agendar visita, link de admissão, Dossiê/Copiloto/Resumo IA, importar lead com IA) só aparecem para quem tem a permissão correspondente (*Atualizar Interessado*; registrar atendimento e WhatsApp também aceitam *Criar Histórico de Contato*; agendar visita também aceita *Criar Visita*; importar com IA exige *Criar Interessado*). Quem só visualiza leads não vê esses botões.
 4. **Ações em Lote:**
    - **Editar em Lote:** Selecione múltiplos leads e altere simultaneamente campos como Status, Consultor Responsável, Temperatura (Quente, Morno, Frio), Origem do Lead, Campanha de Marketing, Data do Próximo Contato, Distância até a Escola, Meio de Transporte e Motivo da Perda. Campos deixados em branco no formulário permanecem inalterados nos registros selecionados. Ao concluir, o Lead Score de cada lead modificado é recalculado automaticamente. **As mesmas travas do funil valem em lote:** mover para uma etapa de perda exige o **Motivo da Perda** (e deixa o registro na linha do tempo de cada lead); a etapa "Matriculado" não é oferecida (a matrícula é concluída lead a lead, pelo assistente); informar só o motivo, sem mudar a etapa, corrige apenas leads que já estão perdidos; e, quando a etapa é alterada, leads já matriculados são pulados, com aviso de quantos não foram alterados.
    - **Atribuir Consultor:** Selecione múltiplos leads e atribua um consultor responsável de uma vez. Só aparecem usuários com permissão para atender leads (contas de famílias e professores ficam de fora) e o consultor escolhido **recebe um aviso no sininho** com a quantidade de leads que recebeu.
@@ -2376,10 +2377,12 @@ Cadastro de obrigações da escola com fornecedores: descrição, valor, vencime
 Link único enviado a um lead já qualificado pelo CRM para que a **própria família preencha a pré-matrícula**: dados do(s) responsável(is), do(s) aluno(s) e endereço. Esses dados chegam **já preenchidos no Assistente de Matrícula**, reduzindo muito o trabalho da secretaria. O link não permite ver nem navegar por nenhum outro cadastro.
 
 ### 44.1 Gerando o Link (`/admin/interessados`)
-1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra, no menu **⋮ Mais ações**, a ação **Gerar Link de Pré-matrícula**.
-2. Ao clicar, o sistema gera um link único (válido por 7 dias, de uso único) e mostra o endereço completo para copiar e enviar ao responsável (WhatsApp, e-mail etc.). A data de validade aparece na descrição da janela.
-3. Abrir a ação de novo mostra **o mesmo link**, enquanto ele ainda for válido (não usado e não expirado): ver o link não invalida o que já foi enviado à família.
-4. Para invalidar o link anterior e criar outro (por exemplo, se expirou ou foi enviado à pessoa errada), use **Gerar novo link de pré-matrícula** no mesmo menu ⋮, que pede confirmação.
+1. Na listagem de **Interessados**, um lead que já tenha ao menos um dependente cadastrado mostra, no menu **⋮ Mais ações**, a ação **Link de Admissão & Matrícula**.
+2. Ao clicar, o sistema mostra o link único do **Portal de Admissão** (`/admissao/{token}`), para copiar e enviar ao responsável (WhatsApp, e-mail etc.). **O link vale por 7 dias.**
+3. Abrir a ação de novo mostra **o mesmo link**, enquanto ele ainda for válido: ver o link não invalida o que já foi enviado à família, e a validade volta a 7 dias a cada vez que a equipe abre, copia ou envia o link. A família abrir o link **não** estende a validade.
+4. **Validade e revogação:** nenhum link vale mais de 7 dias depois da última ação da equipe. Um link vencido **nunca volta a funcionar**: ao abrir a ação de novo o sistema gera um link novo e a URL antiga continua mostrando "link expirado". Links emitidos antes desse controle (sem data de validade) também deixam de abrir: basta gerar o link outra vez.
+5. Para **revogar imediatamente** o link e criar outro (enviado à pessoa errada, vazou), use **Gerar novo link (revoga o anterior)** no mesmo menu ⋮, que pede confirmação. A URL anterior (e qualquer convite antigo `/quero-matricular/convite/...`) passa a mostrar "link expirado" na hora, e a linha do tempo do lead registra quem revogou e quando.
+6. **Convites antigos:** links `/quero-matricular/convite/{token}` enviados antes da unificação continuam redirecionando para o portal, mas só enquanto o prazo de 7 dias do convite não tiver vencido, e abrir um convite antigo não renova a validade do portal.
 
 ### 44.2 O que a Família Preenche
 1. **Responsável (você):** nome, CPF, data de nascimento, telefone, e-mail, vínculo com o aluno (Pai, Mãe etc.) e se é o responsável financeiro.
@@ -2424,7 +2427,12 @@ No painel administrativo (`/admin/interessados`), na aba inferior **Documentos d
    - Parecer resumido e recomendação do status sugerido.
 3. **Sincronização Cadastral com 1 Clique:**
    - No próprio modal do diagnóstico pericial, a secretaria pode acionar o botão **"Sincronizar com Cadastro"**.
-   - O sistema transfere automaticamente os dados oficiais extraídos do documento (CPF, RG e Data de Nascimento) para o cadastro da `Pessoa` ou do dependente, dispensando digitação manual e prevenindo erros humanos.
+   - O sistema transfere os dados extraídos do documento (CPF, RG e Data de Nascimento) para o cadastro da `Pessoa` ou do dependente, dispensando digitação manual. **Só campos ainda vazios são preenchidos** e nada é gravado sem validação:
+     - **Datas** são lidas como DD/MM/AAAA (também DD-MM-AAAA, DD.MM.AAAA e AAAA-MM-DD); "05/03/2015" é 5 de março, nunca 3 de maio. Data inexistente (31/02), futura ou anterior a 1900 é descartada.
+     - **CPF** precisa ter dígitos verificadores válidos e não pode já pertencer a outra pessoa cadastrada.
+     - **RG** em formato inesperado (vazio ou com mais de 30 caracteres) é descartado.
+     - O que foi descartado aparece na notificação, com o motivo, para a secretaria digitar manualmente; o que foi aplicado fica registrado na linha do tempo do lead como entrada automática.
+     - A ação exige a permissão *Atualizar Interessado*.
 4. **Reanálise sob Demanda:** Caso necessário, a ação secundária **"Reanalisar com IA"** permite forçar um novo ciclo de conferência pericial a qualquer momento.
 
 ### 45.4 Herança Direta na Matrícula
@@ -2629,6 +2637,10 @@ Quando a família completa todas as suas obrigações (dados cadastrais preenchi
    - **Título Otimizado para Abas:** Ajustado para `Portal de Pré-Admissão | Torre360`, facilitando a navegação entre múltiplas abas abertas pelos responsáveis.
 4. **Ação Unificada no CRM (`admin/interessados`):**
    - No menu de ações de cada interessado, a ação **'Link de Admissão & Matrícula'** disponibiliza o link seguro exclusivo para envio à família, eliminando botões redundantes e agilizando o atendimento comercial.
+5. **Validade e Revogação do Link (máximo de 7 dias):**
+   - O link do portal vale **7 dias** a partir da última vez que a equipe o abriu, copiou ou enviou; passado esse prazo a página mostra "link expirado" e a secretaria gera um novo (a URL antiga nunca reabre).
+   - **Gerar novo link (revoga o anterior)** invalida o link atual na hora. Na aba *Documentos de Pré-Admissão* do lead, **Copiar Link do Portal** e **Enviar Portal por WhatsApp** também renovam a validade; a mensagem enviada informa que o link vale por 7 dias.
+   - Apenas abrir a aba de documentos não gera nem renova links: isso só acontece quando a equipe clica na ação.
 
 ### 50.2 Nova Classificação dos Tipos de Documentos (`/admin/tipo-documentos`)
 Para garantir segurança jurídica sem burocracia excessiva, os documentos escolares foram organizados em 4 categorias estratégicas:
@@ -2703,7 +2715,9 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 
 3. **Exemplares do Acervo:**
    - **Quantidade Total:** Quantidade física de cópias que a biblioteca possui.
-   - **Quantidade Disponível:** Quantidade livre para empréstimos imediatos (atualizada automaticamente conforme os empréstimos e devoluções forem registrados).
+   - **Quantidade Disponível:** Quantidade livre para empréstimos imediatos. É **calculada automaticamente** (total de exemplares menos os empréstimos em aberto — emprestados ou atrasados) e **não é digitada**: ao cadastrar uma obra todos os exemplares nascem disponíveis, e na edição o campo aparece só para consulta.
+   - **Editando o total:** o sistema reajusta a disponibilidade sozinho (ex.: total 10 → 12 com 3 exemplares emprestados passa a mostrar 9 disponíveis). O total **não pode ser menor** que o número de exemplares emprestados no momento. Salvar a obra também corrige qualquer divergência antiga no saldo.
+   - **Excluir uma obra:** só é possível quando **não há empréstimos em aberto**; registre as devoluções antes. A exclusão apaga também o histórico de empréstimos já devolvidos dessa obra (a tela avisa).
 
 ### 51.2 Visualização, Etiquetas e Listagem (`/admin/livros`)
 - A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, Faixa Etária, ISBN, Código de Tombo e o saldo de exemplares disponíveis sobre o total.
@@ -2719,6 +2733,21 @@ Projetado para eliminar cliques no atendimento de balcão da biblioteca escolar:
 2. **Devolução em 1 Bip:**
    - Ao receber o livro no balcão, o bibliotecário não precisa pesquisar o aluno. Basta apontar o leitor de código de barras para o livro no campo de devolução. O sistema localiza o empréstimo ativo correspondente, dá baixa imediata e recoloca a obra no acervo disponível.
    - Um histórico em tempo real na tela registra todas as operações da sessão.
+3. **Garantias de estoque (balcão e tela de Empréstimos):**
+   - **Último exemplar:** a reserva do exemplar é atômica. Se dois balcões tentarem emprestar o último exemplar ao mesmo tempo, apenas um consegue; o outro recebe "Todos os exemplares deste livro já estão emprestados" e nenhum empréstimo é criado.
+   - **Datas:** a devolução prevista não pode ser anterior à data do empréstimo.
+   - **Devolução repetida:** devolver o mesmo empréstimo duas vezes (duplo clique ou dois balcões) devolve o exemplar ao acervo **uma única vez**; a segunda tentativa avisa que o empréstimo já estava devolvido. A disponibilidade nunca passa do total cadastrado.
+   - **Excluir empréstimos:** excluir (inclusive em lote) um empréstimo ainda em aberto **devolve o exemplar** ao acervo disponível; excluir um já devolvido não altera o estoque.
+
+#### 51.3.1 Conferindo e corrigindo o saldo de exemplares
+Se o saldo de alguma obra estiver divergente (por exemplo, cópias "perdidas" por exclusões antigas), basta **abrir a obra e salvar**, ou o administrador pode rodar no servidor:
+
+```bash
+php artisan biblioteca:reconciliar-disponibilidade            # apenas lista as divergências
+php artisan biblioteca:reconciliar-disponibilidade --aplicar  # grava as correções
+```
+
+O comando compara, para cada obra, o saldo gravado com `total − empréstimos em aberto` e só altera algo com `--aplicar`.
 
 ### 51.4 Integração Pedagógica: Perfil do Aluno e Preceptoria
 - **Histórico de Leitura na Ficha do Estudante:** Em `/admin/matriculas/{id}/edit`, a aba **Histórico de Leitura (Biblioteca)** lista todas as obras retiradas pelo aluno com foto da capa, autor, datas de retirada/devolução e status.
