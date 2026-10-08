@@ -1022,6 +1022,15 @@ Estrutura de ensino e turmas.
 ### `regua_follow_ups` e `regua_follow_up_logs`
 - **Representa:** Regras automatizadas e esteira de follow-up do funil comercial de captação (WhatsApp e E-mail), com interpolação de tags dinâmicas (`{{LINK_PESQUISA}}`, `{{PRIMEIRO_NOME}}`, `{{DATA_VISITA}}`, etc.).
 
+### `mensagem_whatsapp_template` (Modelos de WhatsApp)
+- **Representa:** Modelos oficiais de mensagem do CRM (disparo rápido, pesquisa pós-visita e base de referência para o Copiloto WhatsApp IA).
+- **Campos Principais:** `nome`, `conteudo` (texto com variáveis como `[Nome do Responsável]`), `instrucoes_ia` (Text, nullable — instruções específicas para a IA quando o modelo é usado como base do Copiloto; somam-se às regras gerais de `copiloto_ia_configuracoes`; máx. 1500 caracteres, sem efeito no envio direto do modelo), `ativo`.
+
+### `copiloto_ia_configuracoes`
+- **Representa:** Personalização do comportamento do Copiloto WhatsApp IA feita na tela "Comportamento do Copiloto IA" (sobrescreve `config/copiloto_ia.php`).
+- **Campos Principais:** `valores` (JSON com as chaves de `config/copiloto_ia.php` alteradas: `persona`, `diretrizes`, `mencionar`, `evitar`, `objetivos`, `tons`, `gemini`), `atualizado_por` (FK `users`, nullable).
+- **Relacionamentos:** BelongsTo `users` (`atualizadoPor`). Vale a linha mais recente (`CopilotoIaConfiguracao::valores()`, com cache); sem linhas, valem os padrões do arquivo. `objetivos`, `tons` e `gemini` mesclam por chave; `diretrizes` é substituída por inteiro.
+
 ### `proposta_comercials` (Simulador de Propostas Comerciais & Revenue Management com Alçadas de Desconto)
 - **Representa:** Simulações e propostas comerciais formais emitidas pela equipe de admissões para famílias interessadas, com governança de alçadas de desconto por hierarquia corporativa.
 - **Campos Principais:**

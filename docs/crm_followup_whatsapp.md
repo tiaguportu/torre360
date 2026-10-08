@@ -109,7 +109,7 @@ em testes (`TestAction::make('alerta_contato')->schemaComponent('alertaContato')
 ## 2. Mensagens rápidas de WhatsApp e Integração com Copiloto IA (Gemini)
 
 Modelos de mensagem ficam na tabela `mensagem_whatsapp_template`
-(`nome`, `conteudo`, `ativo`), gerenciáveis pelo Filament em
+(`nome`, `conteudo`, `instrucoes_ia`, `ativo`), gerenciáveis pelo Filament em
 **CRM / Comercial → Modelos de WhatsApp**.
 
 ### Propósito dos Modelos vs. Copiloto IA
@@ -118,6 +118,47 @@ Os modelos oficiais e o Copiloto IA atuam de forma **complementar**:
 2. **Copiloto IA (Personalização contextual):** Ideal para follow-ups consultivos, quebra de objeções específicas (preço, metodologia) e reativação calorosa de famílias estagnadas.
 3. **Sinergia Híbrida (Modelo + IA):** No modal do *Copiloto WhatsApp IA*, o consultor pode escolher um **Modelo Institucional de Referência (Opcional)** para que a IA adapte e enriqueça o comunicado oficial com o perfil e momento da família. Da mesma forma, na ação rápida "WhatsApp" da tabela, há a opção **Personalizar com Copiloto IA (Gemini) ✨** para humanizar o modelo escolhido antes de abrir o mensageiro.
 4. **Contingência Inteligente (Fallback):** Se a API do Gemini estiver instável ou a cota esgotar, o fallback do serviço automaticamente pré-preenche as variáveis dinâmicas do modelo base, garantindo que o atendimento nunca seja interrompido.
+
+### Comportamento do Copiloto IA (editável sem deploy)
+
+Antes, persona, diretrizes, descrição dos objetivos/tons e parâmetros do Gemini
+ficavam escritos em `CrmIaVendasService::gerarMensagemCopiloto()`. Agora a equipe
+ajusta isso em dois níveis:
+
+1. **Regras gerais** — página `ConfiguracaoCopilotoIa`
+   (`/admin/crm/comportamento-copiloto-ia`), aberta pelo botão **Comportamento do
+   Copiloto IA** na lista de Modelos de WhatsApp. Permissão Shield:
+   `View:ConfiguracaoCopilotoIa` (concedida a `super_admin`/`admin` pela migration
+   `2026_10_07_210002_grant_configuracao_copiloto_ia_permissions`). Edita:
+   - `persona` e `diretrizes` (lista numerada automaticamente);
+   - `mencionar` / `evitar` (texto livre, uma ideia por linha);
+   - descrição dos 5 `objetivos` e dos 3 `tons` (as **chaves são fixas**, pois os
+     selects do Copiloto e o envio rápido dependem delas; só a descrição muda);
+   - `gemini.temperature` (0 a 1) e `gemini.max_output_tokens` (200 a 2000).
+
+   Os padrões ficam em `config/copiloto_ia.php`. As alterações são gravadas em
+   `copiloto_ia_configuracoes` (linha mais recente vale, cache em
+   `CopilotoIaConfiguracao::CACHE_KEY`); **Restaurar padrão** apaga as linhas.
+   **Pré-visualizar prompt** mostra o system instruction com o conteúdo atual do
+   formulário (mesmo não salvo), sem chamar o Gemini.
+
+2. **Instruções por modelo** — campo `instrucoes_ia` (opcional, até 1500
+   caracteres) no formulário do Modelo de WhatsApp. É somado às regras gerais
+   **somente quando o modelo é usado como base do Copiloto** (modal *Copiloto
+   WhatsApp IA* e opção *Personalizar com Copiloto IA* do envio rápido); não afeta
+   o envio direto do modelo.
+
+`CrmIaVendasService::montarSystemInstructionCopiloto()` monta o prompt na ordem:
+persona → diretrizes numeradas → linha do objetivo → linha do tom → regras fixas
+→ (regra do modelo base, se houver) → "Sempre mencione…" → "Nunca mencione…" →
+"Instruções específicas do modelo…" → `REGRA_DADOS_NAO_CONFIAVEIS`.
+
+**Não editável (fica no código de propósito):** a linha do objetivo/tom, a
+proibição de links e o "retorne apenas o texto puro" (o pós-processamento
+`removerLinks()` depende deles) e a regra de segurança contra prompt injection,
+sempre anexada por último. Editar a configuração não desliga essas proteções.
+
+Testes: `tests/Feature/CopilotoIaConfiguracaoTest.php`.
 
 ### Variáveis dinâmicas substituídas automaticamente:
 - `[Nome do Responsável]` → `interessado.pessoa.nome`

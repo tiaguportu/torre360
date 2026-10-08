@@ -271,6 +271,7 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - *🎓 Fechamento de Matrícula (Garantia de vaga)*
    - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
    - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
+   - **Ajuste fino do comportamento da IA:** Quem tem acesso pode mudar a "personalidade" do Copiloto sem depender da equipe de TI, em **CRM / Comercial → Modelos de WhatsApp → Comportamento do Copiloto IA** (veja o item 3 abaixo).
    - **Disparo em 1-Clique e Fidelidade de Emojis:** Ao clicar em **Gerar e Abrir no WhatsApp 🚀**, a IA monta o texto personalizado e abre o WhatsApp Web / Desktop já com o número do responsável e a mensagem pré-carregada. O sistema utiliza codificação RFC 3986 e o endpoint canônico `api.whatsapp.com/send`, garantindo que todos os emojis e formatações cheguem perfeitamente legíveis (sem caracteres corrompidos), com registro opcional no histórico de atendimentos do lead.
    - **Contingência Inteligente (Fallback):** Caso a conexão com a IA oscile ou a cota de tokens atinja o limite, o sistema automaticamente aplica as variáveis dinâmicas no modelo de referência selecionado como plano de contingência, assegurando que o consultor nunca fique sem atendimento.
 
@@ -284,6 +285,16 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - `[Link da Pesquisa da Visita]` (link seguro da pesquisa NPS pós-tour)
      - `[Nome da Escola]`
    - **Disparo na Tabela de Interessados:** No botão verde de WhatsApp da linha do lead, selecione o modelo para envio imediato. Se desejar, ative a opção **Personalizar com Copiloto IA (Gemini) ✨** para que a IA adapte o texto do modelo aos relatos e dores da família antes de abrir o aplicativo.
+   - **Instruções para a IA (por modelo):** Ao editar um modelo, a seção **Instruções para a IA (opcional)** diz ao Copiloto como tratar *aquele* texto (ex.: "manter o prazo de matrícula exatamente como está", "não oferecer desconto", "citar o período integral"). Valem só quando o Copiloto usa o modelo como base; o envio direto do modelo continua idêntico ao texto cadastrado.
+   - **Comportamento do Copiloto IA (regras gerais):** O botão **Comportamento do Copiloto IA**, no topo da lista de Modelos de WhatsApp, abre a página onde você ajusta o que vale para todas as mensagens geradas pela IA:
+     - **Persona e diretrizes:** quem a IA é e as regras que toda mensagem deve seguir (o sistema numera as diretrizes sozinho).
+     - **O que a IA menciona e evita:** uma lista do que deve sempre destacar (ex.: período integral, projeto bilíngue) e do que nunca deve citar ou prometer (ex.: descontos não aprovados, valores de mensalidade).
+     - **Objetivos e tons de voz:** o texto que explica à IA o que significa cada objetivo (Primeiro Contato, Convite para Tour, etc.) e cada tom (Acolhedor, Objetivo, Inspirador). Os nomes das opções que o consultor vê não mudam.
+     - **Avançado (Gemini):** temperatura (quanto mais alta, mais variadas e menos previsíveis as mensagens) e limite de tamanho da resposta. Mexa apenas se souber o efeito.
+     - **Pré-visualizar prompt:** mostra exatamente o texto que a IA vai receber com o que está na tela, mesmo antes de salvar. **Salvar configuração** vale a partir da próxima mensagem gerada, e **Restaurar padrão** volta aos valores originais do sistema.
+   - **O que não muda:** a IA nunca inclui links nas mensagens, entrega apenas o texto pronto para o WhatsApp e ignora instruções maliciosas escondidas nos dados do lead. Essas travas valem independentemente do que for configurado.
+   - ⚠️ **Cuidado com as regras:** a IA repete o que está nelas para as famílias. Não escreva promessas de desconto, vaga ou valores que a escola não tenha aprovado.
+   - **Quem acessa:** a página de regras gerais exige a permissão `View:ConfiguracaoCopilotoIa` (perfis Super Admin e Admin recebem automaticamente; para outros perfis, libere em **Sistema e Segurança → Papéis (Shield)**, na aba de Páginas do papel desejado).
 
 ### 3.15 Régua de Automação de Follow-up (Triggers & Workflows)
 A **Régua de Follow-up** automatiza o relacionamento e a comunicação com famílias interessadas em matricular seus filhos, garantindo que nenhum lead esfrie ou seja esquecido por falta de retorno.
