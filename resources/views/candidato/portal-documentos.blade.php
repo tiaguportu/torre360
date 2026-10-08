@@ -11,51 +11,82 @@
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('icon.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Paleta da marca (mesmo azul-marinho do painel: #243468) no lugar do índigo padrão do Tailwind.
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f2f5fb',
+                            100: '#e4e9f5',
+                            200: '#c9d3ea',
+                            300: '#a0b0d8',
+                            400: '#6f86bf',
+                            500: '#3a4f8f',
+                            600: '#243468',
+                            700: '#1d2a55',
+                            800: '#172144',
+                            900: '#111832',
+                        },
+                    },
+                },
+            },
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+
+        /* Campos de formulário: borda mais firme e foco na cor da marca */
+        main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+        main select { border-color: #cbd5e1; }
+        main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):focus,
+        main select:focus { outline: none; border-color: #243468; }
+        fieldset:disabled input, fieldset:disabled select { background-color: #f8fafc; color: #64748b; }
+
+        a:focus-visible, button:focus-visible, summary:focus-visible {
+            outline: 2px solid #3a4f8f; outline-offset: 2px; border-radius: 6px;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-16">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
     <!-- Topbar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <img src="{{ asset('logo-adaptative.svg') }}" alt="Torre360" class="w-10 h-10 rounded-xl shadow-xs object-contain border border-slate-100 p-0.5 bg-white shrink-0">
-                <div>
-                    <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Portal de Pré-Admissão</h1>
-                    <p class="text-xs text-slate-500">Matrícula & Checklist Digital de Documentos</p>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="h-[3px] bg-brand-600"></div>
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <img src="{{ asset('logo-adaptative.svg') }}" alt="Torre360" class="w-10 h-10 object-contain shrink-0">
+                <div class="min-w-0">
+                    <h1 class="font-semibold text-slate-900 text-sm sm:text-base leading-tight truncate">Portal de Pré-Admissão</h1>
+                    <p class="text-xs text-slate-500 truncate">Matrícula & Checklist Digital de Documentos</p>
                 </div>
-            </div>
-            <div class="text-right">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    🔒 Ambiente Seguro
-                </span>
             </div>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto px-4 pt-6 space-y-6">
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 pt-8 pb-10 space-y-6">
         <!-- Feedback Messages -->
         @if(session('sucesso'))
-            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start gap-3 shadow-xs">
-                <span class="text-xl">✅</span>
+            <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-3" role="status">
+                <x-heroicon-o-check-circle class="h-5 w-5 shrink-0 text-emerald-600" />
                 <div class="text-sm font-medium">{{ session('sucesso') }}</div>
             </div>
         @endif
 
         @if(session('erro'))
-            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 shadow-xs">
-                <span class="text-xl">⚠️</span>
+            <div class="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-3" role="alert">
+                <x-heroicon-o-exclamation-triangle class="h-5 w-5 shrink-0 text-rose-600" />
                 <div class="text-sm font-medium">{{ session('erro') }}</div>
             </div>
         @endif
 
         @if($errors->any())
-            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm space-y-1">
-                <span class="font-bold block mb-1">Por favor, verifique os campos abaixo:</span>
+            <div class="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-sm space-y-1" role="alert">
+                <span class="font-semibold block mb-1">Por favor, verifique os campos abaixo:</span>
                 <ul class="list-disc list-inside">
                     @foreach($errors->all() as $err)
                         <li>{{ $err }}</li>
@@ -70,154 +101,164 @@
 
         <!-- Banner de Conclusão da Etapa da Família -->
         @if($etapaFamiliaConcluida)
-            <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white shadow-md space-y-4">
-                <div class="flex items-start gap-3.5 sm:gap-4">
-                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shrink-0 font-bold border border-white/30">
-                        ✓
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+            <section class="bg-white rounded-xl border border-slate-200 border-l-4 border-l-emerald-600 shadow-sm p-5 sm:p-6">
+                <div class="flex items-start gap-4">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                        <x-heroicon-o-check class="h-5 w-5" />
+                    </span>
+                    <div class="space-y-2 min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                            <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
                                 Etapa da Família Concluída
                             </span>
-                            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-100">
-                                ⏳ Aguardando Validação da Secretaria
+                            <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20">
+                                <x-heroicon-s-clock class="h-3.5 w-3.5" /> Aguardando Validação da Secretaria
                             </span>
                         </div>
-                        <h2 class="text-base sm:text-xl font-extrabold leading-snug">
-                            Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso. 🎉
+                        <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 leading-snug">
+                            Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso.
                         </h2>
-                        <p class="text-xs sm:text-sm text-emerald-50 leading-relaxed max-w-2xl">
-                            Você concluiu o cadastro e o envio de todos os documentos obrigatórios. As abas abaixo permanecem disponíveis para você consultar o que foi enviado (em <strong>modo de somente leitura</strong>).
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            Você concluiu o cadastro e o envio de todos os documentos obrigatórios. As abas abaixo permanecem disponíveis para você consultar o que foi enviado (em <strong class="font-semibold text-slate-800">modo de somente leitura</strong>).
                         </p>
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-white/20 text-xs">
-                    <span class="text-emerald-100 flex items-center gap-1.5">
-                        <span>🔒</span> <strong>Modo Somente Leitura:</strong> Formulário e uploads bloqueados para a conferência oficial da secretaria.
+                <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                    <span class="flex items-start gap-2">
+                        <x-heroicon-o-lock-closed class="h-4 w-4 shrink-0 text-slate-400" />
+                        <span><strong class="font-semibold text-slate-700">Modo Somente Leitura:</strong> Formulário e uploads bloqueados para a conferência oficial da secretaria.</span>
                     </span>
                 </div>
-            </div>
+            </section>
         @endif
 
         <!-- Card de Identificação e Resumo do Candidato -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                <div>
-                    <span class="text-xs font-semibold tracking-wider uppercase text-slate-400">Responsável</span>
-                    <h2 class="text-lg sm:text-xl font-bold text-slate-900">{{ $interessado->pessoa?->nome ?? 'Família' }}</h2>
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div class="p-5 sm:p-6 grid gap-5 sm:grid-cols-2">
+                <div class="min-w-0">
+                    <span class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Responsável</span>
+                    <h2 class="mt-1 text-lg font-semibold tracking-tight text-slate-900">{{ $interessado->pessoa?->nome ?? 'Família' }}</h2>
                     @if($interessado->pessoa?->telefone)
-                        <p class="text-xs text-slate-500 mt-0.5">📞 {{ $interessado->pessoa->telefone }}</p>
+                        <p class="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
+                            <x-heroicon-o-phone class="h-4 w-4 text-slate-400" /> {{ $interessado->pessoa->telefone }}
+                        </p>
                     @endif
                 </div>
 
                 @if($interessado->dependentes->isNotEmpty())
-                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 sm:text-right">
-                        <span class="text-[11px] font-semibold uppercase text-slate-400 block mb-0.5">Aluno(s) Pretendente(s)</span>
-                        <div class="space-y-0.5">
+                    <div class="sm:border-l sm:border-slate-100 sm:pl-6">
+                        <span class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Aluno(s) Pretendente(s)</span>
+                        <ul class="mt-1 space-y-1">
                             @foreach($interessado->dependentes as $dep)
-                                <p class="text-xs font-bold text-slate-800">
-                                    {{ $dep->nome_crianca }}
-                                    <span class="text-indigo-600 font-normal">({{ $dep->serie?->nome ?? 'Série a definir' }})</span>
-                                </p>
+                                <li class="text-sm">
+                                    <span class="font-semibold text-slate-900">{{ $dep->nome_crianca }}</span>
+                                    <span class="text-slate-500">· {{ $dep->serie?->nome ?? 'Série a definir' }}</span>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
                     </div>
                 @endif
             </div>
 
             <!-- Progresso Geral dos Documentos -->
-            <div class="pt-4 space-y-2">
-                <div class="flex justify-between items-center text-xs font-semibold">
-                    <span class="text-slate-600">Progresso dos Documentos:</span>
-                    <span class="{{ $todosDocsContratoEntregues ? 'text-emerald-600' : 'text-indigo-600' }}">
-                        {{ $progresso['aprovados'] + $progresso['em_analise'] }} de {{ $progresso['total'] }} enviados
+            <div class="px-5 sm:px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-xl">
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+                    <span class="font-medium text-slate-700">Progresso dos Documentos</span>
+                    <span class="flex items-center gap-2.5 tabular-nums">
+                        <span class="text-slate-600">{{ $progresso['aprovados'] + $progresso['em_analise'] }} de {{ $progresso['total'] }} enviados</span>
                         @if($todosDocsContratoEntregues)
-                            <span class="ml-1 text-emerald-700 font-bold">(Documentos OK ✅)</span>
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                <x-heroicon-s-check-circle class="h-4 w-4" /> Documentos OK
+                            </span>
                         @else
-                            <span class="ml-1 text-amber-700">(Documentos pendentes ⏳)</span>
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+                                <x-heroicon-s-clock class="h-4 w-4" /> Documentos pendentes
+                            </span>
                         @endif
                     </span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                    <div class="h-2.5 rounded-full transition-all duration-500 {{ $todosDocsContratoEntregues ? 'bg-emerald-500' : 'bg-indigo-600' }}" style="width: {{ $progresso['percentual'] }}%"></div>
+                <div class="mt-2.5 w-full bg-slate-200 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-label="Progresso dos documentos" aria-valuenow="{{ $progresso['percentual'] }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="h-1.5 rounded-full transition-all duration-500 {{ $todosDocsContratoEntregues ? 'bg-emerald-600' : 'bg-brand-600' }}" style="width: {{ $progresso['percentual'] }}%"></div>
                 </div>
-                <p class="text-[11px] text-slate-400">
+                <p class="mt-2.5 flex items-center gap-1.5 text-xs text-slate-500">
+                    <x-heroicon-o-information-circle class="h-4 w-4 shrink-0 text-slate-400" />
                     Você pode fotografar os documentos pelo celular ou anexar arquivos em PDF.
                 </p>
             </div>
-        </div>
+        </section>
 
         @php
             $statusAbas = $statusAbas ?? $interessado->resumoPendenciasPortal();
         @endphp
 
         <!-- Abas de Navegação Unificada -->
-        <div class="flex flex-wrap sm:flex-nowrap border-b border-slate-200 gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
+        <nav class="flex gap-6 border-b border-slate-200 text-sm font-medium" aria-label="Etapas da pré-admissão">
             <!-- Aba 1: 1. Cadastro -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']) }}"
-               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'dados' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
+               @if($abaAtiva === 'dados') aria-current="page" @endif
+               class="-mb-px pb-3 border-b-2 transition-colors flex items-center gap-2 {{ $abaAtiva === 'dados' ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                 <span>1. Cadastro</span>
                 @if($statusAbas['dados']['tem_pendencia'])
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ implode(', ', $statusAbas['dados']['pendencias']) }}">
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-semibold rounded-full bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200" title="{{ implode(', ', $statusAbas['dados']['pendencias']) }}">
                         {{ $statusAbas['dados']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Cadastro concluído">
-                        ✓
+                    <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-100 text-emerald-700" title="Cadastro concluído">
+                        <x-heroicon-s-check class="h-3 w-3" />
                     </span>
                 @endif
             </a>
 
             <!-- Aba 2: 2. Documentos -->
             <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}"
-               class="pb-3 px-2 border-b-2 transition-colors flex items-center gap-1.5 {{ $abaAtiva === 'documentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700' }}">
+               @if($abaAtiva === 'documentos') aria-current="page" @endif
+               class="-mb-px pb-3 border-b-2 transition-colors flex items-center gap-2 {{ $abaAtiva === 'documentos' ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                 <span>2. Documentos</span>
                 @if($statusAbas['documentos']['tem_pendencia'])
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200" title="{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s) pendente(s)">
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-semibold rounded-full bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200" title="{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s) pendente(s)">
                         {{ $statusAbas['documentos']['quantidade'] }}
                     </span>
                 @else
-                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200" title="Documentos obrigatórios concluídos">
-                        ✓
+                    <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-100 text-emerald-700" title="Documentos obrigatórios concluídos">
+                        <x-heroicon-s-check class="h-3 w-3" />
                     </span>
                 @endif
             </a>
-        </div>
+        </nav>
 
         <!-- CONTEÚDO DA ABA 1: DADOS CADASTRAIS -->
         @if($abaAtiva === 'dados')
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-6">
-                <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-6">
+                <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                            <span>📝</span> Cadastro dos Dados da Família e dos Alunos
+                        <h3 class="font-semibold tracking-tight text-slate-900 text-base">
+                            Cadastro dos Dados da Família e dos Alunos
                         </h3>
-                        <p class="text-xs text-slate-500 mt-1">
+                        <p class="text-sm text-slate-500 mt-1">
                             Estes dados alimentam diretamente a ficha cadastral e o contrato de prestação de serviços educacionais.
                         </p>
                     </div>
                     @if(! $statusAbas['dados']['tem_pendencia'])
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
-                            <span>✓</span> Cadastro Concluído
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 self-start sm:self-auto shrink-0">
+                            <x-heroicon-s-check-circle class="h-4 w-4" /> Cadastro Concluído
                         </span>
                     @else
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 self-start sm:self-auto">
-                            <span>⏳</span> {{ $statusAbas['dados']['quantidade'] }} {{ $statusAbas['dados']['quantidade'] === 1 ? 'pendência' : 'pendências' }}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20 self-start sm:self-auto shrink-0">
+                            <x-heroicon-s-clock class="h-4 w-4" /> {{ $statusAbas['dados']['quantidade'] }} {{ $statusAbas['dados']['quantidade'] === 1 ? 'pendência' : 'pendências' }}
                         </span>
                     @endif
                 </div>
 
                 @if($etapaFamiliaConcluida)
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">🔒</span>
-                            <span><strong>Modo Somente Leitura:</strong> Seus dados já foram enviados e estão sob análise da secretaria. Edições estão desativadas.</span>
+                    <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-start gap-2.5">
+                            <x-heroicon-o-lock-closed class="h-5 w-5 shrink-0 text-slate-400" />
+                            <span><strong class="font-semibold">Modo Somente Leitura:</strong> Seus dados já foram enviados e estão sob análise da secretaria. Edições estão desativadas.</span>
                         </div>
-                        <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold shrink-0 inline-flex items-center gap-1">
+                        <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="text-brand-700 hover:text-brand-900 font-semibold shrink-0 inline-flex items-center gap-1.5">
                             <span>Ver Documentos Enviados</span>
-                            <span>→</span>
+                            <x-heroicon-o-arrow-right class="h-4 w-4" />
                         </a>
                     </div>
                 @endif
@@ -232,17 +273,17 @@
 
                     <!-- Responsável Principal -->
                     <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
-                        <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Responsável Principal (Financeiro)</legend>
+                        <legend class="text-xs font-bold uppercase tracking-wider text-brand-700 px-2">Responsável Principal (Financeiro)</legend>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                             <div class="sm:col-span-2">
                                 <label class="block font-semibold text-slate-700 mb-1">Nome Completo *</label>
-                                <input type="text" name="responsavel[nome]" value="{{ $respOld['nome'] ?? $interessado->pessoa?->nome }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[nome]" value="{{ $respOld['nome'] ?? $interessado->pessoa?->nome }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">CPF *</label>
-                                <input type="text" name="responsavel[cpf]" id="input-resp-cpf" data-mask="cpf" inputmode="numeric" value="{{ $respOld['cpf'] ?? $interessado->pessoa?->cpf }}" required placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[cpf]" id="input-resp-cpf" data-mask="cpf" inputmode="numeric" value="{{ $respOld['cpf'] ?? $interessado->pessoa?->cpf }}" required placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                             </div>
 
                             @php
@@ -260,22 +301,22 @@
                             @endphp
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
-                                <input type="text" name="responsavel[data_nascimento]" id="input-resp-data-nascimento" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascResp }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[data_nascimento]" id="input-resp-data-nascimento" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascResp }}" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Telefone / WhatsApp *</label>
-                                <input type="text" name="responsavel[telefone]" id="input-resp-telefone" data-mask="telefone" inputmode="tel" value="{{ $respOld['telefone'] ?? $interessado->pessoa?->telefone }}" required placeholder="(00) 00000-0000" maxlength="15" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="text" name="responsavel[telefone]" id="input-resp-telefone" data-mask="telefone" inputmode="tel" value="{{ $respOld['telefone'] ?? $interessado->pessoa?->telefone }}" required placeholder="(00) 00000-0000" maxlength="15" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">E-mail</label>
-                                <input type="email" name="responsavel[email]" value="{{ $respOld['email'] ?? $interessado->pessoa?->email }}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <input type="email" name="responsavel[email]" value="{{ $respOld['email'] ?? $interessado->pessoa?->email }}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                             </div>
 
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Grau de Parentesco / Vínculo *</label>
-                                <select name="responsavel[tipo_vinculo_id]" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <select name="responsavel[tipo_vinculo_id]" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 text-sm">
                                     @foreach($tiposVinculo as $vinculoId => $vinculoNome)
                                         <option value="{{ $vinculoId }}" {{ (string)($respOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
                                              {{ $vinculoNome }}
@@ -286,7 +327,9 @@
 
                             <div class="flex items-center gap-2 pt-5">
                                 <input type="hidden" name="responsavel[is_financeiro]" value="1">
-                                <span class="text-xs font-semibold text-emerald-700">✓ Responsável Financeiro pelo Contrato</span>
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                                    <x-heroicon-s-check-circle class="h-4 w-4" /> Responsável Financeiro pelo Contrato
+                                </span>
                             </div>
                         </div>
 
@@ -297,34 +340,36 @@
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">CEP *</label>
                                     <div class="relative">
-                                        <input type="text" name="responsavel[cep]" id="input-cep" data-mask="cep" inputmode="numeric" value="{{ $respOld['cep'] ?? '' }}" required placeholder="00000-000" maxlength="9" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 pr-8">
-                                        <span id="cep-loading" class="hidden absolute right-2.5 top-2.5 text-xs text-indigo-600 animate-spin font-bold">⏳</span>
+                                        <input type="text" name="responsavel[cep]" id="input-cep" data-mask="cep" inputmode="numeric" value="{{ $respOld['cep'] ?? '' }}" required placeholder="00000-000" maxlength="9" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 pr-8">
+                                        <span id="cep-loading" class="hidden absolute right-2.5 top-2.5 text-brand-600 animate-spin" aria-hidden="true">
+                                            <x-heroicon-o-arrow-path class="h-4 w-4" />
+                                        </span>
                                     </div>
                                     <span id="cep-feedback" class="text-[11px] text-slate-500 block mt-1"></span>
                                 </div>
                                 <div class="sm:col-span-2">
                                     <label class="block font-semibold text-slate-600 mb-1">Logradouro / Rua *</label>
-                                    <input type="text" name="responsavel[logradouro]" id="input-logradouro" value="{{ $respOld['logradouro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[logradouro]" id="input-logradouro" value="{{ $respOld['logradouro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Número *</label>
-                                    <input type="text" name="responsavel[numero]" id="input-numero" value="{{ $respOld['numero'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[numero]" id="input-numero" value="{{ $respOld['numero'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Bairro *</label>
-                                    <input type="text" name="responsavel[bairro]" id="input-bairro" value="{{ $respOld['bairro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[bairro]" id="input-bairro" value="{{ $respOld['bairro'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Cidade *</label>
-                                    <input type="text" name="responsavel[cidade]" id="input-cidade" value="{{ $respOld['cidade'] ?? $respOld['cidade_nome'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[cidade]" id="input-cidade" value="{{ $respOld['cidade'] ?? $respOld['cidade_nome'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div>
                                     <label class="block font-semibold text-slate-600 mb-1">Estado (UF) *</label>
-                                    <input type="text" name="responsavel[uf]" id="input-uf" maxlength="2" value="{{ $respOld['uf'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 uppercase focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[uf]" id="input-uf" maxlength="2" value="{{ $respOld['uf'] ?? '' }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 uppercase focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <div class="sm:col-span-2">
                                     <label class="block font-semibold text-slate-600 mb-1">Complemento</label>
-                                    <input type="text" name="responsavel[complemento]" id="input-complemento" value="{{ $respOld['complemento'] ?? '' }}" placeholder="Apto, Bloco..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <input type="text" name="responsavel[complemento]" id="input-complemento" value="{{ $respOld['complemento'] ?? '' }}" placeholder="Apto, Bloco..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500">
                                 </div>
                                 <input type="hidden" name="responsavel[cidade_ibge]" id="input-cidade-ibge" value="{{ $respOld['cidade_ibge'] ?? '' }}">
                             </div>
@@ -333,7 +378,7 @@
 
                     <!-- Segundo Responsável (Opcional) -->
                     <details class="border border-slate-200 rounded-xl p-4 text-xs" {{ filled($segundoOld['nome'] ?? null) ? 'open' : '' }}>
-                        <summary class="font-bold text-slate-700 cursor-pointer hover:text-indigo-600">
+                        <summary class="font-bold text-slate-700 cursor-pointer hover:text-brand-600">
                             + Adicionar Segundo Responsável (opcional)
                         </summary>
                         <fieldset class="border-0 p-0 m-0" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
@@ -367,7 +412,7 @@
 
                     <!-- Aluno(s) / Dependente(s) -->
                     <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
-                        <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Aluno(s) Pretendente(s)</legend>
+                        <legend class="text-xs font-bold uppercase tracking-wider text-brand-700 px-2">Aluno(s) Pretendente(s)</legend>
 
                         @foreach($interessado->dependentes as $index => $dependente)
                             @php
@@ -378,7 +423,7 @@
 
                                 <div class="font-bold text-slate-800 text-sm flex items-center justify-between">
                                     <span>Estudante: {{ $dependente->nome_crianca }}</span>
-                                    <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Aluno #{{ $index + 1 }}</span>
+                                    <span class="text-xs px-2 py-0.5 rounded bg-brand-100 text-brand-800">Aluno #{{ $index + 1 }}</span>
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -419,12 +464,12 @@
                                     @endphp
                                     <div>
                                         <label class="block font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
-                                        <input type="text" name="dependentes[{{ $index }}][data_nascimento]" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascDep }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
+                                        <input type="text" name="dependentes[{{ $index }}][data_nascimento]" data-mask="data" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ $dataNascDep }}" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500">
                                     </div>
 
                                     <div>
                                         <label class="block font-semibold text-slate-700 mb-1">CPF do Aluno (se possuir)</label>
-                                        <input type="text" name="dependentes[{{ $index }}][cpf]" data-mask="cpf" inputmode="numeric" value="{{ $depOld['cpf'] ?? '' }}" placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
+                                        <input type="text" name="dependentes[{{ $index }}][cpf]" data-mask="cpf" inputmode="numeric" value="{{ $depOld['cpf'] ?? '' }}" placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500">
                                     </div>
 
                                     <div>
@@ -444,9 +489,9 @@
                     </fieldset>
 
                     <!-- Aceite LGPD -->
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
+                    <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
                         <label class="flex items-start gap-2.5 font-medium cursor-pointer">
-                            <input type="checkbox" name="lgpd_aceite" value="1" required {{ filled($dadosPreMatricula) ? 'checked' : '' }} {{ $etapaFamiliaConcluida ? 'disabled' : '' }} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                            <input type="checkbox" name="lgpd_aceite" value="1" required {{ filled($dadosPreMatricula) ? 'checked' : '' }} {{ $etapaFamiliaConcluida ? 'disabled' : '' }} class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                             <span>
                                 Declaro que as informações acima são verdadeiras e autorizo o tratamento dos dados pessoais fornecidos para fins de cadastro, formalização de proposta pré-contratual e procedimentos de matrícula escolar, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
                             </span>
@@ -454,19 +499,19 @@
                     </div>
 
                     @if($etapaFamiliaConcluida)
-                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
-                            <p class="text-xs text-slate-600 font-medium">
+                        <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 text-center space-y-3">
+                            <p class="text-sm text-slate-600">
                                 Dados cadastrais enviados e em análise pela secretaria escolar. Não é necessária nenhuma ação adicional aqui.
                             </p>
-                            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-xs transition-colors">
+                            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-sm text-sm transition-colors">
                                 <span>Consultar Documentos Enviados</span>
-                                <span>→</span>
+                                <x-heroicon-o-arrow-right class="h-4 w-4" />
                             </a>
                         </div>
                     @else
-                        <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-sm transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" class="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-sm text-sm transition-colors flex items-center justify-center gap-2">
                             <span>Salvar Dados e Avançar para Documentos</span>
-                            <span>→</span>
+                            <x-heroicon-o-arrow-right class="h-4 w-4" />
                         </button>
                     @endif
                 </form>
@@ -477,69 +522,72 @@
         @if($abaAtiva === 'documentos')
             <div class="space-y-6">
                 @if(! $statusAbas['documentos']['tem_pendencia'])
-                    <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50 border border-emerald-200 shadow-xs space-y-4">
-                        <div class="flex items-start gap-3.5">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs font-bold">
-                                ✓
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-snug">
-                                        Documentação Recebida com Sucesso! 🎉
+                    <section class="bg-white rounded-xl border border-slate-200 border-l-4 border-l-emerald-600 shadow-sm p-5 sm:p-6 space-y-5">
+                        <div class="flex items-start gap-4">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                <x-heroicon-o-check class="h-5 w-5" />
+                            </span>
+                            <div class="space-y-1.5 min-w-0">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                                    <h3 class="font-semibold tracking-tight text-slate-900 text-base sm:text-lg leading-snug">
+                                        Documentação Recebida com Sucesso!
                                     </h3>
-                                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 tabular-nums">
                                         {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} obrigatórios enviados
                                     </span>
                                 </div>
-                                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                                    Recebemos todos os seus dados cadastrais e documentos obrigatórios para a pré-matrícula. Nossa <strong>Secretaria Escolar</strong> já iniciou a conferência das informações.
+                                <p class="text-sm text-slate-600 leading-relaxed">
+                                    Recebemos todos os seus dados cadastrais e documentos obrigatórios para a pré-matrícula. Nossa <strong class="font-semibold text-slate-800">Secretaria Escolar</strong> já iniciou a conferência das informações.
                                 </p>
                             </div>
                         </div>
 
-                        <div class="bg-white/90 rounded-xl border border-emerald-100 p-4 space-y-2 text-xs">
-                            <span class="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
-                                <span>📋</span> Próximos Passos:
-                            </span>
-                            <ol class="list-decimal list-inside space-y-1.5 text-slate-600 leading-relaxed">
-                                <li>Nossa equipe realizará a conferência detalhada dos documentos enviados.</li>
-                                <li>Em breve entraremos em contato para apresentar as opções de anuidade escolar e parcelamento.</li>
-                                <li>Você receberá as orientações finais para a formalização do contrato e matrícula.</li>
+                        <div class="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-3">
+                            <span class="font-semibold text-slate-800 text-sm">Próximos Passos:</span>
+                            <ol class="space-y-2.5 text-sm text-slate-600 leading-relaxed">
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">1</span>
+                                    <span>Nossa equipe realizará a conferência detalhada dos documentos enviados.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">2</span>
+                                    <span>Em breve entraremos em contato para apresentar as opções de anuidade escolar e parcelamento.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">3</span>
+                                    <span>Você receberá as orientações finais para a formalização do contrato e matrícula.</span>
+                                </li>
                             </ol>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-1 text-xs border-t border-emerald-100/80 text-slate-500">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Status atual: <strong class="text-emerald-700">Aguardando Análise da Secretaria</strong></span>
+                        <div class="flex items-center gap-2 pt-4 text-sm text-slate-500 border-t border-slate-100">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>Status atual: <strong class="font-semibold text-slate-800">Aguardando Análise da Secretaria</strong></span>
                         </div>
-                    </div>
+                    </section>
                 @else
-                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between gap-3 text-xs shadow-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="text-base">⏳</span>
-                            <span>Restam <strong>{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s)</strong> a serem anexados para a pré-matrícula.</span>
+                    <div class="px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 flex items-start sm:items-center justify-between gap-3 text-sm">
+                        <div class="flex items-start sm:items-center gap-2.5">
+                            <x-heroicon-o-exclamation-circle class="h-5 w-5 shrink-0 text-amber-600" />
+                            <span>Restam <strong class="font-semibold">{{ $statusAbas['documentos']['quantidade'] }} documento(s) obrigatório(s)</strong> a serem anexados para a pré-matrícula.</span>
                         </div>
-                        <span class="font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                        <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-md bg-white text-amber-900 ring-1 ring-inset ring-amber-300 tabular-nums">
                             {{ $statusAbas['documentos']['enviados'] }}/{{ $statusAbas['documentos']['total_obrigatorios'] }} enviados
                         </span>
                     </div>
                 @endif
 
                 <!-- Seção 1: Documentos Obrigatórios (Em Destaque) -->
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                                <span class="text-rose-600">🔴</span> Documentos Obrigatórios
-                            </h3>
-                            <p class="text-xs text-slate-500">
-                                <strong>Indispensáveis:</strong> Documentos essenciais para a conferência e efetivação da pré-matrícula.
-                            </p>
-                        </div>
+                <section class="space-y-3">
+                    <div>
+                        <h3 class="font-semibold tracking-tight text-slate-900 text-base">Documentos Obrigatórios</h3>
+                        <p class="mt-0.5 text-sm text-slate-500">
+                            <strong class="font-medium text-slate-700">Indispensáveis:</strong> Documentos essenciais para a conferência e efetivação da pré-matrícula.
+                        </p>
                     </div>
 
                     @if($docsContrato->isEmpty())
-                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 text-sm text-slate-500">
                             Nenhum documento obrigatório configurado para esta série.
                         </div>
                     @else
@@ -547,34 +595,29 @@
                             @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'contrato', 'etapaFamiliaConcluida' => $etapaFamiliaConcluida])
                         @endforeach
                     @endif
-                </div>
+                </section>
 
                 <!-- Seção 2: Documentos para o Histórico Escolar (Colapsado) -->
-                <details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">
-                    <summary class="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50 transition-colors list-none">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-amber-500 text-lg">🟡</span>
-                            <div>
-                                <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
-                                    <span>Documentos para o Histórico Escolar</span>
-                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Documentação acadêmica</span>
-                                </h3>
-                                <p class="text-xs text-slate-500 mt-0.5">
-                                    Exigidos para a pasta pedagógica do aluno (envio facultado neste momento inicial).
-                                </p>
-                            </div>
+                <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <summary class="p-4 sm:p-5 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-slate-50 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                        <div class="min-w-0">
+                            <h3 class="font-semibold tracking-tight text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                                <span>Documentos para o Histórico Escolar</span>
+                                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Documentação acadêmica</span>
+                            </h3>
+                            <p class="mt-0.5 text-sm text-slate-500">
+                                Exigidos para a pasta pedagógica do aluno (envio facultado neste momento inicial).
+                            </p>
                         </div>
-                        <div class="flex items-center gap-2 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                            <span class="text-xs font-semibold hidden sm:inline text-slate-500">{{ $docsHistorico->count() }} {{ $docsHistorico->count() === 1 ? 'documento' : 'documentos' }}</span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                        <div class="flex items-center gap-2 shrink-0 text-slate-400">
+                            <span class="text-xs font-medium hidden sm:inline text-slate-500 tabular-nums">{{ $docsHistorico->count() }} {{ $docsHistorico->count() === 1 ? 'documento' : 'documentos' }}</span>
+                            <x-heroicon-o-chevron-down class="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
                         </div>
                     </summary>
 
-                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/50">
+                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/60">
                         @if($docsHistorico->isEmpty())
-                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-sm text-slate-500">
                                 Nenhum documento de histórico específico requerido para esta série no momento.
                             </div>
                         @else
@@ -586,31 +629,26 @@
                 </details>
 
                 <!-- Seção 3: Documentos Opcionais / Complementares (Colapsado) -->
-                <details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">
-                    <summary class="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50 transition-colors list-none">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-emerald-500 text-lg">🟢</span>
-                            <div>
-                                <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
-                                    <span>Documentos Opcionais / Complementares</span>
-                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Envio facultativo</span>
-                                </h3>
-                                <p class="text-xs text-slate-500 mt-0.5">
-                                    Envio caso o aluno possua (ex: carteirinha de convênio, laudos, declarações).
-                                </p>
-                            </div>
+                <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <summary class="p-4 sm:p-5 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-slate-50 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                        <div class="min-w-0">
+                            <h3 class="font-semibold tracking-tight text-slate-900 text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                                <span>Documentos Opcionais / Complementares</span>
+                                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">Envio facultativo</span>
+                            </h3>
+                            <p class="mt-0.5 text-sm text-slate-500">
+                                Envio caso o aluno possua (ex: carteirinha de convênio, laudos, declarações).
+                            </p>
                         </div>
-                        <div class="flex items-center gap-2 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                            <span class="text-xs font-semibold hidden sm:inline text-slate-500">{{ $docsOpcionais->count() }} {{ $docsOpcionais->count() === 1 ? 'documento' : 'documentos' }}</span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
+                        <div class="flex items-center gap-2 shrink-0 text-slate-400">
+                            <span class="text-xs font-medium hidden sm:inline text-slate-500 tabular-nums">{{ $docsOpcionais->count() }} {{ $docsOpcionais->count() === 1 ? 'documento' : 'documentos' }}</span>
+                            <x-heroicon-o-chevron-down class="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
                         </div>
                     </summary>
 
-                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/50">
+                    <div class="p-4 sm:p-5 border-t border-slate-100 space-y-3 bg-slate-50/60">
                         @if($docsOpcionais->isEmpty())
-                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+                            <div class="p-4 bg-white rounded-xl border border-slate-200 text-sm text-slate-500">
                                 Nenhum documento opcional listado para esta série.
                             </div>
                         @else
@@ -623,6 +661,12 @@
             </div>
         @endif
     </main>
+
+    <footer class="py-6 text-center text-xs text-slate-400">
+        <div class="max-w-3xl mx-auto px-4">
+            &copy; {{ date('Y') }} Torre360 Gestão Escolar
+        </div>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -696,7 +740,7 @@
                     if (loading) loading.classList.remove('hidden');
                     if (feedback) {
                         feedback.innerText = 'Buscando CEP...';
-                        feedback.className = 'text-[11px] text-indigo-600 font-medium block mt-1';
+                        feedback.className = 'text-[11px] text-brand-600 font-medium block mt-1';
                     }
 
                     try {

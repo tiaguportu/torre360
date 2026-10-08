@@ -115,9 +115,9 @@ class CrmNovasFuncionalidadesTest extends TestCase
         $this->assertNotEmpty($token);
 
         // 1. Acesso à página do portal
-        $response = $this->get(route('candidato.documentos.show', ['token' => $token]));
+        $response = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $response->assertStatus(200);
-        $response->assertSee('Portal de Admissão');
+        $response->assertSee('Portal de Pré-Admissão');
         $response->assertSee('Certidão de Nascimento');
 
         // 2. Upload do documento
