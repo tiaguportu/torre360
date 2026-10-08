@@ -166,8 +166,13 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   - A fala também é **dado não confiável**: o prompt manda ignorar instruções ditas nos áudios. Sem texto colado, o
     bloco `<conversa>` não é enviado (só um aviso de que a conversa está nos áudios).
   - `GeminiAgentService::callGeminiApi($payload, $timeout = 45)`: com áudio o resumo usa 120 s por tentativa; sem
-    áudio nada muda. Os arquivos temporários são apagados num `finally`, mesmo com erro. Se a IA falhar, a
-    resposta de contingência (`Fallback`) registra "N áudio(s) anexado(s)" em vez de um trecho vazio.
+    áudio nada muda. Os arquivos temporários são apagados num `finally`, mesmo com erro.
+  - **Falha da IA = contingência, não síntese:** o serviço devolve a resposta de contingência (`Fallback`, que cita
+    "N áudio(s) anexado(s)" em vez de um trecho vazio) com `fallback = true`, como já faz o dossiê. A Action
+    **não grava** nada na linha do tempo, **não altera** temperatura nem próximo contato e mostra uma notificação de
+    erro ("Não foi possível resumir a conversa"). Antes, o texto de contingência era gravado como se fosse a síntese
+    e a notificação dizia "Conversa resumida com sucesso!". Como os áudios já foram apagados, o consultor precisa
+    anexá-los de novo ao tentar outra vez. Quem consumir `resumirConversaWhatsapp()` deve checar `fallback`.
   - O servidor precisa comportar o upload (`upload_max_filesize`/`post_max_size` ≥ 10 MB; o Livewire limita o
     temporário a 12 MB) e a análise mais demorada (`max_execution_time`).
   - Testes: `tests/Feature/ResumoConversaAudioTest.php` (WAV mínimo gerado em memória, Gemini simulado com Mockery).
@@ -210,7 +215,7 @@ acima são opcionais.
 Testes: `LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `CaptacaoReenvioTest`, `CaptacaoIndicacaoTest`,
 `CaptacaoRecaptchaTest`, `MatriculaOnlineConversaoCrmTest`, `AlertaLeadsTest`, `ConsultoresCrmTest`,
 `InteracoesAutomaticasTest`, `KanbanInteressadosAutorizacaoTest`, `CrmIaSegurancaTest`, `CrmIaDossieCacheTest`,
-`CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`.
+`CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`, `ResumoConversaAudioTest`.
 
 ## 11. Fora do escopo destes lotes
 

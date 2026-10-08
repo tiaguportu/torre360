@@ -458,6 +458,9 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
    - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead.
    - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
    - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
+5. **Se a IA não responder:**
+   - O sistema exibe o aviso **"Não foi possível resumir a conversa"** e **não grava nada**: o histórico, a temperatura e o próximo contato do lead permanecem como estavam.
+   - Tente de novo em instantes. Os áudios anexados já foram descartados do servidor, então é preciso **anexá-los novamente** (o texto colado também precisa ser colado de novo).
 
 ### 3.21 Linha do Tempo Omnichannel Interativa (Unified Customer 360 Feed)
 A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento escolar ao consolidar todos os pontos de contato da família em um feed cronológico único, interativo e ultra-responsivo:
