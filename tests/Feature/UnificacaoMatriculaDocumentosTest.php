@@ -733,6 +733,9 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response2->assertSee('Aguardando Análise da Secretaria');
         $response2->assertDontSee('Pré-análise Automática (IA)');
         $response2->assertDontSee('IA estão processando');
+        $response2->assertDontSee('https://wa.me');
+        $response2->assertDontSee('WhatsApp da Escola');
+        $response2->assertDontSee('Falar com a Secretaria no WhatsApp');
     }
 
     public function test_portal_exibe_banner_de_conclusao_e_bloqueia_edicoes_e_uploads_em_modo_somente_leitura_quando_etapa_familia_concluida(): void

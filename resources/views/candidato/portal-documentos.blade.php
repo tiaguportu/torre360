@@ -93,15 +93,10 @@
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-white/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="pt-3 border-t border-white/20 text-xs">
                     <span class="text-emerald-100 flex items-center gap-1.5">
                         <span>🔒</span> <strong>Modo Somente Leitura:</strong> Formulário e uploads bloqueados para a conferência oficial da secretaria.
                     </span>
-                    @if(filled($interessado->unidade?->celular_whatsapp))
-                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade->celular_whatsapp) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-emerald-800 font-bold hover:bg-emerald-50 shadow-xs transition-all text-xs shrink-0">
-                            <span>💬 Falar com a Secretaria no WhatsApp</span>
-                        </a>
-                    @endif
                 </div>
             </div>
         @endif
@@ -513,18 +508,9 @@
                             </ol>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs border-t border-emerald-100/80">
-                            <div class="flex items-center gap-2 text-slate-500">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span>Status atual: <strong class="text-emerald-700">Aguardando Análise da Secretaria</strong></span>
-                            </div>
-                            @if(filled($interessado->unidade?->celular_whatsapp))
-                                <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade->celular_whatsapp) }}"
-                                   target="_blank"
-                                   class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-2xs">
-                                    <span>💬 Falar com a Secretaria no WhatsApp</span>
-                                </a>
-                            @endif
+                        <div class="flex items-center gap-2 pt-1 text-xs border-t border-emerald-100/80 text-slate-500">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Status atual: <strong class="text-emerald-700">Aguardando Análise da Secretaria</strong></span>
                         </div>
                     </div>
                 @else
@@ -634,13 +620,6 @@
                         @endif
                     </div>
                 </details>
-
-                <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                    <span>Em caso de dúvidas, fale diretamente com nossa Secretaria:</span>
-                    <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade?->celular_whatsapp ?? '') }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 inline-flex items-center gap-1.5">
-                        <span>💬 WhatsApp da Escola</span>
-                    </a>
-                </div>
             </div>
         @endif
     </main>
