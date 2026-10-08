@@ -2732,18 +2732,19 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 1. **Busca Automática por ISBN (10 ou 13 dígitos):**
    - **No cabeçalho:** Clique no botão **"Buscar por ISBN"** e informe o código da obra (ex: `9788576082675`).
    - **Ou diretamente no campo ISBN:** Digite o ISBN no formulário e clique no ícone da lupa (`Buscar por ISBN`).
-   - O sistema realiza uma consulta inteligente em cascata e enriquecimento multi-base:
-     - **BrasilAPI (Câmara Brasileira do Livro - CBL):** Fonte primária de dados oficiais do registro nacional.
-     - **Google Books API (com suporte a `GOOGLE_BOOKS_API_KEY`):** Complementa automaticamente autores, sinopses e categorias caso o catálogo oficial da editora esteja incompleto.
+   - O sistema consulta **as três bases públicas ao mesmo tempo** (a busca leva poucos segundos) e mescla os resultados; para cada campo vale o primeiro valor preenchido, nesta ordem de prioridade:
      - **Open Library:** Base colaborativa internacional para títulos acadêmicos e mundiais.
-      - **Amazon Books (Detalhamento da Obra e Autores):** Se o registro nacional omitir os autores (como na CBL para certas edições), o sistema consulta a página de detalhes da obra na Amazon para recuperar com precisão os autores e ilustradores principais.
-     - **Amazon Covers (CDN de Alta Resolução via ISBN-10):** Caso a editora não tenha fornecido a capa na CBL, o sistema calcula matematicamente o ISBN-10 correspondente e recupera a imagem oficial em alta resolução da Amazon.
+     - **BrasilAPI (Câmara Brasileira do Livro - CBL):** Dados do registro nacional.
+     - **Google Books API (com suporte a `GOOGLE_BOOKS_API_KEY`):** Complementa autores e categorias quando as outras bases estão incompletas; se não achar pelo ISBN-13, tenta o ISBN-10 correspondente.
+   - **Cache:** o resultado de cada ISBN fica guardado por **7 dias**, então buscar o mesmo código de novo é instantâneo e não consulta a internet. "Não encontrado" é guardado por 1 hora. Se alguma base estiver fora do ar, o sistema **não** conclui que o livro não existe (avisa que o serviço está indisponível, não guarda isso em cache e o resultado parcial vale só 10 minutos).
+   - **Amazon (desligada por padrão):** a raspagem da página da Amazon (autores quando a CBL omite) e o CDN de capas deles não são oficiais e contrariam os termos de uso do site. Só são usados se o administrador definir `LIVROS_AMAZON_HABILITADO=true` no `.env`, assumindo esse risco. Sem isso, autores ou capas que as três bases não trazem precisam ser preenchidos à mão.
    - Ao localizar a obra, o sistema preenche automaticamente:
      - **Título completo**
      - **Autor(es)**
      - **Editora**
      - **Categoria / Assunto**
-     - **Foto da Capa:** O sistema faz o download automático da imagem oficial da capa em alta resolução e a armazena com segurança no storage da instituição, exibindo a pré-visualização imediata no formulário.
+     - **Foto da Capa:** o sistema baixa a capa, **confere se é uma imagem de verdade** (JPEG, PNG ou WebP, até 3 MB, no mínimo 60×60 px — páginas de erro, imagens de 1 pixel e outros formatos são recusados, independentemente do tipo que o servidor declare), aceita só endereços públicos e exibe a pré-visualização no formulário. Se a base indicada não tiver capa válida, tenta a do Open Library Covers.
+   - **Cliques repetidos não acumulam arquivos:** a capa baixada fica numa área *pendente* com nome fixo por ISBN. Só quando você **salva o livro** ela vira um arquivo próprio da obra (duas obras com o mesmo ISBN não dividem arquivo). Capas de formulários abandonados são removidas automaticamente após 48 horas (`php artisan biblioteca:limpar-capas-pendentes`, agendado todo dia às 03:30), e trocar a capa ou excluir o livro apaga o arquivo antigo.
 
 2. **Foto da Capa do Livro Integrada ao Formulário:**
    - O formulário foi unificado em um box de largura total (**Informações do Livro**), integrando o campo de **Foto da Capa** diretamente ao lado dos dados cadastrais da obra.
