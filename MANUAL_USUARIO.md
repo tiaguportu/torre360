@@ -778,7 +778,7 @@ Ainda no cadastro do **Período Letivo**, o toggle **"Permitir exame final"** ha
 O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a forma mais rápida e guiada de registrar um ou mais alunos com todos os seus vínculos familiares em um único fluxo de 3 etapas.
 
 #### Etapa 1 — Dados do(s) Aluno(s)
-- Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada. Se o cadastro for encontrado, os campos são preenchidos automaticamente e o aluno existente é reutilizado (sem duplicação).
+- Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada. Se o cadastro for encontrado, os campos são preenchidos automaticamente e o aluno existente é reutilizado (sem duplicação). O preenchimento automático inclui nome, **data de nascimento**, e-mail, telefone, nacionalidade, naturalidade, sexo, cor/raça e o primeiro endereço cadastrado; ele ocorre ao sair do campo CPF e aparece o aviso "Cadastro encontrado".
 - O formulário permite cadastrar **múltiplos alunos** na mesma matrícula (irmãos, por exemplo) clicando em **"Adicionar Aluno"**. Todos compartilharão os mesmos responsáveis.
 - O cabeçalho do item no Repeater exibe o **nome do aluno** conforme é preenchido, para fácil identificação.
 - **Criar conta de acesso:** Ao preencher o campo **E-mail**, aparecerá um checkbox **"Criar conta de acesso para esta pessoa?"**. Se marcado, o sistema criará automaticamente um usuário com o papel **`aluno`** e enviará um e-mail de boas-vindas com a senha gerada para o endereço informado.
@@ -788,7 +788,7 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
 
 #### Etapa 2 — Pais / Responsáveis
 - Adicione um ou mais responsáveis e defina o **vínculo** (Pai, Mãe, Tutor etc.) e se é **Responsável Financeiro** (e o percentual correspondente).
-- O campo **CPF** também busca automaticamente um responsável já cadastrado. Responsáveis existentes **não são duplicados**: o sistema os encontra e vincula diretamente.
+- O campo **CPF** também busca automaticamente um responsável já cadastrado (com os mesmos dados preenchidos da Etapa 1, inclusive a data de nascimento). Responsáveis existentes **não são duplicados**: o sistema os encontra e vincula diretamente.
 - Os responsáveis cadastrados serão vinculados a **todos os alunos** adicionados na Etapa 1.
 - **Criar conta de acesso:** Igualmente ao aluno, se o responsável possuir e-mail e o checkbox estiver marcado, será criado um usuário com o papel **`responsavel`**.
 

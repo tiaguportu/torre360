@@ -182,6 +182,29 @@ class InteressadoMatriculaWizardTest extends TestCase
         $wizard->assertSet('data.curso_id', $this->curso->id);
     }
 
+    public function test_wizard_preenche_dados_da_pessoa_ao_digitar_cpf_ja_cadastrado(): void
+    {
+        $existente = Pessoa::factory()->create([
+            'nome' => 'Pedro Já Cadastrado',
+            'cpf' => '01844778320',
+            'data_nascimento' => '2015-03-20',
+        ]);
+        $lead = $this->lead('Maria Responsável', [['nome' => 'João Aluno']]);
+
+        $wizard = Livewire::withQueryParams(['interessado' => $lead->id])
+            ->actingAs($this->admin())
+            ->test(EnrollmentWizard::class);
+
+        $chave = array_key_first($wizard->get('data.alunos'));
+
+        $wizard->set("data.alunos.{$chave}.cpf", '018.447.783-20')
+            ->assertHasNoErrors()
+            ->assertSet("data.alunos.{$chave}.nome", 'Pedro Já Cadastrado')
+            // O DatePicker do Filament hidrata o estado como data+hora; interessa a data.
+            ->assertSet("data.alunos.{$chave}.data_nascimento", fn ($valor) => str_starts_with((string) $valor, '2015-03-20'))
+            ->assertSet("data.alunos.{$chave}.pessoa_id_existente", $existente->id);
+    }
+
     public function test_wizard_sem_parametro_abre_vazio(): void
     {
         Livewire::actingAs($this->admin())

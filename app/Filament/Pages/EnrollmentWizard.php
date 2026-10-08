@@ -47,6 +47,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -231,7 +232,8 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                             $endereco = $pessoa->enderecos->first();
 
                             $set('nome', $pessoa->nome);
-                            $set('data_nascimento', $pessoa->data_nascimento?->toDateString());
+                            // Pessoa::data_nascimento não tem cast de data: chega como string do banco.
+                            $set('data_nascimento', $pessoa->data_nascimento ? Carbon::parse($pessoa->data_nascimento)->toDateString() : null);
                             $set('email', $pessoa->email);
                             $set('telefone', $pessoa->telefone);
                             $set('nacionalidade_id', (string) $pessoa->nacionalidade_id);
