@@ -45,6 +45,13 @@ Torre360.
   empréstimo ainda não devolvido com devolução prevista vencida.
 - Não é dado sensível: permissões liberadas para `secretaria`, `coordenador`, `professor`,
   além de `admin`/`super_admin`.
-- Testes em `tests/Feature/BibliotecaTest.php`.
+- Listagem de livros em **lista ou grade** (`LivrosTable::configure()`): a grade usa
+  `Stack`/`Split` com `contentGrid()` e paginação de 12 em 12; a lista mantém as colunas
+  originais. A preferência fica na sessão (`LivrosTable::SESSION_VISUALIZACAO`, valores
+  `lista`/`grade`). O Filament monta a tabela no início da requisição, antes de qualquer
+  ação rodar, então os botões do cabeçalho (`ListLivros::visualizacaoAction()`) gravam a
+  sessão e redirecionam para a URL anterior (que preserva busca, filtros e ordenação); não
+  dá para trocar as colunas "no lugar".
+- Testes em `tests/Feature/BibliotecaTest.php` (inclui a alternância lista/grade).
 - Página do portal do aluno para ver os próprios empréstimos (item opcional do escopo
   original) não foi incluída nesta entrega — pode ser um incremento futuro.

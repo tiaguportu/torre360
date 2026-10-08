@@ -2752,6 +2752,10 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 
 ### 51.2 Visualização, Etiquetas e Listagem (`/admin/livros`)
 - A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, Faixa Etária, ISBN, Código de Tombo e o saldo de exemplares disponíveis sobre o total.
+- **Lista ou Grade:** no topo da página, ao lado de **"Novo livro"**, dois botões com ícone alternam a forma de ver o acervo — **Ver em lista** (a tabela de sempre) e **Ver em grade** (cartões com a capa em destaque). O botão do modo ativo fica destacado.
+  - **Cartão da grade:** capa grande, Título, Autor, Tombo, Faixa Etária e o saldo (*"X de Y disponíveis"*, verde quando há exemplar e vermelho quando todos estão emprestados). A tela mostra 2, 3 ou 4 cartões por linha conforme a largura, com 12 livros por página (opções de 12, 24, 48 e 96).
+  - **O que continua igual nos dois modos:** busca, ordenação, filtro de **Faixa Etária**, os botões **Etiqueta** e **Editar** de cada livro e as ações em lote (cada cartão tem sua caixa de seleção). Na grade a busca cobre Tombo, Título e Autor, e as colunas extras (Editora, Categoria, ISBN) e o seletor de colunas existem só na lista.
+  - **Preferência salva:** a escolha fica guardada na sessão de quem está usando, então a página reabre no último modo escolhido (em outro navegador ou aparelho, começa em lista). Ao trocar, a página recarrega mantendo a busca, os filtros e a ordenação.
 - **Impressão de Etiqueta Individual:** Clique no botão **"Etiqueta"** na linha de qualquer livro para gerar a etiqueta com código de barras, autor, título e faixa etária em nova aba para impressão imediata.
 - **Impressão em Lote:** Selecione múltiplos livros com as caixas de seleção e clique em **"Imprimir Etiquetas em Lote"** na barra de ações coletivas.
 - Em dispositivos móveis, a listagem se adapta em formato de cards responsivos (`stackedOnMobile`).

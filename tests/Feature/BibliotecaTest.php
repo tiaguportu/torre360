@@ -6,6 +6,7 @@ use App\Enums\StatusEmprestimo;
 use App\Filament\Resources\Emprestimos\Pages\CreateEmprestimo;
 use App\Filament\Resources\Emprestimos\Pages\ListEmprestimos;
 use App\Filament\Resources\Livros\Pages\ListLivros;
+use App\Filament\Resources\Livros\Tables\LivrosTable;
 use App\Models\Emprestimo;
 use App\Models\Livro;
 use App\Models\Matricula;
@@ -48,6 +49,65 @@ class BibliotecaTest extends TestCase
 
         Livewire::test(ListLivros::class)
             ->assertSuccessful();
+    }
+
+    public function test_livros_abre_em_lista_por_padrao(): void
+    {
+        $this->autenticarComoAdmin();
+        $livros = Livro::factory()->count(3)->create();
+
+        Livewire::test(ListLivros::class)
+            ->assertSuccessful()
+            ->assertCanSeeTableRecords($livros)
+            ->assertTableColumnExists('editora')
+            ->assertTableColumnExists('isbn')
+            ->assertDontSeeHtml('fi-ta-content-grid');
+    }
+
+    public function test_alternar_para_grade_salva_preferencia_na_sessao(): void
+    {
+        $this->autenticarComoAdmin();
+        Livro::factory()->create();
+
+        Livewire::test(ListLivros::class)
+            ->callAction('visualizacaoGrade')
+            ->assertRedirect();
+
+        $this->assertSame('grade', session(LivrosTable::SESSION_VISUALIZACAO));
+    }
+
+    public function test_livros_em_grade_exibe_os_cartoes_com_busca_e_ordenacao(): void
+    {
+        $this->autenticarComoAdmin();
+        session([LivrosTable::SESSION_VISUALIZACAO => LivrosTable::VISUALIZACAO_GRADE]);
+        $dom = Livro::factory()->create(['titulo' => 'Dom Casmurro', 'autor' => 'Machado de Assis']);
+        $outro = Livro::factory()->create(['titulo' => 'Vidas Secas', 'autor' => 'Graciliano Ramos']);
+
+        Livewire::test(ListLivros::class)
+            ->assertSuccessful()
+            ->assertCanSeeTableRecords([$dom, $outro])
+            ->assertTableColumnExists('capa')
+            ->assertTableColumnExists('titulo')
+            ->assertTableColumnExists('quantidade_disponivel')
+            ->assertTableColumnDoesNotExist('isbn')
+            ->assertSeeHtml('fi-ta-content-grid')
+            ->assertSee('Dom Casmurro')
+            ->searchTable('Casmurro')
+            ->assertCanSeeTableRecords([$dom])
+            ->assertCanNotSeeTableRecords([$outro]);
+    }
+
+    public function test_voltar_para_lista_restaura_a_tabela(): void
+    {
+        $this->autenticarComoAdmin();
+        session([LivrosTable::SESSION_VISUALIZACAO => LivrosTable::VISUALIZACAO_GRADE]);
+        Livro::factory()->create();
+
+        Livewire::test(ListLivros::class)
+            ->callAction('visualizacaoLista')
+            ->assertRedirect();
+
+        $this->assertSame('lista', session(LivrosTable::SESSION_VISUALIZACAO));
     }
 
     public function test_pagina_de_emprestimos_carrega(): void
