@@ -21,7 +21,7 @@ class AvaliacaoHabilidadeForm
                             ->schema([
                                 Select::make('turma_id')
                                     ->label('Turma')
-                                    ->relationship('turma', 'nome')
+                                    ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))
                                     ->required()
                                     ->live()
                                     ->searchable()

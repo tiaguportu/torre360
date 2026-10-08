@@ -9,6 +9,7 @@ use App\Filament\Resources\Turmas\Pages\EditTurma;
 use App\Models\Curso;
 use App\Models\Disciplina;
 use App\Models\MatrizCurricular;
+use App\Models\PeriodoLetivo;
 use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\Turno;
@@ -118,6 +119,7 @@ class MatrizCurricularTest extends TestCase
                 'nome' => 'Turma A',
                 'serie_id' => $this->serie->id,
                 'turno_id' => Turno::create(['nome' => 'Manhã', 'hora_inicio' => '07:00', 'hora_fim' => '12:00'])->id,
+                'periodo_letivo_id' => PeriodoLetivo::factory()->create()->id,
                 'tipo_avaliacao' => 'notas',
             ])
             ->call('create')

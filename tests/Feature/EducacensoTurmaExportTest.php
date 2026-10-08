@@ -12,6 +12,7 @@ use App\Models\Turno;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\Educacenso\EducacensoTurmaExporter;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -54,6 +55,7 @@ class EducacensoTurmaExportTest extends TestCase
         ]);
 
         $turma = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma 101',
             'codigo' => 'T101',
             'serie_id' => $serie->id,

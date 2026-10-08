@@ -33,7 +33,7 @@ class CronogramaAulaForm
                     ->live(),
 
                 Select::make('turma_id')
-                    ->relationship('turma', 'nome')
+                    ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? "Turma #{$record->id}")
                     ->searchable()
                     ->preload()

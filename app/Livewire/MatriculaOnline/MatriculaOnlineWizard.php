@@ -2,6 +2,7 @@
 
 namespace App\Livewire\MatriculaOnline;
 
+use App\Enums\StatusTurma;
 use App\Models\Curso;
 use App\Models\Serie;
 use App\Models\TipoVinculo;
@@ -10,6 +11,7 @@ use App\Models\Unidade;
 use App\Services\MatriculaOnlineService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -130,6 +132,7 @@ class MatriculaOnlineWizard extends Component
         }
 
         return Turma::where('serie_id', $this->serie_id)
+            ->abertasParaMatricula()
             ->with(['turno', 'matriculas'])
             ->get();
     }
@@ -198,7 +201,7 @@ class MatriculaOnlineWizard extends Component
                 'unidade_id' => 'required|exists:unidade,id',
                 'curso_id' => 'required|exists:curso,id',
                 'serie_id' => 'required|exists:serie,id',
-                'turma_id' => 'required|exists:turma,id',
+                'turma_id' => ['required', Rule::exists('turma', 'id')->whereIn('status', StatusTurma::valoresAbertosParaMatricula())],
             ], [
                 'unidade_id.required' => 'Selecione a Unidade Escolar.',
                 'curso_id.required' => 'Selecione o Curso pretendido.',

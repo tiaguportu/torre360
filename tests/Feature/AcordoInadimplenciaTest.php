@@ -16,6 +16,7 @@ use App\Models\Unidade;
 use App\Models\User;
 use App\Services\AcordoInadimplenciaService;
 use Carbon\Carbon;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -79,6 +80,7 @@ class AcordoInadimplenciaTest extends TestCase
         $periodo = PeriodoLetivo::create(['nome' => '2026', 'ano' => 2026, 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
 
         $turma = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma 701',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,

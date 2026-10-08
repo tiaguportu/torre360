@@ -19,6 +19,7 @@ use App\Models\Unidade;
 use App\Models\User;
 use App\Services\AssinafyService;
 use App\Services\ContractTemplateService;
+use Database\Factories\PeriodoLetivoFactory;
 use Filament\Tables\Table;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -400,6 +401,7 @@ class ContratoTest extends TestCase
         ]);
 
         $turma = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma Teste',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,

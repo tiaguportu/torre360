@@ -9,6 +9,7 @@ use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,6 +48,7 @@ class TurmaCamposEducacensoTest extends TestCase
         ]);
 
         $turma = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma 101 Especial',
             'codigo' => 'TURMA-2026-01',
             'serie_id' => $serie->id,
@@ -93,6 +95,7 @@ class TurmaCamposEducacensoTest extends TestCase
         ]);
 
         $turma = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma 102 Horarios',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,
@@ -148,6 +151,7 @@ class TurmaCamposEducacensoTest extends TestCase
         ]);
 
         $turma1 = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma A',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,
@@ -155,6 +159,7 @@ class TurmaCamposEducacensoTest extends TestCase
         ]);
 
         $turma2 = Turma::create([
+            'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao(),
             'nome' => 'Turma B',
             'serie_id' => $serie->id,
             'turno_id' => $turno->id,

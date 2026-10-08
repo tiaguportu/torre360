@@ -24,7 +24,7 @@ class AvaliacaoForm
                         Grid::make(3)
                             ->schema([
                                 Select::make('turma_id')
-                                    ->relationship('turma', 'nome')
+                                    ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))
                                     ->required()
                                     ->live()
                                     ->searchable()

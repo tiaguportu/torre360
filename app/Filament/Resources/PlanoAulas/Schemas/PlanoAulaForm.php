@@ -23,7 +23,7 @@ class PlanoAulaForm
                     ->schema([
                         Select::make('turma_id')
                             ->label('Turma')
-                            ->relationship('turma', 'nome')
+                            ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))
                             ->searchable()
                             ->preload()
                             ->required()

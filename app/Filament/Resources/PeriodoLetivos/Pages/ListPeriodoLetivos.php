@@ -50,10 +50,10 @@ class ListPeriodoLetivos extends ListRecords
         }
 
         if ($canUpdate) {
-            $html .= '<li><strong>Editar:</strong> Ajuste prazos ou encerre períodos passados.</li>';
+            $html .= '<li><strong>Editar:</strong> Ajuste as datas e as regras de avaliação do período.</li>';
         }
 
-        $html .= '<li><strong>Vigência:</strong> O período letivo controla a disponibilidade de turmas e matrículas no sistema.</li>';
+        $html .= '<li><strong>Turmas do período:</strong> Cada turma pertence a um período letivo (obrigatório) e tem um status (Planejada, Ativa, Concluída ou Cancelada). Para preparar o próximo ano, cadastre o novo período e, em <em>Acadêmico → Turmas</em>, use <em>Duplicar para outro período</em> nas turmas atuais; ao encerrar o ano, use <em>Alterar Status</em> para marcá-las como Concluídas. Um período que ainda tem turmas não pode ser excluído.</li>';
         $html .= '</ul>';
 
         return $html;

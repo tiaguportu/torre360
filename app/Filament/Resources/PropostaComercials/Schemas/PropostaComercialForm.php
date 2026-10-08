@@ -187,7 +187,9 @@ class PropostaComercialForm
                             ->options(function (Get $get) {
                                 $serieId = $get('serie_id');
 
+                                // Turma de interesse = turma que ainda aceita matrículas (mantendo a já escolhida).
                                 return Turma::query()
+                                    ->abertasParaMatricula($get('turma_id'))
                                     ->when($serieId, fn ($q) => $q->where('serie_id', $serieId))
                                     ->pluck('nome', 'id');
                             })

@@ -16,6 +16,7 @@ use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoDocumento;
 use App\Models\Turma;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -236,7 +237,7 @@ class PortalDocumentosCandidatoSegurancaTest extends TestCase
 
         $matricula = Matricula::create([
             'pessoa_id' => Pessoa::create(['nome' => 'Aluno Matriculado'])->id,
-            'turma_id' => Turma::create(['nome' => '1º Ano A'])->id,
+            'turma_id' => Turma::create(['nome' => '1º Ano A', 'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao()])->id,
             'situacao' => SituacaoMatricula::ATIVA->value,
         ]);
         $migrado = $this->criarDocumento($lead, $tipo, ['matricula_id' => $matricula->id]);

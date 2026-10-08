@@ -17,4 +17,16 @@ class PeriodoLetivoFactory extends Factory
             'data_fim' => '2026-12-31',
         ];
     }
+
+    /**
+     * Id de um período já existente (o mais antigo) ou, se não houver nenhum, de um recém-criado.
+     *
+     * Turma exige período letivo; testes que criam `Turma::create([...])` sem se importar com o
+     * período usam isto para não multiplicar períodos (o wizard pré-seleciona o último criado).
+     */
+    public static function idPadrao(): int
+    {
+        return PeriodoLetivo::query()->oldest('id')->value('id')
+            ?? PeriodoLetivo::factory()->create()->id;
+    }
 }

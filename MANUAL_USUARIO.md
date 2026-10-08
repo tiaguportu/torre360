@@ -684,6 +684,12 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 ### 5.8 Gestão e Cadastro de Turmas (Campos do Educacenso / INEP)
 1. Vá em **Acadêmico → Turmas**.
 2. **Cadastro e Edição de Turmas:** Ao cadastrar ou atualizar uma turma, é possível preencher:
+   - **Período Letivo (obrigatório):** o ano/semestre em que a turma funciona (ex: *2026*, *2027*). Todas as listas de matrícula, a rematrícula, o ensalamento e a grade horária usam esse período. Já vem preenchido com o período mais recente.
+   - **Status:** o momento da turma no ciclo de vida:
+     - **Planejada:** turma já cadastrada para um período que ainda não começou (ex: as turmas de 2027 criadas antes da rematrícula). Já aceita matrículas.
+     - **Ativa:** turma em andamento (padrão). Aceita matrículas.
+     - **Concluída:** período encerrado. A turma deixa de aparecer nas listas de matrícula e nas telas de lançamento (cronograma, avaliações, planos de aula, substituições), mas continua disponível para consulta, boletins, histórico e relatórios.
+     - **Cancelada:** turma que não será formada. Mesmo comportamento da Concluída.
    - **Código:** Código identificador da turma (código INEP/Educacenso ou controle interno).
    - **Etapa de Ensino Agregada:** Seleção do agrupamento macro da etapa conforme classificação do Educacenso (ex: *301 - Educação Infantil*, *302 - Ensino Fundamental*, *304 - Ensino Médio*, etc.).
    - **Etapa de Ensino:** Seleção da etapa específica vinculada à Etapa Agregada selecionada (ex: *14 - Ensino fundamental de 9 anos - 1º Ano*, *25 - Ensino médio - 1ª Série*, etc.). O seletor é filtrado dinamicamente com base na Etapa Agregada escolhida.
@@ -722,6 +728,9 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
    - **Carga Horária Total (horas):** Carga horária total da turma definida em horas.
    - **Horário de Funcionamento (Dias da Semana):** Quadro colapsável em largura total que permite definir e visualizar os horários de início e término fixos para todos os dias da semana (Domingo a Sábado).
 3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Etapa Agregada, Etapa de Ensino, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado, Forma de Organização, Modalidade, Língua Ministrada ou Flags de Educação Especial e Bilíngue de Surdos.
+   - **Alterar Status:** selecione as turmas e use **Alterar Status** para marcá-las como Planejada, Ativa, Concluída ou Cancelada de uma vez (ex: concluir todas as turmas de 2026 ao encerrar o ano). Exige a permissão de edição de turmas.
+   - **Duplicar para outro período:** selecione as turmas de um período e use **Duplicar para outro período** para criar, no período de destino (ex: *2027*), uma cópia de cada uma com o status escolhido (padrão *Planejada*). A cópia leva série, turno, vagas, professor conselheiro, disciplinas (com o professor), habilidades, documentos exigidos e horários de funcionamento. **Não** leva matrículas, grade horária, cronograma, avaliações nem planos de aula. Turmas que já existem no período de destino (mesmo nome, série e turno) são ignoradas, então a ação pode ser repetida sem duplicar. Exige a permissão *Replicar* de Turma (padrão: administrador, coordenação).
+   - **Filtros e colunas:** a lista mostra o **Período** e o **Status** de cada turma e permite filtrar por ambos.
 4. **Exportar para Educacenso em Lote:** Na listagem de turmas (`/admin/turmas`), selecione uma ou mais turmas e acione a ação em lote **Exportar para Educacenso**. O sistema gerará e baixará automaticamente um arquivo `.txt` configurado no padrão oficial do INEP (Registro 20) separado por Pipe (`|`), com campos não preenchidos representados por delimitadores vazios (ex: `||`).
 5. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
@@ -805,8 +814,8 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
 - Selecione a **Unidade / Escola** e o **Período Letivo** (pré-selecionado com o período mais recente).
 - Selecione o **Curso** — a lista de turmas é filtrada automaticamente pela unidade e curso escolhidos.
 - Selecione a **Turma** — o campo exibe a quantidade de **vagas ocupadas / vagas totais** (ex: `3/30 vagas`) e marca turmas lotadas com 🔴. Não é possível concluir a matrícula se a turma estiver cheia.
-  - A lista traz as turmas do **curso** escolhido que pertencem ao **Período Letivo** selecionado **ou que não têm período definido** (o cadastro de Turma ainda não pede o período, então turmas criadas pelo painel valem para qualquer período). Turmas vinculadas a *outro* período não aparecem.
-  - Se a lista estiver vazia, confira o **Curso** (ele filtra as turmas) e o **Período Letivo**.
+  - A lista traz as turmas do **curso** escolhido que pertencem ao **Período Letivo** selecionado e estão **abertas para matrícula** (status *Planejada* ou *Ativa*). Turmas *Concluídas* ou *Canceladas* e turmas de *outro* período não aparecem.
+  - Se a lista estiver vazia, confira o **Curso** (ele filtra as turmas), o **Período Letivo** e o **Status** da turma em *Acadêmico → Turmas*.
 - Defina a **Situação Inicial** da matrícula: `Ativa` (padrão), `Pendente` (aguardando documentação/pagamento) ou `Reserva`.
 - Defina a **Data de Ativação** (preenchida automaticamente com a data de hoje).
 - Ao clicar em **"Finalizar Matrícula"**, o sistema criará automaticamente:

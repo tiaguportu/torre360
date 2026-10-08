@@ -44,6 +44,10 @@ class MatriculaOnlineService
         return DB::transaction(function () use ($dados, $arquivos) {
             $turma = Turma::with(['serie.curso', 'periodoLetivo'])->findOrFail($dados['turma_id']);
 
+            if (! $turma->status->abertaParaMatricula()) {
+                throw new \DomainException("A turma '{$turma->nome}' não está aberta para matrículas.");
+            }
+
             // 1. Validação de vagas
             if ($turma->vagas_maximas) {
                 $matriculadas = $turma->matriculas()->count();

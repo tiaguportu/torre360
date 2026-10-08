@@ -11,6 +11,7 @@ use App\Models\TipoDocumento;
 use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -130,7 +131,7 @@ class TipoDocumentoBulkActionTest extends TestCase
     {
         $this->actingAs($this->adminUser);
 
-        $turma = Turma::create(['nome' => '1º Ano A']);
+        $turma = Turma::create(['nome' => '1º Ano A', 'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao()]);
 
         $tipo = TipoDocumento::create([
             'nome' => 'Ficha Individual',

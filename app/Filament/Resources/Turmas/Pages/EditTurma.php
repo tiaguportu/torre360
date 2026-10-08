@@ -62,7 +62,7 @@ class EditTurma extends EditRecord
         $html = '<p>Nesta página você pode editar as informações da turma selecionada.</p>';
         $html .= '<h3>Recursos e Ações:</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Dados da Turma:</strong> Atualize o nome, código, série, turno, vagas, tipo de mediação didático-pedagógica, tipo de turma, local diferenciado e a flag de Educação Especial.</li>';
+        $html .= '<li><strong>Dados da Turma:</strong> Atualize o nome, código, série, turno, período letivo, status (Planejada, Ativa, Concluída ou Cancelada), vagas, tipo de mediação didático-pedagógica, tipo de turma, local diferenciado e a flag de Educação Especial.</li>';
 
         if ($canDelete) {
             $html .= '<li><strong>Excluir:</strong> Permite remover a turma caso não existam dependências que impeçam a exclusão.</li>';

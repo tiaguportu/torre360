@@ -19,6 +19,7 @@ use App\Models\Turma;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use App\Services\InteressadoMatriculaService;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -147,7 +148,7 @@ class CrmNovasFuncionalidadesTest extends TestCase
         $this->assertEquals(SituacaoDocumento::VERIFICADO, $docInserido->status);
 
         // 4. Migração automática para a matrícula quando o lead é matriculado
-        $turma = Turma::create(['nome' => '1º Ano A']);
+        $turma = Turma::create(['nome' => '1º Ano A', 'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao()]);
         $alunoPessoa = Pessoa::create(['nome' => 'Pedrinho Filho']);
         $matricula = Matricula::create([
             'pessoa_id' => $alunoPessoa->id,

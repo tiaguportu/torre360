@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\SituacaoMatricula;
+use App\Enums\StatusTurma;
 use App\Models\Interessado;
 use App\Models\Serie;
 use Illuminate\Support\Collection;
@@ -60,7 +61,8 @@ class TermometroVagasService
         }
 
         $query = Serie::with(['curso', 'turmas' => function ($q) {
-            $q->with('turno')->withCount(['matriculas as matriculas_ativas_count' => function ($mq) {
+            // Só turmas que ainda aceitam matrícula (Planejada e Ativa); concluídas e canceladas não têm vaga.
+            $q->abertasParaMatricula()->with('turno')->withCount(['matriculas as matriculas_ativas_count' => function ($mq) {
                 $mq->where(function ($sub) {
                     $sub->whereIn('situacao', [
                         SituacaoMatricula::ATIVA->value,
@@ -81,6 +83,14 @@ class TermometroVagasService
 
         $resultado = $series->map(function (Serie $serie) {
             $turmas = $serie->turmas;
+
+            // Com turmas já planejadas para o próximo período, são elas que recebem os novos leads:
+            // somar as turmas do ano em curso (cheias) inflaria a capacidade e esconderia a escassez.
+            $planejadas = $turmas->filter(fn ($turma) => $turma->status === StatusTurma::Planejada);
+            if ($planejadas->isNotEmpty()) {
+                $turmas = $planejadas->values();
+            }
+
             $capacidadeTotal = 0;
             $matriculasOcupadas = 0;
             $turmasDetalhes = [];

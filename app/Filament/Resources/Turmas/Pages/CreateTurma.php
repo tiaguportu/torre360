@@ -55,6 +55,8 @@ class CreateTurma extends CreateRecord
         $html .= '<li><strong>Nome:</strong> Identificação principal da turma.</li>';
         $html .= '<li><strong>Código:</strong> Código identificador da turma (ex: censo/INEP ou interno).</li>';
         $html .= '<li><strong>Série e Turno:</strong> Vínculo com a série escolar e o turno de funcionamento.</li>';
+        $html .= '<li><strong>Período Letivo (obrigatório):</strong> Ano/semestre em que a turma funciona. Já vem preenchido com o mais recente; para o próximo ano, cadastre o período antes ou use "Duplicar para outro período" na lista de turmas.</li>';
+        $html .= '<li><strong>Status:</strong> Planejada (período que ainda não começou), Ativa (em andamento), Concluída (encerrada) ou Cancelada. Só Planejada e Ativa aparecem nas listas de matrícula.</li>';
         $html .= '<li><strong>Tipo de mediação didático-pedagógica:</strong> 1-Presencial, 2-Semipresencial, 3-Educação a distância (EAD).</li>';
         $html .= '<li><strong>Tipo de turma:</strong> 4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular com Atividade Complementar.</li>';
         $html .= '<li><strong>Local de funcionamento diferenciado:</strong> 0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional.</li>';

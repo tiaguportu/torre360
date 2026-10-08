@@ -653,7 +653,7 @@ class MatriculasTable
                         ->form([
                             Select::make('turma_id')
                                 ->label('Turma')
-                                ->relationship('turma', 'nome')
+                                ->relationship('turma', 'nome', fn ($query) => $query->abertasParaMatricula())
                                 ->searchable()
                                 ->preload(),
                             Select::make('periodo_letivo_id')

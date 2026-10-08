@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Turmas\Schemas;
 
+use App\Enums\StatusTurma;
 use App\Models\EtapaEnsino;
+use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
 use Filament\Forms\Components\ColorPicker;
@@ -38,6 +40,20 @@ class TurmaForm
                     ->searchable()
                     ->preload()
                     ->required(),
+                Select::make('periodo_letivo_id')
+                    ->label('Período Letivo')
+                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->orderByDesc('data_inicio'))
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->default(fn () => PeriodoLetivo::query()->orderByDesc('data_inicio')->value('id'))
+                    ->helperText('Período em que a turma funciona. Para turmas do próximo ano, cadastre o período e escolha-o aqui (ou use "Duplicar para outro período" na lista).'),
+                Select::make('status')
+                    ->label('Status')
+                    ->options(StatusTurma::class)
+                    ->required()
+                    ->default(StatusTurma::Ativa)
+                    ->helperText('Planejada: já cadastrada para um período que ainda não começou. Ativa: em andamento. Concluída: encerrada (só consulta). Cancelada: não será formada.'),
                 Select::make('professor_conselheiro_id')
                     ->relationship('professorConselheiro', 'nome')
                     ->searchable(['nome', 'cpf'])

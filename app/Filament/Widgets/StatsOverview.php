@@ -28,8 +28,8 @@ class StatsOverview extends BaseWidget
                 ->description('Dentro do período letivo atual')
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
-            Stat::make('Turmas Ativas', Turma::count())
-                ->description('Contagem por período')
+            Stat::make('Turmas Ativas', Turma::ativas()->count())
+                ->description('Turmas com status Ativa')
                 ->descriptionIcon('heroicon-m-academic-cap')
                 ->color('info'),
         ];

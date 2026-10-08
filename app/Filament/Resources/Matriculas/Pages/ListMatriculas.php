@@ -146,7 +146,7 @@ class ListMatriculas extends ListRecords
                 ->form([
                     Select::make('turma_id')
                         ->label('Turma')
-                        ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                        ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome')->abertasParaMatricula())
                         ->required()
                         ->searchable()
                         ->preload(),

@@ -3,17 +3,20 @@
 namespace App\Filament\Resources\Turmas\Tables;
 
 use App\Enums\SituacaoMatricula;
+use App\Enums\StatusTurma;
 use App\Jobs\GerarBoletinsTurmaPdfJob;
 use App\Jobs\GerarCrachasTurmaPdfJob;
 use App\Models\AvaliacaoHabilidade;
 use App\Models\EtapaAvaliativa;
 use App\Models\EtapaEnsino;
 use App\Models\NotaHabilidade;
+use App\Models\PeriodoLetivo;
 use App\Models\TemplateCracha;
 use App\Models\Turma;
 use App\Models\TurmaHorario;
 use App\Services\Educacenso\EducacensoTurmaExporter;
 use App\Services\GradeHorarioService;
+use App\Services\TurmaDuplicacaoService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -33,6 +36,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 
@@ -55,6 +59,13 @@ class TurmasTable
                     ->searchable(),
                 TextColumn::make('turno.nome')
                     ->label('Turno')
+                    ->sortable(),
+                TextColumn::make('periodoLetivo.nome')
+                    ->label('Período')
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
                     ->sortable(),
                 TextColumn::make('etapaEnsinoAgregada.nome')
                     ->label('Etapa Agregada')
@@ -144,7 +155,13 @@ class TurmasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('periodo_letivo_id')
+                    ->label('Período Letivo')
+                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->orderByDesc('data_inicio')),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(StatusTurma::class)
+                    ->multiple(),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -507,6 +524,69 @@ class TurmasTable
                         })
                         ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()?->can('Update:Turma')),
+                    BulkAction::make('alterarStatusLote')
+                        ->label('Alterar Status')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->modalHeading('Alterar o status das turmas selecionadas')
+                        ->modalDescription('Concluída e Cancelada deixam a turma fora das listas de matrícula; ela continua disponível para consulta, boletins e histórico.')
+                        ->form([
+                            Select::make('status')
+                                ->label('Novo status')
+                                ->options(StatusTurma::class)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $status = StatusTurma::resolver($data['status']);
+
+                            $records->each(fn (Turma $turma) => $turma->update(['status' => $status]));
+
+                            Notification::make()
+                                ->title("{$records->count()} turma(s) agora com status {$status->getLabel()}.")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('Update:Turma')),
+                    BulkAction::make('duplicarParaPeriodo')
+                        ->label('Duplicar para outro período')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->color('info')
+                        ->modalHeading('Duplicar turmas para outro período letivo')
+                        ->modalDescription('Cria uma cópia de cada turma selecionada no período escolhido (série, turno, vagas, disciplinas, habilidades, documentos exigidos e horários de funcionamento). Matrículas, grade horária e cronograma não são copiados. Turmas que já existem no período de destino são ignoradas.')
+                        ->modalSubmitActionLabel('Duplicar')
+                        ->form([
+                            Select::make('periodo_letivo_id')
+                                ->label('Período de destino')
+                                ->options(fn () => PeriodoLetivo::query()->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                                ->required()
+                                ->searchable(),
+                            Select::make('status')
+                                ->label('Status das novas turmas')
+                                ->options(StatusTurma::class)
+                                ->default(StatusTurma::Planejada)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, Collection $records) {
+                            $destino = PeriodoLetivo::findOrFail($data['periodo_letivo_id']);
+                            $status = StatusTurma::resolver($data['status']);
+                            $servico = app(TurmaDuplicacaoService::class);
+
+                            $criadas = 0;
+                            $ignoradas = 0;
+
+                            foreach ($records as $turma) {
+                                $servico->duplicar($turma, $destino, $status) ? $criadas++ : $ignoradas++;
+                            }
+
+                            Notification::make()
+                                ->title("{$criadas} turma(s) criada(s) em {$destino->nome}.")
+                                ->body($ignoradas > 0 ? "{$ignoradas} ignorada(s): já existiam no período de destino." : null)
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()?->can('Replicate:Turma')),
                     DeleteBulkAction::make(),
                     BulkAction::make('imprimirBoletinsLote')
                         ->label('Imprimir Boletins em Lote')

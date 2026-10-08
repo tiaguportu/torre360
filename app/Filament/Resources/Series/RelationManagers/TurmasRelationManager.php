@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Series\RelationManagers;
 
+use App\Enums\StatusTurma;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
 use App\Filament\Resources\Turnos\Schemas\TurnoForm;
+use App\Models\PeriodoLetivo;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -37,6 +39,18 @@ class TurmasRelationManager extends RelationManager
                     ->preload()
                     ->createOptionForm(fn (Schema $schema) => TurnoForm::configure($schema)->getComponents())
                     ->required(),
+                Select::make('periodo_letivo_id')
+                    ->label('Período Letivo')
+                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->orderByDesc('data_inicio'))
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->default(fn () => PeriodoLetivo::query()->orderByDesc('data_inicio')->value('id')),
+                Select::make('status')
+                    ->label('Status')
+                    ->options(StatusTurma::class)
+                    ->required()
+                    ->default(StatusTurma::Ativa),
                 Select::make('professor_conselheiro_id')
                     ->relationship('professorConselheiro', 'nome')
                     ->searchable(['nome', 'cpf'])
@@ -58,6 +72,13 @@ class TurmasRelationManager extends RelationManager
                     ->sortable(),
                 TextColumn::make('turno.nome')
                     ->label('Turno')
+                    ->sortable(),
+                TextColumn::make('periodoLetivo.nome')
+                    ->label('Período')
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
                     ->sortable(),
                 TextColumn::make('professorConselheiro.nome')
                     ->label('Professor Conselheiro')

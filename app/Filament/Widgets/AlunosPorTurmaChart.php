@@ -16,7 +16,7 @@ class AlunosPorTurmaChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Turma::withCount('matriculas')->get();
+        $data = Turma::ativas()->withCount('matriculas')->get();
 
         return [
             'datasets' => [

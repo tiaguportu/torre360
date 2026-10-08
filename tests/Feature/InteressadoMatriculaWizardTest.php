@@ -205,12 +205,14 @@ class InteressadoMatriculaWizardTest extends TestCase
             ->assertSet("data.alunos.{$chave}.pessoa_id_existente", $existente->id);
     }
 
-    public function test_turmas_do_periodo_e_sem_periodo_aparecem_e_de_outro_periodo_nao(): void
+    public function test_turmas_oferecidas_sao_do_periodo_escolhido_e_abertas_para_matricula(): void
     {
         $atual = PeriodoLetivo::factory()->create();
         $outro = PeriodoLetivo::factory()->create();
-        $doPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
-        $semPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => null]);
+        $ativa = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
+        $planejada = Turma::factory()->planejada()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
+        $concluida = Turma::factory()->concluida()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
+        $cancelada = Turma::factory()->cancelada()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
         $deOutroPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $outro->id]);
 
         $wizard = Livewire::actingAs($this->admin())
@@ -221,8 +223,10 @@ class InteressadoMatriculaWizardTest extends TestCase
 
         $opcoes = $wizard->instance()->getSchema('form')->getFlatFields(withHidden: true)['turma_id']->getOptions();
 
-        $this->assertArrayHasKey($doPeriodo->id, $opcoes);
-        $this->assertArrayHasKey($semPeriodo->id, $opcoes);
+        $this->assertArrayHasKey($ativa->id, $opcoes);
+        $this->assertArrayHasKey($planejada->id, $opcoes);
+        $this->assertArrayNotHasKey($concluida->id, $opcoes);
+        $this->assertArrayNotHasKey($cancelada->id, $opcoes);
         $this->assertArrayNotHasKey($deOutroPeriodo->id, $opcoes);
     }
 

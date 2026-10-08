@@ -57,7 +57,16 @@ class MatriculaForm
                     ->required()
                     ->label('Período Letivo'),
                 Select::make('turma_id')
-                    ->relationship('turma', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                    ->relationship('turma', 'nome', fn ($query, $record, $livewire) => $query
+                        ->whereNotNull('nome')
+                        // Só turmas abertas para matrícula, mas sempre mantendo a turma atual do registro
+                        // (ou a turma dona do relation manager) para que o campo não fique em branco.
+                        ->abertasParaMatricula([
+                            $record?->turma_id,
+                            $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma
+                                ? $livewire->getOwnerRecord()->getKey()
+                                : null,
+                        ]))
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome ?? "Turma #{$record->id}")
                     ->searchable()
                     ->preload()

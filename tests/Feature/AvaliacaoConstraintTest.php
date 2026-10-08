@@ -9,6 +9,7 @@ use App\Models\EtapaAvaliativa;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\Turma;
+use Database\Factories\PeriodoLetivoFactory;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -33,7 +34,7 @@ class AvaliacaoConstraintTest extends TestCase
     {
         parent::setUp();
 
-        $this->turma = Turma::first() ?? Turma::create(['nome' => 'Turma Teste Manual']);
+        $this->turma = Turma::first() ?? Turma::create(['nome' => 'Turma Teste Manual', 'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao()]);
 
         $this->disciplina = Disciplina::first() ?? Disciplina::create(['nome' => 'Disciplina Teste Manual']);
 
