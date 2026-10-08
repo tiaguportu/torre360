@@ -21,6 +21,9 @@ Caso tenha esquecido sua senha:
 
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
+> Além disso, o sistema conta com salvaguardas avançadas de segurança cibernética:
+> - **Proteção contra Enumeração de Usuários (OWASP A07):** Respostas de login estritamente padronizadas que impedem atacantes de descobrir se um determinado e-mail existe ou seu status no sistema a partir de senhas incorretas.
+> - **Política de Senhas Fortes:** Criação e alteração de senhas exigem comprimento mínimo de 10 caracteres, mesclando letras maiúsculas, minúsculas, números e símbolos especiais, com verificação contra listas globais de senhas comprometidas (HaveIBeenPwned).
 > Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
 
 ---
@@ -507,7 +510,7 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 
 2. **Abas Interativas do Modal Executivo:**
    - **🛡️ Colégios Concorrentes (Battlecards):**
-     - Selecione qualquer escola concorrente cadastrada no painel lateral.
+     - Selecione qualquer escola concorrente cadastrada no painel lateral. O sistema já vem pré-populado com os **10 principais concorrentes reais da região do Jardim Guanabara e Ilha do Governador** (Creche Escola Cambalhota, Colégio COC Jardim Guanabara, Maple Bear Canadian School, Escola Modelar Cambaúba, Colégio Bretanha, Centro Educacional Caravellas, Escola Martim Pescador, Colégio Iglesias / Tia Luzinete, Creche Escola Pimpolho e CAPE Jardim Guanabara), com endereços, faixas de mensalidade, proposta pedagógica, pontos fortes e argumentos matadores.
      - **Visão 360° do Concorrente:** Bairro/cidade, faixa de preço (*Mais acessível*, *Equivalente*, *Mais caro/Premium*), mensalidade estimada e linha pedagógica.
      - **Análise Competitiva:**
        - *O que atrai as famílias neles (Pontos Fortes):* O que a concorrência vende bem.

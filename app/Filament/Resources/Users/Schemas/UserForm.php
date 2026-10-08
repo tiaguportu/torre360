@@ -10,6 +10,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class UserForm
 {
@@ -34,14 +35,14 @@ class UserForm
                     ->password()
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (string $operation): bool => $operation === 'create')
-                    ->minLength(8)
+                    ->rule(Password::defaults())
                     ->confirmed()
                     ->suffixAction(
                         Action::make('generatePassword')
                             ->label('Gerar senha forte')
                             ->icon('heroicon-m-key')
                             ->action(function (Set $set) {
-                                $password = Str::password(12);
+                                $password = Str::password(16);
                                 $set('password', $password);
                                 $set('password_confirmation', $password);
                             })

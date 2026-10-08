@@ -7,6 +7,7 @@ use Ddr\FilamentCaptcha\Forms\Components\Captcha;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class CustomLogin extends BaseLogin
@@ -36,12 +37,13 @@ class CustomLogin extends BaseLogin
         try {
             return parent::authenticate();
         } catch (ValidationException $e) {
-            // Se falhou as credenciais, vamos ver se o usuário existe e está desativado
-            // para dar uma mensagem mais específica.
             $data = $this->form->getState();
-            $user = User::where('email', $data['email'])->first();
+            $user = User::where('email', $data['email'] ?? null)->first();
 
-            if ($user && ! $user->is_active) {
+            // Proteção estrita contra Enumeração de Usuários (OWASP A07):
+            // Só informa que a conta está desativada se a senha informada for EXATA.
+            // Se a senha estiver incorreta ou o e-mail não existir, exibe o erro padrão de credenciais.
+            if ($user && ! $user->is_active && Hash::check($data['password'] ?? '', $user->password)) {
                 throw ValidationException::withMessages([
                     'data.email' => 'Esta conta está desativada. Por favor, entre em contato com o administrador.',
                 ]);

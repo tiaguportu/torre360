@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Portal\Pages\CentralAtendimento;
+use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Models\AtendimentoChamado;
 use App\Models\AtendimentoMensagem;
 use App\Models\AtendimentoSetor;
@@ -13,6 +15,7 @@ use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -144,5 +147,79 @@ class SecurityHardeningTest extends TestCase
             'chamado_id' => $chamadoA->id,
             'mensagem' => 'Tentativa de injeção de mensagem indevida',
         ]);
+    }
+
+    public function test_cabecalho_permissions_policy_permite_camera_no_mesmo_dominio(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(self)');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
+        $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+    }
+
+    public function test_login_com_credenciais_incorretas_nao_enumera_usuario_desativado(): void
+    {
+        // Usuário existe mas está desativado
+        User::factory()->create([
+            'email' => 'desativado@torre360.com.br',
+            'password' => Hash::make('Senha@Forte1234'),
+            'activated_at' => null,
+            'deactivated_at' => now()->subDay(),
+        ]);
+
+        $component = Livewire::test(CustomLogin::class)
+            ->fillForm([
+                'email' => 'desativado@torre360.com.br',
+                'password' => 'SenhaErrada123',
+            ])
+            ->call('authenticate')
+            ->assertHasFormErrors(['email']);
+
+        // A mensagem de erro NÃO deve revelar que a conta está desativada
+        $mensagens = collect($component->errors()->all())->implode(' ');
+        $this->assertStringNotContainsString('Esta conta está desativada', $mensagens);
+        $this->assertFalse(auth()->check());
+    }
+
+    public function test_login_com_credenciais_corretas_em_conta_desativada_bloqueia_e_desloga(): void
+    {
+        User::factory()->create([
+            'email' => 'desativado.correto@torre360.com.br',
+            'password' => Hash::make('Senha@Forte1234'),
+            'activated_at' => null,
+            'deactivated_at' => now()->subDay(),
+        ]);
+
+        $component = Livewire::test(CustomLogin::class)
+            ->fillForm([
+                'email' => 'desativado.correto@torre360.com.br',
+                'password' => 'Senha@Forte1234',
+            ])
+            ->call('authenticate')
+            ->assertHasFormErrors(['email']);
+
+        // Quando as credenciais são legítimas, a mensagem específica de conta desativada é exibida e o login é desfeito
+        $mensagens = collect($component->errors()->all())->implode(' ');
+        $this->assertStringContainsString('Esta conta está desativada', $mensagens);
+        $this->assertFalse(auth()->check(), 'Usuário não deve permanecer autenticado.');
+    }
+
+    public function test_cadastro_de_usuario_exige_politica_de_senha_forte(): void
+    {
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin);
+
+        // Senha fraca com apenas 8 caracteres numéricos
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'Novo Usuario Teste',
+                'email' => 'novo.usuario@torre360.com.br',
+                'password' => '12345678',
+                'password_confirmation' => '12345678',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['password']);
     }
 }
