@@ -62,6 +62,21 @@ matrícula recebe `turma_id`, `serie_id` e `periodo_letivo_id` coerentes.
 - `RematriculaService::opcoesDeTurma()`/`turmaSugerida()` alimentam o Select de turma da
   ação **Efetivar** (individual e em lote, lotadas desabilitadas) e o formulário de edição.
 
+### Matrícula sempre com turma (fase seguinte, já aplicada)
+- `matricula.turma_id` é **NOT NULL** (FK `restrict`) e as colunas `matricula.periodo_letivo_id`
+  e `matricula.serie_id` foram **removidas**: período e série vêm da turma. No `Matricula`,
+  `periodoLetivo()`/`serie()` são `HasOneThrough` via turma, `periodo_letivo_id`/`serie_id`
+  são accessors, `doPeriodo()`/`daSerie()` são scopes e a turma é carregada por padrão.
+- Quem criava matrícula informando esses campos (`RematriculaService`, `MatriculaOnlineService`,
+  `EnrollmentWizard`, `MatriculaForm`, lote) deixou de fazê-lo; o período do Wizard e do formulário
+  de Matrícula virou só um **filtro** das turmas oferecidas.
+- O antigo Ensalamento virou **Remanejamento de Turmas** (`EnsalamentoService`): sem lista de
+  "aguardando turma", sem *desensalar*; mover só entre turmas do **mesmo período**, abertas e com
+  vaga (`TurmaVagasService`, com lock); métodos Livewire exigem `Manage:Ensalamento`.
+- Migration `require_turma_and_drop_periodo_serie_from_matricula_table`: aborta antes de alterar
+  se houver matrícula sem turma; `down()` recria as colunas e as preenche a partir da turma.
+  Validada em MySQL (cópia do esquema local) e SQLite.
+
 ### Outras mudanças
 - Campanha (`PeriodoRematriculaForm`): destino ≠ origem; ativar exige ao menos uma turma
   Planejada/Ativa no período de destino.

@@ -143,9 +143,8 @@ Estrutura de ensino e turmas.
 - **Representa:** Registro de matrícula acadêmica de um estudante na instituição de ensino.
 - **Campos Principais:**
     - `pessoa_id`: BelongsTo `pessoa` (Aluno).
-    - `turma_id`: BelongsTo `turma` (nullable, suporta matrículas aguardando alocação de sala no ensalamento).
-    - `serie_id`: BelongsTo `serie` (nullable, série/ano escolar do estudante para fins de planejamento e ensalamento em lote).
-    - `periodo_letivo_id`: BelongsTo `periodo_letivo`.
+    - `turma_id`: BelongsTo `turma` (**obrigatório**, FK `restrict`: não se apaga uma turma que tenha matrículas). Toda matrícula nasce numa turma (rematrícula, wizard, matrícula em lote e online escolhem a turma).
+    - **Período letivo e série NÃO são colunas** (as antigas `periodo_letivo_id` e `serie_id` foram removidas): vêm sempre da turma. No model, `periodoLetivo()` e `serie()` são `HasOneThrough` via `turma`; `periodo_letivo_id` e `serie_id` são accessors somente leitura; `Matricula::doPeriodo($id)` e `daSerie($id)` filtram por elas. `Matricula` carrega a `turma` por padrão (`$with`). Criar/atualizar com essas chaves lança `LogicException` nos testes. A migration `require_turma_and_drop_periodo_serie_from_matricula_table` aborta, sem alterar nada, se existir matrícula sem turma; o `down()` recria as colunas e as preenche a partir da turma.
     - `situacao`: Enum `SituacaoMatricula` (`ativa`, `trancada`, `cancelada`, `concluido`, `reserva`, `pendente`, `evasao`).
     - `data_ativacao`: Data em que a matrícula entrou em vigência.
     - `data_desativacao`: Data de cancelamento ou encerramento da matrícula.
@@ -189,7 +188,7 @@ Estrutura de ensino e turmas.
 - **UI:** Relation manager na tela de Série; ação "Sincronizar Disciplinas da Matriz" na tela de Turma.
 
 ### `sala`
-- **Representa:** Ambiente físico da unidade (sala de aula, laboratório, quadra etc.), usado para reservar espaço na grade horária. **Não confundir** com o "ensalamento" de `EnsalamentoService`, que distribui alunos entre turmas.
+- **Representa:** Ambiente físico da unidade (sala de aula, laboratório, quadra etc.), usado para reservar espaço na grade horária. **Não confundir** com o remanejamento de `EnsalamentoService`, que move alunos entre turmas.
 - **Campos Principais:** `unidade_id`, `nome`, `capacidade` (nullable), `tipo` (nullable), `ativa` (boolean, padrão true).
 - **Relacionamentos:** BelongsTo `unidade`, HasMany `grade_horario`.
 

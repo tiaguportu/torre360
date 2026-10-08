@@ -81,7 +81,6 @@ class CronogramaCalendarWidgetTest extends TestCase
         Matricula::factory()->create([
             'pessoa_id' => $alunoPessoa->id,
             'turma_id' => $turmaFilho->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 
@@ -134,7 +133,6 @@ class CronogramaCalendarWidgetTest extends TestCase
         $matricula = Matricula::factory()->create([
             'pessoa_id' => $alunoPessoa->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

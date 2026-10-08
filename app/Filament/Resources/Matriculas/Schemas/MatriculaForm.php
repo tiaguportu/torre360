@@ -4,11 +4,14 @@ namespace App\Filament\Resources\Matriculas\Schemas;
 
 use App\Enums\SituacaoMatricula;
 use App\Filament\Resources\Turmas\Schemas\TurmaForm;
+use App\Models\Matricula;
+use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -50,15 +53,24 @@ class MatriculaForm
                             ->searchable()
                             ->preload(),
                     ]),
-                Select::make('periodo_letivo_id')
-                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->whereNotNull('nome'))
+                // O período da matrícula é o da turma: este campo só filtra as turmas oferecidas (não é gravado).
+                Select::make('periodo_letivo_filtro')
+                    ->label('Período Letivo')
+                    ->options(fn () => PeriodoLetivo::query()->whereNotNull('nome')->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                    ->afterStateHydrated(function (Select $component, ?Matricula $record): void {
+                        if ($record && $component->getState() === null) {
+                            $component->state($record->turma?->periodo_letivo_id);
+                        }
+                    })
                     ->searchable()
                     ->preload()
-                    ->required()
-                    ->label('Período Letivo'),
+                    ->live()
+                    ->dehydrated(false)
+                    ->helperText('Filtra as turmas abaixo; o período da matrícula é sempre o da turma escolhida.'),
                 Select::make('turma_id')
-                    ->relationship('turma', 'nome', fn ($query, $record, $livewire) => $query
+                    ->relationship('turma', 'nome', fn ($query, $record, $livewire, Get $get) => $query
                         ->whereNotNull('nome')
+                        ->when($get('periodo_letivo_filtro'), fn ($q, $periodoId) => $q->where('periodo_letivo_id', $periodoId))
                         // Só turmas abertas para matrícula, mas sempre mantendo a turma atual do registro
                         // (ou a turma dona do relation manager) para que o campo não fique em branco.
                         ->abertasParaMatricula([

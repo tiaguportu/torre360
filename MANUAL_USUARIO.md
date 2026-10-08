@@ -34,7 +34,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 🏠 **Início** | Painel com indicadores, calendários e pendências |
 | 🎯 **CRM / Comercial** | Interessados (lista e Kanban), Simulador de Propostas Comerciais com Alçadas de Desconto, Campanhas de Marketing, Comunicação em Massa, Régua de Follow-up, Leads da Landing Page e Modelos de WhatsApp |
 | 🗂️ **Secretaria** | Matrículas, Pessoas, Coordenadores, Documentos (modelos, emitidos com QR e inseridos), Crachás |
-| 🎓 **Acadêmico** | Cursos, Séries, Turmas, Ensalamento, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
+| 🎓 **Acadêmico** | Cursos, Séries, Turmas, Remanejamento de Turmas, Disciplinas, Salas, Rematrículas, Planos de Aula, Nova Matrícula (Wizard), Frequências, Fechamento do Ciclo Letivo e Questionários |
 | ✅ **Avaliações** | Avaliações, Notas, Avaliação e Notas de Habilidades e Lançamento de Notas em Grade |
 | 📖 **Currículo (BNCC)** | Habilidades vinculadas à BNCC |
 | 🤝 **Preceptoria** | Ciclos, Preceptorias (e agendamento), Relatórios e Templates de Relatório |
@@ -2078,54 +2078,55 @@ O módulo de **Comunicação Escolar** reduz o fluxo de ligações e atendimento
 
 ---
 
-## 🏫 34. Ensalamento em Lote Assistido (`/admin/ensalamento`)
+## 🏫 34. Remanejamento de Turmas (`/admin/ensalamento`)
 
-O módulo de **Ensalamento em Lote Assistido** foi desenvolvido para apoiar a equipe pedagógica e a secretaria durante o planejamento do período letivo, permitindo organizar a distribuição dos estudantes entre as turmas de forma visual, equilibrada e em conformidade com a capacidade física das salas de aula.
+O módulo de **Remanejamento de Turmas** (antigo *Ensalamento em Lote Assistido*) ajuda a secretaria e a coordenação a **acompanhar a ocupação das turmas** de um período letivo e a **mover alunos entre elas**, de forma visual, equilibrada e respeitando a capacidade das salas.
 
-### 34.1 Filtros do Planejamento Letivo
-1. Acesse o menu lateral em **Acadêmico → Ensalamento em Lote Assistido** (URL: `/admin/ensalamento`).
+> **Toda matrícula já nasce numa turma.** A turma é escolhida na matrícula (Assistente de Matrícula, matrícula em lote, matrícula online) ou, na rematrícula, pela secretaria ao efetivar (seção 32). Por isso **não existe mais "aluno sem turma"**, lista de "aguardando turma" nem a ação *Desensalar*: aqui você só ajusta a distribuição.
+
+### 34.1 Filtros do Cenário
+1. Acesse o menu lateral em **Acadêmico → Remanejamento de Turmas** (URL: `/admin/ensalamento`; o endereço e as permissões continuam os mesmos).
 2. Utilize os filtros superiores para selecionar o cenário desejado:
-   - **Período Letivo:** Selecione o ano letivo em planejamento ou em curso.
+   - **Período Letivo:** a tela abre no **período em vigor hoje** (ou, se nenhum estiver em vigor, no mais recente).
    - **Curso:** Filtre por segmento (ex: Educação Infantil, Ensino Fundamental).
    - **Série / Ano:** Escolha a série correspondente (ex: 1º Ano, 2º Ano).
-   - **Turno (Opcional):** Permite focar em um turno específico (Matutino/Vespertino) ou analisar todos simultaneamente.
+   - **Turno (Opcional):** Permite focar em um turno específico ou analisar todos simultaneamente.
+3. Aparecem as turmas **Planejadas e Ativas** daquele período e série. Turmas *Concluídas* ou *Canceladas* não entram no cenário.
 
 ### 34.2 Indicadores e Cards Visuais de Ocupação
 O topo da tela consolida os números globais do cenário:
-- **Turmas na Série:** Quantidade de salas abertas para a série selecionada.
+- **Turmas na Série:** Quantidade de turmas abertas para a série selecionada.
 - **Capacidade Total:** Soma das vagas máximas configuradas para todas as turmas.
-- **Já Ensalados:** Total de alunos já alocados e taxa percentual de ocupação global.
-- **Aguardando Turma:** Quantidade de estudantes com matrícula ativa aguardando definição de sala.
+- **Alunos nas Turmas:** Total de alunos que ocupam vaga e taxa percentual de ocupação global. Ocupam vaga as matrículas **Ativa, Pendente e Reserva**; matrículas Canceladas, Trancadas, Concluídas ou em Evasão não contam.
 
 Em cada **Card de Turma**, você acompanha:
 - **Barra de Ocupação Dinâmica:** Progresso visual colorido conforme o preenchimento (verde até 85%, âmbar entre 85% e 99%, vermelho se lotada).
-- **Equilíbrio de Gênero:** Contagem e proporção em tempo real de meninos e meninas matriculados na sala.
-- **Lista de Alunos Ensalados (Sanfona):** Expanda para visualizar os estudantes alocados, com atalhos para **Transferir** de sala ou **Desensalar** (retornando o aluno para a fila de espera).
+- **Equilíbrio de Gênero:** Contagem e proporção em tempo real de meninos e meninas na sala.
+- **Lista de Alunos (Sanfona):** Expanda para ver os estudantes da turma, com o atalho **Mover para outra turma**.
 
-### 34.3 Alocação Manual e em Lote
-1. Na seção inferior, o sistema lista todos os estudantes matriculados que ainda não possuem turma definida na série.
-2. **Alocação Individual Rápida:** No seletor da coluna direita do aluno, escolha a turma desejada; o aluno é alocado imediatamente com validação de vagas livres.
-3. **Alocação em Lote:**
-   - Marque a caixa de seleção de múltiplos alunos (ou utilize a caixa do cabeçalho para selecionar todos).
-   - No topo da tabela, escolha a **Turma de Destino**.
-   - Clique em **Alocar Selecionados**. O sistema valida o teto de capacidade da sala antes de confirmar.
+### 34.3 Mover um Aluno para Outra Turma
+1. Expanda o card da turma e clique no ícone de setas (**Mover para outra turma**) ao lado do aluno.
+2. Escolha a **Turma de Destino** e confirme.
+3. O sistema **confere a vaga com a turma travada** (dois atendentes não conseguem ocupar a última vaga ao mesmo tempo) e recusa o movimento quando:
+   - a turma de destino está **lotada**;
+   - a turma de destino é de **outro período letivo** — o remanejamento acontece só dentro do mesmo período; para levar o aluno ao próximo ano use a **rematrícula** (seção 32);
+   - a turma de destino está **Concluída ou Cancelada**.
+4. O período letivo e a série do aluno acompanham a turma: ao mudar de turma, mudam junto.
 
-### 34.4 Distribuição Automática Inteligente
-Para otimizar o início do ano letivo sem a necessidade de alocar aluno por aluno manualmente:
-1. Clique no botão de cabeçalho **Distribuição Automática Inteligente** (ou na ação rápida do quadro de turmas).
+### 34.4 Redistribuição Automática
+Para reequilibrar as turmas de uma série (por exemplo, depois de várias matrículas novas):
+1. Clique no botão de cabeçalho **Redistribuição Automática**.
 2. Selecione as turmas participantes do rateio.
 3. Escolha o critério do algoritmo:
    - **Equilíbrio Harmônico de Gênero (Recomendado):** Distribui circularmente meninas e meninos para garantir paridade proporcional entre as turmas.
    - **Ordem Alfabética:** Ordena os alunos de A a Z e divide em blocos homogêneos sequenciais.
    - **Equilíbrio por Faixa Etária:** Distribui ordenando por data de nascimento para igualar a média de idade entre as salas.
-4. Defina as opções complementares:
-   - *Redistribuir todos da série:* Reorganiza inclusive quem já estava ensalado.
-   - *Respeitar estritamente o limite de vagas:* Impede qualquer superlotação acima da capacidade cadastrada da turma.
-5. Clique em **Executar Distribuição**. Os alunos são alocados instantaneamente em transação segura no banco de dados.
+4. Opcional: *Respeitar estritamente o limite de vagas* impede qualquer superlotação acima da capacidade cadastrada da turma.
+5. Clique em **Executar Redistribuição**. **Atenção:** os alunos que ocupam vaga nas turmas escolhidas são reorganizados e **podem mudar de turma**. Matrículas Canceladas/Trancadas e turmas não selecionadas não são alteradas. A gravação é feita em transação, com as turmas travadas.
 
 ### 34.5 Controle de Acesso e Permissões (Shield)
 - **`View:Ensalamento`:** Permite visualizar os cenários, ocupação de salas e métricas de turmas.
-- **`Manage:Ensalamento`:** Habilita ações de alocação manual, execução da distribuição automática, transferências e desensalamento.
+- **`Manage:Ensalamento`:** Habilita mover alunos e executar a redistribuição automática. A permissão também é conferida no servidor: quem só tem `View` não consegue mover ou redistribuir nem chamando a tela diretamente.
 - **Ajuda Contextual:** O botão de interrogação no cabeçalho exibe orientações adaptadas às permissões do usuário logado.
 
 ---
@@ -2211,7 +2212,7 @@ Recursos para organizar o período letivo **antes do início das aulas**: defini
 
 Cadastro dos ambientes físicos da escola — salas de aula, laboratórios, quadra, auditório etc. — usados para reservar espaço na grade horária. Informe a **unidade**, o **nome**, a **capacidade** (opcional, usada apenas como referência) e o **tipo**. Salas podem ser desativadas sem serem excluídas.
 
-> Este cadastro é diferente do recurso de **Ensalamento em Lote Assistido** (seção 34), que distribui **alunos entre turmas**. Aqui o assunto é o **espaço físico** usado pela turma em cada aula.
+> Este cadastro é diferente do **Remanejamento de Turmas** (seção 34), que move **alunos entre turmas**. Aqui o assunto é o **espaço físico** usado pela turma em cada aula.
 
 ### 37.3 Grade Horária (na Turma → aba "Grade Horária")
 

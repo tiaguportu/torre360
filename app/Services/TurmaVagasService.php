@@ -33,14 +33,36 @@ class TurmaVagasService
      */
     public function queryOcupantes(Turma|int $turma): Builder
     {
-        $turmaId = $turma instanceof Turma ? $turma->getKey() : $turma;
+        return $this->queryOcupantesDe([$turma instanceof Turma ? $turma->getKey() : $turma]);
+    }
 
+    /**
+     * Matrículas que ocupam vaga em qualquer uma das turmas informadas.
+     *
+     * @param  list<int>  $turmaIds
+     * @return Builder<Matricula>
+     */
+    public function queryOcupantesDe(array $turmaIds): Builder
+    {
         return Matricula::query()
-            ->where('turma_id', $turmaId)
+            ->whereIn('turma_id', $turmaIds)
             ->whereIn('situacao', array_map(fn (SituacaoMatricula $situacao) => $situacao->value, self::SITUACOES_QUE_OCUPAM_VAGA))
             ->where(function (Builder $query) {
                 $query->whereNull('data_desativacao')->orWhereDate('data_desativacao', '>', now());
             });
+    }
+
+    /**
+     * Mesma regra de {@see queryOcupantes()} aplicada a uma matrícula já carregada (sem consultar o banco).
+     */
+    public function ocupaVaga(Matricula $matricula): bool
+    {
+        if (! in_array($matricula->situacao, self::SITUACOES_QUE_OCUPAM_VAGA, true)) {
+            return false;
+        }
+
+        return $matricula->data_desativacao === null
+            || $matricula->data_desativacao->toDateString() > now()->toDateString();
     }
 
     public function ocupadas(Turma|int $turma): int

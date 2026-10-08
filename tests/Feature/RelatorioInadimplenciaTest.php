@@ -43,7 +43,7 @@ class RelatorioInadimplenciaTest extends TestCase
         $aluno = Pessoa::create(['nome' => 'Aluno Inadimplente '.uniqid()]);
         $responsavel = Pessoa::create(['nome' => 'Responsável Inadimplente '.uniqid()]);
 
-        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id, 'periodo_letivo_id' => $periodo->id, 'situacao' => 'ativa']);
+        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id, 'situacao' => 'ativa']);
         $contrato = Contrato::create(['matricula_id' => $matricula->id, 'valor_total' => $valor, 'data_aceite' => '2026-01-05']);
 
         ResponsavelFinanceiro::create(['contrato_id' => $contrato->id, 'pessoa_id' => $responsavel->id]);
@@ -86,7 +86,7 @@ class RelatorioInadimplenciaTest extends TestCase
         $periodo = PeriodoLetivo::create(['nome' => '2027', 'data_inicio' => '2027-01-01', 'data_fim' => '2027-12-31']);
         $turma = Turma::create(['nome' => 'Turma C', 'periodo_letivo_id' => $periodo->id]);
         $aluno = Pessoa::create(['nome' => 'Aluno Em Dia']);
-        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id, 'periodo_letivo_id' => $periodo->id, 'situacao' => 'ativa']);
+        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id, 'situacao' => 'ativa']);
         $contrato = Contrato::create(['matricula_id' => $matricula->id, 'valor_total' => 500, 'data_aceite' => '2027-01-05']);
         $faturaPendente = Fatura::create(['contrato_id' => $contrato->id, 'vencimento' => now()->addDays(10), 'status' => StatusFatura::Pendente]);
         ItemFatura::create(['fatura_id' => $faturaPendente->id, 'descricao' => 'Mensalidade', 'quantidade' => 1, 'valor_unitario' => 500, 'desconto' => 0]);

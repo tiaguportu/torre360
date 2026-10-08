@@ -4,7 +4,7 @@
         <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-2 mb-4 text-gray-700 dark:text-gray-200 font-semibold text-base">
                 <x-filament::icon icon="heroicon-o-funnel" class="h-5 w-5 text-primary-500" />
-                <span>Filtros do Cenário de Ensalamento</span>
+                <span>Filtros do Cenário de Remanejamento</span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -70,20 +70,18 @@
             <div class="p-8 text-center bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-gray-500">
                 <x-filament::icon icon="heroicon-o-academic-cap" class="h-12 w-12 mx-auto text-gray-400 mb-3" />
                 <h3 class="text-base font-semibold text-gray-700 dark:text-gray-200">Selecione o Período Letivo e a Série</h3>
-                <p class="text-sm mt-1">Escolha os filtros acima para visualizar a ocupação das turmas e a lista de alunos aguardando ensalamento.</p>
+                <p class="text-sm mt-1">Escolha os filtros acima para visualizar a ocupação das turmas e remanejar alunos entre elas.</p>
             </div>
         @else
             @php
                 $turmas = $this->turmasCenario;
-                $alunosPendentes = $this->alunosNaoEnsalados;
                 $totalCapacidade = $turmas->sum('vagas_maximas');
                 $totalOcupados = $turmas->sum('ocupados');
-                $totalPendentes = $alunosPendentes->count();
                 $taxaOcupacaoGeral = $totalCapacidade > 0 ? round(($totalOcupados / $totalCapacidade) * 100) : 0;
             @endphp
 
             {{-- Métricas Rápidas do Cenário --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3">
                     <div class="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                         <x-filament::icon icon="heroicon-o-building-office" class="h-6 w-6" />
@@ -109,20 +107,11 @@
                         <x-filament::icon icon="heroicon-o-check-badge" class="h-6 w-6" />
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Já Ensalados</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Alunos nas Turmas</div>
                         <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ $totalOcupados }} ({{ $taxaOcupacaoGeral }}%)</div>
                     </div>
                 </div>
 
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3">
-                    <div class="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg">
-                        <x-filament::icon icon="heroicon-o-clock" class="h-6 w-6" />
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Aguardando Turma</div>
-                        <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ $totalPendentes }}</div>
-                    </div>
-                </div>
             </div>
 
             {{-- Grid de Turmas e Capacidade --}}
@@ -139,14 +128,14 @@
                             icon="heroicon-o-sparkles"
                             size="sm"
                         >
-                            Distribuir Automaticamente
+                            Redistribuir Automaticamente
                         </x-filament::button>
                     @endcan
                 </div>
 
                 @if ($turmas->isEmpty())
                     <div class="p-6 text-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500">
-                        Nenhuma turma cadastrada para esta série no período selecionado. Cadastre turmas no menu de Turmas para prosseguir com o ensalamento.
+                        Nenhuma turma aberta (Planejada ou Ativa) para esta série no período selecionado. Cadastre ou duplique turmas no menu de Turmas.
                     </div>
                 @else
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -210,7 +199,7 @@
                                     >
                                         <span class="flex items-center gap-1.5">
                                             <x-filament::icon icon="heroicon-o-user-group" class="h-4 w-4" />
-                                            <span>Ver Estudantes Ensalados ({{ count($turma['alunos']) }})</span>
+                                            <span>Ver Estudantes da Turma ({{ count($turma['alunos']) }})</span>
                                         </span>
                                         <x-filament::icon
                                             icon="heroicon-s-chevron-down"
@@ -240,21 +229,12 @@
                                                             <x-filament::icon icon="heroicon-o-arrows-right-left" class="h-3.5 w-3.5" />
                                                         </button>
 
-                                                        <button
-                                                            type="button"
-                                                            wire:click="desensalar({{ $aluno['matricula_id'] }})"
-                                                            wire:confirm="Deseja desensalar este estudante? Ele voltará para a lista de aguardando turma."
-                                                            title="Remover da turma (Desensalar)"
-                                                            class="p-1 text-gray-500 hover:text-red-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                        >
-                                                            <x-filament::icon icon="heroicon-o-x-mark" class="h-3.5 w-3.5" />
-                                                        </button>
                                                     </div>
                                                 @endcan
                                             </div>
                                         @empty
                                             <div class="text-center py-3 text-xs text-gray-400">
-                                                Nenhum aluno alocado nesta turma ainda.
+                                                Nenhum aluno nesta turma.
                                             </div>
                                         @endforelse
                                     </div>
@@ -265,141 +245,6 @@
                 @endif
             </div>
 
-            {{-- Seção de Alunos Aguardando Ensalamento --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <x-filament::icon icon="heroicon-o-user-minus" class="h-5 w-5 text-amber-500" />
-                            <span>Estudantes Aguardando Turma ({{ $alunosPendentes->count() }})</span>
-                        </h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            Estudantes com matrícula ativa nesta série que ainda não foram designados a nenhuma turma.
-                        </p>
-                    </div>
-
-                    {{-- Barra de Alocação em Massa --}}
-                    @can('Manage:Ensalamento')
-                        @if ($alunosPendentes->isNotEmpty() && $turmas->isNotEmpty())
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
-                                    {{ count($selecionados) }} selecionado(s)
-                                </span>
-
-                                <select
-                                    wire:model="turmaDestinoManualId"
-                                    class="text-xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white py-1.5"
-                                >
-                                    <option value="">Selecione a Turma de Destino</option>
-                                    @foreach ($turmas as $t)
-                                        <option value="{{ $t['id'] }}">
-                                            {{ $t['nome'] }} (Disp: {{ $t['vagas_restantes'] }})
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <x-filament::button
-                                    wire:click="alocarSelecionados"
-                                    size="sm"
-                                    icon="heroicon-o-arrow-right-circle"
-                                >
-                                    Alocar Selecionados
-                                </x-filament::button>
-                            </div>
-                        @endif
-                    @endcan
-                </div>
-
-                @if ($alunosPendentes->isEmpty())
-                    <div class="p-8 text-center text-gray-500">
-                        <x-filament::icon icon="heroicon-o-check-circle" class="h-10 w-10 mx-auto text-emerald-500 mb-2" />
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Parabéns! Todos os estudantes desta série estão ensalados.</h4>
-                        <p class="text-xs text-gray-400 mt-0.5">Não há alunos pendentes de alocação no momento.</p>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
-                                <tr>
-                                    @can('Manage:Ensalamento')
-                                        <th class="p-3 w-10 text-center">
-                                            <input
-                                                type="checkbox"
-                                                x-on:change="$wire.set('selecionados', $el.checked ? {{ json_encode($alunosPendentes->pluck('matricula_id')->toArray()) }} : [])"
-                                                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                            />
-                                        </th>
-                                    @endcan
-                                    <th class="p-3">Estudante</th>
-                                    <th class="p-3">Gênero</th>
-                                    <th class="p-3">Idade</th>
-                                    <th class="p-3">Data Matrícula</th>
-                                    @can('Manage:Ensalamento')
-                                        <th class="p-3 text-right">Alocação Rápida</th>
-                                    @endcan
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
-                                @foreach ($alunosPendentes as $aluno)
-                                    <tr class="hover:bg-gray-50/70 dark:hover:bg-gray-700/30 transition">
-                                        @can('Manage:Ensalamento')
-                                            <td class="p-3 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    wire:model.live="selecionados"
-                                                    value="{{ $aluno['matricula_id'] }}"
-                                                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                                />
-                                            </td>
-                                        @endcan
-                                        <td class="p-3 font-medium text-gray-900 dark:text-white">
-                                            {{ $aluno['nome'] }}
-                                        </td>
-                                        <td class="p-3">
-                                            @if ($aluno['sexo'] === 'masculino')
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                    Masculino
-                                                </span>
-                                            @elseif ($aluno['sexo'] === 'feminino')
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">
-                                                    Feminino
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                                    Não declarado
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="p-3 text-xs text-gray-500 dark:text-gray-400">
-                                            {{ $aluno['idade'] ? "{$aluno['idade']} anos" : '—' }}
-                                        </td>
-                                        <td class="p-3 text-xs text-gray-500 dark:text-gray-400">
-                                            {{ $aluno['data_matricula'] }}
-                                        </td>
-                                        @can('Manage:Ensalamento')
-                                            <td class="p-3 text-right">
-                                                <div class="inline-flex items-center gap-1.5">
-                                                    <select
-                                                        x-on:change="if ($el.value) { $wire.alocarAlunosEmTurma([{{ $aluno['matricula_id'] }}], $el.value); $el.value = ''; }"
-                                                        class="text-xs rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1"
-                                                    >
-                                                        <option value="">Colocar na turma...</option>
-                                                        @foreach ($turmas as $t)
-                                                            <option value="{{ $t['id'] }}">
-                                                                {{ $t['nome'] }} ({{ $t['vagas_restantes'] }} vagas)
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </td>
-                                        @endcan
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
         @endif
     </div>
 
@@ -411,10 +256,10 @@
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <x-filament::icon icon="heroicon-o-cpu-chip" class="h-6 w-6 text-primary-500" />
-                            <span>Distribuição Automática Inteligente</span>
+                            <span>Redistribuição Automática</span>
                         </h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            O algoritmo assistente alocará os estudantes de forma equilibrada entre as turmas selecionadas.
+                            O algoritmo redistribui os estudantes das turmas selecionadas de forma equilibrada. Os alunos podem mudar de turma.
                         </p>
                     </div>
                     <button wire:click="$set('showModalDistribuicao', false)" class="text-gray-400 hover:text-gray-600">
@@ -475,11 +320,6 @@
                     {{-- Opções Avançadas --}}
                     <div class="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2">
                         <label class="flex items-center gap-2 cursor-pointer text-xs">
-                            <input type="checkbox" wire:model="redistribuirTodos" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                            <span class="text-gray-700 dark:text-gray-300 font-medium">Redistribuir todos da série (embaralha também quem já está em turma)</span>
-                        </label>
-
-                        <label class="flex items-center gap-2 cursor-pointer text-xs">
                             <input type="checkbox" wire:model="respeitarLimiteVagas" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                             <span class="text-gray-700 dark:text-gray-300 font-medium">Respeitar estritamente o limite de vagas de cada sala</span>
                         </label>
@@ -492,7 +332,7 @@
                         Cancelar
                     </x-filament::button>
                     <x-filament::button wire:click="executarDistribuicaoAutomatica" icon="heroicon-o-bolt">
-                        Executar Distribuição
+                        Executar Redistribuição
                     </x-filament::button>
                 </div>
             </div>

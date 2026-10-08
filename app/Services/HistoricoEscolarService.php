@@ -64,7 +64,7 @@ class HistoricoEscolarService
 
         foreach ($matriculas as $matricula) {
             $anoLetivo = (int) ($matricula->periodoLetivo?->nome ?? ($matricula->data_ativacao ? Carbon::parse($matricula->data_ativacao)->year : $matricula->created_at->year));
-            $serie = $matricula->serie ?? $matricula->turma?->serie;
+            $serie = $matricula->turma?->serie;
             $serieNome = $serie?->nome ?? $matricula->turma?->nome ?? 'Série';
 
             // Carga horária e frequência

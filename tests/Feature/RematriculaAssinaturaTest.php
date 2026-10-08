@@ -73,7 +73,6 @@ class RematriculaAssinaturaTest extends TestCase
         $matriculaOrigem = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaOrigem->id,
-            'periodo_letivo_id' => $origem->id,
             'situacao' => 'ativa',
         ]);
         $turmaDestino = Turma::create(['nome' => '5º Ano', 'periodo_letivo_id' => $destino->id]);
@@ -158,7 +157,7 @@ class RematriculaAssinaturaTest extends TestCase
         $segunda = $service->efetivar($rematricula);
 
         $this->assertSame($primeira->id, $segunda->id);
-        $this->assertSame(1, Matricula::where('periodo_letivo_id', $primeira->periodo_letivo_id)->count());
+        $this->assertSame(1, Matricula::doPeriodo($primeira->periodo_letivo_id)->count());
         $this->assertSame(1, Contrato::where('matricula_id', $primeira->id)->count());
         $this->assertSame(12, $rematricula->fresh()->contrato->faturas()->count());
         // Segue aguardando a assinatura: repetir a chamada não "volta" o andamento
@@ -186,7 +185,7 @@ class RematriculaAssinaturaTest extends TestCase
             // esperado
         }
 
-        $this->assertSame(0, Matricula::where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)->count());
+        $this->assertSame(0, Matricula::doPeriodo($periodo->periodo_letivo_destino_id)->count());
         $this->assertSame(0, Contrato::count());
         $this->assertNull($rematricula->fresh()->nova_matricula_id);
 
@@ -194,7 +193,7 @@ class RematriculaAssinaturaTest extends TestCase
         $periodo->update(['valor_entrada_padrao' => 0]);
         $service->efetivar($rematricula);
 
-        $this->assertSame(1, Matricula::where('periodo_letivo_id', $periodo->periodo_letivo_destino_id)->count());
+        $this->assertSame(1, Matricula::doPeriodo($periodo->periodo_letivo_destino_id)->count());
         $this->assertSame(1, Contrato::count());
         $this->assertEquals(StatusRematricula::AguardandoAssinatura, $rematricula->fresh()->status);
     }
@@ -269,7 +268,6 @@ class RematriculaAssinaturaTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => Turma::create(['nome' => '4º Ano', 'periodo_letivo_id' => $origem->id])->id,
-            'periodo_letivo_id' => $origem->id,
             'situacao' => 'ativa',
         ]);
 

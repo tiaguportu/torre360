@@ -11,6 +11,7 @@ use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Models\PeriodoLetivo;
 use App\Models\ResponsavelFinanceiro;
 use App\Services\RiscoEvasaoService;
 use Filament\Actions\Action;
@@ -52,7 +53,6 @@ class MatriculasTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query
                 ->with([
-                    'serie',
                     'periodoLetivo',
                     'turma.serie.curso.documentos',
                     'turma.tiposDocumentos',
@@ -81,13 +81,7 @@ class MatriculasTable
                 TextColumn::make('pessoa.nome')
                     ->label('Aluno')
                     ->description(function (Matricula $record): string {
-                        $turma = $record->turma?->nome;
-
-                        if (blank($turma)) {
-                            return $record->serie_nome ? "{$record->serie_nome} · sem turma" : 'Sem turma';
-                        }
-
-                        return implode(' · ', array_filter([$turma, $record->turma?->serie?->curso?->nome]));
+                        return implode(' · ', array_filter([$record->turma?->nome, $record->turma?->serie?->curso?->nome]));
                     })
                     ->weight('bold')
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $q) => $q
@@ -217,9 +211,13 @@ class MatriculasTable
                     ->searchable()
                     ->label('Turma'),
                 SelectFilter::make('periodoLetivo')
-                    ->relationship('periodoLetivo', 'nome')
+                    ->options(fn () => PeriodoLetivo::query()->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                    // O período da matrícula é o da turma.
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        filled($data['values'] ?? null),
+                        fn (Builder $query) => $query->whereHas('turma', fn (Builder $turma) => $turma->whereIn('periodo_letivo_id', $data['values']))
+                    ))
                     ->multiple()
-                    ->preload()
                     ->searchable()
                     ->label('Período Letivo'),
                 ...($comFiltroSituacao ? [
@@ -654,11 +652,6 @@ class MatriculasTable
                             Select::make('turma_id')
                                 ->label('Turma')
                                 ->relationship('turma', 'nome', fn ($query) => $query->abertasParaMatricula())
-                                ->searchable()
-                                ->preload(),
-                            Select::make('periodo_letivo_id')
-                                ->label('Período Letivo')
-                                ->relationship('periodoLetivo', 'nome')
                                 ->searchable()
                                 ->preload(),
                             Select::make('situacao')

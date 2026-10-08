@@ -44,7 +44,6 @@ class BNCCEvaluationTest extends TestCase
         $matricula = Matricula::factory()->create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

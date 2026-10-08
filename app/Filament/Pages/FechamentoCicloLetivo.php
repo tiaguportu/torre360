@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Concerns\HasAjudaAction;
-use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\SituacaoFinalDisciplina;
 use App\Models\Turma;
@@ -72,13 +71,10 @@ class FechamentoCicloLetivo extends Page implements HasForms
                                     return [];
                                 }
 
-                                $turmaIds = Matricula::query()
-                                    ->where('periodo_letivo_id', $get('periodo_letivo_id'))
-                                    ->pluck('turma_id')
-                                    ->unique();
-
+                                // Turmas do período que têm matrículas (o período da matrícula é o da turma).
                                 return Turma::query()
-                                    ->whereIn('id', $turmaIds)
+                                    ->where('periodo_letivo_id', $get('periodo_letivo_id'))
+                                    ->whereHas('matriculas')
                                     ->whereIn('tipo_avaliacao', ['notas', 'hibrido'])
                                     ->orderBy('nome')
                                     ->pluck('nome', 'id');

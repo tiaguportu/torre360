@@ -247,7 +247,6 @@ class MatriculaOnlineSelfServiceTest extends TestCase
         Matricula::create([
             'pessoa_id' => $alunoExistente->id,
             'turma_id' => $this->turma->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
             'situacao' => SituacaoMatricula::ATIVA,
         ]);
 
@@ -313,7 +312,6 @@ class MatriculaOnlineSelfServiceTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $this->turma->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
             'situacao' => SituacaoMatricula::PENDENTE,
         ]);
 

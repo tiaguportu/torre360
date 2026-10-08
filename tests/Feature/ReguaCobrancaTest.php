@@ -13,6 +13,7 @@ use App\Models\Pessoa;
 use App\Models\ReguaCobranca;
 use App\Models\ReguaCobrancaLog;
 use App\Models\ResponsavelFinanceiro;
+use App\Models\Turma;
 use App\Models\User;
 use App\Services\ReguaCobrancaService;
 use Carbon\Carbon;
@@ -62,7 +63,7 @@ class ReguaCobrancaTest extends TestCase
 
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
+            'turma_id' => Turma::factory()->create(['periodo_letivo_id' => $this->periodoLetivo->id])->id,
             'situacao' => 'ativa',
         ]);
 

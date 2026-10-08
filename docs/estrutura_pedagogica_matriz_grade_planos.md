@@ -5,11 +5,11 @@ Onda 4 do roadmap de funcionalidades (planejamento pedagógico antes do início 
 ## 0. Nota sobre "ensalamento"
 
 Esta onda usa o termo **"sala"** para o ambiente físico (laboratório, quadra etc.) usado
-na grade horária. Isso é diferente do recurso **"Ensalamento em Lote Assistido"**
-(`/admin/ensalamento`, `EnsalamentoService`) já existente no sistema, que distribui
-**alunos entre turmas** (homeroom), não salas físicas. Os dois nomes coexistem porque
-"ensalamento" tem esse sentido consolidado no jargão escolar brasileiro; o cadastro de
-`Sala` desta onda não interfere nele.
+na grade horária. Isso é diferente do **"Remanejamento de Turmas"** (antigo "Ensalamento
+em Lote Assistido"; `/admin/ensalamento`, `EnsalamentoService`) já existente no sistema,
+que move **alunos entre turmas** (homeroom), não salas físicas. O slug e a classe mantêm
+o nome "ensalamento" por compatibilidade (links e permissões `View:/Manage:Ensalamento`);
+o cadastro de `Sala` desta onda não interfere nele.
 
 ## 1. Matriz Curricular
 

@@ -47,7 +47,6 @@ class PortalCalendarioTest extends TestCase
         Matricula::factory()->create([
             'pessoa_id' => $pessoa->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

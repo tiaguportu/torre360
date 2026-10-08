@@ -95,7 +95,6 @@ class RematriculaTurmaObrigatoriaTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaOrigem->id,
-            'periodo_letivo_id' => $this->origem->id,
             'situacao' => SituacaoMatricula::ATIVA,
         ]);
 
@@ -114,7 +113,6 @@ class RematriculaTurmaObrigatoriaTest extends TestCase
             Matricula::create([
                 'pessoa_id' => Pessoa::create(['nome' => "Ocupante {$turma->id}-{$i}"])->id,
                 'turma_id' => $turma->id,
-                'periodo_letivo_id' => $turma->periodo_letivo_id,
                 'situacao' => $situacao,
             ]);
         }

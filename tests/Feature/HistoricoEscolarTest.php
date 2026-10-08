@@ -196,8 +196,6 @@ class HistoricoEscolarTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'serie_id' => $serie->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'concluido',
             'data_ativacao' => '2025-02-05',
         ]);

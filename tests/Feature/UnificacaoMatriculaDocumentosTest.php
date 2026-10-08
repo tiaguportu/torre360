@@ -540,8 +540,6 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaA->id,
-            'serie_id' => $serieA->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => SituacaoMatricula::ATIVA,
         ]);
 
@@ -587,8 +585,6 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaA->id,
-            'serie_id' => $serieA->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => SituacaoMatricula::PENDENTE,
         ]);
 

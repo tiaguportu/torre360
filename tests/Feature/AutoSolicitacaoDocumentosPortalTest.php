@@ -67,7 +67,6 @@ class AutoSolicitacaoDocumentosPortalTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

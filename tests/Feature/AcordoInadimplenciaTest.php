@@ -89,9 +89,7 @@ class AcordoInadimplenciaTest extends TestCase
 
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
-            'serie_id' => $serie->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

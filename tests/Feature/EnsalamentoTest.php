@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\SituacaoMatricula;
+use App\Enums\StatusTurma;
 use App\Filament\Pages\EnsalamentoTurmas;
 use App\Models\Curso;
 use App\Models\Matricula;
@@ -19,6 +20,10 @@ use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
+/**
+ * Remanejamento de alunos entre turmas (antigo "Ensalamento"). Toda matrícula já nasce numa turma, então
+ * os testes partem de alunos já alocados e só movem/redistribuem.
+ */
 class EnsalamentoTest extends TestCase
 {
     use RefreshDatabase;
@@ -61,6 +66,18 @@ class EnsalamentoTest extends TestCase
         ]);
     }
 
+    private function criarTurma(string $nome, int $vagas = 10, ?PeriodoLetivo $periodo = null, StatusTurma $status = StatusTurma::Ativa): Turma
+    {
+        return Turma::create([
+            'nome' => $nome,
+            'codigo' => strtoupper(substr($nome, -2)),
+            'serie_id' => $this->serie->id,
+            'periodo_letivo_id' => ($periodo ?? $this->periodoLetivo)->id,
+            'status' => $status,
+            'vagas_maximas' => $vagas,
+        ]);
+    }
+
     private function criarPessoa(string $nome, string $sexo = 'masculino'): Pessoa
     {
         return Pessoa::create([
@@ -71,34 +88,22 @@ class EnsalamentoTest extends TestCase
         ]);
     }
 
-    private function criarMatricula(Pessoa $pessoa, ?Turma $turma = null): Matricula
+    private function criarMatricula(Pessoa $pessoa, Turma $turma, SituacaoMatricula $situacao = SituacaoMatricula::ATIVA): Matricula
     {
         return Matricula::create([
             'pessoa_id' => $pessoa->id,
-            'turma_id' => $turma?->id,
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'situacao' => SituacaoMatricula::ATIVA,
+            'turma_id' => $turma->id,
+            'situacao' => $situacao,
         ]);
     }
 
     public function test_obter_turmas_cenario_calcula_ocupacao_e_generos_corretamente(): void
     {
-        $turma = Turma::create([
-            'nome' => 'Turma 1A',
-            'codigo' => '1A',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 20,
-        ]);
+        $turma = $this->criarTurma('Turma 1A', 20);
 
-        $menina1 = $this->criarPessoa('Mariana Silva', 'feminino');
-        $menina2 = $this->criarPessoa('Beatriz Souza', 'feminino');
-        $menino1 = $this->criarPessoa('Carlos Eduardo', 'masculino');
-
-        $this->criarMatricula($menina1, $turma);
-        $this->criarMatricula($menina2, $turma);
-        $this->criarMatricula($menino1, $turma);
+        $this->criarMatricula($this->criarPessoa('Mariana Silva', 'feminino'), $turma);
+        $this->criarMatricula($this->criarPessoa('Beatriz Souza', 'feminino'), $turma);
+        $this->criarMatricula($this->criarPessoa('Carlos Eduardo', 'masculino'), $turma);
 
         $cenario = $this->service->obterTurmasCenario($this->periodoLetivo->id, $this->serie->id);
 
@@ -113,76 +118,113 @@ class EnsalamentoTest extends TestCase
         $this->assertEquals(15.0, $dadosTurma['percentual_ocupacao']);
     }
 
-    public function test_alocar_alunos_em_turma_respeita_capacidade_maxima(): void
+    public function test_cenario_conta_so_quem_ocupa_vaga_e_mostra_so_turmas_abertas_do_periodo(): void
     {
-        $turma = Turma::create([
-            'nome' => 'Turma Pequena',
-            'codigo' => 'TP',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 2,
-        ]);
+        $turma = $this->criarTurma('Turma 1A', 20);
+        $this->criarMatricula($this->criarPessoa('Ativa'), $turma, SituacaoMatricula::ATIVA);
+        $this->criarMatricula($this->criarPessoa('Pendente'), $turma, SituacaoMatricula::PENDENTE);
+        $this->criarMatricula($this->criarPessoa('Reserva'), $turma, SituacaoMatricula::RESERVA);
+        $this->criarMatricula($this->criarPessoa('Cancelada'), $turma, SituacaoMatricula::CANCELADA);
+        $this->criarMatricula($this->criarPessoa('Trancada'), $turma, SituacaoMatricula::TRANCADA);
 
-        $p1 = $this->criarPessoa('Aluno Um');
-        $p2 = $this->criarPessoa('Aluno Dois');
-        $p3 = $this->criarPessoa('Aluno Tres');
+        $planejada = $this->criarTurma('Turma 1B', 20, status: StatusTurma::Planejada);
+        $concluida = $this->criarTurma('Turma 1C', 20, status: StatusTurma::Concluida);
+        $cancelada = $this->criarTurma('Turma 1D', 20, status: StatusTurma::Cancelada);
+        $outroPeriodo = $this->criarTurma('Turma 1E', 20, PeriodoLetivo::create(['nome' => '2027', 'data_inicio' => '2027-02-01', 'data_fim' => '2027-12-15']));
 
-        $m1 = $this->criarMatricula($p1);
-        $m2 = $this->criarMatricula($p2);
-        $m3 = $this->criarMatricula($p3);
+        $cenario = $this->service->obterTurmasCenario($this->periodoLetivo->id, $this->serie->id);
 
-        // Tentar alocar 3 alunos em turma de 2 vagas deve lançar InvalidArgumentException
+        $this->assertEqualsCanonicalizing([$turma->id, $planejada->id], $cenario->pluck('id')->all());
+        $this->assertNotContains($concluida->id, $cenario->pluck('id')->all());
+        $this->assertNotContains($cancelada->id, $cenario->pluck('id')->all());
+        $this->assertNotContains($outroPeriodo->id, $cenario->pluck('id')->all());
+        $this->assertEquals(3, $cenario->firstWhere('id', $turma->id)['total_alunos'], 'Só Ativa, Pendente e Reserva ocupam vaga.');
+    }
+
+    public function test_mover_alunos_para_turma_cheia_e_recusado(): void
+    {
+        $origem = $this->criarTurma('Origem', 10);
+        $destino = $this->criarTurma('Turma Pequena', 2);
+
+        $m1 = $this->criarMatricula($this->criarPessoa('Aluno Um'), $origem);
+        $m2 = $this->criarMatricula($this->criarPessoa('Aluno Dois'), $origem);
+        $m3 = $this->criarMatricula($this->criarPessoa('Aluno Tres'), $origem);
+
+        // 3 alunos numa turma de 2 vagas lança InvalidArgumentException e não move ninguém
+        try {
+            $this->service->alocarAlunosEmTurma([$m1->id, $m2->id, $m3->id], $destino->id);
+            $this->fail('Deveria recusar: a turma só tem 2 vagas.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('possui apenas 2 vaga(s) disponível(is) e você tentou matricular 3 aluno(s)', $e->getMessage());
+        }
+
+        $this->assertSame($origem->id, $m1->fresh()->turma_id);
+        $this->assertSame($origem->id, $m3->fresh()->turma_id);
+    }
+
+    public function test_mover_alunos_para_outra_turma_do_mesmo_periodo(): void
+    {
+        $origem = $this->criarTurma('Origem', 10);
+        $destino = $this->criarTurma('Turma A', 10);
+
+        $m1 = $this->criarMatricula($this->criarPessoa('Aluno Um'), $origem);
+        $m2 = $this->criarMatricula($this->criarPessoa('Aluno Dois'), $origem);
+
+        $this->service->alocarAlunosEmTurma([$m1->id, $m2->id], $destino->id);
+
+        $this->assertEquals($destino->id, $m1->fresh()->turma_id);
+        $this->assertEquals($destino->id, $m2->fresh()->turma_id);
+        // O período e a série da matrícula acompanham a turma
+        $this->assertSame($this->periodoLetivo->id, $m1->fresh()->periodo_letivo_id);
+        $this->assertSame($this->serie->id, $m1->fresh()->serie_id);
+    }
+
+    public function test_mover_para_a_mesma_turma_nao_conta_vaga_em_dobro(): void
+    {
+        $turma = $this->criarTurma('Turma Lotada', 2);
+        $m1 = $this->criarMatricula($this->criarPessoa('Aluno Um'), $turma);
+        $this->criarMatricula($this->criarPessoa('Aluno Dois'), $turma);
+
+        // Turma 2/2: "mover" quem já está nela não pode ser tratado como uma matrícula nova
+        $this->service->alocarAlunosEmTurma([$m1->id], $turma->id);
+
+        $this->assertSame($turma->id, $m1->fresh()->turma_id);
+    }
+
+    public function test_mover_para_turma_de_outro_periodo_e_recusado(): void
+    {
+        $origem = $this->criarTurma('Origem 2026', 10);
+        $periodo2027 = PeriodoLetivo::create(['nome' => '2027', 'data_inicio' => '2027-02-01', 'data_fim' => '2027-12-15']);
+        $destino2027 = $this->criarTurma('Turma 2027', 10, $periodo2027, StatusTurma::Planejada);
+        $m = $this->criarMatricula($this->criarPessoa('Aluno Um'), $origem);
+
         $this->expectException(InvalidArgumentException::class);
-        $this->service->alocarAlunosEmTurma([$m1->id, $m2->id, $m3->id], $turma->id);
+        $this->expectExceptionMessage('só pode ser feito entre turmas do mesmo período letivo');
+
+        $this->service->alocarAlunosEmTurma([$m->id], $destino2027->id);
     }
 
-    public function test_alocar_alunos_em_turma_com_sucesso(): void
+    public function test_mover_para_turma_concluida_e_recusado(): void
     {
-        $turma = Turma::create([
-            'nome' => 'Turma A',
-            'codigo' => 'TA',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
+        $origem = $this->criarTurma('Origem', 10);
+        $concluida = $this->criarTurma('Turma Concluída', 10, status: StatusTurma::Concluida);
+        $m = $this->criarMatricula($this->criarPessoa('Aluno Um'), $origem);
 
-        $p1 = $this->criarPessoa('Aluno Um');
-        $p2 = $this->criarPessoa('Aluno Dois');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('não está aberta para matrículas');
 
-        $m1 = $this->criarMatricula($p1);
-        $m2 = $this->criarMatricula($p2);
-
-        $this->service->alocarAlunosEmTurma([$m1->id, $m2->id], $turma->id);
-
-        $this->assertEquals($turma->id, $m1->fresh()->turma_id);
-        $this->assertEquals($turma->id, $m2->fresh()->turma_id);
+        $this->service->alocarAlunosEmTurma([$m->id], $concluida->id);
     }
 
-    public function test_distribuicao_automatica_equilibrio_genero(): void
+    public function test_redistribuicao_automatica_equilibrio_genero(): void
     {
-        $turmaA = Turma::create([
-            'nome' => 'Turma A',
-            'codigo' => 'TA',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
+        $turmaA = $this->criarTurma('Turma A');
+        $turmaB = $this->criarTurma('Turma B');
 
-        $turmaB = Turma::create([
-            'nome' => 'Turma B',
-            'codigo' => 'TB',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
-
-        // Criar 4 meninas e 4 meninos não ensalados
+        // 4 meninas e 4 meninos, todos hoje na turma A
         for ($i = 1; $i <= 4; $i++) {
-            $menina = $this->criarPessoa("Menina {$i}", 'feminino');
-            $this->criarMatricula($menina);
-
-            $menino = $this->criarPessoa("Menino {$i}", 'masculino');
-            $this->criarMatricula($menino);
+            $this->criarMatricula($this->criarPessoa("Menina {$i}", 'feminino'), $turmaA);
+            $this->criarMatricula($this->criarPessoa("Menino {$i}", 'masculino'), $turmaA);
         }
 
         $resultado = $this->service->distribuirAutomaticamente(
@@ -208,28 +250,13 @@ class EnsalamentoTest extends TestCase
         $this->assertEquals(2, $turmaBDados['meninos']);
     }
 
-    public function test_distribuicao_automatica_ordem_alfabetica(): void
+    public function test_redistribuicao_automatica_ordem_alfabetica(): void
     {
-        $turmaA = Turma::create([
-            'nome' => 'Turma A',
-            'codigo' => 'TA',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
+        $turmaA = $this->criarTurma('Turma A');
+        $turmaB = $this->criarTurma('Turma B');
 
-        $turmaB = Turma::create([
-            'nome' => 'Turma B',
-            'codigo' => 'TB',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
-
-        $nomes = ['Amanda', 'Bruno', 'Camila', 'Daniel'];
-        foreach ($nomes as $nome) {
-            $p = $this->criarPessoa($nome);
-            $this->criarMatricula($p);
+        foreach (['Daniel', 'Camila', 'Bruno', 'Amanda'] as $nome) {
+            $this->criarMatricula($this->criarPessoa($nome), $turmaA);
         }
 
         $this->service->distribuirAutomaticamente(
@@ -248,56 +275,105 @@ class EnsalamentoTest extends TestCase
         $this->assertContains('Bruno', $alunosTurmaB);
     }
 
-    public function test_desensalar_remove_estudante_da_turma(): void
+    public function test_redistribuicao_nao_mexe_em_matricula_cancelada_nem_em_turma_nao_selecionada(): void
     {
-        $turma = Turma::create([
-            'nome' => 'Turma A',
-            'codigo' => 'TA',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 10,
-        ]);
+        $turmaA = $this->criarTurma('Turma A');
+        $turmaB = $this->criarTurma('Turma B');
+        $turmaC = $this->criarTurma('Turma C');
 
-        $p = $this->criarPessoa('Aluno Teste');
-        $m = $this->criarMatricula($p, $turma);
+        $cancelada = $this->criarMatricula($this->criarPessoa('Cancelada'), $turmaA, SituacaoMatricula::CANCELADA);
+        $deC = $this->criarMatricula($this->criarPessoa('Aluno da C'), $turmaC);
+        foreach (['Ana', 'Bia', 'Caio', 'Davi'] as $nome) {
+            $this->criarMatricula($this->criarPessoa($nome), $turmaA);
+        }
 
-        $this->assertEquals($turma->id, $m->fresh()->turma_id);
+        $resultado = $this->service->distribuirAutomaticamente($this->serie->id, $this->periodoLetivo->id, [$turmaA->id, $turmaB->id]);
 
-        $this->service->removerDeTurma([$m->id]);
-
-        $this->assertNull($m->fresh()->turma_id);
+        $this->assertEquals(4, $resultado['total_distribuidos']);
+        $this->assertSame($turmaA->id, $cancelada->fresh()->turma_id, 'Matrícula cancelada fica onde está.');
+        $this->assertSame($turmaC->id, $deC->fresh()->turma_id, 'Turma fora da seleção não é tocada.');
     }
 
-    public function test_pagina_livewire_ensalamento_carrega_e_funciona(): void
+    public function test_redistribuicao_sem_alunos_lanca_erro_claro(): void
     {
-        Permission::findOrCreate('View:Ensalamento', 'web');
-        Permission::findOrCreate('Manage:Ensalamento', 'web');
+        $turmaA = $this->criarTurma('Turma A');
+        $turmaB = $this->criarTurma('Turma B');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Não há alunos nas turmas selecionadas');
+
+        $this->service->distribuirAutomaticamente($this->serie->id, $this->periodoLetivo->id, [$turmaA->id, $turmaB->id]);
+    }
+
+    private function usuarioComPermissoes(array $permissoes): User
+    {
+        foreach ($permissoes as $permissao) {
+            Permission::findOrCreate($permissao, 'web');
+        }
 
         $user = User::factory()->create();
-        $user->givePermissionTo(['View:Ensalamento', 'Manage:Ensalamento']);
+        $user->givePermissionTo($permissoes);
 
-        $turma = Turma::create([
-            'nome' => 'Turma 1A',
-            'codigo' => '1A',
-            'serie_id' => $this->serie->id,
-            'periodo_letivo_id' => $this->periodoLetivo->id,
-            'vagas_maximas' => 15,
-        ]);
+        return $user;
+    }
 
-        $p = $this->criarPessoa('Aluno Não Ensalado');
-        $m = $this->criarMatricula($p);
+    public function test_pagina_livewire_mostra_turmas_e_move_aluno(): void
+    {
+        $user = $this->usuarioComPermissoes(['View:Ensalamento', 'Manage:Ensalamento']);
+        $origem = $this->criarTurma('Turma 1A', 15);
+        $destino = $this->criarTurma('Turma 1B', 15);
+        $m = $this->criarMatricula($this->criarPessoa('Aluno Remanejado'), $origem);
 
         Livewire::actingAs($user)
             ->test(EnsalamentoTurmas::class)
             ->set('periodoLetivoId', $this->periodoLetivo->id)
             ->set('serieId', $this->serie->id)
             ->assertSee('Turma 1A')
-            ->assertSee('Aluno Não Ensalado')
-            ->set('selecionados', [$m->id])
-            ->set('turmaDestinoManualId', $turma->id)
-            ->call('alocarSelecionados')
-            ->assertHasNoErrors();
+            ->assertSee('Turma 1B')
+            ->assertSee('Remanejamento')
+            ->assertDontSee('Aguardando Turma')
+            ->assertDontSee('Desensalar')
+            ->call('abrirModalMover', $m->id, 'Aluno Remanejado')
+            ->set('novaTurmaId', $destino->id)
+            ->call('confirmarMover')
+            ->assertHasNoErrors()
+            ->assertSet('showModalMover', false);
 
-        $this->assertEquals($turma->id, $m->fresh()->turma_id);
+        $this->assertEquals($destino->id, $m->fresh()->turma_id);
+    }
+
+    public function test_quem_so_visualiza_nao_consegue_mover_nem_redistribuir_chamando_o_livewire_direto(): void
+    {
+        $user = $this->usuarioComPermissoes(['View:Ensalamento']);
+        $origem = $this->criarTurma('Turma 1A');
+        $destino = $this->criarTurma('Turma 1B');
+        $m = $this->criarMatricula($this->criarPessoa('Aluno'), $origem);
+
+        // Uma instância nova por chamada: depois de um 403 o snapshot do componente deixa de ser reutilizável.
+        $abrir = fn () => Livewire::actingAs($user)
+            ->test(EnsalamentoTurmas::class)
+            ->set('periodoLetivoId', $this->periodoLetivo->id)
+            ->set('serieId', $this->serie->id);
+
+        $abrir()->assertSee('Turma 1A');
+
+        $abrir()->call('abrirModalMover', $m->id, 'Aluno')->assertForbidden();
+        $abrir()->set('matriculaMoverId', $m->id)->set('novaTurmaId', $destino->id)->call('confirmarMover')->assertForbidden();
+        $abrir()->set('turmasSelecionadasDistribuicao', [$origem->id, $destino->id])->call('executarDistribuicaoAutomatica')->assertForbidden();
+        $abrir()->call('abrirModalDistribuicao')->assertForbidden();
+
+        $this->assertSame($origem->id, $m->fresh()->turma_id);
+    }
+
+    public function test_pagina_abre_no_periodo_em_vigor_e_nao_no_mais_recente(): void
+    {
+        $user = $this->usuarioComPermissoes(['View:Ensalamento']);
+
+        $emVigor = PeriodoLetivo::create(['nome' => 'Em vigor', 'data_inicio' => today()->subMonths(2)->toDateString(), 'data_fim' => today()->addMonths(2)->toDateString()]);
+        PeriodoLetivo::create(['nome' => 'Futuro', 'data_inicio' => today()->addYear()->toDateString(), 'data_fim' => today()->addYear()->addMonths(10)->toDateString()]);
+
+        Livewire::actingAs($user)
+            ->test(EnsalamentoTurmas::class)
+            ->assertSet('periodoLetivoId', $emVigor->id);
     }
 }

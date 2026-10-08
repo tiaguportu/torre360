@@ -74,7 +74,6 @@ class MatriculaOnlineService
             $matricula = Matricula::create([
                 'pessoa_id' => $aluno->id,
                 'turma_id' => $turma->id,
-                'periodo_letivo_id' => $turma->periodo_letivo_id,
                 'situacao' => SituacaoMatricula::PENDENTE,
                 'data_ativacao' => now()->toDateString(),
             ]);

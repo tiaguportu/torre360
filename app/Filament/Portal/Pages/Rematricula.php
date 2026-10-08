@@ -207,7 +207,7 @@ class Rematricula extends Page implements HasTable
         $query = Matricula::query()->whereIn('pessoa_id', $idsAcessiveis);
 
         if ($this->periodoAtivo) {
-            $query->where('periodo_letivo_id', $this->periodoAtivo->periodo_letivo_origem_id);
+            $query->doPeriodo($this->periodoAtivo->periodo_letivo_origem_id);
         }
 
         return $query->with(['pessoa', 'turma.serie']);

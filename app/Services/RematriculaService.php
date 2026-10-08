@@ -43,7 +43,7 @@ class RematriculaService
 
         return Matricula::query()
             ->whereIn('pessoa_id', $pessoasAcessiveisIds)
-            ->where('periodo_letivo_id', $periodo->periodo_letivo_origem_id)
+            ->doPeriodo($periodo->periodo_letivo_origem_id)
             ->whereIn('situacao', [SituacaoMatricula::ATIVA, 'ativa'])
             ->with(['pessoa', 'turma.serie.curso', 'periodoLetivo'])
             ->get();
@@ -180,8 +180,6 @@ class RematriculaService
             $novaMatricula = Matricula::create([
                 'pessoa_id' => $matriculaOrigem->pessoa_id,
                 'turma_id' => $turma->id,
-                'serie_id' => $turma->serie_id,
-                'periodo_letivo_id' => $periodo->periodo_letivo_destino_id,
                 'situacao' => SituacaoMatricula::ATIVA,
                 'data_ativacao' => now()->toDateString(),
             ]);

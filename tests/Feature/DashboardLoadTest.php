@@ -41,7 +41,6 @@ class DashboardLoadTest extends TestCase
         Matricula::factory()->create([
             'pessoa_id' => $dependenteComMatricula->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

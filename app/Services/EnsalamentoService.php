@@ -6,20 +6,30 @@ use App\Enums\Sexo;
 use App\Exceptions\TurmaIndisponivelException;
 use App\Models\Matricula;
 use App\Models\Turma;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
+/**
+ * Remanejamento de alunos entre as turmas de um mesmo período letivo.
+ *
+ * Toda matrícula já nasce numa turma (rematrícula, wizard e matrícula online escolhem a turma), então
+ * aqui não existe mais "aluno sem turma": o serviço só enxerga a ocupação das turmas, move alunos de
+ * uma turma para outra e redistribui os alunos de várias turmas para equilibrá-las.
+ */
 class EnsalamentoService
 {
+    public function __construct(private TurmaVagasService $vagasService) {}
+
     /**
-     * Retorna as turmas com dados calculados de lotação e equilíbrio de gênero.
+     * Retorna as turmas abertas do período/série com dados calculados de lotação e equilíbrio de gênero.
+     * Só contam as matrículas que ocupam vaga (Ativa, Pendente e Reserva).
      */
     public function obterTurmasCenario(int $periodoLetivoId, int $serieId, ?int $turnoId = null): Collection
     {
         $query = Turma::query()
+            ->abertasParaMatricula()
             ->where('periodo_letivo_id', $periodoLetivoId)
             ->where('serie_id', $serieId);
 
@@ -27,8 +37,8 @@ class EnsalamentoService
             $query->where('turno_id', $turnoId);
         }
 
-        return $query->with(['turno', 'matriculas.pessoa'])->get()->map(function (Turma $turma) {
-            $matriculas = $turma->matriculas;
+        return $query->with(['turno', 'matriculas.pessoa'])->orderBy('nome')->get()->map(function (Turma $turma) {
+            $matriculas = $turma->matriculas->filter(fn (Matricula $m) => $this->vagasService->ocupaVaga($m));
             $totalAlunos = $matriculas->count();
             $vagas = $turma->vagas_maximas ?: 0;
 
@@ -53,7 +63,7 @@ class EnsalamentoService
                 'total_meninos' => $meninos,
                 'meninos' => $meninos,
                 'total_outros' => $outros,
-                'alunos' => $matriculas->map(function ($m) {
+                'alunos' => $matriculas->values()->map(function ($m) {
                     $nasc = $m->pessoa?->data_nascimento ? Carbon::parse($m->pessoa->data_nascimento) : null;
 
                     return [
@@ -70,87 +80,60 @@ class EnsalamentoService
     }
 
     /**
-     * Retorna os alunos matriculados que ainda não estão ensalados em nenhuma turma.
-     */
-    public function obterAlunosNaoEnsalados(int $periodoLetivoId, int $serieId, ?int $turnoId = null): Collection
-    {
-        // 1. Matrículas diretas sem turma
-        $query = Matricula::query()
-            ->whereNull('turma_id')
-            ->where(function (Builder $q) use ($serieId, $periodoLetivoId) {
-                $q->where(function ($sub) use ($serieId, $periodoLetivoId) {
-                    $sub->where('serie_id', $serieId)
-                        ->where('periodo_letivo_id', $periodoLetivoId);
-                })
-                    ->orWhereHas('rematriculas', function ($sub) use ($serieId, $periodoLetivoId) {
-                        $sub->where('serie_destino_id', $serieId)
-                            ->whereHas('periodoRematricula', fn ($p) => $p->where('periodo_letivo_destino_id', $periodoLetivoId));
-                    });
-            })
-            ->with(['pessoa', 'serie']);
-
-        return $query->get()->map(function (Matricula $m) {
-            $nasc = $m->pessoa?->data_nascimento ? Carbon::parse($m->pessoa->data_nascimento) : null;
-
-            return [
-                'matricula_id' => $m->id,
-                'codigo' => 'MAT-'.str_pad((string) $m->id, 5, '0', STR_PAD_LEFT),
-                'nome' => $m->pessoa?->nome ?? 'Estudante',
-                'cpf' => $m->pessoa?->cpf,
-                'data_matricula' => $m->created_at?->format('d/m/Y') ?? '—',
-                'data_nascimento' => $nasc?->format('d/m/Y'),
-                'idade' => $nasc?->age,
-                'sexo' => $m->pessoa?->sexo instanceof Sexo ? $m->pessoa->sexo->value : strtolower((string) ($m->pessoa?->sexo ?? 'nao_declarado')),
-            ];
-        });
-    }
-
-    /**
-     * Aloca uma lista de matrículas em uma turma específica.
+     * Move matrículas para outra turma do MESMO período letivo.
+     *
+     * O período da matrícula é o da turma: mover para uma turma de outro período equivaleria a
+     * rematricular/retroceder o aluno, o que tem fluxo próprio (rematrícula). A vaga é conferida com
+     * a turma travada na transação, contando só quem ainda não está nela.
+     *
+     * @param  list<int>  $matriculaIds
+     *
+     * @throws InvalidArgumentException turma de outro período, fechada ou sem vagas suficientes
      */
     public function alocarAlunosEmTurma(array $matriculaIds, int $turmaId): void
     {
         DB::transaction(function () use ($matriculaIds, $turmaId) {
+            $destino = Turma::query()->findOrFail($turmaId);
+
+            $periodosDeOrigem = Matricula::query()
+                ->whereIn('id', $matriculaIds)
+                ->get()
+                ->map(fn (Matricula $m) => $m->turma?->periodo_letivo_id)
+                ->unique();
+
+            if ($periodosDeOrigem->contains(fn ($periodoId) => (int) $periodoId !== (int) $destino->periodo_letivo_id)) {
+                throw new InvalidArgumentException("O remanejamento só pode ser feito entre turmas do mesmo período letivo. A turma '{$destino->nome}' é de outro período.");
+            }
+
             // Só quem ainda não está na turma consome vaga nova (mover para a mesma turma não conta em dobro).
             $novos = Matricula::query()
                 ->whereIn('id', $matriculaIds)
-                ->where(fn (Builder $query) => $query->whereNull('turma_id')->orWhere('turma_id', '!=', $turmaId))
+                ->where('turma_id', '!=', $turmaId)
                 ->count();
 
             try {
-                $turma = $novos > 0
-                    ? app(TurmaVagasService::class)->garantirVaga($turmaId, $novos)
-                    : Turma::findOrFail($turmaId);
+                if ($novos > 0) {
+                    $this->vagasService->garantirVaga($turmaId, $novos);
+                } elseif (! $destino->status->abertaParaMatricula()) {
+                    throw TurmaIndisponivelException::fechada($destino);
+                }
             } catch (TurmaIndisponivelException $e) {
                 throw new InvalidArgumentException($e->getMessage(), 0, $e);
             }
 
-            Matricula::whereIn('id', $matriculaIds)->update([
-                'turma_id' => $turma->id,
-                'serie_id' => $turma->serie_id,
-            ]);
+            Matricula::whereIn('id', $matriculaIds)->update(['turma_id' => $destino->id]);
         });
     }
 
     /**
-     * Remove os alunos selecionados da turma atual (desensalamento).
-     */
-    public function removerDeTurma(array $matriculaIds): void
-    {
-        Matricula::whereIn('id', $matriculaIds)->update([
-            'turma_id' => null,
-        ]);
-    }
-
-    /**
-     * Algoritmo de Distribuição Automática Inteligente.
+     * Redistribui os alunos das turmas escolhidas (mesma série e período) para equilibrá-las.
+     * Entram na redistribuição as matrículas que ocupam vaga nessas turmas.
      */
     public function distribuirAutomaticamente(
         int $serieId,
         int $periodoLetivoId,
         array $turmaIds,
         string $criterio = 'equilibrio_genero',
-        bool $redistribuirTodos = false,
         bool $respeitarLimiteVagas = true
     ): array {
         if (empty($turmaIds)) {
@@ -158,6 +141,7 @@ class EnsalamentoService
         }
 
         $turmas = Turma::whereIn('id', $turmaIds)
+            ->abertasParaMatricula()
             ->where('serie_id', $serieId)
             ->where('periodo_letivo_id', $periodoLetivoId)
             ->get();
@@ -166,36 +150,20 @@ class EnsalamentoService
             throw new InvalidArgumentException('Nenhuma turma válida encontrada para a série e período selecionados.');
         }
 
-        // Buscar alunos a distribuir
-        $matriculasQuery = Matricula::query()->with('pessoa');
+        $turmaIdsValidos = $turmas->pluck('id')->all();
 
-        if ($redistribuirTodos) {
-            $matriculasQuery->where(function (Builder $q) use ($serieId, $periodoLetivoId, $turmaIds) {
-                $q->whereIn('turma_id', $turmaIds)
-                    ->orWhere(function ($sub) use ($serieId, $periodoLetivoId) {
-                        $sub->whereNull('turma_id')
-                            ->where('serie_id', $serieId)
-                            ->where('periodo_letivo_id', $periodoLetivoId);
-                    });
-            });
-        } else {
-            $matriculasQuery->whereNull('turma_id')
-                ->where('serie_id', $serieId)
-                ->where('periodo_letivo_id', $periodoLetivoId);
-        }
-
-        $alunos = $matriculasQuery->get();
+        $alunos = $this->vagasService->queryOcupantesDe($turmaIdsValidos)->with('pessoa')->get();
 
         if ($alunos->isEmpty()) {
-            throw new InvalidArgumentException('Não há alunos disponíveis para distribuição no cenário escolhido.');
+            throw new InvalidArgumentException('Não há alunos nas turmas selecionadas para distribuir.');
         }
 
-        // Capacidades das turmas
+        // Capacidades das turmas (a redistribuição recomeça do zero em cada turma)
         $capacidades = [];
         $ocupacoes = [];
         foreach ($turmas as $t) {
             $capacidades[$t->id] = $t->vagas_maximas ?: 999;
-            $ocupacoes[$t->id] = $redistribuirTodos ? 0 : $t->matriculas()->count();
+            $ocupacoes[$t->id] = 0;
         }
 
         // Alocação em lote de acordo com o critério
@@ -215,57 +183,30 @@ class EnsalamentoService
 
             $turmaIndex = 0;
 
-            // Distribui meninas circularmente
-            foreach ($meninas as $aluno) {
-                $turmaId = $this->proximaTurmaDisponivel($turmaIdsList, $turmaIndex, $ocupacoes, $capacidades, $respeitarLimiteVagas);
-                if ($turmaId) {
-                    $alocacoes[$turmaId][] = $aluno->id;
-                    $ocupacoes[$turmaId]++;
-                    $turmaIndex = ($turmaIndex + 1) % $turmaCount;
-                }
-            }
-
-            // Distribui meninos circularmente
-            foreach ($meninos as $aluno) {
-                $turmaId = $this->proximaTurmaDisponivel($turmaIdsList, $turmaIndex, $ocupacoes, $capacidades, $respeitarLimiteVagas);
-                if ($turmaId) {
-                    $alocacoes[$turmaId][] = $aluno->id;
-                    $ocupacoes[$turmaId]++;
-                    $turmaIndex = ($turmaIndex + 1) % $turmaCount;
-                }
-            }
-
-            // Distribui outros
-            foreach ($outros as $aluno) {
-                $turmaId = $this->proximaTurmaDisponivel($turmaIdsList, $turmaIndex, $ocupacoes, $capacidades, $respeitarLimiteVagas);
-                if ($turmaId) {
-                    $alocacoes[$turmaId][] = $aluno->id;
-                    $ocupacoes[$turmaId]++;
-                    $turmaIndex = ($turmaIndex + 1) % $turmaCount;
-                }
-            }
-        } elseif ($criterio === 'ordem_alfabetica') {
-            // Ordenação alfabética
-            $alunosOrdenados = $alunos->sortBy(fn ($m) => $m->pessoa?->nome ?? '')->values();
-            $turmaIndex = 0;
-
-            foreach ($alunosOrdenados as $aluno) {
-                $turmaId = $this->proximaTurmaDisponivel($turmaIdsList, $turmaIndex, $ocupacoes, $capacidades, $respeitarLimiteVagas);
-                if ($turmaId) {
-                    $alocacoes[$turmaId][] = $aluno->id;
-                    $ocupacoes[$turmaId]++;
-                    $turmaIndex = ($turmaIndex + 1) % $turmaCount;
+            foreach ([$meninas, $meninos, $outros] as $grupo) {
+                foreach ($grupo as $aluno) {
+                    $turmaId = $this->proximaTurmaDisponivel($turmaIdsList, $turmaIndex, $ocupacoes, $capacidades, $respeitarLimiteVagas);
+                    if ($turmaId) {
+                        $alocacoes[$turmaId][] = $aluno->id;
+                        $ocupacoes[$turmaId]++;
+                        $turmaIndex = ($turmaIndex + 1) % $turmaCount;
+                    }
                 }
             }
         } else {
-            // Equilíbrio por idade (data de nascimento)
-            $alunosOrdenados = $alunos->sortBy(function ($m) {
-                if (! $m->pessoa?->data_nascimento) {
-                    return 0;
-                }
+            if ($criterio === 'ordem_alfabetica') {
+                $alunosOrdenados = $alunos->sortBy(fn ($m) => $m->pessoa?->nome ?? '')->values();
+            } else {
+                // Equilíbrio por idade (data de nascimento)
+                $alunosOrdenados = $alunos->sortBy(function ($m) {
+                    if (! $m->pessoa?->data_nascimento) {
+                        return 0;
+                    }
 
-                return Carbon::parse($m->pessoa->data_nascimento)->timestamp;
-            })->values();
+                    return Carbon::parse($m->pessoa->data_nascimento)->timestamp;
+                })->values();
+            }
+
             $turmaIndex = 0;
 
             foreach ($alunosOrdenados as $aluno) {
@@ -278,15 +219,14 @@ class EnsalamentoService
             }
         }
 
-        // Executar gravação em banco
+        // Gravação em banco, com as turmas travadas: nenhuma matrícula nova entra nelas durante a troca.
         $totalAlocados = 0;
-        DB::transaction(function () use ($alocacoes, $serieId, &$totalAlocados) {
+        DB::transaction(function () use ($alocacoes, $turmaIdsValidos, &$totalAlocados) {
+            Turma::whereIn('id', $turmaIdsValidos)->lockForUpdate()->get();
+
             foreach ($alocacoes as $turmaId => $matriculaIds) {
                 if (! empty($matriculaIds)) {
-                    Matricula::whereIn('id', $matriculaIds)->update([
-                        'turma_id' => $turmaId,
-                        'serie_id' => $serieId,
-                    ]);
+                    Matricula::whereIn('id', $matriculaIds)->update(['turma_id' => $turmaId]);
                     $totalAlocados += count($matriculaIds);
                 }
             }

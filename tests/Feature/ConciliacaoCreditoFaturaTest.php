@@ -11,6 +11,7 @@ use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\TransacaoBancaria;
+use App\Models\Turma;
 use App\Services\ConciliacaoBancariaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ProibeLazyLoading;
@@ -34,7 +35,7 @@ class ConciliacaoCreditoFaturaTest extends TestCase
     {
         $periodo = PeriodoLetivo::create(['nome' => '2026 '.uniqid(), 'data_inicio' => '2026-01-01', 'data_fim' => '2026-12-31']);
         $aluno = Pessoa::create(['nome' => 'Aluno Teste Conciliacao']);
-        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'periodo_letivo_id' => $periodo->id, 'situacao' => 'ativa']);
+        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => Turma::factory()->create(['periodo_letivo_id' => $periodo->id])->id, 'situacao' => 'ativa']);
         $contrato = Contrato::create(['matricula_id' => $matricula->id, 'valor_total' => $valor, 'data_aceite' => '2026-01-05']);
         $fatura = Fatura::create(['contrato_id' => $contrato->id, 'vencimento' => $vencimento, 'status' => 'pendente']);
 

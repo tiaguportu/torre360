@@ -60,7 +60,7 @@ class DocumentosMatricula extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $cursoId = $this->record->turma?->serie?->curso_id ?? $this->record->serie?->curso_id;
+        $cursoId = $this->record->turma?->serie?->curso_id;
 
         return $table
             ->query(

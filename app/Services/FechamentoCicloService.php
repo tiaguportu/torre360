@@ -217,8 +217,8 @@ class FechamentoCicloService
      * Fecha o ciclo letivo: calcula e persiste a situação final de todas as disciplinas das matrículas
      * ativas/concluídas do período informado (opcionalmente restrito a uma única turma).
      *
-     * O escopo é definido a partir de Matricula.periodo_letivo_id (não de Turma.periodo_letivo_id,
-     * que nem sempre está preenchido) — mesma fonte de verdade já usada pelo restante do módulo acadêmico.
+     * O escopo é o das matrículas das turmas do período (`Matricula::doPeriodo()`): o período da
+     * matrícula é sempre o da sua turma.
      *
      * Se a disciplina deixou de estar em situação de recuperação em relação ao cálculo anterior, os
      * dados de um eventual exame final já lançado são limpos (não fazem mais sentido para a nova
@@ -229,7 +229,7 @@ class FechamentoCicloService
     public function fecharPeriodoLetivo(PeriodoLetivo $periodoLetivo, ?int $turmaId = null): Collection
     {
         $matriculas = Matricula::query()
-            ->where('periodo_letivo_id', $periodoLetivo->id)
+            ->doPeriodo($periodoLetivo->id)
             ->whereIn('situacao', ['ativa', 'concluido'])
             ->whereHas('turma', fn ($q) => $q->whereIn('tipo_avaliacao', ['notas', 'hibrido']))
             ->when($turmaId, fn ($q) => $q->where('turma_id', $turmaId))

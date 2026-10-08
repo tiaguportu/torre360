@@ -7,6 +7,7 @@ use App\Models\Contrato;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -34,7 +35,7 @@ class EditContratoGerarFaturasTest extends TestCase
 
         $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-01-01', 'data_fim' => '2026-12-31']);
         $aluno = Pessoa::create(['nome' => 'Aluno Teste EditContrato']);
-        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'periodo_letivo_id' => $periodo->id, 'situacao' => 'ativa']);
+        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => Turma::factory()->create(['periodo_letivo_id' => $periodo->id])->id, 'situacao' => 'ativa']);
         $contrato = Contrato::create([
             'matricula_id' => $matricula->id,
             'valor_total' => 600.0,

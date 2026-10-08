@@ -53,7 +53,6 @@ class ProfessorTelasMobileTest extends TestCase
         $this->matricula = Matricula::factory()->create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $this->turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
     }

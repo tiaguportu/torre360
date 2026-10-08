@@ -744,7 +744,6 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                     'pessoa_id' => $aluno->id,
                     'turma_id' => $raw['turma_id'],
                     'situacao' => $situacaoFinal,
-                    'periodo_letivo_id' => $raw['periodo_letivo_id'] ?? $turma?->periodo_letivo_id,
                     'data_ativacao' => $dataAtivacaoFinal,
                 ]);
 

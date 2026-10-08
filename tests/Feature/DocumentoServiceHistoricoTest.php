@@ -59,14 +59,12 @@ class DocumentoServiceHistoricoTest extends TestCase
         $matriculaAnterior = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaAnterior->id,
-            'periodo_letivo_id' => $periodoAnterior->id,
             'situacao' => 'concluido',
         ]);
 
         $matriculaAtual = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaAtual->id,
-            'periodo_letivo_id' => $periodoAtual->id,
             'situacao' => 'ativa',
         ]);
 
@@ -122,7 +120,6 @@ class DocumentoServiceHistoricoTest extends TestCase
         $matricula = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
 

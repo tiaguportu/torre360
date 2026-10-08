@@ -72,7 +72,6 @@ class PortalNotasFrequenciaHorariosTest extends TestCase
         $matricula = Matricula::factory()->create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $this->periodo->id,
             'situacao' => 'ativa',
         ]);
 

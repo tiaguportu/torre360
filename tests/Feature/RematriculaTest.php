@@ -110,7 +110,6 @@ class RematriculaTest extends TestCase
         $matriculaOrigem = Matricula::create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turmaOrigem->id,
-            'periodo_letivo_id' => $origem->id,
             'situacao' => 'ativa',
         ]);
 

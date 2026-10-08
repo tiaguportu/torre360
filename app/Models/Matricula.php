@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -36,7 +37,33 @@ class Matricula extends Model
      */
     public const SITUACOES_QUE_EXIGEM_CONTRATO = [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE];
 
-    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'periodo_letivo_id', 'situacao', 'data_ativacao', 'data_desativacao', 'serie_id', 'risco_evasao_score', 'risco_evasao_atualizado_em'];
+    /**
+     * Período letivo e série da matrícula NÃO são colunas: vêm sempre da turma
+     * (`turma_id` é obrigatório), então não há como divergirem. Use `periodo_letivo_id`/`serie_id`
+     * (accessors), as relações `periodoLetivo`/`serie` ou os scopes `doPeriodo()`/`daSerie()`.
+     */
+    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'situacao', 'data_ativacao', 'data_desativacao', 'risco_evasao_score', 'risco_evasao_atualizado_em'];
+
+    /**
+     * A turma é a fonte do período e da série; carregá-la junto evita N+1 e o bloqueio de lazy loading
+     * (ativo em testes e desenvolvimento) ao ler `periodo_letivo_id`/`serie_id`.
+     *
+     * @var list<string>
+     */
+    protected $with = ['turma'];
+
+    /**
+     * Quem ainda passa `periodo_letivo_id`/`serie_id` ao criar/atualizar uma matrícula estaria sendo
+     * ignorado em silêncio (não são mais fillable). Nos testes isso vira erro para o descuido aparecer.
+     */
+    public function fill(array $attributes)
+    {
+        if (app()->runningUnitTests() && array_intersect_key($attributes, ['periodo_letivo_id' => 1, 'serie_id' => 1])) {
+            throw new \LogicException('Matricula não tem mais periodo_letivo_id/serie_id: eles vêm da turma (turma_id). Informe a turma e crie-a no período/série desejados.');
+        }
+
+        return parent::fill($attributes);
+    }
 
     protected function casts(): array
     {
@@ -58,19 +85,51 @@ class Matricula extends Model
         return $this->belongsTo(Turma::class);
     }
 
-    public function serie(): BelongsTo
+    /**
+     * Série da matrícula = série da turma.
+     */
+    public function serie(): HasOneThrough
     {
-        return $this->belongsTo(Serie::class);
+        return $this->hasOneThrough(Serie::class, Turma::class, 'id', 'id', 'turma_id', 'serie_id');
+    }
+
+    /**
+     * Período letivo da matrícula = período da turma.
+     */
+    public function periodoLetivo(): HasOneThrough
+    {
+        return $this->hasOneThrough(PeriodoLetivo::class, Turma::class, 'id', 'id', 'turma_id', 'periodo_letivo_id');
+    }
+
+    protected function periodoLetivoId(): Attribute
+    {
+        return Attribute::get(fn () => $this->turma?->periodo_letivo_id);
+    }
+
+    protected function serieId(): Attribute
+    {
+        return Attribute::get(fn () => $this->turma?->serie_id);
     }
 
     public function getSerieNomeAttribute(): ?string
     {
-        return $this->serie?->nome ?? $this->turma?->serie?->nome;
+        return $this->turma?->serie?->nome;
     }
 
-    public function periodoLetivo(): BelongsTo
+    /**
+     * Matrículas de turmas do período letivo informado.
+     */
+    public function scopeDoPeriodo(Builder $query, int|string|null $periodoLetivoId): Builder
     {
-        return $this->belongsTo(PeriodoLetivo::class);
+        return $query->whereHas('turma', fn (Builder $turma) => $turma->where('periodo_letivo_id', $periodoLetivoId));
+    }
+
+    /**
+     * Matrículas de turmas da série informada.
+     */
+    public function scopeDaSerie(Builder $query, int|string|null $serieId): Builder
+    {
+        return $query->whereHas('turma', fn (Builder $turma) => $turma->where('serie_id', $serieId));
     }
 
     public function contrato(): HasOne
@@ -205,7 +264,7 @@ class Matricula extends Model
             $serie = $this->turma->relationLoaded('serie') ? $this->turma->serie : null;
             $curso = $serie && $serie->relationLoaded('curso') ? $serie->curso : $this->turma->serie?->curso;
         } elseif (! $this->relationLoaded('turma')) {
-            $curso = $this->turma?->serie?->curso ?? ($this->relationLoaded('serie') ? $this->serie?->curso : $this->serie?->curso);
+            $curso = $this->turma?->serie?->curso;
         }
 
         if ($curso) {

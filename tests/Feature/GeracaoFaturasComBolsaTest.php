@@ -8,6 +8,7 @@ use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\TipoBolsa;
+use App\Models\Turma;
 use App\Services\GeracaoFaturasContratoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,7 +21,7 @@ class GeracaoFaturasComBolsaTest extends TestCase
     {
         $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-01-01', 'data_fim' => '2026-12-31']);
         $aluno = Pessoa::create(['nome' => 'Aluno Teste Bolsa']);
-        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'periodo_letivo_id' => $periodo->id, 'situacao' => 'ativa']);
+        $matricula = Matricula::create(['pessoa_id' => $aluno->id, 'turma_id' => Turma::factory()->create(['periodo_letivo_id' => $periodo->id])->id, 'situacao' => 'ativa']);
 
         return Contrato::create([
             'matricula_id' => $matricula->id,
