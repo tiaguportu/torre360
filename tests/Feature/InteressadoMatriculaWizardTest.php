@@ -205,6 +205,27 @@ class InteressadoMatriculaWizardTest extends TestCase
             ->assertSet("data.alunos.{$chave}.pessoa_id_existente", $existente->id);
     }
 
+    public function test_turmas_do_periodo_e_sem_periodo_aparecem_e_de_outro_periodo_nao(): void
+    {
+        $atual = PeriodoLetivo::factory()->create();
+        $outro = PeriodoLetivo::factory()->create();
+        $doPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $atual->id]);
+        $semPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => null]);
+        $deOutroPeriodo = Turma::factory()->create(['serie_id' => $this->serie->id, 'periodo_letivo_id' => $outro->id]);
+
+        $wizard = Livewire::actingAs($this->admin())
+            ->test(EnrollmentWizard::class)
+            ->set('data.unidade_id', $this->unidade->id)
+            ->set('data.curso_id', $this->curso->id)
+            ->set('data.periodo_letivo_id', $atual->id);
+
+        $opcoes = $wizard->instance()->getSchema('form')->getFlatFields(withHidden: true)['turma_id']->getOptions();
+
+        $this->assertArrayHasKey($doPeriodo->id, $opcoes);
+        $this->assertArrayHasKey($semPeriodo->id, $opcoes);
+        $this->assertArrayNotHasKey($deOutroPeriodo->id, $opcoes);
+    }
+
     public function test_wizard_sem_parametro_abre_vazio(): void
     {
         Livewire::actingAs($this->admin())

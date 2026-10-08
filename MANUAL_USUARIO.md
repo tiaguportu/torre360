@@ -797,6 +797,8 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
 - Selecione a **Unidade / Escola** e o **Período Letivo** (pré-selecionado com o período mais recente).
 - Selecione o **Curso** — a lista de turmas é filtrada automaticamente pela unidade e curso escolhidos.
 - Selecione a **Turma** — o campo exibe a quantidade de **vagas ocupadas / vagas totais** (ex: `3/30 vagas`) e marca turmas lotadas com 🔴. Não é possível concluir a matrícula se a turma estiver cheia.
+  - A lista traz as turmas do **curso** escolhido que pertencem ao **Período Letivo** selecionado **ou que não têm período definido** (o cadastro de Turma ainda não pede o período, então turmas criadas pelo painel valem para qualquer período). Turmas vinculadas a *outro* período não aparecem.
+  - Se a lista estiver vazia, confira o **Curso** (ele filtra as turmas) e o **Período Letivo**.
 - Defina a **Situação Inicial** da matrícula: `Ativa` (padrão), `Pendente` (aguardando documentação/pagamento) ou `Reserva`.
 - Defina a **Data de Ativação** (preenchida automaticamente com a data de hoje).
 - Ao clicar em **"Finalizar Matrícula"**, o sistema criará automaticamente:

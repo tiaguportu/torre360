@@ -534,8 +534,12 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                                 return [];
                                             }
 
+                                            // O cadastro de Turma não tem campo de período letivo: turmas criadas pelo
+                                            // painel ficam com periodo_letivo_id nulo e valem para qualquer período.
                                             return Turma::whereHas('serie', fn ($q) => $q->where('curso_id', $cursoId))
-                                                ->when($periodoLetivoId, fn ($q) => $q->where('periodo_letivo_id', $periodoLetivoId))
+                                                ->when($periodoLetivoId, fn ($q) => $q->where(
+                                                    fn ($q) => $q->where('periodo_letivo_id', $periodoLetivoId)->orWhereNull('periodo_letivo_id')
+                                                ))
                                                 ->get()
                                                 ->mapWithKeys(function (Turma $turma) {
                                                     $matriculasAtivas = $turma->matriculas()->count();
