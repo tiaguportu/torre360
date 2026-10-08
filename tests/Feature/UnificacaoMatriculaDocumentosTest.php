@@ -653,7 +653,7 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $responseStatus->assertSee('Documentos Obrigatórios');
 
         // Verifica que seções de histórico e opcionais estão colapsadas em tags <details>
-        $response->assertSee('<details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">', false);
+        $response->assertSee('<details class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition-all">', false);
         $response->assertSee('Documentos para o Histórico Escolar');
         $response->assertSee('Documentação acadêmica');
         $response->assertSee('Documentos Opcionais / Complementares');
@@ -672,7 +672,7 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $this->assertSame(0, $progressoInicial['percentual']);
         $response->assertSee('0 de 1 enviados');
         $response->assertSee('style="width: 0%"', false);
-        $response->assertSee('Documentos pendentes');
+        $response->assertSee('(Documentos pendentes ⏳)');
 
         // Badge exibe apenas o número da pendência
         $response->assertSee('title="1 documento(s) obrigatório(s) pendente(s)"', false);
@@ -723,13 +723,13 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
 
         $response2 = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $response2->assertOk();
-        $response2->assertSee('title="Documentos obrigatórios concluídos"', false);
+        $response2->assertSee('✓');
         $response2->assertSee('1 de 1 enviados');
         $response2->assertSee('style="width: 100%"', false);
-        $response2->assertSee('Documentos OK');
+        $response2->assertSee('(Documentos OK ✅)');
 
         // Banner de Conclusão e Próximos Passos
-        $response2->assertSee('Documentação Recebida com Sucesso!');
+        $response2->assertSee('Documentação Recebida com Sucesso! 🎉');
         $response2->assertSee('Próximos Passos:');
         $response2->assertSee('Aguardando Análise da Secretaria');
         $response2->assertDontSee('Pré-análise Automática (IA)');
@@ -801,7 +801,7 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         // Banner global de Etapa da Família Concluída
         $resAbaDados->assertSee('Etapa da Família Concluída');
         $resAbaDados->assertSee('Aguardando Validação da Secretaria');
-        $resAbaDados->assertSee('Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso.');
+        $resAbaDados->assertSee('Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso. 🎉');
         $resAbaDados->assertSee('Modo Somente Leitura');
 
         // Aviso específico na aba de cadastro
@@ -818,7 +818,7 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $resAbaDocs = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
         $resAbaDocs->assertOk();
         $resAbaDocs->assertSee('Etapa da Família Concluída');
-        $resAbaDocs->assertSee('Documentação Recebida com Sucesso!');
+        $resAbaDocs->assertSee('Documentação Recebida com Sucesso! 🎉');
 
         // Documento deve exibir badge de bloqueio em análise
         $resAbaDocs->assertSee('Em análise pela Secretaria');
