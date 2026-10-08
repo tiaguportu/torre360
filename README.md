@@ -236,6 +236,17 @@ Controle de bens patrimoniais (computadores, mobiliário, material de laboratór
 
 ---
 
+### 14. 🛡️ Autorização de Uso de Imagem e Consentimentos
+Consentimentos da família por aluno (ex.: uso de imagem), com aceite digital simples no Portal (IP + timestamp) em vez de assinatura eletrônica completa. Detalhes em `docs/autorizacao_uso_imagem_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `TipoConsentimento` | Catálogo (nome, texto, se exige renovação periódica) |
+| `ConsentimentoMatricula` | Status (Pendente/Autorizado/Não Autorizado), vigência, dados do respondente |
+| Portal da Família | Lista os consentimentos ativos do aluno selecionado, com botões Autorizar / Não Autorizar |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -360,5 +371,4 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
-| Autorização de uso de imagem e consentimentos (LGPD/ECA) | `docs/autorizacao_uso_imagem_roadmap.md` |
 | Agenda diária / rotina (Educação Infantil) | `docs/agenda_diaria_educacao_infantil_roadmap.md` |
