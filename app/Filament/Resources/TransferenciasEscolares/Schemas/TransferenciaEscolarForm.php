@@ -22,7 +22,7 @@ class TransferenciaEscolarForm
                     ->schema([
                         Select::make('matricula_id')
                             ->label('Matrícula / Aluno')
-                            ->relationship('matricula', 'id')
+                            ->relationship('matricula', 'id', modifyQueryUsing: fn ($query) => $query->with(['pessoa', 'turma']))
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->pessoa?->nome} — {$record->turma?->nome}")
                             ->searchable(['pessoa.nome'])
                             ->preload()
