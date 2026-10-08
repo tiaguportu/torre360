@@ -19,6 +19,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SacolaLeituraImpressaoController;
 use App\Http\Controllers\ValidarDocumentoController;
 use App\Livewire\MatriculaOnline\MatriculaOnlineWizard;
 use Illuminate\Support\Facades\Route;
@@ -113,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Biblioteca Escolar: Impressão de Etiquetas com Código de Barras
     Route::get('/admin/biblioteca/etiquetas/imprimir', [BibliotecaEtiquetasController::class, 'imprimir'])->name('biblioteca.etiquetas.imprimir');
+    Route::get('/admin/biblioteca/sacolas/{sacola}/ficha', [SacolaLeituraImpressaoController::class, 'ficha'])->name('biblioteca.sacolas.ficha');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'throttle:10,1'])->name('mobile.register-token');

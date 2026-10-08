@@ -12,13 +12,18 @@ use App\Services\LeadScoreService;
 use App\Support\PermissaoAcao;
 use Carbon\Carbon;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Facades\Storage;
 
 class ResumoConversaIaAction
 {
+    private const DIRETORIO_AUDIOS = 'temp-conversa-audios';
+
     public static function make(?string $name = 'resumoConversaIa'): Action
     {
         return Action::make($name)
@@ -28,7 +33,7 @@ class ResumoConversaIaAction
             // Altera temperatura e próximo contato do lead além de acionar o Gemini.
             ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
             ->modalHeading(fn (Interessado $record): string => "🤖 Síntese IA de Conversa: {$record->pessoa?->nome}")
-            ->modalDescription('Cole trechos ou o histórico completo da conversa do WhatsApp. O Gemini irá extrair perfil, dores, dúvidas, acordos e temperatura.')
+            ->modalDescription('Cole trechos ou o histórico completo da conversa do WhatsApp e/ou anexe os áudios (mensagens de voz). O Gemini irá extrair perfil, dores, dúvidas, acordos e temperatura.')
             ->modalWidth(Width::Large)
             ->modalSubmitActionLabel('Sintetizar com IA ✨')
             ->modalCancelActionLabel('Cancelar')
@@ -37,8 +42,21 @@ class ResumoConversaIaAction
                     ->label('Histórico da Conversa no WhatsApp')
                     ->placeholder("Cole aqui as mensagens trocadas...\nExemplo:\n[14:20] Mãe: Olá, gostaria de saber se vocês têm período integral para o 2º ano...\n[14:25] Consultor: Olá! Sim, temos o integral com almoço e projeto bilíngue...")
                     ->rows(8)
-                    ->required()
-                    ->helperText('Você pode colar com ou sem data/hora. A IA identifica os participantes e o contexto da conversa.'),
+                    // O texto só é obrigatório quando a conversa não chega em áudio.
+                    ->required(fn (Get $get): bool => blank($get('audios')))
+                    ->helperText('Você pode colar com ou sem data/hora. A IA identifica os participantes e o contexto da conversa. Opcional se anexar áudios.'),
+
+                FileUpload::make('audios')
+                    ->label('Áudios da Conversa (opcional)')
+                    ->multiple()
+                    ->reorderable()
+                    ->maxFiles(CrmIaVendasService::MAX_AUDIOS_CONVERSA)
+                    ->acceptedFileTypes(array_keys(CrmIaVendasService::MIMES_AUDIO_GEMINI))
+                    ->maxSize(10240)
+                    ->disk('local')
+                    ->directory(self::DIRETORIO_AUDIOS)
+                    ->live()
+                    ->helperText('Anexe os áudios do WhatsApp (.opus, .ogg, .mp3, .m4a, .wav, .aac, .flac) na ordem em que ocorreram: até '.CrmIaVendasService::MAX_AUDIOS_CONVERSA.' arquivos de 10 MB. A IA ouve, transcreve e inclui o conteúdo na análise.'),
 
                 Toggle::make('salvar_no_historico')
                     ->label('Salvar síntese executiva na linha do tempo do lead')
@@ -55,12 +73,30 @@ class ResumoConversaIaAction
             ->action(function (array $data, Interessado $record): void {
                 $service = app(CrmIaVendasService::class);
 
+                // O FileUpload devolve os caminhos já gravados no disco; os arquivos são temporários e saem no `finally`.
+                $audiosGravados = array_values(array_filter((array) ($data['audios'] ?? [])));
+                $audios = array_map(fn (string $caminho): array => ['caminho' => Storage::disk('local')->path($caminho)], $audiosGravados);
+
                 Notification::make()
-                    ->title('Processando diálogo com o Gemini...')
+                    ->title($audios === [] ? 'Processando diálogo com o Gemini...' : 'Ouvindo os áudios e processando o diálogo com o Gemini...')
                     ->info()
                     ->send();
 
-                $resultado = $service->resumirConversaWhatsapp($record, $data['conversa_texto']);
+                try {
+                    $resultado = $service->resumirConversaWhatsapp($record, (string) ($data['conversa_texto'] ?? ''), $audios);
+                } catch (\InvalidArgumentException $e) {
+                    Notification::make()
+                        ->title('Não foi possível analisar a conversa')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+
+                    return;
+                } finally {
+                    foreach ($audiosGravados as $caminho) {
+                        Storage::disk('local')->delete($caminho);
+                    }
+                }
 
                 $updates = [];
 

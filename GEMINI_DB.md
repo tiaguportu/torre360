@@ -1245,3 +1245,35 @@ Gestão do acervo de livros e controle de empréstimos e devoluções para a com
 - **Relacionamentos:**
   - BelongsTo `inventario`.
   - BelongsTo `livro`.
+
+### `sacolas_leitura`
+- **Representa:** Lotes de empréstimo coletivo de livros destinados a turmas e salas de aula (ex: Educação Infantil e Fundamental I), gerenciados por professores regentes.
+- **Campos Principais:**
+  - `codigo`: Tombo único da sacola (ex: `SAC-0001`).
+  - `titulo`: Nome descritivo da sacola (ex: *Sacola Literária - 1º Ano A (Outubro)*).
+  - `turma_id`: FK `turma.id` (turma beneficiada).
+  - `responsavel_id`: FK `pessoa.id` (professor(a) regente responsável pela retirada).
+  - `user_id`: FK `users.id` (colaborador/bibliotecário que expediu a sacola).
+  - `data_retirada`: Data em que a sacola saiu da biblioteca.
+  - `data_prevista_devolucao`: Prazo previsto para retorno da sacola (geralmente ciclo de 15 a 30 dias).
+  - `data_devolucao`: Data efetiva de conclusão da devolução.
+  - `status`: Situação da sacola (`em_circulacao`, `parcialmente_devolvida`, `devolvida`, `atrasada`).
+  - `observacoes`: Anotações pedagógicas e cuidados com as obras.
+- **Relacionamentos:**
+  - BelongsTo `turma`.
+  - BelongsTo `responsavel` (`Pessoa`).
+  - BelongsTo `user`.
+  - HasMany `itens` (`SacolaLeituraItem`).
+
+### `sacola_leitura_itens`
+- **Representa:** Obras individuais vinculadas e reservadas para uma sacola de leitura específica.
+- **Campos Principais:**
+  - `sacola_id`: FK `sacolas_leitura.id` (cascade).
+  - `livro_id`: FK `livros.id` (cascade).
+  - `devolvido`: Booleano indicando se o exemplar já retornou fisicamente ao acervo da biblioteca.
+  - `devolvido_em`: Data e hora exata em que a baixa/conferência do exemplar foi realizada.
+  - `observacao_devolucao`: Notas de conservação ou avarias ao receber a obra.
+- **Relacionamentos:**
+  - BelongsTo `sacola`.
+  - BelongsTo `livro`.
+

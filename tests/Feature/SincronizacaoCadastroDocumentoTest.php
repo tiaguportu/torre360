@@ -244,7 +244,7 @@ class SincronizacaoCadastroDocumentoTest extends TestCase
 
     public function test_alteracao_do_cadastro_fica_registrada_na_linha_do_tempo_como_automatica(): void
     {
-        [$documento, , ] = $this->cenario(['rg' => '1234567']);
+        [$documento] = $this->cenario(['rg' => '1234567']);
 
         $this->servico()->sincronizar($documento, null);
 

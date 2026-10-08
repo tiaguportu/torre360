@@ -412,6 +412,14 @@
                     if (window.Livewire && typeof this.$wire !== 'undefined') {
                         this.$wire.processarLeituraInventario(codigoLimpo);
                     }
+                } else if (this.contexto === 'sacola_adicionar') {
+                    if (window.Livewire && typeof this.$wire !== 'undefined') {
+                        this.$wire.processarLeituraCameraAdicionar(codigoLimpo);
+                    }
+                } else if (this.contexto === 'sacola_devolver') {
+                    if (window.Livewire && typeof this.$wire !== 'undefined') {
+                        this.$wire.processarLeituraCameraDevolver(codigoLimpo);
+                    }
                 }
 
                 if (!this.leituraContinua) {

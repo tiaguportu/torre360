@@ -43,10 +43,9 @@ class Livro extends Model
             }
         });
 
-        // Excluir a obra apagaria em cascata (FK) os empréstimos, inclusive os ainda em aberto, e perderia o
-        // controle de quem está com o exemplar. Retornar false cancela a exclusão (o Filament mostra a falha).
+        // Excluir a obra apagaria em cascata os empréstimos e sacolas em aberto. Retornar false cancela a exclusão.
         static::deleting(function (Livro $livro): bool {
-            return ! $livro->temEmprestimosEmAberto();
+            return ! $livro->temEmprestimosEmAberto() && ! $livro->temSacolasEmAberto();
         });
     }
 
@@ -76,6 +75,11 @@ class Livro extends Model
         return $this->hasMany(InventarioItem::class);
     }
 
+    public function sacolaItens(): HasMany
+    {
+        return $this->hasMany(SacolaLeituraItem::class);
+    }
+
     public function temExemplarDisponivel(): bool
     {
         return $this->quantidade_disponivel > 0;
@@ -92,6 +96,11 @@ class Livro extends Model
     public function temEmprestimosEmAberto(): bool
     {
         return $this->emprestimosEmAberto()->exists();
+    }
+
+    public function temSacolasEmAberto(): bool
+    {
+        return $this->sacolaItens()->where('devolvido', false)->exists();
     }
 
     /**

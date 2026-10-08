@@ -236,9 +236,10 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
      * em caso de sobrecarga temporária (503 / 429 / high demand).
      *
      * @param  array<string, mixed>  $payload
+     * @param  int  $timeout  Segundos por tentativa; análises de áudio precisam de mais tempo que as de texto.
      * @return array<string, mixed>
      */
-    public function callGeminiApi(array $payload): array
+    public function callGeminiApi(array $payload, int $timeout = 45): array
     {
         $apiKey = config('services.gemini.key');
 
@@ -262,7 +263,7 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
             try {
-                $response = Http::timeout(45)
+                $response = Http::timeout($timeout)
                     ->withHeaders([
                         'Content-Type' => 'application/json',
                         'x-goog-api-key' => $apiKey,

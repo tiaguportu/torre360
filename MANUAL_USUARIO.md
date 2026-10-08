@@ -44,6 +44,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
 | 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato, DRE, Controladoria Escolar (Rentabilidade & Ponto de Equilíbrio por Turma), Planilha da Lei da Mensalidade (Lei 9.870/99) e Acordos & Renegociação de Inadimplência |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
+| 📚 **Biblioteca** | Gestão de Acervo, Livros, Empréstimos, Balcão de Circulação Ágil com Câmera, Inventários e Sacolas de Leitura |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
 | 🛡️ **Sistema e Segurança** | Usuários, Logs de Atividade e E-mails Enviados |
@@ -2772,6 +2773,30 @@ Permite conferir fisicamente as prateleiras da biblioteca com leitor óptico ou 
    - **Livros Faltantes / Extraviados:** Tabela que aponta exatamente quais livros cadastrados não foram localizados na estante nem constam em empréstimos ativos.
 4. Conclua a auditoria clicando em **"Concluir Auditoria"** para fechar o relatório de contagem física.
 
+### 51.6 Sacola de Leitura e Empréstimo Coletivo por Turma / Professor (`/admin/sacolas-leitura`)
+Projetado especialmente para a Educação Infantil e Ensino Fundamental I, onde a professora regente retira um lote de livros para o "Cantinho de Leitura", "Sacola Viajante" ou projeto literário semanal da turma:
+1. **Abertura da Sacola de Leitura:**
+   - Acesse **Biblioteca → Sacolas de Leitura** e clique em **"Nova Sacola de Leitura"**.
+   - **Identificação da Turma e Professor:** Selecione a **Turma**. O sistema busca automaticamente o professor regente responsável vinculado à turma (com possibilidade de alteração se necessário).
+   - **Datas:** Defina a data de saída e a previsão de devolução.
+   - O sistema gera automaticamente um código de tombo único sequencial (ex: `SAC-0001`).
+2. **Montagem Rápida e Bipagem dos Livros:**
+   - Ao criar a sacola, você é direcionado à tela interativa de montagem (`/admin/sacolas-leitura/{id}/gerenciar`).
+   - **Bipagem Ágil ou Câmera do Celular:** Posicione o cursor no campo de código ou clique no botão **"📷 Câmera"** para abrir o scanner com foco laser e leitura contínua no celular.
+   - Cada livro lido é imediatamente adicionado à sacola com foto da capa, autor e tombo, e seu exemplar é **reservado atomicamente** no acervo (reduzindo a disponibilidade para evitar empréstimos duplicados no balcão avulso).
+3. **Ficha de Controle Impressa:**
+   - Na listagem de sacolas ou na tela de gerenciamento, clique em **"Imprimir Ficha"**.
+   - O sistema gera um documento otimizado para impressão com:
+     - Dados do cabeçalho da escola, código da sacola, turma, professor responsável e datas.
+     - Tabela completa de todos os livros inclusos com caixas de checagem `[ ]` para a professora ticar em sala de aula com os alunos.
+     - Campo de assinatura e protocolo de devolução.
+4. **Devolução da Sacola:**
+   - **Devolução Completa em 1 Clique:** Na listagem de sacolas ou no cabeçalho da sacola, clique em **"Devolver Todos"**. Todos os exemplares da sacola retornam ao acervo disponível instantaneamente e o status muda para `Devolvida`.
+   - **Devolução Livro a Livro (Conferência de Retorno):** Se a professora devolver a sacola e você quiser conferir exemplar por exemplar, acerte na tela de gerenciamento os botões **"Devolver"** ou use a aba de devolução rápida bipando os livros conforme saem da sacola.
+   - **Status Inteligente:** A sacola transita automaticamente entre `Em Circulação`, `Parcialmente Devolvida` (quando apenas parte do lote retornou), `Devolvida` e `Atrasada` (com cálculo automático de prazo vencido).
+5. **Garantias de Integridade:**
+   - O sistema impede a exclusão de qualquer livro que possua exemplares vinculados a sacolas de leitura ativas em circulação.
+
 ---
 
 ## 🛡️ 52. Cobertura Abrangente de Permissões no Filament Shield (`/admin/shield/roles`)
@@ -2784,7 +2809,7 @@ Todas as entidades e páginas operacionais do sistema estão integradas às Pol�
    - **Automações e Réguas:** Réguas de Cobrança (`ReguaCobranca`) e Réguas de Follow-up (`ReguaFollowUp`), incluindo a permissão específica de execução manual/simulação (`Execute:ReguaCobranca` / `Execute:ReguaFollowUp`).
    - **Relatórios Financeiros:** Fluxo de Caixa Consolidado (`View:RelatorioFluxoCaixa`) e Relatório de Inadimplência (`View:RelatorioInadimplencia`).
    - **Secretaria e Matrículas:** Ações pontuais de disparo de comunicados, como o aviso de disponibilidade de horários para preceptoria (`AvisarPossibilidadePreceptoria:Matricula`).
-   - **Biblioteca e Auditoria de Acervo:** Gestão de Acervo e Livros (`Livro`), Empréstimos e Circulação (`Emprestimo`, página `page_CirculacaoBiblioteca`) e Sessões de Auditoria de Acervo (`InventarioAcervo` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
+   - **Biblioteca e Auditoria de Acervo:** Gestão de Acervo e Livros (`Livro`), Empréstimos e Circulação (`Emprestimo`, página `page_CirculacaoBiblioteca`), Sessões de Auditoria de Acervo (`InventarioAcervo` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`) e Sacolas de Leitura por Turma (`SacolaLeitura` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
 
 2. **Como configurar permissões por papel:**
    - Acesse **Sistema e Segurança → Papéis (Shield)** e selecione o perfil desejado.

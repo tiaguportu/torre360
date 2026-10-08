@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\VisitaInteressado;
 use App\Support\PermissaoAcao;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -208,7 +209,7 @@ class AcoesCrmAutorizacaoTest extends TestCase
 
     // ------------------------------------------------------------------ documentos do candidato
 
-    private function documentosRm(User $usuario): \Livewire\Features\SupportTesting\Testable
+    private function documentosRm(User $usuario): Testable
     {
         return Livewire::actingAs($usuario)->test(DocumentosCandidatoRelationManager::class, [
             'ownerRecord' => $this->lead,
@@ -251,7 +252,7 @@ class AcoesCrmAutorizacaoTest extends TestCase
         ]);
     }
 
-    private function visitasRm(User $usuario): \Livewire\Features\SupportTesting\Testable
+    private function visitasRm(User $usuario): Testable
     {
         return Livewire::actingAs($usuario)->test(VisitasRelationManager::class, [
             'ownerRecord' => $this->lead,
