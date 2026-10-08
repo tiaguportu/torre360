@@ -152,6 +152,25 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   o enum direto derrubava com `Object of class … could not be converted to string` qualquer lead que tivesse
   visita registrada, ao abrir o Dossiê IA ou o Copiloto WhatsApp IA. Ao incluir outro campo com cast de enum
   nesse contexto, converter da mesma forma.
+- **Resumo de conversa com áudio** (`CrmIaVendasService::resumirConversaWhatsapp($lead, $texto, $audios)`): o
+  consultor pode anexar até `MAX_AUDIOS_CONVERSA` (5) áudios na Action `ResumoConversaIaAction` (`FileUpload`
+  `audios`, disco `local`, pasta `temp-conversa-audios`, 10 MB cada); o texto só é obrigatório sem áudio.
+  - Cada arquivo segue ao Gemini como `inline_data` (base64), precedido do rótulo "Áudio N de M" e na ordem
+    informada; o fechamento do prompt vem depois das mídias. O MIME é detectado no **conteúdo** do arquivo
+    (`mime_content_type`) e só então o informado pelo navegador vale, traduzido por `MIMES_AUDIO_GEMINI` para os
+    formatos que a API lista (WAV, MP3, AIFF, AAC, OGG, FLAC). Voz do WhatsApp é Opus em OGG → `audio/ogg`. M4A não
+    consta na lista oficial e segue como `audio/aac` (melhor esforço, ainda não validado com arquivo real).
+  - Limites validados **antes** de chamar a IA (`InvalidArgumentException`, mostrada como notificação): máx. 5
+    arquivos, arquivo existente e não vazio, formato suportado e `BYTES_MAXIMOS_AUDIOS` (14 MB somados). A API limita a
+    requisição inline a 20 MB e o base64 incha ~33%; acima disso seria preciso usar a Files API.
+  - A fala também é **dado não confiável**: o prompt manda ignorar instruções ditas nos áudios. Sem texto colado, o
+    bloco `<conversa>` não é enviado (só um aviso de que a conversa está nos áudios).
+  - `GeminiAgentService::callGeminiApi($payload, $timeout = 45)`: com áudio o resumo usa 120 s por tentativa; sem
+    áudio nada muda. Os arquivos temporários são apagados num `finally`, mesmo com erro. Se a IA falhar, a
+    resposta de contingência (`Fallback`) registra "N áudio(s) anexado(s)" em vez de um trecho vazio.
+  - O servidor precisa comportar o upload (`upload_max_filesize`/`post_max_size` ≥ 10 MB; o Livewire limita o
+    temporário a 12 MB) e a análise mais demorada (`max_execution_time`).
+  - Testes: `tests/Feature/ResumoConversaAudioTest.php` (WAV mínimo gerado em memória, Gemini simulado com Mockery).
 - Testes que passam por IA devem usar `Queue::fake()`/`Http::fake()` e `Http::preventStrayRequests()`: o `.env`
   local tem a chave real e o `phpunit.xml` não a sobrescreve.
 

@@ -441,13 +441,20 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
 1. **Como utilizar:**
    - Na tela de edição do lead (cabeçalho) ou no menu de ações rápidas da tabela de interessados, clique no botão **🤖 Resumo IA de Conversa**.
    - Cole o histórico ou trecho da conversa do WhatsApp (pode conter marcação de hora e remetente ou ser apenas o texto corrido).
-2. **Síntese Executiva Gerada pelo Gemini:**
+   - **Conversas em áudio:** anexe também os áudios (mensagens de voz) no campo **Áudios da Conversa**. Quando a família ou o consultor falaram por áudio, o texto colado passa a ser opcional: é possível analisar a conversa só com os áudios, ou combinar texto e áudios.
+2. **Áudios da Conversa (WhatsApp):**
+   - Exporte o áudio no WhatsApp (**Compartilhar/Salvar**) e anexe o arquivo. Formatos aceitos: `.opus` e `.ogg` (padrão do WhatsApp), `.mp3`, `.m4a`, `.aac`, `.wav`, `.flac` e `.aiff`.
+   - Limites: até **5 áudios** por análise, de até **10 MB** cada (no máximo 14 MB somados). Anexe-os na **ordem em que ocorreram** — é possível arrastar para reordenar.
+   - A IA **ouve cada áudio**, identifica quem fala (família ou consultor) e usa o conteúdo falado, inclusive o tom de voz (hesitação, entusiasmo), para definir a temperatura. A síntese ganha a seção 🎙️ **Resumo dos Áudios**, com um item por áudio. Trechos inaudíveis são sinalizados em vez de inventados.
+   - A análise com áudio leva mais tempo do que com texto (quanto maiores os áudios, mais demora); aguarde a notificação de conclusão. Os arquivos são usados apenas para a análise e **apagados do servidor em seguida**; o que fica no histórico do lead é só a síntese.
+3. **Síntese Executiva Gerada pelo Gemini:**
    - A IA analisa o diálogo em segundos e estrutura:
      - 💬 **Síntese da Conversa:** Resumo executivo dos pontos centrais debatidos.
      - 🎯 **Dores e Critérios da Família:** Motivações reais de troca de escola, expectativas pedagógicas e prioridades.
      - ❓ **Dúvidas e Objeções Levantadas:** Aspectos financeiros, turno, metodologia ou adaptação.
      - 🤝 **Acordos Firmados & Próximo Passo:** O que ficou combinado entre as partes e datas mencionadas.
-3. **Automações em 1 Clique:**
+     - 🎙️ **Resumo dos Áudios:** Só aparece quando há áudios anexados.
+4. **Automações em 1 Clique:**
    - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead.
    - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
    - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
