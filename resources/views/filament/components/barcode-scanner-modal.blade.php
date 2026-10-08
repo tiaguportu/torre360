@@ -30,6 +30,16 @@
     x-on:keydown.escape.window="if(aberto) fecharScanner()"
     class="relative z-50"
 >
+    {{-- INPUT OCULTO PARA CAPTURA NATIVA DE FOTO (SEMPRE FUNCIONA, INCLUSIVE EM HTTP DE REDE LOCAL) --}}
+    <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="hidden"
+        x-ref="inputFotoCamera"
+        @change="processarFotoArquivo($event)"
+    />
+
     {{-- OVERLAY / MODAL --}}
     <div
         x-show="aberto"
@@ -74,19 +84,8 @@
                 </button>
             </div>
 
-            {{-- CORPO: VISOR DA CÂMERA --}}
+            {{-- CORPO: VISOR DA CÂMERA & MENSAGENS --}}
             <div class="p-4 flex flex-col items-center">
-                {{-- MENSAGEM DE ERRO (PERMISSÃO / CÂMERA INACESSÍVEL) --}}
-                <template x-if="erroCamera">
-                    <div class="w-full p-4 mb-3 rounded-xl bg-danger-50 dark:bg-danger-950/40 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300 text-xs">
-                        <div class="font-bold flex items-center gap-1.5 mb-1">
-                            <x-heroicon-m-exclamation-triangle class="w-4 h-4 text-danger-500" />
-                            <span>Erro ao Acessar Câmera</span>
-                        </div>
-                        <p x-text="erroCamera"></p>
-                        <p class="mt-2 text-[11px] opacity-80">Dica: No celular, certifique-se de conceder a permissão de acesso à câmera no seu navegador (Chrome/Safari).</p>
-                    </div>
-                </template>
 
                 {{-- FEEDBACK DE LEITURA BEM-SUCEDIDA --}}
                 <div
@@ -98,8 +97,34 @@
                     <span>Lido: <strong class="font-mono text-emerald-900 dark:text-emerald-100" x-text="ultimoCodigoLido"></strong></span>
                 </div>
 
-                {{-- VISOR DA CÂMERA COM RETÂNGULO DE MIRA E LINHA DE LASER --}}
-                <div class="relative w-full aspect-4/3 bg-black rounded-xl overflow-hidden border border-gray-300 dark:border-gray-700 shadow-inner flex items-center justify-center">
+                {{-- MENSAGEM QUANDO O NAVEGADOR BLOQUEIA VÍDEO POR HTTP (INSECURE CONTEXT) OU PERMISSÃO --}}
+                <template x-if="erroCamera">
+                    <div class="w-full p-3.5 mb-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+                        <div class="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                            <x-heroicon-m-exclamation-triangle class="w-4 h-4 text-amber-600 shrink-0" />
+                            <span x-text="tituloErro"></span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90" x-text="erroCamera"></p>
+
+                        {{-- BOTÃO DE AÇÃO RÁPIDA: TIRAR FOTO COM A CÂMERA DO CELULAR (FUNCIONA 100% EM QUALQUER CONEXÃO) --}}
+                        <div class="pt-1">
+                            <button
+                                type="button"
+                                @click="tirarFotoNativa()"
+                                class="w-full py-2.5 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition"
+                            >
+                                <x-heroicon-m-camera class="w-4 h-4" />
+                                <span>Tirar Foto do Código com a Câmera</span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                {{-- VISOR DA CÂMERA AO VIVO COM RETÂNGULO DE MIRA E LINHA DE LASER --}}
+                <div
+                    x-show="!insecureContextDetected && (!erroCamera || cameraRodando)"
+                    class="relative w-full aspect-4/3 bg-black rounded-xl overflow-hidden border border-gray-300 dark:border-gray-700 shadow-inner flex items-center justify-center"
+                >
                     <div id="barcode-reader-container" class="w-full h-full"></div>
 
                     {{-- MOLDURA DE MIRA VISUAL --}}
@@ -124,22 +149,26 @@
                     </div>
                 </div>
 
-                {{-- CONTROLES INFERIORES: ALTERNAR CÂMERA & MODO CONTÍNUO --}}
+                {{-- SPINNER PROCESSANDO FOTO --}}
+                <div x-show="processandoFoto" class="w-full py-4 flex flex-col items-center justify-center gap-2 text-primary-600 dark:text-primary-400">
+                    <svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    <span class="text-xs font-medium">Decodificando código de barras da foto...</span>
+                </div>
+
+                {{-- CONTROLES INFERIORES: BOTAO DE FOTO DIRETO & MODO CONTÍNUO --}}
                 <div class="w-full mt-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
-                    {{-- SELETOR DE CÂMERA (SE HOUVER MAIS DE UMA) --}}
-                    <div class="w-full sm:w-auto flex items-center gap-1.5">
-                        <template x-if="camerasDisponiveis.length > 1">
-                            <select
-                                x-model="cameraIdSelecionada"
-                                @change="trocarCamera(cameraIdSelecionada)"
-                                class="text-[11px] py-1 px-2 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                            >
-                                <template x-for="cam in camerasDisponiveis" :key="cam.id">
-                                    <option :value="cam.id" x-text="cam.label || 'Câmera ' + cam.id"></option>
-                                </template>
-                            </select>
-                        </template>
-                    </div>
+                    {{-- BOTÃO ALTERNATIVO DE FOTO SEMPRE VISÍVEL --}}
+                    <button
+                        type="button"
+                        @click="tirarFotoNativa()"
+                        class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-1.5 underline decoration-dotted"
+                    >
+                        <x-heroicon-m-camera class="w-3.5 h-3.5" />
+                        <span>Capturar por foto (câmera nativa)</span>
+                    </button>
 
                     {{-- TOGGLE LEITURA CONTÍNUA --}}
                     <label class="flex items-center gap-2 cursor-pointer select-none text-gray-700 dark:text-gray-300">
@@ -148,14 +177,14 @@
                             x-model="leituraContinua"
                             class="rounded text-primary-600 focus:ring-primary-500 dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                         />
-                        <span class="text-[11px] font-semibold">Leitura contínua (vários livros)</span>
+                        <span class="text-[11px] font-semibold">Leitura contínua</span>
                     </label>
                 </div>
             </div>
 
             {{-- RODAPÉ DO MODAL --}}
             <div class="p-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/50 flex justify-between items-center text-xs">
-                <span class="text-[11px] text-gray-500">Suporta Code 128, ISBN/EAN-13 e QR Code.</span>
+                <span class="text-[11px] text-gray-500">Suporta Code 128 (tombo) e ISBN/EAN-13.</span>
                 <button
                     type="button"
                     @click="fecharScanner()"
@@ -178,9 +207,10 @@
             scanner: null,
             iniciando: false,
             cameraRodando: false,
+            processandoFoto: false,
+            insecureContextDetected: false,
             erroCamera: null,
-            camerasDisponiveis: [],
-            cameraIdSelecionada: null,
+            tituloErro: 'Acesso à Câmera',
             leituraContinua: false,
             feedbackSucesso: false,
             ultimoCodigoLido: null,
@@ -189,11 +219,27 @@
             abrirScanner(contexto, titulo, subtitulo) {
                 this.contexto = contexto || 'emprestimo';
                 this.titulo = titulo || 'Escanear Código do Livro';
-                this.subtitulo = subtitulo || 'Aponte a câmera do celular para o código de barras ou ISBN';
+                this.subtitulo = subtitulo || 'Aponte a câmera para o código de barras ou ISBN';
                 this.aberto = true;
                 this.erroCamera = null;
                 this.feedbackSucesso = false;
                 this.ultimoCodigoLido = null;
+                this.processandoFoto = false;
+
+                // Verifica se está em contexto seguro (HTTPS ou localhost)
+                const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                const isHttps = window.location.protocol === 'https:';
+                const isSecure = window.isSecureContext || isLocalhost || isHttps;
+
+                if (!isSecure) {
+                    this.insecureContextDetected = true;
+                    this.tituloErro = 'Conexão HTTP na Rede Local';
+                    this.erroCamera = 'O Google Chrome e Safari do celular bloqueiam vídeo ao vivo da câmera em conexões HTTP sem SSL (ex: http://' + window.location.host + '). Para ler o livro sem precisar de HTTPS, use a opção abaixo para fotografar o código:';
+                    this.iniciando = false;
+                    return;
+                }
+
+                this.insecureContextDetected = false;
                 this.iniciando = true;
 
                 this.$nextTick(() => {
@@ -201,11 +247,44 @@
                 });
             },
 
+            tirarFotoNativa() {
+                if (this.$refs && this.$refs.inputFotoCamera) {
+                    this.$refs.inputFotoCamera.click();
+                }
+            },
+
+            async processarFotoArquivo(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+
+                this.processandoFoto = true;
+                this.erroCamera = null;
+
+                try {
+                    let scannerInstancia = this.scanner;
+                    if (!scannerInstancia) {
+                        scannerInstancia = new Html5Qrcode('barcode-reader-container');
+                        this.scanner = scannerInstancia;
+                    }
+
+                    // Escaneia a imagem tirada com a câmera do celular
+                    const decodedText = await scannerInstancia.scanFile(file, true);
+                    this.aoLerCodigo(decodedText);
+                } catch (err) {
+                    this.tituloErro = 'Código não detectado na foto';
+                    this.erroCamera = 'Não foi possível ler o código de barras nesta foto. Tente fotografar mais de perto, em foco e com boa iluminação.';
+                } finally {
+                    this.processandoFoto = false;
+                    event.target.value = '';
+                }
+            },
+
             fecharScanner() {
                 this.pararCamera();
                 this.aberto = false;
                 this.erroCamera = null;
                 this.feedbackSucesso = false;
+                this.processandoFoto = false;
             },
 
             tocarBeep() {
@@ -217,7 +296,7 @@
                         const gain = audioCtx.createGain();
 
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(1400, audioCtx.currentTime); // Tom nítido de 1400Hz
+                        osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
                         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
 
@@ -227,11 +306,8 @@
                         osc.start();
                         osc.stop(audioCtx.currentTime + 0.12);
                     }
-                } catch (e) {
-                    // Ignora se o navegador restringir áudio
-                }
+                } catch (e) {}
 
-                // Feedback tátil no celular se suportado
                 if (navigator.vibrate) {
                     try {
                         navigator.vibrate(100);
@@ -242,7 +318,16 @@
             async iniciarCamera() {
                 if (typeof Html5Qrcode === 'undefined') {
                     this.iniciando = false;
-                    this.erroCamera = 'A biblioteca de scanner de câmera não foi carregada no navegador.';
+                    this.tituloErro = 'Biblioteca não carregada';
+                    this.erroCamera = 'O leitor de código de barras não foi carregado. Recarregue a página.';
+                    return;
+                }
+
+                // Verifica se navigator.mediaDevices existe no navegador
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    this.iniciando = false;
+                    this.tituloErro = 'Câmera não suportada ou bloqueada';
+                    this.erroCamera = 'O navegador não permitiu acesso à câmera em tempo real nesta conexão. Utilize a opção de foto abaixo:';
                     return;
                 }
 
@@ -254,39 +339,29 @@
                         this.scanner = new Html5Qrcode('barcode-reader-container');
                     }
 
-                    // Tenta listar as câmeras disponíveis
-                    try {
-                        const devices = await Html5Qrcode.getCameras();
-                        if (devices && devices.length > 0) {
-                            this.camerasDisponiveis = devices;
-                            if (!this.cameraIdSelecionada) {
-                                // Preferência para câmera traseira / back / environment
-                                const backCamera = devices.find(d => d.label && (d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('traseira') || d.label.toLowerCase().includes('environment')));
-                                this.cameraIdSelecionada = backCamera ? backCamera.id : devices[devices.length - 1].id;
-                            }
-                        }
-                    } catch (e) {
-                        // Não foi possível enumerar dispositivos (padrão facingMode será usado)
-                    }
-
                     const config = {
                         fps: 15,
                         qrbox: { width: 280, height: 160 },
                         aspectRatio: 1.333333,
                     };
 
-                    const cameraConfig = this.cameraIdSelecionada
-                        ? { deviceId: { exact: this.cameraIdSelecionada } }
-                        : { facingMode: 'environment' };
-
-                    await this.scanner.start(
-                        cameraConfig,
-                        config,
-                        (decodedText) => this.aoLerCodigo(decodedText),
-                        (error) => {
-                            // Erro por frame sem código (ignora)
-                        }
-                    );
+                    // Tentativa 1: câmera traseira (environment)
+                    try {
+                        await this.scanner.start(
+                            { facingMode: 'environment' },
+                            config,
+                            (decodedText) => this.aoLerCodigo(decodedText),
+                            () => {}
+                        );
+                    } catch (errFacing) {
+                        // Tentativa 2: qualquer câmera disponível
+                        await this.scanner.start(
+                            {},
+                            config,
+                            (decodedText) => this.aoLerCodigo(decodedText),
+                            () => {}
+                        );
+                    }
 
                     this.iniciando = false;
                     this.cameraRodando = true;
@@ -294,25 +369,16 @@
                 } catch (err) {
                     this.iniciando = false;
                     this.cameraRodando = false;
-                    this.erroCamera = err.message || 'Não foi possível acessar a câmera do dispositivo.';
+                    this.tituloErro = 'Permissão de Câmera Necessária';
+                    this.erroCamera = 'Não foi possível iniciar o vídeo ao vivo. Certifique-se de que a permissão de câmera está liberada nas configurações do seu navegador ou utilize o botão abaixo para fotografar o código:';
                 }
-            },
-
-            async trocarCamera(newCameraId) {
-                if (!newCameraId || !this.scanner) return;
-                await this.pararCamera();
-                this.cameraIdSelecionada = newCameraId;
-                this.iniciando = true;
-                await this.iniciarCamera();
             },
 
             async pararCamera() {
                 if (this.scanner && this.cameraRodando) {
                     try {
                         await this.scanner.stop();
-                    } catch (e) {
-                        // Ignora erro ao parar
-                    }
+                    } catch (e) {}
                     this.cameraRodando = false;
                 }
             },
@@ -322,7 +388,6 @@
                 const codigoLimpo = codigo.trim();
                 const agora = Date.now();
 
-                // Evita leitura duplicada consecutiva do mesmo livro dentro de 2.5s ou disparos muito rápidos
                 if (this.ultimoCodigoLido === codigoLimpo && (agora - this.ultimaTimestampLeitura < 2500)) {
                     return;
                 }
@@ -335,7 +400,6 @@
                 this.feedbackSucesso = true;
                 this.tocarBeep();
 
-                // Dispara ação no Livewire de acordo com o contexto
                 if (this.contexto === 'emprestimo') {
                     if (window.Livewire && typeof this.$wire !== 'undefined') {
                         this.$wire.processarLeituraEmprestimo(codigoLimpo);
@@ -350,13 +414,11 @@
                     }
                 }
 
-                // Se não for leitura contínua, fecha o modal após 500ms
                 if (!this.leituraContinua) {
                     setTimeout(() => {
                         this.fecharScanner();
                     }, 500);
                 } else {
-                    // No modo contínuo, limpa o feedback de sucesso após 2 segundos
                     setTimeout(() => {
                         this.feedbackSucesso = false;
                     }, 2000);
