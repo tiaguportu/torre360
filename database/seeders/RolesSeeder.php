@@ -277,6 +277,31 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Transferência Escolar — mesmo papel de quem já cuida do Histórico
+        // Escolar (secretaria/admin/super_admin).
+        $transferenciaPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $transferenciaPermissions[] = "{$acao}:TransferenciaEscolar";
+        }
+
+        foreach ($transferenciaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($transferenciaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
