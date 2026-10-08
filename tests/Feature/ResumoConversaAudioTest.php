@@ -17,6 +17,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Mockery;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -244,6 +245,57 @@ class ResumoConversaAudioTest extends TestCase
 
         $this->assertStringContainsString('1 áudio(s) anexado(s)', $resultado['resumo_markdown']);
         $this->assertStringNotContainsString('detalhe-interno-sensivel', $resultado['resumo_markdown']);
+        $this->assertTrue($resultado['fallback']);
+    }
+
+    public function test_resposta_valida_da_ia_nao_vem_marcada_como_contingencia(): void
+    {
+        $interessado = $this->criarInteressado();
+        $this->simularGemini();
+
+        $resultado = app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, 'Mãe: olá');
+
+        $this->assertArrayNotHasKey('fallback', $resultado);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: bool}>
+     */
+    public static function falhasDaIa(): array
+    {
+        return [
+            'com áudio' => ['Mãe: segue o áudio', true],
+            'só texto' => ['Mãe: gostaria de saber sobre o integral', false],
+        ];
+    }
+
+    #[DataProvider('falhasDaIa')]
+    public function test_acao_nao_grava_nem_altera_o_lead_quando_a_ia_falha(string $texto, bool $comAudio): void
+    {
+        Storage::fake('local');
+        $interessado = $this->criarInteressado();
+        $mock = Mockery::mock(GeminiAgentService::class);
+        $mock->shouldReceive('callGeminiApi')->once()->andThrow(new \RuntimeException('detalhe-interno-sensivel'));
+        $this->app->instance(GeminiAgentService::class, $mock);
+
+        Livewire::actingAs($this->administrador())
+            ->test(EditInteressado::class, ['record' => $interessado->getKey()])
+            ->callAction('resumoConversaIa', [
+                'conversa_texto' => $texto,
+                'audios' => $comAudio ? [UploadedFile::fake()->createWithContent('audio.wav', $this->wavMinimo())] : [],
+                'salvar_no_historico' => true,
+                'atualizar_temperatura' => true,
+                'atualizar_proximo_contato' => true,
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Não foi possível resumir a conversa');
+
+        // A contingência é só para exibição: nada vai para a linha do tempo nem altera o lead.
+        $this->assertDatabaseCount('historico_contato', 0);
+        $interessado->refresh();
+        $this->assertSame('morno', $interessado->temperatura);
+        $this->assertNull($interessado->data_proximo_contato);
+        $this->assertSame([], Storage::disk('local')->allFiles('temp-conversa-audios'));
     }
 
     public function test_acao_analisa_conversa_so_com_audio_salva_na_linha_do_tempo_e_apaga_o_arquivo(): void

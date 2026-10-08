@@ -98,6 +98,20 @@ class ResumoConversaIaAction
                     }
                 }
 
+                // Contingência (IA indisponível ou resposta inválida): não é uma síntese, então não vai para a linha do
+                // tempo nem mexe na temperatura/próximo contato do lead.
+                if (! empty($resultado['fallback'])) {
+                    Notification::make()
+                        ->title('Não foi possível resumir a conversa')
+                        ->body('A IA não respondeu agora. Nada foi gravado no histórico nem alterado no lead. Tente novamente em instantes'
+                            .($audios === [] ? '.' : ' (os áudios foram descartados, anexe-os de novo).'))
+                        ->danger()
+                        ->duration(10000)
+                        ->send();
+
+                    return;
+                }
+
                 $updates = [];
 
                 if (! empty($data['atualizar_temperatura']) && filled($resultado['temperatura_sugerida'])) {

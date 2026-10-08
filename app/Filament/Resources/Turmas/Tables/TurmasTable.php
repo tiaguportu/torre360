@@ -18,6 +18,7 @@ use App\Services\Educacenso\EducacensoTurmaExporter;
 use App\Services\GradeHorarioService;
 use App\Services\TurmaDuplicacaoService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -33,11 +34,16 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class TurmasTable
@@ -45,27 +51,109 @@ class TurmasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->with(['serie.curso', 'turno', 'periodoLetivo', 'professorConselheiro', 'etapaEnsinoAgregada', 'etapaEnsino'])
+                ->withCount(['matriculas as alunos_ativos_count' => fn (Builder $matriculas) => $matriculas
+                    ->where('situacao', SituacaoMatricula::ATIVA)]))
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
+            ->persistFiltersInSession()
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->striped()
+            ->emptyStateIcon(Heroicon::OutlinedUserGroup)
+            ->emptyStateHeading('Nenhuma turma encontrada')
+            ->emptyStateDescription('Ajuste a busca e os filtros ou cadastre uma nova turma.')
+            ->groups([
+                Group::make('periodoLetivo.nome')
+                    ->label('Período letivo')
+                    ->getTitleFromRecordUsing(fn (Turma $record): string => $record->periodoLetivo?->nome ?? '—')
+                    ->collapsible(),
+                Group::make('serie.nome')
+                    ->label('Série')
+                    ->getTitleFromRecordUsing(fn (Turma $record): string => $record->serie?->nome ?? 'Sem série')
+                    ->collapsible(),
+                Group::make('turno.nome')
+                    ->label('Turno')
+                    ->getTitleFromRecordUsing(fn (Turma $record): string => $record->turno?->nome ?? 'Sem turno')
+                    ->collapsible(),
+            ])
             ->columns([
+                ColorColumn::make('cor')
+                    ->label('Cor')
+                    ->toggleable(),
                 TextColumn::make('nome')
-                    ->searchable()
+                    ->label('Turma')
+                    ->description(fn (Turma $record): string => implode(' · ', array_filter([
+                        $record->serie?->nome,
+                        $record->serie?->curso?->nome,
+                    ])))
+                    ->weight(FontWeight::Bold)
+                    ->searchable(['nome', 'codigo', 'serie.nome'])
                     ->sortable(),
                 TextColumn::make('codigo')
                     ->label('Código')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('serie.nome')
-                    ->label('Série')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('turno.nome')
-                    ->label('Turno')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('—')
                     ->sortable(),
                 TextColumn::make('periodoLetivo.nome')
-                    ->label('Período')
+                    ->label('Período letivo')
+                    ->badge()
+                    ->color('info')
+                    ->icon(Heroicon::OutlinedCalendarDays)
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    ->sortable(),
+                TextColumn::make('turno.nome')
+                    ->label('Turno')
+                    ->icon(Heroicon::OutlinedClock)
+                    ->placeholder('—')
+                    ->sortable(),
+                TextColumn::make('ocupacao')
+                    ->label('Ocupação')
+                    ->state(function (Turma $record): string {
+                        $alunos = (int) $record->alunos_ativos_count;
+
+                        return $record->vagas_maximas
+                            ? "{$alunos} / {$record->vagas_maximas}"
+                            : (string) $alunos;
+                    })
+                    ->description(function (Turma $record): ?string {
+                        if (! $record->vagas_maximas) {
+                            return 'sem limite de vagas';
+                        }
+
+                        $livres = $record->vagas_maximas - (int) $record->alunos_ativos_count;
+
+                        return $livres >= 0
+                            ? ($livres === 1 ? '1 vaga livre' : "{$livres} vagas livres")
+                            : abs($livres).' acima da capacidade';
+                    })
+                    ->badge()
+                    ->color(function (Turma $record): string {
+                        if (! $record->vagas_maximas) {
+                            return 'gray';
+                        }
+
+                        $taxa = (int) $record->alunos_ativos_count / $record->vagas_maximas;
+
+                        return match (true) {
+                            $taxa > 1 => 'danger',
+                            $taxa >= 0.9 => 'warning',
+                            $taxa >= 0.5 => 'success',
+                            default => 'info',
+                        };
+                    })
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query
+                        ->orderBy('alunos_ativos_count', $direction)),
+                TextColumn::make('professorConselheiro.nome')
+                    ->label('Professor Conselheiro')
+                    ->icon(Heroicon::OutlinedUser)
+                    ->placeholder('Não definido')
+                    ->limit(28)
+                    ->tooltip(fn (Turma $record): ?string => $record->professorConselheiro?->nome)
                     ->sortable(),
                 TextColumn::make('etapaEnsinoAgregada.nome')
                     ->label('Etapa Agregada')
@@ -133,13 +221,11 @@ class TurmasTable
                     ->label('Bilíngue Surdos')
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('professorConselheiro.nome')
-                    ->label('Professor Conselheiro')
-                    ->sortable(),
                 TextColumn::make('vagas_maximas')
                     ->label('Vagas')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('carga_horaria_total')
                     ->label('Carga Horária (h)')
                     ->numeric()
@@ -157,158 +243,178 @@ class TurmasTable
             ->filters([
                 SelectFilter::make('periodo_letivo_id')
                     ->label('Período Letivo')
-                    ->relationship('periodoLetivo', 'nome', fn ($query) => $query->orderByDesc('data_inicio')),
+                    ->relationship('periodoLetivo', 'nome', fn (Builder $query) => $query->orderByDesc('data_inicio'))
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(StatusTurma::class)
                     ->multiple(),
+                SelectFilter::make('serie_id')
+                    ->label('Série')
+                    ->relationship('serie', 'nome')
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
+                SelectFilter::make('turno_id')
+                    ->label('Turno')
+                    ->relationship('turno', 'nome')
+                    ->multiple()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),
-                Action::make('avaliarHabilidades')
-                    ->label('Avaliar Habilidades')
-                    ->icon(Heroicon::OutlinedStar)
-                    ->color('warning')
-                    ->form([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('etapa_avaliativa_id')
-                                    ->label('Etapa Avaliativa')
-                                    ->options(EtapaAvaliativa::pluck('nome', 'id'))
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
-                                Select::make('habilidade_id')
-                                    ->label('Habilidade')
-                                    ->options(function (Turma $record) {
-                                        if (! \Illuminate\Support\Facades\Schema::hasTable('turma_habilidade')) {
-                                            return [];
-                                        }
+                ActionGroup::make([
+                    Action::make('avaliarHabilidades')
+                        ->label('Avaliar Habilidades')
+                        ->icon(Heroicon::OutlinedStar)
+                        ->color('warning')
+                        ->form([
+                            Grid::make(2)
+                                ->schema([
+                                    Select::make('etapa_avaliativa_id')
+                                        ->label('Etapa Avaliativa')
+                                        ->options(EtapaAvaliativa::pluck('nome', 'id'))
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
+                                    Select::make('habilidade_id')
+                                        ->label('Habilidade')
+                                        ->options(function (Turma $record) {
+                                            if (! \Illuminate\Support\Facades\Schema::hasTable('turma_habilidade')) {
+                                                return [];
+                                            }
 
-                                        return $record->habilidades->pluck('nome', 'id');
-                                    })
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
-                            ]),
-                        Repeater::make('avaliacoes')
-                            ->label('Avaliação dos Alunos')
-                            ->schema([
-                                Hidden::make('matricula_id'),
-                                TextInput::make('aluno_nome')
-                                    ->label('Aluno')
-                                    ->disabled()
-                                    ->dehydrated(false),
-                                Select::make('conceito')
-                                    ->label('Conceito')
-                                    ->options([
-                                        'Pleno' => 'Pleno',
-                                        'Básico' => 'Básico',
-                                        'Insuficiente' => 'Insuficiente',
-                                        'Não Avaliado' => 'Não Avaliado',
-                                    ])
-                                    ->required(),
-                                TextInput::make('observacao')
-                                    ->label('Observação'),
-                            ])
-                            ->addable(false)
-                            ->deletable(false)
-                            ->columns(3)
-                            ->grid(1)
-                            ->itemLabel(fn (array $state): ?string => $state['aluno_nome'] ?? null),
-                    ])
-                    ->mountUsing(function (Schema $schema, Turma $record) {
-                        $matriculas = $record->matriculas()
-                            ->where('situacao', SituacaoMatricula::ATIVA)
-                            ->with('pessoa')
-                            ->get();
+                                            return $record->habilidades->pluck('nome', 'id');
+                                        })
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(fn (Set $set, Get $get, Turma $record) => self::updateAvaliacoesState($set, $get, $record)),
+                                ]),
+                            Repeater::make('avaliacoes')
+                                ->label('Avaliação dos Alunos')
+                                ->schema([
+                                    Hidden::make('matricula_id'),
+                                    TextInput::make('aluno_nome')
+                                        ->label('Aluno')
+                                        ->disabled()
+                                        ->dehydrated(false),
+                                    Select::make('conceito')
+                                        ->label('Conceito')
+                                        ->options([
+                                            'Pleno' => 'Pleno',
+                                            'Básico' => 'Básico',
+                                            'Insuficiente' => 'Insuficiente',
+                                            'Não Avaliado' => 'Não Avaliado',
+                                        ])
+                                        ->required(),
+                                    TextInput::make('observacao')
+                                        ->label('Observação'),
+                                ])
+                                ->addable(false)
+                                ->deletable(false)
+                                ->columns(3)
+                                ->grid(1)
+                                ->itemLabel(fn (array $state): ?string => $state['aluno_nome'] ?? null),
+                        ])
+                        ->mountUsing(function (Schema $schema, Turma $record) {
+                            $matriculas = $record->matriculas()
+                                ->where('situacao', SituacaoMatricula::ATIVA)
+                                ->with('pessoa')
+                                ->get();
 
-                        $avaliacoes = $matriculas->map(fn ($m) => [
-                            'matricula_id' => $m->id,
-                            'aluno_nome' => $m->pessoa->nome,
-                            'conceito' => 'Pleno',
-                            'observacao' => null,
-                        ])->toArray();
+                            $avaliacoes = $matriculas->map(fn ($m) => [
+                                'matricula_id' => $m->id,
+                                'aluno_nome' => $m->pessoa->nome,
+                                'conceito' => 'Pleno',
+                                'observacao' => null,
+                            ])->toArray();
 
-                        $schema->fill(['avaliacoes' => $avaliacoes]);
-                    })
-                    ->action(function (array $data) {
-                        foreach ($data['avaliacoes'] as $av) {
-                            AvaliacaoHabilidade::updateOrCreate(
-                                [
-                                    'matricula_id' => $av['matricula_id'],
-                                    'habilidade_id' => $data['habilidade_id'],
-                                    'etapa_avaliativa_id' => $data['etapa_avaliativa_id'],
-                                ],
-                                [
-                                    'conceito' => $av['conceito'],
-                                    'observacao' => $av['observacao'],
-                                ]
+                            $schema->fill(['avaliacoes' => $avaliacoes]);
+                        })
+                        ->action(function (array $data) {
+                            foreach ($data['avaliacoes'] as $av) {
+                                AvaliacaoHabilidade::updateOrCreate(
+                                    [
+                                        'matricula_id' => $av['matricula_id'],
+                                        'habilidade_id' => $data['habilidade_id'],
+                                        'etapa_avaliativa_id' => $data['etapa_avaliativa_id'],
+                                    ],
+                                    [
+                                        'conceito' => $av['conceito'],
+                                        'observacao' => $av['observacao'],
+                                    ]
+                                );
+                            }
+
+                            Notification::make()
+                                ->title('Avaliações salvas com sucesso!')
+                                ->success()
+                                ->send();
+                        })
+                        ->modalWidth('7xl')
+                        ->modalSubmitActionLabel('Salvar Avaliações'),
+                    Action::make('imprimirBoletins')
+                        ->label('Imprimir Boletins')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->modalHeading('Imprimir Boletins da Turma')
+                        ->modalDescription('Selecione a etapa avaliativa para os boletins desta turma.')
+                        ->modalSubmitActionLabel('Baixar PDF')
+                        ->form([
+                            Select::make('etapa_id')
+                                ->label('Etapa Avaliativa')
+                                ->options(function () {
+                                    $etapas = EtapaAvaliativa::query()
+                                        ->orderBy('id')
+                                        ->pluck('nome', 'id')
+                                        ->toArray();
+
+                                    return [0 => 'Todas as Etapas'] + $etapas;
+                                })
+                                ->default(0)
+                                ->required(),
+                        ])
+                        ->action(function (Turma $record, array $data) {
+                            GerarBoletinsTurmaPdfJob::dispatch(
+                                turmaIds: [$record->id],
+                                etapaId: $data['etapa_id'] > 0 ? (int) $data['etapa_id'] : null,
+                                userId: auth()->id(),
                             );
-                        }
 
-                        Notification::make()
-                            ->title('Avaliações salvas com sucesso!')
-                            ->success()
-                            ->send();
-                    })
-                    ->modalWidth('7xl')
-                    ->modalSubmitActionLabel('Salvar Avaliações'),
-                Action::make('imprimirBoletins')
-                    ->label('Imprimir Boletins')
-                    ->icon('heroicon-o-printer')
-                    ->color('info')
-                    ->modalHeading('Imprimir Boletins da Turma')
-                    ->modalDescription('Selecione a etapa avaliativa para os boletins desta turma.')
-                    ->modalSubmitActionLabel('Baixar PDF')
-                    ->form([
-                        Select::make('etapa_id')
-                            ->label('Etapa Avaliativa')
-                            ->options(function () {
-                                $etapas = EtapaAvaliativa::query()
-                                    ->orderBy('id')
-                                    ->pluck('nome', 'id')
-                                    ->toArray();
+                            Notification::make()
+                                ->title('Geração dos boletins iniciada')
+                                ->body('Você receberá uma notificação com o link para download assim que os boletins estiverem prontos.')
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn (Turma $record) => auth()->user()->can('Boletim:Matricula') && (
+                            $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
+                            NotaHabilidade::whereIn('matricula_id', $record->matriculas()->pluck('id'))->exists()
+                        )),
+                    Action::make('gerarCronograma')
+                        ->label('Gerar Cronograma do Período')
+                        ->icon('heroicon-o-calendar-days')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Gerar Cronograma do Período')
+                        ->modalDescription('Cria as aulas do diário (cronograma) para todo o período letivo da turma, a partir da grade horária cadastrada. Aulas já existentes na mesma data, disciplina e horário não são duplicadas. Dias não letivos são pulados automaticamente.')
+                        ->modalSubmitActionLabel('Gerar')
+                        ->visible(fn (Turma $record) => auth()->user()->can('gerarCronograma', $record) && $record->gradeHorarios()->exists())
+                        ->action(function (Turma $record) {
+                            $total = app(GradeHorarioService::class)->gerarCronograma($record);
 
-                                return [0 => 'Todas as Etapas'] + $etapas;
-                            })
-                            ->default(0)
-                            ->required(),
-                    ])
-                    ->action(function (Turma $record, array $data) {
-                        GerarBoletinsTurmaPdfJob::dispatch(
-                            turmaIds: [$record->id],
-                            etapaId: $data['etapa_id'] > 0 ? (int) $data['etapa_id'] : null,
-                            userId: auth()->id(),
-                        );
-
-                        Notification::make()
-                            ->title('Geração dos boletins iniciada')
-                            ->body('Você receberá uma notificação com o link para download assim que os boletins estiverem prontos.')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (Turma $record) => auth()->user()->can('Boletim:Matricula') && (
-                        $record->matriculas()->whereHas('notas', fn ($q) => $q->whereNotNull('valor'))->exists() ||
-                        NotaHabilidade::whereIn('matricula_id', $record->matriculas()->pluck('id'))->exists()
-                    )),
-                Action::make('gerarCronograma')
-                    ->label('Gerar Cronograma do Período')
-                    ->icon('heroicon-o-calendar-days')
-                    ->color('info')
-                    ->requiresConfirmation()
-                    ->modalHeading('Gerar Cronograma do Período')
-                    ->modalDescription('Cria as aulas do diário (cronograma) para todo o período letivo da turma, a partir da grade horária cadastrada. Aulas já existentes na mesma data, disciplina e horário não são duplicadas. Dias não letivos são pulados automaticamente.')
-                    ->modalSubmitActionLabel('Gerar')
-                    ->visible(fn (Turma $record) => auth()->user()->can('gerarCronograma', $record) && $record->gradeHorarios()->exists())
-                    ->action(function (Turma $record) {
-                        $total = app(GradeHorarioService::class)->gerarCronograma($record);
-
-                        Notification::make()
-                            ->title($total > 0 ? "{$total} aula(s) criada(s) no cronograma." : 'Nenhuma aula nova para criar (grade sem alteração ou já gerada).')
-                            ->success()
-                            ->send();
-                    }),
+                            Notification::make()
+                                ->title($total > 0 ? "{$total} aula(s) criada(s) no cronograma." : 'Nenhuma aula nova para criar (grade sem alteração ou já gerada).')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->label('Mais ações')
+                    ->icon(Heroicon::EllipsisVertical)
+                    ->color('gray')
+                    ->tooltip('Mais ações'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

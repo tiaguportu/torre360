@@ -40,7 +40,9 @@ class TurmaDuplicacaoService
         }
 
         return DB::transaction(function () use ($origem, $destino, $status) {
-            $nova = $origem->replicate();
+            // Recarrega do banco: a turma vinda de uma listagem pode trazer atributos calculados
+            // (ex.: `alunos_ativos_count`) que `replicate()` tentaria gravar como coluna.
+            $nova = Turma::query()->findOrFail($origem->getKey())->replicate();
             $nova->periodo_letivo_id = $destino->id;
             $nova->status = $status;
             $nova->save();

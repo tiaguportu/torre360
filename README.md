@@ -247,6 +247,17 @@ Registro diário da criança (humor, soneca, refeições, atividades, higiene), 
 
 ---
 
+### 15. 🛡️ Autorização de Uso de Imagem e Consentimentos
+Consentimentos da família por aluno (ex.: uso de imagem), com aceite digital simples no Portal (IP + timestamp) em vez de assinatura eletrônica completa. Detalhes em `docs/autorizacao_uso_imagem_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `TipoConsentimento` | Catálogo (nome, texto, se exige renovação periódica) |
+| `ConsentimentoMatricula` | Status (Pendente/Autorizado/Não Autorizado), vigência, dados do respondente |
+| Portal da Família | Lista os consentimentos ativos do aluno selecionado, com botões Autorizar / Não Autorizar |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -371,4 +382,3 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
-| Autorização de uso de imagem e consentimentos (LGPD/ECA) | `docs/autorizacao_uso_imagem_roadmap.md` |

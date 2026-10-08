@@ -426,6 +426,33 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Consentimentos (uso de imagem, LGPD/ECA) — mesmo papel de quem já
+        // cuida da matrícula (secretaria/admin/super_admin).
+        $consentimentoPermissions = [];
+        foreach (['TipoConsentimento', 'ConsentimentoMatricula'] as $modelName) {
+            foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+                $consentimentoPermissions[] = "{$acao}:{$modelName}";
+            }
+        }
+
+        foreach ($consentimentoPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($consentimentoPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }

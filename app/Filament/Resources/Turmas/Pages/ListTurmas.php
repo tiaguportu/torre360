@@ -44,7 +44,9 @@ class ListTurmas extends ListRecords
         $html = '<p>Nesta página você gerencia as turmas da instituição, vinculando-as a séries, etapas de ensino, períodos letivos, além de definir dados de mediação didática e tipo de turma.</p>';
         $html .= '<h3>O que você pode fazer?</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Listagem:</strong> Visualize as turmas com seu período letivo e status (Planejada, Ativa, Concluída ou Cancelada), filtrando por ambos, além de códigos, séries, turnos, Etapa Agregada, Etapa de Ensino, tipo de mediação, tipo de turma, forma de organização, modalidade, língua ministrada, flag de bilíngue de surdos e Educação Especial.</li>';
+        $html .= '<li><strong>Listagem:</strong> Visualize as turmas com série e curso, código, período letivo, status (Planejada, Ativa, Concluída ou Cancelada), turno, ocupação (alunos ativos / vagas e vagas livres) e professor conselheiro. Etapa Agregada, Etapa de Ensino, tipo de mediação, tipo de turma, forma de organização, modalidade, língua ministrada e as flags de Educação Especial e bilíngue de surdos ficam no seletor de colunas.</li>';
+        $html .= '<li><strong>Filtros:</strong> Use o botão de filtro acima da tabela para filtrar por <strong>período letivo</strong> (mais de um por vez), status, série e turno. Os filtros ficam salvos enquanto você navega.</li>';
+        $html .= '<li><strong>Agrupar:</strong> Pelo botão de agrupamento da tabela, organize a lista por período letivo, série ou turno.</li>';
 
         if ($canCreate) {
             $html .= '<li><strong>Nova Turma:</strong> Crie uma nova turma definindo o nome, código, turno, capacidade, Etapa Agregada, Etapa de Ensino, tipo de mediação, tipo de turma, forma de organização (Série anual, Semestral, Ciclos, Módulos, Alternância), modalidade, língua (Português, Indígena), turma bilíngue de surdos e modalidade de AEE.</li>';

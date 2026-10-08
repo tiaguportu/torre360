@@ -458,6 +458,9 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
    - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead.
    - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
    - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
+5. **Se a IA não responder:**
+   - O sistema exibe o aviso **"Não foi possível resumir a conversa"** e **não grava nada**: o histórico, a temperatura e o próximo contato do lead permanecem como estavam.
+   - Tente de novo em instantes. Os áudios anexados já foram descartados do servidor, então é preciso **anexá-los novamente** (o texto colado também precisa ser colado de novo).
 
 ### 3.21 Linha do Tempo Omnichannel Interativa (Unified Customer 360 Feed)
 A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento escolar ao consolidar todos os pontos de contato da família em um feed cronológico único, interativo e ultra-responsivo:
@@ -727,12 +730,15 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
    - **Turma de Educação Especial (Classe Especial):** Seleção para identificar turmas de classe especial.
    - **Carga Horária Total (horas):** Carga horária total da turma definida em horas.
    - **Horário de Funcionamento (Dias da Semana):** Quadro colapsável em largura total que permite definir e visualizar os horários de início e término fixos para todos os dias da semana (Domingo a Sábado).
-3. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Etapa Agregada, Etapa de Ensino, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado, Forma de Organização, Modalidade, Língua Ministrada ou Flags de Educação Especial e Bilíngue de Surdos.
+3. **Leitura e Filtros da Listagem:** A listagem (`/admin/turmas`) mostra, por turma, a cor, o nome (com série e curso logo abaixo), o código, o **Período Letivo**, o **Status**, o turno, a **Ocupação** (alunos com matrícula ativa / vagas, com a quantidade de vagas livres; a cor do selo indica folga, quase lotada ou acima da capacidade; dá para ordenar por ela) e o professor conselheiro. As demais informações do Educacenso continuam disponíveis em **Colunas** (ícone de colunas no topo da tabela).
+   - **Filtros** (botão de filtro acima da tabela; ficam salvos enquanto você navega): **Período letivo** (aceita mais de um, do mais recente ao mais antigo), **Status**, **Série** e **Turno**. Os filtros se combinam (ex: turmas *Ativas* do período *2026* no turno da manhã).
+   - **Agrupar:** pelo botão de agrupamento da tabela, organize a lista por Período letivo, Série ou Turno.
+   - **Ações da linha:** *Editar* fica sempre à vista; Avaliar Habilidades, Imprimir Boletins e Gerar Cronograma do Período ficam no menu **Mais ações** (⋮).
+4. **Edição em Lote:** Na listagem de turmas, selecione duas ou mais turmas e clique no botão **Editar em Lote** nas ações em lote. Isso permite atualizar de uma só vez a Série, Turno, Etapa Agregada, Etapa de Ensino, Professor Conselheiro, Vagas, Carga Horária Total, Tipo de Avaliação, Tipo de Mediação, Tipo de Turma, Local Diferenciado, Forma de Organização, Modalidade, Língua Ministrada ou Flags de Educação Especial e Bilíngue de Surdos.
    - **Alterar Status:** selecione as turmas e use **Alterar Status** para marcá-las como Planejada, Ativa, Concluída ou Cancelada de uma vez (ex: concluir todas as turmas de 2026 ao encerrar o ano). Exige a permissão de edição de turmas.
    - **Duplicar para outro período:** selecione as turmas de um período e use **Duplicar para outro período** para criar, no período de destino (ex: *2027*), uma cópia de cada uma com o status escolhido (padrão *Planejada*). A cópia leva série, turno, vagas, professor conselheiro, disciplinas (com o professor), habilidades, documentos exigidos e horários de funcionamento. **Não** leva matrículas, grade horária, cronograma, avaliações nem planos de aula. Turmas que já existem no período de destino (mesmo nome, série e turno) são ignoradas, então a ação pode ser repetida sem duplicar. Exige a permissão *Replicar* de Turma (padrão: administrador, coordenação).
-   - **Filtros e colunas:** a lista mostra o **Período** e o **Status** de cada turma e permite filtrar por ambos.
-4. **Exportar para Educacenso em Lote:** Na listagem de turmas (`/admin/turmas`), selecione uma ou mais turmas e acione a ação em lote **Exportar para Educacenso**. O sistema gerará e baixará automaticamente um arquivo `.txt` configurado no padrão oficial do INEP (Registro 20) separado por Pipe (`|`), com campos não preenchidos representados por delimitadores vazios (ex: `||`).
-5. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
+5. **Exportar para Educacenso em Lote:** Na listagem de turmas (`/admin/turmas`), selecione uma ou mais turmas e acione a ação em lote **Exportar para Educacenso**. O sistema gerará e baixará automaticamente um arquivo `.txt` configurado no padrão oficial do INEP (Registro 20) separado por Pipe (`|`), com campos não preenchidos representados por delimitadores vazios (ex: `||`).
+6. **Ajuda e Responsividade:** Todas as telas da gestão de turmas incluem o botão de **Ajuda** no cabeçalho e exibição adaptada para celulares em formato de lista/cards.
 - **Pendente (Amarelo):** Matrícula em processo, geralmente aguardando documentação ou pagamento.
 - **Trancada (Laranja):** Matrícula suspensa temporariamente a pedido.
 - **Cancelada (Vermelho):** Vínculo encerrado definitivamente.

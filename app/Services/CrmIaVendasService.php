@@ -544,12 +544,16 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
      * sintetizando perfil, dores, dúvidas levantadas, acordos firmados, temperatura e próximo passo.
      * Os áudios vão ao Gemini na ordem informada, que os ouve e os trata como parte do diálogo.
      *
+     * Quando a IA falha, devolve uma resposta de contingência com `fallback = true`: quem chama não deve
+     * gravá-la no histórico nem usá-la para alterar o lead (ela só existe para exibição).
+     *
      * @param  array<int, array{caminho: string, mime?: ?string}>  $audios  Arquivos de áudio em disco, em ordem cronológica.
      * @return array{
      *     resumo_markdown: string,
      *     temperatura_sugerida: string,
      *     data_retorno_sugerida: ?string,
      *     proximo_passo_sugerido: string,
+     *     fallback?: bool,
      * }
      *
      * @throws \InvalidArgumentException Quando um áudio não existe, tem formato sem suporte ou excede os limites.
@@ -667,6 +671,8 @@ Você DEVE retornar estritamente um JSON válido com a seguinte estrutura:
                 'temperatura_sugerida' => $interessado->temperatura ?? 'morno',
                 'data_retorno_sugerida' => null,
                 'proximo_passo_sugerido' => 'Retomar contato com o responsável.',
+                // Marca a contingência: ela nunca deve virar histórico do lead nem alterar temperatura/retorno.
+                'fallback' => true,
             ];
         }
     }
