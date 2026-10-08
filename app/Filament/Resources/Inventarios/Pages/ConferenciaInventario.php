@@ -106,9 +106,23 @@ class ConferenciaInventario extends Page
         $html .= '<p>A tabela de <strong>Livros Faltantes</strong> lista automaticamente todos os livros cadastrados na escola que não foram encontrados nas estantes e também não constam como emprestados a nenhum aluno no momento.</p>';
         $html .= '</div>';
 
+        $html .= '<div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">';
+        $html .= '<h4 class="font-semibold text-gray-900 dark:text-white mb-1">📱 Leitura com Celular nas Estantes:</h4>';
+        $html .= '<p>Você pode caminhar pelas prateleiras usando seu smartphone. Clique no botão de câmera para escanear os livros em sequência com o modo de leitura contínua ativado.</p>';
+        $html .= '</div>';
+
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * Processa o código do livro lido através da câmera do celular durante o inventário.
+     */
+    public function processarLeituraInventario(string $codigo): void
+    {
+        $this->codigo_bipado = $codigo;
+        $this->biparLivro();
     }
 
     /**

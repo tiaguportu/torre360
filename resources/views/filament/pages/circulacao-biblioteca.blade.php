@@ -75,6 +75,15 @@
                             />
                             <button
                                 type="button"
+                                @click="$dispatch('abrir-scanner-camera', { contexto: 'emprestimo', titulo: 'Escanear com Câmera do Celular', subtitulo: 'Aponte a câmera para o código de barras ou ISBN do livro' })"
+                                class="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5 border border-gray-200 dark:border-gray-700 shadow-xs"
+                                title="Escanear com a câmera do celular"
+                            >
+                                <x-heroicon-o-camera class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                <span class="hidden sm:inline">Câmera</span>
+                            </button>
+                            <button
+                                type="button"
                                 wire:click="realizarEmprestimo"
                                 class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm rounded-lg transition-colors flex items-center gap-1.5"
                             >
@@ -82,7 +91,7 @@
                                 Emprestar
                             </button>
                         </div>
-                        <p class="text-[11px] text-gray-400 mt-1">Ao bipar com o leitor óptico, o empréstimo é gerado automaticamente (pressione Enter).</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Ao bipar com o leitor óptico ou escanear com a câmera do celular, o empréstimo é gerado automaticamente.</p>
                     </div>
 
                     {{-- DATA PREVISTA --}}
@@ -128,6 +137,15 @@
                             />
                             <button
                                 type="button"
+                                @click="$dispatch('abrir-scanner-camera', { contexto: 'devolucao', titulo: 'Devolução com Câmera do Celular', subtitulo: 'Aponte a câmera para o código do livro entregue' })"
+                                class="px-3.5 py-2.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 shadow-xs"
+                                title="Escanear devolução com a câmera do celular"
+                            >
+                                <x-heroicon-o-camera class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                <span class="hidden sm:inline">Câmera</span>
+                            </button>
+                            <button
+                                type="button"
                                 wire:click="realizarDevolucao"
                                 class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                             >
@@ -170,4 +188,7 @@
         </div>
 
     </div>
+
+    {{-- MODAL REUTILIZÁVEL DE SCANNER COM CÂMERA DO CELULAR --}}
+    @include('filament.components.barcode-scanner-modal')
 </x-filament-panels::page>

@@ -256,4 +256,103 @@ class BibliotecaAvancadaTest extends TestCase
         $view->assertSee('Machado de Assis');
         $view->assertSee('Mateus');
     }
+
+    public function test_balcao_circulacao_processa_leitura_camera_emprestimo(): void
+    {
+        $this->autenticarComoAdmin();
+
+        $pessoa = Pessoa::factory()->create(['nome' => 'Beatriz Santos']);
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $pessoa->id,
+            'situacao' => SituacaoMatricula::ATIVA,
+        ]);
+
+        $livro = Livro::create([
+            'titulo' => 'Capitães da Areia',
+            'autor' => 'Jorge Amado',
+            'quantidade_total' => 2,
+            'quantidade_disponivel' => 2,
+        ]);
+
+        Livewire::test(CirculacaoBiblioteca::class)
+            ->set('matricula_id', $matricula->id)
+            ->call('processarLeituraEmprestimo', $livro->codigo)
+            ->assertHasNoErrors()
+            ->assertNotified();
+
+        $this->assertDatabaseHas('emprestimos', [
+            'livro_id' => $livro->id,
+            'matricula_id' => $matricula->id,
+            'status' => StatusEmprestimo::Emprestado->value,
+        ]);
+
+        $livro->refresh();
+        $this->assertEquals(1, $livro->quantidade_disponivel);
+    }
+
+    public function test_balcao_circulacao_processa_leitura_camera_devolucao(): void
+    {
+        $this->autenticarComoAdmin();
+
+        $pessoa = Pessoa::factory()->create(['nome' => 'Gabriel Ramos']);
+        $matricula = Matricula::factory()->create([
+            'pessoa_id' => $pessoa->id,
+            'situacao' => SituacaoMatricula::ATIVA,
+        ]);
+
+        $livro = Livro::create([
+            'titulo' => 'O Cortiço',
+            'autor' => 'Aluísio Azevedo',
+            'quantidade_total' => 1,
+            'quantidade_disponivel' => 0,
+        ]);
+
+        $emprestimo = Emprestimo::create([
+            'livro_id' => $livro->id,
+            'matricula_id' => $matricula->id,
+            'data_emprestimo' => now()->subDays(3),
+            'data_prevista_devolucao' => now()->addDays(11),
+            'status' => StatusEmprestimo::Emprestado,
+        ]);
+
+        Livewire::test(CirculacaoBiblioteca::class)
+            ->call('processarLeituraDevolucao', $livro->codigo)
+            ->assertHasNoErrors()
+            ->assertNotified();
+
+        $emprestimo->refresh();
+        $livro->refresh();
+
+        $this->assertEquals(StatusEmprestimo::Devolvido, $emprestimo->status);
+        $this->assertEquals(1, $livro->quantidade_disponivel);
+    }
+
+    public function test_conferencia_inventario_processa_leitura_camera(): void
+    {
+        $user = $this->autenticarComoAdmin();
+
+        $livro = Livro::create([
+            'titulo' => 'Iracema',
+            'autor' => 'José de Alencar',
+            'quantidade_total' => 1,
+            'quantidade_disponivel' => 1,
+        ]);
+
+        $inventario = InventarioAcervo::create([
+            'titulo' => 'Inventário Rápido com Celular',
+            'data_inicio' => now()->toDateString(),
+            'status' => 'em_andamento',
+            'user_id' => $user->id,
+        ]);
+
+        Livewire::test(ConferenciaInventario::class, ['record' => $inventario])
+            ->call('processarLeituraInventario', $livro->codigo)
+            ->assertHasNoErrors()
+            ->assertNotified();
+
+        $this->assertDatabaseHas('inventario_itens', [
+            'inventario_id' => $inventario->id,
+            'livro_id' => $livro->id,
+        ]);
+    }
 }

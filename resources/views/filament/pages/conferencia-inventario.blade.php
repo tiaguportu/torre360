@@ -75,6 +75,15 @@
                     />
                     <button
                         type="button"
+                        @click="$dispatch('abrir-scanner-camera', { contexto: 'inventario', titulo: 'Conferência de Inventário com Câmera', subtitulo: 'Aponte a câmera para os livros nas estantes' })"
+                        class="px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm rounded-lg transition-colors flex items-center gap-1.5 border border-gray-300 dark:border-gray-700 shadow-xs"
+                        title="Escanear com a câmera do celular"
+                    >
+                        <x-heroicon-o-camera class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        <span class="hidden sm:inline">Câmera</span>
+                    </button>
+                    <button
+                        type="button"
                         wire:click="biparLivro"
                         class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-xs"
                     >
@@ -83,7 +92,7 @@
                     </button>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">
-                    ⚡ <strong>Dica de Produtividade:</strong> O leitor de código de barras envia automaticamente o comando Enter. Basta bipar os livros um atrás do outro nas prateleiras sem tocar no teclado.
+                    ⚡ <strong>Dica de Produtividade:</strong> O leitor de código de barras ou a câmera do celular (com leitura contínua) conferem os livros sucessivamente nas prateleiras sem tocar no teclado.
                 </p>
             </div>
         @endif
@@ -158,4 +167,7 @@
         </div>
 
     </div>
+
+    {{-- MODAL REUTILIZÁVEL DE SCANNER COM CÂMERA DO CELULAR --}}
+    @include('filament.components.barcode-scanner-modal')
 </x-filament-panels::page>

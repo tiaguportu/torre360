@@ -102,6 +102,11 @@ class CirculacaoBiblioteca extends Page implements HasForms
         $html .= '<p>No momento da entrega do livro, o bibliotecário não precisa procurar o aluno. Basta apontar o leitor de código de barras para o livro no campo de devolução e o sistema identifica o empréstimo ativo, dá baixa e recoloca a obra no acervo disponível na hora.</p>';
         $html .= '</div>';
 
+        $html .= '<div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">';
+        $html .= '<h4 class="font-semibold text-gray-900 dark:text-white mb-1">📱 Leitura com Câmera do Celular:</h4>';
+        $html .= '<p>Você pode usar a própria câmera do smartphone como leitor óptico. Clique no botão de câmera ao lado dos campos de bipagem para abrir o visor, que detecta automaticamente códigos de barras (Code 128) e ISBN (EAN-13), emitindo um bipe sonoro de confirmação.</p>';
+        $html .= '</div>';
+
         if ($user?->can('Create:Emprestimo')) {
             $html .= '<p class="text-xs text-emerald-600 dark:text-emerald-400">✓ Você possui permissão para registrar empréstimos e devoluções.</p>';
         }
@@ -109,6 +114,24 @@ class CirculacaoBiblioteca extends Page implements HasForms
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * Processa o código do livro lido através da câmera do celular para empréstimo.
+     */
+    public function processarLeituraEmprestimo(string $codigo): void
+    {
+        $this->codigo_livro_emprestimo = $codigo;
+        $this->realizarEmprestimo();
+    }
+
+    /**
+     * Processa o código do livro lido através da câmera do celular para devolução.
+     */
+    public function processarLeituraDevolucao(string $codigo): void
+    {
+        $this->codigo_livro_devolucao = $codigo;
+        $this->realizarDevolucao();
     }
 
     /**

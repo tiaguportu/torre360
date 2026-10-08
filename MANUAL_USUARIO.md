@@ -2731,11 +2731,16 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
 Projetado para eliminar cliques no atendimento de balcão da biblioteca escolar:
 1. **Empréstimo Rápido:**
    - **Busca Rápida do Estudante:** Como o aluno não possui crachá, digite o nome do aluno ou turma no campo com filtro imediato. O sistema já exibe o resumo com quantos livros o aluno já possui em mãos e se há algum atraso.
-   - **Bipagem do Livro:** Com foco automático no leitor óptico, bipe o código de barras ou ISBN do livro (ou digite e pressione Enter). O empréstimo é gerado instantaneamente com o prazo configurado (padrão 14 dias).
+   - **Bipagem do Livro ou Câmera do Celular:** Com foco automático no leitor óptico, bipe o código de barras ou ISBN do livro. Se estiver operando em um smartphone ou tablet, clique no botão **"📷 Câmera"**: o visor da câmera do aparelho abre instantaneamente com mira laser visual e lê o código de barras do livro à distância, emitindo um bipe sonoro e registrando o empréstimo na hora.
 2. **Devolução em 1 Bip:**
-   - Ao receber o livro no balcão, o bibliotecário não precisa pesquisar o aluno. Basta apontar o leitor de código de barras para o livro no campo de devolução. O sistema localiza o empréstimo ativo correspondente, dá baixa imediata e recoloca a obra no acervo disponível.
+   - Ao receber o livro no balcão, o bibliotecário não precisa pesquisar o aluno. Basta apontar o leitor de código de barras para o livro no campo de devolução (ou clicar em **"📷 Câmera"** no celular). O sistema localiza o empréstimo ativo correspondente, dá baixa imediata e recoloca a obra no acervo disponível.
    - Um histórico em tempo real na tela registra todas as operações da sessão.
-3. **Garantias de estoque (balcão e tela de Empréstimos):**
+3. **Recursos do Scanner por Câmera:**
+   - **Reconhecimento Multi-padrão:** Detecta etiquetas de tombo da escola em **Code 128** (`LIV-0001`), códigos de barras comerciais **EAN-13 / ISBN** e QR Codes.
+   - **Feedback Multissensorial:** Emite som de bipe nítido via Web Audio API e vibração háptica no celular ao confirmar a leitura.
+   - **Modo Leitura Contínua:** Permite devolver ou conferir vários livros em sequência sem precisar fechar e reabrir o visor da câmera a cada exemplar.
+
+4. **Garantias de estoque (balcão e tela de Empréstimos):**
    - **Último exemplar:** a reserva do exemplar é atômica. Se dois balcões tentarem emprestar o último exemplar ao mesmo tempo, apenas um consegue; o outro recebe "Todos os exemplares deste livro já estão emprestados" e nenhum empréstimo é criado.
    - **Datas:** a devolução prevista não pode ser anterior à data do empréstimo.
    - **Devolução repetida:** devolver o mesmo empréstimo duas vezes (duplo clique ou dois balcões) devolve o exemplar ao acervo **uma única vez**; a segunda tentativa avisa que o empréstimo já estava devolvido. A disponibilidade nunca passa do total cadastrado.
@@ -2757,9 +2762,9 @@ O comando compara, para cada obra, o saldo gravado com `total − empréstimos e
 - **Faixa Etária e Segmento Escolar:** Cada livro pode ser classificado por idade recomendada (*Livre*, *0 a 3 anos*, *4 a 6 anos*, *7 a 9 anos*, *10 a 12 anos*, *13 a 15 anos*, *16+ anos*) e por segmentos escolares indicados (*Educação Infantil*, *Ensino Fundamental I*, *Ensino Fundamental II*, *Ensino Médio*).
 
 ### 51.5 Auditoria e Inventário do Acervo (`/admin/inventarios`)
-Permite conferir fisicamente as prateleiras da biblioteca com leitor óptico e detectar livros perdidos:
+Permite conferir fisicamente as prateleiras da biblioteca com leitor óptico ou câmera do celular e detectar livros perdidos:
 1. Acesse **Biblioteca → Inventários de Acervo** e clique em **"Novo Inventário"**.
-2. Na tela de conferência rápida, bipe os livros nas prateleiras um após o outro sem tocar no teclado.
+2. Na tela de conferência rápida, bipe os livros nas prateleiras com leitor óptico ou use o botão **"📷 Câmera"** com o smartphone na mão, percorrendo as estantes com o modo de leitura contínua ativado.
 3. O painel calcula em tempo real:
    - **Total de Títulos Cadastrados**
    - **Exemplares Presentes na Estante (Bipados)**
