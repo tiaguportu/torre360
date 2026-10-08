@@ -2718,6 +2718,7 @@ Todas as entidades e páginas operacionais do sistema estão integradas às Pol�
    - **Automações e Réguas:** Réguas de Cobrança (`ReguaCobranca`) e Réguas de Follow-up (`ReguaFollowUp`), incluindo a permissão específica de execução manual/simulação (`Execute:ReguaCobranca` / `Execute:ReguaFollowUp`).
    - **Relatórios Financeiros:** Fluxo de Caixa Consolidado (`View:RelatorioFluxoCaixa`) e Relatório de Inadimplência (`View:RelatorioInadimplencia`).
    - **Secretaria e Matrículas:** Ações pontuais de disparo de comunicados, como o aviso de disponibilidade de horários para preceptoria (`AvisarPossibilidadePreceptoria:Matricula`).
+   - **Biblioteca e Auditoria de Acervo:** Gestão de Acervo e Livros (`Livro`), Empréstimos e Circulação (`Emprestimo`, página `page_CirculacaoBiblioteca`) e Sessões de Auditoria de Acervo (`InventarioAcervo` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
 
 2. **Como configurar permissões por papel:**
    - Acesse **Sistema e Segurança → Papéis (Shield)** e selecione o perfil desejado.
