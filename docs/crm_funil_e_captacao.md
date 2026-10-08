@@ -158,8 +158,14 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
 ## 8. Portal de documentos do candidato
 
 Link público por token (`/admissao/{token}`): `Interessado::comTokenDocumentosValido()` — o link **expira**
-(`token_documentos_expira_em`, 90 dias, renovados toda vez que a equipe gera/copia o link; link vencido ou
-inexistente responde 410 com a mesma tela, sem revelar se existiu). O dependente enviado precisa pertencer ao
+(`token_documentos_expira_em`, **7 dias** — `Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS` —, renovados toda vez que a
+equipe gera/copia/envia o link; a família abrir o link não renova. Token sem validade não é aceito; link vencido **não
+é revivido** — a equipe recebe um token novo; link vencido, revogado ou inexistente responde 410 com a mesma tela, sem
+revelar se existiu). **Revogação:** `LinkPortalAdmissaoService::gerarNovo()` ("Gerar novo link") troca o token do
+portal e zera o convite legado, e a URL antiga passa a responder 410 na hora (registro automático na linha do tempo).
+O convite legado `/quero-matricular/convite/{token}` só redireciona dentro da própria validade de 7 dias e sem
+renovar o portal; o portal nunca aceita o token do convite diretamente. A migração
+`2026_10_08_090000_limita_validade_dos_links_do_portal_a_sete_dias` reduz para 7 dias os links antigos de 90. O dependente enviado precisa pertencer ao
 candidato; documento **verificado** não é substituído nem removido pela família; o arquivo antigo é apagado e
 o parecer da IA zerado na substituição; documentos já migrados para uma matrícula não são tocados; limite de
 30 envios/hora por candidato (cada arquivo gera uma análise paga por IA) além do `throttle` por IP; a página

@@ -59,6 +59,7 @@ class ValidarDocumentoIaTest extends TestCase
             'origem_interessado_id' => $origem->id,
             'status_interessado_id' => $status->id,
             'token_documentos' => 'token-teste-portal-ia-12345',
+            'token_documentos_expira_em' => now()->addDays(3),
         ]);
 
         $dependente = InteressadoDependente::create([

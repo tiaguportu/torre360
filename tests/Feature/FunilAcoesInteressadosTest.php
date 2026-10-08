@@ -440,14 +440,15 @@ class FunilAcoesInteressadosTest extends TestCase
 
         $tela = Livewire::actingAs($this->admin())->test(ListInteressados::class);
 
+        // O modal mostra o link do Portal de Admissão (token_documentos), válido por 7 dias.
         $tela->callTableAction('gerarConvite', $lead);
-        $primeiro = $lead->fresh()->token_convite;
+        $primeiro = $lead->fresh()->token_documentos;
         $this->assertNotNull($primeiro);
 
         $tela->callTableAction('gerarConvite', $lead);
         $tela->mountTableAction('gerarConvite', $lead);
 
-        $this->assertSame($primeiro, $lead->fresh()->token_convite, 'Abrir o modal de novo não pode invalidar o link já enviado.');
+        $this->assertSame($primeiro, $lead->fresh()->token_documentos, 'Abrir o modal de novo não pode invalidar o link já enviado.');
     }
 
     public function test_gerar_novo_link_invalida_o_anterior(): void
@@ -458,12 +459,16 @@ class FunilAcoesInteressadosTest extends TestCase
         $tela = Livewire::actingAs($this->admin())->test(ListInteressados::class);
 
         $tela->callTableAction('gerarConvite', $lead);
-        $primeiro = $lead->fresh()->token_convite;
+        $primeiro = $lead->fresh()->token_documentos;
 
         $tela->callTableAction('regenerarConvite', $lead);
 
-        $this->assertNotSame($primeiro, $lead->fresh()->token_convite);
-        $this->assertNull(app(ConviteMatriculaService::class)->validarToken($primeiro));
+        $segundo = $lead->fresh()->token_documentos;
+        $this->assertNotSame($primeiro, $segundo);
+
+        // A URL que a família já tinha deixa de funcionar na hora; só a nova abre o portal.
+        $this->get(route('candidato.documentos.show', ['token' => $primeiro]))->assertStatus(410);
+        $this->get(route('candidato.documentos.show', ['token' => $segundo]))->assertOk();
     }
 
     public function test_acao_de_gerar_novo_link_so_aparece_quando_ja_existe_um_link(): void

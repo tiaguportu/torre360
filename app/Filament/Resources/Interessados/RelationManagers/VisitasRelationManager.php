@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\VisitaInteressado;
 use App\Services\LeadScoreService;
 use App\Services\VisitaInteressadoService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -135,12 +136,15 @@ class VisitasRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (VisitaInteressado $record): bool => $record->status === StatusVisitaInteressado::Agendada)
+                    // Ações personalizadas não herdam a policy: mudar o status da visita recalcula o score e gera a pesquisa.
+                    ->authorize(PermissaoAcao::qualquer('Update:VisitaInteressado'))
                     ->action(fn (VisitaInteressado $record) => $this->alterarStatus($record, StatusVisitaInteressado::Realizada)),
                 Action::make('faltou')
                     ->label('Não compareceu')
                     ->icon('heroicon-o-user-minus')
                     ->color('danger')
                     ->visible(fn (VisitaInteressado $record): bool => $record->status === StatusVisitaInteressado::Agendada)
+                    ->authorize(PermissaoAcao::qualquer('Update:VisitaInteressado'))
                     ->action(fn (VisitaInteressado $record) => $this->alterarStatus($record, StatusVisitaInteressado::Faltou)),
                 Action::make('enviarPesquisaWhatsapp')
                     ->label('Pesquisa WhatsApp')
@@ -148,6 +152,8 @@ class VisitasRelationManager extends RelationManager
                     ->color('success')
                     ->tooltip('Enviar pesquisa de satisfação pós-tour para a família pelo WhatsApp')
                     ->visible(fn (VisitaInteressado $record): bool => $record->status === StatusVisitaInteressado::Realizada)
+                    // A URL cria a pesquisa (obterOuCriarPesquisa) ao renderizar a tabela; sem autorização, só ver bastava para gravar.
+                    ->authorize(PermissaoAcao::qualquer('Update:VisitaInteressado'))
                     ->url(function (VisitaInteressado $record): ?string {
                         $pesquisa = $record->obterOuCriarPesquisa();
 

@@ -14,6 +14,7 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\GeminiAgentService;
 use App\Services\LeadScoreService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -30,6 +31,8 @@ class ImportarLeadIaAction
             ->label('Importar Lead com IA')
             ->icon('heroicon-o-sparkles')
             ->color('purple')
+            // Cria pessoa, lead e dependentes e aciona o Gemini: exige poder cadastrar leads.
+            ->authorize(PermissaoAcao::qualquer('Create:Interessado'))
             ->modalHeading('✨ Importar Lead a partir de Mensagem / Print (IA)')
             ->modalDescription('Cole uma mensagem de texto ou anexe uma captura de tela (print de conversa do WhatsApp, Instagram, e-mail). A IA da Google analisará o conteúdo e extrairá os dados automaticamente.')
             ->modalSubmitActionLabel('Analisar e Criar Lead')

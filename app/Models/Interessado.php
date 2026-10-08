@@ -390,46 +390,106 @@ class Interessado extends Model
     }
 
     /**
-     * Dias de validade do link do portal de pré-admissão. Cada vez que a equipe gera/copia o
-     * link, a validade é renovada (janela deslizante); links esquecidos expiram sozinhos.
+     * Validade máxima, em dias, do link do portal de pré-admissão (teto de revogação). Cada vez que a equipe
+     * gera/copia/envia o link a validade é renovada (janela deslizante), então um link esquecido ou enviado à
+     * pessoa errada deixa de valer sozinho em, no máximo, este prazo contado da última ação da equipe. Um link
+     * expirado nunca é "revivido": a equipe recebe um novo e a URL antiga continua morta.
      */
-    public const DIAS_VALIDADE_TOKEN_DOCUMENTOS = 90;
+    public const DIAS_VALIDADE_TOKEN_DOCUMENTOS = 7;
 
     /**
      * Leads cujo link do portal de documentos corresponde ao token e ainda não expirou.
-     * Token sem data de expiração (legado) segue válido até ser renovado pela equipe.
+     * Token sem data de expiração (emitido antes do controle de validade) não é mais aceito: a equipe
+     * reenvia o link e recebe um novo, com validade.
      */
     public function scopeComTokenDocumentosValido(Builder $query, string $token): Builder
     {
         return $query
             ->where('token_documentos', $token)
-            ->where(fn (Builder $q) => $q
-                ->whereNull('token_documentos_expira_em')
-                ->orWhere('token_documentos_expira_em', '>', now()));
+            ->where('token_documentos_expira_em', '>', now());
     }
 
     /**
-     * Retorna ou gera o token exclusivo para o portal de pré-admissão / documentos do candidato,
-     * renovando a validade do link.
+     * Leads cujo convite legado (`/quero-matricular/convite/{token}`) ainda está dentro da validade. Só serve para
+     * redirecionar links já enviados antes da unificação; o portal em si nunca aceita este token.
+     */
+    public function scopeComConviteLegadoVigente(Builder $query, string $token): Builder
+    {
+        return $query
+            ->where('token_convite', $token)
+            ->where('token_convite_expira_em', '>', now());
+    }
+
+    public function tokenDocumentosValido(): bool
+    {
+        return filled($this->token_documentos)
+            && $this->token_documentos_expira_em !== null
+            && $this->token_documentos_expira_em->isFuture();
+    }
+
+    /**
+     * Retorna o token do portal de pré-admissão / documentos do candidato, renovando a validade (janela
+     * deslizante de {@see self::DIAS_VALIDADE_TOKEN_DOCUMENTOS} dias). Se não há token, ou ele expirou (ou é
+     * legado, sem validade), emite um novo — o anterior deixa de existir.
      */
     public function obterOuCriarTokenDocumentos(): string
     {
-        $validade = now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
+        if ($this->tokenDocumentosValido()) {
+            $validade = now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
 
-        if (filled($this->token_documentos)) {
             // Evita escrita a cada abertura de modal: só renova quando a validade já encurtou um dia.
-            if ($this->token_documentos_expira_em === null || $this->token_documentos_expira_em->lt($validade->copy()->subDay())) {
+            if ($this->token_documentos_expira_em->lt($validade->copy()->subDay())) {
                 $this->update(['token_documentos_expira_em' => $validade]);
             }
 
             return $this->token_documentos;
         }
 
+        return $this->emitirTokenDocumentos();
+    }
+
+    /**
+     * Revoga na hora o link do portal e o convite legado e emite um novo link: a URL antiga passa a responder
+     * "link expirado". Use quando o link foi enviado à pessoa errada ou vazou.
+     */
+    public function rotacionarTokenDocumentos(): string
+    {
+        $token = $this->emitirTokenDocumentos();
+
+        $this->update(['token_convite' => null, 'token_convite_expira_em' => null]);
+
+        return $token;
+    }
+
+    /**
+     * Token do portal para quem abriu um convite legado (link antigo). Reaproveita o token em vigor sem renová-lo —
+     * abrir um link antigo não pode estender a validade — e, se não há um, emite um que não ultrapassa a validade
+     * do próprio convite.
+     */
+    public function tokenDocumentosParaConviteLegado(): string
+    {
+        if ($this->tokenDocumentosValido()) {
+            return $this->token_documentos;
+        }
+
+        $teto = now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
+        $validade = $this->token_convite_expira_em !== null && $this->token_convite_expira_em->lt($teto)
+            ? $this->token_convite_expira_em
+            : $teto;
+
+        return $this->emitirTokenDocumentos($validade);
+    }
+
+    private function emitirTokenDocumentos(?\DateTimeInterface $validade = null): string
+    {
         do {
             $token = Str::random(48);
         } while (static::where('token_documentos', $token)->exists());
 
-        $this->update(['token_documentos' => $token, 'token_documentos_expira_em' => $validade]);
+        $this->update([
+            'token_documentos' => $token,
+            'token_documentos_expira_em' => $validade ?? now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS),
+        ]);
 
         return $token;
     }

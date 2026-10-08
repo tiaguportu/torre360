@@ -7,7 +7,10 @@ namespace App\Filament\Resources\Interessados\RelationManagers;
 use App\Enums\SituacaoDocumento;
 use App\Jobs\ValidarDocumentoComIaJob;
 use App\Models\DocumentoInserido;
+use App\Models\Interessado;
 use App\Models\TipoDocumento;
+use App\Services\SincronizacaoCadastroDocumentoService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -85,10 +88,12 @@ class DocumentosCandidatoRelationManager extends RelationManager
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn ($query) => $query->with(['tipoDocumento', 'dependente']))
             ->headerActions([
+                // Ações personalizadas não herdam a policy: o link do portal dá acesso aos dados da família.
                 Action::make('linkPortal')
                     ->label('Copiar Link do Portal')
                     ->icon('heroicon-o-link')
                     ->color('primary')
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                     ->action(function () {
                         $url = $this->getOwnerRecord()->urlPortalDocumentos();
 
@@ -103,11 +108,14 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->label('Enviar Portal por WhatsApp')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
-                    ->url(function () {
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
+                    // Como action (e não ->url()): a URL do portal gera/renova o token, e isso não pode acontecer a cada
+                    // renderização da tabela — só quando a equipe de fato clica em enviar.
+                    ->action(function ($livewire): void {
                         $lead = $this->getOwnerRecord();
                         $telefone = preg_replace('/\D/', '', (string) ($lead->pessoa?->telefone ?? ''));
                         if (empty($telefone)) {
-                            return null;
+                            return;
                         }
                         if (! str_starts_with($telefone, '55')) {
                             $telefone = '55'.$telefone;
@@ -115,10 +123,11 @@ class DocumentosCandidatoRelationManager extends RelationManager
 
                         $urlPortal = $lead->urlPortalDocumentos();
                         $nome = $lead->pessoa?->nome ?? 'Família';
-                        $msg = rawurlencode("Olá, {$nome}! Para agilizarmos a pré-matrícula, por favor acesse nosso Portal de Admissão seguro para o envio dos documentos necessários:\n\n{$urlPortal}\n\nQualquer dúvida, estamos à disposição!");
+                        $dias = Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS;
+                        $msg = rawurlencode("Olá, {$nome}! Para agilizarmos a pré-matrícula, por favor acesse nosso Portal de Admissão seguro para o envio dos documentos necessários (o link vale por {$dias} dias):\n\n{$urlPortal}\n\nQualquer dúvida, estamos à disposição!");
 
-                        return "https://api.whatsapp.com/send?phone={$telefone}&text={$msg}";
-                    }, shouldOpenInNewTab: true)
+                        $livewire->js('window.open('.json_encode("https://api.whatsapp.com/send?phone={$telefone}&text={$msg}").", '_blank')");
+                    })
                     ->visible(fn () => filled($this->getOwnerRecord()->pessoa?->telefone)),
 
                 CreateAction::make()
@@ -234,64 +243,60 @@ class DocumentosCandidatoRelationManager extends RelationManager
                             ->label('Sincronizar com Cadastro')
                             ->icon('heroicon-o-arrow-path-rounded-square')
                             ->color('success')
+                            ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                             ->requiresConfirmation()
-                            ->modalDescription('Deseja preencher os dados cadastrais (CPF, RG, Data de Nascimento) a partir dos dados extraídos pela IA deste documento?')
+                            ->modalDescription('Deseja preencher os dados cadastrais (CPF, RG, Data de Nascimento) a partir dos dados extraídos pela IA deste documento? Só campos ainda vazios são preenchidos e valores inválidos são descartados.')
                             ->action(function (DocumentoInserido $record) {
-                                $extraidos = $record->dados_ia['dados_extraidos'] ?? [];
-                                if (empty($extraidos)) {
+                                $resultado = app(SincronizacaoCadastroDocumentoService::class)->sincronizar($record, auth()->id());
+
+                                if ($resultado['sem_dados']) {
                                     Notification::make()->title('Nenhum dado extraído disponível para sincronização.')->warning()->send();
 
                                     return;
                                 }
 
-                                $alterados = [];
+                                $descartados = $resultado['ignorados'] === []
+                                    ? null
+                                    : "Não aplicados:\n• ".implode("\n• ", $resultado['ignorados']);
 
-                                if ($record->interessado_dependente_id && $record->dependente) {
-                                    $dep = $record->dependente;
-                                    if (! empty($extraidos['data_nascimento']) && empty($dep->data_nascimento)) {
-                                        $dep->update(['data_nascimento' => $extraidos['data_nascimento']]);
-                                        $alterados[] = 'Data de nascimento do aluno ('.$extraidos['data_nascimento'].')';
-                                    }
-                                } else {
-                                    $pessoa = $record->interessado?->pessoa;
-                                    if ($pessoa) {
-                                        $updates = [];
-                                        if (! empty($extraidos['cpf']) && empty($pessoa->cpf)) {
-                                            $updates['cpf'] = $extraidos['cpf'];
-                                            $alterados[] = 'CPF ('.$extraidos['cpf'].')';
-                                        }
-                                        if (! empty($extraidos['rg']) && empty($pessoa->identidade)) {
-                                            $updates['identidade'] = $extraidos['rg'];
-                                            $alterados[] = 'RG ('.$extraidos['rg'].')';
-                                        }
-                                        if (! empty($extraidos['data_nascimento']) && empty($pessoa->data_nascimento)) {
-                                            $updates['data_nascimento'] = $extraidos['data_nascimento'];
-                                            $alterados[] = 'Data de nascimento ('.$extraidos['data_nascimento'].')';
-                                        }
-                                        if (! empty($updates)) {
-                                            $pessoa->update($updates);
-                                        }
-                                    }
-                                }
-
-                                if (! empty($alterados)) {
-                                    Notification::make()
+                                if ($resultado['alterados'] !== []) {
+                                    $notificacao = Notification::make()
                                         ->title('Cadastro sincronizado com sucesso!')
-                                        ->body('Campos atualizados: '.implode(', ', $alterados))
-                                        ->success()
-                                        ->send();
-                                } else {
-                                    Notification::make()
-                                        ->title('Os campos correspondentes já estavam preenchidos no cadastro.')
-                                        ->info()
-                                        ->send();
+                                        ->body(trim('Campos atualizados: '.implode(', ', $resultado['alterados'])."\n".$descartados))
+                                        ->success();
+
+                                    // O que foi descartado precisa ser lido: a notificação só some quando fechada.
+                                    if ($descartados !== null) {
+                                        $notificacao->persistent();
+                                    }
+
+                                    $notificacao->send();
+
+                                    return;
                                 }
+
+                                if ($descartados !== null) {
+                                    Notification::make()
+                                        ->title('Nenhum dado foi aplicado ao cadastro')
+                                        ->body($descartados)
+                                        ->warning()
+                                        ->persistent()
+                                        ->send();
+
+                                    return;
+                                }
+
+                                Notification::make()
+                                    ->title('Os campos correspondentes já estavam preenchidos no cadastro.')
+                                    ->info()
+                                    ->send();
                             }),
 
                         Action::make('reanalisar')
                             ->label('Reanalisar com IA')
                             ->icon('heroicon-o-sparkles')
                             ->color('warning')
+                            ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                             ->action(function (DocumentoInserido $record) {
                                 ValidarDocumentoComIaJob::dispatch($record->id);
                                 Notification::make()
@@ -307,6 +312,7 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (DocumentoInserido $record) => $record->status !== SituacaoDocumento::VERIFICADO)
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                     ->requiresConfirmation()
                     ->action(function (DocumentoInserido $record) {
                         $record->transitionTo(SituacaoDocumento::VERIFICADO);
@@ -323,6 +329,7 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (DocumentoInserido $record) => $record->status !== SituacaoDocumento::REJEITADO)
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                     ->form([
                         Textarea::make('motivo')
                             ->label('Motivo da Recusa (visível para os pais no portal)')

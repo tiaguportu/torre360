@@ -10,6 +10,7 @@ use App\Models\MensagemWhatsappTemplate;
 use App\Models\TipoContatoInteressado;
 use App\Services\ConsultorWhatsappService;
 use App\Services\CrmIaVendasService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -26,6 +27,7 @@ class CopilotoMensagemIaAction
             ->label('Copiloto WhatsApp IA')
             ->icon('heroicon-o-chat-bubble-left-ellipsis')
             ->color('success')
+            ->authorize(PermissaoAcao::qualquer('Update:Interessado', 'Create:HistoricoContato'))
             ->modalHeading(fn (Interessado $record): string => "💬 Copiloto IA: Mensagem para {$record->pessoa?->nome}")
             ->modalDescription('A IA analisa o histórico do lead e redige uma mensagem personalizada e persuasiva pronta para envio via WhatsApp.')
             ->modalWidth(Width::Large)

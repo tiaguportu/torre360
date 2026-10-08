@@ -107,6 +107,7 @@ class PortalDocumentosCandidatoSegurancaTest extends TestCase
         $token = $lead->obterOuCriarTokenDocumentos();
         $lead->refresh();
 
+        $this->assertSame(7, Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
         $this->assertEqualsWithDelta(
             now()->addDays(Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS)->timestamp,
             $lead->token_documentos_expira_em->timestamp,
@@ -116,13 +117,23 @@ class PortalDocumentosCandidatoSegurancaTest extends TestCase
         // Link quase vencendo: a equipe copiar o link de novo renova a janela, mantendo o mesmo token.
         $lead->update(['token_documentos_expira_em' => now()->addDay()]);
         $this->assertSame($token, $lead->fresh()->obterOuCriarTokenDocumentos());
-        $this->assertGreaterThan(now()->addDays(80), $lead->fresh()->token_documentos_expira_em);
+        $this->assertGreaterThan(now()->addDays(6), $lead->fresh()->token_documentos_expira_em);
+    }
 
-        // Link vencido volta a funcionar depois de renovado.
+    public function test_link_vencido_nao_e_revivido_a_equipe_recebe_um_novo(): void
+    {
+        $lead = $this->criarCandidato();
+        $antigo = $lead->obterOuCriarTokenDocumentos();
         $lead->update(['token_documentos_expira_em' => now()->subDay()]);
-        $this->get(route('candidato.documentos.show', ['token' => $token]))->assertStatus(410);
-        $lead->fresh()->obterOuCriarTokenDocumentos();
-        $this->get(route('candidato.documentos.show', ['token' => $token]))->assertOk();
+
+        $this->get(route('candidato.documentos.show', ['token' => $antigo]))->assertStatus(410);
+
+        $novo = $lead->fresh()->obterOuCriarTokenDocumentos();
+
+        $this->assertNotSame($antigo, $novo);
+        // A URL antiga continua morta mesmo depois de a equipe gerar o link outra vez.
+        $this->get(route('candidato.documentos.show', ['token' => $antigo]))->assertStatus(410);
+        $this->get(route('candidato.documentos.show', ['token' => $novo]))->assertOk();
     }
 
     public function test_portal_pede_que_buscadores_e_referer_ignorem_a_pagina(): void

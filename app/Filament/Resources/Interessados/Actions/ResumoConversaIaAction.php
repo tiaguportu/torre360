@@ -9,6 +9,7 @@ use App\Models\Interessado;
 use App\Models\TipoContatoInteressado;
 use App\Services\CrmIaVendasService;
 use App\Services\LeadScoreService;
+use App\Support\PermissaoAcao;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -24,6 +25,8 @@ class ResumoConversaIaAction
             ->label('Resumo IA de Conversa (WhatsApp)')
             ->icon('heroicon-o-sparkles')
             ->color('warning')
+            // Altera temperatura e próximo contato do lead além de acionar o Gemini.
+            ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
             ->modalHeading(fn (Interessado $record): string => "🤖 Síntese IA de Conversa: {$record->pessoa?->nome}")
             ->modalDescription('Cole trechos ou o histórico completo da conversa do WhatsApp. O Gemini irá extrair perfil, dores, dúvidas, acordos e temperatura.')
             ->modalWidth(Width::Large)

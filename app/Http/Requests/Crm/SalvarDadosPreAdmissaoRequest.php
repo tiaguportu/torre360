@@ -50,8 +50,9 @@ class SalvarDadosPreAdmissaoRequest extends FormRequest
     {
         if ($this->interessado === null) {
             $token = (string) $this->route('token');
-            $this->interessado = Interessado::comTokenDocumentosValido($token)->first()
-                ?? Interessado::where('token_convite', $token)->first();
+            // Só o token do portal em vigor: o convite legado não grava dados (apenas redireciona) e links expirados
+            // ou revogados caem aqui como "não autorizado".
+            $this->interessado = Interessado::comTokenDocumentosValido($token)->first();
         }
 
         return $this->interessado;

@@ -24,12 +24,13 @@ use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\ConsultorWhatsappService;
-use App\Services\ConviteMatriculaService;
 use App\Services\CrmIaVendasService;
 use App\Services\LeadFunilService;
 use App\Services\LeadScoreService;
+use App\Services\LinkPortalAdmissaoService;
 use App\Services\TermometroVagasService;
 use App\Services\VisitaInteressadoService;
+use App\Support\PermissaoAcao;
 use DomainException;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -403,6 +404,8 @@ class InteressadosTable
                     ->color('info')
                     ->iconButton()
                     ->tooltip('Registrar atendimento')
+                    // Ações personalizadas não herdam a policy: sem isto, quem só visualiza leads conseguiria gravar contatos.
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado', 'Create:HistoricoContato'))
                     ->modalHeading('Registrar Atendimento')
                     ->form([
                         Select::make('tipo_contato_interessado_id')
@@ -448,6 +451,8 @@ class InteressadosTable
                     ->iconButton()
                     ->tooltip('Enviar WhatsApp')
                     ->visible(fn (Interessado $record) => filled($record->pessoa?->telefone))
+                    // Gera a pesquisa de satisfação da visita e pode acionar o Gemini (custo): exige poder atender o lead.
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado', 'Create:HistoricoContato'))
                     ->modalHeading('Enviar Mensagem via WhatsApp')
                     ->form([
                         Select::make('mensagem_whatsapp_template_id')
@@ -539,6 +544,7 @@ class InteressadosTable
                         ->icon('heroicon-o-calendar-days')
                         ->color('info')
                         ->visible(fn (Interessado $record) => ! $record->status?->is_final)
+                        ->authorize(PermissaoAcao::qualquer('Update:Interessado', 'Create:VisitaInteressado'))
                         ->modalHeading('Agendar Visita à Escola')
                         ->form([
                             DateTimePicker::make('data_hora')
@@ -606,14 +612,17 @@ class InteressadosTable
                         }),
 
                     // Link único do candidato para preenchimento de pré-matrícula e upload de documentos.
-                    // O link é gerado no mountUsing (uma única vez) e reaproveitado enquanto for válido.
+                    // O link é gerado no mountUsing e reaproveitado (e renovado) enquanto for válido; vale no máximo
+                    // Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS dias após a última ação da equipe.
                     Action::make('gerarConvite')
                         ->label('Link de Admissão & Matrícula')
                         ->icon('heroicon-o-link')
                         ->color('success')
                         ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists())
+                        // Abrir o modal já gera/renova o token do portal (acesso aos dados da família): é uma escrita.
+                        ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                         ->modalHeading('Portal de Admissão & Matrícula Online')
-                        ->modalDescription(fn (Interessado $record): string => "Envie este link seguro e exclusivo para {$record->pessoa?->nome} preencher os dados cadastrais da família e anexar a documentação pelo celular.")
+                        ->modalDescription(fn (Interessado $record): string => "Envie este link seguro e exclusivo para {$record->pessoa?->nome} preencher os dados cadastrais da família e anexar a documentação pelo celular. O link vale por ".Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS.' dias (renovado sempre que você o copia ou envia).')
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Fechar')
                         ->form([
@@ -622,24 +631,23 @@ class InteressadosTable
                                 ->readOnly(),
                         ])
                         ->mountUsing(function (Schema $schema, Interessado $record): void {
-                            $link = app(ConviteMatriculaService::class)->obterOuGerarConvite($record);
-                            $schema->fill(['link' => $link]);
+                            $schema->fill(['link' => $record->urlPortalDocumentos()]);
                         }),
 
                     Action::make('regenerarConvite')
-                        ->label('Gerar novo link de pré-matrícula')
+                        ->label('Gerar novo link (revoga o anterior)')
                         ->icon('heroicon-o-arrow-path')
                         ->color('warning')
-                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && filled($record->token_convite) && $record->dependentes()->exists())
+                        ->visible(fn (Interessado $record) => ! $record->status?->is_ganho && $record->dependentes()->exists() && (filled($record->token_documentos) || filled($record->token_convite)))
                         ->authorize('update')
                         ->requiresConfirmation()
-                        ->modalHeading('Gerar novo link de pré-matrícula?')
-                        ->modalDescription('O link anterior deixa de funcionar. Use quando ele expirou ou foi enviado à pessoa errada.')
+                        ->modalHeading('Gerar novo link e revogar o anterior?')
+                        ->modalDescription('O link atual deixa de funcionar imediatamente (quem abrir a URL antiga verá "link expirado") e um novo é gerado, válido por '.Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS.' dias. Use quando o link foi enviado à pessoa errada ou vazou. Todo link do portal, de qualquer forma, expira sozinho em até '.Interessado::DIAS_VALIDADE_TOKEN_DOCUMENTOS.' dias.')
                         ->action(function (Interessado $record): void {
-                            $link = app(ConviteMatriculaService::class)->gerarConvite($record);
+                            $link = app(LinkPortalAdmissaoService::class)->gerarNovo($record, auth()->id());
 
                             Notification::make()
-                                ->title('Novo link gerado')
+                                ->title('Novo link gerado — o anterior foi revogado')
                                 ->body($link)
                                 ->success()
                                 ->persistent()

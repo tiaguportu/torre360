@@ -8,6 +8,7 @@ use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\TipoContatoInteressado;
 use App\Services\CrmIaVendasService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -25,6 +26,8 @@ class DossieIaAction
             ->label('Dossiê IA do Lead')
             ->icon('heroicon-o-sparkles')
             ->color('purple')
+            // Aciona o Gemini (custo) e grava no histórico do lead: ações personalizadas não herdam a policy.
+            ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
             ->modalHeading(fn (Interessado $record): string => "✨ Dossiê Estratégico IA: {$record->pessoa?->nome}")
             ->modalDescription('Análise profunda de perfil, dores, nível de maturidade e roteiro de vendas gerados em tempo real pela inteligência artificial.')
             ->modalWidth(Width::FiveExtraLarge)

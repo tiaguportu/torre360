@@ -260,6 +260,7 @@ class ConviteMatriculaHttpTest extends TestCase
             ->callTableAction('gerarConvite', $interessado)
             ->assertSuccessful();
 
-        $this->assertNotNull($interessado->fresh()->token_convite);
+        // A ação agora entrega o link do Portal de Admissão (token_documentos, válido por 7 dias).
+        $this->assertNotNull($interessado->fresh()->token_documentos);
     }
 }

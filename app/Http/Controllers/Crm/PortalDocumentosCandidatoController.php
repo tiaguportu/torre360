@@ -39,13 +39,15 @@ class PortalDocumentosCandidatoController extends Controller
      */
     public function redirecionarLegadoConvite(string $token): RedirectResponse|Response
     {
-        $interessado = $this->localizarInteressado($token);
+        // Só convites ainda dentro da validade (7 dias) redirecionam; depois disso o link antigo está morto.
+        $interessado = Interessado::comConviteLegadoVigente($token)->first();
 
         if (! $interessado) {
             return $this->linkInvalido();
         }
 
-        $tokenAlvo = $interessado->obterOuCriarTokenDocumentos();
+        // Não renova a validade: abrir um link antigo não pode estender o acesso.
+        $tokenAlvo = $interessado->tokenDocumentosParaConviteLegado();
 
         return redirect()->route('candidato.documentos.show', ['token' => $tokenAlvo]);
     }
@@ -304,12 +306,12 @@ class PortalDocumentosCandidatoController extends Controller
     }
 
     /**
-     * Resolve o candidato pelo token do link, ignorando links expirados.
+     * Resolve o candidato pelo token do portal, ignorando links expirados ou revogados. O token do convite legado
+     * não abre o portal diretamente: ele só passa pelo redirecionamento acima, que respeita a validade.
      */
     private function localizarInteressado(string $token): ?Interessado
     {
-        return Interessado::comTokenDocumentosValido($token)->first()
-            ?? Interessado::where('token_convite', $token)->first();
+        return Interessado::comTokenDocumentosValido($token)->first();
     }
 
     /**
