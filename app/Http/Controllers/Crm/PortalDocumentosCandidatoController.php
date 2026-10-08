@@ -84,6 +84,7 @@ class PortalDocumentosCandidatoController extends Controller
             $abaAtiva = 'documentos';
         }
         $statusAbas = $interessado->resumoPendenciasPortal();
+        $etapaFamiliaConcluida = $interessado->isEtapaFamiliaConcluida();
 
         return view('candidato.portal-documentos', [
             'interessado' => $interessado,
@@ -94,6 +95,7 @@ class PortalDocumentosCandidatoController extends Controller
             'documentosInseridos' => $documentosInseridos,
             'progresso' => $progresso,
             'todosDocsContratoEntregues' => $todosDocsContratoEntregues,
+            'etapaFamiliaConcluida' => $etapaFamiliaConcluida,
             'token' => $token,
             'abaAtiva' => $abaAtiva,
             'statusAbas' => $statusAbas,
@@ -117,6 +119,12 @@ class PortalDocumentosCandidatoController extends Controller
 
         if (! $interessado) {
             return redirect()->route('candidato.documentos.show', ['token' => $token]);
+        }
+
+        if ($interessado->isEtapaFamiliaConcluida()) {
+            return redirect()
+                ->route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados'])
+                ->with('erro', 'Sua pré-matrícula já foi enviada e está sob análise da secretaria. Para alterar qualquer informação cadastral, favor entrar em contato diretamente com a secretaria.');
         }
 
         $validated = $request->validated();
@@ -143,6 +151,23 @@ class PortalDocumentosCandidatoController extends Controller
 
         if (! $interessado) {
             return $this->linkInvalido();
+        }
+
+        // Quando a etapa da família já foi concluída, bloqueia novos envios a menos que o documento tenha sido rejeitado
+        if ($interessado->isEtapaFamiliaConcluida()) {
+            $tipoId = (int) $request->input('tipo_documento_id');
+            $existente = DocumentoInserido::query()
+                ->where('interessado_id', $interessado->id)
+                ->where('tipo_documento_id', $tipoId)
+                ->whereNull('matricula_id')
+                ->first();
+
+            if (! $existente || $existente->status !== SituacaoDocumento::REJEITADO) {
+                return redirect()->route('candidato.documentos.show', [
+                    'token' => $token,
+                    'aba' => 'documentos',
+                ])->with('aviso', 'Sua documentação já foi enviada e está sob análise da Secretaria Escolar.');
+            }
         }
 
         $validated = $request->validate([
@@ -258,6 +283,13 @@ class PortalDocumentosCandidatoController extends Controller
 
         if ($documento->status === SituacaoDocumento::VERIFICADO) {
             return back()->with('erro', 'Documentos já verificados pela secretaria não podem ser excluídos diretamente.');
+        }
+
+        if ($interessado->isEtapaFamiliaConcluida() && $documento->status !== SituacaoDocumento::REJEITADO) {
+            return redirect()->route('candidato.documentos.show', [
+                'token' => $token,
+                'aba' => 'documentos',
+            ])->with('aviso', 'Documentos em análise não podem ser excluídos.');
         }
 
         if ($documento->arquivo_path && Storage::disk('local')->exists($documento->arquivo_path)) {

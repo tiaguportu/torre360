@@ -1192,6 +1192,9 @@ Gestão do acervo de livros e controle de empréstimos e devoluções para a com
   - `capa`: Caminho da imagem da capa armazenada no disco público (`livros/capas/...`). Suporta upload manual e download automático via APIs (Open Library, BrasilAPI e Google Books).
   - `quantidade_total`: Total de cópias físicas pertencentes ao acervo.
   - `quantidade_disponivel`: Quantidade de exemplares livres para novos empréstimos.
+  - `codigo`: Código de tombo ou chamada único do exemplar/obra (ex: `LIV-0001`), facilitando leitura por leitor de código de barras.
+  - `faixa_etaria`: Classificação etária indicativa (ex: `Livre`, `4 a 6 anos`, `7 a 9 anos`, `10 a 12 anos`, `13 a 15 anos`, `16+ anos`).
+  - `segmentos`: Array JSON com os segmentos de ensino indicados (`educacao_infantil`, `fundamental_1`, `fundamental_2`, `ensino_medio`).
 - **Relacionamentos:**
   - HasMany `emprestimos`.
 
@@ -1209,4 +1212,27 @@ Gestão do acervo de livros e controle de empréstimos e devoluções para a com
   - BelongsTo `livro`.
   - BelongsTo `pessoa`.
 
+### `inventarios_acervo`
+- **Representa:** Sessões de auditoria física e inventário periódicas do acervo da biblioteca.
+- **Campos Principais:**
+  - `titulo`: Nome descritivo da conferência (ex: *Inventário Anual 2026*).
+  - `data_inicio`: Data em que a auditoria foi aberta.
+  - `data_fim`: Data de encerramento da contagem física.
+  - `status`: Situação do inventário (`em_andamento`, `concluido`).
+  - `user_id`: FK `users.id` (colaborador/bibliotecário responsável).
+  - `observacoes`: Anotações gerais da auditoria.
+- **Relacionamentos:**
+  - HasMany `inventarioItens`.
+  - BelongsTo `user`.
 
+### `inventario_itens`
+- **Representa:** Registros de livros fisicamente localizados e conferidos (bipados) durante uma sessão de auditoria.
+- **Campos Principais:**
+  - `inventario_id`: FK `inventarios_acervo.id` (cascade).
+  - `livro_id`: FK `livros.id` (cascade).
+  - `bipado_em`: Data e hora exata da conferência óptica/leitura.
+  - `quantidade_conferida`: Quantidade física contada.
+  - `user_id`: FK `users.id` do conferente.
+- **Relacionamentos:**
+  - BelongsTo `inventario`.
+  - BelongsTo `livro`.

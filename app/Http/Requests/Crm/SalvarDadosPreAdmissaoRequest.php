@@ -8,6 +8,7 @@ use App\Enums\Sexo;
 use App\Models\Interessado;
 use App\Rules\Cpf;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SalvarDadosPreAdmissaoRequest extends FormRequest
 {
@@ -15,7 +16,34 @@ class SalvarDadosPreAdmissaoRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->getInteressado() !== null;
+        $interessado = $this->getInteressado();
+
+        if ($interessado === null) {
+            return false;
+        }
+
+        if ($interessado->isEtapaFamiliaConcluida()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function failedAuthorization(): void
+    {
+        $interessado = $this->getInteressado();
+
+        if ($interessado && $interessado->isEtapaFamiliaConcluida()) {
+            $token = (string) $this->route('token');
+            throw new HttpResponseException(
+                redirect()->route('candidato.documentos.show', [
+                    'token' => $token,
+                    'aba' => 'documentos',
+                ])->with('aviso', 'Seus dados cadastrais já foram enviados e estão em análise pela Secretaria Escolar.')
+            );
+        }
+
+        parent::failedAuthorization();
     }
 
     public function getInteressado(): ?Interessado

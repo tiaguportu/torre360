@@ -1,6 +1,8 @@
 @php
     $inserido = $documentosInseridos->firstWhere('tipo_documento_id', $tipo->id);
     $status = $inserido?->status;
+    $etapaFamiliaConcluida = $etapaFamiliaConcluida ?? false;
+    $bloquearUpload = $etapaFamiliaConcluida && $status !== \App\Enums\SituacaoDocumento::REJEITADO;
 @endphp
 
 <div class="bg-white rounded-2xl border transition-all duration-200 p-5 shadow-xs
@@ -76,8 +78,6 @@
         </div>
     @endif
 
-
-
     <!-- Ações e Formulário de Upload -->
     <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         @if($inserido)
@@ -90,7 +90,15 @@
         @endif
 
         <div class="flex items-center gap-2">
-            @if($status !== \App\Enums\SituacaoDocumento::VERIFICADO)
+            @if($status === \App\Enums\SituacaoDocumento::VERIFICADO)
+                <span class="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                    <span>🔒</span> Documento homologado
+                </span>
+            @elseif($bloquearUpload)
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                    <span>🔒</span> Em análise pela Secretaria
+                </span>
+            @else
                 <form action="{{ route('candidato.documentos.upload', ['token' => $token]) }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
                     @csrf
                     <input type="hidden" name="tipo_documento_id" value="{{ $tipo->id }}">
@@ -123,10 +131,6 @@
                         </button>
                     </form>
                 @endif
-            @else
-                <span class="text-xs text-emerald-700 font-semibold flex items-center gap-1">
-                    <span>🔒</span> Documento homologado
-                </span>
             @endif
         </div>
     </div>

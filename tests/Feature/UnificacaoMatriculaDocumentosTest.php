@@ -734,4 +734,130 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
         $response2->assertDontSee('Pré-análise Automática (IA)');
         $response2->assertDontSee('IA estão processando');
     }
+
+    public function test_portal_exibe_banner_de_conclusao_e_bloqueia_edicoes_e_uploads_em_modo_somente_leitura_quando_etapa_familia_concluida(): void
+    {
+        $interessado = $this->criarLead('Juliana Paes');
+        $token = $interessado->obterOuCriarTokenDocumentos();
+        $curso = Curso::first();
+
+        $docObrigatorio = TipoDocumento::create([
+            'nome' => 'Certidão de Nascimento do Aluno',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+        ]);
+        $docObrigatorio->cursos()->attach($curso->id);
+
+        // 1. Antes de enviar: etapa incompleta, formulários editáveis e sem banner de conclusão
+        $this->assertFalse($interessado->isEtapaFamiliaConcluida());
+
+        $resAbaDadosIncompleta = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']));
+        $resAbaDadosIncompleta->assertOk();
+        $resAbaDadosIncompleta->assertDontSee('Etapa da Família Concluída');
+        $resAbaDadosIncompleta->assertSee('Salvar Dados e Avançar para Documentos');
+
+        $resAbaDocsIncompleta = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resAbaDocsIncompleta->assertOk();
+        $resAbaDocsIncompleta->assertDontSee('Etapa da Família Concluída');
+        $resAbaDocsIncompleta->assertSee('Enviar Arquivo');
+
+        // 2. Família conclui preenchimento dos dados e anexa o documento obrigatório
+        $interessado->update([
+            'dados_pre_matricula' => [
+                'responsaveis' => [
+                    [
+                        'nome' => 'Juliana Paes',
+                        'cpf' => '12345678901',
+                        'tipo_vinculo_id' => 1,
+                        'is_financeiro' => true,
+                    ],
+                ],
+                'alunos' => [
+                    $interessado->dependentes->first()->id => [
+                        'serie_id' => $interessado->dependentes->first()->serie_id,
+                    ],
+                ],
+            ],
+        ]);
+
+        $docInserido = DocumentoInserido::create([
+            'interessado_id' => $interessado->id,
+            'tipo_documento_id' => $docObrigatorio->id,
+            'status' => SituacaoDocumento::EM_ANALISE,
+            'arquivo_path' => 'docs/certidao.pdf',
+            'nome_arquivo_original' => 'certidao.pdf',
+        ]);
+
+        $interessado->refresh();
+        $this->assertTrue($interessado->isEtapaFamiliaConcluida());
+
+        // 3. Verificação na Aba "1. Cadastro"
+        $resAbaDados = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'dados']));
+        $resAbaDados->assertOk();
+
+        // Banner global de Etapa da Família Concluída
+        $resAbaDados->assertSee('Etapa da Família Concluída');
+        $resAbaDados->assertSee('Aguardando Validação da Secretaria');
+        $resAbaDados->assertSee('Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso. 🎉');
+        $resAbaDados->assertSee('Modo Somente Leitura');
+
+        // Aviso específico na aba de cadastro
+        $resAbaDados->assertSee('Seus dados já foram enviados e estão sob análise da secretaria. Edições estão desativadas.');
+
+        // Fieldset desabilitado
+        $resAbaDados->assertSee('<fieldset class="border border-slate-200 rounded-xl p-4 space-y-4" disabled>', false);
+
+        // Botão de submit substituído pelo botão de consulta
+        $resAbaDados->assertDontSee('Salvar Dados e Avançar para Documentos');
+        $resAbaDados->assertSee('Consultar Documentos Enviados');
+
+        // 4. Verificação na Aba "2. Documentos"
+        $resAbaDocs = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resAbaDocs->assertOk();
+        $resAbaDocs->assertSee('Etapa da Família Concluída');
+        $resAbaDocs->assertSee('Documentação Recebida com Sucesso! 🎉');
+
+        // Documento deve exibir badge de bloqueio em análise
+        $resAbaDocs->assertSee('Em análise pela Secretaria');
+        // Botão "Substituir" ou novo formulário de upload não deve estar visível
+        $resAbaDocs->assertDontSee('Substituir');
+        $resAbaDocs->assertDontSee('Remover');
+
+        // 5. Teste de segurança no Backend: tentativa de submeter POST na aba dados
+        $resPostDados = $this->post(route('candidato.documentos.dados', ['token' => $token]), [
+            'responsavel' => [
+                'nome' => 'Tentativa de Alteração',
+                'cpf' => '123.456.789-01',
+                'tipo_vinculo_id' => 1,
+            ],
+        ]);
+        $resPostDados->assertRedirect(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resPostDados->assertSessionHas('aviso', 'Seus dados cadastrais já foram enviados e estão em análise pela Secretaria Escolar.');
+
+        // 6. Teste de segurança no Backend: tentativa de novo upload ou exclusão
+        $resUpload = $this->post(route('candidato.documentos.upload', ['token' => $token]), [
+            'tipo_documento_id' => $docObrigatorio->id,
+        ]);
+        $resUpload->assertRedirect(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resUpload->assertSessionHas('aviso', 'Sua documentação já foi enviada e está sob análise da Secretaria Escolar.');
+
+        $resDelete = $this->delete(route('candidato.documentos.remover', ['token' => $token, 'documento' => $docInserido->id]));
+        $resDelete->assertRedirect(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resDelete->assertSessionHas('aviso', 'Documentos em análise não podem ser excluídos.');
+
+        // 7. Se a secretaria rejeitar um documento com observação, a pendência ressurge e reabre o upload
+        $docInserido->update([
+            'status' => SituacaoDocumento::REJEITADO,
+            'observacoes' => 'Documento ilegível, favor enviar foto com melhor iluminação.',
+        ]);
+
+        $interessado->refresh();
+        $this->assertFalse($interessado->isEtapaFamiliaConcluida());
+
+        $resAbaDocsRejeitado = $this->get(route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']));
+        $resAbaDocsRejeitado->assertOk();
+        $resAbaDocsRejeitado->assertSee('Necessita Correção');
+        $resAbaDocsRejeitado->assertSee('Documento ilegível, favor enviar foto com melhor iluminação.');
+        $resAbaDocsRejeitado->assertSee('Substituir');
+        $resAbaDocsRejeitado->assertSee('Remover');
+    }
 }

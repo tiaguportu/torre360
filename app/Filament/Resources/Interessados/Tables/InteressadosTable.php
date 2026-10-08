@@ -494,7 +494,8 @@ class InteressadosTable
                                 interessado: $record,
                                 objetivo: 'primeiro_contato',
                                 tom: 'acolhedor',
-                                templateBase: $mensagem
+                                templateBase: $mensagem,
+                                instrucoesModelo: $template?->instrucoes_ia,
                             );
 
                             if (filled($linkPesquisa) && ! str_contains($mensagem, $linkPesquisa)) {

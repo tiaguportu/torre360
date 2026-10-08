@@ -2580,6 +2580,19 @@ O **Portal Unificado de Admissão** consolida em um único link seguro o acolhim
      - **Seção de Documentos Obrigatórios em Destaque:** Os documentos indispensáveis são exibidos abertos e destacados no topo.
      - **Seções de Histórico e Opcionais Colapsadas por Padrão:** As seções *'Documentos para o Histórico Escolar'* (documentação acadêmica) e *'Documentos Opcionais / Complementares'* (envio facultativo) ficam recolhidas/colapsadas por padrão, evitando que os responsáveis tenham dúvidas se precisam ou não providenciar esses arquivos imediatamente para a efetivação inicial. O responsável pode expandi-las a qualquer momento para anexar comprovantes adicionais.
    - **Contrato Escolar (Fase Posterior da Secretaria/Financeiro):** A etapa e aba de contrato foi deliberadamente mantida fora deste link de pré-matrícula por enquanto, aguardando a parametrização dos planos de anuidade escolar e parcelas financeiras pela secretaria/financeiro. O portal concentra a família estritamente no envio cadastral e documental.
+
+### 50.1.1 Conclusão da Etapa da Família & Modo Somente Leitura
+Quando a família completa todas as suas obrigações (dados cadastrais preenchidos e todos os documentos obrigatórios para contrato anexados), o portal entra automaticamente no estado de **Etapa da Família Concluída**:
+1. **Banner Comemorativo Global:**
+   - Em todas as abas, um banner verde destacado no topo anuncia: *"Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso. 🎉"* acompanhado do status *"⏳ Aguardando Validação da Secretaria"*.
+   - A mensagem deixa explícito para os pais que a parte deles terminou e que o processo agora é de responsabilidade da equipe interna da escola.
+2. **Consulta Segura em Modo Somente Leitura:**
+   - Caso a família queira revisar o que foi enviado, ela pode navegar livremente pelo portal, porém sem possibilidade de alterações:
+   - **Na Aba '1. Cadastro':** Todos os campos de responsáveis, endereço e dependentes são desabilitados (`disabled`). Um alerta no topo informa que os dados estão sob análise da secretaria e o botão de salvar é substituído por um atalho para consulta dos documentos. Tentativas de submissão direta via formulário são bloqueadas no backend com aviso amigável.
+   - **Na Aba '2. Documentos':** Os arquivos enviados recebem a etiqueta visual `🔒 Em análise pela Secretaria`. Os botões de upload (*"Substituir"*) e de exclusão (*"Remover"*) são ocultados e bloqueados no servidor.
+3. **Tratamento de Documentos Rejeitados:**
+   - Se a secretaria identificar um problema em algum arquivo e marcá-lo como `Necessita Correção` (`REJEITADO`) com justificativa, o portal reabre automaticamente a opção de reenvio **exclusivamente para aquele documento específico**, exibindo com clareza o motivo informado pela secretaria e permitindo que a família regularize a pendência sem afetar o restante da documentação.
+
 3. **Identidade Visual Torre360 no Portal:**
    - **Logo Oficial:** O header exibe a logo oficial do Torre360 (`logo-adaptative.svg`), reforçando a confiabilidade visual da instituição.
    - **Favicon Multi-dispositivo:** Configurado favicon SVG e PNG nas abas dos navegadores.
@@ -2662,9 +2675,36 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
    - **Quantidade Total:** Quantidade física de cópias que a biblioteca possui.
    - **Quantidade Disponível:** Quantidade livre para empréstimos imediatos (atualizada automaticamente conforme os empréstimos e devoluções forem registrados).
 
-### 51.2 Visualização e Listagem (`/admin/livros`)
-- A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, ISBN e o saldo de exemplares disponíveis sobre o total (com destaque visual em verde/vermelho).
+### 51.2 Visualização, Etiquetas e Listagem (`/admin/livros`)
+- A tabela de livros exibe a miniatura da **Foto da Capa**, Título, Autor, Categoria, Faixa Etária, ISBN, Código de Tombo e o saldo de exemplares disponíveis sobre o total.
+- **Impressão de Etiqueta Individual:** Clique no botão **"Etiqueta"** na linha de qualquer livro para gerar a etiqueta com código de barras, autor, título e faixa etária em nova aba para impressão imediata.
+- **Impressão em Lote:** Selecione múltiplos livros com as caixas de seleção e clique em **"Imprimir Etiquetas em Lote"** na barra de ações coletivas.
 - Em dispositivos móveis, a listagem se adapta em formato de cards responsivos (`stackedOnMobile`).
+
+### 51.3 Balcão de Circulação Ágil (`/admin/circulacao-biblioteca`)
+Projetado para eliminar cliques no atendimento de balcão da biblioteca escolar:
+1. **Empréstimo Rápido:**
+   - **Busca Rápida do Estudante:** Como o aluno não possui crachá, digite o nome do aluno ou turma no campo com filtro imediato. O sistema já exibe o resumo com quantos livros o aluno já possui em mãos e se há algum atraso.
+   - **Bipagem do Livro:** Com foco automático no leitor óptico, bipe o código de barras ou ISBN do livro (ou digite e pressione Enter). O empréstimo é gerado instantaneamente com o prazo configurado (padrão 14 dias).
+2. **Devolução em 1 Bip:**
+   - Ao receber o livro no balcão, o bibliotecário não precisa pesquisar o aluno. Basta apontar o leitor de código de barras para o livro no campo de devolução. O sistema localiza o empréstimo ativo correspondente, dá baixa imediata e recoloca a obra no acervo disponível.
+   - Um histórico em tempo real na tela registra todas as operações da sessão.
+
+### 51.4 Integração Pedagógica: Perfil do Aluno e Preceptoria
+- **Histórico de Leitura na Ficha do Estudante:** Em `/admin/matriculas/{id}/edit`, a aba **Histórico de Leitura (Biblioteca)** lista todas as obras retiradas pelo aluno com foto da capa, autor, datas de retirada/devolução e status.
+- **Acompanhamento na Preceptoria:** Na tela de detalhes da preceptoria (`/admin/preceptorias/{id}`), clique no botão **"Histórico de Leitura"** para abrir o modal de acompanhamento de leituras do estudante, permitindo ao professor preceptor dialogar sobre os livros lidos no período.
+- **Faixa Etária e Segmento Escolar:** Cada livro pode ser classificado por idade recomendada (*Livre*, *0 a 3 anos*, *4 a 6 anos*, *7 a 9 anos*, *10 a 12 anos*, *13 a 15 anos*, *16+ anos*) e por segmentos escolares indicados (*Educação Infantil*, *Ensino Fundamental I*, *Ensino Fundamental II*, *Ensino Médio*).
+
+### 51.5 Auditoria e Inventário do Acervo (`/admin/inventarios`)
+Permite conferir fisicamente as prateleiras da biblioteca com leitor óptico e detectar livros perdidos:
+1. Acesse **Biblioteca → Inventários de Acervo** e clique em **"Novo Inventário"**.
+2. Na tela de conferência rápida, bipe os livros nas prateleiras um após o outro sem tocar no teclado.
+3. O painel calcula em tempo real:
+   - **Total de Títulos Cadastrados**
+   - **Exemplares Presentes na Estante (Bipados)**
+   - **Exemplares em Circulação (Emprestados no momento com alunos)**
+   - **Livros Faltantes / Extraviados:** Tabela que aponta exatamente quais livros cadastrados não foram localizados na estante nem constam em empréstimos ativos.
+4. Conclua a auditoria clicando em **"Concluir Auditoria"** para fechar o relatório de contagem física.
 
 ---
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MensagemWhatsappTemplates\Schemas;
 
+use App\Models\MensagemWhatsappTemplate;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -33,6 +34,21 @@ class MensagemWhatsappTemplateForm
                             ->default(true)
                             ->helperText('Modelos ativos aparecem no disparo rápido e como referência no Copiloto IA.'),
                     ])
+                    ->columnSpanFull(),
+
+                Section::make('Instruções para a IA (opcional)')
+                    ->description('Como o Copiloto IA deve tratar este modelo. Somam-se às regras gerais do Copiloto e não afetam o envio direto do modelo.')
+                    ->schema([
+                        Textarea::make('instrucoes_ia')
+                            ->label('Instruções específicas deste modelo')
+                            ->placeholder('Ex: Manter o prazo de matrícula exatamente como no texto. Citar o período integral. Não oferecer desconto.')
+                            ->helperText('Valem quando o Copiloto IA usa este modelo como base. Para tom, persona e regras que valem para todas as mensagens, use "Comportamento do Copiloto IA".')
+                            ->rows(4)
+                            ->maxLength(1500)
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(fn (?MensagemWhatsappTemplate $record): bool => blank($record?->instrucoes_ia))
                     ->columnSpanFull(),
             ]);
     }

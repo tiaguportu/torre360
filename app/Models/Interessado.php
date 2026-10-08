@@ -676,4 +676,15 @@ class Interessado extends Model
             ],
         ];
     }
+
+    /**
+     * Indica se a etapa de responsabilidade da família na pré-matrícula foi concluída:
+     * dados cadastrais preenchidos e todos os documentos obrigatórios entregues e em análise ou aprovados.
+     */
+    public function isEtapaFamiliaConcluida(?int $cursoId = null): bool
+    {
+        $resumo = $this->resumoPendenciasPortal($cursoId);
+
+        return ! $resumo['dados']['tem_pendencia'] && ! $resumo['documentos']['tem_pendencia'];
+    }
 }

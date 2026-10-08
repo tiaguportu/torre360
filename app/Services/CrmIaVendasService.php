@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\StatusVisitaInteressado;
+use App\Models\CopilotoIaConfiguracao;
 use App\Models\Interessado;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
@@ -205,6 +206,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         string $tom = 'acolhedor',
         ?string $instrucoesExtras = null,
         ?string $templateBase = null,
+        ?string $instrucoesModelo = null,
     ): string {
         $interessado->loadMissing([
             'pessoa',
@@ -217,39 +219,15 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
         $contexto = $this->montarContextoLead($interessado);
 
-        $objetivoDescricao = match ($objetivo) {
-            'primeiro_contato' => 'Primeiro contato acolhedor após o cadastro de interesse no site ou indicação, apresentando a escola e iniciando a conversa de forma amigável.',
-            'convite_visita' => 'Convite caloroso para a família fazer um Tour Pedagógico presencial na escola, conhecendo a estrutura e a proposta para os filhos.',
-            'quebra_objecao' => 'Superação de receios ou dúvidas levantadas pela família (como preço, adaptação escolar, rotina, segurança ou metodologia), com argumentos empáticos e seguros.',
-            'reativacao' => 'Reengajamento gentil de uma família que parou de responder há alguns dias, mostrando que a escola se lembra com carinho deles e verificando se ainda buscam vaga.',
-            'fechamento' => 'Incentivo ao fechamento da matrícula, destacando a reserva da vaga para a série desejada e oferecendo auxílio para o preenchimento da pré-matrícula online.',
-            default => 'Contato consultivo de acompanhamento da família.',
-        };
+        $config = CopilotoIaConfiguracao::valores();
 
-        $tomDescricao = match ($tom) {
-            'objetivo' => 'Direto, profissional, conciso e prático.',
-            'inspirador' => 'Entusiasta, acolhedor, vibrante e motivador.',
-            default => 'Caloroso, acolhedor, empático, educado e consultivo (ideal para famílias escolares).',
-        };
-
-        $instrucaoModelo = '';
-        if (filled($templateBase)) {
-            $instrucaoModelo = "\n10. A escola forneceu um MODELO INSTITUCIONAL DE REFERÊNCIA. Você DEVE utilizá-lo como base para o comunicado, adaptando-o e enriquecendo-o de forma humana, empática e fluida para este lead específico, mantendo os pontos institucionais principais mas eliminando qualquer frieza ou marcação genérica de template.";
-        }
-
-        $systemInstruction = "Você é o Copiloto de Atendimento e Vendas Educacionais da Escola Torre de Marfim.
-Sua função é redigir uma mensagem de WhatsApp sob medida para o responsável de um aluno interessado.
-
-Diretrizes obrigatórias da mensagem:
-1. Deve ser pronta para envio pelo WhatsApp: use quebras de linha naturais, formatação sutil do WhatsApp (*negrito* em palavras-chave) e alguns emojis amigáveis (sem exagero).
-2. Dirija-se ao responsável pelo primeiro nome.
-3. Mencione com naturalidade o nome do(s) filho(s) e a(s) série(s) pretendida(s), se constarem nos dados.
-4. O objetivo deste contato é: {$objetivoDescricao}.
-5. Tom de voz desejado: {$tomDescricao}.
-6. Termine SEMPRE com uma pergunta aberta e convidativa que incentive a resposta da família.
-7. NÃO use marcadores de template genéricos (como [Nome]), a mensagem deve estar 100% preenchida com os dados reais.
-8. NÃO inclua links, URLs nem endereços de sites na mensagem.
-9. Retorne APENAS o texto puro da mensagem que será copiado e colado no WhatsApp, sem aspas, sem introduções ou explicações.{$instrucaoModelo}".self::REGRA_DADOS_NAO_CONFIAVEIS;
+        $systemInstruction = $this->montarSystemInstructionCopiloto(
+            objetivo: $objetivo,
+            tom: $tom,
+            usaModeloBase: filled($templateBase),
+            instrucoesModelo: $instrucoesModelo,
+            config: $config,
+        );
 
         $userPrompt = "Dados completos do lead:\n".self::delimitarDadosNaoConfiaveis($contexto, 'dados_do_lead')."\n";
         if (filled($templateBase)) {
@@ -275,8 +253,8 @@ Diretrizes obrigatórias da mensagem:
                 ],
             ],
             'generationConfig' => [
-                'temperature' => 0.4,
-                'maxOutputTokens' => 800,
+                'temperature' => (float) $config['gemini']['temperature'],
+                'maxOutputTokens' => (int) $config['gemini']['max_output_tokens'],
             ],
         ];
 
@@ -306,6 +284,67 @@ Diretrizes obrigatórias da mensagem:
 
             return "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da Escola Torre de Marfim. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?";
         }
+    }
+
+    /**
+     * Monta a system instruction do Copiloto. Persona, diretrizes e extras vêm da configuração editável
+     * (config/copiloto_ia.php + CopilotoIaConfiguracao); a linha de objetivo/tom, o contrato de saída
+     * (texto puro, sem links) e a regra de segurança contra prompt injection ficam fixos no código.
+     *
+     * @param  array<string, mixed>|null  $config  Configuração a usar no lugar da salva (pré-visualização).
+     */
+    public function montarSystemInstructionCopiloto(
+        string $objetivo,
+        string $tom = 'acolhedor',
+        bool $usaModeloBase = false,
+        ?string $instrucoesModelo = null,
+        ?array $config = null,
+    ): string {
+        $config ??= CopilotoIaConfiguracao::valores();
+
+        $objetivoDescricao = $config['objetivos'][$objetivo] ?? 'Contato consultivo de acompanhamento da família.';
+        $tomDescricao = $config['tons'][$tom] ?? $config['tons']['acolhedor'];
+
+        $regras = collect($config['diretrizes'])
+            ->map(fn ($regra): string => trim((string) $regra))
+            ->filter()
+            ->values()
+            ->all();
+
+        $regras[] = 'O objetivo deste contato é: '.rtrim(trim($objetivoDescricao), '.').'.';
+        $regras[] = 'Tom de voz desejado: '.rtrim(trim($tomDescricao), '.').'.';
+        $regras[] = 'NÃO inclua links, URLs nem endereços de sites na mensagem.';
+        $regras[] = 'Retorne APENAS o texto puro da mensagem que será copiado e colado no WhatsApp, sem aspas, sem introduções ou explicações.';
+
+        if ($usaModeloBase) {
+            $regras[] = 'A escola forneceu um MODELO INSTITUCIONAL DE REFERÊNCIA. Você DEVE utilizá-lo como base para o comunicado, adaptando-o e enriquecendo-o de forma humana, empática e fluida para este lead específico, mantendo os pontos institucionais principais mas eliminando qualquer frieza ou marcação genérica de template.';
+        }
+
+        $numeradas = collect($regras)
+            ->map(fn (string $regra, int $i): string => ($i + 1).'. '.$regra)
+            ->implode("\n");
+
+        $persona = filled(trim((string) ($config['persona'] ?? '')))
+            ? trim((string) $config['persona'])
+            : trim((string) config('copiloto_ia.persona'));
+
+        $texto = $persona."\n\nDiretrizes obrigatórias da mensagem:\n".$numeradas;
+
+        $extras = [
+            'Sempre mencione ou destaque, quando fizer sentido para este lead' => $config['mencionar'] ?? '',
+            'Nunca mencione nem prometa' => $config['evitar'] ?? '',
+            'Instruções específicas do modelo institucional selecionado' => mb_substr((string) $instrucoesModelo, 0, 1500),
+        ];
+
+        foreach ($extras as $titulo => $conteudo) {
+            $conteudo = trim((string) $conteudo);
+
+            if ($conteudo !== '') {
+                $texto .= "\n\n{$titulo}:\n{$conteudo}";
+            }
+        }
+
+        return $texto.self::REGRA_DADOS_NAO_CONFIAVEIS;
     }
 
     /**

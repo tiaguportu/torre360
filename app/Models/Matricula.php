@@ -78,6 +78,11 @@ class Matricula extends Model
         return $this->hasOne(Contrato::class);
     }
 
+    public function emprestimos(): HasMany
+    {
+        return $this->hasMany(Emprestimo::class);
+    }
+
     public function rematriculas(): HasMany
     {
         return $this->hasMany(Rematricula::class, 'matricula_origem_id');

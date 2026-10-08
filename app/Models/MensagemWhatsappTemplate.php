@@ -12,7 +12,7 @@ class MensagemWhatsappTemplate extends Model
 
     protected $table = 'mensagem_whatsapp_template';
 
-    protected $fillable = ['nome', 'conteudo', 'ativo'];
+    protected $fillable = ['nome', 'conteudo', 'instrucoes_ia', 'ativo'];
 
     protected function casts(): array
     {

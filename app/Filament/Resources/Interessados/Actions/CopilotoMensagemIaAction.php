@@ -96,7 +96,8 @@ class CopilotoMensagemIaAction
                     objetivo: $data['objetivo'],
                     tom: $data['tom'],
                     instrucoesExtras: ! empty($data['instrucoes_extras']) ? $data['instrucoes_extras'] : null,
-                    templateBase: $template?->conteudo
+                    templateBase: $template?->conteudo,
+                    instrucoesModelo: $template?->instrucoes_ia,
                 );
 
                 if (! empty($data['registrar_historico'])) {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\TemplateCrachaV3Controller;
 use App\Http\Controllers\Api\MobileTokenController;
+use App\Http\Controllers\BibliotecaEtiquetasController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
@@ -109,6 +110,9 @@ Route::middleware(['auth'])->group(function () {
     // Editor de Crachás V3 (Moveable)
     Route::get('/admin/template-crachas-v3/{templateCrachaV3}/editor', [TemplateCrachaV3Controller::class, 'editor'])->name('template-crachas-v3.editor');
     Route::post('/admin/template-crachas-v3/{templateCrachaV3}/save', [TemplateCrachaV3Controller::class, 'save'])->name('template-crachas-v3.save');
+
+    // Biblioteca Escolar: Impressão de Etiquetas com Código de Barras
+    Route::get('/admin/biblioteca/etiquetas/imprimir', [BibliotecaEtiquetasController::class, 'imprimir'])->name('biblioteca.etiquetas.imprimir');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'throttle:10,1'])->name('mobile.register-token');

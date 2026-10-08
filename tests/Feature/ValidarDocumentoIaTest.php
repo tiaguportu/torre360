@@ -185,7 +185,7 @@ class ValidarDocumentoIaTest extends TestCase
         $this->assertTrue($ultimoContato->automatico, 'A análise da IA é registro automático e não conta como interação.');
     }
 
-    public function test_portal_exibe_aviso_lgpd_e_status_de_ia(): void
+    public function test_portal_candidato_nao_exibe_mencao_a_ia_ou_pre_analise_automatica(): void
     {
         [$interessado, $dependente, $tipoDoc] = $this->criarCenarioCandidato();
 
@@ -213,7 +213,10 @@ class ValidarDocumentoIaTest extends TestCase
         $response = $this->get(route('candidato.documentos.show', ['token' => $interessado->token_documentos, 'aba' => 'documentos']));
 
         $response->assertOk();
-        $response->assertSeeText('Pré-análise Automática (IA):');
-        $response->assertSeeText('Arquivo legível e conforme');
+        // A conferência interna assistida por IA é restrita à Secretaria e nunca exposta à família
+        $response->assertDontSeeText('Pré-análise Automática (IA)');
+        $response->assertDontSeeText('Pré-análise Automática');
+        $response->assertDontSeeText('IA');
+        $response->assertSeeText('Em Análise');
     }
 }

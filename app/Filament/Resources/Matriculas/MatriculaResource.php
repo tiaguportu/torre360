@@ -9,6 +9,7 @@ use App\Filament\Resources\Matriculas\Pages\EditarBoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\EditMatricula;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
 use App\Filament\Resources\Matriculas\RelationManagers\DocumentoInseridosRelationManager;
+use App\Filament\Resources\Matriculas\RelationManagers\HistoricoLeituraRelationManager;
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Filament\Resources\Matriculas\Tables\MatriculasTable;
 use App\Models\Matricula;
@@ -89,6 +90,7 @@ class MatriculaResource extends Resource implements HasShieldPermissions
     {
         return [
             DocumentoInseridosRelationManager::class,
+            HistoricoLeituraRelationManager::class,
         ];
     }
 

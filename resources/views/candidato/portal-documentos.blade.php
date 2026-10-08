@@ -64,6 +64,48 @@
             </div>
         @endif
 
+        @php
+            $etapaFamiliaConcluida = $etapaFamiliaConcluida ?? false;
+        @endphp
+
+        <!-- Banner de Conclusão da Etapa da Família -->
+        @if($etapaFamiliaConcluida)
+            <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white shadow-md space-y-4">
+                <div class="flex items-start gap-3.5 sm:gap-4">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shrink-0 font-bold border border-white/30">
+                        ✓
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                                Etapa da Família Concluída
+                            </span>
+                            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-100">
+                                ⏳ Aguardando Validação da Secretaria
+                            </span>
+                        </div>
+                        <h2 class="text-base sm:text-xl font-extrabold leading-snug">
+                            Tudo pronto por aqui! Sua pré-matrícula foi enviada com sucesso. 🎉
+                        </h2>
+                        <p class="text-xs sm:text-sm text-emerald-50 leading-relaxed max-w-2xl">
+                            Você concluiu o cadastro e o envio de todos os documentos obrigatórios. As abas abaixo permanecem disponíveis para você consultar o que foi enviado (em <strong>modo de somente leitura</strong>).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-white/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <span class="text-emerald-100 flex items-center gap-1.5">
+                        <span>🔒</span> <strong>Modo Somente Leitura:</strong> Formulário e uploads bloqueados para a conferência oficial da secretaria.
+                    </span>
+                    @if(filled($interessado->unidade?->celular_whatsapp))
+                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $interessado->unidade->celular_whatsapp) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-emerald-800 font-bold hover:bg-emerald-50 shadow-xs transition-all text-xs shrink-0">
+                            <span>💬 Falar com a Secretaria no WhatsApp</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <!-- Card de Identificação e Resumo do Candidato -->
         <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -172,6 +214,19 @@
                     @endif
                 </div>
 
+                @if($etapaFamiliaConcluida)
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">🔒</span>
+                            <span><strong>Modo Somente Leitura:</strong> Seus dados já foram enviados e estão sob análise da secretaria. Edições estão desativadas.</span>
+                        </div>
+                        <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold shrink-0 inline-flex items-center gap-1">
+                            <span>Ver Documentos Enviados</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('candidato.documentos.dados', ['token' => $token]) }}" class="space-y-6">
                     @csrf
 
@@ -181,7 +236,7 @@
                     @endphp
 
                     <!-- Responsável Principal -->
-                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
                         <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Responsável Principal (Financeiro)</legend>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -286,35 +341,37 @@
                         <summary class="font-bold text-slate-700 cursor-pointer hover:text-indigo-600">
                             + Adicionar Segundo Responsável (opcional)
                         </summary>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-3 border-t border-slate-100">
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Nome Completo</label>
-                                <input type="text" name="segundo_responsavel[nome]" value="{{ $segundoOld['nome'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <fieldset class="border-0 p-0 m-0" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-3 border-t border-slate-100">
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">Nome Completo</label>
+                                    <input type="text" name="segundo_responsavel[nome]" value="{{ $segundoOld['nome'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">CPF</label>
+                                    <input type="text" name="segundo_responsavel[cpf]" data-mask="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" value="{{ $segundoOld['cpf'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">Telefone</label>
+                                    <input type="text" name="segundo_responsavel[telefone]" data-mask="telefone" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15" value="{{ $segundoOld['telefone'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">Grau de Vínculo</label>
+                                    <select name="segundo_responsavel[tipo_vinculo_id]" class="w-full px-3 py-2 border rounded-lg text-sm">
+                                        <option value="">Selecione...</option>
+                                        @foreach($tiposVinculo as $vinculoId => $vinculoNome)
+                                            <option value="{{ $vinculoId }}" {{ (string)($segundoOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
+                                                {{ $vinculoNome }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">CPF</label>
-                                <input type="text" name="segundo_responsavel[cpf]" data-mask="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" value="{{ $segundoOld['cpf'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Telefone</label>
-                                <input type="text" name="segundo_responsavel[telefone]" data-mask="telefone" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15" value="{{ $segundoOld['telefone'] ?? '' }}" class="w-full px-3 py-2 border rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Grau de Vínculo</label>
-                                <select name="segundo_responsavel[tipo_vinculo_id]" class="w-full px-3 py-2 border rounded-lg text-sm">
-                                    <option value="">Selecione...</option>
-                                    @foreach($tiposVinculo as $vinculoId => $vinculoNome)
-                                        <option value="{{ $vinculoId }}" {{ (string)($segundoOld['tipo_vinculo_id'] ?? '') === (string)$vinculoId ? 'selected' : '' }}>
-                                            {{ $vinculoNome }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+                        </fieldset>
                     </details>
 
                     <!-- Aluno(s) / Dependente(s) -->
-                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4">
+                    <fieldset class="border border-slate-200 rounded-xl p-4 space-y-4" {{ $etapaFamiliaConcluida ? 'disabled' : '' }}>
                         <legend class="text-xs font-bold uppercase tracking-wider text-indigo-700 px-2">Aluno(s) Pretendente(s)</legend>
 
                         @foreach($interessado->dependentes as $index => $dependente)
@@ -394,17 +451,29 @@
                     <!-- Aceite LGPD -->
                     <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
                         <label class="flex items-start gap-2.5 font-medium cursor-pointer">
-                            <input type="checkbox" name="lgpd_aceite" value="1" required {{ filled($dadosPreMatricula) ? 'checked' : '' }} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                            <input type="checkbox" name="lgpd_aceite" value="1" required {{ filled($dadosPreMatricula) ? 'checked' : '' }} {{ $etapaFamiliaConcluida ? 'disabled' : '' }} class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
                             <span>
                                 Declaro que as informações acima são verdadeiras e autorizo o tratamento dos dados pessoais fornecidos para fins de cadastro, formalização de proposta pré-contratual e procedimentos de matrícula escolar, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
                             </span>
                         </label>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-sm transition-colors flex items-center justify-center gap-2">
-                        <span>Salvar Dados e Avançar para Documentos</span>
-                        <span>→</span>
-                    </button>
+                    @if($etapaFamiliaConcluida)
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                            <p class="text-xs text-slate-600 font-medium">
+                                Dados cadastrais enviados e em análise pela secretaria escolar. Não é necessária nenhuma ação adicional aqui.
+                            </p>
+                            <a href="{{ route('candidato.documentos.show', ['token' => $token, 'aba' => 'documentos']) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-xs transition-colors">
+                                <span>Consultar Documentos Enviados</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+                    @else
+                        <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs text-sm transition-colors flex items-center justify-center gap-2">
+                            <span>Salvar Dados e Avançar para Documentos</span>
+                            <span>→</span>
+                        </button>
+                    @endif
                 </form>
             </div>
         @endif
@@ -489,7 +558,7 @@
                         </div>
                     @else
                         @foreach($docsContrato as $tipo)
-                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'contrato'])
+                            @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'contrato', 'etapaFamiliaConcluida' => $etapaFamiliaConcluida])
                         @endforeach
                     @endif
                 </div>
@@ -524,7 +593,7 @@
                             </div>
                         @else
                             @foreach($docsHistorico as $tipo)
-                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'historico'])
+                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'historico', 'etapaFamiliaConcluida' => $etapaFamiliaConcluida])
                             @endforeach
                         @endif
                     </div>
@@ -560,7 +629,7 @@
                             </div>
                         @else
                             @foreach($docsOpcionais as $tipo)
-                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'opcional'])
+                                @include('candidato.partials.item-documento', ['tipo' => $tipo, 'categoria' => 'opcional', 'etapaFamiliaConcluida' => $etapaFamiliaConcluida])
                             @endforeach
                         @endif
                     </div>
