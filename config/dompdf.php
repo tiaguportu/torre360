@@ -78,7 +78,15 @@ return [
          * direct class use like:
          * $dompdf = new DOMPDF();  $dompdf->load_html($htmldata); $dompdf->render(); $pdfdata = $dompdf->output();
          */
-        'chroot' => realpath(base_path()),
+        // Restrito às pastas de arquivos de usuário e aos assets públicos. Antes era o projeto inteiro (base_path()), o
+        // que incluía .env, config/ e logs: HTML com `<img src="file:///...">` (template de contrato, nome digitado por
+        // alguém) faria o dompdf abrir esses arquivos. Os PDFs do sistema embutem logos e fotos como data URI, então
+        // não dependem de acesso ao restante do projeto.
+        'chroot' => array_values(array_filter([
+            realpath(storage_path('app/private')),
+            realpath(storage_path('app/public')),
+            realpath(public_path()),
+        ])),
 
         /**
          * Protocol whitelist

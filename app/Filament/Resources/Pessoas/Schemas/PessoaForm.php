@@ -7,6 +7,7 @@ use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Filament\Resources\Enderecos\Schemas\EnderecoForm;
 use App\Models\Pais;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -30,6 +31,7 @@ class PessoaForm
             ->components([
                 FileUpload::make('foto')
                     ->image()
+                    ->acceptedFileTypes(TiposArquivo::imagens())
                     ->imageEditor()
                     ->imageCropAspectRatio('3:4')
                     ->imageEditorAspectRatios(['3:4'])

@@ -143,13 +143,21 @@ class AssistantChatBubble extends Component
                 $text = $matches[1];
                 $url = html_entity_decode($matches[2]);
 
-                // Se for um link relativo do painel admin, adicionamos wire:navigate
-                $navigate = str_starts_with($url, '/admin') ? 'wire:navigate' : '';
+                // A resposta da IA é texto não confiável (pode vir de instruções plantadas no que ela leu): só viram link
+                // caminhos do próprio sistema e URLs http(s). `javascript:`, `data:` e afins ficam só como texto.
+                if (! self::urlPermitida($url)) {
+                    return $text;
+                }
+
+                // Se for um link relativo do painel admin, adicionamos wire:navigate; externos abrem isolados em nova aba
+                $atributos = str_starts_with($url, '/admin')
+                    ? 'wire:navigate'
+                    : (str_starts_with($url, '/') ? '' : 'target="_blank" rel="noopener noreferrer"');
 
                 return sprintf(
                     '<a href="%s" %s class="underline font-semibold hover:opacity-80 transition" style="color: #243468; text-decoration: underline;">%s</a>',
                     e($url),
-                    $navigate,
+                    $atributos,
                     $text
                 );
             },
@@ -157,6 +165,14 @@ class AssistantChatBubble extends Component
         );
 
         return $escaped;
+    }
+
+    /**
+     * Aceita caminho absoluto do próprio sistema ("/admin/...", mas não "//host" nem "/\host") ou URL http(s).
+     */
+    private static function urlPermitida(string $url): bool
+    {
+        return preg_match('#^(?:/(?![/\\\\])|https?://)\S+$#i', $url) === 1;
     }
 
     /**

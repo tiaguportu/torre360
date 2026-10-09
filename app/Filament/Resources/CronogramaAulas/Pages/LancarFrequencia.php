@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CronogramaAulas\Pages;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\Matricula;
 use App\Models\VideoTutorial;
+use App\Support\TiposArquivo;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -172,6 +173,7 @@ class LancarFrequencia extends EditRecord
                             ->label('Anexos e Materiais de Aula')
                             ->multiple()
                             ->directory('materiais-aula')
+                            ->acceptedFileTypes(TiposArquivo::materiaisDeAula())
                             ->preserveFilenames()
                             ->columnSpanFull(),
                     ])

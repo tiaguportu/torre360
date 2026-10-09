@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InstituicaoEnsinos\Schemas;
 
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -29,6 +30,7 @@ class InstituicaoEnsinoForm
                             ->maxLength(255),
                         FileUpload::make('logo')
                             ->image()
+                            ->acceptedFileTypes(TiposArquivo::imagens())
                             ->directory('instituicao-logos')
                             ->visibility('public'),
                         Select::make('endereco_id')

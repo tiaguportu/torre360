@@ -48,13 +48,21 @@ class MatriculaOnlineService
 
             $turma = Turma::with(['serie.curso', 'periodoLetivo'])->findOrFail($dados['turma_id']);
 
-            // 2. Busca ou criação da Pessoa Aluno
-            $aluno = $this->buscarOuCriarPessoaAluno($dados['aluno']);
+            // 2. Busca ou criação da Pessoa Responsável
+            [$responsavel, $responsavelPreexistente] = $this->buscarOuCriarPessoaResponsavel($dados['responsavel']);
 
-            // 3. Busca ou criação da Pessoa Responsável
-            $responsavel = $this->buscarOuCriarPessoaResponsavel($dados['responsavel']);
+            // 3. Busca ou criação da Pessoa Aluno
+            [$aluno, $alunoPreexistente] = $this->buscarOuCriarPessoaAluno($dados['aluno']);
 
-            // 4. Criação e vinculação do endereço
+            // Este fluxo é público e não autenticado: o CPF digitado não prova identidade. Um aluno que já é conhecido pela
+            // escola (matrícula, responsável vinculado ou conta de acesso) só pode ser reaproveitado pela própria família;
+            // senão o formulário viraria um atalho para se tornar "responsável" de qualquer aluno cujo CPF se conheça e ver
+            // o boletim, os documentos e o financeiro dele. Cadastro que só existe como contato de CRM segue permitido.
+            if ($alunoPreexistente && $this->alunoJaConhecido($aluno) && ! $this->ehResponsavelDoAluno($responsavel, $aluno)) {
+                throw new \DomainException('Já existe um cadastro com os dados informados do aluno. Para concluir esta matrícula, procure a secretaria da escola.');
+            }
+
+            // 4. Criação e vinculação do endereço (só em cadastros novos ou ainda sem endereço)
             if (! empty($dados['responsavel']['cep']) || ! empty($dados['responsavel']['logradouro'])) {
                 $this->vincularEndereco($responsavel, $aluno, $dados['responsavel']);
             }
@@ -96,6 +104,13 @@ class MatriculaOnlineService
                 $hashAssinatura
             );
 
+            // Aluno ou responsável que já existiam: quem preencheu o formulário não teve a identidade verificada.
+            $cadastroPreexistente = $responsavelPreexistente || $alunoPreexistente;
+
+            if ($cadastroPreexistente) {
+                $logAceite .= ' | ATENÇÃO: o aluno ou o responsável já tinha cadastro e a identidade de quem preencheu o formulário não foi verificada — conferir na secretaria.';
+            }
+
             $contrato = Contrato::create([
                 'matricula_id' => $matricula->id,
                 'template_contrato_id' => $templateContrato?->id,
@@ -115,30 +130,33 @@ class MatriculaOnlineService
             $this->processarArquivosEnviados($matricula, $arquivos);
 
             // 10. Criação ou vinculação da conta de usuário no Portal
-            $this->garantirUsuarioPortal($responsavel);
+            $this->garantirUsuarioPortal($responsavel, $responsavelPreexistente);
 
             // 11. Conversão automática no CRM se existir lead
             $this->marcarConversaoCrm($responsavel, $aluno, $matricula);
 
             // 12. Notificação interna para a equipe escolar
-            $this->notificarEquipeEscolar($matricula, $aluno, $responsavel, $turma);
+            $this->notificarEquipeEscolar($matricula, $aluno, $responsavel, $turma, $cadastroPreexistente);
 
             return $matricula;
         });
     }
 
-    private function buscarOuCriarPessoaAluno(array $dados): Pessoa
+    /**
+     * @return array{0: Pessoa, 1: bool} A pessoa e se ela já existia antes deste envio.
+     */
+    private function buscarOuCriarPessoaAluno(array $dados): array
     {
         $cpf = ! empty($dados['cpf']) ? preg_replace('/\D/', '', $dados['cpf']) : null;
 
         if ($cpf) {
             $existente = Pessoa::where('cpf', $cpf)->first();
             if ($existente) {
-                return $existente;
+                return [$existente, true];
             }
         }
 
-        return Pessoa::create([
+        $aluno = Pessoa::create([
             'nome' => $dados['nome'],
             'cpf' => $cpf,
             'data_nascimento' => $dados['data_nascimento'] ?? null,
@@ -146,9 +164,18 @@ class MatriculaOnlineService
             'cor_raca' => $dados['cor_raca'] ?? null,
             'necessidades_especiais' => $dados['necessidades_especiais'] ?? false,
         ]);
+
+        return [$aluno, false];
     }
 
-    private function buscarOuCriarPessoaResponsavel(array $dados): Pessoa
+    /**
+     * Regra de ouro deste fluxo público: dado digitado por quem não está autenticado nunca altera um cadastro que já
+     * existe. Em especial o e-mail, que é a chave da conta do Portal: gravá-lo num cadastro sem e-mail entregaria a
+     * esse cadastro (e aos alunos vinculados) a quem só conhecia o CPF. Campos descritivos (CPF) só preenchem lacunas.
+     *
+     * @return array{0: Pessoa, 1: bool} A pessoa e se ela já existia antes deste envio.
+     */
+    private function buscarOuCriarPessoaResponsavel(array $dados): array
     {
         $cpf = ! empty($dados['cpf']) ? preg_replace('/\D/', '', $dados['cpf']) : null;
         $email = $dados['email'] ?? null;
@@ -156,11 +183,7 @@ class MatriculaOnlineService
         if ($cpf) {
             $existente = Pessoa::where('cpf', $cpf)->first();
             if ($existente) {
-                if ($email && empty($existente->email)) {
-                    $existente->update(['email' => $email]);
-                }
-
-                return $existente;
+                return [$existente, true];
             }
         }
 
@@ -171,17 +194,39 @@ class MatriculaOnlineService
                     $existente->update(['cpf' => $cpf]);
                 }
 
-                return $existente;
+                return [$existente, true];
             }
         }
 
-        return Pessoa::create([
+        $responsavel = Pessoa::create([
             'nome' => $dados['nome'],
             'cpf' => $cpf,
             'email' => $email,
             'telefone' => $dados['telefone'] ?? null,
             'data_nascimento' => $dados['data_nascimento'] ?? null,
         ]);
+
+        return [$responsavel, false];
+    }
+
+    private function ehResponsavelDoAluno(Pessoa $responsavel, Pessoa $aluno): bool
+    {
+        // Aluno adulto que se matricula por conta própria: responsável e aluno são a mesma pessoa.
+        if ($responsavel->is($aluno)) {
+            return true;
+        }
+
+        return AlunoResponsavel::query()
+            ->where('aluno_id', $aluno->id)
+            ->where('responsavel_id', $responsavel->id)
+            ->exists();
+    }
+
+    private function alunoJaConhecido(Pessoa $aluno): bool
+    {
+        return Matricula::where('pessoa_id', $aluno->id)->exists()
+            || AlunoResponsavel::where('aluno_id', $aluno->id)->exists()
+            || $aluno->users()->exists();
     }
 
     private function vincularEndereco(Pessoa $responsavel, Pessoa $aluno, array $dados): void
@@ -210,8 +255,12 @@ class MatriculaOnlineService
             'bairro' => $dados['bairro'] ?? null,
         ]);
 
-        $responsavel->enderecos()->attach($endereco->id);
-        $aluno->enderecos()->attach($endereco->id);
+        // Pessoa que já tem endereço não recebe outro vindo de formulário público: a secretaria concilia.
+        foreach ([$responsavel, $aluno] as $pessoa) {
+            if (! $pessoa->enderecos()->exists()) {
+                $pessoa->enderecos()->attach($endereco->id);
+            }
+        }
     }
 
     private function processarArquivosEnviados(Matricula $matricula, array $arquivos): void
@@ -259,7 +308,11 @@ class MatriculaOnlineService
         }
     }
 
-    private function garantirUsuarioPortal(Pessoa $responsavel): ?User
+    /**
+     * A conta do Portal só nasce do e-mail que consta no cadastro do responsável, nunca de um e-mail digitado agora
+     * num cadastro que já existia. A senha é definida pelo próprio titular por um link enviado a esse e-mail.
+     */
+    private function garantirUsuarioPortal(Pessoa $responsavel, bool $responsavelPreexistente = false): ?User
     {
         if (empty($responsavel->email)) {
             return null;
@@ -267,17 +320,23 @@ class MatriculaOnlineService
 
         $user = User::where('email', $responsavel->email)->first();
 
+        // Já existe uma conta com esse e-mail e o cadastro é novo (veio deste formulário): não amarra a pessoa recém-criada
+        // a uma conta que pode ser de outra família ou da equipe.
+        if ($user && ! $responsavelPreexistente) {
+            return null;
+        }
+
         if (! $user) {
-            $senhaTemporaria = Str::random(8);
             $user = User::create([
                 'name' => $responsavel->nome,
                 'email' => $responsavel->email,
-                'password' => Hash::make($senhaTemporaria),
+                // Senha aleatória e descartada: o acesso se dá pelo link de definição de senha do e-mail de boas-vindas.
+                'password' => Hash::make(Str::random(64)),
                 'activated_at' => now(),
             ]);
 
             try {
-                $user->notify(new WelcomeUserMail($senhaTemporaria));
+                $user->notify(new WelcomeUserMail);
             } catch (\Throwable $e) {
                 Log::warning('Erro ao enviar e-mail de boas-vindas: '.$e->getMessage());
             }
@@ -345,7 +404,7 @@ class MatriculaOnlineService
         return $candidatos->first(fn (Interessado $lead): bool => $lead->data_conversao === null) ?? $candidatos->first();
     }
 
-    private function notificarEquipeEscolar(Matricula $matricula, Pessoa $aluno, Pessoa $responsavel, Turma $turma): void
+    private function notificarEquipeEscolar(Matricula $matricula, Pessoa $aluno, Pessoa $responsavel, Turma $turma, bool $cadastroPreexistente = false): void
     {
         try {
             $destinatarios = User::permission('View:Matricula')->get();
@@ -357,7 +416,10 @@ class MatriculaOnlineService
             if ($destinatarios->isNotEmpty()) {
                 Notification::make()
                     ->title('Nova Matrícula 100% Online Recebida!')
-                    ->body("O aluno **{$aluno->nome}** foi matriculado na turma **{$turma->nome}** pelo responsável **{$responsavel->nome}** via auto-atendimento online.")
+                    ->body(
+                        "O aluno **{$aluno->nome}** foi matriculado na turma **{$turma->nome}** pelo responsável **{$responsavel->nome}** via auto-atendimento online."
+                        .($cadastroPreexistente ? ' ⚠️ O aluno ou o responsável já tinha cadastro: confirme com a família que foi ela quem preencheu o formulário antes de ativar a matrícula.' : '')
+                    )
                     ->icon('heroicon-o-academic-cap')
                     ->color('success')
                     ->actions([

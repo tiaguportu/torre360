@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PlanoAulas\Schemas;
 
 use App\Models\Turma;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -80,6 +81,7 @@ class PlanoAulaForm
                             ->label('Anexos e Materiais')
                             ->multiple()
                             ->directory('planos-aula')
+                            ->acceptedFileTypes(TiposArquivo::materiaisDeAula())
                             ->preserveFilenames()
                             ->columnSpanFull(),
                     ]),

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Alunos\Schemas;
 
 use App\Filament\Resources\Enderecos\Schemas\EnderecoForm;
 use App\Models\Pais;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -18,6 +19,7 @@ class AlunoForm
             ->components([
                 FileUpload::make('foto')
                     ->image()
+                    ->acceptedFileTypes(TiposArquivo::imagens())
                     ->imageEditor()
                     ->imageEditorAspectRatios(['3:4'])
                     ->directory('pessoas_fotos'),

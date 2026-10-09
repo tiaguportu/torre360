@@ -6,6 +6,7 @@ use App\Enums\SituacaoDocumento;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\DocumentoInserido;
 use App\Models\TipoDocumento;
+use App\Support\TiposArquivo;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -191,7 +192,7 @@ class DocumentosMatricula extends Page implements HasTable
                             ->label('Arquivo do Documento')
                             ->helperText('Apenas Imagem ou PDF, máx 2MB.')
                             ->required()
-                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->acceptedFileTypes(TiposArquivo::documentos())
                             ->maxSize(2048)
                             ->directory('documentos_alunos')
                             ->storeFileNamesIn('nome_arquivo_original')

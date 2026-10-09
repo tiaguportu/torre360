@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrdemServicoResource\RelationManagers;
 
+use App\Support\TiposArquivo;
 use Filament\Actions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -27,6 +28,7 @@ class AnotacoesRelationManager extends RelationManager
                 FileUpload::make('fotos')
                     ->multiple()
                     ->image()
+                    ->acceptedFileTypes(TiposArquivo::imagens())
                     ->directory('anotacoes-os')
                     ->columnSpanFull(),
                 Hidden::make('user_id')

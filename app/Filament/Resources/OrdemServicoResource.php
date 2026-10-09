@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrdemServicoResource\Pages;
 use App\Filament\Resources\OrdemServicoResource\RelationManagers;
 use App\Models\OrdemServico;
+use App\Support\TiposArquivo;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
@@ -60,6 +61,7 @@ class OrdemServicoResource extends Resource
                                 FileUpload::make('fotos')
                                     ->multiple()
                                     ->image()
+                                    ->acceptedFileTypes(TiposArquivo::imagens())
                                     ->directory('ordem-servicos')
                                     ->label('Fotos'),
                             ]),

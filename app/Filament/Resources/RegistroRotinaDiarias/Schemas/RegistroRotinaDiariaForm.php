@@ -5,6 +5,7 @@ namespace App\Filament\Resources\RegistroRotinaDiarias\Schemas;
 use App\Enums\HumorCrianca;
 use App\Enums\QuantidadeRefeicao;
 use App\Models\Matricula;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -71,6 +72,7 @@ class RegistroRotinaDiariaForm
                         FileUpload::make('foto_path')
                             ->label('Foto (opcional)')
                             ->image()
+                            ->acceptedFileTypes(TiposArquivo::imagens())
                             ->directory('rotina-diaria')
                             ->columnSpanFull(),
                     ]),

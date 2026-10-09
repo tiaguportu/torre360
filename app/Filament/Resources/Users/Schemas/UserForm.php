@@ -73,7 +73,9 @@ class UserForm
 
                 Toggle::make('send_credentials')
                     ->label(fn (string $operation): string => $operation === 'create' ? 'Enviar informações de acesso para o e-mail do usuário' : 'Informar alteração por e-mail ao usuário')
-                    ->helperText('Se marcado, um e-mail será enviado ao usuário.')
+                    ->helperText(fn (string $operation): string => $operation === 'create'
+                        ? 'Se marcado, o usuário recebe um e-mail com um link para definir a própria senha. A senha digitada aqui não é enviada por e-mail.'
+                        : 'Se marcado, o usuário é avisado por e-mail. Se a senha foi alterada, recebe também um link para definir uma nova (a senha em si não é enviada).')
                     ->dehydrated(false),
 
                 Select::make('roles')

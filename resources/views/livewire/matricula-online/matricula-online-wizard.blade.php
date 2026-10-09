@@ -1,5 +1,11 @@
 <div class="py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
 
+    @if (config('services.recaptcha.site_key'))
+        @assets
+            <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+        @endassets
+    @endif
+
     {{-- Título e Boas-Vindas --}}
     <div class="text-center mb-8">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3.5 py-1 text-xs font-semibold text-primary-700 ring-1 ring-inset ring-primary-700/20 mb-3">
@@ -440,6 +446,10 @@
             </div>
         @endif
 
+        @error('recaptcha_token')
+            <p class="mt-4 text-xs font-semibold text-rose-600">{{ $message }}</p>
+        @enderror
+
         {{-- Barra de Navegação entre Passos --}}
         <div class="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between">
             @if ($passoAtual > 1)
@@ -457,7 +467,21 @@
                     Avançar &rarr;
                 </button>
             @else
-                <button type="button" wire:click="finalizarMatricula"
+                {{-- reCAPTCHA v3: o token é obtido no navegador no instante do clique e enviado junto com a finalização. --}}
+                <button type="button"
+                        x-data
+                        x-on:click="
+                            const siteKey = @js(config('services.recaptcha.site_key'));
+                            if (siteKey && typeof grecaptcha !== 'undefined') {
+                                grecaptcha.ready(() => {
+                                    grecaptcha.execute(siteKey, { action: 'matricula_online' })
+                                        .then((token) => { $wire.recaptcha_token = token; $wire.finalizarMatricula(); })
+                                        .catch(() => $wire.finalizarMatricula());
+                                });
+                            } else {
+                                $wire.finalizarMatricula();
+                            }
+                        "
                         wire:loading.attr="disabled"
                         class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md disabled:opacity-50">
                     <span wire:loading.remove wire:target="finalizarMatricula">

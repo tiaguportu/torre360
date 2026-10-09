@@ -30,8 +30,12 @@ Route::get('/', [LandingPageController::class, 'index'])->name('home');
 Route::post('/solicitar-acesso', [LandingPageController::class, 'store'])->middleware('throttle:5,1')->name('solicitar-acesso');
 
 // Matrícula Externa 100% Self-Service para Novos Alunos
-Route::get('/matricular-online', MatriculaOnlineWizard::class)->name('matricular.online');
-Route::get('/matricular-online/sucesso/{matricula}', [MatriculaOnlineController::class, 'sucesso'])->name('matricular.online.sucesso');
+Route::get('/matricular-online', MatriculaOnlineWizard::class)->middleware('throttle:60,1')->name('matricular.online');
+// A confirmação mostra dados pessoais do aluno e do responsável: o controller só libera na mesma sessão do navegador,
+// com o link assinado gerado ao concluir (expira) ou para quem já tem acesso à matrícula.
+Route::get('/matricular-online/sucesso/{matricula}', [MatriculaOnlineController::class, 'sucesso'])
+    ->middleware('throttle:60,1')
+    ->name('matricular.online.sucesso');
 
 // Formulário público de captação de interessados
 Route::get('/quero-matricular', [CaptacaoInteressadoController::class, 'show'])->name('captacao.interessado.show');

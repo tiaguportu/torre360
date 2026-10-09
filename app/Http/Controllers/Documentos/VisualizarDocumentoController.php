@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AtendimentoMensagem;
 use App\Models\DocumentoInserido;
 use App\Models\SolicitacaoDocumento;
+use App\Support\TiposArquivo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class VisualizarDocumentoController extends Controller
 {
@@ -85,36 +87,39 @@ class VisualizarDocumentoController extends Controller
             abort(403, 'Acesso não autorizado a este documento.');
         }
 
-        $fullPath = $disk->path($path);
-        $filename = basename($path);
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        return $this->servir($disk->path($path));
+    }
 
-        $mimeType = null;
-        try {
-            $mimeType = $disk->mimeType($path) ?: (function_exists('mime_content_type') ? @mime_content_type($fullPath) : null);
-        } catch (\Throwable) {
-            $mimeType = null;
+    /**
+     * Os arquivos são enviados por usuários e servidos na mesma origem do painel. O tipo é detectado pelo CONTEÚDO
+     * (nunca pela extensão): só PDF e imagens raster abrem na página; qualquer outra coisa (HTML, SVG, XML, scripts...)
+     * baixa como anexo e, mesmo se alguém a abrir, roda isolada (CSP `sandbox`), sem acesso à sessão do painel.
+     */
+    private function servir(string $caminho): Response
+    {
+        $tipo = (new \finfo(FILEINFO_MIME_TYPE))->file($caminho) ?: 'application/octet-stream';
+        $exibivel = in_array($tipo, TiposArquivo::exibiveisNoNavegador(), true);
+
+        $cabecalhos = [
+            'Content-Type' => $tipo,
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        ];
+
+        if ($exibivel) {
+            // Só `frame-ancestors`: a CSP global traz `object-src 'none'`, que o visualizador de PDF de alguns navegadores
+            // não tolera numa resposta PDF. Este arquivo é PDF/imagem raster, que não executa script na origem do sistema.
+            return response()->file($caminho, $cabecalhos + ['Content-Security-Policy' => "frame-ancestors 'self'"])
+                ->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($caminho))
+                ->setPrivate();
         }
-        $mimeType = strtolower((string) ($mimeType ?? 'application/octet-stream'));
 
-        // SVGs e arquivos HTML/XML enviados não devem ser renderizados inline para evitar Stored XSS
-        $isPotentiallyDangerousInline = in_array($extension, ['svg', 'html', 'htm', 'xhtml', 'xml'], true)
-            || str_contains($mimeType, 'svg')
-            || str_contains($mimeType, 'html')
-            || str_contains($mimeType, 'xml');
-
-        $headers = [
+        // Tipo genérico de propósito: o navegador baixa o arquivo em vez de interpretá-lo.
+        return response()->download($caminho, basename($caminho), [
+            'Content-Type' => 'application/octet-stream',
             'X-Content-Type-Options' => 'nosniff',
             'X-Robots-Tag' => 'noindex, nofollow, noarchive',
             'Content-Security-Policy' => "default-src 'none'; sandbox",
-        ];
-
-        if ($isPotentiallyDangerousInline) {
-            return response()->download($fullPath, $filename, $headers);
-        }
-
-        return response()->file($fullPath, array_merge($headers, [
-            'Content-Disposition' => 'inline; filename="'.$filename.'"',
-        ]));
+        ])->setPrivate();
     }
 }

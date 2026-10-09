@@ -8,6 +8,7 @@ use App\Models\AtendimentoSetor;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\User;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -114,7 +115,7 @@ class AtendimentoChamadoForm
                                         FileUpload::make('anexo_path')
                                             ->label('Anexo')
                                             ->disk('local')
-                                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                            ->acceptedFileTypes(TiposArquivo::documentos())
                                             ->maxSize(5120)
                                             ->directory('atendimentos/anexos'),
                                     ]),

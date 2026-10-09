@@ -28,9 +28,9 @@ class EditUser extends EditRecord
         if ($data['send_credentials'] ?? false) {
             /** @var User $user */
             $user = $this->record;
-            $password = $data['password'] ?? null;
 
-            $user->notify(new UserUpdatedMail($password));
+            // O e-mail avisa que a senha mudou e oferece um link para definir outra; nunca envia a senha.
+            $user->notify(new UserUpdatedMail(senhaAlterada: filled($data['password'] ?? null)));
         }
     }
 }

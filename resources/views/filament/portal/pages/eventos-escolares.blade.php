@@ -73,7 +73,8 @@
                         <!-- Descrição -->
                         @if($evento->descricao)
                             <div class="p-6 text-sm text-gray-600 dark:text-gray-300 leading-relaxed border-b border-gray-100 dark:border-gray-700/60 flex-1">
-                                {!! $evento->descricao !!}
+                                {{-- HTML do editor rico, higienizado na saída: remove <script>, handlers on*, javascript: e afins. --}}
+                                {!! \Illuminate\Support\Str::sanitizeHtml($evento->descricao) !!}
                             </div>
                         @endif
 

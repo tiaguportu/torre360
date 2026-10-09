@@ -423,6 +423,29 @@ class ContractTemplateService
     }
 
     /**
+     * Só aceita arquivos que, depois de resolvidos (".." e links simbólicos), estejam nas pastas de arquivos do sistema.
+     */
+    private static function caminhoDeImagemPermitido(string $caminho): bool
+    {
+        $real = realpath($caminho);
+
+        if ($real === false) {
+            return false;
+        }
+
+        // Raízes dos discos configurados (e não caminhos fixos), para valer também com discos trocados.
+        foreach ([Storage::disk('local')->path(''), Storage::disk('public')->path(''), public_path()] as $raiz) {
+            $raizReal = realpath($raiz);
+
+            if ($raizReal !== false && str_starts_with($real, $raizReal.DIRECTORY_SEPARATOR)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Processa todas as imagens locais no HTML e converte os caminhos locais (/storage/...)
      * para Data-URI Base64, garantindo a renderização correta das imagens no DomPDF.
      */
@@ -467,6 +490,13 @@ class ContractTemplateService
                     $parts = explode('/visualizar-documento/', $src);
                     $localPath = storage_path('app/'.end($parts));
                 }
+            }
+
+            // O caminho vem do HTML do template (e de dados nele interpolados): `/visualizar-documento/../../.env` não pode
+            // sair das pastas de arquivos do sistema e acabar embutido, em base64, no PDF do contrato.
+            if ($localPath && ! self::caminhoDeImagemPermitido($localPath)) {
+                logger()->warning('Contrato: imagem fora das pastas permitidas ignorada.', ['src' => $src]);
+                $localPath = null;
             }
 
             if ($localPath && file_exists($localPath)) {

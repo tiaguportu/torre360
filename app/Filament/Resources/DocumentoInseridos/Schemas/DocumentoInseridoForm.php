@@ -6,6 +6,7 @@ use App\Enums\SituacaoDocumento;
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use App\Models\Matricula;
 use App\Models\TipoDocumento;
+use App\Support\TiposArquivo;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -110,7 +111,7 @@ class DocumentoInseridoForm
                     ->label('Arquivo do Documento')
                     ->helperText('Apenas Imagem ou PDF, máx 2MB.')
                     ->required()
-                    ->acceptedFileTypes(['application/pdf', 'image/*'])
+                    ->acceptedFileTypes(TiposArquivo::documentos())
                     ->maxSize(2048)
                     ->directory('documentos_alunos')
                     ->disk('local')

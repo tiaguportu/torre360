@@ -34,9 +34,9 @@ class CreateUser extends CreateRecord
         if ($data['send_credentials'] ?? false) {
             /** @var User $user */
             $user = $this->record;
-            $password = $data['password'];
 
-            $user->notify(new WelcomeUserMail($password));
+            // A senha digitada não é enviada: o e-mail leva um link para o usuário definir a própria.
+            $user->notify(new WelcomeUserMail);
         }
     }
 

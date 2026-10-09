@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CronogramaAulas\Schemas;
 
 use App\Models\Turma;
+use App\Support\TiposArquivo;
 use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -106,6 +107,7 @@ class CronogramaAulaForm
                     ->label('Anexos de Material de Aula')
                     ->multiple()
                     ->directory('materiais-aula')
+                    ->acceptedFileTypes(TiposArquivo::materiaisDeAula())
                     ->preserveFilenames()
                     ->columnSpanFull(),
 

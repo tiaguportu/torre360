@@ -29,6 +29,7 @@ use App\Models\VideoTutorial;
 use App\Notifications\WelcomeUserMail;
 use App\Services\InteressadoMatriculaService;
 use App\Services\TurmaVagasService;
+use App\Support\TiposArquivo;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
@@ -208,6 +209,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             return [
                 FileUpload::make('foto')
                     ->image()
+                    ->acceptedFileTypes(TiposArquivo::imagens())
                     ->imageEditor()
                     ->imageEditorAspectRatios(['3:4'])
                     ->directory('pessoas_fotos')
@@ -635,6 +637,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                                     FileUpload::make('arquivo')
                                         ->label('Arquivo (PDF ou Imagem)')
                                         ->directory('documentos_matricula')
+                                        ->acceptedFileTypes(TiposArquivo::documentos())
                                         ->maxSize(10240)
                                         ->required(),
                                 ])
@@ -964,18 +967,17 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             return;
         }
 
-        $senha = Str::password(12, true, true, false);
-
         $usuario = User::create([
             'name' => $pessoa->nome,
             'email' => $email,
-            'password' => Hash::make($senha),
+            // Senha aleatória e descartada: o acesso se dá pelo link de definição de senha do e-mail de boas-vindas.
+            'password' => Hash::make(Str::random(64)),
             'activated_at' => now(),
             'email_verified_at' => now(),
         ]);
 
         $usuario->assignRole($role);
         $usuario->pessoas()->attach($pessoa->id);
-        $usuario->notify(new WelcomeUserMail($senha));
+        $usuario->notify(new WelcomeUserMail);
     }
 }

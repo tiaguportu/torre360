@@ -7,6 +7,7 @@ use App\Enums\StatusChamado;
 use App\Models\AtendimentoChamado;
 use App\Models\AtendimentoMensagem;
 use App\Models\AtendimentoSetor;
+use App\Support\TiposArquivo;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
@@ -102,7 +103,7 @@ class AtendimentoChamadosTable
                         FileUpload::make('anexo_path')
                             ->label('Anexo Opcional (PDF, Imagem, Comprovante)')
                             ->disk('local')
-                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->acceptedFileTypes(TiposArquivo::documentos())
                             ->maxSize(5120)
                             ->directory('atendimentos/anexos'),
                     ])

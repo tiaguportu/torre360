@@ -8,9 +8,11 @@ use App\Models\Serie;
 use App\Models\TipoVinculo;
 use App\Models\Turma;
 use App\Models\Unidade;
+use App\Rules\RecaptchaV3;
 use App\Services\MatriculaOnlineService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -89,6 +91,9 @@ class MatriculaOnlineWizard extends Component
     public bool $processando = false;
 
     public ?string $mensagemErro = null;
+
+    /** Token do reCAPTCHA v3, preenchido no navegador imediatamente antes de finalizar. */
+    public string $recaptcha_token = '';
 
     public function mount(): void
     {
@@ -308,6 +313,23 @@ class MatriculaOnlineWizard extends Component
             'aceite_regimento.accepted' => 'É obrigatório declarar ciência e concordância com as normas regimentais da instituição.',
         ]);
 
+        // Formulário público que grava pessoas, contrato e conta de acesso: limita tentativas por IP e exige reCAPTCHA.
+        $limiteChave = 'matricula-online:'.request()->ip();
+        $maxTentativas = (int) config('seguranca.matricula_online.max_tentativas', 6);
+
+        if (RateLimiter::tooManyAttempts($limiteChave, $maxTentativas)) {
+            $this->mensagemErro = 'Recebemos muitas tentativas deste dispositivo. Aguarde alguns minutos e tente novamente, ou fale com a secretaria da escola.';
+
+            return null;
+        }
+
+        RateLimiter::hit($limiteChave, ((int) config('seguranca.matricula_online.janela_minutos', 60)) * 60);
+
+        $this->validate([
+            'recaptcha_token' => [new RecaptchaV3(request()->ip())],
+        ]);
+
+        $this->recaptcha_token = '';
         $this->processando = true;
 
         try {
@@ -346,19 +368,24 @@ class MatriculaOnlineWizard extends Component
 
             $matricula = $service->processarMatricula($dados, $arquivos);
 
+            // A tela de confirmação mostra dados do aluno e do responsável: abre na mesma sessão do navegador (o id fica
+            // na sessão) ou pelo link assinado que expira, em vez de depender só do número da matrícula (sequencial,
+            // portanto adivinhável).
             session(['matricula_online_id' => $matricula->id]);
 
             return redirect()->to(URL::temporarySignedRoute(
                 'matricular.online.sucesso',
-                now()->addDays(7),
-                ['matricula' => $matricula->id]
+                now()->addHours((int) config('seguranca.matricula_online.link_sucesso_horas', 2)),
+                ['matricula' => $matricula->id],
             ));
         } catch (\DomainException $e) {
             $this->processando = false;
             $this->mensagemErro = $e->getMessage();
         } catch (\Throwable $e) {
+            // Nunca devolve a mensagem da exceção ao público: ela pode trazer SQL, caminhos e dados de outras pessoas.
+            report($e);
             $this->processando = false;
-            $this->mensagemErro = 'Ocorreu um erro ao processar sua matrícula. Por favor, revise os dados ou entre em contato com nossa equipe: '.$e->getMessage();
+            $this->mensagemErro = 'Ocorreu um erro ao processar sua matrícula. Revise os dados e tente novamente ou entre em contato com nossa equipe.';
         }
 
         return null;

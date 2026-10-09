@@ -825,7 +825,7 @@ O **Assistente de Matrícula** (`Acadêmico → Nova Matrícula (Wizard)`) é a 
 - Utilize o campo **CPF** para autocompletar dados de uma pessoa já cadastrada. Se o cadastro for encontrado, os campos são preenchidos automaticamente e o aluno existente é reutilizado (sem duplicação). O preenchimento automático inclui nome, **data de nascimento**, e-mail, telefone, nacionalidade, naturalidade, sexo, cor/raça e o primeiro endereço cadastrado; ele ocorre ao sair do campo CPF e aparece o aviso "Cadastro encontrado".
 - O formulário permite cadastrar **múltiplos alunos** na mesma matrícula (irmãos, por exemplo) clicando em **"Adicionar Aluno"**. Todos compartilharão os mesmos responsáveis.
 - O cabeçalho do item no Repeater exibe o **nome do aluno** conforme é preenchido, para fácil identificação.
-- **Criar conta de acesso:** Ao preencher o campo **E-mail**, aparecerá um checkbox **"Criar conta de acesso para esta pessoa?"**. Se marcado, o sistema criará automaticamente um usuário com o papel **`aluno`** e enviará um e-mail de boas-vindas com a senha gerada para o endereço informado.
+- **Criar conta de acesso:** Ao preencher o campo **E-mail**, aparecerá um checkbox **"Criar conta de acesso para esta pessoa?"**. Se marcado, o sistema criará automaticamente um usuário com o papel **`aluno`** e enviará um e-mail de boas-vindas para o endereço informado com um **link para a própria pessoa definir a senha** (o sistema não envia senha por e-mail; o link vale por 60 minutos e, se expirar, basta usar **"Esqueci minha senha"** na tela de acesso).
 
 > [!NOTE]
 > Se já existir um usuário cadastrado com o e-mail informado, o sistema apenas vinculará a Pessoa a esse usuário e garantirá que o papel `aluno` esteja atribuído.
@@ -1928,7 +1928,7 @@ O acesso e as ações do módulo de Preceptorias são totalmente configuráveis 
 O módulo de **Lançamento Rápido no Diário** permite que o professor registre no final da aula, em uma única tela fluida e responsiva (mobile-friendly):
 1. **Conteúdo Ministrado & BNCC:** Registro descritivo dos tópicos lecionados e seleção das Habilidades da BNCC desenvolvidas.
 2. **Dever / Tarefa de Casa:** Campo dedicado para registrar lições e prazos de entrega para a turma.
-3. **Anexos de Material de Aula:** Upload de apresentações, exercícios e arquivos PDF suporte.
+3. **Anexos de Material de Aula:** Upload de apresentações, exercícios e arquivos PDF suporte. Por segurança, só são aceitos PDF, imagens (JPG, PNG, WebP, GIF), documentos do Word/Excel/PowerPoint e LibreOffice, texto/CSV, ZIP, MP4 e MP3. Arquivos HTML, SVG e semelhantes são recusados; e, ao abrir um anexo que não seja PDF ou imagem, o navegador **baixa** o arquivo em vez de exibi-lo na página.
 4. **Frequência dos Alunos:** Chamada rápida com botões de presenças e faltas.
 5. **Botão de Presença em Lote:** Permite marcar todos os alunos presentes com um único clique.
 
@@ -2384,7 +2384,7 @@ O módulo de **Matrícula Externa 100% Self-Service** permite que pais, mães e 
 - **Captação Ativa 24h/7d:** A instituição passa a matricular estudantes a qualquer dia ou hora, aproveitando o momento de maior interesse das famílias.
 - **Validação de Vagas em Tempo Real:** O sistema consulta a lotação da turma selecionada e bloqueia tentativas de matrícula quando o limite máximo de vagas da turma for atingido, prevenindo ocorrências de *overbooking*.
 - **Assinatura Digital com Validade Jurídica:** Ao final do processo, o contrato de prestação de serviços educacionais é formalizado com registro de data/hora, endereço IP, dispositivo de origem e hash criptográfico SHA-256.
-- **Onboarding Automático no Portal da Família:** Ao concluir o cadastro, o responsável recebe imediatamente uma conta no Portal da Família com perfil de acesso e e-mail com as instruções de boas-vindas.
+- **Onboarding Automático no Portal da Família:** Ao concluir o cadastro, o responsável recebe uma conta no Portal da Família com perfil de acesso e um e-mail de boas-vindas com o **link para definir a própria senha** (nenhuma senha é enviada por e-mail). A conta só é criada para o e-mail que já consta no cadastro do responsável; um e-mail digitado no formulário nunca é gravado em um cadastro que já existia.
 - **Integração com o Funil de CRM:** Se o responsável ou estudante já tiver registrado interesse anteriormente no módulo de captação de leads (`/quero-matricular`), o lead é automaticamente convertido no CRM.
 
 ### 42.2 Os 5 Passos do Assistente de Matrícula (Wizard)
@@ -2412,6 +2412,13 @@ O módulo de **Matrícula Externa 100% Self-Service** permite que pais, mães e 
 - O responsável é direcionado para a página de sucesso com o **Protocolo Oficial de Matrícula**, detalhamento da turma, dados do contrato aceito e lista dos documentos sob análise.
 - A tela disponibiliza o botão **"Imprimir Comprovante"** para arquivo da família e um atalho direto para login no **Portal da Família** (`/portal`).
 - A equipe da secretaria escolar recebe uma notificação instantânea no painel administrativo para validação documental e homologação da matrícula.
+- A página de confirmação mostra dados pessoais do aluno e do responsável, por isso abre **somente no mesmo navegador em que a matrícula foi concluída ou pelo link entregue ao concluir** (assinado e válido por 2 horas). Para reabrir depois, a família deve usar o Portal da Família ou falar com a secretaria.
+
+### 42.4 Proteções do Formulário Público
+O formulário é aberto à internet e cria cadastros, contrato e conta de acesso; por isso:
+- **reCAPTCHA v3 e limite de tentativas:** ao concluir, o envio exige a verificação do Google reCAPTCHA e é limitado a poucas tentativas por hora por endereço IP (padrão: 6). Quem exceder vê a mensagem "Recebemos muitas tentativas deste dispositivo" e deve aguardar ou falar com a secretaria.
+- **Aluno que já é conhecido pela escola:** se o CPF informado for de um aluno que já tem matrícula, responsável vinculado ou conta de acesso, e o responsável informado **não** for o responsável já vinculado a ele, a matrícula não é criada e a família é orientada a procurar a secretaria. Isso impede que alguém, só conhecendo um CPF, se torne "responsável" de outro aluno e passe a ver boletim, documentos e financeiro.
+- **Cadastros que já existiam:** quando o aluno ou o responsável já tinham cadastro, a matrícula segue como **Pendente**, o contrato registra o aviso "identidade não verificada" e a notificação da secretaria traz o alerta ⚠️. **Confirme com a família que foi ela quem preencheu o formulário antes de ativar a matrícula.** Dados digitados no formulário não substituem os do cadastro existente (o e-mail nunca; o CPF e o endereço só preenchem campos que estavam em branco).
 
 ---
 

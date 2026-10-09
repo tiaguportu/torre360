@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Livros\Schemas;
 
 use App\Models\Livro;
 use App\Services\LivroLookupService;
+use App\Support\TiposArquivo;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -99,6 +100,7 @@ class LivroForm
                         FileUpload::make('capa')
                             ->label('Foto da Capa')
                             ->image()
+                            ->acceptedFileTypes(TiposArquivo::imagens())
                             ->directory('livros/capas')
                             ->disk('public')
                             ->visibility('public')

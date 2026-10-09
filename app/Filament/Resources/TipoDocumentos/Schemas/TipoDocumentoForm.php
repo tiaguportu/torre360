@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\TipoDocumentos\Schemas;
 
 use App\Enums\CategoriaExigenciaDocumento;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -64,6 +65,7 @@ class TipoDocumentoForm
                     ->label('Modelo de Arquivo para Download (opcional)')
                     ->helperText('Arquivo em PDF ou imagem que a família pode baixar como exemplo/modelo.')
                     ->directory('tipos-documentos-modelos')
+                    ->acceptedFileTypes(TiposArquivo::documentos())
                     ->visibility('public')
                     ->downloadable()
                     ->openable()

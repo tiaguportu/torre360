@@ -241,3 +241,7 @@ chama a API de verdade.
   SQLite em memória, onde o lock não tem efeito. Os testes cobrem a idempotência sequencial e o rollback.
 - O Portal grava `data_confirmacao` já na confirmação dos dados pela família, então a coluna
   aparece preenchida enquanto a rematrícula ainda aguarda a assinatura.
+
+## 6. Matrícula online pública: regras de segurança
+
+O fluxo `/matricular-online` (`MatriculaOnlineWizard` + `MatriculaOnlineService`) não exige login; por isso o CPF/e-mail digitado não altera cadastro existente, não vincula responsável a aluno já conhecido, exige reCAPTCHA e tem limite de tentativas por IP, e a página de confirmação só abre por link assinado. As regras completas, os motivos e o risco residual estão em [seguranca_hardening.md](seguranca_hardening.md) (seção "Matrícula online pública").
