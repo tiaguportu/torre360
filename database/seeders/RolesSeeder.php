@@ -401,6 +401,31 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissões de Agenda Diária (Educação Infantil) — não é dado sensível de saúde,
+        // mesmo grupo que já publica conteúdo pedagógico (MaterialAula).
+        $rotinaDiariaPermissions = [];
+        foreach (['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny'] as $acao) {
+            $rotinaDiariaPermissions[] = "{$acao}:RegistroRotinaDiaria";
+        }
+
+        foreach ($rotinaDiariaPermissions as $permName) {
+            Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web'],
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+        }
+
+        foreach (['professor', 'coordenador', 'secretaria', 'admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                foreach ($rotinaDiariaPermissions as $permName) {
+                    if (! $role->hasPermissionTo($permName)) {
+                        $role->givePermissionTo($permName);
+                    }
+                }
+            }
+        }
+
         // Permissões de Consentimentos (uso de imagem, LGPD/ECA) — mesmo papel de quem já
         // cuida da matrícula (secretaria/admin/super_admin).
         $consentimentoPermissions = [];

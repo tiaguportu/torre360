@@ -236,7 +236,18 @@ Controle de bens patrimoniais (computadores, mobiliário, material de laboratór
 
 ---
 
-### 14. 🛡️ Autorização de Uso de Imagem e Consentimentos
+### 14. 🌞 Agenda Diária (Educação Infantil)
+Registro diário da criança (humor, soneca, refeições, atividades, higiene), distinto de `MaterialAula` e `EventoEscolar`. Detalhes em `docs/agenda_diaria_educacao_infantil_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `RegistroRotinaDiaria` | Um por aluno por dia: humor, horário de soneca, atividades, higiene, foto opcional |
+| `RefeicaoRotina` | Lista de refeições do dia (nome livre + quanto comeu), gerenciada via Repeater no próprio formulário |
+| Portal da Família | Histórico por data, com "Ver Detalhes" mostrando a lista completa de refeições |
+
+---
+
+### 15. 🛡️ Autorização de Uso de Imagem e Consentimentos
 Consentimentos da família por aluno (ex.: uso de imagem), com aceite digital simples no Portal (IP + timestamp) em vez de assinatura eletrônica completa. Detalhes em `docs/autorizacao_uso_imagem_roadmap.md`.
 
 | Recurso | Descrição |
@@ -371,4 +382,3 @@ autorizada:
 | Controle de saída de alunos — manual e por catraca | `docs/controle_saida_alunos_roadmap.md` |
 | Transporte escolar (rotas/veículos/motoristas) | `docs/transporte_escolar_roadmap.md` |
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
-| Agenda diária / rotina (Educação Infantil) | `docs/agenda_diaria_educacao_infantil_roadmap.md` |
