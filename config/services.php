@@ -47,6 +47,10 @@ return [
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
+        // Tempo total máximo de uma consulta (somando tentativas e modelos de contingência). Telas do
+        // painel usam este valor; a análise de documentos, que roda em fila, usa o orçamento maior abaixo.
+        'orcamento_segundos' => (int) env('GEMINI_ORCAMENTO_SEGUNDOS', 60),
+        'orcamento_documento_segundos' => (int) env('GEMINI_ORCAMENTO_DOCUMENTO_SEGUNDOS', 70),
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 

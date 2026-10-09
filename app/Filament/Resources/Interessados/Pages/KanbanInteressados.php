@@ -19,8 +19,10 @@ use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Support\Enums\Width;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 
 class KanbanInteressados extends Page
@@ -34,6 +36,13 @@ class KanbanInteressados extends Page
     protected static ?string $slug = 'kanban';
 
     public ?int $filtroConsultorId = null;
+
+    /**
+     * Quantos cards cada coluna já pediu (id da etapa => limite), para o botão "Carregar mais".
+     *
+     * @var array<int, int>
+     */
+    public array $limitesPorColuna = [];
 
     /**
      * Propriedades de controle do Modal Obrigatório de Motivo de Perda (Stage Gate).
@@ -117,20 +126,89 @@ class KanbanInteressados extends Page
         ];
     }
 
-    public function getStatuses(): Collection
+    /**
+     * Colunas do funil com os cards visíveis. Antes a view chamava `getInteressados()` dentro do laço de
+     * colunas — uma consulta com todos os leads e 9 relações por coluna, a cada render, incluindo
+     * matriculados e perdidos de anos atrás. Agora:
+     *
+     *  1. um agregado traz total e valor de todas as colunas (uma consulta);
+     *  2. cada coluna busca só os ids dos primeiros N cards, na ordem de urgência (consulta leve e limitada);
+     *  3. uma única consulta carrega esses leads com as relações que o card usa.
+     *
+     * Colunas finais (matriculado/perdido) mostram só o que foi movido nos últimos
+     * `crm.kanban.dias_finalizados` dias; o restante continua na aba "Finalizados" da listagem.
+     *
+     * @return Collection<int, array{status: StatusInteressado, total: int, valor: float, leads: Collection<int, Interessado>, tem_mais: bool, janela_dias: ?int}>
+     */
+    #[Computed]
+    public function colunas(): Collection
     {
-        return StatusInteressado::orderBy('ordem')->get();
+        $statuses = StatusInteressado::query()->orderBy('ordem')->get();
+        $passo = max(1, (int) config('crm.kanban.cards_por_coluna', 30));
+        $maximo = max($passo, (int) config('crm.kanban.cards_maximo_por_coluna', 300));
+        $diasFinalizados = max(1, (int) config('crm.kanban.dias_finalizados', 90));
+        $corteFinal = now()->subDays($diasFinalizados);
+        $idsFinais = $statuses->where('is_final', true)->pluck('id');
+
+        $base = fn (): Builder => Interessado::query()
+            ->when($this->filtroConsultorId, fn (Builder $query, int $consultorId) => $query->where('usuario_id', $consultorId));
+
+        $totais = $base()
+            ->selectRaw('status_interessado_id, count(*) as total, coalesce(sum(valor_estimado), 0) as valor')
+            ->where(fn (Builder $query) => $query
+                ->whereNotIn('status_interessado_id', $idsFinais)
+                ->orWhere(fn (Builder $finais) => $finais->whereIn('status_interessado_id', $idsFinais)->where('updated_at', '>=', $corteFinal)))
+            ->groupBy('status_interessado_id')
+            ->get()
+            ->keyBy('status_interessado_id');
+
+        $idsPorColuna = $statuses->mapWithKeys(function (StatusInteressado $status) use ($base, $passo, $maximo, $corteFinal): array {
+            $limite = min($maximo, max($passo, (int) ($this->limitesPorColuna[$status->id] ?? $passo)));
+            $consulta = $base()->where('status_interessado_id', $status->id);
+
+            $consulta = $status->is_final
+                ? $consulta->where('updated_at', '>=', $corteFinal)->orderByDesc('updated_at')
+                : $consulta->orderByRaw('data_proximo_contato is null')->orderBy('data_proximo_contato');
+
+            return [$status->id => $consulta->orderByDesc('id')->limit($limite)->pluck('id')];
+        });
+
+        $todosIds = $idsPorColuna->flatten();
+
+        $leads = $todosIds->isEmpty()
+            ? collect()
+            : Interessado::query()
+                ->with(['pessoa', 'origem', 'usuario', 'dependentes.serie', 'ultimoHistorico', 'visitas.pesquisa', 'indicacao.quemIndicou'])
+                ->withCount('documentosInseridos')
+                ->whereIn('id', $todosIds)
+                ->get()
+                ->keyBy('id');
+
+        return $statuses->map(function (StatusInteressado $status) use ($totais, $idsPorColuna, $leads, $diasFinalizados): array {
+            $total = (int) ($totais[$status->id]->total ?? 0);
+            $cards = $idsPorColuna[$status->id]->map(fn (int $id) => $leads[$id] ?? null)->filter()->values();
+
+            return [
+                'status' => $status,
+                'total' => $total,
+                'valor' => (float) ($totais[$status->id]->valor ?? 0),
+                'leads' => $cards,
+                'tem_mais' => $total > $cards->count(),
+                'janela_dias' => $status->is_final ? $diasFinalizados : null,
+            ];
+        })->values();
     }
 
-    public function getInteressados(): Collection
+    /**
+     * "Carregar mais" de uma coluna: soma um lote de cards ao limite dela, até o teto configurado.
+     */
+    public function carregarMais(int|string $statusId): void
     {
-        $query = Interessado::with(['pessoa', 'status', 'origem', 'usuario', 'dependentes.serie', 'ultimoHistorico', 'visitas.pesquisa', 'indicacao.quemIndicou', 'documentosInseridos']);
+        $statusId = (int) $statusId;
+        $passo = max(1, (int) config('crm.kanban.cards_por_coluna', 30));
+        $maximo = max($passo, (int) config('crm.kanban.cards_maximo_por_coluna', 300));
 
-        if ($this->filtroConsultorId) {
-            $query->where('usuario_id', $this->filtroConsultorId);
-        }
-
-        return $query->get();
+        $this->limitesPorColuna[$statusId] = min($maximo, ($this->limitesPorColuna[$statusId] ?? $passo) + $passo);
     }
 
     /**
@@ -377,6 +455,7 @@ class KanbanInteressados extends Page
         $html .= '<li><strong>Arrastar e Soltar:</strong> Mova os cards entre colunas para atualizar o status do lead.</li>';
         $html .= '<li><strong>🎓 Matrícula:</strong> Arrastar um card para <em>Matriculado</em> abre o Assistente de Matrícula já preenchido com os dados do lead (quem não tem acesso ao assistente usa o atalho "Marcar matriculado"). O lead só vira matriculado quando a matrícula é concluída, e um lead matriculado não volta no funil.</li>';
         $html .= '<li><strong>🛑 Motivo de Perda Obrigatório (Stage Gate):</strong> Ao arrastar um lead para uma coluna de encerramento/perda (ex: <em>Desistente</em>, <em>Perdido</em>), o sistema abre obrigatoriamente um modal para registro da razão da perda, concorrente e anotações, qualificando a inteligência comercial da instituição.</li>';
+        $html .= '<li><strong>Carregar mais:</strong> Cada coluna mostra primeiro os leads mais urgentes. O número no topo da coluna é o total real da etapa; se houver mais leads, use o botão <em>Carregar mais</em> no fim da coluna. Matriculados e perdidos aparecem só dos últimos '.(int) config('crm.kanban.dias_finalizados', 90).' dias — os mais antigos ficam na aba <em>Finalizados</em> da lista.</li>';
         $html .= '<li><strong>Cards em Vermelho:</strong> Indicam leads com contato atrasado (urgente!).</li>';
         $html .= '<li><strong>Filtro de Consultor:</strong> Use o botão "Filtrar Consultor" para ver apenas os leads de um consultor específico.</li>';
 

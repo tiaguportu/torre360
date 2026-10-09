@@ -57,6 +57,21 @@ use Illuminate\Database\Eloquent\Collection;
 
 class InteressadosTable
 {
+    /**
+     * Resumo de vagas do lead, calculado uma vez por linha: a coluna "Vagas na Série" pede o mesmo resumo
+     * para texto, cor e tooltip (3 cálculos por linha, por render). Guardado por instância do modelo,
+     * então não vaza entre requisições nem entre testes.
+     *
+     * @return array<string, mixed>
+     */
+    private static function vagasDoLead(Interessado $record): array
+    {
+        static $memo = null;
+        $memo ??= new \WeakMap;
+
+        return $memo[$record] ??= app(TermometroVagasService::class)->obterStatusParaLead($record);
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -79,9 +94,8 @@ class InteressadosTable
                 TextColumn::make('pessoa.nome')
                     ->label('Interessado')
                     ->description(fn (Interessado $record): ?string => $record->pessoa?->telefone)
-                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas('pessoa', fn (Builder $q) => $q
-                        ->where('nome', 'like', "%{$search}%")
-                        ->orWhere('telefone', 'like', "%{$search}%")))
+                    // Nome, e-mail, telefone (com ou sem máscara) ou CPF: ver `Pessoa::scopeBusca()`.
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas('pessoa', fn (Builder $q) => $q->busca($search)))
                     ->sortable()
                     ->weight('bold'),
                 TextColumn::make('status.nome')
@@ -192,18 +206,18 @@ class InteressadosTable
                 TextColumn::make('vagas_serie_interesse')
                     ->label('Vagas na Série')
                     ->state(function (Interessado $record): string {
-                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+                        $resumo = self::vagasDoLead($record);
 
                         return $resumo['texto_destaque'] ?? '—';
                     })
                     ->badge()
                     ->color(function (Interessado $record): string {
-                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+                        $resumo = self::vagasDoLead($record);
 
                         return $resumo['badge_cor'] ?? 'gray';
                     })
                     ->tooltip(function (Interessado $record): ?string {
-                        $resumo = app(TermometroVagasService::class)->obterStatusParaLead($record);
+                        $resumo = self::vagasDoLead($record);
                         if (empty($resumo['series'])) {
                             return null;
                         }
@@ -349,7 +363,9 @@ class InteressadosTable
                     ->label('Estagnado (7+ dias sem interação)')
                     ->queries(
                         true: fn ($query) => $query->estagnados(),
-                        false: fn ($query) => $query->whereNotIn('id', Interessado::estagnados()->pluck('id')),
+                        // `whereNot` com a mesma subconsulta: antes carregava todos os ids estagnados na memória
+                        // e os devolvia numa lista `NOT IN (...)` que cresce com a base.
+                        false: fn ($query) => $query->whereNot(fn ($q) => $q->estagnados()),
                     ),
                 SelectFilter::make('situacao_visita')
                     ->label('Visitas à Escola')

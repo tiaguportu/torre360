@@ -358,10 +358,7 @@ class ConfiguracaoLeadScore extends Page implements HasForms
         $total = 0;
 
         Interessado::query()->chunkById(200, function ($leads) use (&$total): void {
-            foreach ($leads as $lead) {
-                LeadScoreService::recalcular($lead);
-                $total++;
-            }
+            $total += LeadScoreService::recalcularLote($leads);
         });
 
         Notification::make()->title("{$total} lead(s) recalculado(s)")->success()->send();

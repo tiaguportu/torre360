@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Carbon;
 
 class CrmFollowUpCalendarWidget extends Widget implements HasForms
 {
@@ -79,14 +80,32 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
     }
 
     /**
+     * Intervalo de datas dos eventos (`crm.calendario`): antes entravam todos os leads com próximo contato,
+     * de qualquer época, e os filtros eram aplicados no navegador. Contato atrasado há mais que a janela
+     * continua visível (e prioritário) na aba "Precisa de contato" da listagem.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function janelaDeDatas(): array
+    {
+        return [
+            now()->subDays(max(1, (int) config('crm.calendario.janela_passado_dias', 90)))->startOfDay(),
+            now()->addDays(max(1, (int) config('crm.calendario.janela_futuro_dias', 180)))->endOfDay(),
+        ];
+    }
+
+    /**
      * Visitas agendadas dos leads ativos, com o mesmo escopo de consultor dos follow-ups.
      *
      * @return array<int, array<string, mixed>>
      */
     private function getEventosVisitas(): array
     {
+        [$inicioJanela, $fimJanela] = $this->janelaDeDatas();
+
         $query = VisitaInteressado::query()
             ->agendadas()
+            ->whereBetween('data_hora', [$inicioJanela, $fimJanela])
             ->whereHas('interessado', fn ($q) => $q->ativos())
             ->with(['interessado.pessoa', 'interessado.usuario', 'usuario']);
 
@@ -131,8 +150,10 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
      */
     private function getEventosFollowUp(): array
     {
+        [$inicioJanela, $fimJanela] = $this->janelaDeDatas();
+
         $query = Interessado::ativos()
-            ->whereNotNull('data_proximo_contato')
+            ->whereBetween('data_proximo_contato', [$inicioJanela, $fimJanela])
             ->with(['pessoa', 'usuario', 'status']);
 
         if ($this->fixedConsultorId) {

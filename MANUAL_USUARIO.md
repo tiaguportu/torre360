@@ -111,6 +111,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
      - **Total por Coluna:** O cabeçalho de cada coluna mostra o valor total estimado dos leads daquela etapa.
      - **Dias no Funil:** Leads com mais de 30 dias no funil exibem um alerta vermelho no card.
      - **Contagem:** O topo de cada coluna mostra o número total de interessados naquela etapa.
+     - **Carregar mais:** Cada coluna mostra primeiro os **30 leads mais urgentes** (contato mais atrasado primeiro; sem data de contato por último). O número no topo da coluna e o valor total continuam sendo os de **todos** os leads da etapa. Quando houver mais leads, aparece o botão **Carregar mais (30 de 85)** no fim da coluna, que traz outro lote a cada clique, até 300 por coluna. Para ver além disso, use a **Listagem** com filtros.
+     - **Matriculados e Perdidos recentes:** As colunas de encerramento mostram apenas os leads movidos nos **últimos 90 dias** (e o número do topo conta só esses). Os mais antigos continuam na aba **Finalizados** da listagem.
      - **Alertas de Data:** As datas de "Próximo Contato" mudam de cor automaticamente: **Vermelho** se estiverem atrasadas, **Amarelo** se forem para hoje.
      - **Cards em Vermelho:** Se a data do "Próximo Contato" estiver no passado, o card ganha borda e fundo vermelhos de alerta. O tooltip mostra o resumo do último contato.
      - **Selo de Tour Realizado & Visita Agendada:** Cards de interessados que já visitaram a instituição exibem um selo destacado com a data da visita e o score NPS recebido (ex: `🏫 Tour Realizado (15/09) [NPS 10]`, com cores verde para Promotores, amarelo para Neutros e vermelho para Detratores), ou `📅 Visita Agendada: DD/MM` para visitas futuras.
@@ -118,7 +120,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 
 ### 3.2 Listagem de Interessados (Tabela)
 1. Na página de listagem, você encontra uma tabela completa com:
-   - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos).
+   - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos). Os contadores são guardados por até 1 minuto para a tela abrir rápido, mas são atualizados na hora quando um lead, um contato ou uma etapa do funil é alterado; se o score for recalculado em massa, o contador *Quentes* pode levar até 1 minuto para refletir.
+   - **Busca:** O campo de busca encontra o interessado pelo **nome, e-mail, telefone** (com ou sem parênteses e traços: `11999887766` acha `(11) 99988-7766`) ou **CPF**. Números com menos de 3 dígitos só são procurados no nome e no e-mail.
    - **Colunas visíveis:** **Interessado** (nome e telefone logo abaixo), **Status / Consultor** (status em badge e o consultor abaixo), **Qualificação** (Score em badge e a temperatura do consultor abaixo), **Próximo contato** (data e "em/há X dias") e **Origem**. Leads com contato atrasado aparecem com uma faixa vermelha na linha.
    - **Colunas opcionais (seletor de colunas):** Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
    - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
@@ -2499,6 +2502,7 @@ No painel administrativo (`/admin/interessados`), na aba inferior **Documentos d
      - O que foi descartado aparece na notificação, com o motivo, para a secretaria digitar manualmente; o que foi aplicado fica registrado na linha do tempo do lead como entrada automática.
      - A ação exige a permissão *Atualizar Interessado*.
 4. **Reanálise sob Demanda:** Caso necessário, a ação secundária **"Reanalisar com IA"** permite forçar um novo ciclo de conferência pericial a qualquer momento.
+5. **Fila própria e aviso de falha:** A análise por IA roda numa fila própria (`ia`), então não atrasa e-mails e avisos do sistema. Se a IA ficar indisponível e as 3 tentativas se esgotarem, o **consultor do lead recebe um aviso no sininho** ("Análise por IA indisponível") com atalho para o lead; o documento continua como *Não analisado* e deve ser conferido manualmente. A equipe técnica deve manter o processamento da fila `ia` ativo (o agendador já o inicia a cada minuto; o botão **Processar Fila Agora** do painel processa as duas filas).
 
 ### 45.4 Herança Direta na Matrícula
 Assim que a secretaria conclui a captação e homologa a matrícula do aluno, todos os documentos validados e seus respectivos metadados de auditoria e IA são vinculados automaticamente à `matricula_id` gerada, mantendo o histórico intacto e sem exigir novo envio pela família.

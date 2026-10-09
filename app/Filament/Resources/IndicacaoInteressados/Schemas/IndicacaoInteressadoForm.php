@@ -15,6 +15,11 @@ use Filament\Schemas\Schema;
 
 class IndicacaoInteressadoForm
 {
+    private static function rotuloDoLead(Interessado $lead): string
+    {
+        return ($lead->pessoa?->nome ?? 'Lead #'.$lead->id).' (Score: '.($lead->lead_score ?? 0).')';
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
@@ -22,20 +27,27 @@ class IndicacaoInteressadoForm
                 ->description('Vínculo entre a família que indicou e o novo lead interessado.')
                 ->schema([
                     Grid::make(2)->schema([
+                        // As duas listas eram carregadas inteiras (todas as pessoas; todos os leads, com a pessoa de cada
+                        // um) a cada abertura do formulário. Agora a busca vem do servidor, limitada a 50 resultados.
                         Select::make('indicador_pessoa_id')
                             ->label('Família Indicadora (Quem indicou)')
-                            ->options(fn () => Pessoa::orderBy('nome')->pluck('nome', 'id'))
                             ->searchable()
-                            ->preload()
+                            ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()->busca($search)->orderBy('nome')->limit(50)->pluck('nome', 'id')->all())
+                            ->getOptionLabelUsing(fn ($value): ?string => Pessoa::query()->whereKey($value)->value('nome'))
                             ->required(),
 
                         Select::make('interessado_id')
                             ->label('Lead Interessado (Quem foi indicado)')
-                            ->options(fn () => Interessado::with('pessoa')->get()->mapWithKeys(fn ($lead) => [
-                                $lead->id => ($lead->pessoa?->nome ?? 'Lead #'.$lead->id).' (Score: '.($lead->lead_score ?? 0).')',
-                            ]))
                             ->searchable()
-                            ->preload()
+                            ->getSearchResultsUsing(fn (string $search): array => Interessado::query()
+                                ->with('pessoa')
+                                ->whereHas('pessoa', fn ($pessoa) => $pessoa->busca($search))
+                                ->latest('id')
+                                ->limit(50)
+                                ->get()
+                                ->mapWithKeys(fn (Interessado $lead): array => [$lead->id => self::rotuloDoLead($lead)])
+                                ->all())
+                            ->getOptionLabelUsing(fn ($value): ?string => ($lead = Interessado::query()->with('pessoa')->find($value)) ? self::rotuloDoLead($lead) : null)
                             ->required(),
 
                         TextInput::make('codigo_indicacao')

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -64,6 +65,49 @@ class LeadScoreService
 
         $score = self::calcular($interessado);
 
+        self::gravar($interessado, $score);
+
+        return $score;
+    }
+
+    /**
+     * Maior `ordem` entre as etapas ativas, enquanto um lote está em andamento. Evita repetir a
+     * consulta do fator "Estágio no funil" para cada lead (o valor é o mesmo para todos).
+     */
+    private static ?int $maiorOrdemAtivaEmLote = null;
+
+    /**
+     * Recalcula um lote de leads de uma vez. `recalcular()` (um lead) faz `refresh()` — que recarrega todas
+     * as relações — e uma consulta de etapas por lead: para milhares de leads, dezenas de milhares de
+     * consultas. Aqui as relações do lote inteiro vêm de uma consulta cada (`loadMissing`) e a etapa máxima
+     * é buscada uma vez. Os leads do lote devem ter sido lidos agora (o estado em memória é o usado).
+     *
+     * @param  EloquentCollection<int, Interessado>  $leads
+     * @return int quantos leads foram recalculados
+     */
+    public static function recalcularLote(EloquentCollection $leads): int
+    {
+        if ($leads->isEmpty()) {
+            return 0;
+        }
+
+        $leads->loadMissing(['pessoa', 'dependentes', 'historicos', 'status', 'origem']);
+
+        self::$maiorOrdemAtivaEmLote = (int) (StatusInteressado::query()->where('is_final', false)->max('ordem') ?: 1);
+
+        try {
+            foreach ($leads as $lead) {
+                self::gravar($lead, self::calcular($lead));
+            }
+        } finally {
+            self::$maiorOrdemAtivaEmLote = null;
+        }
+
+        return $leads->count();
+    }
+
+    private static function gravar(Interessado $interessado, int $score): void
+    {
         DB::table('interessado')
             ->where('id', $interessado->id)
             ->update([
@@ -72,8 +116,6 @@ class LeadScoreService
             ]);
 
         $interessado->lead_score = $score;
-
-        return $score;
     }
 
     /**
@@ -233,7 +275,7 @@ class LeadScoreService
             return $interessado->status?->is_ganho ? $maximo : 0;
         }
 
-        $maiorOrdemAtiva = StatusInteressado::where('is_final', false)->max('ordem') ?: 1;
+        $maiorOrdemAtiva = self::$maiorOrdemAtivaEmLote ?? (StatusInteressado::where('is_final', false)->max('ordem') ?: 1);
 
         return (int) round(min(1, $interessado->status->ordem / $maiorOrdemAtiva) * $maximo);
     }

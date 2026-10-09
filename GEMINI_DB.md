@@ -50,6 +50,7 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
 - **Campos Principais:** `nome`, `cpf` (armazenado apenas como dígitos numéricos, sem pontos ou traço), `data_nascimento`, `foto` (armazenamento privado), `email`, `aceita_comunicacao` (boolean, padrão true — opt-out de comunicações em massa por LGPD; não afeta notificações individuais obrigatórias), `sexo` (Enum), `cor_raca` (Enum - 0:Não Declarada, 1:Branca, 2:Preta, 3:Parda, 4:Amarela, 5:Indígena), `tipo_nacionalidade` (Enum - 1:Brasileira, 2:Naturalizado/Exterior, 3:Estrangeira), `nacionalidade_id` (Pais).
+- **Índice:** `pessoa_email_idx` (`email`). **Scope:** `busca($termo)` — nome, e-mail, telefone (ignora `( ) - + e espaço`) e CPF (dígitos); menos de 3 dígitos não entram na busca de telefone/CPF.
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
     - BelongsTo `cidade` (naturalidade), `pais` (nacionalidade).
@@ -397,6 +398,7 @@ Estrutura de ensino e turmas.
     - HasMany `interacoes` (histórico sem os registros automáticos).
     - HasOne `ultimoHistorico` (última interação, ignorando registros automáticos).
     - HasOne `proximaVisita` (visita agendada futura mais próxima).
+- **Índices (desempenho):** `interessado_proximo_contato_idx` (`data_proximo_contato`), `interessado_status_proximo_idx` (`status_interessado_id`, `data_proximo_contato`), `interessado_status_atualizado_idx` (`status_interessado_id`, `updated_at`), `interessado_usuario_status_idx` (`usuario_id`, `status_interessado_id`), `interessado_lead_score_idx`, `interessado_data_conversao_idx`, `interessado_created_at_idx`.
 - **Auditoria:** Trilha de auditoria via `activity_log` com `log_name: crm`, rastreando mudanças em status, temperatura, consultor e valor.
 - **Scopes:** `ativos()` (não finalizados), `precisaContato()` (contato atrasado), `doConsultor($id)`, `estagnados($dias)` (sem interação humana/da família nos últimos N dias), `comTokenDocumentosValido($token)`.
 - **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `totalContatos()` (sem registros automáticos), `diasSemInteracao()`, `estaEstagnado()`.
@@ -434,7 +436,7 @@ Estrutura de ensino e turmas.
 ### `visita_interessado`
 - **Representa:** Visita de um lead à escola.
 - **Campos Principais:** `interessado_id` (FK, `cascadeOnDelete`), `interessado_dependente_id` (FK nullable, `nullOnDelete`), `usuario_id` (FK `users` nullable — consultor), `data_hora`, `status` (Enum `App\Enums\StatusVisitaInteressado`: `agendada`, `realizada`, `faltou`, `cancelada`), `observacoes`, `lembrete_enviado_em` (datetime nullable).
-- **Índice:** (`status`, `data_hora`).
+- **Índices:** (`status`, `data_hora`) e `visita_interessado_lead_status_idx` (`interessado_id`, `status`).
 - **Relacionamentos:** BelongsTo `interessado`, BelongsTo `interessado_dependente` (`dependente`), BelongsTo `users` (`usuario`).
 
 ### `landing_leads`

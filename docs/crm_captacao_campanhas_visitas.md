@@ -200,6 +200,7 @@ A mesma máscara vale na criação do interessado (mesmo formulário) e no cadas
 | `2026_10_04_210100_add_automatico_to_historico_contato_table` | `historico_contato.automatico` + índice `(interessado_id, automatico, data_contato)`; classifica os registros automáticos antigos pelo texto que o sistema grava. |
 | `2026_10_04_230000_add_unidade_e_turno_to_interessado_dependente_table` | `interessado_dependente.unidade_id` (FK, `nullOnDelete`) e `turno_preferencia`. |
 | `2026_10_04_230100_add_ultimo_alerta_em_to_interessado_table` | `interessado.ultimo_alerta_em` (controle do intervalo entre alertas). |
+| `2026_10_05_090000_add_indices_de_desempenho_ao_crm` | Índices de desempenho em `interessado` (próximo contato, etapa + contato/atualização, consultor + etapa, score, conversão, criação), `pessoa.email` e `visita_interessado (interessado, status)`. Idempotente. Ver `docs/crm_funil_e_captacao.md`, seção 10. |
 
 ## 8. Testes
 

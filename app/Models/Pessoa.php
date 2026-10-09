@@ -68,6 +68,27 @@ class Pessoa extends Model
         return $query->where('aceita_comunicacao', true);
     }
 
+    /**
+     * Busca por nome, e-mail, telefone ou CPF. O telefone é gravado com máscara ("(11) 99999-0000"), então
+     * quem digita só os números (ou "11 99999") também precisa achar: a comparação ignora `( ) - + e espaço`.
+     * Dígitos curtos (menos de 3) não entram na busca por telefone/CPF para não casar com quase tudo.
+     */
+    public function scopeBusca(Builder $query, string $termo): Builder
+    {
+        $termo = trim($termo);
+        $digitos = preg_replace('/\D/', '', $termo) ?? '';
+
+        return $query->where(function (Builder $q) use ($termo, $digitos): void {
+            $q->where('nome', 'like', "%{$termo}%")
+                ->orWhere('email', 'like', "%{$termo}%");
+
+            if (strlen($digitos) >= 3) {
+                $q->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '') LIKE ?", ["%{$digitos}%"])
+                    ->orWhere('cpf', 'like', "%{$digitos}%");
+            }
+        });
+    }
+
     public function matriculas(): HasMany
     {
         return $this->hasMany(Matricula::class, 'pessoa_id');

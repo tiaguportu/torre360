@@ -8,7 +8,7 @@ use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Filament\Resources\Interessados\Schemas\InteressadoForm;
 use App\Filament\Resources\Interessados\Tables\InteressadosTable;
 use App\Models\Interessado;
-use App\Models\StatusInteressado;
+use App\Services\ContadoresCrm;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
@@ -43,14 +43,8 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        /** @var StatusInteressado $status */
-        $status = StatusInteressado::where('nome', 'Novo')->first();
-
-        if (! $status) {
-            return null;
-        }
-
-        $count = static::getModel()::where('status_interessado_id', $status->id)->count();
+        // O selo aparece em todas as páginas do painel: vem do cache de contadores (ContadoresCrm), não de 2 consultas por página.
+        $count = ContadoresCrm::novos();
 
         return $count > 0 ? (string) $count : null;
     }

@@ -235,11 +235,19 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
      * Executa a requisição à API do Gemini com fallback automático entre modelos
      * em caso de sobrecarga temporária (503 / 429 / high demand).
      *
+     * O tempo total é limitado por `$orcamentoSegundos` (padrão `services.gemini.orcamento_segundos`): antes a
+     * cascata de 5 modelos em 2 rodadas, com 45 s cada, podia segurar uma requisição ou um worker por mais de
+     * 7 minutos. Esgotado o orçamento não se inicia nova tentativa, e cada tentativa nunca passa do tempo que
+     * resta (mínimo de 5 s).
+     *
      * @param  array<string, mixed>  $payload
      * @param  int  $timeout  Segundos por tentativa; análises de áudio precisam de mais tempo que as de texto.
+     * @param  int|null  $orcamentoSegundos  tempo máximo somado de todas as tentativas; sem valor, usa o da
+     *                                       configuração, mas nunca menos que `$timeout` (uma tentativa longa,
+     *                                       como a de áudio, não pode ser cortada pelo orçamento padrão)
      * @return array<string, mixed>
      */
-    public function callGeminiApi(array $payload, int $timeout = 45): array
+    public function callGeminiApi(array $payload, int $timeout = 45, ?int $orcamentoSegundos = null): array
     {
         $apiKey = config('services.gemini.key');
 
@@ -249,21 +257,35 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
 
         $models = $this->getCandidateModels();
         $lastError = null;
+        $orcamento = $orcamentoSegundos !== null
+            ? max(0, $orcamentoSegundos)
+            : max($timeout, (int) config('services.gemini.orcamento_segundos', 60));
+        $inicio = microtime(true);
 
         // Duas rodadas pelos modelos, com pausa entre elas, para absorver picos de demanda.
         $attempts = array_merge($models, $models);
 
         foreach ($attempts as $i => $model) {
+            $decorrido = microtime(true) - $inicio;
+
+            if ($i > 0 && $decorrido >= $orcamento) {
+                $lastError ??= 'tempo limite da consulta esgotado';
+                break;
+            }
+
             if ($i === count($models)) {
                 Sleep::sleep(3);
             }
+
+            // `ceil`: a primeira tentativa (decorrido ≈ 0) deve receber o timeout inteiro; com `floor`, 120 - 0,0004 virava 119.
+            $limiteDaTentativa = (int) min($timeout, max(5, ceil($orcamento - $decorrido)));
 
             // A chave vai no header (e não na query string): mensagens de erro de rede (cURL) trazem a URL
             // completa e acabariam expondo a chave em logs, notificações e telas.
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
             try {
-                $response = Http::timeout($timeout)
+                $response = Http::timeout($limiteDaTentativa)
                     ->withHeaders([
                         'Content-Type' => 'application/json',
                         'x-goog-api-key' => $apiKey,
