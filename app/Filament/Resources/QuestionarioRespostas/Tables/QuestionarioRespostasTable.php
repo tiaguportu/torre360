@@ -5,6 +5,7 @@ namespace App\Filament\Resources\QuestionarioRespostas\Tables;
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
 use App\Filament\Resources\Questionarios\QuestionarioResource;
 use App\Models\QuestionarioResposta;
+use App\Support\CsvSanitizer;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -107,7 +108,7 @@ class QuestionarioRespostasTable
                         $valorResposta = implode(', ', $detalhe->resposta_json);
                     }
 
-                    fputcsv($handle, [
+                    CsvSanitizer::fputcsv($handle, [
                         $resposta->id,
                         $resposta->questionario->titulo,
                         $resposta->user->name ?? 'Anônimo',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Questionario;
 use App\Models\QuestionarioBloco;
 use App\Models\QuestionarioPergunta;
+use App\Support\CsvSanitizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class QuestionarioService
         $handle = fopen('php://temp', 'r+');
 
         // Cabeçalho
-        fputcsv($handle, [
+        CsvSanitizer::fputcsv($handle, [
             'bloco_identificador',
             'bloco_titulo',
             'bloco_descricao',
@@ -36,7 +37,7 @@ class QuestionarioService
 
         foreach ($questionario->blocos()->with('perguntas')->get() as $bloco) {
             if ($bloco->perguntas->isEmpty()) {
-                fputcsv($handle, [
+                CsvSanitizer::fputcsv($handle, [
                     $bloco->identificador,
                     $bloco->titulo,
                     $bloco->descricao,
@@ -56,7 +57,7 @@ class QuestionarioService
                     $refPerguntaIdentificador = $refPergunta ? $refPergunta->identificador : '';
                 }
 
-                fputcsv($handle, [
+                CsvSanitizer::fputcsv($handle, [
                     $bloco->identificador,
                     $bloco->titulo,
                     $bloco->descricao,
@@ -122,7 +123,9 @@ class QuestionarioService
 
             // Primeiro passo: Criar/Atualizar blocos e perguntas
             foreach ($rows as $row) {
-                $blocoIdentificador = $row['bloco_identificador'] ?: Str::slug($row['bloco_titulo']);
+                $blocoTitulo = (string) CsvSanitizer::desanitize($row['bloco_titulo'] ?? '');
+                $blocoDescricao = CsvSanitizer::desanitize($row['bloco_descricao'] ?? null);
+                $blocoIdentificador = (string) (CsvSanitizer::desanitize($row['bloco_identificador'] ?? '') ?: Str::slug($blocoTitulo));
 
                 if (! isset($blocosCriados[$blocoIdentificador])) {
                     $bloco = QuestionarioBloco::updateOrCreate(
@@ -131,16 +134,17 @@ class QuestionarioService
                             'identificador' => $blocoIdentificador,
                         ],
                         [
-                            'titulo' => $row['bloco_titulo'],
-                            'descricao' => $row['bloco_descricao'],
+                            'titulo' => $blocoTitulo,
+                            'descricao' => $blocoDescricao,
                             'ordem' => (int) $row['bloco_ordem'],
                         ]
                     );
                     $blocosCriados[$blocoIdentificador] = $bloco;
                 }
 
-                if (! empty($row['pergunta_enunciado'])) {
-                    $perguntaIdentificador = $row['pergunta_identificador'] ?: Str::slug(strip_tags($row['pergunta_enunciado']));
+                $enunciado = (string) CsvSanitizer::desanitize($row['pergunta_enunciado'] ?? '');
+                if (! empty($enunciado)) {
+                    $perguntaIdentificador = (string) (CsvSanitizer::desanitize($row['pergunta_identificador'] ?? '') ?: Str::slug(strip_tags($enunciado)));
 
                     $opcoes = json_decode($row['pergunta_opcoes'], true) ?: [];
 
@@ -150,7 +154,7 @@ class QuestionarioService
                             'identificador' => $perguntaIdentificador,
                         ],
                         [
-                            'enunciado' => $row['pergunta_enunciado'],
+                            'enunciado' => $enunciado,
                             'tipo' => $row['pergunta_tipo'],
                             'opcoes' => $opcoes,
                             'is_obrigatoria' => $row['pergunta_obrigatoria'] === '1',

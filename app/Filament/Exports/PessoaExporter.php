@@ -3,6 +3,7 @@
 namespace App\Filament\Exports;
 
 use App\Models\Pessoa;
+use App\Support\CsvSanitizer;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -17,11 +18,15 @@ class PessoaExporter extends Exporter
         return [
             ExportColumn::make('id')
                 ->label('ID'),
-            ExportColumn::make('nome'),
+            ExportColumn::make('nome')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
             ExportColumn::make('data_nascimento'),
-            ExportColumn::make('cpf'),
-            ExportColumn::make('email'),
-            ExportColumn::make('telefone'),
+            ExportColumn::make('cpf')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
+            ExportColumn::make('email')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
+            ExportColumn::make('telefone')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
             ExportColumn::make('sexo_id'),
             ExportColumn::make('cor_raca_id'),
             ExportColumn::make('nacionalidade_id'),

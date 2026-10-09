@@ -3,6 +3,7 @@
 namespace App\Filament\Exports;
 
 use App\Models\Contrato;
+use App\Support\CsvSanitizer;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -20,11 +21,13 @@ class ContratoExporter extends Exporter
             ExportColumn::make('matricula_id')
                 ->label('ID da Matrícula'),
             ExportColumn::make('matricula.pessoa.nome')
-                ->label('Aluno (Nome)'),
+                ->label('Aluno (Nome)')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
             ExportColumn::make('template_contrato_id')
                 ->label('ID do Template'),
             ExportColumn::make('templateContrato.nome')
-                ->label('Template (Nome)'),
+                ->label('Template (Nome)')
+                ->formatStateUsing(fn ($state) => CsvSanitizer::sanitize($state)),
             ExportColumn::make('valor_total')
                 ->label('Valor Total'),
             ExportColumn::make('data_aceite')

