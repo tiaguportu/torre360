@@ -13,6 +13,14 @@ class MatriculaOnlineController extends Controller
      */
     public function sucesso(Request $request, Matricula $matricula): View
     {
+        // Proteção contra IDOR / BOLA (OWASP A01 / LGPD):
+        // Impede enumeração pública e raspagem de dados de menores e responsáveis por ID sequencial.
+        $sessaoValida = session('matricula_online_id') === $matricula->id;
+        $assinaturaValida = $request->hasValidSignature();
+        $usuarioAutorizado = auth()->check() && $matricula->isAccessibleBy(auth()->user());
+
+        abort_unless($sessaoValida || $assinaturaValida || $usuarioAutorizado, 403, 'Acesso não autorizado a este comprovante de matrícula.');
+
         $matricula->load([
             'pessoa.enderecos.cidade.estado',
             'turma.serie.curso',

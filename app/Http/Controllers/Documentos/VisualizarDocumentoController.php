@@ -86,10 +86,35 @@ class VisualizarDocumentoController extends Controller
         }
 
         $fullPath = $disk->path($path);
+        $filename = basename($path);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        return response()->file($fullPath, [
-            'Content-Disposition' => 'inline',
+        $mimeType = null;
+        try {
+            $mimeType = $disk->mimeType($path) ?: (function_exists('mime_content_type') ? @mime_content_type($fullPath) : null);
+        } catch (\Throwable) {
+            $mimeType = null;
+        }
+        $mimeType = strtolower((string) ($mimeType ?? 'application/octet-stream'));
+
+        // SVGs e arquivos HTML/XML enviados não devem ser renderizados inline para evitar Stored XSS
+        $isPotentiallyDangerousInline = in_array($extension, ['svg', 'html', 'htm', 'xhtml', 'xml'], true)
+            || str_contains($mimeType, 'svg')
+            || str_contains($mimeType, 'html')
+            || str_contains($mimeType, 'xml');
+
+        $headers = [
             'X-Content-Type-Options' => 'nosniff',
-        ]);
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+            'Content-Security-Policy' => "default-src 'none'; sandbox",
+        ];
+
+        if ($isPotentiallyDangerousInline) {
+            return response()->download($fullPath, $filename, $headers);
+        }
+
+        return response()->file($fullPath, array_merge($headers, [
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]));
     }
 }

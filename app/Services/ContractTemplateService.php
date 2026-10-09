@@ -7,6 +7,7 @@ use App\Models\Contrato;
 use App\Models\Pessoa;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
+use App\Support\HtmlSanitizer;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -83,6 +84,9 @@ class ContractTemplateService
             ],
             $renderedHtml
         );
+
+        // Sanitiza o HTML renderizado contra vetores de Stored XSS antes da exibição/impressão
+        $renderedHtml = HtmlSanitizer::clean($renderedHtml);
 
         // Processa imagens locais no HTML convertendo-as para Base64 para correta exibição no PDF
         return $this->processHtmlImages($renderedHtml);

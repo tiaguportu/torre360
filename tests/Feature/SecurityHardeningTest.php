@@ -11,12 +11,15 @@ use App\Models\AtendimentoSetor;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\SacolaLeitura;
 use App\Models\Turma;
 use App\Models\User;
+use App\Support\HtmlSanitizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
@@ -285,5 +288,116 @@ class SecurityHardeningTest extends TestCase
         // Verifica que a senha não foi gravada
         $todasPropriedades = json_encode($log->properties);
         $this->assertStringNotContainsString($senhaIncorreta, $todasPropriedades);
+    }
+
+    public function test_confirmacao_de_matricula_online_bloqueia_acesso_sem_autorizacao_ou_assinatura_idor(): void
+    {
+        $aluno = Pessoa::create(['nome' => 'Aluno Invasao', 'cpf' => '99988877766']);
+        $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
+        $turma = Turma::create(['nome' => 'Turma IDOR', 'periodo_letivo_id' => $periodo->id]);
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+
+        // Acesso direto sem sessão e sem assinatura digital deve retornar 403 Forbidden
+        $response = $this->get(route('matricular.online.sucesso', ['matricula' => $matricula->id]));
+        $response->assertForbidden();
+    }
+
+    public function test_confirmacao_de_matricula_online_permite_acesso_com_sessao_ou_url_assinada(): void
+    {
+        $aluno = Pessoa::create(['nome' => 'Aluno Valido', 'cpf' => '88877766655']);
+        $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
+        $turma = Turma::create(['nome' => 'Turma Valida', 'periodo_letivo_id' => $periodo->id]);
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+
+        // 1. Acesso com ID na sessão legítima do wizard
+        $responseSessao = $this->withSession(['matricula_online_id' => $matricula->id])
+            ->get(route('matricular.online.sucesso', ['matricula' => $matricula->id]));
+        $responseSessao->assertOk();
+
+        // 2. Acesso através de URL assinada temporária gerada pelo sistema
+        $signedUrl = URL::temporarySignedRoute(
+            'matricular.online.sucesso',
+            now()->addDays(7),
+            ['matricula' => $matricula->id]
+        );
+
+        $responseAssinada = $this->get($signedUrl);
+        $responseAssinada->assertOk();
+    }
+
+    public function test_impressao_de_etiquetas_e_ficha_de_sacola_bloqueia_usuarios_nao_autorizados(): void
+    {
+        // 1. Não autenticado em etiquetas -> redireciona login
+        $responseEtiquetasAnon = $this->get('/admin/biblioteca/etiquetas/imprimir');
+        $responseEtiquetasAnon->assertRedirect(route('filament.admin.auth.login'));
+
+        // 2. Autenticado como responsável comum sem permissão de biblioteca
+        $userSemPermissao = User::factory()->create(['activated_at' => now()]);
+        $userSemPermissao->assignRole('responsavel');
+        $this->actingAs($userSemPermissao);
+
+        $responseEtiquetasAutenticado = $this->get('/admin/biblioteca/etiquetas/imprimir');
+        $responseEtiquetasAutenticado->assertForbidden();
+
+        // 3. Ficha de sacola sem autorização
+        $responsavel = Pessoa::create(['nome' => 'Responsavel Outro', 'cpf' => '44433322211']);
+        $sacola = SacolaLeitura::create([
+            'titulo' => 'Sacola Aventuras',
+            'responsavel_id' => $responsavel->id,
+            'data_retirada' => now(),
+            'data_prevista_devolucao' => now()->addDays(7),
+        ]);
+
+        $responseFicha = $this->get("/admin/biblioteca/sacolas/{$sacola->id}/ficha");
+        $responseFicha->assertForbidden();
+    }
+
+    public function test_html_sanitizer_remove_scripts_e_eventos_maliciosos_preservando_formatacao(): void
+    {
+        $payloadMalicioso = '<p>Texto legítimo <strong>em negrito</strong>.</p>'
+            .'<script>alert("XSS 1")</script>'
+            .'<img src="foto.jpg" onerror="alert(\'XSS 2\')" />'
+            .'<a href="javascript:alert(\'XSS 3\')">Clique aqui</a>'
+            .'<iframe src="https://evil.com"></iframe>';
+
+        $sanitizado = HtmlSanitizer::clean($payloadMalicioso);
+
+        $this->assertStringContainsString('Texto legítimo', $sanitizado);
+        $this->assertStringContainsString('<strong>em negrito</strong>', $sanitizado);
+        $this->assertStringNotContainsString('<script', $sanitizado);
+        $this->assertStringNotContainsString('alert("XSS 1")', $sanitizado);
+        $this->assertStringNotContainsString('onerror', $sanitizado);
+        $this->assertStringNotContainsString('javascript:', $sanitizado);
+        $this->assertStringNotContainsString('<iframe', $sanitizado);
+    }
+
+    public function test_visualizar_documento_forca_attachment_e_headers_de_seguranca_para_svg(): void
+    {
+        Storage::fake('local');
+
+        $staffUser = User::factory()->create(['activated_at' => now()]);
+        $staffUser->assignRole('super_admin');
+        $this->actingAs($staffUser);
+
+        // Cria um arquivo SVG no storage local sob documentos_emitidos
+        $svgPath = 'documentos_emitidos/teste_vetor.svg';
+        $svgContent = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle r="10"/></svg>';
+        Storage::disk('local')->put($svgPath, $svgContent);
+
+        $response = $this->get(route('documentos.visualizar', ['path' => $svgPath]));
+
+        $response->assertOk();
+        $disposition = $response->headers->get('Content-Disposition');
+        $this->assertStringContainsString('attachment', $disposition, 'Arquivos SVG devem ser forçados para download/attachment.');
+        $this->assertEquals('nosniff', $response->headers->get('X-Content-Type-Options'));
+        $this->assertStringContainsString("default-src 'none'", $response->headers->get('Content-Security-Policy'));
     }
 }

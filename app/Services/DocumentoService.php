@@ -11,6 +11,7 @@ use App\Models\TemplateDocumento;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Support\HtmlSanitizer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -169,6 +170,7 @@ class DocumentoService
         }
 
         $conteudoProcessado = $this->preencherMacros($template, $matricula, $solicitacao);
+        $conteudoProcessado = HtmlSanitizer::clean($conteudoProcessado);
 
         $urlValidacao = url('/validar-documento/'.$solicitacao->codigo_verificacao);
         $qrCodeDataUri = $this->qrCodeService->renderDataUri($urlValidacao);

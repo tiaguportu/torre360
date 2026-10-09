@@ -11,6 +11,9 @@ class BibliotecaEtiquetasController extends Controller
 {
     public function imprimir(Request $request, BarcodeService $barcodeService): View
     {
+        $user = $request->user();
+        abort_unless($user && ($user->isStaff() || $user->can('ViewAny:Livro')), 403, 'Acesso não autorizado à impressão de etiquetas.');
+
         $livroIds = $request->input('livros');
         if (! is_array($livroIds)) {
             $livroIds = array_filter(explode(',', (string) $livroIds));

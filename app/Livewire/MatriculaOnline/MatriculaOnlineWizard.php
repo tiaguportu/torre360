@@ -11,6 +11,7 @@ use App\Models\Unidade;
 use App\Services\MatriculaOnlineService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -345,7 +346,13 @@ class MatriculaOnlineWizard extends Component
 
             $matricula = $service->processarMatricula($dados, $arquivos);
 
-            return redirect()->route('matricular.online.sucesso', ['matricula' => $matricula->id]);
+            session(['matricula_online_id' => $matricula->id]);
+
+            return redirect()->to(URL::temporarySignedRoute(
+                'matricular.online.sucesso',
+                now()->addDays(7),
+                ['matricula' => $matricula->id]
+            ));
         } catch (\DomainException $e) {
             $this->processando = false;
             $this->mensagemErro = $e->getMessage();
