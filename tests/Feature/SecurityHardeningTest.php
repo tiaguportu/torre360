@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Portal\Pages\CentralAtendimento;
 use App\Filament\Resources\Users\Pages\CreateUser;
@@ -15,8 +16,10 @@ use App\Models\SacolaLeitura;
 use App\Models\Turma;
 use App\Models\User;
 use App\Support\HtmlSanitizer;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -399,5 +402,143 @@ class SecurityHardeningTest extends TestCase
         $this->assertStringContainsString('attachment', $disposition, 'Arquivos SVG devem ser forçados para download/attachment.');
         $this->assertEquals('nosniff', $response->headers->get('X-Content-Type-Options'));
         $this->assertStringContainsString("default-src 'none'", $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function test_alteracao_de_senha_no_perfil_revoga_outras_sessoes_concorrentes_e_registra_auditoria(): void
+    {
+        config(['session.driver' => 'database']);
+
+        $senhaOriginal = 'Senha@Antiga1234';
+        $novaSenha = 'NovaSenha@SuperForte2026';
+
+        $user = User::factory()->create([
+            'email' => 'usuario.trocasenha@torre360.com.br',
+            'password' => Hash::make($senhaOriginal),
+            'activated_at' => now(),
+        ]);
+        $user->assignRole('super_admin');
+
+        $outroUser = User::factory()->create([
+            'email' => 'outro.usuario@torre360.com.br',
+            'activated_at' => now(),
+        ]);
+
+        // Simula sessão ativa em outro dispositivo do mesmo usuário
+        DB::table('sessions')->insert([
+            'id' => 'sessao_concorrente_dispositivo_antigo',
+            'user_id' => $user->id,
+            'ip_address' => '10.0.0.99',
+            'user_agent' => 'Mozilla/5.0 (Compromised Device)',
+            'payload' => 'payload_antigo',
+            'last_activity' => time(),
+        ]);
+
+        // Simula sessão ativa de um usuário inocente que NÃO deve ser afetada
+        DB::table('sessions')->insert([
+            'id' => 'sessao_outro_usuario_legitimo',
+            'user_id' => $outroUser->id,
+            'ip_address' => '10.0.0.88',
+            'user_agent' => 'Mozilla/5.0 (Other User Device)',
+            'payload' => 'payload_outro',
+            'last_activity' => time(),
+        ]);
+
+        $this->actingAs($user);
+
+        Livewire::test(ChangePassword::class)
+            ->fillForm([
+                'name' => $user->name,
+                'email' => $user->email,
+                'password' => $novaSenha,
+                'passwordConfirmation' => $novaSenha,
+                'currentPassword' => $senhaOriginal,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        // 1. Senha do usuário deve estar devidamente atualizada no banco
+        $this->assertTrue(Hash::check($novaSenha, $user->fresh()->password));
+
+        // 2. A sessão concorrente do usuário deve ter sido eliminada fisicamente
+        $this->assertFalse(
+            DB::table('sessions')->where('id', 'sessao_concorrente_dispositivo_antigo')->exists(),
+            'Sessões concorrentes anteriores do usuário devem ser revogadas após a troca de senha.'
+        );
+
+        // 3. A sessão do outro usuário não pode ter sido tocada
+        $this->assertTrue(
+            DB::table('sessions')->where('id', 'sessao_outro_usuario_legitimo')->exists(),
+            'Sessões de outros usuários devem permanecer intocadas.'
+        );
+
+        // 4. Deve existir registro de auditoria no canal auth documentando a revogação de outras sessões
+        $log = Activity::where('log_name', 'auth')
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log, 'A alteração de senha deve gerar log de auditoria no canal auth.');
+        $this->assertStringContainsString('alterou sua senha', $log->description);
+        $this->assertStringContainsString('revogadas', $log->description);
+    }
+
+    public function test_redefinicao_de_senha_esquecida_dispara_revogacao_de_sessoes_no_listener(): void
+    {
+        config(['session.driver' => 'database']);
+
+        $user = User::factory()->create([
+            'email' => 'reset.usuario@torre360.com.br',
+            'password' => Hash::make('Senha@Velha999'),
+            'activated_at' => now(),
+        ]);
+
+        $outroUser = User::factory()->create([
+            'email' => 'outro.reset@torre360.com.br',
+            'activated_at' => now(),
+        ]);
+
+        DB::table('sessions')->insert([
+            'id' => 'sessao_esquecida_comprometida',
+            'user_id' => $user->id,
+            'ip_address' => '10.0.0.77',
+            'user_agent' => 'Mozilla/5.0 (Stolen Cookie Device)',
+            'payload' => 'payload_comprometido',
+            'last_activity' => time(),
+        ]);
+
+        DB::table('sessions')->insert([
+            'id' => 'sessao_outro_permanece',
+            'user_id' => $outroUser->id,
+            'ip_address' => '10.0.0.66',
+            'user_agent' => 'Mozilla/5.0 (Legit Device)',
+            'payload' => 'payload_legit',
+            'last_activity' => time(),
+        ]);
+
+        // Simula disparo do evento oficial de PasswordReset
+        event(new PasswordReset($user));
+
+        // 1. Sessão do usuário resetado deve ser removida
+        $this->assertFalse(
+            DB::table('sessions')->where('id', 'sessao_esquecida_comprometida')->exists(),
+            'Sessões ativas devem ser canceladas após o reset de senha esquecida.'
+        );
+
+        // 2. Sessão do outro usuário deve ser mantida
+        $this->assertTrue(
+            DB::table('sessions')->where('id', 'sessao_outro_permanece')->exists()
+        );
+
+        // 3. Log de auditoria gerado
+        $log = Activity::where('log_name', 'auth')
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertStringContainsString('redefinida com sucesso', $log->description);
+        $this->assertStringContainsString('revogadas', $log->description);
     }
 }

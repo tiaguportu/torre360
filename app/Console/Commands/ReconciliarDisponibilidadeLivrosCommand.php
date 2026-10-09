@@ -9,7 +9,7 @@ class ReconciliarDisponibilidadeLivrosCommand extends Command
 {
     protected $signature = 'biblioteca:reconciliar-disponibilidade {--aplicar : Grava as correções (sem esta opção apenas lista as divergências)}';
 
-    protected $description = 'Confere se quantidade_disponivel = quantidade_total − empréstimos em aberto e, com --aplicar, corrige as divergências';
+    protected $description = 'Confere se quantidade_disponivel = quantidade_total − (empréstimos em aberto + sacolas em aberto) e, com --aplicar, corrige as divergências';
 
     public function handle(): int
     {
@@ -18,11 +18,15 @@ class ReconciliarDisponibilidadeLivrosCommand extends Command
         $verificados = 0;
 
         Livro::query()
-            ->withCount(['emprestimosEmAberto as em_aberto'])
+            ->withCount([
+                'emprestimosEmAberto as em_aberto',
+                'sacolaItensEmAberto as em_sacola',
+            ])
             ->chunkById(200, function ($livros) use ($aplicar, &$divergencias, &$verificados): void {
                 foreach ($livros as $livro) {
                     $verificados++;
-                    $correta = max(0, (int) $livro->quantidade_total - (int) $livro->em_aberto);
+                    $fora = (int) $livro->em_aberto + (int) $livro->em_sacola;
+                    $correta = max(0, (int) $livro->quantidade_total - $fora);
 
                     if ((int) $livro->quantidade_disponivel === $correta) {
                         continue;
@@ -34,6 +38,7 @@ class ReconciliarDisponibilidadeLivrosCommand extends Command
                         mb_strimwidth((string) $livro->titulo, 0, 40, '…'),
                         $livro->quantidade_total,
                         $livro->em_aberto,
+                        $livro->em_sacola,
                         $livro->quantidade_disponivel,
                         $correta,
                     ];
@@ -51,7 +56,7 @@ class ReconciliarDisponibilidadeLivrosCommand extends Command
         }
 
         $this->table(
-            ['ID', 'Tombo', 'Título', 'Total', 'Em aberto', 'Disponível (gravado)', 'Disponível (correto)'],
+            ['ID', 'Tombo', 'Título', 'Total', 'Empréstimos', 'Em Sacolas', 'Disponível (gravado)', 'Disponível (correto)'],
             $divergencias,
         );
 

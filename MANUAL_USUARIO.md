@@ -11,7 +11,7 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
 4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes, pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro, além de **contrato não gerado** e **contrato não assinado** nas matrículas ativas ou pendentes); cada cartão abre a lista de Matrículas já filtrada pelo tipo de pendência.
 
-### 🔑 Recuperação de Senha
+### 🔑 Recuperação e Alteração de Senha
 Caso tenha esquecido sua senha:
 1. Na tela de login, clique no link **Esqueceu sua senha?**.
 2. Informe o **E-mail** cadastrado e confirme a verificação de segurança.
@@ -19,12 +19,19 @@ Caso tenha esquecido sua senha:
 4. Você receberá um e-mail contendo um **link seguro e temporário** de redefinição. Sua senha atual permanecerá funcionando até que a troca seja efetivamente confirmada por você.
 5. Acesse o link recebido no e-mail, informe e confirme sua nova senha para concluir o acesso.
 
+Caso deseje alterar sua senha estando logado:
+1. Clique no menu do seu perfil no canto superior direito do painel e selecione **Mudar Senha** (ou Perfil).
+2. Informe sua senha atual para confirmação de identidade.
+3. Digite e confirme sua nova senha segura (ou utilize a ação **Gerar Senha Forte**).
+4. Clique em **Salvar**. Sua senha será imediatamente atualizada e todas as sessões anteriores em outros computadores, tablets ou smartphones serão canceladas automaticamente.
+
 > [!NOTE]
 > O acesso ao sistema, o registro de novos usuários e a solicitação de recuperação de senha são protegidos pelo **Google reCAPTCHA v3**. O sistema analisa o comportamento de navegação de forma invisível para garantir a segurança contra acessos automatizados e ataques de robôs.
 > Além disso, o sistema conta com salvaguardas avançadas de segurança cibernética:
 > - **Proteção contra Enumeração de Usuários (OWASP A07):** Respostas de login estritamente padronizadas que impedem atacantes de descobrir se um determinado e-mail existe ou seu status no sistema a partir de senhas incorretas.
 > - **Política de Senhas Fortes:** Criação e alteração de senhas exigem comprimento mínimo de 10 caracteres, mesclando letras maiúsculas, minúsculas, números e símbolos especiais, com verificação contra listas globais de senhas comprometidas (HaveIBeenPwned).
 > - **Rastreabilidade de Falhas de Autenticação (Marco Civil da Internet, Art. 15):** Toda tentativa de login incorreta é registrada automaticamente no canal de auditoria (`auth`) com endereço IP, navegador (User-Agent), e-mail tentado e marcação temporal, sem jamais registrar senhas submetidas (em estrita conformidade com a LGPD e normas OWASP/NIST).
+> - **Revogação Instantânea de Sessões Concorrentes (OWASP A07):** Ao alterar a senha no perfil do usuário ou concluir a redefinição via link externo de esquecimento de senha, todas as outras sessões ativas em outros navegadores, computadores e celulares são invalidadas e eliminadas imediatamente da base de dados, garantindo que credenciais roubadas ou cookies de sessão previamente clonados percam instantaneamente o acesso ao sistema.
 > - **Proteção contra BOLA / IDOR em Matrícula Pública (OWASP API1 / A01):** As telas de confirmação de matrícula pública contam com validação estrita de integridade por sessão e assinatura digital criptográfica temporária (Signed URLs), impedindo a enumeração e raspagem de dados pessoais e acadêmicos de terceiros.
 > - **Controle de Acesso em Impressões e Fichas de Acervo (OWASP A01):** Endpoints de relatórios, impressão de etiquetas e fichas de sacolas de leitura da biblioteca exigem autorização explícita via Shield (`View:Livro`, `View:SacolaLeitura`) ou vínculo legítimo do responsável logado.
 > - **Sanitização Defensiva contra Stored XSS (OWASP A03):** Templates dinâmicos de contratos e documentos oficiais com TinyMCE passam pelo `HtmlSanitizer`, que extirpa scripts maliciosos, iframes e manipuladores de eventos (`onerror`, `onload`), mantendo estilos e diagramações visuais.
@@ -2857,11 +2864,40 @@ Todas as entidades e páginas operacionais do sistema estão integradas às Pol�
    - **Relatórios Financeiros:** Fluxo de Caixa Consolidado (`View:RelatorioFluxoCaixa`) e Relatório de Inadimplência (`View:RelatorioInadimplencia`).
    - **Secretaria e Matrículas:** Ações pontuais de disparo de comunicados, como o aviso de disponibilidade de horários para preceptoria (`AvisarPossibilidadePreceptoria:Matricula`).
    - **Biblioteca e Auditoria de Acervo:** Gestão de Acervo e Livros (`Livro`), Empréstimos e Circulação (`Emprestimo`, página `page_CirculacaoBiblioteca`), Sessões de Auditoria de Acervo (`InventarioAcervo` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`) e Sacolas de Leitura por Turma (`SacolaLeitura` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
+   - **Consentimentos e LGPD (Onda 25):** Tipos de Consentimento (`TipoConsentimento`) e Consentimentos de Matrículas (`ConsentimentoMatricula` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
 
 2. **Como configurar permissões por papel:**
    - Acesse **Sistema e Segurança → Papéis (Shield)** e selecione o perfil desejado.
    - Nas abas **Recursos**, **Páginas** e **Widgets**, marque os privilégios apropriados para cada função da instituição.
    - Usuários com papéis de equipe visualizam apenas os botões, abas e telas para os quais possuem permissão expressa.
+
+---
+
+## 📝 53. Autorização de Uso de Imagem e Consentimentos LGPD (Onda 25)
+
+Módulo em conformidade com o Estatuto da Criança e do Adolescente (ECA) e a Lei Geral de Proteção de Dados (LGPD), permitindo que a instituição escolar colete, renove e audite as autorizações dos responsáveis legais por aluno.
+
+### 53.1 Catálogo de Tipos de Consentimento (`/admin/tipo-consentimentos`)
+1. Acesse **Secretaria → Tipos de Consentimento** e clique em **"Novo Tipo de Consentimento"**.
+2. **Definição da Finalidade:**
+   - **Nome:** Título claro da autorização (ex.: *Autorização de Uso de Imagem e Voz*, *Divulgação em Redes Sociais da Escola*, *Material Publicitário e Outdoors*).
+   - **Descrição:** Texto jurídico explicativo detalhando o propósito do tratamento dos dados/imagem e as garantias de privacidade.
+   - **Periodicidade (Meses):** Deixe em branco para consentimentos vigentes durante todo o ano letivo ou preencha com a quantidade de meses (ex.: 6 meses para renovação semestral). O sistema recalcula a vigência e avisa a família automaticamente quando expirar.
+   - **Status Ativo:** Marque se a finalidade está em vigor para coleta no Portal da Família. Desativar um tipo preserva o histórico de respostas anteriores.
+
+### 53.2 Resposta Digital no Portal da Família (`/portal/consentimentos`)
+1. Os pais e responsáveis acessam o menu **Meus Dados → Consentimentos** no Portal do Responsável.
+2. O portal lista todas as finalidades ativas para a matrícula selecionada do filho:
+   - Exibe o termo explicativo de cada autorização.
+   - Permite que o responsável marque **"Autorizar"** ou **"Não Autorizar"** com um clique.
+   - O sistema grava a data/hora exata e o endereço IP de onde a assinatura digital foi realizada, garantindo validade jurídica e comprovação perante auditorias de conformidade.
+3. Se um consentimento com periodicidade vencer, o status transita para `Pendente` automaticamente e reaparece para nova confirmação da família.
+
+### 53.3 Gestão e Registro Manual na Secretaria (`/admin/consentimento-matriculas`)
+1. Acesse **Secretaria → Consentimentos de Matrículas**.
+2. A tela exibe o panorama geral: aluno, tipo de consentimento, status (Autorizado, Não Autorizado ou Pendente) e data de vigência.
+3. **Lançamento Manual:** Se a família assinou um termo impresso na secretaria física, a equipe pode clicar em **"Novo Consentimento"**, selecionar o aluno e registrar a resposta manualmente.
+4. **Filtros e Relatórios:** Filtre rapidamente por tipo de consentimento ou status para listar quais alunos da turma não possuem autorização de foto antes de postar conteúdos nas redes sociais.
 
 ---
 

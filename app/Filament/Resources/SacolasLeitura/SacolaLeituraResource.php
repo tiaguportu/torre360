@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SacolasLeitura;
 
 use App\Filament\Resources\SacolasLeitura\Pages\CreateSacolaLeitura;
+use App\Filament\Resources\SacolasLeitura\Pages\EditSacolaLeitura;
 use App\Filament\Resources\SacolasLeitura\Pages\GerenciarSacolaLeitura;
 use App\Filament\Resources\SacolasLeitura\Pages\ListSacolasLeitura;
 use App\Filament\Resources\SacolasLeitura\Schemas\SacolaLeituraForm;
@@ -62,6 +63,7 @@ class SacolaLeituraResource extends Resource implements HasShieldPermissions
         return [
             'index' => ListSacolasLeitura::route('/'),
             'create' => CreateSacolaLeitura::route('/create'),
+            'edit' => EditSacolaLeitura::route('/{record}/edit'),
             'gerenciar' => GerenciarSacolaLeitura::route('/{record}/gerenciar'),
         ];
     }

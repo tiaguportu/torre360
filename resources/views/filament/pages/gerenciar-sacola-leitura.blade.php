@@ -1,5 +1,10 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div
+        x-data="{}"
+        x-on:livro-processado.window="$nextTick(() => { if ($event.detail.tipo === 'adicionar') $refs.inputAdicionar?.focus(); else $refs.inputDevolver?.focus(); })"
+        x-on:barcode-leitura-realizada.window="if ($event.detail.contexto === 'sacola_adicionar') $wire.processarLeituraCameraAdicionar($event.detail.codigo); else if ($event.detail.contexto === 'sacola_devolver') $wire.processarLeituraCameraDevolver($event.detail.codigo);"
+        class="space-y-6"
+    >
 
         {{-- CABEÇALHO COM RESUMO DA SACOLA --}}
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -68,6 +73,7 @@
                 <div class="flex gap-2">
                     <input
                         type="text"
+                        x-ref="inputAdicionar"
                         wire:model="codigo_livro_adicionar"
                         wire:keydown.enter.prevent="adicionarLivroPorCodigo"
                         placeholder="Bipe o código do livro para incluir..."
@@ -108,6 +114,7 @@
                 <div class="flex gap-2">
                     <input
                         type="text"
+                        x-ref="inputDevolver"
                         wire:model="codigo_livro_devolver"
                         wire:keydown.enter.prevent="devolverLivroPorCodigo"
                         placeholder="Bipe o livro devolvido para dar baixa..."

@@ -5,6 +5,9 @@ namespace App\Listeners;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class LogAuthenticationActivity
 {
@@ -71,6 +74,28 @@ class LogAuthenticationActivity
                     'guard' => $event->guard ?? 'web',
                 ])
                 ->log($description);
+        } elseif ($event instanceof PasswordReset) {
+            $user = $event->user;
+            if (! $user) {
+                return;
+            }
+
+            // Ao redefinir a senha via link externo de recuperação, revoga todas as sessões anteriores
+            if (config('session.driver') === 'database' && Schema::hasTable(config('session.table', 'sessions'))) {
+                DB::table(config('session.table', 'sessions'))
+                    ->where('user_id', $user->getAuthIdentifier())
+                    ->delete();
+            }
+
+            activity($logName)
+                ->performedOn($user)
+                ->causedBy($user)
+                ->withProperties([
+                    'ip' => $ip,
+                    'user_agent' => $userAgent,
+                    'acao' => 'senha_redefinida_sessoes_revogadas',
+                ])
+                ->log("A senha do usuário {$user->name} foi redefinida com sucesso. Todas as sessões anteriores foram revogadas.");
         }
     }
 }

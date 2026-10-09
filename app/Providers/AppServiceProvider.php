@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Events\MessageSending;
@@ -93,6 +94,11 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(
             Failed::class,
+            LogAuthenticationActivity::class
+        );
+
+        Event::listen(
+            PasswordReset::class,
             LogAuthenticationActivity::class
         );
 

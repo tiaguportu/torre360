@@ -153,15 +153,15 @@ class LivroForm
                                     ->label('Quantidade Total de Exemplares')
                                     ->numeric()
                                     ->integer()
-                                    // Não dá para ter menos exemplares do que os que estão emprestados agora.
-                                    ->minValue(fn (?Model $record): int => max(1, $record instanceof Livro ? $record->emprestimosEmAberto()->count() : 1))
+                                    // Não dá para ter menos exemplares do que os que estão emprestados ou em sacolas ativas agora.
+                                    ->minValue(fn (?Model $record): int => max(1, $record instanceof Livro ? $record->exemplaresForaDoAcervo() : 1))
                                     ->default(1)
                                     ->required()
                                     ->helperText(function (?Model $record): ?string {
-                                        $emAberto = $record instanceof Livro ? $record->emprestimosEmAberto()->count() : 0;
+                                        $fora = $record instanceof Livro ? $record->exemplaresForaDoAcervo() : 0;
 
-                                        return $emAberto > 0
-                                            ? "Há {$emAberto} exemplar(es) emprestado(s) no momento; o total não pode ser menor que isso."
+                                        return $fora > 0
+                                            ? "Há {$fora} exemplar(es) fora do acervo (empréstimos ou sacolas de leitura ativas) no momento; o total não pode ser menor que isso."
                                             : 'Ao cadastrar, todos os exemplares ficam disponíveis para empréstimo.';
                                     }),
                                 TextInput::make('quantidade_disponivel')
@@ -170,7 +170,7 @@ class LivroForm
                                     ->visibleOn('edit')
                                     ->disabled()
                                     ->dehydrated(false)
-                                    ->helperText('Calculada automaticamente: total de exemplares menos os empréstimos em aberto. Muda a cada empréstimo e devolução.'),
+                                    ->helperText('Calculada automaticamente: total de exemplares menos empréstimos e sacolas em aberto. Muda a cada empréstimo e devolução.'),
                             ]),
                     ]),
             ]);

@@ -336,7 +336,19 @@
                     if (!container) return;
 
                     if (!this.scanner) {
-                        this.scanner = new Html5Qrcode('barcode-reader-container');
+                        const formats = (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
+                            Html5QrcodeSupportedFormats.EAN_13,
+                            Html5QrcodeSupportedFormats.CODE_128,
+                            Html5QrcodeSupportedFormats.EAN_8,
+                            Html5QrcodeSupportedFormats.QR_CODE,
+                            Html5QrcodeSupportedFormats.UPC_A,
+                            Html5QrcodeSupportedFormats.UPC_E,
+                        ] : undefined;
+
+                        this.scanner = new Html5Qrcode('barcode-reader-container', {
+                            formatsToSupport: formats,
+                            verbose: false,
+                        });
                     }
 
                     const config = {
@@ -383,6 +395,28 @@
                 }
             },
 
+            chamarMetodoLivewire(metodo, argumento) {
+                if (typeof this.$wire !== 'undefined' && this.$wire && typeof this.$wire[metodo] === 'function') {
+                    this.$wire[metodo](argumento);
+                    return true;
+                }
+
+                const elLivewire = this.$el.closest('[wire\\:id]');
+                if (elLivewire && window.Livewire) {
+                    const componente = window.Livewire.find(elLivewire.getAttribute('wire:id'));
+                    if (componente && typeof componente[metodo] === 'function') {
+                        componente[metodo](argumento);
+                        return true;
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('barcode-leitura-realizada', {
+                    detail: { contexto: this.contexto, metodo: metodo, codigo: argumento }
+                }));
+
+                return false;
+            },
+
             aoLerCodigo(codigo) {
                 if (!codigo) return;
                 const codigoLimpo = codigo.trim();
@@ -400,26 +434,20 @@
                 this.feedbackSucesso = true;
                 this.tocarBeep();
 
+                window.dispatchEvent(new CustomEvent('codigo-barras-lido', {
+                    detail: { contexto: this.contexto, codigo: codigoLimpo }
+                }));
+
                 if (this.contexto === 'emprestimo') {
-                    if (window.Livewire && typeof this.$wire !== 'undefined') {
-                        this.$wire.processarLeituraEmprestimo(codigoLimpo);
-                    }
+                    this.chamarMetodoLivewire('processarLeituraEmprestimo', codigoLimpo);
                 } else if (this.contexto === 'devolucao') {
-                    if (window.Livewire && typeof this.$wire !== 'undefined') {
-                        this.$wire.processarLeituraDevolucao(codigoLimpo);
-                    }
+                    this.chamarMetodoLivewire('processarLeituraDevolucao', codigoLimpo);
                 } else if (this.contexto === 'inventario') {
-                    if (window.Livewire && typeof this.$wire !== 'undefined') {
-                        this.$wire.processarLeituraInventario(codigoLimpo);
-                    }
+                    this.chamarMetodoLivewire('processarLeituraInventario', codigoLimpo);
                 } else if (this.contexto === 'sacola_adicionar') {
-                    if (window.Livewire && typeof this.$wire !== 'undefined') {
-                        this.$wire.processarLeituraCameraAdicionar(codigoLimpo);
-                    }
+                    this.chamarMetodoLivewire('processarLeituraCameraAdicionar', codigoLimpo);
                 } else if (this.contexto === 'sacola_devolver') {
-                    if (window.Livewire && typeof this.$wire !== 'undefined') {
-                        this.$wire.processarLeituraCameraDevolver(codigoLimpo);
-                    }
+                    this.chamarMetodoLivewire('processarLeituraCameraDevolver', codigoLimpo);
                 }
 
                 if (!this.leituraContinua) {

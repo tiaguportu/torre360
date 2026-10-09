@@ -1277,3 +1277,34 @@ Gestão do acervo de livros e controle de empréstimos e devoluções para a com
   - BelongsTo `sacola`.
   - BelongsTo `livro`.
 
+---
+
+## 15. Secretaria e Consentimentos LGPD (Onda 25)
+Módulo responsável pela gestão de autorizações de uso de imagem, voz e consentimentos de privacidade (LGPD e ECA) das famílias para cada estudante matriculado.
+
+### `tipo_consentimentos`
+- **Representa:** Catálogo de finalidades de consentimento e termos jurídicos escolares (ex.: *Autorização de Uso de Imagem e Voz*, *Divulgação em Redes Sociais*, *Material Publicitário Impresso*).
+- **Campos Principais:**
+  - `nome`: Título da autorização (string, unique).
+  - `descricao`: Texto explicativo e finalidades claras de tratamento apresentadas aos responsáveis (text).
+  - `periodicidade_meses`: Intervalo em meses para renovação obrigatória (integer, nullable). Se nulo, a vigência é válida para todo o ciclo letivo.
+  - `is_ativo`: Booleano indicando se o consentimento está em vigor para coleta no Portal da Família.
+- **Relacionamentos:**
+  - HasMany `consentimentosMatricula` (`ConsentimentoMatricula`).
+
+### `consentimento_matriculas`
+- **Representa:** Registro do aceite ou recusa digital (ou lançamento manual pela secretaria) para um aluno específico matriculado.
+- **Campos Principais:**
+  - `matricula_id`: FK `matricula.id` (cascade on delete).
+  - `tipo_consentimento_id`: FK `tipo_consentimentos.id` (cascade on delete).
+  - `status`: Enum `StatusConsentimento` (`pendente`, `autorizado`, `nao_autorizado`).
+  - `respondido_em`: Timestamp exato em que a resposta foi registrada.
+  - `respondido_por_user_id`: FK `users.id` do usuário que assinou/registrou.
+  - `respondido_ip`: Endereço IP de origem do responsável no momento da assinatura digital no Portal.
+  - `observacao`: Justificativas ou notas complementares colhidas pela secretaria.
+  - `vigencia_fim`: Data de expiração calculada da autorização com base na periodicidade do tipo.
+- **Relacionamentos:**
+  - BelongsTo `matricula`.
+  - BelongsTo `tipoConsentimento`.
+  - BelongsTo `respondidoPorUser` (`User`).
+

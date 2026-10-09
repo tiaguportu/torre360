@@ -117,18 +117,31 @@ class Livro extends Model
         return $this->emprestimosEmAberto()->exists();
     }
 
+    public function sacolaItensEmAberto(): HasMany
+    {
+        return $this->sacolaItens()->where('devolvido', false);
+    }
+
     public function temSacolasEmAberto(): bool
     {
-        return $this->sacolaItens()->where('devolvido', false)->exists();
+        return $this->sacolaItensEmAberto()->exists();
     }
 
     /**
-     * Exemplares disponíveis = total − empréstimos em aberto. É a fonte da verdade: o campo gravado
+     * Exemplares fora do acervo (empréstimos individuais em aberto + exemplares em sacolas de leitura ativas).
+     */
+    public function exemplaresForaDoAcervo(): int
+    {
+        return $this->emprestimosEmAberto()->count() + $this->sacolaItensEmAberto()->count();
+    }
+
+    /**
+     * Exemplares disponíveis = total − (empréstimos em aberto + sacolas em aberto). É a fonte da verdade: o campo gravado
      * `quantidade_disponivel` é apenas o cache desse cálculo (e não deve ser digitado à mão).
      */
     public function disponibilidadeCalculada(?int $total = null): int
     {
-        return max(0, ($total ?? (int) $this->quantidade_total) - $this->emprestimosEmAberto()->count());
+        return max(0, ($total ?? (int) $this->quantidade_total) - $this->exemplaresForaDoAcervo());
     }
 
     /**

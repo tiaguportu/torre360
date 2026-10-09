@@ -27,8 +27,14 @@ class GerenciarSacolaLeitura extends Page
 
     public ?string $codigo_livro_devolver = null;
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return auth()->user()?->can('Update:SacolaLeitura') ?? false;
+    }
+
     public function mount(SacolaLeitura $record): void
     {
+        abort_unless(auth()->user()?->can('Update:SacolaLeitura'), 403);
         $this->record = $record;
     }
 
@@ -110,6 +116,8 @@ class GerenciarSacolaLeitura extends Page
      */
     public function adicionarLivroPorCodigo(): void
     {
+        abort_unless(auth()->user()?->can('Update:SacolaLeitura'), 403);
+
         $codigo = trim((string) $this->codigo_livro_adicionar);
         if (blank($codigo)) {
             Notification::make()
@@ -121,13 +129,7 @@ class GerenciarSacolaLeitura extends Page
             return;
         }
 
-        $cleanIsbn = preg_replace('/[^0-9X]/i', '', $codigo);
-        $livro = Livro::query()
-            ->where('codigo', $codigo)
-            ->orWhere('isbn', $codigo)
-            ->orWhere('isbn', $cleanIsbn)
-            ->orWhere('id', $codigo)
-            ->first();
+        $livro = $this->localizarLivroPorCodigo($codigo);
 
         if (! $livro) {
             Notification::make()
@@ -135,6 +137,8 @@ class GerenciarSacolaLeitura extends Page
                 ->body("Nenhuma obra encontrada para o código \"{$codigo}\".")
                 ->danger()
                 ->send();
+
+            $this->dispatch('livro-processado', tipo: 'adicionar');
 
             return;
         }
@@ -145,6 +149,8 @@ class GerenciarSacolaLeitura extends Page
                 ->body("A obra \"{$livro->titulo}\" não possui exemplares disponíveis no acervo.")
                 ->danger()
                 ->send();
+
+            $this->dispatch('livro-processado', tipo: 'adicionar');
 
             return;
         }
@@ -159,12 +165,16 @@ class GerenciarSacolaLeitura extends Page
                 ->body("\"{$livro->titulo}\" foi incluído com sucesso na sacola.")
                 ->success()
                 ->send();
+
+            $this->dispatch('livro-processado', tipo: 'adicionar');
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Erro ao adicionar')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            $this->dispatch('livro-processado', tipo: 'adicionar');
         }
     }
 
@@ -179,6 +189,8 @@ class GerenciarSacolaLeitura extends Page
      */
     public function devolverLivroPorCodigo(): void
     {
+        abort_unless(auth()->user()?->can('Update:SacolaLeitura'), 403);
+
         $codigo = trim((string) $this->codigo_livro_devolver);
         if (blank($codigo)) {
             Notification::make()
@@ -186,16 +198,12 @@ class GerenciarSacolaLeitura extends Page
                 ->warning()
                 ->send();
 
+            $this->dispatch('livro-processado', tipo: 'devolver');
+
             return;
         }
 
-        $cleanIsbn = preg_replace('/[^0-9X]/i', '', $codigo);
-        $livro = Livro::query()
-            ->where('codigo', $codigo)
-            ->orWhere('isbn', $codigo)
-            ->orWhere('isbn', $cleanIsbn)
-            ->orWhere('id', $codigo)
-            ->first();
+        $livro = $this->localizarLivroPorCodigo($codigo);
 
         if (! $livro) {
             Notification::make()
@@ -203,6 +211,8 @@ class GerenciarSacolaLeitura extends Page
                 ->body("Nenhuma obra corresponde a \"{$codigo}\".")
                 ->danger()
                 ->send();
+
+            $this->dispatch('livro-processado', tipo: 'devolver');
 
             return;
         }
@@ -220,6 +230,8 @@ class GerenciarSacolaLeitura extends Page
                 ->warning()
                 ->send();
 
+            $this->dispatch('livro-processado', tipo: 'devolver');
+
             return;
         }
 
@@ -232,6 +244,24 @@ class GerenciarSacolaLeitura extends Page
             ->body("\"{$livro->titulo}\" conferido e devolvido com sucesso.")
             ->success()
             ->send();
+
+        $this->dispatch('livro-processado', tipo: 'devolver');
+    }
+
+    private function localizarLivroPorCodigo(string $codigo): ?Livro
+    {
+        $cleanCodigo = trim($codigo);
+        $cleanIsbn = preg_replace('/[^0-9X]/i', '', $cleanCodigo);
+
+        return Livro::query()
+            ->where('codigo', $cleanCodigo)
+            ->orWhere('isbn', $cleanCodigo)
+            ->when(filled($cleanIsbn), function ($q) use ($cleanIsbn) {
+                $q->orWhere('isbn', $cleanIsbn)
+                    ->orWhereRaw("REPLACE(REPLACE(isbn, '-', ''), ' ', '') = ?", [$cleanIsbn]);
+            })
+            ->when(is_numeric($cleanCodigo), fn ($q) => $q->orWhere('id', (int) $cleanCodigo))
+            ->first();
     }
 
     public function processarLeituraCameraDevolver(string $codigo): void
@@ -245,6 +275,8 @@ class GerenciarSacolaLeitura extends Page
      */
     public function devolverItemIndividual(int $itemId): void
     {
+        abort_unless(auth()->user()?->can('Update:SacolaLeitura'), 403);
+
         $item = $this->record->itens()->find($itemId);
         if (! $item || $item->devolvido) {
             return;
@@ -265,6 +297,8 @@ class GerenciarSacolaLeitura extends Page
      */
     public function removerItem(int $itemId): void
     {
+        abort_unless(auth()->user()?->can('Update:SacolaLeitura'), 403);
+
         $item = $this->record->itens()->find($itemId);
         if (! $item) {
             return;

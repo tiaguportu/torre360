@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\StatusSacolaLeitura;
+use App\Filament\Resources\SacolasLeitura\Pages\EditSacolaLeitura;
 use App\Filament\Resources\SacolasLeitura\Pages\GerenciarSacolaLeitura;
 use App\Models\Livro;
 use App\Models\Pessoa;
@@ -264,5 +265,103 @@ class SacolaLeituraTest extends TestCase
 
         $this->assertFalse($resultado);
         $this->assertDatabaseHas('livros', ['id' => $livro->id]);
+    }
+
+    public function test_processamento_de_leitura_por_camera_adiciona_e_devolve_livro(): void
+    {
+        $this->autenticarComoAdmin();
+
+        $livro = Livro::create([
+            'titulo' => 'Livro Teste Scanner Câmera',
+            'autor' => 'Autor Câmera',
+            'isbn' => '978-85-325-1101-0',
+            'codigo' => 'LIV-CAM-001',
+            'quantidade_total' => 2,
+            'quantidade_disponivel' => 2,
+        ]);
+
+        $sacola = SacolaLeitura::create([
+            'titulo' => 'Sacola Teste Câmera',
+            'data_retirada' => now()->toDateString(),
+            'data_prevista_devolucao' => now()->addDays(15)->toDateString(),
+        ]);
+
+        // Adiciona via leitura de câmera com ISBN formatado
+        Livewire::test(GerenciarSacolaLeitura::class, ['record' => $sacola])
+            ->call('processarLeituraCameraAdicionar', '9788532511010')
+            ->assertDispatched('livro-processado')
+            ->assertNotified();
+
+        $this->assertEquals(1, $sacola->fresh()->totalLivros());
+        $this->assertEquals(1, $livro->fresh()->quantidade_disponivel);
+
+        // Devolve via leitura de câmera com tombo
+        Livewire::test(GerenciarSacolaLeitura::class, ['record' => $sacola])
+            ->call('processarLeituraCameraDevolver', 'LIV-CAM-001')
+            ->assertDispatched('livro-processado')
+            ->assertNotified();
+
+        $this->assertEquals(1, $sacola->fresh()->totalDevolvidos());
+        $this->assertEquals(2, $livro->fresh()->quantidade_disponivel);
+    }
+
+    public function test_pagina_edicao_sacola_leitura_carrega_e_permite_atualizar(): void
+    {
+        $this->autenticarComoAdmin();
+
+        $turma = Turma::factory()->create();
+        $professor = Pessoa::factory()->create();
+
+        $sacola = SacolaLeitura::create([
+            'titulo' => 'Título Original Sacola',
+            'turma_id' => $turma->id,
+            'responsavel_id' => $professor->id,
+            'data_retirada' => now()->toDateString(),
+            'data_prevista_devolucao' => now()->addDays(20)->toDateString(),
+        ]);
+
+        Livewire::test(EditSacolaLeitura::class, [
+            'record' => $sacola->getRouteKey(),
+        ])
+            ->assertSuccessful()
+            ->fillForm([
+                'titulo' => 'Título Atualizado pela Edição',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertEquals('Título Atualizado pela Edição', $sacola->fresh()->titulo);
+    }
+
+    public function test_reconciliacao_e_disponibilidade_calculada_consideram_sacolas_de_leitura(): void
+    {
+        $livro = Livro::create([
+            'titulo' => 'Livro Teste Reconciliação Sacola',
+            'autor' => 'Autor Teste',
+            'quantidade_total' => 3,
+            'quantidade_disponivel' => 3,
+        ]);
+
+        $sacola = SacolaLeitura::create([
+            'titulo' => 'Sacola de Leitura Teste',
+            'data_retirada' => now()->toDateString(),
+            'data_prevista_devolucao' => now()->addDays(15)->toDateString(),
+        ]);
+
+        $sacola->adicionarLivro($livro);
+        $livro->refresh();
+
+        $this->assertEquals(2, $livro->quantidade_disponivel);
+        $this->assertEquals(2, $livro->disponibilidadeCalculada());
+        $this->assertEquals(1, $livro->exemplaresForaDoAcervo());
+
+        // Ao forçar recalcular, o saldo não deve voltar para 3
+        $this->assertFalse($livro->recalcularDisponibilidade());
+        $this->assertEquals(2, $livro->fresh()->quantidade_disponivel);
+
+        // Ao rodar o comando de reconciliação, nenhuma divergência deve ser encontrada
+        $this->artisan('biblioteca:reconciliar-disponibilidade')
+            ->expectsOutputToContain('nenhuma divergência de estoque')
+            ->assertSuccessful();
     }
 }
