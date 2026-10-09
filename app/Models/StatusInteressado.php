@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ContadoresCrm;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,6 +14,13 @@ class StatusInteressado extends Model
     protected $table = 'status_interessado';
 
     protected $fillable = ['nome', 'cor', 'ordem', 'is_final', 'is_ganho'];
+
+    protected static function booted(): void
+    {
+        // Mudar o que é "final" ou o nome da etapa inicial altera abas e selo do menu (ContadoresCrm).
+        static::saved(static fn () => ContadoresCrm::invalidar());
+        static::deleted(static fn () => ContadoresCrm::invalidar());
+    }
 
     protected function casts(): array
     {

@@ -155,7 +155,9 @@ class InteressadoForm
                                     ->label('Pessoa / Interessado')
                                     ->relationship('pessoa', 'nome')
                                     ->searchable()
-                                    ->preload()
+                                    // Sem `preload()`: carregaria todas as pessoas do sistema (alunos, responsáveis, funcionários)
+                                    // a cada abertura da ficha. A busca vem do servidor, limitada, por nome/e-mail/telefone/CPF.
+                                    ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()->busca($search)->orderBy('nome')->limit(50)->pluck('nome', 'id')->all())
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Set $set, $state) {

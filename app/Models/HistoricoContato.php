@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ContadoresCrm;
 use App\Services\CrmIaVendasService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -46,8 +47,10 @@ class HistoricoContato extends Model
     {
         // O dossiê da IA em cache (CrmIaVendasService::dossieDoLead) descreve o histórico do lead: qualquer
         // mudança nele o torna desatualizado.
+        // As abas "Estagnados"/"Precisa de contato" (ContadoresCrm) também dependem do histórico.
         $descartarDossie = static function (self $historico): void {
             Cache::forget(CrmIaVendasService::chaveCacheDossie($historico->interessado_id));
+            ContadoresCrm::invalidar();
         };
 
         static::saved($descartarDossie);

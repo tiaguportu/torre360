@@ -11,6 +11,20 @@ Artisan::command('inspire', function () {
 Schedule::command('queue:work --stop-when-empty --tries=3 --max-time=50')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+// Worker dedicado à fila da IA (análise de documentos por Gemini, `crm.fila_ia`): cada chamada pode levar mais de
+// um minuto e, na fila padrão, atrasava e-mails e notificações. Roda em segundo plano para que um worker
+// não espere o outro. `--timeout` (85 s) acompanha o `$timeout` do job e fica abaixo do `retry_after` da fila
+// (90 s): se um job pudesse rodar mais que isso, a fila o entregaria a outro worker enquanto ainda roda.
+$filaIa = (string) config('crm.fila_ia', 'ia');
+$filaPadrao = (string) config('queue.connections.'.config('queue.default').'.queue', 'default');
+
+if ($filaIa !== '' && $filaIa !== $filaPadrao) {
+    Schedule::command("queue:work --queue={$filaIa} --stop-when-empty --tries=3 --timeout=85 --max-time=55")
+        ->everyMinute()
+        ->withoutOverlapping(5)
+        ->runInBackground();
+}
 Schedule::command('assinafy:reconciliar')->hourly()->withoutOverlapping();
 Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('crm:executar-regua-follow-up')->dailyAt('08:00')->withoutOverlapping();

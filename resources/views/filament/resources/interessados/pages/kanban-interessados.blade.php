@@ -14,10 +14,11 @@
             }
         }
     }">
-        @foreach($this->getStatuses() as $status)
+        @foreach($this->colunas as $coluna)
             @php
-                $statusInteressados = $this->getInteressados()->where('status_interessado_id', $status->id);
-                $valorTotalColuna = $statusInteressados->sum('valor_estimado');
+                $status = $coluna['status'];
+                $statusInteressados = $coluna['leads'];
+                $valorTotalColuna = $coluna['valor'];
             @endphp
             <div 
                 class="kanban-column"
@@ -30,8 +31,8 @@
                     <div class="kanban-column-header">
                         <div class="flex items-center gap-2">
                             <span class="kanban-column-title">{{ $status->nome }}</span>
-                            <span class="kanban-column-count">
-                                {{ $statusInteressados->count() }}
+                            <span class="kanban-column-count" @if($coluna['janela_dias']) title="Leads movidos nos últimos {{ $coluna['janela_dias'] }} dias" @endif>
+                                {{ $coluna['total'] }}
                             </span>
                         </div>
                         @if($valorTotalColuna > 0)
@@ -124,9 +125,9 @@
                                             </x-filament::badge>
                                         @endif
 
-                                        @if($record->documentosInseridos && $record->documentosInseridos->isNotEmpty())
-                                            <x-filament::badge color="primary" size="sm" class="text-[10px] px-1.5 py-0" title="{{ $record->documentosInseridos->count() }} documento(s) anexados">
-                                                🗂️ {{ $record->documentosInseridos->count() }} doc(s)
+                                        @if($record->documentos_inseridos_count > 0)
+                                            <x-filament::badge color="primary" size="sm" class="text-[10px] px-1.5 py-0" title="{{ $record->documentos_inseridos_count }} documento(s) anexados">
+                                                🗂️ {{ $record->documentos_inseridos_count }} doc(s)
                                             </x-filament::badge>
                                         @endif
 
@@ -190,6 +191,23 @@
                                 </div>
                             </div>
                         @endforeach
+
+                        @if($coluna['tem_mais'])
+                            <button
+                                type="button"
+                                wire:click="carregarMais({{ $status->id }})"
+                                wire:loading.attr="disabled"
+                                class="w-full py-2 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                            >
+                                Carregar mais ({{ $statusInteressados->count() }} de {{ $coluna['total'] }})
+                            </button>
+                        @endif
+
+                        @if($coluna['janela_dias'])
+                            <p class="py-1 text-center text-[10px] text-gray-400">
+                                Mostrando leads movidos nos últimos {{ $coluna['janela_dias'] }} dias. Os mais antigos estão na aba <em>Finalizados</em> da lista.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>

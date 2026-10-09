@@ -55,6 +55,20 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
         ];
     }
 
+    /**
+     * Filas que o botão "Processar Fila Agora" esvazia, em ordem de prioridade: a padrão e a da IA
+     * (`crm.fila_ia`, análise de documentos). Sem a segunda, os jobs de IA ficariam parados por aqui.
+     */
+    public static function filasParaProcessar(): string
+    {
+        $padrao = (string) config('queue.connections.'.config('queue.default').'.queue', 'default');
+
+        return collect([$padrao, (string) config('crm.fila_ia', 'ia')])
+            ->filter()
+            ->unique()
+            ->implode(',');
+    }
+
     public function processQueueAction(): Action
     {
         return Action::make('processQueue')
@@ -72,7 +86,8 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
                     // para não bloquear a requisição do usuário.
                     $phpBinary = escapeshellcmd(env('QUEUE_PHP_BINARY', 'php'));
                     $artisanPath = escapeshellarg(base_path('artisan'));
-                    shell_exec("{$phpBinary} {$artisanPath} queue:work --stop-when-empty > /dev/null 2>&1 &");
+                    $filas = escapeshellarg(self::filasParaProcessar());
+                    shell_exec("{$phpBinary} {$artisanPath} queue:work --queue={$filas} --stop-when-empty > /dev/null 2>&1 &");
 
                     // Atualiza o heartbeat
                     Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));

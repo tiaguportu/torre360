@@ -128,7 +128,7 @@ PROMPT;
         ];
 
         try {
-            $response = $this->gemini->callGeminiApi($payload);
+            $response = $this->gemini->callGeminiApi($payload, orcamentoSegundos: (int) config('services.gemini.orcamento_documento_segundos', 70));
             $textoJson = $response['candidates'][0]['content']['parts'][0]['text'] ?? '';
             $jsonLimpo = trim(preg_replace('/^```(?:json)?|```$/m', '', $textoJson));
             $dados = json_decode($jsonLimpo, true);

@@ -34,6 +34,56 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Kanban (Funil de Vendas)
+    |--------------------------------------------------------------------------
+    */
+    'kanban' => [
+        // Cards carregados por coluna; o botão "Carregar mais" soma este valor a cada clique.
+        'cards_por_coluna' => (int) env('CRM_KANBAN_CARDS_POR_COLUNA', 30),
+
+        // Teto de cards por coluna mesmo com "Carregar mais" (a tela precisa continuar leve).
+        'cards_maximo_por_coluna' => 300,
+
+        // Colunas finais (matriculado/perdido) mostram só leads movidos nos últimos N dias; os mais
+        // antigos continuam na listagem (aba "Finalizados").
+        'dias_finalizados' => (int) env('CRM_KANBAN_DIAS_FINALIZADOS', 90),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contadores (abas da listagem e selo do menu)
+    |--------------------------------------------------------------------------
+    | Os contadores são guardados em cache por este tempo (segundos) e descartados na hora quando um
+    | lead, um contato ou uma etapa do funil é gravado. O score recalculado em lote não os descarta.
+    */
+    'contadores' => [
+        'cache_segundos' => (int) env('CRM_CONTADORES_CACHE_SEGUNDOS', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calendário de follow-up (rodapé da listagem)
+    |--------------------------------------------------------------------------
+    | Só entram follow-ups e visitas dentro desta janela, em dias a partir de hoje. Contatos atrasados
+    | há mais tempo continuam na aba "Precisa de contato".
+    */
+    'calendario' => [
+        'janela_passado_dias' => 90,
+        'janela_futuro_dias' => 180,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fila da IA
+    |--------------------------------------------------------------------------
+    | Análises de documento por IA (Gemini) rodam numa fila própria: uma chamada pode levar minutos
+    | e não pode atrasar e-mails e notificações. O agendador (routes/console.php) mantém um worker
+    | dedicado para esta fila.
+    */
+    'fila_ia' => env('CRM_FILA_IA', 'ia'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Permissão que define quem pode ser "consultor responsável" por um lead
     |--------------------------------------------------------------------------
     | Usuários com esta permissão (direta ou por papel), além de admin e super_admin, aparecem nas

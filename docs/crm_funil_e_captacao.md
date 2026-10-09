@@ -1,6 +1,6 @@
 # Funil, captação pública e segurança do CRM
 
-Resultado dos Lotes A e B da revisão do módulo de CRM. Complementa
+Resultado dos Lotes A, B e C da revisão do módulo de CRM (o Lote C, de desempenho e escala, está na seção 10). Complementa
 `docs/crm_captacao_campanhas_visitas.md`, `docs/crm_followup_whatsapp.md` e `docs/crm_lead_score.md`.
 
 | Peça | Onde |
@@ -11,6 +11,7 @@ Resultado dos Lotes A e B da revisão do módulo de CRM. Complementa
 | Alertas diários, escalonamento e leads sem consultor | `App\Services\AlertaLeadsService` |
 | Quem pode ser consultor / contas ativas | `User::consultoresCrm()`, `User::ativos()` |
 | Etapas e tipos de contato do sistema | `StatusInteressado::inicial()/ganho()/perdido()`, `TipoContatoInteressado::porNome()` |
+| Contadores em cache (abas e selo do menu) | `App\Services\ContadoresCrm` |
 | Configuração | `config/crm.php` |
 
 ## 1. `LeadFunilService`: uma só regra para mover o lead
@@ -204,22 +205,98 @@ mesmo link (guardá-lo com hash obrigaria a gerar outro a cada consulta).
 | `alertas.escalonar_apos_dias` (`CRM_ALERTA_ESCALONAR_APOS_DIAS`) | 7 |
 | `alertas.sem_consultor_apos_horas` (`CRM_ALERTA_SEM_CONSULTOR_HORAS`) | 24 |
 | `captacao.agradecimento_janela_horas` | 24 |
+| `kanban.cards_por_coluna` (`CRM_KANBAN_CARDS_POR_COLUNA`) | 30 |
+| `kanban.cards_maximo_por_coluna` | 300 |
+| `kanban.dias_finalizados` (`CRM_KANBAN_DIAS_FINALIZADOS`) | 90 |
+| `contadores.cache_segundos` (`CRM_CONTADORES_CACHE_SEGUNDOS`) | 60 |
+| `calendario.janela_passado_dias` / `janela_futuro_dias` | 90 / 180 |
+| `fila_ia` (`CRM_FILA_IA`) | `ia` |
 | `permissao_consultor` | `Update:Interessado` |
 
-## 10. Deploy e testes
+Gemini (`config/services.php`): `gemini.orcamento_segundos` (`GEMINI_ORCAMENTO_SEGUNDOS`, 60) para chamadas
+feitas dentro de uma tela e `gemini.orcamento_documento_segundos` (`GEMINI_ORCAMENTO_DOCUMENTO_SEGUNDOS`, 70)
+para a análise de documentos.
+
+## 10. Desempenho e escala (Lote C)
+
+Medidas para o CRM continuar rápido com milhares de leads. Nenhuma muda regra de negócio.
+
+- **Kanban** (`KanbanInteressados::colunas()`): antes cada coluna carregava *todos* os leads, com 9 relações,
+  a cada render (matriculados e perdidos de anos atrás incluídos). Agora: um agregado traz total e valor de
+  todas as colunas; cada coluna busca só os ids dos primeiros `kanban.cards_por_coluna` cards (mais urgentes
+  primeiro: `data_proximo_contato` crescente, sem data por último); uma única consulta carrega esses leads com
+  as relações do card. O número de consultas **não depende** da quantidade de cards
+  (`KanbanDesempenhoTest::test_numero_de_consultas_nao_depende_da_quantidade_de_cards`, com
+  `ProibeLazyLoading`). O botão **Carregar mais** soma um lote até `kanban.cards_maximo_por_coluna`; acima
+  disso, use a listagem com filtros. O total do cabeçalho da coluna continua sendo o real.
+- **Colunas finais** (matriculado/perdido) mostram só leads **movidos nos últimos `dias_finalizados` dias**
+  (`updated_at`); o restante segue na aba *Finalizados* da listagem. Etapas ativas não têm janela.
+- **Contadores em cache** (`ContadoresCrm`): as 6 abas da listagem (11 `count()`, vários com `whereHas`
+  aninhado) e o selo "Novo" do menu (uma consulta em *toda* página do painel) ficam em cache por
+  `contadores.cache_segundos`. `ContadoresCrm::invalidar()` troca um token de versão (as chaves antigas
+  simplesmente deixam de ser lidas) e é chamado quando `Interessado`, `HistoricoContato` ou `StatusInteressado`
+  é salvo/excluído. Limites conhecidos: escrita direta no banco (`DB::table`, como o recálculo de score em
+  lote) não invalida — vale o TTL; a chave inclui o id do usuário porque o escopo da listagem depende dele.
+- **Busca** (`Pessoa::scopeBusca`): nome, e-mail, telefone **com ou sem máscara** (a comparação ignora
+  `( ) - + e espaço`) e CPF (gravado só com dígitos). Menos de 3 dígitos não entram na busca de telefone/CPF
+  (casariam com quase tudo). Usada na busca da listagem e nos selects de pessoa/lead.
+- **Selects sem `preload()`**: *Pessoa / Interessado* da ficha do lead e *Família Indicadora*/*Lead Indicado*
+  do cadastro de indicação carregavam todas as pessoas/leads a cada abertura. Agora a busca vem do servidor
+  (`getSearchResultsUsing`, no máximo 50 resultados) e o rótulo do valor atual é buscado por id.
+- **Filtro "Estagnado = não"** usa `whereNot` com a mesma subconsulta em vez de `NOT IN (todos os ids
+  estagnados)`, que carregava a lista inteira em memória. O resumo de vagas da série é calculado **uma vez por
+  linha** (antes 3: texto, cor e dica).
+- **Índices** (migration `2026_10_05_090000_add_indices_de_desempenho_ao_crm`): `interessado` por
+  `data_proximo_contato`, `(status, data_proximo_contato)`, `(status, updated_at)`, `(usuario, status)`,
+  `lead_score`, `data_conversao` e `created_at`; `pessoa.email`; `visita_interessado (interessado, status)`.
+  Idempotente (só cria o que não existe, nome fixo) e reversível.
+- **Score em lote** (`LeadScoreService::recalcularLote`): o comando diário (`crm:recalcular-lead-score`) e o
+  botão *Recalcular todos* da configuração processam em lotes de 200 carregando as relações do lote todo
+  (uma consulta por relação) e a etapa máxima uma vez, em vez de `refresh()` + consultas por lead. Sobra um
+  `UPDATE` por lead. O resultado é o mesmo do `recalcular()` individual (`CrmEscalaTest`).
+- **Calendário** (`CrmFollowUpCalendarWidget`): só follow-ups e visitas dentro de `calendario.janela_*`
+  (hoje −90/+180 dias). Contato atrasado há mais que isso continua na aba *Precisa de contato*.
+- **IA em fila própria**: `ValidarDocumentoComIaJob` roda na fila `crm.fila_ia` (`ia`) para não atrasar e-mails
+  e notificações da fila padrão. `routes/console.php` agenda um worker dedicado
+  (`queue:work --queue=ia --timeout=85 --max-time=55`, a cada minuto, em segundo plano e sem sobreposição).
+  O `$timeout` do job (85 s) fica **abaixo do `retry_after` da conexão (90 s)** — se passasse, a fila entregaria
+  o job a outro worker com o primeiro ainda ativo e o documento seria analisado em dobro — e acima do
+  orçamento de tempo do Gemini para documentos (70 s). Esgotadas as 3 tentativas, `failed()` avisa o consultor
+  do lead pelo sino ("Análise por IA indisponível") em vez de deixar o documento "Não analisado" sem explicação.
+- **Orçamento de tempo do Gemini** (`GeminiAgentService::callGeminiApi($payload, $timeout, $orcamentoSegundos)`):
+  a cascata de 5 modelos em 2 rodadas, 45 s cada, podia segurar uma requisição (ou um worker) por mais de 7
+  minutos. Agora há um tempo total (`services.gemini.orcamento_*`): esgotado, não se inicia nova tentativa, e
+  cada tentativa usa no máximo o tempo restante (mínimo de 5 s) e nunca mais que `$timeout` (45 s por padrão;
+  o resumo de conversa com áudio passa 120). Sem orçamento explícito vale o da configuração, mas nunca menos que
+  `$timeout`, para que a tentativa longa do áudio não seja cortada pelos 60 s das telas. A análise de
+  documentos passa o seu orçamento (70 s) por parâmetro nomeado.
+
+**Não feito de propósito:** a padronização da visibilidade por consultor (hoje cada tela aplica o seu recorte)
+e os itens 6, 10, 13 e 15 da auditoria ficaram fora — dependem de decisão de negócio.
+
+## 11. Deploy e testes
 
 Migrations novas (rodam no "Git Pull" do painel, que executa `migrate --force`): ver tabela em
-`docs/crm_captacao_campanhas_visitas.md`, seção 7. Nada exige configuração manual; as variáveis de ambiente
-acima são opcionais.
+`docs/crm_captacao_campanhas_visitas.md`, seção 7. A de índices do Lote C é segura para repetir.
+
+**Lote C exige o worker da fila `ia`.** O agendador já o inicia (`schedule:run` a cada minuto, como o worker
+da fila padrão); em produção com Supervisor/serviço próprio, rode também `php artisan queue:work --queue=ia
+--tries=3 --timeout=85` e **não** reduza o `retry_after` da conexão abaixo de 90. O botão *Processar Fila Agora* do painel
+(`QueueSupervisorWidget`) esvazia as duas filas (`default,ia`). Jobs de análise que já
+estavam na fila padrão no momento do deploy terminam normalmente pelo worker antigo. Sem worker na fila `ia`
+os documentos enviados ficam "Não analisados" até alguém processá-la.
+
+As demais variáveis de ambiente são opcionais.
 
 Testes: `LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `CaptacaoReenvioTest`, `CaptacaoIndicacaoTest`,
 `CaptacaoRecaptchaTest`, `MatriculaOnlineConversaoCrmTest`, `AlertaLeadsTest`, `ConsultoresCrmTest`,
 `InteracoesAutomaticasTest`, `KanbanInteressadosAutorizacaoTest`, `CrmIaSegurancaTest`, `CrmIaDossieCacheTest`,
-`CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`, `ResumoConversaAudioTest`.
+`CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`, `ResumoConversaAudioTest`; Lote C:
+`KanbanDesempenhoTest`, `ContadoresCrmTest`, `CrmEscalaTest`, `FilaIaDocumentoTest`.
 
-## 11. Fora do escopo destes lotes
+## 12. Fora do escopo destes lotes
 
-Desempenho do Kanban/listagem e índices (Lote C); distribuição automática de leads, WhatsApp como canal da
+Distribuição automática de leads, WhatsApp como canal da
 régua, funil analítico e demais upgrades (Lote D); LGPD de consentimento no formulário, hash/expurgo do
 rascunho de pré-matrícula e minimização de dados enviados à IA; régua: janela de recuperação nos gatilhos por
 data e teto de mensagens por lead; importação por IA (série padrão, taxonomia livre, deduplicação);

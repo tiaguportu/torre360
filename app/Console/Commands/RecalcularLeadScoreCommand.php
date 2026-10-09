@@ -14,19 +14,22 @@ class RecalcularLeadScoreCommand extends Command
 
     public function handle(): int
     {
-        $interessados = Interessado::ativos()->get();
+        $total = 0;
 
-        if ($interessados->isEmpty()) {
+        // Em lotes: carregar todos os leads de uma vez e recalcular um a um (com `refresh()` e uma consulta
+        // de etapas por lead) multiplicava as consultas pelo tamanho da base. Cada lote carrega as relações
+        // de todos os seus leads em uma consulta por relação.
+        Interessado::ativos()->chunkById(200, function ($lote) use (&$total): void {
+            $total += LeadScoreService::recalcularLote($lote);
+        });
+
+        if ($total === 0) {
             $this->info('Nenhum lead ativo encontrado.');
 
             return self::SUCCESS;
         }
 
-        foreach ($interessados as $interessado) {
-            LeadScoreService::recalcular($interessado);
-        }
-
-        $this->info("Lead Score recalculado para {$interessados->count()} lead(s) ativo(s).");
+        $this->info("Lead Score recalculado para {$total} lead(s) ativo(s).");
 
         return self::SUCCESS;
     }

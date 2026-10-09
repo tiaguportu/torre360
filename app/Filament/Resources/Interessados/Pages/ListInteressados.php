@@ -6,6 +6,7 @@ use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Widgets\CrmFollowUpCalendarWidget;
+use App\Services\ContadoresCrm;
 use App\Support\HelpContent;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -29,40 +30,43 @@ class ListInteressados extends ListRecords
 
     public function getTabs(): array
     {
-        $base = fn () => InteressadoResource::getEloquentQuery();
         $corteQuente = (int) config('lead_score.faixas_cor.quente', 70);
         $quentes = fn (Builder $query): Builder => $query->where(fn (Builder $q) => $q
             ->where('temperatura', 'quente')
             ->orWhere('lead_score', '>=', $corteQuente));
 
+        // Os 6 contadores (antes 6 consultas por render, vários com `whereHas` aninhado) vêm do cache
+        // de `ContadoresCrm`, descartado quando um lead, contato ou etapa do funil é gravado.
+        $contadores = ContadoresCrm::abas(fn () => InteressadoResource::getEloquentQuery(), auth()->id());
+
         return [
             'todos' => Tab::make('Todos')
                 ->icon('heroicon-o-users')
-                ->badge($base()->count()),
+                ->badge($contadores['todos']),
             'precisa_contato' => Tab::make('Precisa de contato')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->modifyQueryUsing(fn (Builder $query) => $query->ativos()->precisaContato())
-                ->badge($base()->ativos()->precisaContato()->count())
+                ->badge($contadores['precisa_contato'])
                 ->badgeColor('danger'),
             'estagnados' => Tab::make('Estagnados')
                 ->icon('heroicon-o-clock')
                 ->modifyQueryUsing(fn (Builder $query) => $query->ativos()->estagnados())
-                ->badge($base()->ativos()->estagnados()->count())
+                ->badge($contadores['estagnados'])
                 ->badgeColor('warning'),
             'quentes' => Tab::make('Quentes')
                 ->icon('heroicon-o-fire')
                 ->modifyQueryUsing(fn (Builder $query) => $quentes($query->ativos()))
-                ->badge($quentes($base()->ativos())->count())
+                ->badge($contadores['quentes'])
                 ->badgeColor('success'),
             'ativos' => Tab::make('Em andamento')
                 ->icon('heroicon-o-arrow-path')
                 ->modifyQueryUsing(fn (Builder $query) => $query->ativos())
-                ->badge($base()->ativos()->count())
+                ->badge($contadores['ativos'])
                 ->badgeColor('info'),
             'finalizados' => Tab::make('Finalizados')
                 ->icon('heroicon-o-check-badge')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('status', fn (Builder $q) => $q->where('is_final', true)))
-                ->badge($base()->whereHas('status', fn (Builder $q) => $q->where('is_final', true))->count())
+                ->badge($contadores['finalizados'])
                 ->badgeColor('gray'),
         ];
     }
