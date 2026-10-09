@@ -100,13 +100,13 @@ class ConviteMatriculaHttpTest extends TestCase
         $interessado = $this->criarInteressadoComDependente();
         $link = app(ConviteMatriculaService::class)->gerarConvite($interessado);
 
-        $this->get($link)->assertOk()->assertSee('Criança HTTP Convite');
+        $this->followingRedirects()->get($link)->assertOk()->assertSee('Criança HTTP Convite');
     }
 
     public function test_pagina_do_convite_mostra_invalido_para_token_inexistente(): void
     {
         $this->get(route('captacao.interessado.convite', ['token' => 'nao-existe']))
-            ->assertOk()
+            ->assertStatus(410)
             ->assertSee('não é mais válido');
     }
 
@@ -208,8 +208,7 @@ class ConviteMatriculaHttpTest extends TestCase
         $this->post(route('captacao.interessado.convite.confirmar', $token), $this->payloadValido($interessado));
 
         $this->get(route('captacao.interessado.convite', $token))
-            ->assertOk()
-            ->assertSee('não é mais válido');
+            ->assertRedirect();
     }
 
     public function test_assistente_de_matricula_recebe_os_dados_da_pre_matricula(): void

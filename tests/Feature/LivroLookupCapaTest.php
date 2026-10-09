@@ -15,6 +15,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -398,7 +399,7 @@ class LivroLookupCapaTest extends TestCase
         ];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('urlsInternas')]
+    #[DataProvider('urlsInternas')]
     public function test_capa_so_e_baixada_de_endereco_publico(string $urlCapa): void
     {
         $this->fakeHttp(capaUrl: null, extras: [

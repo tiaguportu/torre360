@@ -66,7 +66,7 @@ class ResponsaveisRelationManager extends RelationManager
                 AttachAction::make()
                     ->authorize('attachResponsavel')
                     ->preloadRecordSelect()
-                    ->form(fn (AttachAction $action): array => [
+                    ->schema(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
                         Select::make('tipo_vinculo_id')
                             ->label('Tipo de Vínculo')
@@ -91,6 +91,7 @@ class ResponsaveisRelationManager extends RelationManager
                         ->authorize('detachResponsavel'),
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

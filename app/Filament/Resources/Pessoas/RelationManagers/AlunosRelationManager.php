@@ -67,7 +67,7 @@ class AlunosRelationManager extends RelationManager
                 AttachAction::make()
                     ->authorize('attachAluno')
                     ->preloadRecordSelect()
-                    ->form(fn (AttachAction $action): array => [
+                    ->schema(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
                         Select::make('tipo_vinculo_id')
                             ->label('Tipo de Vínculo')
@@ -92,6 +92,7 @@ class AlunosRelationManager extends RelationManager
                         ->authorize('detachAluno'),
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

@@ -44,10 +44,10 @@ Route::get('/quero-matricular/obrigado', [CaptacaoInteressadoController::class, 
 Route::get('/quero-matricular/convite/{token}', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
     ->middleware('throttle:15,1')
     ->name('captacao.interessado.convite');
-Route::post('/quero-matricular/convite/{token}', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
+Route::post('/quero-matricular/convite/{token}', [CaptacaoInteressadoController::class, 'confirmarConvite'])
     ->middleware('throttle:15,1')
     ->name('captacao.interessado.convite.confirmar');
-Route::get('/quero-matricular/convite/{token}/obrigado', [PortalDocumentosCandidatoController::class, 'redirecionarLegadoConvite'])
+Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoController::class, 'conviteConfirmado'])
     ->name('captacao.interessado.convite.sucesso');
 
 // Validação pública de autenticidade documental (QR Code com proteção contra raspagem)

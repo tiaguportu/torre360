@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
+use App\Jobs\ValidarDocumentoComIaJob;
 use App\Livewire\MatriculaOnline\MatriculaOnlineWizard;
 use App\Models\Curso;
 use App\Models\Matricula;
@@ -20,6 +21,7 @@ use App\Services\MatriculaOnlineService;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -149,6 +151,7 @@ class MatriculaOnlineSelfServiceTest extends TestCase
     public function test_service_processa_matricula_criando_todas_as_entidades_e_vinculos(): void
     {
         Storage::fake('local');
+        Queue::fake([ValidarDocumentoComIaJob::class]);
         $service = app(MatriculaOnlineService::class);
 
         $dados = [
@@ -233,6 +236,9 @@ class MatriculaOnlineSelfServiceTest extends TestCase
         $this->assertNotNull($usuario);
         $this->assertTrue($usuario->hasRole('responsavel'));
         $this->assertTrue($usuario->pessoas()->where('pessoa.id', $responsavel->id)->exists());
+
+        // 9. Job de IA enfileirado para os documentos anexados
+        Queue::assertPushed(ValidarDocumentoComIaJob::class);
     }
 
     public function test_impede_matricula_quando_turma_atinge_capacidade_maxima(): void
