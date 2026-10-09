@@ -33,6 +33,11 @@ class TimelineRelationManager extends RelationManager
     protected static string|BackedEnum|null $icon = 'heroicon-o-clock';
 
     /**
+     * Quantidade de eventos exibidos por vez no feed ("Carregar mais" soma outro lote).
+     */
+    public const EVENTOS_POR_LOTE = 20;
+
+    /**
      * Filtro ativo de categoria de eventos.
      */
     public string $filtroCategoria = 'todos';
@@ -41,6 +46,11 @@ class TimelineRelationManager extends RelationManager
      * Termo de busca textual no feed.
      */
     public string $termoBusca = '';
+
+    /**
+     * Quantos eventos do feed estão visíveis no momento.
+     */
+    public int $limiteEventos = self::EVENTOS_POR_LOTE;
 
     /**
      * Controle de visibilidade do formulário de registro rápido.
@@ -179,6 +189,7 @@ class TimelineRelationManager extends RelationManager
     public function filtrar(string $categoria): void
     {
         $this->filtroCategoria = $categoria;
+        $this->limiteEventos = self::EVENTOS_POR_LOTE;
     }
 
     /**
@@ -188,6 +199,23 @@ class TimelineRelationManager extends RelationManager
     {
         $this->filtroCategoria = 'todos';
         $this->termoBusca = '';
+        $this->limiteEventos = self::EVENTOS_POR_LOTE;
+    }
+
+    /**
+     * Uma nova busca recomeça a paginação do feed.
+     */
+    public function updatedTermoBusca(): void
+    {
+        $this->limiteEventos = self::EVENTOS_POR_LOTE;
+    }
+
+    /**
+     * Exibe mais um lote de eventos mais antigos no feed.
+     */
+    public function carregarMais(): void
+    {
+        $this->limiteEventos += self::EVENTOS_POR_LOTE;
     }
 
     /**
@@ -286,13 +314,18 @@ class TimelineRelationManager extends RelationManager
      */
     private function getHelpContent(): string
     {
-        $user = auth()->user();
+        $podeRegistrar = $this->podeRegistrar();
+        $lote = self::EVENTOS_POR_LOTE;
 
         $html = '<p>A <strong>Linha do Tempo Omnichannel Interativa (Unified Customer 360 Feed)</strong> centraliza toda a jornada de relacionamento da família em um único feed cronológico unificado.</p>';
         $html .= '<h3>O que você pode fazer nesta tela:</h3>';
         $html .= '<ul>';
 
-        $html .= '<li><strong>⚡ Barra de Registro Rápido:</strong> Registre uma nova conversa, ligação ou nota interna em segundos no topo da tela, definindo o canal, o resultado e o próximo contato sem precisar navegar entre telas.</li>';
+        $html .= '<li><strong>📊 Indicadores 360°:</strong> No cabeçalho você acompanha temperatura, Lead Score, próximo e último contato, NPS da visita e documentos verificados. O cartão de retorno fica vermelho quando o contato está em atraso.</li>';
+
+        if ($podeRegistrar) {
+            $html .= '<li><strong>⚡ Registrar nova interação:</strong> No bloco logo abaixo do cabeçalho, escolha o canal, escreva o que foi conversado ou acordado e defina o resultado, a duração e o próximo retorno (use os atalhos <em>Amanhã</em>, <em>Em 3 dias</em> ou <em>Em 1 semana</em>) sem precisar navegar entre telas.</li>';
+        }
 
         $html .= '<li><strong>💬 Contatos & Mensagens:</strong> Acompanhe todas as interações humanas e mensagens geradas pelos copilotos de IA no WhatsApp com indicação do consultor e duração.</li>';
 
@@ -300,16 +333,18 @@ class TimelineRelationManager extends RelationManager
 
         $html .= '<li><strong>📑 Documentos & Parecer de IA:</strong> Monitore o envio de documentos da família com o parecer pericial emitido pelo Gemini Vision (nitidez, tipologia e dados extraídos como CPF e certidão).</li>';
 
-        $html .= '<li><strong>🔄 Etapas & Funil:</strong> Visualize as mudanças de status no funil de vendas (Kanban), motivo de perda/descarte e ajustes na temperatura comercial auditados automaticamente pelo sistema.</li>';
+        $html .= '<li><strong>🔄 Etapas & Funil:</strong> Visualize as mudanças de status no funil de vendas (Kanban) como <em>etapa anterior → nova etapa</em>, o motivo de perda/descarte e os ajustes na temperatura comercial auditados automaticamente pelo sistema.</li>';
 
-        $html .= '<li><strong>🔍 Filtros em Tempo Real:</strong> Use os botões superiores para filtrar apenas Contatos, Visitas, Documentos ou Etapas, ou pesquise qualquer palavra-chave no campo de busca.</li>';
+        $html .= '<li><strong>🔍 Filtros em Tempo Real:</strong> Use os botões acima do feed para filtrar apenas Contatos, Visitas, Documentos ou Etapas (os botões mostram quantos registros há em cada categoria) ou pesquise qualquer palavra-chave no campo de busca. O atalho <em>Limpar filtros</em> volta à visão completa.</li>';
 
-        if ($user && $user->can('Update:Interessado')) {
+        $html .= '<li><strong>📅 Feed por dia:</strong> Os eventos aparecem do mais recente ao mais antigo, separados por dia, e as visitas futuras ganham a marca <em>Agendado</em>. São exibidos '.$lote.' eventos por vez: use o botão <em>Carregar mais</em> no fim da lista para ver os anteriores.</li>';
+
+        if ($podeRegistrar) {
             $html .= '<li><strong>Pontuação do Lead (Lead Score):</strong> Toda interação registrada recalcula instantaneamente o Lead Score e a temperatura do interessado.</li>';
         }
 
         $html .= '</ul>';
-        $html .= '<p><strong>Dica de Vendas:</strong> Monitore o alerta de <em>Próximo Contato</em> no painel superior. Se estiver em atraso, faça o retorno imediato via WhatsApp com o botão direto na timeline!</p>';
+        $html .= '<p><strong>Dica de Vendas:</strong> Monitore o cartão de <em>Próximo Contato</em> no cabeçalho. Se estiver em atraso, faça o retorno imediato pelo botão <strong>Retornar no WhatsApp</strong>, no topo da tela!</p>';
 
         return $html;
     }

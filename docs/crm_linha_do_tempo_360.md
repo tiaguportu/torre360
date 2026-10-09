@@ -56,7 +56,27 @@ O painel admin **não compila Tailwind próprio**: `public/css/filament/admin/th
   esconder a linha por trás.
 - `wire:key` em dias, eventos, canais e filtros para o Livewire fazer o morph da lista corretamente.
 
+### Paginação progressiva ("Carregar mais")
+- O feed mostra `TimelineRelationManager::EVENTOS_POR_LOTE` (20) eventos por vez. A propriedade pública `limiteEventos`
+  guarda quantos estão visíveis e `carregarMais()` soma outro lote; a view faz `take($livewire->limiteEventos)` sobre a
+  lista já filtrada/ordenada e agrupa por dia só o que vai aparecer.
+- O limite volta ao primeiro lote em `filtrar()`, `limparFiltros()` e `updatedTermoBusca()`, para que uma nova busca ou
+  categoria nunca comece "no meio" da lista.
+- O rodapé mostra `Mostrando X de Y eventos` com o botão `Carregar mais N` enquanto houver eventos ocultos e, ao chegar
+  ao fim, `N eventos • início do histórico`. O resumo "N eventos encontrados" (com filtro ativo) continua usando o total.
+- O serviço ainda agrega todos os eventos do lead (a busca textual e a ordenação por data precisam do conjunto completo);
+  a paginação limita o que é renderizado e enviado ao navegador, não as consultas. Se algum lead passar de alguns milhares
+  de eventos, o próximo passo é paginar dentro do serviço.
+
+## Texto da Ajuda
+`getHelpContent()` (modal do botão **Ajuda**) acompanha o layout: indicadores do cabeçalho, filtros com contagens,
+feed por dia, "Carregar mais" e o botão **Retornar no WhatsApp** no cabeçalho. Os itens **Registrar nova interação** e
+**Pontuação do Lead** só aparecem para quem `podeRegistrar()`, igual ao bloco na tela. Ao mudar a interface, atualize o
+texto junto — o teste `test_ajuda_descreve_o_layout_atual_e_respeita_a_permissao_do_registro_rapido` falha se a Ajuda
+voltar a citar o botão "direto na timeline" ou perder esses itens.
+
 ## Testes
 - `tests/Feature/Customer360TimelineTest.php`: serviço (agregação, filtro, busca, métricas) e registro rápido.
 - `tests/Feature/Customer360TimelineLayoutTest.php`: contrato do `tom`, agrupamento por dia, estados vazios, visibilidade
-  do registro rápido por permissão e a proteção contra a volta de classes Tailwind não compiladas.
+  do registro rápido por permissão, paginação do feed (lote, "Carregar mais" e reinício ao filtrar/buscar), texto da Ajuda
+  e a proteção contra a volta de classes Tailwind não compiladas.

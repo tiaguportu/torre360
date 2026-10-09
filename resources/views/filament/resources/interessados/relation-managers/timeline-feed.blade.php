@@ -54,7 +54,12 @@
         return \Illuminate\Support\Str::ucfirst($dia->copy()->locale('pt_BR')->isoFormat('dddd, D [de] MMMM [de] YYYY'));
     };
 
-    $dias = $eventos->groupBy(fn (array $evento): string => $evento['data_hora']->format('Y-m-d'));
+    // Paginação progressiva: o feed mostra um lote por vez e o botão "Carregar mais" soma outro.
+    $totalEventos = $eventos->count();
+    $eventosVisiveis = $eventos->take($livewire->limiteEventos);
+    $eventosRestantes = $totalEventos - $eventosVisiveis->count();
+
+    $dias = $eventosVisiveis->groupBy(fn (array $evento): string => $evento['data_hora']->format('Y-m-d'));
 
     $atalhosRetorno = [
         'Amanhã' => now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i'),
@@ -308,6 +313,7 @@
         .tl360-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem .875rem; margin-top: .75rem; padding: .625rem .75rem; font-size: .8125rem; color: var(--tl-text); background: var(--tl-bg); border: 1px solid var(--tl-bd); border-radius: .75rem; }
         .tl360-cta-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 
+        .tl360-more { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .25rem 0 .5rem; font-size: .8125rem; color: var(--tl-muted); }
         .tl360-empty { padding: 2.5rem 1.25rem; text-align: center; background: var(--tl-surface); border: 1px dashed var(--tl-border); border-radius: .875rem; }
         .tl360-empty-ico { display: inline-grid; place-items: center; width: 3.25rem; height: 3.25rem; margin-bottom: .75rem; color: var(--tl-c); background: var(--tl-bg); border-radius: 1rem; }
         .tl360-empty-ico svg.fi-icon { width: 1.5rem; height: 1.5rem; color: var(--tl-c); }
@@ -763,6 +769,24 @@
                     </article>
                 @endforeach
             @endforeach
+        </div>
+
+        <div class="tl360-more">
+            @if($eventosRestantes > 0)
+                <span>Mostrando {{ $eventosVisiveis->count() }} de {{ $totalEventos }} eventos</span>
+                <x-filament::button
+                    type="button"
+                    color="gray"
+                    size="sm"
+                    icon="heroicon-m-arrow-down"
+                    wire:click="carregarMais"
+                    wire:target="carregarMais"
+                >
+                    Carregar mais {{ min($livewire::EVENTOS_POR_LOTE, $eventosRestantes) }}
+                </x-filament::button>
+            @else
+                <span>{{ $totalEventos === 1 ? '1 evento' : $totalEventos.' eventos' }} • início do histórico</span>
+            @endif
         </div>
     @endif
 </div>

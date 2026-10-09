@@ -509,6 +509,7 @@ A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento es
 
 6. **Feed Agrupado por Dia:**
    - Os eventos aparecem em ordem cronológica (do mais recente ao mais antigo), separados por dia (*Hoje*, *Ontem* ou a data por extenso). Visitas futuras ganham a marca **Agendado**.
+   - O feed exibe **20 eventos por vez**. No fim da lista aparece *Mostrando 20 de N eventos* e o botão **Carregar mais**, que traz os 20 seguintes (os mais antigos). Ao trocar de filtro ou fazer uma nova busca, a lista volta aos 20 primeiros; ao chegar ao fim, o rodapé indica *início do histórico*.
    - Cada tipo de evento tem cor e ícone próprios (WhatsApp, ligação, e-mail, visita, documento, etapa do funil, temperatura) e mostra o horário e o tempo decorrido.
    - Mudanças de etapa exibem a transição visual (*Etapa anterior → Nova etapa*); contatos mostram a duração da conversa; visitas realizadas exibem o NPS com estrelas por dimensão; documentos exibem o parecer da IA com medidor de confiança, dados extraídos e divergências.
 
