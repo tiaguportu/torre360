@@ -606,13 +606,14 @@ class AssinafyService
     {
         $statusAtual = $contrato->assinafy_status;
         $assinadoAntes = in_array($statusAtual, Contrato::STATUS_ASSINADO, true);
-        $dados = ['assinafy_request_log' => $requestLog];
+        $dados = [];
+        $aceite = null;
 
         if ($this->etapaPermitida($statusAtual, $novoStatus)) {
             $dados['assinafy_status'] = $novoStatus;
 
             if (! $assinadoAntes && in_array($novoStatus, Contrato::STATUS_ASSINADO, true)) {
-                $dados['data_aceite'] = $concluidoEm ?? now();
+                $aceite = $concluidoEm ?? now();
             }
         }
 
@@ -620,8 +621,17 @@ class AssinafyService
         $assinadoAgora = in_array($statusFinal, Contrato::STATUS_ASSINADO, true);
 
         if ($sincronizarAceite && $concluidoEm && $assinadoAgora) {
-            $dados['data_aceite'] = $concluidoEm;
+            $aceite = $concluidoEm;
         }
+
+        if ($aceite) {
+            $dados['data_aceite'] = $aceite;
+            // Guarda quando as assinaturas foram concluídas: sobrevive a webhooks posteriores (que trocam webhook_last)
+            // e permite recuperar a data_aceite depois, mesmo que a API não informe datas por signatário.
+            $requestLog['assinaturas_concluidas_em'] = $aceite->toIso8601String();
+        }
+
+        $dados['assinafy_request_log'] = $requestLog;
 
         $contrato->update($dados);
 
@@ -764,8 +774,9 @@ class AssinafyService
             $novoStatus = self::STATUS_API_PARA_STATUS[$docStatus ?? ''] ?? null;
 
             if ($novoStatus) {
+                // Data da última assinatura informada pela API; se ela não trouxer datas, usa a conclusão já registrada
                 $concluidoEm = in_array($novoStatus, Contrato::STATUS_ASSINADO, true)
-                    ? $this->dataDaUltimaAssinatura($signersStatus)
+                    ? ($this->dataDaUltimaAssinatura($signersStatus) ?? $this->conclusaoRegistrada($contrato))
                     : null;
 
                 $this->aplicarStatus($contrato, $novoStatus, $requestLog, $concluidoEm, sincronizarAceite: true);
@@ -801,6 +812,25 @@ class AssinafyService
             ->filter();
 
         return $datas->isEmpty() ? null : $datas->max();
+    }
+
+    /**
+     * Quando as assinaturas foram concluídas, segundo o que o sistema já registrou: o marcador gravado na conclusão
+     * ou, em contratos antigos, o horário do último webhook quando ele era o `document_ready` (todos assinaram).
+     */
+    private function conclusaoRegistrada(Contrato $contrato): ?Carbon
+    {
+        $log = $contrato->assinafy_request_log ?? [];
+
+        if ($marcador = $this->interpretarData($log['assinaturas_concluidas_em'] ?? null)) {
+            return $marcador;
+        }
+
+        $ultimoWebhook = $log['webhook_last'] ?? [];
+
+        return strtolower((string) ($ultimoWebhook['event'] ?? '')) === 'document_ready'
+            ? $this->interpretarData($ultimoWebhook['created_at'] ?? null)
+            : null;
     }
 
     private function interpretarData(mixed $valor): ?Carbon

@@ -58,6 +58,7 @@ class ReconciliarAssinafyCommand extends Command
 
         foreach ($contratos as $contrato) {
             $antes = (string) $contrato->assinafy_status;
+            $aceiteAntes = $contrato->data_aceite?->toDateTimeString();
             $resultado = $service->consultarEAtualizarStatusSignatarios($contrato);
 
             if (! $resultado['success']) {
@@ -67,8 +68,17 @@ class ReconciliarAssinafyCommand extends Command
                 continue;
             }
 
-            $depois = (string) $contrato->fresh()->assinafy_status;
-            $linhas[] = [$contrato->id, $antes, $depois, $antes === $depois ? 'sem mudança' : 'atualizado'];
+            $atualizado = $contrato->fresh();
+            $depois = (string) $atualizado->assinafy_status;
+            $mudouStatus = $antes !== $depois;
+            $mudouAceite = $aceiteAntes !== $atualizado->data_aceite?->toDateTimeString();
+
+            $linhas[] = [$contrato->id, $antes, $depois, match (true) {
+                $mudouStatus && $mudouAceite => 'status e data de aceite atualizados',
+                $mudouStatus => 'atualizado',
+                $mudouAceite => 'data de aceite corrigida',
+                default => 'sem mudança',
+            }];
         }
 
         $this->table(['Contrato', 'Status anterior', 'Status atual', 'Resultado'], $linhas);

@@ -38,15 +38,20 @@ Os pontos abaixo foram corrigidos e os testes dessas áreas rodam em modo estrit
 Os demais usos de `label_exibicao` em seleções de matrícula (`PreceptoriaForm`, `Portal/Preceptoria`,
 `AgendarPreceptoria`) já carregavam as relações.
 
+## Lista de contratos: protegida por teste
+`AssinafyAssinaturaTest::lista_de_contratos_exibe_cada_etapa_com_seu_proprio_rotulo` roda com o modo estrito ligado
+(não desliga mais a regra) e cria vários contratos, cada um com pai, mãe e responsável financeiro com usuário, para
+exercitar todas as relações da coluna de signatários. Foi conferido que o teste **falha** sem o eager loading da
+`ContratosTable` (`LazyLoadingViolationException` em `Contrato::responsaveisFinanceiros`) e passa com ele.
+
+`Contrato::getSignatarios()` também consultava `TipoVinculo` (Pai/Mãe) a cada chamada, uma query por contrato listado.
+Não é N+1 de relação (o modo estrito não acusa), então ficou de fora do eager loading; os ids passaram a ser
+consultados uma única vez por processo/requisição (`once()` em `Contrato::idsVinculosPaiMae()`, o mesmo padrão de
+`Matricula::nomesTiposVinculo()`).
+
 ## Pendente
-- **Teste da lista de contratos ainda desliga o modo estrito.** O eager loading da `ContratosTable` já está feito, mas
-  `AssinafyAssinaturaTest::lista_de_contratos_exibe_cada_etapa_com_seu_proprio_rotulo` mantém
-  `Model::preventLazyLoading(false)`. Para a lista passar a ser protegida contra regressões, remova essa linha e rode o
-  teste (com dados de mais de um contrato, como ele já cria); se ainda houver violação, o nome da relação aparece na
-  exceção. A correção da tabela foi conferida só pela leitura do código, sem rodar esse teste.
-- **`TipoVinculo` por linha.** `Contrato::getSignatarios()` consulta `TipoVinculo` (Pai/Mãe) a cada chamada, ou seja, uma
-  query por contrato listado. Não é N+1 de relação (o modo estrito não acusa) e fica fora do eager loading; um cache
-  desses ids resolveria.
+Nenhum ponto conhecido. Telas sem teste podem ter outros casos: use a auditoria abaixo antes de ligar
+`DB_PREVENT_LAZY_LOADING=true` em um ambiente.
 
 ## Como proteger uma área com teste
 Como o modo estrito já é ligado em todos os testes, basta criar dados com **mais de um registro** (senão o N+1 não

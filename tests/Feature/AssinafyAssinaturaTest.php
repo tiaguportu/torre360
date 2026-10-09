@@ -6,9 +6,10 @@ use App\Enums\StatusAssinaturaContrato;
 use App\Filament\Resources\Contratos\Pages\ListContratos;
 use App\Models\Contrato;
 use App\Models\Matricula;
+use App\Models\Pessoa;
+use App\Models\TipoVinculo;
 use App\Models\User;
 use App\Services\AssinafyService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Carbon;
@@ -432,10 +433,6 @@ class AssinafyAssinaturaTest extends TestCase
     #[Test]
     public function lista_de_contratos_exibe_cada_etapa_com_seu_proprio_rotulo(): void
     {
-        // A coluna de signatários da lista de contratos carrega relações sob demanda (comportamento anterior a este
-        // teste); aqui só interessa o rótulo de cada etapa, então o modo estrito de lazy loading não deve interferir.
-        Model::preventLazyLoading(false);
-
         $admin = User::factory()->create([
             'activated_at' => now()->subDay(),
             'deactivated_at' => null,
@@ -445,13 +442,127 @@ class AssinafyAssinaturaTest extends TestCase
         session(['active_role' => 'super_admin']);
         $this->actingAs($admin);
 
-        foreach (['ready', 'certificating', 'certificated'] as $s) {
-            Contrato::create(['matricula_id' => Matricula::factory()->create()->id, 'valor_total' => 0, 'assinafy_status' => $s]);
+        // Vários contratos, cada um com pai, mãe e responsável financeiro com usuário: exercita todas as relações
+        // lidas pela coluna de signatários (o modo estrito de lazy loading vale nos testes e não pode ser violado).
+        $pai = TipoVinculo::create(['nome' => 'Pai']);
+        $mae = TipoVinculo::create(['nome' => 'Mãe']);
+
+        foreach (['ready', 'certificating', 'certificated'] as $status) {
+            $aluno = Pessoa::factory()->create();
+
+            foreach ([$pai, $mae] as $vinculo) {
+                $responsavel = Pessoa::factory()->create();
+                $aluno->responsaveis()->attach($responsavel->id, ['tipo_vinculo_id' => $vinculo->id]);
+                User::factory()->create()->pessoas()->attach($responsavel->id);
+            }
+
+            $financeiro = Pessoa::factory()->create();
+            User::factory()->create()->pessoas()->attach($financeiro->id);
+
+            $contrato = Contrato::create([
+                'matricula_id' => Matricula::factory()->create(['pessoa_id' => $aluno->id])->id,
+                'valor_total' => 0,
+                'assinafy_status' => $status,
+            ]);
+            $contrato->responsaveisFinanceiros()->create(['pessoa_id' => $financeiro->id, 'percentual' => 100]);
         }
 
         Livewire::test(ListContratos::class)
             ->assertSee('Todos assinaram')
             ->assertSee('Certificando')
             ->assertSee('Certificado');
+    }
+
+    #[Test]
+    public function webhook_grava_o_marcador_de_conclusao_e_a_sincronizacao_sem_datas_da_api_o_preserva(): void
+    {
+        $contrato = $this->criarContrato();
+        $quando = Carbon::parse('2026-09-30 14:05:00');
+
+        $this->servico()->handleWebhook($this->evento('document_ready', $quando));
+
+        $contrato->refresh();
+        $this->assertTrue(Carbon::parse($contrato->assinafy_request_log['assinaturas_concluidas_em'])->equalTo($quando));
+
+        // Um evento posterior troca webhook_last, mas não o marcador
+        $this->servico()->handleWebhook($this->evento('signer_viewed_document', $quando->copy()->addDay()));
+
+        // A API passa a informar certificated, sem datas por signatário: a data_aceite continua a da conclusão
+        $this->configurarApi(true);
+        $this->fakeApi('certificated');
+        $this->servico()->consultarEAtualizarStatusSignatarios($contrato->fresh());
+
+        $contrato->refresh();
+        $this->assertSame('certificated', $contrato->assinafy_status);
+        $this->assertTrue($contrato->data_aceite->equalTo($quando));
+    }
+
+    #[Test]
+    public function sincronizacao_repara_contrato_legado_com_o_horario_do_document_ready_gravado_no_log(): void
+    {
+        $this->configurarApi(true);
+        $quando = Carbon::parse('2026-09-30 14:05:00');
+        // Situação deixada pelo tratamento antigo: status ready, data_aceite da criação e o último webhook no log
+        $contrato = $this->criarContrato('ready', '2026-09-01 08:00:00');
+        $contrato->update(['assinafy_request_log' => ['webhook_last' => $this->evento('document_ready', $quando)]]);
+
+        // A API informa o status, mas não as datas de cada signatário
+        $this->fakeApi('certificated');
+        $this->servico()->consultarEAtualizarStatusSignatarios($contrato->fresh());
+
+        $contrato->refresh();
+        $this->assertSame('certificated', $contrato->assinafy_status);
+        $this->assertTrue($contrato->data_aceite->equalTo($quando));
+        $this->assertTrue(Carbon::parse($contrato->assinafy_request_log['assinaturas_concluidas_em'])->equalTo($quando));
+    }
+
+    #[Test]
+    public function alternativa_do_log_so_vale_quando_o_ultimo_webhook_foi_document_ready(): void
+    {
+        $this->configurarApi(true);
+        $contrato = $this->criarContrato('ready', '2026-09-01 08:00:00');
+        $contrato->update(['assinafy_request_log' => ['webhook_last' => $this->evento('signer_viewed_document')]]);
+
+        $this->fakeApi('certificated');
+        $this->servico()->consultarEAtualizarStatusSignatarios($contrato->fresh());
+
+        $contrato->refresh();
+        $this->assertSame('certificated', $contrato->assinafy_status);
+        $this->assertTrue($contrato->data_aceite->equalTo(Carbon::parse('2026-09-01 08:00:00')));
+    }
+
+    #[Test]
+    public function datas_dos_signatarios_na_api_tem_prioridade_sobre_o_log(): void
+    {
+        $this->configurarApi(true);
+        $contrato = $this->criarContrato('ready', '2026-09-01 08:00:00');
+        $contrato->update(['assinafy_request_log' => ['webhook_last' => $this->evento('document_ready', Carbon::parse('2026-09-30 14:05:00'))]]);
+
+        $this->fakeApi('certificated', [
+            ['email' => 'mae@teste.com', 'status' => 'signed', 'signed_at' => '2026-09-29T10:00:00-03:00'],
+        ]);
+        $this->servico()->consultarEAtualizarStatusSignatarios($contrato->fresh());
+
+        $this->assertTrue($contrato->fresh()->data_aceite->equalTo(Carbon::parse('2026-09-29T10:00:00-03:00')));
+    }
+
+    #[Test]
+    public function comando_repara_data_aceite_de_contratos_antigos_pelo_log_quando_a_api_nao_informa_datas(): void
+    {
+        $this->configurarApi(true);
+        $quando = Carbon::parse('2026-09-30 14:05:00');
+        $legado = $this->criarContrato('certificated', '2026-09-01 08:00:00');
+        $legado->update(['assinafy_request_log' => ['webhook_last' => $this->evento('document_ready', $quando)]]);
+
+        $this->fakeHttp(['*/documents/*' => Http::response(['data' => ['status' => 'certificated']], 200)]);
+
+        $this->artisan('assinafy:reconciliar', ['--incluir-assinados' => true])
+            ->expectsTable(
+                ['Contrato', 'Status anterior', 'Status atual', 'Resultado'],
+                [[$legado->id, 'certificated', 'certificated', 'data de aceite corrigida']],
+            )
+            ->assertSuccessful();
+
+        $this->assertTrue($legado->fresh()->data_aceite->equalTo($quando));
     }
 }

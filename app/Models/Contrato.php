@@ -173,7 +173,7 @@ class Contrato extends Model
         }
 
         // 2. Pai e Mãe do aluno vinculado
-        $vinculosInteresse = TipoVinculo::whereIn('nome', ['Pai', 'Mãe', 'pai', 'mãe'])->pluck('id')->toArray();
+        $vinculosInteresse = self::idsVinculosPaiMae();
 
         $mat = $this->matricula;
         if ($mat) {
@@ -213,6 +213,19 @@ class Contrato extends Model
             ->filter(fn ($s) => ! empty($s['email']))
             ->unique('email')
             ->values();
+    }
+
+    /**
+     * IDs dos tipos de vínculo "Pai" e "Mãe", consultados uma única vez (e não a cada contrato listado).
+     *
+     * @return array<int, int>
+     */
+    private static function idsVinculosPaiMae(): array
+    {
+        return once(fn (): array => TipoVinculo::query()
+            ->whereIn('nome', ['Pai', 'Mãe', 'pai', 'mãe'])
+            ->pluck('id')
+            ->all());
     }
 
     /**

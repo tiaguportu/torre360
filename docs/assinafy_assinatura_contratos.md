@@ -50,12 +50,20 @@ Regras:
 - **Nunca regride:** um contrato já assinado só avança (`ready` → `certificating` → `certificated`); eventos atrasados ou
   repetidos não o fazem voltar nem trocam a `data_aceite`.
 - **`data_aceite` = quando a última assinatura foi coletada.** No webhook usa o `created_at` do envelope do evento
-  `document_ready`; na consulta ativa usa a data da última assinatura informada pelo Assinafy (se não houver, a hora da
-  conclusão detectada). É gravada ao passar a "assinado" e, na consulta ativa, corrigida pela data real das assinaturas.
+  `document_ready`; na consulta ativa usa a data da última assinatura informada pelo Assinafy. Se a API não trouxer datas
+  por signatário, usa a conclusão **já registrada** pelo sistema (veja "Marcador de conclusão") e, só em último caso,
+  a hora em que a conclusão foi detectada. É gravada ao passar a "assinado" e, na consulta ativa, corrigida pela data real
+  das assinaturas.
   Obs.: contratos criados pelo Assistente de Matrícula ou pela ação **Gerar contrato** recebem `data_aceite = agora` na
   criação; ao serem assinados esse valor é substituído pela data da conclusão das assinaturas. Os contratos da
   **Rematrícula Online** já nascem **sem** `data_aceite` (ela só passa a existir na assinatura); as faturas deles partem
   do dia da rematrícula, então a assinatura não altera os vencimentos.
+- **Marcador de conclusão (`assinafy_request_log.assinaturas_concluidas_em`).** Ao registrar a conclusão, o sistema guarda
+  nesse campo o mesmo instante usado na `data_aceite` (ISO 8601). Ele sobrevive a webhooks posteriores, que trocam
+  `webhook_last`, e permite refazer a `data_aceite` depois mesmo que a API não informe datas por signatário. Ordem de
+  prioridade na consulta ativa: (1) data da última assinatura informada pela API; (2) o marcador; (3) em contratos
+  antigos, sem marcador, o `created_at` do `webhook_last` **se** ele for um `document_ready` (todos assinaram); se nada
+  disso existir, a `data_aceite` não é alterada.
 - **O webhook do Assinafy não é assinado** ("The envelopes do not have cryptographic signature"). Por isso, quando há
   credenciais da API, a conclusão só é aceita **depois de consultar o documento na API**; se a API não confirmar (ou
   estiver fora do ar), o status é mantido e a reconciliação resolve depois. O HMAC (`ASSINAFY_WEBHOOK_SECRET`) só é
@@ -69,7 +77,8 @@ Opções:
 - `--contrato=ID` consulta um contrato específico.
 - `--limite=N` máximo de contratos por execução (padrão 100).
 - `--incluir-assinados` reprocessa também os já assinados/certificados para **corrigir a `data_aceite`** pela data da
-  última assinatura. Use uma vez para reparar dados antigos.
+  última assinatura (ou, se a API não informar datas, pela conclusão já registrada no log). Use uma vez para reparar
+  dados antigos.
 
 ### Reparar contratos antigos já assinados (executar no servidor de produção)
 Contratos que o tratamento antigo deixou em `ready` já contam como assinados, mas podem ter `data_aceite` incorreta e
@@ -79,6 +88,11 @@ php artisan assinafy:reconciliar --incluir-assinados
 ```
 O comando mostra uma tabela com o status antes/depois de cada contrato. Para um único contrato:
 `php artisan assinafy:reconciliar --contrato=166 --incluir-assinados`.
+
+A coluna "Resultado" informa se mudou o status, a `data_aceite` (por exemplo "data de aceite corrigida", mesmo com o
+status igual) ou ambos. Contratos antigos cujo último webhook gravado **não** foi o `document_ready` (um evento posterior o sobrescreveu) e que
+não têm o marcador continuam com a `data_aceite` anterior caso a API não informe as datas das assinaturas: nesse caso o
+valor pode ser ajustado manualmente no formulário do contrato.
 
 ## Diagnóstico se um contrato assinado não atualizar
 1. Veja o badge **Assinatura** em `/admin/contratos`: **Pendente** indica que o retorno não chegou/não foi confirmado.
