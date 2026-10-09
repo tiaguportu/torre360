@@ -24,7 +24,8 @@ class RematriculaForm
                         Select::make('status')
                             ->label('Status da Rematrícula')
                             ->options(StatusRematricula::class)
-                            ->required(),
+                            ->required()
+                            ->helperText('Ao marcar como Cancelada, a nova matrícula é cancelada (liberando a vaga) e as faturas em aberto do contrato são canceladas. Prefira a ação "Cancelar Rematrícula" da lista, que mostra o resumo do que foi alterado.'),
 
                         Select::make('serie_destino_id')
                             ->label('Série / Ano de Destino')

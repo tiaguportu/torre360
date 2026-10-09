@@ -16,10 +16,13 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class RematriculasTable
@@ -83,6 +86,12 @@ class RematriculasTable
                 SelectFilter::make('periodo_rematricula_id')
                     ->label('Campanha')
                     ->relationship('periodoRematricula', 'nome'),
+
+                // Mesma contagem do contador no menu: famílias que já registraram a intenção e aguardam a turma.
+                Filter::make('aguardando_turma')
+                    ->label('Aguardando turma (a efetivar)')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->aguardandoTurma()),
             ])
             ->recordActions([
                 Action::make('efetivar')
@@ -98,6 +107,7 @@ class RematriculasTable
                         return [self::campoTurma($service, $periodo, $record->serie_destino_id, $service->turmaSugerida($record, $periodo))];
                     })
                     ->visible(fn (Rematricula $record) => $record->status !== StatusRematricula::Confirmada
+                        && ! $record->estaCancelada()
                         && ! $record->nova_matricula_id
                         && auth()->user()?->can('Update:Rematricula'))
                     ->action(function (Rematricula $record, array $data, RematriculaService $service) {
@@ -128,8 +138,61 @@ class RematriculasTable
                     ->url(fn (Rematricula $record) => route('contratos.visualizar', $record->contrato_id))
                     ->openUrlInNewTab(),
 
+                Action::make('cancelar')
+                    ->label('Cancelar Rematrícula')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->modalHeading('Cancelar esta rematrícula?')
+                    ->modalDescription(fn (Rematricula $record): string => $record->foiEfetivada()
+                        ? 'A nova matrícula será cancelada (liberando a vaga na turma) e as faturas em aberto do contrato serão canceladas. Faturas já pagas não são alteradas e precisam de estorno manual. O contrato e o documento enviado para assinatura permanecem registrados, mas uma assinatura posterior não reativa a rematrícula.'
+                        : 'A rematrícula será marcada como cancelada. Nenhuma matrícula ou contrato foi gerado, então nada mais é alterado.')
+                    ->modalSubmitActionLabel('Cancelar rematrícula')
+                    ->schema([
+                        Textarea::make('motivo')
+                            ->label('Motivo (opcional)')
+                            ->placeholder('Ex.: família desistiu, vaga em outra escola…')
+                            ->rows(2),
+                    ])
+                    ->visible(fn (Rematricula $record): bool => ! $record->estaCancelada()
+                        && (bool) auth()->user()?->can('Update:Rematricula'))
+                    ->action(function (Rematricula $record, array $data, RematriculaService $service): void {
+                        try {
+                            $resumo = $service->cancelar($record, filled($data['motivo'] ?? null) ? $data['motivo'] : null);
+
+                            $partes = [];
+                            if ($resumo['matricula_cancelada']) {
+                                $partes[] = 'a matrícula foi cancelada e a vaga liberada';
+                            }
+                            if ($resumo['faturas_canceladas'] > 0) {
+                                $partes[] = "{$resumo['faturas_canceladas']} fatura(s) em aberto cancelada(s)";
+                            }
+
+                            $notificacao = Notification::make()
+                                ->title('Rematrícula cancelada')
+                                ->body($partes === [] ? 'Nenhuma matrícula ou fatura precisou ser alterada.' : ucfirst(implode('; ', $partes)).'.');
+
+                            if ($resumo['faturas_pagas'] > 0) {
+                                $notificacao->warning()->persistent()->body(
+                                    $notificacao->getBody()." Atenção: {$resumo['faturas_pagas']} fatura(s) já paga(s) não foram alteradas — providencie o estorno, se for o caso."
+                                );
+                            } else {
+                                $notificacao->success();
+                            }
+
+                            $notificacao->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Erro ao cancelar a rematrícula')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn (Rematricula $record): bool => $record->podeSerExcluida())
+                    ->failureNotificationTitle('Não foi possível excluir: cancele a rematrícula antes'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

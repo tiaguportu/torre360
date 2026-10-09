@@ -3,16 +3,24 @@
 namespace App\Services;
 
 use App\Enums\SituacaoMatricula;
+use App\Enums\StatusFatura;
 use App\Enums\StatusRematricula;
 use App\Exceptions\TurmaIndisponivelException;
+use App\Filament\Resources\Rematriculas\RematriculaResource;
 use App\Models\Contrato;
+use App\Models\Fatura;
 use App\Models\Matricula;
 use App\Models\PeriodoRematricula;
 use App\Models\Rematricula;
+use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RematriculaService
 {
@@ -148,6 +156,10 @@ class RematriculaService
             // não passem juntas pela checagem de "já efetivada".
             $atual = Rematricula::query()->lockForUpdate()->findOrFail($rematricula->getKey());
 
+            if ($atual->estaCancelada()) {
+                throw new \DomainException('Esta rematrícula foi cancelada e não pode ser efetivada. Exclua-a e inicie uma nova, se for o caso.');
+            }
+
             if ($matriculaExistente = $atual->novaMatricula) {
                 return $matriculaExistente;
             }
@@ -177,10 +189,12 @@ class RematriculaService
             $atual->serie_destino_id = $turma->serie_id;
             $atual->turno_pretendido_id ??= $turma->turno_id;
 
+            // Com contrato a assinar, a matrícula nasce Pendente: reserva a vaga, mas só vira Ativa quando o
+            // contrato for assinado (Rematricula::confirmarPelaAssinatura()). Sem contrato, já nasce Ativa.
             $novaMatricula = Matricula::create([
                 'pessoa_id' => $matriculaOrigem->pessoa_id,
                 'turma_id' => $turma->id,
-                'situacao' => SituacaoMatricula::ATIVA,
+                'situacao' => $periodo->template_contrato_id ? SituacaoMatricula::PENDENTE : SituacaoMatricula::ATIVA,
                 'data_ativacao' => now()->toDateString(),
             ]);
 
@@ -250,5 +264,132 @@ class RematriculaService
         $rematricula->refresh();
 
         return $novaMatricula;
+    }
+
+    /**
+     * Cancela a rematrícula (desistência, erro de lançamento etc.).
+     *
+     * Libera a vaga — a nova matrícula vira Cancelada — e cancela as faturas em aberto do contrato.
+     * Faturas já pagas (total ou parcialmente) NÃO são mexidas: o estorno é manual, e o resumo avisa
+     * quantas são. O contrato e o documento no Assinafy permanecem para histórico, mas uma assinatura
+     * tardia não reativa a rematrícula (ver {@see Rematricula::confirmarPelaAssinatura()}).
+     *
+     * Idempotente: cancelar de novo uma rematrícula já cancelada não faz nada.
+     *
+     * @return array{ja_cancelada: bool, matricula_cancelada: bool, faturas_canceladas: int, faturas_pagas: int}
+     */
+    public function cancelar(Rematricula $rematricula, ?string $motivo = null): array
+    {
+        return DB::transaction(function () use ($rematricula, $motivo): array {
+            $atual = Rematricula::query()->lockForUpdate()->findOrFail($rematricula->getKey());
+
+            if ($atual->estaCancelada()) {
+                return ['ja_cancelada' => true, 'matricula_cancelada' => false, 'faturas_canceladas' => 0, 'faturas_pagas' => 0];
+            }
+
+            $resumo = $this->aplicarCancelamento($atual);
+
+            $observacao = trim('Cancelada em '.now()->format('d/m/Y H:i').($motivo ? ": {$motivo}" : '.'));
+
+            // Quietly: os efeitos já foram aplicados acima e o evento `updated` os aplicaria de novo.
+            $atual->forceFill([
+                'status' => StatusRematricula::Cancelada,
+                'observacoes' => trim(($atual->observacoes ? $atual->observacoes."\n" : '').$observacao),
+            ])->saveQuietly();
+
+            $rematricula->refresh();
+
+            return ['ja_cancelada' => false] + $resumo;
+        });
+    }
+
+    /**
+     * Efeitos do cancelamento sobre a nova matrícula e o contrato. Idempotente (usado também pelo evento
+     * `updated` do model quando o status vira Cancelada por qualquer outro caminho, como o formulário de edição).
+     *
+     * @return array{matricula_cancelada: bool, faturas_canceladas: int, faturas_pagas: int}
+     */
+    public function aplicarCancelamento(Rematricula $rematricula): array
+    {
+        $resumo = ['matricula_cancelada' => false, 'faturas_canceladas' => 0, 'faturas_pagas' => 0];
+
+        DB::transaction(function () use ($rematricula, &$resumo): void {
+            if ($rematricula->nova_matricula_id) {
+                $matricula = Matricula::query()->lockForUpdate()->find($rematricula->nova_matricula_id);
+
+                if ($matricula && in_array($matricula->situacao, TurmaVagasService::SITUACOES_QUE_OCUPAM_VAGA, true)) {
+                    $matricula->update([
+                        'situacao' => SituacaoMatricula::CANCELADA,
+                        'data_desativacao' => today(),
+                    ]);
+                    $resumo['matricula_cancelada'] = true;
+                }
+            }
+
+            if ($rematricula->contrato_id) {
+                $resumo['faturas_canceladas'] = Fatura::query()
+                    ->where('contrato_id', $rematricula->contrato_id)
+                    ->whereIn('status', [StatusFatura::Pendente->value, StatusFatura::Atrasado->value])
+                    ->update(['status' => StatusFatura::Cancelado->value]);
+
+                $resumo['faturas_pagas'] = Fatura::query()
+                    ->where('contrato_id', $rematricula->contrato_id)
+                    ->whereIn('status', [StatusFatura::Pago->value, StatusFatura::Parcial->value])
+                    ->count();
+            }
+        });
+
+        return $resumo;
+    }
+
+    /**
+     * Avisa a equipe (quem pode efetivar rematrículas) que uma família registrou a intenção e falta
+     * escolher a turma. Aviso no sino do painel, com atalho para a lista de Rematrículas.
+     */
+    public function notificarEquipe(Rematricula $rematricula): void
+    {
+        $destinatarios = $this->equipeQuePodeEfetivar();
+
+        if ($destinatarios->isEmpty()) {
+            return;
+        }
+
+        $aluno = Matricula::query()->with('pessoa')->find($rematricula->matricula_origem_id)?->pessoa?->nome ?? 'Um aluno';
+        $campanha = PeriodoRematricula::query()->find($rematricula->periodo_rematricula_id)?->nome ?? 'a campanha de rematrícula';
+        $serie = Serie::query()->find($rematricula->serie_destino_id)?->nome;
+
+        Notification::make()
+            ->title('Rematrícula aguardando turma')
+            ->body("{$aluno} registrou as preferências para {$campanha}".($serie ? " (série pretendida: {$serie})" : '').'. Escolha a turma e efetive a rematrícula.')
+            ->icon('heroicon-o-arrow-path-rounded-square')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('abrir')
+                    ->label('Abrir Rematrículas')
+                    ->button()
+                    // Quem registra é a família, no painel do Portal; a lista de Rematrículas fica no painel admin.
+                    ->url(RematriculaResource::getUrl('index', panel: 'admin')),
+            ])
+            ->sendToDatabase($destinatarios);
+    }
+
+    /**
+     * Usuários ativos com a permissão de efetivar rematrículas (diretamente ou por papel), mais os super admins.
+     *
+     * @return Collection<int, User>
+     */
+    private function equipeQuePodeEfetivar(): Collection
+    {
+        $usuarios = collect();
+
+        if (Permission::where('name', 'Update:Rematricula')->where('guard_name', 'web')->exists()) {
+            $usuarios = User::ativos()->permission('Update:Rematricula')->get();
+        }
+
+        if (Role::where('name', 'super_admin')->where('guard_name', 'web')->exists()) {
+            $usuarios = $usuarios->merge(User::ativos()->role('super_admin')->get());
+        }
+
+        return $usuarios->unique('id')->values();
     }
 }

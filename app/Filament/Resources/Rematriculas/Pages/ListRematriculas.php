@@ -43,9 +43,11 @@ class ListRematriculas extends ListRecords
         $html .= '<ul>';
         $html .= '<li><strong>Status dos Alunos:</strong> Veja quem já iniciou a rematrícula, quem confirmou dados, quem está aguardando assinatura de contrato ou já teve a rematrícula concluída.</li>';
         if ($canUpdate) {
-            $html .= '<li><strong>Efetivar Rematrícula:</strong> Acione o botão <em>"Efetivar Rematrícula"</em> na linha do aluno e <strong>escolha a turma de destino</strong> (só aparecem turmas do período de destino abertas para matrícula; as lotadas não podem ser escolhidas). O sistema cria a nova matrícula ativa nessa turma e o contrato automaticamente. A família só informa série e turno de preferência — a turma é sempre definida pela secretaria.</li>';
+            $html .= '<li><strong>Efetivar Rematrícula:</strong> Acione o botão <em>"Efetivar Rematrícula"</em> na linha do aluno e <strong>escolha a turma de destino</strong> (só aparecem turmas do período de destino abertas para matrícula; as lotadas não podem ser escolhidas). O sistema cria a nova matrícula nessa turma e o contrato automaticamente: com contrato a assinar, a matrícula fica <strong>Pendente</strong> (a vaga já é reservada) e passa a <strong>Ativa</strong> quando o contrato é assinado. A família só informa série e turno de preferência — a turma é sempre definida pela secretaria.</li>';
             $html .= '<li><strong>Efetivar na mesma turma (lote):</strong> Selecione várias rematrículas da mesma campanha e escolha uma turma para efetivar todas de uma vez; se a turma lotar, as restantes continuam pendentes.</li>';
+            $html .= '<li><strong>Cancelar Rematrícula:</strong> Encerra a rematrícula (desistência, erro de lançamento). Se já tinha sido efetivada, a nova matrícula é cancelada (a vaga é liberada) e as faturas em aberto são canceladas; faturas já pagas não são alteradas e precisam de estorno manual. Uma assinatura feita depois não reativa a rematrícula. Só rematrículas nunca efetivadas ou já canceladas podem ser excluídas.</li>';
         }
+        $html .= '<li><strong>Aguardando turma:</strong> O contador amarelo no menu e o filtro <em>"Aguardando turma (a efetivar)"</em> mostram as famílias que já registraram a intenção; você também recebe um aviso no sino quando isso acontece.</li>';
         $html .= '<li><strong>Ver Contrato:</strong> Acesse o contrato gerado com as faturas e dados de assinatura digital.</li>';
         $html .= '</ul>';
 

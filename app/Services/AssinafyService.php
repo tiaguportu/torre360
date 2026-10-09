@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\StatusRematricula;
 use App\Models\Contrato;
 use App\Models\TemplateContrato;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -651,14 +650,9 @@ class AssinafyService
 
     private function confirmarRematricula(Contrato $contrato): void
     {
-        $rematricula = $contrato->rematricula;
-
-        if ($rematricula && $rematricula->status !== StatusRematricula::Confirmada) {
-            $rematricula->update([
-                'status' => StatusRematricula::Confirmada,
-                'data_confirmacao' => now(),
-            ]);
-        }
+        // Confirma a rematrícula e ativa a nova matrícula (que aguardava a assinatura, como Pendente).
+        // Uma rematrícula cancelada não é reativada por uma assinatura tardia.
+        $contrato->rematricula?->confirmarPelaAssinatura();
     }
 
     /**
