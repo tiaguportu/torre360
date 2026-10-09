@@ -315,7 +315,8 @@ class MatriculaOnlineSelfServiceTest extends TestCase
             'situacao' => SituacaoMatricula::PENDENTE,
         ]);
 
-        $response = $this->get(route('matricular.online.sucesso', $matricula));
+        $response = $this->withSession(['matricula_online_id' => $matricula->id])
+            ->get(route('matricular.online.sucesso', $matricula));
 
         $response->assertStatus(200);
         $response->assertSee('Matrícula Efetuada com Sucesso');
