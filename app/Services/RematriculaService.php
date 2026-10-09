@@ -241,11 +241,9 @@ class RematriculaService
             $envio = $this->assinafyService->enviarContrato($contrato);
 
             if ($envio['success'] ?? false) {
-                // Condicional para não desfazer a confirmação caso o webhook da assinatura já tenha chegado.
-                Rematricula::query()
-                    ->whereKey($rematricula->getKey())
-                    ->where('status', StatusRematricula::DadosConfirmados->value)
-                    ->update(['status' => StatusRematricula::AguardandoAssinatura->value]);
+                // enviarContrato() já faz isso em qualquer envio bem-sucedido; repetir aqui deixa a regra
+                // explícita neste fluxo e é inofensivo (condicional, não desfaz uma confirmação do webhook).
+                $contrato->marcarRematriculaAguardandoAssinatura();
             }
         }
 

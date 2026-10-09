@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusAssinaturaContrato;
+use App\Enums\StatusRematricula;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,6 +61,18 @@ class Contrato extends Model
     public function rematricula(): HasOne
     {
         return $this->hasOne(Rematricula::class);
+    }
+
+    /**
+     * O contrato foi enviado para assinatura: a rematrícula dele, se ainda estiver só em "Dados
+     * Confirmados" (primeiro envio falhou, ou o envio é feito depois pela tela de Contratos), passa a
+     * aguardar a assinatura. Condicional para nunca desfazer uma confirmação que o webhook já fez.
+     */
+    public function marcarRematriculaAguardandoAssinatura(): void
+    {
+        $this->rematricula()
+            ->where('status', StatusRematricula::DadosConfirmados->value)
+            ->update(['status' => StatusRematricula::AguardandoAssinatura->value]);
     }
 
     /**

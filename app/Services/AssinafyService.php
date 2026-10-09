@@ -205,6 +205,8 @@ class AssinafyService
                                 'assinafy_request_log' => $reqLog,
                             ]);
 
+                            $contrato->marcarRematriculaAguardandoAssinatura();
+
                             return ['success' => true, 'redirect_url' => $signingUrl];
                         }
                     }
@@ -393,6 +395,8 @@ class AssinafyService
                         'assignment' => $dataAssign,
                     ],
                 ]);
+
+                $contrato->marcarRematriculaAguardandoAssinatura();
 
                 return ['success' => true, 'redirect_url' => $signingUrl];
             }
