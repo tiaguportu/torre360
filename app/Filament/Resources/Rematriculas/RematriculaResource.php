@@ -30,6 +30,26 @@ class RematriculaResource extends Resource implements HasShieldPermissions
 
     protected static ?int $navigationSort = 4;
 
+    /**
+     * Contador no menu: rematrículas cuja família já registrou a intenção e que aguardam a turma.
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $aguardando = Rematricula::query()->aguardandoTurma()->count();
+
+        return $aguardando > 0 ? (string) $aguardando : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Rematrículas aguardando a definição da turma';
+    }
+
     public static function getPermissionPrefixes(): array
     {
         return [

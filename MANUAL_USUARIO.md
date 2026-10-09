@@ -2054,22 +2054,33 @@ A secretaria acompanha o status de cada rematrícula:
 - **Dados Confirmados:** a família registrou a série e o turno de preferência e **aguarda a secretaria definir a turma**. Se a coluna *Nova Matrícula* já estiver preenchida, a secretaria já efetivou, mas o contrato não chegou a ser enviado para assinatura porque o envio ao Assinafy falhou: resolva na tela do Contrato gerado (**Assinar Contrato**), ou a própria família tenta em *Documentos e Contratos*. Esse status só muda quando o contrato é assinado. (Se a campanha não tem modelo de contrato, a rematrícula vai direto para *Confirmada* ao efetivar.)
 - **Aguardando Assinatura do Contrato:** tudo certo — nova matrícula, contrato e faturas já gerados, contrato enviado para o Assinafy.
 - **Rematrícula Confirmada:** o contrato foi assinado (confirmação automática via webhook do Assinafy) — processo concluído.
-- **Cancelada.**
+- **Cancelada:** a rematrícula foi encerrada pela escola (desistência, erro de lançamento etc.). Veja "Cancelar uma rematrícula" mais abaixo.
+
+**Aviso e contador:** quando uma família registra a intenção pelo Portal, quem pode efetivar rematrículas (permissão de edição de rematrículas, além dos super administradores ativos) recebe um aviso no **sino** do painel — *Rematrícula aguardando turma*, com atalho para a lista. O menu **Acadêmico → Rematrículas** mostra um **contador amarelo** com quantas estão aguardando a turma, e o filtro **Aguardando turma (a efetivar)** da lista mostra exatamente essas. O aviso sai uma vez só por rematrícula: a família atualizar as preferências depois não repete.
 
 **Efetivar uma rematrícula (secretaria):**
 1. Na linha da rematrícula, clique em **Efetivar Rematrícula**. Exige a permissão de edição de rematrículas.
 2. Escolha a **Turma de destino** (obrigatória). A lista traz só as turmas do **período de destino** da campanha, abertas para matrícula (Planejada ou Ativa) e, quando a família informou a série, dessa série. Cada turma mostra a ocupação (ex: `5º Ano A — Manhã (12/30 vagas)`); as **lotadas aparecem, mas não podem ser escolhidas**. Se houver uma única turma com vaga na série e no turno pedidos, ela já vem selecionada.
-3. Ao confirmar, o sistema **trava a turma, confere a vaga** e cria a nova matrícula nela (Ativa); depois gera o contrato e as faturas e envia para assinatura. Se a turma lotar enquanto outra pessoa também matricula, você recebe o aviso *Não foi possível efetivar nesta turma* e nada é criado pela metade.
+3. Ao confirmar, o sistema **trava a turma, confere a vaga** e cria a nova matrícula nela; depois gera o contrato e as faturas e envia para assinatura. **Com contrato a assinar, a matrícula nasce *Pendente*** (a vaga fica reservada para a família) **e passa a *Ativa* automaticamente quando o contrato é assinado**; se a campanha não tem contrato, ela já nasce *Ativa*. Não há expiração automática: a matrícula que ficar muito tempo sem assinatura continua Pendente, reservando a vaga, até a secretaria cancelar a rematrícula. Se a turma lotar enquanto outra pessoa também matricula, você recebe o aviso *Não foi possível efetivar nesta turma* e nada é criado pela metade.
 4. **Efetivar na mesma turma (em lote):** selecione várias rematrículas da **mesma campanha** e use essa ação para colocá-las todas na turma escolhida. Se a turma lotar, o lote para e as restantes continuam pendentes.
 5. Quem ocupa vaga: matrículas **Ativa, Pendente e Reserva** que ainda não foram desativadas. Turma sem limite de vagas (campo em branco ou 0) nunca lota.
 6. Na edição da rematrícula também é possível pré-definir a **Turma de Destino** (a mesma lista filtrada); ela vem selecionada ao efetivar.
+
+**Cancelar uma rematrícula (secretaria):**
+1. Na linha da rematrícula, clique em **Cancelar Rematrícula** (permissão de edição de rematrículas) e, se quiser, registre o motivo. Vale para qualquer rematrícula que ainda não esteja cancelada, inclusive já efetivada ou confirmada.
+2. Se a rematrícula já tinha sido efetivada, o sistema **cancela a nova matrícula** (a situação vira *Cancelada* e a vaga na turma é liberada na hora) e **cancela as faturas em aberto** do contrato (pendentes e atrasadas). **Faturas já pagas, total ou parcialmente, não são alteradas**: o aviso de conclusão informa quantas são, para você providenciar o estorno. Boletos já emitidos no gateway de pagamento não são cancelados lá.
+3. O contrato e o documento enviado ao Assinafy continuam registrados para histórico, mas **uma assinatura feita depois do cancelamento não reativa nada**.
+4. Marcar o status como *Cancelada* na tela de edição tem o mesmo efeito; a ação da lista é preferível por mostrar o resumo.
+5. Uma rematrícula cancelada não pode ser efetivada nem reaberta pelo Portal da família. Para recomeçar, exclua a rematrícula cancelada e inicie outra.
+
+**Exclusão protegida:** uma rematrícula **já efetivada não pode ser excluída** (a matrícula criada ficaria ocupando vaga sem vínculo) — cancele primeiro. Rematrículas nunca efetivadas e as já canceladas podem ser excluídas.
 
 ### 32.3 Rematrícula pelo Portal da Família (`/portal/rematricula`)
 1. Durante uma campanha ativa, a família vê a lista de dependentes elegíveis e o botão **Realizar Rematrícula**.
 2. O responsável escolhe a série pretendida e o turno de preferência para o próximo período, pode deixar observações, e confirma. **A família não escolhe a turma.**
 3. O sistema registra a intenção (situação *Dados Confirmados*) e avisa: *Preferências registradas!* A **matrícula, o contrato e as faturas ainda não são criados** — isso acontece quando a secretaria efetiva a rematrícula (seção 32.2). A família pode atualizar as preferências enquanto a secretaria não efetivar.
 4. **Ao efetivar, tudo acontece automaticamente:** o sistema cria a nova matrícula no período de destino, na turma escolhida pela secretaria, gera o contrato a partir do modelo configurado na campanha (copiando os responsáveis financeiros do contrato anterior), gera as faturas (entrada + parcelas, com vencimentos a partir do dia da rematrícula, não da assinatura) e envia o contrato para assinatura digital via Assinafy. A família recebe o link de assinatura pelo mesmo processo já usado na matrícula original (seção 23.3) e acompanha em *Documentos e Contratos*.
-5. A rematrícula só é *Confirmada* depois que o contrato é assinado (ou direto ao efetivar, quando a campanha não tem contrato).
+5. A rematrícula só é *Confirmada* depois que o contrato é assinado (ou direto ao efetivar, quando a campanha não tem contrato). Nesse momento a matrícula, que estava *Pendente*, passa a *Ativa*. Se a escola cancelar a rematrícula, o Portal passa a mostrá-la como *Cancelada* e a ação **Realizar Rematrícula** some: a família precisa falar com a secretaria.
 6. Depois que a nova matrícula é gerada, o botão **Realizar Rematrícula** some para aquele estudante e, na secretaria, a ação **Efetivar Rematrícula** também deixa de aparecer — assim não há risco de gerar matrícula, contrato e cobrança em duplicidade. Uma mesma matrícula só pode ter **uma** rematrícula por campanha.
 
 ---

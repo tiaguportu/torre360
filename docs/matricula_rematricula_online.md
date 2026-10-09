@@ -77,6 +77,37 @@ matrícula recebe `turma_id`, `serie_id` e `periodo_letivo_id` coerentes.
   se houver matrícula sem turma; `down()` recria as colunas e as preenche a partir da turma.
   Validada em MySQL (cópia do esquema local) e SQLite.
 
+### Situação da nova matrícula, cancelamento e aviso à equipe
+- **Situação inicial (`RematriculaService::efetivar()`):** campanha **com** modelo de contrato →
+  a matrícula nasce **Pendente** (ocupa vaga, reservando-a); **sem** modelo → nasce **Ativa**.
+  Ao assinar o contrato, `AssinafyService::confirmarRematricula()` chama
+  `Rematricula::confirmarPelaAssinatura()`: status `Confirmada` + matrícula Pendente → **Ativa**
+  (em uma transação). **Não há expiração automática** (decisão de produto): a vaga fica reservada
+  até assinar ou até a secretaria cancelar a rematrícula.
+- **Cancelamento:** `RematriculaService::cancelar($rematricula, $motivo)` (ação **Cancelar
+  Rematrícula** da lista, permissão `Update:Rematricula`) e `aplicarCancelamento()` (idempotente;
+  também disparado pelo evento `updated` do model quando o status vira `Cancelada` por outro
+  caminho, como o formulário de edição). Efeitos, em transação: nova matrícula → `Cancelada` com
+  `data_desativacao = hoje` (libera a vaga); faturas do contrato `Pendente`/`Atrasado` →
+  `Cancelado`; faturas `Pago`/`Parcial` **não** são tocadas e o resumo informa quantas são
+  (estorno manual). O contrato, o documento no Assinafy e os vínculos (`nova_matricula_id`,
+  `contrato_id`) ficam para histórico. Boletos já emitidos no gateway não são cancelados lá.
+- **Proteções:** `efetivar()` recusa rematrícula cancelada (`DomainException`);
+  `Rematricula::confirmarPelaAssinatura()` ignora rematrícula cancelada (uma assinatura tardia não
+  reativa); o Portal esconde **Realizar Rematrícula** para rematrícula cancelada e rejeita a chamada
+  direta; o evento `deleting` do model impede excluir rematrícula **efetivada e não cancelada**
+  (`podeSerExcluida()`), e a ação Excluir da lista só aparece quando permitido.
+- **Aviso à equipe:** quando a família registra a intenção pela primeira vez (status passa a
+  `DadosConfirmados`), `RematriculaService::notificarEquipe()` envia uma notificação de banco
+  (sino do painel) a usuários **ativos** com `Update:Rematricula` mais os `super_admin` ativos, com
+  atalho para a lista (URL gerada com `panel: 'admin'`, pois a família está no painel Portal). Atualizar as
+  preferências depois não repete o aviso; falha no envio é registrada no log e não atrapalha a
+  família. O menu **Acadêmico → Rematrículas** ganhou um contador (`getNavigationBadge`) e o
+  filtro **Aguardando turma** (scope `Rematricula::aguardandoTurma()`: `dados_confirmados` sem
+  `nova_matricula_id`).
+- Testes: `RematriculaCancelamentoTest` (situação, cancelamento, exclusão, contador) e novos casos
+  em `RematriculaAssinaturaTest` (aviso à equipe e Portal com rematrícula cancelada).
+
 ### Outras mudanças
 - Campanha (`PeriodoRematriculaForm`): destino ≠ origem; ativar exige ao menos uma turma
   Planejada/Ativa no período de destino.

@@ -25,6 +25,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -369,6 +370,74 @@ class RematriculaAssinaturaTest extends TestCase
         app(RematriculaService::class)->efetivar(Rematricula::firstOrFail(), $turmaDestino->id);
 
         $this->assertEquals(StatusRematricula::Confirmada, Rematricula::first()->status);
+    }
+
+    public function test_portal_avisa_a_equipe_uma_unica_vez_quando_a_familia_registra_a_intencao(): void
+    {
+        $this->mock(AssinafyService::class, fn ($mock) => $mock->shouldNotReceive('enviarContrato'));
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+        $outroTurno = Turno::create(['nome' => 'Tarde', 'hora_inicio' => '13:00:00', 'hora_fim' => '17:00:00']);
+
+        Permission::findOrCreate('Update:Rematricula', 'web');
+        $secretaria = User::factory()->create(['activated_at' => now()]);
+        $secretaria->givePermissionTo('Update:Rematricula');
+        $semPermissao = User::factory()->create(['activated_at' => now()]);
+        $desativada = User::factory()->create(['activated_at' => now()->subMonth(), 'deactivated_at' => now()->subDay()]);
+        $desativada->givePermissionTo('Update:Rematricula');
+
+        $pagina = Livewire::actingAs($user)->test(PaginaRematricula::class);
+        $pagina->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno));
+
+        $this->assertSame(1, $secretaria->notifications()->count());
+        $this->assertSame(0, $semPermissao->notifications()->count(), 'Quem não pode efetivar não é avisado.');
+        $this->assertSame(0, $desativada->notifications()->count(), 'Usuário desativado não é avisado.');
+
+        $aviso = $secretaria->notifications()->first();
+        $this->assertSame('Rematrícula aguardando turma', $aviso->data['title']);
+        $this->assertStringContainsString('Aluno Portal Teste', $aviso->data['body']);
+        $this->assertStringContainsString($serie->nome, $aviso->data['body']);
+
+        // Atualizar as preferências antes de a secretaria efetivar não repete o aviso
+        $pagina->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $outroTurno));
+
+        $this->assertSame(1, $secretaria->fresh()->notifications()->count());
+    }
+
+    public function test_equipe_super_admin_tambem_e_avisada(): void
+    {
+        $this->mock(AssinafyService::class, fn ($mock) => $mock->shouldNotReceive('enviarContrato'));
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        Livewire::actingAs($user)
+            ->test(PaginaRematricula::class)
+            ->callTableAction('iniciar_rematricula', $matricula, data: $this->dadosDoFormulario($serie, $turno));
+
+        $this->assertSame(1, $admin->notifications()->count());
+    }
+
+    public function test_portal_nao_reabre_rematricula_cancelada(): void
+    {
+        $this->mock(AssinafyService::class, fn ($mock) => $mock->shouldNotReceive('enviarContrato'));
+        ['user' => $user, 'matricula' => $matricula, 'serie' => $serie, 'turno' => $turno] = $this->prepararPortal();
+        $dados = $this->dadosDoFormulario($serie, $turno);
+
+        Livewire::actingAs($user)
+            ->test(PaginaRematricula::class)
+            ->callTableAction('iniciar_rematricula', $matricula, data: $dados);
+
+        app(RematriculaService::class)->cancelar(Rematricula::firstOrFail());
+
+        $pagina = Livewire::actingAs($user)->test(PaginaRematricula::class);
+        $pagina->assertTableActionHidden('iniciar_rematricula', $matricula)->assertSee('Cancelada');
+
+        // Chamada direta ao servidor também não reabre
+        $pagina->mountTableAction('iniciar_rematricula', $matricula)->setTableActionData($dados)->callMountedTableAction();
+
+        $this->assertEquals(StatusRematricula::Cancelada, Rematricula::firstOrFail()->status);
     }
 
     public function test_portal_nao_reexecuta_a_acao_por_requisicao_direta_depois_de_efetivada(): void

@@ -22,6 +22,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use UnitEnum;
 
 class Rematricula extends Page implements HasTable
@@ -82,6 +83,7 @@ class Rematricula extends Page implements HasTable
                             'Rematrícula Confirmada' => 'success',
                             'Aguardando Assinatura do Contrato' => 'warning',
                             'Dados Confirmados' => 'info',
+                            'Cancelada' => 'danger',
                             'Aguardando Início' => 'gray',
                             default => 'primary',
                         };
@@ -109,8 +111,11 @@ class Rematricula extends Page implements HasTable
 
                         // Depois de efetivada (nova matrícula/contrato gerados) não há o que refazer aqui:
                         // a família segue pela assinatura em "Documentos e Contratos".
+                        // Rematrícula cancelada pela escola também não reabre pelo Portal: a família fala com a secretaria.
                         return ! $rematricula
-                            || ($rematricula->status !== StatusRematricula::Confirmada && ! $rematricula->nova_matricula_id);
+                            || ($rematricula->status !== StatusRematricula::Confirmada
+                                && ! $rematricula->estaCancelada()
+                                && ! $rematricula->nova_matricula_id);
                     })
                     ->modalHeading(fn (Matricula $record) => "Rematrícula: {$record->pessoa?->nome}")
                     ->modalDescription('Informe as preferências para o próximo ano letivo. A secretaria define a turma do seu filho e, em seguida, envia o contrato para assinatura.')
@@ -135,6 +140,19 @@ class Rematricula extends Page implements HasTable
                         try {
                             $rematricula = $service->iniciarOuObter($record, $this->periodoAtivo, auth()->user());
 
+                            // Chamada direta ao servidor: efetivada ou cancelada não volta a ser editada pela família.
+                            if ($rematricula->foiEfetivada() || $rematricula->estaCancelada()) {
+                                Notification::make()
+                                    ->title('Esta rematrícula não pode mais ser alterada')
+                                    ->body('Fale com a secretaria da escola para qualquer ajuste.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $primeiraConfirmacao = $rematricula->status !== StatusRematricula::DadosConfirmados;
+
                             // A família só registra a intenção (série, turno e observações). A turma é
                             // definida pela secretaria ao efetivar, que também cria a matrícula e o contrato.
                             $rematricula->update([
@@ -144,6 +162,15 @@ class Rematricula extends Page implements HasTable
                                 'status' => StatusRematricula::DadosConfirmados,
                                 'data_confirmacao' => now(),
                             ]);
+
+                            // Avisa a equipe uma única vez (atualizar as preferências depois não repete o aviso).
+                            if ($primeiraConfirmacao) {
+                                try {
+                                    $service->notificarEquipe($rematricula);
+                                } catch (\Throwable $e) {
+                                    Log::warning('Falha ao avisar a equipe sobre rematrícula aguardando turma.', ['rematricula_id' => $rematricula->id, 'erro' => $e->getMessage()]);
+                                }
+                            }
 
                             $this->notificarResultado($rematricula, (string) $record->pessoa?->nome);
                         } catch (\Throwable $e) {
