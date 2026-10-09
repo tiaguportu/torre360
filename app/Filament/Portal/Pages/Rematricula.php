@@ -145,7 +145,12 @@ class Rematricula extends Page implements HasTable
                                 'data_confirmacao' => now(),
                             ]);
 
-                            $this->notificarResultado($rematricula, (string) $record->pessoa?->nome);
+                            Notification::make()
+                                ->title('Preferências registradas!')
+                                ->body("Recebemos as preferências de rematrícula do(a) estudante {$record->pessoa?->nome}. A secretaria vai definir a turma e enviar o contrato para assinatura. Depois disso, o contrato ficará disponível em Documentos e Contratos para você assinar.")
+                                ->success()
+                                ->persistent()
+                                ->send();
                         } catch (\Throwable $e) {
                             Notification::make()
                                 ->title('Erro ao processar rematrícula')
@@ -156,48 +161,6 @@ class Rematricula extends Page implements HasTable
                     }),
             ])
             ->stackedOnMobile();
-    }
-
-    /**
-     * Avisa a família com base no status real. Normalmente a rematrícula fica em "Dados Confirmados"
-     * (aguardando a secretaria definir a turma); só passa a "Confirmada" quando não há contrato a
-     * assinar, e com contrato a confirmação só vem após a assinatura.
-     */
-    private function notificarResultado(RematriculaModel $rematricula, string $nomeAluno): void
-    {
-        $irParaDocumentos = Action::make('documentos')
-            ->label('Ir para Documentos e Contratos')
-            ->button()
-            ->url(Documentos::getUrl());
-
-        $notificacao = match ($rematricula->status) {
-            StatusRematricula::DadosConfirmados => Notification::make()
-                ->title('Preferências registradas!')
-                ->body("Recebemos as preferências de rematrícula do(a) estudante {$nomeAluno}. A secretaria vai definir a turma e enviar o contrato para assinatura; você será avisado(a) e poderá assinar em Documentos e Contratos.")
-                ->success()
-                ->persistent(),
-
-            StatusRematricula::Confirmada => Notification::make()
-                ->title('Rematrícula Confirmada!')
-                ->body("A rematrícula do(a) estudante {$nomeAluno} foi registrada com sucesso!")
-                ->success(),
-
-            StatusRematricula::AguardandoAssinatura => Notification::make()
-                ->title('Falta assinar o contrato')
-                ->body("Registramos a rematrícula do(a) estudante {$nomeAluno}, mas ela só é confirmada depois que o contrato for assinado. Acesse Documentos e Contratos para assinar.")
-                ->warning()
-                ->persistent()
-                ->actions([$irParaDocumentos]),
-
-            default => Notification::make()
-                ->title('Dados registrados — contrato ainda não enviado')
-                ->body("Registramos os dados da rematrícula do(a) estudante {$nomeAluno}, mas não foi possível enviar o contrato para assinatura agora. A secretaria vai providenciar o envio; você também pode tentar em Documentos e Contratos, em \"Assinar Contrato\".")
-                ->warning()
-                ->persistent()
-                ->actions([$irParaDocumentos]),
-        };
-
-        $notificacao->send();
     }
 
     protected function getMatriculasElegiveisQuery(): Builder

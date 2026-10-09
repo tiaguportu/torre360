@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Rematriculas\Tables;
 
 use App\Enums\StatusRematricula;
 use App\Exceptions\TurmaIndisponivelException;
+use App\Filament\Resources\Contratos\ContratoResource;
+use App\Models\Matricula;
 use App\Models\PeriodoRematricula;
 use App\Models\Rematricula;
 use App\Services\RematriculaService;
@@ -54,6 +56,11 @@ class RematriculasTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    // "Dados Confirmados" tem dois sentidos: a família só registrou a intenção, ou a
+                    // matrícula já foi gerada mas o contrato ainda não foi enviado para assinatura.
+                    ->description(fn (Rematricula $record): ?string => $record->status === StatusRematricula::DadosConfirmados
+                        ? ($record->nova_matricula_id ? 'Contrato não enviado' : 'Aguardando a secretaria')
+                        : null)
                     ->sortable(),
 
                 TextColumn::make('novaMatricula.id')
@@ -97,11 +104,7 @@ class RematriculasTable
                         try {
                             $novaMatricula = $service->efetivar($record, (int) $data['turma_id']);
 
-                            Notification::make()
-                                ->title('Rematrícula Efetivada')
-                                ->body("A nova Matrícula #{$novaMatricula->id} foi gerada com sucesso para o aluno {$record->matriculaOrigem?->pessoa?->nome}.")
-                                ->success()
-                                ->send();
+                            self::notificarEfetivacao($record, $novaMatricula);
                         } catch (TurmaIndisponivelException|\DomainException $e) {
                             Notification::make()
                                 ->title('Não foi possível efetivar nesta turma')
@@ -163,11 +166,16 @@ class RematriculasTable
                             $efetivadas = 0;
                             $falhas = [];
                             $turmaLotou = false;
+                            $semEnvio = [];
 
                             foreach ($records->filter(fn (Rematricula $r) => ! $r->nova_matricula_id && $r->status !== StatusRematricula::Confirmada) as $rematricula) {
                                 try {
                                     $service->efetivar($rematricula, (int) $data['turma_id']);
                                     $efetivadas++;
+
+                                    if (self::contratoNaoEnviado($rematricula)) {
+                                        $semEnvio[] = (string) $rematricula->matriculaOrigem?->pessoa?->nome;
+                                    }
                                 } catch (TurmaIndisponivelException $e) {
                                     $falhas[] = "{$rematricula->matriculaOrigem?->pessoa?->nome}: {$e->getMessage()}";
 
@@ -181,11 +189,23 @@ class RematriculasTable
                                 }
                             }
 
-                            $notificacao = Notification::make()
-                                ->title("{$efetivadas} rematrícula(s) efetivada(s)")
-                                ->body($falhas === [] ? null : implode("\n", array_slice($falhas, 0, 5)).($turmaLotou ? "\nAs demais continuam pendentes." : ''));
+                            $linhas = array_slice($falhas, 0, 5);
 
-                            ($falhas === [] ? $notificacao->success() : $notificacao->warning())->persistent($falhas !== [])->send();
+                            if ($turmaLotou) {
+                                $linhas[] = 'As demais continuam pendentes.';
+                            }
+
+                            if ($semEnvio !== []) {
+                                $linhas[] = 'Contrato não enviado para assinatura (envie em Contratos → Assinar Contrato): '.implode(', ', array_slice($semEnvio, 0, 5)).(count($semEnvio) > 5 ? '…' : '').'.';
+                            }
+
+                            $notificacao = Notification::make()
+                                ->title("{$efetivadas} rematrícula(s) efetivada(s)".($semEnvio === [] ? '' : ', '.count($semEnvio).' sem contrato enviado'))
+                                ->body($linhas === [] ? null : implode("\n", $linhas));
+
+                            $precisaDeAtencao = $falhas !== [] || $semEnvio !== [];
+
+                            ($precisaDeAtencao ? $notificacao->warning() : $notificacao->success())->persistent($precisaDeAtencao)->send();
                         })
                         ->deselectRecordsAfterCompletion()
                         ->visible(fn () => auth()->user()?->can('Update:Rematricula')),
@@ -193,6 +213,49 @@ class RematriculasTable
                 ]),
             ])
             ->stackedOnMobile();
+    }
+
+    /**
+     * A matrícula e o contrato foram gerados, mas o envio do contrato ao Assinafy não deu certo: o status
+     * continua "Dados Confirmados" e a secretaria precisa enviar manualmente.
+     */
+    private static function contratoNaoEnviado(Rematricula $rematricula): bool
+    {
+        return $rematricula->status === StatusRematricula::DadosConfirmados && filled($rematricula->contrato_id);
+    }
+
+    /**
+     * Avisa o resultado da efetivação pelo status real (o `$rematricula` já vem atualizado por `efetivar()`):
+     * "gerada com sucesso" só quando não resta nada a fazer; se o contrato não foi enviado, é um alerta.
+     */
+    private static function notificarEfetivacao(Rematricula $rematricula, Matricula $novaMatricula): void
+    {
+        $aluno = $rematricula->matriculaOrigem?->pessoa?->nome;
+
+        if (self::contratoNaoEnviado($rematricula)) {
+            Notification::make()
+                ->title('Matrícula gerada, mas o contrato não foi enviado')
+                ->body("A nova Matrícula #{$novaMatricula->id} foi gerada para o aluno {$aluno}, porém o envio do contrato para assinatura falhou. Em Contratos, use \"Assinar Contrato\" na linha do contrato #{$rematricula->contrato_id} para enviar de novo.")
+                ->warning()
+                ->persistent()
+                ->actions([
+                    Action::make('abrirContratos')
+                        ->label('Abrir Contratos')
+                        ->button()
+                        ->url(ContratoResource::getUrl('index')),
+                ])
+                ->send();
+
+            return;
+        }
+
+        $envio = $rematricula->status === StatusRematricula::AguardandoAssinatura ? ' O contrato foi enviado para assinatura.' : '';
+
+        Notification::make()
+            ->title('Rematrícula Efetivada')
+            ->body("A nova Matrícula #{$novaMatricula->id} foi gerada com sucesso para o aluno {$aluno}.{$envio}")
+            ->success()
+            ->send();
     }
 
     /**
