@@ -2761,6 +2761,11 @@ Para registrar uma nova obra no acervo, acesse **Biblioteca > Livros > Novo livr
      - **Categoria / Assunto**
      - **Foto da Capa:** o sistema baixa a capa, **confere se é uma imagem de verdade** (JPEG, PNG ou WebP, até 3 MB, no mínimo 60×60 px — páginas de erro, imagens de 1 pixel e outros formatos são recusados, independentemente do tipo que o servidor declare), aceita só endereços públicos e exibe a pré-visualização no formulário. Se a base indicada não tiver capa válida, tenta a do Open Library Covers.
    - **Cliques repetidos não acumulam arquivos:** a capa baixada fica numa área *pendente* com nome fixo por ISBN. Só quando você **salva o livro** ela vira um arquivo próprio da obra (duas obras com o mesmo ISBN não dividem arquivo). Capas de formulários abandonados são removidas automaticamente após 48 horas (`php artisan biblioteca:limpar-capas-pendentes`, agendado todo dia às 03:30), e trocar a capa ou excluir o livro apaga o arquivo antigo.
+   - **Limpando capas órfãs antigas (administrador, no servidor):** arquivos gravados antes dessa correção (uma cópia nova a cada clique) podem ter sobrado em `storage/app/public/livros/capas`. Para conferir e limpar:
+     1. `php artisan biblioteca:limpar-capas-orfas` — **só lista**; mostra o disco e o banco comparados, quantas capas estão em uso e quais arquivos não são usados por nenhum livro. Não apaga nada.
+     2. Confira a lista. Estando certa: `php artisan biblioteca:limpar-capas-orfas --apagar` — mostra o resumo e **pede confirmação** antes de apagar (`--force` dispensa a pergunta).
+     - **Proteções:** nunca apaga capa usada por algum livro, arquivos modificados nos últimos 7 dias (`--dias=N`, mínimo 1), a pasta `pendentes/`, subpastas ou arquivos ocultos. Se **nenhuma** das capas em uso no banco existir no disco, o comando recusa (o armazenamento provavelmente não pertence àquele banco, por exemplo ao rodar no computador do desenvolvedor com o `.env` apontando para a produção). Se nenhum livro usa capa local, só apaga com `--force`.
+     - O comando **não** é agendado: a limpeza de órfãs é sempre uma decisão de quem opera o servidor.
 
 2. **Foto da Capa do Livro Integrada ao Formulário:**
    - O formulário foi unificado em um box de largura total (**Informações do Livro**), integrando o campo de **Foto da Capa** diretamente ao lado dos dados cadastrais da obra.

@@ -98,5 +98,18 @@ painel (`max_execution_time` de 30 s).
 - **Testes:** `tests/Feature/LivroIsbnLookupTest.php` (fluxo e formulário) e
   `tests/Feature/LivroLookupCapaTest.php` (cache, paralelismo, Amazon opt-in, validação de
   imagem, SSRF, ciclo de vida da capa e comando de limpeza). Sem rede: `Http::preventStrayRequests()`.
-- **Pendência conhecida:** arquivos órfãos anteriores a esta mudança (capas com nome aleatório
-  em `livros/capas/` que nenhum livro referencia) não são limpos automaticamente.
+- **Órfãs antigas (`biblioteca:limpar-capas-orfas`):** arquivos gravados antes desta mudança
+  (um por clique) são limpos manualmente por quem opera o servidor. Padrão = só lista; `--apagar`
+  pede confirmação (`--force` dispensa). `LivroCapaService::diagnosticarOrfas()` compara os arquivos
+  diretos de `livros/capas/` com `livros.capa` (normalizando barra inicial; URL remota não conta) e só
+  considera órfão o que não é referenciado **e** tem mais de `--dias` (padrão 7, mínimo 1). Nunca
+  entram `pendentes/`, subpastas e ocultos; `apagarOrfas()` reconfere cada caminho no momento de
+  apagar. **Salvaguarda de ambiente:** se nenhuma capa em uso no banco existe no disco, recusa (disco
+  e banco de máquinas diferentes — o `.env` local aponta para o banco de produção); sem capas locais
+  no banco, exige `--force`. O cabeçalho imprime disco e banco comparados. Não é agendado.
+  Testes: `tests/Feature/LivroCapasOrfasTest.php`.
+- **Por que novas órfãs não surgem mais:** a busca grava só em `pendentes/` (1 arquivo por ISBN); o
+  livro só ganha arquivo próprio ao ser salvo; trocar a capa/excluir o livro apaga o arquivo antigo;
+  pendentes viram lixo só se o formulário for abandonado e são removidos em 48 h (exige o
+  `schedule:run` ativo). Exclusão em massa por SQL ou `Livro::query()->delete()` não dispara os
+  eventos do modelo e pode deixar arquivo — é para esse caso (e para o legado) que o comando existe.
