@@ -15,12 +15,20 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ContratosTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            // A coluna de signatários (Contrato::getSignatarios) lê estas relações em cada linha; é o mesmo conjunto
+            // que AssinafyService::enviarContrato carrega.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([
+                'matricula.pessoa.responsaveis.users',
+                'matricula.turma.serie.curso.unidade.representantesLegais.users',
+                'responsaveisFinanceiros.pessoa.users',
+            ]))
             ->columns([
                 TextColumn::make('matricula.pessoa.nome')
                     ->label('Aluno / Matrícula')

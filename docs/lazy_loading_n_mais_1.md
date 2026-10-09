@@ -33,22 +33,20 @@ Os pontos abaixo foram corrigidos e os testes dessas áreas rodam em modo estrit
 | `InteressadosTable` | `Interessado::usuario`, `ultimoHistorico` | `modifyQueryUsing(... ->with(['usuario', 'ultimoHistorico']))` |
 | `PreceptoriasTable` (filtro de matrícula) | `Matricula::periodoLetivo`, `turma`, `pessoa` (`label_exibicao`) | `$query->with([...])` na relação do filtro |
 | `User::pessoasAcessiveis()` | `Pessoa::alunos` | `$pessoas->loadMissing('alunos')` |
+| `ContratosTable` (coluna de signatários) | `Contrato::getSignatarios()` lê `matricula.pessoa.responsaveis.users`, `matricula.turma.serie.curso.unidade.representantesLegais.users` e `responsaveisFinanceiros.pessoa.users` | `modifyQueryUsing(... ->with([...]))` com esse mesmo conjunto, que `AssinafyService::enviarContrato` já carrega |
 
 Os demais usos de `label_exibicao` em seleções de matrícula (`PreceptoriaForm`, `Portal/Preceptoria`,
 `AgendarPreceptoria`) já carregavam as relações.
 
-## Pendente: lista de contratos (`/admin/contratos`)
-> **Atenção:** com o modo estrito ligado (testes ou `DB_PREVENT_LAZY_LOADING=true`), a lista de contratos pode lançar
-> `LazyLoadingViolationException` quando houver mais de um contrato na página. Em produção o modo fica desligado e a tela
-> apenas faz queries a mais.
-
-A coluna de signatários (`ContratosTable`) chama `Contrato::getStatusSignatarios()` → `getSignatarios()`, que carrega sob
-demanda `responsaveisFinanceiros`, `Pessoa::responsaveis` e `Matricula::turma` (e, com mais de um responsável por
-contrato, também `pessoa`/`users`). Correção proposta: eager loading na tabela, com o mesmo conjunto que
-`AssinafyService::enviarContrato` já carrega:
-`with(['matricula.turma.serie.curso.unidade.representantesLegais', 'matricula.pessoa.responsaveis.users', 'responsaveisFinanceiros.pessoa.users'])`.
-`getSignatarios()` também consulta `TipoVinculo` a cada chamada (N+1 por query, não por relação), que merece cache.
-Até lá, `AssinafyAssinaturaTest::lista_de_contratos_exibe_cada_etapa...` desliga o modo estrito de propósito.
+## Pendente
+- **Teste da lista de contratos ainda desliga o modo estrito.** O eager loading da `ContratosTable` já está feito, mas
+  `AssinafyAssinaturaTest::lista_de_contratos_exibe_cada_etapa_com_seu_proprio_rotulo` mantém
+  `Model::preventLazyLoading(false)`. Para a lista passar a ser protegida contra regressões, remova essa linha e rode o
+  teste (com dados de mais de um contrato, como ele já cria); se ainda houver violação, o nome da relação aparece na
+  exceção. A correção da tabela foi conferida só pela leitura do código, sem rodar esse teste.
+- **`TipoVinculo` por linha.** `Contrato::getSignatarios()` consulta `TipoVinculo` (Pai/Mãe) a cada chamada, ou seja, uma
+  query por contrato listado. Não é N+1 de relação (o modo estrito não acusa) e fica fora do eager loading; um cache
+  desses ids resolveria.
 
 ## Como proteger uma área com teste
 Como o modo estrito já é ligado em todos os testes, basta criar dados com **mais de um registro** (senão o N+1 não
