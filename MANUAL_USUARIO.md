@@ -24,6 +24,7 @@ Caso tenha esquecido sua senha:
 > Além disso, o sistema conta com salvaguardas avançadas de segurança cibernética:
 > - **Proteção contra Enumeração de Usuários (OWASP A07):** Respostas de login estritamente padronizadas que impedem atacantes de descobrir se um determinado e-mail existe ou seu status no sistema a partir de senhas incorretas.
 > - **Política de Senhas Fortes:** Criação e alteração de senhas exigem comprimento mínimo de 10 caracteres, mesclando letras maiúsculas, minúsculas, números e símbolos especiais, com verificação contra listas globais de senhas comprometidas (HaveIBeenPwned).
+> - **Rastreabilidade de Falhas de Autenticação (Marco Civil da Internet, Art. 15):** Toda tentativa de login incorreta é registrada automaticamente no canal de auditoria (`auth`) com endereço IP, navegador (User-Agent), e-mail tentado e marcação temporal, sem jamais registrar senhas submetidas (em estrita conformidade com a LGPD e normas OWASP/NIST).
 > Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
 
 ---

@@ -18,6 +18,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
@@ -221,5 +222,68 @@ class SecurityHardeningTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['password']);
+    }
+
+    public function test_tentativa_de_login_com_email_inexistente_gera_log_de_auditoria_sem_vazar_senha(): void
+    {
+        $emailInexistente = 'hacker.invasor@tentativa-externa.com';
+        $senhaTentada = 'SenhaSuperSecreta123!';
+
+        Livewire::test(CustomLogin::class)
+            ->fillForm([
+                'email' => $emailInexistente,
+                'password' => $senhaTentada,
+            ])
+            ->call('authenticate')
+            ->assertHasFormErrors(['email']);
+
+        // Deve existir log de auditoria no canal auth
+        $log = Activity::where('log_name', 'auth')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log, 'O evento de login falho deve gerar um registro de auditoria.');
+        $this->assertStringContainsString('não localizado', $log->description);
+        $this->assertStringContainsString($emailInexistente, $log->description);
+        $this->assertEquals($emailInexistente, $log->properties['email_tentado'] ?? null);
+
+        // Segurança e LGPD estrita: a senha digitada NUNCA pode ser armazenada nos logs!
+        $todasPropriedades = json_encode($log->properties);
+        $this->assertStringNotContainsString($senhaTentada, $todasPropriedades, 'A senha tentada jamais deve ser gravada no log de auditoria.');
+        $this->assertArrayNotHasKey('password', $log->properties->toArray(), 'A chave password não pode existir no log.');
+    }
+
+    public function test_tentativa_de_login_com_senha_errada_em_usuario_existente_gera_log_de_auditoria_vinculado(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'usuario.cadastrado@torre360.com.br',
+            'password' => Hash::make('Senha@Correta1234'),
+            'activated_at' => now(),
+        ]);
+
+        $senhaIncorreta = 'SenhaTotalmenteErrada999!';
+
+        Livewire::test(CustomLogin::class)
+            ->fillForm([
+                'email' => $user->email,
+                'password' => $senhaIncorreta,
+            ])
+            ->call('authenticate')
+            ->assertHasFormErrors(['email']);
+
+        $log = Activity::where('log_name', 'auth')
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log, 'Tentativa de login falho para usuário existente deve gerar log vinculado ao modelo User.');
+        $this->assertStringContainsString('usuário cadastrado', $log->description);
+        $this->assertStringContainsString($user->name, $log->description);
+        $this->assertEquals($user->email, $log->properties['email_tentado'] ?? null);
+
+        // Verifica que a senha não foi gravada
+        $todasPropriedades = json_encode($log->properties);
+        $this->assertStringNotContainsString($senhaIncorreta, $todasPropriedades);
     }
 }

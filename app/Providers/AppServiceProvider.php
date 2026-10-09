@@ -8,6 +8,7 @@ use App\Models\LeadScoreConfiguracao;
 use App\Models\RiscoEvasaoConfiguracao;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Verified;
@@ -87,6 +88,11 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(
             Logout::class,
+            LogAuthenticationActivity::class
+        );
+
+        Event::listen(
+            Failed::class,
             LogAuthenticationActivity::class
         );
 
