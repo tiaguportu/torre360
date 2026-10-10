@@ -510,3 +510,36 @@ O Lote D3 implementa a inteligência de identificação de duplicidades e uma ro
 - **Proteção e UI:** Ação "Mesclar Duplicados" disponível no cabeçalho de `EditInteressado` e na tabela de interessados (`InteressadosTable`), protegida pela permissão Shield `Update:Interessado`.
 
 Testes: `tests/Feature/LeadMesclagemDuplicadosTest.php`.
+
+## 17. Lote D4: SLA de 1ª Resposta em Horário Comercial
+
+O Lote D4 implementa o controle rigoroso de tempo de atendimento para novos leads, garantindo que o primeiro contato da escola com a família ocorra dentro de um prazo acordado, considerando estritamente os dias úteis e o expediente comercial da instituição.
+
+### 17.1 Configuração e Modelo de Negócio
+- **Configuração Global (`config/crm.php`):**
+  - `'sla.primeira_resposta_minutos_padrao'`: 120 minutos (2 horas comerciais).
+  - `'sla.horario_comercial'`: Início (`08:00`), Fim (`18:00`) e Dias Úteis (`[1, 2, 3, 4, 5]` = Segunda a Sexta).
+- **Customização por Lead (`interessado.sla_primeira_resposta_minutos`):** Permite configurar prazos específicos por lead (ex.: 30 minutos para leads quentes, 240 minutos para campanhas gerais). Quando nulo, adota o padrão institucional.
+- **Rastreabilidade de Notificação (`interessado.sla_estouro_notificado_em`):** Previne múltiplos disparos redundantes para o mesmo lead quando o SLA estoura.
+
+### 17.2 Motor de Cálculo de Horário Comercial (`LeadSlaService`)
+- **Algoritmo de Janela Útil:**
+  - Se um lead for cadastrado fora do expediente (à noite ou no final de semana), o cronômetro só passa a correr a partir do primeiro minuto útil do próximo expediente escolar.
+  - O cálculo do prazo salta automaticamente intervalos noturnos e finais de semana (ex.: lead criado na sexta-feira às 17h com SLA de 120 min vencerá na segunda-feira às 09h).
+- **Primeiro Contato Efetivo:** Considera atendido quando `data_primeiro_contato` estiver preenchida (registrada no primeiro atendimento humano da escola à família).
+- **Status do SLA:**
+  - `atendido`: Primeiro contato realizado dentro ou fora do prazo (registrando se atendeu no prazo ou com atraso).
+  - `dentro_do_prazo`: Lead aguardando primeiro contato e o prazo comercial ainda não expirou.
+  - `estourado`: Lead aguardando primeiro contato e a data limite de horário comercial já foi ultrapassada.
+
+### 17.3 Monitoramento Automático e Notificações (`VerificarSlaPrimeiraRespostaCommand`)
+- **Comando Artisan:** `php artisan crm:verificar-sla-estourado`.
+- **Agendamento Contínuo:** Configurado no `routes/console.php` para execução a cada 15 minutos (`everyFifteenMinutes()->withoutOverlapping(10)`).
+- **Alerta ao Consultor:** Dispara notificação no sino do painel Filament com ícone de relógio e link de acesso rápido ao lead diretamente para o consultor responsável pelo interessado.
+
+### 17.4 Interface Filament
+- **Formulário de Cadastro/Edição (`InteressadoForm`):** Campo "SLA de 1ª Resposta (minutos úteis)" com helper dinâmico que exibe o prazo padrão, status do atendimento e a data limite estimada em tempo real.
+- **Tabela de Interessados (`InteressadosTable`):** Coluna badge "SLA 1ª Resposta" destacando visualmente os status (verde para atendido no prazo, vermelho para estourado, azul para dentro do prazo) com tooltip detalhado da data limite comercial e tempo decorrido.
+- **Ajuda da Página (`EditInteressado`):** Atualização do modal contextual com as orientações completas sobre o funcionamento do SLA.
+
+Testes: `tests/Feature/CrmSlaPrimeiraRespostaTest.php`.

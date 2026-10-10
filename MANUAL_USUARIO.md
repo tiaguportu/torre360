@@ -124,7 +124,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos). Os contadores são guardados por até 1 minuto para a tela abrir rápido, mas são atualizados na hora quando um lead, um contato ou uma etapa do funil é alterado; se o score for recalculado em massa, o contador *Quentes* pode levar até 1 minuto para refletir.
    - **Busca:** O campo de busca encontra o interessado pelo **nome, e-mail, telefone** (com ou sem parênteses e traços: `11999887766` acha `(11) 99988-7766`) ou **CPF**. Números com menos de 3 dígitos só são procurados no nome e no e-mail.
    - **Colunas visíveis:** **Interessado** (nome e telefone logo abaixo), **Status / Consultor** (status em badge e o consultor abaixo), **Qualificação** (Score em badge e a temperatura do consultor abaixo), **Próximo contato** (data e "em/há X dias") e **Origem**. Leads com contato atrasado aparecem com uma faixa vermelha na linha.
-   - **Colunas opcionais (seletor de colunas):** Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
+   - **Colunas opcionais (seletor de colunas):** SLA 1ª Resposta (badge dinâmico com tooltip da data limite comercial e tempo decorrido), Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
    - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
 2. **Filtros Avançados:**
    - **Visitas à Escola:** Filtre rapidamente famílias que *"Já realizaram visita"*, *"Possuem visita agendada"* ou *"Ainda não visitaram"*.
@@ -137,7 +137,8 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Temperatura:** Filtre por classificação (Quente/Morno/Frio).
    - Os filtros ficam recolhidos acima da tabela e são lembrados durante a sessão.
 3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp*, *Enviar ao consultor* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
-   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo da escola com a família (a data do cadastro do lead não conta como contato).
+   - **Mesclar Duplicados:** Quando o sistema detecta telefones, CPFs, e-mails ou alunos semelhantes entre leads, permite abrir a conciliação assistida para unificar os dados no lead vencedor sem perda de histórico.
+   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo da escola com a família (cumprindo e finalizando o ciclo de SLA de 1ª resposta).
    - **Enviar ao consultor (ícone de compartilhar):** Abre o WhatsApp do consultor responsável pelo lead com a mensagem pronta: link direto para falar com o interessado (o consultor só clica), alunos, status, origem, temperatura, próximo contato, visita agendada e um resumo dos **3 últimos contatos** registrados. O ícone fica **verde** quando o consultor tem telefone cadastrado e **amarelo** quando não tem — nesse caso o WhatsApp abre com a mensagem pronta, sem destinatário, e você escolhe o contato. Só aparece para leads que têm consultor. Para o envio ir direto ao consultor, o telefone dele precisa estar preenchido no cadastro da **Pessoa** vinculada ao usuário.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que conclui o lead como matriculado do mesmo modo que o assistente (status, data de conversão, indicação e documentos). Se a escola ainda não tiver uma etapa de matrícula cadastrada em *Status de Interessado*, o sistema avisa em vez de deixar o lead sem status.
@@ -154,6 +155,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
 - **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator.
+- **SLA de 1ª Resposta (minutos úteis):** Prazo em minutos comerciais para realização do primeiro contato da escola com a família (padrão institucional: 120 minutos úteis). Conta exclusivamente os dias úteis e o horário de expediente cadastrado (ex: seg a sex, 08h às 18h). Um assistente reativo calcula e exibe em tempo real o status e a data limite comercial estimada.
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Redes Sociais:** Na aba *Dados do Negócio*, em **Redes Sociais**, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis.
@@ -566,6 +568,42 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 3. **Alimentação Contínua e Automática do Radar:**
    - Ao mover um card para uma etapa de perda no **Kanban** ou acionar a ação **Perdido** na **Tabela de Interessados**, o formulário disponibiliza a seleção da **Escola Concorrente Escolhida** e o **Fator Decisivo da Família**.
    - As informações são registradas estruturadamente no banco de dados e auditadas no Histórico de Contatos, alimentando automaticamente os rankings e gráficos do Radar de Perdas em tempo real para tomada de decisão da direção.
+
+### 3.23 Relatórios Gerenciais, Previsão de Receita e Alertas de Detratores NPS (Lote D2)
+1. **Página Executiva de Relatórios:**
+   - Acesse **CRM / Comercial → Relatórios e Indicadores**.
+   - **Filtros Temporais Reativos:** Analise métricas pelo Mês Atual, Últimos 30 Dias, Últimos 90 Dias, Ano Atual ou período customizado.
+   - **Análise de Perdas e Concorrência:** Tabela com visualização dos motivos base e coluna dedicada aos **Colégios Concorrentes**, revelando as instituições mais citadas pelas famílias desistentes.
+   - **Painel de Consultores:** Acompanhe o tempo médio de primeira resposta (SLA), volume de leads recebidos, atendimentos manuais, visitas realizadas e conversão.
+   - **Previsão de Receita Ponderada:** Cálculo financeiro automático sobre a carteira ativa de leads baseado no valor estimado do lead e probabilidade de conversão da etapa, confrontado com a taxa histórica real apurada pelo funil.
+2. **Alertas Instantâneos de Detratores em Visitas:**
+   - Quando uma família avalia a visita com nota NPS inferior a 7, uma notificação de alta prioridade com ícone de alerta é disparada instantaneamente no painel para o consultor e para a diretoria, viabilizando contato de acolhimento antes que o lead esfrie.
+
+### 3.24 Detecção de Duplicados e Mesclagem Segura de Leads (Lote D3)
+1. **Detecção Inteligente Multicritério:**
+   - O sistema monitora ativamente duplicidades comparando telefone normalizado (últimos 10/11 dígitos), CPF, e-mail e dependentes com o mesmo nome e data de nascimento.
+   - Quando um lead possui possíveis duplicados, um card de alerta em destaque aparece no topo da ficha do interessado.
+2. **Mesclagem Assistida em 1 Clique:**
+   - Ação **Mesclar Duplicados** disponível no cabeçalho de edição do lead e na tabela de interessados.
+   - Permite escolher qual cadastro será o "Lead Principal" (vencedor).
+   - O processo unifica dependentes repetidos, transfere histórico de contatos, visitas, documentos anexados, transições do funil e rascunhos de pré-matrícula com garantia atômica (`DB::transaction`).
+
+### 3.25 SLA de 1ª Resposta em Horário Comercial (Lote D4)
+1. **Conceito de Horário Útil:**
+   - O cronômetro de primeiro contato considera estritamente os dias úteis e a faixa de horário de expediente da escola (padrão: segunda a sexta-feira, das 08h às 18h).
+   - Leads recebidos à noite, em feriados ou durante fins de semana têm o cálculo iniciado apenas no primeiro minuto útil do dia útil seguinte.
+2. **Prazo por Lead e Institucional:**
+   - Prazo padrão institucional: **120 minutos úteis** (configurável em `config/crm.php`).
+   - Cada lead pode receber um prazo personalizado na ficha cadastral (campo *SLA de 1ª Resposta em minutos úteis*).
+3. **Indicador Visual na Tabela:**
+   - A coluna **SLA 1ª Resposta** exibe badges dinâmicos:
+     - 🟢 **Atendido no Prazo:** Primeiro contato efetuado antes do estouro comercial.
+     - 🔵 **Dentro do Prazo:** Lead aguardando retorno com tempo útil restante.
+     - 🔴 **SLA Estourado:** Prazo limite excedido sem registro de atendimento humano.
+   - O tooltip da coluna detalha a data/hora limite calculada e o tempo decorrido.
+4. **Monitoramento Automatizado e Alertas:**
+   - Uma rotina agendada no servidor (`crm:verificar-sla-estourado`) roda a cada 15 minutos identificando estouros de SLA.
+   - Assim que um lead estoura o tempo limite, o **consultor responsável** recebe uma notificação no sino do painel com atalho direto para falar com a família.
 
 ---
 

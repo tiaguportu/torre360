@@ -13,6 +13,7 @@ use App\Notifications\AcompanhamentoInteressadoNotification;
 use App\Services\ConsultorWhatsappService;
 use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadScoreService;
+use App\Services\LeadSlaService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -277,6 +278,21 @@ class InteressadoForm
                                 DateTimePicker::make('data_proximo_contato')
                                     ->label('Próximo Contato')
                                     ->native(false),
+
+                                TextInput::make('sla_primeira_resposta_minutos')
+                                    ->label('SLA 1ª Resposta (minutos úteis)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->placeholder('Padrão: 120 min úteis')
+                                    ->helperText(function (?Interessado $record): string {
+                                        if (! $record || ! $record->exists) {
+                                            return 'Prazo em minutos comerciais (segunda a sexta, 08h-18h) para a 1ª resposta. Em branco usa o padrão da escola.';
+                                        }
+
+                                        $resumo = app(LeadSlaService::class)->resumoSla($record);
+
+                                        return "{$resumo['texto']} • Limite comercial: {$resumo['limite']->format('d/m/Y H:i')}.";
+                                    }),
 
                                 Select::make('motivo_perda')
                                     ->label('Motivo da Perda')

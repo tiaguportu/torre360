@@ -37,3 +37,4 @@ Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00
 Schedule::command('biblioteca:atualizar-emprestimos-atrasados')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('biblioteca:limpar-capas-pendentes')->dailyAt('03:30')->withoutOverlapping();
 Schedule::command('academico:recalcular-risco-evasao')->dailyAt('06:30')->withoutOverlapping();
+Schedule::command('crm:verificar-sla-estourado')->everyFifteenMinutes()->withoutOverlapping(10);
