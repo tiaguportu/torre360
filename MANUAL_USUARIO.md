@@ -37,6 +37,7 @@ Caso deseje alterar sua senha estando logado:
 > - **Sanitização Defensiva contra Stored XSS (OWASP A03):** Templates dinâmicos de contratos e documentos oficiais com TinyMCE passam pelo `HtmlSanitizer`, que extirpa scripts maliciosos, iframes e manipuladores de eventos (`onerror`, `onload`), mantendo estilos e diagramações visuais.
 > - **Quarentena e Proteção de Arquivos Vetoriais SVG (OWASP A03/A04):** Arquivos vetoriais SVG e XML enviados por upload são servidos obrigatoriamente para download (`Content-Disposition: attachment`) sob política estrita de isolamento (`Content-Security-Policy: default-src 'none'; sandbox`), impedindo execuções arbitrárias de código no navegador.
 > - **Neutralização contra Injeção de Fórmulas em Exportações CSV (OWASP A03 / CWE-1236):** Toda exportação de planilhas CSV (respostas de questionários pedagógicos, acervo e cadastros) passa pelo sanitizador defensivo `CsvSanitizer`, que neutraliza automaticamente caracteres de disparo de fórmulas e comandos DDE (`=`, `+`, `-`, `@`, `\t`, `\r`, `|`, `%`) prefixando valores textuais sensíveis com apóstrofo (`'`), impedindo que softwares como Microsoft Excel, LibreOffice Calc e Google Sheets executem macros maliciosas ou vazem dados da estação de trabalho da equipe.
+> - **Proteção contra Stored XSS e IDOR na Comparação de Questionários (OWASP A01/A03 / CWE-79 / CWE-639):** A visualização em tela e o relatório PDF de comparação de respostas de múltiplos questionários aplicam o escopo estrito de autorização do Shield e de ownership do usuário (`QuestionarioRespostaResource::getEloquentQuery()`), impedindo visualização indevida de questionários de terceiros (IDOR/BOLA). Além disso, todos os enunciados e conteúdos dissertativos digitados pelos respondentes são rigorosamente sanitizados e escapados com Blade e `sanitizeHtml()`, neutralizando qualquer tentativa de injeção de scripts maliciosos (Stored XSS).
 > Caso você não tenha acesso, solicite ao administrador que crie sua conta e associe o papel (role) correto ao seu perfil.
 
 ---
@@ -1866,6 +1867,13 @@ Como o sistema utiliza o framework Laravel, o processamento dos templates de con
     - `{{!! $assinaturaMae !!}}`: Insere a linha de assinatura específica da Mãe do aluno (configuração: `template_contrato_assinatura_mae`).
     - `{{!! $assinaturaResponsavelFinanceiro !!}}`: Insere a linha de assinatura específica do Responsável Financeiro (configuração: `template_contrato_assinatura_responsavel_financeiro`).
     - `{{!! $assinaturaResponsavelLegalUnidade !!}}`: Insere a linha de assinatura do Representante Legal da Unidade de Ensino (configuração: `template_contrato_assinatura_responsavel_legal_unidade`).
+
+    > [!TIP]
+    > **Variáveis Pré-computadas e Segurança Blade (SSTI):** Por motivos de segurança e integridade (mitigação contra Server-Side Template Injection / SSTI via `BladeTemplateSanitizer`), os templates de macros não devem conter blocos `@php ... @endphp`. O sistema injeta automaticamente no escopo das macros e templates as variáveis necessárias:
+    > - `$pai` e `$mae`: Objetos do modelo `Pessoa` correspondentes aos vínculos de Pai e Mãe do aluno.
+    > - `$paiId` e `$maeId`: IDs numéricos dos parentes (ou `null` se ausentes).
+    > - `$paiResponsavel` e `$maeResponsavel`: Booleans indicando se o respectivo parente é signatário financeiro no contrato.
+    > - `$isResponsavelFinanceiro`: Boolean contextual já calculado para a assinatura correspondente (se o Pai ou a Mãe é responsável financeiro).
 
 ### 23.2 Gestão de Contratos e Assinatura Digital (`/admin/contratos`)
 Acesse **Financeiro → Contratos**.

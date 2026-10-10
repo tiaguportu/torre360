@@ -42,34 +42,52 @@ HTML;
 @endforeach
 HTML;
 
-        // Atualiza ou insere as configurações de assinaturas de pais
-        DB::table('configuracao')->updateOrInsert(
-            ['campo' => 'template_contrato_assinatura_pai'],
-            [
-                'valor' => $paiHtml,
-                'grupo' => 'Contrato',
-                'ordem' => 0,
-            ]
-        );
+        $compiladoHtml = <<<'HTML'
+{{-- 1. Assinatura do Pai --}}
+@if($pai)
+<div style="margin-top: 50px; margin-bottom: 30px;">
+_______________________________________________<br>
+CONTRATANTE-ADERENTE: {{ $pai->nome }} - Pai{{ $paiResponsavel ? ' e Responsável Financeiro' : '' }}<br><br>
+CPF nº {{ $pai->cpf ?? '___________________________' }}
+</div>
+@endif
 
-        DB::table('configuracao')->updateOrInsert(
-            ['campo' => 'template_contrato_assinatura_mae'],
-            [
-                'valor' => $maeHtml,
-                'grupo' => 'Contrato',
-                'ordem' => 0,
-            ]
-        );
+{{-- 2. Assinatura da Mãe --}}
+@if($mae)
+<div style="margin-top: 50px; margin-bottom: 30px;">
+_______________________________________________<br>
+CONTRATANTE-ADERENTE: {{ $mae->nome }} - Mãe{{ $maeResponsavel ? ' e Responsável Financeira' : '' }}<br><br>
+CPF nº {{ $mae->cpf ?? '___________________________' }}
+</div>
+@endif
 
-        // Insere a nova configuração para responsável financeiro
-        DB::table('configuracao')->updateOrInsert(
-            ['campo' => 'template_contrato_assinatura_responsavel_financeiro'],
-            [
-                'valor' => $respFinanceiroHtml,
-                'grupo' => 'Contrato',
-                'ordem' => 0,
-            ]
-        );
+{{-- 3. Assinatura de Terceiros que sejam Responsáveis Financeiros --}}
+@foreach($responsaveis as $rf)
+    @if($rf->pessoa && $rf->pessoa_id !== $paiId && $rf->pessoa_id !== $maeId)
+    <div style="margin-top: 50px; margin-bottom: 30px;">
+    _______________________________________________<br>
+    CONTRATANTE-ADERENTE: {{ $rf->pessoa->nome }} - Responsável Financeiro<br><br>
+    CPF nº {{ $rf->pessoa->cpf ?? '___________________________' }}
+    </div>
+    @endif
+@endforeach
+HTML;
+
+        DB::table('configuracao')
+            ->where('campo', 'template_contrato_assinatura_pai')
+            ->update(['valor' => $paiHtml]);
+
+        DB::table('configuracao')
+            ->where('campo', 'template_contrato_assinatura_mae')
+            ->update(['valor' => $maeHtml]);
+
+        DB::table('configuracao')
+            ->where('campo', 'template_contrato_assinatura_responsavel_financeiro')
+            ->update(['valor' => $respFinanceiroHtml]);
+
+        DB::table('configuracao')
+            ->where('campo', 'template_contrato_assinaturas_responsaveis')
+            ->update(['valor' => $compiladoHtml]);
     }
 
     /**
@@ -77,56 +95,6 @@ HTML;
      */
     public function down(): void
     {
-        $paiHtmlOriginal = <<<'HTML'
-@php
-    $pai = null;
-    if ($aluno) {
-        $pai = $aluno->responsaveis->first(function ($resp) {
-            return $resp->pivot && $resp->pivot->tipo_vinculo_id == 1; // 1 é Pai
-        });
-    }
-@endphp
-
-@if($pai)
-<div style="margin-top: 50px; margin-bottom: 30px;">
-_______________________________________________<br>
-CONTRATANTE-ADERENTE: {{ $pai->nome }} - Pai<br><br>
-CPF nº {{ $pai->cpf ?? '___________________________' }}
-</div>
-@endif
-HTML;
-
-        $maeHtmlOriginal = <<<'HTML'
-@php
-    $mae = null;
-    if ($aluno) {
-        $mae = $aluno->responsaveis->first(function ($resp) {
-            return $resp->pivot && $resp->pivot->tipo_vinculo_id == 2; // 2 é Mãe
-        });
-    }
-@endphp
-
-@if($mae)
-<div style="margin-top: 50px; margin-bottom: 30px;">
-_______________________________________________<br>
-CONTRATANTE-ADERENTE: {{ $mae->nome }} - Mãe<br><br>
-CPF nº {{ $mae->cpf ?? '___________________________' }}
-</div>
-@endif
-HTML;
-
-        // Restaura as configurações originais
-        DB::table('configuracao')
-            ->where('campo', 'template_contrato_assinatura_pai')
-            ->update(['valor' => $paiHtmlOriginal]);
-
-        DB::table('configuracao')
-            ->where('campo', 'template_contrato_assinatura_mae')
-            ->update(['valor' => $maeHtmlOriginal]);
-
-        // Remove a nova configuração
-        DB::table('configuracao')
-            ->where('campo', 'template_contrato_assinatura_responsavel_financeiro')
-            ->delete();
+        // Reversão não é necessária para manter os templates limpos
     }
 };

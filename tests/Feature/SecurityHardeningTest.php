@@ -17,6 +17,8 @@ use App\Models\Pessoa;
 use App\Models\Questionario;
 use App\Models\QuestionarioBloco;
 use App\Models\QuestionarioPergunta;
+use App\Models\QuestionarioPerguntaResposta;
+use App\Models\QuestionarioResposta;
 use App\Models\SacolaLeitura;
 use App\Models\TemplateCrachaV3;
 use App\Models\Turma;
@@ -930,5 +932,108 @@ class SecurityHardeningTest extends TestCase
         // A 31ª requisição no mesmo minuto deve sofrer rate limit HTTP 429
         $responseBloqueada = $this->get(route('contratos.visualizar', $contrato));
         $responseBloqueada->assertStatus(429);
+    }
+
+    public function test_comparacao_questionarios_bloqueia_idor_quando_usuario_tenta_acessar_respostas_de_terceiros(): void
+    {
+        $userA = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $userB = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Pesquisa de Clima Escolar',
+            'status' => 'publicado',
+            'tipo_publico' => 'geral',
+        ]);
+
+        $respostaA = QuestionarioResposta::create([
+            'questionario_id' => $questionario->id,
+            'user_id' => $userA->id,
+            'inicio_preenchimento' => now(),
+            'fim_preenchimento' => now(),
+        ]);
+
+        $respostaB = QuestionarioResposta::create([
+            'questionario_id' => $questionario->id,
+            'user_id' => $userB->id,
+            'inicio_preenchimento' => now(),
+            'fim_preenchimento' => now(),
+        ]);
+
+        $this->actingAs($userA);
+
+        // Tentativa de acessar PDF com respostas de terceiros (IDOR) deve retornar 403 Forbidden
+        $response = $this->get(route('questionario-respostas.comparar.pdf', [
+            'ids' => [$respostaA->id, $respostaB->id],
+        ]));
+
+        $response->assertStatus(403);
+    }
+
+    public function test_comparacao_questionarios_escapa_respostas_e_neutraliza_stored_xss(): void
+    {
+        $user = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+
+        $questionario = Questionario::create([
+            'titulo' => 'Pesquisa de Opinião',
+            'status' => 'publicado',
+            'tipo_publico' => 'geral',
+        ]);
+
+        $bloco = QuestionarioBloco::create([
+            'questionario_id' => $questionario->id,
+            'titulo' => 'Bloco 1',
+            'ordem' => 1,
+        ]);
+
+        $pergunta = QuestionarioPergunta::create([
+            'questionario_bloco_id' => $bloco->id,
+            'enunciado' => 'Comentários sobre a estrutura <script>alert("pergunta_xss")</script>',
+            'tipo' => 'texto_longo',
+            'ordem' => 1,
+        ]);
+
+        $resposta = QuestionarioResposta::create([
+            'questionario_id' => $questionario->id,
+            'user_id' => $user->id,
+            'inicio_preenchimento' => now(),
+            'fim_preenchimento' => now(),
+        ]);
+
+        $payloadXss = '<script>alert("xss_armazenado")</script><img src="x" onerror="stealCookies()">';
+
+        QuestionarioPerguntaResposta::create([
+            'questionario_resposta_id' => $resposta->id,
+            'questionario_pergunta_id' => $pergunta->id,
+            'resposta_texto' => $payloadXss,
+        ]);
+
+        $user->assignRole(Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']));
+        $this->actingAs($user);
+
+        // 1. Testa renderização da tela web no painel administrativo
+        $response = $this->get(route('filament.admin.resources.questionario-respostas.comparar', ['ids' => [$resposta->id]]));
+        $response->assertOk();
+        $response->assertDontSee('<script>alert("xss_armazenado")</script>', false);
+        $response->assertDontSee('<img src="x" onerror="stealCookies()">', false);
+        $response->assertSee('&lt;script&gt;alert(&quot;xss_armazenado&quot;)&lt;/script&gt;', false);
+
+        // 2. Testa renderização da view PDF
+        $records = QuestionarioResposta::where('id', $resposta->id)->get();
+        $renderedPdf = view('pdfs.comparacao-questionarios', [
+            'records' => $records,
+        ])->render();
+
+        $this->assertStringNotContainsString('<script>alert("xss_armazenado")</script>', $renderedPdf);
+        $this->assertStringNotContainsString('<img src="x" onerror="stealCookies()">', $renderedPdf);
+        $this->assertStringContainsString('&lt;script&gt;alert(&quot;xss_armazenado&quot;)&lt;/script&gt;', $renderedPdf);
     }
 }

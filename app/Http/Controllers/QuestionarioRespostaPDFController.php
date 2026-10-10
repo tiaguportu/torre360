@@ -16,14 +16,19 @@ class QuestionarioRespostaPDFController extends Controller
             abort(404, 'Nenhum questionário selecionado.');
         }
 
+        $idsLimpos = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($idsLimpos)) {
+            abort(404, 'Nenhum questionário selecionado.');
+        }
+
         // Carrega os registros que o usuário tem permissão para visualizar
         $records = QuestionarioRespostaResource::getEloquentQuery()
-            ->whereIn('id', $ids)
+            ->whereIn('id', $idsLimpos)
             ->with(['questionario', 'user', 'perguntaRespostas.pergunta.bloco'])
             ->get();
 
-        if ($records->isEmpty()) {
-            abort(404, 'Nenhum questionário selecionado ou acesso negado.');
+        if ($records->count() !== count($idsLimpos)) {
+            abort(403, 'Acesso não autorizado a um ou mais questionários selecionados.');
         }
 
         $pdf = Pdf::loadView('pdfs.comparacao-questionarios', [

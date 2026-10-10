@@ -11,39 +11,6 @@ return new class extends Migration
     public function up(): void
     {
         $compiladoHtml = <<<'HTML'
-@php
-    $pai = null;
-    $mae = null;
-    $paiId = null;
-    $maeId = null;
-    $paiResponsavel = false;
-    $maeResponsavel = false;
-
-    if ($aluno) {
-        // Encontra Pai
-        $pai = $aluno->responsaveis->first(function ($resp) {
-            return $resp->pivot && $resp->pivot->tipo_vinculo_id == 1;
-        });
-        if ($pai) {
-            $paiId = $pai->id;
-            $paiResponsavel = $responsaveis->contains(function ($rf) use ($pai) {
-                return $rf->pessoa_id === $pai->id;
-            });
-        }
-
-        // Encontra Mãe
-        $mae = $aluno->responsaveis->first(function ($resp) {
-            return $resp->pivot && $resp->pivot->tipo_vinculo_id == 2;
-        });
-        if ($mae) {
-            $maeId = $mae->id;
-            $maeResponsavel = $responsaveis->contains(function ($rf) use ($mae) {
-                return $rf->pessoa_id === $mae->id;
-            });
-        }
-    }
-@endphp
-
 {{-- 1. Assinatura do Pai --}}
 @if($pai)
 <div style="margin-top: 50px; margin-bottom: 30px;">

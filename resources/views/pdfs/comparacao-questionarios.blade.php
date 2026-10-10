@@ -244,7 +244,7 @@
             @foreach ($perguntasRow as $key => $valores)
                 <tr>
                     <td>
-                        <div class="prose">{!! $perguntasLabels[$key] !!}</div>
+                        <div class="prose">{!! \Illuminate\Support\Str::sanitizeHtml($perguntasLabels[$key]) !!}</div>
                         @if(!str_starts_with($key, 'pergunta_'))
                             <div style="margin-top: 3px; font-size: 8px; color: #777; font-family: monospace;">ID: {{ $key }}</div>
                         @endif
@@ -255,7 +255,7 @@
                                 @if(empty($valores[$resposta->id]))
                                     <span class="text-muted">(Vazio)</span>
                                 @else
-                                    <div class="prose">{!! $valores[$resposta->id] !!}</div>
+                                    <div class="prose">{!! nl2br(e($valores[$resposta->id])) !!}</div>
                                 @endif
                             @else
                                 <span class="text-muted">-</span>

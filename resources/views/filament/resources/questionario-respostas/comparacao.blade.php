@@ -104,7 +104,7 @@
                         @foreach ($perguntasRow as $key => $valores)
                             <tr class="fi-ta-row transition duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td class="fi-ta-cell px-3 py-4 sm:first-of-type:ps-6 sm:last-of-type:pe-6 align-top bg-gray-50/50 dark:bg-white/5" style="width: 60%; max-width: 60%; word-break: break-word; white-space: normal;">
-                                    <div class="prose dark:prose-invert max-w-full break-words text-sm" style="word-break: break-word; white-space: normal;">{!! $perguntasLabels[$key] !!}</div>
+                                    <div class="prose dark:prose-invert max-w-full break-words text-sm" style="word-break: break-word; white-space: normal;">{!! \Illuminate\Support\Str::sanitizeHtml($perguntasLabels[$key]) !!}</div>
                                     @if(!str_starts_with($key, 'pergunta_'))
                                         <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono">ID: {{ $key }}</div>
                                     @endif
@@ -115,7 +115,7 @@
                                             @if(empty($valores[$resposta->id]))
                                                 (Vazio)
                                             @else
-                                                <div class="prose dark:prose-invert max-w-full break-words text-sm text-gray-600 dark:text-gray-400" style="word-break: break-word; white-space: normal;">{!! $valores[$resposta->id] !!}</div>
+                                                <div class="prose dark:prose-invert max-w-full break-words text-sm text-gray-600 dark:text-gray-400" style="word-break: break-word; white-space: pre-line;">{{ $valores[$resposta->id] }}</div>
                                             @endif
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">-</span>

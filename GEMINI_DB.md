@@ -43,6 +43,11 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Papéis Padrão:** `super_admin`, `admin`, `secretaria`, `professor`, `coordenador`, `responsavel`, `aluno`.
 - **Configuração:** Gerenciado via `config/filament-shield.php` e plugin `FilamentShieldPlugin`.
 
+### `configuracao`
+- **Representa:** Parâmetros globais do sistema, modelos de textos, macros dinâmicas e integrações.
+- **Principais Campos:** `campo` (string chave única), `valor` (longtext/text nullable), `grupo` (string), `ordem` (integer).
+- **Templates e Macros de Contrato:** As chaves de macros dinâmicas (`template_contrato_assinatura_pai`, `template_contrato_assinatura_mae`, `template_contrato_assinatura_responsavel_financeiro`, `template_contrato_assinaturas_responsaveis`, etc.) armazenam fragmentos Blade declarativos e estritos, sem blocos `@php ... @endphp`. Isso atende à política defensiva do `BladeTemplateSanitizer` contra Server-Side Template Injection (SSTI / VULN-18), com as variáveis contextuais de parentesco e responsabilidade financeira (`$pai`, `$mae`, `$paiId`, `$maeId`, `$paiResponsavel`, `$maeResponsavel`, `$isResponsavelFinanceiro`) sendo injetadas de forma segura e pré-computada pelo `ContractTemplateService`.
+
 ---
 
 ## 2. Pessoas e Geografia

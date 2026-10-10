@@ -51,6 +51,8 @@ class ContractTemplateService
         $assinaturaResponsavelFinanceiro = $this->generateAssinaturaResponsavelFinanceiro($contrato, $aluno, $tiposVinculo);
         $assinaturaResponsavelLegalUnidade = $this->generateAssinaturasUnidade($unidade);
 
+        $parentesco = $this->resolveParentescoData($contrato, $aluno, $tiposVinculo);
+
         try {
             $renderedHtml = Blade::render($html, [
                 'contrato' => $contrato,
@@ -58,6 +60,13 @@ class ContractTemplateService
                 'aluno' => $aluno,
                 'responsaveis' => $contrato->responsaveisFinanceiros,
                 'faturas' => $contrato->faturas,
+                'pai' => $parentesco['pai'],
+                'mae' => $parentesco['mae'],
+                'paiId' => $parentesco['paiId'],
+                'maeId' => $parentesco['maeId'],
+                'paiResponsavel' => $parentesco['paiResponsavel'],
+                'maeResponsavel' => $parentesco['maeResponsavel'],
+                'isResponsavelFinanceiro' => $parentesco['paiResponsavel'] || $parentesco['maeResponsavel'],
                 // Variáveis do Blade para templates antigos
                 'tabelaFaturas' => $tabelaFaturas,
                 'tabelaAluno' => $tabelaAluno,
@@ -154,14 +163,10 @@ class ContractTemplateService
                     // Sanitiza e renderiza o template da macro customizada usando Blade
                     $macroTemplate = BladeTemplateSanitizer::clean((string) $config->valor);
 
-                    return Blade::render($macroTemplate, [
-                        'contrato' => $contrato,
-                        'matricula' => $contrato->matricula,
-                        'aluno' => $aluno,
-                        'unidade' => $unidade,
-                        'responsaveis' => $contrato->responsaveisFinanceiros,
-                        'faturas' => $contrato->faturas,
-                    ]);
+                    return Blade::render(
+                        $macroTemplate,
+                        $this->buildMacroContext($contrato, $aluno, $unidade, $tiposVinculo, $variableNameSnake)
+                    );
                 } catch (\Throwable $e) {
                     logger()->error("Erro ao renderizar macro customizada {$configKey}: ".$e->getMessage());
 
@@ -545,5 +550,90 @@ class ContractTemplateService
 
             return $matches[0];
         }, $html);
+    }
+
+    /**
+     * Resolve os dados de parentesco e responsabilidade financeira para interpolação nos templates.
+     *
+     * @return array{
+     *     pai: ?Pessoa,
+     *     mae: ?Pessoa,
+     *     paiId: ?int,
+     *     maeId: ?int,
+     *     paiResponsavel: bool,
+     *     maeResponsavel: bool
+     * }
+     */
+    protected function resolveParentescoData(Contrato $contrato, ?Pessoa $aluno, Collection $tiposVinculo): array
+    {
+        $pai = null;
+        $mae = null;
+
+        if ($aluno && $aluno->responsaveis) {
+            $pai = $aluno->responsaveis->first(function ($resp) use ($tiposVinculo) {
+                $nome = $tiposVinculo->get($resp->pivot?->tipo_vinculo_id);
+
+                return $resp->pivot?->tipo_vinculo_id == 1 || strcasecmp((string) $nome, 'Pai') === 0;
+            });
+
+            $mae = $aluno->responsaveis->first(function ($resp) use ($tiposVinculo) {
+                $nome = $tiposVinculo->get($resp->pivot?->tipo_vinculo_id);
+
+                return $resp->pivot?->tipo_vinculo_id == 2 || strcasecmp((string) $nome, 'Mãe') === 0 || strcasecmp((string) $nome, 'Mae') === 0;
+            });
+        }
+
+        $paiId = $pai?->id;
+        $maeId = $mae?->id;
+
+        $responsaveisFinanceiros = $contrato->responsaveisFinanceiros;
+        $paiResponsavel = $pai ? $responsaveisFinanceiros->contains('pessoa_id', $pai->id) : false;
+        $maeResponsavel = $mae ? $responsaveisFinanceiros->contains('pessoa_id', $mae->id) : false;
+
+        return [
+            'pai' => $pai,
+            'mae' => $mae,
+            'paiId' => $paiId,
+            'maeId' => $maeId,
+            'paiResponsavel' => $paiResponsavel,
+            'maeResponsavel' => $maeResponsavel,
+        ];
+    }
+
+    /**
+     * Monta o contexto seguro de variáveis passadas para a renderização Blade de macros.
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildMacroContext(
+        Contrato $contrato,
+        ?Pessoa $aluno,
+        ?Unidade $unidade,
+        Collection $tiposVinculo,
+        string $variableNameSnake
+    ): array {
+        $parentesco = $this->resolveParentescoData($contrato, $aluno, $tiposVinculo);
+
+        $isResponsavelFinanceiro = match ($variableNameSnake) {
+            'assinatura_pai' => $parentesco['paiResponsavel'],
+            'assinatura_mae' => $parentesco['maeResponsavel'],
+            default => $parentesco['paiResponsavel'] || $parentesco['maeResponsavel'],
+        };
+
+        return [
+            'contrato' => $contrato,
+            'matricula' => $contrato->matricula,
+            'aluno' => $aluno,
+            'unidade' => $unidade,
+            'responsaveis' => $contrato->responsaveisFinanceiros,
+            'faturas' => $contrato->faturas,
+            'pai' => $parentesco['pai'],
+            'mae' => $parentesco['mae'],
+            'paiId' => $parentesco['paiId'],
+            'maeId' => $parentesco['maeId'],
+            'paiResponsavel' => $parentesco['paiResponsavel'],
+            'maeResponsavel' => $parentesco['maeResponsavel'],
+            'isResponsavelFinanceiro' => $isResponsavelFinanceiro,
+        ];
     }
 }

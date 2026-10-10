@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\Contratos\Pages\ListContratos;
 use App\Filament\Resources\Contratos\Tables\ContratosTable;
 use App\Filament\Resources\Matriculas\Pages\ListMatriculas;
+use App\Models\Configuracao;
 use App\Models\Contrato;
 use App\Models\Curso;
 use App\Models\InstituicaoEnsino;
@@ -734,5 +735,55 @@ class ContratoTest extends TestCase
         $contrato->refresh();
 
         $this->assertEquals('signed', $contrato->assinafy_request_log['signers_status']['pai@example.com']['status']);
+    }
+
+    public function test_macros_com_bloco_php_legado_sao_sanitizadas_sem_erro_de_variavel_indefinida(): void
+    {
+        TipoVinculo::updateOrCreate(['id' => 1], ['nome' => 'Pai']);
+
+        $aluno = Pessoa::factory()->create([
+            'nome' => 'Carlinhos Brown',
+        ]);
+        $pai = Pessoa::factory()->create([
+            'nome' => 'Pai do Carlinhos',
+            'cpf' => '999.888.777-66',
+        ]);
+        $aluno->responsaveis()->attach($pai->id, ['tipo_vinculo_id' => 1]);
+
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $contrato = Contrato::create([
+            'valor_total' => 5000.00,
+            'matricula_id' => $matricula->id,
+        ]);
+        ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $pai->id,
+        ]);
+
+        // Simula uma configuração contendo bloco @php legado
+        Configuracao::updateOrCreate(
+            ['campo' => 'template_contrato_assinatura_pai'],
+            [
+                'valor' => <<<'HTML'
+@php
+    // Tentativa de manipulação de variáveis via PHP no template legado
+    $varInexistente = 123;
+@endphp
+@if($pai)
+<div>Assinatura Pai: {{ $pai->nome }} - {{ $isResponsavelFinanceiro ? 'Financeiro' : 'Nao Financeiro' }}</div>
+@endif
+HTML,
+                'grupo' => 'Contrato',
+                'ordem' => 0,
+            ]
+        );
+
+        $service = new ContractTemplateService;
+        $htmlResult = $service->process($contrato, '<div>{{!! assinatura_pai !!}}</div>');
+
+        // Garante que não há mensagem de erro nem caixa vermelha de erro
+        $this->assertStringNotContainsString('Erro ao renderizar a macro customizada', $htmlResult);
+        $this->assertStringNotContainsString('Undefined variable', $htmlResult);
+        $this->assertStringContainsString('Assinatura Pai: Pai do Carlinhos - Financeiro', $htmlResult);
     }
 }

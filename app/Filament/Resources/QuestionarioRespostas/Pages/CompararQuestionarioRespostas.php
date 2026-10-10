@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\QuestionarioRespostas\Pages;
 
 use App\Filament\Resources\QuestionarioRespostas\QuestionarioRespostaResource;
-use App\Models\QuestionarioResposta;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\Page;
@@ -18,22 +17,38 @@ class CompararQuestionarioRespostas extends Page
 
     public Collection $records;
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        $user = auth()->user();
+
+        return $user && ($user->can('ViewAny:QuestionarioResposta') || $user->hasRole('super_admin'));
+    }
+
     public function getMaxContentWidth(): Width|string|null
     {
         return Width::Full;
     }
 
-    public function mount()
+    public function mount(): void
     {
         $ids = request()->query('ids');
         if (empty($ids) || ! is_array($ids)) {
             abort(404, 'Nenhum questionário selecionado.');
         }
 
-        $this->records = QuestionarioResposta::whereIn('id', $ids)->get();
-
-        if ($this->records->isEmpty()) {
+        $idsLimpos = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($idsLimpos)) {
             abort(404, 'Nenhum questionário selecionado.');
+        }
+
+        // Carrega estritamente através do escopo autorizado do Resource (Filament Shield + ownership)
+        $this->records = QuestionarioRespostaResource::getEloquentQuery()
+            ->whereIn('id', $idsLimpos)
+            ->get();
+
+        // Se algum dos questionários solicitados não pertencer ao escopo autorizado do usuário, bloqueia acesso (anti-IDOR)
+        if ($this->records->count() !== count($idsLimpos)) {
+            abort(403, 'Acesso não autorizado a um ou mais questionários selecionados.');
         }
     }
 
