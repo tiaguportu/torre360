@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\TemplateCrachaEntidade;
 use App\Filament\Pages\Auth\ChangePassword;
 use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Portal\Pages\CentralAtendimento;
@@ -16,6 +17,7 @@ use App\Models\Questionario;
 use App\Models\QuestionarioBloco;
 use App\Models\QuestionarioPergunta;
 use App\Models\SacolaLeitura;
+use App\Models\TemplateCrachaV3;
 use App\Models\Turma;
 use App\Models\User;
 use App\Services\QuestionarioService;
@@ -30,6 +32,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
@@ -628,5 +631,49 @@ class SecurityHardeningTest extends TestCase
         $this->assertStringNotContainsString('";+HYPERLINK', $csvGerado);
         $this->assertStringNotContainsString('"=cmd|', $csvGerado);
         $this->assertStringNotContainsString('"+HYPERLINK', $csvGerado);
+    }
+
+    public function test_editor_de_cracha_v3_bloqueia_usuario_staff_sem_permissao_do_shield(): void
+    {
+        $professorRole = Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
+        $professor = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $professor->assignRole($professorRole);
+
+        // Usuário é staff, mas NÃO tem permissão de TemplateCrachaV3
+        $this->assertTrue($professor->isStaff());
+
+        $template = TemplateCrachaV3::create([
+            'nome' => 'Crachá de Alunos 2026',
+            'tipo_entidade' => TemplateCrachaEntidade::PESSOA,
+            'largura' => 85,
+            'altura' => 54,
+            'dados_json' => ['elementos' => []],
+        ]);
+
+        // Acesso ao editor sem permissão do Shield deve retornar 403
+        $responseEditor = $this->actingAs($professor)->get(route('template-crachas-v3.editor', $template));
+        $responseEditor->assertForbidden();
+
+        // Tentativa de salvar layout sem permissão deve retornar 403
+        $responseSave = $this->actingAs($professor)->postJson(route('template-crachas-v3.save', $template), [
+            'dados_json' => ['elementos' => [['id' => 1]]],
+        ]);
+        $responseSave->assertForbidden();
+
+        // Conceder a permissão do Shield
+        $permission = Permission::firstOrCreate(['name' => 'Update:TemplateCrachaV3', 'guard_name' => 'web']);
+        $professor->givePermissionTo($permission);
+
+        // Agora com a permissão, pode salvar com sucesso
+        $responseSaveSuccess = $this->actingAs($professor)->postJson(route('template-crachas-v3.save', $template), [
+            'dados_json' => ['elementos' => [['id' => 1]]],
+        ]);
+        $responseSaveSuccess->assertOk();
+        $responseSaveSuccess->assertJson(['success' => true]);
+
+        $this->assertEquals(['elementos' => [['id' => 1]]], $template->fresh()->dados_json);
     }
 }

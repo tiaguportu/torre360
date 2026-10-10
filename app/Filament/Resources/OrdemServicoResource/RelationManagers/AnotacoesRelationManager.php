@@ -29,6 +29,8 @@ class AnotacoesRelationManager extends RelationManager
                     ->multiple()
                     ->image()
                     ->acceptedFileTypes(TiposArquivo::imagens())
+                    ->maxSize(10240)
+                    ->helperText('Fotos da anotação (PNG, JPG ou WEBP até 10MB cada).')
                     ->directory('anotacoes-os')
                     ->columnSpanFull(),
                 Hidden::make('user_id')

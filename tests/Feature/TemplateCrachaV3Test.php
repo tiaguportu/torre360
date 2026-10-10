@@ -8,6 +8,7 @@ use App\Models\Turma;
 use App\Models\User;
 use App\Services\TemplateCrachaV3Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -42,7 +43,12 @@ class TemplateCrachaV3Test extends TestCase
     public function test_usuario_autenticado_pode_acessar_editor_e_salvar_layout_json(): void
     {
         $user = User::factory()->create();
-        $user->assignRole(Role::firstOrCreate(['name' => 'secretaria']));
+        $role = Role::firstOrCreate(['name' => 'secretaria']);
+        $role->givePermissionTo([
+            Permission::firstOrCreate(['name' => 'View:TemplateCrachaV3']),
+            Permission::firstOrCreate(['name' => 'Update:TemplateCrachaV3']),
+        ]);
+        $user->assignRole($role);
 
         $template = TemplateCrachaV3::create([
             'nome' => 'Crachá V3 Rota',

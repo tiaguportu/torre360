@@ -187,7 +187,9 @@ class QuestionarioForm
                                                 ->required()
                                                 ->disk('local')
                                                 ->directory('temp_imports')
-                                                ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'text/plain']),
+                                                ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'text/plain'])
+                                                ->maxSize(10240)
+                                                ->helperText('Formato CSV padrão (máx. 10MB).'),
                                         ])
                                         ->action(function (array $data, Questionario $record, QuestionarioService $service, $livewire) {
                                             $path = Storage::disk('local')->path($data['arquivo_csv']);

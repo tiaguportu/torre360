@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Livro;
 use App\Services\LivroCapaService;
 use App\Services\LivroLookupService;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -317,7 +318,7 @@ class LivroCapasOrfasTest extends TestCase
     public function test_o_comando_nao_esta_no_agendador(): void
     {
         // A limpeza de órfãs é sempre uma decisão de quem opera o servidor (lista primeiro, apaga depois).
-        $comandos = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+        $comandos = collect(app(Schedule::class)->events())
             ->map(fn ($evento): string => (string) $evento->command)
             ->implode(' ');
 

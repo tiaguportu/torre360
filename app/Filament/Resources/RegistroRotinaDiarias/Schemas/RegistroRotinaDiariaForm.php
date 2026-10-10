@@ -73,6 +73,8 @@ class RegistroRotinaDiariaForm
                             ->label('Foto (opcional)')
                             ->image()
                             ->acceptedFileTypes(TiposArquivo::imagens())
+                            ->maxSize(5120)
+                            ->helperText('Foto da rotina diária (PNG, JPG ou WEBP até 5MB).')
                             ->directory('rotina-diaria')
                             ->columnSpanFull(),
                     ]),

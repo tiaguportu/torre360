@@ -20,6 +20,8 @@ class AlunoForm
                 FileUpload::make('foto')
                     ->image()
                     ->acceptedFileTypes(TiposArquivo::imagens())
+                    ->maxSize(5120)
+                    ->helperText('Foto 3x4 (JPG, PNG ou WEBP até 5MB).')
                     ->imageEditor()
                     ->imageEditorAspectRatios(['3:4'])
                     ->directory('pessoas_fotos'),

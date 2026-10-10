@@ -62,6 +62,8 @@ class OrdemServicoResource extends Resource
                                     ->multiple()
                                     ->image()
                                     ->acceptedFileTypes(TiposArquivo::imagens())
+                                    ->maxSize(10240)
+                                    ->helperText('Fotos da ocorrência (PNG, JPG ou WEBP até 10MB cada).')
                                     ->directory('ordem-servicos')
                                     ->label('Fotos'),
                             ]),

@@ -174,6 +174,8 @@ class LancarFrequencia extends EditRecord
                             ->multiple()
                             ->directory('materiais-aula')
                             ->acceptedFileTypes(TiposArquivo::materiaisDeAula())
+                            ->maxSize(51200)
+                            ->helperText('Formatos aceitos: PDF, Office, imagens, áudios e vídeos (máx. 50MB por arquivo).')
                             ->preserveFilenames()
                             ->columnSpanFull(),
                     ])

@@ -34,10 +34,13 @@ class ListTransacaoBancarias extends ListRecords
                         ->options(Banco::where('is_active', true)->pluck('nome', 'id'))
                         ->required(),
                     FileUpload::make('arquivo')
-                        ->label('Arquivo')
+                        ->label('Arquivo de Extrato')
                         ->required()
                         ->disk('local')
-                        ->directory('imports/extratos'),
+                        ->directory('imports/extratos')
+                        ->acceptedFileTypes(['text/csv', 'text/plain', 'application/x-ofx', 'application/ofx', 'text/xml', 'application/xml', 'application/vnd.ms-excel'])
+                        ->maxSize(10240)
+                        ->helperText('Arquivos suportados: .OFX ou .CSV de extrato bancário (máx. 10MB).'),
                 ])
                 ->action(function (array $data, ConciliacaoBancariaService $service) {
                     $filePath = Storage::disk('local')->path($data['arquivo']);

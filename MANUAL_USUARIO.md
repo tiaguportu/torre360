@@ -2933,6 +2933,25 @@ Módulo em conformidade com o Estatuto da Criança e do Adolescente (ECA) e a Le
 
 ---
 
+## 🔒 54. Políticas de Segurança e Controle de Uploads (Onda 26)
+
+Implementações de blindagem do sistema contra ataques de injeção, upload malicioso e acesso indevido por perfil:
+
+### 54.1 Lista Branca e Limites de Uploads de Arquivos
+1. **Restrição Estrita de Formatos:** Todos os campos de envio de arquivos do sistema (planos de aula, diários, materiais didáticos, extratos bancários, questionários e fotos cadastrais) possuem validação rigorosa de tipos MIME permitidos (`TiposArquivo`), impedindo o envio de scripts executáveis (.php, .html, .js, .exe, .sh, .svg com vetores XSS).
+2. **Quotas de Tamanho (DoS Prevention):**
+   - **Materiais e Anexos de Aulas:** Até 50 MB por arquivo.
+   - **Extratos Bancários e Importações CSV:** Até 10 MB por arquivo.
+   - **Modelos de Documentos e Evidências de OS:** Até 10 MB por arquivo.
+   - **Fotos Cadastrais e Logotipos:** Até 5 MB por imagem (JPG, PNG, WEBP).
+   - **Documentos da Família / Aluno:** Até 2 MB por arquivo.
+
+### 54.2 Controle de Acesso ao Editor de Crachás V3 (Filament Shield)
+1. O acesso ao editor visual de crachás (`/admin/template-crachas-v3/{id}/editor`) e a gravação de alterações (`/admin/template-crachas-v3/{id}/save`) agora exigem permissões explícitas do Filament Shield (`View:TemplateCrachaV3` e `Update:TemplateCrachaV3`).
+2. Usuários da equipe (professores, colaboradores) que não tenham a permissão expressa configurada no Shield receberão bloqueio imediato (HTTP 403 Forbidden), impedindo a alteração acidental ou não autorizada de modelos institucionais.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

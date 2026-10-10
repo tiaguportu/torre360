@@ -17,7 +17,12 @@ class TemplateCrachaV3Controller extends Controller
      */
     public function editor(Request $request, TemplateCrachaV3 $templateCrachaV3): View
     {
-        abort_unless($request->user()->isStaff(), 403);
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->can('view', $templateCrachaV3) || $user->can('update', $templateCrachaV3) || $user->can('View:TemplateCrachaV3') || $user->can('Update:TemplateCrachaV3')),
+            403,
+            'Você não possui permissão para visualizar o editor deste template de crachá.'
+        );
 
         $todasVariaveis = [
             'pessoa' => TemplateCrachaService::getVariaveisPorEntidade(TemplateCrachaEntidade::PESSOA),
@@ -32,7 +37,12 @@ class TemplateCrachaV3Controller extends Controller
      */
     public function save(Request $request, TemplateCrachaV3 $templateCrachaV3): JsonResponse
     {
-        abort_unless($request->user()->isStaff(), 403);
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->can('update', $templateCrachaV3) || $user->can('Update:TemplateCrachaV3')),
+            403,
+            'Você não possui permissão para salvar alterações neste template de crachá.'
+        );
 
         $request->validate([
             'dados_json' => 'required|array',

@@ -63,9 +63,10 @@ class TipoDocumentoForm
 
                 FileUpload::make('modelo_arquivo')
                     ->label('Modelo de Arquivo para Download (opcional)')
-                    ->helperText('Arquivo em PDF ou imagem que a família pode baixar como exemplo/modelo.')
+                    ->helperText('Arquivo em PDF ou imagem que a família pode baixar como exemplo/modelo (máx. 10MB).')
                     ->directory('tipos-documentos-modelos')
                     ->acceptedFileTypes(TiposArquivo::documentos())
+                    ->maxSize(10240)
                     ->visibility('public')
                     ->downloadable()
                     ->openable()

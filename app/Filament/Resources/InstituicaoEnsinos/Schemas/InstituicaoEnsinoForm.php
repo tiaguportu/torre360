@@ -31,6 +31,8 @@ class InstituicaoEnsinoForm
                         FileUpload::make('logo')
                             ->image()
                             ->acceptedFileTypes(TiposArquivo::imagens())
+                            ->maxSize(5120)
+                            ->helperText('Logo da escola (PNG, JPG ou WEBP até 5MB).')
                             ->directory('instituicao-logos')
                             ->visibility('public'),
                         Select::make('endereco_id')
