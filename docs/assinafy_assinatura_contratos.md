@@ -102,10 +102,29 @@ valor pode ser ajustado manualmente no formulário do contrato.
 4. Use **Sincronizar Assinaturas** (ou `assinafy:reconciliar --contrato=ID`).
 
 ## Cuidado nos testes
-O `.env` do ambiente local pode ter credenciais reais do Assinafy. Testes que passam por `AssinafyService` devem
-neutralizar a chave (`config(['services.assinafy.key' => ''])`) e usar `Http::preventStrayRequests()`; veja
-`AssinafyAssinaturaTest`. Em `Http::fake()` a primeira resposta que casa vale (as definições se acumulam), então
-redefina com um `Http` novo ao trocar a resposta no meio do teste.
+O `.env` do ambiente local pode ter credenciais reais do Assinafy (inclusive de produção). O `phpunit.xml` esvazia
+`ASSINAFY_API_KEY` e `ASSINAFY_ACCOUNT_ID` para a suíte inteira, e `CredenciaisAssinafyNaSuiteTest` quebra se essas
+linhas forem removidas. Testes que **exercitam** `AssinafyService` declaram as suas próprias credenciais falsas
+(`services.assinafy.key`, `account_id` e `url`) e usam `Http::preventStrayRequests()`; veja `AssinafyAssinaturaTest`.
+Em `Http::fake()` a primeira resposta que casa vale (as definições se acumulam), então redefina com um `Http` novo ao
+trocar a resposta no meio do teste. Padrões específicos vêm primeiro, e os de busca terminam em `?*` porque a URL do
+GET leva query string; um padrão que não casa deixa a requisição seguir para a rede.
+
+### Teste de integração real com o sandbox
+`tests/Feature/Integracao/AssinafySandboxTest.php` fala com o **sandbox** do Assinafy de verdade (valida a chave/conta,
+envia um contrato de exemplo e consulta o status). Fica desligado por padrão:
+
+```
+RODAR_SANDBOX_ASSINAFY=1 php artisan test --filter=AssinafySandboxTest
+```
+
+- Credenciais em variáveis **próprias** do `.env`: `ASSINAFY_SANDBOX_API_URL`, `ASSINAFY_SANDBOX_API_KEY` e
+  `ASSINAFY_SANDBOX_ACCOUNT_ID` (documentadas vazias no `.env.example`). Elas nunca se misturam com as de produção.
+- O flag vem do ambiente do processo, não do `.env`, para não ficar ligado sem querer.
+- Trava: se a URL não for do host `sandbox.assinafy.com.br` o teste falha antes de qualquer requisição, e a rede fica
+  bloqueada para qualquer outro host (inclusive o fallback de produção que o serviço tenta nas leituras).
+- O signatário usa um e-mail de `example.com` (domínio reservado) e o PDF tem nome fixo, então as execuções seguintes
+  reaproveitam o documento em vez de acumular lixo no sandbox.
 
 ## Onde isso aparece para o usuário
 - **Coluna Assinatura** (`/admin/contratos` e `Documentos` do portal), com rótulo e cor de `StatusAssinaturaContrato`.
