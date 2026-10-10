@@ -9,6 +9,7 @@ use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use App\Support\BladeTemplateSanitizer;
 use App\Support\HtmlSanitizer;
+use App\Support\SsrfProtection;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -99,12 +100,13 @@ class ContractTemplateService
     /**
      * Renderiza o PDF do contrato em duas passagens para calcular e injetar dinamicamente
      * o total correto de páginas, evitando que {TOTAL_PAGINAS} retorne 0.
+     * Mantém isRemoteEnabled desativado para proteção estrita contra Server-Side Request Forgery (SSRF).
      */
     public function generatePdf(array $viewData): PDF
     {
-        // 1. Renderização inicial para cálculo de páginas
+        // 1. Renderização inicial para cálculo de páginas com proteção total contra SSRF (isRemoteEnabled = false)
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.contrato', $viewData)
-            ->setOption('isRemoteEnabled', true);
+            ->setOption('isRemoteEnabled', false);
 
         $pdf->render();
         $totalPaginas = $pdf->getDomPDF()->getCanvas()->get_page_count();
@@ -118,9 +120,9 @@ class ContractTemplateService
             $viewData['rodape_template'] = str_replace('%%TOTAL_PAGINAS%%', $totalPaginas, $viewData['rodape_template']);
         }
 
-        // 3. Renderiza novamente o PDF final com o valor exato
+        // 3. Renderiza novamente o PDF final com o valor exato mantendo isRemoteEnabled = false
         return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.contrato', $viewData)
-            ->setOption('isRemoteEnabled', true);
+            ->setOption('isRemoteEnabled', false);
     }
 
     protected function preprocessBlade(string $content, Contrato $contrato, ?Pessoa $aluno, ?Unidade $unidade, Collection $tiposVinculo): string
@@ -459,6 +461,21 @@ class ContractTemplateService
     {
         return preg_replace_callback('/<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>/i', function ($matches) {
             $src = $matches[1];
+            $srcLower = strtolower(trim($src));
+
+            // Proteção defensiva contra SSRF em URLs remotas (loopback, private networks, cloud metadata)
+            if (str_starts_with($srcLower, 'http://') || str_starts_with($srcLower, 'https://')) {
+                if (! SsrfProtection::isSafeUrl($src)) {
+                    logger()->warning('Contrato: URL remota bloqueada por proteção contra SSRF.', ['src' => $src]);
+
+                    return '<!-- [IMAGEM REMOTA BLOQUEADA CONTRA SSRF] -->';
+                }
+            } elseif (preg_match('/^[a-z0-9_-]+:/i', $src) && ! str_starts_with($srcLower, 'data:image/')) {
+                // Bloqueia qualquer outro esquema arbitrário (ex: file://, phar://, gopher://)
+                logger()->warning('Contrato: esquema não permitido bloqueado em imagem.', ['src' => $src]);
+
+                return '<!-- [ESQUEMA DE IMAGEM BLOQUEADO] -->';
+            }
 
             $localPath = null;
             if (str_contains($src, '/visualizar-documento/')) {

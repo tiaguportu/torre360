@@ -2976,6 +2976,11 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 2. **Instruções de Sistema Anti-Jailbreak e Anti-Manipulação:** Os modelos de IA operam com diretrizes mandatórias de recusa a comandos embutidos de terceiros que peçam desvio de regras (*prompt injection* / *jailbreak*, tentativas de revelar prompts de sistema ou requisições de comandos fora de escopo).
 3. **Segurança em OCR de Documentos:** A validação inteligente de imagens (`DocumentoIaService`) possui barreira ativa contra ataques adversariais visuais e instruções manuscritas no documento, avaliando estritamente a autenticidade técnica dos dados.
 
+### 54.7 Mitigação de Server-Side Request Forgery (SSRF) em PDFs e Templates
+1. **Desativação de Recursos Remotos no DomPDF:** O motor de renderização de PDF opera com `isRemoteEnabled = false`, bloqueando nativamente quaisquer conexões de rede de saída automáticas que possam tentar acessar portas locais, serviços internos ou APIs de metadados de nuvem.
+2. **Validador de Segurança de URLs (`SsrfProtection`):** Todas as URLs externas em elementos de imagem são verificadas antes do processamento. São categoricamente bloqueados acessos a endereços de loopback (`127.0.0.1`, `localhost`), metadados de provedores em nuvem (`169.254.169.254`), faixas de rede privada (RFC 1918) e esquemas de protocolo inseguros (`file://`, `phar://`, `gopher://`).
+3. Imagens locais legítimas (fotos de alunos, logotipos e assinaturas) continuam sendo processadas com segurança através de conversão em Data-URI Base64 com verificação de caminhos permitidos.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.

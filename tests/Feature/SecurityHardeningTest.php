@@ -28,6 +28,7 @@ use App\Services\QuestionarioService;
 use App\Support\BladeTemplateSanitizer;
 use App\Support\CsvSanitizer;
 use App\Support\HtmlSanitizer;
+use App\Support\SsrfProtection;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -844,5 +845,55 @@ class SecurityHardeningTest extends TestCase
         $conteudoInterno = trim(substr($delimitado, strlen("<solicitacao_usuario>\n"), -strlen("\n</solicitacao_usuario>")));
         $this->assertStringNotContainsString('</solicitacao_usuario>', $conteudoInterno);
         $this->assertStringNotContainsString('<solicitacao_usuario>', $conteudoInterno);
+    }
+
+    public function test_ssrf_protection_bloqueia_urls_privadas_loopback_e_metadados_de_nuvem(): void
+    {
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://169.254.169.254/latest/meta-data/'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://127.0.0.1:8000/admin'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://localhost:3306'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://metadata.google.internal/computeMetadata/v1/'));
+
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://10.0.0.1/status'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://192.168.1.1/router'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('http://172.16.0.5/api'));
+
+        $this->assertFalse(SsrfProtection::isSafeUrl('file:///etc/passwd'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('gopher://127.0.0.1:25/'));
+        $this->assertFalse(SsrfProtection::isSafeUrl('phar://app.phar'));
+
+        $this->assertFalse(SsrfProtection::isPublicIp('127.0.0.1'));
+        $this->assertFalse(SsrfProtection::isPublicIp('169.254.169.254'));
+        $this->assertFalse(SsrfProtection::isPublicIp('192.168.0.1'));
+        $this->assertFalse(SsrfProtection::isPublicIp('10.1.2.3'));
+        $this->assertTrue(SsrfProtection::isPublicIp('8.8.8.8'));
+        $this->assertTrue(SsrfProtection::isPublicIp('1.1.1.1'));
+    }
+
+    public function test_contract_template_service_neutraliza_imagens_com_urls_ssrf(): void
+    {
+        $aluno = Pessoa::create(['nome' => 'Marina Costa', 'cpf' => '12345678901']);
+        $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
+        $turma = Turma::create(['nome' => 'Turma B', 'periodo_letivo_id' => $periodo->id]);
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+        $contrato = Contrato::create([
+            'matricula_id' => $matricula->id,
+            'data_aceite' => now(),
+            'valor_total' => 15000.00,
+        ]);
+
+        $templateComSsrf = '<p>Contrato</p><img src="http://169.254.169.254/latest/meta-data/" /><img src="http://127.0.0.1:8000/api/secret" /><img src="file:///etc/passwd" />';
+
+        $service = app(ContractTemplateService::class);
+        $resultado = $service->process($contrato, $templateComSsrf);
+
+        $this->assertStringNotContainsString('169.254.169.254', $resultado);
+        $this->assertStringNotContainsString('127.0.0.1:8000', $resultado);
+        $this->assertStringNotContainsString('file:///etc/passwd', $resultado);
+        $this->assertStringContainsString('IMAGEM REMOTA BLOQUEADA CONTRA SSRF', $resultado);
     }
 }
