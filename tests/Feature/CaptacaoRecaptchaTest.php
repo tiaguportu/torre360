@@ -52,6 +52,7 @@ class CaptacaoRecaptchaTest extends TestCase
             'tipo_preenchimento' => 'proprio',
             'responsavel_telefone' => '11999998888',
             'responsavel_email' => 'familia.recaptcha@example.com',
+            'consentimento' => '1',
             'alunos' => [['nome' => 'Aluno Recaptcha', 'unidade_id' => $unidade->id]],
         ], $extra);
     }

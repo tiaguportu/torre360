@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CanalReguaFollowUp;
 use App\Enums\GatilhoReguaFollowUp;
+use App\Enums\StatusVisitaInteressado;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -83,9 +84,10 @@ class ReguaFollowUp extends Model
     /**
      * Interpola as variáveis dinâmicas no assunto e no corpo da mensagem.
      *
+     * @param  string|null  $nomeEscola  nome já resolvido pelo chamador (a régua o busca uma vez por execução, não por mensagem)
      * @return array{assunto: string, mensagem: string}
      */
-    public function interpolarMensagem(Interessado $interessado, ?VisitaInteressado $visita = null): array
+    public function interpolarMensagem(Interessado $interessado, ?VisitaInteressado $visita = null, ?string $nomeEscola = null): array
     {
         $pessoa = $interessado->pessoa;
         $nomeResponsavel = $pessoa?->nome ?? 'Família';
@@ -102,7 +104,7 @@ class ReguaFollowUp extends Model
             ?: 'nossas turmas';
 
         $nomeConsultor = $interessado->usuario?->name ?? 'Equipe de Admissões';
-        $nomeEscola = Unidade::first()?->nome ?? InstituicaoEnsino::first()?->nome ?? 'Nossa Escola';
+        $nomeEscola ??= Unidade::first()?->nome ?? InstituicaoEnsino::first()?->nome ?? 'Nossa Escola';
 
         $dataVisita = $visita?->data_hora ? $visita->data_hora->format('d/m/Y') : '';
         $horarioVisita = $visita?->data_hora ? $visita->data_hora->format('H:i') : '';
@@ -111,14 +113,13 @@ class ReguaFollowUp extends Model
         $linkPesquisa = '';
         if ($visita) {
             $linkPesquisa = $visita->obterOuCriarPesquisa()->url_publica;
-        } elseif ($interessado->visitas()->where('status', 'Realizada')->exists()) {
-            $visitaRealizada = $interessado->visitas()->where('status', 'Realizada')->latest('data_hora')->first();
-            if ($visitaRealizada) {
-                $linkPesquisa = $visitaRealizada->obterOuCriarPesquisa()->url_publica;
-                if (empty($dataVisita) && $visitaRealizada->data_hora) {
-                    $dataVisita = $visitaRealizada->data_hora->format('d/m/Y');
-                    $horarioVisita = $visitaRealizada->data_hora->format('H:i');
-                }
+        } elseif ($visitaRealizada = $interessado->visitas()->where('status', StatusVisitaInteressado::Realizada)->latest('data_hora')->first()) {
+            // Uma consulta só, e pelo enum: o valor gravado é 'realizada' e a comparação com 'Realizada' só
+            // funcionava porque o MySQL ignora a caixa (em SQLite/PostgreSQL o link da pesquisa nunca saía).
+            $linkPesquisa = $visitaRealizada->obterOuCriarPesquisa()->url_publica;
+            if (empty($dataVisita) && $visitaRealizada->data_hora) {
+                $dataVisita = $visitaRealizada->data_hora->format('d/m/Y');
+                $horarioVisita = $visitaRealizada->data_hora->format('H:i');
             }
         }
 

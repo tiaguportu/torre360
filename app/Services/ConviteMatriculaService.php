@@ -215,7 +215,14 @@ class ConviteMatriculaService
             'dados_pre_matricula' => $preMatricula !== []
                 ? $preMatricula + ['confirmado_em' => now()->toIso8601String()]
                 : $interessado->dados_pre_matricula,
+            // Base da retenção: o rascunho (CPF, endereço) é apagado `crm.lgpd.retencao_rascunho_dias` depois disto.
+            'dados_pre_matricula_em' => $preMatricula !== [] ? now() : $interessado->dados_pre_matricula_em,
         ]);
+
+        // O aceite da LGPD também fica na pessoa: o rascunho é apagado na conversão ou na retenção, a prova não.
+        if ($preMatricula !== [] && ! empty($preMatricula['lgpd_aceite_em']) && $interessado->pessoa) {
+            $interessado->pessoa->registrarConsentimento('pre_matricula', $preMatricula['lgpd_ip'] ?? null);
+        }
 
         $tipoContato = TipoContatoInteressado::firstOrCreate(['nome' => 'Confirmação via Convite Online']);
 

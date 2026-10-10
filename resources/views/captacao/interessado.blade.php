@@ -540,6 +540,23 @@
         }
         .recap-notice a { color: var(--primary-lt); text-decoration: none; }
 
+        /* ── LGPD: consentimento ── */
+        .consent-box {
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+        }
+        .consent-box label {
+            display: flex; gap: 10px; align-items: flex-start;
+            font-size: 13px; line-height: 1.6; color: var(--text);
+            text-transform: none; letter-spacing: 0; font-weight: 500; cursor: pointer;
+        }
+        .consent-box input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; flex: 0 0 auto; accent-color: var(--primary); }
+        .consent-box .field-hint { margin: 8px 0 0 28px; line-height: 1.6; }
+        .consent-box a { color: var(--primary-lt); }
+
         /* Responsivo */
         @media (max-width: 480px) {
             .progress-wrap { padding: 20px 16px 0; }
@@ -826,6 +843,28 @@
                         <textarea id="observacoes" name="observacoes"
                                   placeholder="Alguma necessidade especial, dúvida ou informação que gostaria de compartilhar com nossa equipe?">{{ old('observacoes') }}</textarea>
                     </div>
+                </div>
+
+                @php
+                    $urlPolitica = config('crm.lgpd.url_politica_privacidade');
+                    $contatoPrivacidade = config('crm.lgpd.contato_privacidade');
+                @endphp
+                <div class="consent-box">
+                    <label for="consentimento">
+                        <input type="checkbox" id="consentimento" name="consentimento" value="1" required @checked(old('consentimento'))>
+                        <span>
+                            Autorizo a escola a usar os dados informados, meus e do(s) aluno(s), para o atendimento de admissão e a me
+                            contatar por telefone, WhatsApp e e-mail.
+                            @if($urlPolitica)
+                                <a href="{{ $urlPolitica }}" target="_blank" rel="noopener">Política de Privacidade</a>.
+                            @endif
+                        </span>
+                    </label>
+                    <p class="field-hint">
+                        Os dados ficam com a escola e servem só para o processo de admissão. Você pode pedir acesso, correção ou
+                        exclusão {{ $contatoPrivacidade ? 'em '.$contatoPrivacidade : 'à secretaria' }}
+                        e deixar de receber e-mails pelo link que vai no rodapé de cada mensagem.
+                    </p>
                 </div>
 
                 <p class="recap-notice">

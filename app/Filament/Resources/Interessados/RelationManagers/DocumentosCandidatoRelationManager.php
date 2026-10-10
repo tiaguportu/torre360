@@ -381,7 +381,7 @@ class DocumentosCandidatoRelationManager extends RelationManager
         }
 
         $html .= '</ul>';
-        $html .= '<p><strong>Conformidade LGPD:</strong> As análises por IA utilizam endpoints corporativos efêmeros sem retenção para treino, garantindo segurança para dados de menores e responsáveis (Art. 7º, V e Art. 14 da LGPD).</p>';
+        $html .= '<p><strong>Privacidade (LGPD):</strong> Para a análise por IA, a imagem do documento e os dados cadastrais usados na conferência (nome, nascimento, CPF esperados) são enviados à API do Google Gemini. Se a chave configurada é do plano gratuito do Google AI Studio, o Google pode usar o conteúdo para melhorar seus produtos; os planos pagos têm termos diferentes. Confirme o plano e o contrato de tratamento antes de processar documentos de menores, e use a conferência manual quando a família não concordar (Art. 7º, V, Art. 14 e Art. 33 da LGPD).</p>';
 
         return $html;
     }

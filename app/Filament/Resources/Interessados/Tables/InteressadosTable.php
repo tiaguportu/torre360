@@ -222,7 +222,10 @@ class InteressadosTable
                             return null;
                         }
 
-                        return collect($resumo['series'])->map(fn ($s) => "{$s['serie_nome']}: {$s['vagas_restantes']} vagas livres de {$s['capacidade_total']} ({$s['taxa_ocupacao']}%)")->join(' | ');
+                        return collect($resumo['series'])->map(fn ($s) => $s['capacidade_estimada']
+                            ? "{$s['serie_nome']}: capacidade não definida (cadastre as vagas da turma)"
+                            : "{$s['serie_nome']}: {$s['vagas_restantes']} vagas livres de {$s['capacidade_total']} ({$s['taxa_ocupacao']}%)".($s['periodo_letivo_nome'] ? " — turmas de {$s['periodo_letivo_nome']}" : '')
+                        )->join(' | ');
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('pessoa.telefone')
@@ -401,7 +404,8 @@ class InteressadosTable
                         }
 
                         $service = app(TermometroVagasService::class);
-                        $series = $service->calcularVagasPorSerie();
+                        // Séries com capacidade estimada (sem turma/vagas definidas) não entram em nenhuma faixa.
+                        $series = $service->calcularVagasPorSerie()->reject(fn (array $serie): bool => $serie['capacidade_estimada']);
 
                         $seriesIds = match ($valor) {
                             'critico' => $series->whereIn('nivel_escassez', ['critico', 'esgotado'])->pluck('serie_id'),

@@ -1,6 +1,8 @@
 # Funil, captação pública e segurança do CRM
 
-Resultado dos Lotes A, B e C da revisão do módulo de CRM (o Lote C, de desempenho e escala, está na seção 10). Complementa
+Resultado dos Lotes A, B, C e E da revisão do módulo de CRM (o Lote C, de desempenho e escala, está na seção 10; o
+Lote E, que fecha os itens 6, 10, 13 e 15 da auditoria — LGPD, régua, importação por IA e termômetro de vagas —, na
+seção 11). Complementa
 `docs/crm_captacao_campanhas_visitas.md`, `docs/crm_followup_whatsapp.md` e `docs/crm_lead_score.md`.
 
 | Peça | Onde |
@@ -211,6 +213,12 @@ mesmo link (guardá-lo com hash obrigaria a gerar outro a cada consulta).
 | `contadores.cache_segundos` (`CRM_CONTADORES_CACHE_SEGUNDOS`) | 60 |
 | `calendario.janela_passado_dias` / `janela_futuro_dias` | 90 / 180 |
 | `fila_ia` (`CRM_FILA_IA`) | `ia` |
+| `regua.janela_recuperacao_dias` (`CRM_REGUA_JANELA_RECUPERACAO_DIAS`) | 2 |
+| `regua.max_emails_por_lead_dia` (`CRM_REGUA_MAX_EMAILS_POR_LEAD_DIA`, 0 = sem limite) | 2 |
+| `regua.max_tentativas_falha` | 3 |
+| `lgpd.versao_consentimento` | `2026-10` |
+| `lgpd.url_politica_privacidade` (`CRM_URL_POLITICA_PRIVACIDADE`) / `lgpd.contato_privacidade` (`CRM_CONTATO_PRIVACIDADE`) | vazios |
+| `lgpd.retencao_rascunho_dias` (`CRM_RETENCAO_RASCUNHO_DIAS`) | 90 |
 | `permissao_consultor` | `Update:Interessado` |
 
 Gemini (`config/services.php`): `gemini.orcamento_segundos` (`GEMINI_ORCAMENTO_SEGUNDOS`, 60) para chamadas
@@ -272,12 +280,124 @@ Medidas para o CRM continuar rápido com milhares de leads. Nenhuma muda regra d
   documentos passa o seu orçamento (70 s) por parâmetro nomeado.
 
 **Não feito de propósito:** a padronização da visibilidade por consultor (hoje cada tela aplica o seu recorte)
-e os itens 6, 10, 13 e 15 da auditoria ficaram fora — dependem de decisão de negócio.
+depende de decisão de negócio (quem enxerga o quê). Os itens 6, 10, 13 e 15 da auditoria foram fechados no Lote E
+(seção 11).
 
-## 11. Deploy e testes
+## 11. Lote E: LGPD, régua, importação por IA e termômetro de vagas (itens 6, 10, 13 e 15)
+
+### 11.1 Termômetro de vagas (item 15) — `TermometroVagasService`
+
+- **Período letivo de captação:** a série considera só as turmas abertas do período que recebe os novos leads: o
+  **próximo a começar** entre os que têm turma aberta; sem nenhum futuro, o em curso; se todos terminaram, o mais
+  recente. Antes somava a turma cheia do ano em curso com a do próximo (as duas "Ativa") e a escassez calculada não
+  existia para quem ia se matricular. Dentro do período, turmas `Planejada` ainda têm preferência sobre as demais,
+  como antes. O resultado traz `periodo_letivo_id` e `periodo_letivo_nome`; o modal do termômetro mostra "turmas de X".
+- **Capacidade estimada:** série sem turma, ou com turma sem `vagas_maximas`, usa o padrão de 25 vagas por turma. O
+  número é suposição, então a linha vem com `capacidade_estimada = true` e **não gera escassez**: o selo do Kanban
+  some, o filtro "Vagas na série" não a classifica e `obterStatusParaLead()` devolve "Capacidade não definida".
+- **Prompt de IA** (`gerarPromptEscassez`, usado pelo Dossiê e pelo Copiloto): séries com capacidade estimada ficam
+  de fora (sem número confiável, sem bloco); cada linha cita o período; "Restam apenas N" só aparece quando há de
+  fato escassez (antes aparecia até com 25 vagas livres); o bloco traz a data da posição e manda **não inventar
+  prazo, desconto nem outro número de vagas**. Sem escassez, diz expressamente para não usar argumento de urgência.
+  O texto antigo mandava "USAR ISSO NA ABORDAGEM" e podia levar o modelo a pressionar a família com urgência falsa.
+- Testes: `TermometroVagasTest`.
+
+### 11.2 Importação de lead por IA (item 13) — `ImportacaoLeadIaService`
+
+`ImportarLeadIaAction::salvarLeadExtraido()` virou uma chamada a este serviço (a assinatura foi mantida). O JSON da
+IA é texto livre de terceiros e só vira cadastro depois de validado:
+
+- **Série:** nome igual (sem caixa/acento) ou uma **única** série que contenha o termo como palavra inteira (`1º Ano`
+  não casa com `11º Ano`). Ambígua ou inexistente → o aluno fica **sem série**, com aviso. Antes caía em `Serie::first()`.
+- **Origem e tipo de contato:** só existentes. Origem desconhecida usa a escolhida pelo consultor (ou "WhatsApp/IA")
+  com aviso; canal desconhecido usa "Outro" e é citado no relato. Os quatro canais que o prompt oferece (Ligação,
+  WhatsApp, E-mail, Presencial) são criados sob demanda. Antes a IA criava origens e tipos novos a cada importação.
+- **Dados:** CPF validado pelos dígitos verificadores; e-mail com `FILTER_VALIDATE_EMAIL`; nascimento aceita
+  `AAAA-MM-DD` e `DD/MM/AAAA` e descarta futuro, anterior a 1950 ou ilegível; vínculo fora de Pai/Mãe/Parente/Tutor
+  vira vazio (o valor `Filho(a)` antigo violaria o enum). Cada descarte vira aviso na notificação e nas observações.
+- **Deduplicação:** a pessoa é reconhecida por e-mail, CPF ou telefone (`Pessoa::scopeComTelefone`: ignora máscara e
+  o `55`). Se já tem **lead ativo**, a conversa entra no histórico dele, o aluno repetido só é completado, nada do que
+  está preenchido é sobrescrito e não nasce segundo lead; lead encerrado ganha um lead novo.
+- **Transação:** pessoa, lead, alunos e histórico entram juntos ou nenhum.
+- **Prompt:** lista as origens e séries cadastradas para a IA devolver nomes existentes e manda tratar o conteúdo
+  recebido como dado, ignorando instruções escritas nele.
+- Testes: `ImportacaoLeadIaTest`, `GeminiLeadExtractionTest`.
+
+### 11.3 Régua de follow-up (item 10) — `ReguaFollowUpService`
+
+- **Envio de verdade:** o e-mail sai com `sendNow`. `MensagemGenericaMail` é `ShouldQueue` (serve à comunicação em
+  massa) e o `send()` só enfileirava: o log dizia "sucesso" e o contato entrava no histórico mesmo se o SMTP
+  recusasse depois. Agora falha de transporte vira `status_envio = falha` (com o erro) e **não** vira contato.
+- **Janela de recuperação** (`regua.janela_recuperacao_dias`, 2): os gatilhos pós-evento (cadastro, visita
+  realizada, visita com falta, contato atrasado) olham de `data-alvo − janela` até `data-alvo`; um dia sem agendador
+  não perde mais a mensagem. O **lembrete de visita não tem janela**: "amanhã" no dia da visita seria errado. Textos
+  da régua que dizem "ontem" saem errados quando o envio atrasa — prefira `{{DATA_VISITA}}`.
+- **Idempotência** (`jaProcessada`): visita e cadastro uma vez só; `ContatoAtrasado` uma vez por **ciclo** (recomeça
+  quando o consultor reagenda a data); `LeadEstagnado` pela janela do offset. Falha: uma tentativa por dia e no
+  máximo 3 por evento, para e-mail inválido não ser reenviado a cada execução.
+- **Só lead em andamento** nos gatilhos de visita (lembrete, agradecimento e reagendamento para quem já matriculou
+  ou desistiu era ruído).
+- **Horário de disparo:** o comando agendado passou a rodar **de hora em hora** e cada regra sai na primeira
+  execução a partir do seu `horario_envio` (padrão 08:00; 08:30 sai às 09:00). `--ignorar-horario` e `--data=`
+  processam tudo. O campo já existia e era ignorado.
+- **Teto diário:** no máximo `regua.max_emails_por_lead_dia` (2) e-mails da régua por lead por dia; o excedente sai
+  nos dias seguintes (dentro da janela). Não vale para avisos internos nem para o envio manual ("Testar"). A
+  simulação (`--dry-run`) respeita o teto.
+- **Menos consultas por mensagem:** nome da escola e tipo de contato "E-mail" são buscados uma vez por execução;
+  o link da pesquisa de visita usa uma consulta só e o enum `StatusVisitaInteressado::Realizada` (a comparação com
+  `'Realizada'` só funcionava no MySQL, que ignora caixa).
+- **Descadastro:** todo e-mail da régua ganha rodapé com link e os cabeçalhos `List-Unsubscribe`/`List-Unsubscribe-Post`
+  (ver 11.4).
+- Testes: `ReguaFollowUpEntregaTest`, `ReguaFollowUpTest`.
+
+### 11.4 LGPD (item 6)
+
+- **Consentimento no formulário público** (`/quero-matricular`): caixa obrigatória no último passo
+  (`consentimento` → `accepted`). Fica na pessoa: `consentimento_em`, `consentimento_versao`
+  (`lgpd.versao_consentimento`), `consentimento_origem` (`formulario_captacao` ou `pre_matricula`) e
+  `consentimento_ip` (`Pessoa::registrarConsentimento()`). O aviso mostra o link da Política e o canal do titular
+  quando `CRM_URL_POLITICA_PRIVACIDADE`/`CRM_CONTATO_PRIVACIDADE` estão preenchidos — **o sistema não escreve a
+  política nem indica o Encarregado: isso é da escola**. Limites: não há confirmação por e-mail (double opt-in) e o
+  aceite fica registrado em nome da pessoa encontrada pelo e-mail digitado. O envio não religa quem pediu
+  descadastro (o formulário é público e qualquer um pode digitar o e-mail de outra pessoa).
+- **Descadastro** (`GET|POST /comunicacao/descadastrar/{pessoa}`, URL assinada **sem validade**): o `GET` só mostra
+  a confirmação (scanners de e-mail abrem links); o `POST` — também usado pelo "cancelar com um clique" dos
+  provedores, por isso fora do CSRF — põe `aceita_comunicacao = false` e `descadastrado_em`, e deixa um registro
+  automático na linha do tempo de cada lead da pessoa. Vale para a régua e para a comunicação em massa.
+- **Rascunho de pré-matrícula cifrado:** `interessado.dados_pre_matricula` (CPF, endereço, responsáveis e alunos) é
+  gravado com `Crypt` pelo cast `ArrayCriptografado`, que lê também JSON puro (código novo com dado antigo não
+  quebra a ficha). A coluna passou de `json` para `longText` e a migration cifra os rascunhos existentes.
+  `dados_pre_matricula_em` guarda a última atualização. O log de atividades não registra esse campo.
+- **Retenção:** `crm:expurgar-rascunhos-pre-matricula` (diário, 03:15) apaga o rascunho parado há mais de
+  `lgpd.retencao_rascunho_dias` (90) de lead **não convertido e sem interação** (humana ou da família) nesse
+  período; registros automáticos (régua, IA) não contam como atividade. O aceite continua na pessoa. `--dry-run`
+  mostra quantos seriam apagados. A conversão em matrícula já apagava o rascunho (agora também a data).
+- **Minimização na IA** (Dossiê e Copiloto, `CrmIaVendasService::montarContextoLead`): saem telefone, e-mail,
+  sobrenome do responsável e dos alunos (só o primeiro nome e a idade seguem); CPF, telefone e e-mail que a equipe
+  digitou em observações, relatos e visitas viram `[CPF omitido]`/`[telefone omitido]`/`[e-mail omitido]`
+  (`ocultarDadosPessoais`, por padrão de texto — rede de segurança, não garantia). O resumo de conversa e a análise
+  de documentos continuam enviando o conteúdo que existem para analisar (conversa/documento).
+- **Texto honesto sobre a IA:** a ajuda dos documentos dizia "endpoints corporativos efêmeros sem retenção para
+  treino", mas o código usa a API pública do Gemini com chave. Agora diz que os dados vão ao Google e que, no plano
+  gratuito do AI Studio, o conteúdo pode ser usado para melhorar produtos; os planos pagos têm outros termos.
+  **Confirme o plano da chave configurada** antes de processar documentos de menores.
+- **Fora do alcance do código:** conferir no servidor `APP_ENV=production` e `APP_DEBUG=false` (o `.env` desta
+  estação tem `APP_DEBUG=true`); definir Política de Privacidade, Encarregado e canal do titular; contrato com o
+  Google. Ver também `docs/seguranca_pendencias.md` (A4, A5, M9).
+- Testes: `ConsentimentoLgpdCrmTest`, `DescadastroComunicacaoTest`, `RascunhoPreMatriculaCriptografadoTest`,
+  `IaMinimizacaoDadosTest`.
+
+## 12. Deploy e testes
 
 Migrations novas (rodam no "Git Pull" do painel, que executa `migrate --force`): ver tabela em
-`docs/crm_captacao_campanhas_visitas.md`, seção 7. A de índices do Lote C é segura para repetir.
+`docs/crm_captacao_campanhas_visitas.md`, seção 7. A de índices do Lote C é segura para repetir. As do Lote E
+(`2026_10_09_100000_add_consentimento_e_descadastro_to_pessoa_table` e
+`2026_10_09_100100_criptografar_dados_pre_matricula_do_interessado`) também; a segunda **cifra com a `APP_KEY`
+atual**: trocar a chave depois disso torna os rascunhos ilegíveis (o cast devolve vazio), então não gire a
+`APP_KEY` sem reexportar os rascunhos.
+
+**Lote E: o agendador precisa rodar a cada minuto** (como já era para a fila): a régua agora é horária. Quem
+agendava a régua só às 08:00 por cron próprio precisa trocar para `schedule:run`.
 
 **Lote C exige o worker da fila `ia`.** O agendador já o inicia (`schedule:run` a cada minuto, como o worker
 da fila padrão); em produção com Supervisor/serviço próprio, rode também `php artisan queue:work --queue=ia
@@ -292,12 +412,14 @@ Testes: `LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `CaptacaoReenvioTe
 `CaptacaoRecaptchaTest`, `MatriculaOnlineConversaoCrmTest`, `AlertaLeadsTest`, `ConsultoresCrmTest`,
 `InteracoesAutomaticasTest`, `KanbanInteressadosAutorizacaoTest`, `CrmIaSegurancaTest`, `CrmIaDossieCacheTest`,
 `CrmIaVendasTest`, `PortalDocumentosCandidatoSegurancaTest`, `ResumoConversaAudioTest`; Lote C:
-`KanbanDesempenhoTest`, `ContadoresCrmTest`, `CrmEscalaTest`, `FilaIaDocumentoTest`.
+`KanbanDesempenhoTest`, `ContadoresCrmTest`, `CrmEscalaTest`, `FilaIaDocumentoTest`; Lote E: `TermometroVagasTest`,
+`ImportacaoLeadIaTest`, `ReguaFollowUpEntregaTest`, `ConsentimentoLgpdCrmTest`, `DescadastroComunicacaoTest`,
+`RascunhoPreMatriculaCriptografadoTest`, `IaMinimizacaoDadosTest`.
 
-## 12. Fora do escopo destes lotes
+## 13. Fora do escopo destes lotes
 
-Distribuição automática de leads, WhatsApp como canal da
-régua, funil analítico e demais upgrades (Lote D); LGPD de consentimento no formulário, hash/expurgo do
-rascunho de pré-matrícula e minimização de dados enviados à IA; régua: janela de recuperação nos gatilhos por
-data e teto de mensagens por lead; importação por IA (série padrão, taxonomia livre, deduplicação);
-termômetro de vagas por período letivo.
+Distribuição automática de leads, WhatsApp como canal da régua, funil analítico e demais upgrades (Lote D);
+padronização da visibilidade por consultor; Política de Privacidade, Encarregado (DPO) e RIPD (a escola define);
+confirmação do consentimento por e-mail (double opt-in); criptografia de outros dados pessoais do CRM
+(`observacoes`, telefone e e-mail da pessoa); minimização dos dados enviados ao Gemini no resumo de conversa e na
+análise de documentos (o conteúdo a analisar tem de ir).

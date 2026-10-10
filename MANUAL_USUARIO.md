@@ -191,6 +191,7 @@ Interessados podem se cadastrar diretamente pelo site (**quero-matricular**):
 - **Quem já está no CRM não é sobrescrito.** A família é reconhecida pelo e-mail, CPF ou telefone. Se ela preencher o formulário de novo, o lead **não** volta para "Novo", as observações do consultor e o consultor responsável são mantidos e nenhum aluno é apagado: o reenvio vira um registro *Formulário do Site* na linha do tempo, alunos novos são acrescentados, dados que estavam vazios são completados e o próximo contato é antecipado (nunca adiado). Lead que estava como perdido é **reaberto** na etapa inicial.
 - **Link de indicação:** o link `.../quero-matricular?indicacao=CODIGO` (seção 3.18) registra automaticamente a indicação como *Pendente* e a origem como *Indicação*. A auto-indicação (mesma pessoa, e-mail, CPF ou telefone) é ignorada.
 - **Proteção contra robôs:** quando o reCAPTCHA está configurado, o envio sem a verificação é recusado.
+- **Consentimento (LGPD):** no último passo, a família precisa marcar que autoriza a escola a usar os dados (dela e dos alunos) para o atendimento de admissão e o contato por telefone, WhatsApp e e-mail; sem isso o envio é recusado. O sistema guarda **quando, em qual versão do texto, por qual caminho e de qual IP** o aceite foi dado (ficha da pessoa). O aviso mostra o link da Política de Privacidade e o contato para pedidos do titular quando a equipe técnica os configura (`CRM_URL_POLITICA_PRIVACIDADE` e `CRM_CONTATO_PRIVACIDADE`); o texto da política e a indicação do Encarregado são da escola.
 
 ### 3.7.1 Configurar os Pesos do Lead Score
 Acesse **CRM / Comercial → Pesos do Lead Score** (disponível para Administradores):
@@ -211,6 +212,8 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
    - Selecione o consultor responsável e a origem fallback (se a IA não inferir).
    - Clique em **Analisar e Criar Lead**.
    - Ao terminar, o sistema abre automaticamente a **tela de edição do lead criado**, para você revisar e completar os dados (a notificação de sucesso aparece nessa tela). Isso vale a partir da Listagem, do Funil Kanban e do Cadastro de Novo Lead. Se a IA falhar, você permanece na tela atual com o aviso de erro e nenhum lead é criado.
+   - **Sem duplicar:** se a pessoa já existe (mesmo e-mail, CPF ou telefone, com ou sem máscara) e tem um **lead em andamento**, a conversa é somada ao histórico desse lead (o consultor, a etapa e o que já estava preenchido não mudam), alunos repetidos só são completados e a notificação avisa "Conversa somada ao lead existente".
+   - **Só usa o que já existe no cadastro:** a IA não cria origens nem tipos de contato novos e não escolhe uma série por aproximação. Série ambígua ou inexistente deixa o aluno **sem série**; origem desconhecida usa a origem fallback; CPF ou e-mail inválido não é salvo. Cada caso vira um aviso na notificação e uma linha "⚠️ Conferir" nas observações do lead: **leia antes de seguir**.
 > **Alta demanda:** se aparecer a mensagem "servidores de IA do Gemini estão temporariamente com alta demanda", o sistema já tentou automaticamente vários modelos em duas rodadas. Aguarde alguns instantes e tente novamente.
 3. **O que a IA faz automaticamente:**
    - **Histórico de Contato:** registra automaticamente um contato com o relato da conversa, o canal (WhatsApp, Ligação, E-mail ou Presencial) e a data/hora em que ocorreu (quando identificada no texto/print; caso contrário, usa o momento da importação).
@@ -329,12 +332,16 @@ A **Régua de Follow-up** automatiza o relacionamento e a comunicação com fam�
    - **Lead Estagnado (Sem Interação há X dias):** Alerta a equipe interna quando um lead passa 7 dias ou mais sem qualquer contato registrado.
    - **Retorno de Contato Atrasado:** Emite aviso quando a data de retorno combinada com o interessado já expirou há X dias.
 3. **Canais de Envio:**
-   - **E-mail para a Família:** Mensagens ricas e personalizadas enviadas diretamente para a caixa de entrada dos pais. O sistema respeita estritamente a LGPD (respeitando o opt-out caso a família tenha desmarcado o recebimento de comunicações).
+   - **E-mail para a Família:** Mensagens ricas e personalizadas enviadas diretamente para a caixa de entrada dos pais. O sistema respeita estritamente a LGPD (respeitando o opt-out caso a família tenha desmarcado o recebimento de comunicações). Todo e-mail leva no rodapé o link **"clique aqui para cancelar"** (e o botão "cancelar inscrição" dos provedores): quem cancela deixa de receber a régua e a comunicação em massa, e o pedido aparece na linha do tempo do lead.
    - **Alerta no Painel (Sininho) para o Consultor:** Notificação interna na barra superior com atalho direto para a ficha do lead.
 4. **Histórico Integrado:** Todo e-mail disparado pela régua é registrado automaticamente na linha do tempo (**Histórico de Contatos**) do interessado, mantendo a equipe 100% ciente de tudo que foi comunicado.
 5. **Tags Dinâmicas:** Você pode usar tags automáticas como `{{NOME_RESPONSAVEL}}` ou `[Nome]`, `{{NOME_ALUNO}}` ou `[Aluno]`, `{{SERIE_INTERESSE}}` ou `[Serie]`, `{{NOME_CONSULTOR}}` ou `[Consultor]`, `{{DATA_VISITA}}` ou `[DataVisita]`, `{{HORARIO_VISITA}}` ou `[HorarioVisita]`, `{{LINK_PESQUISA}}` ou `[LinkPesquisa]` e `{{ESCOLA_NOME}}` ou `[Escola]`.
 6. **Execução Automática e Simulação:**
-   - A régua é processada diariamente às 08:00 de forma automática via rotina agendada no servidor (`crm:executar-regua-follow-up`).
+   - A régua é processada **de hora em hora** pela rotina agendada no servidor (`crm:executar-regua-follow-up`). Cada automação sai na primeira execução a partir do seu **Horário Preferencial de Disparo** (padrão 08:00; uma regra marcada 08:30 sai às 09:00).
+   - **Dia em que a rotina não rodou:** os gatilhos de cadastro, pós-visita, falta e contato atrasado ainda alcançam eventos de até 2 dias atrás que não receberam a mensagem. O lembrete de visita só vale na data certa. Escreva as mensagens com `{{DATA_VISITA}}` em vez de "ontem", pois um envio atrasado sairia errado.
+   - **Só leads em andamento:** lembrete, agradecimento e reagendamento de visita não são enviados para quem já matriculou ou foi encerrado.
+   - **Limite diário:** cada lead recebe no máximo **2 e-mails da régua por dia** (a equipe técnica pode mudar); o que passar do limite sai nos dias seguintes. Avisos internos para a equipe e o botão **Testar** não entram na conta.
+   - **Falhas de envio:** o status "sucesso" só aparece quando o e-mail foi aceito pelo servidor de e-mail. Se falhar (endereço inválido, servidor recusou), o log mostra o erro, o e-mail **não** entra no histórico do lead como contato feito, e o sistema tenta de novo nos dias seguintes, no máximo 3 vezes.
    - No topo da listagem, o botão **Executar Régua do Dia** permite acionar a verificação sob demanda ou rodar em **Modo Simulação (Dry-run)** para pré-visualizar quantos e-mails seriam gerados sem disparar mensagens reais.
    - Na tabela, o botão **Testar** em cada automação permite escolher um lead de exemplo para testar o envio com dados reais antes de ativar a regra para todos.
 
@@ -389,7 +396,8 @@ A **Pesquisa NPS Pós-Tour Escolar** é uma ferramenta estratégica de retençã
 O **Termômetro de Vagas por Série** fornece à equipe de admissões e consultores educacionais visibilidade instantânea da capacidade de cada turma e nível de ensino, calculando em tempo real as vagas disponíveis e ativando gatilhos legítimos de escassez e urgência nas negociações:
 
 1. **Cálculo em Tempo Real:**
-   - **Capacidade Máxima:** Soma da capacidade das turmas ativas de cada série (ou padrão de 25 vagas por turma caso a capacidade máxima não esteja estipulada).
+   - **Capacidade Máxima:** Soma da capacidade das turmas abertas para matrícula do **período letivo que recebe os novos leads** (o próximo a começar; se não houver, o em curso). Turmas do ano em curso não entram na conta de quem vai se matricular no ano seguinte.
+   - **Capacidade estimada:** série sem turma cadastrada, ou turma sem o número de vagas, usa o padrão de 25 vagas por turma. Esse valor é só uma suposição: aparece com o selo **"capacidade estimada"**, não dispara alerta de escassez nos cards e filtros e **não vai para a IA**. Cadastre as vagas máximas da turma para o termômetro valer.
    - **Matrículas Ocupadas:** Contabiliza alunos com matrículas ativas, pendentes ou reservas (sem data de desativação ou com desativação futura).
    - **Vagas Restantes:** Calculado por `Capacidade Total - Matrículas Ocupadas`.
    - **Taxa de Ocupação:** Percentual exato preenchido da capacidade.
@@ -2474,7 +2482,7 @@ Link único enviado a um lead já qualificado pelo CRM para que a **própria fam
 - O envio **não efetiva a matrícula por si só.** O histórico do lead recebe o registro "A família preencheu a pré-matrícula online…" e o Lead Score é recalculado.
 - Ao clicar em **Matricular**, o **Assistente de Matrícula** abre com responsáveis (inclusive percentual financeiro), alunos, CPF, data de nascimento, sexo e endereço já preenchidos. A secretaria revisa, escolhe unidade, turma e plano, e conclui.
 - Se o CPF informado já existe no sistema, o cadastro existente é reaproveitado.
-- **Privacidade:** os dados da pré-matrícula ficam guardados no lead apenas até a matrícula ser efetivada; ao converter o lead, o rascunho é apagado.
+- **Privacidade:** os dados da pré-matrícula (CPF, endereço, responsáveis e alunos) ficam **criptografados** no lead e apenas até a matrícula ser efetivada; ao converter o lead, o rascunho é apagado. Se o candidato abandonar o processo (sem nenhuma conversa com a equipe ou a família por **90 dias**), o rascunho é apagado automaticamente; o lead e o histórico permanecem, e o registro do aceite da LGPD continua na ficha da pessoa.
 ---
 
 ## 📑 45. Validador Inteligente de Documentos de Pré-Admissão com OCR & IA
@@ -2484,11 +2492,11 @@ O **Validador Inteligente de Documentos** integra o módulo de CRM e Admissões 
 ### 45.1 Análise em Segundo Plano (Fluxo 100% Assíncrono)
 - **Zero Bloqueio para a Família:** O envio de arquivos pelo Portal do Candidato (`/admissao/{token}`) libera a família instantaneamente em milissegundos. A análise pesada de imagem, leitura OCR e validação lógica são enfileiradas via Job assíncrono (`ValidarDocumentoComIaJob`).
 - **Resiliência e Retentativas:** Caso ocorra oscilação momentânea de rede externa com a API de IA, o sistema realiza até 3 retentativas automáticas com espera exponencial (*backoff*).
-- **Sem Custos Excessivos:** O processamento consome em média ~800 tokens de entrada e ~200 tokens de saída por documento (~R$ 0,00065 por análise), operando dentro da cota gratuita diária da API corporativa do Google AI Studio.
+- **Sem Custos Excessivos:** O processamento consome em média ~800 tokens de entrada e ~200 tokens de saída por documento (~R$ 0,00065 por análise), operando, conforme o plano da chave configurada, dentro da cota diária da API do Google AI Studio.
 
 ### 45.2 Transparência, Convivência e Conformidade com a LGPD
 - **Aviso Informativo no Portal:** Antes da lista de documentos, o portal exibe banner explícito de transparência informando que o sistema utiliza validação assistida por inteligência artificial exclusivamente para pré-checagem de nitidez e conformidade pré-contratual (Art. 7º, V e Art. 14 da LGPD para proteção dos dados de menores).
-- **Processamento Efêmero:** As imagens não são compartilhadas publicamente nem retidas para treinamento de modelos de terceiros. Os arquivos físicos permanecem criptografados e salvos estritamente no armazenamento privado (`Storage::disk('local')`) da instituição.
+- **Para onde vão os dados:** A imagem do documento e os dados cadastrais usados na conferência (nome, nascimento e CPF esperados) são enviados à API do Google Gemini. No **plano gratuito** do Google AI Studio o Google pode usar o conteúdo para melhorar seus produtos; os planos pagos têm outros termos. **Confirme o plano da chave configurada e o contrato de tratamento antes de processar documentos de menores**, e use a conferência manual quando a família não concordar. Os arquivos originais ficam no armazenamento privado (`Storage::disk('local')`) da instituição.
 - **Feedback Educativo Instantâneo:** Se a IA detectar que uma foto está cortada, borrada ou ilegível, o portal exibe um aviso amigável sugerindo que a família envie uma foto mais nítida antes mesmo da conferência formal pela secretaria, eliminando esperas e retrabalho.
 
 ### 45.3 Painel da Secretaria: Diagnóstico Pericial e Sincronização em 1 Clique

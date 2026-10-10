@@ -65,6 +65,7 @@ class ReguaFollowUpForm
 
                                 TimePicker::make('horario_envio')
                                     ->label('Horário Preferencial de Disparo')
+                                    ->helperText('A régua roda de hora em hora: a mensagem sai na primeira execução a partir deste horário (ex.: 08:30 sai às 09:00).')
                                     ->default('08:00:00')
                                     ->required(),
                             ]),

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\BibliotecaEtiquetasController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
+use App\Http\Controllers\Comunicacao\DescadastroController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
@@ -53,6 +54,14 @@ Route::post('/quero-matricular/convite/{token}', [CaptacaoInteressadoController:
     ->name('captacao.interessado.convite.confirmar');
 Route::get('/quero-matricular/convite/{token}/obrigado', [CaptacaoInteressadoController::class, 'conviteConfirmado'])
     ->name('captacao.interessado.convite.sucesso');
+
+// Descadastro dos e-mails da régua de follow-up (link assinado no rodapé de cada e-mail; sem login)
+Route::get('/comunicacao/descadastrar/{pessoa}', [DescadastroController::class, 'show'])
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('comunicacao.descadastrar');
+Route::post('/comunicacao/descadastrar/{pessoa}', [DescadastroController::class, 'store'])
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('comunicacao.descadastrar.confirmar');
 
 // Validação pública de autenticidade documental (QR Code com proteção contra raspagem)
 Route::match(['get', 'post'], '/validar-documento/{codigo?}', ValidarDocumentoController::class)

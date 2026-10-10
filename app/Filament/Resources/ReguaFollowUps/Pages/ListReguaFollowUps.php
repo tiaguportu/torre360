@@ -65,7 +65,8 @@ class ListReguaFollowUps extends ListRecords
 
                     Notification::make()
                         ->title($dryRun ? 'Simulação da Régua Concluída!' : 'Régua de Follow-up Processada!')
-                        ->body("Total de {$resultado['total_notificacoes_enviadas']} mensagem(ns) gerada(s) a partir de {$resultado['total_candidatos_analisados']} candidato(s) avaliado(s).")
+                        ->body("Total de {$resultado['total_notificacoes_enviadas']} mensagem(ns) gerada(s) a partir de {$resultado['total_candidatos_analisados']} candidato(s) avaliado(s)."
+                            .($resultado['total_adiadas_limite'] > 0 ? " {$resultado['total_adiadas_limite']} ficou(aram) para os próximos dias pelo limite diário de e-mails por lead." : ''))
                         ->success()
                         ->send();
                 }),

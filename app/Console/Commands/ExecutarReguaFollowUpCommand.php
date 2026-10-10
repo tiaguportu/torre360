@@ -15,7 +15,8 @@ class ExecutarReguaFollowUpCommand extends Command
      */
     protected $signature = 'crm:executar-regua-follow-up
                             {--dry-run : Simula a execução sem disparar e-mails ou notificações reais}
-                            {--data= : Data de referência no formato YYYY-MM-DD (padrão: hoje)}';
+                            {--data= : Data de referência no formato YYYY-MM-DD (padrão: hoje)}
+                            {--ignorar-horario : Processa todas as regras agora, sem esperar o horário de disparo de cada uma}';
 
     /**
      * The console command description.
@@ -36,21 +37,27 @@ class ExecutarReguaFollowUpCommand extends Command
 
         $dataReferencia = $dataStr ? Carbon::parse($dataStr) : now();
 
+        // O agendador roda de hora em hora: cada regra sai na primeira execução a partir do seu horário de disparo.
+        // Reprocessar uma data passada (`--data`) ou pedir `--ignorar-horario` ignora o horário.
+        $agora = $dataStr || $this->option('ignorar-horario') ? null : now();
+
         if ($dryRun) {
             $this->warn('*** MODO DE SIMULAÇÃO (DRY-RUN) ATIVO - NENHUMA MENSAGEM REAL SERÁ DISPARADA ***');
         }
 
-        $resultado = $service->processarReguaDiaria($dataReferencia, $dryRun);
+        $resultado = $service->processarReguaDiaria($dataReferencia, $dryRun, $agora);
 
         $this->table(
-            ['Data de Execução', 'Simulação?', 'Regras Ativas', 'Candidatos Avaliados', 'Notificações Geradas'],
+            ['Data de Execução', 'Simulação?', 'Regras Ativas', 'Aguardando Horário', 'Candidatos Avaliados', 'Notificações Geradas', 'Adiadas (limite diário)'],
             [
                 [
                     $resultado['data_execucao'],
                     $resultado['dry_run'] ? 'Sim' : 'Não',
                     $resultado['total_regras'],
+                    $resultado['total_regras_aguardando_horario'],
                     $resultado['total_candidatos_analisados'],
                     $resultado['total_notificacoes_enviadas'],
+                    $resultado['total_adiadas_limite'],
                 ],
             ]
         );

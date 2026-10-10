@@ -347,16 +347,39 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         return $texto.self::REGRA_DADOS_NAO_CONFIAVEIS;
     }
 
+    /** Primeiro nome de um nome completo, ou null se vazio. */
+    private static function primeiroNome(?string $nome): ?string
+    {
+        $primeiro = explode(' ', trim((string) $nome))[0];
+
+        return $primeiro === '' ? null : $primeiro;
+    }
+
+    /**
+     * Troca e-mail, CPF e telefone por marcadores antes de o texto livre (observações, relatos de contato) ir para a
+     * IA. A equipe costuma anotar o telefone ou o CPF da família no meio do relato, e o modelo não precisa deles
+     * para sugerir a próxima ação. É uma rede de segurança por padrão de texto, não uma garantia: um número escrito
+     * de forma incomum passa.
+     */
+    public static function ocultarDadosPessoais(string $texto): string
+    {
+        $texto = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', '[e-mail omitido]', $texto) ?? $texto;
+        $texto = preg_replace('/(?<!\d)\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}(?!\d)/', '[CPF omitido]', $texto) ?? $texto;
+
+        return preg_replace('/(?<![\d\/])(?:\+?55[\s.-]?)?(?:\(?\d{2}\)?[\s.-]?)?9?\d{4}[\s.-]?\d{4}(?![\d\/])/', '[telefone omitido]', $texto) ?? $texto;
+    }
+
     /**
      * Monta uma representação textual detalhada do lead para envio aos prompts do Gemini.
      */
     protected function montarContextoLead(Interessado $interessado): string
     {
+        // Minimização (LGPD, art. 6º, III): a IA escreve o dossiê e a mensagem sem precisar de telefone, e-mail,
+        // sobrenome ou dados digitados em texto livre. Só o primeiro nome do responsável e dos alunos (menores)
+        // segue, e CPF/telefone/e-mail que a equipe tenha escrito em observações e relatos são ocultados.
         $linhas = [];
         $linhas[] = '=== DADOS DO INTERESSADO ===';
-        $linhas[] = 'Nome do Responsável: '.($interessado->pessoa?->nome ?? 'Não informado');
-        $linhas[] = 'Telefone: '.($interessado->pessoa?->telefone ?? 'Não informado');
-        $linhas[] = 'E-mail: '.($interessado->pessoa?->email ?? 'Não informado');
+        $linhas[] = 'Responsável (primeiro nome): '.(self::primeiroNome($interessado->pessoa?->nome) ?? 'Não informado');
         $linhas[] = 'Etapa no Funil: '.($interessado->status?->nome ?? 'Novo Contato');
         $linhas[] = 'Origem: '.($interessado->origem?->nome ?? 'Não identificada');
         $linhas[] = 'Temperatura Atual: '.($interessado->temperatura ?? 'morno');
@@ -364,7 +387,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         $linhas[] = 'Valor Estimado: '.($interessado->valor_estimado ? 'R$ '.number_format((float) $interessado->valor_estimado, 2, ',', '.') : 'Não informado');
         $linhas[] = 'Distância da Escola: '.($interessado->faixa_distancia_escola ?? 'Não informada');
         $linhas[] = 'Meio de Transporte: '.($interessado->meio_transporte ?? 'Não informado');
-        $linhas[] = 'Observações Gerais: '.($interessado->observacoes ?: 'Nenhuma observação cadastrada.');
+        $linhas[] = 'Observações Gerais: '.self::ocultarDadosPessoais($interessado->observacoes ?: 'Nenhuma observação cadastrada.');
 
         $linhas[] = "\n=== FILHOS / DEPENDENTES ===";
         if ($interessado->dependentes->isEmpty()) {
@@ -373,7 +396,8 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             foreach ($interessado->dependentes as $dep) {
                 $idade = $dep->data_nascimento ? Carbon::parse($dep->data_nascimento)->age.' anos' : 'Idade não informada';
                 $serie = $dep->serie?->nome ?? $dep->serie_pretendida ?? 'Série não informada';
-                $linhas[] = "- {$dep->nome_crianca} ({$idade}) — Série pretendida: {$serie}";
+                $nomeAluno = self::primeiroNome($dep->nome_crianca) ?? 'Aluno';
+                $linhas[] = "- {$nomeAluno} ({$idade}) — Série pretendida: {$serie}";
             }
         }
 
@@ -386,7 +410,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                 $data = $h->data_contato ? Carbon::parse($h->data_contato)->format('d/m/Y H:i') : 'Data não registrada';
                 $tipo = $h->tipoContato?->nome ?? 'Contato';
                 $atendente = $h->usuario?->name ?? 'Sistema';
-                $linhas[] = "[{$data}] {$tipo} por {$atendente}: {$h->relato}";
+                $linhas[] = "[{$data}] {$tipo} por {$atendente}: ".self::ocultarDadosPessoais((string) $h->relato);
             }
         }
 
@@ -397,7 +421,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             foreach ($interessado->visitas as $v) {
                 $dataVisita = $v->data_hora ? Carbon::parse($v->data_hora)->format('d/m/Y H:i') : 'Data não informada';
                 $statusVisita = ($v->status ?? StatusVisitaInteressado::Agendada)->getLabel();
-                $linhas[] = "- Visita em {$dataVisita} (Status: {$statusVisita}) — Obs: ".($v->observacoes ?: 'Sem observações adicionais.');
+                $linhas[] = "- Visita em {$dataVisita} (Status: {$statusVisita}) — Obs: ".self::ocultarDadosPessoais($v->observacoes ?: 'Sem observações adicionais.');
             }
         }
 

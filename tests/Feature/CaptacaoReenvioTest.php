@@ -76,6 +76,7 @@ class CaptacaoReenvioTest extends TestCase
             'responsavel_nome' => 'Maria Responsável',
             'responsavel_telefone' => '(11) 99999-0000',
             'responsavel_email' => 'maria.reenvio@example.com',
+            'consentimento' => '1',
             'alunos' => [array_merge([
                 'nome' => 'João Aluno',
                 'serie_id' => $this->serie->id,

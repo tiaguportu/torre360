@@ -27,7 +27,10 @@ if ($filaIa !== '' && $filaIa !== $filaPadrao) {
 }
 Schedule::command('assinafy:reconciliar')->hourly()->withoutOverlapping();
 Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlapping();
-Schedule::command('crm:executar-regua-follow-up')->dailyAt('08:00')->withoutOverlapping();
+// De hora em hora: cada regra sai na primeira execução a partir do seu `horario_envio` (padrão 08:00) e a
+// idempotência do log impede repetir. O envio é síncrono, então `withoutOverlapping` evita duas execuções juntas.
+Schedule::command('crm:executar-regua-follow-up')->hourly()->withoutOverlapping(60);
+Schedule::command('crm:expurgar-rascunhos-pre-matricula')->dailyAt('03:15')->withoutOverlapping();
 Schedule::command('crm:recalcular-lead-score')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('cobranca:executar-regua')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00')->withoutOverlapping();

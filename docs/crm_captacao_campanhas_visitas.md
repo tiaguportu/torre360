@@ -201,6 +201,8 @@ A mesma máscara vale na criação do interessado (mesmo formulário) e no cadas
 | `2026_10_04_230000_add_unidade_e_turno_to_interessado_dependente_table` | `interessado_dependente.unidade_id` (FK, `nullOnDelete`) e `turno_preferencia`. |
 | `2026_10_04_230100_add_ultimo_alerta_em_to_interessado_table` | `interessado.ultimo_alerta_em` (controle do intervalo entre alertas). |
 | `2026_10_05_090000_add_indices_de_desempenho_ao_crm` | Índices de desempenho em `interessado` (próximo contato, etapa + contato/atualização, consultor + etapa, score, conversão, criação), `pessoa.email` e `visita_interessado (interessado, status)`. Idempotente. Ver `docs/crm_funil_e_captacao.md`, seção 10. |
+| `2026_10_09_100000_add_consentimento_e_descadastro_to_pessoa_table` | `pessoa.consentimento_em/_versao/_origem/_ip` (prova do aceite no formulário público e na pré-matrícula) e `pessoa.descadastrado_em` (pedido de descadastro dos e-mails). Pessoas antigas ficam sem registro de aceite. Ver `docs/crm_funil_e_captacao.md`, seção 11.4. |
+| `2026_10_09_100100_criptografar_dados_pre_matricula_do_interessado` | `interessado.dados_pre_matricula` de `json` para `longText` e **cifrado** com a `APP_KEY` (cast `ArrayCriptografado`, que ainda lê JSON puro); nova `dados_pre_matricula_em` (última atualização do rascunho, usada na retenção). Idempotente; `down()` decifra. |
 
 ## 8. Testes
 

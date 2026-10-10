@@ -19,6 +19,9 @@ class Pessoa extends Model
 {
     use HasFactory, Notifiable;
 
+    /** Coluna `telefone` sem `( ) - + e espaço`, para comparar números gravados com máscara. */
+    private const TELEFONE_SEM_MASCARA = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '')";
+
     protected $table = 'pessoa';
 
     protected $fillable = ['endereco_id', 'naturalidade_id', 'nacionalidade_id', 'nome', 'cpf', 'codigo_indicacao', 'foto', 'telefone', 'email', 'user_id', 'data_nascimento', 'estado_civil', 'profissao', 'identidade', 'sexo', 'cor_raca', 'tipo_nacionalidade', 'aceita_comunicacao'];
@@ -57,7 +60,36 @@ class Pessoa extends Model
             'cor_raca' => CorRacaCast::class,
             'tipo_nacionalidade' => Nacionalidade::class,
             'aceita_comunicacao' => 'boolean',
+            'consentimento_em' => 'datetime',
+            'descadastrado_em' => 'datetime',
         ];
+    }
+
+    /**
+     * Guarda a prova do consentimento dado pela pessoa (LGPD, art. 8º): quando, qual versão do texto
+     * (`crm.lgpd.versao_consentimento`), por qual caminho e de qual IP. Fica fora do `$fillable` de propósito:
+     * só o código que colheu o aceite grava, nunca um formulário do painel.
+     */
+    public function registrarConsentimento(string $origem, ?string $ip = null): void
+    {
+        $this->forceFill([
+            'consentimento_em' => now(),
+            'consentimento_versao' => (string) config('crm.lgpd.versao_consentimento'),
+            'consentimento_origem' => $origem,
+            'consentimento_ip' => $ip,
+        ])->save();
+    }
+
+    /**
+     * Pedido de descadastro (link dos e-mails da régua): a pessoa deixa de receber e-mails comerciais. O aceite
+     * anterior permanece registrado; o descadastro tem data própria.
+     */
+    public function descadastrarDeComunicacoes(): void
+    {
+        $this->forceFill([
+            'aceita_comunicacao' => false,
+            'descadastrado_em' => $this->descadastrado_em ?? now(),
+        ])->save();
     }
 
     /**
@@ -83,10 +115,28 @@ class Pessoa extends Model
                 ->orWhere('email', 'like', "%{$termo}%");
 
             if (strlen($digitos) >= 3) {
-                $q->orWhereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '') LIKE ?", ["%{$digitos}%"])
+                $q->orWhereRaw(self::TELEFONE_SEM_MASCARA.' LIKE ?', ["%{$digitos}%"])
                     ->orWhere('cpf', 'like', "%{$digitos}%");
             }
         });
+    }
+
+    /**
+     * Pessoas com este telefone, com ou sem máscara e com ou sem o código do país (55). Compara os 11 últimos
+     * dígitos (celular com DDD) ou, se o número tiver menos, os 10 últimos. Menos de 10 dígitos não identifica
+     * ninguém: não casa com nada.
+     */
+    public function scopeComTelefone(Builder $query, ?string $telefone): Builder
+    {
+        $digitos = preg_replace('/\D/', '', (string) $telefone) ?? '';
+
+        if (strlen($digitos) < 10) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $final = substr($digitos, -min(11, strlen($digitos)));
+
+        return $query->whereRaw(self::TELEFONE_SEM_MASCARA.' LIKE ?', ["%{$final}"]);
     }
 
     public function matriculas(): HasMany

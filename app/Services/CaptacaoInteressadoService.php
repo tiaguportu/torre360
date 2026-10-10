@@ -82,6 +82,10 @@ class CaptacaoInteressadoService
 
         $pessoa = $this->localizarOuCriarPessoa((string) $nomeContato, $email, trim((string) $dados['responsavel_telefone']), $cpf);
 
+        // Prova do aceite (data, versão do texto, origem e IP). Não religa `aceita_comunicacao` de quem já pediu
+        // descadastro: o formulário é público e qualquer pessoa pode digitar o e-mail de outra.
+        $pessoa->registrarConsentimento('formulario_captacao', $request->ip());
+
         // Link "Família Indica Família": o indicador é resolvido antes de gravar o lead (auto-indicação é ignorada).
         $codigoIndicacao = $this->indicacoes->codigoDaRequisicao($request);
         $indicador = $this->indicacoes->localizarIndicador($codigoIndicacao, $pessoa);

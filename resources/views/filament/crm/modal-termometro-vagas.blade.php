@@ -63,6 +63,16 @@
                             <span class="text-xs text-gray-400 ml-1.5 font-normal">
                                 ({{ $serie['curso_nome'] }})
                             </span>
+                            @if(! empty($serie['periodo_letivo_nome']))
+                                <span class="text-xs text-indigo-500 dark:text-indigo-400 ml-1.5 font-semibold" title="Período letivo das turmas que recebem novos leads">
+                                    · turmas de {{ $serie['periodo_letivo_nome'] }}
+                                </span>
+                            @endif
+                            @if($serie['capacidade_estimada'] ?? false)
+                                <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700" title="Sem turma cadastrada ou turma sem número de vagas: o valor mostrado usa o padrão de {{ \App\Services\TermometroVagasService::VAGAS_PADRAO_TURMA }} vagas por turma e não é usado como argumento de urgência.">
+                                    capacidade estimada
+                                </span>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-2">

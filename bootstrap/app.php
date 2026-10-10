@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/assinafy',
             'mobile/register-token',
+            // "Cancelar com um clique" dos provedores de e-mail (List-Unsubscribe-Post): o POST vem sem token CSRF,
+            // e a rota só aceita URL assinada.
+            'comunicacao/descadastrar/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -142,7 +142,9 @@
                                                 $depColecao = collect($dependentes);
                                                 $serieObj = $depColecao->first()?->serie;
                                                 $dadosVagas = $serieObj ? $todasVagasSeries->firstWhere('serie_id', $serieObj->id) : null;
-                                                $temAlertaVaga = $dadosVagas && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico', 'alerta'], true);
+                                                $temAlertaVaga = $dadosVagas
+                                                    && ! ($dadosVagas['capacidade_estimada'] ?? false)
+                                                    && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico', 'alerta'], true);
                                                 $corBadgeSerie = match(true) {
                                                     $temAlertaVaga && in_array($dadosVagas['nivel_escassez'], ['esgotado', 'critico'], true) => 'danger',
                                                     $temAlertaVaga => 'warning',

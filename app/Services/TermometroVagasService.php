@@ -7,7 +7,9 @@ namespace App\Services;
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusTurma;
 use App\Models\Interessado;
+use App\Models\PeriodoLetivo;
 use App\Models\Serie;
+use App\Models\Turma;
 use Illuminate\Support\Collection;
 
 class TermometroVagasService
@@ -62,7 +64,7 @@ class TermometroVagasService
 
         $query = Serie::with(['curso', 'turmas' => function ($q) {
             // Só turmas que ainda aceitam matrícula (Planejada e Ativa); concluídas e canceladas não têm vaga.
-            $q->abertasParaMatricula()->with('turno')->withCount(['matriculas as matriculas_ativas_count' => function ($mq) {
+            $q->abertasParaMatricula()->with(['turno', 'periodoLetivo'])->withCount(['matriculas as matriculas_ativas_count' => function ($mq) {
                 $mq->where(function ($sub) {
                     $sub->whereIn('situacao', [
                         SituacaoMatricula::ATIVA->value,
@@ -82,14 +84,18 @@ class TermometroVagasService
         $series = $query->orderBy('nome')->get();
 
         $resultado = $series->map(function (Serie $serie) {
-            $turmas = $serie->turmas;
+            [$turmas, $periodo] = self::turmasDoPeriodoDeCaptacao($serie->turmas);
 
-            // Com turmas já planejadas para o próximo período, são elas que recebem os novos leads:
-            // somar as turmas do ano em curso (cheias) inflaria a capacidade e esconderia a escassez.
+            // Com turmas já planejadas para o mesmo período, são elas que recebem os novos leads:
+            // somar as turmas em curso (cheias) inflaria a capacidade e esconderia a escassez.
             $planejadas = $turmas->filter(fn ($turma) => $turma->status === StatusTurma::Planejada);
             if ($planejadas->isNotEmpty()) {
                 $turmas = $planejadas->values();
             }
+
+            // Vagas sem turma cadastrada, ou turma sem `vagas_maximas`, usam o padrão (25): o número é uma
+            // suposição, não um dado da escola, e não pode virar argumento de urgência para a família.
+            $capacidadeEstimada = $turmas->isEmpty() || $turmas->contains(fn ($turma) => ! ($turma->vagas_maximas > 0));
 
             $capacidadeTotal = 0;
             $matriculasOcupadas = 0;
@@ -130,6 +136,9 @@ class TermometroVagasService
                 'serie_nome' => $serie->nome,
                 'curso_nome' => $serie->curso?->nome_externo ?? $serie->curso?->nome_interno ?? $serie->curso?->nome ?? 'Geral',
                 'total_turmas' => $turmas->count(),
+                'periodo_letivo_id' => $periodo?->id,
+                'periodo_letivo_nome' => $periodo?->nome,
+                'capacidade_estimada' => $capacidadeEstimada,
                 'capacidade_total' => $capacidadeTotal,
                 'matriculas_ocupadas' => $matriculasOcupadas,
                 'vagas_restantes' => $vagasRestantes,
@@ -149,6 +158,42 @@ class TermometroVagasService
         }
 
         return $resultado->first() ?? [];
+    }
+
+    /**
+     * Turmas que recebem os novos leads de uma série: as do período letivo de captação. Misturar períodos
+     * somava a turma do ano em curso (cheia) com a do próximo (aberta) e produzia uma escassez que não
+     * existe para quem vai se matricular.
+     *
+     * Período de captação = o próximo a começar entre os que têm turma aberta; sem nenhum futuro, o que está
+     * em curso (ou, se todos já terminaram, o mais recente). Turmas sem período ficam de fora quando a série
+     * tem alguma com período.
+     *
+     * @param  Collection<int, Turma>  $turmas  já limitadas às abertas para matrícula
+     * @return array{0: Collection<int, Turma>, 1: ?PeriodoLetivo}
+     */
+    private static function turmasDoPeriodoDeCaptacao(Collection $turmas): array
+    {
+        $comPeriodo = $turmas->filter(fn ($turma) => $turma->periodo_letivo_id !== null && $turma->periodoLetivo !== null);
+
+        if ($comPeriodo->isEmpty()) {
+            return [$turmas->values(), null];
+        }
+
+        $periodos = $comPeriodo->map(fn ($turma) => $turma->periodoLetivo)->unique('id')->values();
+        $hoje = today();
+
+        $escolhido = $periodos
+            ->filter(fn ($periodo) => $periodo->data_inicio !== null && $periodo->data_inicio->gt($hoje))
+            ->sortBy('data_inicio')
+            ->first()
+            ?? $periodos
+                ->filter(fn ($periodo) => $periodo->data_inicio !== null && $periodo->data_inicio->lte($hoje) && ($periodo->data_fim === null || $periodo->data_fim->gte($hoje)))
+                ->sortByDesc('data_inicio')
+                ->first()
+            ?? $periodos->sortByDesc('data_inicio')->first();
+
+        return [$comPeriodo->where('periodo_letivo_id', $escolhido->id)->values(), $escolhido];
     }
 
     /**
@@ -244,9 +289,22 @@ class TermometroVagasService
             ];
         }
 
-        $temEsgotado = $filtradas->contains('nivel_escassez', 'esgotado');
-        $temCritico = $filtradas->contains('nivel_escassez', 'critico');
-        $temAlerta = $filtradas->contains('nivel_escassez', 'alerta');
+        // Séries com capacidade estimada (sem turma ou sem `vagas_maximas`) não sinalizam escassez: o número é suposição.
+        $confiaveis = $filtradas->reject(fn (array $serie): bool => $serie['capacidade_estimada']);
+
+        if ($confiaveis->isEmpty()) {
+            return [
+                'tem_escassez' => false,
+                'nivel_mais_critico' => 'disponivel',
+                'badge_cor' => 'gray',
+                'texto_destaque' => 'Capacidade não definida',
+                'series' => $filtradas->all(),
+            ];
+        }
+
+        $temEsgotado = $confiaveis->contains('nivel_escassez', 'esgotado');
+        $temCritico = $confiaveis->contains('nivel_escassez', 'critico');
+        $temAlerta = $confiaveis->contains('nivel_escassez', 'alerta');
 
         $nivelMaisCritico = match (true) {
             $temEsgotado => 'esgotado',
@@ -262,7 +320,7 @@ class TermometroVagasService
         };
 
         // Monta texto de destaque para exibição em cards e colunas
-        $primeiraSerie = $filtradas->sortByDesc(fn ($s) => $s['taxa_ocupacao'])->first();
+        $primeiraSerie = $confiaveis->sortByDesc(fn ($s) => $s['taxa_ocupacao'])->first();
         $icone = match ($nivelMaisCritico) {
             'esgotado' => '⛔',
             'critico' => '🔥',
@@ -283,26 +341,36 @@ class TermometroVagasService
 
     /**
      * Gera um bloco de texto com dados reais de vagas para enriquecer o contexto de IA do Copiloto e Dossiê.
+     *
+     * Só entram séries com capacidade conhecida (todas as turmas com `vagas_maximas` definido) e do período
+     * letivo de captação. Sem isso o modelo recebia "Restam apenas 25 vagas" de uma suposição, ou a ocupação
+     * de uma turma do ano em curso, e escrevia mensagens com urgência falsa para uma família.
      */
     public static function gerarPromptEscassez(Interessado $interessado): ?string
     {
         $status = self::obterStatusParaLead($interessado);
 
-        if (empty($status['series'])) {
+        $series = collect($status['series'])->reject(fn (array $serie): bool => $serie['capacidade_estimada']);
+
+        if ($series->isEmpty()) {
             return null;
         }
 
-        $linhas = [];
-        foreach ($status['series'] as $serie) {
-            $linhas[] = "- {$serie['serie_nome']}: {$serie['matriculas_ocupadas']}/{$serie['capacidade_total']} vagas ocupadas ({$serie['taxa_ocupacao']}% de ocupação) — Restam apenas {$serie['vagas_restantes']} vagas.";
-        }
+        $linhas = $series->map(function (array $serie): string {
+            $periodo = $serie['periodo_letivo_nome'] ? " (turmas de {$serie['periodo_letivo_nome']})" : '';
+            $restantes = in_array($serie['nivel_escassez'], [self::STATUS_ESGOTADO, self::STATUS_CRITICO, self::STATUS_ALERTA], true)
+                ? ($serie['vagas_restantes'] === 0 ? 'Não há vagas restantes.' : "Restam apenas {$serie['vagas_restantes']} vagas.")
+                : "{$serie['vagas_restantes']} vagas disponíveis.";
 
-        $detalhes = implode("\n", $linhas);
+            return "- {$serie['serie_nome']}{$periodo}: {$serie['matriculas_ocupadas']}/{$serie['capacidade_total']} vagas ocupadas ({$serie['taxa_ocupacao']}% de ocupação) — {$restantes}";
+        })->implode("\n");
+
+        $posicao = 'Posição em '.now()->format('d/m/Y').'.';
 
         if ($status['tem_escassez']) {
-            return "⚠️ URGÊNCIA REAL DE VAGAS NA ESCOLA (USE ISSO NA ABORDAGEM):\n{$detalhes}\nAtenção: As turmas pretendidas estão com alta procura e poucas vagas restantes. Use esse argumento autêntico com elegância e empatia para motivar os pais a agendarem a visita ou garantirem a vaga quanto antes.";
+            return "⚠️ URGÊNCIA REAL DE VAGAS NA ESCOLA ({$posicao} Cite só se fizer sentido na conversa, usando apenas estes números):\n{$linhas}\nAtenção: As turmas pretendidas estão com alta procura e poucas vagas restantes. Se mencionar, faça com elegância e empatia para ajudar os pais a decidirem a visita ou a vaga; não pressione, não invente prazo, desconto nem outro número de vagas.";
         }
 
-        return "📊 DISPONIBILIDADE DE VAGAS:\n{$detalhes}";
+        return "📊 DISPONIBILIDADE DE VAGAS ({$posicao}):\n{$linhas}\nNão há escassez: não use argumento de urgência.";
     }
 }

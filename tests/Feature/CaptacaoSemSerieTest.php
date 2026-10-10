@@ -41,6 +41,7 @@ class CaptacaoSemSerieTest extends TestCase
             'responsavel_nome' => 'Maria Responsável',
             'responsavel_telefone' => '11999990000',
             'responsavel_email' => 'maria.sem.serie@example.com',
+            'consentimento' => '1',
             // Nenhuma série informada — o formulário público sempre permitiu isso
             // (validação nullable), mas o banco exigia serie_id NOT NULL.
             'alunos' => [['nome' => 'João Aluno']],

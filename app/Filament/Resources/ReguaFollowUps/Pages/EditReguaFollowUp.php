@@ -51,7 +51,7 @@ class EditReguaFollowUp extends EditRecord
     {
         $html = '<div class="space-y-4">';
         $html .= '<p class="text-sm text-gray-600 dark:text-gray-300">Modifique os parâmetros do gatilho ou ajuste a redação da mensagem enviada para as famílias.</p>';
-        $html .= '<p class="text-xs text-gray-500">Alterações entrarão em vigor imediatamente na próxima execução diária agendada (às 08:00) ou nas execuções manuais do sistema.</p>';
+        $html .= '<p class="text-xs text-gray-500">Alterações entrarão em vigor na próxima execução agendada (a régua roda de hora em hora e cada regra sai a partir do seu horário de disparo) ou nas execuções manuais do sistema. Use {{DATA_VISITA}} em vez de "ontem": se a rotina atrasar, a mensagem ainda pode sair até 2 dias depois do evento.</p>';
         $html .= '</div>';
 
         return $html;

@@ -55,6 +55,7 @@ class CampanhaUtmCaptacaoTest extends TestCase
             'responsavel_nome' => 'Maria Responsável',
             'responsavel_telefone' => '11999990000',
             'responsavel_email' => 'maria@example.com',
+            'consentimento' => '1',
             'alunos' => [['nome' => 'João Aluno', 'serie_id' => $this->serie->id]],
         ], $extra);
     }

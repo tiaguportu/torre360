@@ -34,6 +34,44 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Régua de follow-up (`crm:executar-regua-follow-up`, roda de hora em hora)
+    |--------------------------------------------------------------------------
+    */
+    'regua' => [
+        // Gatilhos por data pós-evento (cadastro, visita realizada/faltou, contato atrasado) também valem
+        // para eventos de até N dias atrás que ainda não receberam a mensagem (agendador parado, deploy).
+        // Textos da régua que dizem "ontem" saem errados quando o envio atrasa: prefira {{DATA_VISITA}}.
+        'janela_recuperacao_dias' => (int) env('CRM_REGUA_JANELA_RECUPERACAO_DIAS', 2),
+
+        // Máximo de e-mails da régua por lead no mesmo dia (0 = sem limite). O excedente sai nos dias seguintes.
+        'max_emails_por_lead_dia' => (int) env('CRM_REGUA_MAX_EMAILS_POR_LEAD_DIA', 2),
+
+        // Falhas de envio (e-mail inválido, SMTP recusado) por regra e evento antes de desistir; uma tentativa por dia.
+        'max_tentativas_falha' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | LGPD
+    |--------------------------------------------------------------------------
+    */
+    'lgpd' => [
+        // Identifica o texto de consentimento do formulário público que a família aceitou (gravado com o aceite).
+        // Mude quando o texto mudar de significado, para saber quem aceitou qual versão.
+        'versao_consentimento' => '2026-10',
+
+        // Opcionais: mostrados no aviso do formulário público quando preenchidos. A escola define o texto da
+        // Política de Privacidade e o canal do titular (Encarregado/DPO); o sistema não escreve a política.
+        'url_politica_privacidade' => env('CRM_URL_POLITICA_PRIVACIDADE'),
+        'contato_privacidade' => env('CRM_CONTATO_PRIVACIDADE'),
+
+        // Rascunho de pré-matrícula (CPF, endereço e dados da família preenchidos no convite) é apagado
+        // após N dias sem atualização se o lead não virou matrícula. `crm:expurgar-rascunhos-pre-matricula`.
+        'retencao_rascunho_dias' => (int) env('CRM_RETENCAO_RASCUNHO_DIAS', 90),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Kanban (Funil de Vendas)
     |--------------------------------------------------------------------------
     */

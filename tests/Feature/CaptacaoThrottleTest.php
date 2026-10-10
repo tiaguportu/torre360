@@ -38,6 +38,7 @@ class CaptacaoThrottleTest extends TestCase
             'tipo_preenchimento' => 'proprio',
             'responsavel_telefone' => '11999998888',
             'responsavel_email' => 'teste.throttle@example.com',
+            'consentimento' => '1',
             'alunos' => [
                 [
                     'nome' => 'Aluno Throttle',

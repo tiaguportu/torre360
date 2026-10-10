@@ -39,6 +39,10 @@ class StoreCaptacaoInteressadoRequest extends FormRequest
             // Extras
             'observacoes' => ['nullable', 'string', 'max:2000'],
             'como_conheceu' => ['nullable', 'exists:origem_interessado,id'],
+
+            // LGPD: o aceite do tratamento dos dados (inclusive de menores) é obrigatório e fica registrado na pessoa.
+            'consentimento' => ['accepted'],
+
             'recaptcha_token' => [new RecaptchaV3($this->ip())],
         ];
     }
@@ -56,6 +60,7 @@ class StoreCaptacaoInteressadoRequest extends FormRequest
             'responsavel_email.email' => 'Informe um e-mail válido.',
             'alunos.required' => 'Informe os dados de ao menos um aluno.',
             'alunos.*.nome.required' => 'Informe o nome completo do aluno.',
+            'consentimento.accepted' => 'Para enviar, é preciso autorizar o uso dos dados para o atendimento de admissão.',
         ];
     }
 }

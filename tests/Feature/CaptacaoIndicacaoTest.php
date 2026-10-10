@@ -62,6 +62,7 @@ class CaptacaoIndicacaoTest extends TestCase
             'responsavel_nome' => 'Carla Amiga',
             'responsavel_telefone' => '(11) 98888-2222',
             'responsavel_email' => 'carla.amiga@example.com',
+            'consentimento' => '1',
             'alunos' => [['nome' => 'Lucas Amigo', 'unidade_id' => $unidade->id]],
         ], $extra);
     }

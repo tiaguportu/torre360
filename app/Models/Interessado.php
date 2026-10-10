@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ArrayCriptografado;
 use App\Enums\SituacaoDocumento;
 use App\Enums\StatusVisitaInteressado;
 use App\Services\ContadoresCrm;
@@ -47,7 +48,7 @@ class Interessado extends Model
         'Outro' => 'Outro motivo',
     ];
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula'];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
 
     protected static function booted(): void
     {
@@ -88,7 +89,9 @@ class Interessado extends Model
             'token_convite_expira_em' => 'datetime',
             'token_convite_usado_em' => 'datetime',
             'token_documentos_expira_em' => 'datetime',
-            'dados_pre_matricula' => 'array',
+            // CPF, endereço e dados da família: guardados cifrados (LGPD); ver ArrayCriptografado.
+            'dados_pre_matricula' => ArrayCriptografado::class,
+            'dados_pre_matricula_em' => 'datetime',
         ];
     }
 

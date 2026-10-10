@@ -141,6 +141,7 @@ class InteressadoMatriculaService
         // Minimização de dados (LGPD): a pré-matrícula já virou cadastro, o rascunho não é mais necessário.
         if ($interessado->dados_pre_matricula !== null) {
             $atualizacoes['dados_pre_matricula'] = null;
+            $atualizacoes['dados_pre_matricula_em'] = null;
         }
 
         if ($atualizacoes !== []) {

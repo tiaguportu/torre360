@@ -7,6 +7,7 @@ use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\Matricula;
 use App\Models\OrigemInteressado;
+use App\Models\PeriodoLetivo;
 use App\Models\Serie;
 use App\Models\StatusInteressado;
 use App\Models\Turma;
@@ -197,6 +198,167 @@ class TermometroVagasTest extends TestCase
         $this->assertSame(TermometroVagasService::VAGAS_PADRAO_TURMA, $dados['vagas_restantes']);
         $this->assertEquals(0.0, $dados['taxa_ocupacao']);
         $this->assertSame(TermometroVagasService::STATUS_DISPONIVEL, $dados['nivel_escassez']);
+    }
+
+    private function periodo(string $nome, int $inicioEmDias, int $fimEmDias): PeriodoLetivo
+    {
+        return PeriodoLetivo::factory()->create([
+            'nome' => $nome,
+            'data_inicio' => today()->addDays($inicioEmDias),
+            'data_fim' => today()->addDays($fimEmDias),
+        ]);
+    }
+
+    private function matricular(Turma $turma, int $quantidade): void
+    {
+        for ($i = 0; $i < $quantidade; $i++) {
+            Matricula::factory()->create(['turma_id' => $turma->id, 'situacao' => 'ativa', 'data_desativacao' => null]);
+        }
+    }
+
+    private function leadComDependenteNa(Serie $serie): Interessado
+    {
+        $lead = Interessado::factory()->create();
+        InteressadoDependente::create(['interessado_id' => $lead->id, 'nome_crianca' => 'Filho', 'serie_id' => $serie->id]);
+
+        return $lead;
+    }
+
+    public function test_so_conta_as_turmas_do_proximo_periodo_quando_ele_ja_tem_turma_aberta(): void
+    {
+        $serie = $this->criarSerie('5º Ano');
+        $atual = $this->periodo('Em curso', -200, 60);
+        $proximo = $this->periodo('Próximo', 90, 450);
+
+        // Turma do período em curso, lotada, e turma do próximo período: as duas "Ativa" (nenhuma é "Planejada").
+        $cheia = Turma::factory()->create(['serie_id' => $serie->id, 'periodo_letivo_id' => $atual->id, 'vagas_maximas' => 10]);
+        $this->matricular($cheia, 10);
+        $nova = Turma::factory()->create(['serie_id' => $serie->id, 'periodo_letivo_id' => $proximo->id, 'vagas_maximas' => 20]);
+        $this->matricular($nova, 2);
+
+        $dados = TermometroVagasService::calcularVagasPorSerie($serie->id);
+
+        $this->assertSame(20, $dados['capacidade_total']);
+        $this->assertSame(18, $dados['vagas_restantes']);
+        $this->assertSame($proximo->id, $dados['periodo_letivo_id']);
+        $this->assertSame('Próximo', $dados['periodo_letivo_nome']);
+        $this->assertSame(TermometroVagasService::STATUS_DISPONIVEL, $dados['nivel_escassez']);
+    }
+
+    public function test_sem_periodo_futuro_usa_o_periodo_em_curso(): void
+    {
+        $serie = $this->criarSerie('6º Ano');
+        $encerrado = $this->periodo('Encerrado', -400, -30);
+        $emCurso = $this->periodo('Em curso', -100, 200);
+
+        $velha = Turma::factory()->create(['serie_id' => $serie->id, 'periodo_letivo_id' => $encerrado->id, 'vagas_maximas' => 30]);
+        $this->matricular($velha, 1);
+        $atual = Turma::factory()->create(['serie_id' => $serie->id, 'periodo_letivo_id' => $emCurso->id, 'vagas_maximas' => 10]);
+        $this->matricular($atual, 8);
+
+        $dados = TermometroVagasService::calcularVagasPorSerie($serie->id);
+
+        $this->assertSame($emCurso->id, $dados['periodo_letivo_id']);
+        $this->assertSame(10, $dados['capacidade_total']);
+        $this->assertSame(2, $dados['vagas_restantes']);
+    }
+
+    public function test_capacidade_e_marcada_como_estimada_sem_turma_ou_sem_vagas_maximas(): void
+    {
+        $semTurma = $this->criarSerie('Sem Turma');
+        $this->assertTrue(TermometroVagasService::calcularVagasPorSerie($semTurma->id)['capacidade_estimada']);
+
+        $semVagas = $this->criarSerie('Sem Vagas');
+        Turma::factory()->create(['serie_id' => $semVagas->id, 'vagas_maximas' => null]);
+        $this->assertTrue(TermometroVagasService::calcularVagasPorSerie($semVagas->id)['capacidade_estimada']);
+
+        $definida = $this->criarSerie('Definida');
+        Turma::factory()->create(['serie_id' => $definida->id, 'vagas_maximas' => 12]);
+        $this->assertFalse(TermometroVagasService::calcularVagasPorSerie($definida->id)['capacidade_estimada']);
+    }
+
+    public function test_capacidade_estimada_nao_gera_escassez_nem_prompt_de_urgencia(): void
+    {
+        $serie = $this->criarSerie('Infantil 3');
+        $turma = Turma::factory()->create(['serie_id' => $serie->id, 'vagas_maximas' => null]);
+        // 24 matrículas sobre o padrão de 25 pareceria "última vaga" sem que a escola tenha definido a capacidade.
+        $this->matricular($turma, 24);
+        $lead = $this->leadComDependenteNa($serie);
+
+        $status = TermometroVagasService::obterStatusParaLead($lead);
+
+        $this->assertFalse($status['tem_escassez']);
+        $this->assertSame('gray', $status['badge_cor']);
+        $this->assertSame('Capacidade não definida', $status['texto_destaque']);
+        $this->assertNull(TermometroVagasService::gerarPromptEscassez($lead), 'Sem capacidade definida não há número confiável para o prompt.');
+    }
+
+    public function test_prompt_traz_periodo_e_data_e_orienta_a_nao_inventar_numeros(): void
+    {
+        $serie = $this->criarSerie('4º Ano');
+        $proximo = $this->periodo('Ano Letivo 2027', 60, 420);
+        $turma = Turma::factory()->create(['serie_id' => $serie->id, 'periodo_letivo_id' => $proximo->id, 'vagas_maximas' => 10]);
+        $this->matricular($turma, 9);
+
+        $prompt = TermometroVagasService::gerarPromptEscassez($this->leadComDependenteNa($serie));
+
+        $this->assertStringContainsString('turmas de Ano Letivo 2027', $prompt);
+        $this->assertStringContainsString('Posição em '.now()->format('d/m/Y'), $prompt);
+        $this->assertStringContainsString('Restam apenas 1 vagas', $prompt);
+        $this->assertStringContainsString('não invente prazo, desconto nem outro número de vagas', $prompt);
+        $this->assertStringNotContainsString('USE ISSO NA ABORDAGEM', $prompt);
+    }
+
+    public function test_prompt_sem_escassez_nao_diz_restam_apenas_nem_estimula_urgencia(): void
+    {
+        $serie = $this->criarSerie('7º Ano');
+        $turma = Turma::factory()->create(['serie_id' => $serie->id, 'vagas_maximas' => 30]);
+        $this->matricular($turma, 3);
+
+        $prompt = TermometroVagasService::gerarPromptEscassez($this->leadComDependenteNa($serie));
+
+        $this->assertStringContainsString('27 vagas disponíveis.', $prompt);
+        $this->assertStringNotContainsString('Restam apenas', $prompt);
+        $this->assertStringNotContainsString('URGÊNCIA', $prompt);
+        $this->assertStringContainsString('não use argumento de urgência', $prompt);
+    }
+
+    public function test_modal_do_termometro_mostra_periodo_e_marca_capacidade_estimada(): void
+    {
+        $comPeriodo = $this->criarSerie('8º Ano');
+        $periodo = $this->periodo('Ano Letivo 2027', 60, 420);
+        Turma::factory()->create(['serie_id' => $comPeriodo->id, 'periodo_letivo_id' => $periodo->id, 'vagas_maximas' => 20]);
+        $estimada = $this->criarSerie('9º Ano');
+
+        $html = view('filament.crm.modal-termometro-vagas')->render();
+
+        $this->assertStringContainsString('turmas de Ano Letivo 2027', $html);
+        $this->assertSame(1, preg_match_all('#>\s*capacidade estimada\s*</span>#', $html), 'Só a série sem turma deve levar o selo de capacidade estimada.');
+        $this->assertStringContainsString($estimada->nome, $html);
+    }
+
+    public function test_kanban_nao_mostra_alerta_de_escassez_para_capacidade_estimada(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+        $status = StatusInteressado::create(['nome' => 'Novo', 'ordem' => 1]);
+        $origem = OrigemInteressado::create(['nome' => 'Instagram']);
+
+        $serie = $this->criarSerie('Série Estimada');
+        $turma = Turma::factory()->create(['serie_id' => $serie->id, 'vagas_maximas' => null]);
+        $this->matricular($turma, 24);
+
+        $lead = $this->leadComDependenteNa($serie);
+        $lead->update(['status_interessado_id' => $status->id, 'origem_interessado_id' => $origem->id, 'usuario_id' => $admin->id]);
+
+        $this->actingAs($admin)->get('/admin/interessados/kanban')
+            ->assertOk()
+            ->assertSee('Série Estimada')
+            // O selo do card é "(🔥 N vagas)" / "(⛔ 0 vagas)" / "(🟡 N restam)"; a ajuda da página cita 🔥 em outro contexto.
+            ->assertDontSee('(🔥')
+            ->assertDontSee('(⛔')
+            ->assertDontSee('(🟡');
     }
 
     public function test_kanban_renderiza_com_sucesso_com_alertas_de_vagas(): void

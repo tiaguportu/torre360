@@ -94,7 +94,7 @@ class ReguaFollowUpTest extends TestCase
 
         $this->assertEquals(1, $res['total_notificacoes_enviadas']);
 
-        Mail::assertQueued(MensagemGenericaMail::class, function (MensagemGenericaMail $mail) use ($lead) {
+        Mail::assertSent(MensagemGenericaMail::class, function (MensagemGenericaMail $mail) use ($lead) {
             return $mail->hasTo($lead->pessoa->email)
                 && str_contains($mail->assunto, 'Maria Silva')
                 && str_contains($mail->corpoHtml, '14:30');
@@ -142,12 +142,12 @@ class ReguaFollowUpTest extends TestCase
         // Primeira execução
         $res1 = $service->processarReguaDiaria(Carbon::today());
         $this->assertEquals(1, $res1['total_notificacoes_enviadas']);
-        Mail::assertQueuedCount(1);
+        Mail::assertSentCount(1);
 
         // Segunda execução na mesma data
         $res2 = $service->processarReguaDiaria(Carbon::today());
         $this->assertEquals(0, $res2['total_notificacoes_enviadas']);
-        Mail::assertQueuedCount(1); // Continua sendo 1
+        Mail::assertSentCount(1); // Continua sendo 1
     }
 
     public function test_regua_respeita_opt_out_lgpd(): void
@@ -213,7 +213,7 @@ class ReguaFollowUpTest extends TestCase
         $res = $service->processarReguaDiaria(Carbon::today());
 
         $this->assertEquals(1, $res['total_notificacoes_enviadas']);
-        Mail::assertQueued(MensagemGenericaMail::class);
+        Mail::assertSent(MensagemGenericaMail::class);
 
         $this->assertDatabaseHas('regua_follow_up_logs', [
             'regua_follow_up_id' => $regra->id,
