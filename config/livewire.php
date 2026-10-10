@@ -130,7 +130,10 @@ return [
 
     'temporary_file_upload' => [
         'disk' => env('LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK'), // Example: 'local', 's3'             | Default: 'default'
-        'rules' => null,                                      // Example: ['file', 'mimes:png,jpg'] | Default: ['required', 'file', 'max:12288'] (12MB)
+        // 30 MB (o padrão é 12 MB): gate do upload temporário, anterior à validação de cada campo (que segue com o seu
+        // próprio `maxSize`). Serve ao .zip de conversa do WhatsApp da importação de lead por IA
+        // (`ImportarLeadIaAction::ZIP_KB_MAXIMOS`); o PHP também precisa permitir (`upload_max_filesize` e `post_max_size`).
+        'rules' => ['required', 'file', 'max:30720'],
         'directory' => null,                                  // Example: 'tmp'                     | Default: 'livewire-tmp'
         'middleware' => null,                                 // Example: 'throttle:5,1'            | Default: 'throttle:60,1'
         'preview_mimes' => [                                  // Supported file types for temporary pre-signed file URLs...

@@ -320,8 +320,33 @@ IA é texto livre de terceiros e só vira cadastro depois de validado:
   está preenchido é sobrescrito e não nasce segundo lead; lead encerrado ganha um lead novo.
 - **Transação:** pessoa, lead, alunos e histórico entram juntos ou nenhum.
 - **Prompt:** lista as origens e séries cadastradas para a IA devolver nomes existentes e manda tratar o conteúdo
-  recebido como dado, ignorando instruções escritas nele.
+  recebido como dado, ignorando instruções escritas nele (texto, texto legível nas imagens e **fala nos áudios**).
 - Testes: `ImportacaoLeadIaTest`, `GeminiLeadExtractionTest`.
+
+#### Conversa exportada do WhatsApp (.zip) — `ConversaWhatsappZipService`
+
+A ação aceita o `.zip` de "Exportar conversa" do WhatsApp (Android: `Conversa do WhatsApp com …​.txt`; iPhone:
+`_chat.txt`), com ou sem mídia, sozinho ou somado ao texto colado e ao print.
+
+- **Leitura defensiva** (o arquivo é de terceiros): nenhum nome de entrada vira caminho em disco (as mídias são gravadas
+  como `audio-01.opus`, `imagem-01.jpg`… em `temp-lead-zip-midias/<uuid>`, o que elimina zip-slip); cada leitura tem teto
+  de bytes pelo que é de fato lido, não pelo tamanho declarado (zip bomb); o tipo da mídia vem do **conteúdo**
+  (`mime_content_type`), não da extensão; `__MACOSX`, `._*`, vídeos, documentos e figurinhas são ignorados.
+- **Texto:** UTF-8 sem BOM, sem as marcas de direção (U+200E…) do WhatsApp; acima de 120 mil caracteres vira começo + fim
+  (com aviso). O cabeçalho com o nome do arquivo ajuda a IA a achar o contato do outro lado.
+- **Mídias:** na ordem em que o nome do arquivo aparece na conversa (`PTT-…opus (arquivo anexado)` / `<anexo: …>`), até
+  `MAX_AUDIOS` (10), `MAX_IMAGENS` (10) e `BYTES_MAXIMOS_MIDIAS` (14 MB, descontado o print, porque a requisição inteira ao
+  Gemini é limitada a 20 MB com o base64). O que passa dos limites ou tem formato sem suporte vira aviso na notificação.
+- **Gemini:** `GeminiAgentService::extrairLead(..., array $midias)` envia cada mídia rotulada com o nome higienizado do
+  arquivo, depois do texto; com áudio o timeout por tentativa sobe para 120 s (como no resumo de conversa) e a ação pede
+  `set_time_limit(180)`. O prompt passou a dizer que o atendente da escola nunca é o lead e a usar a data/hora da última
+  mensagem como `data_contato` quando o texto for uma conversa do WhatsApp (vale também para texto colado).
+- **LGPD/retenção:** `.zip`, áudios e imagens são apagados no `finally` da ação; só o que a IA extrai (relato, dados
+  cadastrais) entra no lead, como já era com texto e print. O texto bruto da conversa **não** é gravado.
+- **Upload:** o campo aceita até 30 MB (`ImportarLeadIaAction::ZIP_KB_MAXIMOS`). O gate de upload temporário do Livewire
+  (`config/livewire.php`, antes no padrão de 12 MB) foi elevado para 30 MB; `upload_max_filesize` e `post_max_size` do
+  PHP do servidor precisam ser ≥ 30 MB.
+- Testes: `ImportacaoLeadWhatsappZipTest`.
 
 ### 11.3 Régua de follow-up (item 10) — `ReguaFollowUpService`
 

@@ -208,6 +208,10 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
 1. **Onde Acessar:** Clique no botão de destaque **Importar Lead com IA** (ícone ✨ `sparkles`) disponível no topo da Listagem de Interessados, no Funil Kanban e na tela de Cadastro de Novo Lead.
 2. **Como Usar:** 
    - **Prints / Capturas de Tela:** Você pode anexar diretamente uma imagem com o print da conversa (WhatsApp, Direct do Instagram, print de e-mail ou foto de anotação). O sistema analisa a imagem e extrai os dados visuais.
+   - **Conversa exportada do WhatsApp (.zip):** no WhatsApp, abra a conversa e use **⋮ → Mais → Exportar conversa → Incluir mídia**; anexe o `.zip` gerado no campo **Conversa exportada do WhatsApp (.zip)**. A IA lê o texto da conversa e também **ouve os áudios** e **analisa as imagens** que estão dentro do arquivo, na ordem em que aparecem na conversa. Funciona com a exportação do Android e do iPhone, com ou sem mídia.
+     - **Limites:** até **10 áudios**, **10 imagens** e cerca de **14 MB** de mídia por importação (os primeiros da conversa entram; o que passar disso fica de fora e a notificação avisa). Vídeos, documentos e figurinhas são ignorados. O `.zip` pode ter até **30 MB**. Conversas muito longas são lidas pelo começo e pelo fim.
+     - **Nada fica guardado:** o `.zip`, os áudios e as imagens são apagados assim que a análise termina; só o resumo extraído pela IA vai para o histórico do lead.
+     - Se já houver um print ou texto colado, tudo é analisado em conjunto (o texto colado vira observação do consultor).
    - **Mensagem Bruta / Texto:** Você pode colar qualquer mensagem bruta recebida de clientes ou adicionar observações textuais complementares à imagem.
    - Selecione o consultor responsável e a origem fallback (se a IA não inferir).
    - Clique em **Analisar e Criar Lead**.
