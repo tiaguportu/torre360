@@ -7,6 +7,7 @@ use App\Models\Contrato;
 use App\Models\Pessoa;
 use App\Models\TipoVinculo;
 use App\Models\Unidade;
+use App\Support\BladeTemplateSanitizer;
 use App\Support\HtmlSanitizer;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
@@ -34,6 +35,9 @@ class ContractTemplateService
 
         // Pré-processa o template: resolve escapes do editor e compila as macros customizadas {{!! variavel !!}}
         $html = $this->preprocessBlade($html, $contrato, $aluno, $unidade, $tiposVinculo);
+
+        // Sanitiza o template contra Server-Side Template Injection (SSTI / RCE) antes da compilação Blade
+        $html = BladeTemplateSanitizer::clean($html);
 
         // Gera as variáveis de fallback clássicas para manter compatibilidade retroativa com templates antigos
         $tabelaFaturas = $this->generateFaturasTableFallback($contrato);
@@ -145,8 +149,10 @@ class ContractTemplateService
 
             if ($config && ! empty($config->valor)) {
                 try {
-                    // Renderiza o template da macro customizada usando Blade
-                    return Blade::render($config->valor, [
+                    // Sanitiza e renderiza o template da macro customizada usando Blade
+                    $macroTemplate = BladeTemplateSanitizer::clean((string) $config->valor);
+
+                    return Blade::render($macroTemplate, [
                         'contrato' => $contrato,
                         'matricula' => $contrato->matricula,
                         'aluno' => $aluno,

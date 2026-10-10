@@ -2966,6 +2966,16 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 1. **Filtragem de Contas Inativas:** O canal de envio de notificações móveis (`FcmCanal` e `FcmChannel`) filtra exclusivamente os aparelhos vinculados a usuários com contas ativas no sistema.
 2. Contas suspensas ou desligadas deixam de receber comunicados, notas, cobranças ou avisos da escola no celular imediatamente.
 
+### 54.5 Sanitização e Blindagem de Templates de Contrato contra SSTI & RCE
+1. **Neutralização de Injeção de Código (`BladeTemplateSanitizer`):** Os modelos de contratos editáveis e macros dinâmicas passam obrigatoriamente por sanitização defensiva antes da compilação pelo motor Blade.
+2. **Bloqueio de Comandos de Sistema Operacional e Leitura de Arquivos:** São sumariamente neutralizados blocos `@php ... @endphp`, tags `<?php`, diretivas de inclusão arbitrária (`@include`, `@inject`, `@use`) e quaisquer invocações a funções de sistema (`exec`, `system`, `passthru`, `file_get_contents`, `unlink`, etc.) ou fachadas estáticas (`Artisan::`, `DB::`, `Storage::`).
+3. Variáveis legítimas do contrato (como nome do aluno, número do contrato, faturas, assinaturas e formatações financeiras) continuam operando normalmente com segurança garantida.
+
+### 54.6 Proteção Semântica e Delimitação contra Prompt Injection em Inteligência Artificial
+1. **Delimitação Estruturada de Dados Externos:** Todas as entradas fornecidas por operadores, candidatos e famílias no Chat do Assistente e na Extração de Leads por IA (`GeminiAgentService` e `CrmIaVendasService`) são isoladas dentro de tags semânticas rígidas (`<solicitacao_usuario>`, `<dados_brutos_lead>`), com neutralização de tentativas de fechamento precoce de tags (*context escaping*).
+2. **Instruções de Sistema Anti-Jailbreak e Anti-Manipulação:** Os modelos de IA operam com diretrizes mandatórias de recusa a comandos embutidos de terceiros que peçam desvio de regras (*prompt injection* / *jailbreak*, tentativas de revelar prompts de sistema ou requisições de comandos fora de escopo).
+3. **Segurança em OCR de Documentos:** A validação inteligente de imagens (`DocumentoIaService`) possui barreira ativa contra ataques adversariais visuais e instruções manuscritas no documento, avaliando estritamente a autenticidade técnica dos dados.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
