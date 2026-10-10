@@ -12,7 +12,8 @@ class HistoricoEscolarPDFController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isStaff()) {
+        // Histórico escolar tem dados pessoais e notas de todo o percurso: equipe administrativa ou permissão específica.
+        if (! $user->isEquipeAdministrativa() && ! $user->can('View:HistoricoEscolar')) {
             $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
             abort_unless($idsAcessiveis->contains($record->pessoa_id), 403, 'Acesso não autorizado a este documento.');
         }
@@ -28,7 +29,8 @@ class HistoricoEscolarPDFController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isStaff()) {
+        // Histórico escolar tem dados pessoais e notas de todo o percurso: equipe administrativa ou permissão específica.
+        if (! $user->isEquipeAdministrativa() && ! $user->can('View:HistoricoEscolar')) {
             $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
             abort_unless($idsAcessiveis->contains($record->pessoa_id), 403, 'Acesso não autorizado a este documento.');
         }

@@ -8,16 +8,17 @@ namespace App\Services;
  * Assinafy — cada provedor manda a assinatura num header próprio, mas o cálculo é o
  * mesmo.
  *
- * Quando nenhum segredo está configurado, a validação é pulada (retorna true) para não
- * quebrar um webhook que ainda não teve o segredo configurado — quem chama deve logar um
- * aviso nesse caso, para o time perceber e configurar antes de ir para produção.
+ * Sem segredo configurado a assinatura não pode ser conferida, então a validação FALHA (retorna
+ * false): um endpoint aberto aceitaria qualquer requisição como se viesse do provedor. Quem chama
+ * decide o que fazer sem segredo (o webhook de pagamento responde 503; o do Assinafy só valida
+ * quando o segredo e a assinatura existem, porque confirma o documento na API do provedor).
  */
 class WebhookSignatureValidator
 {
     public function valida(?string $secret, string $payloadBruto, ?string $assinaturaRecebida): bool
     {
-        if (! $secret) {
-            return true;
+        if (blank($secret)) {
+            return false;
         }
 
         if (! $assinaturaRecebida) {

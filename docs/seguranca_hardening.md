@@ -104,6 +104,27 @@ O fluxo não exige login e cria pessoas, matrícula, contrato e conta de acesso,
 
 `CSP_MODO` (`report-only` | `enforce` | `off`), `CSP_EXTRA_SCRIPT_SRC` / `_STYLE_SRC` / `_IMG_SRC` / `_FONT_SRC` / `_CONNECT_SRC` / `_FRAME_SRC` (origens separadas por vírgula), `MATRICULA_ONLINE_MAX_TENTATIVAS`, `MATRICULA_ONLINE_JANELA_MINUTOS`, `MATRICULA_ONLINE_LINK_SUCESSO_HORAS`.
 
+## Terceira rodada (2026-10-09): acesso da equipe a documentos e webhook de pagamento
+
+Testes: `AcessoDocumentosEquipeTest`, `PagamentoWebhookTest` e `GatewayPagamentoTest`.
+
+### "Ser da equipe" deixou de bastar para dados pessoais
+
+`User::isStaff()` inclui o **professor**, e várias telas usavam só isso para liberar documentos pessoais, contratos, exportações e CRM. Um professor podia abrir o RG/CPF de qualquer aluno, baixar qualquer contrato (CPF, endereço, valores), gerar o histórico escolar de qualquer um, abrir os dossiês do CRM e, em `/visualizar-documento/`, ler arquivos como `filament_exports/{id}/...` (ids sequenciais, CSV com dados de todos), extratos bancários e áudios do CRM. Isso fere o princípio da necessidade (LGPD art. 6º, III).
+
+- Novo `User::isEquipeAdministrativa()` (`super_admin`, `admin`, `secretaria`, `coordenador`). `isStaff()` continua existindo para o acesso amplo ao painel.
+- **Documentos pessoais** (`DocumentoInserido`), **documentos emitidos** (`SolicitacaoDocumento`), **contratos** (`Contrato`), **histórico escolar** (`HistoricoEscolarPDFController`) e **dossiê do CRM** (`DossieIaPdfController`): equipe administrativa ou a permissão específica do Shield (`View:DocumentoInserido`, `View:SolicitacaoDocumento`, `View:Contrato`, `View:HistoricoEscolar`, `View:Interessado`); demais, só a própria família.
+- `Matricula::isAccessibleByFamilia()` separa o vínculo familiar do papel na equipe, para que documentos e anexos não herdem o acesso amplo do professor via `Matricula::isAccessibleBy()` (que segue liberando o professor para boletim e listas de turma).
+- `VisualizarDocumentoController`: documentos sem registro, anexos de atendimento e demais arquivos só para a equipe administrativa (anexos de atendimento também para quem tem `View:AtendimentoChamado`). O professor abre apenas as pastas `pessoas_fotos/`, `materiais-aula/`, `planos-aula/`, `rotina-diaria/`, `anotacoes-os/` e `ordem-servicos/` (constante `PASTAS_LIBERADAS_AO_PROFESSOR`). **Se uma pasta nova de arquivos precisar ser aberta por professores, acrescente-a ali.**
+- **Efeito na operação:** professores perdem o que nunca deveriam ter tido. Se algum precisar (ex.: coordenação pedagógica atuando como professor), conceda a permissão específica em *Papéis e Permissões*.
+- Limite conhecido: o professor ainda vê matrícula/boletim de qualquer aluno (não há escopo por turma no modelo atual); restringir por turma é uma evolução.
+
+### Webhook de pagamento falha fechado
+
+`WebhookSignatureValidator::valida()` retornava `true` sem segredo configurado, e `PAGAMENTOS_WEBHOOK_SECRET` não existia no `.env`: qualquer um que soubesse um `gateway_id` dava baixa em fatura com valor e data à escolha. Agora o validador devolve `false` sem segredo e `PagamentoWebhookController` responde **503** (log de aviso) enquanto o segredo não estiver definido; assinatura ausente ou inválida responde 401. O log deixou de gravar o payload inteiro (só `gateway_id` e `evento`). O webhook do Assinafy não muda (só valida quando o segredo e a assinatura existem, e confirma o documento na API do provedor). O botão *Simular Pagamento (Dev)* não usa o webhook.
+
+**Antes de ligar um gateway real:** definir `PAGAMENTOS_WEBHOOK_SECRET` e configurar o mesmo valor no gateway.
+
 ## Pendências conhecidas
 
 - **Autenticação de dois fatores** para contas administrativas: adiada por decisão do produto para agilizar o desenvolvimento. Plano pronto em [melhoria_mfa_painel.md](melhoria_mfa_painel.md).
@@ -111,4 +132,4 @@ O fluxo não exige login e cria pessoas, matrícula, contrato e conta de acesso,
 - **Rodar `php artisan seguranca:higienizar-credenciais`** em cada ambiente (ver "Credenciais em e-mail, fila e log").
 - Deploy em ambiente sem Composer/shell: ver nota no `.gitignore` sobre comitar `vendor/` quando necessário.
 - **Rodar `php artisan migrate` em produção** para aplicar o rename de `coordenadores`/`tributacao_cursos` (ver seção acima) — sem isso, `Coordenador`/`TributacaoCurso` não funcionam em produção.
-- **Demais achados da revisão de 2026-10-08** (acesso de professores a todos os documentos, webhook de pagamento sem segredo, dados de saúde sem criptografia, ambiente/hospedagem, privacidade e retenção, sessão de 1 ano, tela de `git pull`, app mobile e outros): ver [seguranca_pendencias.md](seguranca_pendencias.md).
+- **Demais achados da revisão de 2026-10-08** (dados de saúde sem criptografia, ambiente/hospedagem, privacidade e retenção, sessão de 1 ano, tela de `git pull`, app mobile e outros): ver [seguranca_pendencias.md](seguranca_pendencias.md).

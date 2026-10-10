@@ -15,6 +15,15 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class VisualizarDocumentoController extends Controller
 {
     /**
+     * Pastas de arquivos que o professor pode abrir por ser da equipe: fotos de alunos (listas de turma), materiais
+     * e planos de aula e registros do dia a dia da turma. Todo o resto (documentos pessoais, contratos, extratos,
+     * exportações, áudios e prints do CRM...) é só da equipe administrativa ou de quem tem a permissão específica.
+     */
+    private const PASTAS_LIBERADAS_AO_PROFESSOR = [
+        'pessoas_fotos/', 'materiais-aula/', 'planos-aula/', 'rotina-diaria/', 'anotacoes-os/', 'ordem-servicos/',
+    ];
+
+    /**
      * Serve um arquivo protegido do disco local com autorização e sanitização contra path traversal.
      */
     public function __invoke(Request $request, string $path): Response
@@ -50,7 +59,7 @@ class VisualizarDocumentoController extends Controller
             $solicitacao = SolicitacaoDocumento::where('arquivo_path', $path)->first();
             if ($solicitacao && $solicitacao->isAccessibleBy($user)) {
                 $autorizado = true;
-            } elseif (! $solicitacao && $user->isStaff()) {
+            } elseif (! $solicitacao && $user->isEquipeAdministrativa()) {
                 $autorizado = true;
             }
         }
@@ -59,27 +68,29 @@ class VisualizarDocumentoController extends Controller
             $documentoInserido = DocumentoInserido::where('arquivo_path', $path)->first();
             if ($documentoInserido && $documentoInserido->isAccessibleBy($user)) {
                 $autorizado = true;
-            } elseif (! $documentoInserido && $user->isStaff()) {
+            } elseif (! $documentoInserido && $user->isEquipeAdministrativa()) {
                 $autorizado = true;
             }
         }
         // Contexto C: Anexos de chamados de atendimento
         elseif (str_starts_with($path, 'atendimentos/anexos/')) {
-            if ($user->isStaff()) {
+            if ($user->isEquipeAdministrativa() || $user->can('View:AtendimentoChamado')) {
                 $autorizado = true;
             } else {
                 $mensagem = AtendimentoMensagem::where('anexo_path', $path)->with('chamado.matricula')->first();
                 if ($mensagem && $mensagem->chamado) {
                     $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
                     $chamado = $mensagem->chamado;
-                    if ($idsAcessiveis->contains($chamado->solicitante_id) || ($chamado->matricula && $chamado->matricula->isAccessibleBy($user))) {
+                    if ($idsAcessiveis->contains($chamado->solicitante_id) || ($chamado->matricula && $chamado->matricula->isAccessibleByFamilia($user))) {
                         $autorizado = true;
                     }
                 }
             }
         }
-        // Contexto D: Arquivos gerais de staff
-        elseif ($user->isStaff()) {
+        // Contexto D: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
+        elseif ($user->isEquipeAdministrativa()) {
+            $autorizado = true;
+        } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
             $autorizado = true;
         }
 
@@ -88,6 +99,17 @@ class VisualizarDocumentoController extends Controller
         }
 
         return $this->servir($disk->path($path));
+    }
+
+    private function pastaLiberadaAoProfessor(string $path): bool
+    {
+        foreach (self::PASTAS_LIBERADAS_AO_PROFESSOR as $pasta) {
+            if (str_starts_with($path, $pasta)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

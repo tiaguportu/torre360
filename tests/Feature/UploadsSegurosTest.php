@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\ContractTemplateService;
 use App\Support\TiposArquivo;
-use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -27,7 +27,8 @@ class UploadsSegurosTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(RolesSeeder::class);
+        // Só o papel usado: o RolesSeeder completo cria centenas de permissões e deixa cada teste lento.
+        Role::firstOrCreate(['name' => 'secretaria', 'guard_name' => 'web']);
         Storage::fake('local');
 
         $secretaria = User::create(['name' => 'Secretaria', 'email' => 'secretaria@teste.com', 'password' => bcrypt('x')]);

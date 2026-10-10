@@ -26,26 +26,30 @@ class PagamentoWebhookController extends Controller
         $secret = config('pagamentos.webhook_secret');
         $assinatura = $request->header('X-Pagamento-Signature');
 
+        // Sem segredo o endpoint não distingue o gateway de qualquer pessoa na internet: quem soubesse um gateway_id daria
+        // baixa em fatura com o valor e a data que quisesse. Falha fechado até o segredo ser definido.
+        if (blank($secret)) {
+            Log::warning('Webhook de pagamento recusado: PAGAMENTOS_WEBHOOK_SECRET não está configurado.', ['ip' => $request->ip()]);
+
+            return response()->json(['message' => 'webhook não configurado'], 503);
+        }
+
         if (! $validator->valida($secret, $request->getContent(), $assinatura)) {
             Log::warning('Webhook de pagamento: assinatura inválida', ['ip' => $request->ip()]);
 
             return response()->json(['message' => 'assinatura inválida'], 401);
         }
 
-        if (! $secret) {
-            Log::warning('Webhook de pagamento processado sem validação de assinatura — configure PAGAMENTOS_WEBHOOK_SECRET antes de ir para produção.');
-        }
-
         $payload = $request->all();
-
-        Log::info('Webhook de pagamento recebido', ['payload' => $payload]);
 
         $gatewayId = $payload['gateway_id'] ?? null;
         $eventId = $payload['event_id'] ?? $gatewayId;
         $evento = $payload['evento'] ?? null;
 
+        Log::info('Webhook de pagamento recebido', ['gateway_id' => $gatewayId, 'evento' => $evento]);
+
         if (! $gatewayId || ! $eventId) {
-            Log::warning('Webhook de pagamento: payload sem gateway_id/event_id', ['payload' => $payload]);
+            Log::warning('Webhook de pagamento: payload sem gateway_id/event_id', ['campos' => array_keys($payload)]);
 
             return response()->json(['message' => 'payload inválido'], 422);
         }

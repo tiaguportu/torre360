@@ -2,7 +2,7 @@
 
 Backlog dos achados da revisão de segurança que **ainda estão abertos**. O que já foi corrigido está em [seguranca_hardening.md](seguranca_hardening.md); o plano do MFA está em [melhoria_mfa_painel.md](melhoria_mfa_painel.md). Cada item foi reconferido na `main` em 2026-10-09 (commit `443003e6`).
 
-Já corrigidos (não repetir): enumeração de contas no login, IDOR da confirmação de matrícula online, SVG/HTML servidos inline, injeção de fórmulas em exportações CSV, sessões concorrentes após troca de senha, `Permissions-Policy` bloqueando a câmera, matrícula online pública (vínculo indevido, captcha, limite), tipos de upload, senhas em e-mail/log, CSP (em `report-only`), XSS da descrição de evento, links do chat, `chroot` do dompdf.
+Já corrigidos (não repetir): acesso de professores a documentos pessoais, contratos, histórico, CRM e exportações; webhook de pagamento sem segredo; enumeração de contas no login, IDOR da confirmação de matrícula online, SVG/HTML servidos inline, injeção de fórmulas em exportações CSV, sessões concorrentes após troca de senha, `Permissions-Policy` bloqueando a câmera, matrícula online pública (vínculo indevido, captcha, limite), tipos de upload, senhas em e-mail/log, CSP (em `report-only`), XSS da descrição de evento, links do chat, `chroot` do dompdf.
 
 Gravidade: **Alta** = corrigir em seguida; **Média** = planejar; **Baixa** = higiene.
 
@@ -10,8 +10,6 @@ Gravidade: **Alta** = corrigir em seguida; **Média** = planejar; **Baixa** = hi
 
 | # | Achado | Onde | Correção sugerida |
 |---|---|---|---|
-| A1 | **Professor lê os documentos pessoais de qualquer aluno ou candidato** (RG, CPF, certidão, anexos de atendimento). `isStaff()` conta `professor` como equipe e ignora as permissões do Shield. Viola o princípio da necessidade (LGPD art. 6º, III). | `User::isStaff()` ([User.php:118](../app/Models/User.php)); `DocumentoInserido::isAccessibleBy`, `SolicitacaoDocumento::isAccessibleBy`, `Matricula::isAccessibleBy`; contextos A–D de `VisualizarDocumentoController` | Autorizar por permissão (`View:DocumentoInserido`) ou por vínculo do professor com a turma do aluno; manter `isStaff()` só para o que for mesmo de toda a equipe. Teste: professor sem vínculo recebe 403. |
-| A2 | **Webhook de pagamento aceita requisição sem assinatura quando o segredo está vazio.** `PAGAMENTOS_WEBHOOK_SECRET` não existe no `.env`. Quem souber um `gateway_id` (8 caracteres aleatórios; pode aparecer para a família em link de pagamento, a confirmar) dá baixa em fatura com valor e data à escolha. Hoje o driver é o `fake`, então o risco é latente. | `WebhookSignatureValidator::valida` (retorna `true` sem segredo); `PagamentoWebhookController` | Falhar fechado: sem segredo, responder 503/401. Definir o segredo antes de ligar um gateway real. O webhook do Assinafy se apoia na confirmação pela API e é aceitável. |
 | A3 | **Dados de saúde de crianças sem criptografia em repouso** (tipo sanguíneo, alergias, plano de saúde, SUS, sintomas, medicamentos). LGPD arts. 5º II, 11 e 46. | `FichaMedica`, `AtendimentoEnfermagem` | Cast `encrypted` nas colunas sensíveis (verificar buscas/ordenações que dependam delas) e migração que recifra os dados existentes. |
 | A4 | **Ambiente e hospedagem.** Este checkout usa `APP_ENV=local`, `APP_DEBUG=true`, `DEBUGBAR_OPEN_STORAGE=true`, `LOG_LEVEL=debug` e aponta para o banco de produção; a pasta guarda 337 documentos reais, dumps (`backup_banco_*`) e `.env.backup_realbkp`. O `.htaccess` da raiz só bloqueia `.env` exato e depende do `mod_rewrite` para esconder o resto. | `.env`, `.htaccess`, `.env.example` (traz `APP_DEBUG=true`) | **Confirmar o `.env` do servidor** (`APP_ENV=production`, `APP_DEBUG=false`, sem Debugbar). DocumentRoot em `public/`. Disco da estação criptografado e credencial de banco separada para desenvolvimento. Apagar dumps e `.env.*` antigos. |
 | A5 | **LGPD: transparência e governança ausentes.** Não há Política de Privacidade, canal do titular nem Encarregado (DPO) no sistema; o formulário público `/quero-matricular` coleta CPF, telefone e dados de menores só com o aviso do reCAPTCHA (links do Google); o aceite da matrícula fica embutido no contrato, sem versão do texto; não há política de retenção/descarte nem plano de resposta a incidente. | formulários públicos, `MatriculaOnlineService`, `ConviteMatriculaService` | Página de Política de Privacidade e aviso nos formulários (art. 9º e 14); registrar versão do texto + data + IP do aceite; indicar Encarregado (Res. CD/ANPD 18/2024); rotina de retenção; procedimento de incidente (comunicar à ANPD em 3 dias úteis, Res. CD/ANPD 15/2024); RIPD (arts. 37–38). |
@@ -42,7 +40,7 @@ Gravidade: **Alta** = corrigir em seguida; **Média** = planejar; **Baixa** = hi
 
 ## Ordem sugerida
 
-1. A1, A2 e a confirmação do `.env` do servidor (A4): são pequenos e fecham os maiores riscos de acesso.
+1. Confirmação do `.env` do servidor e do DocumentRoot (A4): é rápida e fecha o maior risco de exposição.
 2. M4 (uma linha por ponto), M5, M7 e `CSP_MODO=enforce`.
 3. A3 e A5, que exigem decisão de negócio e migração de dados.
 4. MFA, M1 e M2 juntos, porque se reforçam.

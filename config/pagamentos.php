@@ -38,9 +38,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Usado para validar a assinatura HMAC-SHA256 (header X-Pagamento-Signature)
-    | das requisições recebidas em /api/webhooks/pagamento. Se vazio, a
-    | validação é pulada (com aviso no log) — configure antes de habilitar um
-    | gateway real em produção.
+    | das requisições recebidas em /api/webhooks/pagamento. Se vazio, o endpoint
+    | RECUSA todas as requisições (503): defina o segredo antes de habilitar um
+    | gateway real. O botão "Simular Pagamento (Dev)" do driver fake não usa o
+    | webhook, então não depende dele.
     |
     */
 

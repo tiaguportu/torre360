@@ -97,9 +97,12 @@ este formato, ou expõe seu próprio endpoint tradutor):
 
 `App\Services\WebhookSignatureValidator`: HMAC-SHA256 do corpo bruto da requisição com um
 segredo compartilhado (`PAGAMENTOS_WEBHOOK_SECRET`), enviado pelo gateway no header
-`X-Pagamento-Signature`. **Se o segredo não estiver configurado, a validação é pulada**
-(com aviso no log) — não quebra antes de você configurar o segredo, mas também não
-protege o endpoint até configurar.
+`X-Pagamento-Signature`. **Se o segredo não estiver configurado, o endpoint recusa toda
+requisição com 503** (falha fechado, com aviso no log): sem segredo ele não distingue o
+gateway de qualquer pessoa na internet, e quem soubesse um `gateway_id` daria baixa em
+fatura com o valor e a data que quisesse. Defina `PAGAMENTOS_WEBHOOK_SECRET` antes de ligar
+um gateway real. O botão *Simular Pagamento (Dev)* não passa pelo webhook, então não
+depende do segredo. Assinatura ausente ou inválida com o segredo definido responde 401.
 
 **Correção no webhook do Assinafy:** o mesmo validador foi aplicado em
 `AssinafyWebhookController` (`ASSINAFY_WEBHOOK_SECRET`, header `X-Assinafy-Signature`),
@@ -157,7 +160,7 @@ falar com a secretaria.
 |---|---|---|
 | `PAGAMENTOS_GATEWAY_DRIVER` | `fake` | Driver de gateway ativo. |
 | `PAGAMENTOS_BANCO_ID_PADRAO` | _(vazio)_ | Banco usado em baixas automáticas sem operador. |
-| `PAGAMENTOS_WEBHOOK_SECRET` | _(vazio)_ | Segredo HMAC do webhook de pagamento. |
+| `PAGAMENTOS_WEBHOOK_SECRET` | _(vazio)_ | Segredo HMAC do webhook de pagamento. **Obrigatório para o webhook funcionar**: vazio, o endpoint responde 503. |
 | `ASSINAFY_WEBHOOK_SECRET` | _(vazio)_ | Segredo HMAC do webhook do Assinafy (novo). |
 
 ## 8. Migrations desta onda

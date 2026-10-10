@@ -146,11 +146,14 @@ class GatewayPagamentoTest extends TestCase
         $this->assertSame(StatusFatura::Cancelado, $fatura->fresh()->status);
     }
 
-    public function test_validador_de_assinatura_pula_quando_sem_segredo(): void
+    public function test_validador_de_assinatura_recusa_quando_sem_segredo(): void
     {
         $validator = new WebhookSignatureValidator;
 
-        $this->assertTrue($validator->valida(null, '{"a":1}', null));
+        // Falha fechado: sem segredo não há como conferir a assinatura, então nada é aceito.
+        $this->assertFalse($validator->valida(null, '{"a":1}', null));
+        $this->assertFalse($validator->valida('', '{"a":1}', hash_hmac('sha256', '{"a":1}', '')));
+        $this->assertFalse($validator->valida(null, '{"a":1}', 'qualquer'));
     }
 
     public function test_validador_de_assinatura_rejeita_sem_header(): void

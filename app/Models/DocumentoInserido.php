@@ -132,14 +132,18 @@ class DocumentoInserido extends Model
         return $this->belongsTo(InteressadoDependente::class, 'interessado_dependente_id');
     }
 
+    /**
+     * Documento pessoal (RG, CPF, certidão, comprovantes): equipe administrativa ou quem tem a permissão específica;
+     * demais, só a própria família. Ser "da equipe" (ex.: professor) não basta.
+     */
     public function isAccessibleBy(User $user): bool
     {
-        if ($user->isStaff()) {
+        if ($user->isEquipeAdministrativa() || $user->can('View:DocumentoInserido')) {
             return true;
         }
 
         if ($this->matricula) {
-            return $this->matricula->isAccessibleBy($user);
+            return $this->matricula->isAccessibleByFamilia($user);
         }
 
         if ($this->interessado) {

@@ -121,6 +121,17 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
+     * Equipe administrativa: a que cuida de cadastro, documentos, contratos e CRM. Diferente de {@see isStaff()}, deixa
+     * o professor de fora, que tem acesso amplo ao painel mas não precisa ver RG, CPF, contratos nem exportações de
+     * dados de todos os alunos (LGPD art. 6º, III — necessidade). O professor entra nesses recursos só com a
+     * permissão específica do Shield (ex.: `View:DocumentoInserido`).
+     */
+    public function isEquipeAdministrativa(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'admin', 'secretaria', 'coordenador']);
+    }
+
+    /**
      * Pessoas cujos dados este usuário pode ver no Portal (ele mesmo, se for aluno,
      * mais seus dependentes, se for responsável).
      *

@@ -1081,6 +1081,9 @@ Os administradores podem definir precisamente quem pode ver, criar, editar ou ex
 - **CRM:** Gestão de leads e histórico de contatos.
 - **Acadêmico:** **Questionários**, **Respostas de Questionários**, **Avaliações de Habilidades** (BNCC), **Notas de Habilidades**, **Campos de Experiência** e **Habilidades**.
 
+#### O que o papel Professor NÃO enxerga por padrão
+O professor tem acesso amplo ao painel (turmas, notas, frequência, planos de aula), mas **não abre**, só por ser professor: documentos pessoais de alunos e candidatos (RG, CPF, certidão, comprovantes), contratos, histórico escolar emitido, dossiês do CRM, anexos de atendimento, extratos bancários e arquivos de exportação. Ele continua abrindo fotos de alunos, materiais e planos de aula e registros da rotina diária. Quem precisar de um desses acessos deve receber a permissão específica em **Papéis e Permissões (Shield)**: `View:DocumentoInserido`, `View:SolicitacaoDocumento`, `View:Contrato`, `View:HistoricoEscolar`, `View:Interessado` ou `View:AtendimentoChamado`. Os papéis Super Admin, Admin, Secretaria e Coordenador mantêm o acesso.
+
 
 ### 9.2 Auditoria de Ações
 O sistema registra automaticamente ações críticas e navegações:

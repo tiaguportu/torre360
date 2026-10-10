@@ -153,10 +153,16 @@ class Matricula extends Model
      */
     public function isAccessibleBy(User $user): bool
     {
-        if ($user->isStaff()) {
-            return true;
-        }
+        return $user->isStaff() || $this->isAccessibleByFamilia($user);
+    }
 
+    /**
+     * Só o vínculo familiar (o próprio aluno, seus responsáveis e os responsáveis financeiros do contrato), sem
+     * considerar o papel na equipe. Usado por quem libera a equipe por regra própria (ex.: documentos pessoais,
+     * em que o professor não entra só por ser da equipe).
+     */
+    public function isAccessibleByFamilia(User $user): bool
+    {
         $idsAcessiveis = $user->pessoasAcessiveis()->pluck('id');
 
         if ($idsAcessiveis->contains($this->pessoa_id)) {

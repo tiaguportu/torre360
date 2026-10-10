@@ -76,12 +76,13 @@ class Contrato extends Model
     }
 
     /**
-     * Verifica se o usuário pode ver este contrato: equipe interna sempre pode;
-     * aluno/responsável só se o contrato for do próprio aluno ou de um dependente seu.
+     * Verifica se o usuário pode ver este contrato: equipe administrativa (ou quem tem a permissão `View:Contrato`)
+     * sempre pode; aluno/responsável só se o contrato for do próprio aluno ou de um dependente seu. O contrato traz
+     * CPF, endereço e valores financeiros, então o professor não entra só por ser da equipe.
      */
     public function isAccessibleBy(User $user): bool
     {
-        if ($user->isStaff()) {
+        if ($user->isEquipeAdministrativa() || $user->can('View:Contrato')) {
             return true;
         }
 

@@ -59,7 +59,7 @@ class SolicitacaoDocumento extends Model
 
     public function isAccessibleBy(User $user): bool
     {
-        if ($user->isStaff()) {
+        if ($user->isEquipeAdministrativa() || $user->can('View:SolicitacaoDocumento')) {
             return true;
         }
 
@@ -67,7 +67,7 @@ class SolicitacaoDocumento extends Model
             return true;
         }
 
-        return $this->matricula?->isAccessibleBy($user) ?? false;
+        return $this->matricula?->isAccessibleByFamilia($user) ?? false;
     }
 
     public function isValido(): bool

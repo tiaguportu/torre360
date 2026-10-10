@@ -45,7 +45,7 @@ class DossieIaPdfController extends Controller
 
         abort_unless($user !== null, 401, 'Não autenticado.');
 
-        if (! $user->isStaff() && ! $user->can('View:Interessado') && ! $user->can('ViewAny:Interessado')) {
+        if (! $user->isEquipeAdministrativa() && ! $user->can('View:Interessado') && ! $user->can('ViewAny:Interessado')) {
             abort(403, 'Acesso não autorizado a este dossiê.');
         }
     }
