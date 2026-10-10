@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
+use App\Models\InteressadoStatusHistorico;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
+use Carbon\Carbon;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +54,17 @@ class LeadFunilService
         $reativando = $statusAnterior?->isPerda() ?? false;
 
         DB::transaction(function () use ($lead, $novoStatus, $statusAnterior, $reativando, $usuarioId): void {
+            $lead->transicaoRegistradaPorServico = true;
+
+            $this->registrarTransicao(
+                $lead,
+                $novoStatus->id,
+                $statusAnterior?->id,
+                $usuarioId,
+                null,
+                now()
+            );
+
             $atualizacoes = ['status_interessado_id' => $novoStatus->id];
 
             if ($reativando) {
@@ -123,6 +136,17 @@ class LeadFunilService
         }
 
         DB::transaction(function () use ($lead, $status, $motivoFinal, $atributosExtras, $usuarioId, $relato): void {
+            $lead->transicaoRegistradaPorServico = true;
+
+            $this->registrarTransicao(
+                $lead,
+                $status->id,
+                $lead->status_interessado_id,
+                $usuarioId,
+                $motivoFinal,
+                now()
+            );
+
             $lead->update([
                 'status_interessado_id' => $status->id,
                 'motivo_perda' => $motivoFinal,
@@ -151,6 +175,19 @@ class LeadFunilService
     {
         if (! StatusInteressado::ganho()) {
             throw new DomainException('Não há etapa de matrícula (ganho) cadastrada no funil. Cadastre uma em Status de Interessado.');
+        }
+
+        $statusGanho = StatusInteressado::ganho();
+        if ($statusGanho && $lead->status_interessado_id !== $statusGanho->id) {
+            $lead->transicaoRegistradaPorServico = true;
+            $this->registrarTransicao(
+                $lead,
+                $statusGanho->id,
+                $lead->status_interessado_id,
+                auth()->id(),
+                null,
+                now()
+            );
         }
 
         InteressadoMatriculaService::registrarConversao($lead);
@@ -219,5 +256,50 @@ class LeadFunilService
         }
 
         return trim(explode(':', $motivoPerda, 2)[0]);
+    }
+
+    /**
+     * Registra explicitamente uma transição de etapa no histórico do funil.
+     */
+    public function registrarTransicao(
+        Interessado $lead,
+        int $statusNovoId,
+        ?int $statusAnteriorId = null,
+        ?int $usuarioId = null,
+        ?string $motivo = null,
+        ?Carbon $dataTransicao = null,
+        bool $estimada = false
+    ): InteressadoStatusHistorico {
+        return InteressadoStatusHistorico::create([
+            'interessado_id' => $lead->id,
+            'status_anterior_id' => $statusAnteriorId,
+            'status_novo_id' => $statusNovoId,
+            'usuario_id' => $usuarioId,
+            'motivo_perda' => $motivo,
+            'data_transicao' => $dataTransicao ?? now(),
+            'estimada' => $estimada,
+        ]);
+    }
+
+    /**
+     * Chamado pelo InteressadoObserver quando o status do lead é alterado diretamente
+     * (criação, importação, formulário público ou edição direta no model).
+     */
+    public function registrarTransicaoViaObserver(
+        Interessado $lead,
+        ?int $statusAnteriorId,
+        int $statusNovoId,
+        bool $estimada = false,
+        ?Carbon $dataTransicao = null
+    ): InteressadoStatusHistorico {
+        return $this->registrarTransicao(
+            $lead,
+            $statusNovoId,
+            $statusAnteriorId,
+            auth()->id() ?? $lead->usuario_id,
+            $lead->motivo_perda,
+            $dataTransicao ?? ($statusAnteriorId === null ? ($lead->created_at ?? now()) : ($lead->updated_at ?? now())),
+            $estimada
+        );
     }
 }

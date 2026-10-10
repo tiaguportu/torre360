@@ -409,6 +409,15 @@ Estrutura de ensino e turmas.
 - **Métodos de Negócio:** `precisaDeContato()`, `diasNoFunil()`, `totalContatos()` (sem registros automáticos), `diasSemInteracao()`, `estaEstagnado()`.
 - **Regras de movimentação:** feitas por `LeadFunilService` (mover etapa ativa, perder com motivo, marcar matriculado, registrar atendimento); a conversão por matrícula vem de `InteressadoMatriculaService::registrarConversao()` (também usada pela matrícula 100% online). Cadastro pelo formulário público: `CaptacaoInteressadoService` (reenvio não sobrescreve o lead).
 
+
+### `interessado_status_historico`
+- **Representa:** Trilha e histórico de transições de etapas do lead no funil de captação e vendas (Lote D1).
+- **Propósito:** Rastreia cada movimentação de etapa, registrando de onde o lead veio (`status_anterior_id`), para onde foi (`status_novo_id`), o consultor/usuário que realizou a movimentação (`usuario_id`), a data/hora exata (`data_transicao`), motivo de perda quando aplicável e se o registro é estimado (`estimada` via backfill).
+- **Campos Principais:** `interessado_id` (FK `interessado`, cascade), `status_anterior_id` (FK `status_interessado`, nullOnDelete), `status_novo_id` (FK `status_interessado`, cascade), `usuario_id` (FK `users`, nullOnDelete), `motivo_perda` (string nullable), `data_transicao` (datetime), `estimada` (boolean, default false).
+- **Índices:** `idx_transicao_lead_data` (`interessado_id`, `data_transicao`), `idx_transicao_status_novo_data` (`status_novo_id`, `data_transicao`), `idx_transicao_de_para` (`status_anterior_id`, `status_novo_id`), `idx_transicao_data` (`data_transicao`).
+- **Relacionamentos:** BelongsTo `interessado`, BelongsTo `statusAnterior`, BelongsTo `statusNovo`, BelongsTo `usuario`.
+- **Serviço Analítico:** Consumido por `FunilAnaliticoService` para métricas de tempo médio e conversão etapa a etapa.
+
 ### `interessado_dependente` (Alunos Vinculados)
 - **Representa:** Os potenciais alunos vinculados a um interessado principal.
 - **Campos Principais:** `interessado_id`, `nome_crianca`, `serie_id` (nullable), `unidade_id` (FK `unidade`, nullable — unidade de preferência), `turno_preferencia` (string nullable: Manhã, Tarde, Integral, Sem preferência), `vinculo` (Pai, Mãe, Parente, Tutor), `data_nascimento` (cast `date`).

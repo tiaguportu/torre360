@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Casts\ArrayCriptografado;
 use App\Enums\SituacaoDocumento;
 use App\Enums\StatusVisitaInteressado;
+use App\Observers\InteressadoObserver;
 use App\Services\ContadoresCrm;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,11 +20,15 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ObservedBy(InteressadoObserver::class)]
 class Interessado extends Model
 {
     use HasFactory, LogsActivity;
 
     protected $table = 'interessado';
+
+    /** Flag temporária para evitar que o Observer duplique transição já gravada pelo serviço. */
+    public bool $transicaoRegistradaPorServico = false;
 
     /** Redes sociais aceitas em `redes_sociais` (chave => rótulo). */
     public const REDES_SOCIAIS = [
@@ -96,6 +102,16 @@ class Interessado extends Model
     }
 
     // ─── Relationships ──────────────────────────────────────────
+
+    public function historicoStatus(): HasMany
+    {
+        return $this->hasMany(InteressadoStatusHistorico::class, 'interessado_id')->orderBy('data_transicao');
+    }
+
+    public function ultimaTransicaoStatus(): HasOne
+    {
+        return $this->hasOne(InteressadoStatusHistorico::class, 'interessado_id')->latestOfMany('data_transicao');
+    }
 
     public function pessoa(): BelongsTo
     {
@@ -197,6 +213,22 @@ class Interessado extends Model
     /**
      * Filtra leads que não estão em status final (ganho/perdido).
      */
+    /**
+     * Filtra leads em etapas de ganho (matriculado).
+     */
+    public function scopeGanhos(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn (Builder $q) => $q->where('is_ganho', true));
+    }
+
+    /**
+     * Filtra leads em etapas de perda/descarte.
+     */
+    public function scopePerdidos(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn (Builder $q) => $q->where('is_final', true)->where('is_ganho', false));
+    }
+
     public function scopeAtivos(Builder $query): Builder
     {
         return $query->whereHas('status', fn (Builder $q) => $q->where('is_final', false));

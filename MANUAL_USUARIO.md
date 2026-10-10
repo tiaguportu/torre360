@@ -1418,6 +1418,12 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 
 ## 🚀 17. Captação Pública de Interessados
 
+### 17.5 Rastreabilidade de Etapas e Métricas do Funil (Lote D1)
+O sistema registra automaticamente o histórico cronológico de cada movimentação de etapa dos interessados:
+- **Histórico Automático:** Toda movimentação no Kanban, na listagem ou por ação do sistema (matrícula, perda ou avanço) gera um registro com a etapa de origem, etapa de destino, consultor responsável e horário.
+- **Motivos de Perda Rastreáveis:** Quando um lead é descartado ou perdido, o motivo selecionado fica vinculado à transição para auditoria e análises de concorrência.
+- **Funil Analítico:** Métricas consolidadas apuram o tempo médio de permanência em cada etapa e a taxa de conversão entre etapas, permitindo identificar gargalos no processo comercial.
+
 O Torre360 disponibiliza um formulário público que pode ser integrado ou divulgado no site da sua escola para captar o interesse de novos alunos de forma automática e integrada ao funil do CRM.
 
 ### 17.1 Como Funciona

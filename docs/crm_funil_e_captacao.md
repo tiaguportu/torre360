@@ -448,3 +448,23 @@ padronização da visibilidade por consultor; Política de Privacidade, Encarreg
 confirmação do consentimento por e-mail (double opt-in); criptografia de outros dados pessoais do CRM
 (`observacoes`, telefone e e-mail da pessoa); minimização dos dados enviados ao Gemini no resumo de conversa e na
 análise de documentos (o conteúdo a analisar tem de ir).
+
+## 14. Lote D1: Histórico de Etapas do Funil e Funil Analítico
+
+O Lote D1 implementa rastreabilidade completa das mudanças de etapa de cada lead, alimentando relatórios gerenciais e métricas de desempenho comercial.
+
+### 14.1 Tabela `interessado_status_historico`
+- **Campos:** `interessado_id`, `status_anterior_id` (nullable), `status_novo_id`, `usuario_id` (nullable), `motivo_perda` (nullable), `data_transicao`, `estimada` (boolean).
+- **Ponto único de gravação:**
+  - `LeadFunilService::moverParaEtapaAtiva()`, `marcarComoPerdido()` e `marcarMatriculado()` gravam a transição com o usuário e motivo correspondente.
+  - O model `Interessado` possui o observer `#[ObservedBy(InteressadoObserver::class)]`: quando o status é criado ou atualizado diretamente fora do serviço (formulário público, importação com IA, edições diretas ou matrícula online), o observer delega a gravação a `LeadFunilService::registrarTransicaoViaObserver()`.
+  - A flag `$lead->transicaoRegistradaPorServico` impede qualquer duplicidade de linha no Kanban, tabela ou lote.
+- **Backfill idempotente:** Leads antigos existentes recebem uma linha inicial correspondente à etapa atual e `created_at`, marcada com `estimada = true`. A execução subsequente não duplica linhas.
+
+### 14.2 `FunilAnaliticoService`
+Serviço analítico que fornece:
+- `tempoMedioPorEtapa(array $filtros)`: calcula o tempo médio em dias e horas que os leads passam em cada etapa do funil antes de avançar.
+- `conversaoEtapaAEtapa(array $filtros)`: apura a taxa de conversão etapa por etapa e a taxa de perda/descarte entre etapas ativas consecutivas.
+- `conversaoPorDimensao(string $dimensao, array $filtros)`: calcula volume, ganhos, perdas e percentual de conversão agrupados por consultor, canal de origem ou campanha de marketing.
+
+Testes: `tests/Feature/FunilHistoricoTransicaoTest.php`.
