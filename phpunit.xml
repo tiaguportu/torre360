@@ -26,6 +26,9 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
+        <!-- O .env local pode ter credenciais reais (de produção) do Assinafy: a suíte nunca deve usá-las. -->
+        <env name="ASSINAFY_API_KEY" value=""/>
+        <env name="ASSINAFY_ACCOUNT_ID" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

@@ -228,12 +228,22 @@ no Assinafy, com `Http::fake`), a promoção condicional (`marcarRematriculaAgua
 não mexe em nenhum outro status), os avisos da secretaria (individual e em lote) e a descrição
 do status "Dados Confirmados" na listagem.
 
-**Atenção ao rodar testes que passam por `efetivar()` ou `enviarContrato()`:** o `.env` local
-pode trazer credenciais reais do Assinafy (inclusive de produção), e o `phpunit.xml` não as zera.
-Todo teste desse tipo deve bloquear HTTP real (`Http::preventStrayRequests()`) e esvaziar
-`services.assinafy.key` no `setUp`, como fazem `RematriculaTest`, `RematriculaAssinaturaTest`,
-`RematriculaTurmaObrigatoriaTest` e `RematriculaEnvioContratoTest`; senão `enviarContrato()`
-chama a API de verdade.
+**Credenciais do Assinafy nos testes:** o `.env` local pode trazer credenciais reais do Assinafy
+(inclusive de produção). Por isso o `phpunit.xml` esvazia `ASSINAFY_API_KEY` e
+`ASSINAFY_ACCOUNT_ID` para a suíte inteira: sem elas, `enviarContrato()` devolve "Configuração do
+Assinafy pendente" antes de qualquer chamada de rede. `CredenciaisAssinafyNaSuiteTest` quebra se
+essas linhas forem removidas.
+
+- Teste que **não** exercita a API não precisa fazer nada.
+- Teste que **exercita** a API (envio, consulta de status) deve declarar as suas próprias
+  credenciais falsas (`services.assinafy.key`, `account_id` e `url`) e bloquear HTTP real
+  (`Http::preventStrayRequests()`), como `AssinafyAssinaturaTest` e o helper
+  `configurarAssinafyDeTeste()` do `ContratoTest`. Os padrões de `Http::fake` devem listar os
+  específicos primeiro e terminar em `?*` nas buscas, porque a URL do GET leva query string; um
+  padrão que não casa deixa a requisição seguir para a rede (ou, com o bloqueio, lançar exceção).
+- Os testes de rematrícula (`RematriculaTest`, `RematriculaAssinaturaTest`,
+  `RematriculaTurmaObrigatoriaTest`, `RematriculaCancelamentoTest`, `RematriculaEnvioContratoTest`)
+  mantêm também o bloqueio de HTTP no `setUp` como segunda camada.
 
 ## 5. Limitações conhecidas
 

@@ -565,17 +565,38 @@ class ContratoTest extends TestCase
         $this->assertEquals(1, $pdf->getDomPDF()->getCanvas()->get_page_count());
     }
 
+    /**
+     * Credenciais falsas e rede bloqueada fora dos Http::fake do teste: a suíte esvazia as credenciais reais
+     * do Assinafy no phpunit.xml, então quem exercita a API precisa declarar as suas.
+     */
+    private function configurarAssinafyDeTeste(): void
+    {
+        config([
+            'services.assinafy.key' => 'CHAVE-DE-TESTE',
+            'services.assinafy.account_id' => 'ACC-TESTE',
+            'services.assinafy.url' => 'https://assinafy.teste/v1',
+        ]);
+
+        Http::preventStrayRequests();
+    }
+
     public function test_assinafy_service_processa_template_sem_erro_de_variavel_indefinida(): void
     {
+        $this->configurarAssinafyDeTeste();
+
+        // Os padrões específicos vêm primeiro (vale o primeiro que casa) e os de busca terminam em "?*"
+        // porque a URL do GET leva query string (?search=...).
         Http::fake([
-            '*/accounts/*/documents' => Http::response(['data' => []], 200),
-            '*/documents' => Http::response(['id' => 'doc_123', 'data' => ['id' => 'doc_123']], 200),
-            '*/accounts/*/signers' => Http::response(['data' => [['id' => 'sig_123', 'email' => 'pai@example.com']]], 200),
             '*/documents/*/assignments' => Http::response([
                 'signing_urls' => [
                     ['signer_id' => 'sig_123', 'url' => 'https://sandbox.assinafy.com.br/sign/123'],
                 ],
             ], 200),
+            '*/documents/doc_123' => Http::response(['data' => ['id' => 'doc_123', 'status' => 'metadata_ready']], 200),
+            '*/accounts/*/documents?*' => Http::response(['data' => []], 200),
+            '*/accounts/*/documents' => Http::response(['id' => 'doc_123', 'data' => ['id' => 'doc_123']], 200),
+            '*/accounts/*/signers?*' => Http::response(['data' => [['id' => 'sig_123', 'email' => 'pai@example.com']]], 200),
+            '*/accounts/*/signers' => Http::response(['id' => 'sig_123'], 200),
         ]);
 
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno Teste']);
@@ -606,15 +627,20 @@ class ContratoTest extends TestCase
 
     public function test_tabela_contratos_acao_assinar_contrato_redireciona_para_url_assinafy(): void
     {
+        $this->configurarAssinafyDeTeste();
+
+        // Mesma ordem do teste acima: específicos primeiro; buscas com query string terminam em "?*".
         Http::fake([
-            '*/accounts/*/documents' => Http::response(['data' => []], 200),
-            '*/documents' => Http::response(['id' => 'doc_999', 'data' => ['id' => 'doc_999']], 200),
-            '*/accounts/*/signers' => Http::response(['data' => [['id' => 'sig_999', 'email' => 'aluno@example.com']]], 200),
             '*/documents/*/assignments' => Http::response([
                 'signing_urls' => [
                     ['signer_id' => 'sig_999', 'url' => 'https://sandbox.assinafy.com.br/sign/999'],
                 ],
             ], 200),
+            '*/documents/doc_999' => Http::response(['data' => ['id' => 'doc_999', 'status' => 'metadata_ready']], 200),
+            '*/accounts/*/documents?*' => Http::response(['data' => []], 200),
+            '*/accounts/*/documents' => Http::response(['id' => 'doc_999', 'data' => ['id' => 'doc_999']], 200),
+            '*/accounts/*/signers?*' => Http::response(['data' => [['id' => 'sig_999', 'email' => 'aluno@example.com']]], 200),
+            '*/accounts/*/signers' => Http::response(['id' => 'sig_999'], 200),
         ]);
 
         $user = User::factory()->create();
@@ -673,6 +699,8 @@ class ContratoTest extends TestCase
 
     public function test_consultar_e_atualizar_status_signatarios_no_assinafy_service(): void
     {
+        $this->configurarAssinafyDeTeste();
+
         Http::fake([
             '*/documents/doc_12345' => Http::response([
                 'data' => [
