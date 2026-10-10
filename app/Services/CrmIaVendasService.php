@@ -255,15 +255,23 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             'generationConfig' => [
                 'temperature' => (float) $config['gemini']['temperature'],
                 'maxOutputTokens' => (int) $config['gemini']['max_output_tokens'],
+                // Redigir uma mensagem curta não precisa de raciocínio. No Gemini 2.5 os tokens de "thinking" saem do
+                // mesmo orçamento de maxOutputTokens: com 800, o raciocínio consumia parte da cota e a mensagem era
+                // cortada no meio (finishReason MAX_TOKENS). Modelos fora da família 2.5 Flash não recebem a chave.
+                'thinkingConfig' => ['thinkingBudget' => 0],
             ],
         ];
 
         try {
-            $response = $this->gemini->callGeminiApi($payload);
-            $texto = $response['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $texto = $this->textoCompletoDoGemini($payload);
 
             return self::removerLinks(trim(preg_replace('/^["\']|["\']$/u', '', $texto)));
         } catch (Throwable $e) {
+            Log::warning('Falha ao gerar a mensagem do Copiloto IA; usando a mensagem de contingência.', [
+                'interessado_id' => $interessado->id,
+                'erro' => $e->getMessage(),
+            ]);
+
             $primeiroNome = explode(' ', trim((string) ($interessado->pessoa?->nome ?? '')))[0] ?: 'Família';
             $filho = $interessado->dependentes->first()?->nome_crianca ?? 'seu(sua) filho(a)';
 
@@ -284,6 +292,39 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
             return "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da Escola Torre de Marfim. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?";
         }
+    }
+
+    /** Teto de `maxOutputTokens` na nova tentativa de uma resposta cortada pelo limite de tokens. */
+    private const TETO_TOKENS_NOVA_TENTATIVA = 8192;
+
+    /**
+     * Pede o texto ao Gemini e se recusa a entregar uma resposta cortada: quando a geração termina por limite de
+     * tokens (`finishReason` MAX_TOKENS) o texto vem pela metade, e ele iria direto para o WhatsApp da família.
+     * Nesse caso tenta de novo, uma única vez, com o quádruplo do limite; se ainda assim vier cortado, lança
+     * exceção para quem chama usar a mensagem de contingência.
+     *
+     * @param  array<string, mixed>  $payload
+     *
+     * @throws \RuntimeException
+     */
+    private function textoCompletoDoGemini(array $payload): string
+    {
+        $limite = (int) ($payload['generationConfig']['maxOutputTokens'] ?? 0);
+
+        for ($tentativa = 1; $tentativa <= 2; $tentativa++) {
+            $candidato = $this->gemini->callGeminiApi($payload)['candidates'][0] ?? [];
+
+            if (($candidato['finishReason'] ?? null) !== 'MAX_TOKENS') {
+                return (string) ($candidato['content']['parts'][0]['text'] ?? '');
+            }
+
+            Log::warning('Mensagem do Copiloto IA cortada pelo limite de tokens.', ['tentativa' => $tentativa, 'maxOutputTokens' => $limite]);
+
+            $limite = min(max($limite, 1) * 4, self::TETO_TOKENS_NOVA_TENTATIVA);
+            $payload['generationConfig']['maxOutputTokens'] = $limite;
+        }
+
+        throw new \RuntimeException('A mensagem gerada continuou cortada pelo limite de tokens.');
     }
 
     /**

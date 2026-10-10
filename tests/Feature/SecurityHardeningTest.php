@@ -896,4 +896,39 @@ class SecurityHardeningTest extends TestCase
         $this->assertStringNotContainsString('file:///etc/passwd', $resultado);
         $this->assertStringContainsString('IMAGEM REMOTA BLOQUEADA CONTRA SSRF', $resultado);
     }
+
+    public function test_rotas_de_geracao_de_pdf_possuem_rate_limiting_contra_exaustao_de_recursos(): void
+    {
+        $user = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $user->assignRole(Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']));
+
+        $aluno = Pessoa::create(['nome' => 'Aluno Rate Limit', 'cpf' => '11223344556']);
+        $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-15']);
+        $turma = Turma::create(['nome' => 'Turma Throttle', 'periodo_letivo_id' => $periodo->id]);
+        $matricula = Matricula::create([
+            'pessoa_id' => $aluno->id,
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+        $contrato = Contrato::create([
+            'matricula_id' => $matricula->id,
+            'data_aceite' => now(),
+            'valor_total' => 1000.00,
+        ]);
+
+        $this->actingAs($user);
+
+        // Dispara até o limite permitido (30 requisições por minuto)
+        for ($i = 0; $i < 30; $i++) {
+            $response = $this->get(route('contratos.visualizar', $contrato));
+            $this->assertNotEquals(429, $response->getStatusCode(), "Requisição {$i} não deveria ser bloqueada pelo throttle.");
+        }
+
+        // A 31ª requisição no mesmo minuto deve sofrer rate limit HTTP 429
+        $responseBloqueada = $this->get(route('contratos.visualizar', $contrato));
+        $responseBloqueada->assertStatus(429);
+    }
 }

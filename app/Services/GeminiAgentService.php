@@ -362,7 +362,7 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
                         'Content-Type' => 'application/json',
                         'x-goog-api-key' => $apiKey,
                     ])
-                    ->post($endpoint, $payload);
+                    ->post($endpoint, self::payloadParaModelo($payload, $model));
 
                 if ($response->successful()) {
                     $json = $response->json();
@@ -395,6 +395,23 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
         }
 
         throw new \Exception("Os servidores de IA do Gemini estão temporariamente com alta demanda. Por favor, tente novamente em instantes. (Detalhes: {$lastError})");
+    }
+
+    /**
+     * `generationConfig.thinkingConfig` (ex.: `thinkingBudget = 0` para desligar o raciocínio) só vale para os
+     * modelos Flash da família 2.5. Os demais da cascata (2.0, aliases `-latest`) o rejeitariam com erro 400,
+     * que é tratado como estrutural e interromperia a contingência, então a chave é retirada para eles.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    protected static function payloadParaModelo(array $payload, string $model): array
+    {
+        if (isset($payload['generationConfig']['thinkingConfig']) && ! str_starts_with($model, 'gemini-2.5-flash')) {
+            unset($payload['generationConfig']['thinkingConfig']);
+        }
+
+        return $payload;
     }
 
     /**

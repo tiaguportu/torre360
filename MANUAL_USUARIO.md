@@ -2985,6 +2985,11 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 2. **Validador de Segurança de URLs (`SsrfProtection`):** Todas as URLs externas em elementos de imagem são verificadas antes do processamento. São categoricamente bloqueados acessos a endereços de loopback (`127.0.0.1`, `localhost`), metadados de provedores em nuvem (`169.254.169.254`), faixas de rede privada (RFC 1918) e esquemas de protocolo inseguros (`file://`, `phar://`, `gopher://`).
 3. Imagens locais legítimas (fotos de alunos, logotipos e assinaturas) continuam sendo processadas com segurança através de conversão em Data-URI Base64 com verificação de caminhos permitidos.
 
+### 54.8 Rate Limiting Defensivo em Emissão de Documentos e PDFs
+1. **Proteção contra Negação de Serviço (DoS / Resource Exhaustion):** As rotas de compilação pesada de binários PDF via DomPDF (`/contratos/{contrato}/pdf`, `/matriculas/{record}/boletim/download`, `/historicos-escolares/{record}/pdf`, dossiês e etiquetas) possuem limitação ativa de taxa de **30 requisições por minuto** (`throttle:30,1`) por usuário/IP.
+2. **Visualização de Documentos Privados:** O endpoint de visualização de arquivos e comprovantes (`/visualizar-documento/{path}`) possui limite de **60 requisições por minuto** (`throttle:60,1`).
+3. Usuários legítimos navegam e emitem relatórios sem qualquer atrito, enquanto scripts automatizados ou requisições concorrentes abusivas são bloqueados com código HTTP 429 (Too Many Requests), preservando a disponibilidade, CPU e memória dos servidores da instituição.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
