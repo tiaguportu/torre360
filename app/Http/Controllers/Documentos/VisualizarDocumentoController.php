@@ -34,6 +34,11 @@ class VisualizarDocumentoController extends Controller
 
         $user = $request->user();
 
+        if (! $user || ! $user->is_active) {
+            auth()->logout();
+            abort(403, 'Acesso não autorizado: conta de usuário inativa ou desativada.');
+        }
+
         // 1. Sanitização estrita contra Path Traversal e injeção de caminho
         if (str_contains($path, '..') || str_contains($path, '\\') || str_contains($path, "\0")) {
             abort(400, 'Caminho de arquivo inválido.');

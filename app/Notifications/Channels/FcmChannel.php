@@ -3,6 +3,7 @@
 namespace App\Notifications\Channels;
 
 use App\Models\Matricula;
+use App\Models\User;
 use App\Services\FcmService;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,10 @@ class FcmChannel
         $fcmToken = $notifiable->fcm_token;
 
         if (! $fcmToken) {
+            return;
+        }
+
+        if ($notifiable instanceof User && ! $notifiable->is_active) {
             return;
         }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\PersistentMobileSession;
 use App\Http\Middleware\SecurityHeaders;
 use Filament\Facades\Filament;
@@ -23,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->append(SecurityHeaders::class);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : route('filament.admin.auth.login'));
+        $middleware->alias([
+            'active' => EnsureAccountIsActive::class,
+        ]);
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/assinafy',
             'mobile/register-token',

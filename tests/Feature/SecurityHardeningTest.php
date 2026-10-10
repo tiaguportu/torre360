@@ -20,9 +20,11 @@ use App\Models\SacolaLeitura;
 use App\Models\TemplateCrachaV3;
 use App\Models\Turma;
 use App\Models\User;
+use App\Services\Canais\FcmCanal;
 use App\Services\QuestionarioService;
 use App\Support\CsvSanitizer;
 use App\Support\HtmlSanitizer;
+use Filament\Facades\Filament;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -675,5 +677,87 @@ class SecurityHardeningTest extends TestCase
         $responseSaveSuccess->assertJson(['success' => true]);
 
         $this->assertEquals(['elementos' => [['id' => 1]]], $template->fresh()->dados_json);
+    }
+
+    public function test_usuario_desativado_com_sessao_ativa_e_bloqueado_pelo_middleware_active_e_tem_sessao_revogada(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'secretaria', 'guard_name' => 'web']);
+        $user = User::factory()->create([
+            'activated_at' => now()->subDays(10),
+            'deactivated_at' => now()->subMinute(), // Conta desativada
+        ]);
+        $user->assignRole($role);
+
+        $template = TemplateCrachaV3::create([
+            'nome' => 'Crachá Teste Inativo',
+            'tipo_entidade' => TemplateCrachaEntidade::PESSOA,
+            'largura' => 85,
+            'altura' => 54,
+            'dados_json' => ['elementos' => []],
+        ]);
+
+        // Faz requisição autenticada com conta inativa na rota protegida pelo middleware active
+        $response = $this->actingAs($user)->get(route('template-crachas-v3.editor', $template));
+
+        $response->assertForbidden();
+        $this->assertGuest(); // A sessão deve ser invalidada e o usuário deslogado
+    }
+
+    public function test_usuario_desativado_sem_email_verificado_e_bloqueado_em_can_access_panel(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => null, // Não verificou e-mail
+            'activated_at' => now()->subDays(10),
+            'deactivated_at' => now()->subMinute(), // Desativado
+        ]);
+
+        $this->assertFalse($user->is_active);
+        $this->assertFalse($user->canAccessPanel(Filament::getPanel('admin')));
+    }
+
+    public function test_fcm_canal_nao_inclui_tokens_de_usuarios_desativados(): void
+    {
+        $pessoa = Pessoa::factory()->create();
+
+        // Usuário desativado com token
+        $userInativo = User::factory()->create([
+            'activated_at' => now()->subDays(10),
+            'deactivated_at' => now()->subMinute(),
+            'fcm_token' => 'token_inativo_123',
+        ]);
+        $pessoa->users()->attach($userInativo->id);
+
+        $canal = app(FcmCanal::class);
+
+        // Não deve considerar disponível se só houver usuário inativo
+        $this->assertFalse($canal->disponivelPara($pessoa));
+
+        // Usuário ativo com token
+        $userAtivo = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'fcm_token' => 'token_ativo_456',
+        ]);
+        $pessoa->users()->attach($userAtivo->id);
+
+        // Agora deve estar disponível
+        $this->assertTrue($canal->disponivelPara($pessoa));
+    }
+
+    public function test_visualizar_documento_bloqueia_usuario_com_conta_inativa(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('planos-aula/aula1.pdf', 'conteudo-pdf');
+
+        $userInativo = User::factory()->create([
+            'activated_at' => now()->subDays(10),
+            'deactivated_at' => now()->subMinute(),
+        ]);
+        $userInativo->assignRole(Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']));
+
+        $response = $this->actingAs($userInativo)->get(route('documentos.visualizar', ['path' => 'planos-aula/aula1.pdf']));
+
+        $response->assertForbidden();
+        $this->assertGuest();
     }
 }

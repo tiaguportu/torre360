@@ -2945,10 +2945,18 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
    - **Modelos de Documentos e Evidências de OS:** Até 10 MB por arquivo.
    - **Fotos Cadastrais e Logotipos:** Até 5 MB por imagem (JPG, PNG, WEBP).
    - **Documentos da Família / Aluno:** Até 2 MB por arquivo.
-
 ### 54.2 Controle de Acesso ao Editor de Crachás V3 (Filament Shield)
 1. O acesso ao editor visual de crachás (`/admin/template-crachas-v3/{id}/editor`) e a gravação de alterações (`/admin/template-crachas-v3/{id}/save`) agora exigem permissões explícitas do Filament Shield (`View:TemplateCrachaV3` e `Update:TemplateCrachaV3`).
 2. Usuários da equipe (professores, colaboradores) que não tenham a permissão expressa configurada no Shield receberão bloqueio imediato (HTTP 403 Forbidden), impedindo a alteração acidental ou não autorizada de modelos institucionais.
+
+### 54.3 Bloqueio Imediato e Revogação de Sessões de Contas Inativas
+1. **Middleware de Conta Ativa (`EnsureAccountIsActive`):** Todas as rotas autenticadas do sistema (boletins, históricos escolares, contratos, dossiês de IA e visualização de documentos privados) validam em tempo real o status de ativação da conta (`is_active`).
+2. Se uma conta for desativada pela administração, qualquer sessão aberta existente no navegador ou no aplicativo móvel é imediatamente revogada (`logout`, invalidação de sessão e token CSRF), retornando HTTP 403 Forbidden.
+3. No painel administrativo e no Portal, contas desativadas têm acesso sumariamente bloqueado, independentemente da situação de verificação de e-mail.
+
+### 54.4 Proteção de Notificações Móveis (Push FCM)
+1. **Filtragem de Contas Inativas:** O canal de envio de notificações móveis (`FcmCanal` e `FcmChannel`) filtra exclusivamente os aparelhos vinculados a usuários com contas ativas no sistema.
+2. Contas suspensas ou desligadas deixam de receber comunicados, notas, cobranças ou avisos da escola no celular imediatamente.
 
 ---
 

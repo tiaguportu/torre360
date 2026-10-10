@@ -153,6 +153,10 @@ class Matricula extends Model
      */
     public function isAccessibleBy(User $user): bool
     {
+        if (! $user->is_active) {
+            return false;
+        }
+
         return $user->isStaff() || $this->isAccessibleByFamilia($user);
     }
 

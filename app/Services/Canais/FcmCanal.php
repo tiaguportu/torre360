@@ -60,6 +60,6 @@ class FcmCanal implements CanalMensagem
      */
     private function tokensDaPessoa(Pessoa $pessoa): Collection
     {
-        return $pessoa->users->pluck('fcm_token')->filter()->unique()->values();
+        return $pessoa->users()->ativos()->pluck('fcm_token')->filter()->unique()->values();
     }
 }

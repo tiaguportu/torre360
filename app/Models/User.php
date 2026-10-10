@@ -43,9 +43,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function canAccessPanel(Panel $panel): bool
     {
-        // Permitir acesso se o e-mail não estiver verificado (para ver o aviso de verificação)
-        // Se já estiver verificado, o acesso depende da validade da ativação.
-        if ($this->hasVerifiedEmail() && ! $this->is_active) {
+        // Contas inativas ou desativadas nunca têm acesso a nenhum painel
+        if (! $this->is_active) {
             return false;
         }
 

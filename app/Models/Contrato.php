@@ -82,6 +82,10 @@ class Contrato extends Model
      */
     public function isAccessibleBy(User $user): bool
     {
+        if (! $user->is_active) {
+            return false;
+        }
+
         if ($user->isEquipeAdministrativa() || $user->can('View:Contrato')) {
             return true;
         }

@@ -97,7 +97,7 @@ Route::get('/visualizar-documento/{path}', VisualizarDocumentoController::class)
     ->where('path', '.*')
     ->name('documentos.visualizar');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/contratos/{contrato}/visualizar', VisualizarContratoController::class)->name('contratos.visualizar');
     Route::get('/contratos/{contrato}/pdf', VisualizarContratoPDFController::class)->name('contratos.pdf');
     Route::get('/contratos/{contrato}/download', DownloadContratoController::class)->name('contratos.download');
@@ -121,4 +121,4 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/biblioteca/sacolas/{sacola}/ficha', [SacolaLeituraImpressaoController::class, 'ficha'])->name('biblioteca.sacolas.ficha');
 });
 
-Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'throttle:10,1'])->name('mobile.register-token');
+Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');
