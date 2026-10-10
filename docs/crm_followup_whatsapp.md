@@ -158,7 +158,40 @@ proibição de links e o "retorne apenas o texto puro" (o pós-processamento
 `removerLinks()` depende deles) e a regra de segurança contra prompt injection,
 sempre anexada por último. Editar a configuração não desliga essas proteções.
 
-Testes: `tests/Feature/CopilotoIaConfiguracaoTest.php`.
+#### Mensagem completa: raciocínio desligado e proteção contra corte por tokens
+
+Sintoma que originou o ajuste: o Copiloto às vezes devolvia a mensagem pela metade
+(lead 36). Causa: no `gemini-2.5-flash` os tokens de *thinking* saem do mesmo
+orçamento de `maxOutputTokens` (padrão 800); em leads com histórico longo o
+raciocínio consumia parte da cota e a geração terminava em
+`finishReason: MAX_TOKENS` com o texto cortado, que seguia direto para o WhatsApp
+e para o histórico. O campo `finishReason` não era lido.
+
+`CrmIaVendasService::gerarMensagemCopiloto()` agora:
+
+1. **Desliga o raciocínio** com `generationConfig.thinkingConfig.thinkingBudget = 0`
+   (redigir uma mensagem curta não precisa dele). Como a cascata de
+   `GeminiAgentService::callGeminiApi()` troca de modelo em caso de sobrecarga, a
+   chave só é enviada a modelos `gemini-2.5-flash*` (`payloadParaModelo()`); os
+   demais (2.0, aliases `-latest`) a rejeitariam com erro 400, tratado como
+   estrutural e que interromperia a contingência.
+2. **Nunca entrega texto cortado** (`textoCompletoDoGemini()`): se
+   `finishReason === 'MAX_TOKENS'`, tenta de novo **uma vez** com o quádruplo do
+   limite (teto de 8192 tokens). Se ainda vier cortado, lança exceção e cai na
+   contingência (modelo base preenchido ou mensagem padrão), nunca no trecho
+   pela metade.
+3. **Registra** em log `Mensagem do Copiloto IA cortada pelo limite de tokens`
+   (cada tentativa) e `Falha ao gerar a mensagem do Copiloto IA; usando a
+   mensagem de contingência` (qualquer falha que leve à contingência, que antes
+   era silenciosa). É o ponto de partida se o problema reaparecer.
+
+A correção não depende do valor salvo em `gemini.max_output_tokens`: overrides
+antigos (ex.: 800 gravado ao salvar a página) continuam valendo e seguem
+protegidos pelos itens acima.
+
+Testes: `tests/Feature/CopilotoIaConfiguracaoTest.php` (configuração) e
+`tests/Feature/CopilotoIaMensagemCompletaTest.php` (raciocínio desligado,
+nova tentativa em `MAX_TOKENS`, contingência e filtro por modelo).
 
 ### Variáveis dinâmicas substituídas automaticamente:
 - `[Nome do Responsável]` → `interessado.pessoa.nome`
