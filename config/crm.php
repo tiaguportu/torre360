@@ -128,4 +128,23 @@ return [
     | listas de consultor. Contas de famílias, professores etc. não entram.
     */
     'permissao_consultor' => 'Update:Interessado',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Previsão de receita e inteligência comercial (Lote D2)
+    |--------------------------------------------------------------------------
+    */
+    'previsao_receita' => [
+        // Ticket médio de referência quando o lead não possui valor_estimado informado
+        'ticket_medio_padrao' => (float) env('CRM_TICKET_MEDIO_PADRAO', 1500.00),
+
+        // Probabilidade de conversão padrão e por etapa (%)
+        'probabilidade_padrao' => (float) env('CRM_PROBABILIDADE_PADRAO', 20.0),
+        'probabilidades_etapa' => [
+            'Novo' => 10.0,
+            'Em Atendimento' => 25.0,
+            'Visita Agendada' => 50.0,
+            'Proposta' => 75.0,
+        ],
+    ],
 ];

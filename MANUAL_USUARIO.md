@@ -1419,6 +1419,13 @@ Cada pergunta pode ter uma **Condição de Exibição** que a torna visível ape
 ## 🚀 17. Captação Pública de Interessados
 
 ### 17.5 Rastreabilidade de Etapas e Métricas do Funil (Lote D1)
+
+### 17.6 Relatórios, Previsão de Receita e Alertas de Detratores (Lote D2)
+Na rota **CRM → Relatórios & Inteligência** (`/admin/crm/relatorios`), a coordenação e a equipe comercial contam com um painel completo:
+1. **Previsão de Receita Ponderada:** Exibe o valor total da carteira de leads ativos ponderado pela probabilidade de conversão de cada etapa do funil (configurável em `config/crm.php`), confrontando com a conversão histórica real da escola.
+2. **Desempenho por Consultor:** Tabela comparativa com tempo médio até a primeira resposta da escola, total de atendimentos realizados, visitas concluídas e taxa de conversão individual.
+3. **Mapeamento de Concorrência & Perdas:** Gráfico consolidado de motivos de perda e ranking de colégios concorrentes com fatores decisivos da família (preço, localização, proposta pedagógica).
+4. **Alerta Imediato de NPS Detrator:** Sempre que uma família avalia uma visita com nota entre 0 e 6 na pesquisa pós-tour, o consultor do lead e os administradores recebem um alerta imediato no sino com atalho para contato imediato e reversão da experiência.
 O sistema registra automaticamente o histórico cronológico de cada movimentação de etapa dos interessados:
 - **Histórico Automático:** Toda movimentação no Kanban, na listagem ou por ação do sistema (matrícula, perda ou avanço) gera um registro com a etapa de origem, etapa de destino, consultor responsável e horário.
 - **Motivos de Perda Rastreáveis:** Quando um lead é descartado ou perdido, o motivo selecionado fica vinculado à transição para auditoria e análises de concorrência.

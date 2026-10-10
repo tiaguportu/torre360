@@ -22,6 +22,9 @@ class PesquisaVisitaController extends Controller
             ->firstOrFail();
 
         if ($pesquisa->isRespondida()) {
+            // Alerta consultor e gestão caso a nota seja de detrator (uma vez por pesquisa)
+            $pesquisa->dispararAlertaDetratorSeNecessario();
+
             return redirect()->route('pesquisa-visita.sucesso', ['token' => $token]);
         }
 
@@ -38,6 +41,9 @@ class PesquisaVisitaController extends Controller
             ->firstOrFail();
 
         if ($pesquisa->isRespondida()) {
+            // Alerta consultor e gestão caso a nota seja de detrator (uma vez por pesquisa)
+            $pesquisa->dispararAlertaDetratorSeNecessario();
+
             return redirect()->route('pesquisa-visita.sucesso', ['token' => $token]);
         }
 
@@ -81,6 +87,9 @@ class PesquisaVisitaController extends Controller
                 'resultado' => $pesquisa->nota_nps >= 7 ? 'retornar' : 'sem_interesse',
             ]);
         }
+
+        // Alerta consultor e gestão caso a nota seja de detrator (uma vez por pesquisa)
+        $pesquisa->dispararAlertaDetratorSeNecessario();
 
         return redirect()->route('pesquisa-visita.sucesso', ['token' => $token]);
     }

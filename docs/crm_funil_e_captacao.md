@@ -468,3 +468,20 @@ Serviço analítico que fornece:
 - `conversaoPorDimensao(string $dimensao, array $filtros)`: calcula volume, ganhos, perdas e percentual de conversão agrupados por consultor, canal de origem ou campanha de marketing.
 
 Testes: `tests/Feature/FunilHistoricoTransicaoTest.php`.
+## 15. Lote D2: Relatórios Gerenciais, Previsão de Receita e Alertas de Detratores
+
+O Lote D2 implementa a tela executiva de inteligência e relatórios do CRM (`/admin/crm/relatorios`), alertas imediatos de insatisfação em visitas e previsões financeiras de captação.
+
+### 15.1 Relatórios e Inteligência Comercial
+- **Página Filament:** `App\Filament\Pages\CrmRelatoriosPage` com agrupamento no grupo `CRM`, filtros reativos por período (Mês Atual, 30 Dias, 90 Dias, Ano Atual e datas manuais) e filtro por consultor.
+- **Ajuda Contextual:** Header Action `ajuda` com conformidade ao Filament Shield (`getHelpContent()`), listando apenas as ações permitidas ao perfil logado.
+- **Motivos de Perda e Concorrência:** Agrupamento por motivo base (`LeadFunilService::motivoBase`) e tabela com **coluna própria para Colégios Concorrentes**, listando volume de perdas e fator decisivo principal informado pela família.
+- **Desempenho por Consultor:** Painel com tempo médio de primeira resposta (SLA), volume de leads atribuídos, contatos humanos registrados (`automatico = false`), visitas realizadas e percentual de conversão.
+- **Previsão de Receita Ponderada:** Calculada sobre a carteira ativa utilizando o `valor_estimado` do lead (com fallback para `config('crm.previsao_receita.ticket_medio_padrao')`), multiplicada pela probabilidade configurada por etapa (`config('crm.previsao_receita.probabilidades_etapa')`) e comparada com a conversão histórica real apurada pelo `FunilAnaliticoService`.
+
+### 15.2 Alertas de Detrator NPS em Visitas
+- Coluna `visita_pesquisa_satisfacao.alerta_detrator_enviado_em`.
+- Ao receber avaliação com NPS < 7 (Detrator), o sistema dispara notificação imediata no sino do painel para o **consultor responsável pelo lead** e para os **gestores** (`admin` e `super_admin`), permitindo intervenção rápida com a família.
+- O alerta é disparado **uma única vez por pesquisa**, garantindo que reavaliações ou consultas não reenviem avisos repetidos.
+
+Testes: `tests/Feature/CrmRelatoriosAlertasTest.php`.

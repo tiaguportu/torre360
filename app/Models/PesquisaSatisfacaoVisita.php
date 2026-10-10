@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +26,7 @@ class PesquisaSatisfacaoVisita extends Model
         'comentario',
         'respondido_em',
         'ip',
+        'alerta_detrator_enviado_em',
     ];
 
     protected function casts(): array
@@ -34,6 +37,7 @@ class PesquisaSatisfacaoVisita extends Model
             'nota_infraestrutura' => 'integer',
             'nota_proposta_pedagogica' => 'integer',
             'respondido_em' => 'datetime',
+            'alerta_detrator_enviado_em' => 'datetime',
         ];
     }
 
@@ -184,5 +188,53 @@ class PesquisaSatisfacaoVisita extends Model
     public static function gerarToken(): string
     {
         return Str::random(40);
+    }
+
+    /**
+     * Dispara notificação de alerta para o consultor do lead e para a gestão escolar
+     * quando a nota for de detrator (< 7). Disparado no máximo uma vez por pesquisa.
+     */
+    public function dispararAlertaDetratorSeNecessario(): bool
+    {
+        if ($this->nota_nps === null || $this->nota_nps >= 7) {
+            return false;
+        }
+
+        if ($this->alerta_detrator_enviado_em !== null) {
+            return false;
+        }
+
+        $this->loadMissing(['interessado.usuario', 'interessado.pessoa']);
+
+        $destinatarios = collect();
+
+        // Consultor responsável pelo lead
+        if ($this->interessado?->usuario) {
+            $destinatarios->push($this->interessado->usuario);
+        }
+
+        // Gestores (admin e super_admin ativos)
+        $gestores = User::role(['super_admin', 'admin'])->ativos()->get();
+        $destinatarios = $destinatarios->merge($gestores)->unique('id');
+
+        if ($destinatarios->isNotEmpty()) {
+            $nomeFamilia = $this->interessado?->pessoa?->nome ?? 'Família';
+            $comentarioTexto = filled($this->comentario) ? " Comentário: \"{$this->comentario}\"" : ' Sem comentário adicional.';
+
+            Notification::make()
+                ->title("⚠️ Alerta NPS: Avaliação Detratora no Tour Escolar ({$this->nota_nps}/10)")
+                ->body("A família de {$nomeFamilia} avaliou a visita com nota {$this->nota_nps}/10.{$comentarioTexto}")
+                ->danger()
+                ->actions([
+                    Action::make('visualizar')
+                        ->label('Ver Lead')
+                        ->url("/admin/interessados/{$this->interessado_id}/edit"),
+                ])
+                ->sendToDatabase($destinatarios);
+        }
+
+        $this->update(['alerta_detrator_enviado_em' => now()]);
+
+        return true;
     }
 }
