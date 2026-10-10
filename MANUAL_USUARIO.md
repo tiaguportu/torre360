@@ -3010,11 +3010,37 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 ### 54.8 Rate Limiting Defensivo em Emissão de Documentos e PDFs
 1. **Proteção contra Negação de Serviço (DoS / Resource Exhaustion):** As rotas de compilação pesada de binários PDF via DomPDF (`/contratos/{contrato}/pdf`, `/matriculas/{record}/boletim/download`, `/historicos-escolares/{record}/pdf`, dossiês e etiquetas) possuem limitação ativa de taxa de **30 requisições por minuto** (`throttle:30,1`) por usuário/IP.
 2. **Visualização de Documentos Privados:** O endpoint de visualização de arquivos e comprovantes (`/visualizar-documento/{path}`) possui limite de **60 requisições por minuto** (`throttle:60,1`).
-3. Usuários legítimos navegam e emitem relatórios sem qualquer atrito, enquanto scripts automatizados ou requisições concorrentes abusivas são bloqueados com código HTTP 429 (Too Many Requests), preservando a disponibilidade, CPU e memória dos servidores da instituição.
+### 54.9 Detecção de Leads Duplicados e Mesclagem Segura (CRM)
+1. **Detecção Automática Multi-Critério (`LeadDuplicadoDetectorService`):** O CRM identifica automaticamente potenciais cadastros duplicados de famílias e interessados com base em 4 critérios independentes:
+   - **Telefone Normalizado:** Compara os últimos 10 ou 11 dígitos do número, desconsiderando máscaras, parênteses, traços e prefixos de país (+55);
+   - **CPF Numérico:** Compara os 11 dígitos do CPF da pessoa;
+   - **E-mail Normalizado:** Compara os e-mails de forma estrita em caixa baixa e sem espaços residuais;
+   - **Aluno Dependente em Comum:** Cruza o nome normalizado da criança e a data de nascimento entre fichas distintas.
+2. **Aviso Visual em Destaque na Ficha do Lead:** Ao abrir a edição de um interessado duplicado, um banner de alerta âmbar exibe a quantidade de correspondências encontradas, os motivos (telefone, CPF, e-mail ou dependente) e links rápidos para inspecionar os outros cadastros.
+3. **Ação "Mesclar Duplicados" (Atômica e Protegida):** Usuários com permissão Shield `Update:Interessado` podem acionar o botão de mesclagem no topo da ficha ou na linha da tabela. A consolidação:
+   - Preserva o lead mais antigo por padrão (ou permite escolher explicitamente qual deve ser o registro mantido);
+   - **Nunca perde dados:** Transfere todas as visitas agendadas e realizadas, pesquisas pós-tour (NPS), documentos inseridos com análise de IA, históricos de contato, transições de etapas do funil, propostas e indicações;
+   - **Unifica Dependentes sem Duplicar:** Alunos com o mesmo nome normalizado têm seus dados completados (série, unidade, turno, data de nascimento) e suas visitas e documentos redirecionados para o registro definitivo;
+   - **Preserva Tokens e Pré-Matrículas:** Mantém tokens válidos do portal de admissão e rascunhos criptografados da família;
+   - **Conflito de Campos:** Preenche campos vazios no lead de destino e concatena o histórico de observações com marcação de data e identificação do lead absorvido;
+   - **Rastreabilidade e Auditoria:** Registra a operação no log de auditoria do sistema (`activity_log`) e insere um evento automático na linha do tempo do lead definitivo.
+
+### 54.10 Governança de Acessos e Blindagem contra Escalação Vertical de Privilégios (VULN-33)
+1. **Atribuição Restrita do Papel Super Administrador:** O papel `super_admin` possui privilégios totais sobre a infraestrutura e configurações do sistema. Usuários com outros papéis administrativos (como `admin`, `secretaria` ou `coordenador`) estão categoricamente impedidos de conceder, vincular ou promover qualquer usuário para `super_admin`.
+2. **Defesa em Camadas (UI e Backend):**
+   - **Camada Visual e Seleção:** O papel `super_admin` é automaticamente filtrado e omitido das opções do campo *Papéis (Roles)* para operadores que não sejam super administradores.
+   - **Regras de Validação Defensiva:** Submissões manuais ou tentativas de adulteração de requisições que injetem o identificador do papel `super_admin` são rejeitadas com erro de validação no formulário.
+   - **Garantia em Mutators do Filament:** Os ciclos de criação e edição (`CreateUser` e `EditUser`) barram sumariamente qualquer payload manipulado com erro HTTP 403 Forbidden.
+3. **Isolamento de Contas Privilegiadas:**
+   - Usuários que não possuem o papel `super_admin` não têm permissão para editar, alterar permissões ou excluir contas com perfil de Super Administrador.
+   - A tela de edição de um `super_admin` retorna bloqueio imediato (HTTP 403 Forbidden) caso acessada diretamente por URL por outro operador.
+4. **Proteção Contra Auto-Exclusão:**
+   - O sistema impede a exclusão da própria conta autenticada (`delete` e `forceDelete`), protegendo administradores contra perda irreversível de acessos ou travamento operacional decorrente de auto-remoção acidental.
 
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 

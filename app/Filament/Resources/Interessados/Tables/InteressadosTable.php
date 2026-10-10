@@ -25,7 +25,9 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Services\ConsultorWhatsappService;
 use App\Services\CrmIaVendasService;
+use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadFunilService;
+use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
 use App\Services\LinkPortalAdmissaoService;
 use App\Services\TermometroVagasService;
@@ -558,6 +560,83 @@ class InteressadosTable
                     DossieIaAction::make(),
                     CopilotoMensagemIaAction::make(),
                     ResumoConversaIaAction::make(),
+
+                    Action::make('mesclar')
+                        ->label('Mesclar Duplicados')
+                        ->icon('heroicon-o-arrows-pointing-in')
+                        ->color('warning')
+                        ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
+                        ->modalHeading('Mesclar Lead Duplicado')
+                        ->modalDescription('Esta ação consolida os cadastros duplicados, preservando contatos, visitas, documentos e dependentes sem perda de dados.')
+                        ->form([
+                            Select::make('lead_origem_id')
+                                ->label('Lead a ser absorvido')
+                                ->options(function (Interessado $record): array {
+                                    $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($record);
+                                    if ($duplicados->isNotEmpty()) {
+                                        return $duplicados->mapWithKeys(function ($item) {
+                                            $outro = $item['interessado'];
+                                            $motivosTxt = implode(', ', $item['motivos']);
+                                            $statusTxt = $outro->status?->nome ?? 'Sem etapa';
+                                            $dataTxt = $outro->created_at?->format('d/m/Y') ?? '';
+
+                                            return [$outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} ({$statusTxt} | Criado: {$dataTxt} | Motivo: {$motivosTxt})"];
+                                        })->all();
+                                    }
+
+                                    return Interessado::query()
+                                        ->where('id', '!=', $record->id)
+                                        ->with(['pessoa', 'status'])
+                                        ->latest('id')
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn (Interessado $outro) => [
+                                            $outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} (".($outro->status?->nome ?? 'Sem etapa').')',
+                                        ])
+                                        ->all();
+                                })
+                                ->searchable()
+                                ->required(),
+                            Select::make('preferir_destino')
+                                ->label('Qual lead deve ser preservado como principal?')
+                                ->options([
+                                    'mais_antigo' => 'Preservar o lead mais antigo (Padrão)',
+                                    'este' => 'Preservar este lead',
+                                    'outro' => 'Preservar o outro lead selecionado',
+                                ])
+                                ->default('mais_antigo')
+                                ->required(),
+                        ])
+                        ->action(function (array $data, Interessado $record) {
+                            $outroLead = Interessado::findOrFail($data['lead_origem_id']);
+
+                            $preferir = match ($data['preferir_destino']) {
+                                'este' => $record,
+                                'outro' => $outroLead,
+                                default => null,
+                            };
+
+                            try {
+                                $preservado = app(LeadMesclagemService::class)->mesclar(
+                                    $record,
+                                    $outroLead,
+                                    auth()->id(),
+                                    $preferir
+                                );
+
+                                Notification::make()
+                                    ->title('Leads mesclados com sucesso!')
+                                    ->body("Os registros foram consolidados no Lead #{$preservado->id}.")
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('Erro ao mesclar leads')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
 
                     Action::make('agendarVisita')
                         ->label('Agendar Visita')

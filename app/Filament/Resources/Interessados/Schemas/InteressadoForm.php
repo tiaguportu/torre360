@@ -11,6 +11,7 @@ use App\Models\StatusInteressado;
 use App\Models\User;
 use App\Notifications\AcompanhamentoInteressadoNotification;
 use App\Services\ConsultorWhatsappService;
+use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -80,6 +81,18 @@ class InteressadoForm
     {
         return $schema
             ->components([
+                View::make('filament.crm.aviso-lead-duplicado')
+                    ->viewData(function (?Interessado $record): array {
+                        if (! $record || ! $record->exists) {
+                            return ['duplicados' => collect(), 'leadAtual' => null];
+                        }
+
+                        return [
+                            'duplicados' => app(LeadDuplicadoDetectorService::class)->detectar($record),
+                            'leadAtual' => $record,
+                        ];
+                    })
+                    ->visible(fn (?Interessado $record): bool => (bool) ($record?->exists && app(LeadDuplicadoDetectorService::class)->temDuplicados($record))),
                 Tabs::make('CRM')
                     ->tabs([
                         Tab::make('Dados do Negócio')

@@ -17,6 +17,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
@@ -175,6 +177,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function hasPermissionTo($permission, $guardName = null): bool
     {
+        try {
+            $permissionClass = app(PermissionRegistrar::class)->getPermissionClass();
+            $perm = is_string($permission)
+                ? $permissionClass::findByName($permission, $guardName ?? $this->getDefaultGuardName())
+                : $permission;
+        } catch (PermissionDoesNotExist) {
+            return $this->traitHasPermissionTo($permission, $guardName);
+        }
+
         $permName = is_string($permission) ? $permission : ($permission->name ?? '');
         $isWidgetPerm = AppServiceProvider::isWidgetShieldPermission($permName);
 

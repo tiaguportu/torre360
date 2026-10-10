@@ -10,10 +10,24 @@ use App\Notifications\WelcomeUserMail;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
+use Spatie\Permission\Models\Role;
 
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $user = auth()->user();
+        if ($user && ! $user->hasRole('super_admin')) {
+            $superAdminRoleId = Role::where('name', 'super_admin')->value('id');
+            if ($superAdminRoleId && in_array($superAdminRoleId, (array) ($data['roles'] ?? []))) {
+                abort(403, 'Ação não permitida: você não possui permissão para atribuir o papel de Super Administrador.');
+            }
+        }
+
+        return $data;
+    }
 
     protected function afterCreate(): void
     {

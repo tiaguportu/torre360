@@ -485,3 +485,28 @@ O Lote D2 implementa a tela executiva de inteligência e relatórios do CRM (`/a
 - O alerta é disparado **uma única vez por pesquisa**, garantindo que reavaliações ou consultas não reenviem avisos repetidos.
 
 Testes: `tests/Feature/CrmRelatoriosAlertasTest.php`.
+
+## 16. Lote D3: Detecção de Duplicados e Mesclagem Segura
+
+O Lote D3 implementa a inteligência de identificação de duplicidades e uma rotina de mesclagem atômica que consolida cadastros sem jamais perder informações de visitas, documentos, dependentes ou histórico.
+
+### 16.1 Detector de Duplicados (`LeadDuplicadoDetectorService`)
+- Avalia 4 critérios independentes com tolerância a formatações e acentuação:
+  1. **Telefone Normalizado:** Compara os últimos 10 ou 11 dígitos contra outras pessoas com lead cadastrado;
+  2. **CPF Numérico:** Compara os 11 dígitos numéricos do CPF;
+  3. **E-mail Normalizado:** Compara e-mails em caixa baixa e sem espaços (`TRIM(LOWER(email))`);
+  4. **Aluno Dependente em Comum:** Cruza `InteressadoDependente::nomeNormalizado()` e `data_nascimento` com dependentes de outros leads.
+- Retorna lista estruturada de duplicados com os motivos e descrições humanas para exibição visual.
+- Aviso em destaque na ficha do lead via componente Blade (`filament.crm.aviso-lead-duplicado`) integrado ao `InteressadoForm`.
+
+### 16.2 Serviço de Mesclagem (`LeadMesclagemService`)
+- **Regra de Vencedor:** Preserva o lead mais antigo por padrão (`created_at`), ou respeita a preferência explícita informada pelo usuário.
+- **Transação Atômica (`DB::transaction`):** Qualquer inconsistência reverte integralmente todas as alterações.
+- **Unificação de Dependentes:** Dependentes com o mesmo nome normalizado são unificados no destino; campos nulos (nascimento, série, unidade, turno) são completados e todas as visitas e documentos vinculados são redirecionados para o dependente unificado antes da exclusão do duplicado da origem.
+- **Integridade Absoluta:** Move integralmente visitas (`visita_interessado`), pesquisas de satisfação (`visita_pesquisa_satisfacao`), documentos periciados (`documento_inserido`), históricos de contato (`historico_contato`), transições de status (`interessado_status_historico`), indicações (`indicacao_interessados`) e propostas comerciais.
+- **Tokens e Pré-Matrícula:** Preserva tokens de convite e portal de documentos válidos, além de mesclar rascunhos de pré-matrícula criptografados.
+- **Resolução de Conflitos:** Completa campos nulos no lead de destino e concatena observações de forma cronológica com identificação do lead absorvido.
+- **Auditoria e Linha do Tempo:** Registra a mesclagem no `activity_log` e adiciona um evento na linha do tempo do lead consolidado.
+- **Proteção e UI:** Ação "Mesclar Duplicados" disponível no cabeçalho de `EditInteressado` e na tabela de interessados (`InteressadosTable`), protegida pela permissão Shield `Update:Interessado`.
+
+Testes: `tests/Feature/LeadMesclagemDuplicadosTest.php`.

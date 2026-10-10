@@ -7,11 +7,16 @@ use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Models\Interessado;
 use App\Models\Pessoa;
+use App\Services\LeadDuplicadoDetectorService;
+use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Width;
 
@@ -56,6 +61,90 @@ class EditInteressado extends EditRecord
             DossieIaAction::make(),
             CopilotoMensagemIaAction::make(),
             ResumoConversaIaAction::make(),
+            Action::make('mesclarLead')
+                ->label('Mesclar Duplicados')
+                ->icon('heroicon-o-arrows-pointing-in')
+                ->color('warning')
+                ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicados($this->record)) > 0 ? $c : null)
+                ->visible(fn (): bool => auth()->user()?->can('Update:Interessado') ?? false)
+                ->modalHeading('Mesclar Lead Duplicado')
+                ->modalDescription('Esta ação une os cadastros duplicados, preservando todos os contatos, visitas, pesquisas de satisfação, documentos, dependentes e tokens sem perda de dados.')
+                ->form([
+                    Select::make('lead_origem_id')
+                        ->label('Lead a ser absorvido')
+                        ->helperText('Selecione qual lead será mesclado neste registro.')
+                        ->options(function (): array {
+                            $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($this->record);
+                            if ($duplicados->isNotEmpty()) {
+                                return $duplicados->mapWithKeys(function ($item) {
+                                    $outro = $item['interessado'];
+                                    $motivosTxt = implode(', ', $item['motivos']);
+                                    $statusTxt = $outro->status?->nome ?? 'Sem etapa';
+                                    $dataTxt = $outro->created_at?->format('d/m/Y') ?? '';
+
+                                    return [$outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} ({$statusTxt} | Criado: {$dataTxt} | Motivo: {$motivosTxt})"];
+                                })->all();
+                            }
+
+                            return Interessado::query()
+                                ->where('id', '!=', $this->record->id)
+                                ->with(['pessoa', 'status'])
+                                ->latest('id')
+                                ->limit(50)
+                                ->get()
+                                ->mapWithKeys(fn (Interessado $outro) => [
+                                    $outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} (".($outro->status?->nome ?? 'Sem etapa').')',
+                                ])
+                                ->all();
+                        })
+                        ->searchable()
+                        ->required(),
+                    Select::make('preferir_destino')
+                        ->label('Qual lead deve ser preservado como principal?')
+                        ->options([
+                            'mais_antigo' => 'Preservar o lead mais antigo (Padrão)',
+                            'este' => "Preservar este lead (#{$this->record->id})",
+                            'outro' => 'Preservar o outro lead selecionado',
+                        ])
+                        ->default('mais_antigo')
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $outroLead = Interessado::findOrFail($data['lead_origem_id']);
+
+                    $preferir = match ($data['preferir_destino']) {
+                        'este' => $this->record,
+                        'outro' => $outroLead,
+                        default => null,
+                    };
+
+                    try {
+                        $preservado = app(LeadMesclagemService::class)->mesclar(
+                            $this->record,
+                            $outroLead,
+                            auth()->id(),
+                            $preferir
+                        );
+
+                        Notification::make()
+                            ->title('Leads mesclados com sucesso!')
+                            ->body("Os registros foram consolidados no Lead #{$preservado->id}. Visitas, documentos e históricos foram unificados.")
+                            ->success()
+                            ->send();
+
+                        if ($preservado->id !== $this->record->id) {
+                            $this->redirect(InteressadoResource::getUrl('edit', ['record' => $preservado]));
+                        } else {
+                            $this->refreshFormData(['dependentes', 'observacoes']);
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Erro ao mesclar leads')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             DeleteAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
@@ -92,6 +181,10 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
         $html .= '<li><strong>📑 Documentos de Pré-Admissão com Validador IA:</strong> Na aba inferior, acompanhe o checklist de documentos. O sistema conta com pré-análise assíncrona por IA (OCR pericial com Gemini Vision) que afere legibilidade, extrai dados cruciais (CPF, RG, Data de Nascimento, Filiação), aponta divergências e permite sincronizar os dados cadastrais da família com 1 único clique, sem travamentos e em total conformidade com a LGPD.</li>';
         $html .= '<li><strong>Histórico Tradicional:</strong> Na aba "Histórico de Contatos", acesse a listagem tabular detalhada de todas as interações do lead.</li>';
+
+        if ($user->can('Update:Interessado')) {
+            $html .= '<li><strong>🔀 Detecção de Duplicados & Mesclagem:</strong> O sistema detecta automaticamente possíveis duplicados com base em telefone, CPF, e-mail ou aluno dependente em comum (nome e nascimento). O botão "Mesclar Duplicados" no topo permite consolidar os cadastros de forma atômica e segura, preservando todo o histórico, visitas, pesquisas NPS, documentos e dependentes sem perda de dados.</li>';
+        }
 
         if ($user->can('Delete:Interessado')) {
             $html .= '<li><strong>Excluir:</strong> Use o botão vermelho "Excluir" para remover o lead.</li>';

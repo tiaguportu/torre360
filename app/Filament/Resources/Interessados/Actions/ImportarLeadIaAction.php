@@ -103,7 +103,7 @@ class ImportarLeadIaAction
                         );
 
                         // Ouvir os áudios leva mais que o limite padrão de 30 s do PHP numa requisição web.
-                        if (collect($conversa['midias'])->contains('tipo', 'audio')) {
+                        if (! app()->runningUnitTests() && collect($conversa['midias'])->contains('tipo', 'audio')) {
                             @set_time_limit(180);
                         }
                     }

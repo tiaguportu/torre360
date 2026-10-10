@@ -6,6 +6,7 @@ use App\Listeners\LogAuthenticationActivity;
 use App\Listeners\LogSentMessage;
 use App\Models\LeadScoreConfiguracao;
 use App\Models\RiscoEvasaoConfiguracao;
+use App\Models\User;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
@@ -54,10 +55,18 @@ class AppServiceProvider extends ServiceProvider
                 ->recordAction(null);
         });
 
-        Gate::before(function ($user, $ability) {
+        Gate::before(function ($user, $ability, array $arguments = []) {
             // Permissões de widgets do Shield devem respeitar a seleção na Role, mesmo para super_admin
             if (is_string($ability) && static::isWidgetShieldPermission($ability)) {
                 return null;
+            }
+
+            // Impede auto-exclusão de conta, mesmo para super_admin
+            if (in_array($ability, ['delete', 'forceDelete', 'Delete:User', 'ForceDelete:User']) && ! empty($arguments)) {
+                $target = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;
+                if ($target instanceof User && (int) $target->id === (int) $user->id) {
+                    return false;
+                }
             }
 
             $activeRole = session('active_role');

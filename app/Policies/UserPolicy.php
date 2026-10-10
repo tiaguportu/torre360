@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -14,9 +15,18 @@ class UserPolicy
         return $authUser->can('ViewAny:User');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('View:User');
+        if (! $authUser->can('View:User')) {
+            return false;
+        }
+
+        // Se o usuário alvo for super_admin, apenas super_admin pode visualizá-lo
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
     public function create(AuthUser $authUser): bool
@@ -24,14 +34,37 @@ class UserPolicy
         return $authUser->can('Create:User');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('Update:User');
+        if (! $authUser->can('Update:User')) {
+            return false;
+        }
+
+        // Contas de super_admin só podem ser editadas por quem já é super_admin (anti-privilege-escalation)
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('Delete:User');
+        if (! $authUser->can('Delete:User')) {
+            return false;
+        }
+
+        // Impede que um usuário exclua a sua própria conta
+        if ($targetUser && $targetUser->id === $authUser->id) {
+            return false;
+        }
+
+        // Apenas super_admin pode excluir outros super_admins
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
     public function deleteAny(AuthUser $authUser): bool
@@ -39,14 +72,35 @@ class UserPolicy
         return $authUser->can('DeleteAny:User');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('Restore:User');
+        if (! $authUser->can('Restore:User')) {
+            return false;
+        }
+
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('ForceDelete:User');
+        if (! $authUser->can('ForceDelete:User')) {
+            return false;
+        }
+
+        // Impede auto-exclusão definitiva
+        if ($targetUser && $targetUser->id === $authUser->id) {
+            return false;
+        }
+
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,9 +113,17 @@ class UserPolicy
         return $authUser->can('RestoreAny:User');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, ?User $targetUser = null): bool
     {
-        return $authUser->can('Replicate:User');
+        if (! $authUser->can('Replicate:User')) {
+            return false;
+        }
+
+        if ($targetUser && $targetUser->hasRole('super_admin') && ! $authUser->hasRole('super_admin')) {
+            return false;
+        }
+
+        return true;
     }
 
     public function reorder(AuthUser $authUser): bool

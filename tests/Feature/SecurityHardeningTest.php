@@ -1036,4 +1036,77 @@ class SecurityHardeningTest extends TestCase
         $this->assertStringNotContainsString('<img src="x" onerror="stealCookies()">', $renderedPdf);
         $this->assertStringContainsString('&lt;script&gt;alert(&quot;xss_armazenado&quot;)&lt;/script&gt;', $renderedPdf);
     }
+
+    public function test_usuario_nao_super_admin_nao_pode_atribuir_papel_super_admin(): void
+    {
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $permViewAny = Permission::firstOrCreate(['name' => 'ViewAny:User', 'guard_name' => 'web']);
+        $permCreateUser = Permission::firstOrCreate(['name' => 'Create:User', 'guard_name' => 'web']);
+        $roleAdmin->givePermissionTo([$permViewAny, $permCreateUser]);
+
+        $roleSuperAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+
+        $userAdmin = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $userAdmin->assignRole($roleAdmin);
+
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        session(['active_role' => 'admin']);
+
+        $this->actingAs($userAdmin);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'Novo Hacker',
+                'email' => 'hacker@torre360.com.br',
+                'password' => 'SenhaForte#2026@XYZ',
+                'password_confirmation' => 'SenhaForte#2026@XYZ',
+                'roles' => [$roleSuperAdmin->id],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['roles']);
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'hacker@torre360.com.br',
+        ]);
+    }
+
+    public function test_usuario_nao_super_admin_nao_pode_editar_ou_excluir_super_admin_nem_excluir_a_si_mesmo(): void
+    {
+        $roleSecretaria = Role::firstOrCreate(['name' => 'secretaria', 'guard_name' => 'web']);
+        $permUpdateUser = Permission::firstOrCreate(['name' => 'Update:User', 'guard_name' => 'web']);
+        $permDeleteUser = Permission::firstOrCreate(['name' => 'Delete:User', 'guard_name' => 'web']);
+        $roleSecretaria->givePermissionTo([$permUpdateUser, $permDeleteUser]);
+
+        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+
+        $superAdmin = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $superAdmin->assignRole($superAdminRole);
+
+        $userOperador = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $userOperador->assignRole($roleSecretaria);
+
+        // 1. Operador não pode atualizar super_admin
+        $this->assertFalse($userOperador->can('update', $superAdmin));
+
+        // 2. Operador não pode excluir super_admin
+        $this->assertFalse($userOperador->can('delete', $superAdmin));
+
+        // 3. Usuário não pode excluir a si mesmo
+        $this->assertFalse($userOperador->can('delete', $userOperador));
+        $this->assertFalse($superAdmin->can('delete', $superAdmin));
+
+        // 4. Operador recebe 403 ao tentar acessar tela de edição de super_admin
+        $this->actingAs($userOperador);
+        $response = $this->get(route('filament.admin.resources.users.edit', ['record' => $superAdmin->id]));
+        $response->assertStatus(403);
+    }
 }

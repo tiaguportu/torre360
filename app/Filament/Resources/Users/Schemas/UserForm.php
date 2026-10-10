@@ -9,8 +9,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -81,7 +83,28 @@ class UserForm
                 Select::make('roles')
                     ->label('Papéis (Roles)')
                     ->multiple()
-                    ->relationship('roles', 'name')
+                    ->relationship(
+                        'roles',
+                        'name',
+                        modifyQueryUsing: fn (Builder $query) => auth()->user()?->hasRole('super_admin')
+                            ? $query
+                            : $query->where('name', '!=', 'super_admin')
+                    )
+                    ->rule(function () {
+                        return function (string $attribute, $value, \Closure $fail) {
+                            $user = auth()->user();
+                            if ($user && ! $user->hasRole('super_admin')) {
+                                $roleIds = is_array($value) ? $value : [$value];
+                                $temSuperAdmin = Role::whereIn('id', $roleIds)
+                                    ->where('name', 'super_admin')
+                                    ->exists();
+
+                                if ($temSuperAdmin) {
+                                    $fail('Você não possui permissão para conceder ou modificar o papel de Super Administrador.');
+                                }
+                            }
+                        };
+                    })
                     ->preload()
                     ->searchable()
                     ->required(),
