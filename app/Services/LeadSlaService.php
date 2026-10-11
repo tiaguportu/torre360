@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Serviço responsável pelo cálculo e monitoramento do SLA de 1ª resposta no CRM.
@@ -171,10 +172,14 @@ class LeadSlaService
      *
      * @return int Quantidade de leads cujo estouro foi notificado
      */
-    public function verificarENotificarEstouros(): int
+    public function verificarENotificarEstouros(?array &$detalhes = null): int
     {
-        /** @var Collection<int, Interessado> $leadsCandidatos */
-        $leadsCandidatos = Interessado::query()
+        $notificadosConsultor = 0;
+        $notificadosGestao = 0;
+
+        // 1. Leads com consultor atribuído
+        /** @var Collection<int, Interessado> $leadsComConsultor */
+        $leadsComConsultor = Interessado::query()
             ->with(['usuario', 'pessoa', 'status'])
             ->whereNotNull('usuario_id')
             ->whereNull('data_primeiro_contato')
@@ -182,9 +187,7 @@ class LeadSlaService
             ->whereHas('status', fn ($q) => $q->where('is_final', false))
             ->get();
 
-        $notificados = 0;
-
-        foreach ($leadsCandidatos as $lead) {
+        foreach ($leadsComConsultor as $lead) {
             if (! $this->slaEstourado($lead)) {
                 continue;
             }
@@ -212,11 +215,69 @@ class LeadSlaService
                     'sla_estouro_notificado_em' => now(),
                 ])->saveQuietly();
 
-                $notificados++;
+                $notificadosConsultor++;
             }
         }
 
-        return $notificados;
+        // 2. Leads sem consultor (ex: formulário público) com SLA estourado
+        /** @var Collection<int, Interessado> $leadsSemConsultor */
+        $leadsSemConsultor = Interessado::query()
+            ->with(['pessoa', 'status'])
+            ->whereNull('usuario_id')
+            ->whereNull('data_primeiro_contato')
+            ->whereNull('sla_gestao_notificado_em')
+            ->whereHas('status', fn ($q) => $q->where('is_final', false))
+            ->get();
+
+        $leadsSemConsultorEstourados = $leadsSemConsultor->filter(fn (Interessado $lead) => $this->slaEstourado($lead))->values();
+
+        if ($leadsSemConsultorEstourados->isNotEmpty()) {
+            $destinatariosGestao = User::query()
+                ->ativos()
+                ->whereHas('roles', fn ($q) => $q->whereIn('name', ['coordenador', 'admin', 'super_admin']))
+                ->get();
+
+            if ($destinatariosGestao->isEmpty()) {
+                Log::warning('Nenhum usuário com papel coordenador, admin ou super_admin encontrado para receber alerta de SLA de leads sem consultor.');
+            } else {
+                $totalSemConsultor = $leadsSemConsultorEstourados->count();
+                $nomes = $leadsSemConsultorEstourados->take(5)
+                    ->map(fn (Interessado $l) => $l->pessoa?->nome ?? "Lead #{$l->id}")
+                    ->join(', ');
+                $sufixo = $totalSemConsultor > 5 ? ' e mais '.($totalSemConsultor - 5).' outro(s)' : '';
+
+                $notificacaoGestao = Notification::make()
+                    ->title("⚠️ Alerta de SLA: {$totalSemConsultor} lead(s) sem consultor com SLA estourado")
+                    ->body("Os seguintes leads aguardam atendimento há mais tempo que o SLA estabelecido: {$nomes}{$sufixo}.")
+                    ->icon('heroicon-o-clock')
+                    ->danger()
+                    ->actions([
+                        NotificationAction::make('ver_leads')
+                            ->label('Ver Leads Sem Consultor')
+                            ->url('/admin/interessados?tableFilters[sem_consultor][value]=1')
+                            ->button(),
+                    ]);
+
+                foreach ($destinatariosGestao as $destinatario) {
+                    $notificacaoGestao->sendToDatabase($destinatario);
+                }
+            }
+
+            foreach ($leadsSemConsultorEstourados as $lead) {
+                $lead->forceFill([
+                    'sla_gestao_notificado_em' => now(),
+                ])->saveQuietly();
+
+                $notificadosGestao++;
+            }
+        }
+
+        $detalhes = [
+            'consultor' => $notificadosConsultor,
+            'gestao' => $notificadosGestao,
+        ];
+
+        return $notificadosConsultor + $notificadosGestao;
     }
 
     /**
