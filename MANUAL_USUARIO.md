@@ -3183,6 +3183,40 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 
 ---
 
+## 🎯 55. Retenção Escolar, SLA Comercial e Governança do CRM (Lote G)
+
+Implementações de refinamento, robustez e segurança operacional no módulo de CRM, Inteligência Artificial e Retenção de Alunos:
+
+### 55.1 Governança da Identidade da Escola no Copiloto IA (Lote G1)
+1. **Preservação da Persona Institucional:** O motor do Copiloto IA de Vendas (`CrmIaVendasService`) divide a resolução do nome da instituição em duas camadas:
+   - `nomeEscolaConfigurado`: avalia parâmetros explícitos, valor personalizado na página de configuração da IA, arquivo de configuração e o cadastro da primeira Unidade ou Instituição Mantenedora. Caso nenhum desses dados esteja presente, retorna `null`.
+   - `nomeEscola`: fallback seguro que adota `config('app.name')` exclusivamente para peças analíticas que exigem string não vazia (como battlecards, dossiês e réguas).
+2. **Eliminação de Menções Genéricas:** No prompt de sistema do Copiloto, a substituição da persona padrão ("Escola Torre de Marfim") só ocorre quando houver nome explicitamente configurado. Escolas recém-instaladas sem unidade cadastrada mantêm a persona de referência íntegra, eliminando a falha que transformava o assistente em "Copiloto ... da Laravel".
+
+### 55.2 Alertas de Risco de Evasão em Lote e Preservação de Notificações (Lote G3)
+1. **Preservação de Histórico e Auditoria:** O recálculo periódico de evasão (`RiscoEvasaoService`) adota o ciclo transacional agregado em memória (`iniciarExecucao()` ... `finalizarExecucao()`).
+2. **Fim da Exclusão de Histórico:** O sistema **nunca mais apaga** notificações de banco de dados (`database notifications`). Notificações de dias anteriores ou já lidas pela coordenação permanecem intactas no histórico do sino.
+3. **Resumo Consolidado Inteligente:** Caso a quantidade de alunos em risco em uma rodada supere o limite individual configurado (`max_notificacoes_individuais`, padrão 5), o sistema gera exatamente **uma única notificação-resumo por gestor ativo**, exibindo a contagem total e o link direto para o painel de intervenção (`RetencaoTarefaResource`).
+
+### 55.3 Régua de Evasão e Acompanhamento das Famílias Reais (Lote G4)
+1. **Independência de Etapa do Lead:** A régua de prevenção de evasão e rematrícula (`candidatosDeRiscoEvasaoRematricula`) removeu o filtro que limitava a busca a leads em etapas ativas. Responsáveis de alunos em risco cujo lead de captação original já se encontre na etapa final de ganho ("Matriculado") são alcançados e incluídos normalmente no fluxo preventivo.
+2. **Vínculo Estrito por Chaves Relacionais Familiares:** Eliminado todo e qualquer casamento por similaridade textual de nome de dependente. O vínculo é estabelecido estritamente pelas chaves relacionais concretas do aluno: vínculos em `aluno_responsavel` (`Pessoa::responsaveis()`), responsáveis financeiros dos contratos vigentes da matrícula (`ResponsavelFinanceiro`) ou a própria pessoa do aluno.
+3. **Deduplicação por Responsável e Sigilo:** Fichas duplicadas de uma mesma família são deduplicadas pela `pessoa_id`, mantendo o lead mais recente. Além disso, as variáveis de interpolação da mensagem à família nunca contêm notas de corte, scores ou o termo "evasão", preservando o acolhimento pedagógico da instituição.
+
+### 55.4 SLA Comercial da Gestão com Fila Preservada (Lote G5)
+1. **Rastreamento Efetivo de Envio:** O controle de estouro de SLA da primeira resposta para novos leads sem consultor atribuído (`sla_gestao_notificado_em`) só marca o horário de notificação e contabiliza o atendimento se houver destinatários gestores ativos (`coordenador`, `admin`, `super_admin`) que realmente receberam o aviso.
+2. **Proteção contra Perda Silenciosa:** Caso a rotina execute sem gestores ativos cadastrados, o sistema registra aviso em log sem marcar a coluna, mantendo os leads pendentes de notificação para a próxima execução assim que um gestor ativo estiver presente.
+
+### 55.5 Correção do Filtro por Consultor no Kanban (Lote G6)
+1. **Filtro Direto por Consultor:** O seletor de consultor no Funil de Vendas Kanban aplica o identificador correto do usuário selecionado diretamente na consulta (`$this->filtroConsultorId`), corrigindo a anomalia em que o filtro sempre restringia incorretamente para o usuário com ID 1.
+2. **Consistência de Totais:** Os cards e os somatórios de valores estimados de todas as etapas do Kanban respeitam com precisão a carteira do consultor selecionado.
+
+### 55.6 Selo de Duplicados com Contagem Visível (Lote G8)
+1. **Contagem Efetiva de Duplicados:** O badge indicador da ação "Mesclar Duplicados" na edição do lead (`EditInteressado`) utiliza `contarDuplicadosVisiveis()`, contabilizando exclusivamente as duplicidades reais que o consultor logado tem permissão para visualizar e mesclar em sua carteira.
+2. **Preservação de Sigilo:** Cadastros correspondentes pertencentes à carteira de outros operadores continuam exibindo o alerta genérico de sigilo para a gestão, sem inflar o selo numérico de opções de mesclagem do operador.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 
