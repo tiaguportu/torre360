@@ -98,7 +98,7 @@ class ReguaFollowUp extends Model
         $dependenteVisita = $visita?->dependente;
         $nomeAluno = $dependenteVisita?->nome_crianca
             ?? $interessado->dependentes->pluck('nome_crianca')->filter()->join(', ')
-            ?: 'seu filho(a)';
+            ?: ($pessoa?->alunos?->pluck('nome')->filter()->join(', ') ?: 'seu filho(a)');
 
         $serieInteresse = $dependenteVisita?->serie?->nome
             ?? $interessado->dependentes->first()?->serie?->nome

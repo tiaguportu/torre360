@@ -10,9 +10,11 @@ use App\Mail\MensagemGenericaMail;
 use App\Models\HistoricoContato;
 use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
+use App\Models\InteressadoDependente;
 use App\Models\Matricula;
 use App\Models\ReguaFollowUp;
 use App\Models\ReguaFollowUpLog;
+use App\Models\ResponsavelFinanceiro;
 use App\Models\TipoContatoInteressado;
 use App\Models\Unidade;
 use App\Models\User;
@@ -310,6 +312,7 @@ class ReguaFollowUpService
 
     /**
      * Localiza candidatos em risco de evasão escolar conectados ao fluxo de rematrícula.
+     * Alcança os responsáveis legais e financeiros das matrículas ativas em risco (Lote F2).
      *
      * @return Collection<int, array{interessado: Interessado, visita: ?VisitaInteressado}>
      */
@@ -317,26 +320,81 @@ class ReguaFollowUpService
     {
         $corte = (int) config('risco_evasao.playbook.corte_risco', 60);
 
-        $pessoaIds = Matricula::query()
+        // Matrículas ativas com risco de evasão no corte configurado
+        $matriculasEmRisco = Matricula::query()
             ->where('situacao', SituacaoMatricula::ATIVA)
             ->where('risco_evasao_score', '>=', $corte)
-            ->pluck('pessoa_id')
-            ->filter()
-            ->unique();
+            ->with(['pessoa.responsaveis'])
+            ->get();
 
-        if ($pessoaIds->isEmpty()) {
+        if ($matriculasEmRisco->isEmpty()) {
             return collect();
         }
 
-        return Interessado::query()
-            ->whereIn('pessoa_id', $pessoaIds)
-            ->with(['pessoa', 'dependentes.serie', 'usuario'])
-            ->get()
-            ->map(fn (Interessado $lead): array => [
+        $responsaveisPessoaIds = [];
+
+        foreach ($matriculasEmRisco as $matricula) {
+            $aluno = $matricula->pessoa;
+            if (! $aluno) {
+                continue;
+            }
+
+            // 1. Responsáveis vinculados na tabela aluno_responsavel
+            foreach ($aluno->responsaveis as $responsavel) {
+                $responsaveisPessoaIds[] = $responsavel->id;
+            }
+
+            // 2. Vínculo direto (compatibilidade retroativa quando o lead é o próprio aluno)
+            $responsaveisPessoaIds[] = $aluno->id;
+        }
+
+        // 3. Responsáveis financeiros dos contratos dessas matrículas
+        $matriculaIds = $matriculasEmRisco->pluck('id')->all();
+        $respFinIds = ResponsavelFinanceiro::query()
+            ->whereHas('contrato', fn ($q) => $q->whereIn('matricula_id', $matriculaIds))
+            ->pluck('pessoa_id')
+            ->filter()
+            ->all();
+
+        $responsaveisPessoaIds = array_merge($responsaveisPessoaIds, $respFinIds);
+        $responsaveisPessoaIds = array_values(array_unique(array_filter($responsaveisPessoaIds)));
+
+        // Localiza leads ativos correspondentes
+        $leads = Interessado::query()
+            ->ativos()
+            ->where(function ($query) use ($responsaveisPessoaIds, $matriculasEmRisco): void {
+                $query->whereIn('pessoa_id', $responsaveisPessoaIds);
+
+                // 4. Também cobre leads cujo dependente seja o aluno
+                foreach ($matriculasEmRisco as $mat) {
+                    if ($nomeAluno = $mat->pessoa?->nome) {
+                        $norm = InteressadoDependente::nomeNormalizado($nomeAluno);
+                        if ($norm !== '') {
+                            $query->orWhereHas('dependentes', fn ($q) => $q->whereRaw('LOWER(TRIM(nome_crianca)) = ?', [$norm]));
+                        }
+                    }
+                }
+            })
+            ->with(['pessoa.alunos', 'dependentes.serie', 'usuario'])
+            ->get();
+
+        // Deduplica por Interessado (irmãos em risco geram 1 único candidato)
+        $candidatos = collect();
+        $processados = [];
+
+        foreach ($leads as $lead) {
+            if (isset($processados[$lead->id])) {
+                continue;
+            }
+            $processados[$lead->id] = true;
+
+            $candidatos->push([
                 'interessado' => $lead,
                 'visita' => null,
-            ])
-            ->values();
+            ]);
+        }
+
+        return $candidatos->values();
     }
 
     /**
