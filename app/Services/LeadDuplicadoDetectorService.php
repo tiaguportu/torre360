@@ -135,6 +135,11 @@ class LeadDuplicadoDetectorService
         return $this->detectar($lead, $usuario)->count();
     }
 
+    public function contarDuplicadosVisiveis(Interessado $lead, ?User $usuario = null): int
+    {
+        return count($this->duplicadosIds($lead, $usuario));
+    }
+
     public function duplicadosIds(Interessado $lead, ?User $usuario = null): array
     {
         return $this->detectar($lead, $usuario)

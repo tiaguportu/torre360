@@ -131,7 +131,7 @@ class EditInteressado extends EditRecord
                 ->label('Mesclar Duplicados')
                 ->icon('heroicon-o-arrows-pointing-in')
                 ->color('warning')
-                ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicados($this->record)) > 0 ? $c : null)
+                ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicadosVisiveis($this->record, auth()->user())) > 0 ? $c : null)
                 ->visible(fn (): bool => auth()->user()?->can('Update:Interessado') ?? false)
                 ->modalHeading('Mesclar Lead Duplicado')
                 ->modalDescription('Esta ação une os cadastros duplicados, preservando todos os contatos, visitas, pesquisas de satisfação, documentos, dependentes e tokens sem perda de dados.')

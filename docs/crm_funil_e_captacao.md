@@ -542,7 +542,13 @@ O Lote D4 implementa o controle rigoroso de tempo de atendimento para novos lead
 - **Tabela de Interessados (`InteressadosTable`):** Coluna badge "SLA 1ª Resposta" destacando visualmente os status (verde para atendido no prazo, vermelho para estourado, azul para dentro do prazo) com tooltip detalhado da data limite comercial e tempo decorrido.
 - **Ajuda da Página (`EditInteressado`):** Atualização do modal contextual com as orientações completas sobre o funcionamento do SLA.
 
-Testes: `tests/Feature/CrmSlaPrimeiraRespostaTest.php`.
+### 17.5 SLA para Leads sem Consultor e Alertas da Gestão (Lotes F4 e G5)
+- **Leads sem Distribuição Automática:** Leads originados por formulários públicos ou landing pages nascem sem consultor (`usuario_id IS NULL`). Anteriormente, esses leads eram desconsiderados pelo verificador de estouro de SLA.
+- **Rastreamento Separado (`sla_gestao_notificado_em`):** Adicionada a coluna `interessado.sla_gestao_notificado_em` via migration idempotente. O controle é independente de `sla_estouro_notificado_em` (que pertence ao consultor que venha a assumir a família posteriormente).
+- **Notificação Consolidada por Execução:** A cada rodada do comando `crm:verificar-sla-estourado`, se houver leads sem consultor com SLA estourado pendentes de notificação à gestão, uma única notificação agregada é enviada aos usuários com papéis `admin`, `super_admin` e `coordenador`, contendo a contagem, até 5 nomes e link direto com filtro para atendimento rápido.
+- **Preservação de Alertas sem Gestores Ativos (Lote G5):** A gravação do timestamp `sla_gestao_notificado_em` e o incremento da contagem de notificados só acontecem quando existem destinatários gestores ativos homologados. Na ausência de gestores ativos, o sistema apenas registra um aviso em log (`Log::warning`) e preserva o lead pendente para as próximas execuções, evitando a perda silenciosa de alertas.
+
+Testes: `tests/Feature/CrmSlaPrimeiraRespostaTest.php`, `tests/Feature/CrmSlaGestaoSemConsultorLoteF4Test.php`, `tests/Feature/CrmSlaGestaoSemDestinatarioLoteG5Test.php`.
 
 ## 18. Lote D7: Escopo da Carteira do Consultor & Leads Não Atribuídos
 
@@ -570,11 +576,6 @@ O Lote D7 estabelece a segregação de acesso comercial por carteira de atendime
 
 Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`.
 
-### 17.5 SLA para Leads sem Consultor e Alertas da Gestão (Lote F4)
-- **Leads sem Distribuição Automática:** Leads originados por formulários públicos ou landing pages nascem sem consultor (`usuario_id IS NULL`). Anteriormente, esses leads eram desconsiderados pelo verificador de estouro de SLA.
-- **Rastreamento Separado (`sla_gestao_notificado_em`):** Adicionada a coluna `interessado.sla_gestao_notificado_em` via migration idempotente. O controle é independente de `sla_estouro_notificado_em` (que pertence ao consultor que venha a assumir a família posteriormente).
-- **Notificação Consolidada por Execução:** A cada rodada do comando `crm:verificar-sla-estourado`, se houver leads sem consultor com SLA estourado pendentes de notificação à gestão, uma única notificação agregada é enviada aos usuários com papéis `admin`, `super_admin` e `coordenador`, contendo a contagem, até 5 nomes e link direto com filtro para atendimento rápido.
-
 ### 18.4 Bloqueio Pessimista e Concorrência ao Assumir Lead (Lote F6)
 - **Atomicidade no Atendimento:** A ação de assumir lead (disponível no Kanban, na listagem de Interessados e no cabeçalho de edição) utiliza transação em banco de dados (`DB::transaction`) associada a bloqueio pessimista (`lockForUpdate()`).
 - **Prevenção de Corridas (Race Conditions):** Se dois consultores tentarem assumir a mesma família simultaneamente, o primeiro confirma a atribuição e gera o histórico de contato. O segundo é notificado amigavelmente com a mensagem *"Este lead já foi assumido por outro consultor"*, preservando a integridade da carteira sem gerar registros duplicados de histórico.
@@ -600,14 +601,24 @@ O Lote D8 e seus refinamentos do Lote F3 estruturam o uso de inteligência artif
   - Ao aprovar, limpa observações e transiciona o estado pela máquina de estados;
   - Registra evento de auditoria no `activity_log` indicando que a decisão acatou a recomendação do Gemini.
 
-### 19.3 Precedência Unificada do Nome da Escola (Lote F3)
-Todas as menções ao nome da instituição no Copiloto IA, dossiês, battlecards de vendas e réguas de comunicação seguem rigorosamente a seguinte cadeia de prioridades única:
-1. Argumento explícito `$config['nome_escola']` (se fornecido na chamada);
-2. Valor salvo em "Comportamento do Copiloto IA" (`CopilotoIaConfiguracao::valores()['nome_escola']`);
-3. Variável de ambiente `CRM_NOME_ESCOLA`;
-4. Nome da primeira unidade cadastrada (`Unidade::first()->nome`);
-5. Nome da instituição mantenedora (`InstituicaoEnsino::first()->nome`);
-6. Nome padrão da aplicação (`config('app.name')`).
+### 19.3 Precedência Unificada do Nome da Escola e Governança da Persona (Lotes F3 e G1)
+A identificação da instituição para inteligência artificial, réguas e peças comerciais segue duas camadas em `CrmIaVendasService`:
+
+1. **Nome Explicitamente Configurado (`nomeEscolaConfigurado`):**
+   - Argumento explícito `$config['nome_escola']` (se fornecido na chamada);
+   - Valor salvo em "Comportamento do Copiloto IA" (`CopilotoIaConfiguracao::valores()['nome_escola']`);
+   - Configuração de aplicação `config('copiloto_ia.nome_escola')`;
+   - Nome da primeira unidade cadastrada (`Unidade::first()->nome`);
+   - Nome da instituição mantenedora (`InstituicaoEnsino::first()->nome`);
+   - Caso nenhuma das fontes acima esteja presente, retorna `null` (sem cair em `app.name`).
+
+2. **Preservação da Persona do Copiloto (Lote G1):**
+   - No prompt base (`montarSystemInstructionCopiloto()`), o literal "Escola Torre de Marfim" da persona padrão **somente** é reescrito quando `nomeEscolaConfigurado($config)` for diferente de `null`.
+   - Isso impede a regressão em que escolas sem unidade cadastrada ou personalização tinham o prompt transformado em "Você é o Copiloto ... da Laravel" devido ao valor padrão de `config('app.name')`.
+   - Personas personalizadas contendo o nome institucional têm a substituição aplicada normalmente quando um nome explícito for configurado.
+
+3. **Fallback Global (`nomeEscola`):**
+   - Para peças analíticas que exigem string não-vazia (battlecards, dossiês, linha do tempo), `nomeEscola()` adota `nomeEscolaConfigurado($config) ?? (string) config('app.name')`.
 
 ## 20. Lote D9, F1 & F2: Playbook de Retenção Escolar e Prevenção de Evasão
 
