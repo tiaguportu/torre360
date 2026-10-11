@@ -261,14 +261,14 @@ class LeadSlaService
                 foreach ($destinatariosGestao as $destinatario) {
                     $notificacaoGestao->sendToDatabase($destinatario);
                 }
-            }
 
-            foreach ($leadsSemConsultorEstourados as $lead) {
-                $lead->forceFill([
-                    'sla_gestao_notificado_em' => now(),
-                ])->saveQuietly();
+                foreach ($leadsSemConsultorEstourados as $lead) {
+                    $lead->forceFill([
+                        'sla_gestao_notificado_em' => now(),
+                    ])->saveQuietly();
 
-                $notificadosGestao++;
+                    $notificadosGestao++;
+                }
             }
         }
 
