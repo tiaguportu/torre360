@@ -165,6 +165,7 @@ class CrmIaVendasTest extends TestCase
             ->andReturn($respostaMock);
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
+        config(['copiloto_ia.nome_escola' => 'Escola Torre de Marfim']);
 
         $service = app(CrmIaVendasService::class);
         $dossie = $service->gerarDossie($interessado);
@@ -202,6 +203,7 @@ class CrmIaVendasTest extends TestCase
             ->andReturn($respostaMock);
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
+        config(['copiloto_ia.nome_escola' => 'Escola Torre de Marfim']);
 
         $service = app(CrmIaVendasService::class);
         $mensagem = $service->gerarMensagemCopiloto($interessado, 'convite_visita');
@@ -218,6 +220,7 @@ class CrmIaVendasTest extends TestCase
             ->andThrow(new \RuntimeException('Timeout de conexão'));
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
+        config(['copiloto_ia.nome_escola' => 'Escola Torre de Marfim']);
 
         $service = app(CrmIaVendasService::class);
 
@@ -319,6 +322,7 @@ class CrmIaVendasTest extends TestCase
             ]);
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
+        config(['copiloto_ia.nome_escola' => 'Escola Torre de Marfim']);
 
         $service = app(CrmIaVendasService::class);
         $mensagem = $service->gerarMensagemCopiloto(
@@ -374,6 +378,7 @@ class CrmIaVendasTest extends TestCase
             ->andThrow(new \RuntimeException('Erro de API'));
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
+        config(['copiloto_ia.nome_escola' => 'Escola Torre de Marfim']);
 
         $service = app(CrmIaVendasService::class);
         $template = 'Olá [Nome do Responsável] ([Primeiro Nome]), vaga para [Nome do Aluno] no [Nome da Escola]!';
