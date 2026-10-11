@@ -210,6 +210,25 @@ class KanbanDesempenhoTest extends TestCase
         $this->assertEqualsCanonicalizing($meus->pluck('id')->all(), $coluna['leads']->pluck('id')->all());
     }
 
+    public function test_filtro_por_consultor_com_id_alto_garante_que_totais_e_cards_respeitam_o_filtro(): void
+    {
+        $consultorX = User::factory()->create();
+        $consultorY = User::factory()->create();
+
+        $leadsX = $this->leads($this->novo, 3, ['usuario_id' => $consultorX->id, 'valor_estimado' => 150]);
+        $this->leads($this->novo, 2, ['usuario_id' => $consultorY->id, 'valor_estimado' => 200]);
+
+        $componente = Livewire::actingAs($this->admin)
+            ->test(KanbanInteressados::class)
+            ->set('filtroConsultorId', $consultorX->id);
+
+        $coluna = $this->coluna($componente->instance()->colunas(), $this->novo);
+
+        $this->assertSame(3, $coluna['total']);
+        $this->assertEquals(450.0, $coluna['valor']);
+        $this->assertEqualsCanonicalizing($leadsX->pluck('id')->all(), $coluna['leads']->pluck('id')->all());
+    }
+
     public function test_numero_de_consultas_nao_depende_da_quantidade_de_cards(): void
     {
         $tipo = TipoContatoInteressado::firstOrCreate(['nome' => 'Telefone']);

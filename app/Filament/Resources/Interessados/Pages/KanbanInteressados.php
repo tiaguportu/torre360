@@ -156,7 +156,7 @@ class KanbanInteressados extends Page
 
         $base = fn (): Builder => Interessado::query()
             ->visivelPara()
-            ->when($this->filtroConsultorId && auth()->user()?->podeVerTodosLeads(), fn (Builder $query, int $consultorId) => $query->where('usuario_id', $consultorId));
+            ->when($this->filtroConsultorId && auth()->user()?->podeVerTodosLeads(), fn (Builder $query) => $query->where('usuario_id', $this->filtroConsultorId));
 
         $totais = $base()
             ->selectRaw('status_interessado_id, count(*) as total, coalesce(sum(valor_estimado), 0) as valor')
