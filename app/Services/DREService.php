@@ -13,14 +13,17 @@ class DREService
      */
     public function generate(string $startDate, string $endDate): array
     {
-        // Busca planos de contas raízes
-        $planoContas = PlanoConta::with('filhos')->whereNull('pai_id')->get();
+        // Busca todos os planos de contas e agrupa por pai_id em memória para evitar N+1 e LazyLoadingViolation
+        $todosPlanos = PlanoConta::all();
+        $planosPorPai = $todosPlanos->groupBy(fn ($p) => $p->pai_id ?? 0);
 
         // Busca todas as transações no período
         $transacoes = TransacaoBancaria::whereBetween('data_transacao', [$startDate, $endDate])->get();
 
-        $receitas = $this->formatGroup($planoContas->where('tipo', 'receita'), $transacoes);
-        $despesas = $this->formatGroup($planoContas->where('tipo', 'despesa'), $transacoes);
+        $raizes = $planosPorPai->get(0, collect());
+
+        $receitas = $this->formatGroup($raizes->where('tipo', 'receita'), $planosPorPai, $transacoes);
+        $despesas = $this->formatGroup($raizes->where('tipo', 'despesa'), $planosPorPai, $transacoes);
 
         $totalReceitas = collect($receitas)->sum('total');
         $totalDespesas = collect($despesas)->sum('total');
@@ -41,13 +44,14 @@ class DREService
     }
 
     /**
-     * Formata recursivamente os grupos do plano de contas com seus totais.
+     * Formata recursivamente os grupos do plano de contas com seus totais em memória.
      */
-    protected function formatGroup(Collection $planos, Collection $transacoes): array
+    protected function formatGroup(Collection $planos, Collection $planosPorPai, Collection $transacoes): array
     {
-        return $planos->map(function ($plano) use ($transacoes) {
-            // Chamada recursiva para os filhos
-            $filhos = $this->formatGroup($plano->filhos, $transacoes);
+        return $planos->map(function ($plano) use ($planosPorPai, $transacoes) {
+            // Filhos em memória via agrupamento
+            $filhosColecao = $planosPorPai->get($plano->id, collect());
+            $filhos = $this->formatGroup($filhosColecao, $planosPorPai, $transacoes);
 
             // Soma as transações diretas deste plano.
             // Consideramos o valor absoluto, pois a distinção entrada/saída já é dada pelo tipo do plano.
@@ -58,11 +62,11 @@ class DREService
 
             return [
                 'id' => $plano->id,
-                'nome' => $plano->nome,
                 'codigo' => $plano->codigo,
-                'total' => $totalGeral,
+                'nome' => $plano->nome,
+                'total' => (float) $totalGeral,
                 'filhos' => $filhos,
             ];
-        })->values()->toArray();
+        })->values()->all();
     }
 }

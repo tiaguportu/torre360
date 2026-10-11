@@ -1163,10 +1163,11 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 4. Para novos fornecedores detectados em débitos, o sistema abre um popup para cadastro rápido.
 
 ### 7.3 Relatório DRE (Demonstrativo de Resultados)
-1. Acesse **Financeiro → Relatórios → DRE**.
-2. Filtre pelo mês ou período desejado.
-3. O sistema consolida todas as receitas (Faturas pagas) e despesas (Pagamentos a fornecedores) com base no **Plano de Contas**, mostrando o lucro ou prejuízo do período.
+1. Acesse **Financeiro → Relatórios → DRE** (`/admin/financeiro/dre`).
+2. Filtre pelo mês ou período desejado e clique em **Atualizar Relatório**.
+3. O sistema consolida recursivamente a árvore do **Plano de Contas** em memória (sem consultas N+1 nem gargalos de *lazy loading*), computando receitas e despesas a partir de `TransacaoBancaria` e exibindo o resultado líquido consolidado.
 4. Utilize o botão de **Ajuda** (ícone de interrogação cinza) no cabeçalho para consultar um resumo dos filtros e da ação de atualização do relatório.
+5. **Garantia por Testes:** A lógica contábil de agregação recursiva de nós e a renderização do painel são cobertas pela suíte `DREServiceTest`.
 
 ---
 
@@ -2066,6 +2067,13 @@ O acesso e as ações do módulo de Preceptorias são totalmente configuráveis 
 - **Criação e Edição (`Create:Preceptoria` / `Update:Preceptoria`):** Permite cadastrar novos horários e gerenciar a agenda dos preceptores.
 - **Agendamento (`Agendar:Preceptoria`):** Controla quem pode acessar a rota `/admin/preceptorias/agendar` e utilizar o formulário simplificado de agendamento de horários para dependentes/alunos. Sem esta permissão atribuída à função do usuário no Shield, o acesso ao caminho `admin/preceptorias/agendar` é bloqueado com erro 403 Forbidden.
 
+### 25.2 Relatórios de Preceptoria e Confidencialidade Pedagógica (`/admin/relatorio-preceptorias`)
+O módulo de relatórios de preceptoria implementa segregação estrita no `getEloquentQuery()`:
+- **Administração (`super_admin`, `admin`, `secretaria`):** Enxergam todos os relatórios cadastrados.
+- **Professores / Preceptores:** Enxergam unicamente os relatórios das preceptorias conduzidas por eles próprios.
+- **Responsáveis e Alunos:** Só têm visibilidade de relatórios marcados explicitamente como públicos (`publico = true`) e estritamente vinculados aos seus próprios dependentes/matrículas. Relatórios privados e de terceiros são omitidos.
+- **Garantia por Testes:** Todo o controle de isolamento multi-papel é validado pela suíte automatizada `RelatorioPreceptoriaSegurancaTest`.
+
 ---
 
 ## 📝 26. Lançamento Rápido no Diário (`/admin/cronograma-aulas/{record}/frequencia`)
@@ -2086,6 +2094,7 @@ Módulo essencial para a Educação Infantil e Ensino Fundamental para assegurar
 2. **Medicamentos de Uso Contínuo:** Controle de dosagens, horários de administração e arquivo de autorização dos pais.
 3. **Contatos de Emergência:** Telefones e grau de parentesco para acionamento urgente.
 4. **Atendimentos de Enfermagem (`/admin/atendimento-enfermagems`):** Prontuário do ambulatório escolar registrando sintomas, medicamentos ministrados e condutas adotadas.
+5. **Privacidade e LGPD (Políticas de Acesso):** Protegido nativamente por `FichaMedicaPolicy` e `AtendimentoEnfermagemPolicy` via Filament Shield. Papéis comuns (professores, alunos e responsáveis) recebem bloqueio estrito (HTTP 403 Forbidden). O acesso é reservado a papéis autorizados e validado pela suíte de testes automatizados `SaudeEscolarTest`.
 
 ---
 
@@ -2095,6 +2104,7 @@ Permite o acompanhamento da rotina disciplinar, operacional e pedagógica dos es
 1. **Tipos de Ocorrências (`/admin/tipo-ocorrencias`):** Classificação por gravidade (Positiva, Leve, Média, Grave) e categorias (Disciplinar, Operacional, Pedagógico, Saúde).
 2. **Registro de Ocorrências:** Cadastro de acontecimentos (atraso na chegada, uniforme incompleto, desentendimento, advertências ou elogios pedagógicos).
 3. **Notificação em Tempo Real aos Responsáveis:** Envio automático via e-mail, push e painel interno aos pais cadastrados. A notificação pode ser facilmente desativada/ativada em registros específicos.
+4. **Ação de Reenvio e Permissão Shield:** O botão **Reenviar Notificação** é controlado pela permissão granular `ReenviarNotificacao:OcorrenciaEscolar` do Shield e `OcorrenciaEscolarPolicy`. Toda a rotina de envio e reenvio de notificações é testada em `OcorrenciaEscolarNotificacaoTest`.
 
 ---
 
