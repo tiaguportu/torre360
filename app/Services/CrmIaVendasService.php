@@ -34,14 +34,25 @@ class CrmIaVendasService
      */
     public static function nomeEscola(?array $config = null): string
     {
-        $nome = $config['nome_escola'] ?? config('copiloto_ia.nome_escola');
-        if (filled($nome)) {
-            return (string) $nome;
+        if ($config !== null && filled($config['nome_escola'] ?? null)) {
+            return (string) $config['nome_escola'];
+        }
+
+        if ($config === null) {
+            $salvo = CopilotoIaConfiguracao::valores()['nome_escola'] ?? null;
+            if (filled($salvo)) {
+                return (string) $salvo;
+            }
+        }
+
+        $envNome = config('copiloto_ia.nome_escola') ?: env('CRM_NOME_ESCOLA');
+        if (filled($envNome)) {
+            return (string) $envNome;
         }
 
         return Unidade::first()?->nome
             ?? InstituicaoEnsino::first()?->nome
-            ?? config('app.name', 'Escola Torre de Marfim');
+            ?? (string) config('app.name', 'Torre 360');
     }
 
     /**
@@ -444,9 +455,8 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             ? trim((string) $config['persona'])
             : trim((string) config('copiloto_ia.persona'));
 
-        if (filled($config['nome_escola'] ?? null)) {
-            $persona = str_replace('Escola Torre de Marfim', (string) $config['nome_escola'], $persona);
-        }
+        $nomeEscola = self::nomeEscola($config);
+        $persona = str_replace('Escola Torre de Marfim', $nomeEscola, $persona);
 
         $texto = $persona."\n\nDiretrizes obrigatórias da mensagem:\n".$numeradas;
 

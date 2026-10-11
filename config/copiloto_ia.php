@@ -12,7 +12,7 @@
 return [
 
     // Nome institucional da escola usado nas personas e prompts de IA (configurável pelo usuário ou .env).
-    'nome_escola' => env('CRM_NOME_ESCOLA', 'Escola Torre de Marfim'),
+    'nome_escola' => env('CRM_NOME_ESCOLA'),
 
     'persona' => 'Você é o Copiloto de Atendimento e Vendas Educacionais da Escola Torre de Marfim.
 Sua função é redigir uma mensagem de WhatsApp sob medida para o responsável de um aluno interessado.',

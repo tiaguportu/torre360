@@ -8,7 +8,6 @@ use App\Enums\SituacaoMatricula;
 use App\Enums\StatusVisitaInteressado;
 use App\Mail\MensagemGenericaMail;
 use App\Models\HistoricoContato;
-use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\Matricula;
@@ -16,7 +15,6 @@ use App\Models\ReguaFollowUp;
 use App\Models\ReguaFollowUpLog;
 use App\Models\ResponsavelFinanceiro;
 use App\Models\TipoContatoInteressado;
-use App\Models\Unidade;
 use App\Models\User;
 use App\Models\VisitaInteressado;
 use App\Support\DescadastroComunicacao;
@@ -509,7 +507,7 @@ class ReguaFollowUpService
 
     private function nomeEscola(): string
     {
-        return $this->nomeEscola ??= Unidade::first()?->nome ?? InstituicaoEnsino::first()?->nome ?? 'Nossa Escola';
+        return $this->nomeEscola ??= CrmIaVendasService::nomeEscola();
     }
 
     private function tipoContatoEmailId(): int

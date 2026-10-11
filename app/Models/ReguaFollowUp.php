@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CanalReguaFollowUp;
 use App\Enums\GatilhoReguaFollowUp;
 use App\Enums\StatusVisitaInteressado;
+use App\Services\CrmIaVendasService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -96,16 +97,20 @@ class ReguaFollowUp extends Model
 
         // Dependentes / Alunos
         $dependenteVisita = $visita?->dependente;
+        $nomeAlunoFallback = ($pessoa && $pessoa->relationLoaded('alunos'))
+            ? $pessoa->alunos->pluck('nome')->filter()->join(', ')
+            : null;
+
         $nomeAluno = $dependenteVisita?->nome_crianca
             ?? $interessado->dependentes->pluck('nome_crianca')->filter()->join(', ')
-            ?: ($pessoa?->alunos?->pluck('nome')->filter()->join(', ') ?: 'seu filho(a)');
+            ?: ($nomeAlunoFallback ?: 'seu filho(a)');
 
         $serieInteresse = $dependenteVisita?->serie?->nome
             ?? $interessado->dependentes->first()?->serie?->nome
             ?: 'nossas turmas';
 
         $nomeConsultor = $interessado->usuario?->name ?? 'Equipe de Admissões';
-        $nomeEscola ??= Unidade::first()?->nome ?? InstituicaoEnsino::first()?->nome ?? 'Nossa Escola';
+        $nomeEscola ??= CrmIaVendasService::nomeEscola();
 
         $dataVisita = $visita?->data_hora ? $visita->data_hora->format('d/m/Y') : '';
         $horarioVisita = $visita?->data_hora ? $visita->data_hora->format('H:i') : '';
