@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Enums\CanalReguaFollowUp;
 use App\Enums\GatilhoReguaFollowUp;
+use App\Enums\SituacaoMatricula;
 use App\Enums\StatusVisitaInteressado;
 use App\Mail\MensagemGenericaMail;
 use App\Models\HistoricoContato;
 use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
+use App\Models\Matricula;
 use App\Models\ReguaFollowUp;
 use App\Models\ReguaFollowUpLog;
 use App\Models\TipoContatoInteressado;
@@ -300,8 +302,41 @@ class ReguaFollowUpService
             GatilhoReguaFollowUp::ContatoAtrasado => $this->candidatosDeLeads(
                 Interessado::ativos()->whereDate('data_proximo_contato', '>=', $depois->copy()->subDays($janela)->toDateString())->whereDate('data_proximo_contato', '<=', $depois->toDateString())
             ),
+            // Alunos em risco de evasão no fluxo de rematrícula (Lote D9)
+            GatilhoReguaFollowUp::RiscoEvasaoRematricula => $this->candidatosDeRiscoEvasaoRematricula($dataReferencia, $regra),
             default => collect(),
         };
+    }
+
+    /**
+     * Localiza candidatos em risco de evasão escolar conectados ao fluxo de rematrícula.
+     *
+     * @return Collection<int, array{interessado: Interessado, visita: ?VisitaInteressado}>
+     */
+    private function candidatosDeRiscoEvasaoRematricula(Carbon $dataReferencia, ReguaFollowUp $regra): Collection
+    {
+        $corte = (int) config('risco_evasao.playbook.corte_risco', 60);
+
+        $pessoaIds = Matricula::query()
+            ->where('situacao', SituacaoMatricula::ATIVA)
+            ->where('risco_evasao_score', '>=', $corte)
+            ->pluck('pessoa_id')
+            ->filter()
+            ->unique();
+
+        if ($pessoaIds->isEmpty()) {
+            return collect();
+        }
+
+        return Interessado::query()
+            ->whereIn('pessoa_id', $pessoaIds)
+            ->with(['pessoa', 'dependentes.serie', 'usuario'])
+            ->get()
+            ->map(fn (Interessado $lead): array => [
+                'interessado' => $lead,
+                'visita' => null,
+            ])
+            ->values();
     }
 
     /**

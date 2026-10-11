@@ -154,12 +154,14 @@ Estrutura de ensino e turmas.
     - `situacao`: Enum `SituacaoMatricula` (`ativa`, `trancada`, `cancelada`, `concluido`, `reserva`, `pendente`, `evasao`).
     - `data_ativacao`: Data em que a matrícula entrou em vigência.
     - `data_desativacao`: Data de cancelamento ou encerramento da matrícula.
+    - `risco_evasao_alerta_em`: Timestamp do último alerta/playbook de risco de evasão emitido para a coordenação (amortecimento de notificações).
 - **Relacionamentos:**
     - BelongsTo `pessoa`, BelongsTo `turma`, BelongsTo `serie`, BelongsTo `periodoLetivo`.
     - HasOne `contrato`.
     - HasMany `rematriculas` (via `matricula_origem_id`).
     - HasMany `frequencias`.
     - HasMany `notas`.
+    - HasMany `retencaoTarefas` (`RetencaoTarefa`).
 
 ### `etapa_ensino_agregada`
 - **Representa:** Agrupamento/Categoria macro das etapas do Educacenso/INEP (ex: 301 - Educação Infantil, 302 - Ensino Fundamental, 304 - Ensino Médio, etc.).
@@ -1327,4 +1329,33 @@ Módulo responsável pela gestão de autorizações de uso de imagem, voz e cons
   - BelongsTo `matricula`.
   - BelongsTo `tipoConsentimento`.
   - BelongsTo `respondidoPorUser` (`User`).
+
+---
+
+## 16. Playbook de Retenção Escolar e Prevenção de Evasão (CRM - Lote D9)
+Módulo preditivo e tático para intervenção precoce em alunos com vulnerabilidade acadêmica ou financeira, disparo de alertas à coordenação escolar e orquestração de tarefas de retenção.
+
+### `retencao_tarefas`
+- **Representa:** Planos de ação e tarefas operacionais de acompanhamento pedagógico/financeiro para retenção de alunos em risco de evasão.
+- **Campos Principais:**
+  - `matricula_id`: FK `matricula.id` (cascade on delete).
+  - `aluno_id`: FK `pessoa.id` (cascade on delete) — aluno titular da matrícula.
+  - `rematricula_id`: FK `rematriculas.id` (nullable, set null on delete) — processo de rematrícula associado durante campanhas de renovação.
+  - `responsavel_user_id`: FK `users.id` (nullable, set null on delete) — colaborador/orientador atribuído ao plano.
+  - `status`: Enum `StatusRetencaoTarefa` (`pendente`, `em_andamento`, `concluido`, `cancelado`).
+  - `score_risco`: Decimal (5,2) — score preditivo acumulado apurado no momento da abertura da tarefa (0 a 100).
+  - `fatores_risco`: JSON — lista estruturada dos fatores de risco detectados pelo `RiscoEvasaoService` (financeiro, faltas, notas, ocorrências).
+  - `data_limite`: Data sugerida/estipulada para intervenção da equipe (date, nullable).
+  - `observacoes`: Texto descritivo das ações de acolhimento realizadas (text, nullable).
+  - `resolucao`: Parecer conclusivo do encerramento da tarefa (text, nullable).
+  - `concluido_em`: Timestamp do encerramento efetivo (datetime, nullable).
+- **Relacionamentos:**
+  - BelongsTo `matricula`.
+  - BelongsTo `aluno` (`Pessoa`).
+  - BelongsTo `rematricula` (`Rematricula`).
+  - BelongsTo `responsavel` (`User`).
+- **Scopes do Model:**
+  - `pendentes()`: Tarefas com status `pendente`.
+  - `ativas()`: Tarefas em status `pendente` ou `em_andamento`.
+
 

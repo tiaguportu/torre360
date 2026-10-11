@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Models\PeriodoRematricula;
 use App\Models\Rematricula;
 use App\Services\RematriculaService;
+use App\Services\RiscoEvasaoService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -66,6 +67,15 @@ class RematriculasTable
                         : null)
                     ->sortable(),
 
+                TextColumn::make('matriculaOrigem.risco_evasao_score')
+                    ->label('Risco Evasão')
+                    ->badge()
+                    ->color(fn (?int $state): string => RiscoEvasaoService::cor($state))
+                    ->formatStateUsing(fn (?int $state): ?string => $state !== null ? "{$state}%" : null)
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(),
+
                 TextColumn::make('novaMatricula.id')
                     ->label('Nova Matrícula')
                     ->badge()
@@ -86,6 +96,12 @@ class RematriculasTable
                 SelectFilter::make('periodo_rematricula_id')
                     ->label('Campanha')
                     ->relationship('periodoRematricula', 'nome'),
+
+                // Alunos com risco crítico de evasão identificados pelo Playbook
+                Filter::make('alto_risco_evasao')
+                    ->label('Alto Risco de Evasão (≥ 60%)')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->whereHas('matriculaOrigem', fn ($q) => $q->where('risco_evasao_score', '>=', 60))),
 
                 // Mesma contagem do contador no menu: famílias que já registraram a intenção e aguardam a turma.
                 Filter::make('aguardando_turma')

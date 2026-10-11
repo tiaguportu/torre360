@@ -651,6 +651,33 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 
 ---
 
+### 3.28 Playbook de Retenção Escolar & Prevenção de Evasão (Lote D9)
+1. **Disparo Automático Baseado em Score Preditivo:**
+   - O algoritmo preditivo do `RiscoEvasaoService` avalia continuamente múltiplos fatores da vida acadêmica e financeira do estudante (frequência escolar, rendimento pedagógico em avaliações, pontualidade de pagamento de mensalidades e engajamento em ocorrências e eventos).
+   - Quando o score acumulado atinge ou ultrapassa o **Corte de Risco** configurado (padrão institucional: **60 pontos**), o sistema ativa o *Playbook de Retenção Escolar*.
+2. **Alertas à Coordenação Escolar:**
+   - O sistema gera alertas imediatos no sininho de notificações do painel para usuários com os papéis de coordenação e gestão escolar (`coordenador`, `admin`, `super_admin`).
+   - O alerta identifica o nome do aluno, turma, série, score apurado e lista resumida dos principais fatores de risco (ex: inadimplência recente, faltas consecutivas ou queda de rendimento).
+   - **Prevenção de Alertas Repetitivos (Cooldown):** Para evitar fadiga de notificações na equipe, o sistema respeita o parâmetro configurável de **Intervalo Mínimo entre Alertas** (padrão: 15 dias), só emitindo novo comunicado se o score permanecer crítico após o período de amortecimento.
+3. **Gestão de Tarefas de Retenção (`RetencaoTarefa`):**
+   - Disponível em **CRM / Comercial → Tarefas de Retenção** (`/admin/retencao-tarefas`), com controle integral de permissões via **Filament Shield** (`ViewAny:RetencaoTarefa`, `Create:RetencaoTarefa`, `Update:RetencaoTarefa`, etc.).
+   - **Abertura Automática:** O playbook cria automaticamente uma tarefa prioritária com os fatores identificados, prazo limite de contato sugerido e vínculo direto com a matrícula e aluno.
+   - **Ciclo de Vida da Tarefa:** Status controlados por ciclo (`Pendente` → `Em Andamento` → `Concluído` ou `Cancelado`).
+   - **Ações Rápidas na Ficha da Tarefa:**
+     - *Iniciar Atendimento:* Move a tarefa para "Em Andamento" e atribui o usuário logado como responsável.
+     - *Concluir com Sucesso:* Registra as medidas tomadas (reunião com a família, apoio pedagógico, renegociação financeira) e finaliza o plano.
+     - *Cancelar / Desistir:* Arquiva a tarefa com justificativa caso a matrícula tenha sido transferida ou o risco neutralizado.
+   - **Visualização Responsiva e Ajuda:** Tabela adaptada com cards móveis (`stackedOnMobile`) e botão de cabeçalho "Ajuda" com orientações contextualizadas pelas permissões do usuário logado.
+4. **Integração com Régua de Follow-up e Campanhas de Rematrícula:**
+   - **Novo Gatilho de Régua:** O gatilho `RiscoEvasaoRematricula` permite configurar réguas automatizadas de comunicação preventiva (WhatsApp ou E-mail) direcionadas especificamente a famílias de alunos com alto risco de evasão durante a vigência de campanhas de rematrícula.
+   - **Filtro na Gestão de Rematrículas:** Na tela de **Rematrículas**, a secretaria conta com a coluna de **Score de Risco** e o filtro rápido **Alto Risco de Evasão**, permitindo atendimento prioritário e escuta ativa antes da abertura das vagas para o mercado externo.
+5. **Painel de Configuração do Playbook:**
+   - Acesse **CRM / Comercial → Configurações de Risco de Evasão** para ajustar os parâmetros globais da instituição:
+     - *Corte de Score do Playbook:* Limite numérico (0 a 100) para acionar alertas e tarefas.
+     - *Notificar Coordenação Escolar:* Ativa ou pausa o envio de avisos no sininho.
+     - *Criar Tarefas de Retenção Automaticamente:* Habilita a criação de planos na esteira comercial.
+     - *Intervalo Mínimo de Alerta (Dias):* Intervalo de carência para reincidência de notificações.
+
 ## 📍 13. Gestão de Unidades e Canais Digitais
 
 ### 13.1 Redes Sociais e Contato

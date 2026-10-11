@@ -77,6 +77,7 @@ class ReguaFollowUp extends Model
             GatilhoReguaFollowUp::ContatoAtrasado => $dias === 0
                 ? 'No dia do vencimento do contato'
                 : "{$dias} dia(s) de contato atrasado",
+            GatilhoReguaFollowUp::RiscoEvasaoRematricula => 'Ao atingir risco de evasão na rematrícula',
             default => "Offset: {$dias} dia(s)",
         };
     }

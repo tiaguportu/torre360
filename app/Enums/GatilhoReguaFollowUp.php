@@ -14,6 +14,7 @@ enum GatilhoReguaFollowUp: string implements HasColor, HasIcon, HasLabel
     case VisitaFaltou = 'visita_faltou';
     case LeadEstagnado = 'lead_estagnado';
     case ContatoAtrasado = 'contato_atrasado';
+    case RiscoEvasaoRematricula = 'risco_evasao_rematricula';
 
     public function getLabel(): ?string
     {
@@ -24,6 +25,7 @@ enum GatilhoReguaFollowUp: string implements HasColor, HasIcon, HasLabel
             self::VisitaFaltou => 'Recuperação de Falta na Visita (No-Show)',
             self::LeadEstagnado => 'Lead Estagnado (Sem Interação há X dias)',
             self::ContatoAtrasado => 'Retorno de Contato Atrasado há X dias',
+            self::RiscoEvasaoRematricula => 'Risco de Evasão na Rematrícula',
         };
     }
 
@@ -36,6 +38,7 @@ enum GatilhoReguaFollowUp: string implements HasColor, HasIcon, HasLabel
             self::VisitaFaltou => 'danger',
             self::LeadEstagnado => 'danger',
             self::ContatoAtrasado => 'amber',
+            self::RiscoEvasaoRematricula => 'danger',
         };
     }
 
@@ -48,6 +51,7 @@ enum GatilhoReguaFollowUp: string implements HasColor, HasIcon, HasLabel
             self::VisitaFaltou => 'heroicon-m-x-circle',
             self::LeadEstagnado => 'heroicon-m-clock',
             self::ContatoAtrasado => 'heroicon-m-exclamation-triangle',
+            self::RiscoEvasaoRematricula => 'heroicon-m-shield-exclamation',
         };
     }
 }

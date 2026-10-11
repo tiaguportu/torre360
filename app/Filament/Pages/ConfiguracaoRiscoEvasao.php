@@ -13,6 +13,7 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -59,6 +60,12 @@ class ConfiguracaoRiscoEvasao extends Page implements HasForms
             'faixas_cor' => $config['faixas_cor'],
             'frequencia' => $config['frequencia'],
             'desempenho' => $config['desempenho'],
+            'playbook' => $config['playbook'] ?? [
+                'corte_risco' => 60,
+                'intervalo_dias_alerta' => 15,
+                'notificar_coordenacao' => true,
+                'criar_tarefa' => true,
+            ],
         ];
     }
 
@@ -85,6 +92,34 @@ class ConfiguracaoRiscoEvasao extends Page implements HasForms
                     ->schema([
                         TextInput::make('faixas_cor.alto')->label('Alto risco a partir de (≥)')->numeric()->integer()->minValue(0)->maxValue(100)->required(),
                         TextInput::make('faixas_cor.moderado')->label('Moderado a partir de (≥)')->numeric()->integer()->minValue(0)->maxValue(100)->required(),
+                    ])
+                    ->columns(2),
+
+                Section::make('Playbook de Retenção Escolar & Prevenção de Evasão')
+                    ->description('Gera alerta à coordenação, tarefa de acompanhamento e ativa o gatilho da régua ligado ao fluxo de rematrícula.')
+                    ->schema([
+                        TextInput::make('playbook.corte_risco')
+                            ->label('Corte de risco para ativação (≥)')
+                            ->helperText('Score mínimo (0-100) para disparar o playbook de retenção.')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->required(),
+                        TextInput::make('playbook.intervalo_dias_alerta')
+                            ->label('Intervalo sem repetição (dias)')
+                            ->helperText('Janela de dias para não repetir alerta nem duplicar tarefas para o mesmo aluno.')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(180)
+                            ->required(),
+                        Toggle::make('playbook.notificar_coordenacao')
+                            ->label('Notificar coordenação e gestão')
+                            ->default(true),
+                        Toggle::make('playbook.criar_tarefa')
+                            ->label('Criar tarefa de acompanhamento de retenção')
+                            ->default(true),
                     ])
                     ->columns(2),
 
@@ -137,17 +172,19 @@ class ConfiguracaoRiscoEvasao extends Page implements HasForms
                 ->requiresConfirmation()
                 ->modalDescription('Recalcula o Risco de Evasão de todas as matrículas ativas com a configuração salva. Pode levar alguns instantes.')
                 ->action('recalcularMatriculas'),
-            $this->ajudaAction('Pesos do Risco de Evasão', HelpContent::make('⚠️', 'Pesos do Risco de Evasão', 'Ajuste como o sistema pontua o risco de evasão de cada aluno matriculado, sem mexer em código.')
+            $this->ajudaAction('Pesos do Risco de Evasão & Playbook de Retenção', HelpContent::make('⚠️', 'Pesos do Risco de Evasão & Playbook de Retenção', 'Ajuste a pontuação de risco e automações preventivas de evasão escolar para alunos matriculados.')
                 ->passos('🚀 Passo a passo', [
                     'Defina o peso máximo de cada fator (a soma precisa ser 100).',
+                    'Configure o limiar de corte do Playbook de Retenção e a janela de dias sem repetição de alerta.',
                     'Ajuste as faixas de faltas e os pontos de cada situação de desempenho.',
                     'Clique em Salvar configuração.',
-                    'Use Recalcular todas as matrículas para aplicar os novos pesos às matrículas já existentes.',
+                    'Use Recalcular todas as matrículas para aplicar os novos pesos e avaliar o playbook para os alunos ativos.',
                 ])
                 ->secao('📊 Como funciona?', [
                     ['📅', 'Frequência', 'Percentual de faltas nos últimos 30 dias.'],
                     ['📚', 'Desempenho', 'Pior situação final entre as disciplinas do último período letivo fechado.'],
                     ['💳', 'Inadimplência', 'Se a matrícula tem fatura vencida em atraso, soma o peso cheio do fator.'],
+                    ['🛡️', 'Playbook de Retenção', 'Gera alertas à coordenação, tarefa de acompanhamento e aciona o gatilho da régua no fluxo de rematrícula quando o score atinge o corte.'],
                     ['↩️', 'Restaurar padrão', 'Volta aos valores originais do sistema.'],
                 ])
                 ->alerta('Salvar não altera os scores já gravados: use "Recalcular todas as matrículas". O score também é recalculado automaticamente todos os dias.')),
@@ -262,6 +299,12 @@ class ConfiguracaoRiscoEvasao extends Page implements HasForms
             'faixas_cor' => $inteiros($state['faixas_cor']),
             'frequencia' => $frequencia,
             'desempenho' => $inteiros($state['desempenho']),
+            'playbook' => [
+                'corte_risco' => (int) ($state['playbook']['corte_risco'] ?? 60),
+                'intervalo_dias_alerta' => (int) ($state['playbook']['intervalo_dias_alerta'] ?? 15),
+                'notificar_coordenacao' => (bool) ($state['playbook']['notificar_coordenacao'] ?? true),
+                'criar_tarefa' => (bool) ($state['playbook']['criar_tarefa'] ?? true),
+            ],
         ];
     }
 }

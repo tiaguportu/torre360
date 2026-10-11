@@ -32,4 +32,12 @@ return [
         'recuperacao' => 20,
         'aprovado' => 0,
     ],
+
+    // Playbook de Retenção Escolar & Prevenção de Evasão (Lote D9)
+    'playbook' => [
+        'corte_risco' => 60,
+        'intervalo_dias_alerta' => 15,
+        'notificar_coordenacao' => true,
+        'criar_tarefa' => true,
+    ],
 ];

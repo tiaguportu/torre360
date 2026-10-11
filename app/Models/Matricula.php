@@ -42,7 +42,7 @@ class Matricula extends Model
      * (`turma_id` é obrigatório), então não há como divergirem. Use `periodo_letivo_id`/`serie_id`
      * (accessors), as relações `periodoLetivo`/`serie` ou os scopes `doPeriodo()`/`daSerie()`.
      */
-    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'situacao', 'data_ativacao', 'data_desativacao', 'risco_evasao_score', 'risco_evasao_atualizado_em'];
+    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'situacao', 'data_ativacao', 'data_desativacao', 'risco_evasao_score', 'risco_evasao_atualizado_em', 'risco_evasao_alerta_em'];
 
     /**
      * A turma é a fonte do período e da série; carregá-la junto evita N+1 e o bloqueio de lazy loading
@@ -72,7 +72,18 @@ class Matricula extends Model
             'data_ativacao' => 'date',
             'data_desativacao' => 'date',
             'risco_evasao_atualizado_em' => 'datetime',
+            'risco_evasao_alerta_em' => 'datetime',
         ];
+    }
+
+    public function retencaoTarefas(): HasMany
+    {
+        return $this->hasMany(RetencaoTarefa::class, 'matricula_id');
+    }
+
+    public function ultimaRetencaoTarefa(): HasOne
+    {
+        return $this->hasOne(RetencaoTarefa::class, 'matricula_id')->latestOfMany();
     }
 
     public function pessoa(): BelongsTo
