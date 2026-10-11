@@ -269,6 +269,8 @@ class RiscoEvasaoService
     }
 
     /**
+     * Cor do badge/indicador conforme a faixa de risco.
+     */
     public static function cor(?int $score): string
     {
         $faixas = config('risco_evasao.faixas_cor');
