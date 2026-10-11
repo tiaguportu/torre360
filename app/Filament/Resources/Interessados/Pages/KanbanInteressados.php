@@ -23,6 +23,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -228,31 +229,50 @@ class KanbanInteressados extends Page
      */
     public function assumirLead(int|string $recordId): void
     {
-        $record = Interessado::find((int) $recordId);
-
-        if (! $record || $record->usuario_id !== null) {
-            return;
-        }
-
-        if (! auth()->user()?->can('Update:Interessado')) {
+        $user = auth()->user();
+        if (! $user || ! $user->can('Update:Interessado')) {
             $this->notificarSemPermissao();
 
             return;
         }
 
-        $record->update([
-            'usuario_id' => auth()->id(),
-        ]);
+        $id = (int) $recordId;
 
-        HistoricoContato::create([
-            'interessado_id' => $record->id,
-            'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
-            'usuario_id' => auth()->id(),
-            'data_contato' => now(),
-            'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
-            'resultado' => 'outro',
-            'automatico' => false,
-        ]);
+        $sucesso = DB::transaction(function () use ($id, $user): bool {
+            $record = Interessado::query()
+                ->visivelPara($user)
+                ->lockForUpdate()
+                ->find($id);
+
+            if (! $record || $record->usuario_id !== null) {
+                return false;
+            }
+
+            $record->update([
+                'usuario_id' => $user->id,
+            ]);
+
+            HistoricoContato::create([
+                'interessado_id' => $record->id,
+                'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+                'usuario_id' => $user->id,
+                'data_contato' => now(),
+                'relato' => 'Lead assumido pelo consultor '.$user->name.'.',
+                'resultado' => 'outro',
+                'automatico' => false,
+            ]);
+
+            return true;
+        });
+
+        if (! $sucesso) {
+            Notification::make()
+                ->title('Este lead já foi assumido por outro consultor')
+                ->warning()
+                ->send();
+
+            return;
+        }
 
         Notification::make()
             ->title('Lead atribuído à sua carteira com sucesso!')

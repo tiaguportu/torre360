@@ -21,6 +21,7 @@ use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Facades\DB;
 
 class EditInteressado extends EditRecord
 {
@@ -57,21 +58,54 @@ class EditInteressado extends EditRecord
                 ->modalHeading('Assumir atendimento deste lead?')
                 ->modalDescription('Você passará a ser o consultor responsável pelo acompanhamento desta família.')
                 ->action(function (): void {
-                    $this->record->update([
-                        'usuario_id' => auth()->id(),
-                    ]);
+                    $user = auth()->user();
+                    if (! $user || ! $user->can('Update:Interessado')) {
+                        Notification::make()
+                            ->title('Sem permissão para assumir este lead.')
+                            ->danger()
+                            ->send();
 
-                    HistoricoContato::create([
-                        'interessado_id' => $this->record->id,
-                        'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
-                        'usuario_id' => auth()->id(),
-                        'data_contato' => now(),
-                        'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
-                        'resultado' => 'outro',
-                        'automatico' => false,
-                    ]);
+                        return;
+                    }
 
+                    $sucesso = DB::transaction(function () use ($user): bool {
+                        $record = Interessado::query()
+                            ->visivelPara($user)
+                            ->lockForUpdate()
+                            ->find($this->record->id);
+
+                        if (! $record || $record->usuario_id !== null) {
+                            return false;
+                        }
+
+                        $record->update([
+                            'usuario_id' => $user->id,
+                        ]);
+
+                        HistoricoContato::create([
+                            'interessado_id' => $record->id,
+                            'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+                            'usuario_id' => $user->id,
+                            'data_contato' => now(),
+                            'relato' => 'Lead assumido pelo consultor '.$user->name.'.',
+                            'resultado' => 'outro',
+                            'automatico' => false,
+                        ]);
+
+                        return true;
+                    });
+
+                    $this->record->refresh();
                     $this->fillForm();
+
+                    if (! $sucesso) {
+                        Notification::make()
+                            ->title('Este lead já foi assumido por outro consultor')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
 
                     Notification::make()
                         ->title('Lead atribuído à sua carteira com sucesso!')

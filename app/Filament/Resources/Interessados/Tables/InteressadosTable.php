@@ -57,6 +57,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class InteressadosTable
 {
@@ -575,19 +576,51 @@ class InteressadosTable
                     ->modalHeading('Assumir atendimento deste lead?')
                     ->modalDescription('Você passará a ser o consultor responsável pelo acompanhamento desta família.')
                     ->action(function (Interessado $record): void {
-                        $record->update([
-                            'usuario_id' => auth()->id(),
-                        ]);
+                        $user = auth()->user();
+                        if (! $user || ! $user->can('Update:Interessado')) {
+                            Notification::make()
+                                ->title('Sem permissão para assumir este lead.')
+                                ->danger()
+                                ->send();
 
-                        HistoricoContato::create([
-                            'interessado_id' => $record->id,
-                            'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
-                            'usuario_id' => auth()->id(),
-                            'data_contato' => now(),
-                            'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
-                            'resultado' => 'outro',
-                            'automatico' => false,
-                        ]);
+                            return;
+                        }
+
+                        $sucesso = DB::transaction(function () use ($record, $user): bool {
+                            $locked = Interessado::query()
+                                ->visivelPara($user)
+                                ->lockForUpdate()
+                                ->find($record->id);
+
+                            if (! $locked || $locked->usuario_id !== null) {
+                                return false;
+                            }
+
+                            $locked->update([
+                                'usuario_id' => $user->id,
+                            ]);
+
+                            HistoricoContato::create([
+                                'interessado_id' => $locked->id,
+                                'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+                                'usuario_id' => $user->id,
+                                'data_contato' => now(),
+                                'relato' => 'Lead assumido pelo consultor '.$user->name.'.',
+                                'resultado' => 'outro',
+                                'automatico' => false,
+                            ]);
+
+                            return true;
+                        });
+
+                        if (! $sucesso) {
+                            Notification::make()
+                                ->title('Este lead já foi assumido por outro consultor')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
 
                         Notification::make()
                             ->title('Lead atribuído à sua carteira com sucesso!')
