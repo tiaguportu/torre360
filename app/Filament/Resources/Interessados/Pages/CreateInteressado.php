@@ -25,6 +25,11 @@ class CreateInteressado extends CreateRecord
 
         unset($data['pessoa_email'], $data['pessoa_telefone']);
 
+        $user = auth()->user();
+        if ($user && (! $user->podeVerTodosLeads() || empty($data['usuario_id']))) {
+            $data['usuario_id'] = $user->id;
+        }
+
         return $data;
     }
 

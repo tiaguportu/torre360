@@ -543,3 +543,29 @@ O Lote D4 implementa o controle rigoroso de tempo de atendimento para novos lead
 - **Ajuda da Página (`EditInteressado`):** Atualização do modal contextual com as orientações completas sobre o funcionamento do SLA.
 
 Testes: `tests/Feature/CrmSlaPrimeiraRespostaTest.php`.
+
+## 18. Lote D7: Escopo da Carteira do Consultor & Leads Não Atribuídos
+
+O Lote D7 estabelece a segregação de acesso comercial por carteira de atendimento no CRM, garantindo foco para os consultores, privacidade entre carteiras e um fluxo ágil para recepção e atribuição de novos interessados.
+
+### 18.1 Regras de Visibilidade e Controle de Acesso
+- **Consultores Comuns:**
+  - Visualizam exclusivamente os leads da sua própria carteira (`usuario_id = auth()->id()`);
+  - Visualizam leads não atribuídos (`usuario_id IS NULL`), permitindo a triagem inicial e apropriação do contato;
+  - Bloqueados de visualizar ou editar leads pertencentes a outros consultores (proteção na Policy, Tabela, Kanban e rotas diretas contra IDOR/BOLA).
+- **Acesso Total / Gestão Comercial:**
+  - Usuários com o papel `super_admin`;
+  - Usuários com a permissão específica no Filament Shield: `ViewAll:Interessado`.
+  - Possuem visibilidade irrestrita de todos os interessados e filtros globais por qualquer consultor.
+
+### 18.2 Ação "Assumir Lead" (Claim Lead)
+- Disponível para qualquer consultor com permissão de edição (`Update:Interessado`) em leads sem responsável definido:
+  1. **Na Tabela (`InteressadosTable`):** Ação com ícone de mão levantada (`heroicon-o-hand-raised`) e modal de confirmação;
+  2. **No Cabeçalho de Edição (`EditInteressado`):** Header Action em destaque verde no topo da ficha;
+  3. **Nos Cards do Kanban (`KanbanInteressados`):** Botão "Assumir" no rodapé do card da etapa.
+- Ao assumir, o lead é vinculado imediatamente ao usuário logado e um evento é registrado no `historico_contato` para auditoria do atendimento.
+
+### 18.3 Escopo Global no Eloquent (`scopeVisivelPara`)
+- Implementado em `Interessado::scopeVisivelPara()` e injetado nativamente em `InteressadoResource::getEloquentQuery()`, assegurando que listagens, abas de contadores (`ContadoresCrm`), widgets de calendário e relatórios reflitam de forma consistente a carteira do usuário ativo.
+
+Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`.

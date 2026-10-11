@@ -97,6 +97,11 @@ class CrmRelatoriosPage extends Page
 
     public function getConsultoresOptions(): Collection
     {
+        $user = auth()->user();
+        if ($user && ! $user->podeVerTodosLeads()) {
+            return collect([$user->id => $user->name]);
+        }
+
         return User::consultoresCrm()->pluck('name', 'id');
     }
 
@@ -105,10 +110,13 @@ class CrmRelatoriosPage extends Page
         $relatoriosService = app(CrmRelatoriosService::class);
         $funilService = app(FunilAnaliticoService::class);
 
+        $user = auth()->user();
+        $usuarioIdFiltro = $user && ! $user->podeVerTodosLeads() ? $user->id : $this->consultorId;
+
         $filtros = [
             'data_inicio' => $this->dataInicio,
             'data_fim' => $this->dataFim,
-            'usuario_id' => $this->consultorId,
+            'usuario_id' => $usuarioIdFiltro,
         ];
 
         $motivosPerda = $relatoriosService->motivosPerda($filtros);

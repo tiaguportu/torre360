@@ -133,6 +133,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
+     * Indica se o usuário possui acesso irrestrito a todos os leads do CRM (Lote D7).
+     * Concedido a super_admin ou a usuários com a permissão ViewAll:Interessado.
+     */
+    public function podeVerTodosLeads(): bool
+    {
+        return $this->hasRole('super_admin') || $this->can('ViewAll:Interessado');
+    }
+
+    /**
      * Pessoas cujos dados este usuário pode ver no Portal (ele mesmo, se for aluno,
      * mais seus dependentes, se for responsável).
      *

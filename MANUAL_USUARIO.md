@@ -608,6 +608,27 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 ---
 
 
+### 3.26 Escopo da Carteira do Consultor & Leads Não Atribuídos (Lote D7)
+1. **Regra de Visibilidade por Perfil Comercial:**
+   - **Consultores Comerciais:** Visualizam estritamente a **sua própria carteira de leads** (`usuario_id = auth()->id()`) somada aos **leads sem consultor ("Não atribuídos")**, garantindo foco na sua rotina diária e oportunidade rápida de captação de novos contatos.
+   - **Gestão e Coordenação (`super_admin` e `ViewAll:Interessado`):** Usuários com o papel `super_admin` ou que possuam a permissão explícita do Filament Shield `ViewAll:Interessado` mantêm visão gerencial irrestrita de todos os leads cadastrados no colégio.
+2. **Ação Rápida "Assumir Lead":**
+   - Disponível para qualquer lead sem consultor responsável atribuído (`usuario_id` nulo).
+   - **Na Tabela de Interessados:** Botão de ação de linha com ícone de mão levantada (verde `heroicon-o-hand-raised`).
+   - **Na Tela de Edição:** Botão em destaque no cabeçalho da ficha do lead.
+   - **No Funil Kanban:** Botão "Assumir" exibido no rodapé do card do lead em qualquer coluna do funil.
+   - Ao confirmar, o usuário autenticado torna-se imediatamente o consultor responsável pelo lead, e o sistema registra uma entrada de auditoria automática no **Histórico de Contatos** (*"Lead assumido pelo consultor [Nome]"*).
+3. **Proteção Nativa e Prevenção de IDOR/BOLA:**
+   - **Novo Cadastro:** Ao cadastrar um lead manualmente, se o usuário não tiver permissão para ver todos os leads, o sistema atribui automaticamente a sua própria conta como consultor responsável.
+   - **Segurança de Acesso (Policies):** A `InteressadoPolicy` bloqueia na camada de autorização qualquer tentativa de visualização direta por URL, edição ou exclusão de fichas pertencentes a outros consultores (HTTP 403 Forbidden).
+4. **Interface e Relatórios Adaptativos:**
+   - **Filtro de Consultor:** Os seletores de filtro por consultor na Tabela, no Kanban e na tela de Relatórios são omitidos automaticamente para usuários comuns, evitando ruído visual.
+   - **Relatórios e Indicadores:** Para consultores comuns, a tela executiva de métricas e conversões consolida exclusivamente os dados da sua própria carteira.
+5. **Permissão Customizada no Filament Shield:**
+   - O recurso de Interessados possui a permissão de controle de acesso `ViewAll:Interessado`, atribuível via **Sistema e Segurança → Papéis (Shield)** para coordenadores, gerentes de admissão e supervisores de vendas.
+
+---
+
 ## 📍 13. Gestão de Unidades e Canais Digitais
 
 ### 13.1 Redes Sociais e Contato
@@ -2962,7 +2983,7 @@ Projetado especialmente para a Educação Infantil e Ensino Fundamental I, onde 
 Todas as entidades e páginas operacionais do sistema estão integradas às Políticas de Autorização (Policies) do Laravel e ao **Filament Shield**:
 
 1. **Novos Módulos e Cadastros com Políticas Ativas:**
-   - **CRM e Vendas:** Concorrentes (`Concorrente`), Indicação de Interessados (`IndicacaoInteressado`), Modelos de WhatsApp (`MensagemWhatsappTemplate`) e Objeções Comerciais (`Objecao`).
+   - **CRM e Vendas:** Interessados (`Interessado`, incluindo a permissão especial `ViewAll:Interessado` para supervisores e gestão visualizarem a carteira de todos os consultores), Concorrentes (`Concorrente`), Indicação de Interessados (`IndicacaoInteressado`), Modelos de WhatsApp (`MensagemWhatsappTemplate`) e Objeções Comerciais (`Objecao`).
    - **Convivência:** Tipos de Ocorrência Escolar (`TipoOcorrencia`).
    - **Automações e Réguas:** Réguas de Cobrança (`ReguaCobranca`) e Réguas de Follow-up (`ReguaFollowUp`), incluindo a permissão específica de execução manual/simulação (`Execute:ReguaCobranca` / `Execute:ReguaFollowUp`).
    - **Relatórios Financeiros:** Fluxo de Caixa Consolidado (`View:RelatorioFluxoCaixa`) e Relatório de Inadimplência (`View:RelatorioInadimplencia`).

@@ -7,8 +7,10 @@ use App\Filament\Resources\Interessados\Actions\CopilotoMensagemIaAction;
 use App\Filament\Resources\Interessados\Actions\DossieIaAction;
 use App\Filament\Resources\Interessados\Actions\ResumoConversaIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
+use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\Pessoa;
+use App\Models\TipoContatoInteressado;
 use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
@@ -46,6 +48,36 @@ class EditInteressado extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('assumirLead')
+                ->label('Assumir Lead')
+                ->icon('heroicon-o-hand-raised')
+                ->color('success')
+                ->visible(fn (): bool => $this->record->podeSerAssumidoPor())
+                ->requiresConfirmation()
+                ->modalHeading('Assumir atendimento deste lead?')
+                ->modalDescription('Você passará a ser o consultor responsável pelo acompanhamento desta família.')
+                ->action(function (): void {
+                    $this->record->update([
+                        'usuario_id' => auth()->id(),
+                    ]);
+
+                    HistoricoContato::create([
+                        'interessado_id' => $this->record->id,
+                        'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+                        'usuario_id' => auth()->id(),
+                        'data_contato' => now(),
+                        'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
+                        'resultado' => 'outro',
+                        'automatico' => false,
+                    ]);
+
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Lead atribuído à sua carteira com sucesso!')
+                        ->success()
+                        ->send();
+                }),
             Action::make('termometroVagas')
                 ->label('Termômetro de Vagas')
                 ->icon('heroicon-o-chart-bar')
@@ -185,6 +217,7 @@ class EditInteressado extends EditRecord
         if ($user->can('Update:Interessado')) {
             $html .= '<li><strong>🔀 Detecção de Duplicados & Mesclagem:</strong> O sistema detecta automaticamente possíveis duplicados com base em telefone, CPF, e-mail ou aluno dependente em comum (nome e nascimento). O botão "Mesclar Duplicados" no topo permite consolidar os cadastros de forma atômica e segura, preservando todo o histórico, visitas, pesquisas NPS, documentos e dependentes sem perda de dados.</li>';
             $html .= '<li><strong>⏱️ SLA de 1ª Resposta Comercial:</strong> O sistema monitora o tempo até o primeiro contato humano, considerando estritamente o expediente comercial (segunda a sexta, 08h às 18h). Prazos customizados podem ser ajustados por lead (padrão de 120 min úteis). Ao estourar, o consultor recebe um alerta imediato no sino do painel.</li>';
+            $html .= '<li><strong>✋ Assumir Lead:</strong> Para interessados que ainda não possuem consultor atribuído, utilize o botão "Assumir Lead" no topo para vincular a família diretamente à sua carteira de atendimento.</li>';
         }
 
         if ($user->can('Delete:Interessado')) {

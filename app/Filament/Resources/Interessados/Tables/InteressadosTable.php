@@ -349,7 +349,8 @@ class InteressadosTable
                     ->relationship('usuario', 'name')
                     ->label('Consultor')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn (): bool => auth()->user()?->podeVerTodosLeads() ?? false),
                 TernaryFilter::make('sem_consultor')
                     ->label('Sem consultor responsável')
                     ->queries(
@@ -562,6 +563,37 @@ class InteressadosTable
                     ->visible(fn (Interessado $record): bool => $record->usuario !== null)
                     ->url(fn (Interessado $record): string => app(ConsultorWhatsappService::class)->urlParaInteressado($record))
                     ->openUrlInNewTab(),
+
+                Action::make('assumirLead')
+                    ->label('Assumir Lead')
+                    ->icon('heroicon-o-hand-raised')
+                    ->color('success')
+                    ->iconButton()
+                    ->tooltip('Assumir atendimento deste lead')
+                    ->visible(fn (Interessado $record): bool => $record->podeSerAssumidoPor())
+                    ->requiresConfirmation()
+                    ->modalHeading('Assumir atendimento deste lead?')
+                    ->modalDescription('Você passará a ser o consultor responsável pelo acompanhamento desta família.')
+                    ->action(function (Interessado $record): void {
+                        $record->update([
+                            'usuario_id' => auth()->id(),
+                        ]);
+
+                        HistoricoContato::create([
+                            'interessado_id' => $record->id,
+                            'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+                            'usuario_id' => auth()->id(),
+                            'data_contato' => now(),
+                            'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
+                            'resultado' => 'outro',
+                            'automatico' => false,
+                        ]);
+
+                        Notification::make()
+                            ->title('Lead atribuído à sua carteira com sucesso!')
+                            ->success()
+                            ->send();
+                    }),
 
                 ActionGroup::make([
                     BattlecardAction::make(),

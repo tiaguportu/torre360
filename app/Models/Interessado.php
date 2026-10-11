@@ -270,6 +270,71 @@ class Interessado extends Model
             });
     }
 
+    /**
+     * Filtra leads sem consultor atribuído (não atribuídos).
+     */
+    public function scopeNaoAtribuidos(Builder $query): Builder
+    {
+        return $query->whereNull('usuario_id');
+    }
+
+    /**
+     * Aplica o escopo de visibilidade da carteira do consultor (Lote D7).
+     *
+     * Regras:
+     *  - Usuários com acesso amplo (super_admin ou com a permissão ViewAll:Interessado) visualizam todos os leads;
+     *  - Consultores comuns visualizam apenas a sua própria carteira e leads não atribuídos (para assumir o atendimento).
+     */
+    public function scopeVisivelPara(Builder $query, ?User $user = null): Builder
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->podeVerTodosLeads()) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $q) use ($user): void {
+            $q->where('usuario_id', $user->id)
+                ->orWhereNull('usuario_id');
+        });
+    }
+
+    /**
+     * Verifica se o lead é acessível para o usuário informado (Lote D7).
+     */
+    public function podeSerAcessadoPor(?User $user = null): bool
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->podeVerTodosLeads()) {
+            return true;
+        }
+
+        return $this->usuario_id === null || $this->usuario_id === $user->id;
+    }
+
+    /**
+     * Verifica se o lead pode ser assumido pelo usuário informado (Lote D7).
+     */
+    public function podeSerAssumidoPor(?User $user = null): bool
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $this->usuario_id === null && $user->can('Update:Interessado');
+    }
+
     // ─── Business Methods ───────────────────────────────────────
 
     /**

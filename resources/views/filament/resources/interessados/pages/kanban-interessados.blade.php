@@ -173,9 +173,21 @@
 
                                     <div class="kanban-card-footer">
                                         <div class="flex items-center gap-2">
-                                            <div class="kanban-avatar" title="{{ $record->usuario?->name }}">
+                                            <div class="kanban-avatar" title="{{ $record->usuario?->name ?? 'Não atribuído' }}">
                                                 {{ substr($record->usuario?->name ?? '?', 0, 1) }}
                                             </div>
+                                            @if($record->usuario_id === null && auth()->user()?->can('Update:Interessado'))
+                                                <button 
+                                                    type="button" 
+                                                    wire:click="assumirLead({{ $record->id }})"
+                                                    wire:confirm="Deseja assumir o atendimento deste lead para a sua carteira?"
+                                                    class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:text-emerald-300 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 transition-colors cursor-pointer"
+                                                    title="Assumir este lead não atribuído"
+                                                >
+                                                    <x-filament::icon icon="heroicon-m-hand-raised" class="w-3 h-3" />
+                                                    Assumir
+                                                </button>
+                                            @endif
                                             @if($record->diasNoFunil() > 30)
                                                 <span class="kanban-dias-alerta" title="{{ $record->diasNoFunil() }} dias no funil">
                                                     {{ $record->diasNoFunil() }}d

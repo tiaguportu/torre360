@@ -19,7 +19,12 @@ class InteressadoPolicy
 
     public function view(AuthUser $authUser, Interessado $interessado): bool
     {
-        return $authUser->can('View:Interessado');
+        return $authUser->can('View:Interessado') && $interessado->podeSerAcessadoPor($authUser);
+    }
+
+    public function viewAll(AuthUser $authUser): bool
+    {
+        return $authUser->podeVerTodosLeads();
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,12 +34,12 @@ class InteressadoPolicy
 
     public function update(AuthUser $authUser, Interessado $interessado): bool
     {
-        return $authUser->can('Update:Interessado');
+        return $authUser->can('Update:Interessado') && $interessado->podeSerAcessadoPor($authUser);
     }
 
     public function delete(AuthUser $authUser, Interessado $interessado): bool
     {
-        return $authUser->can('Delete:Interessado');
+        return $authUser->can('Delete:Interessado') && ($authUser->podeVerTodosLeads() || $interessado->usuario_id === $authUser->id);
     }
 
     public function deleteAny(AuthUser $authUser): bool

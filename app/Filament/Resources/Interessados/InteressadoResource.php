@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class InteressadoResource extends Resource implements HasShieldPermissions
@@ -28,7 +29,13 @@ class InteressadoResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'view_all',
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->visivelPara();
     }
 
     protected static ?string $model = Interessado::class;

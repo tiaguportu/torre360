@@ -7,6 +7,7 @@ use App\Filament\Resources\CentroCustos\CentroCustoResource;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Filament\Resources\Fornecedores\FornecedorResource;
+use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Filament\Resources\PlanoContas\PlanoContaResource;
@@ -243,6 +244,9 @@ return [
             FornecedorResource::class => [],
             PlanoContaResource::class => [],
             TransacaoBancariaResource::class => [],
+            InteressadoResource::class => [
+                'viewAll',
+            ],
 
         ],
         'exclude' => [

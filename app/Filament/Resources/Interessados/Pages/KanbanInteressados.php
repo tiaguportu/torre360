@@ -7,8 +7,10 @@ use App\Filament\Resources\Interessados\Actions\BattlecardAction;
 use App\Filament\Resources\Interessados\Actions\ImportarLeadIaAction;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\Concorrente;
+use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\StatusInteressado;
+use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Models\VideoTutorial;
 use App\Services\LeadFunilService;
@@ -84,6 +86,7 @@ class KanbanInteressados extends Page
                 ->label('Filtrar Consultor')
                 ->icon('heroicon-o-funnel')
                 ->color('gray')
+                ->visible(fn () => auth()->user()?->podeVerTodosLeads() ?? false)
                 ->form([
                     Select::make('consultor_id')
                         ->label('Consultor')
@@ -151,7 +154,8 @@ class KanbanInteressados extends Page
         $idsFinais = $statuses->where('is_final', true)->pluck('id');
 
         $base = fn (): Builder => Interessado::query()
-            ->when($this->filtroConsultorId, fn (Builder $query, int $consultorId) => $query->where('usuario_id', $consultorId));
+            ->visivelPara()
+            ->when($this->filtroConsultorId && auth()->user()?->podeVerTodosLeads(), fn (Builder $query, int $consultorId) => $query->where('usuario_id', $consultorId));
 
         $totais = $base()
             ->selectRaw('status_interessado_id, count(*) as total, coalesce(sum(valor_estimado), 0) as valor')
@@ -217,6 +221,43 @@ class KanbanInteressados extends Page
     public function podeMoverLeads(): bool
     {
         return (bool) auth()->user()?->can('Update:Interessado');
+    }
+
+    /**
+     * Permite que um consultor assuma um lead que ainda não possui responsável atribuído (Lote D7).
+     */
+    public function assumirLead(int|string $recordId): void
+    {
+        $record = Interessado::find((int) $recordId);
+
+        if (! $record || $record->usuario_id !== null) {
+            return;
+        }
+
+        if (! auth()->user()?->can('Update:Interessado')) {
+            $this->notificarSemPermissao();
+
+            return;
+        }
+
+        $record->update([
+            'usuario_id' => auth()->id(),
+        ]);
+
+        HistoricoContato::create([
+            'interessado_id' => $record->id,
+            'tipo_contato_interessado_id' => TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)?->id,
+            'usuario_id' => auth()->id(),
+            'data_contato' => now(),
+            'relato' => 'Lead assumido pelo consultor '.auth()->user()->name.'.',
+            'resultado' => 'outro',
+            'automatico' => false,
+        ]);
+
+        Notification::make()
+            ->title('Lead atribuído à sua carteira com sucesso!')
+            ->success()
+            ->send();
     }
 
     public function updateRecordStatus($recordId, $statusId): void
