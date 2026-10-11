@@ -27,12 +27,18 @@ class CrmIaVendasService
     public const LIMITE_PADRAO_IA_POR_MINUTO = 10;
 
     /**
-     * Retorna o nome institucional da escola configurado no sistema.
-     * Busca prioritariamente da configuração do Copiloto, depois de Unidade/Instituição e por fim de app.name.
+     * Retorna o nome da escola configurado explicitamente no sistema, ou null se não houver.
+     * Ordem de precedência:
+     * 1. $config['nome_escola'] (se passado explicitamente)
+     * 2. CopilotoIaConfiguracao::valores()['nome_escola'] (se $config for null)
+     * 3. config('copiloto_ia.nome_escola')
+     * 4. Unidade::first()?->nome
+     * 5. InstituicaoEnsino::first()?->nome
+     * 6. null (NÃO usa app.name)
      *
      * @param  array<string, mixed>|null  $config
      */
-    public static function nomeEscola(?array $config = null): string
+    public static function nomeEscolaConfigurado(?array $config = null): ?string
     {
         if ($config !== null && filled($config['nome_escola'] ?? null)) {
             return (string) $config['nome_escola'];
@@ -45,14 +51,33 @@ class CrmIaVendasService
             }
         }
 
-        $envNome = config('copiloto_ia.nome_escola') ?: env('CRM_NOME_ESCOLA');
-        if (filled($envNome)) {
-            return (string) $envNome;
+        $configNome = config('copiloto_ia.nome_escola');
+        if (filled($configNome)) {
+            return (string) $configNome;
         }
 
-        return Unidade::first()?->nome
-            ?? InstituicaoEnsino::first()?->nome
-            ?? (string) config('app.name', 'Torre 360');
+        $unidade = Unidade::first()?->nome;
+        if (filled($unidade)) {
+            return (string) $unidade;
+        }
+
+        $instituicao = InstituicaoEnsino::first()?->nome;
+        if (filled($instituicao)) {
+            return (string) $instituicao;
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna o nome institucional da escola configurado no sistema.
+     * Mantém o fallback para config('app.name') para battlecard, dossiê, régua etc.
+     *
+     * @param  array<string, mixed>|null  $config
+     */
+    public static function nomeEscola(?array $config = null): string
+    {
+        return self::nomeEscolaConfigurado($config) ?? (string) config('app.name', 'Torre 360');
     }
 
     /**
@@ -455,8 +480,10 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             ? trim((string) $config['persona'])
             : trim((string) config('copiloto_ia.persona'));
 
-        $nomeEscola = self::nomeEscola($config);
-        $persona = str_replace('Escola Torre de Marfim', $nomeEscola, $persona);
+        $nomeConfigurado = self::nomeEscolaConfigurado($config);
+        if ($nomeConfigurado !== null) {
+            $persona = str_replace('Escola Torre de Marfim', $nomeConfigurado, $persona);
+        }
 
         $texto = $persona."\n\nDiretrizes obrigatórias da mensagem:\n".$numeradas;
 
