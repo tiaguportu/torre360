@@ -278,7 +278,7 @@ class HistoricoEscolarTest extends TestCase
     public function test_usuario_staff_pode_visualizar_pdf_do_historico(): void
     {
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['activated_at' => now()]);
         $admin->assignRole('super_admin');
 
         $aluno = Pessoa::create([

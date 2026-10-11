@@ -42,7 +42,7 @@ class TemplateCrachaV3Test extends TestCase
 
     public function test_usuario_autenticado_pode_acessar_editor_e_salvar_layout_json(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['activated_at' => now()]);
         $role = Role::firstOrCreate(['name' => 'secretaria']);
         $role->givePermissionTo([
             Permission::firstOrCreate(['name' => 'View:TemplateCrachaV3']),
@@ -108,7 +108,7 @@ class TemplateCrachaV3Test extends TestCase
     {
         // Regressão de segurança: a rota exigia apenas 'auth', permitindo que qualquer
         // conta autenticada (ex.: aluno/responsável do portal) alterasse o template do crachá.
-        $user = User::factory()->create();
+        $user = User::factory()->create(['activated_at' => now()]);
         $user->assignRole(Role::firstOrCreate(['name' => 'aluno']));
 
         $template = TemplateCrachaV3::create([

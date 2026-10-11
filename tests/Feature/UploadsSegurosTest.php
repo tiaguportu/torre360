@@ -31,7 +31,7 @@ class UploadsSegurosTest extends TestCase
         Role::firstOrCreate(['name' => 'secretaria', 'guard_name' => 'web']);
         Storage::fake('local');
 
-        $secretaria = User::create(['name' => 'Secretaria', 'email' => 'secretaria@teste.com', 'password' => bcrypt('x')]);
+        $secretaria = User::create(['name' => 'Secretaria', 'email' => 'secretaria@teste.com', 'password' => bcrypt('x'), 'activated_at' => now()]);
         $secretaria->assignRole('secretaria');
         $this->actingAs($secretaria);
     }

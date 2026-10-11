@@ -80,7 +80,7 @@ class ContentSecurityPolicyTest extends TestCase
     {
         config(['seguranca.csp.modo' => 'enforce']);
 
-        $this->actingAs(User::create(['name' => 'S', 'email' => 's@teste.com', 'password' => bcrypt('x')]));
+        $this->actingAs(User::create(['name' => 'S', 'email' => 's@teste.com', 'password' => bcrypt('x'), 'activated_at' => now()]));
         $this->seed(RolesSeeder::class);
         auth()->user()->assignRole('secretaria');
         Storage::fake('local');
