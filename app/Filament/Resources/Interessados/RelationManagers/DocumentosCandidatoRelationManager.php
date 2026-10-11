@@ -315,8 +315,12 @@ class DocumentosCandidatoRelationManager extends RelationManager
                     ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
                     ->requiresConfirmation()
                     ->action(function (DocumentoInserido $record) {
-                        $record->transitionTo(SituacaoDocumento::VERIFICADO);
-                        $record->update(['observacoes' => null]);
+                        $record->aplicarSituacao(
+                            situacao: SituacaoDocumento::VERIFICADO,
+                            motivo: null,
+                            usuario: auth()->user(),
+                            origemIa: false
+                        );
 
                         Notification::make()
                             ->title('Documento aprovado!')
@@ -337,8 +341,12 @@ class DocumentosCandidatoRelationManager extends RelationManager
                             ->placeholder('Ex: Foto cortada, documento vencido ou ilegível...'),
                     ])
                     ->action(function (DocumentoInserido $record, array $data) {
-                        $record->transitionTo(SituacaoDocumento::REJEITADO);
-                        $record->update(['observacoes' => $data['motivo']]);
+                        $record->aplicarSituacao(
+                            situacao: SituacaoDocumento::REJEITADO,
+                            motivo: $data['motivo'],
+                            usuario: auth()->user(),
+                            origemIa: false
+                        );
 
                         Notification::make()
                             ->title('Documento rejeitado. A família poderá reenviar pelo portal.')

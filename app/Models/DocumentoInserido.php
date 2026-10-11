@@ -173,4 +173,55 @@ class DocumentoInserido extends Model
 
         return false;
     }
+
+    /**
+     * Aplica uma nova situação ao documento com validações, observações e rastreamento oficial.
+     *
+     * @param  SituacaoDocumento  $situacao  Nova situação
+     * @param  string|null  $motivo  Motivo da rejeição (obrigatório se rejeitado)
+     * @param  User|null  $usuario  Usuário que realizou a conferência
+     * @param  bool  $origemIa  Se a decisão veio do acatamento da pré-triagem da IA
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function aplicarSituacao(
+        SituacaoDocumento $situacao,
+        ?string $motivo = null,
+        ?User $usuario = null,
+        bool $origemIa = false
+    ): void {
+        $usuario ??= auth()->user();
+
+        if ($situacao === SituacaoDocumento::REJEITADO && blank($motivo)) {
+            throw new \InvalidArgumentException('O motivo da rejeição é obrigatório.');
+        }
+
+        $situacaoAnterior = $this->status;
+
+        if ($this->status !== $situacao) {
+            $this->transitionTo($situacao);
+        }
+
+        if ($situacao === SituacaoDocumento::REJEITADO) {
+            $this->observacoes = $motivo;
+        } elseif ($situacao === SituacaoDocumento::VERIFICADO) {
+            $this->observacoes = null;
+        }
+
+        $this->save();
+
+        if ($origemIa) {
+            activity('documento_inserido')
+                ->performedOn($this)
+                ->causedBy($usuario)
+                ->withProperties([
+                    'status_anterior' => $situacaoAnterior?->value,
+                    'status_novo' => $situacao->value,
+                    'status_sugerido_ia' => $this->status_sugerido,
+                    'origem_ia' => true,
+                    'motivo' => $motivo,
+                ])
+                ->log("Decisão da pré-triagem por IA acatada: situação alterada para '{$situacao->getLabel()}'".($motivo ? " (motivo: {$motivo})" : '').'.');
+        }
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DocumentoInseridos\Tables;
 
 use App\Enums\SituacaoDocumento;
 use App\Models\DocumentoInserido;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -11,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -92,14 +94,33 @@ class DocumentoInseridosTable
                     ->label('Acatar IA')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
+                    ->authorize(PermissaoAcao::qualquer('Update:DocumentoInserido'))
                     ->visible(fn (DocumentoInserido $record): bool => filled($record->status_sugerido) && $record->status_sugerido !== $record->status?->value)
-                    ->requiresConfirmation()
+                    ->requiresConfirmation(fn (DocumentoInserido $record): bool => $record->status_sugerido !== SituacaoDocumento::REJEITADO->value)
                     ->modalHeading('Acatar Pré-triagem da IA')
                     ->modalDescription(fn (DocumentoInserido $record): string => "Deseja atualizar a situação do documento '{$record->tipoDocumento?->nome}' de '{$record->status?->getLabel()}' para '{$record->status_sugerido}' com base na pré-triagem do Gemini?")
-                    ->action(function (DocumentoInserido $record): void {
+                    ->form(function (DocumentoInserido $record): array {
+                        if ($record->status_sugerido === SituacaoDocumento::REJEITADO->value) {
+                            return [
+                                Textarea::make('motivo')
+                                    ->label('Motivo da Recusa (visível para os pais no portal)')
+                                    ->required()
+                                    ->placeholder('Ex: Foto cortada, documento vencido ou ilegível...'),
+                            ];
+                        }
+
+                        return [];
+                    })
+                    ->action(function (DocumentoInserido $record, array $data): void {
                         $target = SituacaoDocumento::tryFrom((string) $record->status_sugerido);
                         if ($target) {
-                            $record->update(['status' => $target]);
+                            $record->aplicarSituacao(
+                                situacao: $target,
+                                motivo: $data['motivo'] ?? null,
+                                usuario: auth()->user(),
+                                origemIa: true
+                            );
+
                             Notification::make()
                                 ->title('Situação atualizada!')
                                 ->body("Documento atualizado para {$target->getLabel()} conforme pré-triagem da IA.")
