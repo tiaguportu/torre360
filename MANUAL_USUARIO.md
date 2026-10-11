@@ -1162,13 +1162,20 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 
 
 
-### 7.2 Conciliação Bancária
+### 7.2 Cadastro e Gestão de Fornecedores (`/admin/fornecedores`)
+1. **Cadastro Unificado de Fornecedores:** Permite gerenciar prestadores de serviços, concessionárias e fornecedores de materiais escolares e infraestrutura com Razão Social, Nome Fantasia, CNPJ/CPF, E-mail, Telefone, Chave PIX e dados bancários.
+2. **Validação de Unicidade Fiscal:** O sistema valida o CNPJ/CPF para impedir duplicidade de cadastros de um mesmo fornecedor na base de dados.
+3. **Integração com Contas a Pagar e Extratos:** Vincula despesas operacionais da escola (`ContaPagar`) e saídas bancárias (`TransacaoBancaria`), permitindo rastreabilidade financeira completa e conciliação de pagamentos.
+4. **Governança com Filament Shield:** O acesso ao módulo é protegido por permissões granulares (`ViewAny:Fornecedor`, `Create:Fornecedor`, `Update:Fornecedor`, `Delete:Fornecedor`).
+5. **Garantia por Testes:** O ciclo completo de cadastro, validação de unicidade e vínculos com contas a pagar é validado pela suíte automatizada `FornecedorContaPagarTest`.
+
+### 7.3 Conciliação Bancária
 1. Vá em **Financeiro → Conciliação Bancária**.
 2. Faça o upload do arquivo **OFX** extraído do seu banco.
 3. O sistema tentará identificar automaticamente a qual fatura ou fornecedor o lançamento pertence.
 4. Para novos fornecedores detectados em débitos, o sistema abre um popup para cadastro rápido.
 
-### 7.3 Relatório DRE (Demonstrativo de Resultados)
+### 7.4 Relatório DRE (Demonstrativo de Resultados)
 1. Acesse **Financeiro → Relatórios → DRE** (`/admin/financeiro/dre`).
 2. Filtre pelo mês ou período desejado e clique em **Atualizar Relatório**.
 3. O sistema consolida recursivamente a árvore do **Plano de Contas** em memória (sem consultas N+1 nem gargalos de *lazy loading*), computando receitas e despesas a partir de `TransacaoBancaria` e exibindo o resultado líquido consolidado.
@@ -2265,9 +2272,11 @@ O módulo de **Comunicação Escolar** reduz o fluxo de ligações e atendimento
 2. Com um clique em **Confirmar Presença**, informam a quantidade de acompanhantes e, caso o evento exija autorização de saída, assinam o termo digital com registro de data, hora e IP do dispositivo.
 
 ### 33.3 Central de Atendimento & Chamados (`/admin/atendimento-chamados` e `/admin/atendimento-setores`)
-1. **Setores de Atendimento:** Configure os departamentos disponíveis para contato (Secretaria, Setor Financeiro, Coordenação Pedagógica, Ambulatório e Direção).
-2. **Painel de Chamados:** A equipe acompanha chamados organizados por protocolo único (`ATD-YYYY-XXXXX`), com filtros por setor, status e prioridade.
-3. **Ação Rápida "Responder":** O atendente responde a dúvida da família, anexa documentos/comprovantes em PDF e atualiza a situação do atendimento com notificações instantâneas.
+1. **Setores de Atendimento:** Configure os departamentos disponíveis para contato (Secretaria, Setor Financeiro, Coordenação Pedagógica, Ambulatório e Direção), definindo e-mails de notificação e status de ativação. Apenas setores ativos são disponibilizados para abertura de novas solicitações.
+2. **Painel de Chamados e Protocolo Automático:** A equipe acompanha chamados organizados por protocolo sequencial padronizado (`ATD-YYYY-XXXXX`), com filtros por setor, status (`aberto`, `em_atendimento`, `respondido`, `fechado`) e prioridade (`baixa`, `media`, `alta`, `urgente`).
+3. **Ação Rápida "Responder":** O atendente responde a dúvida da família com modal dedicado, anexa documentos/comprovantes em PDF, atualiza a situação do atendimento e registra o atendente responsável de forma rastreável.
+4. **Governança com Filament Shield:** Protegido por políticas de acesso Shield (`ViewAny:AtendimentoChamado`, `Create:AtendimentoChamado`, `Update:AtendimentoChamado`, `ViewAny:AtendimentoSetor`). Usuários sem as permissões adequadas recebem bloqueio imediato (HTTP 403 Forbidden).
+5. **Garantia por Testes:** A geração de protocolo, as regras de negócio de resposta de chamados, a filtragem de setores ativos e a segurança de autorização são cobertas pela suíte automatizada `AtendimentoChamadosCicloTest`.
 
 ### 33.4 Atendimento pelo Portal da Família (`/portal/atendimento`)
 1. **Abertura Descomplicada:** O responsável clica em **Novo Chamado**, seleciona o setor, o estudante (opcional), informa o assunto e descreve a solicitação com opção de anexos.

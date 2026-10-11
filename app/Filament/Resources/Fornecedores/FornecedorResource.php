@@ -8,18 +8,33 @@ use App\Filament\Resources\Fornecedores\Pages\ListFornecedores;
 use App\Filament\Resources\Fornecedores\Schemas\FornecedorForm;
 use App\Filament\Resources\Fornecedores\Tables\FornecedoresTable;
 use App\Models\Fornecedor;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class FornecedorResource extends Resource
+class FornecedorResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+            'view',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = Fornecedor::class;
 
     protected static ?string $modelLabel = 'Fornecedor';
 
     protected static ?string $pluralModelLabel = 'Fornecedores';
+
+    protected static ?string $slug = 'fornecedores';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Financeiro';
 
