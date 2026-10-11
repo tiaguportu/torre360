@@ -762,10 +762,16 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
    - **Para uma única turma:** Clique na ação **Imprimir Boletins** na respectiva linha da turma. O sistema abrirá um modal questionando se deseja filtrar por uma etapa avaliativa específica ou gerar todas as etapas juntas.
    - **Para múltiplas turmas em lote:** Selecione as turmas desejadas na tabela através das caixas de seleção, abra as ações em lote e clique em **Imprimir Boletins em Lote**. O mesmo modal de filtro por etapa será exibido. O PDF gerado realiza a quebra de página automática por aluno para facilitar a impressão física.
 
-### 5.4 Gerenciamento de Notas
+### 5.4 Gerenciamento e Lançamento de Notas em Grade
 1. No menu **Avaliações → Notas**, é possível visualizar o histórico completo de notas lançadas.
 2. Para facilitar a identificação, a coluna **Matrícula** segue o padrão: `Turma - Período Escolar - Nome do Aluno`.
 3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
+4. **Regras de Negócio e Prevalência (`NotaLancamentoService`):**
+   - **Teto da Avaliação:** O sistema bloqueia notas que ultrapassem a nota máxima cadastrada (`\InvalidArgumentException`), impedindo erros de digitação.
+   - **Justificativas (*Faltou* / *Não se Aplica*):** Quando uma justificativa é selecionada, ela tem precedência absoluta, descartando e anulando o valor numérico digitado para resolver pendências sem afetar indevidamente as médias.
+   - **Limpeza de Notas:** Ao esvaziar simultaneamente o valor numérico e a justificativa de um aluno, a nota é imediatamente excluída da base de dados.
+   - **Garantia por Testes:** Todo o ciclo de validação do serviço é coberto e auditado pela suíte `NotaLancamentoRegrasTest`.
+5. **Automações de Desempenho e Risco:** O comando agendado `academico:recalcular-risco-evasao` reavalia periodicamente as médias e a frequência escolar de todas as matrículas ativas para atualizar o indicador de risco de evasão, sendo testado por `ComandosAgendadosTest`.
 
 ### 5.5 Avaliação de Habilidades (BNCC - Educação Infantil)
 O sistema permite avaliar competências e habilidades específicas organizadas por **Campos de Experiência**, em total conformidade com a BNCC para a Educação Infantil.
@@ -3006,10 +3012,11 @@ Permite conferir fisicamente as prateleiras da biblioteca com leitor óptico ou 
 2. Na tela de conferência rápida, bipe os livros nas prateleiras com leitor óptico ou use o botão **"📷 Câmera"** com o smartphone na mão, percorrendo as estantes com o modo de leitura contínua ativado.
 3. O painel calcula em tempo real:
    - **Total de Títulos Cadastrados**
-   - **Exemplares Presentes na Estante (Bipados)**
+   - **Exemplares Presentes na Estante (Bipados):** Leitura cumulativa de múltiplos exemplares de um mesmo título.
    - **Exemplares em Circulação (Emprestados no momento com alunos)**
    - **Livros Faltantes / Extraviados:** Tabela que aponta exatamente quais livros cadastrados não foram localizados na estante nem constam em empréstimos ativos.
-4. Conclua a auditoria clicando em **"Concluir Auditoria"** para fechar o relatório de contagem física.
+4. Conclua a auditoria clicando em **"Concluir Auditoria"** para fechar o relatório de contagem física (com bloqueio imediato contra bipagens acidentais). É possível **Reabrir Auditoria** a qualquer momento caso novas caixas sejam encontradas.
+5. **Garantia por Testes e Comandos:** O fluxo completo de bipagem, conciliação de exemplares e as ações de conclusão/reabertura são auditados por `InventarioAcervoTest`. A rotina diária que identifica e atualiza empréstimos vencidos (`biblioteca:atualizar-emprestimos-atrasados`) é validada em `ComandosAgendadosTest`.
 
 ### 51.6 Sacola de Leitura e Empréstimo Coletivo por Turma / Professor (`/admin/sacolas-leitura`)
 Projetado especialmente para a Educação Infantil e Ensino Fundamental I, onde a professora regente retira um lote de livros para o "Cantinho de Leitura", "Sacola Viajante" ou projeto literário semanal da turma:
