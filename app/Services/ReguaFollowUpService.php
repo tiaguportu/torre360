@@ -9,7 +9,6 @@ use App\Enums\StatusVisitaInteressado;
 use App\Mail\MensagemGenericaMail;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
-use App\Models\InteressadoDependente;
 use App\Models\Matricula;
 use App\Models\ReguaFollowUp;
 use App\Models\ReguaFollowUpLog;
@@ -357,34 +356,26 @@ class ReguaFollowUpService
         $responsaveisPessoaIds = array_merge($responsaveisPessoaIds, $respFinIds);
         $responsaveisPessoaIds = array_values(array_unique(array_filter($responsaveisPessoaIds)));
 
-        // Localiza leads ativos correspondentes
+        // Localiza leads correspondentes pelo vínculo de responsabilidade (sem filtro por etapa)
         $leads = Interessado::query()
-            ->ativos()
-            ->where(function ($query) use ($responsaveisPessoaIds, $matriculasEmRisco): void {
-                $query->whereIn('pessoa_id', $responsaveisPessoaIds);
-
-                // 4. Também cobre leads cujo dependente seja o aluno
-                foreach ($matriculasEmRisco as $mat) {
-                    if ($nomeAluno = $mat->pessoa?->nome) {
-                        $norm = InteressadoDependente::nomeNormalizado($nomeAluno);
-                        if ($norm !== '') {
-                            $query->orWhereHas('dependentes', fn ($q) => $q->whereRaw('LOWER(TRIM(nome_crianca)) = ?', [$norm]));
-                        }
-                    }
-                }
-            })
+            ->whereIn('pessoa_id', $responsaveisPessoaIds)
+            ->latest('id')
             ->with(['pessoa.alunos', 'dependentes.serie', 'usuario'])
             ->get();
 
-        // Deduplica por Interessado (irmãos em risco geram 1 único candidato)
+        // Deduplica por pessoa_id mantendo o lead mais recente
         $candidatos = collect();
-        $processados = [];
+        $pessoasProcessadas = [];
 
         foreach ($leads as $lead) {
-            if (isset($processados[$lead->id])) {
+            $pessoaId = $lead->pessoa_id;
+            if ($pessoaId !== null && isset($pessoasProcessadas[$pessoaId])) {
                 continue;
             }
-            $processados[$lead->id] = true;
+
+            if ($pessoaId !== null) {
+                $pessoasProcessadas[$pessoaId] = true;
+            }
 
             $candidatos->push([
                 'interessado' => $lead,
