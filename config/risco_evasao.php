@@ -35,10 +35,10 @@ return [
 
     // Playbook de Retenção Escolar & Prevenção de Evasão (Lote D9)
     'playbook' => [
-        'corte_risco' => 60,
-        'intervalo_dias_alerta' => 15,
-        'notificar_coordenacao' => true,
-        'criar_tarefa' => true,
-        'max_notificacoes_individuais' => 5,
+        'corte_risco' => (int) env('RISCO_EVASAO_PLAYBOOK_CORTE', 60),
+        'intervalo_dias_alerta' => (int) env('RISCO_EVASAO_PLAYBOOK_INTERVALO_DIAS', 15),
+        'notificar_coordenacao' => (bool) env('RISCO_EVASAO_PLAYBOOK_NOTIFICAR_COORDENACAO', true),
+        'criar_tarefa' => (bool) env('RISCO_EVASAO_PLAYBOOK_CRIAR_TAREFA', true),
+        'max_notificacoes_individuais' => (int) env('RISCO_EVASAO_PLAYBOOK_MAX_NOTIFICACOES_INDIVIDUAIS', 5),
     ],
 ];

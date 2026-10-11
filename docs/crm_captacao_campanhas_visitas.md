@@ -205,6 +205,11 @@ A mesma máscara vale na criação do interessado (mesmo formulário) e no cadas
 | `2026_10_10_191121_add_alerta_detrator_to_visita_pesquisa_satisfacao_table` | Coluna `alerta_detrator_enviado_em` na tabela `visita_pesquisa_satisfacao` e permissões Shield para `CrmRelatoriosPage`. |
 | `2026_10_10_184810_create_interessado_status_historico_table` | Tabela `interessado_status_historico` (histórico de transição de etapas, tempo por etapa e motivo de perda) com backfill idempotente inicial. |
 | `2026_10_09_100100_criptografar_dados_pre_matricula_do_interessado` | `interessado.dados_pre_matricula` de `json` para `longText` e **cifrado** com a `APP_KEY` (cast `ArrayCriptografado`, que ainda lê JSON puro); nova `dados_pre_matricula_em` (última atualização do rascunho, usada na retenção). Idempotente; `down()` decifra. |
+| `2026_10_11_070000_add_sla_primeira_resposta_to_interessado_table` | `interessado.sla_primeira_resposta_minutos`, `data_primeiro_contato` e `sla_estouro_notificado_em` (Lote D4 - Controle de SLA de 1ª resposta). |
+| `2026_10_11_074500_create_view_all_interessado_permission` | Cria permissão Shield `ViewAll:Interessado` e concede ao papel `super_admin` (Lote D7 - Escopo de Carteira). |
+| `2026_10_11_091500_add_status_sugerido_to_documento_inserido_table` | `documento_inserido.status_sugerido` (Lote D8 - Pré-triagem com OCR por IA). |
+| `2026_10_11_120000_create_retencao_tarefas_table` | Tabela `retencao_tarefas` e permissões Shield para o Playbook de Retenção Escolar (Lote D9). |
+| `2026_10_11_130000_add_sla_gestao_notificado_em_to_interessado_table` | `interessado.sla_gestao_notificado_em` (Lote F4 - Alerta agregado à gestão para leads sem consultor com SLA estourado). |
 
 ## 8. Testes
 

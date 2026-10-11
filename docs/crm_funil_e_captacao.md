@@ -569,3 +569,63 @@ O Lote D7 estabelece a segregação de acesso comercial por carteira de atendime
 - Implementado em `Interessado::scopeVisivelPara()` e injetado nativamente em `InteressadoResource::getEloquentQuery()`, assegurando que listagens, abas de contadores (`ContadoresCrm`), widgets de calendário e relatórios reflitam de forma consistente a carteira do usuário ativo.
 
 Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`.
+
+### 17.5 SLA para Leads sem Consultor e Alertas da Gestão (Lote F4)
+- **Leads sem Distribuição Automática:** Leads originados por formulários públicos ou landing pages nascem sem consultor (`usuario_id IS NULL`). Anteriormente, esses leads eram desconsiderados pelo verificador de estouro de SLA.
+- **Rastreamento Separado (`sla_gestao_notificado_em`):** Adicionada a coluna `interessado.sla_gestao_notificado_em` via migration idempotente. O controle é independente de `sla_estouro_notificado_em` (que pertence ao consultor que venha a assumir a família posteriormente).
+- **Notificação Consolidada por Execução:** A cada rodada do comando `crm:verificar-sla-estourado`, se houver leads sem consultor com SLA estourado pendentes de notificação à gestão, uma única notificação agregada é enviada aos usuários com papéis `admin`, `super_admin` e `coordenador`, contendo a contagem, até 5 nomes e link direto com filtro para atendimento rápido.
+
+### 18.4 Bloqueio Pessimista e Concorrência ao Assumir Lead (Lote F6)
+- **Atomicidade no Atendimento:** A ação de assumir lead (disponível no Kanban, na listagem de Interessados e no cabeçalho de edição) utiliza transação em banco de dados (`DB::transaction`) associada a bloqueio pessimista (`lockForUpdate()`).
+- **Prevenção de Corridas (Race Conditions):** Se dois consultores tentarem assumir a mesma família simultaneamente, o primeiro confirma a atribuição e gera o histórico de contato. O segundo é notificado amigavelmente com a mensagem *"Este lead já foi assumido por outro consultor"*, preservando a integridade da carteira sem gerar registros duplicados de histórico.
+
+### 18.5 Detecção de Duplicados e Mesclagem com Respeito à Carteira (Lote F5)
+- **Isolamento de Carteiras no Detector:** O serviço `LeadDuplicadoDetectorService` avalia o usuário autenticado. Consultores sem permissão `ViewAll:Interessado` visualizam detalhes apenas de leads sob sua gestão direta ou não atribuídos.
+- **Aviso Genérico de Sigilo:** Quando existe correspondência com lead de outro consultor, o sistema exibe apenas o alerta *"Há possível duplicado fora da sua carteira. Acione a gestão."*, sem expor nome, etapa do funil ou dados de contato da outra carteira.
+- **Segurança na Mesclagem:** A interface de mesclagem (`Select` de leads a absorver) restringe as opções estritamente ao escopo visível do consultor. Em nível de serviço (`LeadMesclagemService::mesclar()`), se o usuário não possuir acesso aos dois leads ou carecer de `Update:Interessado`, uma `AuthorizationException` é lançada.
+
+## 19. Lote D8 & F3: Governança do Copiloto IA, OCR e Padronização Institucional
+
+O Lote D8 e seus refinamentos do Lote F3 estruturam o uso de inteligência artificial generativa (Google Gemini) no CRM, adicionando controle orçamentário, triagem documental e resolução unificada da identidade da escola.
+
+### 19.1 Limite de Requisições por Minuto (Rate Limiting)
+- **Controle por Usuário:** Implementado em `CrmIaVendasService::verificarIncrementarRateLimit()`, garantindo que cada operador não exceda o limite de requisições configurado em `config('services.gemini.limite_por_minuto')` (variável `GEMINI_LIMITE_POR_MINUTO`, padrão: 10 requisições/min).
+- **Proteção Orçamentária e Mensagens Amigáveis:** Evita estouro de cota da API e bloqueia requisições excessivas com orientações claras sobre o tempo restante para liberação.
+
+### 19.2 Pré-triagem com OCR no Upload de Documentos
+- **Extração Automatizada:** O job de análise por IA avalia nitidez, legibilidade e conformidade do documento anexado pelo candidato, persistindo a coluna `documento_inserido.status_sugerido` (`verificado`, `em_analise` ou `rejeitado`).
+- **Acatamento Oficial da Sugestão da IA (Lote F7):** Na listagem de documentos, a ação "Acatar IA" passa pelo método oficial `DocumentoInserido::aplicarSituacao()`.
+  - Exige a permissão `Update:DocumentoInserido`;
+  - Ao sugerir `rejeitado`, abre obrigatoriamente formulário exigindo o motivo da recusa (visível para os pais no portal);
+  - Ao aprovar, limpa observações e transiciona o estado pela máquina de estados;
+  - Registra evento de auditoria no `activity_log` indicando que a decisão acatou a recomendação do Gemini.
+
+### 19.3 Precedência Unificada do Nome da Escola (Lote F3)
+Todas as menções ao nome da instituição no Copiloto IA, dossiês, battlecards de vendas e réguas de comunicação seguem rigorosamente a seguinte cadeia de prioridades única:
+1. Argumento explícito `$config['nome_escola']` (se fornecido na chamada);
+2. Valor salvo em "Comportamento do Copiloto IA" (`CopilotoIaConfiguracao::valores()['nome_escola']`);
+3. Variável de ambiente `CRM_NOME_ESCOLA`;
+4. Nome da primeira unidade cadastrada (`Unidade::first()->nome`);
+5. Nome da instituição mantenedora (`InstituicaoEnsino::first()->nome`);
+6. Nome padrão da aplicação (`config('app.name')`).
+
+## 20. Lote D9, F1 & F2: Playbook de Retenção Escolar e Prevenção de Evasão
+
+O Lote D9 integra o CRM à vida acadêmica dos alunos matriculados, transformando o diagnóstico precoce de evasão em planos de ação imediatos para a equipe de retenção escolar.
+
+### 20.1 Motor de Evasão e Tarefas de Retenção
+- **Cálculo de Risco:** Baseado nos pilares de frequência (40%), desempenho acadêmico (35%) e pontualidade financeira (25%).
+- **Criação de Tarefas (`RetencaoTarefa`):** Quando um aluno ultrapassa o corte de risco (`corte_risco = 60`), o sistema gera automaticamente uma tarefa de intervenção no `RetencaoTarefaResource` para acompanhamento pedagógico e familiar.
+
+### 20.2 Alertas Exclusivos para a Gestão Ativa (Lote F1)
+- **Destinatários Homologados:** As notificações de alerta de evasão são enviadas exclusivamente para usuários ativos com papéis de gestão escolar (`coordenador`, `admin` ou `super_admin`). Professores, secretários comuns e famílias nunca recebem o score de risco.
+- **Proteção contra Volume e Resumo Agregado:** Em recálculos em lote que gerem mais de 5 notificações individuais (`risco_evasao.playbook.max_notificacoes_individuais`), o sistema consolida o envio em 1 notificação resumo com a quantidade total de alunos em risco e link para a lista de tarefas de retenção.
+
+### 20.3 Régua de Follow-up de Evasão para Responsáveis (Lote F2)
+- **Vínculo Aluno → Responsável:** O gatilho de risco de evasão da régua de follow-up (`candidatosDeRiscoEvasaoRematricula`) localiza os responsáveis legais (`aluno_responsavel`) e financeiros vinculados às matrículas ativas em risco e os mapeia para o lead correspondente (`Interessado`).
+- **Deduplicação Familiar:** Irmãos matriculados sob a mesma família geram um único contato na régua.
+- **Sigilo e Privacidade da Família:** As mensagens automáticas enviadas à família nunca expõem termos como "risco", "score" ou "evasão", utilizando abordagens acolhedoras de acompanhamento escolar e rematrícula preventiva.
+
+### 20.4 Limitação Operacional Conhecida: Famílias sem Lead Cadastrado
+- Famílias de alunos matriculados que ingressaram por vias históricas sem passagem pelo CRM (portanto, sem registro correspondente na tabela `interessado`) **não têm lead gerado automaticamente pelo gatilho de evasão**.
+- Essa diretriz protege o funil comercial contra poluição de dados e respeita o ciclo de consentimento LGPD. O acompanhamento dessas famílias ocorre diretamente pelas ferramentas acadêmicas da coordenação (`RetencaoTarefaResource`) ou mediante cadastro assistido no módulo de rematrícula.

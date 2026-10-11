@@ -59,7 +59,7 @@ class CanalMensagemTest extends TestCase
         $this->mockFcmService();
 
         $pessoa = Pessoa::factory()->create();
-        $user = User::factory()->create(['fcm_token' => 'token-abc']);
+        $user = User::factory()->create(['fcm_token' => 'token-abc', 'activated_at' => now()]);
         $pessoa->users()->attach($user->id);
 
         $canal = app(FcmCanal::class);
@@ -73,7 +73,7 @@ class CanalMensagemTest extends TestCase
         $this->mockFcmService();
 
         $pessoa = Pessoa::factory()->create();
-        $user = User::factory()->create(['fcm_token' => null]);
+        $user = User::factory()->create(['fcm_token' => null, 'activated_at' => now()]);
         $pessoa->users()->attach($user->id);
 
         $canal = app(FcmCanal::class);
