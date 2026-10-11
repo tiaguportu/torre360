@@ -111,10 +111,12 @@ class RiscoEvasaoGestaoLoteF1Test extends TestCase
 
         config(['risco_evasao.playbook.max_notificacoes_individuais' => 5]);
 
+        RiscoEvasaoService::iniciarExecucao();
         for ($i = 1; $i <= 6; $i++) {
             $m = $this->criarMatricula("Aluno {$i}");
             RiscoEvasaoService::notificarCoordenacao($m, 80);
         }
+        RiscoEvasaoService::finalizarExecucao();
 
         $notificacoes = DatabaseNotification::where('notifiable_id', $coord->id)->get();
         $this->assertCount(1, $notificacoes);

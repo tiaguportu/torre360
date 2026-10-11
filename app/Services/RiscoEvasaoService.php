@@ -12,7 +12,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -25,32 +25,90 @@ use Illuminate\Support\Facades\Log;
 class RiscoEvasaoService
 {
     /**
-     * Quantidade de alertas gerados na execução corrente.
+     * Indica se uma execução em lote está aberta.
      */
-    private static int $totalAlertasExecucao = 0;
+    private static bool $emExecucao = false;
 
     /**
-     * IDs das notificações individuais enviadas nesta execução.
+     * Alertas acumulados na execução corrente.
      *
-     * @var list<string>
+     * @var list<array{alunoNome: string, turmaNome: string, score: int, tarefaId: ?int}>
      */
-    private static array $notificacoesIndividuaisIds = [];
+    private static array $alertasFila = [];
 
     /**
-     * IDs das notificações de resumo enviadas por destinatário.
-     *
-     * @var array<int, string>
+     * Inicia uma execução em lote, acumulando alertas em memória para envio consolidado.
      */
-    private static array $resumoNotificacaoIds = [];
+    public static function iniciarExecucao(): void
+    {
+        self::$emExecucao = true;
+        self::$alertasFila = [];
+    }
 
     /**
      * Reseta o controle de volume de alertas da execução corrente.
      */
     public static function resetarExecucao(): void
     {
-        self::$totalAlertasExecucao = 0;
-        self::$notificacoesIndividuaisIds = [];
-        self::$resumoNotificacaoIds = [];
+        self::$emExecucao = false;
+        self::$alertasFila = [];
+    }
+
+    /**
+     * Finaliza a execução em lote, resolvendo destinatários e enviando notificações consolidadas.
+     */
+    public static function finalizarExecucao(): void
+    {
+        $alertas = self::$alertasFila;
+        self::$emExecucao = false;
+        self::$alertasFila = [];
+
+        if (empty($alertas)) {
+            return;
+        }
+
+        $destinatarios = self::obterDestinatariosGestao();
+        if ($destinatarios->isEmpty()) {
+            Log::warning('Nenhum usuário da coordenação ou gestão escolar ativo foi encontrado para receber o alerta de evasão.');
+
+            return;
+        }
+
+        $maxIndividuais = (int) config('risco_evasao.playbook.max_notificacoes_individuais', 5);
+        $total = count($alertas);
+
+        if ($total > $maxIndividuais) {
+            $url = '/admin/retencao-tarefas';
+            try {
+                $url = RetencaoTarefaResource::getUrl('index');
+            } catch (\Throwable) {
+                // fallback
+            }
+
+            foreach ($destinatarios as $destinatario) {
+                Notification::make()
+                    ->title("⚠️ Alerta de Risco de Evasão: {$total} alunos em risco")
+                    ->body("Foram identificados {$total} alunos com score alto de risco de evasão nesta execução. Acesse o Playbook de Retenção para gerenciar as tarefas.")
+                    ->icon('heroicon-o-shield-exclamation')
+                    ->danger()
+                    ->actions([
+                        Action::make('visualizar_tarefas')
+                            ->label('Ver Playbook de Retenção')
+                            ->url($url),
+                    ])
+                    ->sendToDatabase($destinatario);
+            }
+        } else {
+            foreach ($alertas as $alerta) {
+                self::enviarNotificacaoIndividual(
+                    $destinatarios,
+                    $alerta['alunoNome'],
+                    $alerta['turmaNome'],
+                    $alerta['score'],
+                    $alerta['tarefaId']
+                );
+            }
+        }
     }
 
     /**
@@ -89,6 +147,7 @@ class RiscoEvasaoService
     public static function recalcular(Matricula $matricula): int
     {
         $matricula->refresh();
+        $matricula->loadMissing(['situacoesFinais', 'pessoa', 'turma', 'contrato']);
 
         $score = self::calcular($matricula);
 
@@ -193,62 +252,56 @@ class RiscoEvasaoService
      */
     public static function notificarCoordenacao(Matricula $matricula, int $score, ?RetencaoTarefa $tarefa = null): void
     {
-        $destinatarios = User::query()
-            ->ativos()
-            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['coordenador', 'admin', 'super_admin']))
-            ->get();
+        $alunoNome = $matricula->pessoa?->nome ?? 'Aluno';
+        $turmaNome = $matricula->turma?->nome ?? 'Turma';
 
+        if (self::$emExecucao) {
+            self::$alertasFila[] = [
+                'alunoNome' => $alunoNome,
+                'turmaNome' => $turmaNome,
+                'score' => $score,
+                'tarefaId' => $tarefa?->id,
+            ];
+
+            return;
+        }
+
+        $destinatarios = self::obterDestinatariosGestao();
         if ($destinatarios->isEmpty()) {
             Log::warning('Nenhum usuário da coordenação ou gestão escolar ativo foi encontrado para receber o alerta de evasão.');
 
             return;
         }
 
-        self::$totalAlertasExecucao++;
-        $maxIndividuais = (int) config('risco_evasao.playbook.max_notificacoes_individuais', 5);
+        self::enviarNotificacaoIndividual(
+            $destinatarios,
+            $alunoNome,
+            $turmaNome,
+            $score,
+            $tarefa?->id
+        );
+    }
 
-        // Se ultrapassou o limite máximo de notificações individuais, consolida em 1 resumo por destinatário
-        if (self::$totalAlertasExecucao > $maxIndividuais) {
-            $destinatariosIds = $destinatarios->pluck('id')->all();
+    /**
+     * Resolve os destinatários ativos da coordenação e gestão escolar.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    private static function obterDestinatariosGestao()
+    {
+        return User::query()
+            ->ativos()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['coordenador', 'admin', 'super_admin']))
+            ->get();
+    }
 
-            // Remove alertas individuais anteriores desta execução para os destinatários
-            DatabaseNotification::query()
-                ->whereIn('notifiable_id', $destinatariosIds)
-                ->where(function ($q) {
-                    $q->where('data', 'like', '%Alerta de Risco de Evas%')->orWhere('data', 'like', '%retencao%');
-                })
-                ->delete();
-
-            $url = '/admin/retencao-tarefas';
-            try {
-                $url = RetencaoTarefaResource::getUrl('index');
-            } catch (\Throwable) {
-                // fallback
-            }
-
-            $total = self::$totalAlertasExecucao;
-
-            foreach ($destinatarios as $destinatario) {
-                $resumoNotif = Notification::make()
-                    ->title("⚠️ Alerta de Risco de Evasão: {$total} alunos em risco")
-                    ->body("Foram identificados {$total} alunos com score alto de risco de evasão nesta execução. Acesse o Playbook de Retenção para gerenciar as tarefas.")
-                    ->icon('heroicon-o-shield-exclamation')
-                    ->danger()
-                    ->actions([
-                        Action::make('visualizar_tarefas')
-                            ->label('Ver Playbook de Retenção')
-                            ->url($url),
-                    ]);
-
-                $resumoNotif->sendToDatabase($destinatario);
-            }
-
-            return;
-        }
-
-        $alunoNome = $matricula->pessoa?->nome ?? 'Aluno';
-        $turmaNome = $matricula->turma?->nome ?? 'Turma';
-
+    /**
+     * Envia notificação individual de risco de evasão para os destinatários.
+     *
+     * @param  Collection<int, User>|\Illuminate\Database\Eloquent\Collection<int, User>  $destinatarios
+     */
+    private static function enviarNotificacaoIndividual($destinatarios, string $alunoNome, string $turmaNome, int $score, ?int $tarefaId): void
+    {
         foreach ($destinatarios as $destinatario) {
             $notification = Notification::make()
                 ->title("⚠️ Alerta de Risco de Evasão: {$alunoNome} ({$score}%)")
@@ -256,11 +309,11 @@ class RiscoEvasaoService
                 ->icon('heroicon-o-shield-exclamation')
                 ->danger();
 
-            if ($tarefa) {
+            if ($tarefaId !== null) {
                 $notification->actions([
                     Action::make('visualizar_tarefa')
                         ->label('Ver Acompanhamento')
-                        ->url("/admin/retencao-tarefas/{$tarefa->id}/edit"),
+                        ->url("/admin/retencao-tarefas/{$tarefaId}/edit"),
                 ]);
             }
 

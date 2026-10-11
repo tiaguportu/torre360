@@ -17,13 +17,18 @@ class RecalcularRiscoEvasaoCommand extends Command
     {
         $total = 0;
 
-        Matricula::query()->where('situacao', SituacaoMatricula::ATIVA)
-            ->chunkById(200, function ($matriculas) use (&$total): void {
-                foreach ($matriculas as $matricula) {
-                    RiscoEvasaoService::recalcular($matricula);
-                    $total++;
-                }
-            });
+        RiscoEvasaoService::iniciarExecucao();
+        try {
+            Matricula::query()->where('situacao', SituacaoMatricula::ATIVA)
+                ->chunkById(200, function ($matriculas) use (&$total): void {
+                    foreach ($matriculas as $matricula) {
+                        RiscoEvasaoService::recalcular($matricula);
+                        $total++;
+                    }
+                });
+        } finally {
+            RiscoEvasaoService::finalizarExecucao();
+        }
 
         if ($total === 0) {
             $this->info('Nenhuma matrícula ativa encontrada.');
