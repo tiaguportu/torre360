@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SituacaoFinal;
 use App\Enums\StatusRetencaoTarefa;
+use App\Filament\Resources\RetencaoTarefas\RetencaoTarefaResource;
 use App\Models\Matricula;
 use App\Models\Rematricula;
 use App\Models\RetencaoTarefa;
@@ -11,7 +12,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Calcula o Risco de Evasão (0-100) de uma matrícula ativa, combinando frequência
@@ -21,6 +24,35 @@ use Illuminate\Support\Facades\DB;
  */
 class RiscoEvasaoService
 {
+    /**
+     * Quantidade de alertas gerados na execução corrente.
+     */
+    private static int $totalAlertasExecucao = 0;
+
+    /**
+     * IDs das notificações individuais enviadas nesta execução.
+     *
+     * @var list<string>
+     */
+    private static array $notificacoesIndividuaisIds = [];
+
+    /**
+     * IDs das notificações de resumo enviadas por destinatário.
+     *
+     * @var array<int, string>
+     */
+    private static array $resumoNotificacaoIds = [];
+
+    /**
+     * Reseta o controle de volume de alertas da execução corrente.
+     */
+    public static function resetarExecucao(): void
+    {
+        self::$totalAlertasExecucao = 0;
+        self::$notificacoesIndividuaisIds = [];
+        self::$resumoNotificacaoIds = [];
+    }
+
     /**
      * Quantos dias olhar para trás ao calcular o percentual de faltas recentes.
      */
@@ -161,20 +193,61 @@ class RiscoEvasaoService
      */
     public static function notificarCoordenacao(Matricula $matricula, int $score, ?RetencaoTarefa $tarefa = null): void
     {
-        $alunoNome = $matricula->pessoa?->nome ?? 'Aluno';
-        $turmaNome = $matricula->turma?->nome ?? 'Turma';
-
-        try {
-            $destinatarios = User::role(['coordenador', 'super_admin', 'admin'])
-                ->ativos()
-                ->get();
-        } catch (\Throwable) {
-            $destinatarios = User::ativos()->take(3)->get();
-        }
+        $destinatarios = User::query()
+            ->ativos()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['coordenador', 'admin', 'super_admin']))
+            ->get();
 
         if ($destinatarios->isEmpty()) {
-            $destinatarios = User::ativos()->take(3)->get();
+            Log::warning('Nenhum usuário da coordenação ou gestão escolar ativo foi encontrado para receber o alerta de evasão.');
+
+            return;
         }
+
+        self::$totalAlertasExecucao++;
+        $maxIndividuais = (int) config('risco_evasao.playbook.max_notificacoes_individuais', 5);
+
+        // Se ultrapassou o limite máximo de notificações individuais, consolida em 1 resumo por destinatário
+        if (self::$totalAlertasExecucao > $maxIndividuais) {
+            $destinatariosIds = $destinatarios->pluck('id')->all();
+
+            // Remove alertas individuais anteriores desta execução para os destinatários
+            DatabaseNotification::query()
+                ->whereIn('notifiable_id', $destinatariosIds)
+                ->where(function ($q) {
+                    $q->where('data', 'like', '%Alerta de Risco de Evas%')->orWhere('data', 'like', '%retencao%');
+                })
+                ->delete();
+
+            $url = '/admin/retencao-tarefas';
+            try {
+                $url = RetencaoTarefaResource::getUrl('index');
+            } catch (\Throwable) {
+                // fallback
+            }
+
+            $total = self::$totalAlertasExecucao;
+
+            foreach ($destinatarios as $destinatario) {
+                $resumoNotif = Notification::make()
+                    ->title("⚠️ Alerta de Risco de Evasão: {$total} alunos em risco")
+                    ->body("Foram identificados {$total} alunos com score alto de risco de evasão nesta execução. Acesse o Playbook de Retenção para gerenciar as tarefas.")
+                    ->icon('heroicon-o-shield-exclamation')
+                    ->danger()
+                    ->actions([
+                        Action::make('visualizar_tarefas')
+                            ->label('Ver Playbook de Retenção')
+                            ->url($url),
+                    ]);
+
+                $resumoNotif->sendToDatabase($destinatario);
+            }
+
+            return;
+        }
+
+        $alunoNome = $matricula->pessoa?->nome ?? 'Aluno';
+        $turmaNome = $matricula->turma?->nome ?? 'Turma';
 
         foreach ($destinatarios as $destinatario) {
             $notification = Notification::make()
@@ -196,9 +269,6 @@ class RiscoEvasaoService
     }
 
     /**
-     * Cor Filament (success/warning/danger) correspondente à faixa do score. Ao
-     * contrário do Lead Score, aqui pontuação alta é ruim (mais risco).
-     */
     public static function cor(?int $score): string
     {
         $faixas = config('risco_evasao.faixas_cor');

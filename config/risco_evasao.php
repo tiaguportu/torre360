@@ -39,5 +39,6 @@ return [
         'intervalo_dias_alerta' => 15,
         'notificar_coordenacao' => true,
         'criar_tarefa' => true,
+        'max_notificacoes_individuais' => 5,
     ],
 ];
