@@ -11,12 +11,25 @@ use App\Filament\Resources\PeriodoLetivos\Schemas\PeriodoLetivoForm;
 use App\Filament\Resources\PeriodoLetivos\Schemas\PeriodoLetivoInfolist;
 use App\Filament\Resources\PeriodoLetivos\Tables\PeriodoLetivosTable;
 use App\Models\PeriodoLetivo;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class PeriodoLetivoResource extends Resource
+class PeriodoLetivoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = PeriodoLetivo::class;
 
     protected static ?string $modelLabel = 'Período Letivo';

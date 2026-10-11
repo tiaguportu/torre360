@@ -8,13 +8,26 @@ use App\Filament\Resources\VideoTutorials\Pages\ListVideoTutorials;
 use App\Filament\Resources\VideoTutorials\Schemas\VideoTutorialForm;
 use App\Filament\Resources\VideoTutorials\Tables\VideoTutorialsTable;
 use App\Models\VideoTutorial;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class VideoTutorialResource extends Resource
+class VideoTutorialResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = VideoTutorial::class;
 
     protected static ?string $modelLabel = 'Vídeo Tutorial';

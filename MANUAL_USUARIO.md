@@ -3066,6 +3066,16 @@ Todas as entidades e páginas operacionais do sistema estão integradas às Pol�
    - **Biblioteca e Auditoria de Acervo:** Gestão de Acervo e Livros (`Livro`), Empréstimos e Circulação (`Emprestimo`, página `page_CirculacaoBiblioteca`), Sessões de Auditoria de Acervo (`InventarioAcervo` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`) e Sacolas de Leitura por Turma (`SacolaLeitura` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
    - **Consentimentos e LGPD (Onda 25):** Tipos de Consentimento (`TipoConsentimento`) e Consentimentos de Matrículas (`ConsentimentoMatricula` — com permissões `ViewAny`, `Create`, `Update`, `Delete`, `Restore`, `ForceDelete`).
 
+### 52.1 Cobertura Total de Recursos e Garantia por Testes Automatizados
+1. **100% dos Resources Protegidos pelo Shield:** Todas as 98 entidades e interfaces do painel administrativo implementam oficialmente a interface `HasShieldPermissions`, assegurando controle estrito de `ViewAny`, `View`, `Create`, `Update`, `Delete` e `DeleteAny`.
+2. **Novos Recursos Padronizados no Shield:**
+   - **Localização e Cadastros:** Instituições de Ensino (`InstituicaoEnsino`) e Unidades Escolares (`Unidade`).
+   - **Acadêmico e Avaliações:** Períodos Letivos (`PeriodoLetivo`), Notas de Habilidades BNCC (`NotaHabilidade`) e Acompanhamento de Retenção e Evasão Escolar (`RetencaoTarefa`).
+   - **Secretaria e Documentação:** Modelos de Documentos Oficiais com Tags Dinâmicas (`TemplateDocumento`) e Templates de Crachá (`TemplateCracha`).
+   - **Financeiro:** Tipos de Bolsa e Desconto (`TipoBolsa`) e Gestão de Fornecedores (`Fornecedor`).
+   - **Comunicação e Apoio:** Setores da Central de Atendimento (`AtendimentoSetor`) e Central de Vídeos Tutoriais (`VideoTutorial`).
+3. **Garantia de Não-Regressão por Testes:** Cada um dos 98 Resources conta com testes automatizados de Feature no PHPUnit (`*FilamentTest`), cobrindo o bloqueio obrigatório (HTTP 403 Forbidden) para usuários não autorizados, a integridade da renderização das tabelas em desktop/mobile e o correto salvamento de formulários.
+
 2. **Como configurar permissões por papel:**
    - Acesse **Sistema e Segurança → Papéis (Shield)** e selecione o perfil desejado.
    - Nas abas **Recursos**, **Páginas** e **Widgets**, marque os privilégios apropriados para cada função da instituição.

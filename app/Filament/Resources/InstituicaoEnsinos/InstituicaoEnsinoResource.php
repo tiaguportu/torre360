@@ -9,13 +9,26 @@ use App\Filament\Resources\InstituicaoEnsinos\Schemas\InstituicaoEnsinoForm;
 use App\Filament\Resources\InstituicaoEnsinos\Tables\InstituicaoEnsinosTable;
 use App\Models\InstituicaoEnsino;
 use BackedEnum;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class InstituicaoEnsinoResource extends Resource
+class InstituicaoEnsinoResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = InstituicaoEnsino::class;
 
     protected static ?string $modelLabel = 'Instituição de Ensino';

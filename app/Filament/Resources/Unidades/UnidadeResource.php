@@ -9,13 +9,26 @@ use App\Filament\Resources\Unidades\RelationManagers\RepresentantesLegaisRelatio
 use App\Filament\Resources\Unidades\Schemas\UnidadeForm;
 use App\Filament\Resources\Unidades\Tables\UnidadesTable;
 use App\Models\Unidade;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class UnidadeResource extends Resource
+class UnidadeResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+
     protected static ?string $model = Unidade::class;
 
     protected static ?string $modelLabel = 'Unidade';
