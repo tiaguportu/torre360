@@ -23,45 +23,54 @@
 
                 <div class="mt-3 space-y-2">
                     @foreach($duplicados as $item)
-                        @php
-                            $outro = $item['interessado'];
-                            $motivos = $item['motivos'] ?? [];
-                            $detalhes = $item['detalhes'] ?? [];
-                        @endphp
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-amber-200/80 bg-white/80 p-2.5 text-xs dark:border-amber-800/40 dark:bg-gray-900/60">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-gray-900 dark:text-gray-100">
-                                        Lead #{{ $outro->id }} - {{ $outro->pessoa?->nome ?? 'Sem nome' }}
-                                    </span>
-                                    @if($outro->status)
-                                        <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white bg-gray-600">
-                                            {{ $outro->status->nome }}
+                        @if($item['fora_carteira'] ?? false)
+                            <div class="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-100/70 p-2.5 text-xs font-medium text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/40 dark:text-amber-200">
+                                <svg class="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>Há possível duplicado fora da sua carteira. Acione a gestão.</span>
+                            </div>
+                        @elseif($item['interessado'])
+                            @php
+                                $outro = $item['interessado'];
+                                $motivos = $item['motivos'] ?? [];
+                                $detalhes = $item['detalhes'] ?? [];
+                            @endphp
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-amber-200/80 bg-white/80 p-2.5 text-xs dark:border-amber-800/40 dark:bg-gray-900/60">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-gray-900 dark:text-gray-100">
+                                            Lead #{{ $outro->id }} - {{ $outro->pessoa?->nome ?? 'Sem nome' }}
                                         </span>
-                                    @endif
-                                    @if($outro->created_at)
-                                        <span class="text-gray-500 dark:text-gray-400 text-[11px]">
-                                            (Criado em {{ $outro->created_at->format('d/m/Y') }})
-                                        </span>
-                                    @endif
+                                        @if($outro->status)
+                                            <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white bg-gray-600">
+                                                {{ $outro->status->nome }}
+                                            </span>
+                                        @endif
+                                        @if($outro->created_at)
+                                            <span class="text-gray-500 dark:text-gray-400 text-[11px]">
+                                                (Criado em {{ $outro->created_at->format('d/m/Y') }})
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        @foreach($detalhes as $detalhe)
+                                            <span class="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                                                {{ $detalhe }}
+                                            </span>
+                                        @endforeach
+                                    </div>
                                 </div>
-                                <div class="mt-1 flex flex-wrap gap-1">
-                                    @foreach($detalhes as $detalhe)
-                                        <span class="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
-                                            {{ $detalhe }}
-                                        </span>
-                                    @endforeach
+                                <div class="shrink-0 flex items-center gap-2">
+                                    <a href="{{ url('/admin/interessados/' . $outro->id . '/edit') }}" target="_blank" class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                                        <span>Ver lead #{{ $outro->id }}</span>
+                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
                                 </div>
                             </div>
-                            <div class="shrink-0 flex items-center gap-2">
-                                <a href="{{ url('/admin/interessados/' . $outro->id . '/edit') }}" target="_blank" class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-                                    <span>Ver lead #{{ $outro->id }}</span>
-                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
+                        @endif
                     @endforeach
                 </div>
             </div>

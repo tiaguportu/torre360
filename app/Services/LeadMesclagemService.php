@@ -15,6 +15,7 @@ use App\Models\TipoContatoInteressado;
 use App\Models\User;
 use App\Models\VisitaInteressado;
 use DomainException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -52,6 +53,24 @@ class LeadMesclagemService
     ): Interessado {
         if ($leadA->id === $leadB->id) {
             throw new DomainException('Não é possível mesclar um lead com ele mesmo.');
+        }
+
+        if ($usuarioResponsavelId !== null) {
+            $usuario = User::find($usuarioResponsavelId);
+            if ($usuario) {
+                if (! $usuario->can('Update:Interessado')) {
+                    throw new AuthorizationException('Usuário não possui permissão para atualizar ou mesclar leads.');
+                }
+
+                if (! $usuario->podeVerTodosLeads()) {
+                    $leadAVisivel = ($leadA->usuario_id === null || (int) $leadA->usuario_id === (int) $usuario->id);
+                    $leadBVisivel = ($leadB->usuario_id === null || (int) $leadB->usuario_id === (int) $usuario->id);
+
+                    if (! $leadAVisivel || ! $leadBVisivel) {
+                        throw new AuthorizationException('Usuário não tem acesso a um ou mais leads para mesclagem.');
+                    }
+                }
+            }
         }
 
         return DB::transaction(function () use ($leadA, $leadB, $usuarioResponsavelId, $preferirDestino): Interessado {

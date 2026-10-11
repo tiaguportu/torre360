@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
 use App\Models\Pessoa;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 /**
@@ -29,8 +30,10 @@ class LeadDuplicadoDetectorService
      *     detalhes: list<string>
      * }>
      */
-    public function detectar(Interessado $lead): Collection
+    public function detectar(Interessado $lead, ?User $usuario = null): Collection
     {
+        $usuario ??= auth()->user();
+
         $lead->loadMissing(['pessoa', 'dependentes']);
 
         $pessoa = $lead->pessoa;
@@ -60,11 +63,21 @@ class LeadDuplicadoDetectorService
             return collect();
         }
 
-        // Carrega as instâncias dos interessados detectados com relações relevantes
         $ids = array_keys($duplicadosPorId);
+        $podeVerTodos = $usuario ? $usuario->podeVerTodosLeads() : true;
+
+        $visiveisIds = $podeVerTodos
+            ? $ids
+            : Interessado::query()
+                ->whereIn('id', $ids)
+                ->visivelPara($usuario)
+                ->pluck('id')
+                ->all();
+
+        // Carrega as instâncias dos interessados detectados com relações relevantes (somente os visíveis)
         $interessados = Interessado::query()
             ->with(['pessoa', 'status', 'usuario', 'dependentes'])
-            ->whereIn('id', $ids)
+            ->whereIn('id', $visiveisIds)
             ->get()
             ->keyBy('id');
 
@@ -81,11 +94,12 @@ class LeadDuplicadoDetectorService
                 'interessado' => $outroLead,
                 'motivos' => array_values(array_unique($info['motivos'])),
                 'detalhes' => array_values(array_unique($info['detalhes'])),
+                'fora_carteira' => false,
             ]);
         }
 
         // Ordena por quantidade de motivos coincidentes decrescente, depois pelo ID mais recente
-        return $resultado->sort(function (array $a, array $b): int {
+        $ordenados = $resultado->sort(function (array $a, array $b): int {
             $cmpMotivos = count($b['motivos']) <=> count($a['motivos']);
             if ($cmpMotivos !== 0) {
                 return $cmpMotivos;
@@ -93,33 +107,40 @@ class LeadDuplicadoDetectorService
 
             return $b['interessado']->id <=> $a['interessado']->id;
         })->values();
+
+        // Se houver duplicados fora da carteira do consultor, adiciona um item genérico
+        $foraCarteiraCount = count($ids) - count($visiveisIds);
+        if ($foraCarteiraCount > 0) {
+            $ordenados->push([
+                'interessado' => null,
+                'motivos' => [],
+                'detalhes' => ['Há possível duplicado fora da sua carteira. Acione a gestão.'],
+                'fora_carteira' => true,
+            ]);
+        }
+
+        return $ordenados;
     }
 
     /**
      * Verifica se o lead possui qualquer duplicado em potencial.
      */
-    public function temDuplicados(Interessado $lead): bool
+    public function temDuplicados(Interessado $lead, ?User $usuario = null): bool
     {
-        return $this->detectar($lead)->isNotEmpty();
+        return $this->detectar($lead, $usuario)->isNotEmpty();
     }
 
-    /**
-     * Retorna a contagem de leads duplicados em potencial.
-     */
-    public function contarDuplicados(Interessado $lead): int
+    public function contarDuplicados(Interessado $lead, ?User $usuario = null): int
     {
-        return $this->detectar($lead)->count();
+        return $this->detectar($lead, $usuario)->count();
     }
 
-    /**
-     * Retorna apenas os IDs dos leads duplicados.
-     *
-     * @return list<int>
-     */
-    public function duplicadosIds(Interessado $lead): array
+    public function duplicadosIds(Interessado $lead, ?User $usuario = null): array
     {
-        return $this->detectar($lead)
+        return $this->detectar($lead, $usuario)
             ->pluck('interessado.id')
+            ->filter()
+            ->values()
             ->all();
     }
 

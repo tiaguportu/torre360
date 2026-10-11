@@ -106,9 +106,11 @@ class EditInteressado extends EditRecord
                         ->label('Lead a ser absorvido')
                         ->helperText('Selecione qual lead será mesclado neste registro.')
                         ->options(function (): array {
-                            $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($this->record);
-                            if ($duplicados->isNotEmpty()) {
-                                return $duplicados->mapWithKeys(function ($item) {
+                            $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($this->record, auth()->user());
+                            $duplicadosVisiveis = $duplicados->reject(fn ($item) => ! empty($item['fora_carteira']));
+
+                            if ($duplicadosVisiveis->isNotEmpty()) {
+                                return $duplicadosVisiveis->mapWithKeys(function ($item) {
                                     $outro = $item['interessado'];
                                     $motivosTxt = implode(', ', $item['motivos']);
                                     $statusTxt = $outro->status?->nome ?? 'Sem etapa';
@@ -119,6 +121,7 @@ class EditInteressado extends EditRecord
                             }
 
                             return Interessado::query()
+                                ->visivelPara(auth()->user())
                                 ->where('id', '!=', $this->record->id)
                                 ->with(['pessoa', 'status'])
                                 ->latest('id')
@@ -142,7 +145,9 @@ class EditInteressado extends EditRecord
                         ->required(),
                 ])
                 ->action(function (array $data): void {
-                    $outroLead = Interessado::findOrFail($data['lead_origem_id']);
+                    $outroLead = Interessado::query()
+                        ->visivelPara(auth()->user())
+                        ->findOrFail($data['lead_origem_id']);
 
                     $preferir = match ($data['preferir_destino']) {
                         'este' => $this->record,

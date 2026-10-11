@@ -23,6 +23,7 @@ use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadMesclagemService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class LeadMesclagemDuplicadosTest extends TestCase
@@ -432,7 +433,9 @@ class LeadMesclagemDuplicadosTest extends TestCase
 
     public function test_mesclar_registra_auditoria_e_linha_do_tempo(): void
     {
+        Permission::firstOrCreate(['name' => 'Update:Interessado', 'guard_name' => 'web']);
         $usuario = User::factory()->create();
+        $usuario->givePermissionTo('Update:Interessado');
 
         $leadAntigo = $this->criarLead();
         $leadAntigo->forceFill(['created_at' => Carbon::now()->subDays(5)])->saveQuietly();

@@ -612,9 +612,11 @@ class InteressadosTable
                             Select::make('lead_origem_id')
                                 ->label('Lead a ser absorvido')
                                 ->options(function (Interessado $record): array {
-                                    $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($record);
-                                    if ($duplicados->isNotEmpty()) {
-                                        return $duplicados->mapWithKeys(function ($item) {
+                                    $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($record, auth()->user());
+                                    $duplicadosVisiveis = $duplicados->reject(fn ($item) => ! empty($item['fora_carteira']));
+
+                                    if ($duplicadosVisiveis->isNotEmpty()) {
+                                        return $duplicadosVisiveis->mapWithKeys(function ($item) {
                                             $outro = $item['interessado'];
                                             $motivosTxt = implode(', ', $item['motivos']);
                                             $statusTxt = $outro->status?->nome ?? 'Sem etapa';
@@ -625,6 +627,7 @@ class InteressadosTable
                                     }
 
                                     return Interessado::query()
+                                        ->visivelPara(auth()->user())
                                         ->where('id', '!=', $record->id)
                                         ->with(['pessoa', 'status'])
                                         ->latest('id')
@@ -648,7 +651,7 @@ class InteressadosTable
                                 ->required(),
                         ])
                         ->action(function (array $data, Interessado $record) {
-                            $outroLead = Interessado::findOrFail($data['lead_origem_id']);
+                            $outroLead = Interessado::query()->visivelPara(auth()->user())->findOrFail($data['lead_origem_id']);
 
                             $preferir = match ($data['preferir_destino']) {
                                 'este' => $record,
