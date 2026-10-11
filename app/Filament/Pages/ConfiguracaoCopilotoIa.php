@@ -67,6 +67,12 @@ class ConfiguracaoCopilotoIa extends Page implements HasForms
                 Section::make('Persona e diretrizes')
                     ->description('Quem a IA é e as regras que toda mensagem deve seguir. As diretrizes são numeradas automaticamente. A linha do objetivo e do tom, o contrato de saída (texto puro, sem links) e a proteção contra instruções maliciosas nos dados do lead são fixos e sempre aplicados.')
                     ->schema([
+                        TextInput::make('nome_escola')
+                            ->label('Nome Institucional da Escola')
+                            ->placeholder('Ex: Escola Torre de Marfim')
+                            ->helperText('Nome utilizado nas mensagens, personas e respostas geradas pela IA. Deixe em branco para usar o nome padrão do colégio.')
+                            ->maxLength(200)
+                            ->columnSpanFull(),
                         Textarea::make('persona')
                             ->label('Persona e função')
                             ->rows(3)
@@ -178,15 +184,18 @@ class ConfiguracaoCopilotoIa extends Page implements HasForms
                 ->requiresConfirmation()
                 ->modalDescription('Descarta todas as personalizações e volta aos valores originais do sistema (config/copiloto_ia.php).')
                 ->action('restaurarPadrao'),
-            $this->ajudaAction('Comportamento do Copiloto IA', HelpContent::make('🧠', 'Comportamento do Copiloto IA', 'Ajuste como o Copiloto WhatsApp IA escreve as mensagens, sem mexer em código.')
+            $this->ajudaAction('Comportamento do Copiloto IA', HelpContent::make('🧠', 'Comportamento do Copiloto IA', 'Ajuste como o Copiloto WhatsApp IA e os assistentes de inteligência artificial escrevem e atuam, sem mexer em código.')
                 ->passos('🚀 Passo a passo', [
+                    'Defina o Nome Institucional da Escola que a IA deve utilizar em comunicações e dossiês.',
                     'Edite a persona, as diretrizes e o que a IA deve mencionar ou evitar.',
                     'Se quiser, ajuste a descrição de cada objetivo e de cada tom de voz.',
                     'Use Pré-visualizar prompt para ver exatamente o texto que a IA recebe.',
-                    'Clique em Salvar configuração. A mudança vale na próxima mensagem gerada.',
+                    'Clique em Salvar configuração. A mudança vale imediatamente para novas interações.',
                 ])
                 ->secao('📚 Como funciona?', [
+                    ['🏫', 'Nome da Escola', 'Personalize o nome citado em saudações, propostas e apresentações do colégio.'],
                     ['🌐', 'Regras gerais', 'Valem para todas as mensagens do Copiloto, inclusive "Personalizar com Copiloto IA" no envio rápido.'],
+                    ['⏱️', 'Proteção de Cota', 'Limite de requisições por usuário por minuto para prevenir consumo excessivo do Gemini.'],
                     ['📄', 'Instruções por modelo', 'Cada Modelo de WhatsApp pode ter instruções próprias, somadas a estas regras quando o modelo é usado como base.'],
                     ['🔒', 'O que não muda', 'A proibição de links, o texto puro na saída e a proteção contra instruções maliciosas nos dados do lead são sempre aplicadas.'],
                     ['↩️', 'Restaurar padrão', 'Volta aos valores originais do sistema.'],
@@ -268,6 +277,7 @@ class ConfiguracaoCopilotoIa extends Page implements HasForms
             ->all();
 
         $normalizado = [
+            'nome_escola' => trim((string) ($state['nome_escola'] ?? '')) ?: null,
             'persona' => trim((string) ($state['persona'] ?? '')),
             'diretrizes' => $diretrizes,
             'mencionar' => trim((string) ($state['mencionar'] ?? '')),
@@ -279,6 +289,10 @@ class ConfiguracaoCopilotoIa extends Page implements HasForms
                 'max_output_tokens' => isset($state['gemini']['max_output_tokens']) && $state['gemini']['max_output_tokens'] !== '' ? (int) $state['gemini']['max_output_tokens'] : null,
             ], fn ($valor): bool => $valor !== null),
         ];
+
+        if (empty($normalizado['nome_escola'])) {
+            unset($normalizado['nome_escola']);
+        }
 
         // Prévia com formulário incompleto: lista/persona vazias caem no padrão em vez de gerar um prompt quebrado.
         if ($normalizado['diretrizes'] === []) {

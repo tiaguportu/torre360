@@ -267,9 +267,7 @@ class CrmIaVendasTest extends TestCase
 
     public function test_rota_dossie_pdf_permite_download_para_usuario_com_permissao(): void
     {
-        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $admin = User::factory()->create();
-        $admin->assignRole('super_admin');
+        $admin = $this->admin();
 
         $interessado = $this->criarInteressadoCompleto();
 

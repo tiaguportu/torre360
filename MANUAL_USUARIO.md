@@ -629,6 +629,28 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 
 ---
 
+### 3.27 Inteligência Artificial no CRM: Nome Institucional, Rate Limiter e Pré-triagem OCR (Lote D8)
+1. **Nome Institucional da Escola Configurável:**
+   - Em **CRM / Comercial → Comportamento do Copiloto IA** (`/admin/crm/comportamento-copiloto-ia`), o administrador pode definir o campo **Nome Institucional da Escola**.
+   - O nome informado passa a ser utilizado dinamicamente em todas as personas, instruções de sistema do Copiloto WhatsApp, análises do Dossiê Estratégico de Vendas, contra-argumentos de Battlecards e substituição automática da variável de modelo `[Nome da Escola]`.
+   - Caso o campo seja deixado em branco, o sistema adota automaticamente o nome da Unidade Escolar ativa, da Instituição de Ensino cadastrada ou o padrão corporativo configurado no ambiente.
+2. **Proteção de Quota e Rate Limiter por Consultor:**
+   - Para prevenir estouro de cotas do Google Gemini, gargalos de rede e requisições repetitivas, todas as ferramentas de IA do CRM contam com controle de taxa (*Rate Limiting*) por usuário:
+     - Limite institucional padrão: **10 requisições por minuto por consultor** (configurável em `services.gemini.limite_por_minuto`).
+     - Ações protegidas: *Copiloto de Mensagens WhatsApp*, *Dossiê Estratégico IA*, *Resumo Inteligente de Conversa*, *Importar Lead com IA* e *Contra-argumento IA em Battlecards*.
+     - Se o usuário ultrapassar o limite, o sistema exibe uma notificação amigável e segura informando quantos segundos restam para a liberação da próxima consulta.
+3. **Pré-triagem com OCR na Fila de Documentos da Secretaria:**
+   - Ao analisar comprovantes e certidões na esteira de pré-admissão e matrícula (`documento_inserido`), o validador pericial do Gemini Vision identifica conformidade e registra o `status_sugerido` (`verificado` ou `rejeitado`).
+   - **Na Tabela de Documentos Inseridos:**
+     - Coluna destacada **Pré-triagem IA** com badge verde (*Aprovação Sugerida*) ou vermelho (*Rejeição Sugerida*) e tooltip detalhado com a justificativa técnica identificada pelo OCR.
+     - Ação de linha **Acatar IA** (ícone de varinha mágica): permite à equipe da secretaria aplicar imediatamente a situação recomendada com apenas 1 clique e modal de confirmação.
+     - Filtros dedicados por **Situação Atual** e **Pré-triagem IA** para agilizar a triagem de lotes prioritários.
+4. **Registro Transparente no Histórico do Lead:**
+   - Mensagens elaboradas com assistência do Copiloto IA e resumos executivos salvos na ficha do interessado são marcados com a flag `automatico = true`.
+   - Essas entradas enriquecem a Linha do Tempo Omnichannel e o contexto de vendas sem inflar indevidamente o cálculo de contatos manuais do Lead Score.
+
+---
+
 ## 📍 13. Gestão de Unidades e Canais Digitais
 
 ### 13.1 Redes Sociais e Contato

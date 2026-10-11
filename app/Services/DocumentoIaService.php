@@ -140,9 +140,10 @@ PROMPT;
                 throw new \RuntimeException('A resposta da IA não pôde ser decodificada em JSON.');
             }
 
-            // Grava os metadados da análise no documento
+            // Grava os metadados da análise e o status sugerido no documento
             $documento->update([
                 'dados_ia' => $dados,
+                'status_sugerido' => $dados['status_sugerido'] ?? null,
                 'analisado_ia_em' => now(),
             ]);
 

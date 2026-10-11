@@ -26,6 +26,7 @@ class DocumentoInserido extends Model
         'hash_arquivo',
         'dados_ia',
         'analisado_ia_em',
+        'status_sugerido',
     ];
 
     protected function casts(): array
@@ -35,6 +36,22 @@ class DocumentoInserido extends Model
             'dados_ia' => 'array',
             'analisado_ia_em' => 'datetime',
         ];
+    }
+
+    /**
+     * Retorna a situação sugerida pela IA em formato enum se válida.
+     */
+    public function getStatusSugeridoEnum(): ?SituacaoDocumento
+    {
+        return $this->status_sugerido ? SituacaoDocumento::tryFrom($this->status_sugerido) : null;
+    }
+
+    /**
+     * Indica se a IA já realizou a pré-triagem do documento.
+     */
+    public function temSugestaoIa(): bool
+    {
+        return filled($this->status_sugerido);
     }
 
     /**

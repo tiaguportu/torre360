@@ -7,6 +7,7 @@ use App\Models\Interessado;
 use App\Models\OrigemInteressado;
 use App\Models\User;
 use App\Services\ConversaWhatsappZipService;
+use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use App\Services\ImportacaoLeadIaService;
 use App\Support\PermissaoAcao;
@@ -81,6 +82,17 @@ class ImportarLeadIaAction
                     Notification::make()
                         ->title('Dados insuficientes')
                         ->body('Por favor, informe uma mensagem de texto, anexe um print ou envie o .zip da conversa do WhatsApp para prosseguir com a extração por IA.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $rateLimit = CrmIaVendasService::verificarIncrementarRateLimit();
+                if (! $rateLimit['permitido']) {
+                    Notification::make()
+                        ->title('Limite de consultas de IA atingido')
+                        ->body($rateLimit['mensagem'])
                         ->warning()
                         ->send();
 

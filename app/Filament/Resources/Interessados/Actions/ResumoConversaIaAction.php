@@ -77,6 +77,17 @@ class ResumoConversaIaAction
                 $audiosGravados = array_values(array_filter((array) ($data['audios'] ?? [])));
                 $audios = array_map(fn (string $caminho): array => ['caminho' => Storage::disk('local')->path($caminho)], $audiosGravados);
 
+                $rateLimit = CrmIaVendasService::verificarIncrementarRateLimit();
+                if (! $rateLimit['permitido']) {
+                    Notification::make()
+                        ->title('Limite de consultas de IA atingido')
+                        ->body($rateLimit['mensagem'])
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
                 Notification::make()
                     ->title($audios === [] ? 'Processando diálogo com o Gemini...' : 'Ouvindo os áudios e processando o diálogo com o Gemini...')
                     ->info()
@@ -136,6 +147,7 @@ class ResumoConversaIaAction
                         'tipo_contato_interessado_id' => $tipoContato->id,
                         'relato' => $resultado['resumo_markdown'],
                         'data_contato' => now(),
+                        'automatico' => true,
                     ]);
                 }
 

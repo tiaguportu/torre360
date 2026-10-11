@@ -86,8 +86,15 @@ class BattlecardService
      */
     public function gerarContraArgumentoIa(string $cenarioOuConcorrente, string $objecaoFamilia): string
     {
+        $rateLimit = CrmIaVendasService::verificarIncrementarRateLimit();
+        if (! $rateLimit['permitido']) {
+            return "### ⚠️ Limite Temporário de IA Atingido\n\n{$rateLimit['mensagem']}\n\n**Dica:** Valide a empatia com a família e reforce os diferenciais humanos da escola enquanto aguarda.";
+        }
+
+        $nomeEscola = CrmIaVendasService::nomeEscola();
+
         $prompt = <<<PROMPT
-Você é o especialista líder em admissões e vendas consultivas da escola particular "Torre de Marfim" (sistema Torre360).
+Você é o especialista líder em admissões e vendas consultivas da escola particular "{$nomeEscola}" (sistema Torre360).
 Sua missão é fornecer um roteiro persuasivo, ético e empático para o consultor escolar responder à família.
 
 DIRETRIZES FUNDAMENTAIS:

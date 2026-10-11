@@ -89,6 +89,17 @@ class CopilotoMensagemIaAction
                     return;
                 }
 
+                $rateLimit = CrmIaVendasService::verificarIncrementarRateLimit();
+                if (! $rateLimit['permitido']) {
+                    Notification::make()
+                        ->title('Limite de consultas de IA atingido')
+                        ->body($rateLimit['mensagem'])
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
                 $template = filled($data['mensagem_whatsapp_template_id'] ?? null)
                     ? MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id'])
                     : null;
@@ -112,6 +123,7 @@ class CopilotoMensagemIaAction
                         'tipo_contato_interessado_id' => $tipoWpp->id,
                         'data_contato' => now(),
                         'relato' => "💬 Mensagem redigida pelo Copiloto IA (Objetivo: {$data['objetivo']}{$baseTexto}):\n\n{$mensagem}",
+                        'automatico' => true,
                     ]);
                 }
 

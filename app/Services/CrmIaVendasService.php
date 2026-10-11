@@ -6,17 +6,77 @@ namespace App\Services;
 
 use App\Enums\StatusVisitaInteressado;
 use App\Models\CopilotoIaConfiguracao;
+use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
+use App\Models\Unidade;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Throwable;
 
 class CrmIaVendasService
 {
+    /**
+     * Limite padrão de requisições às IAs do CRM por usuário por minuto.
+     */
+    public const LIMITE_PADRAO_IA_POR_MINUTO = 10;
+
+    /**
+     * Retorna o nome institucional da escola configurado no sistema.
+     * Busca prioritariamente da configuração do Copiloto, depois de Unidade/Instituição e por fim de app.name.
+     *
+     * @param  array<string, mixed>|null  $config
+     */
+    public static function nomeEscola(?array $config = null): string
+    {
+        $nome = $config['nome_escola'] ?? config('copiloto_ia.nome_escola');
+        if (filled($nome)) {
+            return (string) $nome;
+        }
+
+        return Unidade::first()?->nome
+            ?? InstituicaoEnsino::first()?->nome
+            ?? config('app.name', 'Escola Torre de Marfim');
+    }
+
+    /**
+     * Verifica e incrementa o consumo de RateLimit das ações de IA por usuário.
+     *
+     * @return array{permitido: bool, restantes: int, segundos_espera: int, mensagem: ?string}
+     */
+    public static function verificarIncrementarRateLimit(?User $usuario = null): array
+    {
+        $userId = $usuario?->id ?? auth()->id() ?? 'guest';
+        $chave = "crm_gemini_user_{$userId}";
+        $maxTentativas = (int) config('services.gemini.limite_por_minuto', self::LIMITE_PADRAO_IA_POR_MINUTO);
+        $decaySegundos = 60;
+
+        if (RateLimiter::tooManyAttempts($chave, $maxTentativas)) {
+            $segundos = RateLimiter::availableIn($chave);
+
+            return [
+                'permitido' => false,
+                'restantes' => 0,
+                'segundos_espera' => $segundos,
+                'mensagem' => "Você atingiu o limite de consultas de IA ({$maxTentativas} por minuto). Por favor, aguarde {$segundos} segundos antes de tentar novamente.",
+            ];
+        }
+
+        RateLimiter::hit($chave, $decaySegundos);
+
+        return [
+            'permitido' => true,
+            'restantes' => RateLimiter::remaining($chave, $maxTentativas),
+            'segundos_espera' => 0,
+            'mensagem' => null,
+        ];
+    }
+
     public function __construct(
         protected GeminiAgentService $gemini,
         protected ConsultorWhatsappService $whatsappService,
@@ -49,7 +109,8 @@ class CrmIaVendasService
 
         $contexto = $this->montarContextoLead($interessado);
 
-        $systemInstruction = 'Você é um consultor sênior de admissões e inteligência comercial educacional do sistema Torre360 da Escola Torre de Marfim.
+        $nomeEscola = self::nomeEscola();
+        $systemInstruction = 'Você é um consultor sênior de admissões e inteligência comercial educacional do sistema Torre360 da '.$nomeEscola.'.
 A escola se destaca por sua sólida formação humana e acadêmica, ambiente acolhedor, segurança, corpo docente qualificado e parceria próxima com as famílias.
 Sua missão é analisar o histórico completo de um lead/família interessada e produzir um Dossiê Estratégico de Vendas em formato JSON para orientar o consultor no fechamento da matrícula.
 
@@ -149,6 +210,17 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
         if (is_array($guardado) && ! empty($guardado['dossie_markdown'])) {
             return $guardado;
+        }
+
+        $rateLimit = self::verificarIncrementarRateLimit();
+        if (! $rateLimit['permitido']) {
+            return [
+                'resumo_executivo' => 'Limite temporário de consultas da IA atingido.',
+                'temperatura_sugerida' => $interessado->temperatura ?? 'morno',
+                'proxima_acao_sugerida' => 'Aguarde alguns instantes antes de consultar a IA novamente.',
+                'dossie_markdown' => "### ⚠️ Limite Temporário de IA Atingido\n\n{$rateLimit['mensagem']}\n\n**Dados do Lead:**\n- **Responsável:** {$interessado->pessoa?->nome}\n- **Telefone:** {$interessado->pessoa?->telefone}\n- **Etapa atual:** {$interessado->status?->nome}",
+                'fallback' => true,
+            ];
         }
 
         $dossie = $this->gerarDossie($interessado);
@@ -278,6 +350,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             if (filled($templateBase)) {
                 $nomeResponsavel = $interessado->pessoa?->nome ?? 'Família';
                 $visitaFormatada = ($interessado->proximaVisita?->data_hora ?? $interessado->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir';
+                $nomeEscola = self::nomeEscola();
 
                 return strtr($templateBase, [
                     '[Nome do Responsável]' => $nomeResponsavel,
@@ -285,12 +358,14 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                     '[Nome do Aluno]' => $filho,
                     '[Horário de Visita Agendada]' => $visitaFormatada,
                     '[Data da Visita]' => $visitaFormatada,
-                    '[Nome da Escola]' => 'Escola Torre de Marfim',
-                    '[Escola]' => 'Escola Torre de Marfim',
+                    '[Nome da Escola]' => $nomeEscola,
+                    '[Escola]' => $nomeEscola,
                 ]);
             }
 
-            return "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da Escola Torre de Marfim. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?";
+            $nomeEscola = self::nomeEscola();
+
+            return "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da {$nomeEscola}. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?";
         }
     }
 
@@ -368,6 +443,10 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         $persona = filled(trim((string) ($config['persona'] ?? '')))
             ? trim((string) $config['persona'])
             : trim((string) config('copiloto_ia.persona'));
+
+        if (filled($config['nome_escola'] ?? null)) {
+            $persona = str_replace('Escola Torre de Marfim', (string) $config['nome_escola'], $persona);
+        }
 
         $texto = $persona."\n\nDiretrizes obrigatórias da mensagem:\n".$numeradas;
 
@@ -642,7 +721,8 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             ? 'o diálogo/histórico de conversa de WhatsApp (texto colado e/ou áudios anexados) enviado pelo consultor'
             : 'o diálogo/histórico de conversa de WhatsApp colado pelo consultor';
 
-        $systemInstruction = 'Você é um especialista em atendimento comercial e admissões escolares da Escola Torre de Marfim.
+        $nomeEscola = self::nomeEscola();
+        $systemInstruction = 'Você é um especialista em atendimento comercial e admissões escolares da '.$nomeEscola.'.
 Sua missão é analisar '.$origemConversa.' e extrair uma síntese executiva impecável para a equipe pedagógica e de captação.
 
 Você DEVE retornar estritamente um JSON válido com a seguinte estrutura:

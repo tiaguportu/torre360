@@ -1013,6 +1013,7 @@ Estrutura de ensino e turmas.
   - `status`: Enum `SituacaoDocumento` (`EM_ANALISE`, `VERIFICADO`, `REJEITADO`).
   - `arquivo_path`, `nome_arquivo_original`, `hash_arquivo`, `observacoes` (motivo de rejeição).
   - `dados_ia`: JSON (nullable) - Parecer estruturado pericial do Gemini Vision com score de confiança (0-100), aferição de nitidez/enquadramento, verificação de correspondência com o tipo solicitado, extração segura de campos (nome do titular, CPF, RG, data de nascimento, filiação, endereço) e orientações em caso de divergência.
+  - `status_sugerido`: String indexada (nullable) - Sugestão de situação identificada pela pré-triagem do Gemini/OCR (`verificado` ou `rejeitado`), permitindo ação rápida da equipe da secretaria para acatar ou revisar.
   - `analisado_ia_em`: Timestamp (nullable) - Registro cronológico da execução assíncrona do job de validação por IA.
 - **Validação Inteligente e OCR Efêmero:** Os uploads despacham o job assíncrono `ValidarDocumentoComIaJob`, realizando análise de imagem em segundo plano sem travar a interface da família nem reter imagens para treinamento (em conformidade com o Art. 7º, V e Art. 14 da LGPD). Os dados extraídos podem ser sincronizados com 1 clique para a ficha cadastral do aluno/responsável no painel administrativo.
 - **Lógica de Transição e Herança:** Quando o lead é matriculado, os registros de `documento_inserido` são automaticamente associados à nova `matricula_id`, mantendo integridade com a auditoria e evitando qualquer reenvio documental pela família.
@@ -1196,6 +1197,7 @@ Gestão de tipos de documentos, anexos comprobatórios da família e checklist d
   - `arquivo_path`: Caminho do arquivo armazenado no storage.
   - `nome_arquivo_original`: Nome do arquivo enviado pelo usuário.
   - `status`: Enum `SituacaoDocumento` (`pendente`, `em_analise`, `verificado`, `rejeitado`).
+  - `status_sugerido`: String indexada (nullable) - Situação recomendada pela pré-triagem do OCR/IA (`verificado`, `rejeitado`).
   - `observacoes`: Parecer da secretaria ou motivo de rejeição.
   - `metadados_ia`: JSON com validações automáticas por OCR e Inteligência Artificial (`ValidarDocumentoComIaJob`).
 - **Relacionamentos:**
