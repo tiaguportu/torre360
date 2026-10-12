@@ -3223,6 +3223,25 @@ Implementações de refinamento, robustez e segurança operacional no módulo de
 
 ---
 
+## 🎯 56. Segurança de Imagens em Contratos e Blindagem Anti-IDOR em Questionários (Lote H)
+
+Implementações de segurança da informação e endurecimento defensivo no motor de documentos e relatórios do sistema:
+
+### 56.1 Fechamento do Desvio de SSRF e Isolamento de Origem em Imagens de Contratos (Lote H1)
+1. **Validação Estrita de Origem Própria:** O compilador de templates de contratos (`ContractTemplateService::processHtmlImages`) avalia se uma imagem pertence à própria aplicação antes de qualquer acesso ao sistema de arquivos. Uma URL é considerada da própria aplicação exclusivamente se:
+   - For um caminho relativo estrito (inicia com `/` e não com `//`, evitando ataques *protocol-relative* que apontem para domínios externos); ou
+   - Possuir esquema `http`/`https` cujo hostname coincida com exatidão com o domínio configurado em `config('app.url')` (ignorando portas ou credenciais de usuário maliciosas).
+2. **Mapeamento Ancorado a Discos Locais:** O mapeamento para o armazenamento local (`Storage::disk('public')`, `Storage::disk('local')`, pastas de aplicação) é ancorado no início do caminho da URL sanitizada (`/storage/` ou `/visualizar-documento/`). URLs externas contendo substrings arbitrárias de diretórios de armazenamento deixam de ser mapeadas indevidamente para arquivos do servidor.
+3. **Barreira Secundária Contra Escapes de Diretório:** Permanece ativa a checagem em profundidade por `realpath` (`caminhoDeImagemPermitido()`), impedindo vetores de *path traversal* (como sequências `../`) de extraírem arquivos confidenciais fora dos discos públicos e privados autorizados.
+4. **Proteção Ativa Contra SSRF em Imagens Remotas:** URLs de terceiros continuam submetidas à validação contra SSRF (`SsrfProtection::isSafeUrl()`), bloqueando acessos a endereços de loopback, redes privadas e serviços de metadados de provedores em nuvem.
+
+### 56.2 Integridade Anti-IDOR e Contrato Estrito na Comparação de Questionários em PDF (Lote H2)
+1. **Contrato de Integridade "Tudo ou Nada":** Na exportação comparativa em PDF de respostas de questionários (`QuestionarioRespostaPDFController`), o sistema exige que **todos** os identificadores solicitados sejam acessíveis ao operador solicitante.
+2. **Resposta 403 Forbidden em Discrepâncias de Acesso:** Se um usuário comum requisitar questionários misturando IDs de sua titularidade com IDs de outros operadores ou inexistentes, a requisição é terminantemente recusada com HTTP 403 Forbidden, eliminando o risco de exposição indevida (IDOR).
+3. **Prevenção de Oráculo de Existência:** IDs inexistentes recebem o mesmo código de status (HTTP 403) dispensado a registros restritos de outros usuários, prevenindo a enumeração e sondagem de recursos internos. Requisições vazias ou com formato não numérico retornam HTTP 404 Not Found.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 
