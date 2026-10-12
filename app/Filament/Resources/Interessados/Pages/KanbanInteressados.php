@@ -155,7 +155,6 @@ class KanbanInteressados extends Page
         $idsFinais = $statuses->where('is_final', true)->pluck('id');
 
         $base = fn (): Builder => Interessado::query()
-            ->visivelPara()
             ->when($this->filtroConsultorId && auth()->user()?->podeVerTodosLeads(), fn (Builder $query) => $query->where('usuario_id', $this->filtroConsultorId));
 
         $totais = $base()

@@ -27,8 +27,8 @@ class QuestionarioRespostaPDFController extends Controller
             ->with(['questionario', 'user', 'perguntaRespostas.pergunta.bloco'])
             ->get();
 
-        if ($records->count() !== count($idsLimpos)) {
-            abort(403, 'Acesso não autorizado a um ou mais questionários selecionados.');
+        if ($records->isEmpty()) {
+            abort(404, 'Nenhum questionário selecionado encontrado.');
         }
 
         $pdf = Pdf::loadView('pdfs.comparacao-questionarios', [

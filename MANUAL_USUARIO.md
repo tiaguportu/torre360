@@ -3181,6 +3181,12 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 4. **Proteção Contra Auto-Exclusão:**
    - O sistema impede a exclusão da própria conta autenticada (`delete` e `forceDelete`), protegendo administradores contra perda irreversível de acessos ou travamento operacional decorrente de auto-remoção acidental.
 
+### 54.11 Ciclo de Vida de Contas Ativas e Estabilidade de Módulos Críticos
+1. **Ativação e Estado Padrão de Contas de Acesso:** Usuários do sistema passam por controle temporal estrito de ativação (`activated_at` e `deactivated_at`). Usuários criados possuem ativação transparente imediata, garantindo pleno acesso a rotas autenticadas sob o middleware `EnsureAccountIsActive` e prevenindo desconexões ou bloqueios indevidos por conta inativa.
+2. **Resolução Segura de Imagens Internas em Contratos:** O compilador de templates de contratos (`ContractTemplateService`) diferencia de forma determinística caminhos internos em `/storage/` e `/visualizar-documento/` de URLs externas, convertendo arquivos locais em Data-URIs em conformidade com o isolamento de SSRF e bloqueando escapes de diretório.
+3. **Filtro Atômico de Consultores no Kanban de CRM:** A seleção de consultor no Funil de Vendas preserva com exatidão o identificador do operador selecionado, aplicando o escopo correto sobre cartões e métricas totais do estágio.
+4. **Comparação e Exportação de Questionários:** O comparador em PDF gera relatórios parciais com base nos questionários que o usuário possui permissão de leitura, retornando 404 apenas quando nenhum registro selecionado for acessível ao solicitante.
+
 ---
 
 ## 🎯 55. Retenção Escolar, SLA Comercial e Governança do CRM (Lote G)

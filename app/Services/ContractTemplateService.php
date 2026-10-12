@@ -471,17 +471,19 @@ class ContractTemplateService
             $isLocalStoragePath = str_contains($src, '/visualizar-documento/') || str_contains($src, '/storage/');
 
             // Proteção defensiva contra SSRF em URLs remotas (loopback, private networks, cloud metadata)
-            if (! $isLocalStoragePath && (str_starts_with($srcLower, 'http://') || str_starts_with($srcLower, 'https://'))) {
-                if (! SsrfProtection::isSafeUrl($src)) {
-                    logger()->warning('Contrato: URL remota bloqueada por proteção contra SSRF.', ['src' => $src]);
+            if (! $isLocalStoragePath) {
+                if (str_starts_with($srcLower, 'http://') || str_starts_with($srcLower, 'https://')) {
+                    if (! SsrfProtection::isSafeUrl($src)) {
+                        logger()->warning('Contrato: URL remota bloqueada por proteção contra SSRF.', ['src' => $src]);
 
-                    return '<!-- [IMAGEM REMOTA BLOQUEADA CONTRA SSRF] -->';
+                        return '<!-- [IMAGEM REMOTA BLOQUEADA CONTRA SSRF] -->';
+                    }
+                } elseif (preg_match('/^[a-z0-9_-]+:/i', $src) && ! str_starts_with($srcLower, 'data:image/')) {
+                    // Bloqueia qualquer outro esquema arbitrário (ex: file://, phar://, gopher://)
+                    logger()->warning('Contrato: esquema não permitido bloqueado em imagem.', ['src' => $src]);
+
+                    return '<!-- [ESQUEMA DE IMAGEM BLOQUEADO] -->';
                 }
-            } elseif (! $isLocalStoragePath && preg_match('/^[a-z0-9_-]+:/i', $src) && ! str_starts_with($srcLower, 'data:image/')) {
-                // Bloqueia qualquer outro esquema arbitrário (ex: file://, phar://, gopher://)
-                logger()->warning('Contrato: esquema não permitido bloqueado em imagem.', ['src' => $src]);
-
-                return '<!-- [ESQUEMA DE IMAGEM BLOQUEADO] -->';
             }
 
             $localPath = null;
