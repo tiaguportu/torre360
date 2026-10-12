@@ -3241,6 +3241,20 @@ Implementações de segurança da informação e endurecimento defensivo no moto
 
 ---
 
+## 📊 57. Restauração e Blindagem do Escopo de Carteira no Funil Kanban (Lote I)
+
+Garantia de segurança da informação, privacidade e isolamento estrito de carteiras comerciais no Funil de Vendas Kanban:
+
+### 57.1 Isolamento Integral no Funil de Vendas Kanban (Lote I1)
+1. **Escopo de Carteira em Todas as Consultas:** O Funil Kanban (`KanbanInteressados`) aplica o escopo `visivelPara()` à base de todas as consultas executadas pela tela.
+2. **Cards, Contagens e Valores Financeiros:** Consultores comerciais comuns visualizam exclusivamente os leads de sua própria carteira e leads não atribuídos (órfãos). Os cards exibidos, as contagens de leads por coluna e os valores financeiros totais estimados por etapa respeitam rigorosamente esse isolamento, impedindo que um consultor tenha acesso a métricas ou dados de famílias atendidas por outros colegas.
+3. **Impossibilidade de Bypass por Filtro:** A tentativa de manipulação de parâmetros de filtro de outros consultores por usuários sem privilégio é ignorada no servidor, mantendo a consulta restrita à sua respectiva carteira. A visualização global irrestrita e a filtragem livre entre consultores permanecem exclusivas para administradores (`super_admin`) e operadores com a permissão explícita `ViewAll:Interessado`.
+
+### 57.2 Blindagem Automatizada e Prevenção de Regressões (Lote I2)
+1. **Cobertura por Testes de Regressão:** Implementada a suíte `KanbanEscopoCarteiraLoteITest`, que valida minuciosamente o isolamento de carteiras, cálculos agregados, filtros avançados, botão "Carregar mais" com paginação progressiva, colunas de status final e visibilidade de leads sem consultor.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 
