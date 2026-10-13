@@ -81,4 +81,14 @@ class AvaliacaoPolicy
     {
         return $authUser->can('NotificarProfessor:Avaliacao');
     }
+
+    public function gerenciarGabarito(AuthUser $authUser, Avaliacao $avaliacao): bool
+    {
+        return $authUser->can('GerenciarGabarito:Avaliacao');
+    }
+
+    public function corrigirGabarito(AuthUser $authUser, Avaliacao $avaliacao): bool
+    {
+        return $authUser->can('CorrigirGabarito:Avaliacao');
+    }
 }

@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Avaliacaos;
 
+use App\Filament\Resources\Avaliacaos\Pages\CorrigirGabarito;
 use App\Filament\Resources\Avaliacaos\Pages\CreateAvaliacao;
 use App\Filament\Resources\Avaliacaos\Pages\EditAvaliacao;
 use App\Filament\Resources\Avaliacaos\Pages\LancarNotas;
 use App\Filament\Resources\Avaliacaos\Pages\ListAvaliacaos;
 use App\Filament\Resources\Avaliacaos\Pages\ViewAvaliacao;
+use App\Filament\Resources\Avaliacaos\RelationManagers\QuestoesGabaritoRelationManager;
 use App\Filament\Resources\Avaliacaos\Schemas\AvaliacaoForm;
 use App\Filament\Resources\Avaliacaos\Tables\AvaliacaosTable;
 use App\Models\Avaliacao;
@@ -31,6 +33,8 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
             'delete_any',
             'lancarNotas',
             'notificarProfessor',
+            'gerenciarGabarito',
+            'corrigirGabarito',
         ];
     }
 
@@ -65,7 +69,7 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            //
+            QuestoesGabaritoRelationManager::class,
         ];
     }
 
@@ -77,6 +81,7 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
             'view' => ViewAvaliacao::route('/{record}'),
             'edit' => EditAvaliacao::route('/{record}/edit'),
             'lancar-notas' => LancarNotas::route('/{record}/lancar-notas'),
+            'corrigir-gabarito' => CorrigirGabarito::route('/{record}/corrigir-gabarito'),
         ];
     }
 }

@@ -71,4 +71,19 @@ class PlanoAulaPolicy
     {
         return $authUser->can('Reorder:PlanoAula');
     }
+
+    public function gerarComCopiloto(AuthUser $authUser, ?PlanoAula $planoAula = null): bool
+    {
+        return $authUser->can('GerarComCopiloto:PlanoAula');
+    }
+
+    public function gerarPei(AuthUser $authUser, ?PlanoAula $planoAula = null): bool
+    {
+        return $authUser->can('GerarPei:PlanoAula');
+    }
+
+    public function exportarPei(AuthUser $authUser, ?PlanoAula $planoAula = null): bool
+    {
+        return $authUser->can('ExportarPei:PlanoAula');
+    }
 }

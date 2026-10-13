@@ -3223,7 +3223,104 @@ Implementações de refinamento, robustez e segurança operacional no módulo de
 
 ---
 
+## 📋 56. Gestão de Matrículas: Pendências de Documentos Obrigatórios para o Contrato (`/admin/matriculas`)
+
+Aprimoramento das regras de exibição e filtragem de pendências documentais na listagem de matrículas da secretaria:
+
+### 56.1 Foco em Documentos Bloqueantes de Contrato
+1. **Regra de Exigência:** Na tela de Gestão de Matrículas (`/admin/matriculas`), a coluna **Pendências**, o filtro de **Pendências** e a aba **Com pendências** consideram especificamente os **documentos faltantes que são obrigatórios para o contrato** (`categoria_exigencia = OBRIGATORIO_CONTRATO`).
+2. **Desacoplamento de Documentos de Histórico:** Documentos de vida escolar e conformidade com o MEC classificados como `OBRIGATORIO_HISTORICO` (como Histórico Escolar anterior, Atestado de Saúde ou Ficha de Anamnese) continuam cadastrados e passíveis de envio, mas **não bloqueiam o contrato nem marcam a matrícula com pendência impeditiva na listagem geral**.
+3. **Modal de Detalhes:** Ao clicar sobre a pendência na tabela:
+   - A seção de **Documentos obrigatórios para o contrato** destaca os documentos indispensáveis para a liberação da emissão contratual (faltantes e rejeitados que aguardam reenvio).
+   - O card de **Contrato não gerado** alerta explicitamente quando a emissão automática está travada pela falta desses documentos obrigatórios.
+   - Quando houver documentos complementares de histórico escolar pendentes, estes são exibidos em seção informativa separada com indicação clara de que não bloqueiam o contrato.
+4. **Widgets e Ações em Linha:** O atalho de documentos (ícone de clipe com badge) e o widget **Matrículas Pendentes** (`MatriculasPendentesWidget`) exibem a contagem sincronizada das matrículas que possuem documentos obrigatórios do contrato pendentes.
+
+---
+
+## 📷 58. Correção Automatizada de Gabaritos por Foto (OMR) (`/admin/avaliacaos`)
+
+O Torre360 conta com um motor determinístico de visão computacional (OMR - *Optical Mark Recognition*) desenvolvido em PHP puro (biblioteca GD), permitindo a leitura e correção instantânea de provas físicas por foto ou escaneamento, sem custos com APIs externas e com total privacidade dos dados dos alunos.
+
+### 58.1 Cadastro do Gabarito Oficial da Avaliação
+1. Acesse **Acadêmico → Avaliações** e clique em editar uma avaliação ou cadastrar uma nova.
+2. Na aba/relação **Gabarito Oficial**, defina:
+   - **Total de Questões** (suporta de 1 a 60 questões por folha) e **Alternativas** (4 ou 5 opções por questão: A-D ou A-E).
+   - **Modo de Anulação de Questões**:
+     - *Pontua Todos*: a questão anulada pontua automaticamente para todos os alunos que realizaram a avaliação.
+     - *Desconsidera*: a questão anulada tem seu peso subtraído do divisor total da prova, recalculando a nota proporcionalmente.
+3. Utilize o botão **Preenchimento Rápido** para colar uma sequência de letras (ex: `ABCDEABCDE`) e aplicar a resposta correta de todas as questões em um só clique.
+4. Cada questão pode receber um **Peso específico** e ser associada a uma **Habilidade da BNCC**.
+5. **Trava de Segurança**: A avaliação deve possuir **Nota Máxima** preenchida e maior que zero. Após confirmação de correções, o gabarito oficial é travado para não sobrescrever notas históricas.
+
+### 58.2 Emissão e Impressão das Folhas de Respostas em PDF
+1. No menu de cabeçalho do Gabarito Oficial, utilize:
+   - **Imprimir Turma Completa (PDF)**: gera um único arquivo PDF no formato A4 retrato com uma página para cada aluno com matrícula ativa na turma.
+   - **Folha Individual do Aluno**: na listagem de alunos, imprima a folha com identificação e QR Code individual.
+   - **Folha em Branco / Avulsa**: emite folhas com identificador neutro para alunos transferidos ou substituição de folhas danificadas.
+2. **Geometria de Alta Precisão**: O gerador embutido em SVG vetorial garante posicionamento milimétrico com 4 marcadores de canto assimétricos (marcador superior esquerdo vazado) e bolhas de 4,5 mm de diâmetro.
+3. **Privacidade e QR Code Opaco**: O QR Code impresso contém exclusivamente um identificador UUID opaco gerado no banco de dados. Nenhum CPF, nome ou dado pessoal do menor é codificado no QR Code.
+4. **Instruções de Impressão**: Imprima sempre em escala 100% ("Tamanho real", sem "Ajustar à página").
+
+### 58.3 Leitura por Câmera / Upload e Conferência
+1. Na listagem de Avaliações ou na tela de Lançamento de Notas, clique no botão **Corrigir via Gabarito / Câmera**.
+2. **Captura e Upload**:
+   - Envie uma ou mais fotos das folhas de respostas (JPG, PNG ou WebP).
+   - Em smartphones ou tablets, o botão ativa diretamente a câmera traseira do dispositivo com foco macro.
+   - O sistema realiza redimensionamento automático, alinhamento por EXIF e homografia quadrilátera bilinear pelos 4 marcadores de canto.
+3. **Tela de Conferência Visual**:
+   - O professor visualiza a grade de bolhas detectada, com destaque em verde para acertos, vermelho para erros e amarelo para marcações ambíguas/duplas.
+   - Se um aluno utilizou folha em branco, o professor pode selecionar manualmente a matrícula correspondente.
+4. **Lançamento Transacional Seguro**:
+   - Clique em **Lançar Notas no Diário**: as notas confirmadas são salvas estritamente através do `NotaLancamentoService` oficial, dentro de uma transação `DB::transaction`.
+   - Se um aluno já possuir nota lançada no sistema com valor diferente, o sistema acusa conflito visual e exige confirmação expressa antes de sobrescrever.
+   - Linhas em branco não apagam notas existentes e todas as ações geram registro de auditoria no log de atividades (`ActivityLog`).
+
+---
+
+## 🤖 59. Copiloto Pedagógico IA: Sequência Didática BNCC e Adaptações Inclusivas (PEI) (`/admin/planos-aulas`)
+
+O Torre360 integra ferramentas avançadas de Inteligência Artificial Generativa direcionadas exclusivamente ao planejamento curricular do docente e à inclusão de estudantes com necessidades educacionais especiais.
+
+### 59.1 Geração de Sequência Didática Alinhada à BNCC
+1. Acesse **Acadêmico → Planos de Aula** e clique em **Novo** ou edite um plano pendente de execução.
+2. No cabeçalho superior, clique em **Criar com Copiloto IA** (permissão `GerarComCopiloto:PlanoAula`).
+3. No modal do assistente:
+   - Selecione a **Turma**, **Componente Curricular** e uma ou mais **Habilidades da BNCC**.
+   - Defina o número de aulas (ex: 2 aulas) e a duração por aula (ex: 50 minutos).
+   - Opcionalmente, informe instruções pedagógicas específicas (ex: "foco em trabalho prático em grupos no laboratório").
+4. **Geração Estruturada**: O Copiloto IA (alimentado pelo Gemini com saída estrita em JSON) formula:
+   - **Objetivos de Aprendizagem** categorizados pela Taxonomia de Bloom Revisada (*Lembrar, Compreender, Aplicar, Analisar, Avaliar, Criar*).
+   - **Metodologia Ativa de Aprendizagem** fundamentada com justificativa pedagógica.
+   - **Cronograma da Aula** com etapas didáticas divididas minuto a minuto (Aquecimento, Desenvolvimento e Fechamento), detalhando a mediação do professor e a ação dos estudantes.
+   - **Recursos Didáticos** e **Instrumentos de Avaliação Formativa**.
+5. **Revisão Humana sem Persistência Forçada**: O resultado preenche os campos do formulário da tela sem salvar automaticamente no banco de dados. O professor pode ler, ajustar, acrescentar materiais e salvar no momento desejado.
+6. **Exportação em PDF**: Utilize o botão **Exportar PDF** para emitir o plano de aula diagramado para arquivo ou impressão.
+
+### 59.2 Copiloto de Inclusão e Adaptação Curricular PEI (LGPD Estrita)
+1. Na edição de um Plano de Aula, abra a aba inferior **Adaptações Curriculares e PEI (Inclusão)**.
+2. Clique em **Gerar Adaptação PEI com IA** (disponível para coordenadores e gestores com permissão `GerarPei:PlanoAula` quando a flag institucional `COPILOTO_PEDAGOGICO_PEI_HABILITADO` estiver ativa).
+3. Selecione o estudante da turma.
+4. **Minimização e Anonimização Rigorosa (LGPD Arts. 6º III, 11 e 14)**:
+   - O Torre360 **NUNCA** envia à IA dados como nome, data de nascimento, CPF, contatos ou informações clínicas da Ficha Médica (alergias, medicamentos ou número do SUS).
+   - Apenas os nomes padronizados das categorias de acessibilidade (cadastradas em Necessidades Especiais, Transtornos de Aprendizagem e Recursos de Acessibilidade), a etapa escolar e a faixa etária aproximada são enviados, referindo-se ao discente sempre como "o estudante".
+   - Observações livres inseridas pelo professor passam por limpeza automática de dados pessoais via `ocultarDadosPessoais()`.
+5. **Diretrizes Pedagógicas Inclusivas**:
+   - A IA propõe adaptações para a **MESMA atividade da turma** com base no Desenho Universal para a Aprendizagem (DUA) e na Lei nº 13.146/2015 (LBI).
+   - Sugere quebra de instruções em passo a passo, apoios visuais, ampliação temporal justificada e organização do ambiente de sala de aula.
+   - A habilidade da BNCC alvo é preservada. Qualquer flexibilização profunda recebe aviso explícito de que requer validação do AEE.
+   - O modelo é expressamente proibido de emitir diagnósticos clínicos ou prescrever medicamentos.
+6. **Criptografia em Repouso**: Os dados do PEI gerado são gravados na tabela `plano_aula_adaptacoes` com criptografia em repouso através do cast `encrypted:array`.
+7. **Homologação e Exportação**:
+   - A adaptação é gravada inicialmente como **Rascunho (IA)**.
+   - O professor ou coordenador revisa os detalhes e clica em **Aprovar**.
+   - O botão **PDF** gera o documento oficial com tarja de rascunho enquanto não homologado e aviso de confidencialidade da LBI. Todo download é registrado em log de auditoria.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
+
 
 
 

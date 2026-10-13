@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -176,5 +177,32 @@ class Avaliacao extends Model
         $totalNotas = $this->notasResolvidasCount();
 
         return max(0, $totalAlunos - $totalNotas);
+    }
+
+    public function gabarito(): HasOne
+    {
+        return $this->hasOne(AvaliacaoGabarito::class, 'avaliacao_id');
+    }
+
+    public function folhasGabarito(): HasMany
+    {
+        return $this->hasMany(GabaritoFolha::class, 'avaliacao_id');
+    }
+
+    public function correcoesOmr(): HasMany
+    {
+        return $this->hasMany(OmrCorrecao::class, 'avaliacao_id');
+    }
+
+    public function questoesGabarito(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            AvaliacaoGabaritoQuestao::class,
+            AvaliacaoGabarito::class,
+            'avaliacao_id',
+            'avaliacao_gabarito_id',
+            'id',
+            'id'
+        )->orderBy('numero');
     }
 }

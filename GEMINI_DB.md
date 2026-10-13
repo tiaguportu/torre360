@@ -297,6 +297,38 @@ Estrutura de ensino e turmas.
 - **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: frequencia_escolar`), gravando ações de criação, alteração e exclusão das frequências com a identificação do aluno, aula e situação atribuída.
 - **Observer:** `FrequenciaFaltaObserver` (registrado via atributo `#[ObservedBy]` no model) dispara `FrequenciaAusenciaNotification` para o(s) responsável(is) do aluno sempre que `situacao` é criada ou alterada para `'ausente'`. Não notifica quando a data da aula está fora do intervalo `data_ativacao`–`data_desativacao` da matrícula. Ver seção 14.
 
+### `avaliacao_gabaritos`
+- **Representa:** Configuração e gabarito oficial de respostas de uma avaliação com suporte a correção OMR (1:1 com `avaliacao`).
+- **Campos Principais:** `avaliacao_id` (FK `avaliacao`, unique), `total_questoes` (integer), `alternativas` (integer: 4 ou 5), `layout_versao` (integer: padrão 1), `layout` (json: metadados do `GabaritoLayout`), `anulacao_modo` (Enum: `todos`, `nenhum`).
+- **Relacionamentos:** BelongsTo `avaliacao`, HasMany `questoes` (`avaliacao_gabarito_questoes`), HasMany `folhas` (`gabarito_folhas`), HasMany `correcoes` (`omr_correcoes`).
+
+### `avaliacao_gabarito_questoes`
+- **Representa:** Gabarito detalhado por questão de uma avaliação.
+- **Campos Principais:** `avaliacao_gabarito_id` (FK `avaliacao_gabaritos`), `numero` (integer), `alternativa_correta` (string: A-E, nullable se anulada), `peso` (decimal 8,2), `habilidade_id` (FK `habilidades`, nullable), `anulada` (boolean).
+- **Restrição de Unicidade:** Único por `(avaliacao_gabarito_id, numero)`.
+- **Relacionamentos:** BelongsTo `gabarito` (`avaliacao_gabaritos`), BelongsTo `habilidade` (`habilidades`).
+
+### `gabarito_folhas`
+- **Representa:** Folhas de respostas impressas com identificador opaco para alunos de uma avaliação.
+- **Campos Principais:** `uuid` (UUID v4 único), `avaliacao_id` (FK `avaliacao`), `matricula_id` (FK `matricula`), `layout_versao` (integer), `gerada_por` (FK `users`), `corrigida_em` (datetime, nullable).
+- **Restrição de Unicidade:** Único por `(avaliacao_id, matricula_id)`.
+- **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula`, BelongsTo `gerador` (`users`), HasMany `correcoes` (`omr_correcoes`).
+
+### `omr_correcoes`
+- **Representa:** Registro da tentativa e resultado de leitura OMR por foto de um gabarito preenchido.
+- **Campos Principais:** `avaliacao_id` (FK `avaliacao`), `gabarito_folha_id` (FK `gabarito_folhas`, nullable), `matricula_id` (FK `matricula`, nullable), `user_id` (FK `users`), `arquivo_path` (string, caminho no disco privado), `arquivo_sha256` (string, hash para deduplicação), `status` (Enum: `pendente`, `processando`, `aguardando_conferencia`, `confirmada`, `descartada`, `falha`), `respostas` (json), `respostas_finais` (json), `alertas` (json), `acertos` (integer), `total_validas` (integer), `nota_calculada` (decimal 8,2), `motor` (string: `gd` ou `gemini`), `layout_versao` (integer), `tempo_ms` (integer), `confirmada_por` (FK `users`, nullable), `confirmada_em` (datetime, nullable).
+- **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `folha` (`gabarito_folhas`), BelongsTo `matricula`, BelongsTo `usuario` (`users`), BelongsTo `confirmadoPor` (`users`), HasMany `desempenhoHabilidades` (`omr_correcao_habilidades`).
+
+### `omr_correcao_habilidades`
+- **Representa:** Desempenho pedagógico por habilidade da BNCC apurado na correção do gabarito OMR.
+- **Campos Principais:** `omr_correcao_id` (FK `omr_correcoes`), `habilidade_id` (FK `habilidades`), `acertos` (integer), `total` (integer), `percentual` (decimal 5,2).
+- **Relacionamentos:** BelongsTo `correcao` (`omr_correcoes`), BelongsTo `habilidade` (`habilidades`).
+
+### `plano_aula_adaptacoes`
+- **Representa:** Adaptações pedagógicas curriculares e Plano Educacional Individualizado (PEI) gerados pelo Copiloto IA para inclusão escolar.
+- **Campos Principais:** `plano_aula_id` (FK `plano_aula`), `matricula_id` (FK `matricula`), `conteudo` (cast `encrypted:array` para proteção de dados sensíveis de saúde e apoio pedagógico), `status` (Enum: `rascunho`, `revisado`, `aprovado`), `gerado_por` (FK `users`), `revisado_por` (FK `users`, nullable), `revisado_em` (datetime, nullable), `aprovado_por` (FK `users`, nullable), `aprovado_em` (datetime, nullable), `modelo_ia` (string, nullable).
+- **Relacionamentos:** BelongsTo `planoAula` (`plano_aula`), BelongsTo `matricula`, BelongsTo `gerador` (`users`), BelongsTo `revisor` (`users`), BelongsTo `aprovador` (`users`).
+
 ---
 
 ## 5. Gestão Financeira

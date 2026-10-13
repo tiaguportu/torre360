@@ -39,6 +39,12 @@ class LancarNotas extends EditRecord
                 ->label('Salvar Notas')
                 ->action('saveNotas')
                 ->color('primary'),
+            Action::make('corrigir_gabarito')
+                ->label('Corrigir via Gabarito / Câmera')
+                ->icon('heroicon-o-camera')
+                ->color('gray')
+                ->visible(fn (): bool => auth()->user()?->can('corrigirGabarito', $this->getRecord()) ?? false)
+                ->url(fn (): string => AvaliacaoResource::getUrl('corrigir-gabarito', ['record' => $this->getRecord()])),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')

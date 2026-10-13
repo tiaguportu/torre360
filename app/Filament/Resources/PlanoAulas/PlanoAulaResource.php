@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PlanoAulas;
 use App\Filament\Resources\PlanoAulas\Pages\CreatePlanoAula;
 use App\Filament\Resources\PlanoAulas\Pages\EditPlanoAula;
 use App\Filament\Resources\PlanoAulas\Pages\ListPlanoAulas;
+use App\Filament\Resources\PlanoAulas\RelationManagers\AdaptacoesPeiRelationManager;
 use App\Filament\Resources\PlanoAulas\Schemas\PlanoAulaForm;
 use App\Filament\Resources\PlanoAulas\Tables\PlanoAulasTable;
 use App\Models\PlanoAula;
@@ -33,6 +34,9 @@ class PlanoAulaResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'gerar_com_copiloto',
+            'gerar_pei',
+            'exportar_pei',
         ];
     }
 
@@ -93,7 +97,9 @@ class PlanoAulaResource extends Resource implements HasShieldPermissions
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            AdaptacoesPeiRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

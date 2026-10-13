@@ -84,6 +84,12 @@ class PlanoAulasTable
                     }),
                 EditAction::make()
                     ->visible(fn (PlanoAula $record): bool => ! $record->foiExecutado()),
+                Action::make('pdf')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(fn (PlanoAula $record): string => route('planos-aula.pdf', $record))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

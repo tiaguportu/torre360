@@ -18,7 +18,10 @@ class HabilidadeFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'codigo' => 'EF'.fake()->numerify('##MA##'),
+            'nome' => fake()->sentence(3),
+            'descricao' => fake()->paragraph(),
+            'tipo' => 'fundamental',
         ];
     }
 }

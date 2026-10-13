@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * O que o professor planeja lecionar numa data futura: objetivos, metodologia
@@ -59,5 +60,10 @@ class PlanoAula extends Model
     public function foiExecutado(): bool
     {
         return $this->executado_em !== null;
+    }
+
+    public function adaptacoesPei(): HasMany
+    {
+        return $this->hasMany(PlanoAulaAdaptacao::class, 'plano_aula_id');
     }
 }

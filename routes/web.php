@@ -10,6 +10,7 @@ use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
 use App\Http\Controllers\Contratos\VisualizarContratoController;
 use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
+use App\Http\Controllers\CopilotoPdfController;
 use App\Http\Controllers\Crm\PesquisaVisitaController;
 use App\Http\Controllers\Crm\PortalDocumentosCandidatoController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Financeiro\AcordoPublicoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
+use App\Http\Controllers\OmrFolhasController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SacolaLeituraImpressaoController;
@@ -129,6 +131,16 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     // Biblioteca Escolar: Impressão de Etiquetas com Código de Barras
     Route::get('/admin/biblioteca/etiquetas/imprimir', [BibliotecaEtiquetasController::class, 'imprimir'])->name('biblioteca.etiquetas.imprimir');
     Route::get('/admin/biblioteca/sacolas/{sacola}/ficha', [SacolaLeituraImpressaoController::class, 'ficha'])->name('biblioteca.sacolas.ficha');
+
+    // OMR: Download de Folhas de Resposta em PDF
+    Route::get('/admin/omr/folhas/download', [OmrFolhasController::class, 'downloadArquivo'])->name('omr.folhas.download');
+    Route::get('/admin/omr/folhas/{folha}/pdf', [OmrFolhasController::class, 'downloadFolha'])->name('omr.folha.pdf');
+    Route::get('/admin/omr/folhas/em-branco/{avaliacao}/pdf', [OmrFolhasController::class, 'downloadFolhaEmBranco'])->name('omr.folha.em_branco.pdf');
+    Route::get('/admin/omr/folhas/turma/{avaliacao}/pdf', [OmrFolhasController::class, 'downloadTurma'])->name('omr.folhas.turma.pdf');
+
+    // Copiloto Pedagógico: Exportação de PDF do Plano de Aula e PEI
+    Route::get('/admin/planos-aula/{planoAula}/pdf', [CopilotoPdfController::class, 'downloadPlanoAula'])->name('planos-aula.pdf');
+    Route::get('/admin/planos-aula/adaptacoes/{adaptacao}/pdf', [CopilotoPdfController::class, 'downloadPei'])->name('planos-aula.adaptacoes.pdf');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

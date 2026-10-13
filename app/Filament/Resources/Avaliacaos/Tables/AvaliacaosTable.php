@@ -202,6 +202,12 @@ class AvaliacaosTable
                     ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record))
                     ->badge(fn (Avaliacao $record): ?int => $record->notas_pendentes_count > 0 ? $record->notas_pendentes_count : null)
                     ->badgeColor('danger'),
+                Action::make('corrigirGabarito')
+                    ->label('Corrigir via Gabarito / Câmera')
+                    ->icon('heroicon-o-camera')
+                    ->color('primary')
+                    ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('corrigir-gabarito', ['record' => $record]))
+                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('corrigirGabarito', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
