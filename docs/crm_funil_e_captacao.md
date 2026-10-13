@@ -573,8 +573,9 @@ O Lote D7 estabelece a segregação de acesso comercial por carteira de atendime
 
 ### 18.3 Escopo Global no Eloquent (`scopeVisivelPara`)
 - Implementado em `Interessado::scopeVisivelPara()` e injetado nativamente em `InteressadoResource::getEloquentQuery()`, assegurando que listagens, abas de contadores (`ContadoresCrm`), widgets de calendário e relatórios reflitam de forma consistente a carteira do usuário ativo.
+- O Funil de Vendas (Kanban) aplica `visivelPara()` à base de todas as consultas (cards, contagem total de leads e somatório de valores por coluna), garantindo isolamento estrito entre consultores comerciais. A classe `tests/Feature/KanbanEscopoCarteiraLoteITest.php` blinda e guarda essa regra de segurança contra regressões.
 
-Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`.
+Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php` e `tests/Feature/KanbanEscopoCarteiraLoteITest.php`.
 
 ### 18.4 Bloqueio Pessimista e Concorrência ao Assumir Lead (Lote F6)
 - **Atomicidade no Atendimento:** A ação de assumir lead (disponível no Kanban, na listagem de Interessados e no cabeçalho de edição) utiliza transação em banco de dados (`DB::transaction`) associada a bloqueio pessimista (`lockForUpdate()`).

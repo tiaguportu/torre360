@@ -459,6 +459,43 @@ class ContractTemplateService
     }
 
     /**
+     * Verifica se uma URL pertence à própria aplicação.
+     * Verdadeiro SOMENTE se:
+     * - for um caminho relativo estrito (começa com '/' e NÃO com '//'); ou
+     * - possuir esquema http/https e o host (em minúsculas) for idêntico ao host de config('app.url').
+     */
+    private static function ehUrlDaPropriaAplicacao(string $src): bool
+    {
+        $src = trim($src);
+
+        if (str_starts_with($src, '/') && ! str_starts_with($src, '//')) {
+            return true;
+        }
+
+        $scheme = parse_url($src, PHP_URL_SCHEME);
+        if (! $scheme || ! in_array(strtolower($scheme), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $host = parse_url($src, PHP_URL_HOST);
+        if (! $host) {
+            return false;
+        }
+
+        $appUrl = (string) config('app.url');
+        $appHost = parse_url($appUrl, PHP_URL_HOST);
+        if (! $appHost && ! str_contains($appUrl, '://')) {
+            $appHost = parse_url('http://'.$appUrl, PHP_URL_HOST);
+        }
+
+        if (! $appHost) {
+            return false;
+        }
+
+        return strtolower($host) === strtolower($appHost);
+    }
+
+    /**
      * Processa todas as imagens locais no HTML e converte os caminhos locais (/storage/...)
      * para Data-URI Base64, garantindo a renderização correta das imagens no DomPDF.
      */
@@ -468,88 +505,87 @@ class ContractTemplateService
             $src = $matches[1];
             $srcLower = strtolower(trim($src));
 
-            $isLocalStoragePath = str_contains($src, '/visualizar-documento/') || str_contains($src, '/storage/');
+            $ehOrigemPropria = self::ehUrlDaPropriaAplicacao($src);
 
-            // Proteção defensiva contra SSRF em URLs remotas (loopback, private networks, cloud metadata)
-            if (! $isLocalStoragePath) {
-                if (str_starts_with($srcLower, 'http://') || str_starts_with($srcLower, 'https://')) {
-                    if (! SsrfProtection::isSafeUrl($src)) {
-                        logger()->warning('Contrato: URL remota bloqueada por proteção contra SSRF.', ['src' => $src]);
-
-                        return '<!-- [IMAGEM REMOTA BLOQUEADA CONTRA SSRF] -->';
-                    }
-                } elseif (preg_match('/^[a-z0-9_-]+:/i', $src) && ! str_starts_with($srcLower, 'data:image/')) {
-                    // Bloqueia qualquer outro esquema arbitrário (ex: file://, phar://, gopher://)
-                    logger()->warning('Contrato: esquema não permitido bloqueado em imagem.', ['src' => $src]);
-
-                    return '<!-- [ESQUEMA DE IMAGEM BLOQUEADO] -->';
-                }
-            }
-
-            $localPath = null;
-            if (str_contains($src, '/visualizar-documento/')) {
-                $parts = explode('/visualizar-documento/', $src);
-                $filename = end($parts);
-                try {
-                    $disk = Storage::disk('local');
-                    if ($disk->exists($filename)) {
-                        $localPath = $disk->path($filename);
-                    }
-                } catch (\Throwable $e) {
-                    logger()->warning('Erro ao obter caminho do disco local para visualizar-documento: '.$e->getMessage());
-                }
-            } elseif (str_contains($src, '/storage/')) {
-                $parts = explode('/storage/', $src);
-                $filename = end($parts);
-                try {
-                    $disk = Storage::disk('public');
-                    if ($disk->exists($filename)) {
-                        $localPath = $disk->path($filename);
-                    }
-                } catch (\Throwable $e) {
-                    logger()->warning('Erro ao obter caminho do disco public para storage: '.$e->getMessage());
-                }
-            }
-
-            // Fallback de caminho clássico se o Storage não resolveu
-            if (! $localPath) {
-                if (str_starts_with($src, '/storage/')) {
-                    $localPath = public_path(substr($src, 1));
-                } elseif (str_contains($src, '/storage/')) {
-                    $parts = explode('/storage/', $src);
-                    $localPath = public_path('storage/'.end($parts));
-                } elseif (str_contains($src, '/visualizar-documento/')) {
-                    $parts = explode('/visualizar-documento/', $src);
-                    $localPath = storage_path('app/'.end($parts));
-                }
-            }
-
-            // O caminho vem do HTML do template (e de dados nele interpolados): `/visualizar-documento/../../.env` não pode
-            // sair das pastas de arquivos do sistema e acabar embutido, em base64, no PDF do contrato.
-            if ($localPath && ! self::caminhoDeImagemPermitido($localPath)) {
-                logger()->warning('Contrato: imagem fora das pastas permitidas ignorada.', ['src' => $src]);
+            if ($ehOrigemPropria) {
+                $path = parse_url($src, PHP_URL_PATH);
                 $localPath = null;
+
+                if (is_string($path)) {
+                    if (str_starts_with($path, '/visualizar-documento/')) {
+                        $filename = substr($path, strlen('/visualizar-documento/'));
+                        try {
+                            $disk = Storage::disk('local');
+                            if ($disk->exists($filename)) {
+                                $localPath = $disk->path($filename);
+                            }
+                        } catch (\Throwable $e) {
+                            logger()->warning('Erro ao obter caminho do disco local para visualizar-documento: '.$e->getMessage());
+                        }
+
+                        if (! $localPath) {
+                            $localPath = storage_path('app/'.$filename);
+                        }
+                    } elseif (str_starts_with($path, '/storage/')) {
+                        $filename = substr($path, strlen('/storage/'));
+                        try {
+                            $disk = Storage::disk('public');
+                            if ($disk->exists($filename)) {
+                                $localPath = $disk->path($filename);
+                            }
+                        } catch (\Throwable $e) {
+                            logger()->warning('Erro ao obter caminho do disco public para storage: '.$e->getMessage());
+                        }
+
+                        if (! $localPath) {
+                            $localPath = public_path('storage/'.$filename);
+                        }
+                    }
+                }
+
+                // O caminho vem do HTML do template (e de dados nele interpolados): `/visualizar-documento/../../.env` não pode
+                // sair das pastas de arquivos do sistema e acabar embutido, em base64, no PDF do contrato.
+                if ($localPath && ! self::caminhoDeImagemPermitido($localPath)) {
+                    logger()->warning('Contrato: imagem fora das pastas permitidas ignorada.', ['src' => $src]);
+                    $localPath = null;
+                }
+
+                if ($localPath && file_exists($localPath)) {
+                    try {
+                        $extension = strtolower(pathinfo($localPath, PATHINFO_EXTENSION));
+                        $mimeType = match ($extension) {
+                            'png' => 'image/png',
+                            'gif' => 'image/gif',
+                            'svg' => 'image/svg+xml',
+                            'webp' => 'image/webp',
+                            'jpg', 'jpeg' => 'image/jpeg',
+                            default => (function_exists('mime_content_type') ? mime_content_type($localPath) : null) ?: 'image/jpeg',
+                        };
+
+                        $data = file_get_contents($localPath);
+                        $base64 = 'data:'.$mimeType.';base64,'.base64_encode($data);
+
+                        return str_replace($src, $base64, $matches[0]);
+                    } catch (\Throwable $e) {
+                        logger()->warning('Erro ao converter imagem em base64 no contrato: '.$e->getMessage());
+                    }
+                }
+
+                return $matches[0];
             }
 
-            if ($localPath && file_exists($localPath)) {
-                try {
-                    $extension = strtolower(pathinfo($localPath, PATHINFO_EXTENSION));
-                    $mimeType = match ($extension) {
-                        'png' => 'image/png',
-                        'gif' => 'image/gif',
-                        'svg' => 'image/svg+xml',
-                        'webp' => 'image/webp',
-                        'jpg', 'jpeg' => 'image/jpeg',
-                        default => (function_exists('mime_content_type') ? mime_content_type($localPath) : null) ?: 'image/jpeg',
-                    };
+            // Não é URL da própria aplicação: proteção defensiva contra SSRF em URLs remotas
+            if (str_starts_with($srcLower, 'http://') || str_starts_with($srcLower, 'https://')) {
+                if (! SsrfProtection::isSafeUrl($src)) {
+                    logger()->warning('Contrato: URL remota bloqueada por proteção contra SSRF.', ['src' => $src]);
 
-                    $data = file_get_contents($localPath);
-                    $base64 = 'data:'.$mimeType.';base64,'.base64_encode($data);
-
-                    return str_replace($src, $base64, $matches[0]);
-                } catch (\Throwable $e) {
-                    logger()->error('Erro ao converter imagem local do contrato para base64: '.$e->getMessage());
+                    return '<!-- [IMAGEM REMOTA BLOQUEADA CONTRA SSRF] -->';
                 }
+            } elseif (preg_match('/^[a-z0-9_-]+:/i', $src) && ! str_starts_with($srcLower, 'data:image/')) {
+                // Bloqueia qualquer outro esquema arbitrário (ex: file://, phar://, gopher://)
+                logger()->warning('Contrato: esquema não permitido bloqueado em imagem.', ['src' => $src]);
+
+                return '<!-- [ESQUEMA DE IMAGEM BLOQUEADO] -->';
             }
 
             return $matches[0];

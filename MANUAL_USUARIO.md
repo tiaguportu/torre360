@@ -3185,7 +3185,6 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 1. **Ativação e Estado Padrão de Contas de Acesso:** Usuários do sistema passam por controle temporal estrito de ativação (`activated_at` e `deactivated_at`). Usuários criados possuem ativação transparente imediata, garantindo pleno acesso a rotas autenticadas sob o middleware `EnsureAccountIsActive` e prevenindo desconexões ou bloqueios indevidos por conta inativa.
 2. **Resolução Segura de Imagens Internas em Contratos:** O compilador de templates de contratos (`ContractTemplateService`) diferencia de forma determinística caminhos internos em `/storage/` e `/visualizar-documento/` de URLs externas, convertendo arquivos locais em Data-URIs em conformidade com o isolamento de SSRF e bloqueando escapes de diretório.
 3. **Filtro Atômico de Consultores no Kanban de CRM:** A seleção de consultor no Funil de Vendas preserva com exatidão o identificador do operador selecionado, aplicando o escopo correto sobre cartões e métricas totais do estágio.
-4. **Comparação e Exportação de Questionários:** O comparador em PDF gera relatórios parciais com base nos questionários que o usuário possui permissão de leitura, retornando 404 apenas quando nenhum registro selecionado for acessível ao solicitante.
 
 ---
 
@@ -3223,11 +3222,44 @@ Implementações de refinamento, robustez e segurança operacional no módulo de
 
 ---
 
-## 📋 56. Gestão de Matrículas: Pendências de Documentos Obrigatórios para o Contrato (`/admin/matriculas`)
+## 🎯 56. Segurança de Imagens em Contratos e Blindagem Anti-IDOR em Questionários (Lote H)
+
+Implementações de segurança da informação e endurecimento defensivo no motor de documentos e relatórios do sistema:
+
+### 56.1 Fechamento do Desvio de SSRF e Isolamento de Origem em Imagens de Contratos (Lote H1)
+1. **Validação Estrita de Origem Própria:** O compilador de templates de contratos (`ContractTemplateService::processHtmlImages`) avalia se uma imagem pertence à própria aplicação antes de qualquer acesso ao sistema de arquivos. Uma URL é considerada da própria aplicação exclusivamente se:
+   - For um caminho relativo estrito (inicia com `/` e não com `//`, evitando ataques *protocol-relative* que apontem para domínios externos); ou
+   - Possuir esquema `http`/`https` cujo hostname coincida com exatidão com o domínio configurado em `config('app.url')` (ignorando portas ou credenciais de usuário maliciosas).
+2. **Mapeamento Ancorado a Discos Locais:** O mapeamento para o armazenamento local (`Storage::disk('public')`, `Storage::disk('local')`, pastas de aplicação) é ancorado no início do caminho da URL sanitizada (`/storage/` ou `/visualizar-documento/`). URLs externas contendo substrings arbitrárias de diretórios de armazenamento deixam de ser mapeadas indevidamente para arquivos do servidor.
+3. **Barreira Secundária Contra Escapes de Diretório:** Permanece ativa a checagem em profundidade por `realpath` (`caminhoDeImagemPermitido()`), impedindo vetores de *path traversal* (como sequências `../`) de extraírem arquivos confidenciais fora dos discos públicos e privados autorizados.
+4. **Proteção Ativa Contra SSRF em Imagens Remotas:** URLs de terceiros continuam submetidas à validação contra SSRF (`SsrfProtection::isSafeUrl()`), bloqueando acessos a endereços de loopback, redes privadas e serviços de metadados de provedores em nuvem.
+
+### 56.2 Integridade Anti-IDOR e Contrato Estrito na Comparação de Questionários em PDF (Lote H2)
+1. **Contrato de Integridade "Tudo ou Nada":** Na exportação comparativa em PDF de respostas de questionários (`QuestionarioRespostaPDFController`), o sistema exige que **todos** os identificadores solicitados sejam acessíveis ao operador solicitante.
+2. **Resposta 403 Forbidden em Discrepâncias de Acesso:** Se um usuário comum requisitar questionários misturando IDs de sua titularidade com IDs de outros operadores ou inexistentes, a requisição é terminantemente recusada com HTTP 403 Forbidden, eliminando o risco de exposição indevida (IDOR).
+3. **Prevenção de Oráculo de Existência:** IDs inexistentes recebem o mesmo código de status (HTTP 403) dispensado a registros restritos de outros usuários, prevenindo a enumeração e sondagem de recursos internos. Requisições vazias ou com formato não numérico retornam HTTP 404 Not Found.
+
+---
+
+## 📊 57. Restauração e Blindagem do Escopo de Carteira no Funil Kanban (Lote I)
+
+Garantia de segurança da informação, privacidade e isolamento estrito de carteiras comerciais no Funil de Vendas Kanban:
+
+### 57.1 Isolamento Integral no Funil de Vendas Kanban (Lote I1)
+1. **Escopo de Carteira em Todas as Consultas:** O Funil Kanban (`KanbanInteressados`) aplica o escopo `visivelPara()` à base de todas as consultas executadas pela tela.
+2. **Cards, Contagens e Valores Financeiros:** Consultores comerciais comuns visualizam exclusivamente os leads de sua própria carteira e leads não atribuídos (órfãos). Os cards exibidos, as contagens de leads por coluna e os valores financeiros totais estimados por etapa respeitam rigorosamente esse isolamento, impedindo que um consultor tenha acesso a métricas ou dados de famílias atendidas por outros colegas.
+3. **Impossibilidade de Bypass por Filtro:** A tentativa de manipulação de parâmetros de filtro de outros consultores por usuários sem privilégio é ignorada no servidor, mantendo a consulta restrita à sua respectiva carteira. A visualização global irrestrita e a filtragem livre entre consultores permanecem exclusivas para administradores (`super_admin`) e operadores com a permissão explícita `ViewAll:Interessado`.
+
+### 57.2 Blindagem Automatizada e Prevenção de Regressões (Lote I2)
+1. **Cobertura por Testes de Regressão:** Implementada a suíte `KanbanEscopoCarteiraLoteITest`, que valida minuciosamente o isolamento de carteiras, cálculos agregados, filtros avançados, botão "Carregar mais" com paginação progressiva, colunas de status final e visibilidade de leads sem consultor.
+
+---
+
+## 📋 58. Gestão de Matrículas: Pendências de Documentos Obrigatórios para o Contrato (`/admin/matriculas`)
 
 Aprimoramento das regras de exibição e filtragem de pendências documentais na listagem de matrículas da secretaria:
 
-### 56.1 Foco em Documentos Bloqueantes de Contrato
+### 58.1 Foco em Documentos Bloqueantes de Contrato
 1. **Regra de Exigência:** Na tela de Gestão de Matrículas (`/admin/matriculas`), a coluna **Pendências**, o filtro de **Pendências** e a aba **Com pendências** consideram especificamente os **documentos faltantes que são obrigatórios para o contrato** (`categoria_exigencia = OBRIGATORIO_CONTRATO`).
 2. **Desacoplamento de Documentos de Histórico:** Documentos de vida escolar e conformidade com o MEC classificados como `OBRIGATORIO_HISTORICO` (como Histórico Escolar anterior, Atestado de Saúde ou Ficha de Anamnese) continuam cadastrados e passíveis de envio, mas **não bloqueiam o contrato nem marcam a matrícula com pendência impeditiva na listagem geral**.
 3. **Modal de Detalhes:** Ao clicar sobre a pendência na tabela:
@@ -3238,11 +3270,11 @@ Aprimoramento das regras de exibição e filtragem de pendências documentais na
 
 ---
 
-## 📷 58. Correção Automatizada de Gabaritos por Foto (OMR) (`/admin/avaliacaos`)
+## 📷 59. Correção Automatizada de Gabaritos por Foto (OMR) (`/admin/avaliacaos`)
 
 O Torre360 conta com um motor determinístico de visão computacional (OMR - *Optical Mark Recognition*) desenvolvido em PHP puro (biblioteca GD), permitindo a leitura e correção instantânea de provas físicas por foto ou escaneamento, sem custos com APIs externas e com total privacidade dos dados dos alunos.
 
-### 58.1 Cadastro do Gabarito Oficial da Avaliação
+### 59.1 Cadastro do Gabarito Oficial da Avaliação
 1. Acesse **Acadêmico → Avaliações** e clique em editar uma avaliação ou cadastrar uma nova.
 2. Na aba/relação **Gabarito Oficial**, defina:
    - **Total de Questões** (suporta de 1 a 60 questões por folha) e **Alternativas** (4 ou 5 opções por questão: A-D ou A-E).
@@ -3253,7 +3285,7 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
 4. Cada questão pode receber um **Peso específico** e ser associada a uma **Habilidade da BNCC**.
 5. **Trava de Segurança**: A avaliação deve possuir **Nota Máxima** preenchida e maior que zero. Após confirmação de correções, o gabarito oficial é travado para não sobrescrever notas históricas.
 
-### 58.2 Emissão e Impressão das Folhas de Respostas em PDF
+### 59.2 Emissão e Impressão das Folhas de Respostas em PDF
 1. No menu de cabeçalho do Gabarito Oficial, utilize:
    - **Imprimir Turma Completa (PDF)**: gera um único arquivo PDF no formato A4 retrato com uma página para cada aluno com matrícula ativa na turma.
    - **Folha Individual do Aluno**: na listagem de alunos, imprima a folha com identificação e QR Code individual.
@@ -3262,7 +3294,7 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
 3. **Privacidade e QR Code Opaco**: O QR Code impresso contém exclusivamente um identificador UUID opaco gerado no banco de dados. Nenhum CPF, nome ou dado pessoal do menor é codificado no QR Code.
 4. **Instruções de Impressão**: Imprima sempre em escala 100% ("Tamanho real", sem "Ajustar à página").
 
-### 58.3 Leitura por Câmera / Upload e Conferência
+### 59.3 Leitura por Câmera / Upload e Conferência
 1. Na listagem de Avaliações ou na tela de Lançamento de Notas, clique no botão **Corrigir via Gabarito / Câmera**.
 2. **Captura e Upload**:
    - Envie uma ou mais fotos das folhas de respostas (JPG, PNG ou WebP).
@@ -3278,11 +3310,11 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
 
 ---
 
-## 🤖 59. Copiloto Pedagógico IA: Sequência Didática BNCC e Adaptações Inclusivas (PEI) (`/admin/planos-aulas`)
+## 🤖 60. Copiloto Pedagógico IA: Sequência Didática BNCC e Adaptações Inclusivas (PEI) (`/admin/planos-aulas`)
 
 O Torre360 integra ferramentas avançadas de Inteligência Artificial Generativa direcionadas exclusivamente ao planejamento curricular do docente e à inclusão de estudantes com necessidades educacionais especiais.
 
-### 59.1 Geração de Sequência Didática Alinhada à BNCC
+### 60.1 Geração de Sequência Didática Alinhada à BNCC
 1. Acesse **Acadêmico → Planos de Aula** e clique em **Novo** ou edite um plano pendente de execução.
 2. No cabeçalho superior, clique em **Criar com Copiloto IA** (permissão `GerarComCopiloto:PlanoAula`).
 3. No modal do assistente:
@@ -3297,7 +3329,7 @@ O Torre360 integra ferramentas avançadas de Inteligência Artificial Generativa
 5. **Revisão Humana sem Persistência Forçada**: O resultado preenche os campos do formulário da tela sem salvar automaticamente no banco de dados. O professor pode ler, ajustar, acrescentar materiais e salvar no momento desejado.
 6. **Exportação em PDF**: Utilize o botão **Exportar PDF** para emitir o plano de aula diagramado para arquivo ou impressão.
 
-### 59.2 Copiloto de Inclusão e Adaptação Curricular PEI (LGPD Estrita)
+### 60.2 Copiloto de Inclusão e Adaptação Curricular PEI (LGPD Estrita)
 1. Na edição de um Plano de Aula, abra a aba inferior **Adaptações Curriculares e PEI (Inclusão)**.
 2. Clique em **Gerar Adaptação PEI com IA** (disponível para coordenadores e gestores com permissão `GerarPei:PlanoAula` quando a flag institucional `COPILOTO_PEDAGOGICO_PEI_HABILITADO` estiver ativa).
 3. Selecione o estudante da turma.

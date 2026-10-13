@@ -178,6 +178,7 @@ class UploadsSegurosTest extends TestCase
 
     public function test_imagem_legitima_do_disco_publico_continua_sendo_embutida(): void
     {
+        config(['app.url' => 'http://escola.test']);
         Storage::fake('public');
         Storage::disk('public')->put('instituicao-logos/logo.png', base64_decode(self::PNG_1X1));
 

@@ -28,6 +28,21 @@ class CompararQuestionarioRespostasPDFTest extends TestCase
         return $user;
     }
 
+    private function criarUsuarioComum(): User
+    {
+        Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
+
+        $user = User::factory()->create([
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+            'email_verified_at' => now(),
+        ]);
+        $user->assignRole('professor');
+        session(['active_role' => 'professor']);
+
+        return $user;
+    }
+
     private function criarResposta(?User $user, string $questionarioTitulo): QuestionarioResposta
     {
         $questionario = Questionario::create([
@@ -63,6 +78,19 @@ class CompararQuestionarioRespostasPDFTest extends TestCase
         $response->assertStatus(404);
     }
 
+    public function test_retorna_404_quando_ids_for_array_vazio_ou_apenas_nao_numericos(): void
+    {
+        $admin = $this->criarAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => []]))
+            ->assertStatus(404);
+
+        $this->actingAs($admin)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => ['abc']]))
+            ->assertStatus(404);
+    }
+
     public function test_admin_baixa_pdf_de_comparacao_com_duas_respostas(): void
     {
         $admin = $this->criarAdmin();
@@ -78,31 +106,53 @@ class CompararQuestionarioRespostasPDFTest extends TestCase
         $this->assertStringStartsWith('%PDF', $response->getContent());
     }
 
-    public function test_usuario_comum_nao_baixa_pdf_de_resposta_de_outro_usuario(): void
+    public function test_admin_baixa_pdf_de_respostas_de_outros_usuarios(): void
     {
-        Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
+        $admin = $this->criarAdmin();
+        $outro1 = User::factory()->create(['activated_at' => now()]);
+        $outro2 = User::factory()->create(['activated_at' => now()]);
 
+        $resposta1 = $this->criarResposta($outro1, 'Questionário Outro Um');
+        $resposta2 = $this->criarResposta($outro2, 'Questionário Outro Dois');
+
+        $response = $this->actingAs($admin)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$resposta1->id, $resposta2->id]]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_usuario_comum_baixa_pdf_com_sucesso_quando_informa_apenas_respostas_proprias(): void
+    {
+        $usuario = $this->criarUsuarioComum();
+
+        $resposta1 = $this->criarResposta($usuario, 'Minha Resposta Um');
+        $resposta2 = $this->criarResposta($usuario, 'Minha Resposta Dois');
+
+        $response = $this->actingAs($usuario)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$resposta1->id, $resposta2->id]]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    public function test_usuario_comum_recebe_403_ao_tentar_baixar_pdf_de_resposta_de_outro_usuario(): void
+    {
+        $outroUsuario = $this->criarUsuarioComum();
         $dono = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
-        $outroUsuario = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
-        $outroUsuario->assignRole('professor');
-        session(['active_role' => 'professor']);
 
         $respostaAlheia = $this->criarResposta($dono, 'Questionário Alheio');
 
         $response = $this->actingAs($outroUsuario)
             ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$respostaAlheia->id]]));
 
-        $response->assertStatus(404);
+        $response->assertStatus(403);
     }
 
-    public function test_usuario_comum_baixa_pdf_apenas_da_propria_resposta_entre_ids_selecionados(): void
+    public function test_usuario_comum_recebe_403_ao_tentar_misturar_resposta_propria_e_alheia(): void
     {
-        Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
-
-        $usuario = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
-        $usuario->assignRole('professor');
-        session(['active_role' => 'professor']);
-
+        $usuario = $this->criarUsuarioComum();
         $outroUsuario = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
 
         $minhaResposta = $this->criarResposta($usuario, 'Minha Resposta');
@@ -111,8 +161,34 @@ class CompararQuestionarioRespostasPDFTest extends TestCase
         $response = $this->actingAs($usuario)
             ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$minhaResposta->id, $respostaAlheia->id]]));
 
-        // A resposta alheia é filtrada pelo escopo do resource, mas como sobra
-        // ao menos a própria resposta, o PDF ainda é gerado com sucesso.
+        // Contrato anti-IDOR (dd98243d): exige que todos os IDs solicitados sejam visíveis (tudo ou nada).
+        $response->assertStatus(403);
+    }
+
+    public function test_retorna_403_quando_informa_id_inexistente_isolado_ou_misturado(): void
+    {
+        $usuario = $this->criarUsuarioComum();
+        $minhaResposta = $this->criarResposta($usuario, 'Minha Resposta');
+
+        // ID inexistente isolado: não pode virar oráculo de existência, responde 403
+        $this->actingAs($usuario)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => [999999]]))
+            ->assertStatus(403);
+
+        // ID inexistente misturado com próprio: responde 403
+        $this->actingAs($usuario)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$minhaResposta->id, 999999]]))
+            ->assertStatus(403);
+    }
+
+    public function test_baixa_pdf_com_sucesso_quando_ids_sao_repetidos(): void
+    {
+        $usuario = $this->criarUsuarioComum();
+        $minhaResposta = $this->criarResposta($usuario, 'Minha Resposta Repetida');
+
+        $response = $this->actingAs($usuario)
+            ->get(route('questionario-respostas.comparar.pdf', ['ids' => [$minhaResposta->id, $minhaResposta->id]]));
+
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
     }
