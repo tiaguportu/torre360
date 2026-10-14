@@ -90,6 +90,8 @@ Em conformidade com a auditoria de segurança (`docs/seguranca_pendencias.md`), 
 - `App\Policies\TranstornoAprendizagemPolicy` (`ViewAny:TranstornoAprendizagem`)
 - `App\Policies\RecursoAcessibilidadePolicy` (`ViewAny:RecursoAcessibilidade`)
 
+> **Impacto na operação (decisão de negócio pendente).** Essas três entidades aparecem como abas (Relation Managers) na edição de **Pessoa** (`PessoaResource`). Antes não havia Policy e qualquer usuário que abrisse a pessoa as via e editava (a lacuna descrita em `docs/lgpd_saude_policies.md`). Com as Policies, **somente `super_admin`** recebe `View/Create/Update/Delete`: `admin`, `coordenador` e `secretaria` deixam de ver essas abas até que um `super_admin` conceda as permissões em *Shield → Roles*. Isso é intencional (mesmo precedente de `FichaMedica`), mas quem hoje cadastra necessidades especiais precisa ser avisado e os papéis certos precisam receber a permissão. O PEI **não depende** dessas permissões: a geração lê as categorias pelo serviço, sob `GerarPei:PlanoAula` e o escopo do professor.
+
 ---
 
 ## 5. Trava Operacional: Flag de Habilitação do PEI

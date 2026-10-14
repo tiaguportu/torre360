@@ -95,10 +95,13 @@ Todos os parâmetros são parametrizáveis e podem ser sobrescritos por variáve
 |---|---|---|
 | `OMR_LIMIAR_MARCADA` | `0.42` | Fração mínima de preenchimento escuro para considerar a bolha como marcada. |
 | `OMR_LIMIAR_VAZIA` | `0.18` | Fração máxima para considerar a bolha como desmarcada/em branco. |
-| `OMR_DELTA_DUPLA` | `0.12` | Se duas bolhas na mesma linha superarem `limiar_marcada` com diferença inferior a este delta, a questão é classificada como marcação dupla. |
-| `OMR_RESOLUCAO_CANONICA` | `1600` | Largura em pixels do canvas retificado pela homografia. |
-| `OMR_MAX_ARQUIVOS` | `50` | Limite de fotos enviadas em lote na interface do Filament. |
-| `OMR_RETENCAO_DIAS` | `30` | Período de guarda da foto original antes da purga automática. |
+| `OMR_MAX_ARQUIVOS` | `45` | Limite de fotos enviadas em lote na interface do Filament. |
+| `OMR_RETENCAO_DIAS` | `30` | Período de guarda da foto (cópia reencodada) antes da purga automática. |
+| `OMR_FILA` | `default` | Fila dos jobs de OMR. |
+
+Uma bolha entre `OMR_LIMIAR_VAZIA` e `OMR_LIMIAR_MARCADA` é lida como **ambígua**. A leitura amostra 80% do raio da bolha, então só um preenchimento relevante passa o limiar de marcada. Duas ou mais bolhas marcadas na mesma questão são lidas como **dupla marcação** (a questão não pontua e fica sinalizada).
+
+> A resolução do canvas retificado e o tamanho da janela de busca dos marcadores são constantes do código (`GabaritoLayout`, `MarcadorDetector`), não variáveis de ambiente.
 
 ---
 
@@ -112,23 +115,34 @@ As permissões seguem o padrão canônico `PascalCase` com dois-pontos:
   - **Papéis Padrão:** `super_admin`, `admin`, `coordenador`, `professor`.
 - `CorrigirGabarito:Avaliacao`:
   - Permite acessar a interface de correção por foto / câmera (`CorrigirGabarito`).
-  - Permite conferir, editar respostas e lançar notas oficiais em lote.
+  - Permite conferir as folhas lidas, associar o aluno quando o QR falha, descartar e lançar notas.
   - **Papéis Padrão:** `super_admin`, `admin`, `coordenador`, `professor`.
 
+> A conferência **não edita** respostas individuais: a folha lida só pode ser lançada, descartada ou reenviada com uma foto melhor. A edição questão a questão não está implementada.
+
 ### Proteções de Acesso (Escopo Pedagógico):
-- O professor só pode acessar avaliações das turmas em que leciona a respectiva disciplina (validado no `AvaliacaoPolicy::corrigirGabarito()`).
-- O download dos PDFs e a rota de imagens retificadas são protegidos por `Gate::authorize()` e tokens temporários assinados.
+- Quem tem o papel de professor só gerencia e corrige as **próprias** avaliações (`professor_id` entre as pessoas do usuário). O escopo está na `AvaliacaoPolicy` (`gerenciarGabarito()` e `corrigirGabarito()`), porque as rotas de PDF resolvem a avaliação direto pelo id, sem passar pelo `AvaliacaoResource`. Coordenação e administração veem todas.
+- O download dos PDFs passa por `Gate::authorize()` no registro específico (folha ou avaliação). O download de PDFs gerados em fila só aceita caminhos no padrão `gabaritos/folhas_turma_avaliacao_{id}_{token}.pdf` e autoriza a avaliação do nome. Não existe rota de imagem retificada nem URL assinada: a foto fica em disco privado e não é exibida na interface.
+- Os métodos da tela de conferência (`lancarNotaIndividual`, `associarMatricula`, `descartarCorrecao`, `lancarTodasConfirmadas`) só atuam sobre correções **da avaliação aberta**: um id de outra avaliação vindo do navegador é ignorado.
+
+### Lançamento de notas:
+- Vai sempre por `NotaLancamentoService::salvarNotas()`, em transação com trava de linha, e só para correções `aguardando_conferencia` com aluno identificado e nota calculada. Folha com falha de leitura ou descartada nunca vira nota; lançar de novo uma correção já lançada é idempotente (não regrava nem duplica a auditoria).
+- **Nota já lançada e diferente nunca é sobrescrita sem confirmação:** o cartão da folha mostra "nota atual → nota da folha" e só o botão "Sobrescrever a nota atual" a substitui.
+- **"Lançar Notas Prontas"** (lote) lança apenas folhas com aluno identificado, sem marcação dupla, ambígua ou ilegível e sem conflito. As demais ficam na tela, e o aviso final diz quantas e por quê.
+- Folha com marcação a conferir pede confirmação (`wire:confirm`) antes do lançamento individual.
+- A mesma imagem enviada duas vezes para a avaliação gera um alerta de duplicidade (SHA-256 do arquivo original).
+- Uma folha cujo QR pertence a **outra avaliação** não é vinculada à correção, não identifica o aluno e não é marcada como corrigida.
 
 ---
 
 ## 6. Operação da Fila de Processamento
 
-Para garantir tempo de resposta na interface e evitar estouro de memória, o processamento de imagens e geração de folhas em lote roda em fila assíncrona:
+A geração do PDF da turma inteira roda em fila (`GerarFolhasTurmaPdfJob`). **A leitura das fotos roda de forma síncrona** na própria requisição da tela de conferência (até `OMR_MAX_ARQUIVOS` imagens por envio, reduzidas a ~1600 px): um lote grande pode demorar. O job `ProcessarGabaritoOmrJob` existe, mas **ainda não está ligado à interface**.
 
 ### Filas Utilizadas:
-- `OMR_FILA` (padrão: `omr` ou `default`):
-  - Job: `App\Jobs\ProcessarGabaritoOmrJob` (processa uma foto individualmente).
+- `OMR_FILA` (padrão: `default`):
   - Job: `App\Jobs\GerarFolhasTurmaPdfJob` (monta o PDF de toda a turma em background).
+  - Job: `App\Jobs\ProcessarGabaritoOmrJob` (processa uma foto; reservado para o processamento assíncrono).
 
 ### Como iniciar o Worker de Fila em Produção:
 ```bash
@@ -146,6 +160,6 @@ O comando `omr:purgar-arquivos-antigos` é executado diariamente via scheduler (
 ```bash
 php artisan omr:purgar-arquivos-antigos
 ```
-- Remove fotos de correções concluídas há mais de `OMR_RETENCAO_DIAS` dias (padrão: 30 dias).
-- Remove imagens de rascunhos descartados ou com erro após 48 horas.
-- Preserva integralmente o histórico de respostas (`respostas_finais`), notas e auditoria na tabela `omr_correcoes`.
+- Remove a foto de **toda** correção com mais de `OMR_RETENCAO_DIAS` dias (padrão: 30), seja qual for o status: confirmada, descartada, com falha de leitura ou abandonada na conferência.
+- Remove uploads temporários (`omr/uploads`) com mais de 24 horas. O upload original é apagado logo após o processamento; o que fica é uma cópia reencodada, sem EXIF/GPS.
+- Preserva o resultado (respostas, nota, alertas) e a auditoria na tabela `omr_correcoes`; o campo `arquivo_path` passa a `purgado_lgpd`.

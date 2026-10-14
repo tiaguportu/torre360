@@ -3308,8 +3308,10 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
    - **Prevenção de Atribuição Incorreta**: Se a folha não teve aluno identificado automaticamente via QR Code, o sistema define `matricula_id` como nulo e **desabilita o botão de lançamento** até que o professor selecione o aluno correto no seletor da turma.
    - O sistema valida estritamente que a matrícula selecionada pertença à turma da avaliação e esteja com situação ativa.
 4. **Lançamento Transacional Seguro**:
-   - Clique em **Lançar Notas no Diário**: as notas confirmadas são salvas estritamente através do `NotaLancamentoService` oficial, dentro de uma transação `DB::transaction`.
-   - Se um aluno já possuir nota lançada no sistema com valor diferente, o sistema acusa conflito visual e exige confirmação expressa antes de sobrescrever.
+   - Em cada folha, clique em **Lançar Nota**; ou use **Lançar Notas Prontas** para lançar de uma vez todas as folhas com aluno identificado, sem marcação dupla/ambígua e sem conflito. Folhas com marcação a conferir pedem uma confirmação antes de lançar, e o lote não as inclui. As notas são salvas pelo `NotaLancamentoService` oficial, dentro de uma transação.
+   - Se o aluno já possuir nota lançada com valor diferente, o cartão da folha mostra "nota atual → nota da folha" e só o botão **Sobrescrever a nota atual** a substitui. O lote nunca sobrescreve.
+   - Folha com falha de leitura ou já lançada não gera nota (lançar de novo não duplica). Uma foto enviada duas vezes gera um alerta de duplicidade.
+   - A conferência não edita respostas questão a questão: se a leitura saiu errada, descarte a folha e reenvie uma foto melhor.
    - Linhas em branco não apagam notas existentes e todas as ações geram registro de auditoria no log de atividades (`ActivityLog`).
 
 ---
