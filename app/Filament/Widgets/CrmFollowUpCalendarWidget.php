@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
+use Livewire\Attributes\Locked;
 
 class CrmFollowUpCalendarWidget extends Widget implements HasForms
 {
@@ -31,6 +32,7 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
     public ?array $data = [];
 
     // Filtro fixo vindo de um componente pai (ex: agenda de um consultor específico)
+    #[Locked]
     public ?int $fixedConsultorId = null;
 
     public function mount(): void
@@ -50,11 +52,11 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
                                     ->label('Consultor')
                                     ->multiple()
                                     ->options(fn () => User::whereIn('id',
-                                        Interessado::whereNotNull('usuario_id')->distinct()->pluck('usuario_id')
-                                    )->pluck('name', 'id'))
+                                        Interessado::query()->visivelPara()->whereNotNull('usuario_id')->distinct()->pluck('usuario_id')
+                                    )->orderBy('name')->pluck('name', 'id'))
                                     ->searchable()
                                     ->live()
-                                    ->hidden(fn () => $this->fixedConsultorId !== null),
+                                    ->hidden(fn () => $this->fixedConsultorId !== null || ! (auth()->user()?->podeVerTodosLeads() ?? false)),
 
                                 Toggle::make('somente_atrasados')
                                     ->label('Somente atrasados')
@@ -102,23 +104,24 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
     private function getEventosVisitas(): array
     {
         [$inicioJanela, $fimJanela] = $this->janelaDeDatas();
+        $user = auth()->user();
 
         $query = VisitaInteressado::query()
             ->agendadas()
             ->whereBetween('data_hora', [$inicioJanela, $fimJanela])
-            ->whereHas('interessado', fn ($q) => $q->ativos())
             ->with(['interessado.pessoa', 'interessado.usuario', 'usuario']);
 
-        if ($this->fixedConsultorId) {
-            $consultorId = $this->fixedConsultorId;
-        } elseif (! auth()->user()->hasRole(['super_admin', 'admin'])) {
-            $consultorId = auth()->id();
+        if (! $user?->podeVerTodosLeads()) {
+            $query->whereHas('interessado', fn ($q) => $q->ativos()->visivelPara($user));
+        } else {
+            $query->whereHas('interessado', fn ($q) => $q->ativos());
         }
 
-        if (isset($consultorId)) {
+        if ($this->fixedConsultorId) {
             $query->where(fn ($q) => $q
-                ->where('usuario_id', $consultorId)
-                ->orWhereHas('interessado', fn ($lead) => $lead->where('usuario_id', $consultorId)));
+                ->where('usuario_id', $this->fixedConsultorId)
+                ->orWhereHas('interessado', fn ($lead) => $lead->where('usuario_id', $this->fixedConsultorId))
+            );
         }
 
         return $query->get()->map(function (VisitaInteressado $visita) {
@@ -151,15 +154,18 @@ class CrmFollowUpCalendarWidget extends Widget implements HasForms
     private function getEventosFollowUp(): array
     {
         [$inicioJanela, $fimJanela] = $this->janelaDeDatas();
+        $user = auth()->user();
 
         $query = Interessado::ativos()
             ->whereBetween('data_proximo_contato', [$inicioJanela, $fimJanela])
             ->with(['pessoa', 'usuario', 'status']);
 
+        if (! $user?->podeVerTodosLeads()) {
+            $query->visivelPara($user);
+        }
+
         if ($this->fixedConsultorId) {
             $query->where('usuario_id', $this->fixedConsultorId);
-        } elseif (! auth()->user()->hasRole(['super_admin', 'admin'])) {
-            $query->where('usuario_id', auth()->id());
         }
 
         return $query->get()->map(function (Interessado $i) {
