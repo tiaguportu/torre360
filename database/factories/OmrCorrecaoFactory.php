@@ -51,6 +51,8 @@ class OmrCorrecaoFactory extends Factory
                     'nota_maxima' => 10.00,
                     'peso_etapa_avaliativa' => 1.00,
                     'data_prevista' => now()->toDateString(),
+                    'data_ocorrencia' => now()->toDateString(),
+                    'data_limite_lancamento' => now()->addDays(30)->toDateString(),
                 ])->id;
             },
             'gabarito_folha_id' => null,

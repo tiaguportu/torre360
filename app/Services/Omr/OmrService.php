@@ -63,6 +63,16 @@ class OmrService
         $caminhoHigienizado = $carregamento['caminho'];
         $sha256 = $carregamento['sha256'];
 
+        // A mesma foto enviada duas vezes gera duas correções: avisa o professor em vez de aceitar em silêncio.
+        $jaEnviada = OmrCorrecao::where('avaliacao_id', $avaliacao->id)
+            ->where('arquivo_sha256', $sha256)
+            ->where('status', '!=', StatusOmrCorrecao::Descartada)
+            ->exists();
+
+        if ($jaEnviada) {
+            $alertas[] = 'Atenção: esta mesma imagem já foi enviada para esta avaliação. Confira para não lançar a nota em duplicidade.';
+        }
+
         $layout = new GabaritoLayout(
             totalQuestoes: $gabarito->total_questoes,
             alternativas: $gabarito->alternativas,
@@ -92,7 +102,7 @@ class OmrService
                 'arquivo_sha256' => $sha256,
                 'status' => StatusOmrCorrecao::Falha,
                 'respostas' => [],
-                'alertas' => [$resultadoMarcadores['mensagem'] ?? 'Marcadores não identificados.'],
+                'alertas' => array_merge($alertas, [$resultadoMarcadores['mensagem'] ?? 'Marcadores não identificados.']),
                 'motor' => 'gd',
                 'layout_versao' => $layout->versao,
                 'mensagem_erro' => $resultadoMarcadores['mensagem'],
@@ -117,8 +127,11 @@ class OmrService
 
             if (! $folhaEncontrada) {
                 $alertas[] = "QR Code lido ({$uuidFolha}), mas a folha não consta no banco de dados.";
-            } elseif ($folhaEncontrada->avaliacao_id !== $avaliacao->id) {
+            } elseif ((int) $folhaEncontrada->avaliacao_id !== (int) $avaliacao->id) {
                 $alertas[] = "ATENÇÃO: Esta folha foi gerada para outra avaliação (ID #{$folhaEncontrada->avaliacao_id}).";
+                // Não vincula: a correção não pode apontar para a folha de outra avaliação (nem marcá-la como corrigida
+                // quando a nota for lançada) nem herdar o aluno dela.
+                $folhaEncontrada = null;
             } else {
                 $matriculaResolvida = $folhaEncontrada->matricula_id;
                 if ($folhaEncontrada->corrigida_em !== null) {
@@ -211,6 +224,22 @@ class OmrService
             $correcaoLocked = OmrCorrecao::where('id', $correcao->id)->lockForUpdate()->firstOrFail();
             $avaliacao = $correcaoLocked->avaliacao()->lockForUpdate()->firstOrFail();
             $matricula = $correcaoLocked->matricula;
+
+            // Idempotência: duplo clique ou segundo professor não regrava a nota nem duplica a auditoria.
+            if ($correcaoLocked->status === StatusOmrCorrecao::Confirmada) {
+                return [
+                    'sucesso' => true,
+                    'conflito' => false,
+                    'ja_lancada' => true,
+                    'nota_lancada' => (float) $correcaoLocked->nota_calculada,
+                    'mensagem' => 'Esta correção já foi lançada no diário.',
+                ];
+            }
+
+            // Falha de leitura ou folha descartada não têm nota calculada: lançar viraria um zero indevido.
+            if ($correcaoLocked->status !== StatusOmrCorrecao::AguardandoConferencia || $correcaoLocked->nota_calculada === null) {
+                throw new \InvalidArgumentException('Somente correções aguardando conferência, com nota calculada, podem ser lançadas.');
+            }
 
             if ($correcaoLocked->matricula_id === null || ! $matricula) {
                 throw new \InvalidArgumentException('Não é possível lançar nota de uma correção sem aluno/matrícula selecionado.');
