@@ -11,6 +11,7 @@ use App\Models\Matricula;
 use App\Models\OrigemInteressado;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
+use App\Models\PropostaComercial;
 use App\Models\Serie;
 use App\Models\StatusInteressado;
 use App\Models\TipoVinculo;
@@ -20,6 +21,7 @@ use App\Models\User;
 use App\Services\InteressadoMatriculaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -296,5 +298,150 @@ class InteressadoMatriculaWizardTest extends TestCase
         Livewire::actingAs($this->admin())
             ->test(ListInteressados::class)
             ->assertTableActionHidden('matricular', $lead);
+    }
+
+    public function test_wizard_bloqueia_pre_preenchimento_de_lead_de_outro_consultor_idor(): void
+    {
+        $consultorA = User::factory()->create(['name' => 'Consultor A']);
+        $consultorA->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        $consultorB = User::factory()->create(['name' => 'Consultor B']);
+
+        $leadAlheio = $this->lead('Responsavel Alheio', [['nome' => 'Aluno Alheio']]);
+        $leadAlheio->update(['usuario_id' => $consultorB->id]);
+
+        $wizard = Livewire::withQueryParams(['interessado' => $leadAlheio->id])
+            ->actingAs($consultorA)
+            ->test(EnrollmentWizard::class);
+
+        $wizard
+            ->assertSet('interessadoId', null)
+            ->assertNotified('Você não tem acesso a este lead.');
+
+        $responsaveis = $wizard->get('data.responsaveis');
+        $this->assertEmpty($responsaveis);
+    }
+
+    public function test_wizard_pre_preenche_lead_proprio_e_lead_sem_dono_para_consultor(): void
+    {
+        $consultor = User::factory()->create(['name' => 'Consultor']);
+        $consultor->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        // Lead próprio
+        $leadProprio = $this->lead('Responsavel Proprio', [['nome' => 'Aluno Proprio']]);
+        $leadProprio->update(['usuario_id' => $consultor->id]);
+
+        Livewire::withQueryParams(['interessado' => $leadProprio->id])
+            ->actingAs($consultor)
+            ->test(EnrollmentWizard::class)
+            ->assertSet('interessadoId', $leadProprio->id)
+            ->assertNotified('Dados do lead carregados');
+
+        // Lead sem dono
+        $leadSemDono = $this->lead('Responsavel Sem Dono', [['nome' => 'Aluno Sem Dono']]);
+        $leadSemDono->update(['usuario_id' => null]);
+
+        Livewire::withQueryParams(['interessado' => $leadSemDono->id])
+            ->actingAs($consultor)
+            ->test(EnrollmentWizard::class)
+            ->assertSet('interessadoId', $leadSemDono->id)
+            ->assertNotified('Dados do lead carregados');
+    }
+
+    public function test_wizard_pre_preenche_para_super_admin_e_usuario_com_view_all(): void
+    {
+        $consultorB = User::factory()->create(['name' => 'Consultor B']);
+        $leadAlheio = $this->lead('Responsavel Alheio', [['nome' => 'Aluno Alheio']]);
+        $leadAlheio->update(['usuario_id' => $consultorB->id]);
+
+        $superAdmin = $this->admin();
+        $superAdmin->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        Livewire::withQueryParams(['interessado' => $leadAlheio->id])
+            ->actingAs($superAdmin)
+            ->test(EnrollmentWizard::class)
+            ->assertSet('interessadoId', $leadAlheio->id)
+            ->assertNotified('Dados do lead carregados');
+
+        $gestor = User::factory()->create(['name' => 'Gestor']);
+        $gestor->givePermissionTo(
+            Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'ViewAll:Interessado', 'guard_name' => 'web'])
+        );
+
+        Livewire::withQueryParams(['interessado' => $leadAlheio->id])
+            ->actingAs($gestor)
+            ->test(EnrollmentWizard::class)
+            ->assertSet('interessadoId', $leadAlheio->id)
+            ->assertNotified('Dados do lead carregados');
+    }
+
+    public function test_wizard_bloqueia_proposta_com_lead_de_outro_consultor(): void
+    {
+        $consultorA = User::factory()->create(['name' => 'Consultor A']);
+        $consultorA->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        $consultorB = User::factory()->create(['name' => 'Consultor B']);
+
+        $leadAlheio = $this->lead('Responsavel Proposta Alheia', [['nome' => 'Aluno Proposta Alheia']]);
+        $leadAlheio->update(['usuario_id' => $consultorB->id]);
+
+        $proposta = PropostaComercial::create([
+            'codigo' => 'PROP-TEST-001',
+            'interessado_id' => $leadAlheio->id,
+            'responsavel_nome' => 'Responsavel Proposta Alheia',
+            'responsavel_telefone' => '11999998888',
+            'responsavel_email' => 'proposta@example.com',
+            'unidade_id' => $this->unidade->id,
+            'curso_id' => $this->curso->id,
+            'serie_id' => $this->serie->id,
+            'valor_tabela_mensal' => 1000.00,
+            'valor_liquido_mensal' => 900.00,
+            'quantidade_parcelas' => 12,
+            'valor_total_anual' => 10800.00,
+            'solicitado_por_user_id' => $consultorB->id,
+            'validade' => now()->addDays(5),
+        ]);
+
+        $wizard = Livewire::withQueryParams(['proposta_id' => $proposta->id])
+            ->actingAs($consultorA)
+            ->test(EnrollmentWizard::class);
+
+        $wizard
+            ->assertSet('interessadoId', null)
+            ->assertNotified('Você não tem acesso a este lead.');
+
+        $this->assertNull($wizard->get('data.unidade_id'));
+    }
+
+    public function test_wizard_carrega_proposta_sem_lead_normalmente(): void
+    {
+        $consultor = User::factory()->create(['name' => 'Consultor']);
+        $consultor->givePermissionTo(Permission::firstOrCreate(['name' => 'View:EnrollmentWizard', 'guard_name' => 'web']));
+
+        $proposta = PropostaComercial::create([
+            'codigo' => 'PROP-SEM-LEAD',
+            'interessado_id' => null,
+            'responsavel_nome' => 'Responsavel Sem Lead',
+            'responsavel_telefone' => '11999998888',
+            'responsavel_email' => 'semlead@example.com',
+            'aluno_nome' => 'Aluno Sem Lead',
+            'unidade_id' => $this->unidade->id,
+            'curso_id' => $this->curso->id,
+            'serie_id' => $this->serie->id,
+            'valor_tabela_mensal' => 1000.00,
+            'valor_liquido_mensal' => 900.00,
+            'quantidade_parcelas' => 12,
+            'valor_total_anual' => 10800.00,
+            'solicitado_por_user_id' => $consultor->id,
+            'validade' => now()->addDays(5),
+        ]);
+
+        Livewire::withQueryParams(['proposta_id' => $proposta->id])
+            ->actingAs($consultor)
+            ->test(EnrollmentWizard::class)
+            ->assertSet('interessadoId', null)
+            ->assertSet('data.unidade_id', $this->unidade->id)
+            ->assertNotified("Proposta {$proposta->codigo} Carregada");
     }
 }
