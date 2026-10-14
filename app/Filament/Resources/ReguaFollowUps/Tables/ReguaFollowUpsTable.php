@@ -87,7 +87,10 @@ class ReguaFollowUpsTable
                     ->schema([
                         Select::make('interessado_id')
                             ->label('Lead de Teste')
-                            ->options(fn () => Interessado::with('pessoa')
+                            ->options(fn () => Interessado::query()
+                                ->visivelPara()
+                                ->with('pessoa')
+                                ->latest('id')
                                 ->limit(40)
                                 ->get()
                                 ->mapWithKeys(fn (Interessado $i) => [
@@ -97,7 +100,8 @@ class ReguaFollowUpsTable
                             ->required(),
                     ])
                     ->action(function (array $data, ReguaFollowUp $record): void {
-                        $interessado = Interessado::find($data['interessado_id']);
+                        // Escopo de carteira (D7): não dispara teste (e-mail/notificação real) para lead alheio.
+                        $interessado = Interessado::query()->visivelPara()->find($data['interessado_id']);
 
                         if (! $interessado) {
                             Notification::make()
