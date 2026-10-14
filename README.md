@@ -280,6 +280,17 @@ Fila de pretendentes para turmas lotadas, notificados automaticamente quando abr
 
 ---
 
+### 18. 🔄 Transferência Escolar
+Processo de saída (para outra escola) e entrada (vinda de outra escola), reaproveitando o Histórico Escolar e o motor de declarações já existentes. Detalhes em `docs/transferencia_escolar_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `TransferenciaEscolar` | Matrícula, tipo (Saída/Entrada), escola externa (nome/cidade/UF), data, motivo, status |
+| "Concluir Saída" | Emite a Declaração de Transferência (`DocumentoService`) e fecha a matrícula como Cancelada |
+| "Marcar Histórico Recebido" | Encerra o processo de Entrada após lançar o ano externo no Histórico Escolar |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
