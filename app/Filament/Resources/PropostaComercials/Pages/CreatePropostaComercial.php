@@ -8,6 +8,7 @@ use App\Models\Interessado;
 use App\Models\PropostaComercial;
 use App\Services\RevenueManagementService;
 use App\Support\HelpContent;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,7 +24,19 @@ class CreatePropostaComercial extends CreateRecord
 
         $interessadoId = request()->query('interessado_id');
         if ($interessadoId) {
-            $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($interessadoId);
+            // Escopo de carteira (D7): o lead precisa estar visível para quem abre a proposta.
+            $lead = Interessado::query()
+                ->visivelPara()
+                ->with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])
+                ->find($interessadoId);
+
+            if (! $lead) {
+                Notification::make()
+                    ->warning()
+                    ->title('Você não tem acesso a este lead.')
+                    ->send();
+            }
+
             if ($lead) {
                 $dados = [
                     'interessado_id' => $lead->id,

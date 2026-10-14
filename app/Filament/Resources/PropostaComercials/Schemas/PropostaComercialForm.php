@@ -10,6 +10,7 @@ use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
 use App\Services\RevenueManagementService;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -19,9 +20,22 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class PropostaComercialForm
 {
+    /**
+     * Devolve o id do lead só se ele estiver na carteira visível do usuário logado (escopo do D7).
+     */
+    private static function leadVisivelId(mixed $id): ?string
+    {
+        if (blank($id) || ! is_numeric($id)) {
+            return null;
+        }
+
+        return Interessado::query()->visivelPara()->whereKey((int) $id)->exists() ? (string) (int) $id : null;
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -33,7 +47,9 @@ class PropostaComercialForm
                         Select::make('interessado_id')
                             ->label('Lead do CRM (Opcional)')
                             ->options(function (): array {
-                                return Interessado::with('pessoa')
+                                return Interessado::query()
+                                    ->visivelPara()
+                                    ->with('pessoa')
                                     ->latest()
                                     ->limit(50)
                                     ->get()
@@ -44,8 +60,11 @@ class PropostaComercialForm
                             })
                             ->getSearchResultsUsing(function (string $search): array {
                                 return Interessado::query()
-                                    ->whereHas('pessoa', fn ($q) => $q->where('nome', 'like', "%{$search}%")->orWhere('telefone', 'like', "%{$search}%"))
-                                    ->orWhere('id', 'like', "%{$search}%")
+                                    ->visivelPara()
+                                    // Agrupado: o `orWhere` não pode escapar do escopo de carteira acima.
+                                    ->where(fn ($busca) => $busca
+                                        ->whereHas('pessoa', fn ($q) => $q->where('nome', 'like', "%{$search}%")->orWhere('telefone', 'like', "%{$search}%"))
+                                        ->orWhere('id', 'like', "%{$search}%"))
                                     ->with('pessoa')
                                     ->limit(30)
                                     ->get()
@@ -55,7 +74,7 @@ class PropostaComercialForm
                                     ->toArray();
                             })
                             ->getOptionLabelUsing(function ($value): ?string {
-                                $lead = Interessado::with('pessoa')->find($value);
+                                $lead = Interessado::query()->visivelPara()->with('pessoa')->find($value);
                                 if (! $lead) {
                                     return null;
                                 }
@@ -63,13 +82,23 @@ class PropostaComercialForm
                                 return ($lead->pessoa?->nome ?? "Lead #{$lead->id}").($lead->pessoa?->telefone ? " ({$lead->pessoa->telefone})" : '');
                             })
                             ->searchable()
-                            ->default(request()->query('interessado_id'))
+                            ->default(fn (): ?string => self::leadVisivelId(request()->query('interessado_id')))
+                            ->rule(fn (?Model $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
+                                // Mantém o vínculo já gravado (ex.: coordenação editando a proposta); só valida troca/novo vínculo.
+                                if (blank($value) || ($record && (string) $record->getAttribute('interessado_id') === (string) $value)) {
+                                    return;
+                                }
+
+                                if (self::leadVisivelId($value) === null) {
+                                    $fail('Lead inválido ou sem acesso.');
+                                }
+                            })
                             ->live()
                             ->afterStateHydrated(function (?string $state, Set $set): void {
                                 if (! $state) {
                                     return;
                                 }
-                                $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
+                                $lead = Interessado::query()->visivelPara()->with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
                                 if ($lead) {
                                     if ($lead->pessoa) {
                                         $set('responsavel_nome', $lead->pessoa->nome);
@@ -95,7 +124,7 @@ class PropostaComercialForm
                                 if (! $state) {
                                     return;
                                 }
-                                $lead = Interessado::with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
+                                $lead = Interessado::query()->visivelPara()->with(['pessoa', 'dependentes.serie.curso', 'dependentes.unidade'])->find($state);
                                 if ($lead) {
                                     if ($lead->pessoa) {
                                         $set('responsavel_nome', $lead->pessoa->nome);
