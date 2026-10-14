@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\OrigemInteressado;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
+use App\Models\User;
 use App\Services\ContadoresCrm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -162,29 +165,109 @@ class ContadoresCrmTest extends TestCase
 
     public function test_selo_novos_conta_a_etapa_inicial_e_acompanha_novos_leads(): void
     {
-        $this->assertSame(0, ContadoresCrm::novos());
+        $this->assertSame(0, ContadoresCrm::novos(fn () => Interessado::query(), 1));
 
         $this->lead();
         $this->lead(['status_interessado_id' => $this->matriculado->id]);
 
-        $this->assertSame(1, ContadoresCrm::novos());
+        $this->assertSame(1, ContadoresCrm::novos(fn () => Interessado::query(), 1));
 
         $this->lead();
 
-        $this->assertSame(2, ContadoresCrm::novos());
+        $this->assertSame(2, ContadoresCrm::novos(fn () => Interessado::query(), 1));
     }
 
     public function test_alterar_etapa_do_funil_descarta_os_contadores(): void
     {
         $this->lead();
-        $this->assertSame(1, ContadoresCrm::novos());
+        $this->assertSame(1, ContadoresCrm::novos(fn () => Interessado::query(), 1));
 
         // "Novo" renomeada: a etapa inicial passa a ser a primeira ativa do funil, e o selo precisa refletir isso.
         $this->novo->update(['nome' => 'Primeiro contato']);
-        $this->assertSame(1, ContadoresCrm::novos());
+        $this->assertSame(1, ContadoresCrm::novos(fn () => Interessado::query(), 1));
 
         // Sem nenhuma etapa ativa, não há etapa inicial e o selo some.
         $this->novo->update(['is_final' => true]);
-        $this->assertSame(0, ContadoresCrm::novos());
+        $this->assertSame(0, ContadoresCrm::novos(fn () => Interessado::query(), 1));
+    }
+
+    public function test_selo_novos_diferencia_carteiras_de_consultores_e_super_admin(): void
+    {
+        $consultorA = User::factory()->create();
+        $consultorB = User::factory()->create();
+
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        // Lead próprio do consultor A
+        $this->lead(['usuario_id' => $consultorA->id]);
+        // Lead próprio do consultor B
+        $this->lead(['usuario_id' => $consultorB->id]);
+        // Lead sem dono
+        $this->lead(['usuario_id' => null]);
+
+        $this->actingAs($consultorA);
+        $countA = ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorA->id);
+        $this->assertSame(2, $countA);
+
+        $this->actingAs($consultorB);
+        $countB = ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorB->id);
+        $this->assertSame(2, $countB);
+
+        $this->actingAs($superAdmin);
+        $countSuper = ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $superAdmin->id);
+        $this->assertSame(3, $countSuper);
+    }
+
+    public function test_cache_de_novos_de_um_consultor_nao_vaza_para_outro(): void
+    {
+        $consultorA = User::factory()->create();
+        $consultorB = User::factory()->create();
+
+        $this->lead(['usuario_id' => $consultorA->id]);
+
+        $this->actingAs($consultorA);
+        $this->assertSame(1, ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorA->id));
+
+        $this->actingAs($consultorB);
+        $this->assertSame(0, ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorB->id));
+    }
+
+    public function test_invalidar_zera_contadores_novos_de_todos_usuarios(): void
+    {
+        $consultorA = User::factory()->create();
+        $this->actingAs($consultorA);
+
+        $this->assertSame(0, ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorA->id));
+
+        // Inserção direta no banco não dispara evento do modelo Eloquent
+        DB::table('interessado')->insert([
+            'pessoa_id' => Pessoa::factory()->create()->id,
+            'status_interessado_id' => $this->novo->id,
+            'origem_interessado_id' => $this->origem->id,
+            'usuario_id' => $consultorA->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Ainda vê 0 antes de invalidar por causa do cache
+        $this->assertSame(0, ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorA->id));
+
+        ContadoresCrm::invalidar();
+
+        $this->assertSame(1, ContadoresCrm::novos(fn () => InteressadoResource::getEloquentQuery(), $consultorA->id));
+    }
+
+    public function test_navigation_badge_retorna_null_sem_usuario_autenticado_e_respeita_escopo_com_usuario(): void
+    {
+        $consultor = User::factory()->create();
+        $this->lead(['usuario_id' => $consultor->id]);
+
+        auth()->logout();
+        $this->assertNull(InteressadoResource::getNavigationBadge());
+
+        $this->actingAs($consultor);
+        $this->assertSame('1', InteressadoResource::getNavigationBadge());
     }
 }
