@@ -453,6 +453,15 @@ class RolesSeeder extends Seeder
             }
         }
 
+        // Permissão de escopo amplo do CRM (ViewAll:Interessado) para papéis administrativos
+        $viewAllInteressado = Permission::firstOrCreate(['name' => 'ViewAll:Interessado', 'guard_name' => 'web']);
+        foreach (['admin', 'super_admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role && ! $role->hasPermissionTo($viewAllInteressado)) {
+                $role->givePermissionTo($viewAllInteressado);
+            }
+        }
+
         $this->command->info('Papéis e permissões criados com sucesso: '.implode(', ', array_keys($roles)));
     }
 }
