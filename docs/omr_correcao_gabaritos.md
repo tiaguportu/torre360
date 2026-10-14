@@ -12,7 +12,7 @@ O sistema de OMR (*Optical Mark Recognition*) do Torre360 foi projetado para ope
 1. **Motor Primário Determinístico (GD Puro):** Não requer extensões externas não padronizadas (como Imagick ou OpenCV). Todo o processamento de imagem roda em PHP com a extensão nativa `gd` (disponível por padrão no PHP 8.2 / XAMPP e na maioria dos ambientes Linux).
 2. **Layout Canônico Único (`GabaritoLayout`):** Geometria parametrizada em milímetros (A4 retrato: 210 × 297 mm). O mesmo objeto que dita o desenho vetorial (SVG) no gerador de folhas em PDF dita as coordenadas esperadas pelo motor OMR.
 3. **Anonimização e Identificação Opaca por UUID:** A folha de respostas gerada contém um QR Code contendo **apenas um UUID v4** vinculado à tabela `gabarito_folhas`. Nenhum dado pessoal (nome, matrícula, CPF ou ID sequencial) trafega no QR Code.
-4. **Fallback Gemini Vision Desligado por Padrão:** O envio para modelo multimodal (Gemini 2.5 Flash) existe apenas como fallback opcional e desligado (`OMR_FALLBACK_GEMINI=false`). Quando habilitado, apenas o recorte estrito da grade de respostas é enviado (sem cabeçalho, sem nome e sem QR Code).
+4. **Motor 100% Determinístico em GD Puro (Sem LLM de Visão):** O reconhecimento óptico roda integralmente no servidor através de binarização adaptativa e homografia bilinear em PHP nativo. Não envia fotos ou recortes para APIs de IA externas (zero custo de inferência e total aderência à LGPD). O fallback multimodal planejado não foi implementado nesta versão para preservar o isolamento completo de dados e reprodutibilidade determinística.
 5. **Lançamento Transacional e Idempotente:** Nenhuma nota é gravada sem confirmação humana na interface do Filament. O lançamento final utiliza o serviço oficial `NotaLancamentoService::salvarNotas()` dentro de transação com trava atômica.
 
 ---
@@ -99,7 +99,6 @@ Todos os parâmetros são parametrizáveis e podem ser sobrescritos por variáve
 | `OMR_RESOLUCAO_CANONICA` | `1600` | Largura em pixels do canvas retificado pela homografia. |
 | `OMR_MAX_ARQUIVOS` | `50` | Limite de fotos enviadas em lote na interface do Filament. |
 | `OMR_RETENCAO_DIAS` | `30` | Período de guarda da foto original antes da purga automática. |
-| `OMR_FALLBACK_GEMINI` | `false` | Se `true`, ativa envio opcional do recorte para Gemini Vision caso os marcadores falhem. |
 
 ---
 
@@ -143,9 +142,9 @@ php artisan queue:work --queue=omr,default --tries=3 --timeout=120 --memory=512
 As imagens enviadas contêm grafia de alunos e são consideradas dados sensíveis temporários. Após a confirmação do lançamento das notas, o armazenamento permanente da imagem não é necessário.
 
 ### Comando Agendado:
-O comando `omr:purga-arquivos` é executado diariamente via scheduler (`routes/console.php`):
+O comando `omr:purgar-arquivos-antigos` é executado diariamente via scheduler (`routes/console.php`):
 ```bash
-php artisan omr:purga-arquivos
+php artisan omr:purgar-arquivos-antigos
 ```
 - Remove fotos de correções concluídas há mais de `OMR_RETENCAO_DIAS` dias (padrão: 30 dias).
 - Remove imagens de rascunhos descartados ou com erro após 48 horas.
