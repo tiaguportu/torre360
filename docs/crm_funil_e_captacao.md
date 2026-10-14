@@ -583,16 +583,19 @@ O Lote D7 estabelece a segregação de acesso comercial por carteira de atendime
 6. **Calendário de Follow-up** (`App\Filament\Widgets\CrmFollowUpCalendarWidget`): eventos de contato e visitas filtrados por `podeVerTodosLeads()` e `visivelPara($user)`, propriedade `$fixedConsultorId` protegida com `#[Locked]`, seletor de consultor oculto para operadores sem permissão e opções restritas aos consultores visíveis. Testes: `tests/Feature/CrmFollowUpCalendarWidgetTest.php`.
 7. **Assistente de Matrícula** (`App\Filament\Pages\EnrollmentWizard::mount()`): blindagem contra IDOR via parâmetros de URL `?interessado={id}` e `?proposta_id={id}`, rejeitando o carregamento de leads alheios com notificação de advertência ao usuário e formulário limpo. Testes: `tests/Feature/InteressadoMatriculaWizardTest.php`.
 
-Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`, `tests/Feature/KanbanEscopoCarteiraLoteITest.php`, `tests/Feature/ContadoresCrmTest.php`, `tests/Feature/InteressadoChartsEscopoTest.php`, `tests/Feature/CrmFollowUpCalendarWidgetTest.php` e `tests/Feature/InteressadoMatriculaWizardTest.php`.
+8. **Proposta Comercial** (`CreatePropostaComercial::mount()` e `PropostaComercialForm::interessado_id`, Lote K): `?interessado_id=` só pré-preenche com lead visível; o `Select` (opções, busca, rótulo, valor padrão e hidratação) usa `visivelPara()`, a busca agrupa o `orWhere` para não escapar do escopo e há regra de validação no servidor que recusa novo vínculo com lead alheio (o vínculo já gravado é preservado na edição).
+9. **Indicações / Família Indica Família** (`IndicacaoInteressadoResource::getEloquentQuery()` e `IndicacaoInteressadoForm`, Lote K): a indicação só aparece (lista, edição) quando o lead indicado é visível; busca, rótulo e validação do lead seguem o mesmo escopo.
+10. **Dossiê Estratégico IA em PDF** (`DossieIaPdfController::authorizeAccess()`, Lote K): além da permissão genérica, exige `Interessado::podeSerAcessadoPor()` (403 para lead de outra carteira).
+11. **Comunicação em Massa** (`ComunicacaoEmMassaService::destinatariosInteressados()`, Lote K): o público "Interessados" é restrito à carteira de quem criou a comunicação (`enviado_por_user_id`) quando ele não tem `ViewAll:Interessado`; vale para a prévia, o envio e os `interessado_ids` explícitos. Comunicações antigas sem criador não são restringidas.
+12. **Teste de disparo da régua** (`ReguaFollowUpsTable`, ação `testar`, Lote K): lista e aceita apenas leads visíveis; não dispara e-mail/notificação de teste para lead alheio.
 
-#### Pendências Conhecidas (Inventário Lote J5):
-Conforme inventário realizado no Lote J5, as seguintes superfícies foram mapeadas e permanecem documentadas como pendências ou particularidades de desenho arquitetural:
-- **`CreatePropostaComercial::mount()`** (`app/Filament/Resources/PropostaComercials/Pages/CreatePropostaComercial.php:26`): carrega lead via parâmetro `?interessado=` na URL sem validação de carteira (`visivelPara()`), permitindo emissão de proposta para lead alheio.
-- **`PropostaComercialForm::interessado_id`** (`app/Filament/Resources/PropostaComercials/Schemas/PropostaComercialForm.php:36, 46`): campo `Select` de interessado e busca assíncrona consultam a base global de leads sem filtro por carteira do consultor.
-- **`IndicacaoInteressadoResource`** (`app/Filament/Resources/IndicacaoInteressados/IndicacaoInteressadoResource.php:21`): listagem de indicações não implementa `getEloquentQuery()`, expondo famílias indicadas por e para outras carteiras.
-- **`DossieIaPdfController::authorizeAccess`** (`app/Http/Controllers/DossieIaPdfController.php:48`): autorização para download do Dossiê em PDF verifica apenas a permissão genérica `View:Interessado` sem chamar `podeSerAcessadoPor()`.
-- **`ComunicacaoEmMassaService::destinatariosInteressados`** (`app/Services/ComunicacaoEmMassaService.php:48`): seleção de destinatários para disparos de comunicação em massa consulta `Interessado::query()` irrestrito, permitindo envio para leads fora da carteira do operador.
-- **`ReguaFollowUpsTable::testarDisparo`** (`app/Filament/Resources/ReguaFollowUps/Tables/ReguaFollowUpsTable.php:90`): modal de teste de réguas lista os 40 interessados mais recentes de toda a escola sem escopo de carteira.
+Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`, `tests/Feature/KanbanEscopoCarteiraLoteITest.php`, `tests/Feature/ContadoresCrmTest.php`, `tests/Feature/InteressadoChartsEscopoTest.php`, `tests/Feature/CrmFollowUpCalendarWidgetTest.php`, `tests/Feature/InteressadoMatriculaWizardTest.php` e `tests/Feature/CrmEscopoSuperficiesRestantesLoteKTest.php`.
+
+#### Pendências Conhecidas (após o Lote K):
+- **Assistente de matrícula com `?proposta_id=` de proposta sem lead** (`EnrollmentWizard::mount()`): carrega a proposta sem checar dono (`solicitado_por_user_id`), por decisão do Lote J (proposta sem lead mantém o comportamento anterior).
+- **Listas de `PropostaComercialResource` e `DocumentoInseridoResource`**: a proteção é por registro (policy/`isAccessibleBy`); a listagem não aplica escopo de carteira.
+- **Papel `secretaria`**: não possui `ViewAll:Interessado`; não pré-preenche o assistente de matrícula a partir de leads de outras carteiras. Conceder `ViewAll` ao papel é decisão de negócio.
+- **Comunicação em massa para responsáveis de turma** não é carteira comercial (público institucional) e não é afetada pelo escopo.
 
 ### 18.4 Bloqueio Pessimista e Concorrência ao Assumir Lead (Lote F6)
 - **Atomicidade no Atendimento:** A ação de assumir lead (disponível no Kanban, na listagem de Interessados e no cabeçalho de edição) utiliza transação em banco de dados (`DB::transaction`) associada a bloqueio pessimista (`lockForUpdate()`).
