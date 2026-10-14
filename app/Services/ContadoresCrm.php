@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,16 +59,18 @@ class ContadoresCrm
 
     /**
      * Leads na etapa inicial ("Novo"), exibidos como selo no menu.
+     *
+     * @param  Closure(): Builder  $base  consulta-base da listagem (escopo do usuário já aplicado)
      */
-    public static function novos(): int
+    public static function novos(Closure $base, int|string|null $usuarioId): int
     {
         return Cache::remember(
-            self::chave('novos'),
+            self::chave("novos:{$usuarioId}"),
             self::segundos(),
-            function (): int {
+            function () use ($base): int {
                 $status = StatusInteressado::inicial();
 
-                return $status ? Interessado::query()->where('status_interessado_id', $status->id)->count() : 0;
+                return $status ? $base()->where('status_interessado_id', $status->id)->count() : 0;
             }
         );
     }

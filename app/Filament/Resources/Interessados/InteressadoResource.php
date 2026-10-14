@@ -50,8 +50,12 @@ class InteressadoResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
+        if (! auth()->check()) {
+            return null;
+        }
+
         // O selo aparece em todas as páginas do painel: vem do cache de contadores (ContadoresCrm), não de 2 consultas por página.
-        $count = ContadoresCrm::novos();
+        $count = ContadoresCrm::novos(fn () => static::getEloquentQuery(), auth()->id());
 
         return $count > 0 ? (string) $count : null;
     }
