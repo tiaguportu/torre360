@@ -269,6 +269,17 @@ Apostilas e vídeo-aulas por turma/disciplina, publicadas para o aluno estudar f
 
 ---
 
+### 17. ⏳ Lista de Espera por Turma Lotada
+Fila de pretendentes para turmas lotadas, notificados automaticamente quando abre vaga. Detalhes em `docs/lista_espera_matricula_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `ListaEsperaMatricula` | Turma, período letivo, aluno (pessoa), origem no CRM (interessado/dependente, opcional), status (Aguardando/Notificado/Convertido/Desistiu) |
+| Notificação automática | Cancelamento, transferência ou exclusão de matrícula que libera vaga notifica o primeiro da fila (e-mail, push e sininho) |
+| Conversão automática | Nova matrícula da mesma pessoa na turma marca a entrada da fila como Convertida |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos

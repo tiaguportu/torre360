@@ -704,7 +704,9 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
 
                 Notification::make()
                     ->title($e->turmaSemVaga() ? 'Turma sem vagas suficientes' : 'Turma indisponível')
-                    ->body($e->getMessage())
+                    ->body($e->getMessage().($e->turmaSemVaga()
+                        ? ' Use a tela "Lista de Espera" (Secretaria) para registrar o interesse e ser avisado quando abrir vaga.'
+                        : ''))
                     ->danger()
                     ->send();
 
