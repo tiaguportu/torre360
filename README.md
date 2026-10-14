@@ -258,6 +258,17 @@ Consentimentos da família por aluno (ex.: uso de imagem), com aceite digital si
 
 ---
 
+### 16. 📁 Repositório de Conteúdo Pedagógico Digital
+Apostilas e vídeo-aulas por turma/disciplina, publicadas para o aluno estudar fora do horário de aula. Detalhes em `docs/conteudo_pedagogico_digital_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `MaterialAula` | Título, descrição, turma, disciplina, professor responsável, tipo (Apostila/Vídeo-aula/Link Externo), data de publicação, visibilidade |
+| Campo condicional | Upload de arquivo (apostila) ou URL (vídeo/link), de acordo com o tipo selecionado |
+| Portal do Aluno | Página "Materiais" lista o conteúdo visível da turma do aluno selecionado, com ação "Abrir" |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
