@@ -29,6 +29,10 @@ class CrmSlaGestaoSemConsultorLoteF4Test extends TestCase
     {
         parent::setUp();
 
+        // Congela o relógio ANTES de criar usuários e leads: os cenários usam datas fixas (13/10/2026) e
+        // `activated_at => now()` com o relógio real ficaria "no futuro" para o `ativos()` do cenário.
+        Carbon::setTestNow(Carbon::create(2026, 10, 13, 7, 0, 0));
+
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'coordenador', 'guard_name' => 'web']);
