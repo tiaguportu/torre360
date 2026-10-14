@@ -571,11 +571,28 @@ O Lote D7 estabelece a segregação de acesso comercial por carteira de atendime
   3. **Nos Cards do Kanban (`KanbanInteressados`):** Botão "Assumir" no rodapé do card da etapa.
 - Ao assumir, o lead é vinculado imediatamente ao usuário logado e um evento é registrado no `historico_contato` para auditoria do atendimento.
 
-### 18.3 Escopo Global no Eloquent (`scopeVisivelPara`)
-- Implementado em `Interessado::scopeVisivelPara()` e injetado nativamente em `InteressadoResource::getEloquentQuery()`, assegurando que listagens, abas de contadores (`ContadoresCrm`), widgets de calendário e relatórios reflitam de forma consistente a carteira do usuário ativo.
-- O Funil de Vendas (Kanban) aplica `visivelPara()` à base de todas as consultas (cards, contagem total de leads e somatório de valores por coluna), garantindo isolamento estrito entre consultores comerciais. A classe `tests/Feature/KanbanEscopoCarteiraLoteITest.php` blinda e guarda essa regra de segurança contra regressões.
+### 18.3 Escopo Global no Eloquent (`scopeVisivelPara`) e Superfícies Escopadas (Lotes D7, I e J)
+- Implementado em `Interessado::scopeVisivelPara()` (com qualificação de coluna `interessado.usuario_id`), permitindo filtrar dinamicamente os registros acessíveis: consultores comuns visualizam apenas os leads da sua própria carteira e leads não atribuídos (`usuario_id IS NULL`), enquanto administradores (`super_admin`) e detentores da permissão `ViewAll:Interessado` visualizam todos.
 
-Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php` e `tests/Feature/KanbanEscopoCarteiraLoteITest.php`.
+#### Superfícies Escopadas:
+1. **Funil de Vendas (Kanban)** (`App\Filament\Pages\KanbanInteressados`): cards, contagens por etapa e somatório de valores estimados calculados sobre a base filtrada por `visivelPara()`. Testes: `tests/Feature/KanbanEscopoCarteiraLoteITest.php`.
+2. **Listagem de Interessados** (`App\Filament\Resources\Interessados\InteressadoResource::getEloquentQuery()`): tabela principal do CRM injeta `visivelPara()`.
+3. **Abas de Contadores do CRM** (`App\Services\ContadoresCrm::abas()`): totalizadores por etapa e filtro com chave de cache isolada por usuário (`self::chave("abas:{$usuarioId}")`).
+4. **Selo "Novos" de Navegação** (`App\Services\ContadoresCrm::novos()` e `InteressadoResource::getNavigationBadge()`): contagem de novos contatos com cache individual por usuário (`self::chave("novos:{$usuarioId}")`), retornando nulo quando deslogado.
+5. **Gráficos do Dashboard** (`App\Filament\Widgets\InteressadoStatusChart` e `InteressadoOrigemChart`): agregações por etapa e origem com escopo `visivelPara()` antes das junções, mantendo a ordenação oficial por `ordem`. Testes: `tests/Feature/InteressadoChartsEscopoTest.php`.
+6. **Calendário de Follow-up** (`App\Filament\Widgets\CrmFollowUpCalendarWidget`): eventos de contato e visitas filtrados por `podeVerTodosLeads()` e `visivelPara($user)`, propriedade `$fixedConsultorId` protegida com `#[Locked]`, seletor de consultor oculto para operadores sem permissão e opções restritas aos consultores visíveis. Testes: `tests/Feature/CrmFollowUpCalendarWidgetTest.php`.
+7. **Assistente de Matrícula** (`App\Filament\Pages\EnrollmentWizard::mount()`): blindagem contra IDOR via parâmetros de URL `?interessado={id}` e `?proposta_id={id}`, rejeitando o carregamento de leads alheios com notificação de advertência ao usuário e formulário limpo. Testes: `tests/Feature/InteressadoMatriculaWizardTest.php`.
+
+Testes: `tests/Feature/CrmCarteiraConsultorEscopoTest.php`, `tests/Feature/KanbanEscopoCarteiraLoteITest.php`, `tests/Feature/ContadoresCrmTest.php`, `tests/Feature/InteressadoChartsEscopoTest.php`, `tests/Feature/CrmFollowUpCalendarWidgetTest.php` e `tests/Feature/InteressadoMatriculaWizardTest.php`.
+
+#### Pendências Conhecidas (Inventário Lote J5):
+Conforme inventário realizado no Lote J5, as seguintes superfícies foram mapeadas e permanecem documentadas como pendências ou particularidades de desenho arquitetural:
+- **`CreatePropostaComercial::mount()`** (`app/Filament/Resources/PropostaComercials/Pages/CreatePropostaComercial.php:26`): carrega lead via parâmetro `?interessado=` na URL sem validação de carteira (`visivelPara()`), permitindo emissão de proposta para lead alheio.
+- **`PropostaComercialForm::interessado_id`** (`app/Filament/Resources/PropostaComercials/Schemas/PropostaComercialForm.php:36, 46`): campo `Select` de interessado e busca assíncrona consultam a base global de leads sem filtro por carteira do consultor.
+- **`IndicacaoInteressadoResource`** (`app/Filament/Resources/IndicacaoInteressados/IndicacaoInteressadoResource.php:21`): listagem de indicações não implementa `getEloquentQuery()`, expondo famílias indicadas por e para outras carteiras.
+- **`DossieIaPdfController::authorizeAccess`** (`app/Http/Controllers/DossieIaPdfController.php:48`): autorização para download do Dossiê em PDF verifica apenas a permissão genérica `View:Interessado` sem chamar `podeSerAcessadoPor()`.
+- **`ComunicacaoEmMassaService::destinatariosInteressados`** (`app/Services/ComunicacaoEmMassaService.php:48`): seleção de destinatários para disparos de comunicação em massa consulta `Interessado::query()` irrestrito, permitindo envio para leads fora da carteira do operador.
+- **`ReguaFollowUpsTable::testarDisparo`** (`app/Filament/Resources/ReguaFollowUps/Tables/ReguaFollowUpsTable.php:90`): modal de teste de réguas lista os 40 interessados mais recentes de toda a escola sem escopo de carteira.
 
 ### 18.4 Bloqueio Pessimista e Concorrência ao Assumir Lead (Lote F6)
 - **Atomicidade no Atendimento:** A ação de assumir lead (disponível no Kanban, na listagem de Interessados e no cabeçalho de edição) utiliza transação em banco de dados (`DB::transaction`) associada a bloqueio pessimista (`lockForUpdate()`).
