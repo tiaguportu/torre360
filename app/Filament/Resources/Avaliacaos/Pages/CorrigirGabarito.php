@@ -8,6 +8,7 @@ use App\Enums\StatusOmrCorrecao;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Models\Avaliacao;
+use App\Models\Matricula;
 use App\Models\OmrCorrecao;
 use App\Services\Omr\OmrService;
 use App\Support\HelpContent;
@@ -151,6 +152,7 @@ class CorrigirGabarito extends Page implements HasForms
 
             return [
                 'id' => $c->id,
+                'matricula_id' => $c->matricula_id,
                 'aluno_nome' => $alunoNome,
                 'matricula_codigo' => $matriculaCodigo,
                 'uuid' => $uuid,
@@ -241,11 +243,54 @@ class CorrigirGabarito extends Page implements HasForms
         }
     }
 
+    public function associarMatricula(int $correcaoId, int $matriculaId, OmrService $omrService): void
+    {
+        $correcao = OmrCorrecao::find($correcaoId);
+        if (! $correcao) {
+            return;
+        }
+
+        try {
+            $omrService->associarMatricula($correcao, $matriculaId);
+            $this->carregarCorrecoes();
+
+            Notification::make()
+                ->title('Aluno associado com sucesso!')
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Erro ao associar aluno')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function getAlunosTurma(): array
+    {
+        return Matricula::where('turma_id', $this->record->turma_id)
+            ->where('situacao', 'ativa')
+            ->with('pessoa')
+            ->get()
+            ->map(fn (Matricula $m) => [
+                'id' => $m->id,
+                'nome' => ($m->pessoa?->nome ?? 'Aluno').' ('.($m->numero_matricula ?? 'MAT-'.$m->id).')',
+            ])
+            ->all();
+    }
+
     public function lancarTodasConfirmadas(OmrService $omrService): void
     {
         $pendentes = OmrCorrecao::where('avaliacao_id', $this->record->id)
             ->where('status', StatusOmrCorrecao::AguardandoConferencia)
+            ->whereNotNull('matricula_id')
             ->get();
+
+        $semMatricula = OmrCorrecao::where('avaliacao_id', $this->record->id)
+            ->where('status', StatusOmrCorrecao::AguardandoConferencia)
+            ->whereNull('matricula_id')
+            ->count();
 
         $sucessos = 0;
 
@@ -260,10 +305,19 @@ class CorrigirGabarito extends Page implements HasForms
 
         $this->carregarCorrecoes();
 
-        Notification::make()
-            ->title("{$sucessos} nota(s) lançada(s) com sucesso no diário da turma!")
-            ->success()
-            ->send();
+        if ($sucessos > 0) {
+            Notification::make()
+                ->title("{$sucessos} nota(s) lançada(s) com sucesso no diário da turma!")
+                ->success()
+                ->send();
+        }
+
+        if ($semMatricula > 0) {
+            Notification::make()
+                ->title("Atenção: {$semMatricula} folha(s) não foram lançadas porque aguardam identificação do aluno.")
+                ->warning()
+                ->send();
+        }
     }
 
     public function descartarCorrecao(int $correcaoId): void

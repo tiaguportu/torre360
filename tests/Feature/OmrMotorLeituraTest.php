@@ -265,4 +265,41 @@ class OmrMotorLeituraTest extends TestCase
             @unlink($arquivoFake);
         }
     }
+
+    public function test_folha_com_qr_code_ilegivel_ou_ausente_resulta_em_matricula_id_nulo(): void
+    {
+        Storage::fake('local');
+
+        $turma = Turma::factory()->create();
+        $avaliacao = $this->criarAvaliacao([
+            'turma_id' => $turma->id,
+            'nota_maxima' => 10.00,
+        ]);
+        $gabarito = AvaliacaoGabarito::factory()->create([
+            'avaliacao_id' => $avaliacao->id,
+            'total_questoes' => 3,
+        ]);
+        AvaliacaoGabaritoQuestao::factory()->create(['avaliacao_gabarito_id' => $gabarito->id, 'numero' => 1, 'alternativa_correta' => 'A']);
+        AvaliacaoGabaritoQuestao::factory()->create(['avaliacao_gabarito_id' => $gabarito->id, 'numero' => 2, 'alternativa_correta' => 'B']);
+        AvaliacaoGabaritoQuestao::factory()->create(['avaliacao_gabarito_id' => $gabarito->id, 'numero' => 3, 'alternativa_correta' => 'C']);
+
+        // Cria matrícula na turma, mas o gabarito é sintético SEM QR (ou QR ausente) e sem matrícula manual
+        Matricula::factory()->create(['turma_id' => $turma->id]);
+
+        $layout = new GabaritoLayout(totalQuestoes: 3, alternativas: 5);
+        $imagemPath = $this->gerarImagemSintetica($layout, null, [
+            1 => 'A',
+            2 => 'B',
+            3 => 'C',
+        ]);
+
+        $omrService = app(OmrService::class);
+        $correcao = $omrService->processarImagem($avaliacao, $imagemPath, null, null);
+        @unlink($imagemPath);
+
+        $this->assertNull($correcao->matricula_id, 'Matrícula deve ser nula quando QR não é lido e não há seleção manual.');
+        $this->assertSame(StatusOmrCorrecao::AguardandoConferencia, $correcao->status);
+        $this->assertNotEmpty($correcao->alertas);
+        $this->assertTrue(collect($correcao->alertas)->contains(fn ($alerta) => str_contains($alerta, 'Matrícula não identificada')));
+    }
 }

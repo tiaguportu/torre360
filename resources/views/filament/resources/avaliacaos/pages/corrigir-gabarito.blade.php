@@ -124,11 +124,29 @@
 
                             <!-- AÇÕES DA CORREÇÃO -->
                             <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
                                     @if($c['status'] !== 'confirmada')
-                                        <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
-                                            Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
-                                        </x-filament::button>
+                                        @if(empty($c['matricula_id']))
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <select
+                                                    wire:change="associarMatricula({{ $c['id'] }}, $event.target.value)"
+                                                    class="rounded-lg border border-rose-300 bg-white px-2.5 py-1 text-xs text-gray-900 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-rose-700 dark:bg-gray-800 dark:text-gray-100"
+                                                >
+                                                    <option value="">-- Selecione o Aluno da Turma --</option>
+                                                    @foreach($this->getAlunosTurma() as $alunoOpcao)
+                                                        <option value="{{ $alunoOpcao['id'] }}">{{ $alunoOpcao['nome'] }}</option>
+                                                    @endforeach
+                                                </select>
+
+                                                <x-filament::button size="sm" color="gray" icon="heroicon-o-lock-closed" disabled="disabled" title="Vincule um aluno para habilitar o lançamento">
+                                                    Lançar Nota (Bloqueado)
+                                                </x-filament::button>
+                                            </div>
+                                        @else
+                                            <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
+                                                Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
+                                            </x-filament::button>
+                                        @endif
                                     @else
                                         <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                             ✓ Nota lançada no diário

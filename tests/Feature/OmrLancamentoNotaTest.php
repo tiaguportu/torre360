@@ -205,4 +205,134 @@ class OmrLancamentoNotaTest extends TestCase
             'causer_id' => $user->id,
         ]);
     }
+
+    public function test_lancar_sem_aluno_matricula_e_recusado(): void
+    {
+        $turma = Turma::factory()->create();
+        $avaliacao = $this->criarAvaliacao([
+            'turma_id' => $turma->id,
+            'nota_maxima' => 10.00,
+        ]);
+        $user = User::factory()->create();
+
+        $correcao = OmrCorrecao::factory()->create([
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => null,
+            'nota_calculada' => 8.00,
+            'status' => StatusOmrCorrecao::AguardandoConferencia,
+        ]);
+
+        $omrService = app(OmrService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Não é possível lançar nota de uma correção sem aluno/matrícula selecionado.');
+        $omrService->lancarNota($correcao, $user, true);
+    }
+
+    public function test_associacao_manual_de_aluno_valida_e_lanca_nota(): void
+    {
+        $turma = Turma::factory()->create();
+        $avaliacao = $this->criarAvaliacao([
+            'turma_id' => $turma->id,
+            'nota_maxima' => 10.00,
+        ]);
+        $matricula = Matricula::factory()->create([
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+        $user = User::factory()->create();
+
+        $correcao = OmrCorrecao::factory()->create([
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => null,
+            'nota_calculada' => 8.50,
+            'status' => StatusOmrCorrecao::AguardandoConferencia,
+        ]);
+
+        $omrService = app(OmrService::class);
+        $atualizada = $omrService->associarMatricula($correcao, $matricula->id);
+
+        $this->assertSame($matricula->id, $atualizada->matricula_id);
+
+        $resultado = $omrService->lancarNota($atualizada, $user, true);
+        $this->assertTrue($resultado['sucesso']);
+
+        $this->assertDatabaseHas('nota', [
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => $matricula->id,
+            'valor' => 8.50,
+        ]);
+    }
+
+    public function test_selecao_de_matricula_de_outra_turma_ou_inativa_e_recusada(): void
+    {
+        $turma1 = Turma::factory()->create();
+        $turma2 = Turma::factory()->create();
+        $avaliacao = $this->criarAvaliacao([
+            'turma_id' => $turma1->id,
+            'nota_maxima' => 10.00,
+        ]);
+
+        // Matrícula de outra turma
+        $matriculaOutraTurma = Matricula::factory()->create([
+            'turma_id' => $turma2->id,
+            'situacao' => 'ativa',
+        ]);
+
+        // Matrícula inativa da mesma turma
+        $matriculaInativa = Matricula::factory()->create([
+            'turma_id' => $turma1->id,
+            'situacao' => 'cancelada',
+        ]);
+
+        $correcao = OmrCorrecao::factory()->create([
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => null,
+            'nota_calculada' => 7.00,
+        ]);
+
+        $omrService = app(OmrService::class);
+
+        // 1. Rejeita aluno de outra turma
+        try {
+            $omrService->associarMatricula($correcao, $matriculaOutraTurma->id);
+            $this->fail('Deveria ter recusado matrícula de outra turma');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('não pertence à turma', $e->getMessage());
+        }
+
+        // 2. Rejeita aluno inativo
+        try {
+            $omrService->associarMatricula($correcao, $matriculaInativa->id);
+            $this->fail('Deveria ter recusado matrícula inativa');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('não está ativa', $e->getMessage());
+        }
+    }
+
+    public function test_nenhuma_nota_e_criada_para_matricula_nao_confirmada(): void
+    {
+        $turma = Turma::factory()->create();
+        $avaliacao = $this->criarAvaliacao([
+            'turma_id' => $turma->id,
+            'nota_maxima' => 10.00,
+        ]);
+        $matricula = Matricula::factory()->create([
+            'turma_id' => $turma->id,
+            'situacao' => 'ativa',
+        ]);
+
+        // Correção apenas aguardando conferência, nunca confirmada
+        OmrCorrecao::factory()->create([
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => $matricula->id,
+            'nota_calculada' => 9.00,
+            'status' => StatusOmrCorrecao::AguardandoConferencia,
+        ]);
+
+        $this->assertDatabaseMissing('nota', [
+            'avaliacao_id' => $avaliacao->id,
+            'matricula_id' => $matricula->id,
+        ]);
+    }
 }
