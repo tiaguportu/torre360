@@ -48,5 +48,10 @@ class DossieIaPdfController extends Controller
         if (! $user->isEquipeAdministrativa() && ! $user->can('View:Interessado') && ! $user->can('ViewAny:Interessado')) {
             abort(403, 'Acesso não autorizado a este dossiê.');
         }
+
+        // Escopo de carteira (D7): a permissão genérica não basta; o lead precisa estar na carteira visível ao usuário.
+        if (! $record->podeSerAcessadoPor($user)) {
+            abort(403, 'Acesso não autorizado a este dossiê.');
+        }
     }
 }
