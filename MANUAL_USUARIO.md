@@ -595,6 +595,9 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 2. **Prazo por Lead e Institucional:**
    - Prazo padrão institucional: **120 minutos úteis** (configurável em `config/crm.php`).
    - Cada lead pode receber um prazo personalizado na ficha cadastral (campo *SLA de 1ª Resposta em minutos úteis*).
+   - O prazo corre a partir da **data de cadastro do lead** e termina no **primeiro contato registrado** com a família. Qualquer um destes registros encerra o SLA: a ação **Atendimento** da tabela, a **interação rápida da Linha do Tempo 360°** e o botão **Registrar Contato** da aba *Histórico de Contatos*. Vale a data do contato informada.
+   - **Não encerram o SLA:** registros automáticos do sistema (régua de e-mails, análises da IA), movimentações de etapa no funil e o reenvio do formulário do site.
+   - Só o **primeiro** contato conta: os seguintes não alteram a data. Editar ou excluir um contato depois não reabre o SLA.
 3. **Indicador Visual na Tabela:**
    - A coluna **SLA 1ª Resposta** exibe badges dinâmicos:
      - 🟢 **Atendido no Prazo:** Primeiro contato efetuado antes do estouro comercial.

@@ -316,6 +316,33 @@ class LeadFunilServiceTest extends TestCase
         $this->assertSame(2, $lead->historicos()->count());
     }
 
+    public function test_registrar_primeiro_contato_ignora_automatico_e_administrativo_e_nao_sobrescreve(): void
+    {
+        $ligacao = TipoContatoInteressado::create(['nome' => 'Ligação']);
+        $lead = $this->criarLead(null, ['data_primeiro_contato' => null]);
+
+        $novoHistorico = fn (int $tipoId, array $extra = []): HistoricoContato => $lead->historicos()->create($extra + [
+            'tipo_contato_interessado_id' => $tipoId,
+            'relato' => 'Registro de teste.',
+            'data_contato' => now(),
+        ]);
+
+        // Régua/IA e registros do funil não são conversa com a família: nada de SLA respondido.
+        $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico($ligacao->id, ['automatico' => true])));
+        $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico(TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)->id)));
+        $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico(TipoContatoInteressado::porNome(TipoContatoInteressado::FORMULARIO_SITE)->id)));
+        $this->assertNull($lead->fresh()->data_primeiro_contato);
+
+        $quando = now()->subHours(3)->startOfMinute();
+        $primeiro = $novoHistorico($ligacao->id, ['data_contato' => $quando]);
+
+        $this->assertTrue($this->funil->registrarPrimeiroContato($lead, $primeiro));
+        $this->assertEquals($quando->timestamp, $lead->fresh()->data_primeiro_contato->timestamp);
+
+        $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico($ligacao->id)));
+        $this->assertEquals($quando->timestamp, $lead->fresh()->data_primeiro_contato->timestamp);
+    }
+
     public function test_dependente_converte_data_de_nascimento_para_data_e_normaliza_nomes(): void
     {
         $lead = $this->criarLead();

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Interessados\RelationManagers;
 
-use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\TipoContatoInteressado;
 use App\Services\Customer360TimelineService;
-use App\Services\LeadScoreService;
+use App\Services\LeadFunilService;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -21,7 +20,6 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 
 class TimelineRelationManager extends RelationManager
@@ -252,28 +250,22 @@ class TimelineRelationManager extends RelationManager
         /** @var Interessado $interessado */
         $interessado = $this->getOwnerRecord();
 
-        DB::transaction(function () use ($interessado): void {
-            // 1. Grava no Histórico de Contatos
-            HistoricoContato::create([
-                'interessado_id' => $interessado->id,
-                'usuario_id' => auth()->id(),
-                'tipo_contato_interessado_id' => $this->novoTipoContatoId,
-                'relato' => trim($this->novoRelato),
-                'data_contato' => now(),
-                'resultado' => $this->novoResultado,
-                'duracao_minutos' => $this->novaDuracaoMinutos,
-            ]);
+        $dados = [
+            'tipo_contato_interessado_id' => $this->novoTipoContatoId,
+            'relato' => trim($this->novoRelato),
+            'data_contato' => now(),
+            'resultado' => $this->novoResultado,
+            'duracao_minutos' => $this->novaDuracaoMinutos,
+        ];
 
-            // 2. Se informada nova data de próximo contato, atualiza no Interessado
-            if (! empty($this->novaDataProximoContato)) {
-                $interessado->update([
-                    'data_proximo_contato' => Carbon::parse($this->novaDataProximoContato),
-                ]);
-            }
+        // Sem data informada, o próximo contato do lead fica como está (a chave ausente não zera o campo).
+        if (! empty($this->novaDataProximoContato)) {
+            $dados['data_proximo_contato'] = Carbon::parse($this->novaDataProximoContato);
+        }
 
-            // 3. Recalcula o Lead Score com base na nova interação
-            LeadScoreService::recalcular($interessado);
-        });
+        // Mesmo caminho da ação "Atendimento" da tabela: grava o contato, reagenda, recalcula o Lead Score e,
+        // sendo o primeiro contato da escola com a família, encerra o SLA de 1ª resposta.
+        app(LeadFunilService::class)->registrarAtendimento($interessado, $dados, auth()->id());
 
         // 4. Limpa campos do formulário
         $this->novoRelato = '';

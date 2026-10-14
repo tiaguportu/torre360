@@ -16,6 +16,12 @@ O bloco **Registrar nova interação** só é renderizado quando `podeRegistrar`
 O método `registrarContatoRapido()` repete a checagem no servidor (`abort_unless(..., 403)`), então esconder o bloco na
 view não é a única proteção. O restante da aba (indicadores, filtros e feed) segue a visibilidade do próprio relation manager.
 
+Ao gravar, `registrarContatoRapido()` delega a `LeadFunilService::registrarAtendimento()` (o mesmo caminho da ação
+"Atendimento" da tabela): grava o contato com `data_contato = now()`, reagenda o próximo contato **somente se** a data foi
+informada (campo vazio mantém o agendamento atual), recalcula o Lead Score e, sendo o primeiro contato da escola com a
+família, preenche `data_primeiro_contato` e encerra o SLA de 1ª resposta. O canal "Movimentação no Funil" e "Formulário do
+Site" não contam como primeiro contato (ver `docs/crm_funil_e_captacao.md`, seção do SLA).
+
 ## Contrato de cada evento do feed
 Cada item devolvido por `obterTimeline()` é um array com:
 

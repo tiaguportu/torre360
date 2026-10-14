@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Interessados\RelationManagers;
 
+use App\Models\HistoricoContato;
+use App\Services\LeadFunilService;
 use App\Services\LeadScoreService;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -116,7 +118,14 @@ class HistoricosRelationManager extends RelationManager
 
                         return $data;
                     })
-                    ->after(fn () => LeadScoreService::recalcular($this->getOwnerRecord())),
+                    ->after(function (HistoricoContato $record): void {
+                        $interessado = $this->getOwnerRecord();
+
+                        // Primeiro contato da escola com a família: encerra o SLA de 1ª resposta.
+                        app(LeadFunilService::class)->registrarPrimeiroContato($interessado, $record);
+
+                        LeadScoreService::recalcular($interessado);
+                    }),
             ])
             ->actions([
                 ViewAction::make(),

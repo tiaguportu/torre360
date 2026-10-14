@@ -217,8 +217,10 @@ class LeadFunilService
             }
 
             // Primeiro contato real da escola com a família (não o cadastro do lead).
-            if (! $lead->data_primeiro_contato) {
-                $atualizacoes['data_primeiro_contato'] = $historico->data_contato;
+            $primeiroContato = $this->dataDoPrimeiroContato($lead, $historico);
+
+            if ($primeiroContato !== null) {
+                $atualizacoes['data_primeiro_contato'] = $primeiroContato;
             }
 
             if ($atualizacoes !== []) {
@@ -231,6 +233,45 @@ class LeadFunilService
         LeadScoreService::recalcular($lead);
 
         return $historico;
+    }
+
+    /**
+     * Encerra o SLA de 1ª resposta quando um contato já gravado na ficha (Linha do Tempo ou aba Histórico
+     * de Contatos) é o primeiro da escola com a família. Sem isto, só a ação "Atendimento" da tabela
+     * preenchia `data_primeiro_contato` e o lead seguia "sem resposta" (e gerando alerta de SLA estourado)
+     * mesmo com contatos registrados por esses dois caminhos.
+     *
+     * @return bool true quando `data_primeiro_contato` foi preenchida agora
+     */
+    public function registrarPrimeiroContato(Interessado $lead, HistoricoContato $historico): bool
+    {
+        $primeiroContato = $this->dataDoPrimeiroContato($lead, $historico);
+
+        if ($primeiroContato === null) {
+            return false;
+        }
+
+        $lead->update(['data_primeiro_contato' => $primeiroContato]);
+
+        return true;
+    }
+
+    /**
+     * Data a gravar em `data_primeiro_contato`, ou null quando o histórico não conta: o lead já tem a data,
+     * o registro é automático (régua, IA) ou é administrativo (movimentação no funil, reenvio do formulário).
+     */
+    private function dataDoPrimeiroContato(Interessado $lead, HistoricoContato $historico): ?Carbon
+    {
+        if ($lead->data_primeiro_contato || $historico->automatico) {
+            return null;
+        }
+
+        $administrativo = TipoContatoInteressado::query()
+            ->whereKey($historico->tipo_contato_interessado_id)
+            ->whereIn('nome', [TipoContatoInteressado::FUNIL, TipoContatoInteressado::FORMULARIO_SITE])
+            ->exists();
+
+        return $administrativo ? null : $historico->data_contato;
     }
 
     /**
