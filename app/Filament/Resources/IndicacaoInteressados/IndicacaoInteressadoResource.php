@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class IndicacaoInteressadoResource extends Resource implements HasShieldPermissions
@@ -43,6 +44,22 @@ class IndicacaoInteressadoResource extends Resource implements HasShieldPermissi
     protected static ?string $pluralModelLabel = 'Programa Família Indica Família';
 
     protected static ?string $navigationLabel = 'Família Indica Família';
+
+    /**
+     * Escopo de carteira (D7): a indicação carrega dados do lead indicado, então só aparece para quem
+     * pode ver esse lead (os próprios, os sem consultor e, com `ViewAll:Interessado`, todos).
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $usuario = auth()->user();
+
+        if ($usuario?->podeVerTodosLeads()) {
+            return $query;
+        }
+
+        return $query->whereHas('interessado', fn (Builder $lead) => $lead->visivelPara($usuario));
+    }
 
     public static function form(Schema $schema): Schema
     {
