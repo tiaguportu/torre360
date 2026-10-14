@@ -8,6 +8,7 @@ use App\Models\ComunicacaoEmMassa;
 use App\Models\Interessado;
 use App\Models\Matricula;
 use App\Models\Pessoa;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ class ComunicacaoEmMassaService
         $filtros = $comunicacao->filtros ?? [];
 
         $pessoas = match ($comunicacao->tipo_publico) {
-            TipoPublicoComunicacao::Interessados => $this->destinatariosInteressados($filtros),
+            TipoPublicoComunicacao::Interessados => $this->destinatariosInteressados($filtros, $comunicacao->enviadoPor),
             TipoPublicoComunicacao::ResponsaveisTurma => $this->destinatariosResponsaveisTurma($filtros),
             default => collect(),
         };
@@ -41,11 +42,17 @@ class ComunicacaoEmMassaService
      * @param  array<string, mixed>  $filtros
      * @return Collection<int, Pessoa>
      */
-    private function destinatariosInteressados(array $filtros): Collection
+    private function destinatariosInteressados(array $filtros, ?User $criador = null): Collection
     {
         $interessadoIds = $filtros['interessado_ids'] ?? [];
 
         $query = Interessado::query()->with('pessoa');
+
+        // Escopo de carteira (D7): quem não vê todos os leads só dispara para os próprios e os sem consultor.
+        // Comunicações antigas sem criador registrado (`enviado_por_user_id` nulo) seguem sem restrição.
+        if ($criador !== null && ! $criador->podeVerTodosLeads()) {
+            $query->visivelPara($criador);
+        }
 
         if ($interessadoIds !== []) {
             $query->whereIn('id', $interessadoIds);
