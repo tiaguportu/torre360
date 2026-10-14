@@ -3303,9 +3303,10 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
    - Envie uma ou mais fotos das folhas de respostas (JPG, PNG ou WebP).
    - Em smartphones ou tablets, o botão ativa diretamente a câmera traseira do dispositivo com foco macro.
    - O sistema realiza redimensionamento automático, alinhamento por EXIF e homografia quadrilátera bilinear pelos 4 marcadores de canto.
-3. **Tela de Conferência Visual**:
+3. **Tela de Conferência Visual e Bloqueio de Segurança (T1)**:
    - O professor visualiza a grade de bolhas detectada, com destaque em verde para acertos, vermelho para erros e amarelo para marcações ambíguas/duplas.
-   - Se um aluno utilizou folha em branco, o professor pode selecionar manualmente a matrícula correspondente.
+   - **Prevenção de Atribuição Incorreta**: Se a folha não teve aluno identificado automaticamente via QR Code, o sistema define `matricula_id` como nulo e **desabilita o botão de lançamento** até que o professor selecione o aluno correto no seletor da turma.
+   - O sistema valida estritamente que a matrícula selecionada pertença à turma da avaliação e esteja com situação ativa.
 4. **Lançamento Transacional Seguro**:
    - Clique em **Lançar Notas no Diário**: as notas confirmadas são salvas estritamente através do `NotaLancamentoService` oficial, dentro de uma transação `DB::transaction`.
    - Se um aluno já possuir nota lançada no sistema com valor diferente, o sistema acusa conflito visual e exige confirmação expressa antes de sobrescrever.
@@ -3317,36 +3318,41 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
 
 O Torre360 integra ferramentas avançadas de Inteligência Artificial Generativa direcionadas exclusivamente ao planejamento curricular do docente e à inclusão de estudantes com necessidades educacionais especiais.
 
-### 60.1 Geração de Sequência Didática Alinhada à BNCC
+### 60.1 Geração de Sequência Didática Alinhada à BNCC e Regeneração por Seção (T7)
 1. Acesse **Acadêmico → Planos de Aula** e clique em **Novo** ou edite um plano pendente de execução.
 2. No cabeçalho superior, clique em **Criar com Copiloto IA** (permissão `GerarComCopiloto:PlanoAula`).
 3. No modal do assistente:
+   - Selecione a **Operação**: escolha entre *Gerar Plano Completo* ou *Regenerar apenas uma seção* (*Objetivos*, *Metodologia e Cronograma*, *Recursos Didáticos* ou *Avaliação Formativa*).
+   - Ao regenerar uma seção, você pode incluir uma **Instrução Curta de Ajuste** (ex: "tornar a introdução mais lúdica", "adicionar recursos digitais interativos" ou "detalhar rubricas de autoavaliação").
    - Selecione a **Turma**, **Componente Curricular** e uma ou mais **Habilidades da BNCC**.
-   - Defina o número de aulas (ex: 2 aulas) e a duração por aula (ex: 50 minutos).
-   - Opcionalmente, informe instruções pedagógicas específicas (ex: "foco em trabalho prático em grupos no laboratório").
-4. **Geração Estruturada**: O Copiloto IA (alimentado pelo Gemini com saída estrita em JSON) formula:
+   - Defina o número de aulas e a duração por aula.
+4. **Geração Estruturada e Rate Limit**: O Copiloto IA (alimentado pelo Gemini com saída estrita em JSON) formula:
    - **Objetivos de Aprendizagem** categorizados pela Taxonomia de Bloom Revisada (*Lembrar, Compreender, Aplicar, Analisar, Avaliar, Criar*).
    - **Metodologia Ativa de Aprendizagem** fundamentada com justificativa pedagógica.
    - **Cronograma da Aula** com etapas didáticas divididas minuto a minuto (Aquecimento, Desenvolvimento e Fechamento), detalhando a mediação do professor e a ação dos estudantes.
    - **Recursos Didáticos** e **Instrumentos de Avaliação Formativa**.
-5. **Revisão Humana sem Persistência Forçada**: O resultado preenche os campos do formulário da tela sem salvar automaticamente no banco de dados. O professor pode ler, ajustar, acrescentar materiais e salvar no momento desejado.
+   - Trava de proteção: limite de até 10 regenerações por sessão de usuário para preservação de rate limit e custos.
+5. **Revisão Humana sem Persistência Forçada**: O resultado preenche exclusivamente os campos do formulário da tela sem salvar automaticamente no banco de dados. O professor pode ler, ajustar, acrescentar materiais e salvar no momento desejado.
 6. **Exportação em PDF**: Utilize o botão **Exportar PDF** para emitir o plano de aula diagramado para arquivo ou impressão.
 
-### 60.2 Copiloto de Inclusão e Adaptação Curricular PEI (LGPD Estrita)
+### 60.2 Copiloto de Inclusão e Adaptação Curricular PEI (LGPD Estrita e Policy de Acesso - T2)
 1. Na edição de um Plano de Aula, abra a aba inferior **Adaptações Curriculares e PEI (Inclusão)**.
-2. Clique em **Gerar Adaptação PEI com IA** (disponível para coordenadores e gestores com permissão `GerarPei:PlanoAula` quando a flag institucional `COPILOTO_PEDAGOGICO_PEI_HABILITADO` estiver ativa).
-3. Selecione o estudante da turma.
-4. **Minimização e Anonimização Rigorosa (LGPD Arts. 6º III, 11 e 14)**:
+2. **Governança e Escopo Pedagógico (Policy T2)**:
+   - O acesso é governado pela `PlanoAulaAdaptacaoPolicy`. Professores só visualizam adaptações de estudantes vinculados às suas próprias turmas e disciplinas. Coordenadores e gestores possuem acesso institucional.
+   - Toda geração, visualização em tela e exportação em PDF registra auditoria no `ActivityLog` identificando o autor, o estudante e o momento, sem gravar o conteúdo confidencial nos logs.
+3. Clique em **Gerar Adaptação PEI com IA** (disponível para usuários com permissão `GerarPei:PlanoAula` quando a flag institucional `COPILOTO_PEDAGOGICO_PEI_HABILITADO` estiver ativa).
+4. Selecione o estudante da turma.
+5. **Minimização e Anonimização Rigorosa (LGPD Arts. 6º III, 11 e 14)**:
    - O Torre360 **NUNCA** envia à IA dados como nome, data de nascimento, CPF, contatos ou informações clínicas da Ficha Médica (alergias, medicamentos ou número do SUS).
    - Apenas os nomes padronizados das categorias de acessibilidade (cadastradas em Necessidades Especiais, Transtornos de Aprendizagem e Recursos de Acessibilidade), a etapa escolar e a faixa etária aproximada são enviados, referindo-se ao discente sempre como "o estudante".
    - Observações livres inseridas pelo professor passam por limpeza automática de dados pessoais via `ocultarDadosPessoais()`.
-5. **Diretrizes Pedagógicas Inclusivas**:
+6. **Diretrizes Pedagógicas Inclusivas**:
    - A IA propõe adaptações para a **MESMA atividade da turma** com base no Desenho Universal para a Aprendizagem (DUA) e na Lei nº 13.146/2015 (LBI).
    - Sugere quebra de instruções em passo a passo, apoios visuais, ampliação temporal justificada e organização do ambiente de sala de aula.
    - A habilidade da BNCC alvo é preservada. Qualquer flexibilização profunda recebe aviso explícito de que requer validação do AEE.
    - O modelo é expressamente proibido de emitir diagnósticos clínicos ou prescrever medicamentos.
-6. **Criptografia em Repouso**: Os dados do PEI gerado são gravados na tabela `plano_aula_adaptacoes` com criptografia em repouso através do cast `encrypted:array`.
-7. **Homologação e Exportação**:
+7. **Criptografia em Repouso**: Os dados do PEI gerado são gravados na tabela `plano_aula_adaptacoes` com criptografia em repouso através do cast `encrypted:array`.
+8. **Homologação e Exportação**:
    - A adaptação é gravada inicialmente como **Rascunho (IA)**.
    - O professor ou coordenador revisa os detalhes e clica em **Aprovar**.
    - O botão **PDF** gera o documento oficial com tarja de rascunho enquanto não homologado e aviso de confidencialidade da LBI. Todo download é registrado em log de auditoria.

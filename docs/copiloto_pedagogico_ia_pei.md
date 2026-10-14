@@ -69,12 +69,23 @@ As permissões são controladas pelo Filament Shield no formato `PascalCase` com
 
 | Permissão | Finalidade | Concessão Padrão |
 |---|---|---|
-| `GerarComCopiloto:PlanoAula` | Permite usar o assistente IA para preencher o formulário de Plano de Aula | `super_admin`, `admin`, `coordenador`, `professor` |
-| `GerarPei:PlanoAula` | Permite solicitar a geração de adaptações PEI para um aluno com necessidades especiais | `super_admin`, `admin`, `coordenador` *(Professores requerem liberação manual)* |
+| `GerarComCopiloto:PlanoAula` | Permite usar o assistente IA para preencher ou regenerar seções do Plano de Aula | `super_admin`, `admin`, `coordenador`, `professor` |
+| `GerarPei:PlanoAula` | Permite solicitar a geração e homologação de adaptações PEI para um aluno com necessidades especiais | `super_admin`, `admin`, `coordenador` *(Professores requerem liberação manual)* |
 | `ExportarPei:PlanoAula` | Permite gerar e baixar o PDF oficial confidencial do PEI do estudante | `super_admin`, `admin`, `coordenador` |
 
-### Salvaguarda para Dados de Saúde (Policies):
-Em conformidade com a auditoria de segurança (`docs/seguranca_pendencias.md`), as entidades de suporte a inclusão agora contam com Policies dedicadas com concessão conservadora apenas para `super_admin`:
+### Regeneração Modular de Seções (T7):
+Além da geração completa do plano didático, o Copiloto permite a regeneração pontual e isolada de seções individuais:
+- **Objetivos de Aprendizagem:** Mantém as habilidades BNCC selecionadas e recalcula os objetivos e níveis cognitivos da Taxonomia de Bloom.
+- **Metodologia e Cronograma:** Regenera a metodologia ativa sugerida e a fragmentação do cronograma temporizado com papéis de professor e alunos.
+- **Recursos Didáticos:** Atualiza a lista de materiais e recursos necessários.
+- **Avaliação Formativa:** Reformula os instrumentos avaliativos e critérios de sucesso.
+- **Instrução de Ajuste (Opcional):** Permite ao docente fornecer uma orientação curta (ex: "foco em trabalho em equipes", "recursos digitais").
+- **Limite por Sessão:** Trava de segurança limitando a 10 regenerações por sessão para prevenção de abuso e rate limit.
+- **Preenchimento sem Persistência:** A regeneração atualiza exclusivamente o campo correspondente no formulário sem gravar no banco de dados, preservando a autonomia docente de revisão antes do salvamento.
+
+### Salvaguarda para Dados de Saúde e Adaptações Inclusivas (Policies):
+Em conformidade com a auditoria de segurança (`docs/seguranca_pendencias.md`), as entidades de suporte à inclusão e dados sensíveis contam com Policies dedicadas:
+- `App\Policies\PlanoAulaAdaptacaoPolicy`: Governa a visualização, geração, homologação e download de PDFs de adaptações PEI. Exige as permissões de Shield e aplica o **escopo do professor** (professores só acessam planos e estudantes de suas próprias turmas/disciplinas).
 - `App\Policies\NecessidadeEducacaoEspecialPolicy` (`ViewAny:NecessidadeEducacaoEspecial`)
 - `App\Policies\TranstornoAprendizagemPolicy` (`ViewAny:TranstornoAprendizagem`)
 - `App\Policies\RecursoAcessibilidadePolicy` (`ViewAny:RecursoAcessibilidade`)
