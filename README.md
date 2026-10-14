@@ -385,3 +385,5 @@ autorizada:
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
 | Avaliação de desempenho docente | `docs/avaliacao_desempenho_docente_roadmap.md` |
+| Reserva de espaços e recursos (auditório, quadra, laboratório) | `docs/reserva_espacos_roadmap.md` |
+| Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
