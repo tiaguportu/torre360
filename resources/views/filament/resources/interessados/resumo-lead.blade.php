@@ -14,7 +14,7 @@
     ];
 @endphp
 
-<div style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); align-items:stretch;">
+<div style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:stretch;">
     {{-- Score --}}
     <div class="fi-section" style="padding:1.25rem; display:flex; align-items:center; gap:1.25rem; border-radius:.75rem; border:1px solid rgba(128,128,128,.25);">
         <div style="position:relative; width:104px; height:104px; flex:none;">
@@ -38,7 +38,7 @@
     </div>
 
     {{-- Métricas --}}
-    <div style="display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+    <div style="display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));">
         @foreach($metricas as $m)
             @php $corM = ! empty($m['alerta']) ? '#dc2626' : 'inherit'; @endphp
             <div class="fi-section" style="padding:1rem; border-radius:.75rem; border:1px solid {{ ! empty($m['alerta']) ? '#dc2626' : 'rgba(128,128,128,.25)' }}; display:flex; flex-direction:column; justify-content:center; gap:.25rem;">
@@ -57,19 +57,25 @@
     </div>
 </div>
 
-{{-- Detalhamento --}}
+{{-- Detalhamento: 1 coluna no celular, 2 colunas a partir de 768px (colunas com minmax(0,1fr) para a barra nunca passar da tela) --}}
+<style>
+    .lead-score-fatores { display:grid; gap:.6rem 2rem; grid-template-columns:minmax(0,1fr); }
+    @media (min-width: 768px) {
+        .lead-score-fatores { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+</style>
 <div class="fi-section" style="margin-top:1rem; padding:1.25rem; border-radius:.75rem; border:1px solid rgba(128,128,128,.25);">
     <div style="font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin-bottom:.75rem;">Detalhamento do score</div>
-    <div style="display:grid; gap:.6rem 2rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
+    <div class="lead-score-fatores">
         @foreach($fatores as $f)
             @php
                 $pct = $f['maximo'] > 0 ? round($f['pontos'] / $f['maximo'] * 100) : 0;
                 $corF = $pct >= 70 ? '#16a34a' : ($pct >= 35 ? '#d97706' : '#dc2626');
             @endphp
-            <div>
-                <div style="display:flex; justify-content:space-between; font-size:.8rem; margin-bottom:.2rem;">
-                    <span>{{ $f['fator'] }}</span>
-                    <span style="font-weight:600;">{{ $f['pontos'] }}<span style="opacity:.5; font-weight:400;"> / {{ $f['maximo'] }}</span></span>
+            <div style="min-width:0;">
+                <div style="display:flex; justify-content:space-between; gap:.5rem; font-size:.8rem; margin-bottom:.2rem;">
+                    <span style="min-width:0; overflow-wrap:anywhere;">{{ $f['fator'] }}</span>
+                    <span style="flex:none; white-space:nowrap; font-weight:600;">{{ $f['pontos'] }}<span style="opacity:.5; font-weight:400;"> / {{ $f['maximo'] }}</span></span>
                 </div>
                 <div style="height:6px; border-radius:999px; background:rgba(128,128,128,.2); overflow:hidden;">
                     <div style="height:100%; width:{{ $pct }}%; background:{{ $corF }}; border-radius:999px;"></div>

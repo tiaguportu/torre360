@@ -79,6 +79,27 @@ Definidas em `config('lead_score.faixas_cor')`:
 - **Amarelo (`warning`)**: score entre 40 e 69
 - **Vermelho (`danger`)**: score < 40
 
+### Onde o detalhamento aparece (Resumo do Lead)
+
+Na edição do interessado (`/admin/interessados/{id}/edit`, aba "Dados do Negócio"), o
+bloco **Resumo do Lead** é a view
+`resources/views/filament/resources/interessados/resumo-lead.blade.php`, alimentada por
+`LeadScoreService::detalhar()` (uma linha por fator, com `fator`, `pontos` e `maximo`). O
+"Detalhamento do score" é uma barra de progresso por fator, cor por % do máximo
+(≥ 70% verde, ≥ 35% âmbar, abaixo disso vermelho).
+
+Layout responsivo (CSS em `<style>` na própria view, classe `.lead-score-fatores`):
+
+- **Até 767px (celular):** 1 coluna.
+- **A partir de 768px (desktop/tablet):** 2 colunas fixas (`repeat(2, minmax(0, 1fr))`), 6 fatores
+  em cada com os 12 fatores atuais.
+- As colunas usam `minmax(0, 1fr)` e os itens `min-width: 0`: sem isso, o conteúdo "empurra" a
+  coluna e a barra passa do limite da tela. O rótulo do fator quebra linha (`overflow-wrap`) e o
+  valor "10 / 20" não quebra (`white-space: nowrap`).
+- Os cartões do topo (anel do score e métricas) usam `minmax(min(100%, 260px), 1fr)` e
+  `minmax(min(100%, 150px), 1fr)`: o mínimo da coluna nunca excede a largura disponível, o que
+  antes causava estouro horizontal em celulares de ~360px.
+
 ## Quando o score é recalculado
 
 O score é uma coluna persistida (`interessado.lead_score` +
