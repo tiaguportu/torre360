@@ -46,8 +46,11 @@
 
                     @if(count($correcoes) > 0)
                         <x-filament::button type="button" color="success" size="lg" icon="heroicon-o-check-badge" wire:click="lancarTodasConfirmadas">
-                            Lançar Todas as Notas Confirmadas
+                            Lançar Notas Prontas
                         </x-filament::button>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            Só entram folhas com aluno identificado, sem marcação a conferir e sem conflito com nota já lançada.
+                        </span>
                     @endif
                 </div>
             </form>
@@ -109,6 +112,20 @@
                                 </div>
                             @endif
 
+                            <!-- CONFLITO COM NOTA JÁ LANÇADA: exige confirmação explícita para sobrescrever -->
+                            @if(!empty($c['conflito']))
+                                <div class="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                                    <p class="font-bold">Este aluno já tem nota lançada nesta avaliação.</p>
+                                    <p class="mt-1">
+                                        Nota atual: <strong>{{ number_format((float) $c['conflito']['atual'], 2, ',', '.') }}</strong>
+                                        &rarr; nota da folha: <strong>{{ number_format((float) $c['conflito']['nova'], 2, ',', '.') }}</strong>
+                                    </p>
+                                    <x-filament::button class="mt-2" size="xs" color="danger" icon="heroicon-o-exclamation-triangle" wire:click="lancarNotaIndividual({{ $c['id'] }}, true)">
+                                        Sobrescrever a nota atual
+                                    </x-filament::button>
+                                </div>
+                            @endif
+
                             <!-- GRADE RESUMIDA DE RESPOSTAS -->
                             <div class="mt-4">
                                 <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Respostas Detectadas:</span>
@@ -143,9 +160,17 @@
                                                 </x-filament::button>
                                             </div>
                                         @else
-                                            <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
-                                                Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
-                                            </x-filament::button>
+                                            @if($c['status'] === 'aguardando_conferencia')
+                                                @if($c['tem_marcacao_a_conferir'])
+                                                    <x-filament::button size="sm" color="warning" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})" wire:confirm="Esta folha tem marcação dupla, ambígua ou ilegível. A nota calculada pode estar incorreta. Lançar mesmo assim?">
+                                                        Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
+                                                    </x-filament::button>
+                                                @else
+                                                    <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
+                                                        Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
+                                                    </x-filament::button>
+                                                @endif
+                                            @endif
                                         @endif
                                     @else
                                         <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">

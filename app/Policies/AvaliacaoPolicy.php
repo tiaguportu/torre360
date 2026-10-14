@@ -84,11 +84,27 @@ class AvaliacaoPolicy
 
     public function gerenciarGabarito(AuthUser $authUser, Avaliacao $avaliacao): bool
     {
-        return $authUser->can('GerenciarGabarito:Avaliacao');
+        return $authUser->can('GerenciarGabarito:Avaliacao') && $this->avaliacaoVisivelAoProfessor($authUser, $avaliacao);
     }
 
     public function corrigirGabarito(AuthUser $authUser, Avaliacao $avaliacao): bool
     {
-        return $authUser->can('CorrigirGabarito:Avaliacao');
+        return $authUser->can('CorrigirGabarito:Avaliacao') && $this->avaliacaoVisivelAoProfessor($authUser, $avaliacao);
+    }
+
+    /**
+     * Mesmo escopo de `AvaliacaoResource::getEloquentQuery()`: quem tem o papel de professor só enxerga as próprias
+     * avaliações. As rotas de PDF das folhas resolvem a avaliação direto pelo id, sem passar pelo Resource, então o
+     * escopo precisa estar também aqui.
+     */
+    private function avaliacaoVisivelAoProfessor(AuthUser $authUser, Avaliacao $avaliacao): bool
+    {
+        if (! $authUser->hasRole('professor')) {
+            return true;
+        }
+
+        $pessoasIds = $authUser->pessoas()->pluck('pessoa.id');
+
+        return $avaliacao->professor_id !== null && $pessoasIds->contains($avaliacao->professor_id);
     }
 }
