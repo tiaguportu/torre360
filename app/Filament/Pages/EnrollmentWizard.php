@@ -102,55 +102,84 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
         ];
 
         $interessadoIdAlvo = $interessado ?: request()->integer('interessado');
-        $interessado = $interessadoIdAlvo ? Interessado::with(['pessoa', 'dependentes.serie.curso'])->find($interessadoIdAlvo) : null;
+        $lead = null;
 
-        if ($interessado) {
-            $this->interessadoId = $interessado->id;
-            $dados = array_merge($dados, InteressadoMatriculaService::dadosParaWizard($interessado));
+        if ($interessadoIdAlvo) {
+            $lead = Interessado::query()
+                ->visivelPara()
+                ->with(['pessoa', 'dependentes.serie.curso'])
+                ->find($interessadoIdAlvo);
 
-            Notification::make()
-                ->title('Dados do lead carregados')
-                ->body("Formulário pré-preenchido com os dados de {$interessado->pessoa?->nome}"
-                    .(filled($interessado->dados_pre_matricula) ? ' e com a pré-matrícula online preenchida pela família (responsáveis, alunos e endereço)' : '')
-                    .'. Revise e complete as informações.')
-                ->info()
-                ->send();
+            if ($lead) {
+                $this->interessadoId = $lead->id;
+                $dados = array_merge($dados, InteressadoMatriculaService::dadosParaWizard($lead));
+
+                Notification::make()
+                    ->title('Dados do lead carregados')
+                    ->body("Formulário pré-preenchido com os dados de {$lead->pessoa?->nome}"
+                        .(filled($lead->dados_pre_matricula) ? ' e com a pré-matrícula online preenchida pela família (responsáveis, alunos e endereço)' : '')
+                        .'. Revise e complete as informações.')
+                    ->info()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->warning()
+                    ->title('Você não tem acesso a este lead.')
+                    ->send();
+            }
         }
 
         $propostaId = request()->integer('proposta_id');
-        if ($propostaId && ! $interessado) {
+        if ($propostaId && ! $lead && ! $interessadoIdAlvo) {
             $proposta = PropostaComercial::find($propostaId);
             if ($proposta) {
+                $propostaValida = true;
+
                 if ($proposta->interessado_id) {
-                    $this->interessadoId = $proposta->interessado_id;
-                }
-                $dados['unidade_id'] = $proposta->unidade_id;
-                $dados['curso_id'] = $proposta->curso_id;
-                if ($proposta->turma_id) {
-                    $dados['turma_id'] = $proposta->turma_id;
-                }
-                $dados['responsaveis'] = [
-                    [
-                        'nome' => $proposta->responsavel_nome,
-                        'telefone' => $proposta->responsavel_telefone,
-                        'email' => $proposta->responsavel_email,
-                        'responsavel_financeiro' => true,
-                        'tipo_vinculo' => 'Responsável Legal',
-                    ],
-                ];
-                if ($proposta->aluno_nome) {
-                    $dados['alunos'] = [
-                        [
-                            'nome' => $proposta->aluno_nome,
-                        ],
-                    ];
+                    $leadProposta = Interessado::query()
+                        ->visivelPara()
+                        ->find($proposta->interessado_id);
+
+                    if ($leadProposta) {
+                        $this->interessadoId = $leadProposta->id;
+                    } else {
+                        $propostaValida = false;
+                        Notification::make()
+                            ->warning()
+                            ->title('Você não tem acesso a este lead.')
+                            ->send();
+                    }
                 }
 
-                Notification::make()
-                    ->title("Proposta {$proposta->codigo} Carregada")
-                    ->body('Formulário pré-preenchido com os dados da Proposta Comercial aprovada (Mensalidade Líquida: R$ '.number_format((float) $proposta->valor_liquido_mensal, 2, ',', '.').').')
-                    ->success()
-                    ->send();
+                if ($propostaValida) {
+                    $dados['unidade_id'] = $proposta->unidade_id;
+                    $dados['curso_id'] = $proposta->curso_id;
+                    if ($proposta->turma_id) {
+                        $dados['turma_id'] = $proposta->turma_id;
+                    }
+                    $dados['responsaveis'] = [
+                        [
+                            'nome' => $proposta->responsavel_nome,
+                            'telefone' => $proposta->responsavel_telefone,
+                            'email' => $proposta->responsavel_email,
+                            'responsavel_financeiro' => true,
+                            'tipo_vinculo' => 'Responsável Legal',
+                        ],
+                    ];
+                    if ($proposta->aluno_nome) {
+                        $dados['alunos'] = [
+                            [
+                                'nome' => $proposta->aluno_nome,
+                            ],
+                        ];
+                    }
+
+                    Notification::make()
+                        ->title("Proposta {$proposta->codigo} Carregada")
+                        ->body('Formulário pré-preenchido com os dados da Proposta Comercial aprovada (Mensalidade Líquida: R$ '.number_format((float) $proposta->valor_liquido_mensal, 2, ',', '.').').')
+                        ->success()
+                        ->send();
+                }
             }
         }
 

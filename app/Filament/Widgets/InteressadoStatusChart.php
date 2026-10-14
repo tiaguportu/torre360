@@ -17,6 +17,7 @@ class InteressadoStatusChart extends ChartWidget
     protected function getData(): array
     {
         $data = Interessado::query()
+            ->visivelPara()
             ->join('status_interessado', 'interessado.status_interessado_id', '=', 'status_interessado.id')
             ->selectRaw('status_interessado.nome, count(*) as total, status_interessado.ordem')
             ->groupBy('status_interessado.nome', 'status_interessado.ordem')

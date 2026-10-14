@@ -3353,11 +3353,26 @@ O Torre360 integra ferramentas avançadas de Inteligência Artificial Generativa
 
 ---
 
+## 🎯 61. Escopo de Carteira Comercial nas Demais Superfícies do CRM (Lote J)
+
+Para garantir privacidade entre atendimentos, organização do trabalho comercial e foco nas famílias de cada carteira, o sistema estende o isolamento por consultor para todas as áreas de visualização e operação do CRM:
+
+### 61.1 Selo "Novos" e Contadores
+- O selo numérico que indica novos leads no menu lateral do CRM passa a exibir a quantidade real de interessados novos que o usuário logado tem permissão de visualizar (seus próprios leads e os leads ainda não atribuídos a nenhum consultor).
+- Cada consultor possui sua própria contagem sem interferência da carteira de outros operadores.
+
+### 61.2 Gráficos de Status e Origem no Dashboard
+- Os gráficos de **Leads por Etapa (Status)** e **Leads por Origem** no painel de controle refletem automaticamente a carteira do operador ativo.
+- Consultores visualizam o volume e proporção dos seus atendimentos e dos contatos sem dono; gestores e coordenadores com permissão de visão ampla (`ViewAll:Interessado` ou `super_admin`) mantêm a visão consolidada de toda a escola.
+
+### 61.3 Calendário de Atividades e Visitas (Follow-up)
+- Na agenda de follow-up, os lembretes de contato e agendamentos de visita exibidos correspondem estritamente aos leads que o consultor atende e aos leads não atribuídos.
+- O filtro por consultor fica oculto para quem atende apenas a própria carteira, mantendo a tela simples e direta. Usuários gestores visualizam o filtro para selecionar o consultor que desejam acompanhar.
+
+### 61.4 Assistente de Matrícula Seguro
+- Ao abrir o assistente de matrícula a partir de links externos ou parâmetros na barra de endereços, o sistema verifica se o operador tem permissão de acesso àquele lead ou proposta.
+- Caso o interessado pertença a outro consultor, o assistente protege os dados da família, exibe um aviso de segurança e inicia o formulário em branco, prevenindo visualização acidental ou indevida de dados cadastrais confidenciais.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
-
-
-
-
-
-
-
