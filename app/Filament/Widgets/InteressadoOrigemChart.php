@@ -17,6 +17,7 @@ class InteressadoOrigemChart extends ChartWidget
     protected function getData(): array
     {
         $data = Interessado::query()
+            ->visivelPara()
             ->join('origem_interessado', 'interessado.origem_interessado_id', '=', 'origem_interessado.id')
             ->selectRaw('origem_interessado.nome, count(*) as total')
             ->groupBy('origem_interessado.nome')

@@ -299,8 +299,8 @@ class Interessado extends Model
         }
 
         return $query->where(function (Builder $q) use ($user): void {
-            $q->where('usuario_id', $user->id)
-                ->orWhereNull('usuario_id');
+            $q->where('interessado.usuario_id', $user->id)
+                ->orWhereNull('interessado.usuario_id');
         });
     }
 
