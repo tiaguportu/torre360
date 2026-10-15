@@ -27,6 +27,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class CopilotoPedagogicoPeiTest extends TestCase
@@ -336,5 +337,96 @@ class CopilotoPedagogicoPeiTest extends TestCase
 
         $pdfBytes = $response->getContent();
         $this->assertStringStartsWith('%PDF', $pdfBytes);
+    }
+
+    public function test_sem_permissao_usuario_e_bloqueado_pela_policy(): void
+    {
+        $plano = PlanoAula::factory()->create();
+        $matricula = Matricula::factory()->create();
+        $adaptacao = PlanoAulaAdaptacao::create([
+            'plano_aula_id' => $plano->id,
+            'matricula_id' => $matricula->id,
+            'conteudo' => ['barreiras' => 'Nenhuma'],
+            'status' => StatusAdaptacaoPei::Rascunho,
+        ]);
+
+        $userSemPermissao = User::factory()->create();
+
+        $this->assertFalse($userSemPermissao->can('viewAny', PlanoAulaAdaptacao::class));
+        $this->assertFalse($userSemPermissao->can('view', $adaptacao));
+        $this->assertFalse($userSemPermissao->can('create', [PlanoAulaAdaptacao::class, $plano]));
+        $this->assertFalse($userSemPermissao->can('update', $adaptacao));
+        $this->assertFalse($userSemPermissao->can('delete', $adaptacao));
+        $this->assertFalse($userSemPermissao->can('exportarPei', $adaptacao));
+
+        $response = $this->actingAs($userSemPermissao)->get(route('planos-aula.adaptacoes.pdf', $adaptacao));
+        $response->assertForbidden();
+    }
+
+    public function test_professor_de_outra_turma_nao_tem_acesso_ao_pei_mesmo_com_permissao(): void
+    {
+        $pessoaProf1 = Pessoa::factory()->create();
+        $pessoaProf2 = Pessoa::factory()->create();
+
+        $turma1 = Turma::factory()->create(['professor_conselheiro_id' => $pessoaProf1->id]);
+        $turma2 = Turma::factory()->create(['professor_conselheiro_id' => $pessoaProf2->id]);
+
+        $plano1 = PlanoAula::factory()->create([
+            'turma_id' => $turma1->id,
+            'professor_id' => $pessoaProf1->id,
+        ]);
+        $matricula1 = Matricula::factory()->create(['turma_id' => $turma1->id]);
+
+        $adaptacao1 = PlanoAulaAdaptacao::create([
+            'plano_aula_id' => $plano1->id,
+            'matricula_id' => $matricula1->id,
+            'conteudo' => ['barreiras' => 'Barreira teste'],
+            'status' => StatusAdaptacaoPei::Rascunho,
+        ]);
+
+        // Professor 2 (da turma 2) tem a permissão no Shield, mas atua com active_role = 'professor'
+        $roleProfessor = Role::firstOrCreate(['name' => 'professor', 'guard_name' => 'web']);
+        $roleProfessor->givePermissionTo('GerarPei:PlanoAula');
+        $roleProfessor->givePermissionTo('ExportarPei:PlanoAula');
+
+        $userProf2 = User::factory()->create();
+        $userProf2->assignRole($roleProfessor);
+        $userProf2->pessoas()->attach($pessoaProf2->id);
+
+        session(['active_role' => 'professor']);
+
+        $this->assertFalse($userProf2->can('view', $adaptacao1));
+        $this->assertFalse($userProf2->can('exportarPei', $adaptacao1));
+
+        $response = $this->actingAs($userProf2)->get(route('planos-aula.adaptacoes.pdf', $adaptacao1));
+        $response->assertForbidden();
+    }
+
+    public function test_coordenador_com_permissao_acessa_pei_de_qualquer_turma(): void
+    {
+        $turma = Turma::factory()->create();
+        $plano = PlanoAula::factory()->create(['turma_id' => $turma->id]);
+        $matricula = Matricula::factory()->create(['turma_id' => $turma->id]);
+
+        $adaptacao = PlanoAulaAdaptacao::create([
+            'plano_aula_id' => $plano->id,
+            'matricula_id' => $matricula->id,
+            'conteudo' => ['barreiras' => 'Barreira'],
+            'status' => StatusAdaptacaoPei::Rascunho,
+        ]);
+
+        $roleCoordenador = Role::firstOrCreate(['name' => 'coordenador', 'guard_name' => 'web']);
+        $roleCoordenador->givePermissionTo('ExportarPei:PlanoAula');
+
+        $userCoordenador = User::factory()->create();
+        $userCoordenador->assignRole($roleCoordenador);
+
+        session(['active_role' => 'coordenador']);
+
+        $this->assertTrue($userCoordenador->can('view', $adaptacao));
+        $this->assertTrue($userCoordenador->can('exportarPei', $adaptacao));
+
+        $response = $this->actingAs($userCoordenador)->get(route('planos-aula.adaptacoes.pdf', $adaptacao));
+        $response->assertOk();
     }
 }

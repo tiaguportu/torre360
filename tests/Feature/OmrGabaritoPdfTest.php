@@ -13,8 +13,14 @@ use App\Models\Turma;
 use App\Models\User;
 use App\Services\Omr\FolhaGabaritoPdfService;
 use App\Services\Omr\GabaritoLayout;
+use App\Services\Omr\HomografiaService;
+use App\Services\Omr\QrCodeLeitor;
+use App\Services\QrCodeService;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Tests\Feature\Concerns\CriaAvaliacaoTestTrait;
 use Tests\TestCase;
@@ -117,5 +123,56 @@ class OmrGabaritoPdfTest extends TestCase
         $response = $this->actingAs($user)->get(route('omr.folha.pdf', ['folha' => $folha->id]));
 
         $response->assertStatus(403);
+    }
+
+    public function test_qrcode_gerado_e_decodificado_pelo_leitor(): void
+    {
+        $uuid = (string) Str::uuid();
+        $qrService = app(QrCodeService::class);
+        $dataUri = $qrService->renderDataUri($uuid);
+
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', $dataUri);
+
+        $options = new QROptions([
+            'version' => QRCode::VERSION_AUTO,
+            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+            'eccLevel' => QRCode::ECC_M,
+            'scale' => 6,
+            'outputBase64' => false,
+        ]);
+        $pngBlob = (new QRCode($options))->render($uuid);
+
+        $gd = imagecreatefromstring($pngBlob);
+        $this->assertNotFalse($gd);
+
+        $layout = new GabaritoLayout(totalQuestoes: 20, alternativas: 5);
+        $area = $layout->areaQrCode();
+
+        $w = 1600;
+        $h = (int) round(1600 * (297 / 210));
+        $canvas = imagecreatetruecolor($w, $h);
+        $branco = imagecolorallocate($canvas, 255, 255, 255);
+        imagefill($canvas, 0, 0, $branco);
+
+        $qrX = (int) round(($area['x'] / 210) * $w);
+        $qrY = (int) round(($area['y'] / 297) * $h);
+        $qrW = (int) round(($area['w'] / 210) * $w);
+        $qrH = (int) round(($area['h'] / 297) * $h);
+
+        imagecopyresampled($canvas, $gd, $qrX, $qrY, 0, 0, $qrW, $qrH, imagesx($gd), imagesy($gd));
+        imagedestroy($gd);
+
+        $homografia = new HomografiaService(
+            tl: ['x' => (int) round(17 / 210 * $w), 'y' => (int) round(17 / 297 * $h)],
+            tr: ['x' => (int) round(193 / 210 * $w), 'y' => (int) round(17 / 297 * $h)],
+            br: ['x' => (int) round(193 / 210 * $w), 'y' => (int) round(280 / 297 * $h)],
+            bl: ['x' => (int) round(17 / 210 * $w), 'y' => (int) round(280 / 297 * $h)],
+        );
+
+        $leitor = new QrCodeLeitor;
+        $lido = $leitor->ler($canvas, $homografia, $layout);
+        imagedestroy($canvas);
+
+        $this->assertSame($uuid, $lido);
     }
 }

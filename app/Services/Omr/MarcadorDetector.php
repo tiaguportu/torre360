@@ -162,11 +162,11 @@ class MarcadorDetector
             $luminancias[$chave] = ($r * 0.299) + ($g * 0.587) + ($b * 0.114);
         }
 
-        // O marcador TL tem centro vazado (branco, alta luminância).
+        // O marcador TL tem centro vazado (branco, alta luminância). `imagerotate` gira no sentido anti-horário.
         // Se TL for o mais claro, rotação = 0°.
-        // Se TR for o mais claro, rotação = 270°.
+        // Se TR for o mais claro, a foto foi girada 90° no sentido horário (o TL foi para a direita): gira 90°.
         // Se BR for o mais claro, rotação = 180°.
-        // Se BL for o mais claro, rotação = 90°.
+        // Se BL for o mais claro, a foto foi girada 90° no sentido anti-horário (o TL foi para baixo): gira 270°.
         $maiorLuminancia = max($luminancias);
         $cantoMaisClaro = array_search($maiorLuminancia, $luminancias, true);
 
@@ -177,9 +177,9 @@ class MarcadorDetector
         }
 
         $rotacao = match ($cantoMaisClaro) {
-            'TR' => 270,
+            'TR' => 90,
             'BR' => 180,
-            'BL' => 90,
+            'BL' => 270,
             default => 0,
         };
 

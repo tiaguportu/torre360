@@ -428,7 +428,7 @@ Importante: em todos os textos livres (observacoes e relato_contato) escreva dat
 
         $mensagem = preg_replace('/([?&]key=)[^&\s"\')]+/i', '$1[chave-oculta]', $mensagem) ?? $mensagem;
 
-        return preg_replace('/AIza[0-9A-Za-z_\-]{10,}/', '[chave-oculta]', $mensagem) ?? $mensagem;
+        return preg_replace('/AIza[0-9A-Za-z_\-]{20,}/', '[chave-oculta]', $mensagem) ?? $mensagem;
     }
 
     /**

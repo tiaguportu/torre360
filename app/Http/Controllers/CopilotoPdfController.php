@@ -38,7 +38,7 @@ class CopilotoPdfController extends Controller
     public function downloadPei(PlanoAulaAdaptacao $adaptacao): Response
     {
         $planoAula = $adaptacao->planoAula;
-        Gate::authorize('exportarPei', $planoAula);
+        Gate::authorize('exportarPei', $adaptacao);
 
         $pdf = $this->pdfService->gerarPdfPei($adaptacao);
         $nomeArquivo = 'pei_adaptacao_matricula_'.$adaptacao->matricula_id.'_plano_'.$planoAula->id.'.pdf';

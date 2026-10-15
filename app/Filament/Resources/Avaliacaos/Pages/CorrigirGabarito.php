@@ -8,6 +8,7 @@ use App\Enums\StatusOmrCorrecao;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Models\Avaliacao;
+use App\Models\Matricula;
 use App\Models\OmrCorrecao;
 use App\Services\Omr\OmrService;
 use App\Support\HelpContent;
@@ -43,6 +44,13 @@ class CorrigirGabarito extends Page implements HasForms
      * @var list<array<string, mixed>>
      */
     public array $correcoes = [];
+
+    /**
+     * Folhas cuja nota nova conflita com uma já lançada: `correcao_id => ['atual' => float, 'nova' => float]`.
+     *
+     * @var array<int, array{atual: float, nova: float}>
+     */
+    public array $conflitos = [];
 
     public function authorizeAccess(): void
     {
@@ -151,6 +159,7 @@ class CorrigirGabarito extends Page implements HasForms
 
             return [
                 'id' => $c->id,
+                'matricula_id' => $c->matricula_id,
                 'aluno_nome' => $alunoNome,
                 'matricula_codigo' => $matriculaCodigo,
                 'uuid' => $uuid,
@@ -161,6 +170,8 @@ class CorrigirGabarito extends Page implements HasForms
                 'status_label' => $c->status->label(),
                 'status_classe' => $statusClasse,
                 'alertas' => (array) ($c->alertas ?? []),
+                'tem_marcacao_a_conferir' => $c->temMarcacaoAConferir(),
+                'conflito' => $this->conflitos[$c->id] ?? null,
                 'respostas_detalhe' => $detalhes,
             ];
         })->all();
@@ -196,6 +207,10 @@ class CorrigirGabarito extends Page implements HasForms
             } catch (\Throwable $e) {
                 $erros++;
                 report($e);
+            } finally {
+                // O serviço já guardou uma cópia reencodada (sem EXIF/GPS) no disco privado: o upload original,
+                // com metadados e sem prazo de retenção, não deve ficar para trás.
+                Storage::disk('local')->delete($arquivoRelativo);
             }
         }
 
@@ -217,15 +232,48 @@ class CorrigirGabarito extends Page implements HasForms
         }
     }
 
-    public function lancarNotaIndividual(int $correcaoId, OmrService $omrService): void
+    /**
+     * Métodos públicos do Livewire aceitam qualquer id vindo do navegador: a correção só vale se for desta
+     * avaliação (a que o usuário está autorizado a corrigir nesta página).
+     */
+    protected function correcaoDestaAvaliacao(int $correcaoId): ?OmrCorrecao
     {
-        $correcao = OmrCorrecao::find($correcaoId);
+        $this->authorize('corrigirGabarito', $this->record);
+
+        return OmrCorrecao::where('avaliacao_id', $this->record->id)->find($correcaoId);
+    }
+
+    /**
+     * Lança a nota de uma folha. Nota já existente e diferente NÃO é sobrescrita sem confirmação explícita:
+     * o conflito aparece no cartão da folha e só `$sobrescrever = true` (botão de confirmação) a substitui.
+     */
+    public function lancarNotaIndividual(int $correcaoId, bool $sobrescrever = false): void
+    {
+        $correcao = $this->correcaoDestaAvaliacao($correcaoId);
         if (! $correcao) {
             return;
         }
 
         try {
-            $resultado = $omrService->lancarNota($correcao, auth()->user(), true);
+            $resultado = app(OmrService::class)->lancarNota($correcao, auth()->user(), $sobrescrever);
+
+            if (($resultado['conflito'] ?? false) === true) {
+                $this->conflitos[$correcao->id] = [
+                    'atual' => (float) $resultado['nota_atual'],
+                    'nova' => (float) $resultado['nota_nova'],
+                ];
+                $this->carregarCorrecoes();
+
+                Notification::make()
+                    ->title('Nota já lançada para este aluno')
+                    ->body($resultado['mensagem'])
+                    ->warning()
+                    ->send();
+
+                return;
+            }
+
+            unset($this->conflitos[$correcao->id]);
             $this->carregarCorrecoes();
 
             Notification::make()
@@ -241,36 +289,128 @@ class CorrigirGabarito extends Page implements HasForms
         }
     }
 
-    public function lancarTodasConfirmadas(OmrService $omrService): void
+    public function associarMatricula(int $correcaoId, int|string|null $matriculaId = null): void
     {
-        $pendentes = OmrCorrecao::where('avaliacao_id', $this->record->id)
+        // Voltar ao "-- Selecione o Aluno --" envia texto vazio: não é uma seleção.
+        if ($matriculaId === null || $matriculaId === '') {
+            return;
+        }
+
+        $correcao = $this->correcaoDestaAvaliacao($correcaoId);
+        if (! $correcao) {
+            return;
+        }
+
+        try {
+            app(OmrService::class)->associarMatricula($correcao, (int) $matriculaId);
+            $this->carregarCorrecoes();
+
+            Notification::make()
+                ->title('Aluno associado com sucesso!')
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Erro ao associar aluno')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function getAlunosTurma(): array
+    {
+        return Matricula::where('turma_id', $this->record->turma_id)
+            ->where('situacao', 'ativa')
+            ->with('pessoa')
+            ->get()
+            ->map(fn (Matricula $m) => [
+                'id' => $m->id,
+                'nome' => ($m->pessoa?->nome ?? 'Aluno').' ('.($m->numero_matricula ?? 'MAT-'.$m->id).')',
+            ])
+            ->all();
+    }
+
+    /**
+     * Lança em lote só o que está pronto: com aluno identificado, sem marcação a conferir e sem conflito com nota
+     * já lançada. O restante fica na tela para decisão individual do professor.
+     */
+    public function lancarTodasConfirmadas(): void
+    {
+        $this->authorize('corrigirGabarito', $this->record);
+
+        $omrService = app(OmrService::class);
+
+        $aguardando = OmrCorrecao::where('avaliacao_id', $this->record->id)
             ->where('status', StatusOmrCorrecao::AguardandoConferencia)
             ->get();
 
+        $semMatricula = $aguardando->whereNull('matricula_id')->count();
+        $aConferir = 0;
+        $conflitos = 0;
+        $falhas = 0;
         $sucessos = 0;
 
-        foreach ($pendentes as $c) {
+        foreach ($aguardando->whereNotNull('matricula_id') as $c) {
+            if ($c->temMarcacaoAConferir()) {
+                $aConferir++;
+
+                continue;
+            }
+
             try {
-                $omrService->lancarNota($c, auth()->user(), true);
+                $resultado = $omrService->lancarNota($c, auth()->user(), false);
+
+                if (($resultado['conflito'] ?? false) === true) {
+                    $conflitos++;
+                    $this->conflitos[$c->id] = [
+                        'atual' => (float) $resultado['nota_atual'],
+                        'nova' => (float) $resultado['nota_nova'],
+                    ];
+
+                    continue;
+                }
+
                 $sucessos++;
-            } catch (\Throwable) {
-                // Continua para as próximas
+            } catch (\Throwable $e) {
+                $falhas++;
+                report($e);
             }
         }
 
         $this->carregarCorrecoes();
 
-        Notification::make()
-            ->title("{$sucessos} nota(s) lançada(s) com sucesso no diário da turma!")
-            ->success()
-            ->send();
+        if ($sucessos > 0) {
+            Notification::make()
+                ->title("{$sucessos} nota(s) lançada(s) com sucesso no diário da turma!")
+                ->success()
+                ->send();
+        }
+
+        $avisos = array_filter([
+            $semMatricula > 0 ? "{$semMatricula} folha(s) aguardam a identificação do aluno" : null,
+            $aConferir > 0 ? "{$aConferir} folha(s) têm marcação dupla, ambígua ou ilegível e precisam de conferência individual" : null,
+            $conflitos > 0 ? "{$conflitos} folha(s) conflitam com uma nota já lançada e pedem confirmação" : null,
+            $falhas > 0 ? "{$falhas} folha(s) não puderam ser lançadas" : null,
+        ]);
+
+        if ($avisos !== []) {
+            Notification::make()
+                ->title('Algumas folhas não foram lançadas')
+                ->body(implode('; ', $avisos).'.')
+                ->warning()
+                ->send();
+        }
     }
 
     public function descartarCorrecao(int $correcaoId): void
     {
-        $c = OmrCorrecao::find($correcaoId);
-        if ($c) {
+        $c = $this->correcaoDestaAvaliacao($correcaoId);
+
+        // Folha já lançada no diário não pode ser "descartada": a nota continuaria lá sem correção que a explique.
+        if ($c && $c->status !== StatusOmrCorrecao::Confirmada) {
             $c->update(['status' => StatusOmrCorrecao::Descartada]);
+            unset($this->conflitos[$c->id]);
             $this->carregarCorrecoes();
 
             Notification::make()

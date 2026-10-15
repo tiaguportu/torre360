@@ -39,6 +39,25 @@ trait HasCopilotoPlanoAulaAction
             ->modalHeading('Copiloto Pedagógico IA: Planejamento Alinhado à BNCC')
             ->modalDescription('Defina a turma, disciplina e habilidades da BNCC. A IA gerará a proposta didática estruturada preenchendo o formulário para sua revisão.')
             ->schema([
+                Select::make('escopo_geracao')
+                    ->label('O que você deseja fazer?')
+                    ->options([
+                        'completo' => 'Gerar Plano de Aula Completo (todas as seções)',
+                        'objetivos' => 'Regenerar apenas: Objetivos de Aprendizagem',
+                        'metodologia' => 'Regenerar apenas: Metodologia e Cronograma',
+                        'recursos' => 'Regenerar apenas: Recursos Didáticos',
+                        'avaliacao' => 'Regenerar apenas: Avaliação Formativa',
+                    ])
+                    ->default('completo')
+                    ->required()
+                    ->live(),
+
+                TextInput::make('instrucao_ajuste')
+                    ->label('Instrução Curta de Ajuste para esta Seção (Opcional)')
+                    ->helperText('Ex: foco em dinâmicas práticas, apoio de tecnologia ou autoavaliação.')
+                    ->visible(fn (Get $get): bool => $get('escopo_geracao') !== 'completo')
+                    ->maxLength(250),
+
                 Select::make('turma_id')
                     ->label('Turma')
                     ->options(fn () => Turma::vigentes()->pluck('nome', 'id'))
@@ -83,8 +102,9 @@ trait HasCopilotoPlanoAulaAction
                     ->required(),
 
                 Textarea::make('instrucoes_extras')
-                    ->label('Instruções Pedagógicas Específicas (Opcional)')
+                    ->label('Instruções Pedagógicas Gerais (Opcional)')
                     ->helperText('Ex: foco em dinâmicas em grupo, uso de laboratório, estudo de caso ou debate.')
+                    ->visible(fn (Get $get): bool => $get('escopo_geracao') === 'completo')
                     ->rows(2),
             ])
             ->action(function (array $data): void {
@@ -110,24 +130,70 @@ trait HasCopilotoPlanoAulaAction
                 );
 
                 $copilotoService = app(CopilotoPedagogicoIaService::class);
-                $output = $copilotoService->gerarPlanoAula($input, auth()->user());
+                $escopo = (string) ($data['escopo_geracao'] ?? 'completo');
 
-                // Preenche o formulário local sem salvar no banco de dados
-                $this->form->fill(array_merge($this->data ?? [], [
-                    'turma_id' => $turma->id,
-                    'disciplina_id' => $disciplina->id,
-                    'objetivos' => $output->toObjetivosTexto(),
-                    'metodologia' => $output->toMetodologiaTexto(),
-                    'recursos' => $output->toRecursosTexto(),
-                    'avaliacao' => $output->toAvaliacaoTexto(),
-                    'habilidades' => $output->habilidadeIds,
-                ]));
+                if ($escopo === 'completo') {
+                    $output = $copilotoService->gerarPlanoAula($input, auth()->user());
 
-                Notification::make()
-                    ->success()
-                    ->title('Sugestão do Copiloto IA aplicada!')
-                    ->body('Os campos foram preenchidos com objetivos e cronograma. Revise o conteúdo antes de salvar.')
-                    ->send();
+                    // Preenche o formulário local sem salvar no banco de dados
+                    $this->form->fill(array_merge($this->data ?? [], [
+                        'turma_id' => $turma->id,
+                        'disciplina_id' => $disciplina->id,
+                        'objetivos' => $output->toObjetivosTexto(),
+                        'metodologia' => $output->toMetodologiaTexto(),
+                        'recursos' => $output->toRecursosTexto(),
+                        'avaliacao' => $output->toAvaliacaoTexto(),
+                        'habilidades' => $output->habilidadeIds,
+                    ]));
+
+                    Notification::make()
+                        ->success()
+                        ->title('Sugestão do Copiloto IA aplicada!')
+                        ->body('Os campos foram preenchidos com objetivos e cronograma. Revise o conteúdo antes de salvar.')
+                        ->send();
+                } else {
+                    $chaveSessao = 'copiloto_regenerar_sessao_'.auth()->id();
+                    $tentativas = (int) session()->get($chaveSessao, 0);
+
+                    if ($tentativas >= 10) {
+                        Notification::make()
+                            ->warning()
+                            ->title('Limite de regenerações atingido')
+                            ->body('Você atingiu o limite de 10 regenerações por sessão. Salve o plano antes de continuar.')
+                            ->send();
+
+                        return;
+                    }
+
+                    session()->put($chaveSessao, $tentativas + 1);
+
+                    $instrucaoAjuste = ! empty($data['instrucao_ajuste']) ? (string) $data['instrucao_ajuste'] : null;
+                    $textoRegenerado = $copilotoService->regenerarSecaoPlanoAula(
+                        input: $input,
+                        secao: $escopo,
+                        instrucaoCurta: $instrucaoAjuste,
+                        user: auth()->user()
+                    );
+
+                    $this->form->fill(array_merge($this->data ?? [], [
+                        $escopo => $textoRegenerado,
+                    ]));
+
+                    $nomesSecoes = [
+                        'objetivos' => 'Objetivos de Aprendizagem',
+                        'metodologia' => 'Metodologia e Cronograma',
+                        'recursos' => 'Recursos Didáticos',
+                        'avaliacao' => 'Avaliação Formativa',
+                    ];
+
+                    $nomeSecao = $nomesSecoes[$escopo] ?? $escopo;
+
+                    Notification::make()
+                        ->success()
+                        ->title("Seção '{$nomeSecao}' regenerada!")
+                        ->body('A nova sugestão foi aplicada no formulário. Revise o conteúdo antes de salvar.')
+                        ->send();
+                }
             });
     }
 }

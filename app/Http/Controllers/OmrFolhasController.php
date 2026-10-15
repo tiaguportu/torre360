@@ -27,7 +27,25 @@ class OmrFolhasController extends Controller
         $pathCodificado = (string) $request->query('path', '');
         $caminho = base64_decode($pathCodificado);
 
-        if (empty($caminho) || ! str_starts_with($caminho, 'gabaritos/') || ! Storage::disk('local')->exists($caminho)) {
+        if (empty($caminho) || str_contains($caminho, '..') || str_contains($caminho, "\0")) {
+            abort(404, 'Arquivo de gabarito não encontrado ou inválido.');
+        }
+
+        // Validação estrita do padrão de caminho gerado pelo sistema
+        if (! preg_match('/^gabaritos\/folhas_turma_avaliacao_(\d+)_[a-zA-Z0-9]+\.pdf$/', $caminho, $matches)) {
+            abort(404, 'Arquivo de gabarito não encontrado ou caminho não autorizado.');
+        }
+
+        $avaliacaoId = (int) $matches[1];
+        $avaliacao = Avaliacao::find($avaliacaoId);
+        if (! $avaliacao) {
+            abort(404, 'Avaliação não encontrada.');
+        }
+
+        // Proteção IDOR: autoriza a avaliação específica para o usuário autenticado
+        Gate::authorize('gerenciarGabarito', $avaliacao);
+
+        if (! Storage::disk('local')->exists($caminho)) {
             abort(404, 'Arquivo de gabarito não encontrado ou expirado.');
         }
 

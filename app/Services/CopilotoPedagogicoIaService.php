@@ -454,4 +454,255 @@ PROMPT;
 
         RateLimiter::hit($chave, 60);
     }
+
+    /**
+     * Regenera uma seção específica do plano de aula mantendo alinhamento às habilidades e diretrizes.
+     *
+     * @param  'objetivos'|'metodologia'|'recursos'|'avaliacao'  $secao
+     *
+     * @throws CopilotoIndisponivelException
+     * @throws RespostaIaInvalidaException
+     * @throws LimiteDeUsoException
+     */
+    public function regenerarSecaoPlanoAula(
+        GerarPlanoAulaInput $input,
+        string $secao,
+        ?string $instrucaoCurta,
+        User $user
+    ): string {
+        $this->verificarRateLimit($user);
+
+        $timeout = (int) config('copiloto_pedagogico.timeout', 90);
+        $temperatura = (float) config('copiloto_pedagogico.temperatura', 0.4);
+
+        $habilidadesTexto = [];
+        foreach ($input->habilidades as $hab) {
+            $habilidadesTexto[] = "- Código [{$hab['codigo']}]: {$hab['nome']}";
+        }
+        $habilidadesFormatadas = implode("\n", $habilidadesTexto);
+        $duracaoTotal = $input->duracaoTotalMinutos();
+
+        $ajusteDocente = '';
+        if (filled($instrucaoCurta)) {
+            $limpo = CrmIaVendasService::ocultarDadosPessoais($instrucaoCurta);
+            $delimitado = GeminiAgentService::delimitarEntradaSegura($limpo, 'instrucao_ajuste');
+            $ajusteDocente = "\nInstrução específica do docente para esta regeneração:\n{$delimitado}\n";
+        }
+
+        $systemInstruction = config('copiloto_pedagogico.persona_plano_aula');
+
+        [$prompt, $chaveValidacao] = match ($secao) {
+            'objetivos' => [
+                <<<PROMPT
+Você deve regenerar EXCLUSIVAMENTE a seção de OBJETIVOS DE APRENDIZAGEM para um plano de aula de {$input->numeroAulas} aula(s) ({$duracaoTotal} minutos no total).
+Turma: {$input->turmaNome} ({$input->serieNome}).
+Disciplina: {$input->disciplinaNome}.
+Habilidades BNCC selecionadas:
+{$habilidadesFormatadas}
+{$ajusteDocente}
+Diretriz: Retorne EXCLUSIVAMENTE um objeto JSON no formato:
+{
+  "objetivos": [
+    {
+      "descricao": "Texto claro do objetivo",
+      "habilidade_codigo": "Código exato recebido",
+      "nivel_bloom": "Lembrar|Compreender|Aplicar|Analisar|Avaliar|Criar"
+    }
+  ]
+}
+PROMPT,
+                'objetivos',
+            ],
+            'metodologia' => [
+                <<<PROMPT
+Você deve regenerar EXCLUSIVAMENTE a seção de METODOLOGIA ATIVA E CRONOGRAMA DE ETAPAS para um plano de aula de {$input->numeroAulas} aula(s) com duração total de EXATAMENTE {$duracaoTotal} minutos.
+Turma: {$input->turmaNome} ({$input->serieNome}).
+Disciplina: {$input->disciplinaNome}.
+Habilidades BNCC selecionadas:
+{$habilidadesFormatadas}
+{$ajusteDocente}
+Diretriz: Retorne EXCLUSIVAMENTE um objeto JSON no formato:
+{
+  "metodologia_ativa": {
+    "nome": "Nome da metodologia ativa",
+    "justificativa": "Justificativa pedagógica"
+  },
+  "cronograma": [
+    {
+      "etapa": "Nome da etapa",
+      "minutos": 10,
+      "atividade": "Descrição da atividade prática",
+      "papel_professor": "Mediação docente",
+      "papel_aluno": "Atividade do aluno"
+    }
+  ]
+}
+PROMPT,
+                'cronograma',
+            ],
+            'recursos' => [
+                <<<PROMPT
+Você deve regenerar EXCLUSIVAMENTE a lista de RECURSOS DIDÁTICOS E MATERIAIS para um plano de aula de {$input->numeroAulas} aula(s).
+Turma: {$input->turmaNome} ({$input->serieNome}).
+Disciplina: {$input->disciplinaNome}.
+Habilidades BNCC selecionadas:
+{$habilidadesFormatadas}
+{$ajusteDocente}
+Diretriz: Retorne EXCLUSIVAMENTE um objeto JSON no formato:
+{
+  "recursos": [
+    "Recurso 1",
+    "Recurso 2"
+  ]
+}
+PROMPT,
+                'recursos',
+            ],
+            'avaliacao' => [
+                <<<PROMPT
+Você deve regenerar EXCLUSIVAMENTE a seção de AVALIAÇÃO FORMATIVA para o plano de aula.
+Turma: {$input->turmaNome} ({$input->serieNome}).
+Disciplina: {$input->disciplinaNome}.
+Habilidades BNCC selecionadas:
+{$habilidadesFormatadas}
+{$ajusteDocente}
+Diretriz: Retorne EXCLUSIVAMENTE um objeto JSON no formato:
+{
+  "avaliacao_formativa": [
+    {
+      "instrumento": "Instrumento avaliativo",
+      "criterio": "Critério de avaliação",
+      "nivel_bloom": "Lembrar|Compreender|Aplicar|Analisar|Avaliar|Criar"
+    }
+  ],
+  "observacoes": "Observações avaliativas ou null"
+}
+PROMPT,
+                'avaliacao_formativa',
+            ],
+            default => throw new \InvalidArgumentException("Seção inválida: {$secao}")
+        };
+
+        $payload = [
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => $prompt],
+                    ],
+                ],
+            ],
+            'systemInstruction' => [
+                'parts' => [
+                    ['text' => $systemInstruction],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => $temperatura,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
+
+        try {
+            $resposta = $this->geminiService->callGeminiApi($payload, $timeout);
+            $textoBruto = $resposta['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $textoLimpo = trim(preg_replace('/^```(?:json)?|```$/m', '', $textoBruto));
+            $dados = json_decode($textoLimpo, true);
+
+            if (! is_array($dados) || empty($dados[$chaveValidacao])) {
+                throw new RespostaIaInvalidaException;
+            }
+
+            return match ($secao) {
+                'objetivos' => $this->formatarObjetivosTexto((array) $dados['objetivos']),
+                'metodologia' => $this->formatarMetodologiaTexto((array) ($dados['metodologia_ativa'] ?? []), (array) ($dados['cronograma'] ?? [])),
+                'recursos' => $this->formatarRecursosTexto((array) $dados['recursos']),
+                'avaliacao' => $this->formatarAvaliacaoTexto((array) $dados['avaliacao_formativa'], isset($dados['observacoes']) ? (string) $dados['observacoes'] : null),
+            };
+        } catch (Throwable $e) {
+            if ($e instanceof RespostaIaInvalidaException || $e instanceof LimiteDeUsoException) {
+                throw $e;
+            }
+
+            throw new CopilotoIndisponivelException('Falha na comunicação com o assistente inteligente: '.GeminiAgentService::sanitizarMensagemDeErro($e->getMessage()));
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $objetivos
+     */
+    protected function formatarObjetivosTexto(array $objetivos): string
+    {
+        $linhas = [];
+        foreach ($objetivos as $i => $obj) {
+            $num = $i + 1;
+            $codigo = $obj['habilidade_codigo'] ?? 'BNCC';
+            $bloom = $obj['nivel_bloom'] ?? 'Compreender';
+            $descricao = $obj['descricao'] ?? '';
+            $linhas[] = "{$num}. [{$codigo}] ({$bloom}): {$descricao}";
+        }
+
+        return implode("\n", $linhas);
+    }
+
+    /**
+     * @param  array<string, mixed>  $metodologiaAtiva
+     * @param  array<int, array<string, mixed>>  $cronograma
+     */
+    protected function formatarMetodologiaTexto(array $metodologiaAtiva, array $cronograma): string
+    {
+        $linhas = [];
+        if (! empty($metodologiaAtiva['nome'])) {
+            $linhas[] = "METODOLOGIA ATIVA: {$metodologiaAtiva['nome']}";
+            if (! empty($metodologiaAtiva['justificativa'])) {
+                $linhas[] = "Justificativa: {$metodologiaAtiva['justificativa']}\n";
+            }
+        }
+
+        $linhas[] = 'CRONOGRAMA DETALHADO DA AULA:';
+        foreach ($cronograma as $etapa) {
+            $nomeEtapa = $etapa['etapa'] ?? 'Etapa';
+            $minutos = $etapa['minutos'] ?? 10;
+            $atividade = $etapa['atividade'] ?? '';
+            $papelProf = $etapa['papel_professor'] ?? '-';
+            $papelAluno = $etapa['papel_aluno'] ?? '-';
+
+            $linhas[] = "• {$nomeEtapa} ({$minutos} min): {$atividade}";
+            $linhas[] = "  - Professor: {$papelProf}";
+            $linhas[] = "  - Estudantes: {$papelAluno}";
+        }
+
+        return implode("\n", $linhas);
+    }
+
+    /**
+     * @param  array<int, mixed>  $recursos
+     */
+    protected function formatarRecursosTexto(array $recursos): string
+    {
+        return implode("\n", array_map(fn ($r): string => "• {$r}", $recursos));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $avaliacaoFormativa
+     */
+    protected function formatarAvaliacaoTexto(array $avaliacaoFormativa, ?string $observacoes = null): string
+    {
+        $linhas = [];
+        $linhas[] = 'AVALIAÇÃO FORMATIVA:';
+        foreach ($avaliacaoFormativa as $av) {
+            $instrumento = $av['instrumento'] ?? 'Instrumento avaliativo';
+            $nivelBloom = $av['nivel_bloom'] ?? 'Avaliar';
+            $criterio = $av['criterio'] ?? '-';
+
+            $linhas[] = "• Instrumento: {$instrumento} (Nível: {$nivelBloom})";
+            $linhas[] = "  Critério: {$criterio}";
+        }
+
+        if (! empty($observacoes)) {
+            $linhas[] = "\nObservações: {$observacoes}";
+        }
+
+        return implode("\n", $linhas);
+    }
 }

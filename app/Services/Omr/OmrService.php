@@ -10,6 +10,7 @@ use App\Enums\StatusOmrCorrecao;
 use App\Models\Avaliacao;
 use App\Models\AvaliacaoGabarito;
 use App\Models\GabaritoFolha;
+use App\Models\Matricula;
 use App\Models\Nota;
 use App\Models\OmrCorrecao;
 use App\Models\OmrCorrecaoHabilidade;
@@ -62,11 +63,26 @@ class OmrService
         $caminhoHigienizado = $carregamento['caminho'];
         $sha256 = $carregamento['sha256'];
 
+        // A mesma foto enviada duas vezes gera duas correções: avisa o professor em vez de aceitar em silêncio.
+        $jaEnviada = OmrCorrecao::where('avaliacao_id', $avaliacao->id)
+            ->where('arquivo_sha256', $sha256)
+            ->where('status', '!=', StatusOmrCorrecao::Descartada)
+            ->exists();
+
+        if ($jaEnviada) {
+            $alertas[] = 'Atenção: esta mesma imagem já foi enviada para esta avaliação. Confira para não lançar a nota em duplicidade.';
+        }
+
         $layout = new GabaritoLayout(
             totalQuestoes: $gabarito->total_questoes,
             alternativas: $gabarito->alternativas,
             versao: $gabarito->layout_versao,
         );
+
+        // Se uma matrícula manual foi informada, valida antecipadamente
+        if ($matriculaIdManual !== null) {
+            $this->validarMatriculaParaAvaliacao($avaliacao, $matriculaIdManual);
+        }
 
         // 1. Detecção dos 4 marcadores de calibração
         $resultadoMarcadores = $this->marcadorDetector->detectar($imagem);
@@ -80,13 +96,13 @@ class OmrService
 
             return OmrCorrecao::create([
                 'avaliacao_id' => $avaliacao->id,
-                'matricula_id' => $matriculaIdManual ?? $this->obterPrimeiraMatriculaId($avaliacao),
+                'matricula_id' => $matriculaIdManual,
                 'user_id' => $userId,
                 'arquivo_path' => $caminhoHigienizado,
                 'arquivo_sha256' => $sha256,
                 'status' => StatusOmrCorrecao::Falha,
                 'respostas' => [],
-                'alertas' => [$resultadoMarcadores['mensagem'] ?? 'Marcadores não identificados.'],
+                'alertas' => array_merge($alertas, [$resultadoMarcadores['mensagem'] ?? 'Marcadores não identificados.']),
                 'motor' => 'gd',
                 'layout_versao' => $layout->versao,
                 'mensagem_erro' => $resultadoMarcadores['mensagem'],
@@ -111,8 +127,11 @@ class OmrService
 
             if (! $folhaEncontrada) {
                 $alertas[] = "QR Code lido ({$uuidFolha}), mas a folha não consta no banco de dados.";
-            } elseif ($folhaEncontrada->avaliacao_id !== $avaliacao->id) {
+            } elseif ((int) $folhaEncontrada->avaliacao_id !== (int) $avaliacao->id) {
                 $alertas[] = "ATENÇÃO: Esta folha foi gerada para outra avaliação (ID #{$folhaEncontrada->avaliacao_id}).";
+                // Não vincula: a correção não pode apontar para a folha de outra avaliação (nem marcá-la como corrigida
+                // quando a nota for lançada) nem herdar o aluno dela.
+                $folhaEncontrada = null;
             } else {
                 $matriculaResolvida = $folhaEncontrada->matricula_id;
                 if ($folhaEncontrada->corrigida_em !== null) {
@@ -123,13 +142,15 @@ class OmrService
             $alertas[] = 'O QR Code da folha não pôde ser decodificado automaticamente.';
         }
 
-        // Se o QR falhar, aplica o preenchimento manual do professor
-        if (! $matriculaResolvida && $matriculaIdManual) {
+        // Se o QR falhar ou for folha em branco, aplica o preenchimento manual do professor
+        if ($matriculaIdManual !== null) {
+            if ($folhaEncontrada && $folhaEncontrada->matricula_id && (int) $folhaEncontrada->matricula_id !== (int) $matriculaIdManual) {
+                throw new \InvalidArgumentException('A folha identificada pelo QR Code pertence a outro aluno.');
+            }
             $matriculaResolvida = $matriculaIdManual;
         }
 
         if (! $matriculaResolvida) {
-            $matriculaResolvida = $this->obterPrimeiraMatriculaId($avaliacao);
             $alertas[] = 'Matrícula não identificada automaticamente. Selecione o aluno correspondente para concluir.';
         }
 
@@ -174,15 +195,17 @@ class OmrService
             'tempo_ms' => $tempoMs,
         ]);
 
-        // Grava acertos por habilidade BNCC
-        foreach ($calculo['habilidades'] as $habId => $dadosHab) {
-            OmrCorrecaoHabilidade::create([
-                'omr_correcao_id' => $correcao->id,
-                'habilidade_id' => $habId,
-                'acertos' => $dadosHab['acertos'],
-                'total' => $dadosHab['total'],
-                'percentual' => $dadosHab['percentual'],
-            ]);
+        // Grava acertos por habilidade BNCC apenas se houver aluno associado
+        if ($matriculaResolvida !== null) {
+            foreach ($calculo['habilidades'] as $habId => $dadosHab) {
+                OmrCorrecaoHabilidade::create([
+                    'omr_correcao_id' => $correcao->id,
+                    'habilidade_id' => $habId,
+                    'acertos' => $dadosHab['acertos'],
+                    'total' => $dadosHab['total'],
+                    'percentual' => $dadosHab['percentual'],
+                ]);
+            }
         }
 
         return $correcao;
@@ -201,6 +224,35 @@ class OmrService
             $correcaoLocked = OmrCorrecao::where('id', $correcao->id)->lockForUpdate()->firstOrFail();
             $avaliacao = $correcaoLocked->avaliacao()->lockForUpdate()->firstOrFail();
             $matricula = $correcaoLocked->matricula;
+
+            // Idempotência: duplo clique ou segundo professor não regrava a nota nem duplica a auditoria.
+            if ($correcaoLocked->status === StatusOmrCorrecao::Confirmada) {
+                return [
+                    'sucesso' => true,
+                    'conflito' => false,
+                    'ja_lancada' => true,
+                    'nota_lancada' => (float) $correcaoLocked->nota_calculada,
+                    'mensagem' => 'Esta correção já foi lançada no diário.',
+                ];
+            }
+
+            // Falha de leitura ou folha descartada não têm nota calculada: lançar viraria um zero indevido.
+            if ($correcaoLocked->status !== StatusOmrCorrecao::AguardandoConferencia || $correcaoLocked->nota_calculada === null) {
+                throw new \InvalidArgumentException('Somente correções aguardando conferência, com nota calculada, podem ser lançadas.');
+            }
+
+            if ($correcaoLocked->matricula_id === null || ! $matricula) {
+                throw new \InvalidArgumentException('Não é possível lançar nota de uma correção sem aluno/matrícula selecionado.');
+            }
+
+            if ($matricula->turma_id !== $avaliacao->turma_id) {
+                throw new \InvalidArgumentException('A matrícula vinculada à correção não pertence à turma desta avaliação.');
+            }
+
+            $sit = is_object($matricula->situacao) ? $matricula->situacao->value : (string) $matricula->situacao;
+            if ($sit !== 'ativa') {
+                throw new \InvalidArgumentException('A matrícula informada não está ativa.');
+            }
 
             if ($avaliacao->nota_maxima === null || (float) $avaliacao->nota_maxima <= 0) {
                 throw new \InvalidArgumentException('A avaliação não possui nota máxima definida.');
@@ -385,6 +437,23 @@ class OmrService
         if (! in_array($mime, TiposArquivo::imagens(), true)) {
             throw new \InvalidArgumentException("Tipo de arquivo inválido ({$mime}). Envie uma foto JPG, PNG ou WebP.");
         }
+
+        // Limite de peso: máximo 15 MB
+        $pesoBytes = filesize($caminho);
+        if ($pesoBytes !== false && $pesoBytes > 15 * 1024 * 1024) {
+            throw new \InvalidArgumentException('O arquivo enviado excede o limite máximo permitido de 15 MB.');
+        }
+
+        // getimagesize antes de decodificar (proteção contra arquivos corrompidos e polyglots)
+        $tamanho = @getimagesize($caminho);
+        if ($tamanho === false || ($tamanho[0] ?? 0) <= 0 || ($tamanho[1] ?? 0) <= 0) {
+            throw new \InvalidArgumentException('O arquivo enviado não possui dimensões válidas de imagem.');
+        }
+
+        // Proteção contra descompressão abusiva (Decompression Bomb)
+        if (($tamanho[0] > 10000) || ($tamanho[1] > 10000)) {
+            throw new \InvalidArgumentException('As dimensões da imagem excedem a resolução máxima suportada (10.000 px).');
+        }
     }
 
     /**
@@ -462,10 +531,52 @@ class OmrService
         ];
     }
 
-    protected function obterPrimeiraMatriculaId(Avaliacao $avaliacao): int
+    public function validarMatriculaParaAvaliacao(Avaliacao $avaliacao, int $matriculaId): Matricula
     {
-        $primeira = $avaliacao->turma?->matriculas()->where('situacao', 'ativa')->first();
+        $matriculaObj = Matricula::find($matriculaId);
 
-        return $primeira?->id ?? 1;
+        if (! $matriculaObj || (int) $matriculaObj->turma_id !== (int) $avaliacao->turma_id) {
+            throw new \InvalidArgumentException('A matrícula informada não pertence à turma desta avaliação.');
+        }
+
+        $situacaoValor = is_object($matriculaObj->situacao) ? $matriculaObj->situacao->value : (string) $matriculaObj->situacao;
+        if ($situacaoValor !== 'ativa') {
+            throw new \InvalidArgumentException('A matrícula informada não está ativa.');
+        }
+
+        return $matriculaObj;
+    }
+
+    public function associarMatricula(OmrCorrecao $correcao, int $matriculaId): OmrCorrecao
+    {
+        $avaliacao = $correcao->avaliacao;
+        $this->validarMatriculaParaAvaliacao($avaliacao, $matriculaId);
+
+        if ($correcao->gabaritoFolha && $correcao->gabaritoFolha->matricula_id && (int) $correcao->gabaritoFolha->matricula_id !== (int) $matriculaId) {
+            throw new \InvalidArgumentException('Esta folha de gabarito pertence originalmente a outro aluno.');
+        }
+
+        $correcao->update([
+            'matricula_id' => $matriculaId,
+        ]);
+
+        // Se ainda não existiam habilidades gravadas para esta correção, grava agora
+        if ($correcao->habilidades()->count() === 0 && ! empty($correcao->respostas)) {
+            $gabarito = $avaliacao->gabarito;
+            if ($gabarito) {
+                $calculo = $this->calcularNotaEAcertos($gabarito, (float) $avaliacao->nota_maxima, (array) $correcao->respostas);
+                foreach ($calculo['habilidades'] as $habId => $dadosHab) {
+                    OmrCorrecaoHabilidade::create([
+                        'omr_correcao_id' => $correcao->id,
+                        'habilidade_id' => $habId,
+                        'acertos' => $dadosHab['acertos'],
+                        'total' => $dadosHab['total'],
+                        'percentual' => $dadosHab['percentual'],
+                    ]);
+                }
+            }
+        }
+
+        return $correcao->fresh(['matricula.pessoa']);
     }
 }
