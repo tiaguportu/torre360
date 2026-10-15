@@ -367,7 +367,9 @@ class InteressadoTest extends TestCase
             ->assertOk()
             ->assertSee('Resumo do Lead')
             ->assertSee('Detalhamento do score')
-            ->assertSee('Dias no funil');
+            ->assertSee('Dias no funil')
+            // Gancho do CSS que aperta os recuos do Resumo no celular (InteressadoForm::extraAttributes).
+            ->assertSee('lead-resumo-secao', false);
     }
 
     public function test_listagem_renderiza_com_abas_e_filtra_por_situacao(): void

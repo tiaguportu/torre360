@@ -14,9 +14,51 @@
     ];
 @endphp
 
-<div style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:stretch;">
+{{--
+    Espaçamentos do Resumo. `.lead-resumo-secao` é posto na Section pelo InteressadoForm (extraAttributes).
+
+    Por que `!important` + seletor com `.lead-resumo-secao`: o tema do painel (resources/css/filament/admin/theme.css)
+    aplica `.fi-section { padding:1.5rem !important }` em TODA seção, inclusive na própria seção do Resumo e nos
+    cartões daqui (que usam `.fi-section` pelo visual de caixa). Um `padding` inline ou de classe simples nunca vale
+    contra isso; somavam-se aba 24px + seção 24px + conteúdo 24px + cartão 24px por lado e, em 360px, sobravam
+    ~136px de conteúdo. A regra mais específica abaixo vale só aqui, sem mexer nas demais seções do painel.
+--}}
+<style>
+    .lead-resumo-topo { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:stretch; }
+    .lead-resumo-score { display:flex; align-items:center; gap:1.25rem; }
+    .lead-resumo-metricas { display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); }
+    .lead-resumo-card,
+    .lead-resumo-metrica { border-radius:.75rem; border:1px solid rgba(128,128,128,.25); }
+    .lead-resumo-metrica { display:flex; flex-direction:column; justify-content:center; gap:.25rem; }
+    .lead-resumo-detalhe { margin-top:1rem; }
+    /* Detalhamento: 1 coluna no celular, 2 a partir de 768px (minmax(0,1fr): a barra nunca passa da tela) */
+    .lead-score-fatores { display:grid; gap:.6rem 2rem; grid-template-columns:minmax(0,1fr); }
+
+    /* A seção perde o padding extra do tema: o recuo fica por conta do cabeçalho e do conteúdo (padrão do Filament). */
+    .lead-resumo-secao section.fi-section { padding:0 !important; }
+    .lead-resumo-secao .lead-resumo-card { padding:1.25rem !important; }
+    .lead-resumo-secao .lead-resumo-metrica { padding:1rem !important; }
+
+    @media (min-width: 768px) {
+        .lead-score-fatores { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+
+    @media (max-width: 640px) {
+        .lead-resumo-secao .fi-section-header { padding:.625rem .75rem !important; }
+        .lead-resumo-secao .fi-section-content { padding:.5rem !important; }
+        .lead-resumo-secao .lead-resumo-card { padding:.75rem !important; }
+        .lead-resumo-secao .lead-resumo-metrica { padding:.625rem .75rem !important; }
+        .lead-resumo-topo,
+        .lead-resumo-metricas { gap:.5rem; }
+        .lead-resumo-score { gap:.75rem; }
+        .lead-resumo-detalhe { margin-top:.5rem; }
+        .lead-score-fatores { gap:.5rem; }
+    }
+</style>
+
+<div class="lead-resumo-topo">
     {{-- Score --}}
-    <div class="fi-section" style="padding:1.25rem; display:flex; align-items:center; gap:1.25rem; border-radius:.75rem; border:1px solid rgba(128,128,128,.25);">
+    <div class="fi-section lead-resumo-card lead-resumo-score">
         <div style="position:relative; width:104px; height:104px; flex:none;">
             <svg viewBox="0 0 100 100" width="104" height="104" style="transform:rotate(-90deg);">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(128,128,128,.25)" stroke-width="9"/>
@@ -28,8 +70,8 @@
                 <span style="font-size:.65rem; opacity:.6;">de 100</span>
             </div>
         </div>
-        <div>
-            <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6;">Lead Score (automático)</div>
+        <div style="min-width:0;">
+            <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; overflow-wrap:anywhere;">Lead Score (automático)</div>
             <div style="font-size:1.1rem; font-weight:600; color:{{ $cor }};">{{ $faixa }}</div>
             @if($record->lead_score_atualizado_em)
                 <div style="font-size:.75rem; opacity:.6; margin-top:.25rem;">Atualizado em {{ \Illuminate\Support\Carbon::parse($record->lead_score_atualizado_em)->format('d/m/Y H:i') }}</div>
@@ -38,10 +80,10 @@
     </div>
 
     {{-- Métricas --}}
-    <div style="display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));">
+    <div class="lead-resumo-metricas">
         @foreach($metricas as $m)
             @php $corM = ! empty($m['alerta']) ? '#dc2626' : 'inherit'; @endphp
-            <div class="fi-section" style="padding:1rem; border-radius:.75rem; border:1px solid {{ ! empty($m['alerta']) ? '#dc2626' : 'rgba(128,128,128,.25)' }}; display:flex; flex-direction:column; justify-content:center; gap:.25rem;">
+            <div class="fi-section lead-resumo-metrica" @if(! empty($m['alerta'])) style="border-color:#dc2626;" @endif>
                 <div style="display:flex; align-items:center; gap:.4rem; font-size:.75rem; opacity:.7; color:{{ $corM }};">
                     <x-filament::icon :icon="$m['icone']" style="width:1rem; height:1rem;"/>
                     {{ $m['rotulo'] }}
@@ -57,14 +99,8 @@
     </div>
 </div>
 
-{{-- Detalhamento: 1 coluna no celular, 2 colunas a partir de 768px (colunas com minmax(0,1fr) para a barra nunca passar da tela) --}}
-<style>
-    .lead-score-fatores { display:grid; gap:.6rem 2rem; grid-template-columns:minmax(0,1fr); }
-    @media (min-width: 768px) {
-        .lead-score-fatores { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    }
-</style>
-<div class="fi-section" style="margin-top:1rem; padding:1.25rem; border-radius:.75rem; border:1px solid rgba(128,128,128,.25);">
+{{-- Detalhamento --}}
+<div class="fi-section lead-resumo-card lead-resumo-detalhe">
     <div style="font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin-bottom:.75rem;">Detalhamento do score</div>
     <div class="lead-score-fatores">
         @foreach($fatores as $f)

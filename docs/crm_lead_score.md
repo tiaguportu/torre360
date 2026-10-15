@@ -100,6 +100,24 @@ Layout responsivo (CSS em `<style>` na própria view, classe `.lead-score-fatore
   `minmax(min(100%, 150px), 1fr)`: o mínimo da coluna nunca excede a largura disponível, o que
   antes causava estouro horizontal em celulares de ~360px.
 
+**Recuos (margens internas) do Resumo.** O tema do painel
+(`resources/css/filament/admin/theme.css`) aplica `.fi-section { padding: 1.5rem !important }` em
+**toda** seção, e os cartões do Resumo usam a classe `fi-section` pelo visual de caixa. Por ser
+`!important`, um `padding` inline ou de classe simples **nunca vale**: somavam-se aba (24px) +
+seção (24px) + conteúdo da seção (24px) + cartão (24px) por lado, e em 360px sobravam ~136px de
+largura útil. A correção é local ao Resumo, sem mexer no tema:
+
+- A `Section` recebe a classe `lead-resumo-secao` (`InteressadoForm`, `->extraAttributes()`), e a
+  view usa seletores `.lead-resumo-secao …` (especificidade maior que `.fi-section`) com
+  `!important`. É por isso que há `!important` no CSS da view: é a única forma de ganhar do tema.
+- **Desktop:** a seção fica sem o padding extra do tema (o recuo vem do cabeçalho e do conteúdo,
+  como no Filament padrão); cartões com 1.25rem (métricas 1rem).
+- **Até 640px:** conteúdo da seção com .5rem, cartões com .75rem, espaços entre cartões .5rem e
+  cabeçalho mais compacto. Em 360px a largura útil dos cartões passou de ~136px para ~240px.
+- Se o tema mudar (ou a classe `fi-section` sair dos cartões), revisar esse bloco: o teste
+  `InteressadoTest::test_pagina_de_edicao_renderiza_o_resumo_do_lead` garante apenas que o gancho
+  `lead-resumo-secao` chega ao HTML.
+
 ## Quando o score é recalculado
 
 O score é uma coluna persistida (`interessado.lead_score` +
