@@ -11,7 +11,6 @@ use App\Filament\Resources\TransferenciasEscolares\Pages\ListTransferenciasEscol
 use App\Models\HistoricoEscolar;
 use App\Models\HistoricoEscolarAno;
 use App\Models\Matricula;
-use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\TemplateDocumento;
 use App\Models\TransferenciaEscolar;
@@ -49,14 +48,13 @@ class TransferenciaEscolarTest extends TestCase
 
     private function criarMatriculaAtiva(): Matricula
     {
+        // Período e série da matrícula vêm da turma; não são mais atributos da Matricula.
         $turma = Turma::factory()->create();
-        $periodo = PeriodoLetivo::factory()->create();
         $aluno = Pessoa::factory()->create();
 
         return Matricula::factory()->create([
             'pessoa_id' => $aluno->id,
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
     }

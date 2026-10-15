@@ -94,9 +94,9 @@ class ListaEsperaMatriculaTest extends TestCase
         $periodo = PeriodoLetivo::factory()->create();
 
         for ($i = 0; $i < $vagas; $i++) {
+            // Período e série da matrícula vêm da turma; não são mais atributos da Matricula.
             Matricula::factory()->create([
                 'turma_id' => $turma->id,
-                'periodo_letivo_id' => $periodo->id,
                 'situacao' => 'ativa',
             ]);
         }
@@ -173,7 +173,6 @@ class ListaEsperaMatriculaTest extends TestCase
         // Turma acima da capacidade (3 ativas para 2 vagas): cancelar uma ainda deixa 2/2.
         $matriculas = Matricula::factory()->count(3)->create([
             'turma_id' => $turma->id,
-            'periodo_letivo_id' => $periodo->id,
             'situacao' => 'ativa',
         ]);
         $this->criarEsperaNotificavel($turma, $periodo);
@@ -212,7 +211,6 @@ class ListaEsperaMatriculaTest extends TestCase
 
         Matricula::factory()->create([
             'turma_id' => $dados['turma']->id,
-            'periodo_letivo_id' => $dados['periodo']->id,
             'pessoa_id' => $espera['pessoa']->id,
             'situacao' => 'ativa',
         ]);

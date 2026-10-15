@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\MaterialAulas\Schemas;
 
 use App\Enums\TipoMaterialAula;
+use App\Support\TiposArquivo;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -64,6 +65,7 @@ class MaterialAulaForm
                         FileUpload::make('arquivo_path')
                             ->label('Arquivo')
                             ->directory('materiais-aula')
+                            ->acceptedFileTypes(TiposArquivo::materiaisDeAula())
                             ->preserveFilenames()
                             ->visible(fn (Get $get): bool => self::tipoSelecionado($get) === TipoMaterialAula::Apostila)
                             ->required(fn (Get $get): bool => self::tipoSelecionado($get) === TipoMaterialAula::Apostila)
