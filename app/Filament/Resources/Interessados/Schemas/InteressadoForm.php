@@ -163,6 +163,8 @@ class InteressadoForm
                                     ])
                                     ->collapsible()
                                     ->columnSpanFull()
+                                    // Gancho do CSS da view: aperta o padding do conteúdo da seção no celular.
+                                    ->extraAttributes(['class' => 'lead-resumo-secao'])
                                     ->visible(fn (?Interessado $record) => $record !== null),
 
                                 Select::make('pessoa_id')
