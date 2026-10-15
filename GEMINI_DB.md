@@ -1390,4 +1390,88 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
   - `pendentes()`: Tarefas com status `pendente`.
   - `ativas()`: Tarefas em status `pendente` ou `em_andamento`.
 
+---
+
+## 17. Correção de Gabaritos por Foto (OMR) e Copiloto Pedagógico IA (PEI)
+
+### `avaliacao_gabaritos`
+- **Representa:** Configuração do gabarito oficial de uma avaliação avaliativa.
+- **Campos Principais:**
+  - `avaliacao_id`: FK `avaliacao.id` (cascade on delete, unique).
+  - `total_questoes`: Quantidade total de questões da prova (inteiro, 1 a 60).
+  - `alternativas`: Quantidade de alternativas por questão (4 ou 5).
+  - `anulacao_modo`: Enum `ModoAnulacaoQuestao` (`pontua_todos`, `desconsidera`).
+- **Relacionamentos:** BelongsTo `avaliacao`, HasMany `questoes` (`avaliacao_gabarito_questoes`), HasMany `folhas` (`gabarito_folhas`).
+
+### `avaliacao_gabarito_questoes`
+- **Representa:** Questões individuais do gabarito oficial e seus pesos/habilidades.
+- **Campos Principais:**
+  - `avaliacao_gabarito_id`: FK `avaliacao_gabaritos.id` (cascade on delete).
+  - `numero`: Número de ordem da questão (1, 2, ...).
+  - `alternativa_correta`: Alternativa oficial ('A', 'B', 'C', 'D', 'E' ou null quando anulada).
+  - `peso`: Decimal (5,2) — peso/valor da questão na nota total.
+  - `habilidade_id`: FK `habilidades.id` (nullable, set null on delete) — competência/habilidade BNCC vinculada.
+  - `anulada`: Boolean — indica se a questão foi anulada após a aplicação da prova.
+- **Relacionamentos:** BelongsTo `gabarito` (`avaliacao_gabaritos`), BelongsTo `habilidade` (`Habilidade`).
+
+### `gabarito_folhas`
+- **Representa:** As folhas físicas de gabarito geradas com QR Code opaco rastreável.
+- **Campos Principais:**
+  - `uuid`: Identificador único opaco em UUIDv4 (único, indexado). O QR Code carrega exclusivamente este UUID.
+  - `avaliacao_id`: FK `avaliacao.id` (cascade on delete).
+  - `matricula_id`: FK `matricula.id` (nullable, cascade on delete) — preenchido para folhas nominais ou nulo para avulsas.
+  - `gerada_em`: Timestamp de geração da folha para impressão.
+  - `corrigida_em`: Timestamp em que a folha foi processada e confirmada no sistema.
+- **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula`.
+
+### `omr_correcoes`
+- **Representa:** O registro de processamento computacional da leitura de uma foto de gabarito.
+- **Campos Principais:**
+  - `avaliacao_id`: FK `avaliacao.id` (cascade on delete).
+  - `gabarito_folha_id`: FK `gabarito_folhas.id` (nullable, set null on delete).
+  - `matricula_id`: FK `matricula.id` (nullable, cascade on delete) — **Nullable**: quando o QR Code é ilegível ou ausente, permanece nulo até conferência e seleção manual do professor antes do lançamento.
+  - `user_id`: FK `users.id` — usuário que enviou a foto.
+  - `arquivo_path`: Caminho interno privado da foto higienizada (sem metadados EXIF/GPS).
+  - `arquivo_sha256`: Hash SHA-256 do arquivo original para evitar duplicidades.
+  - `status`: Enum `StatusOmrCorrecao` (`aguardando_conferencia`, `confirmada`, `falha`).
+  - `respostas`: JSON — respostas brutas identificadas pela leitura óptica das bolhas.
+  - `respostas_finais`: JSON — respostas homologadas após conferência humana.
+  - `alertas`: JSON — alertas de leitura (dupla marcação, questão em branco, aluno não identificado, etc.).
+  - `acertos`: Inteiro — total ponderado de questões acertadas.
+  - `total_validas`: Inteiro — total de questões consideradas válidas.
+  - `nota_calculada`: Decimal (5,2) — nota estimada calculada automaticamente pelo OMR.
+  - `motor`: String — motor de processamento computacional ('gd').
+  - `layout_versao`: Inteiro — versão da grade de calibração do gabarito.
+  - `tempo_ms`: Inteiro — tempo de processamento em milissegundos.
+  - `confirmada_por_user_id`: FK `users.id` (nullable) — professor/usuário que homologou.
+  - `confirmada_em`: Timestamp da homologação.
+  - `mensagem_erro`: Texto descritivo em caso de falha de leitura (ex: marcadores não detectados).
+- **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `gabaritoFolha`, BelongsTo `matricula`, BelongsTo `usuario`, HasMany `habilidades` (`omr_correcao_habilidades`).
+
+### `omr_correcao_habilidades`
+- **Representa:** Desempenho e taxa de acerto por habilidade da BNCC apurados na correção OMR.
+- **Campos Principais:**
+  - `omr_correcao_id`: FK `omr_correcoes.id` (cascade on delete).
+  - `habilidade_id`: FK `habilidades.id` (cascade on delete).
+  - `acertos`: Inteiro — questões acertadas dessa habilidade na prova.
+  - `total`: Inteiro — total de questões dessa habilidade na prova.
+  - `percentual`: Decimal (5,2) — aproveitamento percentual do aluno (0 a 100).
+- **Relacionamentos:** BelongsTo `correcao` (`omr_correcoes`), BelongsTo `habilidade` (`Habilidade`).
+
+### `plano_aula_adaptacoes`
+- **Representa:** Proposta de adaptação curricular e Plano Educacional Individualizado (PEI) confidencial para inclusão escolar.
+- **Campos Principais:**
+  - `plano_aula_id`: FK `plano_aula.id` (cascade on delete).
+  - `matricula_id`: FK `matricula.id` (cascade on delete).
+  - `conteudo`: Text com cast `encrypted:array` — armazenado criptografado em repouso no banco de dados (LGPD Dados Sensíveis de Menores).
+  - `status`: Enum `StatusAdaptacaoPei` (`rascunho`, `aprovado`, `arquivado`).
+  - `gerado_por_user_id`: FK `users.id` (nullable) — autor que solicitou geração com IA.
+  - `revisado_por_user_id`: FK `users.id` (nullable) — professor/revisor pedagógico.
+  - `revisado_em`: Datetime (nullable).
+  - `aprovado_por_user_id`: FK `users.id` (nullable) — orientador/coordenador homologador.
+  - `aprovado_em`: Datetime (nullable).
+  - `modelo_ia`: String informando o modelo LLM utilizado.
+- **Relacionamentos:** BelongsTo `planoAula`, BelongsTo `matricula`, BelongsTo `geradoPor`, BelongsTo `aprovadoPor`.
+
+
 

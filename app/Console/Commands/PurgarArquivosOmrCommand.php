@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Enums\StatusOmrCorrecao;
 use App\Models\OmrCorrecao;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -31,10 +30,12 @@ class PurgarArquivosOmrCommand extends Command
         $diasRetencao = (int) config('omr.retencao_dias', 30);
         $limite = now()->subDays($diasRetencao);
 
-        // 1. Purga fotos de correções já confirmadas ou descartadas
-        $correcoesAntigas = OmrCorrecao::whereIn('status', [StatusOmrCorrecao::Confirmada, StatusOmrCorrecao::Descartada])
-            ->where('created_at', '<', $limite)
+        // 1. Purga as fotos de qualquer correção mais antiga que a retenção, inclusive as de leitura com falha ou
+        // abandonadas na conferência: a foto só serve de registro e carrega a letra de menores. O resultado
+        // (respostas, nota e auditoria) permanece na tabela.
+        $correcoesAntigas = OmrCorrecao::where('created_at', '<', $limite)
             ->whereNotNull('arquivo_path')
+            ->where('arquivo_path', '!=', 'purgado_lgpd')
             ->get();
 
         $removidos = 0;

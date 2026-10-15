@@ -46,8 +46,11 @@
 
                     @if(count($correcoes) > 0)
                         <x-filament::button type="button" color="success" size="lg" icon="heroicon-o-check-badge" wire:click="lancarTodasConfirmadas">
-                            Lançar Todas as Notas Confirmadas
+                            Lançar Notas Prontas
                         </x-filament::button>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            Só entram folhas com aluno identificado, sem marcação a conferir e sem conflito com nota já lançada.
+                        </span>
                     @endif
                 </div>
             </form>
@@ -109,6 +112,20 @@
                                 </div>
                             @endif
 
+                            <!-- CONFLITO COM NOTA JÁ LANÇADA: exige confirmação explícita para sobrescrever -->
+                            @if(!empty($c['conflito']))
+                                <div class="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                                    <p class="font-bold">Este aluno já tem nota lançada nesta avaliação.</p>
+                                    <p class="mt-1">
+                                        Nota atual: <strong>{{ number_format((float) $c['conflito']['atual'], 2, ',', '.') }}</strong>
+                                        &rarr; nota da folha: <strong>{{ number_format((float) $c['conflito']['nova'], 2, ',', '.') }}</strong>
+                                    </p>
+                                    <x-filament::button class="mt-2" size="xs" color="danger" icon="heroicon-o-exclamation-triangle" wire:click="lancarNotaIndividual({{ $c['id'] }}, true)">
+                                        Sobrescrever a nota atual
+                                    </x-filament::button>
+                                </div>
+                            @endif
+
                             <!-- GRADE RESUMIDA DE RESPOSTAS -->
                             <div class="mt-4">
                                 <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Respostas Detectadas:</span>
@@ -124,11 +141,37 @@
 
                             <!-- AÇÕES DA CORREÇÃO -->
                             <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
                                     @if($c['status'] !== 'confirmada')
-                                        <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
-                                            Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
-                                        </x-filament::button>
+                                        @if(empty($c['matricula_id']))
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <select
+                                                    wire:change="associarMatricula({{ $c['id'] }}, $event.target.value)"
+                                                    class="rounded-lg border border-rose-300 bg-white px-2.5 py-1 text-xs text-gray-900 shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-rose-700 dark:bg-gray-800 dark:text-gray-100"
+                                                >
+                                                    <option value="">-- Selecione o Aluno da Turma --</option>
+                                                    @foreach($this->getAlunosTurma() as $alunoOpcao)
+                                                        <option value="{{ $alunoOpcao['id'] }}">{{ $alunoOpcao['nome'] }}</option>
+                                                    @endforeach
+                                                </select>
+
+                                                <x-filament::button size="sm" color="gray" icon="heroicon-o-lock-closed" disabled="disabled" title="Vincule um aluno para habilitar o lançamento">
+                                                    Lançar Nota (Bloqueado)
+                                                </x-filament::button>
+                                            </div>
+                                        @else
+                                            @if($c['status'] === 'aguardando_conferencia')
+                                                @if($c['tem_marcacao_a_conferir'])
+                                                    <x-filament::button size="sm" color="warning" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})" wire:confirm="Esta folha tem marcação dupla, ambígua ou ilegível. A nota calculada pode estar incorreta. Lançar mesmo assim?">
+                                                        Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
+                                                    </x-filament::button>
+                                                @else
+                                                    <x-filament::button size="sm" color="success" icon="heroicon-o-check" wire:click="lancarNotaIndividual({{ $c['id'] }})">
+                                                        Lançar Nota ({{ number_format((float) $c['nota_calculada'], 2, ',', '.') }})
+                                                    </x-filament::button>
+                                                @endif
+                                            @endif
+                                        @endif
                                     @else
                                         <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                             ✓ Nota lançada no diário

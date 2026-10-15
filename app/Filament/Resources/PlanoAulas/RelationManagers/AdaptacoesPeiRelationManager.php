@@ -8,6 +8,7 @@ use App\Enums\StatusAdaptacaoPei;
 use App\Models\Matricula;
 use App\Models\PlanoAula;
 use App\Models\PlanoAulaAdaptacao;
+use App\Policies\PlanoAulaAdaptacaoPolicy;
 use App\Services\CopilotoPedagogico\GerarPeiInput;
 use App\Services\CopilotoPedagogicoIaService;
 use Filament\Actions\Action;
@@ -18,6 +19,8 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class AdaptacoesPeiRelationManager extends RelationManager
@@ -29,6 +32,21 @@ class AdaptacoesPeiRelationManager extends RelationManager
     protected static ?string $modelLabel = 'Adaptação PEI';
 
     protected static ?string $pluralModelLabel = 'Adaptações PEI';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        /** @var PlanoAula $ownerRecord */
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        if (! ($user->can('GerarPei:PlanoAula') || $user->can('ExportarPei:PlanoAula'))) {
+            return false;
+        }
+
+        return app(PlanoAulaAdaptacaoPolicy::class)->verificarEscopoProfessor($user, $ownerRecord);
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -48,6 +66,18 @@ class AdaptacoesPeiRelationManager extends RelationManager
 
         return $table
             ->recordTitleAttribute('id')
+            ->modifyQueryUsing(function (Builder $query) use ($planoAula) {
+                $user = auth()->user();
+                if (! $user) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                if (! app(PlanoAulaAdaptacaoPolicy::class)->verificarEscopoProfessor($user, $planoAula)) {
+                    $query->whereRaw('1 = 0');
+                }
+            })
             ->columns([
                 TextColumn::make('matricula.pessoa.nome')
                     ->label('Estudante')
@@ -81,7 +111,7 @@ class AdaptacoesPeiRelationManager extends RelationManager
                     ->label('Gerar Adaptação PEI com IA')
                     ->icon('heroicon-o-sparkles')
                     ->color('primary')
-                    ->visible(fn () => auth()->user()?->can('GerarPei:PlanoAula') && config('copiloto_pedagogico.pei_habilitado', false))
+                    ->visible(fn () => auth()->user()?->can('create', [PlanoAulaAdaptacao::class, $planoAula]) && config('copiloto_pedagogico.pei_habilitado', false))
                     ->modalHeading('Copiloto de Inclusão: Geração de Adaptação Curricular (PEI)')
                     ->modalDescription('Selecione o estudante da turma para o qual a proposta de aula será adaptada conforme as diretrizes do DUA e LBI.')
                     ->schema([
@@ -156,6 +186,17 @@ class AdaptacoesPeiRelationManager extends RelationManager
                             ]
                         );
 
+                        // Auditoria estrita sem gravar conteúdo confidencial
+                        activity('plano_aula')
+                            ->performedOn($planoAula)
+                            ->causedBy(auth()->user())
+                            ->withProperties([
+                                'plano_aula_id' => $planoAula->id,
+                                'matricula_id' => $matricula->id,
+                                'acao' => 'gerar_pei',
+                            ])
+                            ->log("Geração de proposta de adaptação curricular PEI com IA para a matrícula #{$matricula->id}.");
+
                         Notification::make()
                             ->success()
                             ->title('Adaptação PEI gerada com sucesso!')
@@ -168,6 +209,18 @@ class AdaptacoesPeiRelationManager extends RelationManager
                     ->label('Ver Detalhes')
                     ->icon('heroicon-o-eye')
                     ->color('gray')
+                    ->visible(fn (PlanoAulaAdaptacao $record) => auth()->user()?->can('view', $record))
+                    ->mountUsing(function (Action $action, PlanoAulaAdaptacao $record): void {
+                        activity('plano_aula')
+                            ->performedOn($record->planoAula)
+                            ->causedBy(auth()->user())
+                            ->withProperties([
+                                'plano_aula_adaptacao_id' => $record->id,
+                                'matricula_id' => $record->matricula_id,
+                                'acao' => 'visualizar_pei',
+                            ])
+                            ->log("Visualização em tela dos detalhes da adaptação PEI para a matrícula #{$record->matricula_id}.");
+                    })
                     ->modalHeading(fn (PlanoAulaAdaptacao $record): string => 'Adaptação PEI: '.($record->matricula?->pessoa?->nome ?? 'Estudante'))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fechar')
@@ -203,7 +256,7 @@ class AdaptacoesPeiRelationManager extends RelationManager
                     ->label('Aprovar')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn (PlanoAulaAdaptacao $record) => $record->status !== StatusAdaptacaoPei::Aprovado && auth()->user()?->can('GerarPei:PlanoAula'))
+                    ->visible(fn (PlanoAulaAdaptacao $record) => $record->status !== StatusAdaptacaoPei::Aprovado && auth()->user()?->can('update', $record))
                     ->requiresConfirmation()
                     ->modalHeading('Homologar Adaptação PEI')
                     ->modalDescription('Deseja aprovar e homologar esta adaptação pedagógica oficial?')
@@ -225,7 +278,7 @@ class AdaptacoesPeiRelationManager extends RelationManager
                     ->label('PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('info')
-                    ->visible(fn () => auth()->user()?->can('ExportarPei:PlanoAula'))
+                    ->visible(fn (PlanoAulaAdaptacao $record) => auth()->user()?->can('exportarPei', $record))
                     ->url(fn (PlanoAulaAdaptacao $record): string => route('planos-aula.adaptacoes.pdf', $record))
                     ->openUrlInNewTab(),
             ])

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\EstadoLeituraQuestao;
 use App\Enums\StatusOmrCorrecao;
 use Database\Factories\OmrCorrecaoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -89,5 +90,29 @@ class OmrCorrecao extends Model
     public function estaConfirmada(): bool
     {
         return $this->status === StatusOmrCorrecao::Confirmada;
+    }
+
+    /**
+     * Indica se alguma questão foi lida como dupla marcação, marcação ambígua ou ilegível: a leitura automática não
+     * decide sozinha e o professor precisa olhar a folha antes de a nota entrar no diário.
+     */
+    public function temMarcacaoAConferir(): bool
+    {
+        $pendentes = [
+            EstadoLeituraQuestao::Dupla->value,
+            EstadoLeituraQuestao::Ambigua->value,
+            EstadoLeituraQuestao::Ilegivel->value,
+        ];
+
+        foreach ((array) ($this->respostas ?? []) as $resposta) {
+            $estado = $resposta['estado'] ?? null;
+            $estado = $estado instanceof EstadoLeituraQuestao ? $estado->value : $estado;
+
+            if (in_array($estado, $pendentes, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

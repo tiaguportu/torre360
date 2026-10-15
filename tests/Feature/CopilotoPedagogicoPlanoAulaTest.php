@@ -367,7 +367,7 @@ class CopilotoPedagogicoPlanoAulaTest extends TestCase
         );
 
         $mock = Mockery::mock(GeminiAgentService::class);
-        $mock->shouldReceive('callGeminiApi')->twice()->andThrow(new \Exception('Connection timeout to https://generativelanguage.googleapis.com with key AIzaSyFakeKey12345'));
+        $mock->shouldReceive('callGeminiApi')->twice()->andThrow(new \Exception('Connection timeout to https://generativelanguage.googleapis.com with key AIzaSyFakeKey123456789012345678901234'));
         $this->app->instance(GeminiAgentService::class, $mock);
 
         $user = User::factory()->create(['id' => 1]);
@@ -377,7 +377,7 @@ class CopilotoPedagogicoPlanoAulaTest extends TestCase
             $service->gerarPlanoAula($input, $user);
             $this->fail('Deveria ter lançado CopilotoIndisponivelException');
         } catch (CopilotoIndisponivelException $e) {
-            $this->assertStringNotContainsString('AIzaSyFakeKey12345', $e->getMessage(), 'Chave não pode vazar!');
+            $this->assertStringNotContainsString('AIzaSyFakeKey123456789012345678901234', $e->getMessage(), 'Chave não pode vazar!');
             $this->assertStringContainsString('Falha na comunicação', $e->getMessage());
         }
     }
@@ -468,5 +468,59 @@ class CopilotoPedagogicoPlanoAulaTest extends TestCase
 
         $conteudoPdf = $response->getContent();
         $this->assertStringStartsWith('%PDF', $conteudoPdf);
+    }
+
+    public function test_regenerar_secao_de_recursos_e_de_objetivos_com_ia(): void
+    {
+        $hab = Habilidade::factory()->create(['codigo' => 'EF06MA01', 'nome' => 'Números Naturais']);
+
+        $input = new GerarPlanoAulaInput(
+            turmaId: 1,
+            disciplinaId: 1,
+            turmaNome: '6º Ano A',
+            serieNome: '6º Ano',
+            disciplinaNome: 'Matemática',
+            numeroAulas: 1,
+            duracaoMinutosPorAula: 50,
+            habilidades: [
+                ['id' => $hab->id, 'codigo' => 'EF06MA01', 'nome' => 'Números Naturais'],
+            ],
+        );
+
+        $mock = Mockery::mock(GeminiAgentService::class);
+        $mock->shouldReceive('callGeminiApi')
+            ->once()
+            ->andReturn([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'recursos' => [
+                                            'Tablets com aplicativo GeoGebra',
+                                            'Papel quadriculado e réguas',
+                                        ],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+        $this->app->instance(GeminiAgentService::class, $mock);
+
+        $user = User::factory()->create();
+        $service = app(CopilotoPedagogicoIaService::class);
+
+        $resultado = $service->regenerarSecaoPlanoAula(
+            input: $input,
+            secao: 'recursos',
+            instrucaoCurta: 'adicionar recursos digitais interativos',
+            user: $user
+        );
+
+        $this->assertStringContainsString('GeoGebra', $resultado);
+        $this->assertStringContainsString('Papel quadriculado', $resultado);
     }
 }

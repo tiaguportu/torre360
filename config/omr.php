@@ -19,18 +19,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Fallback com Gemini Vision
-    |--------------------------------------------------------------------------
-    |
-    | Por padrão desativado (motor determinístico em GD puro).
-    | Quando ativado, somente recebe recorte da grade e nunca lança notas sem
-    | conferência humana explícita.
-    |
-    */
-    'fallback_gemini' => (bool) env('OMR_FALLBACK_GEMINI', false),
-
-    /*
-    |--------------------------------------------------------------------------
     | Retenção e Limpeza de Arquivos
     |--------------------------------------------------------------------------
     |
