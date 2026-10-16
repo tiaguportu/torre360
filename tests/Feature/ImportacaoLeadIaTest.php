@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\StatusVisitaInteressado;
 use App\Filament\Resources\Interessados\Pages\ListInteressados;
 use App\Models\Curso;
 use App\Models\HistoricoContato;
@@ -16,10 +17,13 @@ use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Models\VisitaInteressado;
 use App\Services\GeminiAgentService;
 use App\Services\ImportacaoLeadIaService;
+use Filament\Notifications\Notification;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -318,7 +322,230 @@ class ImportacaoLeadIaTest extends TestCase
         $this->assertSame([], Pessoa::query()->comTelefone('21988885555')->pluck('id')->all());
     }
 
+    // ─── Visitas à escola ───────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    private function visita(Carbon|string $dataHora, string $situacao = 'agendada', array $extra = []): array
+    {
+        return $extra + [
+            'data_hora' => $dataHora instanceof Carbon ? $dataHora->format('Y-m-d H:i:s') : $dataHora,
+            'situacao' => $situacao,
+        ];
+    }
+
+    public function test_visita_ja_realizada_e_visita_marcada_viram_agendamentos_do_lead(): void
+    {
+        $passada = now()->subDays(3)->setTime(15, 30);
+        $futura = now()->addDays(4)->setTime(10, 0);
+
+        $resultado = $this->importar($this->extraido([
+            'alunos' => [['nome' => 'Lucas Silva']],
+            'visitas' => [
+                $this->visita($passada, 'realizada', ['aluno' => 'lucas  silva', 'observacoes' => 'Conheceu as salas.']),
+                $this->visita($futura, 'agendada', ['aluno' => null]),
+            ],
+        ]));
+
+        $lead = $resultado['interessado'];
+        $this->assertSame(2, $resultado['visitas']);
+        $this->assertSame([], $resultado['avisos']);
+
+        $visitas = $lead->visitas()->orderBy('data_hora')->get();
+        $this->assertCount(2, $visitas);
+
+        $this->assertSame(StatusVisitaInteressado::Realizada, $visitas[0]->status);
+        $this->assertSame($passada->format('Y-m-d H:i'), $visitas[0]->data_hora->format('Y-m-d H:i'));
+        $this->assertSame($lead->dependentes()->firstOrFail()->id, $visitas[0]->interessado_dependente_id);
+        $this->assertSame($this->consultor->id, $visitas[0]->usuario_id);
+        $this->assertStringContainsString('Conheceu as salas.', $visitas[0]->observacoes);
+        $this->assertStringContainsString('via IA', $visitas[0]->observacoes);
+
+        $this->assertSame(StatusVisitaInteressado::Agendada, $visitas[1]->status);
+        $this->assertNull($visitas[1]->interessado_dependente_id, 'Sem aluno informado, a visita é da família toda.');
+    }
+
+    public function test_visita_marcada_antecipa_o_proximo_contato_do_lead(): void
+    {
+        $visita = now()->addHours(12)->startOfMinute();
+
+        $resultado = $this->importar($this->extraido(['visitas' => [$this->visita($visita)]]));
+
+        $this->assertSame($visita->format('Y-m-d H:i'), $resultado['interessado']->data_proximo_contato->format('Y-m-d H:i'));
+    }
+
+    public function test_visita_sem_horario_assume_o_padrao_e_avisa_para_confirmar(): void
+    {
+        $dia = now()->addDays(5);
+
+        $resultado = $this->importar($this->extraido(['visitas' => [$this->visita($dia->format('Y-m-d'))]]));
+
+        $visita = $resultado['interessado']->visitas()->firstOrFail();
+        $this->assertSame($dia->format('Y-m-d').' 09:00:00', $visita->data_hora->format('Y-m-d H:i:s'));
+        $this->assertCount(1, $resultado['avisos']);
+        $this->assertStringContainsString('sem horário', $resultado['avisos'][0]);
+    }
+
+    public function test_situacao_incoerente_com_a_data_e_corrigida_e_avisada(): void
+    {
+        $resultado = $this->importar($this->extraido(['visitas' => [
+            $this->visita(now()->addDays(2)->setTime(10, 0), 'realizada'),
+            $this->visita(now()->subDays(2)->setTime(10, 0), 'agendada'),
+        ]]));
+
+        $visitas = $resultado['interessado']->visitas()->orderBy('data_hora')->get();
+        $this->assertSame(StatusVisitaInteressado::Agendada, $visitas[0]->status);
+        $this->assertTrue($visitas[0]->estaAtrasada(), 'Visita passada sem desfecho aparece como atrasada para o consultor decidir.');
+        $this->assertSame(StatusVisitaInteressado::Agendada, $visitas[1]->status, 'Realizada no futuro vira agendada.');
+
+        $this->assertCount(2, $resultado['avisos']);
+        $this->assertStringContainsString('está no futuro', implode(' ', $resultado['avisos']));
+        $this->assertStringContainsString('já passou', implode(' ', $resultado['avisos']));
+    }
+
+    public function test_visita_faltou_e_cancelada_sao_registradas_com_a_situacao_informada(): void
+    {
+        $resultado = $this->importar($this->extraido(['visitas' => [
+            $this->visita(now()->subDays(6)->setTime(9, 0), 'faltou'),
+            $this->visita(now()->addDays(6)->setTime(9, 0), 'cancelada'),
+            $this->visita(now()->subDays(1)->setTime(9, 0), 'situação inventada'),
+        ]]));
+
+        $status = $resultado['interessado']->visitas()->orderBy('data_hora')->get()->pluck('status')->all();
+        $this->assertSame([StatusVisitaInteressado::Faltou, StatusVisitaInteressado::Agendada, StatusVisitaInteressado::Cancelada], $status);
+    }
+
+    public function test_visita_com_data_ilegivel_ou_fora_de_epoca_nao_derruba_a_importacao(): void
+    {
+        $resultado = $this->importar($this->extraido(['visitas' => [
+            $this->visita('semana que vem'),
+            $this->visita('2026-02-31 10:00:00'),
+            $this->visita(now()->subYears(3)->setTime(10, 0)),
+            ['situacao' => 'agendada'],
+            'texto solto',
+        ]]));
+
+        $this->assertSame(0, $resultado['visitas']);
+        $this->assertSame(0, VisitaInteressado::count());
+        $this->assertNotNull($resultado['interessado']->id, 'O lead é criado mesmo sem as visitas.');
+        $this->assertCount(3, $resultado['avisos']);
+
+        $this->assertSame(0, $this->importar($this->extraido(['visitas' => 'tem visita sim']))['visitas']);
+    }
+
+    public function test_so_as_primeiras_visitas_da_ia_sao_aceitas(): void
+    {
+        $visitas = array_map(fn (int $dias): array => $this->visita(now()->addDays($dias)->setTime(10, 0)), range(1, 9));
+
+        $resultado = $this->importar($this->extraido(['visitas' => $visitas]));
+
+        $this->assertSame(5, $resultado['visitas']);
+        $this->assertSame(5, VisitaInteressado::count());
+    }
+
+    public function test_conversa_sem_visitas_nao_cria_agendamento(): void
+    {
+        $this->assertSame(0, $this->importar($this->extraido())['visitas']);
+        $this->assertSame(0, $this->importar($this->extraido(['visitas' => []]))['visitas']);
+        $this->assertSame(0, VisitaInteressado::count());
+    }
+
+    public function test_visita_do_mesmo_dia_nao_e_duplicada_e_so_avanca_a_partir_de_agendada(): void
+    {
+        $dia = now()->subDays(3)->setTime(14, 0);
+
+        $this->assertSame(1, $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]))['visitas']);
+
+        // Outra conversa sobre a mesma visita, agora confirmando que aconteceu (e com o horário um pouco diferente).
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia->copy()->setTime(15, 0), 'realizada')]]));
+        $this->assertTrue($segunda['reaproveitado']);
+        $this->assertSame(1, $segunda['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+        $this->assertSame(StatusVisitaInteressado::Realizada, VisitaInteressado::firstOrFail()->status);
+
+        // Reimportar a mesma conversa, ou uma que a dê como "faltou", não duplica nem desfaz o desfecho já registrado.
+        $this->assertSame(0, $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'realizada')]]))['visitas']);
+        $this->assertSame(0, $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'faltou')]]))['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+        $this->assertSame(StatusVisitaInteressado::Realizada, VisitaInteressado::firstOrFail()->status);
+    }
+
+    public function test_visita_em_outro_dia_do_mesmo_lead_e_somada_as_existentes(): void
+    {
+        $this->importar($this->extraido(['visitas' => [$this->visita(now()->subDays(10)->setTime(10, 0), 'realizada')]]));
+
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita(now()->addDays(2)->setTime(10, 0), 'agendada')]]));
+
+        $this->assertSame(1, $segunda['visitas']);
+        $this->assertSame(2, VisitaInteressado::count());
+        $this->assertSame(1, Interessado::count());
+    }
+
+    public function test_visita_de_lead_existente_usa_o_consultor_do_lead(): void
+    {
+        $outroConsultor = User::factory()->create();
+        $pessoa = Pessoa::factory()->create(['email' => 'carla@exemplo.com']);
+        Interessado::create([
+            'pessoa_id' => $pessoa->id,
+            'usuario_id' => $outroConsultor->id,
+            'origem_interessado_id' => OrigemInteressado::create(['nome' => 'Site'])->id,
+            'status_interessado_id' => $this->novo->id,
+        ]);
+
+        $this->importar($this->extraido(['visitas' => [$this->visita(now()->addDays(3)->setTime(10, 0))]]));
+
+        $this->assertSame($outroConsultor->id, VisitaInteressado::firstOrFail()->usuario_id);
+    }
+
     // ─── Prompt e ação ──────────────────────────────────────────
+
+    public function test_prompt_de_extracao_pede_as_visitas_a_escola(): void
+    {
+        config(['services.gemini.key' => 'chave-de-teste']);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => '{"visitas": []}']]]]]], 200)]);
+
+        app(GeminiAgentService::class)->extrairLead('A Carla quer visitar a escola sexta às 15h.');
+
+        Http::assertSent(function ($request): bool {
+            $instrucao = $request->data()['systemInstruction']['parts'][0]['text'] ?? '';
+
+            return str_contains($instrucao, '"visitas": [')
+                && str_contains($instrucao, 'agendada|realizada|faltou|cancelada')
+                && str_contains($instrucao, 'VISITAS À ESCOLA');
+        });
+    }
+
+    public function test_acao_registra_as_visitas_da_conversa_e_informa_na_notificacao(): void
+    {
+        config(['services.gemini.key' => 'chave-de-teste']);
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now(), 'email_verified_at' => now()]);
+        $admin->assignRole('super_admin');
+        session(['active_role' => 'super_admin']);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [[
+            'text' => json_encode($this->extraido(['visitas' => [
+                $this->visita(now()->subDays(2)->setTime(10, 0), 'realizada'),
+                $this->visita(now()->addDays(5)->setTime(15, 0), 'agendada'),
+            ]])),
+        ]]]]]], 200)]);
+
+        Livewire::actingAs($admin)
+            ->test(ListInteressados::class)
+            ->callAction('importarComIA', ['mensagem_bruta' => 'Conversa com a Carla.', 'usuario_id' => $admin->id])
+            ->assertHasNoActionErrors()
+            ->assertNotified(
+                Notification::make()
+                    ->title('✨ Lead importado com sucesso via IA!')
+                    ->body('Interessado Carla Souza cadastrado com 0 dependente(s). 2 visita(s) à escola registrada(s) (aba Visitas à Escola).')
+                    ->success()
+            );
+
+        $this->assertSame(2, VisitaInteressado::count());
+    }
 
     public function test_prompt_de_extracao_lista_os_cadastros_existentes_e_trata_o_texto_como_dado(): void
     {

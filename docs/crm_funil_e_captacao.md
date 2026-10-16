@@ -319,9 +319,32 @@ IA é texto livre de terceiros e só vira cadastro depois de validado:
 - **Deduplicação:** a pessoa é reconhecida por e-mail, CPF ou telefone (`Pessoa::scopeComTelefone`: ignora máscara e
   o `55`). Se já tem **lead ativo**, a conversa entra no histórico dele, o aluno repetido só é completado, nada do que
   está preenchido é sobrescrito e não nasce segundo lead; lead encerrado ganha um lead novo.
-- **Transação:** pessoa, lead, alunos e histórico entram juntos ou nenhum.
+- **Visitas à escola:** o JSON da IA traz `visitas` (`data_hora`, `situacao`, `aluno`, `observacoes`) com as visitas já
+  feitas e as marcadas. `resolverVisitas()` valida e `gravarVisitas()` grava via `VisitaInteressadoService::agendar()`
+  (que ganhou o parâmetro opcional `$status`; por isso a visita marcada também antecipa o "próximo contato" e recalcula
+  o score), depois dos alunos e dentro da mesma transação. O resultado de `importar()` traz `visitas` (quantas foram
+  criadas ou atualizadas), que a notificação da ação exibe. Regras:
+  - `situacao` fora de `agendada|realizada|faltou|cancelada` vira `agendada`. **Realizada/faltou numa data futura** vira
+    `agendada`, com aviso. Visita **já passada** que a IA dá como `agendada` (a conversa não confirma o desfecho) fica
+    `agendada`, aparece atrasada na aba Visitas e gera aviso para o consultor marcar o desfecho.
+  - `data_hora` aceita `AAAA-MM-DD HH:MM[:SS]` e `DD/MM/AAAA`; **só o dia** assume 09:00 (`HORARIO_VISITA_PADRAO`) com
+    aviso para confirmar. Data ilegível, inexistente (31/02 não "transborda" para março) ou a mais de 365 dias de hoje
+    (`JANELA_VISITA_DIAS`, ano errado da IA) descarta a visita com aviso, sem derrubar o cadastro. No máximo 5 visitas por
+    importação (`MAX_VISITAS`).
+  - **Deduplicação por lead e dia:** havendo visita do lead no mesmo dia (qualquer horário), nada é criado; só uma
+    existente `agendada` passa para realizada/faltou/cancelada quando a nova conversa confirma. Desfecho já registrado,
+    inclusive à mão, nunca é desfeito. Reimportar a mesma conversa é inofensivo.
+  - O consultor da visita é o do lead (`$interessado->usuario_id`, senão o escolhido na importação); o aluno é ligado
+    pelo nome (sem caixa/acento) entre os dependentes do lead, já com os recém-cadastrados; sem correspondência, a visita é
+    da família toda. As observações levam a marca "Visita registrada via IA".
+  - A visita importada como realizada **não** cria a `PesquisaSatisfacaoVisita` (NPS) na hora: ela nasce no primeiro
+    `obterOuCriarPesquisa()`, como nas demais visitas. Os gatilhos `VisitaRealizada`/`VisitaFaltou` da régua olham a
+    janela `crm.regua.janela_recuperacao_dias` e valem para a visita importada como para a manual.
+- **Transação:** pessoa, lead, alunos, visitas e histórico entram juntos ou nenhum.
 - **Prompt:** lista as origens e séries cadastradas para a IA devolver nomes existentes e manda tratar o conteúdo
-  recebido como dado, ignorando instruções escritas nele (texto, texto legível nas imagens e **fala nos áudios**).
+  recebido como dado, ignorando instruções escritas nele (texto, texto legível nas imagens e **fala nos áudios**). O bloco
+  "VISITAS À ESCOLA" pede só visitas presenciais com data (não reunião online, ligação nem intenção sem data) e manda
+  resolver datas relativas ("amanhã", "sexta") a partir da data da mensagem em que foram ditas.
 - Testes: `ImportacaoLeadIaTest`, `GeminiLeadExtractionTest`.
 
 #### Conversa exportada do WhatsApp (.zip) — `ConversaWhatsappZipService`

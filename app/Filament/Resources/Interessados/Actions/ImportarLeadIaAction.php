@@ -141,6 +141,10 @@ class ImportarLeadIaAction
                         ? "{$interessado->pessoa->nome} já tinha um lead ativo: a conversa foi somada ao histórico dele, sem criar outro."
                         : "Interessado {$interessado->pessoa->nome} cadastrado com ".$interessado->dependentes()->count().' dependente(s).';
 
+                    if ($resultado['visitas'] > 0) {
+                        $corpo .= " {$resultado['visitas']} visita(s) à escola registrada(s) (aba Visitas à Escola).";
+                    }
+
                     $avisos = array_merge($resultado['avisos'], $conversa['avisos'] ?? []);
 
                     if ($conversa !== null) {

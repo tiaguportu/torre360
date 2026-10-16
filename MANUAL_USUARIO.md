@@ -225,6 +225,13 @@ Para agilizar a prospecção e evitar a digitação manual de formulários, o To
 3. **O que a IA faz automaticamente:**
    - **Histórico de Contato:** registra automaticamente um contato com o relato da conversa, o canal (WhatsApp, Ligação, E-mail ou Presencial) e a data/hora em que ocorreu (quando identificada no texto/print; caso contrário, usa o momento da importação).
    - **Observações com datas:** o resumo em Observações cita as datas disponíveis (conversa, visitas, prazos, previsão de matrícula) no formato DD/MM/AAAA (o sistema converte automaticamente qualquer data fora desse padrão). O histórico também começa com a linha "Contato em DD/MM/AAAA HH:MM via <canal>".
+   - **Visitas à escola:** se a conversa fala de uma visita **que já aconteceu** ou **que foi marcada** (com data), ela entra na aba **Visitas à Escola** do lead, com a situação correspondente (*Agendada*, *Realizada*, *Não compareceu* ou *Cancelada*) e, quando a conversa cita o aluno, vinculada a ele (senão, vale para a família toda). A visita marcada também antecipa o **Próximo Contato** do lead, como no agendamento manual. Pontos de atenção, todos sinalizados na notificação e nas observações do lead:
+     - **Sem horário na conversa:** a visita é registrada às **09:00**; confirme o horário.
+     - **Visita que já passou sem a conversa dizer se aconteceu:** fica como *Agendada* e aparece **atrasada** (em vermelho); marque como *Realizada* ou *Não compareceu*.
+     - **"Realizada" com data futura** não existe: vira *Agendada*.
+     - **Data ilegível ou a mais de um ano de hoje** (ano errado da IA) não é registrada. Cada importação aceita até **5 visitas**.
+     - **Sem duplicar:** se o lead já tem visita no **mesmo dia**, nada é criado; só uma visita *Agendada* é atualizada quando a nova conversa confirma que foi *Realizada*, *Não compareceu* ou *Cancelada*. O que você já alterou à mão não é desfeito.
+     - Visita marcada como *Realizada* por aqui **não gera a pesquisa de satisfação (NPS) sozinha**: ela é criada quando você abre o convite pelo WhatsApp, como nas demais visitas. Já os gatilhos da régua de follow-up para visita realizada (por exemplo, o e-mail pós-visita) valem para visitas recentes, não importa como foram cadastradas.
    - Lê e interpreta o print ou o texto recebido com alta precisão.
    - Extrai o Nome completo, E-mail, Telefone e CPF do responsável.
    - Identifica **perfis de redes sociais** citados na mensagem ou no print e os cadastra em Redes Sociais (só links válidos; o `https://` é acrescentado quando faltar).

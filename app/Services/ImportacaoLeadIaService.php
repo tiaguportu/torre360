@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\StatusVisitaInteressado;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
@@ -45,9 +46,18 @@ class ImportacaoLeadIaService
     /** Vínculos aceitos em `interessado_dependente.vinculo` (enum do banco). */
     private const VINCULOS = ['Pai', 'Mãe', 'Parente', 'Tutor'];
 
+    /** Visitas aceitas por importação: o que a IA devolve é texto de terceiros, então a quantidade tem teto. */
+    private const MAX_VISITAS = 5;
+
+    /** Visita mais de um ano no passado ou no futuro é quase certamente ano errado da IA: não é registrada. */
+    private const JANELA_VISITA_DIAS = 365;
+
+    /** Horário assumido quando a conversa cita só o dia da visita. */
+    private const HORARIO_VISITA_PADRAO = '09:00:00';
+
     /**
      * @param  array<string, mixed>  $extraido  JSON devolvido por `GeminiAgentService::extrairLead()`
-     * @return array{interessado: Interessado, reaproveitado: bool, avisos: list<string>}
+     * @return array{interessado: Interessado, reaproveitado: bool, avisos: list<string>, visitas: int}
      */
     public function importar(array $extraido, int $usuarioId, ?int $origemFallbackId = null): array
     {
@@ -56,7 +66,7 @@ class ImportacaoLeadIaService
 
     /**
      * @param  array<string, mixed>  $extraido
-     * @return array{interessado: Interessado, reaproveitado: bool, avisos: list<string>}
+     * @return array{interessado: Interessado, reaproveitado: bool, avisos: list<string>, visitas: int}
      */
     private function gravar(array $extraido, int $usuarioId, ?int $origemFallbackId): array
     {
@@ -83,16 +93,18 @@ class ImportacaoLeadIaService
         $observacaoIa = filled($extraido['observacoes'] ?? null) ? self::normalizarDatas((string) $extraido['observacoes']) : null;
 
         [$alunos, $avisosAlunos] = $this->resolverAlunos($extraido['alunos'] ?? []);
+        [$visitas, $avisosVisitas] = $this->resolverVisitas($extraido['visitas'] ?? []);
+        $avisosCadastro = array_merge($avisosAlunos, $avisosVisitas);
 
         $existente = Interessado::query()->ativos()->where('pessoa_id', $pessoa->id)->latest('id')->first();
 
         if ($existente) {
             $interessado = $existente;
-            $avisos = array_merge($avisos, $avisosAlunos);
+            $avisos = array_merge($avisos, $avisosCadastro);
             $this->complementarLead($interessado, $temperatura, $valorEstimado, $redes, $observacaoIa);
         } else {
             $origemId = $this->resolverOrigem($this->texto($extraido['origem_sugerida'] ?? null, 100), $origemFallbackId, $avisos);
-            $avisos = array_merge($avisos, $avisosAlunos);
+            $avisos = array_merge($avisos, $avisosCadastro);
 
             $interessado = Interessado::create([
                 'pessoa_id' => $pessoa->id,
@@ -112,11 +124,12 @@ class ImportacaoLeadIaService
         }
 
         $this->gravarAlunos($interessado, $alunos);
+        $registradas = $this->gravarVisitas($interessado, $visitas, $usuarioId);
         $this->registrarContato($interessado, $extraido, $usuarioId, $existente !== null);
 
         LeadScoreService::recalcular($interessado);
 
-        return ['interessado' => $interessado->fresh(), 'reaproveitado' => $existente !== null, 'avisos' => array_values($avisos)];
+        return ['interessado' => $interessado->fresh(), 'reaproveitado' => $existente !== null, 'avisos' => array_values($avisos), 'visitas' => $registradas];
     }
 
     /**
@@ -324,6 +337,155 @@ class ImportacaoLeadIaService
 
             $existentes->push($interessado->dependentes()->create($informados + ['nome_crianca' => $aluno['nome']]));
         }
+    }
+
+    /**
+     * Visitas à escola citadas pela IA (já feitas ou marcadas), com data e situação validadas. Visita sem data
+     * legível ou fora de uma janela plausível é descartada com aviso; "realizada"/"faltou" numa data futura vira
+     * "agendada"; e visita já passada que a conversa não confirma fica "agendada" (aparece como atrasada) para o
+     * consultor dizer se aconteceu.
+     *
+     * @return array{0: list<array{data_hora: Carbon, status: StatusVisitaInteressado, aluno: ?string, observacoes: ?string}>, 1: list<string>}
+     */
+    private function resolverVisitas(mixed $visitas): array
+    {
+        if (! is_array($visitas) || $visitas === []) {
+            return [[], []];
+        }
+
+        $resolvidas = [];
+        $avisos = [];
+
+        foreach (array_slice(array_values($visitas), 0, self::MAX_VISITAS) as $dados) {
+            if (! is_array($dados)) {
+                continue;
+            }
+
+            $dataHora = $this->dataHoraDaVisita($dados['data_hora'] ?? null, $avisos);
+
+            if ($dataHora === null) {
+                continue;
+            }
+
+            $rotulo = $dataHora->format('d/m/Y H:i');
+            $status = StatusVisitaInteressado::tryFrom(mb_strtolower($this->texto($dados['situacao'] ?? null, 20) ?? '')) ?? StatusVisitaInteressado::Agendada;
+
+            if ($dataHora->isFuture() && in_array($status, [StatusVisitaInteressado::Realizada, StatusVisitaInteressado::Faltou], true)) {
+                $avisos[] = "A visita de {$rotulo} está no futuro, então foi registrada como Agendada (a IA a deu como {$status->getLabel()}).";
+                $status = StatusVisitaInteressado::Agendada;
+            } elseif ($dataHora->isPast() && $status === StatusVisitaInteressado::Agendada) {
+                $avisos[] = "A visita de {$rotulo} já passou e a conversa não diz se aconteceu: ficou como Agendada (atrasada). Marque como Realizada ou Não compareceu.";
+            }
+
+            $observacoes = $this->texto($dados['observacoes'] ?? null, 500);
+
+            $resolvidas[] = [
+                'data_hora' => $dataHora,
+                'status' => $status,
+                'aluno' => $this->texto($dados['aluno'] ?? null, 255),
+                'observacoes' => $observacoes === null ? null : self::normalizarDatas($observacoes),
+            ];
+        }
+
+        return [$resolvidas, $avisos];
+    }
+
+    /**
+     * Data e hora da visita (AAAA-MM-DD HH:MM[:SS], ou DD/MM/AAAA). Só o dia: assume o horário padrão e avisa.
+     *
+     * @param  list<string>  $avisos
+     */
+    private function dataHoraDaVisita(mixed $valor, array &$avisos): ?Carbon
+    {
+        $texto = $this->texto($valor, 40);
+
+        if ($texto === null) {
+            return null;
+        }
+
+        $iso = preg_replace('#^(\d{2})/(\d{2})/(\d{4})#', '$3-$2-$1', str_replace('T', ' ', $texto)) ?? $texto;
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?$/', $iso, $partes) !== 1) {
+            $avisos[] = "A data de visita \"{$texto}\" extraída pela IA não é válida e a visita não foi registrada.";
+
+            return null;
+        }
+
+        $semHorario = ! isset($partes[1]);
+
+        try {
+            $dataHora = Carbon::parse($semHorario ? $iso.' '.self::HORARIO_VISITA_PADRAO : $iso);
+
+            // 31/02 "transborda" para março sem erro: só vale se o dia continua o mesmo.
+            if ($dataHora->format('Y-m-d') !== substr($iso, 0, 10)) {
+                throw new \InvalidArgumentException('Data inexistente.');
+            }
+        } catch (\Throwable) {
+            $avisos[] = "A data de visita \"{$texto}\" extraída pela IA não é válida e a visita não foi registrada.";
+
+            return null;
+        }
+
+        if ($dataHora->lt(now()->subDays(self::JANELA_VISITA_DIAS)) || $dataHora->gt(now()->addDays(self::JANELA_VISITA_DIAS))) {
+            $avisos[] = 'A visita de '.$dataHora->format('d/m/Y').' está a mais de um ano de hoje (possível ano errado da IA) e não foi registrada.';
+
+            return null;
+        }
+
+        if ($semHorario) {
+            $avisos[] = 'A conversa cita a visita de '.$dataHora->format('d/m/Y').' sem horário: foi registrada às '.$dataHora->format('H:i').'. Confirme o horário.';
+        }
+
+        return $dataHora;
+    }
+
+    /**
+     * Cadastra as visitas no lead. Visita no mesmo dia de outra já existente do lead não é duplicada (reimportar a
+     * conversa, ou uma conversa nova sobre a mesma visita, é comum); só sai de "agendada" se a conversa agora
+     * confirma o desfecho. O que o consultor já alterou à mão nunca é desfeito.
+     *
+     * @param  list<array{data_hora: Carbon, status: StatusVisitaInteressado, aluno: ?string, observacoes: ?string}>  $visitas
+     * @return int Visitas criadas ou atualizadas.
+     */
+    private function gravarVisitas(Interessado $interessado, array $visitas, int $usuarioId): int
+    {
+        if ($visitas === []) {
+            return 0;
+        }
+
+        $dependentes = $interessado->dependentes()->get();
+        $registradas = 0;
+
+        foreach ($visitas as $visita) {
+            $existente = $interessado->visitas()
+                ->whereBetween('data_hora', [$visita['data_hora']->copy()->startOfDay(), $visita['data_hora']->copy()->endOfDay()])
+                ->orderBy('id')
+                ->first();
+
+            if ($existente) {
+                if ($existente->status === StatusVisitaInteressado::Agendada && $visita['status'] !== StatusVisitaInteressado::Agendada) {
+                    $existente->update(['status' => $visita['status']]);
+                    $registradas++;
+                }
+
+                continue;
+            }
+
+            $alvo = $visita['aluno'] === null ? '' : InteressadoDependente::nomeNormalizado($visita['aluno']);
+            $dependente = $alvo === '' ? null : $dependentes->first(fn (InteressadoDependente $d): bool => InteressadoDependente::nomeNormalizado($d->nome_crianca) === $alvo);
+
+            VisitaInteressadoService::agendar(
+                $interessado,
+                $visita['data_hora'],
+                $interessado->usuario_id ?? $usuarioId,
+                $dependente?->id,
+                implode("\n", array_filter([$visita['observacoes'], '✨ Visita registrada via IA (Google Gemini) em '.now()->format('d/m/Y H:i').'.'])),
+                $visita['status'],
+            );
+            $registradas++;
+        }
+
+        return $registradas;
     }
 
     /**

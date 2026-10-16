@@ -26,13 +26,14 @@ class VisitaInteressadoService
         ?int $usuarioId = null,
         ?int $dependenteId = null,
         ?string $observacoes = null,
+        StatusVisitaInteressado $status = StatusVisitaInteressado::Agendada,
     ): VisitaInteressado {
         $visita = $interessado->visitas()->create([
             'data_hora' => $dataHora,
             'usuario_id' => $usuarioId ?? $interessado->usuario_id,
             'interessado_dependente_id' => $dependenteId,
             'observacoes' => $observacoes,
-            'status' => StatusVisitaInteressado::Agendada,
+            'status' => $status,
         ]);
 
         self::sincronizarProximoContato($interessado);

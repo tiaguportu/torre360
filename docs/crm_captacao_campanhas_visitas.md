@@ -81,9 +81,19 @@ Regras (`VisitaInteressadoService`):
   futura agendada **somente** se o lead não tem retorno marcado, se o retorno já passou
   ou se a visita vier antes dele. Um retorno já marcado para antes da visita não é
   adiado.
+- `agendar()` aceita o parâmetro opcional `$status` (padrão `agendada`), usado pela
+  importação de lead por IA para registrar também visitas já realizadas, que faltaram
+  ou foram canceladas. Ver `docs/crm_funil_e_captacao.md`, seção 11.2.
 - A variável `[Horário de Visita Agendada]` dos modelos de WhatsApp usa
   `Interessado::proximaVisita` (a visita agendada futura mais próxima), com fallback para
   `data_proximo_contato`.
+
+### Visitas criadas pela importação de lead por IA
+
+A ação **Importar Lead com IA** cria as visitas citadas na conversa (já feitas ou marcadas),
+sem duplicar visita do mesmo dia no lead. Horário ausente assume 09:00 e visita passada sem
+desfecho fica "Agendada" (atrasada) até o consultor marcar Realizada ou Não compareceu.
+Regras completas na seção 11.2 de `docs/crm_funil_e_captacao.md`.
 
 ### Lembretes
 
