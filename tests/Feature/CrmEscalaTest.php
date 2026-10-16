@@ -105,6 +105,74 @@ class CrmEscalaTest extends TestCase
             ->assertCanNotSeeTableRecords([$outro]);
     }
 
+    public function test_listagem_de_interessados_acha_lead_por_parte_do_telefone_com_qualquer_formatacao_digitada(): void
+    {
+        $alvo = $this->lead(['nome' => 'Família Alvo', 'telefone' => '(31) 98888-7777']);
+        $outro = $this->lead(['nome' => 'Família Outra', 'telefone' => '(41) 97777-6666']);
+
+        // O Filament quebra o termo por espaço; "(31)" sozinho tem poucos dígitos, mas o termo inteiro não.
+        foreach (['(31) 98888-7777', '(31) 98888', '31 98888', '31 9888', '98888-7777', '8888 7777', '31.98888.7777'] as $termo) {
+            Livewire::actingAs($this->admin)
+                ->test(ListInteressados::class)
+                ->searchTable($termo)
+                ->assertCanSeeTableRecords([$alvo])
+                ->assertCanNotSeeTableRecords([$outro]);
+        }
+    }
+
+    public function test_listagem_acha_telefone_gravado_sem_mascara_quando_o_termo_vem_formatado(): void
+    {
+        $alvo = $this->lead(['nome' => 'Família Sem Máscara', 'telefone' => '31988887777']);
+        $outro = $this->lead(['nome' => 'Família Outra', 'telefone' => '41977776666']);
+
+        foreach (['(31) 98888-7777', '(31) 98888', '31 98888', '(31)98888', '98888-7777', '88 87777'] as $termo) {
+            Livewire::actingAs($this->admin)
+                ->test(ListInteressados::class)
+                ->searchTable($termo)
+                ->assertCanSeeTableRecords([$alvo])
+                ->assertCanNotSeeTableRecords([$outro]);
+        }
+    }
+
+    public function test_listagem_acha_telefone_gravado_com_pontos_barras_ou_outros_separadores(): void
+    {
+        $alvo = $this->lead(['nome' => 'Família Pontuada', 'telefone' => '31.98888/7777']);
+        $outro = $this->lead(['nome' => 'Família Outra', 'telefone' => '(41) 97777-6666']);
+
+        foreach (['98888 7777', '31988887777', '(31) 98888', '8888/77'] as $termo) {
+            Livewire::actingAs($this->admin)
+                ->test(ListInteressados::class)
+                ->searchTable($termo)
+                ->assertCanSeeTableRecords([$alvo])
+                ->assertCanNotSeeTableRecords([$outro]);
+        }
+    }
+
+    public function test_listagem_continua_achando_nome_com_palavras_em_qualquer_ordem(): void
+    {
+        $alvo = $this->lead(['nome' => 'Maria Aparecida Souza', 'telefone' => '(31) 98888-7777']);
+        $outro = $this->lead(['nome' => 'João Pedro Lima', 'telefone' => '(41) 97777-6666']);
+
+        foreach (['Maria Souza', 'souza maria', 'Aparecida'] as $termo) {
+            Livewire::actingAs($this->admin)
+                ->test(ListInteressados::class)
+                ->searchTable($termo)
+                ->assertCanSeeTableRecords([$alvo])
+                ->assertCanNotSeeTableRecords([$outro]);
+        }
+    }
+
+    public function test_busca_de_pessoa_acha_telefone_pelo_termo_inteiro_mesmo_com_espacos_e_parenteses(): void
+    {
+        $maria = Pessoa::factory()->create(['nome' => 'Maria', 'telefone' => '(11) 99876-5432']);
+        Pessoa::factory()->create(['nome' => 'João', 'telefone' => '(21) 91111-2222']);
+
+        $achar = fn (string $termo): array => Pessoa::query()->busca($termo)->pluck('id')->all();
+
+        $this->assertSame([$maria->id], $achar('(11) 99876'));
+        $this->assertSame([$maria->id], $achar('11 9987'));
+    }
+
     public function test_selects_de_pessoa_e_lead_buscam_no_servidor_com_limite(): void
     {
         $lead = $this->lead(['nome' => 'Beatriz Souza', 'email' => 'bia@exemplo.com'], ['lead_score' => 42]);

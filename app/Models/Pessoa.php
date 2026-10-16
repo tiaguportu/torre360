@@ -19,8 +19,8 @@ class Pessoa extends Model
 {
     use HasFactory, Notifiable;
 
-    /** Coluna `telefone` sem `( ) - + e espaço`, para comparar números gravados com máscara. */
-    private const TELEFONE_SEM_MASCARA = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '')";
+    /** Separadores que aparecem em telefones digitados ou importados; saem da coluna para comparar só os dígitos. */
+    private const SEPARADORES_TELEFONE = ['(', ')', '-', '+', ' ', '.', '/', ',', '_', "\u{00A0}"];
 
     protected $table = 'pessoa';
 
@@ -101,21 +101,43 @@ class Pessoa extends Model
     }
 
     /**
-     * Busca por nome, e-mail, telefone ou CPF. O telefone é gravado com máscara ("(11) 99999-0000"), então
-     * quem digita só os números (ou "11 99999") também precisa achar: a comparação ignora `( ) - + e espaço`.
-     * Dígitos curtos (menos de 3) não entram na busca por telefone/CPF para não casar com quase tudo.
+     * Coluna `telefone` sem pontuação nem espaços (`REPLACE` aninhado, que funciona igual em MySQL e SQLite),
+     * para comparar só os dígitos de números gravados em qualquer formato.
+     */
+    private static function telefoneSemMascara(): string
+    {
+        $expressao = 'telefone';
+
+        foreach (self::SEPARADORES_TELEFONE as $separador) {
+            $expressao = "REPLACE({$expressao}, '{$separador}', '')";
+        }
+
+        return $expressao;
+    }
+
+    /**
+     * Busca por nome, e-mail, telefone ou CPF. Em nome e e-mail, cada palavra do termo precisa aparecer (em
+     * qualquer ordem). O telefone usa os dígitos do termo inteiro, ignorando tudo que não é número nos dois
+     * lados: "(11) 99876", "11 99876" e "99876-54" acham "(11) 99876-5432" ou "11998765432". Dígitos curtos
+     * (menos de 3 no termo todo) não entram na busca por telefone/CPF para não casar com quase tudo.
      */
     public function scopeBusca(Builder $query, string $termo): Builder
     {
         $termo = trim($termo);
         $digitos = preg_replace('/\D/', '', $termo) ?? '';
+        $palavras = preg_split('/\s+/u', $termo, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
-        return $query->where(function (Builder $q) use ($termo, $digitos): void {
-            $q->where('nome', 'like', "%{$termo}%")
-                ->orWhere('email', 'like', "%{$termo}%");
+        return $query->where(function (Builder $q) use ($palavras, $digitos): void {
+            $q->where(function (Builder $nomeOuEmail) use ($palavras): void {
+                foreach ($palavras as $palavra) {
+                    $nomeOuEmail->where(fn (Builder $w) => $w
+                        ->where('nome', 'like', "%{$palavra}%")
+                        ->orWhere('email', 'like', "%{$palavra}%"));
+                }
+            });
 
             if (strlen($digitos) >= 3) {
-                $q->orWhereRaw(self::TELEFONE_SEM_MASCARA.' LIKE ?', ["%{$digitos}%"])
+                $q->orWhereRaw(self::telefoneSemMascara().' LIKE ?', ["%{$digitos}%"])
                     ->orWhere('cpf', 'like', "%{$digitos}%");
             }
         });
@@ -136,7 +158,7 @@ class Pessoa extends Model
 
         $final = substr($digitos, -min(11, strlen($digitos)));
 
-        return $query->whereRaw(self::TELEFONE_SEM_MASCARA.' LIKE ?', ["%{$final}"]);
+        return $query->whereRaw(self::telefoneSemMascara().' LIKE ?', ["%{$final}"]);
     }
 
     public function matriculas(): HasMany

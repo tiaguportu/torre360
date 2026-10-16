@@ -108,7 +108,7 @@ class ListInteressados extends ListRecords
             ->secao('🧭 O que você encontra nesta tela', [
                 ['🗂️', 'Abas de situação (topo)', 'Cada aba mostra um recorte da lista, com a quantidade de leads ao lado: Todos, Precisa de contato, Estagnados, Quentes, Em andamento e Finalizados.'],
                 ['📋', 'Tabela de leads', 'Uma linha por interessado, com as informações principais já resumidas (veja "Como ler a tabela").'],
-                ['🔎', 'Busca e filtros', 'A busca procura por nome ou telefone. Os filtros ficam recolhidos acima da tabela.'],
+                ['🔎', 'Busca e filtros', 'A busca procura por nome, e-mail, telefone ou CPF. No telefone vale qualquer parte do número (a partir de 3 dígitos), com ou sem parênteses, espaços e traços. Os filtros ficam recolhidos acima da tabela.'],
                 ['📅', 'Calendário de follow-up (rodapé)', 'Agenda com os próximos contatos e visitas dos leads, filtrável por consultor, com opção de ver só os atrasados.'],
                 ['🔘', 'Botões do topo', 'Novo (cadastro manual), Importar Lead com IA, Ver Kanban (o mesmo funil em formato de quadro) e Ajuda.'],
             ])

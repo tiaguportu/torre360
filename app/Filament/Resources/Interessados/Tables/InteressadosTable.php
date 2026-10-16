@@ -84,6 +84,9 @@ class InteressadosTable
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico', 'visitas.pesquisa', 'visitas.usuario']))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
+            // O termo chega inteiro à busca: dividido por espaço, "(31) 98888" viraria "(31)" + "98888", e o pedaço
+            // curto ("31") não vale como telefone. `Pessoa::scopeBusca()` já trata as palavras do nome.
+            ->splitSearchTerms(false)
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(25)
             ->persistFiltersInSession()

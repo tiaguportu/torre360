@@ -246,9 +246,22 @@ Medidas para o CRM continuar rápido com milhares de leads. Nenhuma muda regra d
   simplesmente deixam de ser lidas) e é chamado quando `Interessado`, `HistoricoContato` ou `StatusInteressado`
   é salvo/excluído. Limites conhecidos: escrita direta no banco (`DB::table`, como o recálculo de score em
   lote) não invalida — vale o TTL; a chave inclui o id do usuário porque o escopo da listagem depende dele.
-- **Busca** (`Pessoa::scopeBusca`): nome, e-mail, telefone **com ou sem máscara** (a comparação ignora
-  `( ) - + e espaço`) e CPF (gravado só com dígitos). Menos de 3 dígitos não entram na busca de telefone/CPF
-  (casariam com quase tudo). Usada na busca da listagem e nos selects de pessoa/lead.
+- **Busca** (`Pessoa::scopeBusca`): nome, e-mail, telefone **com ou sem máscara** e CPF (gravado só com
+  dígitos). Usada na busca da listagem e nos selects de pessoa/lead.
+  - *Nome e e-mail:* o termo é dividido em palavras e **cada uma** precisa aparecer (em qualquer ordem), então
+    `souza maria` acha `Maria Aparecida Souza`.
+  - *Telefone:* usa os dígitos do **termo inteiro** (`\D` removido) contra a coluna `telefone` sem separadores
+    (`Pessoa::telefoneSemMascara()`: `REPLACE` aninhado de `( ) - + . / , _` e espaços comum e não separável,
+    igual em MySQL e SQLite). Vale qualquer parte do número, digitada com ou sem formatação, contra número
+    gravado com ou sem formatação: `(31) 98888`, `31 98888` e `988887777` acham `(31) 98888-7777`,
+    `31988887777` e `31.98888/7777`. Para outro separador, incluí-lo em `SEPARADORES_TELEFONE`.
+  - *Mínimo de 3 dígitos* no termo todo para telefone/CPF (menos casaria com quase tudo); abaixo disso só
+    nome e e-mail são pesquisados.
+  - *Por que a tabela usa `splitSearchTerms(false)`:* no Filament 5 o termo é dividido por espaço por padrão e
+    cada pedaço é avaliado separado. `(31) 98888` virava `(31)` + `98888`, e o pedaço de 2 dígitos caía na
+    regra do mínimo, derrubando o resultado quando o número estava gravado sem máscara. Com a divisão
+    desligada em `InteressadosTable`, o termo chega inteiro e a divisão por palavras fica só no nome/e-mail.
+    Qualquer outra tabela que use `busca()` precisa do mesmo ajuste.
 - **Selects sem `preload()`**: *Pessoa / Interessado* da ficha do lead e *Família Indicadora*/*Lead Indicado*
   do cadastro de indicação carregavam todas as pessoas/leads a cada abertura. Agora a busca vem do servidor
   (`getSearchResultsUsing`, no máximo 50 resultados) e o rótulo do valor atual é buscado por id.
