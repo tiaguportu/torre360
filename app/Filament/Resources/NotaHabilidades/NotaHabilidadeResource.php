@@ -45,7 +45,7 @@ class NotaHabilidadeResource extends Resource implements HasShieldPermissions
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->hasRole('professor')) {
+        if ($user && $user->atuaComoProfessor()) {
             $query->whereHas('avaliacaoHabilidade', function ($q) use ($user) {
                 $q->whereIn('professor_id', $user->pessoas()->pluck('pessoa.id'));
             });

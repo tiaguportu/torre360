@@ -93,13 +93,13 @@ class AvaliacaoPolicy
     }
 
     /**
-     * Mesmo escopo de `AvaliacaoResource::getEloquentQuery()`: quem tem o papel de professor só enxerga as próprias
+     * Mesmo escopo de `AvaliacaoResource::getEloquentQuery()`: quem está atuando como professor só enxerga as próprias
      * avaliações. As rotas de PDF das folhas resolvem a avaliação direto pelo id, sem passar pelo Resource, então o
      * escopo precisa estar também aqui.
      */
     private function avaliacaoVisivelAoProfessor(AuthUser $authUser, Avaliacao $avaliacao): bool
     {
-        if (! $authUser->hasRole('professor')) {
+        if (! $authUser->atuaComoProfessor()) {
             return true;
         }
 

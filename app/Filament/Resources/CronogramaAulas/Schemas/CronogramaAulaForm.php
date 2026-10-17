@@ -62,8 +62,8 @@ class CronogramaAulaForm
                     ->searchable(['nome', 'cpf'])
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
                     ->preload()
-                    ->default(auth()->user()?->hasRole('professor') ? auth()->user()->pessoa?->id : null)
-                    ->disabled(auth()->user()?->hasRole('professor') && auth()->user()->pessoa?->id !== null)
+                    ->default(auth()->user()?->atuaComoProfessor() ? auth()->user()->pessoa?->id : null)
+                    ->disabled(auth()->user()?->atuaComoProfessor() && auth()->user()->pessoa?->id !== null)
                     ->dehydrated(),
 
                 DatePicker::make('data')

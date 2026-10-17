@@ -37,14 +37,8 @@ class DisciplinaResource extends Resource
             return $query;
         }
 
-        // Se o usuário for Super Admin, vê tudo
-        if ($user->hasRole('super_admin')) {
-            return $query;
-        }
-
-        $isProfessor = $user->hasRole('professor');
-
-        if ($isProfessor) {
+        // Só quem está atuando como professor fica restrito às próprias disciplinas; atuando como super_admin, vê tudo
+        if ($user->atuaComoProfessor()) {
             $pessoasIds = $user->pessoas->pluck('id')->toArray();
 
             $query->whereHas('cronogramasAula', function ($q) use ($pessoasIds) {

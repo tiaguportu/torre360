@@ -118,14 +118,11 @@ class CronogramaAulaResource extends Resource implements HasShieldPermissions
             return $query;
         }
 
-        // Se o usuário for Super Admin, vê tudo
-        if ($user->hasRole('super_admin')) {
-            return $query;
-        }
-
+        // Sem restrição para quem atua como super_admin/admin/secretaria; só professor e responsável são escopados,
+        // pelo papel ativo, e não por ter o papel (um super_admin que também é professor vê tudo ao atuar como super_admin)
         $activeRole = session('active_role');
 
-        if ($activeRole === 'professor') {
+        if ($user->atuaComoProfessor()) {
             $pessoasIds = array_filter(array_merge(
                 [$user->pessoa?->id],
                 $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []

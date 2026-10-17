@@ -80,7 +80,7 @@ class CronogramaAulasTable
                     ->relationship('professor', 'nome')
                     ->searchable()
                     ->preload()
-                    ->hidden(fn () => auth()->user()?->hasRole('professor')),
+                    ->hidden(fn () => auth()->user()?->atuaComoProfessor()),
                 Filter::make('periodo_data')
                     ->form([
                         DatePicker::make('data_inicio')
@@ -247,7 +247,7 @@ class CronogramaAulasTable
                                 ->relationship('professor', 'nome')
                                 ->searchable()
                                 ->preload()
-                                ->hidden(fn () => auth()->user()?->hasRole('professor')),
+                                ->hidden(fn () => auth()->user()?->atuaComoProfessor()),
                             DatePicker::make('data')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),

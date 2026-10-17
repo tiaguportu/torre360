@@ -111,9 +111,7 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
                 (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
             ');
 
-        $isProfessor = $user->hasRole('professor')
-            || session('active_role') === 'professor'
-            || $user->active_role === 'professor';
+        $isProfessor = $user->atuaComoProfessor();
 
         if ($isProfessor) {
             $pessoasIds = array_filter(array_merge(
@@ -171,9 +169,7 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
-                $isProfessor = $user?->hasRole('professor')
-                    || session('active_role') === 'professor'
-                    || $user?->active_role === 'professor';
+                $isProfessor = (bool) $user?->atuaComoProfessor();
 
                 if ($isProfessor && $user) {
                     $pessoasIds = array_filter(array_merge(
@@ -239,9 +235,7 @@ class PendenciasFrequencia extends Page implements HasActions, HasForms
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
-                $isProfessor = $user?->hasRole('professor')
-                    || session('active_role') === 'professor'
-                    || $user?->active_role === 'professor';
+                $isProfessor = (bool) $user?->atuaComoProfessor();
 
                 if ($isProfessor && $user) {
                     $pessoasIds = array_filter(array_merge(

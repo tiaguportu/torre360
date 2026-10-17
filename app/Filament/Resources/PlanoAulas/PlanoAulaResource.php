@@ -61,11 +61,7 @@ class PlanoAulaResource extends Resource implements HasShieldPermissions
             return $query;
         }
 
-        if ($user->hasRole('super_admin')) {
-            return $query;
-        }
-
-        if (session('active_role') === 'professor') {
+        if ($user->atuaComoProfessor()) {
             $pessoasIds = array_filter(array_merge(
                 [$user->pessoa?->id],
                 $user->pessoas ? $user->pessoas->pluck('id')->toArray() : []

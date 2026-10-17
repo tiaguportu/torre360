@@ -75,7 +75,7 @@ class AvaliacaoForm
                                     ->preload()
                                     ->default(function () {
                                         $user = auth()->user();
-                                        if ($user && $user->hasRole('professor')) {
+                                        if ($user && $user->atuaComoProfessor()) {
                                             $pessoas = $user->pessoas;
                                             if ($pessoas->count() === 1) {
                                                 return $pessoas->first()->id;
@@ -86,7 +86,7 @@ class AvaliacaoForm
                                     })
                                     ->disabled(function () {
                                         $user = auth()->user();
-                                        if ($user && $user->hasRole('professor')) {
+                                        if ($user && $user->atuaComoProfessor()) {
                                             return $user->pessoas->count() === 1;
                                         }
 
@@ -94,7 +94,7 @@ class AvaliacaoForm
                                     })
                                     ->options(function () {
                                         $user = auth()->user();
-                                        if ($user && $user->hasRole('professor')) {
+                                        if ($user && $user->atuaComoProfessor()) {
                                             return $user->pessoas->pluck('nome', 'id');
                                         }
 

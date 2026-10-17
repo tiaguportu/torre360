@@ -49,7 +49,7 @@ class AvaliacaoResource extends Resource implements HasShieldPermissions
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->hasRole('professor')) {
+        if ($user && $user->atuaComoProfessor()) {
             $query->whereIn('professor_id', $user->pessoas()->pluck('pessoa.id'));
         }
 

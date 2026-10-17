@@ -179,6 +179,28 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $activeRole === $role;
     }
 
+    /**
+     * Indica se o usuário está atuando como professor, isto é, se o escopo "só o que eu leciono" vale para ele agora.
+     * `hasRole('professor')` não serve para isso: olha todos os papéis, e quem acumula professor com super_admin (ou
+     * outro papel de gestão) ficaria preso ao escopo de professor mesmo depois de trocar para o outro papel em
+     * "Atuar como". Aqui vale o papel ativo da sessão; sem ele (console, jobs) o papel de gestão prevalece, mesmo
+     * critério de {@see hasPermissionTo()}.
+     */
+    public function atuaComoProfessor(): bool
+    {
+        if (! $this->hasRole('professor')) {
+            return false;
+        }
+
+        $papelAtivo = session('active_role');
+
+        if ($papelAtivo && $this->hasRole($papelAtivo)) {
+            return $papelAtivo === 'professor';
+        }
+
+        return ! $this->hasAnyRole(['super_admin', 'admin', 'secretaria', 'coordenador']);
+    }
+
     public function hasPermissionInActiveRole(string $permission): bool
     {
         return $this->hasPermissionTo($permission);

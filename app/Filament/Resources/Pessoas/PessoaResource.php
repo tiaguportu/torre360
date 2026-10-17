@@ -61,14 +61,15 @@ class PessoaResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if (! $user || $user->hasRole('super_admin')) {
+        if (! $user) {
             return $query;
         }
 
         $activeRole = session('active_role');
 
-        // Se estiver atuando como admin ou secretaria, vê tudo
-        if (in_array($activeRole, ['admin', 'secretaria'])) {
+        // Atuando como super_admin, admin ou secretaria, vê tudo. O atalho é pelo papel ativo, não por ter o papel:
+        // um super_admin que também é professor fica restrito aos seus alunos enquanto atua como professor.
+        if (in_array($activeRole, ['super_admin', 'admin', 'secretaria'])) {
             return $query;
         }
 

@@ -149,6 +149,8 @@ Controle de acesso baseado em papéis (RBAC).
 
 > **Atribuição:** Para dar acesso total a um usuário, atribua o papel `super_admin` em **Configurações → Usuários**.
 
+> **Vários papéis:** o usuário atua em um papel por vez (menu **Atuar como**). O escopo "só o que eu leciono" do professor vale apenas enquanto o papel ativo é `professor` (`User::atuaComoProfessor()`); quem também é `super_admin` vê e lança tudo ao atuar como `super_admin`. Detalhes em `docs/escopo_professor_papel_ativo.md`.
+
 ---
 
 ### 7. 🎯 CRM e Captação

@@ -1757,6 +1757,7 @@ O Torre360 permite que um usuário possua múltiplos papéis (ex: Professor e Re
 2. **Alternar Contexto:** Se você tiver outros papéis disponíveis, eles aparecerão como opções (ex: `Atuar como: responsavel`). 
 3. **Como Trocar:** Clique na opção desejada. O sistema atualizará seu Dashboard, menu lateral e permissões instantaneamente para o novo contexto.
 4. **Pessoa:** Exibe o nome completo da entidade "Pessoa" associada ao seu usuário.
+5. **O que você vê muda com o papel:** quem é Professor e também Super Admin (ou Administrador/Secretaria) enxerga apenas as próprias turmas, disciplinas, avaliações, aulas e frequências enquanto atua como **professor**. Ao trocar para o outro papel, passa a ver e a lançar notas e frequências de qualquer professor.
 
 ---
 

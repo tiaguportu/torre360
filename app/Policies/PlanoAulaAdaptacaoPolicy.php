@@ -77,11 +77,7 @@ class PlanoAulaAdaptacaoPolicy
      */
     public function verificarEscopoProfessor(AuthUser $authUser, ?PlanoAula $planoAula): bool
     {
-        if ($authUser->hasRole('super_admin')) {
-            return true;
-        }
-
-        if (session('active_role') !== 'professor') {
+        if (! $authUser->atuaComoProfessor()) {
             return true;
         }
 

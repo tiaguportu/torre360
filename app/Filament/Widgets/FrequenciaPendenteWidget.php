@@ -21,7 +21,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Models\Role;
 
 class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 {
@@ -54,10 +53,8 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                 (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
             ');
 
-        // Se o usuário logado possui a role/papel ativo de professor, filtra apenas pelas aulas associadas a ele
-        $isProfessor = $user->hasRole('professor')
-            || session('active_role') === 'professor'
-            || $user->active_role === 'professor';
+        // Se o usuário logado está atuando como professor, filtra apenas pelas aulas associadas a ele
+        $isProfessor = $user->atuaComoProfessor();
 
         if ($isProfessor) {
             $pessoasIds = array_filter(array_merge(
@@ -115,9 +112,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
-                $isProfessor = $user?->hasRole('professor')
-                    || session('active_role') === 'professor'
-                    || $user?->active_role === 'professor';
+                $isProfessor = (bool) $user?->atuaComoProfessor();
 
                 if ($isProfessor && $user) {
                     $pessoasIds = array_filter(array_merge(
@@ -183,9 +178,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
                         (SELECT COUNT(*) FROM frequencia_escolar WHERE frequencia_escolar.cronograma_aula_id = cronograma_aula.id AND frequencia_escolar.situacao IS NOT NULL)
                     ');
 
-                $isProfessor = $user?->hasRole('professor')
-                    || session('active_role') === 'professor'
-                    || $user?->active_role === 'professor';
+                $isProfessor = (bool) $user?->atuaComoProfessor();
 
                 if ($isProfessor && $user) {
                     $pessoasIds = array_filter(array_merge(
