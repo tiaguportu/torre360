@@ -37,7 +37,11 @@ class SalaForm
                         Toggle::make('ativa')
                             ->label('Ativa')
                             ->default(true)
-                            ->helperText('Salas inativas não aparecem para seleção na grade horária.'),
+                            ->helperText('Salas inativas não aparecem para seleção na grade horária nem em novas reservas.'),
+                        Toggle::make('exige_aprovacao_reserva')
+                            ->label('Reservas exigem aprovação')
+                            ->default(false)
+                            ->helperText('Para espaços concorridos (ex.: auditório): o pedido fica "aguardando aprovação" até a coordenação ou a secretaria confirmar. Quem pode aprovar reservas já confirma as próprias na hora.'),
                     ]),
             ]);
     }

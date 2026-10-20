@@ -23,12 +23,13 @@ class Sala extends Model
 
     protected $table = 'sala';
 
-    protected $fillable = ['unidade_id', 'nome', 'capacidade', 'tipo', 'ativa'];
+    protected $fillable = ['unidade_id', 'nome', 'capacidade', 'tipo', 'ativa', 'exige_aprovacao_reserva'];
 
     protected function casts(): array
     {
         return [
             'ativa' => 'boolean',
+            'exige_aprovacao_reserva' => 'boolean',
         ];
     }
 
@@ -40,6 +41,11 @@ class Sala extends Model
     public function gradeHorarios(): HasMany
     {
         return $this->hasMany(GradeHorario::class);
+    }
+
+    public function reservas(): HasMany
+    {
+        return $this->hasMany(ReservaEspaco::class);
     }
 
     public function scopeAtivas(Builder $query): Builder

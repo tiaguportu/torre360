@@ -38,6 +38,10 @@ class SalasTable
                     ->label('Ativa')
                     ->boolean()
                     ->sortable(),
+                IconColumn::make('exige_aprovacao_reserva')
+                    ->label('Reserva com aprovação')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('unidade')
