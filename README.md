@@ -163,6 +163,7 @@ Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_
 | `VisitaInteressado` | Visitas à escola agendadas por lead, exibidas no calendário de follow-up e lembradas 24h antes (`crm:notificar-pendentes`) |
 | Conversão | Ação **Matricular** abre o Assistente de Matrícula pré-preenchido com o lead e o marca como convertido ao finalizar |
 | Repasse ao consultor | Ações **Enviar ao consultor** (linha) e **Enviar aos consultores (WhatsApp)** (lote) abrem um link `wa.me` com o contato direto do lead e o resumo dos últimos contatos (`ConsultorWhatsappService`) |
+| Redes sociais do lead | Botão **Redes sociais** (linha da tabela de interessados) abre o perfil cadastrado em nova aba, ou uma lista quando há mais de um; só links `http(s)` viram botão (`Interessado::redesSociaisLinks()`) |
 | Widgets | `ConversaoCampanhaWidget` e `ConversaoOrigemWidget`: leads, matrículas, taxa e custo por campanha/origem |
 | `LandingLead` | Pedidos de demonstração da landing page (leads B2B, separados de `Interessado`) |
 

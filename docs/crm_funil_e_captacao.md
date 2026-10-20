@@ -65,6 +65,17 @@ não é de ganho). O formulário público não usa mais `?? 1` (id fixo) como fa
   pré-matrícula** (com confirmação) invalida o anterior de propósito.
 - As ações que alteram o funil (`marcarPerdido`, `finalizarMatricula`, `regenerarConvite`, atribuição em lote)
   exigem a permissão `update` do lead.
+- **Botão "Redes sociais" na linha** (`abrirRedesSociais`, `InteressadosTable`): só abre links, não altera o
+  lead e por isso não tem `authorize()` próprio (basta ver a listagem). Os perfis vêm de
+  `Interessado::redesSociaisLinks()`, que lê a coluna JSON `redes_sociais` (`[{rede, url}]`) e devolve
+  `{rede, rotulo, url}` só para entradas bem formadas com URL `http(s)://` válida; rede fora de
+  `Interessado::REDES_SOCIAIS` vira "Outra". O filtro existe porque o campo também é gravado pela importação
+  com IA (`ImportacaoLeadIaService::normalizarRedesSociais()` aceita qualquer URL de `FILTER_VALIDATE_URL`,
+  inclusive `javascript://…`) e vira `href` na tela: sem ele, um valor hostil seria um link clicável. Com um
+  único perfil a ação é um link nativo em nova aba (`->url()->openUrlInNewTab()`, sem modal, sem bloqueio de
+  pop-up); com vários, `url()` devolve `null` e o clique abre o modal `filament.interessados.redes-sociais`
+  (uma linha e um botão "Abrir" por rede). A ação fica oculta quando não sobra nenhum link válido. A coluna
+  opcional "Redes Sociais" usa o mesmo método. Teste: `InteressadoRedesSociaisBotaoTest`.
 
 ## 2. Formulário público: `CaptacaoInteressadoService`
 

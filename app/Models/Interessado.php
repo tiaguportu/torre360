@@ -415,6 +415,30 @@ class Interessado extends Model
     }
 
     /**
+     * Perfis de redes sociais do lead prontos para virar link (rede, rótulo e URL). Só passam links http(s):
+     * o campo também é preenchido pela importação com IA, então um `javascript:` ou lixo nunca vira botão.
+     *
+     * @return Collection<int, array{rede: string, rotulo: string, url: string}>
+     */
+    public function redesSociaisLinks(): Collection
+    {
+        return collect($this->redes_sociais ?? [])
+            ->filter(fn (mixed $item): bool => is_array($item))
+            ->map(function (array $item): array {
+                $rede = is_string($item['rede'] ?? null) && array_key_exists($item['rede'], self::REDES_SOCIAIS) ? $item['rede'] : 'outra';
+
+                return [
+                    'rede' => $rede,
+                    'rotulo' => self::REDES_SOCIAIS[$rede],
+                    'url' => is_string($item['url'] ?? null) ? trim($item['url']) : '',
+                ];
+            })
+            ->filter(fn (array $item): bool => preg_match('#^https?://#i', $item['url']) === 1
+                && filter_var($item['url'], FILTER_VALIDATE_URL) !== false)
+            ->values();
+    }
+
+    /**
      * Verifica se o link de convite de matrícula online ainda pode ser usado: existe,
      * não expirou e ainda não foi usado.
      */

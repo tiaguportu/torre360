@@ -302,10 +302,8 @@ class InteressadosTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('redes_sociais')
                     ->label('Redes Sociais')
-                    ->state(fn (Interessado $record): array => collect($record->redes_sociais ?? [])
-                        ->map(fn (array $rede): string => Interessado::REDES_SOCIAIS[$rede['rede'] ?? ''] ?? 'Outra')
-                        ->all())
-                    ->url(fn (Interessado $record): ?string => $record->redes_sociais[0]['url'] ?? null, shouldOpenInNewTab: true)
+                    ->state(fn (Interessado $record): array => $record->redesSociaisLinks()->pluck('rotulo')->all())
+                    ->url(fn (Interessado $record): ?string => $record->redesSociaisLinks()->first()['url'] ?? null, shouldOpenInNewTab: true)
                     ->badge()
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -555,6 +553,23 @@ class InteressadosTable
 
                         $livewire->js('window.open('.json_encode($url).", '_blank')");
                     }),
+
+                // Só abre links: com um perfil o botão vai direto para ele, com vários abre uma lista para escolher.
+                Action::make('abrirRedesSociais')
+                    ->label('Redes sociais')
+                    ->icon('heroicon-o-globe-alt')
+                    ->color('primary')
+                    ->iconButton()
+                    ->tooltip(fn (Interessado $record): string => ($redes = $record->redesSociaisLinks())->count() === 1
+                        ? 'Abrir '.$redes->first()['rotulo']
+                        : "Redes sociais ({$redes->count()})")
+                    ->visible(fn (Interessado $record): bool => $record->redesSociaisLinks()->isNotEmpty())
+                    ->url(fn (Interessado $record): ?string => ($redes = $record->redesSociaisLinks())->count() === 1 ? $redes->first()['url'] : null)
+                    ->openUrlInNewTab()
+                    ->modalHeading('Redes sociais')
+                    ->modalContent(fn (Interessado $record) => view('filament.interessados.redes-sociais', ['redes' => $record->redesSociaisLinks()]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
 
                 Action::make('enviarAoConsultor')
                     ->label('Enviar ao consultor')
