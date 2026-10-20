@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Funcionarios;
 use App\Filament\Resources\Funcionarios\Pages\CreateFuncionario;
 use App\Filament\Resources\Funcionarios\Pages\EditFuncionario;
 use App\Filament\Resources\Funcionarios\Pages\ListFuncionarios;
+use App\Filament\Resources\Funcionarios\RelationManagers\AvaliacoesDocenteRelationManager;
 use App\Filament\Resources\Funcionarios\RelationManagers\ContratosTrabalhoRelationManager;
 use App\Filament\Resources\Funcionarios\RelationManagers\PeriodosFeriasRelationManager;
 use App\Filament\Resources\Funcionarios\Schemas\FuncionarioForm;
@@ -59,6 +60,7 @@ class FuncionarioResource extends Resource implements HasShieldPermissions
         return [
             ContratosTrabalhoRelationManager::class,
             PeriodosFeriasRelationManager::class,
+            AvaliacoesDocenteRelationManager::class,
         ];
     }
 

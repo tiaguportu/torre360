@@ -52,6 +52,15 @@ class Funcionario extends Model
     }
 
     /**
+     * Histórico de avaliações de desempenho (Onda 19). Dado sensível: quem consulta deve passar por
+     * `AvaliacaoDocente::visiveisPara()`.
+     */
+    public function avaliacoesDocente(): HasMany
+    {
+        return $this->hasMany(AvaliacaoDocente::class)->orderByDesc('data_observacao');
+    }
+
+    /**
      * Contrato de trabalho vigente — a linha de `contratos_trabalho` sem `vigencia_fim`
      * (ou com `vigencia_fim` ainda não alcançada).
      */
