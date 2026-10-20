@@ -10,7 +10,9 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **Aluno** | `Heroicon::OutlinedAcademicCap` | Filament Enum |
 | **AreaConhecimento** | `Heroicon::OutlinedVariable` | Filament Enum |
 | **Avaliacao** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
+| **AvaliacaoDocente** | `Heroicon::OutlinedPresentationChartLine` | Filament Enum |
 | **CategoriaAvaliacao** | `Heroicon::OutlinedTag` | Filament Enum |
+| **CicloAvaliacaoDocente** | `Heroicon::OutlinedArrowPath` | Filament Enum |
 | **Cidade** | `Heroicon::OutlinedGlobeAsiaAustralia` | Filament Enum |
 | **Configuracao** | `heroicon-o-cog` | String |
 | **Contrato** | `Heroicon::OutlinedClipboardDocumentCheck` | Filament Enum |
@@ -26,12 +28,14 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **Estado** | `Heroicon::OutlinedGlobeEuropeAfrica` | Filament Enum |
 | **EtapaAvaliativa** | `Heroicon::OutlinedQueueList` | Filament Enum |
 | **FrequenciaEscolar** | `Heroicon::OutlinedCheckBadge` | Filament Enum |
+| **InstrumentoAvaliacaoDocente** | `Heroicon::OutlinedClipboardDocumentList` | Filament Enum |
 | **Matricula** | `Heroicon::OutlinedIdentification` | Filament Enum |
 | **Nota** | `heroicon-o-check-badge` | String |
 | **Pais** | `Heroicon::OutlinedGlobeAmericas` | Filament Enum |
 | **Perfil** | `heroicon-o-shield-check` | String |
 | **PeriodoLetivo** | `heroicon-o-calendar-days` | String |
 | **Pessoa** | `Heroicon::OutlinedUsers` | Filament Enum |
+| **ReservaEspaco** | `Heroicon::OutlinedCalendarDays` | Filament Enum |
 | **ResponsavelFinanceiro** | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **Serie** | `Heroicon::OutlinedDocumentText` | Filament Enum |
 | **Sexo** | `heroicon-o-identification` | String |

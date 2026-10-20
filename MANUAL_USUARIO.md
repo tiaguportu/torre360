@@ -3392,4 +3392,76 @@ Para garantir privacidade entre atendimentos, organização do trabalho comercia
 
 ---
 
+## 📈 62. Avaliação de Desempenho Docente (`/admin/avaliacao-docentes`)
+
+Ciclo de observação do professor pela coordenação: a escola monta o roteiro de critérios, abre um ciclo (por exemplo, "1º Semestre 2026"), e a coordenação registra observações em sala com nota por critério, pontuação consolidada e parecer. Fica no grupo **RH** do menu.
+
+> **Dado sensível.** O parecer e as observações são guardados **cifrados**. O professor avaliado só vê a avaliação depois de **finalizada**, e nenhum professor vê as avaliações de colegas.
+
+### 62.1 Instrumentos de avaliação (o roteiro de critérios)
+1. Acesse **RH → Instrumentos de Avaliação Docente** e clique em **Novo**.
+2. Informe o nome e a **escala de notas** (1 a 4, 1 a 5 ou 1 a 10).
+3. Cadastre os **critérios** (ex.: *Planejamento da aula*, *Mediação e clima de sala*). Cada critério tem um **peso**: quanto maior, mais ele conta na pontuação. Arraste para reordenar.
+4. **Instrumento já usado em avaliação não pode mais ter os critérios alterados** (isso reescreveria o histórico dos professores). Para mudar o roteiro, crie um novo instrumento e use-o no próximo ciclo. Instrumentos usados em ciclos também não podem ser excluídos: desative-os.
+
+### 62.2 Ciclos de avaliação
+1. Acesse **RH → Ciclos de Avaliação Docente** e clique em **Novo**.
+2. Informe o nome, a data de início e de fim e o **instrumento** do ciclo.
+3. Para encerrar um ciclo, desmarque **Ciclo aberto**: ele deixa de aceitar novas observações e o histórico permanece. Ciclos com avaliações não podem ser excluídos, e o instrumento deles não pode ser trocado.
+
+### 62.3 Avaliando um professor
+1. Em **RH → Avaliações de Desempenho**, clique em **Nova observação**.
+2. Escolha o **ciclo** aberto, o **professor** e a **data da observação** (dentro do ciclo e não futura). A turma observada é opcional.
+3. O sistema cria a avaliação em **rascunho**, com uma linha para cada critério. Dê a **nota** de cada critério e, se quiser, uma observação.
+4. Registre o **parecer** qualitativo (pontos fortes, oportunidades de melhoria, combinados com o professor).
+5. Salve para continuar depois: o rascunho só pode ser alterado por quem o iniciou (a administração corrige o de qualquer avaliador).
+
+Regras: **ninguém avalia o próprio desempenho**, não é possível registrar duas vezes a mesma observação (mesmo ciclo, professor, avaliador e data), e funcionário já desligado na data não é avaliado.
+
+### 62.4 Finalizando e a pontuação
+- Clique em **Finalizar avaliação**. Todos os critérios precisam ter nota, dentro da escala.
+- A **pontuação** é a média das notas ponderada pelos pesos, em **% da nota máxima da escala**. Exemplo: escala de 1 a 5, critério A (peso 2) com nota 5 e critério B (peso 1) com nota 3 → (5×2 + 3×1) ÷ (5×2 + 5×1) = 86,7%.
+- Depois de finalizada, a avaliação **não pode mais ser alterada** e passa a ser visível para o professor avaliado.
+
+### 62.5 Reabrindo e histórico
+- Quem tem a permissão **Reabrir** (administração) pode devolver uma avaliação finalizada a rascunho para correção. A pontuação é zerada e recalculada ao finalizar de novo. A reabertura fica registrada no log de atividades.
+- O histórico de cada professor aparece também na ficha do funcionário (**RH → Funcionários**), na aba **Avaliações de Desempenho**.
+
+### 62.6 Para o professor avaliado
+Ao atuar como professor, o menu mostra **Avaliações de Desempenho** apenas com as **suas** avaliações já finalizadas: ciclo, data, avaliador, pontuação e, ao abrir, a nota de cada critério, as observações e o parecer.
+
+---
+
+## 🗓️ 63. Reserva de Espaços (`/admin/reserva-espacos`)
+
+Agendamento **pontual** de espaços (auditório, quadra, laboratório, biblioteca) para eventos e atividades fora da grade horária semanal: ensaio de formatura, palestra, aula extra de Educação Física, gravação. Fica no grupo **Calendário e Horários**.
+
+### 63.1 Antes de reservar: ver o que está ocupado
+Em **Reservas de Espaços**, clique em **Ver ocupação dos espaços**. Escolha o espaço, a data inicial e o período (1, 7, 14 ou 30 dias). Cada dia mostra as **reservas** (com a situação) e as **aulas da grade fixa** daquele espaço. Dias sem blocos estão livres o dia todo. Em dias não letivos (feriados, recesso) e fora do período letivo da turma, a grade não aparece, porque a aula não acontece.
+
+### 63.2 Reservando
+1. Clique em **Nova reserva**.
+2. Escolha o **espaço**, a **data**, o **horário de início e fim** e a **finalidade**. A turma é opcional.
+3. Salve. Se o horário estiver ocupado, o sistema mostra o motivo (outra reserva ou aula da grade) e **nada é gravado**.
+4. Se a turma tiver mais alunos ativos que a capacidade da sala, aparece um aviso (a reserva é feita mesmo assim).
+
+Faixas que apenas se tocam não conflitam (uma reserva das 14h às 15h e outra das 15h às 16h convivem). Não é possível reservar um horário que já passou.
+
+### 63.3 Espaços que exigem aprovação
+- No cadastro da **Sala** (**Acadêmico → Salas**), ative **Reservas exigem aprovação** para espaços concorridos, como o auditório.
+- Nesses espaços o pedido de um professor fica **aguardando aprovação**, e já **segura o horário**: ninguém mais consegue reservá-lo até o pedido ser confirmado ou cancelado.
+- Quem tem a permissão de aprovar (coordenação, secretaria, administração) vê a ação **Confirmar** e já tem as próprias reservas confirmadas na hora.
+- Para **recusar** um pedido, use **Cancelar** e informe a **justificativa**: o solicitante a vê na listagem.
+
+### 63.4 Alterando e cancelando
+- Cada pessoa altera e cancela as **próprias** reservas; quem aprova gerencia as de qualquer pessoa.
+- Mudar o horário de uma reserva já confirmada num espaço com aprovação a devolve para **aguardando aprovação** (a não ser que quem altera possa aprovar).
+- Reservas já realizadas e reservas canceladas não podem ser alteradas. Cancelar a reserva de outra pessoa exige justificativa.
+- Cancelar libera o horário para outras reservas.
+
+### 63.5 Listagem
+Por padrão a lista mostra as reservas **de hoje em diante**. Use os filtros para ver o passado, só as **suas** reservas, um espaço, uma situação ou um período.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

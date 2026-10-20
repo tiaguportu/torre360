@@ -197,8 +197,8 @@ Estrutura de ensino e turmas.
 
 ### `sala`
 - **Representa:** Ambiente físico da unidade (sala de aula, laboratório, quadra etc.), usado para reservar espaço na grade horária. **Não confundir** com o remanejamento de `EnsalamentoService`, que move alunos entre turmas.
-- **Campos Principais:** `unidade_id`, `nome`, `capacidade` (nullable), `tipo` (nullable), `ativa` (boolean, padrão true).
-- **Relacionamentos:** BelongsTo `unidade`, HasMany `grade_horario`.
+- **Campos Principais:** `unidade_id`, `nome`, `capacidade` (nullable), `tipo` (nullable), `ativa` (boolean, padrão true), `exige_aprovacao_reserva` (boolean, padrão false — reservas pontuais do espaço ficam “solicitadas” até alguém com `Confirmar:ReservaEspaco` aprovar).
+- **Relacionamentos:** BelongsTo `unidade`, HasMany `grade_horario`, HasMany `reservas_espaco`.
 
 ### `grade_horario`
 - **Representa:** Horário recorrente da grade semanal de uma turma — vale para todas as semanas do período letivo. É a origem do `cronograma_aula` gerado por `GradeHorarioService::gerarCronograma()`.
@@ -1475,3 +1475,43 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 
 
 
+
+---
+
+## 18. Reserva de Espaços (Onda 21)
+
+### `reservas_espaco`
+- **Representa:** Uso **pontual** de uma `sala` (auditório, quadra, laboratório) numa data e faixa de horário, fora da grade horária semanal fixa (`grade_horario`). Disponibilidade validada por `ReservaEspacoConflitoService` e regras de ciclo de vida em `ReservaEspacoService`.
+- **Campos Principais:** `sala_id` (FK `sala`), `data` (date), `hora_inicio` e `hora_fim` (time, sempre gravados como `HH:MM:SS`), `solicitante_user_id` (FK `users`, nullable), `motivo`, `descricao` (nullable), `turma_id` (FK `turma`, nullable), `status` (`solicitada` = aguardando aprovação, `confirmada`, `cancelada`), `decidido_por_user_id` (FK `users`, nullable), `decidido_em`, `justificativa_decisao` (nullable; obrigatória ao cancelar a reserva de outra pessoa).
+- **Regras:** `solicitada` e `confirmada` ocupam o horário; `cancelada` libera. Faixas que apenas se tocam não conflitam. A grade fixa só bloqueia se a turma tem aula na data (dentro do período letivo e fora de `dia_nao_letivo`).
+- **Relacionamentos:** BelongsTo `sala`, `solicitante` (`users`), `turma`, `decididoPor` (`users`).
+
+---
+
+## 19. Avaliação de Desempenho Docente (Onda 19)
+
+> Dado sensível de funcionário. `parecer` e `observacao` usam cast `encrypted`.
+
+### `instrumentos_avaliacao_docente`
+- **Representa:** Roteiro de observação em sala (lista de critérios e escala de notas), configurável pela escola e reutilizado por vários ciclos.
+- **Campos Principais:** `nome`, `descricao` (nullable), `escala_maxima` (4, 5 ou 10), `ativo`.
+- **Relacionamentos:** HasMany `criterios_avaliacao_docente`, HasMany `ciclos_avaliacao_docente`. Quando algum ciclo do instrumento já tem avaliação (`emUso()`), os critérios ficam congelados.
+
+### `criterios_avaliacao_docente`
+- **Campos Principais:** `instrumento_id` (FK, cascade), `nome`, `descricao` (nullable), `peso` (decimal, usado na média ponderada), `ordem`.
+- **Relacionamentos:** BelongsTo `instrumento`. Critério usado em avaliação não pode ser apagado (FK restrict).
+
+### `ciclos_avaliacao_docente`
+- **Representa:** Período em que a coordenação observa os professores (ex.: "1º Semestre 2026").
+- **Campos Principais:** `nome`, `data_inicio`, `data_fim`, `instrumento_id` (FK, restrict), `ativo` (false = encerrado).
+- **Relacionamentos:** BelongsTo `instrumento`, HasMany `avaliacoes_docente`.
+
+### `avaliacoes_docente`
+- **Representa:** Uma observação da coordenação sobre um professor dentro de um ciclo.
+- **Campos Principais:** `ciclo_id`, `funcionario_id` (FK `funcionarios`, o professor avaliado), `avaliador_user_id` (FK `users`), `turma_id` (nullable), `data_observacao`, `pontuacao_percentual` (nullable até finalizar; média ponderada em % da escala), `parecer` (longText cifrado), `status` (`rascunho`, `finalizada`), `finalizada_em`.
+- **Regras:** única por (`ciclo_id`, `funcionario_id`, `avaliador_user_id`, `data_observacao`); ninguém avalia o próprio desempenho; depois de `finalizada` é imutável (até `Reabrir:AvaliacaoDocente`). Quem atua como professor só enxerga as próprias **finalizadas** (`AvaliacaoDocente::visiveisPara()`).
+- **Relacionamentos:** BelongsTo `ciclo`, `funcionario`, `avaliador` (`users`), `turma`; HasMany `avaliacao_docente_criterios`.
+
+### `avaliacao_docente_criterios`
+- **Campos Principais:** `avaliacao_docente_id` (FK, cascade), `criterio_id` (FK, restrict), `nota` (nullable até avaliar), `observacao` (longText cifrado). Única por (`avaliacao_docente_id`, `criterio_id`).
+- **Relacionamentos:** BelongsTo `avaliacao` (`avaliacoes_docente`), BelongsTo `criterio`.
