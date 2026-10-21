@@ -42,6 +42,14 @@ class FaturaPolicy
         return $authUser->can('DeleteAny:Fatura');
     }
 
+    /**
+     * Gerar o informe anual de mensalidades pagas de qualquer aluno (traz CPF e valores pagos de cada família).
+     */
+    public function gerarInformeAnual(AuthUser $authUser): bool
+    {
+        return $authUser->can('GerarInformeAnual:Fatura');
+    }
+
     public function restore(AuthUser $authUser, Fatura $fatura): bool
     {
         return $authUser->can('Restore:Fatura');

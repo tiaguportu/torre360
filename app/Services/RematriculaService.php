@@ -205,7 +205,8 @@ class RematriculaService
                 $contrato = Contrato::create([
                     'matricula_id' => $novaMatricula->id,
                     'template_contrato_id' => $periodo->template_contrato_id,
-                    'valor_total' => $periodo->valor_taxa ?? 0,
+                    // Preço da série definido por um reajuste aplicado; sem ele, o valor único da campanha.
+                    'valor_total' => $periodo->valorTotalParaSerie($turma->serie_id),
                 ]);
 
                 // Copia responsáveis financeiros do contrato anterior se existirem

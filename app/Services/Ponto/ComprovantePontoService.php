@@ -6,6 +6,7 @@ namespace App\Services\Ponto;
 
 use App\Models\PontoConfiguracao;
 use App\Models\PontoRegistro;
+use App\Support\Formatacao;
 
 /**
  * Dados do comprovante de registro de ponto: NSR, empregador (com CNPJ), trabalhador (com CPF), data e hora, hash e
@@ -37,7 +38,7 @@ class ComprovantePontoService
             'estabelecimento' => $unidade->nome,
             'cnpj' => $unidade->cnpj ?: $unidade->instituicaoEnsino?->cnpj,
             'trabalhador' => $pessoa?->nome,
-            'cpf' => self::formatarCpf($pessoa?->cpf),
+            'cpf' => Formatacao::cpf($pessoa?->cpf),
             'data_hora' => $registro->momento->format('d/m/Y H:i:s'),
             'fuso' => $registro->fuso,
             'origem' => $registro->origem->getLabel(),
@@ -49,14 +50,5 @@ class ComprovantePontoService
             'assinatura' => $assinatura,
             'assinador' => $this->assinador->nome(),
         ];
-    }
-
-    private static function formatarCpf(?string $cpf): ?string
-    {
-        $digitos = preg_replace('/\D/', '', (string) $cpf);
-
-        return strlen((string) $digitos) === 11
-            ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digitos)
-            : ($cpf ?: null);
     }
 }

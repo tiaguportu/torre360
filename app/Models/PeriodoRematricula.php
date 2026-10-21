@@ -36,6 +36,31 @@ class PeriodoRematricula extends Model
         return $this->hasMany(Rematricula::class);
     }
 
+    /**
+     * Preços por série definidos por um reajuste aplicado (Onda 44).
+     */
+    public function precos(): HasMany
+    {
+        return $this->hasMany(PeriodoRematriculaPreco::class);
+    }
+
+    /**
+     * Valor total do novo contrato para a série: o preço definido por reajuste aplicado, ou o `valor_taxa` da campanha
+     * quando a série não tem preço próprio (comportamento anterior, mantido para campanhas sem reajuste).
+     */
+    public function valorTotalParaSerie(?int $serieId): float
+    {
+        if ($serieId !== null) {
+            $preco = $this->precos()->where('serie_id', $serieId)->value('valor_total');
+
+            if ($preco !== null) {
+                return (float) $preco;
+            }
+        }
+
+        return (float) ($this->valor_taxa ?? 0);
+    }
+
     public function isAberto(): bool
     {
         if (! $this->is_ativo) {

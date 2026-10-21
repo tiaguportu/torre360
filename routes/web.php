@@ -17,6 +17,7 @@ use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\Financeiro\AcordoPublicoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
+use App\Http\Controllers\InformeAnualPdfController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\OmrFolhasController;
@@ -156,6 +157,12 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/ponto/registros/{registro}/comprovante', [PontoPdfController::class, 'comprovante'])->name('ponto.comprovante');
     Route::get('/ponto/espelho/{funcionario}/{ano}/{mes}', [PontoPdfController::class, 'espelho'])->whereNumber(['ano', 'mes'])->name('ponto.espelho');
     Route::get('/ponto/configuracoes/{configuracao}/atestado', [PontoPdfController::class, 'atestado'])->name('ponto.atestado');
+});
+
+// Informe anual de mensalidades pagas (Onda 42): a família baixa o do seu aluno; a equipe com permissão, de qualquer aluno ou em lote.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/informe-anual/{ano}/matricula/{matricula}', [InformeAnualPdfController::class, 'aluno'])->whereNumber('ano')->name('informe-anual.aluno');
+    Route::get('/informe-anual/{ano}/lote', [InformeAnualPdfController::class, 'lote'])->whereNumber('ano')->name('informe-anual.lote');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');
