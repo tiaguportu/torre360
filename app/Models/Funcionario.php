@@ -70,6 +70,29 @@ class Funcionario extends Model
             ->first(fn (ContratoTrabalho $c) => $c->vigencia_fim === null || $c->vigencia_fim->isFuture());
     }
 
+    /**
+     * Ponto eletrônico (Onda 41). Os registros nunca são apagados com o funcionário (restrictOnDelete).
+     */
+    public function registrosPonto(): HasMany
+    {
+        return $this->hasMany(PontoRegistro::class)->orderByDesc('momento');
+    }
+
+    public function jornadasPonto(): HasMany
+    {
+        return $this->hasMany(PontoJornada::class)->orderByDesc('vigencia_inicio');
+    }
+
+    public function acordosBancoHoras(): HasMany
+    {
+        return $this->hasMany(PontoAcordoBancoHoras::class)->orderByDesc('vigencia_inicio');
+    }
+
+    public function lancamentosBancoHoras(): HasMany
+    {
+        return $this->hasMany(PontoBancoHorasLancamento::class)->orderByDesc('data')->orderByDesc('id');
+    }
+
     public function isAtivo(): bool
     {
         return $this->data_desligamento === null;

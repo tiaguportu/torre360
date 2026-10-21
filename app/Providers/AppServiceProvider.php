@@ -7,6 +7,11 @@ use App\Listeners\LogSentMessage;
 use App\Models\LeadScoreConfiguracao;
 use App\Models\RiscoEvasaoConfiguracao;
 use App\Models\User;
+use App\Services\Ponto\AssinadorNaoAssinado;
+use App\Services\Ponto\AssinadorPonto;
+use App\Services\Ponto\HoraLegalDesativada;
+use App\Services\Ponto\HoraLegalProvider;
+use App\Services\Ponto\NtpHoraLegalProvider;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
@@ -31,7 +36,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Ponto eletrônico (Onda 41): fonte da hora e assinador são trocáveis; o padrão é consultar o NTP.br e NÃO assinar.
+        $this->app->bind(HoraLegalProvider::class, fn (): HoraLegalProvider => config('ponto.hora_legal') === 'ntp'
+            ? new NtpHoraLegalProvider
+            : new HoraLegalDesativada);
+
+        // Não existe ainda implementação com certificado ICP-Brasil: qualquer valor de PONTO_ASSINADOR cai em "não
+        // assina", de modo que mudar o .env sozinho nunca faz o sistema parecer assinado.
+        $this->app->bind(AssinadorPonto::class, fn (): AssinadorPonto => new AssinadorNaoAssinado);
     }
 
     /**

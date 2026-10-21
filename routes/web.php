@@ -20,6 +20,7 @@ use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\OmrFolhasController;
+use App\Http\Controllers\PontoPdfController;
 use App\Http\Controllers\PortfolioAnexoController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
@@ -148,6 +149,13 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 // Limite maior que o do grupo acima, porque uma página do portfólio carrega várias miniaturas de uma vez.
 Route::middleware(['auth', 'active', 'throttle:120,1'])->group(function () {
     Route::get('/portfolio/{item}/anexo/{indice}', [PortfolioAnexoController::class, 'show'])->whereNumber('indice')->name('portfolio.anexo');
+});
+
+// Ponto eletrônico (Onda 41): comprovante de cada marcação e espelho mensal, só para o próprio trabalhador ou quem pode ver o de todos.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/ponto/registros/{registro}/comprovante', [PontoPdfController::class, 'comprovante'])->name('ponto.comprovante');
+    Route::get('/ponto/espelho/{funcionario}/{ano}/{mes}', [PontoPdfController::class, 'espelho'])->whereNumber(['ano', 'mes'])->name('ponto.espelho');
+    Route::get('/ponto/configuracoes/{configuracao}/atestado', [PontoPdfController::class, 'atestado'])->name('ponto.atestado');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');
