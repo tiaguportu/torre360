@@ -480,6 +480,7 @@ class ReajusteMensalidadeTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(CreateCenarioReajuste::class)
+            ->assertActionExists('ajuda')
             ->fillForm(['periodo_rematricula_id' => $this->campanha->id, 'nome' => 'Reajuste 2027', 'percentual_padrao' => 6.5, 'arredondamento' => 'centavos'])
             ->call('create')
             ->assertHasNoFormErrors()
