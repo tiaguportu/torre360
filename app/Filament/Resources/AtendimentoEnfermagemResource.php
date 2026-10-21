@@ -17,6 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AtendimentoEnfermagemResource extends Resource implements HasShieldPermissions
 {
@@ -121,6 +122,15 @@ class AtendimentoEnfermagemResource extends Resource implements HasShieldPermiss
             ])
             ->defaultSort('data_hora', 'desc')
             ->stackedOnMobile();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'pessoa',
+                'atendidoPor',
+            ]);
     }
 
     public static function getPages(): array

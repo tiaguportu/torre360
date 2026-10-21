@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class FichaMedicaResource extends Resource implements HasShieldPermissions
 {
@@ -207,6 +208,14 @@ class FichaMedicaResource extends Resource implements HasShieldPermissions
                     ->badge(),
             ])
             ->stackedOnMobile();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'pessoa',
+            ]);
     }
 
     public static function getPages(): array

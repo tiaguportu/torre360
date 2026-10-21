@@ -21,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class OcorrenciaEscolarResource extends Resource implements HasShieldPermissions
 {
@@ -187,6 +188,17 @@ class OcorrenciaEscolarResource extends Resource implements HasShieldPermissions
             ])
             ->defaultSort('data_hora', 'desc')
             ->stackedOnMobile();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'matricula.pessoa',
+                'matricula.turma',
+                'tipoOcorrencia',
+                'registradoPor',
+            ]);
     }
 
     public static function getPages(): array
