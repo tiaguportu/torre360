@@ -63,6 +63,24 @@ final class TiposArquivo
     }
 
     /**
+     * Evidências do portfólio do aluno: imagens, PDF e mídia curta (vídeo MP4, áudio MP3/MP4/WAV). Sem Office, zip,
+     * HTML ou SVG: o material é servido às famílias.
+     *
+     * @return list<string>
+     */
+    public static function portfolio(): array
+    {
+        return [
+            ...self::documentos(),
+            'video/mp4',
+            'audio/mpeg',
+            'audio/mp4',
+            'audio/wav',
+            'audio/x-wav',
+        ];
+    }
+
+    /**
      * Tipos que o navegador pode exibir na própria página sem risco de executar código no domínio do sistema.
      *
      * @return list<string>

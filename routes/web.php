@@ -20,6 +20,7 @@ use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\OmrFolhasController;
+use App\Http\Controllers\PortfolioAnexoController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SacolaLeituraImpressaoController;
@@ -141,6 +142,12 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     // Copiloto Pedagógico: Exportação de PDF do Plano de Aula e PEI
     Route::get('/admin/planos-aula/{planoAula}/pdf', [CopilotoPdfController::class, 'downloadPlanoAula'])->name('planos-aula.pdf');
     Route::get('/admin/planos-aula/adaptacoes/{adaptacao}/pdf', [CopilotoPdfController::class, 'downloadPei'])->name('planos-aula.adaptacoes.pdf');
+});
+
+// Portfólio do aluno: anexos no disco privado, entregues só mediante autorização por item (equipe ou família do aluno).
+// Limite maior que o do grupo acima, porque uma página do portfólio carrega várias miniaturas de uma vez.
+Route::middleware(['auth', 'active', 'throttle:120,1'])->group(function () {
+    Route::get('/portfolio/{item}/anexo/{indice}', [PortfolioAnexoController::class, 'show'])->whereNumber('indice')->name('portfolio.anexo');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');
