@@ -28,7 +28,7 @@ class MatriculasPendentesWidget extends BaseWidget
             })
             ->count();
 
-        // 2. Contagem de Matrículas com documentos obrigatórios pendentes (pendência de documentos)
+        // 2. Contagem de Matrículas com documentos obrigatórios para o contrato pendentes
         $documentosPendentesCount = 0;
 
         Matricula::query()
@@ -41,7 +41,7 @@ class MatriculasPendentesWidget extends BaseWidget
             ])
             ->chunk(150, function ($chunk) use (&$documentosPendentesCount) {
                 foreach ($chunk as $matricula) {
-                    if ($matricula->hasMissingMandatoryDocuments()) {
+                    if ($matricula->hasMissingContractDocuments()) {
                         $documentosPendentesCount++;
                     }
                 }
@@ -68,7 +68,7 @@ class MatriculasPendentesWidget extends BaseWidget
                 ])),
 
             Stat::make('Pendência de Documentos', $documentosPendentesCount)
-                ->description('Documentos obrigatórios faltantes')
+                ->description('Documentos obrigatórios do contrato faltantes')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color($documentosPendentesCount > 0 ? 'danger' : 'success')
                 ->url(MatriculaResource::getUrl('index', [

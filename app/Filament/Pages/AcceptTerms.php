@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
 use Filament\Pages\SimplePage;
 use Illuminate\Contracts\Support\Htmlable;
@@ -70,5 +71,33 @@ class AcceptTerms extends SimplePage
         ]);
 
         redirect()->to(url('/admin'));
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Detalhes de Registro')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $html = '<p class="text-sm text-gray-600 dark:text-gray-300">Termos e Condições de Uso da plataforma Torre360.</p>';
+        $html .= '<p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Para prosseguir para o painel administrativo, leia as diretrizes institucionais e marque o consentimento obrigatório.</p>';
+
+        return $html;
     }
 }

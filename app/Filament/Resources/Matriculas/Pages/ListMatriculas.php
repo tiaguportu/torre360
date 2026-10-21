@@ -211,13 +211,13 @@ class ListMatriculas extends ListRecords
             ->secao('🗂️ Para que serve cada aba', [
                 ['✅', 'Ativas', 'Matrículas em andamento. É a aba que abre por padrão.'],
                 ['⏳', 'Pendentes', 'Matrículas em processo, geralmente aguardando documentação ou pagamento.'],
-                ['🚨', 'Com pendências', 'Matrículas ativas ou pendentes que têm algum problema a resolver: aluno sem responsável, cadastro incompleto, documentos obrigatórios faltando/rejeitados, contrato não gerado ou contrato não assinado. É a sua lista de trabalho da secretaria.'],
+                ['🚨', 'Com pendências', 'Matrículas ativas ou pendentes que têm algum problema a resolver: aluno sem responsável, cadastro incompleto, documentos obrigatórios do contrato faltando/rejeitados, contrato não gerado ou contrato não assinado. É a sua lista de trabalho da secretaria.'],
                 ['📚', 'Demais abas', 'Trancadas, Concluídas, Canceladas, Reserva e Evasão agrupam as matrículas por situação. "Todas" mostra tudo, sem recorte.'],
             ])
             ->secao('📋 Como ler a tabela', [
                 ['👤', 'Aluno', 'Nome do aluno e, logo abaixo, o ano letivo, o curso, a série e a turma (ex.: 2026 · Ensino Fundamental · 3º Ano · Turma A). Clique no nome para abrir a ficha da pessoa (se você tiver permissão).'],
                 ['🏷️', 'Situação', 'Badge colorido com a situação da matrícula.'],
-                ['⚠️', 'Pendências', 'Badges, um embaixo do outro, com cada tipo de pendência: Sem responsável, Cadastro incompleto, N documentos faltando, N documentos rejeitados, Contrato não gerado e Contrato não assinado. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
+                ['⚠️', 'Pendências', 'Badges, um embaixo do outro, com cada tipo de pendência: Sem responsável, Cadastro incompleto, N docs. de contrato faltando, N docs. de contrato rejeitados, Contrato não gerado e Contrato não assinado. "Em dia" (verde) indica que não há nada a resolver. Passe o mouse para ver o resumo e clique para abrir o detalhe, com links para corrigir.'],
                 ['📄', 'Contrato', 'Ícone verde quando a matrícula já tem contrato gerado; cinza quando ainda não tem.'],
                 ['⚙️', 'Colunas opcionais', 'Pelo ícone de colunas da tabela você pode exibir Turma (para ordenar por ela), Data de Ativação, Data de Desativação, Criada em e Atualizada em.'],
             ]);

@@ -19,6 +19,7 @@ final readonly class PendenciasMatricula
      * @param  Collection<int, array{tipo: string, pessoa: Pessoa, campos: array<string>}>  $cadastrosIncompletos
      * @param  Collection<int, TipoDocumento>  $documentosFaltantes
      * @param  Collection<int, DocumentoInserido>  $documentosRejeitados
+     * @param  Collection<int, TipoDocumento>|null  $documentosHistoricoFaltantes
      */
     public function __construct(
         public bool $semResponsavel,
@@ -27,6 +28,7 @@ final readonly class PendenciasMatricula
         public Collection $documentosRejeitados,
         public bool $contratoNaoGerado = false,
         public bool $contratoNaoAssinado = false,
+        public ?Collection $documentosHistoricoFaltantes = null,
     ) {}
 
     public function total(): int
@@ -99,11 +101,11 @@ final readonly class PendenciasMatricula
         }
 
         if ($this->documentosFaltantes->isNotEmpty()) {
-            $linhas[] = 'Documentos faltando: '.$this->documentosFaltantes->pluck('nome')->implode(', ').'.';
+            $linhas[] = 'Documentos obrigatórios do contrato faltando: '.$this->documentosFaltantes->pluck('nome')->implode(', ').'.';
         }
 
         if ($this->documentosRejeitados->isNotEmpty()) {
-            $linhas[] = 'Documentos rejeitados: '.$this->documentosRejeitados->map(fn ($doc) => $doc->tipoDocumento?->nome)->filter()->implode(', ').'.';
+            $linhas[] = 'Documentos do contrato rejeitados: '.$this->documentosRejeitados->map(fn ($doc) => $doc->tipoDocumento?->nome)->filter()->implode(', ').'.';
         }
 
         if ($this->contratoNaoGerado) {

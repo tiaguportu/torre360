@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CategoriaExigenciaDocumento;
 use App\Enums\SituacaoDocumento;
 use App\Enums\SituacaoMatricula;
 use App\Enums\StatusFatura;
@@ -353,6 +354,19 @@ class Matricula extends Model
     }
 
     /**
+     * Retorna os documentos obrigatórios para o Histórico Escolar do Aluno (MEC)
+     * que ainda não foram entregues, não bloqueando a emissão do contrato.
+     *
+     * @return Collection<TipoDocumento>
+     */
+    public function getMissingHistoricoDocuments(): Collection
+    {
+        return $this->getMissingMandatoryDocuments()
+            ->filter(fn (TipoDocumento $doc) => $doc->isObrigatorioHistorico())
+            ->values();
+    }
+
+    /**
      * Informa se há pendência de documentos que bloqueiam a emissão do contrato.
      */
     public function hasMissingContractDocuments(): bool
@@ -361,7 +375,7 @@ class Matricula extends Model
     }
 
     /**
-     * Retorna os documentos inseridos que foram rejeitados (apenas se forem obrigatórios)
+     * Retorna os documentos inseridos que foram rejeitados (apenas se forem obrigatórios para o contrato)
      */
     public function getRejectedDocuments(): Collection
     {
@@ -374,13 +388,23 @@ class Matricula extends Model
             }
 
             return $rejeitados->loadMissing('tipoDocumento')
-                ->filter(fn (DocumentoInserido $doc) => (bool) $doc->tipoDocumento?->flag_obrigatorio)
+                ->filter(fn (DocumentoInserido $doc) => $doc->tipoDocumento && (
+                    $doc->tipoDocumento->isObrigatorioContrato() ||
+                    ($doc->tipoDocumento->flag_obrigatorio && $doc->tipoDocumento->categoria_exigencia === null)
+                ))
                 ->values();
         }
 
         return $this->documentoInseridos()
             ->where('status', SituacaoDocumento::REJEITADO)
-            ->whereHas('tipoDocumento', fn ($query) => $query->where('flag_obrigatorio', true))
+            ->whereHas('tipoDocumento', fn (Builder $query) => $query
+                ->where(function (Builder $q) {
+                    $q->where('categoria_exigencia', CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO->value)
+                        ->orWhere(function (Builder $sub) {
+                            $sub->whereNull('categoria_exigencia')
+                                ->where('flag_obrigatorio', true);
+                        });
+                }))
             ->with('tipoDocumento')
             ->get();
     }
@@ -677,7 +701,7 @@ class Matricula extends Model
     }
 
     /**
-     * Resumo consolidado das pendências (responsáveis, cadastro e documentos).
+     * Resumo consolidado das pendências (responsáveis, cadastro, documentos obrigatórios do contrato e contrato).
      * Memoizado por instância: colunas, ações e modais da listagem compartilham o mesmo cálculo.
      */
     protected function pendencias(): Attribute
@@ -685,10 +709,11 @@ class Matricula extends Model
         return Attribute::get(fn (): PendenciasMatricula => new PendenciasMatricula(
             semResponsavel: $this->estaSemResponsavel(),
             cadastrosIncompletos: $this->getPessoasComCadastroIncompleto(),
-            documentosFaltantes: $this->getMissingMandatoryDocuments(),
+            documentosFaltantes: $this->getMissingContractDocuments(),
             documentosRejeitados: $this->getRejectedDocuments(),
             contratoNaoGerado: $this->exigeContrato() && $this->contrato === null,
             contratoNaoAssinado: $this->exigeContrato() && $this->contrato !== null && ! $this->contrato->estaAssinado(),
+            documentosHistoricoFaltantes: $this->getMissingHistoricoDocuments(),
         ));
     }
 
@@ -717,7 +742,7 @@ class Matricula extends Model
     }
 
     /**
-     * Scope para matrículas com algum documento obrigatório (do curso, da turma ou da matrícula)
+     * Scope para matrículas com algum documento obrigatório para o contrato (do curso, da turma ou da matrícula)
      * ainda não inserido (documentos rejeitados contam como não inseridos).
      */
     public function scopeComDocumentosFaltando(Builder $query): Builder
@@ -731,7 +756,7 @@ class Matricula extends Model
     }
 
     /**
-     * Scope para matrículas sem nenhum documento obrigatório faltando.
+     * Scope para matrículas sem nenhum documento obrigatório para o contrato faltando.
      */
     public function scopeSemDocumentosFaltando(Builder $query): Builder
     {
@@ -744,13 +769,21 @@ class Matricula extends Model
     }
 
     /**
-     * Scope para matrículas com documento obrigatório rejeitado (aguardando reenvio).
+     * Scope para matrículas com documento obrigatório para o contrato rejeitado (aguardando reenvio).
      */
     public function scopeComDocumentosRejeitados(Builder $query): Builder
     {
         return $query->whereHas('documentoInseridos', fn (Builder $sub) => $sub
             ->where('status', SituacaoDocumento::REJEITADO)
-            ->whereHas('tipoDocumento', fn (Builder $tipo) => $tipo->where('flag_obrigatorio', true)));
+            ->whereHas('tipoDocumento', fn (Builder $tipo) => $tipo
+                ->where(function (Builder $q) {
+                    $q->where('categoria_exigencia', CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO->value)
+                        ->orWhere(function (Builder $subDoc) {
+                            $subDoc->whereNull('categoria_exigencia')
+                                ->where('flag_obrigatorio', true);
+                        });
+                })
+            ));
     }
 
     /**
@@ -806,12 +839,18 @@ class Matricula extends Model
     }
 
     /**
-     * Restrição aplicada ao tipo de documento: obrigatório e sem documento válido inserido na matrícula externa.
+     * Restrição aplicada ao tipo de documento: obrigatório para o contrato e sem documento válido inserido na matrícula externa.
      */
     private static function restricaoDocumentoObrigatorioFaltante(): \Closure
     {
-        return fn (Builder $tipo) => $tipo
-            ->where('tipo_documento.flag_obrigatorio', true)
+        return fn ($tipo) => $tipo
+            ->where(function (Builder $q) {
+                $q->where('tipo_documento.categoria_exigencia', CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO->value)
+                    ->orWhere(function (Builder $sub) {
+                        $sub->whereNull('tipo_documento.categoria_exigencia')
+                            ->where('tipo_documento.flag_obrigatorio', true);
+                    });
+            })
             ->whereNotExists(fn ($existente) => $existente
                 ->from('documento_inserido')
                 ->whereColumn('documento_inserido.tipo_documento_id', 'tipo_documento.id')

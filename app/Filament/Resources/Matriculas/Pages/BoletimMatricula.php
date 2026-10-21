@@ -55,7 +55,8 @@ class BoletimMatricula extends Page implements HasSchemas
                     ])
                     ->columns(['md' => 2, 'default' => 1]),
 
-                BoletimeGradesTable::make(),
+                BoletimeGradesTable::make()
+                    ->stackedOnMobile(),
             ]);
     }
 

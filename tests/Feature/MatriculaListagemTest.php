@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CategoriaExigenciaDocumento;
 use App\Enums\CorRaca;
 use App\Enums\Sexo;
 use App\Enums\SituacaoDocumento;
@@ -623,5 +624,94 @@ class MatriculaListagemTest extends TestCase
 
         // Mais linhas não podem significar mais queries: pendências, ações e colunas usam dados já carregados
         $this->assertSame($comTres, $comDoze);
+    }
+
+    #[Test]
+    public function apenas_documentos_obrigatorios_para_o_contrato_sao_considerados_como_pendencia_na_listagem(): void
+    {
+        $docContrato = TipoDocumento::create([
+            'nome' => 'Comprovante de Residência',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+            'flag_obrigatorio' => true,
+        ]);
+
+        $docHistorico = TipoDocumento::create([
+            'nome' => 'Histórico Escolar Anterior',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_HISTORICO,
+            'flag_obrigatorio' => true,
+        ]);
+
+        $matricula = Matricula::factory()->create();
+        $matricula->tiposDocumentos()->attach([$docContrato->id, $docHistorico->id]);
+
+        // Inicialmente falta o documento de contrato e o de histórico
+        // Apenas o documento do contrato conta como pendência de documentos
+        $this->assertTrue($matricula->hasMissingContractDocuments());
+        $this->assertSame(1, $matricula->getMissingContractDocuments()->count());
+        $this->assertTrue($matricula->getMissingContractDocuments()->contains('id', $docContrato->id));
+        $this->assertFalse($matricula->getMissingContractDocuments()->contains('id', $docHistorico->id));
+
+        // Scopes concordam com o model
+        $this->assertTrue(Matricula::comDocumentosFaltando()->whereKey($matricula->id)->exists());
+        $this->assertFalse(Matricula::semDocumentosFaltando()->whereKey($matricula->id)->exists());
+
+        // Pendências consolidadas
+        $pendencias = $matricula->fresh()->pendencias;
+        $this->assertTrue($pendencias->temPendenciaDocumental());
+        $this->assertContains(TipoPendenciaMatricula::DOCUMENTOS_FALTANDO, $pendencias->tipos());
+        $this->assertSame(1, $pendencias->documentosFaltantes->count());
+        $this->assertSame('Comprovante de Residência', $pendencias->documentosFaltantes->first()->nome);
+        $this->assertSame(1, $pendencias->documentosHistoricoFaltantes->count());
+        $this->assertSame('Histórico Escolar Anterior', $pendencias->documentosHistoricoFaltantes->first()->nome);
+
+        // Ao enviar o documento de contrato, a pendência documental é eliminada, mesmo que falte o de histórico!
+        DocumentoInserido::create([
+            'tipo_documento_id' => $docContrato->id,
+            'matricula_id' => $matricula->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'documentos/residencia.pdf',
+        ]);
+
+        $matricula = $matricula->fresh();
+        $this->assertFalse($matricula->hasMissingContractDocuments());
+        $this->assertEmpty($matricula->getMissingContractDocuments());
+        $this->assertFalse(Matricula::comDocumentosFaltando()->whereKey($matricula->id)->exists());
+        $this->assertTrue(Matricula::semDocumentosFaltando()->whereKey($matricula->id)->exists());
+
+        $pendenciasAtualizadas = $matricula->pendencias;
+        $this->assertFalse($pendenciasAtualizadas->temPendenciaDocumental());
+        $this->assertNotContains(TipoPendenciaMatricula::DOCUMENTOS_FALTANDO, $pendenciasAtualizadas->tipos());
+        // Mas a informação do histórico continua disponível para consulta
+        $this->assertSame(1, $pendenciasAtualizadas->documentosHistoricoFaltantes->count());
+    }
+
+    #[Test]
+    public function documentos_obrigatorios_de_contrato_do_curso_geram_pendencia_para_a_matricula(): void
+    {
+        $docCurso = TipoDocumento::create([
+            'nome' => 'Certidão de Nascimento do Curso',
+            'categoria_exigencia' => CategoriaExigenciaDocumento::OBRIGATORIO_CONTRATO,
+            'flag_obrigatorio' => true,
+        ]);
+
+        $turma = $this->turmaCompleta('2026', 'Série Curso', 'Turma C');
+        $turma->serie->curso->documentos()->attach($docCurso->id);
+
+        $matricula = Matricula::factory()->create(['turma_id' => $turma->id]);
+
+        $this->assertTrue($matricula->hasMissingContractDocuments());
+        $this->assertTrue($matricula->getMissingContractDocuments()->contains('id', $docCurso->id));
+        $this->assertTrue(Matricula::comDocumentosFaltando()->whereKey($matricula->id)->exists());
+
+        // Envia o documento do curso
+        DocumentoInserido::create([
+            'tipo_documento_id' => $docCurso->id,
+            'matricula_id' => $matricula->id,
+            'status' => SituacaoDocumento::VERIFICADO,
+            'arquivo_path' => 'documentos/certidao.pdf',
+        ]);
+
+        $this->assertFalse($matricula->fresh()->hasMissingContractDocuments());
+        $this->assertFalse(Matricula::comDocumentosFaltando()->whereKey($matricula->id)->exists());
     }
 }

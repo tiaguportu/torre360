@@ -238,6 +238,7 @@ Estrutura de ensino e turmas.
 ### `nota`
 - **Representa:** Notas individuais dos alunos em cada avaliação.
 - **Campos Principais:** `avaliacao_id`, `matricula_id`, `valor` (nullable), `situacao` (nullable, Enum `SituacaoNota`: `faltou`, `nao_se_aplica`).
+- **Restrição de Unicidade e Índice Composto:** Possui índice único composto `nota_matricula_avaliacao_unique` sobre `(matricula_id, avaliacao_id)`, garantindo integridade relacional e impedindo o lançamento duplicado de notas para uma mesma matrícula na mesma avaliação.
 - **Situação (justificativa de ausência de nota):** Para avaliações aplicadas só a alunos específicos ou quando o aluno faltou, a nota é gravada com `valor = null` e `situacao` preenchida. Esse registro conta como **resolvido** em `Avaliacao::scopePendentes()`, `tem_pendencia` e `notas_pendentes_count` (resolvida = `valor` não nulo **ou** `situacao` não nula), mas **não entra em médias**, pois boletim e fechamento de ciclo consideram apenas `valor` não nulo. `situacao` e `valor` são mutuamente exclusivos (o serviço `NotaLancamentoService` zera um ao gravar o outro).
 - **Relacionamentos:** BelongsTo `avaliacao`, BelongsTo `matricula` (Aluno).
 

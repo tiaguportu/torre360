@@ -37,3 +37,6 @@ Thumbs.db
 backup_banco_*/
 *.sql
 
+# Git Worktrees locais
+worktree-*/
+

@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Alunos\Pages;
 
 use App\Filament\Resources\Alunos\AlunoResource;
 use App\Filament\Schemas\Components\BoletimeGradesTable;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -50,7 +52,8 @@ class BoletimAluno extends Page implements HasSchemas
                             ->content(now()->format('d/m/Y')),
                     ])
                     ->columns(['md' => 2, 'default' => 1]),
-                BoletimeGradesTable::make(),
+                BoletimeGradesTable::make()
+                    ->stackedOnMobile(),
             ]);
     }
 
@@ -67,5 +70,38 @@ class BoletimAluno extends Page implements HasSchemas
             AlunoResource::getUrl() => 'Alunos',
             '#' => 'Boletim',
         ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ajuda')
+                ->label('Ajuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Ajuda: Detalhes de Aluno')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->form([
+                    ViewField::make('help_content')
+                        ->view('filament.components.help-content')
+                        ->viewData([
+                            'content' => $this->getHelpContent(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private function getHelpContent(): string
+    {
+        $user = auth()->user();
+        $html = '<p class="text-sm text-gray-600 dark:text-gray-300">Boletim Escolar do Aluno, consolidando notas por etapa avaliativa, médias e frequência.</p>';
+        $html .= '<h4 class="font-semibold text-gray-800 dark:text-gray-100 mt-2 text-sm">Recursos:</h4>';
+        $html .= '<ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">';
+        $html .= '<li>Consulte o aproveitamento pedagógico do aluno nas disciplinas da matriz.</li>';
+        $html .= '<li>Acompanhe o total de presenças e faltas registradas no período letivo.</li>';
+        $html .= '</ul>';
+
+        return $html;
     }
 }

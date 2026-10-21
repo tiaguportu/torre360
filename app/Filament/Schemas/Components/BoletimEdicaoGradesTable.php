@@ -13,9 +13,21 @@ class BoletimEdicaoGradesTable extends Component
 {
     protected string $view = 'filament.schemas.components.boletim-edicao-grades-table';
 
+    public bool $isStackedOnMobile = true;
+
     public static function make(): static
     {
-        return app(static::class);
+        $static = app(static::class);
+        $static->stackedOnMobile();
+
+        return $static;
+    }
+
+    public function stackedOnMobile(bool $condition = true): static
+    {
+        $this->isStackedOnMobile = $condition;
+
+        return $this;
     }
 
     public function getMatricula(): ?Matricula

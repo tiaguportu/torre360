@@ -772,6 +772,7 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 7. **Impressão de Boletins por Turma (Individual e em Lote):** No menu **Acadêmico → Turmas**, usuários que possuam permissão de visualização de boletim (`Boletim:Matricula`) podem emitir e baixar todos os boletins dos alunos ativos da(s) turma(s) em um único arquivo PDF consolidado.
    - **Para uma única turma:** Clique na ação **Imprimir Boletins** na respectiva linha da turma. O sistema abrirá um modal questionando se deseja filtrar por uma etapa avaliativa específica ou gerar todas as etapas juntas.
    - **Para múltiplas turmas em lote:** Selecione as turmas desejadas na tabela através das caixas de seleção, abra as ações em lote e clique em **Imprimir Boletins em Lote**. O mesmo modal de filtro por etapa será exibido. O PDF gerado realiza a quebra de página automática por aluno para facilitar a impressão física.
+8. **Responsividade Mobile:** As grades e tabelas de consulta e edição do boletim contam com suporte ao modo empilhado (`stackedOnMobile`), adaptando-se confortavelmente a telas de celulares e tablets sem necessidade de rolagem horizontal excessiva.
 
 ### 5.4 Gerenciamento e Lançamento de Notas em Grade
 1. No menu **Avaliações → Notas**, é possível visualizar o histórico completo de notas lançadas.
@@ -779,6 +780,7 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 3. A busca nesta tela permite localizar registros pesquisando por qualquer uma dessas três informações.
 4. **Regras de Negócio e Prevalência (`NotaLancamentoService`):**
    - **Teto da Avaliação:** O sistema bloqueia notas que ultrapassem a nota máxima cadastrada (`\InvalidArgumentException`), impedindo erros de digitação.
+   - **Garantia de Unicidade e Integridade:** A base de dados conta com restrição e índice composto exclusivo (`matricula_id`, `avaliacao_id`), impedindo concorrentemente notas duplicadas para uma mesma matrícula na mesma avaliação.
    - **Justificativas (*Faltou* / *Não se Aplica*):** Quando uma justificativa é selecionada, ela tem precedência absoluta, descartando e anulando o valor numérico digitado para resolver pendências sem afetar indevidamente as médias.
    - **Limpeza de Notas:** Ao esvaziar simultaneamente o valor numérico e a justificativa de um aluno, a nota é imediatamente excluída da base de dados.
    - **Garantia por Testes:** Todo o ciclo de validação do serviço é coberto e auditado pela suíte `NotaLancamentoRegrasTest`.
@@ -2497,7 +2499,8 @@ Cada tela do menu lateral está recebendo, aos poucos, o botão **Ajuda** (ícon
 - **Portal da Família/Aluno (`/portal`):** as 14 páginas (Início, Notas, Frequência, Horários, Calendário, Boletins, Documentos e Contratos, Solicitar Documentos Oficiais, Eventos e Atividades, Rematrícula Online, Financeiro, Ocorrências, Agendar Preceptoria e Central de Atendimento), com explicações em linguagem simples para as famílias.
 - **Menu do Responsável/Aluno:** os links "Dados Cadastrais", "Boletim Escolar", "Preceptorias", "Documentos" e "Agendar preceptoria" também abrem telas com o botão de Ajuda.
 - **CRM / Comercial:** Campanhas de Marketing, Comunicação em Massa, Leads da Landing Page e Modelos de WhatsApp.
-- **Cobertura completa:** todas as telas do menu lateral do painel administrativo e do Portal da Família têm o botão de Ajuda. A única exceção é **Filament Shield → Roles** (tela de papéis e permissões, fornecida pelo pacote Shield), que por ora não tem o botão. Um teste automático impede que novas telas entrem no menu sem Ajuda. A lista de acompanhamento fica em `docs/ajuda_botoes_sidebar.md`.
+- **Cobertura 100% completa e unificada:** Todas as 343 páginas do painel administrativo e do Portal da Família contam com o botão de Ajuda integrado. Isso inclui não apenas as listagens principais (`ListRecords`), mas também **todos os formulários de cadastro (`CreateRecord`)**, **todas as telas de edição (`EditRecord`)**, **telas de visualização detalhada (`ViewRecord`)** e páginas customizadas de todo o ecossistema escolar.
+- **Ajuda Contextual com Segurança Shield:** Em cada tela (seja criação, alteração ou consulta), o conteúdo da ajuda é dinâmico e valida as permissões individuais do usuário logado via Spatie/Filament Shield (`Create:Recurso`, `Update:Recurso`, `View:Recurso`, `Delete:Recurso`), garantindo que apenas funcionalidades e ações permitidas sejam apresentadas.
 
 ### 39.3 Para a equipe de desenvolvimento
 O guia de como montar a ajuda de uma nova tela (construtor `HelpContent` e botão `HasAjudaAction`) está em `docs/ajuda_modal_design.md`.

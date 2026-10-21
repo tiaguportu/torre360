@@ -57,11 +57,11 @@
         <div class="p-4 bg-danger-500/10 border border-danger-500/20 rounded-lg text-danger-700 dark:text-danger-400">
             <div class="flex items-center gap-2 font-bold mb-1">
                 <x-filament::icon icon="heroicon-m-document-text" class="h-5 w-5" />
-                <span>Documentos pendentes</span>
+                <span>Documentos pendentes (obrigatórios para o contrato)</span>
             </div>
 
             @if ($pendencias->documentosFaltantes->isNotEmpty())
-                <p class="text-sm font-semibold mt-2">Faltando:</p>
+                <p class="text-sm font-semibold mt-2">Faltando (obrigatórios para emissão do contrato):</p>
                 <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 mt-1">
                     @foreach ($pendencias->documentosFaltantes as $documento)
                         <li>{{ $documento->nome }}</li>
@@ -97,16 +97,39 @@
         </div>
     @endif
 
+    @if ($pendencias->documentosHistoricoFaltantes && $pendencias->documentosHistoricoFaltantes->isNotEmpty())
+        <div class="p-4 bg-gray-500/10 border border-gray-500/20 rounded-lg text-gray-700 dark:text-gray-300">
+            <div class="flex items-center gap-2 font-bold mb-1">
+                <x-filament::icon icon="heroicon-m-academic-cap" class="h-5 w-5 text-gray-500" />
+                <span>Documentos escolares / histórico a regularizar</span>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Estes documentos são exigidos para o histórico do aluno (MEC), mas não impedem a emissão do contrato escolar.
+            </p>
+            <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 mt-2 space-y-0.5">
+                @foreach ($pendencias->documentosHistoricoFaltantes as $docHistorico)
+                    <li>{{ $docHistorico->nome }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if ($pendencias->contratoNaoGerado)
         <div class="p-4 bg-warning-500/10 border border-warning-500/20 rounded-lg text-warning-700 dark:text-warning-400">
             <div class="flex items-center gap-2 font-bold mb-1">
                 <x-filament::icon icon="heroicon-m-document-plus" class="h-5 w-5" />
                 <span>Contrato não gerado</span>
             </div>
-            <p class="text-sm">
-                Esta matrícula ainda não tem contrato. Use a ação <strong>Gerar contrato</strong> no menu
-                <strong>⋮ Mais ações</strong> da linha (disponível quando o aluno tem responsável) ou crie o contrato manualmente.
-            </p>
+            @if ($pendencias->temPendenciaDocumental())
+                <p class="text-sm">
+                    Esta matrícula ainda não tem contrato. A emissão automática está <strong>bloqueada</strong> até que os documentos obrigatórios para o contrato listados acima sejam enviados e aprovados.
+                </p>
+            @else
+                <p class="text-sm">
+                    Esta matrícula ainda não tem contrato. Use a ação <strong>Gerar contrato</strong> no menu
+                    <strong>⋮ Mais ações</strong> da linha (disponível quando o aluno tem responsável) ou crie o contrato manualmente.
+                </p>
+            @endif
             <div class="mt-2">
                 <x-filament::link
                     :href="ContratoResource::getUrl('create')"

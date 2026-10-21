@@ -50,7 +50,8 @@ class EditarBoletimMatricula extends Page implements HasSchemas
                     ])
                     ->columns(['md' => 2, 'default' => 1]),
 
-                BoletimEdicaoGradesTable::make(),
+                BoletimEdicaoGradesTable::make()
+                    ->stackedOnMobile(),
             ]);
     }
 
