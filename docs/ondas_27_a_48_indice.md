@@ -4,8 +4,11 @@ Levantamento de funcionalidades para as próximas entregas, com o que já foi fe
 continua como proposta. Cada onda tem um documento próprio com contexto, o que já existe no
 sistema, escopo e riscos.
 
-- **Implementadas (4):** 30, 39, 40 e 41.
-- **Propostas (18):** as demais. Não há código, migration nem teste delas.
+- **Implementadas (5):** 30, 39, 40, 41 e 44.
+- **Parcialmente implementada (1):** 42 (informe anual entregue; NFS-e proposta).
+- **Propostas (16):** as demais. Não há código, migration nem teste delas.
+- **Melhorias em ondas anteriores (2026-10-21):** alerta de férias na Onda 10 e autoavaliação com
+  plano de desenvolvimento na Onda 19 (veja o fim deste índice).
 
 ## Visão geral
 
@@ -26,9 +29,9 @@ sistema, escopo e riscos.
 | 39 | Manutenção Preventiva | Operação | **Implementada** | [manutencao_preventiva_roadmap.md](manutencao_preventiva_roadmap.md) |
 | 40 | Cardápio e Alergias | Operação | **Implementada** | [cardapio_alergias_roadmap.md](cardapio_alergias_roadmap.md) |
 | 41 | Ponto e Banco de Horas | RH | **Implementada** (controle interno; REP-A/REP-P bloqueados por requisitos legais) | [ponto_banco_horas_roadmap.md](ponto_banco_horas_roadmap.md) |
-| 42 | NFS-e e Informe Anual de Mensalidades | Financeiro | Proposta | [nfse_informe_mensalidades_roadmap.md](nfse_informe_mensalidades_roadmap.md) |
+| 42 | NFS-e e Informe Anual de Mensalidades | Financeiro | **Parcial** (informe anual implementado junto com a 44; NFS-e proposta) | [nfse_informe_mensalidades_roadmap.md](nfse_informe_mensalidades_roadmap.md) · [entrega unificada](reajuste_e_informe_anual_roadmap.md) |
 | 43 | Orçamento Anual × Realizado | Financeiro | Proposta | [orcamento_anual_realizado_roadmap.md](orcamento_anual_realizado_roadmap.md) |
-| 44 | Reajuste de Mensalidades | Financeiro | Proposta | [reajuste_mensalidades_roadmap.md](reajuste_mensalidades_roadmap.md) |
+| 44 | Reajuste de Mensalidades | Financeiro | **Implementada** (com o informe anual da 42) | [reajuste_mensalidades_roadmap.md](reajuste_mensalidades_roadmap.md) · [entrega unificada](reajuste_e_informe_anual_roadmap.md) |
 | 45 | Painel da Direção | Gestão | Proposta | [painel_direcao_roadmap.md](painel_direcao_roadmap.md) |
 | 46 | Segurança Reforçada (MFA, retenção de logs, criptografia de saúde) | Segurança | Proposta | [seguranca_reforcada_roadmap.md](seguranca_reforcada_roadmap.md) |
 | 47 | Digest Diário por Papel | Comunicação | Proposta | [digest_diario_papel_roadmap.md](digest_diario_papel_roadmap.md) |
@@ -55,7 +58,8 @@ A ordem considera valor para a escola, risco e dependências, nesta sequência:
 
 1. **Conformidade primeiro:** 34 (LGPD do titular) e 46 (MFA e retenção). Reduzem risco e já têm
    pendências abertas na revisão de segurança.
-2. **Receita e controle financeiro:** 44 (reajuste), 42 (informe anual primeiro, NFS-e depois) e 43.
+2. **Receita e controle financeiro:** 43 e a NFS-e da 42 (o reajuste da 44 e o informe anual já
+   foram entregues).
 3. **Pedagógico:** 27, 28 e 29, que aproveitam o que a Onda 30 e as habilidades já entregam.
 4. **Comunicação:** 33 e 47.
 5. **Operação:** 37 (junto com a Onda 9), 38 e 31.
@@ -64,3 +68,10 @@ A ordem considera valor para a escola, risco e dependências, nesta sequência:
 A Onda 41 pede uma decisão própria: se a escola tem mais de 20 trabalhadores e precisa de ponto
 **oficial**, a via mais curta é um REP certificado ou um REP-P de fornecedor que já tenha registro
 no INPI e Atestado Técnico (veja o documento da onda).
+
+## Melhorias em ondas anteriores
+
+| Onda | Melhoria | Documento |
+|---|---|---|
+| 10 | Painel e aviso semanal de férias vencidas, com prazo acabando ou sem registro (CLT, arts. 134 e 137) | [rh_funcionarios_roadmap.md](rh_funcionarios_roadmap.md) |
+| 19 | Autoavaliação do professor, comparativo com as observações e plano de desenvolvimento individual | [avaliacao_desempenho_docente_roadmap.md](avaliacao_desempenho_docente_roadmap.md) |

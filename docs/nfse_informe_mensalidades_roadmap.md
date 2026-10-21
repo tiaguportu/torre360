@@ -1,8 +1,8 @@
-# NFS-e e Informe Anual de Mensalidades (Onda 42) — Proposta para o Futuro
+# NFS-e e Informe Anual de Mensalidades (Onda 42)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: parcialmente implementado.** O **informe anual** foi entregue em 2026-10-21, junto com
+> o reajuste da Onda 44: veja [reajuste_e_informe_anual_roadmap.md](reajuste_e_informe_anual_roadmap.md).
+> A **NFS-e** continua **proposta**: não há código, migration ou teste dela ainda.
 
 ## Contexto
 
@@ -22,15 +22,15 @@ Duas obrigações recorrentes da secretaria financeira que hoje são feitas fora
 - `TributacaoCurso`: regime e alíquotas por curso (base para a tributação da nota).
 - `Contrato` e `GatewayPagamentoManager`: vínculo com o contrato e conciliação.
 - `DREService`: visão contábil de receita.
-- Não existe emissão de NFS-e nem o informe anual.
+- Não existe emissão de NFS-e. O informe anual já existe (`InformeAnualMensalidadesService`).
 
 ## Escopo
 
-### Informe anual (independente de integração externa)
-- Relatório por aluno e responsável com valores **pagos** no ano, por mês, separando mensalidade
-  de itens não dedutíveis (material, uniforme, alimentação, passeios, conforme a contabilidade).
-- PDF individual e envio em lote; disponível no Portal da Família (**Financeiro → Informe anual**).
-- Dados exigidos pela declaração: CNPJ da escola, nome e CPF do aluno, CPF do pagante, valor pago.
+### Informe anual — implementado
+- Entregue: pagamentos recebidos no ano por aluno, mês a mês, parte estimada de instrução,
+  responsáveis com participação, PDF individual e em lote e página **Informe Anual** no Portal.
+- Ficou para depois: envio do informe por e-mail em lote e categoria explícita (dedutível ou não) no
+  item da fatura.
 
 ### NFS-e (depende de integração)
 - `NotaFiscalServico`: fatura de origem, número, série, chave/protocolo, status (pendente,

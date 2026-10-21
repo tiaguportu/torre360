@@ -1594,3 +1594,49 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 - **Representa:** Razão do banco de horas (crédito positivo, débito negativo, em minutos). Só inserção.
 - **Campos Principais:** `funcionario_id`, `data`, `minutos`, `origem` (`apuracao_dia`, `compensacao`, `expiracao`, `ajuste_manual`), `vence_em` (créditos), `credito_origem_id` (FK própria; na expiração, o crédito que venceu), `observacao`, `criado_por_user_id`, `created_at`.
 - **Regras:** o saldo é a soma das linhas. A apuração do dia lança só a **diferença** em relação ao que já foi lançado (ajuste posterior gera lançamento corretivo). Débitos abatem primeiro o crédito que vence antes; o vencido vira horas a pagar (`ponto:expirar-banco-horas`).
+
+
+---
+
+## 24. Autoavaliação e Plano de Desenvolvimento Docente (melhoria da Onda 19)
+
+> Dado sensível de funcionário. Comentários, observações, objetivo, descrições e resultados usam cast `encrypted`; os logs registram só o fluxo.
+
+### `autoavaliacoes_docente`
+- **Representa:** Autoavaliação do professor num ciclo, com os mesmos critérios do instrumento usado pela coordenação.
+- **Campos Principais:** `ciclo_id` (FK `ciclos_avaliacao_docente`, restrict), `funcionario_id` (FK `funcionarios`, restrict), `status` (`rascunho`, `enviada`), `comentario` (longText cifrado), `pontuacao_percentual` (nullable até enviar), `enviada_em`.
+- **Regras:** única por (`ciclo_id`, `funcionario_id`) (`uq_autoavaliacao_ciclo_funcionario`). Só o próprio professor inicia e envia; o rascunho é privado (a coordenação vê só as enviadas, `AutoavaliacaoDocente::visiveisPara()`); enviada é imutável até `Reabrir:AutoavaliacaoDocente`.
+- **Relacionamentos:** BelongsTo `ciclo`, `funcionario`; HasMany `notas` (`autoavaliacao_notas`).
+
+### `autoavaliacao_notas`
+- **Campos Principais:** `autoavaliacao_id` (FK, cascade), `criterio_id` (FK `criterios_avaliacao_docente`, restrict), `nota` (nullable até preencher), `observacao` (longText cifrado). Única por (`autoavaliacao_id`, `criterio_id`).
+
+### `planos_desenvolvimento_docente`
+- **Representa:** Plano de desenvolvimento individual (PDI) criado a partir de uma avaliação finalizada.
+- **Campos Principais:** `avaliacao_docente_id` (FK `avaliacoes_docente`, restrict, único), `funcionario_id` (FK, restrict), `status` (`rascunho`, `ativo`, `concluido`), `objetivo` (cifrado), `data_revisao`, `criado_por_user_id`, `ativado_em`, `ciencia_em` (o professor tomou conhecimento), `concluido_em`.
+- **Regras:** o professor só enxerga o próprio plano, e só depois de `ativo`; quem é avaliado não edita, ativa, conclui nem cancela ações do próprio plano.
+- **Relacionamentos:** BelongsTo `avaliacao`, `funcionario`, `criadoPor`; HasMany `acoes`.
+
+### `acoes_desenvolvimento_docente`
+- **Campos Principais:** `plano_id` (FK, cascade), `criterio_id` (FK, nullable, nullOnDelete), `descricao` (cifrada), `prazo`, `status` (`pendente`, `em_andamento`, `concluida`, `cancelada`), `concluida_em`, `resultado` (cifrado; obrigatório para concluir ou cancelar), `ordem`.
+- **Regras:** criadas sugeridas para critérios com nota abaixo de 70% da escala; atrasada = em aberto com `prazo` anterior a hoje.
+
+---
+
+## 25. Reajuste de Mensalidades e preços por série na rematrícula (Onda 44)
+
+> O informe anual de mensalidades (Onda 42) não tem tabela própria: é calculado a partir de `transacao_bancarias` (entradas com fatura), `faturas`, `item_faturas` e `responsavel_financeiro` (`InformeAnualMensalidadesService`).
+
+### `cenarios_reajuste`
+- **Representa:** Simulação de reajuste para uma campanha de rematrícula.
+- **Campos Principais:** `periodo_rematricula_id` (FK `periodo_rematriculas`, restrict), `planilha_lei_id` (FK `planilha_lei_mensalidades`, nullable), `nome`, `percentual_padrao`, `arredondamento` (`centavos`, `real`, `dezena`), `status` (`simulacao`, `aprovado`, `aplicado`), `observacao`, `criado_por_user_id`, `aprovado_por_user_id`, `aprovado_em`, `aplicado_em`, `comunicado_em`.
+- **Regras:** só a simulação é editável; aplicado grava `periodo_rematricula_precos`; não aplica nem desfaz se a campanha já tem rematrícula efetivada; um aplicado por campanha.
+- **Relacionamentos:** BelongsTo `periodoRematricula`, `planilhaLei`, `criadoPor`, `aprovadoPor`; HasMany `itens`.
+
+### `cenario_reajuste_itens`
+- **Campos Principais:** `cenario_id` (FK, cascade), `serie_id` (FK `serie`, restrict), `percentual` (nullable = usa o padrão), `valor_atual` (média dos contratos do período de origem, editável), `valor_novo`, `alunos`, `bolsa_media`. Único por (`cenario_id`, `serie_id`).
+
+### `periodo_rematricula_precos`
+- **Representa:** Preço do novo contrato por série numa campanha de rematrícula.
+- **Campos Principais:** `periodo_rematricula_id` (FK, cascade), `serie_id` (FK, restrict), `valor_total`, `cenario_reajuste_item_id` (FK, nullable). Único por (`periodo_rematricula_id`, `serie_id`).
+- **Regras:** `RematriculaService::efetivar()` usa `PeriodoRematricula::valorTotalParaSerie()`: o preço da série, ou o `valor_taxa` da campanha se a série não tiver preço.

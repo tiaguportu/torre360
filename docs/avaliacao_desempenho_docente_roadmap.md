@@ -87,11 +87,50 @@ escola monta o próprio roteiro em **Instrumentos de Avaliação Docente**.
     criar, editar e `Finalizar` para `super_admin`, `admin`, `coordenador`; `Reabrir` e excluir
     para `super_admin` e `admin`.
 
+## Melhoria: autoavaliação e plano de desenvolvimento (2026-10-21)
+
+A avaliação só registrava a visão da coordenação e terminava na nota. Duas peças fecham o ciclo:
+
+### Autoavaliação do professor (`AutoavaliacaoDocente`, `AutoavaliacaoNota`)
+- O professor inicia a autoavaliação de um ciclo **aberto** (*RH → Autoavaliação Docente*) e dá
+  nota aos **mesmos critérios** do instrumento, com observação opcional e comentário geral.
+- Só o próprio professor inicia, preenche e envia; abrir duas vezes não duplica (um por ciclo e
+  funcionário). Enviar exige todas as notas dentro da escala e calcula a pontuação com a mesma média
+  ponderada da avaliação da coordenação, para os números serem comparáveis.
+- O **rascunho é privado**: a coordenação e a administração só veem a autoavaliação **enviada**.
+  Depois de enviada não muda; `Reabrir:AutoavaliacaoDocente` (administração) devolve ao professor.
+- Comentário e observações cifrados; o log registra só o fluxo.
+
+### Comparativo
+`DesenvolvimentoDocenteService::comparativo()` cruza, por critério, a nota da autoavaliação enviada
+com a **média das observações finalizadas** do ciclo e mostra a diferença (positiva: o professor se
+vê melhor do que foi visto). Aparece na tela do plano de desenvolvimento.
+
+### Plano de desenvolvimento individual (`PlanoDesenvolvimentoDocente`, `AcaoDesenvolvimentoDocente`)
+- Nasce de uma **avaliação finalizada** (ação "Criar plano de desenvolvimento" na lista e na tela
+  da avaliação), um por avaliação, em **rascunho**, com uma ação sugerida para cada critério com nota
+  abaixo de **70% da escala** (prazo padrão de 90 dias).
+- A coordenação ajusta objetivo, data de revisão e ações e **ativa** o plano (exige ao menos uma ação
+  e nenhuma com prazo vencido). Só então o professor o enxerga.
+- O professor **dá ciência** (registra a data, não concordância) e **registra o andamento** de cada
+  ação (em andamento; concluída com resultado de pelo menos 10 caracteres).
+- **Segregação:** quem é avaliado não edita, não ativa, não conclui e não cancela ações do próprio
+  plano, mesmo que tenha papel de coordenação. Cancelar ação é da coordenação, com justificativa.
+- A coordenação **conclui** o plano quando não há ação em aberto. A lista mostra ações atrasadas.
+- Objetivo, descrição e resultado das ações cifrados; o log registra só o fluxo.
+
+### Permissões
+`ViewAny/View/Create/Update/Enviar:AutoavaliacaoDocente` (equipe, inclusive professor),
+`Reabrir:AutoavaliacaoDocente` (administração); `ViewAny/View:PlanoDesenvolvimentoDocente`
+(equipe, recortado), `Create/Update/Ativar/Concluir` (coordenação e administração), `Delete`
+(administração, só rascunho), `DarCiencia/AtualizarAcao` (equipe, só o dono do plano ou quem
+conduz).
+
 ## Decisões e limites
 
-- Não há autoavaliação, avaliação por pares nem avaliação 360°: só a coordenação avalia.
-- O professor avaliado não pode contestar nem comentar pelo sistema; o parecer é da
-  coordenação.
+- Não há avaliação por pares nem avaliação 360° (alunos e famílias avaliando o professor).
+- O professor avaliado não contesta a avaliação pelo sistema; o canal dele é a autoavaliação e a
+  ciência/andamento do plano.
 - Não há relatório comparativo entre professores nem exportação em PDF. O histórico por
   professor está na ficha do funcionário.
 - A avaliação não se vincula a bônus ou remuneração.
@@ -101,4 +140,5 @@ escola monta o próprio roteiro em **Instrumentos de Avaliação Docente**.
 `tests/Feature/AvaliacaoDocenteTest.php`: início e validações, pontuação ponderada, finalizar e
 reabrir, cifragem do parecer e das observações, histórico congelado, visibilidade do professor
 (só as próprias finalizadas), policies e telas (formulários, ações, aba na ficha do
-funcionário).
+funcionário). A melhoria tem `tests/Feature/DesenvolvimentoDocenteTest.php` (regras, escopo,
+policies, cifragem) e `tests/Feature/DesenvolvimentoDocenteTelasTest.php` (telas e bloqueios).

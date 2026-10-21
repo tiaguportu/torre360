@@ -9,10 +9,12 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **ActivityLog** | `Heroicon::OutlinedListBullet` | Filament Enum |
 | **Aluno** | `Heroicon::OutlinedAcademicCap` | Filament Enum |
 | **AreaConhecimento** | `Heroicon::OutlinedVariable` | Filament Enum |
+| **AutoavaliacaoDocente** | `Heroicon::OutlinedUserCircle` | Filament Enum |
 | **Avaliacao** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
 | **AvaliacaoDocente** | `Heroicon::OutlinedPresentationChartLine` | Filament Enum |
 | **Cardapio** | `Heroicon::OutlinedCake` | Filament Enum |
 | **CategoriaAvaliacao** | `Heroicon::OutlinedTag` | Filament Enum |
+| **CenarioReajuste** | `Heroicon::OutlinedArrowTrendingUp` | Filament Enum |
 | **CicloAvaliacaoDocente** | `Heroicon::OutlinedArrowPath` | Filament Enum |
 | **Cidade** | `Heroicon::OutlinedGlobeAsiaAustralia` | Filament Enum |
 | **Configuracao** | `heroicon-o-cog` | String |
@@ -37,6 +39,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **Perfil** | `heroicon-o-shield-check` | String |
 | **PeriodoLetivo** | `heroicon-o-calendar-days` | String |
 | **Pessoa** | `Heroicon::OutlinedUsers` | Filament Enum |
+| **PlanoDesenvolvimentoDocente** | `Heroicon::OutlinedFlag` | Filament Enum |
 | **PlanoManutencao** | `Heroicon::OutlinedWrench` | Filament Enum |
 | **PontoConfiguracao** | `Heroicon::OutlinedCog6Tooth` | Filament Enum |
 | **PontoTratamento** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
@@ -61,6 +64,8 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **BancoDeHoras** | `heroicon-o-scale` | String |
 | **EnrollmentWizard** | `heroicon-o-user-plus` | String |
 | **EspelhoDePonto** | `heroicon-o-document-text` | String |
+| **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |
+| **PainelFerias** | `heroicon-o-sun` | String |
 | **RegistrarPonto** | `heroicon-o-clock` | String |
 | **SchoolSetupWizard** | `heroicon-o-home-modern` | String |
 

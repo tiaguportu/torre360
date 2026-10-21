@@ -3606,4 +3606,98 @@ Se a escola tem mais de 20 trabalhadores e precisa de ponto oficial agora, a via
 
 ---
 
+## 🌴 68. Painel de Férias (`/admin/rh/painel-ferias`)
+
+Mostra as férias dos empregados **CLT ativos** que precisam de atenção antes de virarem pagamento em dobro. Fica no grupo **RH** e é visto pela administração.
+
+### 68.1 Como o prazo é contado
+- Depois de 12 meses de trabalho (período aquisitivo), a escola tem **mais 12 meses** para conceder as férias (CLT, art. 134).
+- Se as férias são concedidas depois disso, os dias são pagos **em dobro** (art. 137).
+- A data-limite aparece na ficha do funcionário (**RH → Funcionários**, aba **Férias**), nas colunas **Conceder até** e **Prazo de concessão**.
+
+### 68.2 O que o painel mostra
+- **Vencidas:** o prazo passou e ainda há dias a gozar. O painel mostra quantos dias seriam pagos em dobro. Programe as férias o quanto antes e fale com a contabilidade.
+- **Prazo acabando:** faltam 90 dias ou menos para o fim do prazo.
+- **A conceder:** o direito já existe e ainda há tempo.
+- **Período sem registro:** pela data de admissão, o período deveria existir, mas não foi cadastrado na aba Férias. Cadastre-o para o controle funcionar.
+
+Use o filtro **Mostrar** para ver só uma situação ou todas. O número ao lado do menu soma as vencidas e as com prazo acabando.
+
+### 68.3 Aviso semanal
+Toda segunda-feira, às 7h30, a administração recebe um aviso por e-mail e push com as contagens (vencidas, prazo acabando, sem registro). O aviso não traz nomes de empregados; os detalhes ficam no painel.
+
+> O painel usa os dias de direito e de gozo informados na aba Férias. Fracionamento e redução por faltas não são calculados.
+
+---
+
+## 🪞 69. Autoavaliação e Plano de Desenvolvimento Docente (grupo **RH**)
+
+Completam a avaliação de desempenho (seção 62): o professor se avalia nos mesmos critérios da coordenação, e a avaliação vira um plano com ações e prazos.
+
+### 69.1 Autoavaliação (`/admin/autoavaliacao-docentes`)
+1. Em **Autoavaliação Docente**, clique em **Iniciar autoavaliação** e escolha o ciclo aberto.
+2. Dê uma nota a cada critério (a mesma escala da coordenação) e, se quiser, explique a nota. Escreva um comentário geral.
+3. **Salve** para continuar depois. Enquanto estiver em preenchimento, só você vê.
+4. Clique em **Enviar autoavaliação**. A pontuação é calculada e a coordenação passa a vê-la. Depois de enviada, ela não muda; se enviou por engano, peça à administração para reabrir.
+
+### 69.2 Criar o plano de desenvolvimento (coordenação)
+1. Em **Avaliações de Desempenho**, abra uma avaliação **finalizada** e clique em **Criar plano de desenvolvimento**.
+2. O plano nasce em rascunho, com uma ação sugerida para cada critério abaixo de 70% da escala.
+3. Ajuste o **objetivo**, a **data de revisão** e as **ações** (descrição e prazo). Abaixo do formulário aparece o comparativo **Autoavaliação × observações do ciclo**: a diferença positiva indica que o professor se vê melhor do que foi visto.
+4. Clique em **Ativar plano**. Só então o professor passa a vê-lo.
+
+### 69.3 Acompanhar o plano (professor)
+- Em **Planos de Desenvolvimento**, abra o seu plano e clique em **Estou ciente do plano**. Isso registra a data em que você tomou conhecimento; não significa concordância.
+- Em cada ação, use **Registrar andamento**: marque **Em andamento** e, ao terminar, **Concluída**, descrevendo o resultado.
+
+### 69.4 Concluir (coordenação)
+Quando todas as ações estiverem concluídas ou canceladas, clique em **Concluir plano**. Só a coordenação cancela uma ação, com justificativa. A lista mostra as ações atrasadas de cada plano.
+
+> Conteúdo confidencial: notas, comentários, objetivo e ações ficam cifrados. Quem é avaliado não edita, não ativa e não conclui o próprio plano.
+
+---
+
+## 📈 70. Reajuste de Mensalidades (`/admin/cenario-reajustes`)
+
+Simula, aprova e aplica o novo valor de cada série na campanha de rematrícula. Fica no grupo **Financeiro** e é usado pela administração.
+
+### 70.1 Simular
+1. Clique em **Nova simulação** e escolha a **campanha de rematrícula**, o **percentual**, o **arredondamento** (centavo, real ou R$ 10) e, de preferência, a **planilha de custos** da Lei das Mensalidades.
+2. O sistema calcula o **valor atual** de cada série pela média dos contratos das matrículas ativas do período de origem da campanha e aplica o percentual.
+3. Na aba **Séries**, use **Ajustar** para dar a uma série um percentual próprio ou corrigir o valor atual.
+4. Confira a **projeção de receita** e os **pontos de atenção** (planilha não homologada, percentual acima do calculado, prazo de divulgação).
+
+### 70.2 Aprovar e aplicar
+- **Aprovar cenário:** congela os valores. Para mudar depois, crie outra simulação.
+- **Aplicar na campanha:** as próximas rematrículas efetivadas usam o preço da série no novo contrato. Séries fora do cenário continuam com o valor único da campanha. Contratos que já existem não mudam.
+- **Desfazer aplicação:** volta ao valor único. Só funciona enquanto nenhuma rematrícula da campanha foi efetivada.
+
+### 70.3 Comunicar as famílias
+- **Baixar lista de comunicação (CSV):** responsáveis, contatos, aluno, série e os valores atual e novo. A exportação fica registrada.
+- Depois de avisar as famílias pelos canais da escola, clique em **Registrar comunicado às famílias**.
+
+> A Lei nº 9.870/1999 (art. 1º, § 5º) pede a divulgação do valor ao menos 45 dias antes da data final de matrícula. O sistema avisa quando o prazo fica curto, mas confira com o jurídico.
+
+---
+
+## 🧾 71. Informe Anual de Mensalidades (`/admin/financeiro/informe-anual`)
+
+O que cada família pagou à escola no ano-calendário, para a declaração do imposto de renda. Fica no grupo **Financeiro** (administração e secretaria); as famílias baixam o próprio informe no Portal, em **Meus Dados → Informe Anual**.
+
+### 71.1 Como é calculado
+- Conta os pagamentos **recebidos** de 1º de janeiro a 31 de dezembro (data do recebimento), não o vencimento. Pagamento parcial entra pelo valor recebido.
+- A **parte estimada como despesa com instrução** exclui os itens da fatura cuja descrição indica material, uniforme, alimentação, transporte, passeios ou apostilas.
+- O valor de cada **responsável financeiro** segue a participação cadastrada no contrato.
+
+### 71.2 Emitindo
+1. Escolha o **ano**, filtre por **turma** ou busque o **aluno**.
+2. Clique em **PDF** na linha do aluno, ou em **Baixar PDF de todos os filtrados** (até 300 alunos por vez; acima disso, filtre por turma).
+
+### 71.3 No Portal
+A família escolhe o ano e baixa um PDF por aluno. Ela vê os alunos de que é responsável e também aqueles em cujo contrato consta como responsável financeira.
+
+> O informe é um documento de apoio: não substitui o recibo nem a nota fiscal de serviço. As regras de dedução e o limite anual devem ser conferidos com a contabilidade.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

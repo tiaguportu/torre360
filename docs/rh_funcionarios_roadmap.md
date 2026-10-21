@@ -75,3 +75,30 @@ sub-ondas, no mesmo espírito da Onda 8.
   liberado para `secretaria`/`coordenador` (é só agenda, não dado financeiro).
 - Testes em `tests/Feature/FuncionarioTest.php` e
   `tests/Feature/SubstituicaoProfessorTest.php`.
+
+## Melhoria: alerta de férias vencidas (2026-10-21)
+
+O cadastro de férias registrava o que foi gozado, mas ninguém era avisado quando o prazo legal de
+concessão estava acabando. Agora o sistema acompanha esse prazo para os empregados **CLT ativos**.
+
+- **Regra legal:** o empregador concede as férias nos 12 meses seguintes ao fim do período
+  aquisitivo (CLT, art. 134); concedidas depois, a remuneração é paga em dobro (art. 137; TST,
+  Súmula 81, para os dias gozados fora do prazo). O limite é calculado por
+  `PeriodoFerias::limiteDeConcessao()` (fim do aquisitivo + 12 meses).
+- **Situação calculada** (`SituacaoConcessaoFerias`, nunca gravada; o `status` antigo do período
+  não muda): em aquisição, a conceder, **prazo acabando** (90 dias ou menos), **vencida** (com os
+  dias que seriam pagos em dobro), gozada, gozada fora do prazo e **período sem registro**.
+- **Período sem registro:** pela data de admissão, o `FeriasVencimentoService` sabe quais
+  períodos aquisitivos já deveriam existir. Se um deles não foi cadastrado e o prazo de concessão
+  venceu há menos de um ano (ou ainda não venceu), ele aparece como pendência. Histórico mais
+  antigo é ignorado, porque não há como saber se foi gozado.
+- **Painel de Férias** (`/admin/rh/painel-ferias`, grupo RH): contadores, filtro e link para a
+  ficha do funcionário; o número no menu mostra vencidas + prazo acabando (cache de 10 minutos).
+  A aba **Férias** da ficha ganhou as colunas "Conceder até" e "Prazo de concessão" (só para CLT).
+- **Aviso semanal:** `rh:avisar-ferias` (segundas, 07:30) manda e-mail/push a quem tem
+  `VerPainelFerias:Funcionario` e ao `super_admin`, **só com contagens** (sem nome de empregado).
+- **Permissão:** `VerPainelFerias:Funcionario` para `super_admin` e `admin`.
+- **Limites:** não modela o fracionamento em até três períodos (art. 134, § 1º) nem a redução do
+  direito por faltas (art. 130); usa os dias informados pelo RH. Estatutário, PJ e estágio não
+  entram (estágio tem recesso próprio, Lei nº 11.788/2008).
+- Testes em `tests/Feature/FeriasVencimentoTest.php`.

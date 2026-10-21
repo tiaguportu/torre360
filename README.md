@@ -188,7 +188,8 @@ Cadastro de funcionários, contratos de trabalho e férias. Detalhes em `docs/rh
 |---|---|
 | `Funcionario` | Cargo, regime (CLT/Estatutário/PJ/Estágio), admissão/desligamento, carga horária, unidade de lotação — ligado a `Pessoa` |
 | `ContratoTrabalho` | Histórico de vigências salariais (append-only); "Registrar Aditivo" encerra a vigência atual e cria a próxima com o novo salário |
-| `PeriodoFerias` | Período aquisitivo, dias de direito/gozados, status; ação "Registrar Gozo" |
+| `PeriodoFerias` | Período aquisitivo, dias de direito/gozados, status; ação "Registrar Gozo"; prazo de concessão (CLT, art. 134) calculado |
+| **Painel de Férias** | Férias vencidas (risco de pagamento em dobro), com prazo acabando ou sem registro, para CLT ativos; aviso semanal só com contagens (`rh:avisar-ferias`) |
 | `SubstituicaoProfessor` | Professor titular × substituto por turma/disciplina e período |
 
 ---
@@ -297,6 +298,11 @@ Processo de saída (para outra escola) e entrada (vinda de outra escola), reapro
 ### 19. 📋 Avaliação de Desempenho Docente (Onda 19)
 Ciclos de observação da coordenação com instrumento de critérios ponderados. Dado sensível (parecer e observações criptografados). Detalhes em `docs/avaliacao_desempenho_docente_roadmap.md`.
 
+| Recurso | Descrição |
+|---|---|
+| `AutoavaliacaoDocente` | O professor se avalia nos critérios do ciclo; rascunho privado, envio único, comparativo com as observações |
+| `PlanoDesenvolvimentoDocente` | Plano individual nascido de uma avaliação finalizada, com ações sugeridas, ciência e andamento pelo professor |
+
 ---
 
 ### 20. 🏟️ Reserva de Espaços (Onda 21)
@@ -333,6 +339,17 @@ Registro de ponto íntegro (NSR por unidade, hash SHA-256 encadeado, só inserç
 | `PontoTratamento` | Ajuste (incluir, desconsiderar, abonar) que não altera o original; quem pede não aprova |
 | `PontoBancoHorasLancamento` | Razão do banco de horas com vencimento do crédito e expiração em horas a pagar |
 | `PontoConfiguracao` | Modo e requisitos legais por unidade, com a lista do que falta |
+
+---
+
+### 25. 📈 Reajuste de Mensalidades e Informe Anual (Ondas 44 e 42)
+Entrega unificada do ciclo financeiro anual da família. Detalhes em `docs/reajuste_e_informe_anual_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `CenarioReajuste` | Simulação por série a partir dos contratos do período de origem; aprovação, aplicação na campanha de rematrícula, alertas da Lei nº 9.870/1999 e lista de comunicação |
+| `PeriodoRematriculaPreco` | Preço do novo contrato por série; sem ele, vale o valor único da campanha |
+| **Informe Anual** | Pagamentos recebidos no ano por aluno, parte estimada de instrução e responsáveis; PDF individual, em lote e no Portal |
 
 ---
 
@@ -463,7 +480,8 @@ autorizada:
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
-| Ondas 27 a 48 (18 propostas e 4 já implementadas), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+| Ondas 27 a 48 (16 propostas, 5 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+| NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
-estão nas seções 19 e 20 dos módulos.)
+estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25.)
