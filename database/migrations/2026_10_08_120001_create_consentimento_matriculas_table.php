@@ -22,7 +22,10 @@ return new class extends Migration
                 $table->text('observacao')->nullable();
                 $table->timestamps();
 
-                $table->unique(['matricula_id', 'tipo_consentimento_id']);
+                // Nome explícito: o gerado pelo Laravel (consentimento_matriculas_matricula_id_tipo_consentimento_id_unique)
+                // tem 66 caracteres e o MySQL/MariaDB aceita no máximo 64. A migration seguinte garante o índice onde
+                // a tabela já existia sem ele.
+                $table->unique(['matricula_id', 'tipo_consentimento_id'], 'uq_consentimento_matricula_tipo');
             });
         }
     }
