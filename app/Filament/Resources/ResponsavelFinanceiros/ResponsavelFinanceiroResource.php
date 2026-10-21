@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ResponsavelFinanceiroResource extends Resource
 {
@@ -26,6 +27,14 @@ class ResponsavelFinanceiroResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Secretaria';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with([
+            'contrato.matricula.pessoa',
+            'pessoa',
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

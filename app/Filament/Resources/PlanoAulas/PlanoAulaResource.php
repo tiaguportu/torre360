@@ -54,7 +54,11 @@ class PlanoAulaResource extends Resource implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with([
+            'turma',
+            'disciplina',
+            'professor',
+        ]);
         $user = auth()->user();
 
         if (! $user) {

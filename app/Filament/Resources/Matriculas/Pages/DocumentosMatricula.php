@@ -6,26 +6,36 @@ use App\Enums\SituacaoDocumento;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use App\Models\DocumentoInserido;
 use App\Models\TipoDocumento;
+use App\Services\ImportacaoDocumentosMatriculaService;
+use App\Support\PermissaoAcao;
 use App\Support\TiposArquivo;
+use DomainException;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 use ZipArchive;
 
 class DocumentosMatricula extends Page implements HasTable
@@ -61,23 +71,8 @@ class DocumentosMatricula extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $cursoId = $this->record->turma?->serie?->curso_id;
-
         return $table
-            ->query(
-                TipoDocumento::query()
-                    ->where(function ($query) use ($cursoId) {
-                        $query->where(function ($sub) use ($cursoId) {
-                            if ($cursoId) {
-                                $sub->paraCursos($cursoId);
-                            } else {
-                                $sub->whereDoesntHave('cursos');
-                            }
-                        })
-                            ->orWhereHas('turmas', fn ($q) => $q->where('turma.id', $this->record->turma_id))
-                            ->orWhereHas('matriculas', fn ($q) => $q->where('matricula.id', $this->record->id));
-                    })
-            )
+            ->query(TipoDocumento::query()->aplicaveisA($this->record))
             ->columns([
                 TextColumn::make('nome')
                     ->label('Tipo de Documento')
@@ -299,9 +294,151 @@ class DocumentosMatricula extends Page implements HasTable
             ]);
     }
 
+    /**
+     * Documentos da matrícula de origem já cacheados na requisição (o formulário consulta a mesma lista
+     * em `options`, `descriptions` e `disableOptionWhen`). Propriedade não pública: o Livewire não a persiste.
+     *
+     * @var array<int, Collection>
+     */
+    private array $importaveisPorOrigem = [];
+
+    /**
+     * Outras matrículas do MESMO aluno que o usuário logado pode enxergar (mesmo escopo do Resource).
+     */
+    private function consultaMatriculasDeOrigem(): Builder
+    {
+        return MatriculaResource::getEloquentQuery()
+            ->where('pessoa_id', $this->record->pessoa_id)
+            ->whereKeyNot($this->record->getKey())
+            ->with('periodoLetivo');
+    }
+
+    /**
+     * @return Collection<int, array{documento: DocumentoInserido, motivo_bloqueio: ?string}>
+     */
+    private function documentosParaImportar(mixed $origemId): Collection
+    {
+        if (blank($origemId)) {
+            return collect();
+        }
+
+        $origemId = (int) $origemId;
+
+        if (! isset($this->importaveisPorOrigem[$origemId])) {
+            $origem = $this->consultaMatriculasDeOrigem()->find($origemId);
+
+            $this->importaveisPorOrigem[$origemId] = $origem
+                ? app(ImportacaoDocumentosMatriculaService::class)->documentosImportaveis($origem, $this->record)
+                : collect();
+        }
+
+        return $this->importaveisPorOrigem[$origemId];
+    }
+
+    /**
+     * @param  array{documento: DocumentoInserido, motivo_bloqueio: ?string}  $item
+     */
+    private function descricaoDoDocumentoImportavel(array $item): string
+    {
+        $documento = $item['documento'];
+
+        return collect([
+            $documento->nome_arquivo_original,
+            $documento->status?->getLabel(),
+            $documento->created_at ? 'enviado em '.$documento->created_at->format('d/m/Y') : null,
+            $item['motivo_bloqueio'],
+        ])->filter()->implode(' · ');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('importarDeOutraMatricula')
+                ->label('Importar de outra matrícula')
+                ->icon('heroicon-o-arrow-down-on-square-stack')
+                ->color('gray')
+                ->authorize(PermissaoAcao::qualquer('ImportarDocumentos:Matricula'))
+                ->visible(fn (): bool => $this->consultaMatriculasDeOrigem()->exists())
+                ->modalHeading('Importar documentos de outra matrícula')
+                ->modalDescription('Escolha os documentos já enviados em outra matrícula deste aluno. Cada arquivo é copiado para esta matrícula e entra como "Em Análise".')
+                ->modalSubmitActionLabel('Importar')
+                ->modalWidth('xl')
+                ->form([
+                    Select::make('matricula_origem_id')
+                        ->label('Matrícula de origem')
+                        ->options(fn (): array => $this->consultaMatriculasDeOrigem()
+                            ->get()
+                            ->mapWithKeys(fn ($matricula) => [
+                                $matricula->id => $matricula->label_exibicao.' ('.$matricula->documentoInseridos->count().' documento(s))',
+                            ])
+                            ->all())
+                        ->searchable()
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set) => $set('documentos', [])),
+
+                    CheckboxList::make('documentos')
+                        ->label('Documentos a importar')
+                        ->helperText('Marque os documentos que deseja trazer. Tipos que já existem nesta matrícula não podem ser importados.')
+                        ->options(fn (Get $get): array => $this->documentosParaImportar($get('matricula_origem_id'))
+                            ->map(fn (array $item) => $item['documento']->tipoDocumento?->nome ?? 'Documento')
+                            ->all())
+                        ->descriptions(fn (Get $get): array => $this->documentosParaImportar($get('matricula_origem_id'))
+                            ->map(fn (array $item) => $this->descricaoDoDocumentoImportavel($item))
+                            ->all())
+                        ->disableOptionWhen(fn ($value, Get $get): bool => filled(
+                            $this->documentosParaImportar($get('matricula_origem_id'))->get($value)['motivo_bloqueio'] ?? null
+                        ))
+                        ->bulkToggleable()
+                        ->required()
+                        ->minItems(1)
+                        ->columns(1)
+                        ->visible(fn (Get $get): bool => filled($get('matricula_origem_id'))),
+                ])
+                ->action(function (array $data): void {
+                    try {
+                        $origem = $this->consultaMatriculasDeOrigem()->findOrFail($data['matricula_origem_id']);
+
+                        $resultado = app(ImportacaoDocumentosMatriculaService::class)
+                            ->importar($origem, $this->record, $data['documentos']);
+                    } catch (DomainException $e) {
+                        Notification::make()
+                            ->title('Não foi possível importar')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        return;
+                    } catch (Throwable $e) {
+                        report($e);
+
+                        Notification::make()
+                            ->title('Erro ao importar os documentos')
+                            ->body('Nenhum documento foi importado. Tente novamente.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    if ($resultado['importados'] !== []) {
+                        Notification::make()
+                            ->title('Documentos importados')
+                            ->body(count($resultado['importados']).' documento(s) importado(s): '.implode(', ', $resultado['importados']).'.')
+                            ->success()
+                            ->send();
+                    }
+
+                    if ($resultado['ignorados'] !== []) {
+                        Notification::make()
+                            ->title('Documentos ignorados')
+                            ->body(new HtmlString(collect($resultado['ignorados'])
+                                ->map(fn (array $item) => e($item['tipo'].': '.$item['motivo']))
+                                ->implode('<br>')))
+                            ->warning()
+                            ->send();
+                    }
+                }),
             Action::make('exportarZip')
                 ->label('Exportar Todos (.zip)')
                 ->icon('heroicon-o-archive-box-arrow-down')
@@ -329,6 +466,7 @@ class DocumentosMatricula extends Page implements HasTable
         $user = auth()->user();
 
         $canExport = $user?->can('Documentos:Matricula');
+        $canImport = $user?->can('ImportarDocumentos:Matricula');
 
         $html = '<div class="space-y-3 text-sm">';
         $html .= '<p>Esta página é dedicada ao controle dos documentos exigidos e opcionais do aluno para esta matrícula específica.</p>';
@@ -346,6 +484,10 @@ class DocumentosMatricula extends Page implements HasTable
 
         if ($canExport) {
             $html .= '<li><strong>Exportar ZIP:</strong> Baixe todos os documentos enviados em um arquivo compactado.</li>';
+        }
+
+        if ($canImport) {
+            $html .= '<li><strong>Importar de outra matrícula:</strong> Traga vários documentos de uma vez já enviados em outra matrícula do mesmo aluno. Os arquivos são copiados, entram como "Em Análise" e tipos que já existem nesta matrícula são ignorados.</li>';
         }
 
         $html .= '</ul>';

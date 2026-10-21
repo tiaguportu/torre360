@@ -77,6 +77,11 @@ class MatriculaPolicy
         return $authUser->can('Documentos:Matricula');
     }
 
+    public function importarDocumentos(AuthUser $authUser, Matricula $matricula): bool
+    {
+        return $authUser->can('ImportarDocumentos:Matricula');
+    }
+
     public function avisarPendencia(AuthUser $authUser, Matricula $matricula): bool
     {
         return $authUser->can('AvisarPendencia:Matricula');

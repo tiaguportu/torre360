@@ -111,6 +111,28 @@ class TipoDocumento extends Model
     }
 
     /**
+     * Tipos de documento que a matrícula exige/lista: os do curso da turma (ou gerais, sem curso vinculado),
+     * os vinculados à turma e os vinculados diretamente à matrícula.
+     * É a mesma regra da tela "Gerenciar Documentos" da matrícula.
+     */
+    public function scopeAplicaveisA(Builder $query, Matricula $matricula): Builder
+    {
+        $cursoId = $matricula->turma?->serie?->curso_id;
+
+        return $query->where(function (Builder $q) use ($matricula, $cursoId): void {
+            $q->where(function (Builder $sub) use ($cursoId): void {
+                if ($cursoId) {
+                    $sub->paraCursos($cursoId);
+                } else {
+                    $sub->whereDoesntHave('cursos');
+                }
+            })
+                ->orWhereHas('turmas', fn (Builder $tq) => $tq->where('turma.id', $matricula->turma_id))
+                ->orWhereHas('matriculas', fn (Builder $mq) => $mq->where('matricula.id', $matricula->id));
+        });
+    }
+
+    /**
      * Verifica se o tipo de documento se aplica a um curso específico.
      * Retorna true se estiver vinculado ao curso ou se for geral (sem cursos vinculados).
      */

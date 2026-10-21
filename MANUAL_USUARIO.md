@@ -1063,6 +1063,11 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
    - **Aprovado:** Documento validado e aceito.
    - **Rejeitado:** Documento com problemas (ilegível, errado, etc).
 4. As transições de estado são controladas; por exemplo, um documento *Aprovado* não pode voltar para *Pendente* sem passar por uma revisão, garantindo a integridade do processo.
+5. **Importar documentos de outra matrícula do mesmo aluno:** na tela **Gerenciar Documentos**, o botão **Importar de outra matrícula** (cabeçalho) traz para a matrícula atual documentos já enviados em outra matrícula da **mesma pessoa** (por exemplo, ao rematricular o aluno em um novo ano letivo). O botão só aparece para quem tem a permissão **Importar Documentos** (Secretaria) e quando o aluno possui outra matrícula.
+   - Escolha a **matrícula de origem** e **marque os documentos** que deseja trazer. É possível marcar vários e importá-los de uma só vez; nada vem marcado por padrão, e há a opção de selecionar todos.
+   - Cada arquivo é **copiado** (o original permanece intacto na matrícula de origem) e entra na matrícula atual como **Em Análise**, para nova conferência. Documentos rejeitados na origem também podem ser escolhidos.
+   - Tipos de documento que a matrícula atual **já possui** e arquivos que não existem mais no servidor aparecem desabilitados, com o motivo, e nunca são sobrescritos.
+   - Se o tipo escolhido não faz parte dos documentos exigidos para o curso/turma da matrícula atual, ele é vinculado a ela para que o documento apareça na lista.
 
 ### 6.3 Aviso de Pendência de Documentos
 1. Na lista de **Matrículas**, caso o aluno possua documentos obrigatórios pendentes ou rejeitados, você verá a ação **Avisar pendência por e-mail** (ícone de envelope amarelo, no menu **⋮ Mais ações** da linha).
@@ -1226,7 +1231,7 @@ Para garantir a segurança e conformidade, o Torre360 utiliza o sistema **Filame
 Os administradores podem definir precisamente quem pode ver, criar, editar ou excluir registros em módulos críticos através dos **Papéis e Permissões (Shield)**:
 - **Pessoas:** Possibilidade de vincular ou desvincular endereços no cadastro.
 - **Financeiro:** Relatório DRE, Transações Bancárias, Cadastro de Fornecedores, Centros de Custo, Plano de Contas, Bancos e **Templates de Contrato**.
-- **Secretaria:** Matrículas, Documentos sensíveis e **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
+- **Secretaria:** Matrículas, Documentos sensíveis, **Edição de Notas de Boletim** (permissão `boletim_editar_matricula`) e **Importação de documentos entre matrículas do mesmo aluno** (permissão `ImportarDocumentos:Matricula`, concedida por padrão a Super Admin, Admin e Secretaria; a Coordenação pode recebê-la em **Papéis e Permissões (Shield)**). Além disso, usuários com este perfil possuem visibilidade total de todas as matrículas cadastradas no sistema.
 - **CRM:** Gestão de leads e histórico de contatos.
 - **Acadêmico:** **Questionários**, **Respostas de Questionários**, **Avaliações de Habilidades** (BNCC), **Notas de Habilidades**, **Campos de Experiência** e **Habilidades**.
 
@@ -1239,7 +1244,7 @@ O sistema registra automaticamente ações críticas e navegações:
 - **Navegações no Painel:** As visualizações de recursos realizadas por usuários com papéis de **Responsável**, **Professor** ou **Secretaria** são registradas automaticamente no Log de Atividades (`admin/activity-logs`) para controle de acessos.
 - **Frequência Escolar:** Lançamentos, atualizações e exclusões de registros de presença e ausência de alunos são auditados detalhadamente, identificando o aluno, a aula, a disciplina e a situação atribuída (presente/ausente), com rastreamento das alterações e do usuário responsável pelo lançamento.
 - **Módulo de Matrícula:** O sistema loga acessos à lista de matrículas e à tela de documentos.
-- **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora.
+- **Gestão de Documentos:** Uploads, substituições e exclusões de arquivos são auditados com identificação do usuário e data/hora. A importação de documentos de outra matrícula registra, na matrícula de destino, quem importou, de qual matrícula e quais tipos de documento.
 - **Financeiro:** Alterações em transações e planos de contas são rastreadas para evitar inconsistências.
 - **Notificações:** Tentativas de envio de mensagens Push (Firebase/FCM) e suas respectivas respostas do servidor são registradas no histórico da matrícula para depuração e acompanhamento técnico.
 

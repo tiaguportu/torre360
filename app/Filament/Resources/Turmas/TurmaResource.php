@@ -34,7 +34,14 @@ class TurmaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with([
+            'serie.curso',
+            'turno',
+            'periodoLetivo',
+            'professorConselheiro',
+            'etapaEnsinoAgregada',
+            'etapaEnsino',
+        ]);
         $user = auth()->user();
 
         if (! $user) {

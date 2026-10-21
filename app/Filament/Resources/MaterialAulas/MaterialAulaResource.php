@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class MaterialAulaResource extends Resource implements HasShieldPermissions
@@ -41,6 +42,15 @@ class MaterialAulaResource extends Resource implements HasShieldPermissions
     protected static ?string $pluralModelLabel = 'Materiais de Aula';
 
     protected static ?string $recordTitleAttribute = 'titulo';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with([
+            'turma',
+            'disciplina',
+            'professor',
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

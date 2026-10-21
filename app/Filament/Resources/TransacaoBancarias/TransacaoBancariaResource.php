@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransacaoBancariaResource extends Resource
 {
@@ -26,6 +27,17 @@ class TransacaoBancariaResource extends Resource
     protected static ?int $navigationSort = 3;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with([
+            'banco',
+            'fatura.contrato.matricula.pessoa',
+            'planoConta',
+            'centroCusto',
+            'fornecedor',
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {
