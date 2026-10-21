@@ -331,6 +331,20 @@ class PontoRegistroTest extends TestCase
         return collect($pendencias)->pluck('codigo')->all();
     }
 
+    public function test_configuracao_criada_so_com_a_unidade_nasce_em_controle_interno(): void
+    {
+        $unidade = Unidade::create(['nome' => 'Unidade Sul', 'situacao_funcionamento' => '1']);
+
+        $config = PontoConfiguracao::create(['unidade_id' => $unidade->id]);
+
+        $this->assertSame(ModoPonto::ControleInterno, $config->modo);
+        $this->assertTrue($config->ativo);
+        $this->assertTrue($config->exige_hora_legal);
+        $this->assertSame(10, $config->tolerancia_diaria_minutos);
+        $this->assertSame(0, $config->ultimo_nsr);
+        $this->assertSame([], $this->conformidade()->pendencias($config));
+    }
+
     public function test_controle_interno_nao_tem_pendencias(): void
     {
         $config = PontoConfiguracao::factory()->create();

@@ -156,6 +156,16 @@ class PontoTelasTest extends TestCase
         $this->assertSame(0, PontoRegistro::count());
     }
 
+    public function test_super_admin_sem_cadastro_de_funcionario_nao_acessa_a_tela_de_registro(): void
+    {
+        // O super_admin passa por qualquer Gate; sem cadastro de funcionário não há quem registrar.
+        ['user' => $super] = $this->usuario('super_admin', [], comFuncionario: false);
+
+        Livewire::actingAs($super)->test(RegistrarPonto::class)->assertForbidden();
+
+        $this->assertSame(0, PontoRegistro::count());
+    }
+
     public function test_tela_de_registro_avisa_quando_a_unidade_nao_tem_ponto_configurado(): void
     {
         ['user' => $user, 'func' => $func] = $this->professor();

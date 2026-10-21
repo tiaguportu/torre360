@@ -44,9 +44,14 @@ class RegistrarPonto extends Page
     /** Registro que acabou de ser gravado nesta tela (para mostrar o comprovante). */
     public ?int $ultimoRegistroId = null;
 
+    /**
+     * Exige a permissão e o cadastro de funcionário ativo. A checagem do cadastro é repetida aqui porque o super_admin
+     * passa por qualquer Gate (`Gate::before`) e, sem cadastro, a tela não teria quem registrar.
+     */
     public static function canAccess(): bool
     {
-        return Gate::allows('registrar', PontoRegistro::class);
+        return Gate::allows('registrar', PontoRegistro::class)
+            && FuncionarioDoUsuario::para(auth()->user()) !== null;
     }
 
     public function mount(): void

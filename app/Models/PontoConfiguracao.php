@@ -25,6 +25,20 @@ class PontoConfiguracao extends Model
 
     protected $table = 'ponto_configuracoes';
 
+    /**
+     * Mesmos padrões da migration, para que o model já nasça coerente (o modo, por exemplo, é lido antes de o banco
+     * preencher o padrão na gravação).
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'modo' => 'controle_interno',
+        'ativo' => true,
+        'exige_hora_legal' => true,
+        'tolerancia_diaria_minutos' => 10,
+        'ultimo_nsr' => 0,
+    ];
+
     protected $fillable = [
         'unidade_id',
         'modo',
