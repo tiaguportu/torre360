@@ -1515,3 +1515,81 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 ### `avaliacao_docente_criterios`
 - **Campos Principais:** `avaliacao_docente_id` (FK, cascade), `criterio_id` (FK, restrict), `nota` (nullable até avaliar), `observacao` (longText cifrado). Única por (`avaliacao_docente_id`, `criterio_id`).
 - **Relacionamentos:** BelongsTo `avaliacao` (`avaliacoes_docente`), BelongsTo `criterio`.
+
+
+---
+
+## 20. Portfólio do Aluno e Parecer Descritivo (Onda 30)
+
+> Dado pedagógico de criança. Os arquivos do portfólio ficam no disco privado (`local`) e só saem pela rota `portfolio.anexo`, que autoriza cada acesso.
+
+### `portfolio_itens`
+- **Representa:** Evidência de aprendizagem de um aluno (produção, foto, PDF, áudio, vídeo curto).
+- **Campos Principais:** `matricula_id` (FK `matricula`, cascade), `titulo`, `descricao` (nullable), `data_registro`, `anexos` (JSON com caminhos no disco privado), `mostra_outros_alunos` (boolean), `visivel_familia` (boolean), `registrado_por_user_id` (FK `users`, nullable).
+- **Regras:** se `mostra_outros_alunos`, `visivel_familia` é forçado a `false` (model e formulário). Apagar o item apaga os arquivos. Quem atua como professor só alcança alunos das próprias turmas (`EscopoProfessor`).
+- **Relacionamentos:** BelongsTo `matricula`, `registradoPor` (`users`); BelongsToMany `habilidades` (via `portfolio_item_habilidade`).
+
+### `portfolio_item_habilidade`
+- **Campos Principais:** `portfolio_item_id` (FK, cascade), `habilidade_id` (FK, cascade). Única por par.
+
+### `pareceres_descritivos`
+- **Representa:** Parecer de um aluno numa etapa avaliativa: texto do professor (opcionalmente rascunhado por IA), revisado pela coordenação e publicado para a família.
+- **Campos Principais:** `matricula_id`, `etapa_avaliativa_id` (ambos cascade), `texto` (longText, nullable), `status` (`rascunho`, `em_revisao`, `publicado`), `gerado_com_ia`, `autor_user_id`, `publicado_por_user_id` (nullable), `publicado_em`.
+- **Regras:** único por (`matricula_id`, `etapa_avaliativa_id`). Publicado não é editado até ser reaberto (`Publicar:ParecerDescritivo`). O log de atividade registra o fluxo e nunca o texto.
+- **Relacionamentos:** BelongsTo `matricula`, `etapaAvaliativa`, `autor`, `publicadoPor` (`users`).
+
+---
+
+## 21. Manutenção Preventiva (Onda 39)
+
+### `planos_manutencao`
+- **Representa:** Plano recorrente de manutenção de um bem patrimonial e/ou de um espaço.
+- **Campos Principais:** `titulo`, `descricao` (nullable), `bem_patrimonial_id` (FK `bens_patrimoniais`, nullable), `sala_id` (FK `sala`, nullable), `periodicidade_dias`, `proxima_execucao`, `ultima_execucao` (nullable), `antecedencia_dias`, `prioridade`, `categoria_os_id` (nullable), `checklist` (JSON), `ativo`, `criado_por_user_id`.
+- **Regras:** situação calculada: em dia, a vencer (até 30 dias) ou vencido. `manutencao:gerar-ordens` abre a OS dos planos que entraram na janela de antecedência.
+- **Relacionamentos:** BelongsTo `bemPatrimonial`, `sala`, `categoriaOs`; HasMany `execucoes`.
+
+### `execucoes_manutencao`
+- **Campos Principais:** `plano_manutencao_id` (FK, cascade), `ordem_servico_id` (FK, nullable), `data_prevista`, `status` (`prevista`, `concluida`, `cancelada`), `concluida_em`, `checklist_resultado` (JSON), `observacoes`, `registrado_por_user_id`.
+- **Regras:** única por (`plano_manutencao_id`, `data_prevista`): impede abrir duas ordens para o mesmo vencimento.
+
+---
+
+## 22. Cardápio Escolar e Alergias (Onda 40)
+
+### `cardapios`
+- **Representa:** Uma refeição de um dia (café da manhã, lanche da manhã, almoço, lanche da tarde ou jantar), com os alérgenos declarados.
+- **Campos Principais:** `data`, `tipo_refeicao`, `descricao`, `alergenos` (JSON com chaves do enum `Alergeno`), `unidade_id` (FK `unidade`, nullable = todas), `unidade_chave` (0 quando `unidade_id` é nulo; existe para a unicidade funcionar no banco), `publicado`, `observacoes`, `criado_por_user_id`.
+- **Regras:** único por (`data`, `tipo_refeicao`, `unidade_chave`). O Portal só mostra refeições publicadas da unidade do aluno. O cruzamento com `ficha_medicas` (`CardapioAlergiaService`) tem três níveis (confirmado, possível, conferir) e o acesso ao relatório exige `VerAlergicos:Cardapio` e é registrado no log.
+
+---
+
+## 23. Ponto Eletrônico e Banco de Horas (Onda 41)
+
+> Dado pessoal do trabalhador. Opera como **controle interno**; os modos REP-A e REP-P ficam bloqueados até os requisitos da Portaria MTP 671/2021 serem cumpridos (veja `docs/ponto_banco_horas_roadmap.md`). `ponto_registros` e `ponto_banco_horas_lancamentos` são **só inserção**: o model recusa `update` e `delete` e gatilhos `BEFORE UPDATE/DELETE` (MySQL, MariaDB e SQLite) fazem o mesmo no banco.
+
+### `ponto_configuracoes`
+- **Representa:** Configuração do ponto de uma unidade (estabelecimento) e o sequenciador de registros.
+- **Campos Principais:** `unidade_id` (FK `unidade`, única, restrict), `modo` (`controle_interno`, `rep_a`, `rep_p`), `ativo`, `registro_inpi`, `atestado_tecnico_path` (disco privado), `atestado_tecnico_data`, `atestado_assinatura_conferida`, `acordo_coletivo_referencia`, `acordo_coletivo_vigencia_fim`, `exige_hora_legal`, `tolerancia_diaria_minutos` (máximo 10), `ultimo_nsr`, `hash_ultimo_registro`.
+- **Regras:** salvar um modo oficial com requisito pendente lança `PontoException` (`ConformidadePontoService`). O sequenciador é atualizado sob `lockForUpdate` a cada marcação e não dispara essa checagem.
+
+### `ponto_registros`
+- **Representa:** Uma marcação de ponto.
+- **Campos Principais:** `unidade_id`, `funcionario_id` (FKs `restrict`), `nsr` (único por unidade), `momento` (horário do servidor), `fuso`, `origem` (`web`, `mobile`), `ip`, `hora_legal_ok`, `desvio_segundos`, `hash_anterior`, `hash` (SHA-256 encadeado: `unidade|nsr|funcionario|momento|fuso|origem|hash_anterior`), `created_at`.
+- **Regras:** só inserção. `ponto:verificar-integridade` detecta adulteração, NSR faltando, encadeamento rompido e registros removidos do fim da cadeia.
+
+### `ponto_tratamentos`
+- **Representa:** Ajuste sobre a jornada de um dia (nunca altera o registro original).
+- **Campos Principais:** `unidade_id`, `funcionario_id`, `data`, `tipo` (`inclusao`, `desconsiderar`, `abono`), `momento` (inclusão), `registro_id` (FK `ponto_registros`, desconsiderar), `minutos_abono`, `motivo` (longText cifrado), `status` (`pendente`, `aprovado`, `recusado`), `solicitado_por_user_id`, `decidido_por_user_id`, `decidido_em`.
+- **Regras:** só o ajuste aprovado conta na apuração; quem pediu não aprova; a aprovação reapura o dia no banco de horas. O log de atividade não guarda o motivo.
+
+### `ponto_jornadas`
+- **Campos Principais:** `funcionario_id`, `vigencia_inicio`, `vigencia_fim` (nullable), `minutos_seg` ... `minutos_dom` (minutos previstos por dia da semana).
+
+### `ponto_acordos_banco_horas`
+- **Campos Principais:** `funcionario_id`, `tipo` (`individual_escrito` até 6 meses, `coletivo` até 12, `mesmo_mes`), `vigencia_inicio`, `vigencia_fim`, `prazo_compensacao_meses`, `documento_referencia`.
+- **Regras:** o model recusa prazo acima do máximo do tipo (CLT, art. 59). Sem acordo vigente, a hora excedente é hora extra a pagar e não entra no banco.
+
+### `ponto_banco_horas_lancamentos`
+- **Representa:** Razão do banco de horas (crédito positivo, débito negativo, em minutos). Só inserção.
+- **Campos Principais:** `funcionario_id`, `data`, `minutos`, `origem` (`apuracao_dia`, `compensacao`, `expiracao`, `ajuste_manual`), `vence_em` (créditos), `credito_origem_id` (FK própria; na expiração, o crédito que venceu), `observacao`, `criado_por_user_id`, `created_at`.
+- **Regras:** o saldo é a soma das linhas. A apuração do dia lança só a **diferença** em relação ao que já foi lançado (ajuste posterior gera lançamento corretivo). Débitos abatem primeiro o crédito que vence antes; o vencido vira horas a pagar (`ponto:expirar-banco-horas`).

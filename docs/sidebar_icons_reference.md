@@ -11,6 +11,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **AreaConhecimento** | `Heroicon::OutlinedVariable` | Filament Enum |
 | **Avaliacao** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
 | **AvaliacaoDocente** | `Heroicon::OutlinedPresentationChartLine` | Filament Enum |
+| **Cardapio** | `Heroicon::OutlinedCake` | Filament Enum |
 | **CategoriaAvaliacao** | `Heroicon::OutlinedTag` | Filament Enum |
 | **CicloAvaliacaoDocente** | `Heroicon::OutlinedArrowPath` | Filament Enum |
 | **Cidade** | `Heroicon::OutlinedGlobeAsiaAustralia` | Filament Enum |
@@ -32,9 +33,14 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **Matricula** | `Heroicon::OutlinedIdentification` | Filament Enum |
 | **Nota** | `heroicon-o-check-badge` | String |
 | **Pais** | `Heroicon::OutlinedGlobeAmericas` | Filament Enum |
+| **ParecerDescritivo** | `Heroicon::OutlinedChatBubbleBottomCenterText` | Filament Enum |
 | **Perfil** | `heroicon-o-shield-check` | String |
 | **PeriodoLetivo** | `heroicon-o-calendar-days` | String |
 | **Pessoa** | `Heroicon::OutlinedUsers` | Filament Enum |
+| **PlanoManutencao** | `Heroicon::OutlinedWrench` | Filament Enum |
+| **PontoConfiguracao** | `Heroicon::OutlinedCog6Tooth` | Filament Enum |
+| **PontoTratamento** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
+| **PortfolioItem** | `Heroicon::OutlinedPhoto` | Filament Enum |
 | **ReservaEspaco** | `Heroicon::OutlinedCalendarDays` | Filament Enum |
 | **ResponsavelFinanceiro** | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **Serie** | `Heroicon::OutlinedDocumentText` | Filament Enum |
@@ -52,7 +58,10 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 
 | Página | Ícone | Tipo/Referência |
 | :--- | :--- | :--- |
+| **BancoDeHoras** | `heroicon-o-scale` | String |
 | **EnrollmentWizard** | `heroicon-o-user-plus` | String |
+| **EspelhoDePonto** | `heroicon-o-document-text` | String |
+| **RegistrarPonto** | `heroicon-o-clock` | String |
 | **SchoolSetupWizard** | `heroicon-o-home-modern` | String |
 
 ---

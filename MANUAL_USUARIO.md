@@ -3464,4 +3464,137 @@ Por padrão a lista mostra as reservas **de hoje em diante**. Use os filtros par
 
 ---
 
+## 🖼️ 64. Portfólio do Aluno e Pareceres Descritivos (`/admin/portfolio-items` e `/admin/parecer-descritivos`)
+
+Registro das **evidências** de aprendizagem de cada aluno (trabalhos, fotos, registros) e do **parecer descritivo** de cada etapa, que a família lê no Portal. Ficam no grupo **Acadêmico**.
+
+### 64.1 Registrando uma evidência
+1. Em **Portfólio do Aluno**, clique em **Novo**.
+2. Escolha o **aluno** (o professor só encontra os alunos das **suas** turmas), dê um **título** e a **data**, e descreva o que o aluno fez ou demonstrou.
+3. Marque as **habilidades** que a evidência mostra.
+4. Envie os **arquivos** (até 10 de 20 MB: imagem, PDF, áudio MP3/WAV ou vídeo MP4). Eles ficam em área privada.
+5. Em **Compartilhamento com a família**, ative **Compartilhar com a família no Portal** se a família puder ver.
+
+> **Atenção:** se a foto, o vídeo ou o áudio mostram **outros alunos**, marque **Aparecem outros alunos**. Esse material **nunca** é compartilhado com a família de um aluno só, porque envolve a imagem de outras crianças.
+
+### 64.2 Escrevendo o parecer
+1. Em **Pareceres Descritivos**, clique em **Novo**, escolha o aluno e a etapa. Se já existir um parecer desse aluno nessa etapa, o sistema abre o existente.
+2. Escreva o texto (mínimo de 80 caracteres). Na tela de edição você vê os registros da etapa para se basear.
+3. Salve e use **Enviar para revisão**.
+4. A **coordenação** revisa e usa **Publicar para a família**. O parecer passa a aparecer no Portal.
+
+Depois de publicado, o parecer não é editado. Para corrigir, a coordenação usa **Voltar para rascunho**, ajusta e publica de novo. O texto não pode conter o marcador `[ALUNO]` ao publicar.
+
+### 64.3 Rascunho com IA (se estiver ligado)
+Quando a escola habilita o recurso, o botão **Rascunhar com IA** monta um texto a partir dos conceitos por habilidade e das evidências da etapa. O aluno **não é identificado** ao provedor de IA (o nome é colocado de volta depois). O resultado entra como **rascunho**: leia tudo, corrija e só então envie para revisão. Nada vai para a família sem a revisão da coordenação.
+
+### 64.4 O que a família vê
+No Portal, **Meus Dados → Portfólio e Pareceres** mostra os pareceres **publicados** e as evidências **compartilhadas** do aluno selecionado, com as habilidades de cada uma. Rascunhos e itens não compartilhados nunca aparecem.
+
+---
+
+## 🛠️ 65. Manutenção Preventiva (`/admin/plano-manutencaos`)
+
+Planos recorrentes de manutenção de bens e espaços (ar-condicionado, extintores, caixa d'água, elevador). O sistema abre a **ordem de serviço** sozinho no prazo. Fica no grupo **Operacional**.
+
+### 65.1 Criando um plano
+1. Em **Manutenção Preventiva**, clique em **Novo plano**.
+2. Informe o **título**, o **alvo** (um bem, um espaço ou os dois), a **periodicidade em dias** e a **próxima data**.
+3. Defina a **antecedência** (quantos dias antes do vencimento a ordem de serviço é aberta), a prioridade e, se quiser, um **checklist**.
+
+### 65.2 Acompanhando
+A lista mostra se cada plano está **em dia**, **a vencer** (até 30 dias) ou **vencido**. O número ao lado do menu é a quantidade de planos vencidos.
+
+### 65.3 Executando
+- Todo dia o sistema abre as ordens dos planos que entraram na janela de antecedência.
+- Quando o serviço é feito, use **Registrar execução** (data e resultado do checklist). A ordem é concluída e o plano **avança** para o próximo vencimento. Concluir a ordem na tela de Ordens de Serviço também fecha a execução.
+- **Gerar OS agora** abre a ordem sem esperar a antecedência. **Reprogramar** muda a data do próximo vencimento.
+
+> Se uma ordem for **cancelada**, o plano fica vencido até alguém reprogramá-lo; o sistema não abre outra ordem para o mesmo vencimento.
+
+---
+
+## 🍽️ 66. Cardápio e Alergias (`/admin/cardapios`)
+
+Cardápio por dia e refeição, com os **alérgenos** de cada prato e o cruzamento com as restrições alimentares da ficha médica. Fica no grupo **Operacional**; as famílias veem em **Meus Dados → Cardápio** no Portal.
+
+### 66.1 Cadastrando e publicando
+1. Em **Cardápio**, clique em **Novo**: escolha a **data**, a **refeição** (café da manhã, lanche da manhã, almoço, lanche da tarde ou jantar) e descreva o prato.
+2. Marque os **alérgenos presentes** (lactose, glúten, amendoim, ovo, soja, castanhas, peixe, frutos do mar). Quem cadastra é quem declara: o sistema não lê receitas.
+3. Deixe a **unidade** em branco para valer para todas, ou escolha uma.
+4. **Publique**. Só o cardápio publicado aparece para as famílias.
+
+Para repetir uma semana, use **Duplicar semana**.
+
+### 66.2 Restrições alimentares do dia (cozinha)
+Quem tem a permissão de ver restrições alimentares (por padrão, a administração) abre **Restrições alimentares do dia**, escolhe a data e vê, por refeição, os alunos afetados em três níveis:
+- **Confirmado:** a ficha médica tem o campo de alergia marcado (lactose, glúten ou amendoim).
+- **Possível:** o texto livre da ficha cita o alérgeno.
+- **Conferir:** há restrição escrita que o sistema não consegue ligar a um alérgeno; confira com a família.
+
+Cada consulta a essa tela fica registrada no log de atividades.
+
+### 66.3 O que a família vê
+O Portal mostra a semana (com navegação) só com as refeições publicadas da unidade do aluno. Se a ficha médica **do próprio filho** tem restrição alimentar, as refeições com aquele alérgeno aparecem destacadas. A família nunca vê a restrição de outro aluno, e é orientada a conferir os ingredientes com a escola.
+
+---
+
+## ⏰ 67. Ponto Eletrônico e Banco de Horas (grupo **RH**)
+
+Registro da jornada dos funcionários, espelho mensal, ajustes e banco de horas. Fica no grupo **RH**.
+
+> **Leia antes de usar:** o ponto funciona em modo **controle interno**. Os registros são íntegros e não podem ser alterados, mas esse modo **não substitui um REP** (registrador eletrônico de ponto) perante a fiscalização do trabalho. Estabelecimentos com **mais de 20 trabalhadores** são obrigados por lei a registrar a jornada em sistema que atenda a Portaria MTP nº 671/2021. Veja a seção 67.9.
+
+### 67.1 Registrar o ponto (`/admin/rh/registrar-ponto`)
+1. Abra **Registrar Ponto** e clique em **Registrar ponto agora** em cada entrada e saída (início, almoço, retorno, fim).
+2. A confirmação mostra o horário e o **NSR** (número da marcação). O horário gravado é o do **servidor**, não o do seu aparelho.
+3. Use **Baixar comprovante (PDF)** se quiser guardar. O comprovante sai com a faixa **NÃO ASSINADO** enquanto não houver assinatura eletrônica ICP-Brasil.
+
+Um segundo toque em até 10 segundos devolve a mesma marcação. Você só vê e registra o **seu** ponto.
+
+### 67.2 Espelho de ponto (`/admin/rh/espelho-de-ponto`)
+Mostra o mês dia a dia: marcações, jornada prevista, trabalhado e **saldo**, mais os totais. Variações de até 10 minutos no dia não contam (CLT, art. 58, § 1º). Dias **incompletos** (número ímpar de marcações) e **faltas** aparecem em destaque. Marcação com asterisco foi incluída por um ajuste aprovado. **Baixar PDF** gera o espelho para assinar e arquivar.
+
+A administração pode escolher qualquer funcionário; cada consulta ao ponto de outra pessoa fica registrada.
+
+### 67.3 Pedir um ajuste (`/admin/ponto-tratamentos`)
+Esqueceu de marcar, marcou duas vezes ou teve atestado? Em **Ajustes de Ponto**, clique em **Pedir ajuste**:
+- **Incluir marcação esquecida:** informe o horário em que realmente entrou ou saiu.
+- **Desconsiderar marcação indevida:** escolha a marcação (toque duplicado ou por engano).
+- **Abonar tempo:** informe os minutos (480 = 8 horas) de atestado, consulta ou folga combinada.
+
+Escreva o motivo (não escreva o diagnóstico: basta dizer que há atestado). O ajuste fica **aguardando aprovação**; outra pessoa do RH aprova ou recusa (**quem pediu não aprova o próprio pedido**). A marcação original **nunca é apagada**: o ajuste só passa a valer depois de aprovado.
+
+### 67.4 Banco de horas (`/admin/rh/banco-de-horas`)
+Mostra o **saldo**, o que está disponível para folga, os **créditos a vencer** (com a data limite) e o extrato. Só entra no banco o saldo dos dias cobertos por um **acordo de banco de horas vigente**; sem acordo, a hora excedente é **hora extra a pagar**.
+- Prazo para compensar: **6 meses** (acordo individual escrito), **12 meses** (acordo ou convenção coletiva) ou **até o fim do mês**.
+- O crédito que vence sem ser compensado deixa de ser saldo e vira **horas a pagar** (CLT, art. 59, § 3º).
+- A administração usa **Registrar folga** e **Ajuste manual** (com motivo). Lançamentos nunca são alterados nem apagados: o erro é corrigido com um novo lançamento.
+
+### 67.5 Jornada e acordos do funcionário
+Na ficha do funcionário (**RH → Funcionários**), as abas **Jornada do Ponto** (minutos previstos por dia da semana, com vigência) e **Acordos de banco de horas** (tipo, prazo, vigência e documento) alimentam a apuração. A jornada não se apaga: para mudar, encerre a vigência e crie outra.
+
+### 67.6 Configuração do ponto (`/admin/ponto-configuracaos`)
+Só a administração. Por unidade, define o **modo**, a tolerância diária e, nos modos oficiais, os requisitos legais. A tela **Conformidade** lista o que falta e como resolver. **Verificar integridade** confere a numeração e o encadeamento dos registros da unidade (o sistema também faz isso toda madrugada).
+
+### 67.7 O que o sistema faz sozinho
+- 02:30 — apura o dia anterior e lança o saldo no banco de horas.
+- 03:00 — converte em horas a pagar os créditos vencidos.
+- 03:20 — verifica a integridade dos registros e grava um erro crítico se algo estiver quebrado.
+
+### 67.8 Alertas da apuração
+Intervalo curto (CLT, art. 71), menos de 11 horas entre jornadas (art. 66), mais de 10 horas no dia (art. 59), trabalho em feriado nacional e funcionário sem jornada cadastrada. Feriados municipais e estaduais não são reconhecidos: use abono. Turno que atravessa a meia-noite ainda não é tratado.
+
+### 67.9 Ponto "oficial": o que falta
+Os modos **REP-A** e **REP-P** só podem ser ativados quando todos os requisitos estão cumpridos, e hoje não estão. Resumo do que falta e quem resolve (detalhes em `docs/ponto_banco_horas_roadmap.md`):
+- **Registro do programa no INPI** (REP-P): titular do software.
+- **Atestado Técnico e Termo de Responsabilidade**, assinado com certificado ICP-Brasil de pessoa física (REP-P): desenvolvedor, depois de cumprir o Anexo IX.
+- **Assinatura ICP-Brasil do comprovante**: certificado da empresa e implementação pelo desenvolvedor.
+- **Arquivos AFD e AEJ** no leiaute oficial e a conformidade com o Anexo IX: desenvolvedor.
+- **Acordo ou convenção coletiva** (REP-A): a escola, com o sindicato.
+
+Se a escola tem mais de 20 trabalhadores e precisa de ponto oficial agora, a via mais curta é um **REP-C certificado** (relógio) ou o REP-P de um fornecedor que já tenha registro no INPI e atestado.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

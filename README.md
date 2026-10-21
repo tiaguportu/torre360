@@ -294,6 +294,48 @@ Processo de saída (para outra escola) e entrada (vinda de outra escola), reapro
 
 ---
 
+### 19. 📋 Avaliação de Desempenho Docente (Onda 19)
+Ciclos de observação da coordenação com instrumento de critérios ponderados. Dado sensível (parecer e observações criptografados). Detalhes em `docs/avaliacao_desempenho_docente_roadmap.md`.
+
+---
+
+### 20. 🏟️ Reserva de Espaços (Onda 21)
+Agendamento pontual de auditório, quadra e laboratório, com checagem de conflito contra reservas e contra a grade fixa. Detalhes em `docs/reserva_espacos_roadmap.md`.
+
+---
+
+### 21. 🖼️ Portfólio do Aluno e Parecer Descritivo (Onda 30)
+Evidências de aprendizagem com arquivos privados, parecer em rascunho/revisão/publicação e página no Portal da Família. Rascunho por IA desligado por padrão e sem dados pessoais. Detalhes em `docs/portfolio_parecer_descritivo_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `PortfolioItem` | Evidência por matrícula, com habilidades, anexos privados e compartilhamento com a família (nunca com material de outros alunos) |
+| `ParecerDescritivo` | Um por aluno e etapa; o professor escreve, a coordenação publica |
+
+---
+
+### 22. 🛠️ Manutenção Preventiva (Onda 39)
+Planos recorrentes de bens e espaços que abrem ordens de serviço no prazo (`manutencao:gerar-ordens`). Detalhes em `docs/manutencao_preventiva_roadmap.md`.
+
+---
+
+### 23. 🍽️ Cardápio e Alergias (Onda 40)
+Cardápio por dia e refeição com alérgenos declarados, cruzamento com a ficha médica em três níveis de certeza e aviso no Portal só para a restrição do próprio filho. Detalhes em `docs/cardapio_alergias_roadmap.md`.
+
+---
+
+### 24. ⏰ Ponto Eletrônico e Banco de Horas (Onda 41)
+Registro de ponto íntegro (NSR por unidade, hash SHA-256 encadeado, só inserção), apuração com tolerância da CLT, espelho, ajustes com aprovação e banco de horas com prazo de compensação. **Opera como controle interno**: os modos REP-A e REP-P (Portaria MTP 671/2021) ficam bloqueados até os requisitos legais serem cumpridos. Detalhes, requisitos e como resolver em `docs/ponto_banco_horas_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `PontoRegistro` | Marcação com horário do servidor, NSR, hash e conferência da hora legal; imutável (model e gatilhos) |
+| `PontoTratamento` | Ajuste (incluir, desconsiderar, abonar) que não altera o original; quem pede não aprova |
+| `PontoBancoHorasLancamento` | Razão do banco de horas com vencimento do crédito e expiração em horas a pagar |
+| `PontoConfiguracao` | Modo e requisitos legais por unidade, com a lista do que falta |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -420,6 +462,8 @@ autorizada:
 | Excursões e passeios escolares | `docs/excursoes_passeios_roadmap.md` |
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
-| Avaliação de desempenho docente | `docs/avaliacao_desempenho_docente_roadmap.md` |
-| Reserva de espaços e recursos (auditório, quadra, laboratório) | `docs/reserva_espacos_roadmap.md` |
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
+| Ondas 27 a 48 (18 propostas e 4 já implementadas), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+
+(A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
+estão nas seções 19 e 20 dos módulos.)
