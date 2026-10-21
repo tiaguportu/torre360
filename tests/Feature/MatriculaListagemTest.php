@@ -714,4 +714,36 @@ class MatriculaListagemTest extends TestCase
         $this->assertFalse($matricula->fresh()->hasMissingContractDocuments());
         $this->assertFalse(Matricula::comDocumentosFaltando()->whereKey($matricula->id)->exists());
     }
+
+    #[Test]
+    public function resumo_stats_calcula_contagens_consolidadas_corretamente_em_query_unica(): void
+    {
+        // 1 em dia (ativa, com responsável, contrato assinado)
+        $this->criarMatriculaEmDia('ativa', comContrato: true);
+
+        // 1 com pendência (sem responsável, contrato não gerado)
+        $this->criarMatriculaComPendencia('ativa');
+
+        $lista = Livewire::test(ListMatriculas::class);
+        $instance = $lista->instance();
+
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+
+        $stats = $instance->getResumoStats();
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        // Garante que o cálculo dos 5 stats é executado em exatamente 1 consulta consolidada
+        $this->assertCount(1, $queries);
+
+        // Confere os dados retornados
+        $statsMap = collect($stats)->mapWithKeys(fn ($stat) => [$stat->getLabel() => (int) $stat->getValue()]);
+
+        $this->assertEquals(2, $statsMap['Matrículas na lista']);
+        $this->assertEquals(1, $statsMap['Com pendências']);
+        $this->assertEquals(1, $statsMap['Sem responsável']);
+        $this->assertEquals(1, $statsMap['Contrato não gerado']);
+        $this->assertEquals(0, $statsMap['Contrato não assinado']);
+    }
 }

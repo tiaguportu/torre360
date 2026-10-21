@@ -21,6 +21,7 @@ use Filament\Schemas\Schema;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ListMatriculas extends ListRecords
 {
@@ -55,18 +56,35 @@ class ListMatriculas extends ListRecords
 
     /**
      * Cartões de resumo do que está na lista no momento (aba, busca e filtros).
+     * Executa uma única query consolidada com subselects, evitando múltiplos round-trips ao banco.
      *
      * @return array<int, Stat>
      */
     public function getResumoStats(): array
     {
-        $query = $this->getFilteredTableQuery()->reorder();
+        $baseQuery = $this->getFilteredTableQuery()->reorder();
 
-        $total = (clone $query)->count();
-        $comPendencias = (clone $query)->comPendencias()->count();
-        $semResponsavel = (clone $query)->semResponsavel()->count();
-        $contratoNaoGerado = (clone $query)->comContratoNaoGerado()->count();
-        $contratoNaoAssinado = (clone $query)->comContratoNaoAssinado()->count();
+        $countSub = function (Builder $query): Builder {
+            $sub = clone $query;
+            $sub->getQuery()->columns = null;
+            $sub->getQuery()->bindings['select'] = [];
+
+            return $sub->selectRaw('count(*)');
+        };
+
+        $stats = DB::query()
+            ->selectSub($countSub($baseQuery), 'total')
+            ->selectSub($countSub((clone $baseQuery)->comPendencias()), 'com_pendencias')
+            ->selectSub($countSub((clone $baseQuery)->semResponsavel()), 'sem_responsavel')
+            ->selectSub($countSub((clone $baseQuery)->comContratoNaoGerado()), 'contrato_nao_gerado')
+            ->selectSub($countSub((clone $baseQuery)->comContratoNaoAssinado()), 'contrato_nao_assinado')
+            ->first();
+
+        $total = (int) ($stats?->total ?? 0);
+        $comPendencias = (int) ($stats?->com_pendencias ?? 0);
+        $semResponsavel = (int) ($stats?->sem_responsavel ?? 0);
+        $contratoNaoGerado = (int) ($stats?->contrato_nao_gerado ?? 0);
+        $contratoNaoAssinado = (int) ($stats?->contrato_nao_assinado ?? 0);
 
         return [
             Stat::make('Matrículas na lista', $total)

@@ -832,7 +832,7 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 **Edição em Lote:** Na listagem de Matrículas (`/admin/matriculas`), é possível selecionar múltiplas matrículas e acionar a ação **Editar em Lote** para atualizar simultaneamente os campos de **Turma**, **Período Letivo**, **Situação**, **Data de Ativação** e **Data de Desativação**.
 
 ### 5.7.1 Listagem de Matrículas (`/admin/matriculas`)
-1. **Cartões de resumo (topo):** mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm **pendências**, quantas estão **sem responsável**, quantas estão com **contrato não gerado** e quantas estão com **contrato não assinado**.
+1. **Cartões de resumo (topo):** mostram, para o que está na lista no momento (aba, busca e filtros), quantas matrículas há, quantas têm **pendências**, quantas estão **sem responsável**, quantas estão com **contrato não gerado** e quantas estão com **contrato não assinado**. O cálculo dos 5 indicadores é totalmente otimizado e consolidado em uma única query agregada no banco de dados, eliminando múltiplos round-trips e garantindo carregamento instantâneo da listagem mesmo em escolas com milhares de alunos.
 2. **Abas de situação, com contador:** *Ativas* (aba que abre por padrão), *Pendentes*, *Com pendências*, *Trancadas*, *Concluídas*, *Canceladas*, *Reserva*, *Evasão* e *Todas*. *Trancadas*, *Concluídas*, *Reserva* e *Evasão* só aparecem quando existem matrículas nessa situação. A aba **Com pendências** reúne as matrículas ativas ou pendentes com algum problema a resolver (aluno sem responsável, cadastro incompleto, documentos obrigatórios faltando/rejeitados, **contrato não gerado** ou **contrato não assinado**) e é a lista de trabalho da secretaria. Não há mais filtro de situação separado: as abas fazem esse papel.
 3. **Colunas visíveis:**
    - **Aluno:** nome e, logo abaixo, o **ano letivo**, o **curso**, a **série** e a **turma**, nessa ordem (ex.: `2026 · Ensino Fundamental · 3º Ano · Turma A`). O nome leva à ficha da pessoa (conforme a permissão do usuário). A busca procura pelo nome do aluno, da turma, da série ou do ano letivo.
@@ -3325,6 +3325,12 @@ O Torre360 conta com um motor determinístico de visão computacional (OMR - *Op
    - Folha com falha de leitura ou já lançada não gera nota (lançar de novo não duplica). Uma foto enviada duas vezes gera um alerta de duplicidade.
    - A conferência não edita respostas questão a questão: se a leitura saiu errada, descarte a folha e reenvie uma foto melhor.
    - Linhas em branco não apagam notas existentes e todas as ações geram registro de auditoria no log de atividades (`ActivityLog`).
+
+### 59.4 Limpeza e Higienização Periódica de Arquivos Temporários de OCR/OMR
+Para preservar o espaço em disco do servidor e manter a estrita conformidade com a LGPD:
+1. **Rotina Agendada:** O sistema executa diariamente às 04:15 da madrugada a rotina automatizada `php artisan omr:limpar-temporarios --dias=7` (registrada no scheduler do `routes/console.php`).
+2. **Expurgo de Uploads Abandonados:** Arquivos temporários residuais na pasta `omr/uploads` com data de modificação superior a 7 dias são excluídos fisicamente do disco local.
+3. **Higienização de Folhas Descartadas ou Falhas:** Imagens vinculadas a correções canceladas/descartadas pelo usuário ou que falharam na leitura após 7 dias têm suas fotos físicas eliminadas do armazenamento, preservando a trilha de auditoria e atualizando o status do arquivo para `expurgado_temp`.
 
 ---
 

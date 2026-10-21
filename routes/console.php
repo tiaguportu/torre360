@@ -39,6 +39,7 @@ Schedule::command('biblioteca:limpar-capas-pendentes')->dailyAt('03:30')->withou
 Schedule::command('academico:recalcular-risco-evasao')->dailyAt('06:30')->withoutOverlapping();
 Schedule::command('crm:verificar-sla-estourado')->everyFifteenMinutes()->withoutOverlapping(10);
 Schedule::command('omr:purgar-arquivos-antigos')->dailyAt('03:45')->withoutOverlapping();
+Schedule::command('omr:limpar-temporarios --dias=7')->dailyAt('04:15')->withoutOverlapping();
 Schedule::command('manutencao:gerar-ordens')->dailyAt('06:15')->withoutOverlapping();
 Schedule::command('ponto:apurar-dia')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('ponto:expirar-banco-horas')->dailyAt('03:00')->withoutOverlapping();
