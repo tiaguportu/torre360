@@ -3676,7 +3676,7 @@ Simula, aprova e aplica o novo valor de cada série na campanha de rematrícula.
 - **Baixar lista de comunicação (CSV):** responsáveis, contatos, aluno, série e os valores atual e novo. A exportação fica registrada.
 - Depois de avisar as famílias pelos canais da escola, clique em **Registrar comunicado às famílias**.
 
-> A Lei nº 9.870/1999 (art. 1º, § 5º) pede a divulgação do valor ao menos 45 dias antes da data final de matrícula. O sistema avisa quando o prazo fica curto, mas confira com o jurídico.
+> A Lei nº 9.870/1999 (art. 2º) pede a divulgação do valor ao menos 45 dias antes da data final de matrícula. O sistema avisa quando o prazo fica curto, mas confira com o jurídico.
 
 ---
 

@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ReajusteMensalidadeService
 {
-    /** Divulgação mínima antes da data final de matrícula (Lei nº 9.870/1999, art. 1º, § 5º). */
+    /** Divulgação mínima antes da data final de matrícula (Lei nº 9.870/1999, art. 2º). */
     public const PRAZO_DIVULGACAO_DIAS = 45;
 
     public const PERCENTUAL_MINIMO = -50.0;
@@ -297,7 +297,7 @@ class ReajusteMensalidadeService
 
         if ($divulgacao->gt($limite)) {
             $alertas[] = sprintf(
-                'A divulgação %s menos de %d dias antes do fim da campanha (%s). A Lei nº 9.870/1999 (art. 1º, § 5º) pede ao menos %d dias antes da data final de matrícula; confira com o jurídico.',
+                'A divulgação %s menos de %d dias antes do fim da campanha (%s). A Lei nº 9.870/1999 (art. 2º) pede ao menos %d dias antes da data final de matrícula; confira com o jurídico.',
                 $cenario->comunicado_em ? 'foi feita com' : 'ficaria com',
                 self::PRAZO_DIVULGACAO_DIAS,
                 $dataFim->format('d/m/Y'),

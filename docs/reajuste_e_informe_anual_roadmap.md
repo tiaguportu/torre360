@@ -50,7 +50,7 @@ pagamentos, responsáveis financeiros) e a mesma equipe.
   estimada de bolsas. Não considera inadimplência, evasão nem alunos novos.
 - **Pontos de atenção** (não bloqueiam): sem planilha vinculada; planilha não homologada; percentual
   acima do da planilha; divulgação a menos de **45 dias** do fim da campanha (Lei nº 9.870/1999,
-  art. 1º, § 5º, usando a data final da campanha como data final de matrícula); série sem aluno com
+  art. 2º, usando a data final da campanha como data final de matrícula); série sem aluno com
   contrato; rematrículas já efetivadas.
 - **Comunicação:** lista em CSV (responsável, e-mail, telefone, aluno, série, valor atual e novo,
   variação), com BOM, ponto e vírgula e proteção contra injeção de fórmulas (`CsvSanitizer`). A

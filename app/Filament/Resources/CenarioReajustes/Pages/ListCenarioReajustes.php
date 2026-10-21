@@ -28,7 +28,7 @@ class ListCenarioReajustes extends ListRecords
                     'Aplique na campanha: as próximas rematrículas efetivadas usam o preço da série no novo contrato.',
                     'Baixe a lista de comunicação e registre a data em que as famílias foram avisadas.',
                 ])
-                ->alerta('A Lei nº 9.870/1999 (art. 1º, § 5º) pede que o valor seja divulgado ao menos 45 dias antes da data final de matrícula. O sistema avisa, mas a responsabilidade é da escola: confira com o jurídico.')
+                ->alerta('A Lei nº 9.870/1999 (art. 2º) pede que o valor seja divulgado ao menos 45 dias antes da data final de matrícula. O sistema avisa, mas a responsabilidade é da escola: confira com o jurídico.')
                 ->dica('Contratos que já existem não são alterados. Se alguma rematrícula da campanha já foi efetivada, o cenário não pode ser aplicado (as famílias teriam preços diferentes para a mesma série).')),
         ];
     }
