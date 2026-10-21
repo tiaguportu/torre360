@@ -44,3 +44,4 @@ Schedule::command('manutencao:gerar-ordens')->dailyAt('06:15')->withoutOverlappi
 Schedule::command('ponto:apurar-dia')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('ponto:expirar-banco-horas')->dailyAt('03:00')->withoutOverlapping();
 Schedule::command('ponto:verificar-integridade')->dailyAt('03:20')->withoutOverlapping();
+Schedule::command('rh:avisar-ferias')->weeklyOn(1, '07:30')->withoutOverlapping();

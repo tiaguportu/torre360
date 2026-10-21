@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources\Funcionarios\RelationManagers;
 
+use App\Enums\RegimeContratacao;
+use App\Enums\SituacaoConcessaoFerias;
 use App\Enums\StatusPeriodoFerias;
 use App\Models\PeriodoFerias;
+use App\Services\FeriasVencimentoService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -59,6 +62,15 @@ class PeriodosFeriasRelationManager extends RelationManager
                     ->label('Dias de Direito'),
                 TextColumn::make('dias_gozados')
                     ->label('Dias Gozados'),
+                TextColumn::make('limite_concessao')
+                    ->label('Conceder até')
+                    ->state(fn (PeriodoFerias $record): string => $record->limiteDeConcessao()->format('d/m/Y'))
+                    ->visible(fn (): bool => $this->getOwnerRecord()->regime === RegimeContratacao::CLT),
+                TextColumn::make('prazo')
+                    ->label('Prazo de concessão')
+                    ->badge()
+                    ->state(fn (PeriodoFerias $record): SituacaoConcessaoFerias => app(FeriasVencimentoService::class)->avaliar($record)['situacao'])
+                    ->visible(fn (): bool => $this->getOwnerRecord()->regime === RegimeContratacao::CLT),
                 TextColumn::make('status')
                     ->label('Situação')
                     ->badge(),

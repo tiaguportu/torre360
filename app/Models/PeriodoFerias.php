@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusPeriodoFerias;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,5 +44,13 @@ class PeriodoFerias extends Model
     public function getDiasSaldoAttribute(): int
     {
         return $this->dias_direito - $this->dias_gozados;
+    }
+
+    /**
+     * Último dia para o empregador conceder as férias: 12 meses depois do fim do período aquisitivo (CLT, art. 134).
+     */
+    public function limiteDeConcessao(): CarbonInterface
+    {
+        return $this->periodo_aquisitivo_fim->copy()->startOfDay()->addYearNoOverflow();
     }
 }
