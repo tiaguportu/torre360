@@ -6,6 +6,7 @@ namespace App\Filament\Resources\AvaliacaoDocentes\Tables;
 
 use App\Enums\StatusAvaliacaoDocente;
 use App\Exceptions\AvaliacaoDocenteException;
+use App\Filament\Resources\PlanoDesenvolvimentoDocentes\PlanoDesenvolvimentoDocenteResource;
 use App\Models\AvaliacaoDocente;
 use App\Services\AvaliacaoDocenteService;
 use Filament\Actions\Action;
@@ -60,6 +61,7 @@ class AvaliacaoDocentesTable
             ])
             ->recordActions([
                 ViewAction::make()->label('Abrir'),
+                PlanoDesenvolvimentoDocenteResource::acaoPlanoDaAvaliacao(),
                 Action::make('reabrir')
                     ->label('Reabrir')
                     ->icon('heroicon-o-lock-open')

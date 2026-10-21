@@ -7,6 +7,7 @@ namespace App\Filament\Resources\AvaliacaoDocentes\Pages;
 use App\Exceptions\AvaliacaoDocenteException;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\AvaliacaoDocentes\AvaliacaoDocenteResource;
+use App\Filament\Resources\PlanoDesenvolvimentoDocentes\PlanoDesenvolvimentoDocenteResource;
 use App\Models\AvaliacaoDocente;
 use App\Services\AvaliacaoDocenteService;
 use App\Support\HelpContent;
@@ -25,6 +26,7 @@ class ViewAvaliacaoDocente extends ViewRecord
     {
         return [
             EditAction::make()->label('Continuar avaliação'),
+            PlanoDesenvolvimentoDocenteResource::acaoPlanoDaAvaliacao(),
             Action::make('reabrir')
                 ->label('Reabrir para correção')
                 ->icon('heroicon-o-lock-open')
