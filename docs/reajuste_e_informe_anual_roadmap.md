@@ -51,7 +51,8 @@ pagamentos, responsáveis financeiros) e a mesma equipe.
 - **Pontos de atenção** (não bloqueiam): sem planilha vinculada; planilha não homologada; percentual
   acima do da planilha; divulgação a menos de **45 dias** do fim da campanha (Lei nº 9.870/1999,
   art. 2º, usando a data final da campanha como data final de matrícula); série sem aluno com
-  contrato; rematrículas já efetivadas.
+  contrato; rematrículas já efetivadas; séries do cenário sem **lista de material publicada** no período
+  de destino da campanha (Onda 59).
 - **Comunicação:** lista em CSV (responsável, e-mail, telefone, aluno, série, valor atual e novo,
   variação), com BOM, ponto e vírgula e proteção contra injeção de fórmulas (`CsvSanitizer`). A
   exportação fica no log. "Registrar comunicado" grava a data, que passa a valer no alerta de prazo.

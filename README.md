@@ -353,6 +353,28 @@ Entrega unificada do ciclo financeiro anual da família. Detalhes em `docs/reaju
 
 ---
 
+### 26. 🏫 Censo Escolar: Situação do Aluno (Onda 58)
+A 2ª etapa do Censo Escolar, que completa a exportação da matrícula inicial. Detalhes em `docs/censo_escolar_situacao_aluno_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| **Censo Escolar (2ª etapa)** | Apura a situação de cada aluno (aprovado, reprovado, transferido...) e mostra o que impede o envio; gera os arquivos de Situação do Aluno (registros 89, 90 e 91) e de identificação no leiaute do Inep |
+| Retorno do Educacenso | Importa o código Inep das turmas, o ID Inep dos alunos e o código das matrículas, sem sobrescrever o que já existe |
+| `CensoSituacaoAluno` | Ajuste manual da situação pela secretaria, com justificativa cifrada |
+
+---
+
+### 27. 🎒 Lista de Material Escolar (Onda 59)
+Detalhes em `docs/lista_material_escolar_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `ListaMaterialEscolar` | Uma lista por série e período, em rascunho até a secretaria publicar; cópia dos itens de outro período |
+| Trava de uso coletivo | Barra material de uso coletivo e pede confirmação para o que pode ser individual ou coletivo (Lei nº 9.870/1999, art. 1º, § 7º); sem campo de marca ou loja |
+| **Lista de Material** (Portal) | A família vê a lista publicada da série do aluno e baixa o PDF |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -482,6 +504,8 @@ autorizada:
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
 | Ondas 27 a 48 (16 propostas, 5 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
 | NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
+| Ondas 49 a 60 (10 propostas e 2 implementadas), com as ampliações propostas em ondas existentes | `docs/ondas_49_a_60_indice.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
-estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25.)
+estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
+Censo Escolar e a lista de material, nas seções 26 e 27.)

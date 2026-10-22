@@ -55,6 +55,7 @@ Base cadastral de qualquer indivíduo ou entidade no sistema.
 
 ### `pessoa`
 - **Campos Principais:** `nome`, `cpf` (armazenado apenas como dígitos numéricos, sem pontos ou traço), `data_nascimento`, `foto` (armazenamento privado), `email`, `aceita_comunicacao` (boolean, padrão true — opt-out de comunicações em massa por LGPD; não afeta notificações individuais obrigatórias), `consentimento_em`/`consentimento_versao`/`consentimento_origem`/`consentimento_ip` (prova do aceite dado no formulário público ou na pré-matrícula; gravados por `Pessoa::registrarConsentimento()`, fora do `$fillable`; pessoas antigas ficam sem registro), `descadastrado_em` (timestamp nullable — pedido de descadastro pelo link dos e-mails da régua; `Pessoa::descadastrarDeComunicacoes()` também põe `aceita_comunicacao = false`), `sexo` (Enum), `cor_raca` (Enum - 0:Não Declarada, 1:Branca, 2:Preta, 3:Parda, 4:Amarela, 5:Indígena), `tipo_nacionalidade` (Enum - 1:Brasileira, 2:Naturalizado/Exterior, 3:Estrangeira), `nacionalidade_id` (Pais).
+- **Censo Escolar (Onda 58):** `codigo_inep` (string 12, nullable, índice `idx_pessoa_codigo_inep`) — ID Inep do aluno (código de identificação única), devolvido pelo Educacenso na exportação da matrícula inicial ou no resultado da identificação. Um ID não pode pertencer a duas pessoas (regra do serviço, não do banco).
 - **Índice:** `pessoa_email_idx` (`email`). **Scope:** `busca($termo)` — nome, e-mail, telefone (ignora `( ) - + e espaço`) e CPF (dígitos); menos de 3 dígitos não entram na busca de telefone/CPF.
 - **Relacionamentos:** 
     - BelongsToMany `endereco` (via `endereco_pessoa`).
@@ -142,7 +143,7 @@ Estrutura de ensino e turmas.
 
 ### `curso`, `serie`, `turma`
 - Estrutura hierárquica de ensino. Cursos possuem Séries, que possuem Turmas.
-- **Turma - Campos Principais:** `nome`, `codigo`, `serie_id`, `turno_id`, `periodo_letivo_id` (**obrigatório**, FK `restrict`: não se apaga um período que tenha turmas), `status` (string, default `ativa`; cast para o Enum `StatusTurma`: `planejada`, `ativa`, `concluida`, `cancelada` — turma "aberta para matrícula" = planejada ou ativa; scopes `Turma::ativas()`, `abertasParaMatricula()` e `vigentes()`), `etapa_ensino_agregada_id`, `etapa_ensino_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean), `forma_organizacao` (1-Série/Ano, 2-Semestral, 3-Ciclos, 4-Grupos não seriados, 5-Módulos, 6-Alternância), `modalidade_ensino` (1-Regular, 2-Especial, 3-EJA, 4-Profissional), `tipo_lingua_ministrada` (1-Português, 2-Indígena+Português, 3-Indígena), `codigo_lingua_indigena`, `turma_educacao_bilingue_surdos` (boolean), flags de AEE (`flag_aee_*`) e **Controladoria Escolar**: `mensalidade_base` (Decimal 10,2 - mensalidade de tabela de referência), `custo_docente_mensal` (Decimal 10,2 - custo mensal direto da folha docente da turma), `custo_operacional_rateado` (Decimal 10,2 - rateio fixo de infraestrutura e suporte para a turma), `meta_margem_lucro` (Decimal 5,2 - meta percentual esperada de margem líquida).
+- **Turma - Campos Principais:** `nome`, `codigo`, `codigo_inep` (string 10, nullable — código Inep da turma, devolvido pelo Educacenso; Onda 58), `serie_id`, `turno_id`, `periodo_letivo_id` (**obrigatório**, FK `restrict`: não se apaga um período que tenha turmas), `status` (string, default `ativa`; cast para o Enum `StatusTurma`: `planejada`, `ativa`, `concluida`, `cancelada` — turma "aberta para matrícula" = planejada ou ativa; scopes `Turma::ativas()`, `abertasParaMatricula()` e `vigentes()`), `etapa_ensino_agregada_id`, `etapa_ensino_id`, `professor_conselheiro_id`, `vagas_maximas`, `carga_horaria_total` (em horas), `cor`, `tipo_avaliacao` (Enum: notas, habilidades, hibrido), `tipo_mediacao_didatico_pedagogica` (1-Presencial, 2-Semipresencial, 3-EAD), `tipo_turma` (4-Atividade complementar, 5-AEE, 6-Curricular, 9-Curricular c/ Ativ. Comp.), `local_funcionamento_diferenciado` (0-Não diferenciado, 1-Sala anexa, 2-Unidade socioeducativa, 3-Unidade prisional), `turma_educacao_especial` (boolean), `forma_organizacao` (1-Série/Ano, 2-Semestral, 3-Ciclos, 4-Grupos não seriados, 5-Módulos, 6-Alternância), `modalidade_ensino` (1-Regular, 2-Especial, 3-EJA, 4-Profissional), `tipo_lingua_ministrada` (1-Português, 2-Indígena+Português, 3-Indígena), `codigo_lingua_indigena`, `turma_educacao_bilingue_surdos` (boolean), flags de AEE (`flag_aee_*`) e **Controladoria Escolar**: `mensalidade_base` (Decimal 10,2 - mensalidade de tabela de referência), `custo_docente_mensal` (Decimal 10,2 - custo mensal direto da folha docente da turma), `custo_operacional_rateado` (Decimal 10,2 - rateio fixo de infraestrutura e suporte para a turma), `meta_margem_lucro` (Decimal 5,2 - meta percentual esperada de margem líquida).
 - **Relacionamentos:** BelongsTo `etapaEnsinoAgregada` (`etapa_ensino_agregada`), BelongsTo `etapaEnsino` (`etapa_ensino`), HasMany `horariosFuncionamento` (`turma_horario`), HasMany `propostasComerciais` (`proposta_comercials`).
 
 ### `matricula`
@@ -150,6 +151,7 @@ Estrutura de ensino e turmas.
 - **Campos Principais:**
     - `pessoa_id`: BelongsTo `pessoa` (Aluno).
     - `turma_id`: BelongsTo `turma` (**obrigatório**, FK `restrict`: não se apaga uma turma que tenha matrículas). Toda matrícula nasce numa turma (rematrícula, wizard, matrícula em lote e online escolhem a turma).
+    - `codigo_matricula_inep`: string 12, nullable — código da matrícula gerado pelo Inep na matrícula inicial; com ele a matrícula vai no registro 90 da Situação do Aluno (sem ele, só no 91, se foi admitida após a data de referência). Relação `censoAjuste()` (HasOne `censo_situacoes_aluno`). Onda 58.
     - **Período letivo e série NÃO são colunas** (as antigas `periodo_letivo_id` e `serie_id` foram removidas): vêm sempre da turma. No model, `periodoLetivo()` e `serie()` são `HasOneThrough` via `turma`; `periodo_letivo_id` e `serie_id` são accessors somente leitura; `Matricula::doPeriodo($id)` e `daSerie($id)` filtram por elas. `Matricula` carrega a `turma` por padrão (`$with`). Criar/atualizar com essas chaves lança `LogicException` nos testes. A migration `require_turma_and_drop_periodo_serie_from_matricula_table` aborta, sem alterar nada, se existir matrícula sem turma; o `down()` recria as colunas e as preenche a partir da turma.
     - `situacao`: Enum `SituacaoMatricula` (`ativa`, `trancada`, `cancelada`, `concluido`, `reserva`, `pendente`, `evasao`).
     - `data_ativacao`: Data em que a matrícula entrou em vigência.
@@ -1640,3 +1642,29 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 - **Representa:** Preço do novo contrato por série numa campanha de rematrícula.
 - **Campos Principais:** `periodo_rematricula_id` (FK, cascade), `serie_id` (FK, restrict), `valor_total`, `cenario_reajuste_item_id` (FK, nullable). Único por (`periodo_rematricula_id`, `serie_id`).
 - **Regras:** `RematriculaService::efetivar()` usa `PeriodoRematricula::valorTotalParaSerie()`: o preço da série, ou o `valor_taxa` da campanha se a série não tiver preço.
+
+---
+
+## 26. Censo Escolar: Situação do Aluno (Onda 58)
+
+> Além das colunas `pessoa.codigo_inep`, `turma.codigo_inep` e `matricula.codigo_matricula_inep` (descritas em cada tabela), a apuração é calculada na hora a partir de `matricula`, `situacao_final_disciplina` e `transferencias_escolares`; só o ajuste manual é gravado.
+
+### `censo_situacoes_aluno`
+- **Representa:** Ajuste manual da situação do aluno no Censo Escolar, feito pela secretaria quando o cálculo não reflete o caso (por exemplo, falecimento).
+- **Campos Principais:** `matricula_id` (FK `matricula`, cascade, único: `uq_censo_situacao_matricula`), `situacao` (tinyint: 1 transferido, 2 deixou de frequentar, 3 falecido, 4 reprovado, 5 aprovado, 6 aprovado concluinte, 7 sem movimentação, 8 em andamento — Enum `SituacaoAlunoCenso`, leiaute v3 do Censo 2025), `justificativa` (text, **cifrada**), `definido_por_user_id` (FK `users`, nullOnDelete).
+- **Regras:** vale no lugar do cálculo; respeita as regras de etapa do leiaute (`SituacaoAlunoCenso::restricaoParaEtapa()`). O log (`censo_escolar`) guarda a matrícula e a situação, nunca a justificativa.
+- **Relacionamentos:** BelongsTo `matricula`, `definidoPor`.
+
+---
+
+## 27. Lista de Material Escolar (Onda 59)
+
+### `listas_material_escolar`
+- **Representa:** Lista de material de uma série num período letivo.
+- **Campos Principais:** `serie_id` (FK `serie`, restrict), `periodo_letivo_id` (FK `periodo_letivo`, restrict), `status` (`rascunho`, `publicada` — Enum `StatusListaMaterial`), `observacao` (recado às famílias), `publicada_em`, `publicada_por_user_id` (FK `users`, nullOnDelete), `criada_por_user_id` (FK `users`, nullOnDelete).
+- **Regras:** única por (`serie_id`, `periodo_letivo_id`) (`uq_lista_material_serie_periodo`). Publicada, não se altera nem se apaga; volta para rascunho por `Publicar:ListaMaterialEscolar`.
+- **Relacionamentos:** BelongsTo `serie`, `periodoLetivo`, `publicadaPor`; HasMany `itens` (ordenados por `ordem`).
+
+### `itens_lista_material`
+- **Campos Principais:** `lista_material_id` (FK, cascade), `descricao` (160), `quantidade` (smallint, 1 a 999), `unidade` (30, nullable), `categoria` (Enum `CategoriaItemMaterial`: `papelaria`, `livros`, `arte`, `higiene_pessoal`, `educacao_fisica`, `outros`), `observacao` (255), `uso_individual_confirmado` (boolean), `ordem` (índice `idx_item_lista_ordem`).
+- **Regras:** não há campo de marca nem de loja (venda casada). A trava de uso coletivo está no `ListaMaterialService` (termos em `config/material_escolar.php`); `uso_individual_confirmado` só é verdadeiro em item de "atenção".

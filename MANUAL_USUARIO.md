@@ -2071,7 +2071,7 @@ Acesse **Localização e Cadastros → Instituições de Ensino**.
   - *Outro órgão da administração pública*
 - **Dados Gerais:** Nome, CNPJ, Logotipo institucional e status (Ativo/Inativo).
 - **Canais de Comunicação:** Celular/WhatsApp, Instagram, Facebook e YouTube.
-- **Exportação Completa para o Educacenso (Ação em Lote):** Selecione uma ou mais instituições na tabela e utilize a opção em lote **Exportar para Educacenso** para gerar o arquivo `.txt` completo no formato oficial do INEP (Censo Escolar 2026), contendo todos os registros: **00** (Escola), **10** (Infraestrutura), **20** (Turmas), **30** (Pessoas Físicas), **40** (Gestores), **50** (Docentes) e **60** (Vínculos de Alunos).
+- **Exportação Completa para o Educacenso (Ação em Lote):** Selecione uma ou mais instituições na tabela e utilize a opção em lote **Exportar para Educacenso** para gerar o arquivo `.txt` completo no formato oficial do INEP (Censo Escolar 2026), contendo todos os registros: **00** (Escola), **10** (Infraestrutura), **20** (Turmas), **30** (Pessoas Físicas), **40** (Gestores), **50** (Docentes) e **60** (Vínculos de Alunos). Essa exportação é a **1ª etapa** do Censo (matrícula inicial); a **2ª etapa** (Situação do Aluno) está na seção 72.
 - **Ajuda Integrada:** O botão de ajuda no cabeçalho resume as ações disponíveis de acordo com suas permissões.
 
 ### 24.2 Unidade Escolar (`/admin/unidades`)
@@ -3670,7 +3670,7 @@ Simula, aprova e aplica o novo valor de cada série na campanha de rematrícula.
 1. Clique em **Nova simulação** e escolha a **campanha de rematrícula**, o **percentual**, o **arredondamento** (centavo, real ou R$ 10) e, de preferência, a **planilha de custos** da Lei das Mensalidades.
 2. O sistema calcula o **valor atual** de cada série pela média dos contratos das matrículas ativas do período de origem da campanha e aplica o percentual.
 3. Na aba **Séries**, use **Ajustar** para dar a uma série um percentual próprio ou corrigir o valor atual.
-4. Confira a **projeção de receita** e os **pontos de atenção** (planilha não homologada, percentual acima do calculado, prazo de divulgação).
+4. Confira a **projeção de receita** e os **pontos de atenção** (planilha não homologada, percentual acima do calculado, prazo de divulgação, série sem lista de material publicada).
 
 ### 70.2 Aprovar e aplicar
 - **Aprovar cenário:** congela os valores. Para mudar depois, crie outra simulação.
@@ -3702,6 +3702,83 @@ O que cada família pagou à escola no ano-calendário, para a declaração do i
 A família escolhe o ano e baixa um PDF por aluno. Ela vê os alunos de que é responsável e também aqueles em cujo contrato consta como responsável financeira.
 
 > O informe é um documento de apoio: não substitui o recibo nem a nota fiscal de serviço. As regras de dedução e o limite anual devem ser conferidos com a contabilidade.
+
+---
+
+## 🏫 72. Censo Escolar: Situação do Aluno (`/admin/secretaria/censo-escolar`)
+
+A 2ª etapa do Censo Escolar informa ao Inep o que aconteceu com cada aluno no ano: aprovado, reprovado, transferido, deixou de frequentar. Fica no grupo **Secretaria** e é usada pela administração e pela secretaria.
+
+### 72.1 Antes de começar
+- A **unidade** precisa ter o **código Inep da escola** (8 dígitos) e um **gestor** (representante legal) com nome e CPF. A tela avisa o que falta, em um quadro amarelo.
+- O **resultado final** do ano precisa estar fechado no boletim: o sistema usa a aprovação por disciplina (inclusive o exame final).
+- Registre antes as **transferências de saída** concluídas e a situação das matrículas (cancelada, evasão).
+
+### 72.2 Passo a passo
+1. No Educacenso, na **1ª etapa (matrícula inicial)**, peça a exportação dos dados da escola (**Migração → Exportação**). O arquivo chega em até 24 horas, compactado; descompacte e use o `.txt`.
+2. Aqui, clique em **Importar retorno da matrícula inicial** e escolha o arquivo. O sistema grava o **código Inep das turmas**, o **ID Inep dos alunos** e o **código das matrículas**. Nada que já esteja cadastrado é trocado: se o arquivo trouxer um código diferente, aparece como divergência para você conferir.
+3. Alunos **sem ID Inep** (em geral, os que entraram depois da data de referência): clique em **Baixar arquivo de identificação**, envie ao Educacenso (**Migração → Identificação**) e importe o `RESULTADO_CERTO` em **Importar identificação**. Os "prováveis" devem ser conferidos um a um e informados na linha do aluno, em **Códigos do Inep**.
+4. Confira a **lista**: cada aluno mostra o registro (90 ou 91), a situação e o motivo, e em **Pendências e avisos** o que ainda impede o envio. Use o filtro **Com pendência** para ir resolvendo.
+5. Ajuste o que o sistema não sabe (por exemplo, falecimento) em **Ajustar situação**, com a justificativa. Para voltar ao cálculo, use **Voltar ao cálculo**.
+6. Com a lista sem pendências, clique em **Baixar arquivo da Situação do Aluno** e importe no Educacenso (**2ª etapa → Migração → Importação**). Depois, faça o encerramento do ano escolar no Educacenso.
+
+### 72.3 Como o sistema decide a situação
+| Situação | Quando |
+|---|---|
+| **Transferido** | Há transferência de saída concluída. |
+| **Deixou de frequentar** | Matrícula em evasão; ou cancelada/trancada sem transferência (com aviso para conferir). |
+| **Sem movimentação** | Educação infantil, que não tem aprovação nem reprovação. |
+| **Reprovado** | Reprovado em alguma disciplina (vale o resultado depois do exame final). |
+| **Aprovado** | Aprovado em todas as disciplinas. |
+| **Aprovado concluinte** | Igual ao anterior, na etapa final do curso (por exemplo, 9º ano ou 3ª série do ensino médio). |
+| **Falecido**, **Em andamento** | Só por **ajuste manual**: o sistema não tem esses dados. "Em andamento" vale apenas para EJA e cursos em módulos. |
+
+Disciplina em recuperação ou sem resultado não vira situação: fica como pendência, para você fechar o ano primeiro.
+
+### 72.4 Registros 90 e 91
+- **90:** aluno que já tem o **código da matrícula** do Inep (veio da matrícula inicial).
+- **91:** aluno que entrou **depois da data de referência** (a última quarta-feira de maio) e ainda não tem esse código.
+- Matrícula antiga sem o código do Inep fica como pendência: importe antes o retorno da matrícula inicial. Quem saiu da escola antes da data de referência não entra no Censo.
+
+### 72.5 Cuidados
+- **Importar no Educacenso apaga tudo o que a escola já informou antes**, inclusive o que foi digitado à mão, e não dá para enviar o arquivo em partes. Gere o arquivo quando a lista estiver sem pendências.
+- Matrículas com pendência **ficam de fora do arquivo**, e a tela diz quem e por quê. O Inep aceita o arquivo como "importado parcialmente"; esses alunos devem ser informados direto nos formulários do Educacenso, **sem importar de novo**.
+- Turma com mais de uma etapa e aluno admitido depois nessa turma: o Inep pede a etapa do aluno, que deve ser informada direto no Educacenso.
+- O leiaute do Inep muda todo ano. O sistema segue o do Censo 2025 (versão 3); confira se há versão nova antes de gerar o arquivo.
+- O arquivo é gerado em ISO-8859-1, em maiúsculas e sem acentos, como o Inep exige. Ele não leva nome de aluno (só códigos), exceto o do gestor.
+
+---
+
+## 🎒 73. Lista de Material Escolar (`/admin/lista-material-escolars`)
+
+Monta a lista de material de cada série e a publica para as famílias. Fica no grupo **Secretaria**. A secretaria e a administração montam e publicam; a coordenação só consulta.
+
+### 73.1 Montar a lista
+1. Clique em **Nova lista** e escolha a **série** e o **período letivo**. Só pode haver uma lista por série e período.
+2. Na aba **Itens**, clique em **Adicionar item** e descreva o que o aluno precisa, com a quantidade, a unidade (opcional) e a categoria. Não cite **marca** nem **loja**: a escola não pode exigir uma ou outra.
+3. Para reaproveitar a lista de outro ano, use **Copiar itens de outra lista** (a lista atual precisa estar vazia). Itens que a trava de hoje não aceita ficam de fora, com o motivo.
+4. Escreva, se quiser, um **recado para as famílias** (por exemplo, para reaproveitar o material em bom estado).
+5. Clique em **Publicar para as famílias**. Antes, o sistema confere todos os itens e a lista precisa ter ao menos um.
+
+### 73.2 O que o sistema barra
+A Lei nº 9.870/1999 (art. 1º, § 7º) torna nula a cláusula que obriga a família a pagar ou fornecer **material de uso coletivo** da escola: o custo entra na mensalidade.
+
+| Situação do item | Exemplos | O que acontece |
+|---|---|---|
+| **Uso coletivo evidente** | papel higiênico, papel toalha, sabão, detergente, material de limpeza, copo descartável, água mineral, giz, pincel para quadro, toner, grampeador, álcool | **Não entra na lista**, nem confirmando. O formulário mostra o motivo. |
+| **Pode ser individual ou coletivo** | resma de papel, papel sulfite, fita adesiva, clipes, barbante, algodão, sabonete, lenço umedecido, pilha; ou quantidade de 30 ou mais | Entra só se você marcar a **confirmação de uso individual**. A confirmação fica registrada no item. |
+| **Comum** | caderno, lápis, estojo, livro adotado, tesoura, cola bastão, **giz de cera** | Entra normalmente. |
+
+A lista de termos é uma ajuda e não substitui o jurídico da escola. Ela pode ser ajustada com a equipe técnica (arquivo `config/material_escolar.php`).
+
+### 73.3 Corrigir uma lista publicada
+Lista publicada **não pode ser alterada nem apagada**. Abra a lista e clique em **Voltar para rascunho**: as famílias deixam de vê-la até você publicar de novo. Avise quem já comprou o material se algo mudar.
+
+### 73.4 As famílias
+No Portal da Família, em **Meus Dados → Lista de Material**, a família escolhe o aluno e vê a lista da série dele, agrupada por categoria, e baixa o **PDF**. A lista só aparece depois de publicada. O PDF abre também para a equipe (o rascunho vem marcado como rascunho).
+
+### 73.5 Junto com o reajuste
+Na simulação de reajuste (seção 70), o sistema avisa quando alguma série da campanha ainda não tem lista publicada para o período de destino: as famílias costumam pedir a lista junto com o valor do ano.
 
 ---
 

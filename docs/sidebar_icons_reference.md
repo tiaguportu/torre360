@@ -32,6 +32,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **EtapaAvaliativa** | `Heroicon::OutlinedQueueList` | Filament Enum |
 | **FrequenciaEscolar** | `Heroicon::OutlinedCheckBadge` | Filament Enum |
 | **InstrumentoAvaliacaoDocente** | `Heroicon::OutlinedClipboardDocumentList` | Filament Enum |
+| **ListaMaterialEscolar** | `Heroicon::OutlinedShoppingBag` | Filament Enum |
 | **Matricula** | `Heroicon::OutlinedIdentification` | Filament Enum |
 | **Nota** | `heroicon-o-check-badge` | String |
 | **Pais** | `Heroicon::OutlinedGlobeAmericas` | Filament Enum |
@@ -62,6 +63,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | Página | Ícone | Tipo/Referência |
 | :--- | :--- | :--- |
 | **BancoDeHoras** | `heroicon-o-scale` | String |
+| **CensoEscolar** | `heroicon-o-clipboard-document-check` | String |
 | **EnrollmentWizard** | `heroicon-o-user-plus` | String |
 | **EspelhoDePonto** | `heroicon-o-document-text` | String |
 | **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |

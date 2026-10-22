@@ -9,6 +9,7 @@ sistema, escopo e riscos.
 - **Propostas (16):** as demais. Não há código, migration nem teste delas.
 - **Melhorias em ondas anteriores (2026-10-21):** alerta de férias na Onda 10 e autoavaliação com
   plano de desenvolvimento na Onda 19 (veja o fim deste índice).
+- **Continuação:** as ondas 49 a 60 estão em [ondas_49_a_60_indice.md](ondas_49_a_60_indice.md).
 
 ## Visão geral
 
