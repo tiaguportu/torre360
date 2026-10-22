@@ -10,6 +10,7 @@ use App\Filament\Resources\Funcionarios\RelationManagers\AvaliacoesDocenteRelati
 use App\Filament\Resources\Funcionarios\RelationManagers\ContratosTrabalhoRelationManager;
 use App\Filament\Resources\Funcionarios\RelationManagers\JornadasPontoRelationManager;
 use App\Filament\Resources\Funcionarios\RelationManagers\PeriodosFeriasRelationManager;
+use App\Filament\Resources\Funcionarios\RelationManagers\ProcessosRelationManager;
 use App\Filament\Resources\Funcionarios\Schemas\FuncionarioForm;
 use App\Filament\Resources\Funcionarios\Tables\FuncionariosTable;
 use App\Models\Funcionario;
@@ -65,6 +66,7 @@ class FuncionarioResource extends Resource implements HasShieldPermissions
             AvaliacoesDocenteRelationManager::class,
             JornadasPontoRelationManager::class,
             AcordosBancoHorasRelationManager::class,
+            ProcessosRelationManager::class,
         ];
     }
 

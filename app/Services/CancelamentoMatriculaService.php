@@ -20,7 +20,7 @@ use App\Models\Matricula;
 use App\Models\Rematricula;
 use App\Models\TransferenciaEscolar;
 use App\Models\User;
-use App\Support\TiposArquivo;
+use App\Support\ArquivoPrivado;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -62,21 +62,6 @@ class CancelamentoMatriculaService
         SituacaoMatricula::TRANCADA,
         SituacaoMatricula::PENDENTE,
         SituacaoMatricula::RESERVA,
-    ];
-
-    /**
-     * Extensão gravada para cada tipo detectado pelo conteúdo do arquivo (nunca pela extensão enviada).
-     *
-     * @var array<string, string>
-     */
-    private const EXTENSOES = [
-        'application/pdf' => 'pdf',
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-        'image/gif' => 'gif',
-        'image/heic' => 'heic',
-        'image/heif' => 'heif',
     ];
 
     public function __construct(private readonly EncargosAtrasoService $encargos) {}
@@ -461,22 +446,9 @@ class CancelamentoMatriculaService
             throw new \DomainException('O distrato assinado só é anexado depois da aprovação e antes da conclusão.');
         }
 
-        $conteudo = $arquivo->get();
-
-        if (! is_string($conteudo) || $conteudo === '') {
-            throw new \DomainException('Arquivo vazio ou ilegível.');
-        }
-
-        $tipo = (new \finfo(FILEINFO_MIME_TYPE))->buffer($conteudo) ?: '';
-
-        if (! in_array($tipo, TiposArquivo::documentos(), true) || ! isset(self::EXTENSOES[$tipo])) {
-            throw new \DomainException('Envie o distrato assinado em PDF ou em foto (JPG, PNG ou WEBP).');
-        }
-
         $anterior = $cancelamento->distrato_assinado_path;
-        $caminho = "cancelamentos_matricula/{$cancelamento->id}/distrato-assinado-".now()->format('YmdHis').'.'.self::EXTENSOES[$tipo];
+        $caminho = ArquivoPrivado::guardarDocumento($arquivo, "cancelamentos_matricula/{$cancelamento->id}", 'distrato-assinado-'.now()->format('YmdHis'));
 
-        Storage::disk('local')->put($caminho, $conteudo);
         $cancelamento->update(['distrato_assinado_path' => $caminho]);
 
         if ($anterior && $anterior !== $caminho) {

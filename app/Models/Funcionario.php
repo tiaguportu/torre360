@@ -93,6 +93,14 @@ class Funcionario extends Model
         return $this->hasMany(PontoBancoHorasLancamento::class)->orderByDesc('data')->orderByDesc('id');
     }
 
+    /**
+     * Admissões e desligamentos (Onda 65), do mais recente para o mais antigo.
+     */
+    public function processos(): HasMany
+    {
+        return $this->hasMany(ProcessoFuncionario::class)->orderByDesc('data_prevista')->orderByDesc('id');
+    }
+
     public function isAtivo(): bool
     {
         return $this->data_desligamento === null;

@@ -101,7 +101,12 @@ class VisualizarDocumentoController extends Controller
                 $autorizado = true;
             }
         }
-        // Contexto E: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
+        // Contexto E: Comprovantes de admissão e desligamento de funcionários (Onda 65): RH é da administração, então
+        // secretaria e coordenação só abrem se tiverem a permissão específica.
+        elseif (str_starts_with($path, 'processos_funcionario/')) {
+            $autorizado = $user->can('View:ProcessoFuncionario');
+        }
+        // Contexto F: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
         elseif ($user->isEquipeAdministrativa()) {
             $autorizado = true;
         } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
