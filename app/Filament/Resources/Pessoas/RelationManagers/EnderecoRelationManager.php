@@ -60,6 +60,7 @@ class EnderecoRelationManager extends RelationManager
                 DetachAction::make()
                     ->authorize('detachEndereco'),
                 DeleteAction::make(),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

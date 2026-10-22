@@ -32,7 +32,8 @@ class HabilidadesRelationManager extends RelationManager
                 Textarea::make('descricao')
                     ->label('Descrição')
                     ->columnSpanFull(),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

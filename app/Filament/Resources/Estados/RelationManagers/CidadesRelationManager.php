@@ -28,7 +28,8 @@ class CidadesRelationManager extends RelationManager
                     ->maxLength(255),
                 Forms\Components\TextInput::make('codigo_ibge')
                     ->maxLength(7),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

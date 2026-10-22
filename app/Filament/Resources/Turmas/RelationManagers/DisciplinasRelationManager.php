@@ -34,7 +34,8 @@ class DisciplinasRelationManager extends RelationManager
                     ->options(Pessoa::all()->pluck('nome', 'id'))
                     ->searchable()
                     ->preload(),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

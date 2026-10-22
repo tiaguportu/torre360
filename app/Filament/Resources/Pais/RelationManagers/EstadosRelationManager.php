@@ -29,7 +29,8 @@ class EstadosRelationManager extends RelationManager
                 Forms\Components\TextInput::make('sigla')
                     ->required()
                     ->maxLength(2),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

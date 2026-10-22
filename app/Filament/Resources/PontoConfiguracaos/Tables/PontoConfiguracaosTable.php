@@ -64,6 +64,7 @@ class PontoConfiguracaosTable
                             ->persistent()
                             ->send();
                     }),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

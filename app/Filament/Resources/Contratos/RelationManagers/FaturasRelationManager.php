@@ -82,6 +82,7 @@ class FaturasRelationManager extends RelationManager
                                 ->send();
                         }
                     }),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 }

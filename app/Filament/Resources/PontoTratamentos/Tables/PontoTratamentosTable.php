@@ -56,7 +56,8 @@ class PontoTratamentosTable
                     ->requiresConfirmation()
                     ->visible(fn (PontoTratamento $record): bool => (bool) auth()->user()?->can('recusar', $record))
                     ->action(fn (PontoTratamento $record) => self::executar(fn () => app(PontoTratamentoService::class)->recusar($record, auth()->user()), 'Ajuste recusado')),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     private static function executar(callable $acao, string $sucesso): void

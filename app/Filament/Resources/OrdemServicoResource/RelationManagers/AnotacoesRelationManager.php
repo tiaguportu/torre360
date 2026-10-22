@@ -35,7 +35,8 @@ class AnotacoesRelationManager extends RelationManager
                     ->columnSpanFull(),
                 Hidden::make('user_id')
                     ->default(auth()->id()),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

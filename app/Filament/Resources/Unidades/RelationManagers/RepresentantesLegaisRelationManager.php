@@ -31,7 +31,8 @@ class RepresentantesLegaisRelationManager extends RelationManager
                     ->maxLength(255),
                 TextInput::make('cargo')
                     ->maxLength(255),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

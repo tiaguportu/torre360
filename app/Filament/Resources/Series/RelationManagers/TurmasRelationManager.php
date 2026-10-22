@@ -60,7 +60,8 @@ class TurmasRelationManager extends RelationManager
                 TextInput::make('vagas_maximas')
                     ->numeric()
                     ->default(30),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

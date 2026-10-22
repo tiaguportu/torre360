@@ -33,7 +33,8 @@ class SeriesRelationManager extends RelationManager
                         'Parecer' => 'Parecer',
                     ])
                     ->required(),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table

@@ -55,7 +55,8 @@ class MatrizCurricularRelationManager extends RelationManager
                     ->label('Obrigatória')
                     ->default(true)
                     ->helperText('Disciplinas não obrigatórias (optativas) também são sincronizadas com as turmas.'),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public function table(Table $table): Table
