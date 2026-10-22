@@ -195,7 +195,7 @@ class CensoEscolar extends Page
                     'Confira a lista: o sistema calcula a situação pelo resultado final, pelas transferências e pela matrícula. Ajuste os casos que o sistema não sabe (por exemplo, falecimento).',
                     'Baixe o arquivo da Situação do Aluno e importe no Educacenso (Migração > Importação).',
                 ])
-                ->alerta('A importação no Educacenso sobrepõe o que a escola já informou. Arquivo com matrículas de fora é aceito como "importado parcialmente": informe os demais alunos direto no sistema do Inep.')
+                ->alerta('A importação no Educacenso sobrepõe tudo o que a escola já informou (inclusive à mão) e não dá para enviar o arquivo em partes: gere-o quando a lista estiver sem pendências. Se alguma matrícula ficar de fora, o Inep aceita o arquivo como "importado parcialmente" e esses alunos devem ser informados direto nos formulários do Educacenso, sem importar de novo.')
                 ->dica('A data de referência do Censo é a última quarta-feira de maio. Quem entrou depois dela vai no registro 91 (admitido após).')),
         ];
     }
