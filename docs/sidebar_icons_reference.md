@@ -12,6 +12,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **AutoavaliacaoDocente** | `Heroicon::OutlinedUserCircle` | Filament Enum |
 | **Avaliacao** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
 | **AvaliacaoDocente** | `Heroicon::OutlinedPresentationChartLine` | Filament Enum |
+| **CancelamentoMatricula** | `Heroicon::OutlinedDocumentMinus` | Filament Enum |
 | **Cardapio** | `Heroicon::OutlinedCake` | Filament Enum |
 | **CategoriaAvaliacao** | `Heroicon::OutlinedTag` | Filament Enum |
 | **CenarioReajuste** | `Heroicon::OutlinedArrowTrendingUp` | Filament Enum |
@@ -45,6 +46,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **PontoConfiguracao** | `Heroicon::OutlinedCog6Tooth` | Filament Enum |
 | **PontoTratamento** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
 | **PortfolioItem** | `Heroicon::OutlinedPhoto` | Filament Enum |
+| **ProcessoFuncionario** (Admissão e Desligamento) | `Heroicon::OutlinedArrowRightOnRectangle` | Filament Enum |
 | **ReservaEspaco** | `Heroicon::OutlinedCalendarDays` | Filament Enum |
 | **ResponsavelFinanceiro** | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **Serie** | `Heroicon::OutlinedDocumentText` | Filament Enum |
@@ -66,10 +68,18 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **CensoEscolar** | `heroicon-o-clipboard-document-check` | String |
 | **EnrollmentWizard** | `heroicon-o-user-plus` | String |
 | **EspelhoDePonto** | `heroicon-o-document-text` | String |
+| **GradeHorariaAssistida** | `heroicon-o-squares-2x2` | String |
 | **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |
 | **PainelFerias** | `heroicon-o-sun` | String |
 | **RegistrarPonto** | `heroicon-o-clock` | String |
 | **SchoolSetupWizard** | `heroicon-o-home-modern` | String |
+
+## Portal da Família (Pages)
+
+| Página | Ícone | Tipo/Referência |
+| :--- | :--- | :--- |
+| **CancelamentoDeMatricula** | `heroicon-o-document-minus` | String |
+| **ListaDeMaterial** | `heroicon-o-shopping-bag` | String |
 
 ---
 *Documento gerado automaticamente para referência de design e consistência visual.*

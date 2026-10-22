@@ -6,6 +6,9 @@ contexto, o que já existe no sistema (conferido no código), escopo, base legal
 - **Implementadas (2):** 58 e 59.
 - **Propostas (10):** 49, 50, 51, 52, 53, 54, 55, 56, 57 e 60. Não há código, migration nem teste delas.
 
+Seguem as [ondas 61 a 67](ondas_61_a_67_indice.md): quatro implementadas (cancelamento de matrícula, encargos
+por atraso, grade horária assistida e admissão e desligamento) e duas propostas.
+
 ## Visão geral
 
 | Onda | Tema | Área | Status | Documento |

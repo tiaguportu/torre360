@@ -375,6 +375,52 @@ Detalhes em `docs/lista_material_escolar_roadmap.md`.
 
 ---
 
+### 28. 📄 Cancelamento de Matrícula e Distrato (Onda 61)
+Do pedido da família ao distrato assinado, com o destino de cada fatura. Detalhes em `docs/cancelamento_matricula_distrato_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `CancelamentoMatricula` | Pedido pelo Portal ou registrado pela secretaria; aprovar, recusar, retirar e concluir, com o motivo criptografado e fora do log |
+| Proposta por fatura | Mantém a entrada e o que vence até o fim do mês da saída; cancela o que vence depois e não foi pago; devolve o pago adiantado. A secretaria troca cada decisão |
+| **Distrato** (PDF) | Termo com as faturas, valores, multa rescisória (se houver) e a nota da Lei nº 9.870/1999; cópia assinada em área privada |
+| Conclusão | Matrícula cancelada, faturas canceladas (cobrança tirada do gateway), rematrícula sem contrato cancelada e Declaração de Transferência opcional |
+
+---
+
+### 29. 🧮 Encargos por Atraso (Onda 62)
+Multa e juros calculados na hora, com o teto legal. Detalhes em `docs/encargos_atraso_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `EncargosAtrasoService` | Multa de mora uma vez (teto de 2%, CDC art. 52, § 1º) e juros simples por dia; vencimento em fim de semana ou feriado vale no dia útil seguinte; carência opcional; percentuais por contrato |
+| `Fatura::emAtraso()` | Atrasada ou pendente/parcial vencida. **Corrigiu o Relatório de Inadimplência**, que só listava o status `Atrasado`, que ninguém gravava |
+| **Demonstrativo de débito** (PDF) | Faturas vencidas com multa, juros e total; no Portal da Família e na equipe |
+
+---
+
+### 30. 🧑‍💼 Admissão e Desligamento de Funcionários (Onda 65)
+Lista de providências com prazo e comprovante, e retirada dos acessos na saída. Detalhes em `docs/admissao_desligamento_funcionarios_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `ProcessoFuncionario` | Admissão ou desligamento com a lista padrão de `config/rh_processos.php` (documentos, exame, contrato e eSocial, acessos, equipamentos, treinamento, financeiro) |
+| Concluir | Exige as providências obrigatórias; no desligamento, a partir do último dia, grava a data e tira os papéis de equipe (mantém os de família; super admin só avisa) |
+| Privacidade | Comprovantes em área privada, só para quem tem `View:ProcessoFuncionario`; motivo e observação cifrados e fora do log |
+
+---
+
+### 31. 🗓️ Grade Horária Assistida (Onda 64)
+A grade de cada turma conferida contra a matriz curricular, com sugestão dos horários que faltam. Detalhes em `docs/grade_horaria_assistida_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `TempoAula` | O "sinal" de cada turno, com geração automática; um horário da grade vale tantas aulas quantos tempos couberem |
+| `DisponibilidadeProfessor` | Janelas em que o professor pode ou não dar aula; sem janelas, está livre |
+| **Grade Assistida** | Conferência com a matriz (aulas esperadas × na grade) e sugestão gulosa que respeita tempos livres, professor ocupado em outras turmas, disponibilidade e limite diário; nunca troca o que já existe |
+| Conflito por período | O conflito de professor e sala só vale entre turmas de períodos que se cruzam; turma cancelada não ocupa ninguém |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -505,7 +551,11 @@ autorizada:
 | Ondas 27 a 48 (16 propostas, 5 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
 | NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
 | Ondas 49 a 60 (10 propostas e 2 implementadas), com as ampliações propostas em ondas existentes | `docs/ondas_49_a_60_indice.md` |
+| Ondas 61 a 67 (2 propostas, 4 implementadas e 1 mesclada à Onda 35), com as ampliações propostas | `docs/ondas_61_a_67_indice.md` |
+| Conferência de cláusulas dos modelos de contrato (Onda 66) | `docs/conferencia_clausulas_contrato_roadmap.md` |
+| Loja escolar opcional: uniformes e livros (Onda 67) | `docs/loja_escolar_roadmap.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
-Censo Escolar e a lista de material, nas seções 26 e 27.)
+Censo Escolar e a lista de material, nas seções 26 e 27; o cancelamento de matrícula, os encargos por atraso,
+a admissão e o desligamento e a grade horária assistida, nas seções 28 a 31.)

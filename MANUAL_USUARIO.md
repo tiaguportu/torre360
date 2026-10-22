@@ -3786,4 +3786,116 @@ Na simulação de reajuste (seção 70), o sistema avisa quando alguma série da
 
 ---
 
+## 📄 74. Cancelamento de Matrícula e Distrato (`/admin/cancelamentos-matricula`)
+
+Cuida do pedido de cancelamento, do destino de cada fatura e do distrato. Fica no grupo **Secretaria**. A secretaria e a administração decidem; a coordenação só consulta.
+
+### 74.1 O pedido
+- **Pela família:** no Portal, em **Meus Dados → Cancelar Matrícula**, o responsável pelo aluno, o responsável financeiro do contrato ou o próprio aluno **maior de idade** clica em **Pedir cancelamento**, escolhe o motivo e o último dia do aluno na escola e marca a ciência de que as mensalidades até o mês da saída continuam devidas. Enquanto a secretaria não analisa, ela pode **retirar o pedido**.
+- **Pela secretaria:** **Registrar pedido**, quando a família avisou por telefone ou pessoalmente. Aqui a data de saída pode ser anterior a hoje.
+- Só há um pedido em andamento por matrícula. O detalhe que a família escreve fica criptografado e não aparece no histórico de alterações.
+
+### 74.2 Conferir e aprovar
+1. Em **Situação financeira**, veja o que a família deve (com multa e juros até hoje) e o que já pagou adiantado.
+2. Clique em **Aprovar**. O sistema sugere o destino de cada fatura, e você pode trocar:
+
+| Fatura | Sugestão |
+|---|---|
+| Entrada, e tudo o que vence até o **último dia do mês da saída** | **Manter** (o mês da saída é cobrado inteiro) |
+| Vence depois e **não foi paga** | **Cancelar** |
+| Vence depois e **já tem pagamento** (inteiro ou parcial) | **Devolver** o que foi pago |
+
+3. Informe a **multa rescisória** só se o contrato a previr: ela vira uma fatura ao concluir. Marque a **Declaração de Transferência** se o aluno vai para outra escola.
+4. Para negar, use **Recusar** e escreva o motivo: a família o lê no Portal.
+
+### 74.3 Distrato
+Depois de aprovado, **Distrato (PDF)** gera o termo com as faturas, os valores e a nota sobre os documentos de transferência. Imprima, colha a assinatura e use **Anexar distrato assinado** (PDF ou foto). O arquivo fica em área privada.
+
+### 74.4 Concluir
+**Concluir** só funciona a partir da data de saída e, por padrão, com o distrato assinado anexado. Ele cancela a matrícula, cancela as faturas marcadas (tirando a cobrança do gateway), cria a fatura da multa (se houver), cancela a rematrícula do próximo ano que ainda não tinha turma nem contrato e, se marcado, abre o processo de saída em Transferências Escolares e emite a declaração. Os avisos aparecem na tela (por exemplo, uma fatura marcada para cancelar que recebeu pagamento depois da aprovação **não** é cancelada).
+
+### 74.5 Devolução
+Se há dinheiro a devolver, devolva à família, lance a saída em **Movimentação Bancária** e use **Registrar devolução** para guardar a data. O pedido fica marcado com "devolução pendente" até lá.
+
+### 74.6 Cuidados
+- O distrato é um **modelo**: peça ao jurídico da escola para revisar o texto antes de usar.
+- Multa por rescisão só vale se estiver no contrato e não pode ser abusiva (CDC, art. 51, IV).
+- A Declaração de Transferência sai **mesmo com débito**: a lei não permite reter documento de transferência por inadimplência.
+- **Encerrar pedido** serve para quando a família desistiu: a matrícula e as faturas não mudam.
+
+---
+
+## 🧮 75. Encargos por Atraso e Demonstrativo de Débito
+
+O sistema calcula, na hora, a multa e os juros de cada fatura vencida. Os valores aparecem em **Financeiro → Faturas** (coluna **Multa e Juros**), no **Relatório de Inadimplência**, no **Acordo de Inadimplência** e no **Portal da Família → Financeiro**.
+
+### 75.1 Como é calculado
+- **Multa:** uma vez só, sobre o saldo em aberto (padrão 2%, o máximo que a lei permite: CDC, art. 52, § 1º).
+- **Juros:** simples, por dia de atraso (padrão 1% ao mês, dividido por 30).
+- **Fim de semana e feriado:** vencimento em sábado, domingo ou feriado vale no **próximo dia útil**. A lista de feriados fica em `config/financeiro.php` (peça à equipe técnica).
+- **Pagamento parcial** reduz o valor sobre o qual se calcula. Fatura paga ou cancelada não tem encargo.
+- O valor **muda a cada dia**: nada é gravado na fatura.
+
+### 75.2 Percentuais do contrato
+No contrato há os campos **Multa de mora (%)** e **Juros de mora ao mês (%)**. Se ficarem em branco, vale o padrão da escola. A multa digitada acima de 2% é recusada. Os percentuais ficam no contrato: mudar o padrão da escola depois não altera os contratos já assinados.
+
+### 75.3 Demonstrativo de débito
+No Portal, o botão **Demonstrativo de débito** (um por aluno com fatura vencida) gera o PDF com cada fatura, os dias de atraso, a multa, os juros e o total. A equipe com permissão de ver faturas abre o demonstrativo de qualquer aluno; a emissão fica no histórico (sem os valores).
+
+### 75.4 Cuidados
+- O **boleto ou PIX** já emitido no banco **não muda**: o demonstrativo avisa que o valor do banco pode ser diferente. Confira antes de orientar a família.
+- O relatório de inadimplência agora lista também as faturas **pendentes ou parciais já vencidas** (antes só listava as marcadas como atrasadas, que o sistema nunca marcava).
+- Os percentuais precisam estar no contrato; confira com o jurídico.
+
+---
+
+## 🗓️ 76. Grade Horária Assistida (`/admin/calendario/grade-assistida`)
+
+Confere a grade de uma turma com a matriz curricular da série e sugere os horários que faltam. Fica em **Calendário e Horários**, para administração, secretaria e coordenação.
+
+### 76.1 Antes de começar
+1. **Tempos de aula do turno:** em **Configurações → Turnos**, aba **Tempos de aula**, cadastre os tempos ou use **Gerar tempos** (primeiro horário, quantidade, duração e o intervalo).
+2. **Matriz curricular:** informe as aulas por semana de cada disciplina na série.
+3. **Professor da disciplina:** em cada turma, defina quem leciona cada disciplina. Sem professor, a disciplina não é sugerida.
+
+### 76.2 Conferência
+Escolha o período e a turma. A tabela mostra, por disciplina, as aulas **esperadas** pela matriz e as que **já estão na grade** (aula dupla vale 2), com a situação: completa, faltam, aulas a mais, sem carga na matriz ou fora da matriz. A **visão geral do período** lista as turmas e quantas aulas faltam em cada uma.
+
+### 76.3 Disponibilidade dos professores
+Em **Disponibilidade dos professores da turma**, clique em **Disponibilidade** e informe as janelas: dias e horários em que o professor **pode** dar aula, ou em que **não pode**. Sem nenhuma janela, o professor está livre. Havendo janelas "disponível", ele só dá aula dentro delas. Na grade manual da turma, marcar horário fora da disponibilidade **avisa**, mas deixa salvar.
+
+### 76.4 Sugerir horários
+Clique em **Sugerir horários**: o sistema mostra o que colocaria e as aulas que não achou lugar, com o motivo. **Aplicar sugestão** grava os horários (calculando de novo na hora e conferindo conflitos). Ele só usa tempos livres da turma, não coloca o professor em dois lugares (nem em outra turma do mesmo período), respeita a disponibilidade, espalha a disciplina pela semana e **nunca troca nem apaga** o que já existe. Depois ajuste na aba **Grade Horária** da turma e gere o cronograma em **Turmas**.
+
+### 76.5 Cuidados
+- É uma sugestão, não uma otimização: se sobrar aula, libere horários ou ajuste a disponibilidade e sugira de novo.
+- A sugestão não escolhe sala.
+- O conflito de professor e de sala só vale entre turmas de períodos letivos que se cruzam, e turma cancelada não conta.
+
+---
+
+## 🧑‍💼 77. Admissão e Desligamento de Funcionários (`/admin/rh/admissao-desligamento`)
+
+Lista de providências com prazo e comprovante para quem entra e para quem sai. Fica em **RH**, para a administração. O número no menu mostra as providências com o prazo vencido.
+
+### 77.1 Iniciar
+1. Cadastre a pessoa em **Funcionários**.
+2. Em **Admissão e Desligamento** (ou na aba **Admissão e Desligamento** da página do funcionário), clique em **Iniciar admissão** (data do primeiro dia de trabalho) ou **Iniciar desligamento** (último dia de trabalho e o motivo).
+3. O sistema cria a lista de providências: documentos, exame médico, contrato e eSocial, acessos, equipamentos, treinamento e financeiro, cada uma com o prazo contado a partir da data.
+
+### 77.2 Providências
+Em cada linha: **Marcar como feito** (com observação e comprovante em PDF ou foto, se quiser), **Não se aplica** (sempre com uma justificativa, mesmo nas obrigatórias), **Anexar comprovante** e **Reabrir**. **Acrescentar providência** inclui algo que a lista padrão não tem. Os comprovantes ficam em área privada, visíveis só para quem pode ver este módulo.
+
+### 77.3 Concluir
+**Concluir processo** exige as providências **obrigatórias** resolvidas.
+- **Admissão:** encerra o processo; o cadastro do funcionário não muda.
+- **Desligamento:** só a partir do **último dia de trabalho**. Grava a data de desligamento e **retira os acessos de equipe** ao sistema. Quem também é responsável ou aluno da escola mantém a conta, só sem os papéis de equipe; sem papel nenhum, a conta é desativada. **Super administrador não é alterado**: o sistema avisa para você ajustar. Aulas na grade horária com o professor viram aviso.
+
+### 77.4 Cuidados
+- A lista é um ponto de partida para escola privada com contratação pela CLT. Confira prazos e exigências com o contador e o jurídico (a equipe técnica ajusta em `config/rh_processos.php`).
+- O módulo **não calcula a rescisão, não gera o TRCT e não envia nada ao eSocial**: ele controla o que foi feito.
+- O motivo do desligamento e a observação ficam criptografados e fora do histórico de alterações.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.

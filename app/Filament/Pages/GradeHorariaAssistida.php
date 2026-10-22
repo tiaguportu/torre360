@@ -34,7 +34,7 @@ class GradeHorariaAssistida extends Page
 {
     use HasAjudaAction;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-table-cells';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
     protected static UnitEnum|string|null $navigationGroup = 'Calendário e Horários';
 

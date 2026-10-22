@@ -206,7 +206,8 @@ Estrutura de ensino e turmas.
 - **Representa:** Horário recorrente da grade semanal de uma turma — vale para todas as semanas do período letivo. É a origem do `cronograma_aula` gerado por `GradeHorarioService::gerarCronograma()`.
 - **Campos Principais:** `turma_id`, `disciplina_id`, `professor_id` (FK `pessoa`, nullable), `sala_id` (nullable), `dia_semana` (mesma convenção de `turma_horario`: 0=Domingo...6=Sábado), `hora_inicio`, `hora_fim`.
 - **Relacionamentos:** BelongsTo `turma`, `disciplina`, `professor` (Pessoa), `sala`.
-- **Conflitos:** `GradeHorarioConflitoService::conflitos()` detecta sobreposição de horário (mesmo dia da semana + intervalo cruzado) para a mesma turma, o mesmo professor ou a mesma sala; usado para bloquear o cadastro na UI (RelationManager da Turma).
+- **Conflitos:** `GradeHorarioConflitoService::conflitos()` detecta sobreposição de horário (mesmo dia da semana + intervalo cruzado) para a mesma turma, o mesmo professor ou a mesma sala; usado para bloquear o cadastro na UI (RelationManager da Turma). Desde a Onda 64, professor e sala só conflitam com turmas de **períodos letivos que se cruzam** (por data) e turma `cancelada` não ocupa ninguém. `avisos()` devolve, sem bloquear, o aviso de professor fora da disponibilidade.
+- **Conferência e sugestão (Onda 64):** `GradeAssistidaService` compara a grade com `matriz_curricular.carga_horaria_semanal` (aulas por semana; um horário vale tantos `tempos_aula` quantos couberem nele) e sugere os horários que faltam; veja a seção 31.
 
 ### `matricula`
 - **Representa:** Vínculo do aluno com uma turma em um período letivo.
@@ -339,6 +340,7 @@ Estrutura de ensino e turmas.
 - Acordo comercial de prestação de serviço.
 - **Principais Campos:** `valor_total`, `data_aceite`, `template_contrato_id`, `matricula_id`.
 - **Campos de Assinatura (Assinafy):** `assinafy_id`, `assinafy_status`, `assinafy_request_log`.
+- **Encargos por atraso (Onda 62):** `multa_percentual` e `juros_mensal_percentual` (decimal 5,2, nullable). Em branco vale o padrão de `config/financeiro.php` (`encargos`). A multa é limitada a 2% (CDC, art. 52, § 1º) e os juros a 12% ao mês no cálculo.
 - **Relacionamentos:** BelongsTo `matricula` (Aluno), HasMany `responsavel_financeiro`, HasMany `faturas`, BelongsTo `template_contratos`.
 
 ### `template_contratos`
@@ -1668,3 +1670,59 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 ### `itens_lista_material`
 - **Campos Principais:** `lista_material_id` (FK, cascade), `descricao` (160), `quantidade` (smallint, 1 a 999), `unidade` (30, nullable), `categoria` (Enum `CategoriaItemMaterial`: `papelaria`, `livros`, `arte`, `higiene_pessoal`, `educacao_fisica`, `outros`), `observacao` (255), `uso_individual_confirmado` (boolean), `ordem` (índice `idx_item_lista_ordem`).
 - **Regras:** não há campo de marca nem de loja (venda casada). A trava de uso coletivo está no `ListaMaterialService` (termos em `config/material_escolar.php`); `uso_individual_confirmado` só é verdadeiro em item de "atenção".
+
+---
+
+## 28. Cancelamento de Matrícula e Distrato (Onda 61)
+
+### `cancelamentos_matricula`
+- **Representa:** Pedido de cancelamento de uma matrícula e o distrato que o fecha. Um pedido em andamento por matrícula (regra do `CancelamentoMatriculaService`, sem índice único).
+- **Campos Principais:** `matricula_id` (FK `matricula`, restrict), `origem` (`familia`, `escola` — Enum `OrigemCancelamentoMatricula`), `motivo` (Enum `MotivoCancelamentoMatricula`), `motivo_detalhe` (text, **cifrado**), `data_efetiva` (date: último dia do aluno), `status` (`solicitado`, `aprovado`, `concluido`, `recusado`, `retirado` — Enum `StatusCancelamentoMatricula`).
+- **Distrato:** `decisoes` (JSON: id da fatura => `manter`, `cancelar` ou `devolver`), `valor_devido`, `multa_rescisoria`, `valor_a_devolver` (decimal 10,2; valores da aprovação, com multa e juros até a data), `distrato_gerado_em`, `distrato_assinado_path` (disco `local`, pasta `cancelamentos_matricula/{id}/`), `devolucao_realizada_em` (date).
+- **Saída para outra escola:** `gerar_transferencia` (boolean), `escola_destino`, `transferencia_escolar_id` (FK `transferencias_escolares`, nullOnDelete).
+- **Decisão:** `observacao` (interna), `motivo_recusa` (a família lê), `solicitado_por_user_id`, `decidido_por_user_id`, `decidido_em`, `concluido_por_user_id`, `concluido_em` (FKs `users`, nullOnDelete).
+- **Índices:** `idx_cancelamento_matricula_status` (`matricula_id`, `status`) e `idx_cancelamento_status`.
+- **Regras:** concluir exige estado `aprovado`, `data_efetiva` já chegada e (config `cancelamento.exige_distrato_assinado`) a cópia assinada. Cancela a matrícula (`CANCELADA` + `data_desativacao`), as faturas marcadas, a cobrança no gateway (melhor esforço), cria a fatura da multa rescisória e cancela a rematrícula sem turma nem contrato. O log (`secretaria`) nunca leva o texto do motivo.
+- **Permissões:** `ViewAny`, `View`, `Create`, `Aprovar`, `Concluir` `:CancelamentoMatricula`. Sem edição nem exclusão.
+- **Relacionamentos:** BelongsTo `matricula`, `transferenciaEscolar`, `solicitadoPor`, `decididoPor`, `concluidoPor`.
+
+---
+
+## 29. Encargos por Atraso (Onda 62)
+
+> Não há tabela nova. O cálculo (`EncargosAtrasoService`) é feito na hora e nada é gravado na fatura. Os parâmetros ficam em `config/financeiro.php` (`encargos`: `multa_percentual`, `juros_mensal_percentual`, `carencia_dias`, `feriados`) e, por contrato, em `contrato.multa_percentual` e `contrato.juros_mensal_percentual` (veja a seção 5).
+
+- **Atraso:** `Fatura::emAtraso()` = status `atrasado` **ou** `pendente`/`parcial` com `vencimento` anterior a hoje. Nenhum processo grava `atrasado` sozinho.
+- **Conta:** multa uma vez sobre o saldo em aberto; juros simples = saldo × % ao mês × dias ÷ 30. Vencimento em sábado, domingo ou feriado vale no próximo dia útil; a carência adia a cobrança, e os juros contam desde o vencimento.
+
+---
+
+## 30. Admissão e Desligamento de Funcionários (Onda 65)
+
+### `processos_funcionario`
+- **Representa:** Uma admissão ou um desligamento de um funcionário.
+- **Campos Principais:** `funcionario_id` (FK `funcionarios`, restrict), `tipo` (`admissao`, `desligamento` — Enum `TipoProcessoFuncionario`), `status` (`em_andamento`, `concluido`, `cancelado` — Enum `StatusProcessoFuncionario`), `data_prevista` (primeiro ou último dia de trabalho), `motivo` (Enum `MotivoDesligamentoFuncionario`, só no desligamento), `observacao` (text, **cifrado**), `iniciado_por_user_id`, `concluido_por_user_id` (FKs `users`, nullOnDelete), `concluido_em`.
+- **Índice:** `idx_processo_func_tipo_status` (`funcionario_id`, `tipo`, `status`). Um processo em andamento por tipo e funcionário é regra do `ProcessoFuncionarioService`.
+- **Regras:** concluir exige as providências obrigatórias resolvidas. Desligamento só conclui a partir de `data_prevista`: grava `funcionarios.data_desligamento`, tira de cada usuário da pessoa todo papel que não seja `responsavel` ou `aluno` e as permissões diretas, e desativa a conta sem papel sobrando (`users.deactivated_at`). `super_admin` não é alterado (aviso).
+- **Permissões:** `ViewAny`, `View`, `Create`, `Update`, `Concluir` `:ProcessoFuncionario` (administração).
+- **Relacionamentos:** BelongsTo `funcionario`, `iniciadoPor`, `concluidoPor`; HasMany `itens` (por `ordem`). `Funcionario::processos()`.
+
+### `itens_processo_funcionario`
+- **Campos Principais:** `processo_id` (FK, cascade), `categoria` (Enum `CategoriaItemProcessoFuncionario`), `titulo` (200), `orientacao` (300), `obrigatorio` (boolean), `prazo` (date), `ordem`, `concluido_em`, `nao_se_aplica` (boolean; exige justificativa em `observacao`), `observacao` (300), `arquivo_path` (disco `local`, `processos_funcionario/{processo}/`; só abre com `View:ProcessoFuncionario`), `concluido_por_user_id`.
+- **Índice:** `idx_item_processo_func_ordem` (`processo_id`, `ordem`). A lista inicial vem de `config/rh_processos.php`.
+
+---
+
+## 31. Grade Horária Assistida (Onda 64)
+
+### `tempos_aula`
+- **Representa:** Os tempos de aula (o "sinal") de um turno.
+- **Campos Principais:** `turno_id` (FK `turno`, cascade), `ordem` (smallint), `hora_inicio`, `hora_fim` (time). Único por (`turno_id`, `ordem`) (`uq_tempo_aula_turno_ordem`). O intervalo é o espaço entre dois tempos. Sem cruzar tempos do mesmo turno (regra da tela).
+- **Relacionamentos:** BelongsTo `turno`; `Turno::temposAula()` (por `ordem`).
+
+### `disponibilidades_professor`
+- **Representa:** Janelas semanais em que um professor pode ou não dar aula.
+- **Campos Principais:** `pessoa_id` (FK `pessoa`, cascade), `dia_semana` (0=Domingo...6=Sábado), `hora_inicio`, `hora_fim`, `tipo` (`disponivel`, `indisponivel` — Enum `TipoDisponibilidadeProfessor`), `observacao` (160). Índice `idx_disponibilidade_pessoa_dia`.
+- **Regra (`DisponibilidadeProfessorService`):** sem janela, o professor está livre; `indisponivel` sempre bloqueia; havendo `disponivel`, só vale dentro delas (dia sem janela = não dá aula; janelas coladas valem como uma).
+
+> A conferência com a matriz usa `matriz_curricular.carga_horaria_semanal` (aulas por semana) e `turma_disciplina.professor_id`. A sugestão (`GradeAssistidaService`) não grava nada até a ação "Aplicar"; configuração em `config/grade_horaria.php` (`dias_da_semana`, `maximo_aulas_por_dia_da_disciplina`, `sugerir_sem_professor`). Permissão `GradeAssistida:Turma`.

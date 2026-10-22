@@ -42,7 +42,7 @@ class ProcessoFuncionarioResource extends Resource implements HasShieldPermissio
 
     protected static ?string $model = ProcessoFuncionario::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowRightOnRectangle;
 
     protected static UnitEnum|string|null $navigationGroup = 'RH';
 

@@ -44,6 +44,47 @@ solicitações comuns e não protege a identidade de quem relata.
   ser definido com o jurídico da escola.
 - Quem é citado na denúncia não pode participar da apuração.
 
+## Ampliação: programa de convivência escolar e prevenção ao bullying
+
+> Esta seção reúne o que foi pensado como uma "Onda 63" separada. O canal, a fila restrita, a apuração e a
+> devolutiva acima já cobrem o **recebimento e o tratamento do caso**; o que sobra é o **programa da escola**
+> e o acompanhamento do aluno, que usa o mesmo cadastro em vez de abrir um segundo. Por isso foi mesclada aqui
+> e não virou onda própria. Continua sendo proposta.
+
+### Base legal (a conferir com o jurídico da escola)
+
+- **Lei nº 13.185/2015**: institui o Programa de Combate à Intimidação Sistemática (bullying) e manda a escola
+  agir na prevenção e no combate, sem aplicar punição de caráter pedagógico que não ajude a resolver.
+- **LDB, art. 12, IX e X** (Lei nº 13.663/2018): o estabelecimento promove medidas de conscientização,
+  prevenção e combate a todos os tipos de violência, especialmente o bullying, e ações de cultura de paz.
+- **Lei nº 14.811/2024**: tipifica a intimidação sistemática (bullying) e a virtual (cyberbullying) no Código
+  Penal (art. 146-A) e traz medidas de proteção à criança e ao adolescente nos estabelecimentos de ensino.
+- **ECA, art. 13**, e **Lei nº 13.431/2017**: comunicação ao Conselho Tutelar nos casos de suspeita de violência.
+
+### O que acrescentar ao canal
+
+- **Categorias de convivência** no cadastro: bullying, cyberbullying, agressão física, discriminação,
+  assédio, exposição de imagem. O mesmo caso pode ter vários envolvidos (vítima, autor, testemunha) com o
+  papel de cada um.
+- **Plano de ação** com prazo e responsável: acolhimento da vítima, conversa com o autor, contato com as
+  famílias (registrado), mediação, encaminhamento à rede de proteção e ao Conselho Tutelar. Sem a
+  indicação de punição como única resposta.
+- **Acompanhamento** do aluno depois do encerramento (30 e 90 dias), com o registro de que o caso não se
+  repetiu.
+- **Prevenção** como ação registrada: rodas de conversa, campanhas e formação de professores, com data,
+  turma e participantes, para a escola comprovar o programa.
+- **Indicadores** sem identificar pessoas: casos por turma, por local e por horário, e o tempo até o primeiro
+  contato. Um relatório anual para a direção e o conselho escolar.
+- Ligar a **ocorrência escolar** (`OcorrenciaEscolar`) a um caso quando o registro disciplinar nasce de um
+  episódio de convivência.
+
+### Regras e limites
+
+- Os dados do caso são sensíveis e de criança: acesso só do comitê de convivência; a família do aluno vê a
+  devolutiva, nunca os dados do outro aluno envolvido.
+- Os procedimentos locais (secretarias de educação, protocolo do Ministério Público) variam: o plano de ação é
+  editável por modelo.
+
 ## Dependências já satisfeitas
 
 - Portal, armazenamento privado, permissões por papel e log de atividades.

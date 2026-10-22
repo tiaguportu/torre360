@@ -31,6 +31,14 @@ inviabilizar o seguro. Hoje cada um fica numa pasta ou na memória de alguém.
 - Ação "Abrir ordem de serviço de renovação" ligada à Onda 39 (quando o documento exige vistoria ou laudo).
 - Checklist por tipo de unidade, para o cadastro de uma filial nova não esquecer nada.
 
+### Ampliação proposta: contratos com vencimento
+O mesmo painel pode guardar os **contratos da escola que vencem**: seguro patrimonial e de responsabilidade
+civil, manutenção de elevador, extintores e ar-condicionado, vigilância e transporte, com a vigência, o valor, o
+índice de reajuste e a data limite para avisar o fornecedor de que não vai renovar. É o mesmo cadastro (tipo,
+vigência, arquivo privado, alerta), com o fornecedor ligado ao cadastro da Onda 38 (compras). A diferença é o
+alerta duplo: o do vencimento e o da data de aviso prévio, que costuma vir antes e é a que faz a escola pagar
+mais um ano por distração.
+
 ## Regras e limites
 
 - Exigências, prazos de validade e nomes dos documentos variam por município e por estado (por exemplo, o
