@@ -93,6 +93,38 @@ class ComunicacaoEmMassaResourceTest extends TestCase
         Queue::assertPushed(EnviarComunicacaoEmMassaJob::class, fn (EnviarComunicacaoEmMassaJob $job) => $job->comunicacao->is($comunicacao));
     }
 
+    public function test_modal_de_confirmacao_do_envio_lista_os_emails_de_quem_vai_receber(): void
+    {
+        Queue::fake();
+
+        $status = StatusInteressado::factory()->create();
+        $origem = OrigemInteressado::firstOrCreate(['nome' => 'Site']);
+
+        $recebe = Pessoa::factory()->create(['nome' => 'Maria Responsável', 'email' => 'maria@example.com', 'aceita_comunicacao' => true]);
+        $naoRecebe = Pessoa::factory()->create(['nome' => 'João Cancelado', 'email' => 'joao@example.com', 'aceita_comunicacao' => false]);
+
+        foreach ([$recebe, $naoRecebe] as $pessoa) {
+            Interessado::factory()->create([
+                'pessoa_id' => $pessoa->id,
+                'status_interessado_id' => $status->id,
+                'origem_interessado_id' => $origem->id,
+            ]);
+        }
+
+        $comunicacao = ComunicacaoEmMassa::factory()->paraInteressados([
+            'status_interessado_ids' => [$status->id],
+        ])->create();
+
+        Livewire::actingAs($this->usuario('secretaria'))
+            ->test(ListComunicacaoEmMassas::class)
+            ->mountAction(TestAction::make('enviar')->table($comunicacao))
+            ->assertMountedActionModalSee(['maria@example.com', 'Maria Responsável'])
+            ->assertMountedActionModalDontSee('joao@example.com');
+
+        // Só abrir o modal não envia nada: o disparo acontece apenas ao confirmar.
+        Queue::assertNothingPushed();
+    }
+
     public function test_acao_enviar_fica_oculta_para_comunicacao_ja_concluida(): void
     {
         $comunicacao = ComunicacaoEmMassa::factory()->create(['status' => StatusComunicacaoEmMassa::Concluida]);

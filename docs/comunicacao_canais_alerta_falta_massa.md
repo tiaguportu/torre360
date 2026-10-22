@@ -91,8 +91,16 @@ Resource: `App\Filament\Resources\ComunicacaoEmMassas\ComunicacaoEmMassaResource
    - `responsaveis_turma`: `filtros.turma_ids` — responsáveis dos alunos com
      `Matricula.situacao = ativa` nessas turmas (via pivô `aluno_responsavel`).
    - A lista mostra a contagem de destinatários (calculada ao vivo enquanto o
-     status é `rascunho`) e o botão **Enviar** confirma mostrando quantas pessoas
-     vão receber antes do envio.
+     status é `rascunho`).
+   - O botão **Enviar** abre um modal de confirmação com o total e a **lista de
+     quem vai receber** (nome e e-mail de cada `Pessoa` devolvida por
+     `destinatarios()`, ou seja, já sem quem fez opt-out ou não tem e-mail). A
+     lista rola a partir de ~16 rem de altura para não alongar o modal em envios
+     grandes. O job só é despachado ao confirmar; abrir o modal não envia nada.
+     Sem destinatários o botão fica desabilitado e o modal nem abre. Corpo do
+     modal: `resources/views/filament/comunicacao-em-massa/confirmar-envio.blade.php`
+     (via `modalContent()` em `ComunicacaoEmMassasTable`, uma única chamada ao
+     serviço por abertura).
 
 ### Regras de segmentação e envio (`ComunicacaoEmMassaService` / `EnviarComunicacaoEmMassaJob`)
 

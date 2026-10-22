@@ -31,9 +31,9 @@ class ListComunicacaoEmMassas extends ListRecords
                 ['📋', 'Listagem', 'Acompanhe status, público, total de destinatários, enviados e falhas de cada comunicação.'],
                 $user->can('Create:ComunicacaoEmMassa') ? ['🆕', 'Nova Comunicação', 'Defina nome, canal, assunto e o público por origem, status do funil ou turma.'] : null,
                 $user->can('Update:ComunicacaoEmMassa') ? ['✏️', 'Editar', 'Altere o conteúdo enquanto a comunicação ainda não foi enviada.'] : null,
-                ['🚀', 'Enviar', 'Dispara a mensagem para o público escolhido; o resultado aparece em Enviados e Falhas.'],
+                ['🚀', 'Enviar', 'Abre uma confirmação com a lista de e-mails que vão receber a mensagem; ao confirmar, dispara o envio e o resultado aparece em Enviados e Falhas.'],
             ])
-            ->alerta('O envio em massa não pode ser desfeito. Revise público e texto antes de clicar em Enviar.')
+            ->alerta('O envio em massa não pode ser desfeito. Revise público, texto e a lista de e-mails antes de confirmar o envio.')
             ->dica('Use os filtros de status e de público para localizar comunicações anteriores.');
     }
 }

@@ -83,13 +83,11 @@ class ComunicacaoEmMassasTable
                     ->visible(fn (ComunicacaoEmMassa $record): bool => $record->podeSerEnviada() && auth()->user()?->can('enviar', $record))
                     ->requiresConfirmation()
                     ->modalHeading('Enviar comunicação em massa')
-                    ->modalDescription(function (ComunicacaoEmMassa $record): string {
-                        $total = app(ComunicacaoEmMassaService::class)->destinatarios($record)->count();
-
-                        return $total > 0
-                            ? "Esta comunicação será enviada por e-mail para {$total} pessoa(s). Esta ação não pode ser desfeita."
-                            : 'Nenhum destinatário encontrado para os filtros escolhidos. Revise os filtros antes de enviar.';
-                    })
+                    ->modalDescription('Confira os destinatários antes de confirmar. Esta ação não pode ser desfeita.')
+                    ->modalContent(fn (ComunicacaoEmMassa $record) => view('filament.comunicacao-em-massa.confirmar-envio', [
+                        'destinatarios' => app(ComunicacaoEmMassaService::class)->destinatarios($record),
+                    ]))
+                    ->modalSubmitActionLabel('Enviar')
                     ->disabled(fn (ComunicacaoEmMassa $record): bool => app(ComunicacaoEmMassaService::class)->destinatarios($record)->isEmpty())
                     ->action(function (ComunicacaoEmMassa $record) {
                         EnviarComunicacaoEmMassaJob::dispatch($record);
