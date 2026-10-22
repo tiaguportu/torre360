@@ -14,6 +14,7 @@ use App\Http\Controllers\CopilotoPdfController;
 use App\Http\Controllers\Crm\PesquisaVisitaController;
 use App\Http\Controllers\Crm\PortalDocumentosCandidatoController;
 use App\Http\Controllers\DemonstrativoDebitoPdfController;
+use App\Http\Controllers\DistratoMatriculaPdfController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\Financeiro\AcordoPublicoController;
@@ -175,6 +176,11 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 // Demonstrativo de débito (Onda 62): faturas em atraso com multa e juros. A família abre o do seu aluno; a equipe com View:Fatura, o de qualquer um.
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/demonstrativo-debito/{matricula}', [DemonstrativoDebitoPdfController::class, 'show'])->whereNumber('matricula')->name('demonstrativo-debito.pdf');
+});
+
+// Distrato de matrícula (Onda 61): existe depois da aprovação do pedido; a equipe com View:CancelamentoMatricula e a família do aluno abrem.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/cancelamentos-matricula/{cancelamento}/distrato', [DistratoMatriculaPdfController::class, 'show'])->whereNumber('cancelamento')->name('cancelamentos-matricula.distrato');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

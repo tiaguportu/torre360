@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Documentos;
 
 use App\Http\Controllers\Controller;
 use App\Models\AtendimentoMensagem;
+use App\Models\CancelamentoMatricula;
 use App\Models\DocumentoInserido;
 use App\Models\SolicitacaoDocumento;
 use App\Support\TiposArquivo;
@@ -92,7 +93,15 @@ class VisualizarDocumentoController extends Controller
                 }
             }
         }
-        // Contexto D: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
+        // Contexto D: Cópia assinada do distrato de matrícula (Onda 61): a equipe com permissão e a família do aluno.
+        elseif (str_starts_with($path, 'cancelamentos_matricula/')) {
+            $cancelamento = CancelamentoMatricula::with(['matricula.pessoa', 'matricula.contrato'])->where('distrato_assinado_path', $path)->first();
+
+            if ($cancelamento ? $cancelamento->isAccessibleBy($user) : $user->isEquipeAdministrativa()) {
+                $autorizado = true;
+            }
+        }
+        // Contexto E: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
         elseif ($user->isEquipeAdministrativa()) {
             $autorizado = true;
         } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
