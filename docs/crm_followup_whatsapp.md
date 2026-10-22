@@ -119,6 +119,20 @@ Os modelos oficiais e o Copiloto IA atuam de forma **complementar**:
 3. **Sinergia Híbrida (Modelo + IA):** No modal do *Copiloto WhatsApp IA*, o consultor pode escolher um **Modelo Institucional de Referência (Opcional)** para que a IA adapte e enriqueça o comunicado oficial com o perfil e momento da família. Da mesma forma, na ação rápida "WhatsApp" da tabela, há a opção **Personalizar com Copiloto IA (Gemini) ✨** para humanizar o modelo escolhido antes de abrir o mensageiro.
 4. **Contingência Inteligente (Fallback):** Se a API do Gemini estiver instável ou a cota esgotar, o fallback do serviço automaticamente pré-preenche as variáveis dinâmicas do modelo base, garantindo que o atendimento nunca seja interrompido.
 
+### O que o Copiloto enxerga do lead
+O Copiloto (e o Dossiê IA) recebem o cadastro do lead, **todo** o histórico de contatos e de visitas, os dependentes e a
+disponibilidade de vagas, sem limite de quantidade. Além disso, a cada geração vão:
+- **a data de hoje** e o **andamento**: há quantos dias o lead foi cadastrado, quando foi a última interação da equipe
+  (registros automáticos da régua e da IA não contam) e o próximo contato combinado, já com o prazo calculado;
+- o **resultado** (Agendou Visita, Retornar depois, Sem Interesse…) e a **duração** de cada contato, quando
+  registrados;
+- a **pré-admissão**, se a família já foi convidada ou enviou algo: dados cadastrais confirmados ou não e os
+  documentos obrigatórios do contrato que faltam. Útil sobretudo no objetivo *Fechamento de Matrícula*.
+
+A IA só sabe o que foi registrado: a resposta da família no WhatsApp entra apenas se alguém a salvou no histórico
+(por exemplo, colando a conversa no *Resumo de Conversa IA* com "salvar no histórico"). A lista completa e o que ainda
+não entra no contexto estão em `docs/crm_funil_e_captacao.md` (item "O que o contexto do lead contém").
+
 ### Comportamento do Copiloto IA (editável sem deploy)
 
 Antes, persona, diretrizes, descrição dos objetivos/tons e parâmetros do Gemini

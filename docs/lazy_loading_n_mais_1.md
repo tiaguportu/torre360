@@ -33,6 +33,7 @@ Os pontos abaixo foram corrigidos e os testes dessas áreas rodam em modo estrit
 | `InteressadosTable` | `Interessado::usuario`, `ultimoHistorico` | `modifyQueryUsing(... ->with(['usuario', 'ultimoHistorico']))` |
 | `PreceptoriasTable` (filtro de matrícula) | `Matricula::periodoLetivo`, `turma`, `pessoa` (`label_exibicao`) | `$query->with([...])` na relação do filtro |
 | `User::pessoasAcessiveis()` | `Pessoa::alunos` | `$pessoas->loadMissing('alunos')` |
+| `CrmIaVendasService::montarContextoLead()` (Copiloto WhatsApp IA) | `HistoricoContato::tipoContato`, `HistoricoContato::usuario`, `Interessado::origem` (2 consultas por contato do histórico, mais 1 da origem) | `loadMissing([...])` dentro de `montarContextoLead()`, e não nos chamadores: o Dossiê já carregava, o Copiloto não. Protegido por `CopilotoIaContextoDoLeadTest::test_copiloto_nao_carrega_relacionamentos_por_registro_do_historico` (falha com `LazyLoadingViolationException` sem a correção) |
 | `ContratosTable` (coluna de signatários) | `Contrato::getSignatarios()` lê `matricula.pessoa.responsaveis.users`, `matricula.turma.serie.curso.unidade.representantesLegais.users` e `responsaveisFinanceiros.pessoa.users` | `modifyQueryUsing(... ->with([...]))` com esse mesmo conjunto, que `AssinafyService::enviarContrato` já carrega |
 
 Os demais usos de `label_exibicao` em seleções de matrícula (`PreceptoriaForm`, `Portal/Preceptoria`,

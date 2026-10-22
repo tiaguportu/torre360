@@ -438,6 +438,10 @@ O **Termômetro de Vagas por Série** fornece à equipe de admissões e consulto
 
 6. **Enriquecimento do Copiloto WhatsApp e Dossiê IA:**
    - Os dados reais de ocupação são injetados automaticamente no contexto do **Gemini**, orientando a inteligência artificial a formular abordagens autênticas de urgência para visitas e matrículas sem soar agressiva ou artificial.
+   - **O que a IA considera sobre a família:** o cadastro, **todo** o histórico de contatos e de visitas, os filhos e a disponibilidade de vagas. A cada geração ela também recebe a **data de hoje**, há quantos dias foi a última conversa da equipe (e-mails automáticos e resumos de IA não contam) e o **próximo contato combinado**. Assim a mensagem de uma família que sumiu há três semanas sai diferente da de quem falou ontem.
+   - **Resultado e duração dos contatos:** quando você preenche o *Resultado* (Agendou Visita, Retornar depois, Sem Interesse…) e a *Duração* ao registrar um contato, a IA passa a considerá-los. Contatos sem esses campos continuam valendo normalmente.
+   - **Pré-admissão:** se a família já recebeu o link do portal de documentos ou enviou algo, a IA sabe se os dados cadastrais foram confirmados e quais documentos obrigatórios do contrato ainda faltam, e pode lembrá-los com delicadeza, principalmente na mensagem de *Fechamento de Matrícula*.
+   - **Importante:** a IA só conhece o que está registrado na ficha. Se a família respondeu no WhatsApp e ninguém anotou, ela não sabe. Para incluir uma conversa, cole-a no **Resumo de Conversa IA** com a opção de salvar no histórico. Telefone, e-mail, CPF e sobrenomes continuam sendo ocultados antes do envio.
 
 ### 3.18 Programa "Família Indica Família" (Member Get Member / MGM)
 O **Programa "Família Indica Família"** potencializa a captação de novos estudantes através do canal de maior conversão da educação: a recomendação genuína entre famílias da escola.

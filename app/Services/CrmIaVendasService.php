@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\StatusVisitaInteressado;
 use App\Models\CopilotoIaConfiguracao;
+use App\Models\HistoricoContato;
 use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
 use App\Models\Unidade;
@@ -131,18 +132,6 @@ class CrmIaVendasService
      */
     public function gerarDossie(Interessado $interessado): array
     {
-        $interessado->loadMissing([
-            'pessoa',
-            'dependentes.serie',
-            'historicos.tipoContato',
-            'historicos.usuario',
-            'visitas',
-            'status',
-            'origem',
-            'campanha',
-            'usuario',
-        ]);
-
         $contexto = $this->montarContextoLead($interessado);
 
         $nomeEscola = self::nomeEscola();
@@ -316,15 +305,6 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         ?string $templateBase = null,
         ?string $instrucoesModelo = null,
     ): string {
-        $interessado->loadMissing([
-            'pessoa',
-            'dependentes.serie',
-            'historicos',
-            'visitas',
-            'status',
-            'usuario',
-        ]);
-
         $contexto = $this->montarContextoLead($interessado);
 
         $config = CopilotoIaConfiguracao::valores();
@@ -534,8 +514,24 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         // Minimização (LGPD, art. 6º, III): a IA escreve o dossiê e a mensagem sem precisar de telefone, e-mail,
         // sobrenome ou dados digitados em texto livre. Só o primeiro nome do responsável e dos alunos (menores)
         // segue, e CPF/telefone/e-mail que a equipe tenha escrito em observações e relatos são ocultados.
+        // Tudo o que o contexto lê é carregado aqui: o Copiloto não pedia o tipo e o atendente de cada contato nem a
+        // origem, e cada um virava uma consulta extra por registro (e exceção com o modo estrito de lazy loading).
+        $interessado->loadMissing([
+            'pessoa',
+            'status',
+            'origem',
+            'dependentes.serie',
+            'historicos.tipoContato',
+            'historicos.usuario',
+            'visitas',
+        ]);
+
+        $hoje = now();
+
         $linhas = [];
         $linhas[] = '=== DADOS DO INTERESSADO ===';
+        // Sem a data de hoje o modelo não sabe há quanto tempo a família está sem resposta (reativação, follow-up).
+        $linhas[] = 'Data de hoje: '.$hoje->format('d/m/Y').' ('.self::DIAS_DA_SEMANA[$hoje->dayOfWeek].')';
         $linhas[] = 'Responsável (primeiro nome): '.(self::primeiroNome($interessado->pessoa?->nome) ?? 'Não informado');
         $linhas[] = 'Etapa no Funil: '.($interessado->status?->nome ?? 'Novo Contato');
         $linhas[] = 'Origem: '.($interessado->origem?->nome ?? 'Não identificada');
@@ -545,6 +541,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         $linhas[] = 'Distância da Escola: '.($interessado->faixa_distancia_escola ?? 'Não informada');
         $linhas[] = 'Meio de Transporte: '.($interessado->meio_transporte ?? 'Não informado');
         $linhas[] = 'Observações Gerais: '.self::ocultarDadosPessoais($interessado->observacoes ?: 'Nenhuma observação cadastrada.');
+        array_push($linhas, ...$this->linhasDeAndamento($interessado, $hoje));
 
         $linhas[] = "\n=== FILHOS / DEPENDENTES ===";
         if ($interessado->dependentes->isEmpty()) {
@@ -567,7 +564,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                 $data = $h->data_contato ? Carbon::parse($h->data_contato)->format('d/m/Y H:i') : 'Data não registrada';
                 $tipo = $h->tipoContato?->nome ?? 'Contato';
                 $atendente = $h->usuario?->name ?? 'Sistema';
-                $linhas[] = "[{$data}] {$tipo} por {$atendente}: ".self::ocultarDadosPessoais((string) $h->relato);
+                $linhas[] = "[{$data}] {$tipo} por {$atendente}".self::detalhesDoContato($h).': '.self::ocultarDadosPessoais((string) $h->relato);
             }
         }
 
@@ -582,6 +579,8 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             }
         }
 
+        array_push($linhas, ...$this->linhasPreAdmissao($interessado));
+
         $vagasTexto = app(TermometroVagasService::class)->gerarPromptEscassez($interessado);
         if ($vagasTexto) {
             $linhas[] = "\n=== DISPONIBILIDADE REAL DE VAGAS NA ESCOLA ===";
@@ -589,6 +588,117 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         }
 
         return implode("\n", $linhas);
+    }
+
+    /** Dias da semana por extenso, na ordem de `Carbon::dayOfWeek` (0 = domingo): independe do idioma da aplicação. */
+    private const DIAS_DA_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+
+    /**
+     * Quanto tempo o lead está no funil, quando foi a última conversa de verdade e o que ficou combinado para o
+     * próximo contato. As datas já constam no histórico, mas o modelo erra conta de dias: aqui vão prontas.
+     *
+     * @return list<string>
+     */
+    private function linhasDeAndamento(Interessado $interessado, Carbon $hoje): array
+    {
+        $linhas = [];
+
+        if ($interessado->created_at !== null) {
+            $linhas[] = 'Lead cadastrado em '.$interessado->created_at->format('d/m/Y').' ('.self::prazoRelativo($interessado->created_at, $hoje).')';
+        }
+
+        // Registros automáticos (régua, análises de IA) não são conversa com a família: não zeram o "sem retorno".
+        $ultimaInteracao = $interessado->historicos
+            ->where('automatico', false)
+            ->filter(fn ($h): bool => $h->data_contato !== null)
+            ->sortByDesc('data_contato')
+            ->first()?->data_contato;
+
+        $linhas[] = $ultimaInteracao !== null
+            ? 'Última interação registrada pela equipe: '.$ultimaInteracao->format('d/m/Y').' ('.self::prazoRelativo($ultimaInteracao, $hoje).')'
+            : 'Última interação registrada pela equipe: nenhuma até o momento';
+
+        $linhas[] = $interessado->data_proximo_contato !== null
+            ? 'Próximo contato combinado: '.$interessado->data_proximo_contato->format('d/m/Y \à\s H:i').' ('.self::prazoRelativo($interessado->data_proximo_contato, $hoje).')'
+            : 'Próximo contato combinado: nenhum agendado';
+
+        return $linhas;
+    }
+
+    /**
+     * Distância entre duas datas em linguagem natural ("hoje", "há 12 dias", "em 3 dias"), contada em dias de
+     * calendário: um contato de ontem à noite é "ontem" mesmo que tenha menos de 24 horas.
+     */
+    private static function prazoRelativo(Carbon $data, Carbon $hoje): string
+    {
+        $dias = (int) round($hoje->copy()->startOfDay()->diffInDays($data->copy()->startOfDay(), false));
+
+        return match (true) {
+            $dias === 0 => 'hoje',
+            $dias === 1 => 'amanhã',
+            $dias === -1 => 'ontem',
+            $dias > 0 => "em {$dias} dias",
+            default => 'há '.abs($dias).' dias',
+        };
+    }
+
+    /** Resultado e duração do contato, entre parênteses, para o trecho depois do atendente (vazio se não houver). */
+    private static function detalhesDoContato(HistoricoContato $historico): string
+    {
+        $detalhes = [];
+
+        if (filled($historico->resultado)) {
+            $detalhes[] = 'resultado: '.(HistoricoContato::RESULTADOS[$historico->resultado] ?? $historico->resultado);
+        }
+
+        if ((int) $historico->duracao_minutos > 0) {
+            $detalhes[] = "duração: {$historico->duracao_minutos} min";
+        }
+
+        return $detalhes === [] ? '' : ' ('.implode('; ', $detalhes).')';
+    }
+
+    /**
+     * Situação da pré-admissão no portal de documentos: só aparece quando a família já foi convidada ou enviou
+     * algo, para não encher o prompt de "tudo pendente" em quem nem começou. Ajuda o objetivo "fechamento" a
+     * pedir o que falta. Os nomes dos alunos (que constam em `pendenciasDadosCadastrais`) não são enviados.
+     *
+     * @return list<string>
+     */
+    private function linhasPreAdmissao(Interessado $interessado): array
+    {
+        $iniciada = filled($interessado->token_documentos)
+            || filled($interessado->dados_pre_matricula)
+            || $interessado->documentosInseridos()->exists();
+
+        if (! $iniciada) {
+            return [];
+        }
+
+        $linhas = ["\n=== PRÉ-ADMISSÃO (PORTAL DE DOCUMENTOS) ==="];
+
+        $linhas[] = 'Dados cadastrais: '.(filled($interessado->dados_pre_matricula)
+            ? 'confirmados pela família'.($interessado->dados_pre_matricula_em ? ' em '.$interessado->dados_pre_matricula_em->format('d/m/Y') : '')
+            : 'ainda não confirmados pela família');
+
+        $progresso = $interessado->progressoDocumentos();
+
+        if ($progresso['total'] === 0) {
+            $linhas[] = 'Documentos obrigatórios do contrato: nenhum exigido para as séries pretendidas.';
+
+            return $linhas;
+        }
+
+        $linhas[] = "Documentos obrigatórios do contrato: {$progresso['enviados']} de {$progresso['total']} entregues"
+            ." ({$progresso['aprovados']} aprovado(s), {$progresso['em_analise']} em análise; {$progresso['rejeitados']} rejeitado(s) aguardando novo envio).";
+
+        $pendentes = $interessado->documentosContratoPendentes()->pluck('nome');
+
+        $linhas[] = $pendentes->isEmpty()
+            ? 'Todos os documentos do contrato já foram entregues.'
+            : 'Faltam ou precisam ser reenviados: '.$pendentes->implode(', ').'.';
+
+        return $linhas;
     }
 
     /**

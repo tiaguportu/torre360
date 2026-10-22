@@ -167,6 +167,32 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   o enum direto derrubava com `Object of class … could not be converted to string` qualquer lead que tivesse
   visita registrada, ao abrir o Dossiê IA ou o Copiloto WhatsApp IA. Ao incluir outro campo com cast de enum
   nesse contexto, converter da mesma forma.
+- **O que o contexto do lead contém** (`montarContextoLead()`, usado pelo Dossiê e pelo Copiloto): cadastro (etapa,
+  origem, temperatura, score, valor, distância, transporte, observações), dependentes, **todo** o histórico de
+  contatos e de visitas (sem limite de quantidade ou de data), vagas e, desde 2026-10-21:
+  - **Data de hoje** com o dia da semana (`DIAS_DA_SEMANA`, independe do idioma da aplicação). Sem ela o modelo não
+    sabia há quanto tempo a família estava sem retorno.
+  - **Andamento** (`linhasDeAndamento()`): data do cadastro, **última interação registrada pela equipe** e **próximo
+    contato combinado** (`data_proximo_contato`), cada um com o prazo relativo já calculado ("há 12 dias", "hoje",
+    "em 3 dias"), porque o modelo erra conta de dias. A última interação ignora registros `automatico = true` (régua,
+    resumos de IA), como `Interessado::ultimoHistorico`.
+  - **Resultado e duração do contato** no próprio registro do histórico, entre parênteses depois do atendente
+    (`WhatsApp por Ana (resultado: Agendou Visita; duração: 12 min): relato`); sem nenhum dos dois o formato não muda.
+    O resultado vem de `HistoricoContato::RESULTADOS` (o fluxo de perda grava `sem_interesse`).
+  - **Pré-admissão** (`linhasPreAdmissao()`): só aparece se a família já foi convidada (`token_documentos`), enviou o
+    rascunho (`dados_pre_matricula`) ou algum documento. Traz se os dados cadastrais foram confirmados e quantos
+    documentos obrigatórios do contrato foram entregues, com os nomes dos que faltam ou foram rejeitados (reaproveita
+    `progressoDocumentos()` e `documentosContratoPendentes()`, a mesma regra do portal). Nomes de alunos **não** vão:
+    `pendenciasDadosCadastrais()` cita o aluno pelo nome completo e por isso não é usado aqui.
+  - O motivo da perda e o concorrente **já chegam** pelo relato que `LeadFunilService::marcarComoPerdido()` grava no
+    histórico; por isso não há bloco próprio para eles.
+  - Ainda **fora** do contexto: etapas por onde o lead passou (`historicoStatus`), turno de preferência e unidade dos
+    dependentes, campanha/UTM, indicação, consultor responsável e a marcação de quais registros do histórico são
+    automáticos.
+- **Carregamento dos relacionamentos:** `montarContextoLead()` faz o próprio `loadMissing` de tudo o que lê (pessoa,
+  etapa, origem, dependentes com série, contatos com tipo e atendente, visitas). Antes cada chamador tinha a sua
+  lista e a do Copiloto esquecia o tipo e o atendente de cada contato e a origem: duas consultas por contato do
+  histórico (e exceção no modo estrito de lazy loading). Ver `docs/lazy_loading_n_mais_1.md`.
 - **Resumo de conversa com áudio** (`CrmIaVendasService::resumirConversaWhatsapp($lead, $texto, $audios)`): o
   consultor pode anexar até `MAX_AUDIOS_CONVERSA` (5) áudios na Action `ResumoConversaIaAction` (`FileUpload`
   `audios`, disco `local`, pasta `temp-conversa-audios`, 10 MB cada); o texto só é obrigatório sem áudio.
