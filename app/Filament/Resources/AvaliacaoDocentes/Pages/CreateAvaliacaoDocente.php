@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AvaliacaoDocentes\Pages;
 
 use App\Exceptions\AvaliacaoDocenteException;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\AvaliacaoDocentes\AvaliacaoDocenteResource;
 use App\Services\AvaliacaoDocenteService;
+use App\Support\HelpContent;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
 class CreateAvaliacaoDocente extends CreateRecord
 {
+    use HasAjudaAction;
+
     protected static string $resource = AvaliacaoDocenteResource::class;
 
     /**
@@ -42,5 +46,29 @@ class CreateAvaliacaoDocente extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('edit', ['record' => $this->record]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->ajudaAction('Iniciar Avaliação de Desempenho Docente', $this->getHelpContent()),
+        ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        $user = auth()->user();
+
+        return HelpContent::make('📝', 'Iniciar Avaliação de Desempenho Docente', 'Iniciação de ciclo avaliativo de professor com base no instrumento selecionado.')
+            ->secao('🎯 Funcionalidades Disponíveis', array_filter([
+                ['📋', 'Instrumento e Ciclo', 'Selecione o ciclo vigente e o instrumento avaliativo aplicável.'],
+                ['👤', 'Professor', 'Escolha o docente a ser avaliado pela coordenação.'],
+            ]))
+            ->secao('🔒 Permissões do Perfil', array_filter([
+                $user?->can('Create:AvaliacaoDocente') ? ['🆕', 'Cadastrar', 'Permissão para criar novos registros deste recurso.'] : null,
+                $user?->can('Update:AvaliacaoDocente') ? ['✏️', 'Editar', 'Permissão para alterar informações existentes.'] : null,
+                $user?->can('Delete:AvaliacaoDocente') ? ['🗑️', 'Excluir', 'Permissão para remover dados do sistema.'] : null,
+            ]))
+            ->dica('Após salvar, você será direcionado para atribuir as notas a cada critério avaliativo.');
     }
 }
