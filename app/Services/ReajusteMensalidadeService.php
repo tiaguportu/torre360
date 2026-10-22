@@ -313,6 +313,14 @@ class ReajusteMensalidadeService
             $alertas[] = 'Já existem rematrículas efetivadas nesta campanha. Elas mantêm o valor antigo e o cenário não poderá ser aplicado.';
         }
 
+        if ($cenario->periodoRematricula->periodo_letivo_destino_id) {
+            $semLista = app(ListaMaterialService::class)->seriesSemListaPublicada((int) $cenario->periodoRematricula->periodo_letivo_destino_id, $cenario->itens->pluck('serie_id'));
+
+            if ($semLista->isNotEmpty()) {
+                $alertas[] = 'Ainda não há lista de material escolar publicada para: '.$semLista->pluck('nome')->implode(', ').'. As famílias costumam pedir a lista junto com o valor do ano.';
+            }
+        }
+
         return $alertas;
     }
 

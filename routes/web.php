@@ -19,6 +19,7 @@ use App\Http\Controllers\Financeiro\AcordoPublicoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\InformeAnualPdfController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\ListaMaterialPdfController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\OmrFolhasController;
 use App\Http\Controllers\PontoPdfController;
@@ -163,6 +164,11 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/informe-anual/{ano}/matricula/{matricula}', [InformeAnualPdfController::class, 'aluno'])->whereNumber('ano')->name('informe-anual.aluno');
     Route::get('/informe-anual/{ano}/lote', [InformeAnualPdfController::class, 'lote'])->whereNumber('ano')->name('informe-anual.lote');
+});
+
+// Lista de material escolar (Onda 59): a equipe com permissão abre qualquer lista; a família, a publicada da série do seu aluno.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/lista-material/{lista}', [ListaMaterialPdfController::class, 'show'])->whereNumber('lista')->name('lista-material.pdf');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

@@ -19,6 +19,7 @@ use App\Models\BolsaConcedida;
 use App\Models\CenarioReajuste;
 use App\Models\Contrato;
 use App\Models\Curso;
+use App\Models\ListaMaterialEscolar;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\PeriodoRematricula;
@@ -32,6 +33,7 @@ use App\Models\Turma;
 use App\Models\Turno;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Services\ListaMaterialService;
 use App\Services\ReajusteMensalidadeService;
 use App\Services\RematriculaService;
 use Carbon\Carbon;
@@ -392,9 +394,24 @@ class ReajusteMensalidadeTest extends TestCase
         $this->assertStringNotContainsString('planilha', implode(' ', $ok));
     }
 
+    /**
+     * Publica a lista de material das duas séries no período de destino, para o cenário "tudo em dia" não ter o alerta de lista.
+     */
+    private function publicarListasDeMaterial(): void
+    {
+        $material = app(ListaMaterialService::class);
+
+        foreach ([$this->quinto, $this->sexto] as $serie) {
+            $lista = ListaMaterialEscolar::create(['serie_id' => $serie->id, 'periodo_letivo_id' => $this->destino->id]);
+            $material->salvarItem($lista, ['descricao' => 'Caderno brochura', 'quantidade' => 1]);
+            $material->publicar($lista, null);
+        }
+    }
+
     public function test_alerta_de_prazo_legal_de_divulgacao(): void
     {
         $this->base();
+        $this->publicarListasDeMaterial();
         $cenario = $this->cenario(5.0, planilha: $this->planilha(StatusPlanilhaLei::Homologada->value, 5.0));
 
         // Fim da campanha em 31/01/2027: o limite de divulgação é 17/12/2026; hoje (21/10) ainda dá tempo.
@@ -552,5 +569,33 @@ class ReajusteMensalidadeTest extends TestCase
         $secretaria = $this->admin([], 'secretaria');
 
         Livewire::actingAs($secretaria)->test(ListCenarioReajustes::class)->assertForbidden();
+    }
+
+    public function test_alerta_as_series_sem_lista_de_material_publicada_no_periodo_de_destino(): void
+    {
+        $this->base();
+        $cenario = $this->cenario();
+        $material = app(ListaMaterialService::class);
+
+        $this->assertStringContainsString('lista de material escolar publicada para: 5º Ano, 6º Ano.', implode(' ', $this->servico()->alertas($cenario)));
+
+        // Rascunho e lista de outro período não contam; só a publicada da série no período de destino.
+        $rascunho = ListaMaterialEscolar::create(['serie_id' => $this->sexto->id, 'periodo_letivo_id' => $this->destino->id]);
+        $material->salvarItem($rascunho, ['descricao' => 'Caderno brochura', 'quantidade' => 1]);
+        $doAnoPassado = ListaMaterialEscolar::create(['serie_id' => $this->sexto->id, 'periodo_letivo_id' => $this->origem->id]);
+        $material->salvarItem($doAnoPassado, ['descricao' => 'Caderno brochura', 'quantidade' => 1]);
+        $material->publicar($doAnoPassado, null);
+
+        $publicada = ListaMaterialEscolar::create(['serie_id' => $this->quinto->id, 'periodo_letivo_id' => $this->destino->id]);
+        $material->salvarItem($publicada, ['descricao' => 'Caderno brochura', 'quantidade' => 1]);
+        $material->publicar($publicada, null);
+
+        $alertas = implode(' ', $this->servico()->alertas($cenario->fresh()));
+
+        $this->assertStringContainsString('lista de material escolar publicada para: 6º Ano.', $alertas);
+
+        $material->publicar($rascunho, null);
+
+        $this->assertStringNotContainsString('lista de material', implode(' ', $this->servico()->alertas($cenario->fresh())));
     }
 }
