@@ -134,7 +134,7 @@ class ProcessoFuncionarioService
             'orientacao' => filled($dados['orientacao'] ?? null) ? trim((string) $dados['orientacao']) : null,
             'obrigatorio' => (bool) ($dados['obrigatorio'] ?? false),
             'prazo' => filled($dados['prazo'] ?? null) ? Carbon::parse($dados['prazo'])->toDateString() : null,
-            'ordem' => ((int) $processo->itens()->max('ordem')) + 1,
+            'ordem' => ((int) $processo->itens()->reorder()->max('ordem')) + 1,
         ]);
 
         $this->registrarLog($processo, $por, 'Providência acrescentada ao processo.', ['item_id' => $item->id]);

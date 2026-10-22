@@ -45,7 +45,7 @@ class TemposAulaRelationManager extends RelationManager
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(20)
-                    ->default(fn (): int => ((int) $this->getOwnerRecord()->temposAula()->max('ordem')) + 1)
+                    ->default(fn (): int => ((int) $this->getOwnerRecord()->temposAula()->reorder()->max('ordem')) + 1)
                     ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->where('turno_id', $this->getOwnerRecord()->getKey()))
                     ->required(),
                 TimePicker::make('hora_inicio')
