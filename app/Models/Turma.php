@@ -24,7 +24,7 @@ class Turma extends Model
     ];
 
     protected $fillable = [
-        'status', 'serie_id', 'turno_id', 'codigo', 'tipo_mediacao_didatico_pedagogica', 'tipo_turma',
+        'status', 'serie_id', 'turno_id', 'codigo', 'codigo_inep', 'tipo_mediacao_didatico_pedagogica', 'tipo_turma',
         'local_funcionamento_diferenciado', 'forma_organizacao', 'modalidade_ensino',
         'tipo_lingua_ministrada', 'codigo_lingua_indigena', 'turma_educacao_bilingue_surdos',
         'flag_aee_ensino_libras', 'flag_aee_ensino_soroba', 'flag_aee_ensino_informatica_acessivel',

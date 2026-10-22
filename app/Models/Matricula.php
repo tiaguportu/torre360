@@ -46,7 +46,7 @@ class Matricula extends Model
      * (`turma_id` é obrigatório), então não há como divergirem. Use `periodo_letivo_id`/`serie_id`
      * (accessors), as relações `periodoLetivo`/`serie` ou os scopes `doPeriodo()`/`daSerie()`.
      */
-    protected $fillable = ['pessoa_id', 'turma_id', 'status', 'situacao', 'data_ativacao', 'data_desativacao', 'risco_evasao_score', 'risco_evasao_atualizado_em', 'risco_evasao_alerta_em'];
+    protected $fillable = ['pessoa_id', 'turma_id', 'codigo_matricula_inep', 'status', 'situacao', 'data_ativacao', 'data_desativacao', 'risco_evasao_score', 'risco_evasao_atualizado_em', 'risco_evasao_alerta_em'];
 
     /**
      * A turma é a fonte do período e da série; carregá-la junto evita N+1 e o bloqueio de lazy loading
@@ -219,6 +219,14 @@ class Matricula extends Model
     public function situacoesFinais(): HasMany
     {
         return $this->hasMany(SituacaoFinalDisciplina::class);
+    }
+
+    /**
+     * Ajuste manual da situação do aluno no Censo Escolar (2ª etapa), se a secretaria fez algum.
+     */
+    public function censoAjuste(): HasOne
+    {
+        return $this->hasOne(CensoSituacaoAluno::class);
     }
 
     /**

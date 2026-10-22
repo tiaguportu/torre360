@@ -81,6 +81,16 @@ final class TiposArquivo
     }
 
     /**
+     * Arquivos de texto simples lidos pelo sistema (retorno do Educacenso). Nunca são servidos de volta ao navegador.
+     *
+     * @return list<string>
+     */
+    public static function textoPlano(): array
+    {
+        return ['text/plain'];
+    }
+
+    /**
      * Tipos que o navegador pode exibir na própria página sem risco de executar código no domínio do sistema.
      *
      * @return list<string>
