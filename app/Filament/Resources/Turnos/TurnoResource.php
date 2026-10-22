@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Turnos;
 use App\Filament\Resources\Turnos\Pages\CreateTurno;
 use App\Filament\Resources\Turnos\Pages\EditTurno;
 use App\Filament\Resources\Turnos\Pages\ListTurnos;
+use App\Filament\Resources\Turnos\RelationManagers\TemposAulaRelationManager;
 use App\Filament\Resources\Turnos\Schemas\TurnoForm;
 use App\Filament\Resources\Turnos\Tables\TurnosTable;
 use App\Models\Turno;
@@ -40,7 +41,7 @@ class TurnoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TemposAulaRelationManager::class,
         ];
     }
 

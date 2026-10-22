@@ -134,9 +134,19 @@ class GradeHorariosRelationManager extends RelationManager
         $grade->fill($data);
         $grade->turma_id = $this->getOwnerRecord()->getKey();
 
-        $conflitos = app(GradeHorarioConflitoService::class)->conflitos($grade);
+        $servico = app(GradeHorarioConflitoService::class);
+        $conflitos = $servico->conflitos($grade);
 
         if ($conflitos === []) {
+            // Disponibilidade informada pelo professor (Onda 64): avisa, mas quem monta a grade pode ter combinado outra coisa.
+            if ($avisos = $servico->avisos($grade)) {
+                Notification::make()
+                    ->warning()
+                    ->title('Atenção com a disponibilidade')
+                    ->body(implode(' ', $avisos))
+                    ->send();
+            }
+
             return;
         }
 

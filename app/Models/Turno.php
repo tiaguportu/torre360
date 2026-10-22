@@ -15,4 +15,12 @@ class Turno extends Model
     {
         return $this->hasMany(Turma::class);
     }
+
+    /**
+     * Tempos de aula do turno (Onda 64), do primeiro ao último.
+     */
+    public function temposAula(): HasMany
+    {
+        return $this->hasMany(TempoAula::class)->orderBy('ordem');
+    }
 }
