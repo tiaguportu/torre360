@@ -7,6 +7,7 @@ use App\Models\Banco;
 use App\Models\Fatura;
 use App\Models\ReguaCobranca;
 use App\Services\BaixaFaturaService;
+use App\Services\EncargosAtrasoService;
 use App\Services\GatewayPagamentoManager;
 use App\Services\PagamentoConfirmacaoService;
 use App\Services\ReguaCobrancaService;
@@ -66,6 +67,14 @@ class FaturasTable
                     ->label('Saldo Devedor')
                     ->money('BRL')
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
+                TextColumn::make('encargos')
+                    ->label('Multa e Juros')
+                    ->state(fn (Fatura $record): ?float => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['em_atraso'] ? $encargos['multa'] + $encargos['juros'] : null)
+                    ->description(fn (Fatura $record): ?string => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['em_atraso'] ? "{$encargos['dias_atraso']} dia(s) de atraso" : null)
+                    ->money('BRL')
+                    ->placeholder('—')
+                    ->color('danger')
+                    ->toggleable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()

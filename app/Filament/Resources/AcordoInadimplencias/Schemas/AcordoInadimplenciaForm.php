@@ -6,6 +6,7 @@ use App\Enums\StatusAcordoInadimplencia;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Services\AcordoInadimplenciaService;
+use App\Services\EncargosAtrasoService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -68,10 +69,15 @@ class AcordoInadimplenciaForm
 
                                 if ($totalOriginal <= 0) {
                                     $totalOriginal = 1500.00; // Padrão se não houver faturas com vencimento vencido no momento
+                                    $multa = round($totalOriginal * 0.02, 2);
+                                    $juros = round($totalOriginal * 0.01, 2);
+                                } else {
+                                    // Multa e juros de cada fatura pelos dias de atraso e pelos percentuais do contrato (Onda 62).
+                                    $encargos = app(EncargosAtrasoService::class);
+                                    $totais = $encargos->totais($faturasVencidas->map(fn ($fat): array => $encargos->calcular($fat)));
+                                    $multa = $totais['multa'];
+                                    $juros = $totais['juros'];
                                 }
-
-                                $multa = round($totalOriginal * 0.02, 2); // 2% multa padrão
-                                $juros = round($totalOriginal * 0.01, 2); // 1% juros padrão
 
                                 $set('valor_original_total', $totalOriginal);
                                 $set('valor_multa_original', $multa);

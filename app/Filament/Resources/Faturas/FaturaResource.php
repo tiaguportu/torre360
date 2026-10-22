@@ -12,10 +12,20 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class FaturaResource extends Resource
 {
     protected static ?string $model = Fatura::class;
+
+    /**
+     * A lista mostra valor, pago, saldo e encargos de cada fatura (itens, transações e contrato): carregar tudo de uma vez
+     * evita uma consulta por linha.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['contrato.matricula.pessoa', 'itens', 'transacoes']);
+    }
 
     protected static ?string $modelLabel = 'Fatura';
 

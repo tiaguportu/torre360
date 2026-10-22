@@ -5,6 +5,7 @@ namespace App\Filament\Portal\Pages;
 use App\Enums\StatusFatura;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Fatura;
+use App\Services\EncargosAtrasoService;
 use App\Services\GatewayPagamentoManager;
 use App\Support\HelpContent;
 use BackedEnum;
@@ -48,7 +49,7 @@ class Financeiro extends Page implements HasTable
                     ->label('Vencimento')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->color(fn (Fatura $record) => $record->status === StatusFatura::Atrasado ? 'danger' : null),
+                    ->color(fn (Fatura $record) => $record->status === StatusFatura::Atrasado || app(EncargosAtrasoService::class)->calcular($record)['em_atraso'] ? 'danger' : null),
                 TextColumn::make('valor')
                     ->label('Valor')
                     ->money('BRL'),
@@ -60,6 +61,19 @@ class Financeiro extends Page implements HasTable
                     ->label('Saldo')
                     ->money('BRL')
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
+                TextColumn::make('encargos')
+                    ->label('Multa e juros')
+                    ->state(fn (Fatura $record): ?float => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['em_atraso'] ? $encargos['multa'] + $encargos['juros'] : null)
+                    ->description(fn (Fatura $record): ?string => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['em_atraso'] ? "{$encargos['dias_atraso']} dia(s) de atraso" : null)
+                    ->money('BRL')
+                    ->placeholder('—')
+                    ->color('danger'),
+                TextColumn::make('atualizado')
+                    ->label('Valor hoje')
+                    ->state(fn (Fatura $record): ?float => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['em_atraso'] ? $encargos['total'] : null)
+                    ->money('BRL')
+                    ->placeholder('—')
+                    ->weight('bold'),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge(),
@@ -140,9 +154,28 @@ class Financeiro extends Page implements HasTable
             ->with(['itens', 'transacoes', 'contrato.matricula.pessoa']);
     }
 
+    /**
+     * Um botão de demonstrativo de débito (PDF) por aluno que tem fatura em atraso.
+     */
     protected function getHeaderActions(): array
     {
+        $demonstrativos = $this->getFaturasQuery()
+            ->emAtraso()
+            ->get()
+            ->map(fn (Fatura $fatura) => $fatura->contrato?->matricula)
+            ->filter()
+            ->unique('id')
+            ->map(fn ($matricula): Action => Action::make('demonstrativo_'.$matricula->id)
+                ->label('Demonstrativo de débito'.($matricula->pessoa?->nome ? ' — '.$matricula->pessoa->nome : ''))
+                ->icon('heroicon-o-document-text')
+                ->color('gray')
+                ->url(route('demonstrativo-debito.pdf', ['matricula' => $matricula->id]))
+                ->openUrlInNewTab())
+            ->values()
+            ->all();
+
         return [
+            ...$demonstrativos,
             $this->ajudaAction('Financeiro', $this->getHelpContent()),
         ];
     }
@@ -153,6 +186,7 @@ class Financeiro extends Page implements HasTable
             ->secao('🎯 O que você encontra aqui?', [
                 ['🧾', 'Faturas', 'Veja aluno, vencimento, valor, valor pago e saldo de cada fatura.'],
                 ['🚦', 'Situação', 'A coluna Status mostra se a fatura está Pendente, Paga, Atrasada, Paga Parcialmente ou Cancelada.'],
+                ['🧮', 'Atraso', 'Fatura vencida mostra a multa e os juros até hoje e o valor atualizado. O botão "Demonstrativo de débito" gera o PDF com a conta. Vencimento em fim de semana ou feriado vale no próximo dia útil.'],
                 ['🔎', 'Filtro', 'Filtre as faturas por status.'],
             ])
             ->dica('Dúvidas sobre valores? Abra um chamado na Central de Atendimento.');

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Contratos\Schemas;
 
 use App\Models\Matricula;
 use App\Models\TemplateContrato;
+use App\Services\EncargosAtrasoService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -54,6 +55,24 @@ class ContratoForm
                     ->numeric()
                     ->prefix('R$')
                     ->required(),
+                TextInput::make('multa_percentual')
+                    ->label('Multa por atraso (%)')
+                    ->numeric()
+                    ->step(0.01)
+                    ->minValue(0)
+                    ->maxValue(EncargosAtrasoService::MULTA_MAXIMA_LEGAL)
+                    ->suffix('%')
+                    ->placeholder(fn (): string => number_format((float) config('financeiro.encargos.multa_percentual', 2), 2, ',', '.'))
+                    ->helperText('Em branco: vale o padrão da escola. O CDC limita a multa de mora a 2% (art. 52, § 1º).'),
+                TextInput::make('juros_mensal_percentual')
+                    ->label('Juros de mora (% ao mês)')
+                    ->numeric()
+                    ->step(0.01)
+                    ->minValue(0)
+                    ->maxValue(EncargosAtrasoService::JUROS_MENSAL_MAXIMO_CONFIGURAVEL)
+                    ->suffix('%')
+                    ->placeholder(fn (): string => number_format((float) config('financeiro.encargos.juros_mensal_percentual', 1), 2, ',', '.'))
+                    ->helperText('Em branco: vale o padrão da escola. Use o mesmo percentual que está escrito no contrato.'),
                 DatePicker::make('data_aceite'),
                 Textarea::make('log_assinatura')
                     ->columnSpanFull(),

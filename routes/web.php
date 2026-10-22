@@ -13,6 +13,7 @@ use App\Http\Controllers\Contratos\VisualizarContratoPDFController;
 use App\Http\Controllers\CopilotoPdfController;
 use App\Http\Controllers\Crm\PesquisaVisitaController;
 use App\Http\Controllers\Crm\PortalDocumentosCandidatoController;
+use App\Http\Controllers\DemonstrativoDebitoPdfController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
 use App\Http\Controllers\Financeiro\AcordoPublicoController;
@@ -169,6 +170,11 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 // Lista de material escolar (Onda 59): a equipe com permissão abre qualquer lista; a família, a publicada da série do seu aluno.
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/lista-material/{lista}', [ListaMaterialPdfController::class, 'show'])->whereNumber('lista')->name('lista-material.pdf');
+});
+
+// Demonstrativo de débito (Onda 62): faturas em atraso com multa e juros. A família abre o do seu aluno; a equipe com View:Fatura, o de qualquer um.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/demonstrativo-debito/{matricula}', [DemonstrativoDebitoPdfController::class, 'show'])->whereNumber('matricula')->name('demonstrativo-debito.pdf');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

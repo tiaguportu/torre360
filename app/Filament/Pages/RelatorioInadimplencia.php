@@ -2,10 +2,10 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\StatusFatura;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Models\Fatura;
 use App\Models\Turma;
+use App\Services\EncargosAtrasoService;
 use App\Support\HelpContent;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -81,6 +81,11 @@ class RelatorioInadimplencia extends Page implements HasTable
                     ->label('Saldo Devedor')
                     ->money('BRL')
                     ->sortable(),
+                TextColumn::make('encargos')
+                    ->label('Multa e Juros')
+                    ->state(fn (Fatura $record): float => ($encargos = app(EncargosAtrasoService::class)->calcular($record))['multa'] + $encargos['juros'])
+                    ->money('BRL')
+                    ->color('danger'),
             ])
             ->filters([
                 SelectFilter::make('turma')
@@ -116,10 +121,14 @@ class RelatorioInadimplencia extends Page implements HasTable
             ->stackedOnMobile();
     }
 
+    /**
+     * Em atraso = marcada como Atrasado ou Pendente/Parcial com vencimento passado (nenhuma rotina troca o status
+     * sozinha; antes só a marcação manual aparecia aqui).
+     */
     protected function getFaturasAtrasadasQuery(): Builder
     {
         return Fatura::query()
-            ->where('status', StatusFatura::Atrasado)
+            ->emAtraso()
             ->with([
                 'contrato.matricula.pessoa',
                 'contrato.matricula.turma',
@@ -130,15 +139,19 @@ class RelatorioInadimplencia extends Page implements HasTable
     }
 
     /**
-     * @return array{total_faturas: int, total_devido: float, total_responsaveis: int}
+     * @return array{total_faturas: int, total_devido: float, total_encargos: float, total_atualizado: float, total_responsaveis: int}
      */
     public function getResumo(): array
     {
         $faturas = $this->getFaturasAtrasadasQuery()->get();
+        $encargos = app(EncargosAtrasoService::class);
+        $totais = $encargos->totais($faturas->map(fn (Fatura $f): array => $encargos->calcular($f)));
 
         return [
             'total_faturas' => $faturas->count(),
             'total_devido' => (float) $faturas->sum('valor_restante'),
+            'total_encargos' => $totais['encargos'],
+            'total_atualizado' => round((float) $faturas->sum('valor_restante') + $totais['encargos'], 2),
             'total_responsaveis' => $faturas
                 ->flatMap(fn (Fatura $f) => $f->contrato?->responsaveisFinanceiros->pluck('pessoa_id') ?? [])
                 ->unique()
@@ -157,8 +170,9 @@ class RelatorioInadimplencia extends Page implements HasTable
     {
         return HelpContent::make('⚠️', 'Relatório de Inadimplência', 'Faturas em atraso, consolidadas por turma, faixa de atraso e responsável.')
             ->secao('🎯 O que você encontra aqui?', [
-                ['📋', 'Faturas em atraso', 'Aluno, turma, responsável(is), vencimento, dias em atraso e saldo devedor.'],
+                ['📋', 'Faturas em atraso', 'Aluno, turma, responsável(is), vencimento, dias em atraso, saldo devedor e a multa e os juros estimados. Entra a fatura marcada como atrasada e também a pendente ou parcial com o vencimento já passado.'],
                 ['🔎', 'Filtros', 'Filtre por turma ou por faixa de dias de atraso.'],
+                ['🧮', 'Multa e juros', 'Usam os percentuais do contrato (ou o padrão da escola): multa de no máximo 2%, uma vez, e juros simples proporcionais aos dias. Vencimento em fim de semana ou feriado vale no próximo dia útil.'],
             ])
             ->dica('Para lembretes automáticos de cobrança, use a Régua de Cobrança — este relatório só mostra o quadro consolidado.');
     }

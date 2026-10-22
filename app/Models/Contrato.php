@@ -36,7 +36,7 @@ class Contrato extends Model
      */
     public const STATUS_ASSINADO = ['ready', 'certificating', 'certificated', 'signed', 'completed'];
 
-    protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id'];
+    protected $fillable = ['assinafy_id', 'assinafy_status', 'assinafy_request_log', 'valor_total', 'data_aceite', 'log_assinatura', 'template_contrato_id', 'matricula_id', 'multa_percentual', 'juros_mensal_percentual'];
 
     public function matricula(): BelongsTo
     {
@@ -104,6 +104,8 @@ class Contrato extends Model
         return [
             'assinafy_request_log' => 'array',
             'data_aceite' => 'datetime',
+            'multa_percentual' => 'decimal:2',
+            'juros_mensal_percentual' => 'decimal:2',
         ];
     }
 

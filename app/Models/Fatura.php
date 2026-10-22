@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\StatusFatura;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,6 +53,26 @@ class Fatura extends Model
     public function cobrancaLogs(): HasMany
     {
         return $this->hasMany(ReguaCobrancaLog::class);
+    }
+
+    /**
+     * Faturas em atraso: marcadas como Atrasado ou ainda Pendente/Parcial com o vencimento já passado. Nenhuma rotina
+     * troca o status para Atrasado sozinha, então só o status não basta (mesma regra de `Matricula::hasDebitosVencidos()`).
+     * Não considera fim de semana nem carência: para o valor devido, use `EncargosAtrasoService`.
+     *
+     * @param  Builder<Fatura>  $query
+     * @return Builder<Fatura>
+     */
+    public function scopeEmAtraso(Builder $query, ?CarbonInterface $em = null): Builder
+    {
+        $hoje = ($em ?? today())->toDateString();
+
+        return $query->where(function (Builder $q) use ($hoje): void {
+            $q->where('status', StatusFatura::Atrasado->value)
+                ->orWhere(fn (Builder $p) => $p
+                    ->whereIn('status', [StatusFatura::Pendente->value, StatusFatura::Parcial->value])
+                    ->whereDate('vencimento', '<', $hoje));
+        });
     }
 
     /**
