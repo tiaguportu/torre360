@@ -10,8 +10,8 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Rules\RecaptchaV3;
 use App\Services\MatriculaOnlineService;
+use App\Services\ViaCepService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
@@ -177,24 +177,17 @@ class MatriculaOnlineWizard extends Component
 
     public function buscarCep(): void
     {
-        $cepLimpo = preg_replace('/\D/', '', $this->cep);
-
-        if (strlen($cepLimpo) !== 8) {
+        if (empty($this->cep)) {
             return;
         }
 
-        try {
-            $response = Http::timeout(4)->get("https://viacep.com.br/ws/{$cepLimpo}/json/");
+        $dados = app(ViaCepService::class)->buscar($this->cep);
 
-            if ($response->successful() && ! isset($response->json()['erro'])) {
-                $dados = $response->json();
-                $this->logradouro = $dados['logradouro'] ?? $this->logradouro;
-                $this->bairro = $dados['bairro'] ?? $this->bairro;
-                $this->cidade_nome = $dados['localidade'] ?? $this->cidade_nome;
-                $this->estado_sigla = $dados['uf'] ?? $this->estado_sigla;
-            }
-        } catch (\Throwable) {
-            // Silencioso em caso de falha de conexão com ViaCEP
+        if ($dados) {
+            $this->logradouro = $dados['logradouro'] ?: $this->logradouro;
+            $this->bairro = $dados['bairro'] ?: $this->bairro;
+            $this->cidade_nome = $dados['localidade'] ?: $this->cidade_nome;
+            $this->estado_sigla = $dados['uf'] ?: $this->estado_sigla;
         }
     }
 

@@ -29,6 +29,7 @@ use App\Models\VideoTutorial;
 use App\Notifications\WelcomeUserMail;
 use App\Services\InteressadoMatriculaService;
 use App\Services\TurmaVagasService;
+use App\Services\ViaCepService;
 use App\Support\TiposArquivo;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Actions\Action;
@@ -53,7 +54,6 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
@@ -407,30 +407,15 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                         return;
                     }
 
-                    $cep = preg_replace('/\D/', '', $state);
-                    if (strlen($cep) !== 8) {
-                        return;
-                    }
+                    $dados = app(ViaCepService::class)->buscarComCidade((string) $state);
+                    if ($dados) {
+                        $set('logradouro', $dados['logradouro'] ?? '');
+                        $set('bairro', $dados['bairro'] ?? '');
+                        $set('complemento', $dados['complemento'] ?? '');
 
-                    try {
-                        $response = Http::get("https://viacep.com.br/ws/{$cep}/json/")->json();
-
-                        if (isset($response['erro'])) {
-                            return;
+                        if (! empty($dados['cidade_id'])) {
+                            $set('cidade_id', (string) $dados['cidade_id']);
                         }
-
-                        $set('logradouro', $response['logradouro'] ?? '');
-                        $set('bairro', $response['bairro'] ?? '');
-                        $set('complemento', $response['complemento'] ?? '');
-
-                        if (isset($response['ibge'])) {
-                            $cidade = Cidade::where('codigo_ibge', $response['ibge'])->first();
-                            if ($cidade) {
-                                $set('cidade_id', (string) $cidade->id);
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        // Silently fail if API is down
                     }
                 }),
 

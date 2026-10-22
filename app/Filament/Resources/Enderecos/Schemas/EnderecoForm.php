@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources\Enderecos\Schemas;
 
-use App\Models\Cidade;
+use App\Services\ViaCepService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Http;
 
 class EnderecoForm
 {
@@ -30,23 +29,14 @@ class EnderecoForm
                             return;
                         }
 
-                        $cep = preg_replace('/[^0-9]/', '', $state);
+                        $dados = app(ViaCepService::class)->buscarComCidade($state);
 
-                        if (strlen($cep) !== 8) {
-                            return;
-                        }
+                        if ($dados) {
+                            $set('logradouro', $dados['logradouro'] ?? '');
+                            $set('bairro', $dados['bairro'] ?? '');
 
-                        $response = Http::get("https://viacep.com.br/ws/{$cep}/json/")->json();
-
-                        if (! isset($response['erro'])) {
-                            $set('logradouro', $response['logradouro'] ?? '');
-                            $set('bairro', $response['bairro'] ?? '');
-
-                            if (isset($response['ibge'])) {
-                                $cidade = Cidade::where('codigo_ibge', $response['ibge'])->first();
-                                if ($cidade) {
-                                    $set('cidade_id', $cidade->id);
-                                }
+                            if (! empty($dados['cidade_id'])) {
+                                $set('cidade_id', $dados['cidade_id']);
                             }
                         }
                     }),
