@@ -368,6 +368,8 @@ class InteressadoForm
                                     ->itemLabel(fn (array $state): ?string => $state['nome_crianca'] ?? null),
                             ]),
                     ])
+                    // Gancho do tema (theme.css): no celular, aba com padding menor para dar largura ao formulário e ao Resumo.
+                    ->extraAttributes(['class' => 'crm-abas-compactas'])
                     ->columnSpanFull(),
             ]);
     }

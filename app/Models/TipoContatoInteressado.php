@@ -14,6 +14,14 @@ class TipoContatoInteressado extends Model
     /** Reenvio do formulário público por um lead que já existia. */
     public const FORMULARIO_SITE = 'Formulário do Site';
 
+    /**
+     * Tipos que o sistema grava por conta própria: não oferecidos ao registrar atendimento e que nunca contam
+     * como o primeiro contato da escola com a família (SLA de 1ª resposta).
+     *
+     * @var list<string>
+     */
+    public const ADMINISTRATIVOS = [self::FUNIL, self::FORMULARIO_SITE];
+
     protected $fillable = ['nome'];
 
     /**

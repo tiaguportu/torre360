@@ -38,6 +38,9 @@
     .lead-resumo-secao section.fi-section { padding:0 !important; }
     .lead-resumo-secao .lead-resumo-card { padding:1.25rem !important; }
     .lead-resumo-secao .lead-resumo-metrica { padding:1rem !important; }
+    /* Lead estagnado: o tema zera `border-width` de `.fi-section` com !important, então a borda não aparece;
+       `outline` não depende disso, não desloca o layout e acompanha o raio dos cantos. */
+    .lead-resumo-secao .lead-resumo-alerta { outline:1px solid #dc2626; outline-offset:-1px; }
 
     @media (min-width: 768px) {
         .lead-score-fatores { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -83,7 +86,7 @@
     <div class="lead-resumo-metricas">
         @foreach($metricas as $m)
             @php $corM = ! empty($m['alerta']) ? '#dc2626' : 'inherit'; @endphp
-            <div class="fi-section lead-resumo-metrica" @if(! empty($m['alerta'])) style="border-color:#dc2626;" @endif>
+            <div @class(['fi-section', 'lead-resumo-metrica', 'lead-resumo-alerta' => ! empty($m['alerta'])])>
                 <div style="display:flex; align-items:center; gap:.4rem; font-size:.75rem; opacity:.7; color:{{ $corM }};">
                     <x-filament::icon :icon="$m['icone']" style="width:1rem; height:1rem;"/>
                     {{ $m['rotulo'] }}

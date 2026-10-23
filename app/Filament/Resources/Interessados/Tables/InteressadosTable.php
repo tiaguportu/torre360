@@ -444,7 +444,7 @@ class InteressadosTable
                         Select::make('tipo_contato_interessado_id')
                             ->label('Tipo de Contato')
                             ->options(fn () => TipoContatoInteressado::query()
-                                ->whereNotIn('nome', [TipoContatoInteressado::FUNIL, TipoContatoInteressado::FORMULARIO_SITE])
+                                ->whereNotIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)
                                 ->pluck('nome', 'id'))
                             ->required(),
                         DateTimePicker::make('data_contato')

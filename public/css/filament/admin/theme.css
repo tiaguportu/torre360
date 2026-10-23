@@ -35,6 +35,15 @@ body {
     padding: 1.5rem !important; /* spacing.6 */
 }
 
+/* Abas do CRM (ficha do interessado): no celular, o `p-6` das abas "contained" do Filament (24px de cada lado)
+   comia largura do formulário e do Resumo do Lead. A classe vem de InteressadoForm (Tabs::make('CRM')->extraAttributes).
+   Especificidade maior que a do Filament (.fi-sc-tabs.fi-contained .fi-sc-tabs-tab.fi-active), sem precisar de !important. */
+@media (max-width: 640px) {
+    .fi-sc-tabs.crm-abas-compactas.fi-contained .fi-sc-tabs-tab.fi-active {
+        padding: 0.75rem;
+    }
+}
+
 /* Editorial Data Tables (No Horizontal lines except header) */
 .fi-ta-content {
     border-width: 0 !important;

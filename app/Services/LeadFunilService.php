@@ -268,7 +268,7 @@ class LeadFunilService
 
         $administrativo = TipoContatoInteressado::query()
             ->whereKey($historico->tipo_contato_interessado_id)
-            ->whereIn('nome', [TipoContatoInteressado::FUNIL, TipoContatoInteressado::FORMULARIO_SITE])
+            ->whereIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)
             ->exists();
 
         return $administrativo ? null : $historico->data_contato;

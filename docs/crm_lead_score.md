@@ -114,9 +114,21 @@ largura útil. A correção é local ao Resumo, sem mexer no tema:
   como no Filament padrão); cartões com 1.25rem (métricas 1rem).
 - **Até 640px:** conteúdo da seção com .5rem, cartões com .75rem, espaços entre cartões .5rem e
   cabeçalho mais compacto. Em 360px a largura útil dos cartões passou de ~136px para ~240px.
+- **Aba no celular:** o `p-6` das abas "contained" do Filament (24px de cada lado) também comia
+  largura. O `Tabs::make('CRM')` recebe a classe `crm-abas-compactas` (`InteressadoForm`) e o
+  `theme.css` reduz o padding da aba ativa para .75rem até 640px (seletor
+  `.fi-sc-tabs.crm-abas-compactas.fi-contained .fi-sc-tabs-tab.fi-active`, mais específico que o do
+  Filament, sem `!important`). Vale na criação e na edição do interessado. **O `theme.css` existe em
+  duas cópias versionadas e idênticas** (`resources/css/filament/admin/` e `public/css/filament/admin/`,
+  sem etapa de build): alterar sempre as duas. Em 360px a área útil dentro dos cartões passa de ~240px
+  para ~264px (cartão de ~264px para ~288px: 360 − 32 da página − 24 da aba − 16 do conteúdo da seção).
+- **Lead estagnado:** o cartão "Sem interação há" ganha a classe `lead-resumo-alerta`, com `outline`
+  vermelho de 1px. O tema zera `border-width` de `.fi-section` com `!important`, então uma `border`
+  vermelha nunca aparecia (só o texto ficava vermelho); `outline` não depende disso, não desloca o
+  layout e acompanha os cantos arredondados.
 - Se o tema mudar (ou a classe `fi-section` sair dos cartões), revisar esse bloco: o teste
-  `InteressadoTest::test_pagina_de_edicao_renderiza_o_resumo_do_lead` garante apenas que o gancho
-  `lead-resumo-secao` chega ao HTML.
+  `InteressadoTest::test_pagina_de_edicao_renderiza_o_resumo_do_lead` garante apenas que os ganchos
+  `lead-resumo-secao` e `crm-abas-compactas` chegam ao HTML.
 
 ## Quando o score é recalculado
 
