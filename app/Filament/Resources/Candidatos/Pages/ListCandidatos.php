@@ -32,17 +32,25 @@ class ListCandidatos extends ListRecords
                 ->color('purple')
                 ->visible(fn () => auth()->user()?->can('Create:Candidato'))
                 ->modalHeading('✨ Cadastrar Candidato a partir do Currículo (IA)')
-                ->modalDescription('Faça upload do arquivo de currículo (PDF, JPG, PNG). A IA interpretará os dados profissionais, preencherá o cadastro e extrairá a foto da pessoa automaticamente.')
+                ->modalDescription('Faça upload do arquivo de currículo em PDF, Word (.doc, .docx), LibreOffice (.odt) ou Imagens (JPG, PNG). A IA interpretará os dados profissionais, preencherá o cadastro e extrairá a foto da pessoa automaticamente.')
                 ->modalSubmitActionLabel('Analisar e Criar Candidato')
                 ->form([
                     FileUpload::make('curriculo_arquivo')
-                        ->label('Arquivo do Currículo')
+                        ->label('Arquivo do Currículo (PDF, Word, LibreOffice ou Imagem)')
                         ->disk('public')
                         ->directory('candidatos/curriculos')
-                        ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
-                        ->maxSize(15360)
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.oasis.opendocument.text',
+                            'image/jpeg',
+                            'image/png',
+                            'image/webp',
+                        ])
+                        ->maxSize(20480)
                         ->required()
-                        ->helperText('Selecione o arquivo do currículo para interpretação e auditoria.'),
+                        ->helperText('Selecione o arquivo do currículo para interpretação, extração de foto e auditoria.'),
                 ])
                 ->action(function (array $data) {
                     $caminhoRelativo = $data['curriculo_arquivo'] ?? null;
@@ -51,7 +59,7 @@ class ListCandidatos extends ListRecords
                     }
 
                     $caminhoFisico = Storage::disk('public')->path($caminhoRelativo);
-                    $mime = @mime_content_type($caminhoFisico) ?: 'application/pdf';
+                    $mime = @mime_content_type($caminhoFisico) ?: 'application/octet-stream';
                     $nomeOriginal = basename($caminhoRelativo);
 
                     try {
@@ -82,7 +90,7 @@ class ListCandidatos extends ListRecords
                             'cadastrado_por_user_id' => auth()->id(),
                         ]);
 
-                        $mensagemFoto = ! empty($extraido['foto_path']) ? ' Foto extraída com sucesso.' : '';
+                        $mensagemFoto = ! empty($extraido['foto_path']) ? ' Foto do candidato extraída com sucesso!' : '';
 
                         Notification::make()
                             ->title('✨ Candidato cadastrado com sucesso via IA!')
@@ -136,12 +144,12 @@ class ListCandidatos extends ListRecords
         $html .= '<li><strong>Filtros:</strong> Filtre por status (Novo, Em Triagem, Entrevistado, Banco de Talentos, Aprovado), por vaga ou se possui currículo/áudio anexado.</li>';
 
         if ($podeCriar) {
-            $html .= '<li><strong>Cadastrar com IA ✨:</strong> Envie o currículo em PDF ou imagem para que a IA preencha os dados e extraia a foto do candidato automaticamente.</li>';
+            $html .= '<li><strong>Cadastrar com IA ✨:</strong> Envie o currículo em PDF, Word (.doc, .docx), LibreOffice (.odt) ou imagem para que a IA preencha os dados e extraia a foto do candidato automaticamente.</li>';
             $html .= '<li><strong>Novo Candidato:</strong> Formulário completo de cadastro manual ou assistido por IA.</li>';
         }
 
         if ($podeEditar) {
-            $html .= '<li><strong>Edição & Áudio de WhatsApp:</strong> Abra qualquer candidato para ouvir o áudio do entrevistador, sintetizar impressões e editar dados.</li>';
+            $html .= '<li><strong>Edição & Áudio de WhatsApp:</strong> Abra qualquer candidato para acionar o modal de áudio de entrevista, sintetizar impressões e editar dados.</li>';
         }
 
         if ($podeExcluir) {
@@ -149,7 +157,7 @@ class ListCandidatos extends ListRecords
         }
 
         $html .= '</ul></div>';
-        $html .= '<p class="text-xs text-gray-500 dark:text-gray-400">Dica: Áudios de WhatsApp gravados pelo entrevistador podem ser enviados no cadastro para consolidar as impressões de RH automaticamente com IA.</p>';
+        $html .= '<p class="text-xs text-gray-500 dark:text-gray-400">Dica: Áudios de WhatsApp gravados pelo entrevistador podem ser enviados no modal de áudio da edição para consolidar as impressões de RH automaticamente com IA.</p>';
         $html .= '</div>';
 
         return $html;

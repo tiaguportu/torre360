@@ -1760,5 +1760,5 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
   - `deleted_at`: Soft delete para remoção segura de registros sem perda de histórico.
 - **Índices:** `idx_candidatos_status_cargo` (`status`, `cargo_pretendido`), `idx_candidatos_email`, `idx_candidatos_telefone`.
 - **Permissões:** `ViewAny`, `View`, `Create`, `Update`, `Delete`, `DeleteAny` `:Candidato` (RH).
-- **Serviços:** `CurriculoIaService` (interpretação multimodal de currículos, recorte e extração de foto via GD/PDF e análise de áudios de WhatsApp com síntese de impressões de RH).
+- **Serviços:** `CurriculoIaService` (interpretação multimodal de currículos em PDF, Imagens, Microsoft Word `.docx`/`.doc` e LibreOffice `.odt`, extração de foto via contêineres ZIP `word/media/`, `Pictures/`, streams JPEG e GD nativo, e interpretação de áudios de WhatsApp com síntese de impressões de RH via modal interativo).
 

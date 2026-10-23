@@ -16,6 +16,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
+use ZipArchive;
 
 class CandidatoCurriculoIaTest extends TestCase
 {
@@ -30,7 +31,6 @@ class CandidatoCurriculoIaTest extends TestCase
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Garante as permissões e papéis necessários
         foreach (['ViewAny:Candidato', 'View:Candidato', 'Create:Candidato', 'Update:Candidato', 'Delete:Candidato', 'DeleteAny:Candidato'] as $perm) {
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
         }
@@ -79,7 +79,7 @@ class CandidatoCurriculoIaTest extends TestCase
         $this->assertEquals(StatusCandidato::Novo, $candidato->status);
     }
 
-    public function test_curriculo_ia_service_interpreta_curriculo_e_extrai_dados(): void
+    public function test_curriculo_ia_service_interpreta_curriculo_pdf_e_extrai_dados(): void
     {
         $fakeJson = json_encode([
             'nome_completo' => 'Prof. Roberto Mendes',
@@ -134,9 +134,121 @@ class CandidatoCurriculoIaTest extends TestCase
         }
     }
 
+    public function test_curriculo_ia_service_interpreta_curriculo_docx_e_extrai_foto_embutida(): void
+    {
+        // Cria imagem real para embutir no DOCX
+        $img = imagecreatetruecolor(150, 150);
+        $corFundo = imagecolorallocate($img, 100, 150, 200);
+        imagefilledrectangle($img, 0, 0, 150, 150, $corFundo);
+        ob_start();
+        imagejpeg($img, null, 90);
+        $jpegBytes = ob_get_clean();
+        imagedestroy($img);
+
+        // Cria arquivo .docx como contêiner ZIP real
+        $caminhoDocx = tempnam(sys_get_temp_dir(), 'docx_test_').'.docx';
+        $zip = new ZipArchive;
+        $zip->open($caminhoDocx, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip->addFromString('word/document.xml', '<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Curriculo de Vanessa Ribeiro. Pedagoga com especializacao em alfabetizacao. Mora na Vila Mariana em Sao Paulo. Pretensao 4800.</w:t></w:r></w:p></w:body></w:document>');
+        $zip->addFromString('word/media/image1.jpeg', $jpegBytes);
+        $zip->close();
+
+        $fakeJson = json_encode([
+            'nome_completo' => 'Vanessa Ribeiro',
+            'cargo_pretendido' => 'Pedagoga',
+            'escola_atual' => 'Escola Aquarela',
+            'local_moradia' => 'Vila Mariana, São Paulo - SP',
+            'pretensao_salarial' => 4800.00,
+            'formacao_academica' => 'Pedagogia com especialização em Alfabetização',
+            'tem_foto_perfil' => true,
+        ]);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => $fakeJson],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        try {
+            /** @var CurriculoIaService $service */
+            $service = app(CurriculoIaService::class);
+            $dados = $service->analisarCurriculo($caminhoDocx, null, 'curriculo_vanessa.docx');
+
+            $this->assertEquals('Vanessa Ribeiro', $dados['nome_completo']);
+            $this->assertEquals('Pedagoga', $dados['cargo_pretendido']);
+            $this->assertNotEmpty($dados['foto_path']);
+            $this->assertStringStartsWith('candidatos/fotos/', $dados['foto_path']);
+            $this->assertTrue(Storage::disk('public')->exists($dados['foto_path']));
+        } finally {
+            @unlink($caminhoDocx);
+        }
+    }
+
+    public function test_curriculo_ia_service_interpreta_curriculo_odt_e_extrai_foto_embutida(): void
+    {
+        $img = imagecreatetruecolor(120, 120);
+        $corFundo = imagecolorallocate($img, 180, 120, 90);
+        imagefilledrectangle($img, 0, 0, 120, 120, $corFundo);
+        ob_start();
+        imagejpeg($img, null, 90);
+        $jpegBytes = ob_get_clean();
+        imagedestroy($img);
+
+        // Cria arquivo .odt como contêiner ZIP real
+        $caminhoOdt = tempnam(sys_get_temp_dir(), 'odt_test_').'.odt';
+        $zip = new ZipArchive;
+        $zip->open($caminhoOdt, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip->addFromString('content.xml', '<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"><office:body><office:text><text:p>Curriculo de Lucas Andrade. Professor de Historia. Trabalha no Colegio Objetivo.</text:p></office:text></office:body></office:document-content>');
+        $zip->addFromString('Pictures/1000000000.jpg', $jpegBytes);
+        $zip->close();
+
+        $fakeJson = json_encode([
+            'nome_completo' => 'Lucas Andrade',
+            'cargo_pretendido' => 'Professor de História',
+            'escola_atual' => 'Colégio Objetivo',
+            'local_moradia' => 'Campinas - SP',
+            'pretensao_salarial' => 4500.00,
+            'tem_foto_perfil' => true,
+        ]);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => $fakeJson],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        try {
+            /** @var CurriculoIaService $service */
+            $service = app(CurriculoIaService::class);
+            $dados = $service->analisarCurriculo($caminhoOdt, null, 'curriculo_lucas.odt');
+
+            $this->assertEquals('Lucas Andrade', $dados['nome_completo']);
+            $this->assertEquals('Professor de História', $dados['cargo_pretendido']);
+            $this->assertNotEmpty($dados['foto_path']);
+            $this->assertTrue(Storage::disk('public')->exists($dados['foto_path']));
+        } finally {
+            @unlink($caminhoOdt);
+        }
+    }
+
     public function test_curriculo_ia_service_extrai_foto_com_bounding_box_em_imagem(): void
     {
-        // Cria uma imagem real temporária de 400x400 via GD
         $img = imagecreatetruecolor(400, 400);
         $corFundo = imagecolorallocate($img, 240, 240, 240);
         imagefilledrectangle($img, 0, 0, 400, 400, $corFundo);
@@ -155,7 +267,7 @@ class CandidatoCurriculoIaTest extends TestCase
             'local_moradia' => 'Belo Horizonte - MG',
             'pretensao_salarial' => 4000.00,
             'tem_foto_perfil' => true,
-            'foto_bounding_box' => [200, 200, 800, 800], // [ymin, xmin, ymax, xmax] normalizado 0-1000
+            'foto_bounding_box' => [200, 200, 800, 800],
         ]);
 
         Http::fake([
@@ -254,9 +366,25 @@ class CandidatoCurriculoIaTest extends TestCase
         $response->assertSee('Fernando Lima');
     }
 
+    public function test_usuario_com_permissao_acessa_edicao_de_candidatos_e_ve_botao_modal_audio(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('super_admin');
+
+        $candidato = Candidato::factory()->create([
+            'nome_completo' => 'Priscila Alencar',
+            'cargo_pretendido' => 'Professora de Artes',
+        ]);
+
+        $response = $this->actingAs($user)->get("/admin/candidatos/{$candidato->id}/edit");
+
+        $response->assertStatus(200);
+        $response->assertSee('Priscila Alencar');
+    }
+
     public function test_usuario_sem_permissao_nao_acessa_candidatos(): void
     {
-        $user = User::factory()->create(); // Sem role super_admin ou permissões
+        $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get('/admin/candidatos');
 
