@@ -20,6 +20,7 @@ enum TipoTemplateDocumento: string implements HasColor, HasIcon, HasLabel
     case DistratoMatricula = 'distrato_matricula';
     case ContratoTrabalho = 'contrato_trabalho';
     case TermoConfidencialidade = 'termo_confidencialidade';
+    case OficioConselhoTutelar = 'oficio_conselho_tutelar';
 
     public function getLabel(): ?string
     {
@@ -36,6 +37,7 @@ enum TipoTemplateDocumento: string implements HasColor, HasIcon, HasLabel
             self::DistratoMatricula => 'Distrato de Matrícula',
             self::ContratoTrabalho => 'Contrato de Trabalho',
             self::TermoConfidencialidade => 'Termo de Confidencialidade e Proteção de Dados',
+            self::OficioConselhoTutelar => 'Ofício ao Conselho Tutelar (faltas excessivas)',
         };
     }
 
@@ -54,6 +56,7 @@ enum TipoTemplateDocumento: string implements HasColor, HasIcon, HasLabel
             self::DistratoMatricula => 'danger',
             self::ContratoTrabalho => 'primary',
             self::TermoConfidencialidade => 'warning',
+            self::OficioConselhoTutelar => 'danger',
         };
     }
 
@@ -72,6 +75,7 @@ enum TipoTemplateDocumento: string implements HasColor, HasIcon, HasLabel
             self::DistratoMatricula => 'heroicon-m-document-minus',
             self::ContratoTrabalho => 'heroicon-m-briefcase',
             self::TermoConfidencialidade => 'heroicon-m-shield-check',
+            self::OficioConselhoTutelar => 'heroicon-m-building-library',
         };
     }
 
@@ -84,6 +88,7 @@ enum TipoTemplateDocumento: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::DistratoMatricula => ContextoDocumento::CancelamentoMatricula,
             self::ContratoTrabalho, self::TermoConfidencialidade => ContextoDocumento::Funcionario,
+            self::OficioConselhoTutelar => ContextoDocumento::CasoFrequencia,
             default => ContextoDocumento::Matricula,
         };
     }

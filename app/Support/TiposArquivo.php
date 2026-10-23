@@ -81,6 +81,16 @@ final class TiposArquivo
     }
 
     /**
+     * Só PDF: documentos que o sistema lê (assinatura digital) antes de guardar.
+     *
+     * @return list<string>
+     */
+    public static function pdf(): array
+    {
+        return ['application/pdf'];
+    }
+
+    /**
      * Arquivos de texto simples lidos pelo sistema (retorno do Educacenso). Nunca são servidos de volta ao navegador.
      *
      * @return list<string>

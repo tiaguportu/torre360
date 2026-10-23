@@ -68,8 +68,11 @@ class HistoricoEscolarService
             $serieNome = $serie?->nome ?? $matricula->turma?->nome ?? 'Série';
 
             // Carga horária e frequência
-            $cargaHorariaTotal = (int) ($matricula->turma?->carga_horaria_total ?: 800);
-            $diasLetivos = 200; // Padrão LDB
+            // Dias e horas do cronograma da turma (Onda 49), quando existe; sem cronograma, o padrão da LDB (200 dias, 800 horas).
+            // A carga horária informada na turma, quando preenchida, é a do currículo e continua valendo.
+            $doCronograma = $matricula->turma ? app(CargaLetivaService::class)->paraHistorico($matricula->turma) : null;
+            $cargaHorariaTotal = (int) ($matricula->turma?->carga_horaria_total ?: ($doCronograma['horas'] ?? 800));
+            $diasLetivos = $doCronograma['dias'] ?? 200;
 
             // Cálculo da frequência percentual
             $totalAulas = FrequenciaEscolar::where('matricula_id', $matricula->id)->count();

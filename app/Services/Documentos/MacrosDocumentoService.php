@@ -6,6 +6,7 @@ namespace App\Services\Documentos;
 
 use App\Enums\ContextoDocumento;
 use App\Models\CancelamentoMatricula;
+use App\Models\CasoFrequencia;
 use App\Models\ContratoTrabalho;
 use App\Models\Fatura;
 use App\Models\Funcionario;
@@ -129,6 +130,32 @@ class MacrosDocumentoService
                 ],
                 'Escola' => $this->grupoEscola(),
             ] + $assinatura,
+
+            ContextoDocumento::CasoFrequencia => [
+                'Aluno e faltas' => [
+                    '{{ALUNO_NOME}}' => 'Nome do aluno',
+                    '{{ALUNO_NASCIMENTO}}' => 'Data de nascimento',
+                    '{{SERIE_NOME}}' => 'Série / ano escolar',
+                    '{{TURMA_NOME}}' => 'Turma',
+                    '{{PERIODO_LETIVO}}' => 'Período letivo',
+                    '{{AULAS_PREVISTAS}}' => 'Aulas previstas no ano',
+                    '{{FALTAS}}' => 'Faltas até a abertura do caso',
+                    '{{FALTAS_JUSTIFICADAS}}' => 'Faltas justificadas',
+                    '{{FALTAS_INJUSTIFICADAS}}' => 'Faltas injustificadas',
+                    '{{PERCENTUAL_FALTAS}}' => 'Faltas sobre as aulas previstas (%)',
+                    '{{LIMITE_FALTAS}}' => 'Limite de faltas que a escola considera para notificar',
+                ],
+                'Família e contatos' => [
+                    '{{RESPONSAVEIS}}' => 'Responsáveis para contato (nome e telefone)',
+                    '{{TENTATIVAS_CONTATO}}' => 'Lista das tentativas de contato com a família (data, meio e resultado)',
+                ],
+                'Conselho Tutelar' => [
+                    '{{CONSELHO_NOME}}' => 'Nome do Conselho Tutelar',
+                    '{{CONSELHO_ENDERECO}}' => 'Endereço do Conselho Tutelar',
+                    '{{CONSELHO_MUNICIPIO}}' => 'Município do Conselho Tutelar',
+                ],
+                'Escola' => $this->grupoEscola(),
+            ] + $assinatura,
         };
     }
 
@@ -211,6 +238,7 @@ class MacrosDocumentoService
             $registro instanceof Matricula => Matricula::query()->with('pessoa')->find($registro->id)?->pessoa?->nome ?? 'Aluno',
             $registro instanceof CancelamentoMatricula => Matricula::query()->with('pessoa')->find($registro->matricula_id)?->pessoa?->nome ?? 'Aluno',
             $registro instanceof Funcionario => Funcionario::query()->with('pessoa')->find($registro->id)?->pessoa?->nome ?? 'Funcionário',
+            $registro instanceof CasoFrequencia => Matricula::query()->with('pessoa')->find($registro->matricula_id)?->pessoa?->nome ?? 'Aluno',
             default => class_basename($registro),
         };
     }
@@ -231,6 +259,7 @@ class MacrosDocumentoService
             $registro instanceof Matricula => $this->documentos->variaveis($registro, $solicitacao, $template),
             $registro instanceof CancelamentoMatricula => $this->valoresDoCancelamento($registro),
             $registro instanceof Funcionario => $this->valoresDoFuncionario($registro),
+            $registro instanceof CasoFrequencia => $this->valoresDoCasoFrequencia($registro),
             default => throw new \InvalidArgumentException('Registro sem variáveis de documento: '.$registro::class),
         };
 
@@ -384,6 +413,53 @@ class MacrosDocumentoService
             '{{VIGENCIA_INICIO}}' => $contrato ? $contrato->vigencia_inicio->format('d/m/Y') : '—',
             '{{VIGENCIA_FIM}}' => $contrato?->vigencia_fim ? $contrato->vigencia_fim->format('d/m/Y') : 'prazo indeterminado',
         ] + $this->valoresDaEscola($funcionario->unidade);
+    }
+
+    // --- Caso de faltas excessivas -----------------------------------------------------------------------------------
+
+    /**
+     * Dados mínimos do ofício ao Conselho Tutelar (Onda 57): o aluno, o número de faltas, os responsáveis para contato e as
+     * tentativas feitas. O que a família disse (observação cifrada de cada contato) não sai no ofício.
+     *
+     * @return array<string, string>
+     */
+    private function valoresDoCasoFrequencia(CasoFrequencia $caso): array
+    {
+        $caso = CasoFrequencia::query()->with(['conselhoTutelar', 'contatos'])->findOrFail($caso->id);
+        $matricula = Matricula::query()
+            ->with(['pessoa', 'turma.serie.curso.unidade.instituicaoEnsino', 'turma.serie.curso.unidade.endereco.cidade.estado', 'turma.periodoLetivo', 'contrato.responsaveisFinanceiros.pessoa', 'pessoa.responsaveis'])
+            ->findOrFail($caso->matricula_id);
+
+        $unidade = $matricula->turma?->serie?->curso?->unidade;
+        $conselho = $caso->conselhoTutelar;
+
+        $responsaveis = collect($matricula->contrato?->responsaveisFinanceiros?->map(fn ($r) => $r->pessoa) ?? [])
+            ->merge($matricula->pessoa?->responsaveis ?? [])
+            ->filter()
+            ->unique('id')
+            ->map(fn (Pessoa $pessoa): string => e($pessoa->nome).($pessoa->telefone ? ' ('.e($pessoa->telefone).')' : ''))
+            ->implode('; ');
+
+        $tentativas = $caso->contatos->map(fn ($contato): string => '<li>'.$contato->data->format('d/m/Y').' — '.e($contato->meio->getLabel()).': '.e($contato->resultado->getLabel()).'</li>')->implode('');
+
+        return [
+            '{{ALUNO_NOME}}' => e($matricula->pessoa?->nome ?? '—'),
+            '{{ALUNO_NASCIMENTO}}' => $matricula->pessoa?->data_nascimento ? Carbon::parse($matricula->pessoa->data_nascimento)->format('d/m/Y') : '—',
+            '{{SERIE_NOME}}' => e($matricula->turma?->serie?->nome ?? '—'),
+            '{{TURMA_NOME}}' => e($matricula->turma?->nome ?? '—'),
+            '{{PERIODO_LETIVO}}' => e($matricula->turma?->periodoLetivo?->nome ?? '—'),
+            '{{AULAS_PREVISTAS}}' => (string) $caso->aulas_previstas,
+            '{{FALTAS}}' => (string) $caso->faltas,
+            '{{FALTAS_JUSTIFICADAS}}' => (string) $caso->faltas_justificadas,
+            '{{FALTAS_INJUSTIFICADAS}}' => (string) max(0, $caso->faltas - $caso->faltas_justificadas),
+            '{{PERCENTUAL_FALTAS}}' => number_format((float) $caso->percentual_faltas, 1, ',', '.').'%',
+            '{{LIMITE_FALTAS}}' => (string) $caso->limite_aulas,
+            '{{RESPONSAVEIS}}' => $responsaveis !== '' ? $responsaveis : 'Não informados',
+            '{{TENTATIVAS_CONTATO}}' => $tentativas !== '' ? '<ul>'.$tentativas.'</ul>' : '<p><em>Nenhuma tentativa de contato registrada.</em></p>',
+            '{{CONSELHO_NOME}}' => e($conselho?->nome ?? 'Conselho Tutelar'),
+            '{{CONSELHO_ENDERECO}}' => e((string) ($conselho?->endereco ?? '')),
+            '{{CONSELHO_MUNICIPIO}}' => e(trim(($conselho?->municipio ?? '').($conselho?->uf ? '/'.$conselho->uf : ''))),
+        ] + $this->valoresDaEscola($unidade);
     }
 
     // --- Apoio -------------------------------------------------------------------------------------------------------

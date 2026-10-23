@@ -47,3 +47,7 @@ Schedule::command('ponto:apurar-dia')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('ponto:expirar-banco-horas')->dailyAt('03:00')->withoutOverlapping();
 Schedule::command('ponto:verificar-integridade')->dailyAt('03:20')->withoutOverlapping();
 Schedule::command('rh:avisar-ferias')->weeklyOn(1, '07:30')->withoutOverlapping();
+
+// Relatórios configuráveis (Onda 72): a rodada é a cada 5 minutos, então a hora marcada vale com essa tolerância.
+Schedule::command('relatorios:executar-agendados')->everyFiveMinutes()->withoutOverlapping(10);
+Schedule::command('relatorios:limpar-arquivos')->dailyAt('04:30')->withoutOverlapping();

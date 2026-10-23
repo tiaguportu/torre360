@@ -17,6 +17,11 @@ class PlanoContasTable
             ->columns([
                 TextColumn::make('codigo')
                     ->searchable(),
+                TextColumn::make('codigo_contabil')
+                    ->label('Código no escritório')
+                    ->placeholder('Falta preencher')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('nome')
                     ->searchable(),
                 TextColumn::make('tipo')

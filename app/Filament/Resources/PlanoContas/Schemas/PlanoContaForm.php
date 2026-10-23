@@ -19,6 +19,10 @@ class PlanoContaForm
                     ->placeholder('Ex: 1.1')
                     ->required()
                     ->unique(ignoreRecord: true),
+                TextInput::make('codigo_contabil')
+                    ->label('Código no escritório de contabilidade')
+                    ->helperText('A conta correspondente no plano de contas do escritório. Vai no arquivo da exportação contábil; sem ele, a conta fica de fora.')
+                    ->maxLength(30),
                 TextInput::make('nome')
                     ->label('Nome da Conta')
                     ->required(),

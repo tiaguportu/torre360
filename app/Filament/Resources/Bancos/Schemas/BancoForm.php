@@ -31,6 +31,10 @@ class BancoForm
                     ->label('Agência'),
                 TextInput::make('conta')
                     ->label('Número da Conta'),
+                TextInput::make('conta_contabil')
+                    ->label('Conta no escritório de contabilidade')
+                    ->helperText('A conta (do disponível) que o escritório usa para este banco. Vai no arquivo da exportação contábil.')
+                    ->maxLength(30),
                 TextInput::make('pix_key')
                     ->label('Chave PIX'),
                 Toggle::make('is_active')

@@ -61,6 +61,46 @@ class DocumentoAssinaturaInfolist
                             ->columnSpanFull()
                             ->placeholder('—'),
                     ]),
+                Section::make('Assinatura digital')
+                    ->description('O que o sistema leu no PDF assinado. Ele não valida a cadeia de certificação, a revogação nem a validade do certificado: para essa garantia, use o Verificador de Conformidade do ITI (validar.iti.gov.br).')
+                    ->icon('heroicon-o-shield-check')
+                    ->iconColor('success')
+                    ->columns(3)
+                    ->visible(fn (DocumentoAssinatura $record): bool => $record->nivel_assinatura !== null)
+                    ->schema([
+                        TextEntry::make('nivel_assinatura')
+                            ->label('Nível encontrado')
+                            ->badge()
+                            ->columnSpan(2),
+                        TextEntry::make('origem_da_assinatura')
+                            ->label('Origem')
+                            ->state(fn (DocumentoAssinatura $record): string => $record->foiAssinadoFora() ? 'Assinado fora do sistema e anexado' : 'Assinado pelo Assinafy'),
+                        TextEntry::make('assinaturas_no_pdf')
+                            ->label('Assinaturas no PDF')
+                            ->state(fn (DocumentoAssinatura $record): string => (string) ($record->assinatura_detalhes['assinaturas'] ?? 0)),
+                        TextEntry::make('formatos_da_assinatura')
+                            ->label('Formato')
+                            ->state(fn (DocumentoAssinatura $record): string => implode(', ', $record->assinatura_detalhes['formatos'] ?? []) ?: '—'),
+                        TextEntry::make('conferencia_do_original')
+                            ->label('Parte do PDF emitido pela escola')
+                            ->state(function (DocumentoAssinatura $record): string {
+                                $contem = $record->assinatura_detalhes['contem_original'] ?? null;
+
+                                return match ($contem) {
+                                    true => 'Sim, o arquivo começa pelo PDF emitido',
+                                    false => 'Não confere: confira se é o mesmo documento',
+                                    default => 'Não conferido',
+                                };
+                            }),
+                        TextEntry::make('hash_assinado')
+                            ->label('Impressão digital do PDF assinado (SHA-256)')
+                            ->state(fn (DocumentoAssinatura $record): ?string => $record->assinatura_detalhes['hash_sha256'] ?? null)
+                            ->copyable()
+                            ->fontFamily('mono')
+                            ->size('xs')
+                            ->columnSpanFull()
+                            ->placeholder('—'),
+                    ]),
                 Section::make('Aviso do envio')
                     ->icon('heroicon-o-exclamation-triangle')
                     ->iconColor('danger')
@@ -73,6 +113,7 @@ class DocumentoAssinaturaInfolist
                                 : 'Este documento foi cancelado aqui, mas o Assinafy registrou que ele foi assinado. Confira no Assinafy antes de usá-lo.'),
                     ]),
                 Section::make('Assinantes')
+                    ->visible(fn (DocumentoAssinatura $record): bool => ! $record->foiAssinadoFora())
                     ->schema([
                         RepeatableEntry::make('assinantes')
                             ->hiddenLabel()

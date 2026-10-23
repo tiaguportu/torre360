@@ -6,6 +6,7 @@ namespace App\Services\Documentos;
 
 use App\Enums\ContextoDocumento;
 use App\Models\CancelamentoMatricula;
+use App\Models\CasoFrequencia;
 use App\Models\Funcionario;
 use App\Models\Matricula;
 
@@ -39,6 +40,14 @@ final class RegistrosDoContexto
                 ->get()
                 ->mapWithKeys(fn (CancelamentoMatricula $cancelamento): array => [$cancelamento->id => self::rotuloCancelamento($cancelamento)])
                 ->all(),
+            ContextoDocumento::CasoFrequencia => CasoFrequencia::query()
+                ->when($busca !== '', fn ($consulta) => $consulta->whereHas('matricula.pessoa', fn ($pessoa) => $pessoa->where('nome', 'like', "%{$busca}%")))
+                ->with('matricula.pessoa')
+                ->latest('id')
+                ->limit($limite)
+                ->get()
+                ->mapWithKeys(fn (CasoFrequencia $caso): array => [$caso->id => self::rotuloCasoFrequencia($caso)])
+                ->all(),
             ContextoDocumento::Funcionario => Funcionario::query()
                 ->when($busca !== '', fn ($consulta) => $consulta->whereHas('pessoa', fn ($pessoa) => $pessoa->where('nome', 'like', "%{$busca}%")))
                 ->with('pessoa')
@@ -61,7 +70,13 @@ final class RegistrosDoContexto
             ContextoDocumento::Matricula => ($matricula = Matricula::query()->with(['pessoa', 'turma'])->find($id)) ? self::rotuloMatricula($matricula) : null,
             ContextoDocumento::CancelamentoMatricula => ($cancelamento = CancelamentoMatricula::query()->with('matricula.pessoa')->find($id)) ? self::rotuloCancelamento($cancelamento) : null,
             ContextoDocumento::Funcionario => ($funcionario = Funcionario::query()->with('pessoa')->find($id)) ? self::rotuloFuncionario($funcionario) : null,
+            ContextoDocumento::CasoFrequencia => ($caso = CasoFrequencia::query()->with('matricula.pessoa')->find($id)) ? self::rotuloCasoFrequencia($caso) : null,
         };
+    }
+
+    private static function rotuloCasoFrequencia(CasoFrequencia $caso): string
+    {
+        return ($caso->matricula?->pessoa?->nome ?? 'Aluno').' — '.$caso->faltas.' falta(s)';
     }
 
     private static function rotuloMatricula(Matricula $matricula): string

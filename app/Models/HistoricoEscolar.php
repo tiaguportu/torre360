@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Contracts\ReageAoDocumentoAssinado;
+use App\Models\Concerns\TemCopiaAssinada;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class HistoricoEscolar extends Model
+class HistoricoEscolar extends Model implements ReageAoDocumentoAssinado
 {
     use HasFactory;
+    use TemCopiaAssinada;
 
     protected $table = 'historico_escolars';
 

@@ -13,14 +13,41 @@ class CronogramaAula extends Model
 
     protected $table = 'cronograma_aula';
 
-    protected $fillable = ['turma_id', 'disciplina_id', 'pessoa_id', 'data', 'hora_inicio', 'hora_fim', 'conteudo_ministrado', 'dever_casa', 'anexo_material'];
+    protected $fillable = ['turma_id', 'disciplina_id', 'pessoa_id', 'data', 'hora_inicio', 'hora_fim', 'conteudo_ministrado', 'dever_casa', 'anexo_material', 'nao_realizada_em', 'motivo_nao_realizacao', 'reposicao_de_id'];
 
     protected function casts(): array
     {
         return [
             'data' => 'date',
             'anexo_material' => 'array',
+            'nao_realizada_em' => 'datetime',
         ];
+    }
+
+    /**
+     * A aula que esta repõe (Onda 49).
+     */
+    public function reposicaoDe(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reposicao_de_id');
+    }
+
+    /**
+     * As aulas de reposição desta aula, quando ela não aconteceu.
+     */
+    public function reposicoes(): HasMany
+    {
+        return $this->hasMany(self::class, 'reposicao_de_id');
+    }
+
+    public function naoFoiRealizada(): bool
+    {
+        return $this->nao_realizada_em !== null;
+    }
+
+    public function ehReposicao(): bool
+    {
+        return $this->reposicao_de_id !== null;
     }
 
     public function habilidades()

@@ -178,6 +178,11 @@ class DocumentoService
      */
     public function gerarPdf(SolicitacaoDocumento $solicitacao): string
     {
+        // A cópia assinada é do PDF que existia na hora da assinatura: refazer o PDF a deixaria sem par.
+        if ($solicitacao->temCopiaAssinada()) {
+            throw new \DomainException('Esta declaração já tem uma cópia assinada digitalmente e não pode ser emitida de novo.');
+        }
+
         $matricula = $solicitacao->matricula;
         $template = $solicitacao->templateDocumento;
         $unidade = $matricula->turma?->serie?->curso?->unidade;

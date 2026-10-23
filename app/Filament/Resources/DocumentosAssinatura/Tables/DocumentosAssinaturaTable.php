@@ -34,6 +34,11 @@ class DocumentosAssinaturaTable
                     ->label('Assinaturas')
                     ->state(fn (DocumentoAssinatura $record): string => "{$record->assinantes_assinaram}/{$record->assinantes_total}")
                     ->description(fn (DocumentoAssinatura $record): ?string => $record->status === StatusDocumentoAssinatura::Enviado && $record->expira_em ? 'Prazo: '.$record->expira_em->format('d/m/Y') : null),
+                TextColumn::make('nivel_assinatura')
+                    ->label('Nível da assinatura')
+                    ->badge()
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('tipo_do_registro')
                     ->label('Referente a')
                     ->state(fn (DocumentoAssinatura $record): string => $record->tipoDoRegistro())

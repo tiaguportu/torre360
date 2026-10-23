@@ -38,6 +38,12 @@ class ModelosPadraoDocumento
                 'descricao' => 'Modelo de partida para a admissão (LGPD, Lei nº 13.709/2018). Revise com o jurídico antes de ativar.',
                 'conteudo' => $this->termoDeConfidencialidade(),
             ],
+            [
+                'tipo' => TipoTemplateDocumento::OficioConselhoTutelar,
+                'nome' => 'Ofício ao Conselho Tutelar (faltas excessivas)',
+                'descricao' => 'Modelo de partida para a comunicação do art. 12, VIII, da LDB. Procedimentos locais (ficha de aluno infrequente, por exemplo) variam: ajuste com o jurídico e com o Conselho antes de ativar.',
+                'conteudo' => $this->oficioConselhoTutelar(),
+            ],
         ];
     }
 
@@ -122,6 +128,33 @@ HTML;
 <p>Fica eleito o foro da comarca de {{UNIDADE_CIDADE}} para dirimir dúvidas deste contrato.</p>
 
 <p style="margin-top: 14px;">{{DATA_EXTENSO}}.</p>
+{{BLOCO_ASSINATURAS}}
+HTML;
+    }
+
+    private function oficioConselhoTutelar(): string
+    {
+        return <<<'HTML'
+<p style="text-align: right;">{{DATA_EXTENSO}}.</p>
+<p><strong>À {{CONSELHO_NOME}}</strong><br>{{CONSELHO_ENDERECO}}<br>{{CONSELHO_MUNICIPIO}}</p>
+<h2 style="text-align: center; text-transform: uppercase;">Ofício — comunicação de faltas excessivas</h2>
+<p>Senhores Conselheiros,</p>
+<p>A <strong>{{ESCOLA_NOME}}</strong> (unidade {{UNIDADE_NOME}}), em cumprimento ao art. 12, VIII, da Lei nº 9.394/1996 (LDB) e ao art. 56, II, da Lei nº 8.069/1990 (ECA), comunica que o(a) aluno(a) abaixo apresenta faltas acima do limite de notificação, depois de esgotados os recursos da escola.</p>
+
+<h3>Identificação</h3>
+<p><strong>Aluno(a):</strong> {{ALUNO_NOME}}, nascido(a) em {{ALUNO_NASCIMENTO}}.<br>
+<strong>Turma:</strong> {{TURMA_NOME}} ({{SERIE_NOME}}), período letivo {{PERIODO_LETIVO}}.<br>
+<strong>Responsáveis para contato:</strong> {{RESPONSAVEIS}}.</p>
+
+<h3>Faltas</h3>
+<p>Até esta data o(a) aluno(a) acumula <strong>{{FALTAS}}</strong> falta(s) em {{AULAS_PREVISTAS}} aulas previstas no ano ({{PERCENTUAL_FALTAS}}), sendo {{FALTAS_JUSTIFICADAS}} justificada(s) e {{FALTAS_INJUSTIFICADAS}} injustificada(s). O limite adotado pela escola para esta comunicação é de {{LIMITE_FALTAS}} faltas.</p>
+
+<h3>Providências da escola</h3>
+<p>A escola procurou a família nas ocasiões abaixo:</p>
+{{TENTATIVAS_CONTATO}}
+
+<p>Colocamo-nos à disposição para prestar as informações que o Conselho considerar necessárias.</p>
+<p>Atenciosamente,</p>
 {{BLOCO_ASSINATURAS}}
 HTML;
     }

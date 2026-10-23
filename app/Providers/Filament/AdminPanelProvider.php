@@ -49,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Preceptoria'),
                 NavigationGroup::make('Calendário e Horários'),
                 NavigationGroup::make('Financeiro'),
+                NavigationGroup::make('Relatórios'),
                 NavigationGroup::make('Operacional'),
                 NavigationGroup::make('Localização e Cadastros')
                     ->collapsed(),

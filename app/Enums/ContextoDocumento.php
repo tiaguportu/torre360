@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use App\Models\CancelamentoMatricula;
+use App\Models\CasoFrequencia;
 use App\Models\Funcionario;
 use App\Models\Matricula;
 use Filament\Support\Contracts\HasLabel;
@@ -17,6 +18,7 @@ enum ContextoDocumento: string implements HasLabel
     case Matricula = 'matricula';
     case CancelamentoMatricula = 'cancelamento_matricula';
     case Funcionario = 'funcionario';
+    case CasoFrequencia = 'caso_frequencia';
 
     public function getLabel(): string
     {
@@ -24,6 +26,7 @@ enum ContextoDocumento: string implements HasLabel
             self::Matricula => 'Aluno (matrícula)',
             self::CancelamentoMatricula => 'Cancelamento de matrícula',
             self::Funcionario => 'Funcionário',
+            self::CasoFrequencia => 'Caso de faltas excessivas',
         };
     }
 
@@ -36,6 +39,7 @@ enum ContextoDocumento: string implements HasLabel
             self::Matricula => Matricula::class,
             self::CancelamentoMatricula => CancelamentoMatricula::class,
             self::Funcionario => Funcionario::class,
+            self::CasoFrequencia => CasoFrequencia::class,
         };
     }
 }
