@@ -764,9 +764,10 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
    - 🟡 **Em Lançamento:** Data da prova já ocorreu, lançamento em andamento dentro do prazo limite.
    - 🔴 **Atrasada:** Prazo limite de lançamento ultrapassado e ainda com pendência de notas de alunos ativos.
    - 🟢 **Concluída:** 100% das notas e justificativas dos alunos da turma foram lançadas.
+   - 🔒 **Homologada:** Avaliação encerrada e trancada pela coordenação, com notas protegidas contra alterações.
 4. **Visibilidade Restrita:** Para garantir a organização e o foco pedagógico, usuários com o papel de **Professor** visualizam apenas as avaliações que estão vinculadas diretamente a eles. Administradores e secretaria continuam com acesso total.
 5. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
-6. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+6. Localize a prova/trabalho e utilize a ação de **Lançar Notas** (ou **Ver Notas** se já estiver homologada).
 7. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
 8. **Restrição de Duplicidade (Prevenção de Erros):** O sistema impede a criação de avaliações duplicadas. Não é permitido salvar mais de uma avaliação com a mesma combinação de **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**. Caso tente cadastrar uma combinação idêntica, um aviso de validação será exibido e o registro não será salvo.
 9. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
@@ -777,23 +778,30 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
     - **Select de Turmas Inteligente:** O select de turmas exibe apenas as turmas do período escolhido e omite automaticamente turmas encerradas (*Concluída* ou *Cancelada*). O nome da turma é acompanhado do turno e do ano (ex: `Berçário II - Manhã (2026)`), eliminando qualquer ambiguidade entre anos letivos.
     - **Sugestão Automática do Professor:** Ao selecionar a Turma e a Disciplina, o sistema consulta a grade da turma e pré-preenche automaticamente o campo **Professor** com o docente titular responsável por aquela matéria.
     - **Sincronização de Etapas e Prazos:** Ao selecionar a Etapa Avaliativa, a data limite de lançamento é calculada de forma contextual com base na data de encerramento da etapa. Trocar a turma ou o período redefine os campos dependentes para prevenir inconsistências.
+13. **Redirecionamento Rápido após Criar Avaliação:** Ao clicar no botão **"Criar"**, o sistema cadastra a avaliação e redireciona você imediatamente para a página de **Lançamento de Notas** daquela turma (`admin/avaliacaos/{id}/lancar-notas`), economizando tempo e etapas operacionais no dia a dia dos professores e da coordenação.
+14. **Homologação e Fechamento de Avaliação (Bloqueio Defensivo):**
+    - **Homologar Fechamento:** Ao concluir a digitação e conferência das notas, a coordenação ou o professor pode acionar a ação **Homologar Fechamento** (na tabela de avaliações, na edição ou na tela de lançamento de notas).
+    - **Proteção das Notas:** Após homologada, a avaliação tem seu status atualizado para 🔒 **Homologada** e qualquer modificação ou digitação de novas notas é bloqueada, assim como a exclusão da avaliação.
+    - **Rastreabilidade:** O sistema registra a data/hora exata e o usuário responsável pela homologação, exibindo um alerta informativo no topo do formulário.
+    - **Desbloqueio Extraordinário:** Caso haja necessidade de retificação após conselho de classe, usuários com permissão podem utilizar a ação **Desbloquear Avaliação** para reabrir o lançamento com confirmação.
 
-### 5.2 Frequência Escolar e Cronograma de Aulas
-1. **Widget de Pendências no Dashboard:** No painel principal (**Dashboard**), o sistema exibe o widget **Pendências de Lançamento de Frequência**, agrupando automaticamente todas as aulas com chamadas não lançadas ou incompletas em datas iguais a hoje ou anteriores.
-   - **Lançamento Rápido em Lote por Dia:** Clique em **Lançar Chamada do Dia** no card da data correspondente para abrir um modal interativo.
-   - **Configuração de Chamada em Lote:** O modal seleciona por padrão todas as matérias/aulas do dia e atribui **Presença** para todos os alunos matriculados. É possível desselecionar aulas específicas, desmarcar alunos ou alterar o status individual para **Ausente** antes de confirmar.
-2. Em **Calendário e Horários → Cronograma de Aulas** (ou **admin/cronograma-aulas**), a listagem por padrão ativa o filtro **Frequência Pendente** (apenas pendentes), exibindo prioritariamente os cronogramas de aulas que possuem frequências ainda não lançadas ou incompletas.
-3. Selecione o Cronograma de Aula do dia e utilize a ação **Frequência** para realizar o lançamento da chamada individual no diário de classe.
-4. Marque as faltas ou presenças dos alunos. O padrão é "Presença".
-5. **Auditoria e Segurança:** Toda ação de lançamento, alteração ou exclusão de frequência escolar (presença/ausência) é automaticamente auditada e registrada no log de atividades para controle e rastreabilidade dos lançamentos feitos por professores e administradores.
-6. **Alerta de Falta ao Responsável:** Ao marcar um aluno como **Ausente** (na chamada individual ou em lote), o(s) responsável(is) cadastrado(s) recebem automaticamente um aviso por e-mail, sininho e push, com a disciplina e a data da falta. O alerta não é enviado para faltas lançadas em datas fora do período em que a matrícula estava ativa (ex: antes da ativação ou após o desligamento do aluno).
-
-### 5.3 Boletim do Aluno
-1. Na listagem de **Matrículas**, abra o menu **⋮ Mais ações** da linha e use a ação **Boletim** (aparece apenas quando o aluno já tem notas lançadas).
-2. **Impressão de Boletim:** Na visualização do boletim de uma matrícula, agora é possível exportar o documento em PDF. Você pode escolher imprimir uma etapa específica (ex: 1º Bimestre) ou todas as etapas que já possuem notas registradas. O PDF gerado inclui uma **legenda detalhada das avaliações** (explicando o significado de cada coluna/categoria) e, logo abaixo, a **lista de datas das faltas** consolidadas daquela etapa para conferência da família.
-3. O sistema gera uma tabela dinâmica por Etapa Avaliativa (Bimestre/Trimestre) mostrando as notas de cada disciplina e a média global.
-4. Notas abaixo da média aparecem destacadas em vermelho.
-5. **Frequência Escolar Acumulada:** A frequência do aluno é exibida de forma acumulativa de todo o período letivo (e não separada por etapa). Por essa razão, a coluna de frequência só é exibida na tabela da última etapa avaliativa do período letivo. Nela, o percentual reflete a presença global do aluno no ano/período, e ao passar o mouse sobre o valor, é exibida a listagem detalhada de todas as datas com faltas (DD/MM). Adicionalmente, antes da legenda do boletim, é apresentada uma listagem de frequências acumuladas por disciplina (ex: Inglês=100%; Matemática=85%). Para as disciplinas com frequência inferior a 100%, ao passar o mouse sobre o valor, um balão explicativo (tooltip) detalha as datas em que o aluno faltou.
+### 5.2 Lançamento de Notas, Importação CSV e Painel de Desempenho
+1. Vá em **Avaliações → Avaliações** e clique na ação **Lançar Notas** (ou acesse diretamente pelo redirecionamento automático após a criação).
+2. **Painel de Estatísticas e Desempenho da Turma:** No topo da tela de notas, são exibidos indicadores em tempo real:
+   - **Média da Turma:** Média aritmética calculada instantaneamente a partir das notas numéricas lançadas.
+   - **Taxa de Participação:** Percentual e contagem de alunos da turma que já possuem notas ou justificativas lançadas.
+   - **Maior / Menor Nota:** Aponta a maior e a menor nota atribuídas na avaliação para diagnóstico de dispersão da aprendizagem.
+   - **Pendências:** Alerta visual com o quantitativo exato de alunos ativos que ainda necessitam de nota.
+3. **Importação e Exportação por Planilha (CSV):**
+   - **Baixar Modelo CSV:** Clique no botão **Baixar Modelo CSV** no cabeçalho para gerar um arquivo pronto com a listagem de todos os alunos ativos da turma, com cabeçalhos `matricula_id;aluno_nome;nota;situacao` e compatibilidade total com o Microsoft Excel (UTF-8 BOM).
+   - **Importar Notas (CSV):** Após preencher a planilha, use a ação **Importar Notas (CSV)** para enviar o arquivo. O sistema valida se as matrículas pertencem à turma, confere se os valores respeitam a nota máxima da avaliação, valida justificativas e atualiza a grade de notas automaticamente em lote.
+4. **Regras de Negócio e Prevalência (`NotaLancamentoService`):**
+   - **Teto da Avaliação:** O sistema bloqueia notas que ultrapassem a nota máxima cadastrada, prevenindo erros de digitação.
+   - **Garantia de Unicidade e Integridade:** A base de dados conta com restrição e índice composto exclusivo (`matricula_id`, `avaliacao_id`), impedindo concorrentemente notas duplicadas para uma mesma matrícula na mesma avaliação.
+   - **Justificativas (*Faltou* / *Não se Aplica*):** Quando uma justificativa é selecionada, ela tem precedência absoluta, descartando e anulando o valor numérico digitado para resolver pendências sem afetar indevidamente as médias.
+   - **Limpeza de Notas:** Ao esvaziar simultaneamente o valor numérico e a justificativa de um aluno, a nota é imediatamente excluída da base de dados.
+   - **Atalho de Teclado:** Pressionar a tecla `Enter` em qualquer campo de nota dispara o salvamento e validação rápida da grade.
+5. **Automações de Desempenho e Risco:** O comando agendado `academico:recalcular-risco-evasao` reavalia periodicamente as médias e a frequência escolar de todas as matrículas ativas para atualizar o indicador de risco de evasão, sendo testado por `ComandosAgendadosTest`.odas as datas com faltas (DD/MM). Adicionalmente, antes da legenda do boletim, é apresentada uma listagem de frequências acumuladas por disciplina (ex: Inglês=100%; Matemática=85%). Para as disciplinas com frequência inferior a 100%, ao passar o mouse sobre o valor, um balão explicativo (tooltip) detalha as datas em que o aluno faltou.
 6. **Edição de Notas:** Caso possua a permissão necessária, você visualizará o botão **Editar Notas** no topo da página do boletim. Esta tela permite o preenchimento rápido de todas as notas da etapa em um layout idêntico ao de consulta.
 7. **Impressão de Boletins por Turma (Individual e em Lote):** No menu **Acadêmico → Turmas**, usuários que possuam permissão de visualização de boletim (`Boletim:Matricula`) podem emitir e baixar todos os boletins dos alunos ativos da(s) turma(s) em um único arquivo PDF consolidado.
    - **Para uma única turma:** Clique na ação **Imprimir Boletins** na respectiva linha da turma. O sistema abrirá um modal questionando se deseja filtrar por uma etapa avaliativa específica ou gerar todas as etapas juntas.

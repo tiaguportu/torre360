@@ -234,7 +234,8 @@ Estrutura de ensino e turmas.
 
 ### `avaliacao`
 - **Representa:** Atividades avaliativas aplicadas às turmas.
-- **Campos Principais:** `turma_id`, `disciplina_id`, `etapa_avaliativa_id`, `categoria_avaliacao_id`, `professor_id` (nullable), `data_prevista`, `data_limite_lancamento`, `nota_maxima`, `peso_etapa_avaliativa`.
+- **Campos Principais:** `turma_id`, `disciplina_id`, `etapa_avaliativa_id`, `categoria_avaliacao_id`, `professor_id` (nullable), `data_prevista`, `data_ocorrencia`, `data_limite_lancamento`, `nota_maxima`, `peso_etapa_avaliativa`, `homologada_em` (timestamp nullable), `homologada_por` (FK `users`, nullable).
+- **Homologação e Fechamento:** Quando `homologada_em` está preenchido, a avaliação é considerada homologada/trancada. O lançamento de notas e a exclusão da avaliação são bloqueados no sistema para garantir a integridade dos dados após o encerramento do período avaliativo. Apenas usuários autorizados podem desbloquear a avaliação para eventuais correções extraordinárias.
 - **Restrição de Unicidade:** Possui um índice composto exclusivo (`avaliacao_composite_unique`) que impede a existência de duas avaliações com a mesma combinação de: **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**.
 - **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: avaliacao`), gravando ações de criação, alteração e exclusão com a identificação do usuário responsável (`causer`).
 

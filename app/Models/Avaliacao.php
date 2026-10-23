@@ -80,6 +80,10 @@ class Avaliacao extends Model
     protected static function booted(): void
     {
         static::saving(function (Avaliacao $avaliacao) {
+            if (empty($avaliacao->data_ocorrencia) && ! empty($avaliacao->data_prevista)) {
+                $avaliacao->data_ocorrencia = $avaliacao->data_prevista;
+            }
+
             $query = static::where('turma_id', $avaliacao->turma_id)
                 ->where('disciplina_id', $avaliacao->disciplina_id)
                 ->where('etapa_avaliativa_id', $avaliacao->etapa_avaliativa_id)

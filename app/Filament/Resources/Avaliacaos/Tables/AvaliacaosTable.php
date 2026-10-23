@@ -54,6 +54,10 @@ class AvaliacaosTable
                     ->label('Status')
                     ->badge()
                     ->state(function (Avaliacao $record): string {
+                        if ($record->isHomologada()) {
+                            return 'Homologada';
+                        }
+
                         $totalAlunos = $record->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
                         $temPendencia = $record->tem_pendencia;
 
@@ -76,6 +80,7 @@ class AvaliacaosTable
                         return 'Em Lançamento';
                     })
                     ->color(fn (string $state): string => match ($state) {
+                        'Homologada' => 'primary',
                         'Concluída' => 'success',
                         'Atrasada' => 'danger',
                         'Agendada' => 'info',
@@ -83,6 +88,7 @@ class AvaliacaosTable
                         default => 'gray',
                     })
                     ->icon(fn (string $state): string => match ($state) {
+                        'Homologada' => 'heroicon-m-lock-closed',
                         'Concluída' => 'heroicon-m-check-circle',
                         'Atrasada' => 'heroicon-m-exclamation-triangle',
                         'Agendada' => 'heroicon-m-calendar',
@@ -258,19 +264,54 @@ class AvaliacaosTable
                     ->modalSubmitActionLabel('Sim, enviar aviso'),
                 EditAction::make(),
                 Action::make('lancarNotas')
-                    ->label('Lançar Notas')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('success')
+                    ->label(fn (Avaliacao $record): string => $record->isHomologada() ? 'Ver Notas' : 'Lançar Notas')
+                    ->icon(fn (Avaliacao $record): string => $record->isHomologada() ? 'heroicon-o-eye' : 'heroicon-o-pencil-square')
+                    ->color(fn (Avaliacao $record): string => $record->isHomologada() ? 'gray' : 'success')
                     ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('lancar-notas', ['record' => $record]))
                     ->visible(fn (Avaliacao $record): bool => auth()->user()->can('lancarNotas', $record))
-                    ->badge(fn (Avaliacao $record): ?int => $record->notas_pendentes_count > 0 ? $record->notas_pendentes_count : null)
+                    ->badge(fn (Avaliacao $record): ?int => (! $record->isHomologada() && $record->notas_pendentes_count > 0) ? $record->notas_pendentes_count : null)
                     ->badgeColor('danger'),
+                Action::make('homologar')
+                    ->label('Homologar')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('success')
+                    ->visible(fn (Avaliacao $record): bool => ! $record->isHomologada() && (auth()->user()?->can('homologar', $record) ?? false))
+                    ->requiresConfirmation()
+                    ->modalHeading('Homologar Fechamento')
+                    ->modalDescription(fn (Avaliacao $record): string => "Deseja homologar a avaliação \"{$record->label_exibicao}\"? O lançamento de notas será bloqueado contra alterações.")
+                    ->modalSubmitActionLabel('Sim, homologar')
+                    ->action(function (Avaliacao $record) {
+                        $record->homologar(auth()->user());
+
+                        FilamentUINotification::make()
+                            ->title('Avaliação homologada com sucesso!')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('desbloquear')
+                    ->label('Desbloquear')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('danger')
+                    ->visible(fn (Avaliacao $record): bool => $record->isHomologada() && (auth()->user()?->can('homologar', $record) ?? false))
+                    ->requiresConfirmation()
+                    ->modalHeading('Desbloquear Avaliação')
+                    ->modalDescription(fn (Avaliacao $record): string => "Deseja desbloquear a avaliação \"{$record->label_exibicao}\" para permitir novas edições de notas?")
+                    ->modalSubmitActionLabel('Sim, desbloquear')
+                    ->action(function (Avaliacao $record) {
+                        $record->desbloquear();
+
+                        FilamentUINotification::make()
+                            ->title('Avaliação desbloqueada!')
+                            ->body('O lançamento de notas foi liberado novamente.')
+                            ->success()
+                            ->send();
+                    }),
                 Action::make('corrigirGabarito')
                     ->label('Corrigir via Gabarito / Câmera')
                     ->icon('heroicon-o-camera')
                     ->color('primary')
                     ->url(fn (Avaliacao $record): string => AvaliacaoResource::getUrl('corrigir-gabarito', ['record' => $record]))
-                    ->visible(fn (Avaliacao $record): bool => auth()->user()->can('corrigirGabarito', $record)),
+                    ->visible(fn (Avaliacao $record): bool => ! $record->isHomologada() && auth()->user()->can('corrigirGabarito', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
