@@ -400,7 +400,10 @@ IA é texto livre de terceiros e só vira cadastro depois de validado:
   vira vazio (o valor `Filho(a)` antigo violaria o enum). Cada descarte vira aviso na notificação e nas observações.
 - **Deduplicação:** a pessoa é reconhecida por e-mail, CPF ou telefone (`Pessoa::scopeComTelefone`: ignora máscara e
   o `55`). Se já tem **lead ativo**, a conversa entra no histórico dele, o aluno repetido só é completado, nada do que
-  está preenchido é sobrescrito e não nasce segundo lead; lead encerrado ganha um lead novo.
+  está preenchido é sobrescrito e não nasce segundo lead; lead encerrado ganha um lead novo. Os **avisos** da
+  importação (CPF/e-mail inválido, série, visitas) vão para a notificação e, em lead novo ou reaproveitado, para as
+  observações do lead como linhas "⚠️ Conferir" (`complementarLead()` recebe os avisos; antes, no lead existente, só a
+  notificação os trazia).
 - **Visitas à escola:** o JSON da IA traz `visitas` (`data_hora`, `situacao`, `aluno`, `observacoes`) com as visitas já
   feitas e as marcadas. `resolverVisitas()` valida e `gravarVisitas()` grava via `VisitaInteressadoService::agendar()`
   (que ganhou o parâmetro opcional `$status`; por isso a visita marcada também antecipa o "próximo contato" e recalcula
@@ -413,9 +416,17 @@ IA é texto livre de terceiros e só vira cadastro depois de validado:
     aviso para confirmar. Data ilegível, inexistente (31/02 não "transborda" para março) ou a mais de 365 dias de hoje
     (`JANELA_VISITA_DIAS`, ano errado da IA) descarta a visita com aviso, sem derrubar o cadastro. No máximo 5 visitas por
     importação (`MAX_VISITAS`).
-  - **Deduplicação por lead e dia:** havendo visita do lead no mesmo dia (qualquer horário), nada é criado; só uma
-    existente `agendada` passa para realizada/faltou/cancelada quando a nova conversa confirma. Desfecho já registrado,
-    inclusive à mão, nunca é desfeito. Reimportar a mesma conversa é inofensivo.
+  - **Deduplicação (`planejarVisitas()` / `visitaJaConhecida()`):** o plano é feito antes de gravar, confrontando cada
+    visita da IA com as do lead (inclusive as já aceitas na mesma resposta). É a **mesma visita** se for no mesmo dia, de
+    aluno compatível e com até `TOLERANCIA_MESMA_VISITA_MINUTOS` (120) entre os horários, ou se a nova veio só com o dia
+    (`sem_horario`). Aluno compatível: um dos dois omitido (família toda cobre qualquer aluno), nome igual ou um contido
+    no outro como palavra inteira ("Lucas" / "Lucas Silva"), sempre sem caixa/acento. Alunos diferentes ou horários
+    distantes no mesmo dia são visitas diferentes. Visita `cancelada` nunca absorve uma que não seja cancelamento:
+    marcar de novo depois de cancelar é remarcação e cria outra. Repetida: nada é criado; só uma existente `agendada`
+    passa para realizada/faltou/cancelada quando a nova conversa confirma. Desfecho já registrado, inclusive à mão, nunca é
+    desfeito. Reimportar a mesma conversa é inofensivo. Como o plano precede a gravação, os avisos de horário assumido e
+    de visita passada só saem para a visita que será de fato criada. Limite conhecido: visita registrada só com o dia
+    (09:00 assumido) e citada depois com horário a mais de 2 h daquele não é reconhecida como a mesma.
   - O consultor da visita é o do lead (`$interessado->usuario_id`, senão o escolhido na importação); o aluno é ligado
     pelo nome (sem caixa/acento) entre os dependentes do lead, já com os recém-cadastrados; sem correspondência, a visita é
     da família toda. As observações levam a marca "Visita registrada via IA".
@@ -425,8 +436,11 @@ IA é texto livre de terceiros e só vira cadastro depois de validado:
 - **Transação:** pessoa, lead, alunos, visitas e histórico entram juntos ou nenhum.
 - **Prompt:** lista as origens e séries cadastradas para a IA devolver nomes existentes e manda tratar o conteúdo
   recebido como dado, ignorando instruções escritas nele (texto, texto legível nas imagens e **fala nos áudios**). O bloco
-  "VISITAS À ESCOLA" pede só visitas presenciais com data (não reunião online, ligação nem intenção sem data) e manda
-  resolver datas relativas ("amanhã", "sexta") a partir da data da mensagem em que foram ditas.
+  "VISITAS À ESCOLA" pede só visitas presenciais com data (não reunião online, ligação nem intenção sem data). Há uma
+  única regra de **DATAS RELATIVAS** ("amanhã", "sexta", "semana que vem") para todo o prompt: valem a partir da data
+  da mensagem em que foram ditas quando as mensagens trazem data (WhatsApp, e-mail) e, só sem data de mensagem (texto
+  colado, print sem data), a partir de hoje; "Data de hoje" fica para calcular nascimentos a partir de idades. Antes o
+  topo do prompt mandava resolver tudo a partir de hoje e o bloco de visitas dizia o contrário.
 - Testes: `ImportacaoLeadIaTest`, `GeminiLeadExtractionTest`.
 
 #### Conversa exportada do WhatsApp (.zip) — `ConversaWhatsappZipService`

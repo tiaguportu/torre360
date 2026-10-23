@@ -91,7 +91,8 @@ Regras (`VisitaInteressadoService`):
 ### Visitas criadas pela importação de lead por IA
 
 A ação **Importar Lead com IA** cria as visitas citadas na conversa (já feitas ou marcadas),
-sem duplicar visita do mesmo dia no lead. Horário ausente assume 09:00 e visita passada sem
+sem duplicar a mesma visita no lead (mesmo dia, aluno compatível e até 2 h de diferença; irmãos
+ou horários distantes no mesmo dia são visitas distintas). Horário ausente assume 09:00 e visita passada sem
 desfecho fica "Agendada" (atrasada) até o consultor marcar Realizada ou Não compareceu.
 Regras completas na seção 11.2 de `docs/crm_funil_e_captacao.md`.
 
