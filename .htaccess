@@ -10,10 +10,11 @@ Allow from all
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Bloqueia acesso direto a arquivos e pastas sensíveis
-    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^\.env - [F,L]
     RewriteRule ^\.git - [F,L]
     RewriteRule ^composer\.(json|lock)$ - [F,L]
     RewriteRule ^package(-lock)?\.json$ - [F,L]
+    RewriteRule \.(sql|bak|backup|old|tmp|log)$ - [F,L]
     
     # Redireciona todas as requisições para a pasta /public de forma transparente
     # Isso mantém a URL limpa (sem aparecer /public no navegador)
@@ -23,3 +24,14 @@ Allow from all
 
 # Impede a listagem de arquivos em pastas que não tenham index
 Options -Indexes
+
+# Bloqueio defensivo para arquivos sensíveis e de configuração
+<FilesMatch "^\.env|\.(sql|bak|backup|old|tmp|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>

@@ -125,11 +125,36 @@ Testes: `AcessoDocumentosEquipeTest`, `PagamentoWebhookTest` e `GatewayPagamento
 
 **Antes de ligar um gateway real:** definir `PAGAMENTOS_WEBHOOK_SECRET` e configurar o mesmo valor no gateway.
 
+## Quarta rodada (2026-10-23): Higiene, Quick Wins, Cookies e App Mobile
+
+Testes em `SecurityHardeningTest`:
+- `test_cookie_de_sessao_e_seguro_quando_configurado_ou_em_producao`
+- `test_capacitor_config_possui_navegacao_restrita_e_sem_debug`
+- `test_regras_htaccess_bloqueiam_variacoes_de_arquivos_env_e_backups`
+- `test_manifest_android_bloqueia_backup_e_trafego_cleartext`
+
+### Cookies e Sessão
+- `config/session.php`: fallback inteligente `'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production')`. Em produção, o cookie de sessão tem a flag `Secure` ativada por padrão, impedindo transmissão em canais não criptografados mesmo se a variável não estiver explicitamente configurada no `.env`.
+- `.env.example`: documentada a chave `SESSION_SECURE_COOKIE=true`.
+
+### Bloqueio no Servidor Web (.htaccess)
+- `.htaccess` (raiz) e `public/.htaccess`: bloqueio direto reforçado via `RewriteRule` e diretiva `<FilesMatch>` defensiva contra qualquer variação de `^\.env` (incluindo backups e arquivos temporários como `.env.backup`, `.env.old`) e extensões de banco/dump (`.sql`, `.bak`, `.backup`, `.tmp`, `.log`).
+- `.gitignore`: atualizado para `.env` e `.env.*` (preservando apenas `!.env.example`), evitando commits acidentais de backups de credenciais.
+
+### App Mobile (Capacitor e Android)
+- `capacitor.config.json`:
+  - `allowNavigation`: restrito aos domínios oficiais da escola (`torre360.escolatorredemarfim.com.br`, `*.escolatorredemarfim.com.br`) e serviços essenciais de Google reCAPTCHA/Fonts, eliminando a navegação arbitrária `*`.
+  - `allowMixedContent`: desativado (`false`).
+  - `webContentsDebuggingEnabled`: desativado (`false`) para impedir inspeção de DOM e extração de tokens/cookies via USB Chrome DevTools.
+- `android/app/src/main/AndroidManifest.xml`:
+  - `android:allowBackup="false"`: impede extração do sandbox local do app via `adb backup`.
+  - `android:usesCleartextTraffic="false"`: força comunicação exclusivamente criptografada (HTTPS).
+
 ## Pendências conhecidas
 
-- **Autenticação de dois fatores** para contas administrativas: adiada por decisão do produto para agilizar o desenvolvimento. Plano pronto em [melhoria_mfa_painel.md](melhoria_mfa_painel.md).
-- **Ativar o bloqueio da CSP** (`CSP_MODO=enforce`) depois do período em `report-only` (ver acima).
-- **Rodar `php artisan seguranca:higienizar-credenciais`** em cada ambiente (ver "Credenciais em e-mail, fila e log").
-- Deploy em ambiente sem Composer/shell: ver nota no `.gitignore` sobre comitar `vendor/` quando necessário.
-- **Rodar `php artisan migrate` em produção** para aplicar o rename de `coordenadores`/`tributacao_cursos` (ver seção acima) — sem isso, `Coordenador`/`TributacaoCurso` não funcionam em produção.
-- **Demais achados da revisão de 2026-10-08** (dados de saúde sem criptografia, ambiente/hospedagem, privacidade e retenção, sessão de 1 ano, tela de `git pull`, app mobile e outros): ver [seguranca_pendencias.md](seguranca_pendencias.md).
+- **Autenticação de dois fatores** para contas administrativas: plano em [melhoria_mfa_painel.md](melhoria_mfa_painel.md).
+- **Ativar o bloqueio da CSP** (`CSP_MODO=enforce`) após homologação em `report-only`.
+- **Criptografia em repouso de dados de saúde** (`FichaMedica`, `AtendimentoEnfermagem`).
+- **Portal do Titular LGPD** ([portal_titular_lgpd_roadmap.md](portal_titular_lgpd_roadmap.md)).
+- **Demais itens pendentes**: consultar [seguranca_pendencias.md](seguranca_pendencias.md).
+

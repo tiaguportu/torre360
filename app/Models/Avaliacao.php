@@ -18,7 +18,20 @@ class Avaliacao extends Model
 
     protected $table = 'avaliacao';
 
-    protected $fillable = ['etapa_avaliativa_id', 'data_ocorrencia', 'data_limite_lancamento', 'disciplina_id', 'turma_id', 'data_prevista', 'nota_maxima', 'peso_etapa_avaliativa', 'professor_id', 'categoria_avaliacao_id'];
+    protected $fillable = [
+        'etapa_avaliativa_id',
+        'data_ocorrencia',
+        'data_limite_lancamento',
+        'disciplina_id',
+        'turma_id',
+        'data_prevista',
+        'nota_maxima',
+        'peso_etapa_avaliativa',
+        'professor_id',
+        'categoria_avaliacao_id',
+        'homologada_em',
+        'homologada_por',
+    ];
 
     protected function casts(): array
     {
@@ -28,6 +41,7 @@ class Avaliacao extends Model
             'data_limite_lancamento' => 'date',
             'nota_maxima' => 'decimal:2',
             'peso_etapa_avaliativa' => 'decimal:2',
+            'homologada_em' => 'datetime',
         ];
     }
 
@@ -45,6 +59,8 @@ class Avaliacao extends Model
                 'data_limite_lancamento',
                 'nota_maxima',
                 'peso_etapa_avaliativa',
+                'homologada_em',
+                'homologada_por',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
@@ -192,6 +208,32 @@ class Avaliacao extends Model
     public function correcoesOmr(): HasMany
     {
         return $this->hasMany(OmrCorrecao::class, 'avaliacao_id');
+    }
+
+    public function homologadaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'homologada_por');
+    }
+
+    public function isHomologada(): bool
+    {
+        return ! is_null($this->homologada_em);
+    }
+
+    public function homologar(?User $user = null): void
+    {
+        $this->update([
+            'homologada_em' => now(),
+            'homologada_por' => $user?->id ?? auth()->id(),
+        ]);
+    }
+
+    public function desbloquear(): void
+    {
+        $this->update([
+            'homologada_em' => null,
+            'homologada_por' => null,
+        ]);
     }
 
     public function questoesGabarito(): HasManyThrough

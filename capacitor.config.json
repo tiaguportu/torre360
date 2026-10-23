@@ -8,13 +8,16 @@
     "cleartext": false,
     "androidScheme": "https",
     "allowNavigation": [
-      "*"
+      "torre360.escolatorredemarfim.com.br",
+      "*.escolatorredemarfim.com.br",
+      "*.google.com",
+      "*.gstatic.com"
     ]
   },
   "android": {
-    "allowMixedContent": true,
+    "allowMixedContent": false,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true,
+    "webContentsDebuggingEnabled": false,
     "backgroundColor": "#1e1e2e",
     "appendUserAgent": "Torre360App"
   },

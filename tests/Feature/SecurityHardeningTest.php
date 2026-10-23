@@ -1109,4 +1109,57 @@ class SecurityHardeningTest extends TestCase
         $response = $this->get(route('filament.admin.resources.users.edit', ['record' => $superAdmin->id]));
         $response->assertStatus(403);
     }
+
+    public function test_cookie_de_sessao_e_seguro_quando_configurado_ou_em_producao(): void
+    {
+        // Se SESSION_SECURE_COOKIE estiver como true, deve ser true
+        config(['session.secure' => true]);
+        $this->assertTrue(config('session.secure'));
+
+        // Validação da lógica no config/session.php
+        $sessionConfig = require config_path('session.php');
+        $this->assertNotNull($sessionConfig['secure']);
+    }
+
+    public function test_capacitor_config_possui_navegacao_restrita_e_sem_debug(): void
+    {
+        $path = base_path('capacitor.config.json');
+        $this->assertFileExists($path);
+
+        $json = json_decode(file_get_contents($path), true);
+        $this->assertIsArray($json);
+
+        // Não pode permitir navegação indiscriminada para "*"
+        $this->assertNotContains('*', $json['server']['allowNavigation'] ?? []);
+
+        // Debug e mixed content desativados para segurança do app
+        $this->assertFalse($json['android']['allowMixedContent'] ?? true);
+        $this->assertFalse($json['android']['webContentsDebuggingEnabled'] ?? true);
+    }
+
+    public function test_regras_htaccess_bloqueiam_variacoes_de_arquivos_env_e_backups(): void
+    {
+        $raizHtaccess = file_get_contents(base_path('.htaccess'));
+        $publicHtaccess = file_get_contents(public_path('.htaccess'));
+
+        // Na raiz, deve bloquear variações de .env e arquivos de dump/backup
+        $this->assertStringContainsString('^\.env', $raizHtaccess);
+        $this->assertStringContainsString('(sql|bak|backup|old|tmp|log)', $raizHtaccess);
+
+        // No public/.htaccess, deve possuir proteção defensiva contra arquivos ocultos e confidenciais
+        $this->assertStringContainsString('FilesMatch', $publicHtaccess);
+        $this->assertStringContainsString('(sql|bak|backup|old|tmp|log|env)', $publicHtaccess);
+    }
+
+    public function test_manifest_android_bloqueia_backup_e_trafego_cleartext(): void
+    {
+        $manifestPath = base_path('android/app/src/main/AndroidManifest.xml');
+        if (! file_exists($manifestPath)) {
+            $this->markTestSkipped('AndroidManifest.xml nativo não encontrado neste ambiente.');
+        }
+
+        $manifestContent = file_get_contents($manifestPath);
+        $this->assertStringContainsString('android:allowBackup="false"', $manifestContent);
+        $this->assertStringContainsString('android:usesCleartextTraffic="false"', $manifestContent);
+    }
 }

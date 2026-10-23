@@ -82,6 +82,11 @@ class AvaliacaoPolicy
         return $authUser->can('NotificarProfessor:Avaliacao');
     }
 
+    public function homologar(AuthUser $authUser, Avaliacao $avaliacao): bool
+    {
+        return $authUser->can('Homologar:Avaliacao') || $authUser->can('Update:Avaliacao');
+    }
+
     public function gerenciarGabarito(AuthUser $authUser, Avaliacao $avaliacao): bool
     {
         return $authUser->can('GerenciarGabarito:Avaliacao') && $this->avaliacaoVisivelAoProfessor($authUser, $avaliacao);
