@@ -17,12 +17,25 @@ class FrequenciaEscolar extends Model
 
     protected $table = 'frequencia_escolar';
 
-    protected $fillable = ['matricula_id', 'cronograma_aula_id', 'situacao'];
+    protected $fillable = [
+        'matricula_id',
+        'cronograma_aula_id',
+        'situacao',
+        'justificada',
+        'motivo_justificativa',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'justificada' => 'boolean',
+        ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['matricula_id', 'cronograma_aula_id', 'situacao'])
+            ->logOnly(['matricula_id', 'cronograma_aula_id', 'situacao', 'justificada', 'motivo_justificativa'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('frequencia_escolar')

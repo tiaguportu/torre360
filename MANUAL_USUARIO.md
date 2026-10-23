@@ -4112,8 +4112,65 @@ Reúne numa tela só o que está **esperando ação** do seu papel, em vez de ab
 
 ---
 
+## 🤝 82. Acordo Público de Renegociação de Inadimplência (`/acordo/{token}`)
+
+Permite que a família consulte propostas de regularização financeira de mensalidades em atraso e formalize o **Instrumento Particular de Confissão e Transação de Dívida** (Art. 784, III do CPC) de forma online, segura e descomplicada.
+
+### 82.1 Fluxo de Aceite e Regras de Segurança (M3)
+1. **Link Seguro e Temporário:** O link público gerado pela equipe financeira possui prazo de validade determinado (padrão de 15 dias). Se o prazo expirar, o sistema avisa o usuário e impede o aceite, orientando a emissão de uma nova proposta monetariamente atualizada.
+2. **Confirmação de Identidade (Lei nº 14.063/2020):** Para autenticar digitalmente a assinatura eletrônica da confissão de dívida, o formulário exige a confirmação do CPF do responsável financeiro titular da proposta (com exibição de máscara parcial `***.***.123-**`). A proposta só pode ser aceita se os dígitos conferirem rigorosamente com o cadastro escolar.
+3. **Proteção contra Clique Duplo e Transações Fantasmas:** O processamento ocorre sob transação atômica com bloqueio concorrente (`lockForUpdate`), garantindo que cliques simultâneos no botão de confirmação não criem parcelas duplicadas nem corrompam o plano de pagamentos.
+4. **Congelamento Jurídico da Minuta:** No momento exato do aceite, o sistema congela o texto do termo, grava o IP, navegador, data/hora e os dígitos autenticados do CPF, conferindo plena eficácia jurídica ao acordo.
+
+---
+
+## ⏱️ 83. Carga Letiva Mínima e Reposição de Aulas (Onda 49)
+
+Garante o cumprimento dos requisitos legais da **Lei de Diretrizes e Bases da Educação Nacional (LDB nº 9.394/1996, Art. 24, I)**:
+- **200 dias de efetivo trabalho escolar**;
+- Carga horária mínima de **800 horas** (Ensino Fundamental) e **1.000 horas** (Ensino Médio) convertidas em hora-relógio de 60 minutos (Parecer CNE/CEB nº 8/2004).
+
+### 83.1 Apuração da Carga Letiva (`CargaLetivaService`)
+- O sistema compara o total de dias e horas programados no cronograma de aulas de cada turma com os mínimos exigidos pela legislação.
+- **Semáforo de Cumprimento:**
+  - 🟢 **Em dia:** A projeção de aulas e reposições atinge ou supera 100% dos dias e horas mínimos.
+  - 🟡 **Em risco:** A projeção situa-se entre 90% e 99% da meta legal ou há déficit de dias decorrente de suspensão de aulas.
+  - 🔴 **Insuficiente:** A projeção está abaixo de 90%, exigindo agendamento imediato de reposições pela coordenação.
+
+### 83.2 Agendamento de Reposições de Aulas
+1. Acesse **Calendário e Horários > Reposições de Aulas**.
+2. Clique em **Novo Reposição de Aula**.
+3. Selecione a **Turma**, a **Disciplina** e o **Professor Responsável**.
+4. Defina a **Data da Reposição** (ex.: sábado letivo ou contraturno), o **Horário de Início e Término** e o **Motivo**.
+5. Ao salvar, a reposição entra como `Agendada` e uma aula correspondente é criada na grade do cronograma para permitir o lançamento da chamada e a visibilidade na agenda escolar.
+6. Após a realização da aula, clique em **Concluir** na tabela de reposições para atualizar o saldo cumprido da turma.
+
+---
+
+## 🛡️ 84. Notificação de Infrequência Excessiva ao Conselho Tutelar - FICAI (Onda 57)
+
+Atende às obrigações legais da **LDB (Art. 12, VIII - Lei nº 13.803/2019)** e do **Estatuto da Criança e do Adolescente (ECA - Lei nº 8.069/1990, Art. 56, II)** quanto à garantia da frequência escolar e combate à evasão.
+
+### 84.1 Gatilhos Legais e Apuração Automática
+- **Gatilho Legal do Conselho Tutelar:** 30% do limite legal de faltas toleradas (25%). Como a LDB exige 75% de presença mínima anual, o limite tolerado de faltas é 25%; portanto, 30% desse limite equivale a **7,5% do total de aulas previstas no ano letivo** (ou 15 dias num ano de 200 dias letivos).
+- **Alerta Preventivo Escolar:** O sistema sinaliza a infrequência preventiva quando o aluno atinge **5,0% de faltas no ano**, permitindo ação imediata da orientação educacional antes de acionar órgãos externos.
+- **Diferenciação de Faltas Justificadas:** O lançamento da frequência permite registrar atestados e justificativas médicas/legais. O relatório e o ofício apresentam separadamente as faltas justificadas e as faltas injustificadas.
+
+### 84.2 Esgotamento dos Recursos Escolares (ECA Art. 56, II)
+A legislação proíbe o encaminhamento automático sem que a escola comprove que tentou resolver a situação diretamente com os pais ou responsáveis.
+1. Acesse **Acadêmico > Notificações ao Conselho Tutelar**.
+2. Na linha do aluno infrequente, clique na ação **Registrar Tentativa**.
+3. Selecione o canal utilizado (Ligação Telefônica, Mensagem WhatsApp, E-mail, Reunião Presencial ou Visita Domiciliar) e descreva o contato e o resultado da conversa.
+4. O sistema só considera os recursos escolares esgotados quando houver ao menos 2 tentativas formais documentadas na ficha.
+
+### 84.3 Emissão do Ofício FICAI e Protocolo
+1. Clique em **Gerar FICAI / Ofício** para abrir o texto completo e padronizado da notificação, contendo os dados do aluno, histórico de faltas apuradas e o detalhamento das tentativas de contato realizadas.
+2. Encaminhe o documento ao Conselho Tutelar do município.
+3. Ao receber o comprovante de entrega, clique em **Protocolar Envio**, informe o número do protocolo e a data de entrega para homologar o processo no sistema.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 

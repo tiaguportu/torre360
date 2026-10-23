@@ -1833,3 +1833,72 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
   - `arquivo_receita_path`: Caminho no storage privado da receita médica.
 - **Relacionamentos:** BelongsTo `fichaMedica`.
 
+---
+
+## 36. Renegociação e Acordos de Inadimplência
+
+### `acordo_inadimplencias`
+- **Representa:** Instrumentos particulares de confissão e transação de dívida para renegociação de mensalidades escolares em atraso.
+- **Campos Principais:**
+  - `codigo`: Identificador público único (ex.: `ACD-2026-00001`).
+  - `contrato_id`: FK `contrato` (nullable).
+  - `matricula_id`: FK `matricula`.
+  - `responsavel_pessoa_id`: FK `pessoa` (Responsável financeiro).
+  - `criado_por_user_id`: FK `users`.
+  - `valor_original_total`, `valor_multa_original`, `valor_juros_original`, `valor_desconto`, `valor_total_acordo`, `valor_entrada`.
+  - `quantidade_parcelas`, `valor_parcela`, `dia_vencimento_parcelas`, `primeiro_vencimento`.
+  - `token_publico`: Token único para acesso à proposta online.
+  - `token_expira_em`: Datetime limite de validade da proposta de renegociação online (segurança M3).
+  - `status`: Enum `StatusAcordoInadimplencia` (`simulado`, `aguardando_aceite`, `ativo`, `cumprido`, `quebrado`).
+  - `termo_confissao_texto`: Minuta jurídica do acordo (congelada permanentemente após aceite).
+  - `aceito_em`, `ip_aceite`, `cpf_confirmado_aceite` (validação de titularidade Lei nº 14.063/2020), `user_agent_aceite`.
+- **Relacionamentos:** BelongsTo `matricula`, BelongsTo `responsavelPessoa`, BelongsTo `contrato`, HasMany `parcelas` (`acordo_parcelas`).
+
+### `acordo_parcelas`
+- **Representa:** Cronograma de parcelamento e quitação do termo de acordo.
+- **Campos Principais:** `acordo_inadimplencia_id` (FK `acordo_inadimplencias`), `numero_parcela` (0=Entrada, 1..N), `valor`, `data_vencimento`, `data_pagamento`, `valor_pago`, `status` (`pendente`, `pago`, `atrasado`, `cancelado`), `forma_pagamento`.
+
+---
+
+## 37. Carga Letiva, Frequência e Proteção Escolar (LDB e Conselho Tutelar)
+
+### `frequencia_escolar`
+- **Representa:** Registros de presença e ausência dos alunos por aula do cronograma.
+- **Campos Principais:**
+  - `matricula_id`: FK `matricula`.
+  - `cronograma_aula_id`: FK `cronograma_aula`.
+  - `situacao`: `presente` ou `ausente`.
+  - `justificada`: Boolean indicando se a ausência foi devidamente justificada perante a secretaria/coordenação.
+  - `motivo_justificativa`: Descrição ou referência do atestado médico/justificativa apresentada.
+- **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronogramaAula`.
+
+### `reposicao_aulas` (Onda 49)
+- **Representa:** Agendamento e cumprimento de aulas de reposição para atendimento aos mínimos legais da LDB (200 dias de efetivo trabalho escolar e 800h/1.000h de carga horária em hora-relógio).
+- **Campos Principais:**
+  - `turma_id`: FK `turma`.
+  - `disciplina_id`: FK `disciplina`.
+  - `pessoa_id`: FK `pessoa` (Professor que ministrará a reposição).
+  - `cronograma_aula_original_id`: FK `cronograma_aula` (nullable, aula que foi cancelada ou perdida).
+  - `cronograma_aula_reposicao_id`: FK `cronograma_aula` (aula inserida na grade escolar para a reposição).
+  - `data_reposicao`, `hora_inicio`, `hora_fim`, `motivo`.
+  - `status`: `agendada`, `realizada`, `cancelada`.
+  - `observacoes`: Texto descritivo.
+- **Relacionamentos:** BelongsTo `turma`, BelongsTo `disciplina`, BelongsTo `professor`, BelongsTo `aulaOriginal`, BelongsTo `aulaReposicao`.
+
+### `notificacoes_conselho_tutelar` (Onda 57)
+- **Representa:** Registros e encaminhamentos oficiais da Ficha de Comunicação de Aluno Infrequente (FICAI) ao Conselho Tutelar Municipal nos termos do Art. 12, VIII da LDB e Art. 56, II do ECA.
+- **Campos Principais:**
+  - `matricula_id`: FK `matricula`.
+  - `turma_id`: FK `turma`.
+  - `ano_letivo`: Ano da ocorrência (integer).
+  - `numero_oficio`: Identificador formal único gerado pelo sistema (ex.: `FICAI-2026-00001`).
+  - `total_aulas_previstas`, `total_presencas`, `total_faltas`, `total_faltas_justificadas`, `total_faltas_injustificadas`.
+  - `percentual_faltas`: Percentual acumulado sobre as aulas previstas no ano (alerta preventivo em 5.0%, gatilho LDB em 7.5%, reprovação em 25.0%).
+  - `tentativas_contato`: JSON estruturado registrando ligações, mensagens de WhatsApp, e-mails ou reuniões prévias com a família (comprovação de esgotamento dos recursos escolares).
+  - `status`: `em_analise`, `notificado`, `resolvido`, `arquivado`.
+  - `data_notificacao`: Data em que o ofício foi protocolado no Conselho.
+  - `protocolo_conselho`: Número do protocolo fornecido pelo Conselho Tutelar.
+  - `nome_conselho_tutelar`, `municipio_conselho`: Destinatários da comunicação.
+- **Relacionamentos:** BelongsTo `matricula`, BelongsTo `turma`, BelongsTo `criadoPor` (`User`).
+
+

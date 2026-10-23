@@ -171,9 +171,10 @@ class AcordoInadimplenciaTest extends TestCase
             ->assertSee($acordo->codigo)
             ->assertSee($responsavel->nome);
 
-        // Aceite do acordo
+        // Aceite do acordo com validação de CPF
         $response = $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), [
             'concordo' => '1',
+            'cpf' => '123.456.789-01',
         ]);
 
         $response->assertRedirect(route('acordo.publico.show', ['token' => $acordo->token_publico]));
@@ -181,6 +182,58 @@ class AcordoInadimplenciaTest extends TestCase
         $acordo->refresh();
         $this->assertEquals(StatusAcordoInadimplencia::Ativo, $acordo->status);
         $this->assertNotNull($acordo->aceito_em);
+        $this->assertEquals('12345678901', $acordo->cpf_confirmado_aceite);
+    }
+
+    public function test_rejeita_aceite_quando_cpf_nao_confere(): void
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $service = app(AcordoInadimplenciaService::class);
+        $acordo = $service->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 1500.00,
+            'quantidade_parcelas' => 2,
+            'primeiro_vencimento' => '2026-11-10',
+        ], $user);
+
+        $response = $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), [
+            'concordo' => '1',
+            'cpf' => '999.888.777-66',
+        ]);
+
+        $response->assertSessionHas('mensagem_erro');
+        $acordo->refresh();
+        $this->assertEquals(StatusAcordoInadimplencia::AguardandoAceite, $acordo->status);
+        $this->assertNull($acordo->aceito_em);
+    }
+
+    public function test_bloqueia_aceite_quando_proposta_expirou(): void
+    {
+        $user = $this->autenticarComo('admin');
+        [$matricula, $responsavel] = $this->criarMatriculaComResponsavel();
+
+        $service = app(AcordoInadimplenciaService::class);
+        $acordo = $service->criarAcordo([
+            'matricula_id' => $matricula->id,
+            'responsavel_pessoa_id' => $responsavel->id,
+            'valor_original_total' => 1500.00,
+            'quantidade_parcelas' => 2,
+            'primeiro_vencimento' => '2026-11-10',
+            'token_expira_em' => now()->subDay(),
+        ], $user);
+
+        $response = $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), [
+            'concordo' => '1',
+            'cpf' => '123.456.789-01',
+        ]);
+
+        $response->assertSessionHas('mensagem_erro');
+        $acordo->refresh();
+        $this->assertEquals(StatusAcordoInadimplencia::AguardandoAceite, $acordo->status);
+        $this->assertNull($acordo->aceito_em);
     }
 
     public function test_baixa_de_parcelas_e_quitacao_integral_do_acordo(): void
@@ -407,7 +460,10 @@ class AcordoInadimplenciaTest extends TestCase
         $acordo = $this->criarAcordoComTermoLegadoDefeituoso();
         $service = app(AcordoInadimplenciaService::class);
 
-        $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), ['concordo' => '1'])
+        $this->post(route('acordo.publico.aceitar', ['token' => $acordo->token_publico]), [
+            'concordo' => '1',
+            'cpf' => $acordo->responsavelPessoa->cpf,
+        ])
             ->assertRedirect();
 
         $aceito = $acordo->fresh();

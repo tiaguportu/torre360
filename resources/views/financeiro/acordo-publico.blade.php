@@ -66,6 +66,11 @@
                                 {{ $acordo->status->getLabel() }}
                             </span>
                         </div>
+                        @if($acordo->token_expira_em)
+                            <p class="text-[11px] {{ $acordo->estaExpirado() ? 'text-rose-600 font-semibold' : 'text-slate-500' }} mt-1">
+                                {{ $acordo->estaExpirado() ? 'Expirou em' : 'Válido até' }}: {{ $acordo->token_expira_em->format('d/m/Y H:i') }}
+                            </p>
+                        @endif
                     </div>
                 </div>
 
@@ -128,33 +133,79 @@
 
             <!-- Área de Aceite e Termo Legal -->
             @if(in_array($acordo->status->value, ['aguardando_aceite', 'simulado']))
-                <div class="p-6 sm:p-8 border-t border-slate-200 bg-white">
-                    <h3 class="text-sm font-bold text-slate-900 mb-2">Termo de Confissão de Dívida e Transação</h3>
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 max-h-48 overflow-y-auto mb-6 whitespace-pre-line leading-relaxed font-mono">
-                        {{ $termo }}
-                    </div>
-
-                    <form action="{{ route('acordo.publico.aceitar', ['token' => $acordo->token_publico]) }}" method="POST">
-                        @csrf
-                        <label class="flex items-start gap-3 cursor-pointer text-xs text-slate-700 mb-6">
-                            <input type="checkbox" name="concordo" required class="mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-4 w-4">
-                            <span>
-                                Li, concordo expressamente com as condições e valores estipulados e formalizo o presente <strong>Instrumento Particular de Confissão e Transação de Dívida</strong> com eficácia de Título Executivo Extrajudicial (Art. 784, III do CPC).
-                            </span>
-                        </label>
-
-                        <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-all focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 flex items-center justify-center gap-2">
-                            <span>Confirmar e Assinar Acordo Digitalmente</span>
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                @if($acordo->estaExpirado())
+                    <div class="p-6 sm:p-8 border-t border-slate-200 bg-amber-50/70 text-amber-900">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
-                        </button>
-                    </form>
-                </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-amber-950">Proposta de Acordo Expirada</h3>
+                                <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+                                    O prazo limite para assinatura digital desta proposta de renegociação encerrou-se em <strong>{{ $acordo->token_expira_em->format('d/m/Y \à\s H:i') }}</strong>.
+                                    Por questões de segurança e atualização monetária, solicite a emissão de uma nova proposta junto à secretaria financeira da escola.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="p-6 sm:p-8 border-t border-slate-200 bg-white">
+                        <h3 class="text-sm font-bold text-slate-900 mb-2">Termo de Confissão de Dívida e Transação</h3>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 max-h-48 overflow-y-auto mb-6 whitespace-pre-line leading-relaxed font-mono">
+                            {{ $termo }}
+                        </div>
+
+                        <form action="{{ route('acordo.publico.aceitar', ['token' => $acordo->token_publico]) }}" method="POST">
+                            @csrf
+
+                            <!-- Autenticação de Identidade (Lei 14.063/2020) -->
+                            <div class="mb-5 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                                <label for="cpf" class="block text-xs font-bold text-slate-800 mb-1">
+                                    Autenticação de Identidade do Responsável Financeiro <span class="text-red-500">*</span>
+                                </label>
+                                @php
+                                    $cpfReal = preg_replace('/\D/', '', (string) ($acordo->responsavelPessoa?->cpf ?? ''));
+                                    $mascaraDica = strlen($cpfReal) === 11
+                                        ? '***.***.'.substr($cpfReal, 6, 3).'-**'
+                                        : '000.000.000-00';
+                                @endphp
+                                <div class="mt-1">
+                                    <input type="text" name="cpf" id="cpf" required value="{{ old('cpf') }}"
+                                        placeholder="Confirme seu CPF: {{ $mascaraDica }}"
+                                        class="w-full sm:w-80 px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1.5 leading-normal">
+                                    Informe o CPF cadastrado do responsável titular para validar sua assinatura eletrônica nos termos da Lei Federal nº 14.063/2020.
+                                </p>
+                                @error('cpf')
+                                    <p class="text-xs text-red-600 mt-1 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <label class="flex items-start gap-3 cursor-pointer text-xs text-slate-700 mb-6">
+                                <input type="checkbox" name="concordo" required class="mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-4 w-4">
+                                <span>
+                                    Li, concordo expressamente com as condições e valores estipulados e formalizo o presente <strong>Instrumento Particular de Confissão e Transação de Dívida</strong> com eficácia de Título Executivo Extrajudicial (Art. 784, III do CPC).
+                                </span>
+                            </label>
+
+                            <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-all focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 flex items-center justify-center gap-2">
+                                <span>Confirmar e Assinar Acordo Digitalmente</span>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                @endif
             @elseif($acordo->aceito_em)
                 <div class="p-6 border-t border-slate-200 bg-emerald-50/40 text-xs text-emerald-800">
                     <span class="font-bold block">✓ Acordo Formalizado Eletronicamente</span>
-                    Aceite registrado em {{ $acordo->aceito_em->format('d/m/Y \à\s H:i:s') }} (IP: {{ $acordo->ip_aceite ?? 'registrado' }}).
+                    Aceite registrado em {{ $acordo->aceito_em->format('d/m/Y \à\s H:i:s') }}
+                    @if($acordo->cpf_confirmado_aceite)
+                        (CPF autenticado: ***.***.{{ substr($acordo->cpf_confirmado_aceite, 6, 3) }}-**)
+                    @endif
+                    (IP: {{ $acordo->ip_aceite ?? 'registrado' }}).
                 </div>
             @endif
         </div>

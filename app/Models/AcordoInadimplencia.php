@@ -38,10 +38,12 @@ class AcordoInadimplencia extends Model
         'dia_vencimento_parcelas',
         'primeiro_vencimento',
         'token_publico',
+        'token_expira_em',
         'status',
         'termo_confissao_texto',
         'aceito_em',
         'ip_aceite',
+        'cpf_confirmado_aceite',
         'user_agent_aceite',
         'observacoes',
     ];
@@ -64,8 +66,14 @@ class AcordoInadimplencia extends Model
             'dia_vencimento_parcelas' => 'integer',
             'data_vencimento_entrada' => 'date',
             'primeiro_vencimento' => 'date',
+            'token_expira_em' => 'datetime',
             'aceito_em' => 'datetime',
         ];
+    }
+
+    public function estaExpirado(): bool
+    {
+        return $this->token_expira_em !== null && $this->token_expira_em->isPast();
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -8,6 +8,7 @@ use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class QuestionarioRespostaInfolist
 {
@@ -83,6 +84,7 @@ class QuestionarioRespostaInfolist
                                                 TextEntry::make('enunciado')
                                                     ->label('Pergunta')
                                                     ->weight('bold')
+                                                    ->formatStateUsing(fn (?string $state): string => Str::sanitizeHtml($state ?? ''))
                                                     ->html(),
                                                 TextEntry::make('valor_resposta')
                                                     ->label('Resposta')

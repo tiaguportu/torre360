@@ -156,6 +156,7 @@ class AcordoInadimplenciaService
                 'dia_vencimento_parcelas' => $simulacao['dia_vencimento_parcelas'],
                 'primeiro_vencimento' => $simulacao['primeiro_vencimento'],
                 'token_publico' => AcordoInadimplencia::gerarTokenPublico(),
+                'token_expira_em' => $dados['token_expira_em'] ?? now()->addDays(15),
                 'status' => StatusAcordoInadimplencia::AguardandoAceite,
                 'observacoes' => $dados['observacoes'] ?? null,
             ]);
@@ -183,12 +184,17 @@ class AcordoInadimplenciaService
     /**
      * Registra o aceite eletrônico formal da família no acordo.
      */
-    public function confirmarAceite(AcordoInadimplencia $acordo, string $ip, ?string $userAgent = null): void
-    {
+    public function confirmarAceite(
+        AcordoInadimplencia $acordo,
+        string $ip,
+        ?string $userAgent = null,
+        ?string $cpfConfirmado = null
+    ): void {
         $acordo->update([
             'status' => StatusAcordoInadimplencia::Ativo,
             'aceito_em' => now(),
             'ip_aceite' => $ip,
+            'cpf_confirmado_aceite' => $cpfConfirmado,
             'user_agent_aceite' => $userAgent,
             // Congela o texto que a família acabou de ler: a partir daqui o termo aceito não é mais regerado.
             'termo_confissao_texto' => $this->gerarMinutaConfissaoDivida($acordo),
