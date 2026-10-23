@@ -704,6 +704,38 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
      - *Criar Tarefas de Retenção Automaticamente:* Habilita a criação de planos na esteira comercial.
      - *Intervalo Mínimo de Alerta (Dias):* Intervalo de carência para reincidência de notificações.
 
+### 3.29 Escopo de Carteira Integral e Blindagem Periférica do CRM (Lotes J e K)
+Para garantir privacidade estrita entre consultores e conformidade com a LGPD, o isolamento de carteira (`scopeVisivelPara`) foi expandido para todas as superfícies periféricas do CRM:
+
+1. **Dashboard, Gráficos e Selo do Menu (Lote J):**
+   - **Selo "Novos" na Barra Lateral:** O contador numérico no menu exibe apenas a quantidade de novos leads da carteira do consultor logado, com cache individual e isolado por usuário.
+   - **Gráficos de Status e Origem:** O gráfico de distribuição por etapas do funil e o gráfico de canais de captação agregam exclusivamente os dados visíveis ao consultor logado.
+   - **Abas de Situação do CRM:** Os totalizadores das abas no topo da listagem de interessados são calculados e cacheados individualmente por usuário.
+
+2. **Calendário de Follow-up (Lote J):**
+   - **Eventos e Contatos:** Exibe exclusivamente as interações, ligações e visitas agendadas da carteira do consultor.
+   - **Seletor de Consultor Protegido:** Operadores sem permissão gerencial não visualizam agendas alheias nem podem contornar a seleção via parâmetros (`fixedConsultorId` travado).
+
+3. **Assistente de Matrícula e Prevenção de IDOR (Lotes J e K):**
+   - **Proteção contra IDOR/BOLA:** Ao abrir o assistente de matrícula via URL com parâmetros (`?interessado={id}` ou `?proposta_id={id}`), o sistema valida se o registro pertence à carteira do usuário. Tentativas de carregar dados de leads pertencentes a outros consultores são bloqueadas com notificação de advertência e o formulário é inicializado em branco.
+
+4. **Propostas Comerciais e Alçadas de Desconto (Lote K):**
+   - **Seleção e Vínculo de Lead:** Ao emitir uma nova Proposta Comercial, a lista de interessados (busca e opções) exibe apenas leads da carteira do consultor.
+   - **Parâmetro de URL:** O pré-preenchimento via `?interessado_id=` valida a visibilidade e recusa leads de terceiros.
+   - **Validação no Servidor:** O salvamento bloqueia a vinculação indevida caso o ID do lead não pertença à carteira permitida.
+
+5. **Indicações "Família Indica Família" (Lote K):**
+   - **Listagem e Gestão:** A listagem de indicações e o formulário de cadastro filtram as opções de lead indicado estritamente pelo escopo visível da carteira.
+
+6. **Dossiê Estratégico IA em PDF (Lote K):**
+   - **Download Protegido:** A emissão e download do relatório executivo em PDF (`DossieIaPdfController`) checam a autorização direta do lead (`podeSerAcessadoPor`), impedindo que consultores baixem relatórios analíticos de clientes de outras carteiras via manipulação direta de link (HTTP 403).
+
+7. **Comunicação em Massa e Disparos da Régua (Lote K):**
+   - **Disparos em Massa por E-mail:** Ao selecionar o público-alvo "Interessados", os destinatários são restritos estritamente à carteira do consultor responsável pelo disparo (quando este não possuir `ViewAll:Interessado`).
+   - **Teste de Automação da Régua:** Na ação "Testar" da tabela de Régua de Follow-up, o seletor de lead de teste aceita apenas contatos visíveis da carteira do operador.
+
+---
+
 ## 📍 13. Gestão de Unidades e Canais Digitais
 
 ### 13.1 Redes Sociais e Contato
