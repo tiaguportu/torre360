@@ -7,6 +7,7 @@ use App\Enums\SituacaoDocumento;
 use App\Enums\StatusVisitaInteressado;
 use App\Observers\InteressadoObserver;
 use App\Services\ContadoresCrm;
+use App\Services\CrmIaVendasService;
 use App\Services\LeadSlaService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -57,11 +58,41 @@ class Interessado extends Model
 
     protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'sla_primeira_resposta_minutos', 'sla_estouro_notificado_em', 'sla_gestao_notificado_em', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
 
+    /**
+     * Campos do lead que entram no contexto enviado à IA (CrmIaVendasService::montarContextoLead). Quando um deles
+     * muda, o Dossiê IA em cache descreve um lead que já não é o mesmo. Marcadores internos que a IA não vê
+     * (SLA, tokens, lead score recalculado em lote) não descartam o dossiê.
+     */
+    public const CAMPOS_DO_CONTEXTO_IA = [
+        'pessoa_id',
+        'status_interessado_id',
+        'origem_interessado_id',
+        'temperatura',
+        'lead_score',
+        'valor_estimado',
+        'faixa_distancia_escola',
+        'meio_transporte',
+        'observacoes',
+        'data_proximo_contato',
+        'token_documentos',
+        'dados_pre_matricula',
+        'dados_pre_matricula_em',
+    ];
+
     protected static function booted(): void
     {
         // Abas da listagem e selo do menu são contadores em cache (ContadoresCrm): mudou um lead, recontam.
-        static::saved(static fn () => ContadoresCrm::invalidar());
-        static::deleted(static fn () => ContadoresCrm::invalidar());
+        static::saved(static function (self $lead): void {
+            ContadoresCrm::invalidar();
+
+            if ($lead->wasChanged(self::CAMPOS_DO_CONTEXTO_IA)) {
+                CrmIaVendasService::descartarDossie($lead->getKey());
+            }
+        });
+        static::deleted(static function (self $lead): void {
+            ContadoresCrm::invalidar();
+            CrmIaVendasService::descartarDossie($lead->getKey());
+        });
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -179,6 +210,16 @@ class Interessado extends Model
     public function visitas(): HasMany
     {
         return $this->hasMany(VisitaInteressado::class);
+    }
+
+    public function propostasComerciais(): HasMany
+    {
+        return $this->hasMany(PropostaComercial::class);
+    }
+
+    public function listasEspera(): HasMany
+    {
+        return $this->hasMany(ListaEsperaMatricula::class);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\NivelAlcadaComercial;
 use App\Enums\StatusPropostaComercial;
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class PropostaComercial extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, InvalidaDossieIaDoLead, LogsActivity;
 
     protected $table = 'proposta_comercials';
 

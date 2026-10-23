@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class InteressadoDependente extends Model
 {
+    use InvalidaDossieIaDoLead;
+
     protected $table = 'interessado_dependente';
 
     /** Turnos aceitos como preferência no formulário público (`Sem preferência` inclusive). */
