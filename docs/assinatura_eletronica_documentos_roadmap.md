@@ -3,6 +3,10 @@
 > **Status: implementado.** Detalhes de uso ficam no texto de Ajuda das telas e na seção 80 do
 > `MANUAL_USUARIO.md`. Tela: `/admin/secretaria/documentos-assinatura` (grupo Secretaria, **Documentos para
 > Assinatura**). Editor: **Modelos de Documentos**, no mesmo grupo.
+>
+> **Estendida pela [Onda 74](assinatura_declaracoes_historico_roadmap.md):** a declaração emitida e o histórico escolar
+> (que já nascem como PDF) também vão para esta assinatura, ou recebem um PDF assinado fora do sistema, com o nível da
+> assinatura registrado no documento.
 
 ## Contexto
 

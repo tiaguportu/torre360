@@ -4213,6 +4213,77 @@ Em conformidade com as diretrizes de endurecimento de segurança do Torre360:
 
 ---
 
+## 🔏 89. Declarações e Histórico com Assinatura Digital (Onda 74)
+
+A declaração emitida e o histórico escolar podem ganhar uma **cópia assinada digitalmente**. Os botões ficam nas linhas de **Documentos Emitidos (QR)** e de **Histórico Escolar Multi-Ano**, no grupo Secretaria.
+
+**Dois caminhos:**
+- **Enviar para assinatura:** o PDF que a escola emitiu vai para o Assinafy, para a direção assinar por e-mail. O sistema sugere os representantes legais da unidade que têm e-mail; confira a lista. Depois de montar, você segue para a tela do documento (em *Documentos para Assinatura*), onde envia e acompanha, como nos demais documentos.
+- **Anexar PDF assinado:** assine o PDF fora do sistema, com o certificado digital da escola (ICP-Brasil A1 ou A3) ou no gov.br, e anexe o arquivo. É o caminho de quem precisa de **assinatura qualificada**. Marque que conferiu que o PDF é o documento do aluno indicado. Só quem tem a permissão `AnexarAssinado` (administração e secretaria) vê este botão.
+
+**O que o sistema confere (e o que não confere):**
+- Lê o PDF e registra **quantas assinaturas** ele traz, o **formato** e se o certificado tem a **marca da ICP-Brasil**. Daí vem o nível: *assinatura qualificada (certificado ICP-Brasil)*, *assinatura digital (certificado não ICP-Brasil)* ou, para o certificado do Assinafy sem assinatura embutida, *assinatura eletrônica*.
+- **Não valida** o certificado: não confere a cadeia, a revogação nem a validade. Para essa garantia, use o **Verificador de Conformidade do ITI** (validar.iti.gov.br). Um arquivo sem assinatura digital, que não seja PDF ou acima de 15 MB é recusado.
+- Na declaração, o sistema também compara o arquivo assinado com o PDF emitido e **avisa** na tela do documento se não parecem o mesmo.
+
+**Depois de assinado:**
+- A declaração com cópia assinada **não pode ser emitida de novo**, editada nem excluída; o histórico assinado não pode ser sincronizado nem excluído. Se precisar refazer, é preciso outro documento.
+- Aparece o botão **Baixar cópia assinada**, e a coluna **Assinatura digital** mostra o nível.
+- A família baixa pelo **Portal** (*Baixar com assinatura digital* nas declarações; *Histórico com assinatura digital* ao lado do histórico oficial).
+- A **página pública de verificação** (QR Code) informa que existe cópia assinada, com a data e o nível, e orienta pedir o arquivo à secretaria. O arquivo não é público.
+
+> A exigência de certificado ICP-Brasil para o histórico varia por sistema de ensino. Confirme com o órgão da sua rede.
+
+---
+
+## 🧮 90. Exportação para a Contabilidade (`/admin/financeiro/exportacao-contabil`)
+
+Entrega ao escritório de contabilidade os lançamentos do período, em partidas dobradas, no plano de contas **dele**. Fica no grupo **Financeiro**, em *Contabilidade*, para quem tem `View:ExportacaoContabil` (ver) e `Exportar:ExportacaoContabil` (gerar, baixar e mexer nos parâmetros), normalmente a administração.
+
+**Antes de usar, uma vez:**
+1. Em **Plano de Contas**, preencha o *Código no escritório de contabilidade* de cada conta.
+2. Em **Bancos**, preencha a *Conta no escritório de contabilidade* de cada banco.
+3. Em *Contabilidade* → **Parâmetros contábeis**, defina a conta de clientes, a de fornecedores e as contas de **receita e despesa padrão** (valem para o movimento que ainda não tem conta do plano, como a baixa das mensalidades).
+
+**Gerar o arquivo:**
+- Escolha o **período** (a tela abre no mês anterior), o **regime** que o escritório pediu e o **arquivo**.
+- **Regime de caixa:** um lançamento por movimento do banco. **Regime de competência:** a fatura e a conta a pagar com vencimento no período entram contra clientes e fornecedores, e o banco dá baixa.
+- A tela mostra quantos **lançamentos** saem, o total, de onde vêm e uma **prévia**. Em **O que falta classificar** aparecem as pendências (banco sem conta, conta do plano sem código, conta padrão não definida): **enquanto houver pendência, o arquivo não sai**. *Para conferir* traz avisos que não impedem, como conta de despesa usada em recebimento.
+- **Gerar arquivo** guarda o CSV em *Arquivos gerados*, com data, período, regime, total e quem gerou; dá para **baixar de novo** sem refazer a conta. O *balancete de conferência* mostra o total a débito e a crédito por conta.
+
+**Bom saber:**
+- O arquivo **não leva nome de aluno nem de responsável**, só o número da fatura (`FAT-…`): o escritório reconcilia por ele.
+- Se já existe arquivo do mesmo regime para um período que se sobrepõe, a tela avisa. Gere outro só se o movimento mudou.
+- Em *Minha Mesa* aparece a fila **Classificação contábil pendente** com o que falta do mês anterior; depois do dia 10 ela passa a atrasada.
+- Não é o SPED nem a ECD: o arquivo é insumo para o escritório, que decide o regime e confere os lançamentos.
+
+---
+
+## 📑 91. Relatórios Configuráveis e Agendados (`/admin/relatorios/configuraveis`)
+
+No grupo **Relatórios**, *Meus Relatórios*. Cada pessoa monta o relatório de que precisa e recebe o arquivo na hora ou na data marcada.
+
+**Montar um relatório:**
+1. **Novo relatório**, dê um nome e escolha **Dados de** (inadimplência, matrículas por turma, contas a pagar, movimento bancário, faltas excessivas ou documentos para assinatura). Você só vê as fontes cujos dados já pode ver nas telas do sistema.
+2. Marque as **colunas**. As que levam dado de pessoas vêm com *(dado pessoal)*: leve só o necessário.
+3. Em **Filtros e ordem**, reduza o relatório (um período, uma turma, uma situação) e escolha a ordem.
+4. Escolha o **arquivo**: planilha (CSV, até 20.000 linhas) ou PDF (até 1.500 linhas). Passou do limite, o arquivo sai **cortado** e o histórico avisa.
+
+**Gerar:** *Gerar agora* na lista (ou no relatório) cria o arquivo e mostra o botão **Baixar**. O resultado, ou o motivo de não ter saído, aparece na hora.
+
+**Agendar:** ligue **Gerar automaticamente**, escolha todo dia, toda semana (e o dia) ou todo mês (do dia 1 ao 28), a **hora** e **quem recebe o aviso**. O sistema verifica de 5 em 5 minutos, então o arquivo sai até 5 minutos depois da hora. O aviso (e-mail e sino) leva **só o link**: o arquivo se baixa dentro do sistema, com login.
+- Só podem receber o aviso pessoas ativas que **podem ver os dados** daquela fonte.
+- Se o relatório **falhar três vezes seguidas** (por exemplo, o dono perdeu o acesso aos dados), o agendamento é desligado e o dono é avisado. Veja o motivo no histórico e ligue de novo.
+- Mudar a frequência, o dia ou a hora recalcula a próxima execução; salvar sem mexer nisso não muda a agenda.
+
+**Histórico:** ao abrir o relatório, a aba *Histórico de execuções* mostra cada rodada (quando, origem, situação, linhas, motivo do erro) e o botão **Baixar**. O arquivo é guardado por **30 dias**; depois o arquivo é apagado e o registro permanece.
+
+**Quem vê o quê:** cada pessoa vê só os seus relatórios; quem tem `VerTodos:RelatorioSalvo` (administração) vê, edita e gera os de todos. Perder a permissão da fonte fecha o arquivo, mesmo para o dono.
+
+> Relatório com nome, nascimento ou outro dado de pessoas é dado pessoal (LGPD): escolha as colunas de que precisa e não compartilhe o arquivo fora da finalidade para a qual foi gerado.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

@@ -1951,3 +1951,45 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
 
 
 
+
+---
+
+## 40. Declarações e Histórico com Assinatura Digital (Onda 74)
+
+### Colunas novas em `solicitacao_documentos` e `historico_escolars`
+- **Representa:** a cópia assinada digitalmente do documento oficial da escola (declaração emitida ou histórico escolar).
+- **Campos:** `arquivo_assinado_path` (disco `local`, `documentos_assinatura/{id}/assinado.pdf`), `assinado_em` (timestamp) e `assinatura_nivel` (Enum `NivelAssinatura`: `eletronica`, `digital`, `qualificada_icp`). O trait `TemCopiaAssinada` dá o `fillable`, o cast, `documentosAssinatura()` e a reação `documentoAssinado()` aos dois models (contrato `ReageAoDocumentoAssinado`).
+
+### Colunas novas em `documentos_assinatura`
+- `nivel_assinatura` (string 20, Enum `NivelAssinatura`, nullable) e `assinatura_detalhes` (JSON: `origem` = `assinafy` ou `anexado`, `assinaturas`, `formatos`, `icp_brasil`, `hash_sha256` do PDF assinado, `lido_em`, `contem_original`, `validado` = sempre `false`: o sistema lê o PDF, não valida o certificado).
+- O documento criado a partir de um PDF não tem modelo (`template_documento_id` nulo) e guarda um texto fixo em `conteudo`; o `documentavel` passa a poder ser `SolicitacaoDocumento` ou `HistoricoEscolar`. O documento assinado fora do sistema nasce com `status = assinado` e sem `assinafy_id`.
+
+---
+
+## 41. Exportação para a Contabilidade (Onda 73)
+
+### Colunas novas
+- `plano_contas.codigo_contabil` (string 30, nullable): a conta correspondente no plano do escritório de contabilidade.
+- `bancos.conta_contabil` (string 30, nullable): a conta do disponível que o escritório usa para o banco.
+
+### `parametros_contabeis`
+- **Representa:** as contas padrão da exportação. Uma linha só (lida com `ParametroContabil::atual()`).
+- **Campos:** `conta_clientes` e `conta_fornecedores` (string 30), `plano_conta_receita_id` e `plano_conta_despesa_id` (FK `plano_contas`, nullOnDelete: valem para o movimento ainda sem conta do plano), `atualizado_por_user_id` (FK `users`, nullOnDelete).
+
+### `lotes_contabeis`
+- **Representa:** cada arquivo entregue à contabilidade.
+- **Campos:** `periodo_inicio` e `periodo_fim` (date), `regime` (Enum `RegimeContabil`: `caixa`, `competencia`), `formato` (Enum `FormatoExportacaoContabil`: `csv_lancamentos`, `csv_balancete`), `lancamentos` (quantidade), `total` (decimal 14,2), `arquivo_path` (disco `local`, `exportacoes_contabeis/{uuid}.csv`), `arquivo_hash` (SHA-256, conferido no download), `gerado_por_user_id` (FK `users`, nullOnDelete). Índice por período.
+
+> Os lançamentos não são tabela: o `ExportacaoContabilService` os monta na hora a partir de `transacao_bancarias`, `faturas` (com `item_faturas`) e `conta_pagars`, e o arquivo gerado é a fonte da verdade do que foi entregue.
+
+---
+
+## 42. Relatórios Configuráveis e Agendados (Onda 72)
+
+### `relatorios_salvos`
+- **Representa:** o relatório configurado por uma pessoa.
+- **Campos:** `nome` (120), `fonte` (chave de uma classe `FonteDeRelatorio` de `config/relatorios.php`, nunca SQL), `colunas` (JSON, chaves declaradas pela fonte), `filtros` (JSON; `chave`, ou `chave_de` e `chave_ate` nos filtros de data), `ordenar_por`, `direcao` (`asc`/`desc`), `formato` (Enum `FormatoRelatorio`: `csv`, `pdf`). Agendamento: `agendado` (bool), `frequencia` (Enum `FrequenciaAgendamento`: `diaria`, `semanal`, `mensal`), `dia` (1-7 na semanal, 1-28 na mensal), `hora` (`HH:MM`), `destinatarios` (JSON de ids de `users`), `proxima_execucao_em`, `ultima_execucao_em`. `criado_por_user_id` (FK `users`, nullOnDelete). Índice `(agendado, proxima_execucao_em)`.
+
+### `execucoes_relatorio`
+- **Representa:** uma rodada de um relatório.
+- **Campos:** `relatorio_salvo_id` (FK, cascade), `origem` (Enum `OrigemExecucaoRelatorio`: `manual`, `agendada`), `status` (Enum `StatusExecucaoRelatorio`: `sucesso`, `erro`), `formato`, `linhas`, `truncado` (passou do limite de linhas), `arquivo_path` / `arquivo_hash` (disco `local`, `relatorios/{id}/{uuid}`; zerados quando a retenção apaga o arquivo), `erro` (texto), `executado_por_user_id` (FK `users`, nullOnDelete), `expira_em` (date; índice).

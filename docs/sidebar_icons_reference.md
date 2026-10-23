@@ -48,6 +48,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **PontoTratamento** | `Heroicon::OutlinedPencilSquare` | Filament Enum |
 | **PortfolioItem** | `Heroicon::OutlinedPhoto` | Filament Enum |
 | **ProcessoFuncionario** (Admissão e Desligamento) | `Heroicon::OutlinedArrowRightOnRectangle` | Filament Enum |
+| **RelatorioSalvo** (Meus Relatórios) | `Heroicon::OutlinedDocumentChartBar` | Filament Enum |
 | **ReservaEspaco** | `Heroicon::OutlinedCalendarDays` | Filament Enum |
 | **ResponsavelFinanceiro** | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **Serie** | `Heroicon::OutlinedDocumentText` | Filament Enum |
@@ -69,6 +70,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **CensoEscolar** | `heroicon-o-clipboard-document-check` | String |
 | **EnrollmentWizard** | `heroicon-o-user-plus` | String |
 | **EspelhoDePonto** | `heroicon-o-document-text` | String |
+| **ExportacaoContabil** (Contabilidade) | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **GradeHorariaAssistida** | `heroicon-o-squares-2x2` | String |
 | **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |
 | **MesaDePendencias** (Minha Mesa) | `Heroicon::OutlinedInboxStack` | Filament Enum |

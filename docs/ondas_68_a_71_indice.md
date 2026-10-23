@@ -1,5 +1,7 @@
 # Ondas 68 a 71 — Índice
 
+> Continua no [índice das ondas 72 a 79](ondas_72_a_79_indice.md).
+
 Continuação do [índice das ondas 61 a 67](ondas_61_a_67_indice.md). Cada onda tem um documento próprio com
 contexto, o que já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.
 

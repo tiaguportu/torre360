@@ -78,6 +78,9 @@ fila (o professor, por exemplo, vê só as ferramentas dele).
 3. Eager-load o que `itens()` usa: o projeto proíbe lazy loading em teste.
 4. Acrescente a classe em `config/mesa_pendencias.php` e um teste em `tests/Feature/MesaDePendenciasTest.php`.
 
+Filas acrescentadas depois da Onda 71: **Classificação contábil pendente** (Onda 73, permissão
+`View:ExportacaoContabil`), que cacheia a apuração do mês anterior pelo mesmo tempo do selo.
+
 ## Decisões e limites
 
 - **Só leitura e sem estado.** Não há atribuição, fila "minha", prioridade manual, adiamento nem comentário. É uma

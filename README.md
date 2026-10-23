@@ -446,6 +446,44 @@ Uma tela com o que espera ação do papel ativo, reunindo as filas dos módulos.
 
 ---
 
+### 34. 📑 Relatórios Configuráveis e Agendados (Onda 72)
+A pessoa monta o relatório (dados, colunas, filtros, ordem, formato), gera na hora ou agenda. Detalhes em `docs/relatorios_configuraveis_agendados_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `FonteDeRelatorio` | Contrato de uma fonte de dados (colunas, filtros, permissão, linhas); o relatório nunca vira SQL livre. Seis fontes iniciais em `config/relatorios.php`: inadimplência, matrículas, contas a pagar, movimento bancário, faltas excessivas e documentos para assinatura |
+| **Meus Relatórios** (grupo Relatórios) | Cada pessoa vê os seus; `VerTodos:RelatorioSalvo` vê os de todos. CSV (até 20.000 linhas) ou PDF (até 1.500), colunas com dado pessoal sinalizadas |
+| Agendamento | Diário, semanal ou mensal (rodada de 5 em 5 minutos, `relatorios:executar-agendados`); aviso por e-mail e sino **só com o link**; três falhas seguidas desligam o agendamento |
+| Permissão em todas as pontas | A da fonte é conferida ao montar, a cada execução, para cada destinatário e ao baixar; perder o acesso aos dados fecha o arquivo |
+| Retenção | Arquivo apagado em 30 dias (`relatorios:limpar-arquivos`); o histórico da execução permanece |
+
+---
+
+### 35. 🧮 Exportação para a Contabilidade (Onda 73)
+Lançamentos contábeis do período, em partidas dobradas, no plano de contas do escritório. Detalhes em `docs/exportacao_contabil_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| De-para | *Código no escritório* em cada conta do plano e *Conta no escritório* em cada banco; **Parâmetros contábeis** (clientes, fornecedores, receita e despesa padrão) |
+| **Contabilidade** (grupo Financeiro) | Regime de **caixa** ou de **competência** (fatura e conta a pagar pelo vencimento, o banco baixa), conferência com totais, prévia, pendências e avisos |
+| Pendências | Banco sem conta, conta do plano sem código ou padrão não definida **impedem o arquivo** |
+| Arquivos | CSV de lançamentos e balancete de conferência; cada arquivo vira um lote com SHA-256, baixado por rota própria (`Exportar:ExportacaoContabil`) |
+| Privacidade | Sem nome de aluno nem de responsável; texto do extrato passa pelo `CsvSanitizer`. Fila *Classificação contábil pendente* na Mesa |
+
+---
+
+### 36. 🔏 Declarações e Histórico com Assinatura Digital (Onda 74)
+Cópia assinada digitalmente da declaração emitida e do histórico escolar. Detalhes em `docs/assinatura_declaracoes_historico_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Dois caminhos | **Enviar para assinatura** (Assinafy, reaproveita a Onda 69) ou **Anexar PDF assinado** fora (ICP-Brasil, gov.br), com a permissão `AnexarAssinado:DocumentoAssinatura` |
+| Leitura do PDF | `AssinaturaPdfInspector` conta as assinaturas, vê o formato e a marca da ICP-Brasil e registra o nível; **não valida** a cadeia nem o certificado (Verificador do ITI) |
+| Proteção | Documento com cópia assinada não é emitido de novo, nem editado, excluído ou sincronizado; o anexo exige confirmar que é o documento do aluno |
+| Onde aparece | Coluna e seção do nível em *Documentos para Assinatura*, Portal da família e página pública de verificação |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos

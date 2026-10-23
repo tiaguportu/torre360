@@ -1,0 +1,71 @@
+# Ondas 72 a 79 — Índice
+
+Continuação do [índice das ondas 68 a 71](ondas_68_a_71_indice.md). Cada onda tem um documento próprio com contexto, o que
+já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.
+
+- **Implementadas (3):** 72, 73 e 74.
+- **Propostas (5):** 75 a 79. Não há código, migration nem teste delas.
+
+## Visão geral
+
+| Onda | Tema | Área | Status | Documento |
+|---|---|---|---|---|
+| 72 | Relatórios Configuráveis e Agendados | Transversal | **Implementada** | [relatorios_configuraveis_agendados_roadmap.md](relatorios_configuraveis_agendados_roadmap.md) |
+| 73 | Exportação para a Contabilidade | Financeiro | **Implementada** | [exportacao_contabil_roadmap.md](exportacao_contabil_roadmap.md) |
+| 74 | Declarações e Histórico com Assinatura Digital | Secretaria | **Implementada** | [assinatura_declaracoes_historico_roadmap.md](assinatura_declaracoes_historico_roadmap.md) |
+| 75 | Acesso do Contador | Financeiro / Segurança | Proposta | [acesso_contador_roadmap.md](acesso_contador_roadmap.md) |
+| 76 | Simulador do Próximo Ano Letivo | Gestão | Proposta | [simulador_proximo_ano_letivo_roadmap.md](simulador_proximo_ano_letivo_roadmap.md) |
+| 77 | Rentabilidade e Custo por Turma | Financeiro / Gestão | Proposta | [rentabilidade_por_turma_roadmap.md](rentabilidade_por_turma_roadmap.md) |
+| 78 | Contas Recorrentes e Fluxo de Caixa Projetado | Financeiro | Proposta | [contas_recorrentes_fluxo_projetado_roadmap.md](contas_recorrentes_fluxo_projetado_roadmap.md) |
+| 79 | Guarda e Descarte de Documentos Escolares | Conformidade | Proposta | [guarda_descarte_documentos_roadmap.md](guarda_descarte_documentos_roadmap.md) |
+
+## O que mudou no que já existia
+
+- **Menu:** novo grupo **Relatórios** (*Meus Relatórios*) e, em **Financeiro**, a página **Contabilidade**.
+- **Plano de Contas e Bancos:** campos novos *Código no escritório* e *Conta no escritório*. Sem eles a exportação contábil
+  aponta pendência; nada mais muda para quem não usa a exportação.
+- **Documentos Emitidos (QR) e Histórico Escolar Multi-Ano:** botões de assinatura nas linhas. Uma declaração ou histórico
+  **com cópia assinada** perde os botões de editar, excluir, emitir PDF de novo e sincronizar: a cópia assinada é do PDF
+  daquele momento.
+- **Documentos para Assinatura:** coluna e seção do **nível da assinatura**; documento assinado fora do sistema não lista
+  assinantes.
+- **Página pública de verificação e Portal da família:** mostram a cópia assinada digitalmente quando existe.
+- **Minha Mesa:** fila **Classificação contábil pendente** (permissão `View:ExportacaoContabil`).
+- **Agendador:** `relatorios:executar-agendados` (a cada 5 minutos) e `relatorios:limpar-arquivos` (diário, 04:30).
+- **Permissões novas**, criadas pelas migrations: `AnexarAssinado:DocumentoAssinatura` (super admin, administração,
+  secretaria), `View` e `Exportar:ExportacaoContabil` (administração), `ViewAny`, `View`, `Create`, `Update`, `Delete` e
+  `Executar:RelatorioSalvo` (administração, secretaria, coordenação) e `VerTodos:RelatorioSalvo` (administração). Um papel
+  criado à mão precisa recebê-las em **Perfis de acesso**.
+- **Novas variáveis de ambiente (opcionais):** `RELATORIOS_LIMITE_LINHAS` (20000), `RELATORIOS_LIMITE_LINHAS_PDF` (1500),
+  `RELATORIOS_RETENCAO_DIAS` (30), `RELATORIOS_LIMITE_POR_RODADA` (10) e `MESA_CONTABILIDADE_DIA_LIMITE` (10).
+
+## Fusões sugeridas para dar completude
+
+| Conjunto | Ondas | O que compartilham | Ordem dentro do conjunto |
+|---|---|---|---|
+| **Contabilidade ponta a ponta** | 73 + 75 + ampliações da 73 | O arquivo é gerado pela escola (73), entregue sem e-mail ao escritório (75), no leiaute do sistema dele e com a conta do plano por item de fatura. | 73 (feita), conta por item de fatura, 75 (depois do MFA), leiautes |
+| **Resultado da escola** | 77 + 78 + 43 + 45 | Receita, custo, orçamento, projeção e o painel da direção usam as mesmas faturas, contas a pagar, centros de custo e a hora-aula. Quatro telas viram um painel com três visões: orçado, projetado e realizado. | 43, 78, 77, 45 |
+| **Planejamento do ano** | 76 + 77 + 44 + 20 | A projeção de matrículas e o ponto de equilíbrio por turma saem dos mesmos dados (rematrícula, lista de espera, risco de evasão, reajuste, custo da hora-aula). | 77, 76 |
+| **Dado pessoal: ciclo de vida** | 34 + 79 | O pedido de eliminação do titular e a rotina de descarte consultam a mesma tabela de temporalidade. | 34, 79 (ou juntas) |
+| **Relatórios como saída comum** | 72 + 43 + 45 + 47 | O digest diário, o painel e o orçamento podem usar os relatórios agendados e as fontes da Onda 72 como entrega, em vez de montar a sua. | Fontes novas em cada módulo |
+
+## Ampliações propostas em ondas já existentes
+
+| Onda | Ampliação | Observação |
+|---|---|---|
+| 72 (relatórios) | **Mais fontes:** CRM (funil, visitas), RH (férias, contratos), Biblioteca, Patrimônio, Cantina e Loja. **Totais e agrupamento**, compartilhar com um papel, entrega pela Central de Avisos (Onda 70). | Cada fonte é uma classe de ~80 linhas e uma entrada em `config/relatorios.php`. |
+| 73 (contabilidade) | **Leiautes por sistema contábil** e importação do plano de contas do escritório; **conta do plano por item de fatura** e data de competência; **trava de período**; provisões. | A conta por item de fatura destrava a Onda 77. |
+| 74 (assinatura) | **Validação técnica** da assinatura (ITI), **carimbo do tempo**, **assinatura em lote** de históricos, certificados de conclusão. | O inspetor lê o PDF e não valida a cadeia; a validação fecha esse limite. |
+| 69 (assinatura) | **Lembrete automático** e **ordem de assinatura** (herdado do índice anterior). | Continua proposto. |
+| 57 (FICAI) | Emitir o **ofício a partir de um modelo editável** (Onda 69), mandar para a assinatura da direção (Onda 74) e levar para a Mesa os casos parados (sem contato com a família ou sem resposta do Conselho). | A Onda 57 já registra as tentativas de contato; falta o ofício sair pelo mesmo caminho dos demais documentos. |
+| 71 (mesa) | Filas de contas a pagar vencendo, recorrentes sem valor revisado e relatórios agendados que falharam. | Cada fila é uma classe pequena. |
+
+## Achados da implementação
+
+| Achado | Onde | O que fazer |
+|---|---|---|
+| **`dia_nao_letivo.curso_id` não existe em bancos MySQL montados pela cadeia de migrations**: a migration `2026_03_27_224946` remove a coluna fora do SQLite. Quatro pontos do código ainda filtram por ela (`Portal/Pages/Calendario`, `HorarioAlunoService`, `GradeHorarioService`, `ReservaEspacoConflitoService`), e o model e o formulário de dia não letivo também a preveem. No SQLite dos testes a coluna existe, então nenhum teste vê o problema. | Verificado em um banco de teste montado a partir do esquema de `torre360_demo` mais todas as migrations pendentes. **Não foi verificado em produção.** | Conferir `SHOW COLUMNS FROM dia_nao_letivo` na produção. Se a coluna não existir: recriá-la (cadastro por curso) ou tirar os filtros. |
+| O estado de um `Select` com enum chega ao `Get` ora como o enum, ora como texto; comparar com `->value` falha em silêncio (o campo dependente some e o servidor recusa por "campo faltando"). | `RelatorioSalvoForm` (campo *Dia* do agendamento) | Normalizar com `Enum::tryFrom` antes de comparar. |
+| `User::is_active` é um acessor, não coluna: `where('is_active', true)` quebra a consulta. | Lista de destinatários dos relatórios | Usar o escopo `User::ativos()`. |
+| O usuário em memória guarda os papéis (e as permissões deles) já carregados; revogar uma permissão no meio de um teste exige reler o usuário. | Testes | `User::findOrFail($id)` depois de revogar. |
+| Engenharia | A suíte roda só em SQLite; o achado acima só apareceu com MariaDB. | Rodar a suíte também em MariaDB no CI (já proposto no índice anterior). |
