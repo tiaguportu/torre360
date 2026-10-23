@@ -275,4 +275,18 @@ class LinkPortalAdmissaoRevogacaoTest extends TestCase
         $this->portal($antigo)->assertStatus(410);
         $this->portal($lead->fresh()->token_documentos)->assertOk();
     }
+
+    public function test_token_documentos_e_persistido_como_hash_sha256(): void
+    {
+        $lead = $this->criarLead();
+        $tokenPlano = $lead->obterOuCriarTokenDocumentos();
+
+        $leadAtualizado = $lead->fresh();
+
+        $this->assertSame(hash('sha256', $tokenPlano), $leadAtualizado->token_documentos);
+        $this->assertNotSame($tokenPlano, $leadAtualizado->token_documentos);
+        $this->assertSame(64, strlen($leadAtualizado->token_documentos));
+
+        $this->portal($tokenPlano)->assertOk();
+    }
 }

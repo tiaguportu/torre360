@@ -430,7 +430,7 @@ Estrutura de ensino e turmas.
 - **Motivos de Perda:** Padronizados na constante `Interessado::MOTIVOS_PERDA` (`Preço`, `Concorrência`, `Distância`, `Mudança`, `Vagas Esgotadas`, `Metodologia`, `Sem retorno`, `Desistência`, `Outro`).
 - **Redes sociais:** `redes_sociais` (JSON nullable, cast `array`) — lista de `{rede, url}`. Redes aceitas em `Interessado::REDES_SOCIAIS` (instagram, facebook, linkedin, tiktok, x, youtube, outra). Editável no Repeater "Redes Sociais" da aba Dados do Negócio e preenchido pela importação com IA.
 - **Convite de Matrícula Online (Onda 7):** `token_convite` (string nullable, único), `token_convite_expira_em` (datetime nullable), `token_convite_usado_em` (datetime nullable), `dados_pre_matricula` (texto longo nullable, **cifrado** com a `APP_KEY` pelo cast `ArrayCriptografado` — array JSON; `dados_pre_matricula_em` = última atualização do rascunho, base da retenção `crm:expurgar-rascunhos-pre-matricula`; conteúdo: responsáveis, alunos, endereço e aceite LGPD preenchidos pela família; usado para pré-preencher o `EnrollmentWizard` e zerado em `registrarConversao()`). Gerado por `ConviteMatriculaService::gerarConvite()`; `Interessado::conviteValido()` verifica existência + validade + não-uso. Rota pública `/quero-matricular/convite/{token}`.
-- **Portal de Pré-Admissão & Documentos:** `token_documentos` (string nullable, token seguro de acesso sem login), `token_documentos_expira_em` (datetime nullable, validade do link: **7 dias**, renovados sempre que a equipe gera/copia/envia o link; token sem validade, vencido ou revogado responde 410 e nunca é revivido — a equipe recebe um token novo; "Gerar novo link" troca o token na hora).
+- **Portal de Pré-Admissão & Documentos:** `token_documentos` (string 64 nullable, armazena o **hash SHA-256** do token para busca e comparação segura sem expor texto claro no banco/backups; item M8), `token_documentos_cifrado` (text nullable, guarda o token plano criptografado em repouso com `APP_KEY` para recuperação da URL no modal do Filament pelo atendente), `token_documentos_expira_em` (datetime nullable, validade do link: **7 dias**, renovados sempre que a equipe gera/copia/envia o link; token sem validade, vencido ou revogado responde 410 e nunca é revivido — a equipe recebe um token novo; "Gerar novo link" troca o token na hora).
 - **Linha do Tempo 360° Omnichannel:** Visão agregada unificada consumida pelo `Customer360TimelineService` e `TimelineRelationManager`.
 - **Relacionamentos:** 
     - BelongsTo `pessoa`.
@@ -1787,3 +1787,49 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 ## 34. Mesa de Pendências por Papel (Onda 71)
 
 > Não há tabela nova. Cada fila (`App\Contracts\FontePendencia`, em `app/Services/Pendencias/Fontes/`) conta direto das tabelas dos módulos, com as mesmas regras das telas deles: `cancelamentos_matricula` (solicitado; aprovado com a data de saída chegada; concluído com valor a devolver e sem `devolucao_realizada_em`, escopo `comDevolucaoPendente`), `documentos_assinatura` (rascunho ou erro; enviado há mais de N dias ou com `expira_em` próximo), `rematriculas` (`aguardandoTurma()`), `transferencias_escolares` (em andamento), `itens_processo_funcionario` (`atrasados()`) e a visão geral da grade horária. A lista de filas e os prazos ficam em `config/mesa_pendencias.php`. O selo do menu guarda o resumo no cache por usuário e papel (`mesa-pendencias:{user}:{papel}`). Cada fila declara a permissão do módulo que a alimenta; a Mesa não tem permissão própria.
+
+---
+
+## 35. Saúde Escolar e Enfermagem (LGPD A3)
+
+Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, com proteção rigorosa de dados pessoais sensíveis de menores (LGPD arts. 5º II, 11 e 46).
+
+### `ficha_medicas`
+- **Representa:** Ficha de saúde e histórico médico do aluno.
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Aluno, unique, cascade).
+  - `tipo_sanguineo`: Text (**cifrado em repouso** com cast `encrypted`).
+  - `has_alergia_lactose`, `has_alergia_gluten`, `has_alergia_amendoim`: Booleans de alerta rápido para cozinha/refeições.
+  - `outras_alergias_alimentares`: Text (**cifrado em repouso**).
+  - `observacoes_alimentares`: Text (**cifrado em repouso**).
+  - `plano_saude`: Text (**cifrado em repouso**).
+  - `numero_carteira_sus`: Text (**cifrado em repouso**).
+  - `hospital_preferencia`: Text (**cifrado em repouso**).
+  - `observacoes_gerais`: Text (**cifrado em repouso**).
+- **Relacionamentos:** BelongsTo `pessoa`, HasMany `medicamentos` (`medicamento_alunos`), HasMany `contatosEmergencia` (`contato_emergencias`).
+
+### `atendimento_enfermagems`
+- **Representa:** Prontuário de atendimentos ambulatoriais e de enfermagem realizados na escola.
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Aluno, cascade).
+  - `atendido_por_user_id`: FK `users` (Profissional que prestou o atendimento, nullOnDelete).
+  - `data_hora`: Datetime do atendimento.
+  - `sintomas_queixa`: Text (**cifrado em repouso** com cast `encrypted`).
+  - `procedimento_realizado`: Text (**cifrado em repouso**).
+  - `medicamento_ministrado`: Text (**cifrado em repouso**).
+  - `notificado_responsaveis`: Boolean indicando se a família foi avisada.
+  - `observacoes`: Text (**cifrado em repouso**).
+- **Relacionamentos:** BelongsTo `pessoa`, BelongsTo `atendidoPor` (`User`).
+
+### `medicamento_alunos`
+- **Representa:** Medicamentos de uso contínuo ou emergencial autorizados para o aluno.
+- **Campos Principais:**
+  - `ficha_medica_id`: FK `ficha_medicas` (cascade).
+  - `nome_medicamento`: Text (**cifrado em repouso** com cast `encrypted`).
+  - `dosagem`: Text (**cifrado em repouso**).
+  - `horario_administracao`: Text (**cifrado em repouso**).
+  - `instrucoes`: Text (**cifrado em repouso**).
+  - `autorizado_responsaveis`: Boolean indicando autorização da família.
+  - `arquivo_receita_path`: Caminho no storage privado da receita médica.
+- **Relacionamentos:** BelongsTo `fichaMedica`.
+

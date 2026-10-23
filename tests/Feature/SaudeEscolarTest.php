@@ -14,6 +14,7 @@ use App\Models\Pessoa;
 use App\Models\Turma;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -131,12 +132,19 @@ class SaudeEscolarTest extends TestCase
 
         $this->assertDatabaseHas('ficha_medicas', [
             'pessoa_id' => $this->aluno->id,
-            'tipo_sanguineo' => 'A+',
             'has_alergia_lactose' => true,
             'has_alergia_gluten' => true,
-            'outras_alergias_alimentares' => 'Frutos do mar',
-            'numero_carteira_sus' => '987654321098765',
         ]);
+
+        $ficha = FichaMedica::where('pessoa_id', $this->aluno->id)->firstOrFail();
+        $this->assertSame('A+', $ficha->tipo_sanguineo);
+        $this->assertSame('Frutos do mar', $ficha->outras_alergias_alimentares);
+        $this->assertSame('987654321098765', $ficha->numero_carteira_sus);
+
+        // Comprova que no banco em repouso o dado está criptografado e não em texto claro
+        $brutoFicha = DB::table('ficha_medicas')->where('id', $ficha->id)->first();
+        $this->assertNotSame('A+', $brutoFicha->tipo_sanguineo);
+        $this->assertNotSame('987654321098765', $brutoFicha->numero_carteira_sus);
     }
 
     public function test_usuario_sem_permissao_nao_pode_acessar_atendimentos_enfermagem(): void
@@ -170,9 +178,16 @@ class SaudeEscolarTest extends TestCase
         $this->assertDatabaseHas('atendimento_enfermagems', [
             'pessoa_id' => $this->aluno->id,
             'atendido_por_user_id' => $this->superAdmin->id,
-            'sintomas_queixa' => 'Dor de cabeca e febre leve de 37.8C',
             'notificado_responsaveis' => true,
         ]);
+
+        $atendimento = AtendimentoEnfermagem::where('pessoa_id', $this->aluno->id)->firstOrFail();
+        $this->assertSame('Dor de cabeca e febre leve de 37.8C', $atendimento->sintomas_queixa);
+        $this->assertSame('Dipirona gotas conforme autorizacao', $atendimento->medicamento_ministrado);
+
+        // Comprova que no banco em repouso o dado está criptografado
+        $brutoAtendimento = DB::table('atendimento_enfermagems')->where('id', $atendimento->id)->first();
+        $this->assertNotSame('Dor de cabeca e febre leve de 37.8C', $brutoAtendimento->sintomas_queixa);
 
         $this->get('/admin/atendimento-enfermagems')->assertSuccessful();
 

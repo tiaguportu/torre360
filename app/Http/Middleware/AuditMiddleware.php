@@ -25,7 +25,7 @@ class AuditMiddleware
                 AuditLog::create([
                     'user_id' => $user->id,
                     'event' => 'view',
-                    'url' => $request->fullUrl(),
+                    'url' => $request->url(),
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
@@ -64,11 +64,11 @@ class AuditMiddleware
                     if ($resource->isNotEmpty() && $resource != 'Admin') {
                         activity()
                             ->withProperties([
-                                'url' => $request->fullUrl(),
+                                'url' => $request->url(),
                                 'method' => $request->method(),
                                 'ip' => $request->ip(),
                             ])
-                            ->log("{$roleLabel} visualizou recurso: {$resource} | URL: {$request->fullUrl()}");
+                            ->log("{$roleLabel} visualizou recurso: {$resource} | URL: {$request->url()}");
                     }
                 }
             }

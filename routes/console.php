@@ -47,3 +47,5 @@ Schedule::command('ponto:apurar-dia')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('ponto:expirar-banco-horas')->dailyAt('03:00')->withoutOverlapping();
 Schedule::command('ponto:verificar-integridade')->dailyAt('03:20')->withoutOverlapping();
 Schedule::command('rh:avisar-ferias')->weeklyOn(1, '07:30')->withoutOverlapping();
+Schedule::command('activitylog:clean --days=180 --force')->dailyAt('04:00')->withoutOverlapping();
+Schedule::command('audit:limpar-logs --dias=180')->dailyAt('04:10')->withoutOverlapping();

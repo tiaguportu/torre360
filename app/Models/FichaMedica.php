@@ -18,6 +18,13 @@ class FichaMedica extends Model
     protected function casts(): array
     {
         return [
+            'tipo_sanguineo' => 'encrypted',
+            'outras_alergias_alimentares' => 'encrypted',
+            'observacoes_alimentares' => 'encrypted',
+            'plano_saude' => 'encrypted',
+            'numero_carteira_sus' => 'encrypted',
+            'hospital_preferencia' => 'encrypted',
+            'observacoes_gerais' => 'encrypted',
             'has_alergia_lactose' => 'boolean',
             'has_alergia_gluten' => 'boolean',
             'has_alergia_amendoim' => 'boolean',

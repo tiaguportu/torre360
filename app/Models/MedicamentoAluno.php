@@ -18,6 +18,10 @@ class MedicamentoAluno extends Model
     {
         return [
             'autorizado_responsaveis' => 'boolean',
+            'nome_medicamento' => 'encrypted',
+            'dosagem' => 'encrypted',
+            'horario_administracao' => 'encrypted',
+            'instrucoes' => 'encrypted',
         ];
     }
 

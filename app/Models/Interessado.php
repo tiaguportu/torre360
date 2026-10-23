@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -56,7 +57,7 @@ class Interessado extends Model
         'Outro' => 'Outro motivo',
     ];
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'sla_primeira_resposta_minutos', 'sla_estouro_notificado_em', 'sla_gestao_notificado_em', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_cifrado', 'token_documentos_expira_em', 'data_proximo_contato', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'sla_primeira_resposta_minutos', 'sla_estouro_notificado_em', 'sla_gestao_notificado_em', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
 
     /**
      * Campos do lead que entram no contexto enviado à IA (CrmIaVendasService::montarContextoLead). Quando um deles
@@ -593,13 +594,17 @@ class Interessado extends Model
 
     /**
      * Leads cujo link do portal de documentos corresponde ao token e ainda não expirou.
-     * Token sem data de expiração (emitido antes do controle de validade) não é mais aceito: a equipe
-     * reenvia o link e recebe um novo, com validade.
+     * Busca tanto pelo hash SHA-256 do token (padrão de segurança M8) quanto pelo token direto (legado).
      */
     public function scopeComTokenDocumentosValido(Builder $query, string $token): Builder
     {
+        $hash = hash('sha256', $token);
+
         return $query
-            ->where('token_documentos', $token)
+            ->where(function (Builder $q) use ($token, $hash) {
+                $q->where('token_documentos', $hash)
+                    ->orWhere('token_documentos', $token);
+            })
             ->where('token_documentos_expira_em', '>', now());
     }
 
@@ -622,7 +627,7 @@ class Interessado extends Model
     }
 
     /**
-     * Retorna o token do portal de pré-admissão / documentos do candidato, renovando a validade (janela
+     * Retorna o token em texto claro do portal de pré-admissão / documentos do candidato, renovando a validade (janela
      * deslizante de {@see self::DIAS_VALIDADE_TOKEN_DOCUMENTOS} dias). Se não há token, ou ele expirou (ou é
      * legado, sem validade), emite um novo — o anterior deixa de existir.
      */
@@ -636,7 +641,15 @@ class Interessado extends Model
                 $this->update(['token_documentos_expira_em' => $validade]);
             }
 
-            return $this->token_documentos;
+            if (filled($this->token_documentos_cifrado)) {
+                try {
+                    return Crypt::decryptString($this->token_documentos_cifrado);
+                } catch (\Throwable) {
+                    return $this->emitirTokenDocumentos();
+                }
+            }
+
+            return (string) $this->token_documentos;
         }
 
         return $this->emitirTokenDocumentos();
@@ -663,7 +676,15 @@ class Interessado extends Model
     public function tokenDocumentosParaConviteLegado(): string
     {
         if ($this->tokenDocumentosValido()) {
-            return $this->token_documentos;
+            if (filled($this->token_documentos_cifrado)) {
+                try {
+                    return Crypt::decryptString($this->token_documentos_cifrado);
+                } catch (\Throwable) {
+                    // Cai na emissão abaixo
+                }
+            } else {
+                return (string) $this->token_documentos;
+            }
         }
 
         $teto = now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS);
@@ -678,10 +699,12 @@ class Interessado extends Model
     {
         do {
             $token = Str::random(48);
-        } while (static::where('token_documentos', $token)->exists());
+            $hash = hash('sha256', $token);
+        } while (static::where('token_documentos', $hash)->orWhere('token_documentos', $token)->exists());
 
         $this->update([
-            'token_documentos' => $token,
+            'token_documentos' => $hash,
+            'token_documentos_cifrado' => Crypt::encryptString($token),
             'token_documentos_expira_em' => $validade ?? now()->addDays(self::DIAS_VALIDADE_TOKEN_DOCUMENTOS),
         ]);
 

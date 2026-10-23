@@ -19,6 +19,10 @@ class AtendimentoEnfermagem extends Model
         return [
             'data_hora' => 'datetime',
             'notificado_responsaveis' => 'boolean',
+            'sintomas_queixa' => 'encrypted',
+            'procedimento_realizado' => 'encrypted',
+            'medicamento_ministrado' => 'encrypted',
+            'observacoes' => 'encrypted',
         ];
     }
 
