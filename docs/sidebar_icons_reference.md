@@ -26,6 +26,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **Curso** | `Heroicon::OutlinedBookOpen` | Filament Enum |
 | **DiaNaoLetivo** | `heroicon-o-calendar` | String |
 | **Disciplina** | `Heroicon::OutlinedAcademicCap` | Filament Enum |
+| **DocumentoAssinatura** (Documentos para Assinatura) | `Heroicon::OutlinedPencil` | Filament Enum |
 | **DocumentoInserido** | `heroicon-o-document-duplicate` | String |
 | **DocumentoObrigatorio** | `Heroicon::OutlinedPaperClip` | Filament Enum |
 | **Endereco** | `Heroicon::OutlinedMapPin` | Filament Enum |
@@ -70,6 +71,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **EspelhoDePonto** | `heroicon-o-document-text` | String |
 | **GradeHorariaAssistida** | `heroicon-o-squares-2x2` | String |
 | **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |
+| **MesaDePendencias** (Minha Mesa) | `Heroicon::OutlinedInboxStack` | Filament Enum |
 | **PainelFerias** | `heroicon-o-sun` | String |
 | **RegistrarPonto** | `heroicon-o-clock` | String |
 | **SchoolSetupWizard** | `heroicon-o-home-modern` | String |

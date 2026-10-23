@@ -1,6 +1,6 @@
 # Ondas 61 a 67 — Índice
 
-Continuação do [índice das ondas 49 a 60](ondas_49_a_60_indice.md). Cada onda tem um documento próprio com
+Continuação do [índice das ondas 49 a 60](ondas_49_a_60_indice.md); a sequência está no [índice das ondas 68 a 71](ondas_68_a_71_indice.md). Cada onda tem um documento próprio com
 contexto, o que já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.
 
 - **Implementadas (4):** 61, 62, 64 e 65.
@@ -48,7 +48,7 @@ Não são ondas novas: são melhorias de funcionalidades já implementadas ou do
 
 | Onda | Ampliação | Observação |
 |---|---|---|
-| 61 (cancelamento) | **Aviso à família** ao aprovar ou recusar o pedido (e-mail ou WhatsApp, pela Onda 33) e **sino de avisos no Portal**. | Hoje a família acompanha só abrindo o Portal. |
+| 61 (cancelamento) | **Aviso à família** ao aprovar ou recusar o pedido (e-mail ou WhatsApp) e **sino de avisos no Portal**. | Hoje a família acompanha só abrindo o Portal. Proposto na [Onda 70](central_avisos_familia_roadmap.md). A assinatura eletrônica do distrato já existe (Onda 69). |
 | 61 (cancelamento) | **Proporcional do mês da saída** como opção da escola, e cálculo de multa rescisória a partir de uma regra do contrato. | Hoje o mês da saída é cobrado inteiro e a multa é informada à mão. |
 | 61 (cancelamento) | **Devolução com saída bancária lançada** em Movimentação Bancária, em vez de só a data. | |
 | 62 (encargos) | Reemitir a cobrança no gateway com o valor atualizado (quando houver driver real) e mostrar o valor atualizado na **régua de cobrança**. | Hoje o PIX ou boleto emitido não muda. |
@@ -57,7 +57,7 @@ Não são ondas novas: são melhorias de funcionalidades já implementadas ou do
 | 64 (grade) | Sugestão com **sala** (por tipo e capacidade), limite de aulas seguidas e carga semanal por professor, e **trocas** (reposicionar horário existente para encaixar o que sobrou). | Hoje a sugestão é gulosa, sem sala e não mexe no que existe. |
 | 64 (grade) | **PDF da grade** por turma e por professor, e disponibilidade por período letivo. | |
 | 64 e 50 | A carga de aulas colocada na grade é a base da **apuração de hora-aula** (Onda 50). | |
-| 65 (admissão e desligamento) | **Lembrete semanal** das providências vencidas (como o aviso de férias), modelos de lista **por cargo** (professor e administrativo) e termo de confidencialidade assinado pelo Assinafy. | Hoje há só o número no menu. |
+| 65 (admissão e desligamento) | **Lembrete semanal** das providências vencidas (como o aviso de férias) e modelos de lista **por cargo** (professor e administrativo). | Hoje há o número no menu e a fila da [Mesa de Pendências](mesa_pendencias_roadmap.md) (Onda 71). O termo de confidencialidade e o contrato de trabalho já podem ser assinados pelo Assinafy (Onda 69). |
 | 65 e 10 | O **desligamento** puxar o saldo de férias e do banco de horas para a conferência da rescisão. | |
 | 63 (na Onda 35) | Veja a seção "Ampliação: programa de convivência escolar" no documento da Onda 35. | |
 | 58 (censo) | Tabela de regra de admissão e etapas equivalentes; turmas com mais de uma etapa no registro 91. | Veja o documento da Onda 58. |

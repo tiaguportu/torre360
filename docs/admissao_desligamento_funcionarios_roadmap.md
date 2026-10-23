@@ -78,7 +78,8 @@ Cancelar o processo não muda o cadastro nem os acessos.
 - **Não calcula a rescisão, não gera o TRCT e não envia nada ao eSocial:** é uma lista de controle com prazo e
   comprovante. O pagamento e os eventos são feitos no sistema da contabilidade.
 - A lista é única por tipo (sem modelos por cargo) e pensada para escola privada com contratação pela CLT.
-- Sem lembrete automático por e-mail das providências vencidas (só o número no menu).
+- Sem lembrete automático por e-mail das providências vencidas: elas aparecem no número do menu e na fila *Providências de RH vencidas* da Mesa de Pendências (Onda 71).
+- O contrato de trabalho e o termo de confidencialidade podem ser colhidos pela **assinatura eletrônica** (Onda 69): a ação *Assinatura eletrônica* da providência monta o documento do funcionário a partir de um modelo ativo, e a providência é concluída sozinha quando todos assinam. Veja [assinatura_eletronica_documentos_roadmap.md](assinatura_eletronica_documentos_roadmap.md).
 - Os papéis que saem são todos os que não são de família; escolas com papéis próprios de família devem
   ajustar `ProcessoFuncionarioService::PAPEIS_DA_FAMILIA`.
 

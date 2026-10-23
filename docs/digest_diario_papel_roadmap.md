@@ -56,3 +56,12 @@ ação**, reduz esquecimento e dá motivo para abrir o sistema.
 
 - Fadiga de notificação: começar com poucos blocos, medir abertura e permitir silenciar.
 - E-mail com link para o painel exige que o destinatário esteja autenticado ao abrir.
+
+## Fusão com a Mesa de Pendências (Onda 71)
+
+A [Mesa de Pendências](mesa_pendencias_roadmap.md) já foi implementada e criou o que esta onda previa como "interface
+`DigestBloco` + catálogo": `App\Contracts\FontePendencia`, com `config/mesa_pendencias.php`. O digest não precisa de
+um segundo catálogo: ele passa a ser **outro consumidor das mesmas filas** (`MesaDePendencias::filas($usuario)`),
+mandando por e-mail ou push só a contagem e o link de cada fila. O que continua faltando nesta onda é a preferência por
+usuário (ativo, canal, horário), o comando agendado, a prévia e a regra de não enviar digest vazio. Cada módulo que
+ganhar uma fila na Mesa ganha o bloco no digest sem trabalho extra.
