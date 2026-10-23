@@ -55,3 +55,9 @@ guarda nada disso, e o vencimento de um exame só é percebido na fiscalização
 ## Esforço
 
 Pequeno.
+
+## Fusão sugerida
+
+Junto com a [Onda 60](documentos_escola_validade_roadmap.md) e o painel de férias da Onda 10 (já implementado), forma o conjunto **"Vencimentos"**: três telas que fazem a mesma coisa (cadastro com data de vencimento, painel, aviso semanal). Em vez de um painel por assunto, vale um cadastro genérico de vencimento com responsável e antecedência de aviso, em que cada área registra o seu tipo. Cada tipo vira uma fila da Mesa de Pendências (Onda 71), com pouco código.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

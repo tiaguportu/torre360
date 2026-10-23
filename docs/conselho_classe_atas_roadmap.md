@@ -54,3 +54,9 @@ documento avulso), e a decisão não fica ligada ao aluno nem ao fechamento do c
   professor (`EscopoProfessor`, Onda 30).
 - Procedimentos do conselho variam por regimento escolar; o modelo precisa ser configurável
   (itens de deliberação por escola).
+
+## Fusão sugerida
+
+Faz parte do **ciclo pedagógico** 27, 28 e 13: o conselho de classe (esta onda) decide encaminhamentos por aluno, a [Onda 28](reforco_recuperacao_paralela_roadmap.md) executa o reforço e o score de risco de evasão (Onda 13, implementada) deixa de ser só número e vira ação, com tarefa, contato registrado e medida de efetividade. Os encaminhamentos do conselho devem nascer como itens de ação desse ciclo, não como texto livre da ata.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

@@ -50,3 +50,9 @@ resposta.
 
 - Cuidado de linguagem no portal: "reforço" não pode soar como rótulo ao aluno.
 - Se houver cobrança do reforço, entra na lógica de contraturno (Onda 31).
+
+## Fusão sugerida
+
+Receptor dos encaminhamentos da [Onda 27](conselho_classe_atas_roadmap.md) e das ações sobre risco de evasão (Onda 13): veja o ciclo pedagógico descrito na Onda 27.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

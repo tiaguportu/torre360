@@ -47,3 +47,9 @@ Não coberto pela lista de marketing do Sponte nem pelas ondas já levantadas.
 - É o módulo mais distante do resto do sistema (fluxo de "frente de caixa" rápido, não
   cadastro tradicional) — maior candidato a precisar de UI própria fora do padrão
   Filament Resource usado no restante do projeto.
+
+## Fusão sugerida
+
+Divide com a [Onda 67](loja_escolar_roadmap.md) (loja escolar) a base de produtos, o saldo ou pagamento, o caixa e o estoque. Antes de implementar uma delas, decidir um cadastro único de **"vendas da escola"** (produto, preço, estoque, forma de cobrança) com a cantina e a loja como dois pontos de venda. O cruzamento de alérgenos com o cardápio (Onda 40) vale para os dois.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

@@ -70,3 +70,9 @@ legais mudam o desenho:
 ## Esforço
 
 Médio a grande (o pedido pelo Portal com pagamento, estoque por tamanho e devolução são o grosso).
+
+## Fusão sugerida
+
+Veja a fusão com a [Onda 17](cantina_escolar_roadmap.md): cantina e loja compartilham produto, estoque e caixa. A cobrança em fatura do contrato é o que a loja acrescenta.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

@@ -56,3 +56,9 @@ da categoria**. Hoje essa conta é feita fora do sistema.
 ## Esforço
 
 Médio.
+
+## Fusão sugerida
+
+Usa as aulas colocadas na grade da [Onda 64](grade_horaria_assistida_roadmap.md) (implementada) e o total do ano da [Onda 49](carga_letiva_minima_roadmap.md): conjunto **"Frequência e carga letiva"**, ordem 64, 49, 57 e 50.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

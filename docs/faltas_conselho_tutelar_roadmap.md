@@ -59,3 +59,11 @@ tentou resolver antes.
 ## Esforço
 
 Pequeno.
+
+## Fusão sugerida
+
+Depende da [Onda 49](carga_letiva_minima_roadmap.md) (total de aulas do ano) e deve ser entregue logo depois dela: as duas formam o conjunto **"Frequência e carga letiva"**. É obrigação legal e usa dados que já existem, então a 57 pode ir primeiro com o total vindo do calendário, e passar a usar o da 49 quando ela existir.
+
+O aviso de falta excessiva é um novo tipo de aviso na [Central de Avisos à Família](central_avisos_familia_roadmap.md) (Onda 70) e uma fila da Mesa de Pendências (Onda 71) para a coordenação.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

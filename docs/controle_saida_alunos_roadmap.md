@@ -65,3 +65,9 @@ uma só proposta, em vez de dois sistemas que fariam a mesma coisa.
 - `TipoVinculo` já existe para qualificar a relação (Pai, Mãe, Responsável Legal etc.).
 - `WebhookSignatureValidator` já existe e cobre exatamente o tipo de autenticação que um
   endpoint de catraca precisaria (segredo compartilhado, HMAC).
+
+## Fusão sugerida
+
+Entregar junto com a [Onda 37](portaria_digital_roadmap.md) (portaria digital): é o mesmo fluxo visto de dois lados.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

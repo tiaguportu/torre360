@@ -57,3 +57,9 @@ mais um ano por distração.
 ## Esforço
 
 Pequeno.
+
+## Fusão sugerida
+
+Faz parte do conjunto **"Vencimentos"** com a [Onda 56](saude_seguranca_trabalhador_roadmap.md) (exames e Lei Lucas) e o painel de férias (Onda 10, implementado). Veja o racional na Onda 56. A ampliação que inclui contratos de seguro e de manutenção com data de aviso prévio é o mesmo cadastro com outro tipo.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

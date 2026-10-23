@@ -49,3 +49,9 @@ rastro e agilidade, e reduz filas na entrada e na saída.
 - Implementar junto com a Onda 9: são o mesmo fluxo visto de ângulos diferentes.
 - Dado de visitante é dado pessoal: base legal, finalidade e prazo de retenção definidos antes de
   coletar documento e foto.
+
+## Fusão sugerida
+
+É o mesmo fluxo da [Onda 9](controle_saida_alunos_roadmap.md) (controle de saída) visto da portaria. Entregar as duas juntas, com o "quem está na escola agora" para simulado de evacuação, evita dois cadastros de autorizados e de registro de saída.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).
