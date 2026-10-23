@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\MotivoDesligamentoFuncionario;
 use App\Enums\StatusProcessoFuncionario;
 use App\Enums\TipoProcessoFuncionario;
+use App\Models\DocumentoAssinatura;
 use App\Models\Funcionario;
 use App\Models\GradeHorario;
 use App\Models\ItemProcessoFuncionario;
@@ -234,9 +235,35 @@ class ProcessoFuncionarioService
 
         $item->update(['arquivo_path' => $caminho]);
 
-        if ($anterior && $anterior !== $caminho) {
+        // A cópia certificada de uma assinatura eletrônica mora com o documento de assinatura e nunca é apagada aqui.
+        if ($anterior && $anterior !== $caminho && ! str_starts_with($anterior, 'documentos_assinatura/')) {
             Storage::disk('local')->delete($anterior);
         }
+    }
+
+    /**
+     * O documento da providência foi assinado por todos (Onda 69): a providência passa a feita e a cópia certificada é o
+     * comprovante. Processo já encerrado não muda.
+     */
+    public function registrarAssinaturaEletronica(ItemProcessoFuncionario $item, DocumentoAssinatura $documento): void
+    {
+        $processo = ProcessoFuncionario::query()->find($item->processo_id);
+
+        if (! $processo?->estaEmAndamento() || blank($documento->arquivo_assinado_path)) {
+            return;
+        }
+
+        $item = ItemProcessoFuncionario::query()->findOrFail($item->id);
+
+        $item->forceFill([
+            'arquivo_path' => $documento->arquivo_assinado_path,
+            'concluido_em' => $item->concluido_em ?? now(),
+            'nao_se_aplica' => false,
+            'observacao' => filled($item->observacao) ? $item->observacao : 'Assinado eletronicamente.',
+            'concluido_por_user_id' => $item->concluido_por_user_id ?? $documento->criado_por_user_id,
+        ])->save();
+
+        $this->registrarLog($processo, null, 'Providência concluída por assinatura eletrônica.', ['item_id' => $item->id, 'documento_assinatura_id' => $documento->id]);
     }
 
     // --- Andamento ---------------------------------------------------------------------------------------------------

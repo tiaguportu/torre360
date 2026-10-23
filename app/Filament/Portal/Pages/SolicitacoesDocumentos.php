@@ -87,6 +87,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
     public function getTemplatesDisponiveisProperty(): Collection
     {
         return TemplateDocumento::query()
+            ->paraEmissao()
             ->where('is_ativo', true)
             ->orderBy('nome')
             ->get();
@@ -122,7 +123,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
             return;
         }
 
-        $template = TemplateDocumento::find($templateId);
+        $template = TemplateDocumento::paraEmissao()->find($templateId);
 
         if (! $template || ! $template->is_ativo) {
             Notification::make()
@@ -185,7 +186,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
 
                         Select::make('template_documento_id')
                             ->label('Tipo de Documento Desejado')
-                            ->options(TemplateDocumento::where('is_ativo', true)->pluck('nome', 'id'))
+                            ->options(TemplateDocumento::paraEmissao()->where('is_ativo', true)->pluck('nome', 'id'))
                             ->required(),
 
                         Textarea::make('observacao_solicitante')
@@ -196,7 +197,7 @@ class SolicitacoesDocumentos extends Page implements HasTable
                     ->action(function (array $data, DocumentoService $service) {
                         try {
                             $matricula = Matricula::findOrFail($data['matricula_id']);
-                            $template = TemplateDocumento::findOrFail($data['template_documento_id']);
+                            $template = TemplateDocumento::paraEmissao()->findOrFail($data['template_documento_id']);
 
                             $solicitacao = $service->emitirDocumento(
                                 $matricula,

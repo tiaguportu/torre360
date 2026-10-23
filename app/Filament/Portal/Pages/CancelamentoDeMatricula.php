@@ -6,8 +6,12 @@ namespace App\Filament\Portal\Pages;
 
 use App\Enums\MotivoCancelamentoMatricula;
 use App\Enums\OrigemCancelamentoMatricula;
+use App\Enums\StatusAssinante;
+use App\Enums\StatusDocumentoAssinatura;
 use App\Filament\Concerns\HasAjudaAction;
+use App\Models\AssinanteDocumento;
 use App\Models\CancelamentoMatricula;
+use App\Models\DocumentoAssinatura;
 use App\Models\Matricula;
 use App\Services\CancelamentoMatriculaService;
 use App\Services\EncargosAtrasoService;
@@ -85,6 +89,38 @@ class CancelamentoDeMatricula extends Page
             ->get()
             ->unique('matricula_id')
             ->keyBy('matricula_id');
+    }
+
+    /**
+     * O distrato em assinatura eletrônica (Onda 69), se a escola o enviou: quantos já assinaram e, quando o usuário é um
+     * dos assinantes e ainda não assinou, o link dele. O link de cada pessoa é só dela: nunca aparece o de outro assinante.
+     *
+     * @return array{situacao: StatusDocumentoAssinatura, link: ?string, ja_assinou: bool, assinaram: int, total: int}|null
+     */
+    public function getAssinaturaEletronica(CancelamentoMatricula $pedido): ?array
+    {
+        $documento = DocumentoAssinatura::query()
+            ->where('documentavel_type', CancelamentoMatricula::class)
+            ->where('documentavel_id', $pedido->id)
+            ->whereIn('status', [StatusDocumentoAssinatura::Enviado->value, StatusDocumentoAssinatura::Assinado->value])
+            ->latest('id')
+            ->first();
+
+        if (! $documento) {
+            return null;
+        }
+
+        $email = mb_strtolower(trim((string) auth()->user()?->email));
+        $assinantes = $documento->assinantes()->get();
+        $meu = $email === '' ? null : $assinantes->first(fn (AssinanteDocumento $assinante): bool => mb_strtolower($assinante->email) === $email);
+
+        return [
+            'situacao' => $documento->status,
+            'link' => $documento->status === StatusDocumentoAssinatura::Enviado && $meu?->status === StatusAssinante::Pendente ? $meu->link_assinatura : null,
+            'ja_assinou' => $meu?->status === StatusAssinante::Assinou,
+            'assinaram' => $assinantes->where('status', StatusAssinante::Assinou)->count(),
+            'total' => $assinantes->count(),
+        ];
     }
 
     /**
@@ -240,7 +276,7 @@ class CancelamentoDeMatricula extends Page
                 ->passos('🔁 Como funciona', [
                     'Clique em "Pedir cancelamento" no aluno, escolha o motivo e o último dia dele na escola.',
                     'A secretaria confere a situação financeira e aprova o pedido.',
-                    'Baixe o distrato, assine e entregue na secretaria.',
+                    'Assine o distrato: online, se a escola o enviou por e-mail para assinatura eletrônica (o botão "Assinar o distrato" aparece aqui), ou baixe, assine e entregue na secretaria.',
                     'Com o distrato assinado, a escola conclui o cancelamento e, se for o caso, devolve o que foi pago adiantado.',
                 ])
                 ->secao('📌 Bom saber', [

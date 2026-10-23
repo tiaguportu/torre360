@@ -37,7 +37,7 @@ class SolicitacaoDocumentoForm
                         Select::make('template_documento_id')
                             ->label('Modelo de Documento')
                             ->relationship('templateDocumento', 'nome')
-                            ->options(TemplateDocumento::where('is_ativo', true)->pluck('nome', 'id'))
+                            ->options(TemplateDocumento::paraEmissao()->where('is_ativo', true)->pluck('nome', 'id'))
                             ->required()
                             ->disabled(fn (?string $operation) => $operation === 'edit'),
 

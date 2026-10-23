@@ -26,6 +26,7 @@ if ($filaIa !== '' && $filaIa !== $filaPadrao) {
         ->runInBackground();
 }
 Schedule::command('assinafy:reconciliar')->hourly()->withoutOverlapping();
+Schedule::command('documentos:reconciliar-assinaturas')->hourly()->withoutOverlapping();
 Schedule::command('crm:notificar-pendentes')->dailyAt('08:00')->withoutOverlapping();
 // De hora em hora: cada regra sai na primeira execução a partir do seu `horario_envio` (padrão 08:00) e a
 // idempotência do log impede repetir. O envio é síncrono, então `withoutOverlapping` evita duas execuções juntas.

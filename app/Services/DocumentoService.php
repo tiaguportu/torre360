@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ContextoDocumento;
 use App\Enums\StatusSolicitacaoDocumento;
 use App\Enums\TipoTemplateDocumento;
 use App\Models\Matricula;
@@ -26,6 +27,19 @@ class DocumentoService
      * Substitui todas as variáveis dinâmicas no conteúdo do template.
      */
     public function preencherMacros(TemplateDocumento $template, Matricula $matricula, SolicitacaoDocumento $solicitacao): string
+    {
+        $variaveis = $this->variaveis($matricula, $solicitacao, $template);
+
+        return str_replace(array_keys($variaveis), array_values($variaveis), $template->conteudo);
+    }
+
+    /**
+     * Valor de cada variável de um modelo de matrícula. Sem a solicitação (prévia do modelo e documentos mandados para
+     * assinatura eletrônica, que não têm protocolo nem QR Code), as variáveis de autenticidade vão com um traço.
+     *
+     * @return array<string, string> variável (com as chaves) => valor
+     */
+    public function variaveis(Matricula $matricula, ?SolicitacaoDocumento $solicitacao = null, ?TemplateDocumento $template = null): array
     {
         $aluno = $matricula->pessoa;
         $turma = $matricula->turma;
@@ -55,7 +69,7 @@ class DocumentoService
         $enderecoAlunoFormatado = $endAluno ? trim("{$endAluno->logradouro}, {$endAluno->numero} ".($endAluno->complemento ? "- {$endAluno->complemento} " : '')."- {$endAluno->bairro}, {$endAluno->cidade?->nome}/{$endAluno->cidade?->estado?->sigla} - CEP: {$endAluno->cep}") : 'Não informado';
 
         $cidadeUnidade = $unidade?->endereco?->cidade?->nome ?? 'Esta Cidade';
-        $urlValidacao = url('/validar-documento/'.$solicitacao->codigo_verificacao);
+        $urlValidacao = $solicitacao ? url('/validar-documento/'.$solicitacao->codigo_verificacao) : '—';
 
         $dataNascimento = $aluno?->data_nascimento ? Carbon::parse($aluno->data_nascimento)->format('d/m/Y') : '-';
         $cpfFormatado = $aluno?->cpf ? (strlen($aluno->cpf) === 11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $aluno->cpf) : $aluno->cpf) : 'Não informado';
@@ -98,16 +112,18 @@ class DocumentoService
             '{{UNIDADE_ESTADO}}' => $unidade?->endereco?->cidade?->estado?->sigla ?? '',
 
             // Autenticidade
-            '{{PROTOCOLO}}' => $solicitacao->protocolo,
-            '{{CODIGO_VERIFICACAO}}' => $solicitacao->codigo_verificacao,
+            '{{PROTOCOLO}}' => $solicitacao?->protocolo ?? '—',
+            '{{CODIGO_VERIFICACAO}}' => $solicitacao?->codigo_verificacao ?? '—',
             '{{URL_VERIFICACAO}}' => $urlValidacao,
-            '{{DATA_EMISSAO}}' => $solicitacao->data_emissao ? $solicitacao->data_emissao->format('d/m/Y') : now()->format('d/m/Y'),
-            '{{DATA_VALIDADE}}' => $solicitacao->data_validade ? $solicitacao->data_validade->format('d/m/Y') : now()->addDays($template->validade_dias)->format('d/m/Y'),
+            '{{DATA_EMISSAO}}' => $solicitacao?->data_emissao ? $solicitacao->data_emissao->format('d/m/Y') : now()->format('d/m/Y'),
+            '{{DATA_VALIDADE}}' => $solicitacao?->data_validade
+                ? $solicitacao->data_validade->format('d/m/Y')
+                : ($solicitacao && $template ? now()->addDays($template->validade_dias)->format('d/m/Y') : '—'),
             '{{DATA_EXTENSO}}' => "{$cidadeUnidade}, ".now()->translatedFormat('d \d\e F \d\e Y'),
             '{{TABELA_HISTORICO}}' => $tabelaHistorico,
         ];
 
-        return str_replace(array_keys($variaveis), array_values($variaveis), $template->conteudo);
+        return $variaveis;
     }
 
     /**
@@ -117,6 +133,11 @@ class DocumentoService
      */
     public function validarEmissao(TemplateDocumento $template, Matricula $matricula): void
     {
+        // Distrato e documentos de funcionário têm outro registro como base e saem pela assinatura eletrônica.
+        if ($template->tipo->contexto() !== ContextoDocumento::Matricula) {
+            throw new \DomainException('Este modelo não é uma declaração do aluno e não pode ser emitido por aqui.');
+        }
+
         if ($template->tipo === TipoTemplateDocumento::DeclaracaoQuitacao) {
             if ($matricula->hasDebitosVencidos()) {
                 $totalPendencias = $matricula->getDebitosVencidosCount();

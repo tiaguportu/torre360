@@ -7,8 +7,13 @@ namespace App\Filament\Resources\CancelamentosMatricula\Tables;
 use App\Enums\MotivoCancelamentoMatricula;
 use App\Enums\OrigemCancelamentoMatricula;
 use App\Enums\StatusCancelamentoMatricula;
+use App\Enums\TipoTemplateDocumento;
+use App\Filament\Resources\DocumentosAssinatura\DocumentoAssinaturaResource;
 use App\Models\CancelamentoMatricula;
+use App\Models\TemplateDocumento;
 use App\Services\CancelamentoMatriculaService;
+use App\Services\Documentos\AssinaturaDocumentoService;
+use App\Services\Documentos\SignatariosSugeridosService;
 use App\Support\TiposArquivo;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -99,6 +104,8 @@ class CancelamentosMatriculaTable
                 ActionGroup::make([
                     self::recusarAction(),
                     self::distratoAction(),
+                    self::prepararAssinaturaEletronicaAction(),
+                    self::verAssinaturaEletronicaAction(),
                     self::anexarDistratoAction(),
                     self::verDistratoAssinadoAction(),
                     self::registrarDevolucaoAction(),
@@ -282,6 +289,67 @@ class CancelamentosMatriculaTable
             ->visible(fn (CancelamentoMatricula $record): bool => $record->temDistrato())
             ->url(fn (CancelamentoMatricula $record): string => route('cancelamentos-matricula.distrato', ['cancelamento' => $record->id]))
             ->openUrlInNewTab();
+    }
+
+    /**
+     * Monta o distrato com o modelo ativo e leva para a página do documento, onde a secretaria confere o texto e os
+     * assinantes e só então envia ao Assinafy. Fica de fora se já há documento em andamento ou assinado.
+     */
+    private static function prepararAssinaturaEletronicaAction(): Action
+    {
+        return Action::make('preparar_assinatura_eletronica')
+            ->label('Assinatura eletrônica do distrato')
+            ->icon('heroicon-o-pencil')
+            ->color('info')
+            ->visible(fn (CancelamentoMatricula $record): bool => (bool) auth()->user()?->can('anexarDistrato', $record)
+                && auth()->user()?->can('Create:DocumentoAssinatura')
+                && ! $record->documentosAssinatura->contains(fn ($documento): bool => $documento->emAndamento() || $documento->estaAssinado()))
+            ->modalHeading('Assinatura eletrônica do distrato')
+            ->modalDescription('O sistema monta o distrato com o modelo ativo e leva você ao documento, onde confere o texto e os assinantes antes de enviar. Nada vai para o Assinafy ainda.')
+            ->modalSubmitActionLabel('Montar o documento')
+            ->action(function (CancelamentoMatricula $record) {
+                $modelo = TemplateDocumento::query()->where('tipo', TipoTemplateDocumento::DistratoMatricula->value)->where('is_ativo', true)->first();
+
+                if (! $modelo) {
+                    Notification::make()
+                        ->title('Não há modelo de distrato ativo')
+                        ->body('Revise e ative o modelo "Distrato de matrícula" em Modelos de Documentos (o botão "Criar modelos padrão" traz um ponto de partida para o jurídico revisar).')
+                        ->warning()
+                        ->persistent()
+                        ->send();
+
+                    return null;
+                }
+
+                try {
+                    $sugestao = app(SignatariosSugeridosService::class)->para($record);
+                    $documento = app(AssinaturaDocumentoService::class)->criar($modelo, $record, $sugestao['assinantes'], auth()->user());
+                } catch (\DomainException $e) {
+                    Notification::make()->title('Não foi possível montar o documento')->body($e->getMessage())->danger()->persistent()->send();
+
+                    return null;
+                }
+
+                if ($sugestao['sem_email'] !== []) {
+                    Notification::make()
+                        ->title('Pessoas sem e-mail cadastrado')
+                        ->body(implode(', ', $sugestao['sem_email']).' não entraram na lista de assinantes.')
+                        ->warning()
+                        ->send();
+                }
+
+                return redirect(DocumentoAssinaturaResource::getUrl('view', ['record' => $documento]));
+            });
+    }
+
+    private static function verAssinaturaEletronicaAction(): Action
+    {
+        return Action::make('ver_assinatura_eletronica')
+            ->label('Ver assinatura eletrônica')
+            ->icon('heroicon-o-pencil-square')
+            ->color('gray')
+            ->visible(fn (CancelamentoMatricula $record): bool => $record->documentosAssinatura->isNotEmpty() && (bool) auth()->user()?->can('view', $record->documentosAssinatura->first()))
+            ->url(fn (CancelamentoMatricula $record): string => DocumentoAssinaturaResource::getUrl('view', ['record' => $record->documentosAssinatura->first()]));
     }
 
     private static function anexarDistratoAction(): Action

@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ProcessosFuncionario\RelationManagers;
 
 use App\Enums\CategoriaItemProcessoFuncionario;
+use App\Enums\ContextoDocumento;
+use App\Enums\TipoTemplateDocumento;
+use App\Filament\Resources\DocumentosAssinatura\DocumentoAssinaturaResource;
 use App\Models\ItemProcessoFuncionario;
 use App\Models\ProcessoFuncionario;
+use App\Models\TemplateDocumento;
+use App\Services\Documentos\AssinaturaDocumentoService;
+use App\Services\Documentos\SignatariosSugeridosService;
 use App\Services\ProcessoFuncionarioService;
 use App\Support\TiposArquivo;
 use Filament\Actions\Action;
@@ -52,7 +58,7 @@ class ItensRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('titulo')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('concluidoPor'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['concluidoPor', 'documentosAssinatura']))
             ->columns([
                 TextColumn::make('categoria')
                     ->label('Categoria')
@@ -107,10 +113,12 @@ class ItensRelationManager extends RelationManager
             ])
             ->recordActions([
                 $this->marcarAction(),
+                $this->assinaturaEletronicaAction(),
                 $this->dispensarAction(),
                 $this->anexarAction(),
                 $this->reabrirAction(),
                 $this->verArquivoAction(),
+                $this->verAssinaturaEletronicaAction(),
             ])
             ->defaultSort('ordem')
             ->paginated(false)
@@ -219,6 +227,75 @@ class ItensRelationManager extends RelationManager
 
                 Notification::make()->title('Providência concluída')->success()->send();
             });
+    }
+
+    /**
+     * Monta o documento do funcionário (contrato de trabalho, termo) ligado a esta providência e leva à página dele, onde
+     * se confere e se envia. Quando todos assinam, a providência é concluída sozinha, com a cópia certificada.
+     */
+    private function assinaturaEletronicaAction(): Action
+    {
+        return Action::make('assinatura_eletronica')
+            ->label('Assinatura eletrônica')
+            ->icon('heroicon-o-pencil')
+            ->color('info')
+            ->visible(fn (ItemProcessoFuncionario $record): bool => ! $record->estaResolvido()
+                && $this->podeMexer()
+                && (bool) auth()->user()?->can('Create:DocumentoAssinatura')
+                && ! $record->documentosAssinatura->contains(fn ($documento): bool => $documento->emAndamento()))
+            ->modalHeading(fn (ItemProcessoFuncionario $record): string => 'Assinatura eletrônica: '.$record->titulo)
+            ->modalDescription('O sistema monta o documento com o modelo escolhido e leva você a ele, onde confere o texto e os assinantes antes de enviar. Quando todos assinarem, esta providência é concluída sozinha.')
+            ->modalSubmitActionLabel('Montar o documento')
+            ->schema([
+                Select::make('modelo')
+                    ->label('Modelo')
+                    ->options(fn (): array => TemplateDocumento::query()
+                        ->where('is_ativo', true)
+                        ->whereIn('tipo', array_map(fn (TipoTemplateDocumento $tipo): string => $tipo->value, array_filter(TipoTemplateDocumento::cases(), fn (TipoTemplateDocumento $tipo): bool => $tipo->contexto() === ContextoDocumento::Funcionario)))
+                        ->orderBy('nome')
+                        ->pluck('nome', 'id')
+                        ->all())
+                    ->helperText('Só aparecem modelos de funcionário ativos. Revise e ative o modelo em Modelos de Documentos.')
+                    ->required(),
+            ])
+            ->action(function (ItemProcessoFuncionario $record, array $data) {
+                $modelo = TemplateDocumento::query()->find($data['modelo']);
+
+                if (! $modelo || $modelo->contexto() !== ContextoDocumento::Funcionario) {
+                    Notification::make()->title('Modelo não encontrado')->danger()->send();
+
+                    return null;
+                }
+
+                try {
+                    $sugestao = app(SignatariosSugeridosService::class)->para($record);
+                    $documento = app(AssinaturaDocumentoService::class)->criar($modelo, $record, $sugestao['assinantes'], auth()->user());
+                } catch (\DomainException $e) {
+                    Notification::make()->title('Não foi possível montar o documento')->body($e->getMessage())->danger()->persistent()->send();
+
+                    return null;
+                }
+
+                if ($sugestao['sem_email'] !== []) {
+                    Notification::make()
+                        ->title('Pessoas sem e-mail cadastrado')
+                        ->body(implode(', ', $sugestao['sem_email']).' não entraram na lista de assinantes.')
+                        ->warning()
+                        ->send();
+                }
+
+                return redirect(DocumentoAssinaturaResource::getUrl('view', ['record' => $documento]));
+            });
+    }
+
+    private function verAssinaturaEletronicaAction(): Action
+    {
+        return Action::make('ver_assinatura_eletronica')
+            ->label('Ver assinatura eletrônica')
+            ->icon('heroicon-o-pencil-square')
+            ->color('gray')
+            ->visible(fn (ItemProcessoFuncionario $record): bool => $record->documentosAssinatura->isNotEmpty() && (bool) auth()->user()?->can('view', $record->documentosAssinatura->first()))
+            ->url(fn (ItemProcessoFuncionario $record): string => DocumentoAssinaturaResource::getUrl('view', ['record' => $record->documentosAssinatura->first()]));
     }
 
     private function dispensarAction(): Action

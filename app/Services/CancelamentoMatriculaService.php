@@ -451,7 +451,8 @@ class CancelamentoMatriculaService
 
         $cancelamento->update(['distrato_assinado_path' => $caminho]);
 
-        if ($anterior && $anterior !== $caminho) {
+        // A cópia certificada da assinatura eletrônica (Onda 69) mora com o documento de assinatura e não se apaga aqui.
+        if ($anterior && $anterior !== $caminho && ! str_starts_with($anterior, 'documentos_assinatura/')) {
             Storage::disk('local')->delete($anterior);
         }
 

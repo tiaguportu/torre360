@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Documentos;
 use App\Http\Controllers\Controller;
 use App\Models\AtendimentoMensagem;
 use App\Models\CancelamentoMatricula;
+use App\Models\DocumentoAssinatura;
 use App\Models\DocumentoInserido;
 use App\Models\SolicitacaoDocumento;
 use App\Support\TiposArquivo;
@@ -100,6 +101,13 @@ class VisualizarDocumentoController extends Controller
             if ($cancelamento ? $cancelamento->isAccessibleBy($user) : $user->isEquipeAdministrativa()) {
                 $autorizado = true;
             }
+        }
+        // Contexto E1: PDFs de documentos mandados para assinatura eletrônica (Onda 69): quem pode ver o documento (equipe com
+        // permissão, quem foi chamado para assinar e a família do aluno). Arquivo sem documento não abre para ninguém.
+        elseif (str_starts_with($path, 'documentos_assinatura/')) {
+            $documento = DocumentoAssinatura::query()->where('arquivo_original_path', $path)->orWhere('arquivo_assinado_path', $path)->first();
+
+            $autorizado = $documento?->isAccessibleBy($user) ?? false;
         }
         // Contexto E: Comprovantes de admissão e desligamento de funcionários (Onda 65): RH é da administração, então
         // secretaria e coordenação só abrem se tiverem a permissão específica.
