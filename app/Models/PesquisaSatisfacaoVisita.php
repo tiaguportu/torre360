@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class PesquisaSatisfacaoVisita extends Model
 {
-    use HasFactory;
+    use HasFactory, InvalidaDossieIaDoLead;
 
     protected $table = 'visita_pesquisa_satisfacao';
 

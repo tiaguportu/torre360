@@ -16,6 +16,7 @@ use App\Models\StatusInteressado;
 use App\Models\User;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Mockery;
@@ -191,15 +192,18 @@ class CopilotoIaConfiguracaoTest extends TestCase
         $capturado = null;
         $this->mockGemini($capturado);
 
+        // O Copiloto é em duas etapas: o botão "Gerar mensagem" chama a IA (com o modelo escolhido) e preenche o campo.
         Livewire::actingAs($this->admin())
             ->test(EditInteressado::class, ['record' => $interessado->id])
-            ->callAction('copilotoIa', [
+            ->mountAction('copilotoIa')
+            ->fillForm([
                 'mensagem_whatsapp_template_id' => $template->id,
                 'objetivo' => 'primeiro_contato',
                 'tom' => 'acolhedor',
                 'registrar_historico' => false,
             ])
-            ->assertNotified();
+            ->callAction(TestAction::make('gerarMensagemCopiloto')->schemaComponent('acoesMensagem'))
+            ->assertSchemaStateSet(['mensagem' => 'Olá Mariana!', 'mensagem_contingencia' => false]);
 
         $this->assertStringContainsString('Nunca citar o valor da mensalidade.', $capturado['systemInstruction']['parts'][0]['text']);
     }

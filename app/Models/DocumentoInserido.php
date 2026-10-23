@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SituacaoDocumento;
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -10,7 +11,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class DocumentoInserido extends Model
 {
-    use LogsActivity;
+    use InvalidaDossieIaDoLead, LogsActivity;
 
     protected $table = 'documento_inserido';
 

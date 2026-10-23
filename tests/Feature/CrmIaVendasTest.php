@@ -19,6 +19,7 @@ use App\Models\VisitaInteressado;
 use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use Barryvdh\DomPDF\PDF;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Mockery;
@@ -419,14 +420,18 @@ class CrmIaVendasTest extends TestCase
 
         $this->app->instance(GeminiAgentService::class, $geminiMock);
 
+        // Gera no campo editável e, depois da revisão, abre o WhatsApp (só então a tentativa vai para o histórico).
         Livewire::actingAs($admin)
             ->test(EditInteressado::class, ['record' => $interessado->id])
-            ->callAction('copilotoIa', [
+            ->mountAction('copilotoIa')
+            ->fillForm([
                 'mensagem_whatsapp_template_id' => $template->id,
                 'objetivo' => 'primeiro_contato',
                 'tom' => 'acolhedor',
                 'registrar_historico' => true,
             ])
+            ->callAction(TestAction::make('gerarMensagemCopiloto')->schemaComponent('acoesMensagem'))
+            ->callMountedAction()
             ->assertNotified();
 
         $historico = HistoricoContato::where('interessado_id', $interessado->id)->latest('id')->first();

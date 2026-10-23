@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusListaEspera;
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use App\Notifications\ListaEspera\VagaDisponivelNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Support\Collection;
 
 class ListaEsperaMatricula extends Model
 {
-    use HasFactory;
+    use HasFactory, InvalidaDossieIaDoLead;
 
     protected $table = 'lista_espera_matriculas';
 

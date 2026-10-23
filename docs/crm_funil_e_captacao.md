@@ -158,9 +158,13 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   instruções ali contidas. O copiloto **remove links** da mensagem gerada (phishing por injeção de prompt).
 - **Saída escapada:** o cabeçalho do Dossiê IA passa por `e()`; o PDF usa `markdownSeguro()` (sem HTML cru).
 - **Dossiê em cache** (`CrmIaVendasService::dossieDoLead()`, 15 min): o modal do Filament reconstrói o formulário
-  a cada interação e gerar dentro dele chamava o Gemini de novo a cada clique. A chave é descartada quando o
-  histórico do lead muda (`HistoricoContato` saved/deleted) e respostas de contingência (`fallback = true`)
-  nunca são guardadas. O PDF reaproveita o mesmo cache.
+  a cada interação e gerar dentro dele chamava o Gemini de novo a cada clique. A chave é descartada quando algo
+  que a IA lê muda: o histórico (`HistoricoContato`), o próprio lead (só os campos de
+  `Interessado::CAMPOS_DO_CONTEXTO_IA`; SLA, score recalculado em lote e validade do token não contam) e, pelo trait
+  `App\Models\Concerns\InvalidaDossieIaDoLead`, visitas, pesquisa pós-visita, propostas, lista de espera,
+  dependentes e documentos (`CrmIaVendasService::descartarDossie()`). Um modelo novo que entre no contexto da IA
+  precisa usar o trait. Respostas de contingência (`fallback = true`) nunca são guardadas. O PDF reaproveita o mesmo
+  cache. O Copiloto não usa cache: gera a mensagem na hora.
 - **Contexto do lead em texto puro:** `CrmIaVendasService::montarContextoLead()` monta o texto enviado ao Gemini
   (dossiê e copiloto). `VisitaInteressado::status` é um enum (`StatusVisitaInteressado`) e não pode ser
   interpolado em string — usar `getLabel()` ("Agendada", "Realizada", "Não compareceu", "Cancelada"). Interpolar
@@ -186,13 +190,41 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
     `pendenciasDadosCadastrais()` cita o aluno pelo nome completo e por isso não é usado aqui.
   - O motivo da perda e o concorrente **já chegam** pelo relato que `LeadFunilService::marcarComoPerdido()` grava no
     histórico; por isso não há bloco próprio para eles.
+  - **Pesquisa pós-visita** (`trechoPesquisaPosVisita()`), no fim da linha de cada visita: NPS (com a classe
+    Promotor/Neutro/Detrator) e notas de 1 a 5 de atendimento, infraestrutura e proposta pedagógica, mais o comentário
+    livre da família (até `LIMITE_COMENTARIO_PESQUISA` = 500 caracteres, com CPF/telefone/e-mail ocultados). Pesquisa
+    criada e ainda não respondida aparece como "enviada, ainda sem resposta da família".
+  - **Propostas comerciais** (`linhasPropostas()`, as 5 mais recentes): código, situação, data de criação e, nas que
+    ainda estão em aberto (rascunho, aprovada, aguardando aprovação), a validade, com "VENCIDA" quando já passou.
+    **Valores, descontos e nomes não vão**: a mensagem não pode prometer números que a IA não tem como confirmar, e o
+    cabeçalho do bloco diz isso ao modelo.
+  - **Lista de espera de matrícula** (`linhasListaEspera()`, as 5 mais recentes): turma, período, aluno (primeiro
+    nome), situação, desde quando está na lista e quando foi avisada da vaga.
   - Ainda **fora** do contexto: etapas por onde o lead passou (`historicoStatus`), turno de preferência e unidade dos
     dependentes, campanha/UTM, indicação, consultor responsável e a marcação de quais registros do histórico são
     automáticos.
 - **Carregamento dos relacionamentos:** `montarContextoLead()` faz o próprio `loadMissing` de tudo o que lê (pessoa,
-  etapa, origem, dependentes com série, contatos com tipo e atendente, visitas). Antes cada chamador tinha a sua
-  lista e a do Copiloto esquecia o tipo e o atendente de cada contato e a origem: duas consultas por contato do
-  histórico (e exceção no modo estrito de lazy loading). Ver `docs/lazy_loading_n_mais_1.md`.
+  etapa, origem, dependentes com série, contatos com tipo e atendente, visitas com pesquisa, propostas, lista de
+  espera). Antes cada chamador tinha a sua lista e a do Copiloto esquecia o tipo e o atendente de cada contato e a
+  origem: duas consultas por contato do histórico (e exceção no modo estrito de lazy loading). Ver
+  `docs/lazy_loading_n_mais_1.md`.
+- **Copiloto WhatsApp IA em duas etapas** (`CopilotoMensagemIaAction`): o modal tem o botão **Gerar mensagem com a IA**
+  (ação de schema `gerarMensagemCopiloto`, dentro do `Actions` de chave `acoesMensagem`), que chama
+  `CrmIaVendasService::redigirMensagemCopiloto()` com o modelo, objetivo, tom e instrução escolhidos e preenche o campo
+  editável `mensagem`. Cada clique consome uma chamada do limite por minuto (`verificarIncrementarRateLimit`) e não
+  grava nada. O botão principal passou a ser **Abrir no WhatsApp**: abre `api.whatsapp.com/send` com o texto que estiver
+  no campo (obrigatório, até 2.000 caracteres; pode ser escrito à mão sem usar a IA) e só então registra a tentativa no
+  histórico (`automatico = true`), com o texto final e a origem dele: "redigida pelo Copiloto IA", "redigida pelo
+  Copiloto IA e ajustada pelo consultor", "padrão, porque a IA não respondeu" (com "ajustada" se foi editada) ou
+  "escrita pelo consultor". Os campos ocultos `mensagem_original` e `mensagem_contingencia` só servem para esse
+  rótulo. Antes, o registro era gravado antes de alguém ler a mensagem e dizia "redigida pelo Copiloto IA" para texto
+  que nunca chegava a ser enviado.
+- **Aviso quando a IA falha:** `redigirMensagemCopiloto()` devolve `['mensagem', 'contingencia']`
+  (`gerarMensagemCopiloto()` continua devolvendo só o texto). `contingencia = true` quando o Gemini lança erro, a
+  resposta vem cortada duas vezes ou **vem sem texto** (antes uma resposta vazia virava mensagem em branco). No modal,
+  o campo mostra um aviso fixo e uma notificação diz que o texto é padrão; no envio rápido da tabela
+  (`enviarWhatsapp` com "Personalizar com Copiloto IA") a notificação avisa que o modelo saiu sem personalização. O
+  Dossiê e o Resumo de Conversa já usavam `fallback`.
 - **Resumo de conversa com áudio** (`CrmIaVendasService::resumirConversaWhatsapp($lead, $texto, $audios)`): o
   consultor pode anexar até `MAX_AUDIOS_CONVERSA` (5) áudios na Action `ResumoConversaIaAction` (`FileUpload`
   `audios`, disco `local`, pasta `temp-conversa-audios`, 10 MB cada); o texto só é obrigatório sem áudio.

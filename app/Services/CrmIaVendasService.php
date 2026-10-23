@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\StatusPropostaComercial;
 use App\Enums\StatusVisitaInteressado;
 use App\Models\CopilotoIaConfiguracao;
 use App\Models\HistoricoContato;
@@ -11,6 +12,7 @@ use App\Models\InstituicaoEnsino;
 use App\Models\Interessado;
 use App\Models\Unidade;
 use App\Models\User;
+use App\Models\VisitaInteressado;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Support\Carbon;
@@ -221,10 +223,20 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         return "dossie_ia_lead_{$interessadoId}";
     }
 
+    /** Descarta o dossiê em cache de um lead (sem efeito quando não há lead). */
+    public static function descartarDossie(int|string|null $interessadoId): void
+    {
+        if ($interessadoId !== null) {
+            Cache::forget(self::chaveCacheDossie($interessadoId));
+        }
+    }
+
     /**
      * Dossiê do lead com reaproveitamento: o modal do Filament monta seu formulário a cada interação, e
      * gerar na hora refazia a chamada ao Gemini (custo e demora de até minutos) a cada clique. A chave é
-     * descartada quando o histórico do lead muda (`HistoricoContato`), e respostas de contingência não são guardadas.
+     * descartada quando algo que entra no contexto muda: o lead, o histórico, visitas, pesquisa pós-visita,
+     * propostas, lista de espera, dependentes e documentos (trait `InvalidaDossieIaDoLead`). Respostas de
+     * contingência não são guardadas.
      *
      * @return array<string, mixed>
      */
@@ -296,6 +308,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
     /**
      * Gera uma mensagem contextualizada e persuasiva pronta para ser enviada no WhatsApp da família.
+     * Só devolve o texto; quem precisa saber se a IA falhou usa {@see self::redigirMensagemCopiloto()}.
      */
     public function gerarMensagemCopiloto(
         Interessado $interessado,
@@ -305,6 +318,25 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         ?string $templateBase = null,
         ?string $instrucoesModelo = null,
     ): string {
+        return $this->redigirMensagemCopiloto($interessado, $objetivo, $tom, $instrucoesExtras, $templateBase, $instrucoesModelo)['mensagem'];
+    }
+
+    /**
+     * Como {@see self::gerarMensagemCopiloto()}, mas diz se o texto veio da IA ou da mensagem de contingência
+     * (IA fora do ar, cota esgotada, resposta cortada ou vazia). A contingência é um texto genérico, ou o modelo
+     * escolhido só com as variáveis preenchidas: quem a mostra ao consultor precisa avisar que não é a mensagem
+     * personalizada que a IA redigiria.
+     *
+     * @return array{mensagem: string, contingencia: bool}
+     */
+    public function redigirMensagemCopiloto(
+        Interessado $interessado,
+        string $objetivo,
+        string $tom = 'acolhedor',
+        ?string $instrucoesExtras = null,
+        ?string $templateBase = null,
+        ?string $instrucoesModelo = null,
+    ): array {
         $contexto = $this->montarContextoLead($interessado);
 
         $config = CopilotoIaConfiguracao::valores();
@@ -352,8 +384,14 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
         try {
             $texto = $this->textoCompletoDoGemini($payload);
+            $mensagem = self::removerLinks(trim(preg_replace('/^["\']|["\']$/u', '', $texto)));
 
-            return self::removerLinks(trim(preg_replace('/^["\']|["\']$/u', '', $texto)));
+            // Uma resposta sem texto (bloqueio de segurança, candidato vazio) não é uma mensagem: iria em branco ao WhatsApp.
+            if ($mensagem === '') {
+                throw new \RuntimeException('A IA devolveu uma mensagem vazia.');
+            }
+
+            return ['mensagem' => $mensagem, 'contingencia' => false];
         } catch (Throwable $e) {
             Log::warning('Falha ao gerar a mensagem do Copiloto IA; usando a mensagem de contingência.', [
                 'interessado_id' => $interessado->id,
@@ -368,7 +406,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                 $visitaFormatada = ($interessado->proximaVisita?->data_hora ?? $interessado->data_proximo_contato)?->format('d/m/Y \à\s H:i\h') ?? 'a definir';
                 $nomeEscola = self::nomeEscola();
 
-                return strtr($templateBase, [
+                return ['contingencia' => true, 'mensagem' => strtr($templateBase, [
                     '[Nome do Responsável]' => $nomeResponsavel,
                     '[Primeiro Nome]' => $primeiroNome,
                     '[Nome do Aluno]' => $filho,
@@ -376,12 +414,15 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                     '[Data da Visita]' => $visitaFormatada,
                     '[Nome da Escola]' => $nomeEscola,
                     '[Escola]' => $nomeEscola,
-                ]);
+                ])];
             }
 
             $nomeEscola = self::nomeEscola();
 
-            return "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da {$nomeEscola}. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?";
+            return [
+                'contingencia' => true,
+                'mensagem' => "Olá, {$primeiroNome}! Tudo bem? Sou da equipe da {$nomeEscola}. Estamos muito felizes pelo seu interesse para a vaga de {$filho}. Como estão os preparativos para o próximo ano letivo? Poderíamos agendar um momento para vocês conhecerem nossa escola?",
+            ];
         }
     }
 
@@ -523,7 +564,11 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             'dependentes.serie',
             'historicos.tipoContato',
             'historicos.usuario',
-            'visitas',
+            'visitas.pesquisa',
+            'propostasComerciais',
+            'listasEspera.turma',
+            'listasEspera.periodoLetivo',
+            'listasEspera.dependente',
         ]);
 
         $hoje = now();
@@ -575,11 +620,16 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             foreach ($interessado->visitas as $v) {
                 $dataVisita = $v->data_hora ? Carbon::parse($v->data_hora)->format('d/m/Y H:i') : 'Data não informada';
                 $statusVisita = ($v->status ?? StatusVisitaInteressado::Agendada)->getLabel();
-                $linhas[] = "- Visita em {$dataVisita} (Status: {$statusVisita}) — Obs: ".self::ocultarDadosPessoais($v->observacoes ?: 'Sem observações adicionais.');
+                $linhas[] = "- Visita em {$dataVisita} (Status: {$statusVisita}) — Obs: ".self::ocultarDadosPessoais($v->observacoes ?: 'Sem observações adicionais.').self::trechoPesquisaPosVisita($v);
             }
         }
 
-        array_push($linhas, ...$this->linhasPreAdmissao($interessado));
+        array_push(
+            $linhas,
+            ...$this->linhasPropostas($interessado, $hoje),
+            ...$this->linhasListaEspera($interessado),
+            ...$this->linhasPreAdmissao($interessado),
+        );
 
         $vagasTexto = app(TermometroVagasService::class)->gerarPromptEscassez($interessado);
         if ($vagasTexto) {
@@ -640,6 +690,127 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
             $dias > 0 => "em {$dias} dias",
             default => 'há '.abs($dias).' dias',
         };
+    }
+
+    /** Máximo de propostas e de entradas na lista de espera mais recentes enviadas à IA. */
+    private const LIMITE_REGISTROS_RELACIONADOS = 5;
+
+    /** Tamanho máximo do comentário da família na pesquisa pós-visita enviado à IA. */
+    private const LIMITE_COMENTARIO_PESQUISA = 500;
+
+    /**
+     * O que a família respondeu na pesquisa de satisfação depois da visita (NPS e notas de 1 a 5, comentário livre) ou
+     * que ainda não respondeu. É a opinião dela sobre a escola, nas palavras dela: um detrator ou um elogio mudam a
+     * abordagem. O comentário é texto de terceiros: tem dados pessoais ocultados e tamanho limitado.
+     */
+    private static function trechoPesquisaPosVisita(VisitaInteressado $visita): string
+    {
+        $pesquisa = $visita->pesquisa;
+
+        if ($pesquisa === null) {
+            return '';
+        }
+
+        if (! $pesquisa->isRespondida()) {
+            return ' — Pesquisa pós-visita: enviada, ainda sem resposta da família';
+        }
+
+        $notas = array_filter([
+            $pesquisa->nota_nps !== null ? "NPS {$pesquisa->nota_nps}/10 ({$pesquisa->classificacaoNps()})" : null,
+            $pesquisa->nota_atendimento !== null ? "atendimento {$pesquisa->nota_atendimento}/5" : null,
+            $pesquisa->nota_infraestrutura !== null ? "infraestrutura {$pesquisa->nota_infraestrutura}/5" : null,
+            $pesquisa->nota_proposta_pedagogica !== null ? "proposta pedagógica {$pesquisa->nota_proposta_pedagogica}/5" : null,
+        ]);
+
+        $trecho = ' — Pesquisa pós-visita respondida em '.$pesquisa->respondido_em->format('d/m/Y').': '.($notas === [] ? 'sem notas' : implode(', ', $notas));
+
+        if (filled($pesquisa->comentario)) {
+            $comentario = self::ocultarDadosPessoais(Str::limit(trim((string) $pesquisa->comentario), self::LIMITE_COMENTARIO_PESQUISA));
+            $trecho .= "; comentário da família: «{$comentario}»";
+        }
+
+        return $trecho;
+    }
+
+    /**
+     * Propostas comerciais do lead (as mais recentes): a situação de cada uma e, nas que ainda estão em aberto, a
+     * validade. Para o "fechamento" a IA precisa saber se já existe proposta e em que pé ela está. Valores e descontos
+     * NÃO vão: a mensagem não deve prometer números, e a IA não tem como confirmá-los.
+     *
+     * @return list<string>
+     */
+    private function linhasPropostas(Interessado $interessado, Carbon $hoje): array
+    {
+        $propostas = $interessado->propostasComerciais->sortByDesc('id')->take(self::LIMITE_REGISTROS_RELACIONADOS);
+
+        if ($propostas->isEmpty()) {
+            return [];
+        }
+
+        $emAberto = [
+            StatusPropostaComercial::Rascunho,
+            StatusPropostaComercial::AprovadaAutomatica,
+            StatusPropostaComercial::AguardandoAprovacao,
+            StatusPropostaComercial::Aprovada,
+        ];
+
+        $linhas = ["\n=== PROPOSTAS COMERCIAIS (valores e descontos não são informados; não invente nem prometa números) ==="];
+
+        foreach ($propostas as $proposta) {
+            $linha = "- Proposta {$proposta->codigo}: ".($proposta->status?->getLabel() ?? 'situação não informada');
+
+            if ($proposta->created_at !== null) {
+                $linha .= ', criada em '.$proposta->created_at->format('d/m/Y');
+            }
+
+            if ($proposta->validade !== null && in_array($proposta->status, $emAberto, true)) {
+                $prazo = self::prazoRelativo($proposta->validade, $hoje);
+                $linha .= $proposta->validade->copy()->startOfDay()->lt($hoje->copy()->startOfDay())
+                    ? ", VENCIDA em {$proposta->validade->format('d/m/Y')} ({$prazo})"
+                    : ", válida até {$proposta->validade->format('d/m/Y')} ({$prazo})";
+            }
+
+            $linhas[] = $linha;
+        }
+
+        return $linhas;
+    }
+
+    /**
+     * Entradas do lead na lista de espera de matrícula (as mais recentes): turma, aluno (só o primeiro nome) e situação.
+     * A IA já sabe a ocupação das séries; aqui ela fica sabendo que esta família está na fila.
+     *
+     * @return list<string>
+     */
+    private function linhasListaEspera(Interessado $interessado): array
+    {
+        $entradas = $interessado->listasEspera->sortByDesc('id')->take(self::LIMITE_REGISTROS_RELACIONADOS);
+
+        if ($entradas->isEmpty()) {
+            return [];
+        }
+
+        $linhas = ["\n=== LISTA DE ESPERA DE MATRÍCULA ==="];
+
+        foreach ($entradas as $entrada) {
+            $turma = $entrada->turma?->nome ?? 'turma não informada';
+            $periodo = $entrada->periodoLetivo?->nome;
+            $aluno = self::primeiroNome($entrada->dependente?->nome_crianca);
+
+            $linha = "- {$turma}".($periodo ? " ({$periodo})" : '').($aluno ? " para {$aluno}" : '').': '.($entrada->status?->getLabel() ?? 'situação não informada');
+
+            if ($entrada->created_at !== null) {
+                $linha .= ', na lista desde '.$entrada->created_at->format('d/m/Y');
+            }
+
+            if ($entrada->notificado_em !== null) {
+                $linha .= ', avisada da vaga em '.$entrada->notificado_em->format('d/m/Y');
+            }
+
+            $linhas[] = $linha;
+        }
+
+        return $linhas;
     }
 
     /** Resultado e duração do contato, entre parênteses, para o trecho depois do atendente (vazio se não houver). */

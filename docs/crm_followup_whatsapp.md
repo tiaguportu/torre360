@@ -119,6 +119,15 @@ Os modelos oficiais e o Copiloto IA atuam de forma **complementar**:
 3. **Sinergia Híbrida (Modelo + IA):** No modal do *Copiloto WhatsApp IA*, o consultor pode escolher um **Modelo Institucional de Referência (Opcional)** para que a IA adapte e enriqueça o comunicado oficial com o perfil e momento da família. Da mesma forma, na ação rápida "WhatsApp" da tabela, há a opção **Personalizar com Copiloto IA (Gemini) ✨** para humanizar o modelo escolhido antes de abrir o mensageiro.
 4. **Contingência Inteligente (Fallback):** Se a API do Gemini estiver instável ou a cota esgotar, o fallback do serviço automaticamente pré-preenche as variáveis dinâmicas do modelo base, garantindo que o atendimento nunca seja interrompido.
 
+### Fluxo do Copiloto WhatsApp IA: gerar, revisar e abrir
+O modal tem duas etapas na mesma janela. O consultor escolhe modelo, objetivo e tom, clica em **✨ Gerar mensagem com
+a IA** e o texto aparece num campo **editável**. Pode gerar de novo quantas vezes quiser (cada geração conta no limite
+de consultas de IA por minuto), ajustar o texto ou escrevê-lo à mão. O botão **Abrir no WhatsApp 🚀** abre a conversa
+com exatamente o que está no campo; só nesse momento a tentativa é registrada no histórico (se o interruptor estiver
+ligado), com o texto final e a informação de que foi gerado pela IA, ajustado pelo consultor, texto padrão de
+contingência ou escrito à mão. Quando a IA não responde, o campo traz o texto padrão com um aviso em destaque e uma
+notificação; o mesmo aviso aparece no envio rápido da tabela com "Personalizar com Copiloto IA".
+
 ### O que o Copiloto enxerga do lead
 O Copiloto (e o Dossiê IA) recebem o cadastro do lead, **todo** o histórico de contatos e de visitas, os dependentes e a
 disponibilidade de vagas, sem limite de quantidade. Além disso, a cada geração vão:
@@ -127,7 +136,11 @@ disponibilidade de vagas, sem limite de quantidade. Além disso, a cada geraçã
 - o **resultado** (Agendou Visita, Retornar depois, Sem Interesse…) e a **duração** de cada contato, quando
   registrados;
 - a **pré-admissão**, se a família já foi convidada ou enviou algo: dados cadastrais confirmados ou não e os
-  documentos obrigatórios do contrato que faltam. Útil sobretudo no objetivo *Fechamento de Matrícula*.
+  documentos obrigatórios do contrato que faltam. Útil sobretudo no objetivo *Fechamento de Matrícula*;
+- a **pesquisa de satisfação pós-visita**: NPS, notas e o comentário da família, junto de cada visita (ou o aviso de
+  que a pesquisa ainda não foi respondida);
+- as **propostas comerciais** (situação e validade, **sem valores nem descontos**) e a **lista de espera de matrícula**
+  da família.
 
 A IA só sabe o que foi registrado: a resposta da família no WhatsApp entra apenas se alguém a salvou no histórico
 (por exemplo, colando a conversa no *Resumo de Conversa IA* com "salvar no histórico"). A lista completa e o que ainda
