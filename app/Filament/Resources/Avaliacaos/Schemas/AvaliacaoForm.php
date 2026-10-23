@@ -6,6 +6,7 @@ use App\Models\EtapaAvaliativa;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\Turma;
+use App\Services\CalendarioAvaliacaoService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -16,6 +17,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 class AvaliacaoForm
 {
@@ -156,6 +158,23 @@ class AvaliacaoForm
                                         if ($state && ! $get('data_limite_lancamento')) {
                                             $set('data_limite_lancamento', Carbon::parse($state)->addDays(15)->format('Y-m-d'));
                                         }
+                                    })
+                                    ->helperText(function (callable $get, $record, $state) {
+                                        $turmaId = $get('turma_id');
+                                        if (! $turmaId || ! $state) {
+                                            return null;
+                                        }
+
+                                        $conflitos = app(CalendarioAvaliacaoService::class)
+                                            ->verificarConflitos((int) $turmaId, (string) $state, $record?->id);
+
+                                        if ($conflitos['tem_conflito']) {
+                                            return new HtmlString(
+                                                '<span class="text-amber-600 font-medium">⚠️ '.e($conflitos['aviso_formatado']).'</span>'
+                                            );
+                                        }
+
+                                        return 'Data pedagógica disponível sem conflitos na turma.';
                                     }),
                                 DatePicker::make('data_limite_lancamento')
                                     ->default(fn (callable $get) => $get('data_prevista') ? Carbon::parse($get('data_prevista'))->addDays(15) : now()->addDays(15))

@@ -4170,7 +4170,51 @@ A legislação proíbe o encaminhamento automático sem que a escola comprove qu
 
 ---
 
+## 💵 85. Apuração de Hora-Aula Docente e DSR (Onda 50)
+
+Centraliza o fechamento mensal da remuneração variável de professores com base nas aulas efetivamente ministradas no período letivo:
+- **Cálculo Automático por Cronograma:** Totaliza as aulas executadas na grade curricular, faltas docentes e integra as aulas de reposição realizadas (Onda 49).
+- **Horas-Atividade e DSR (CLT Art. 320):** Permite registrar horas extras de planejamento/reuniões e calcula automaticamente o Descanso Semanal Remunerado de 1/6 (16,67%) sobre a soma de aulas ministradas e horas-atividade.
+- **Processamento em Lote:** Na listagem de apurações (`/admin/apuracao-hora-aulas`), o botão **Processar Mês** gera simultaneamente o cálculo de todos os professores com aulas registradas no mês e ano selecionados.
+- **Homologação e Exportação:** Os registros iniciam em `Rascunho` e podem ser homologados pela diretoria/financeiro com carimbo de data e usuário auditor. A ação **Exportar CSV Contabilidade** gera o arquivo no formato padrão para importação em sistemas de folha de pagamento.
+
+---
+
+## 📅 86. Calendário de Avaliações e Limite Pedagógico de Provas (Onda 52)
+
+Evita a sobrecarga de estudos dos alunos e orienta o planejamento pedagógico dos professores através do `CalendarioAvaliacaoService`:
+- **Limite Diário de Avaliações:** A recomendação pedagógica é de até **2 avaliações formais por dia** para uma mesma turma. Caso o professor tente agendar uma 3ª avaliação na mesma data, o formulário de cadastro de avaliações emite um alerta em tempo real identificando as provas já agendadas e suas respectivas disciplinas.
+- **Limite Semanal:** Sinaliza turmas com acúmulo excessivo (mais de 4 avaliações na mesma semana letiva).
+- **Alerta de Dias Não Letivos e Feriados:** O sistema cruza a data prevista da prova com os registros de `DiaNaoLetivo` do período letivo e com o calendário nacional de feriados, alertando imediatamente caso o dia escolhido seja de recesso ou folga escolar.
+- **Flexibilidade Pedagógica:** O recurso atua de forma preventiva através de alertas visuais no formulário sem impedir agendamentos especiais, garantindo a viabilidade de provas de 2ª chamada e reposições pedagógicas autorizadas.
+
+---
+
+## 🏛️ 87. Gestão de Documentos da Escola com Validade (Onda 60)
+
+Garante o controle e a conformidade regulatória contínua das unidades escolares perante os órgãos de fiscalização:
+- **Catálogo de Licenças e Alvarás:** Gestão de Alvará de Funcionamento, AVCB/CLCB (Corpo de Bombeiros), Licença Sanitária, Credenciamento/Autorização no CEE/MEC, Laudo SPDA (pára-raios), Dedetização e Higienização de Reservatórios.
+- **Monitoramento Proativo de Prazos:** Permite definir a antecedência em dias corridos (padrão: 30 dias) para disparo de status de alerta prévio de renovação.
+- **Semáforo Regulatório:**
+  - 🟢 **Vigente:** Documento com prazo regular.
+  - 🟡 **Próximo ao Vencimento:** Faltam menos dias do que a antecedência configurada, indicando a necessidade de iniciar o processo de revalidação.
+  - 🔴 **Vencido:** Prazo de validade expirado.
+  - 🔵 **Em Renovação:** Processo administrativo em trâmite no órgão emissor.
+- **Sincronização Dinâmica:** O botão **Atualizar Situações** no cabeçalho recalcula em lote todas as situações com base nas datas de validade vigentes.
+
+---
+
+## 🔐 88. Segurança: Restrição de Sessão Mobile e Proteção Administrativa (M1)
+
+Em conformidade com as diretrizes de endurecimento de segurança do Torre360:
+- **Redução do Prazo de Sessão Mobile:** A duração máxima das sessões associadas ao aplicativo para celular foi reduzida de 1 ano incondicional para **30 dias corridos** (43.200 minutos), exigindo renovação periódica das credenciais.
+- **Bloqueio de Papéis Administrativos:** O benefício da sessão estendida é restrito estritamente a contas do **Portal do Aluno e Responsáveis Familiares**. Usuários autenticados com papéis de equipe (`super_admin`, `admin`, `diretoria`, `secretaria`, `coordenador`) têm a sessão persistente sumariamente desativada (*fail-closed*).
+- **Proteção de Rotas Administrativas:** Quaisquer acessos às rotas do painel administrativo (`/admin*`) mantêm o tempo de sessão padrão e seguro da aplicação, prevenindo riscos de sequestro de sessão em casos de furto ou extravio de dispositivos móveis.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 

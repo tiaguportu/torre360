@@ -3,8 +3,8 @@
 Continuação do [índice das ondas 27 a 48](ondas_27_a_48_indice.md). Cada onda tem um documento próprio com
 contexto, o que já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.
 
-- **Implementadas (4):** 49, 57, 58 e 59.
-- **Propostas (8):** 50, 51, 52, 53, 54, 55, 56 e 60.
+- **Implementadas (7):** 49, 50, 52, 57, 58, 59 e 60.
+- **Propostas (5):** 51, 53, 54, 55 e 56.
 
 Seguem as [ondas 61 a 67](ondas_61_a_67_indice.md): quatro implementadas (cancelamento de matrícula, encargos
 por atraso, grade horária assistida e admissão e desligamento) e duas propostas.
@@ -14,9 +14,9 @@ por atraso, grade horária assistida e admissão e desligamento) e duas proposta
 | Onda | Tema | Área | Status | Documento |
 |---|---|---|---|---|
 | 49 | Carga Letiva Mínima e Reposição de Aulas | Pedagógico | **Implementada** | [carga_letiva_minima_roadmap.md](carga_letiva_minima_roadmap.md) |
-| 50 | Apuração de Hora-Aula Docente | RH / Financeiro | Proposta | [hora_aula_docente_roadmap.md](hora_aula_docente_roadmap.md) |
+| 50 | Apuração de Hora-Aula Docente | RH / Financeiro | **Implementada** | [hora_aula_docente_roadmap.md](hora_aula_docente_roadmap.md) |
 | 51 | Tarefas e Lições de Casa | Pedagógico | Proposta (evolui o campo `dever_casa` já existente) | [tarefas_licoes_casa_roadmap.md](tarefas_licoes_casa_roadmap.md) |
-| 52 | Calendário de Avaliações e Limite de Provas por Dia | Pedagógico | Proposta | [calendario_avaliacoes_roadmap.md](calendario_avaliacoes_roadmap.md) |
+| 52 | Calendário de Avaliações e Limite de Provas por Dia | Pedagógico | **Implementada** | [calendario_avaliacoes_roadmap.md](calendario_avaliacoes_roadmap.md) |
 | 53 | Risco de Inadimplência | Financeiro | Proposta | [risco_inadimplencia_roadmap.md](risco_inadimplencia_roadmap.md) |
 | 54 | Saúde do Sistema | Operação / Segurança | Proposta | [saude_do_sistema_roadmap.md](saude_do_sistema_roadmap.md) |
 | 55 | Medicação com Registro de Doses | Saúde | Proposta | [medicacao_registro_doses_roadmap.md](medicacao_registro_doses_roadmap.md) |
@@ -24,7 +24,7 @@ por atraso, grade horária assistida e admissão e desligamento) e duas proposta
 | 57 | Faltas Excessivas e Comunicação ao Conselho Tutelar | Conformidade | **Implementada** | [faltas_conselho_tutelar_roadmap.md](faltas_conselho_tutelar_roadmap.md) |
 | 58 | Censo Escolar: Situação do Aluno (2ª etapa) | Secretaria | **Implementada** | [censo_escolar_situacao_aluno_roadmap.md](censo_escolar_situacao_aluno_roadmap.md) |
 | 59 | Lista de Material Escolar | Secretaria | **Implementada** | [lista_material_escolar_roadmap.md](lista_material_escolar_roadmap.md) |
-| 60 | Documentos da Escola com Validade | Operação | Proposta | [documentos_escola_validade_roadmap.md](documentos_escola_validade_roadmap.md) |
+| 60 | Documentos da Escola com Validade | Operação | **Implementada** | [documentos_escola_validade_roadmap.md](documentos_escola_validade_roadmap.md) |
 
 ## Ordem sugerida das propostas
 

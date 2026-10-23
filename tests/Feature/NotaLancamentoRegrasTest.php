@@ -199,4 +199,49 @@ class NotaLancamentoRegrasTest extends TestCase
 
         $this->service->salvarNotas($this->avaliacao, $notasPayload);
     }
+
+    public function test_estado_notas_para_grade_retorna_alunos_sem_erro_quando_nenhuma_nota_existe(): void
+    {
+        // Garante que nenhuma nota existe previamente
+        Nota::where('avaliacao_id', $this->avaliacao->id)->delete();
+
+        $grade = $this->service->estadoNotasParaGrade($this->avaliacao);
+
+        $this->assertCount(2, $grade);
+        $this->assertNull($grade[0]['valor']);
+        $this->assertNull($grade[0]['situacao']);
+        $this->assertNull($grade[1]['valor']);
+        $this->assertNull($grade[1]['situacao']);
+    }
+
+    public function test_salvar_nota_com_situacao_nao_se_aplica_anula_valor_e_persiste_situacao(): void
+    {
+        $notasPayload = [
+            [
+                'matricula_id' => $this->matriculaA->id,
+                'aluno_nome' => 'Ana Silva',
+                'valor' => '9.0',
+                'situacao' => 'nao_se_aplica',
+            ],
+        ];
+
+        $this->service->salvarNotas($this->avaliacao, $notasPayload);
+
+        $nota = Nota::where('avaliacao_id', $this->avaliacao->id)
+            ->where('matricula_id', $this->matriculaA->id)
+            ->first();
+
+        $this->assertNotNull($nota);
+        $this->assertNull($nota->valor, 'O valor numérico deve ser nulo quando justificado como não se aplica.');
+        $this->assertEquals(SituacaoNota::NAO_SE_APLICA, $nota->situacao);
+    }
+
+    public function test_enum_situacao_nota_retorna_rotulo_e_cor(): void
+    {
+        $this->assertSame('Faltou', SituacaoNota::FALTOU->getLabel());
+        $this->assertSame('warning', SituacaoNota::FALTOU->getColor());
+
+        $this->assertSame('Não se aplica', SituacaoNota::NAO_SE_APLICA->getLabel());
+        $this->assertSame('gray', SituacaoNota::NAO_SE_APLICA->getColor());
+    }
 }

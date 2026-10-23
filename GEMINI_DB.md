@@ -1901,4 +1901,53 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
   - `nome_conselho_tutelar`, `municipio_conselho`: Destinatários da comunicação.
 - **Relacionamentos:** BelongsTo `matricula`, BelongsTo `turma`, BelongsTo `criadoPor` (`User`).
 
+---
+
+## 38. Gestão de RH e Apuração de Hora-Aula Docente (Onda 50)
+
+### `apuracao_hora_aulas`
+- **Representa:** Fechamento e apuração mensal de horas-aulas ministradas, reposições, horas-atividade e DSR (Descanso Semanal Remunerado - CLT art. 320) para fins contábeis e de folha de pagamento docente.
+- **Campos Principais:**
+  - `pessoa_id`: FK `pessoa` (Docente).
+  - `ano`: Ano de competência (integer).
+  - `mes`: Mês de competência (integer, 1 a 12).
+  - `total_aulas_previstas`: Quantidade planejada na grade escolar.
+  - `total_aulas_ministradas`: Aulas executadas com base no cronograma escolar.
+  - `total_aulas_reposicao`: Aulas de reposição realizadas no mês (integração Onda 49).
+  - `total_aulas_faltadas`: Aulas não ministradas (ausências).
+  - `horas_atividade`: Carga horária complementar dedicada a planejamento/reuniões.
+  - `valor_hora_aula`: Valor unitário nominal da hora-aula (decimal:2).
+  - `valor_base_aulas`: Subtotal das aulas ministradas e reposições.
+  - `valor_horas_atividade`: Subtotal das horas-atividade.
+  - `valor_dsr`: Adicional de 1/6 (16,67%) sobre a base de aulas e atividade (CLT art. 320).
+  - `valor_total_bruto`: Remuneração bruta consolidada para a folha.
+  - `status`: `rascunho`, `homologado`, `pago`.
+  - `observacoes`: Anotações complementares da coordenação pedagógica/RH.
+  - `criado_por_user_id`: FK `users` (colaborador que gerou a apuração).
+  - `homologado_por_user_id`: FK `users` (gestor financeiro/diretor responsável).
+  - `homologado_em`: Data e hora da homologação definitiva.
+- **Relacionamentos:** BelongsTo `professor` (`Pessoa`), BelongsTo `criadoPor` (`User`), BelongsTo `homologadoPor` (`User`).
+
+---
+
+## 39. Conformidade Regulatória e Documentos com Validade da Escola (Onda 60)
+
+### `documentos_regulatorios`
+- **Representa:** Licenças, alvarás, certificados e laudos periódicos obrigatórios para a regularidade e funcionamento das unidades escolares perante os órgãos públicos fiscalizadores.
+- **Campos Principais:**
+  - `unidade_id`: FK `unidade` (nullable, permite vincular à unidade escolar física ou à mantenedora institucional).
+  - `tipo_documento`: Classificação técnica (`alvara_funcionamento`, `avcb_clcb`, `licenca_sanitaria`, `credenciamento_mec_cee`, `laudo_spda`, `higienizacao_reservatorio`, `dedetizacao`, `outro`).
+  - `nome`: Título descritivo do documento ou autorização.
+  - `numero_registro`: Identificador formal, protocolo ou número de processo administrativo.
+  - `orgao_emissor`: Entidade expedidora (Corpo de Bombeiros, Prefeitura, Vigilância Sanitária, CEE/MEC).
+  - `data_emissao`: Data em que a licença foi concedida.
+  - `data_validade`: Data limite de vigência legal do documento (nullable se indeterminado).
+  - `dias_antecedencia_alerta`: Prazo em dias corridos para disparar status de alerta prévio de vencimento (padrão: 30 dias).
+  - `responsavel_renovacao`: Setor ou pessoa incumbida de providenciar o protocolo de renovação.
+  - `arquivo_path`: Caminho no disco privado do arquivo digitalizado (PDF/imagem).
+  - `status`: Situação do documento (`vigente`, `alerta_vencimento`, `vencido`, `em_renovacao`, `revogado`, `indeterminado`).
+  - `observacoes`: Requisitos, despachos ou pendências técnicas da renovação.
+- **Relacionamentos:** BelongsTo `unidade`.
+
+
 

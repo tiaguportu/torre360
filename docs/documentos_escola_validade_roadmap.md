@@ -1,6 +1,6 @@
-# Documentos da Escola com Validade (Onda 60) — Proposta para o Futuro
+# Documentos da Escola com Validade (Onda 60)
 
-> **Status: proposta.** Não há código, migration ou teste desta onda.
+> **Status: Implementada em 2026-10-23.** Migration e model `DocumentoRegulatorio` (tipos regulatórios, unidade, prazos de validade, antecedência de alerta, responsável e arquivo privado), service `DocumentoRegulatorioService` (cálculo de status e sincronização), Filament Resource com action `ajuda`, visualização em cards mobile com `->stackedOnMobile()` e políticas Shield. Testado em `DocumentoRegulatorioTest`.
 
 ## Contexto
 

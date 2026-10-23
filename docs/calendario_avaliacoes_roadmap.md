@@ -1,6 +1,6 @@
-# Calendário de Avaliações e Limite de Provas por Dia (Onda 52) — Proposta para o Futuro
+# Calendário de Avaliações e Limite de Provas por Dia (Onda 52)
 
-> **Status: proposta.** Não há código, migration ou teste desta onda.
+> **Status: Implementada em 2026-10-23.** Service `CalendarioAvaliacaoService` para detecção de conflitos, limite diário de até 2 provas por turma, limite semanal de 4 provas e bloqueio/alerta de dias não letivos e feriados nacionais (`DiaNaoLetivo`). Integração reativa no `AvaliacaoForm` com helperText de aviso pedagógico. Testado em `CalendarioAvaliacaoTest`.
 
 ## Contexto
 

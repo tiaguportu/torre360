@@ -1,6 +1,6 @@
-# Apuração de Hora-Aula Docente (Onda 50) — Proposta para o Futuro
+# Apuração de Hora-Aula Docente (Onda 50)
 
-> **Status: proposta.** Não há código, migration ou teste desta onda.
+> **Status: Implementada em 2026-10-23.** Model `ApuracaoHoraAula`, service `ApuracaoHoraAulaService` (cálculo de aulas dadas, reposições da Onda 49, horas-atividade e DSR CLT art. 320), resource Filament com action de cabeçalho `ajuda` e `->stackedOnMobile()`, homologação e exportação CSV. Testado em `ApuracaoHoraAulaTest`.
 
 ## Contexto
 
