@@ -3905,4 +3905,15 @@ Em cada linha: **Marcar como feito** (com observação e comprovante em PDF ou f
 
 ---
 
+## 📧 78. Manutenção Preventiva e Retenção de Histórico de E-mails (`email:limpar-logs`)
+
+O sistema mantém um registro auditável de todas as mensagens eletrônicas disparadas (comunicados em massa, envios de boletos/faturas, avisos de cobrança, follow-up de interessados e notificações do sistema) no módulo **Sistema e Segurança → E-mails Enviados**.
+
+### 78.1 Política de Retenção e Descarte
+- **Prazo de Retenção Padrão:** Os registros de logs de e-mail são preservados na íntegra por **365 dias (1 ano)** para fins de auditoria, histórico de relacionamento com as famílias e comprovação do ano letivo.
+- **Expurgo Automático:** Diariamente, às **04:45 da madrugada**, uma rotina agendada no servidor executa a limpeza dos logs com mais de 1 ano (`email:limpar-logs --dias=365`), processando a exclusão em lotes graduais de 500 registros para evitar bloqueios ou sobrecarga no banco de dados.
+- **Simulação Prévia (Dry-Run):** A equipe de TI/Administração pode rodar `php artisan email:limpar-logs --dry-run` para verificar quantos registros seriam expurgados sem removê-los efetivamente, ou especificar períodos personalizados através da opção `--dias=N`.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
