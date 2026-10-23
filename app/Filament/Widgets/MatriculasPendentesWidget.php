@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class MatriculasPendentesWidget extends BaseWidget
 {
@@ -16,46 +17,62 @@ class MatriculasPendentesWidget extends BaseWidget
 
     protected static ?int $sort = 2;
 
-    protected ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '120s';
 
     protected function getStats(): array
     {
-        // 1. Contagem de Matrículas sem responsáveis (pendência de responsáveis)
-        $semResponsavelCount = Matricula::query()
-            ->where('situacao', SituacaoMatricula::ATIVA)
-            ->whereHas('pessoa', function ($query) {
-                $query->whereDoesntHave('responsaveis');
-            })
-            ->count();
+        $stats = Cache::remember('widget_matriculas_pendentes_counts', 180, function () {
+            // 1. Contagem de Matrículas sem responsáveis (pendência de responsáveis)
+            $semResponsavelCount = Matricula::query()
+                ->where('situacao', SituacaoMatricula::ATIVA)
+                ->whereHas('pessoa', function ($query) {
+                    $query->whereDoesntHave('responsaveis');
+                })
+                ->count();
 
-        // 2. Contagem de Matrículas com documentos obrigatórios para o contrato pendentes
-        $documentosPendentesCount = 0;
+            // 2. Contagem de Matrículas com documentos obrigatórios para o contrato pendentes
+            $documentosPendentesCount = 0;
 
-        Matricula::query()
-            ->where('situacao', SituacaoMatricula::ATIVA)
-            ->with([
-                'turma.serie.curso.documentos',
-                'turma.tiposDocumentos',
-                'tiposDocumentos',
-                'documentoInseridos',
-            ])
-            ->chunk(150, function ($chunk) use (&$documentosPendentesCount) {
-                foreach ($chunk as $matricula) {
-                    if ($matricula->hasMissingContractDocuments()) {
-                        $documentosPendentesCount++;
+            Matricula::query()
+                ->where('situacao', SituacaoMatricula::ATIVA)
+                ->with([
+                    'turma.serie.curso.documentos',
+                    'turma.tiposDocumentos',
+                    'tiposDocumentos',
+                    'documentoInseridos',
+                ])
+                ->chunk(150, function ($chunk) use (&$documentosPendentesCount) {
+                    foreach ($chunk as $matricula) {
+                        if ($matricula->hasMissingContractDocuments()) {
+                            $documentosPendentesCount++;
+                        }
                     }
-                }
-            });
+                });
 
-        // 3. Contagem de Matrículas com dados cadastrais ausentes (aluno, responsáveis ou financeiro)
-        $cadastroPendenteCount = Matricula::query()
-            ->where('situacao', SituacaoMatricula::ATIVA)
-            ->comCadastroIncompleto()
-            ->count();
+            // 3. Contagem de Matrículas com dados cadastrais ausentes (aluno, responsáveis ou financeiro)
+            $cadastroPendenteCount = Matricula::query()
+                ->where('situacao', SituacaoMatricula::ATIVA)
+                ->comCadastroIncompleto()
+                ->count();
 
-        // 4. Matrículas ativas ou pendentes sem contrato gerado e com contrato ainda não assinado
-        $contratoNaoGeradoCount = Matricula::query()->comContratoNaoGerado()->count();
-        $contratoNaoAssinadoCount = Matricula::query()->comContratoNaoAssinado()->count();
+            // 4. Matrículas ativas ou pendentes sem contrato gerado e com contrato ainda não assinado
+            $contratoNaoGeradoCount = Matricula::query()->comContratoNaoGerado()->count();
+            $contratoNaoAssinadoCount = Matricula::query()->comContratoNaoAssinado()->count();
+
+            return [
+                'semResponsavelCount' => $semResponsavelCount,
+                'documentosPendentesCount' => $documentosPendentesCount,
+                'cadastroPendenteCount' => $cadastroPendenteCount,
+                'contratoNaoGeradoCount' => $contratoNaoGeradoCount,
+                'contratoNaoAssinadoCount' => $contratoNaoAssinadoCount,
+            ];
+        });
+
+        $semResponsavelCount = $stats['semResponsavelCount'];
+        $documentosPendentesCount = $stats['documentosPendentesCount'];
+        $cadastroPendenteCount = $stats['cadastroPendenteCount'];
+        $contratoNaoGeradoCount = $stats['contratoNaoGeradoCount'];
+        $contratoNaoAssinadoCount = $stats['contratoNaoAssinadoCount'];
 
         return [
             Stat::make('Pendência de Responsáveis', $semResponsavelCount)

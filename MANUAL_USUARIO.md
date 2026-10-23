@@ -9,7 +9,12 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
 1. Abra o navegador e acesse o endereço do sistema (ex: `http://localhost:8000/admin`).
 2. Insira seu **E-mail** e **Senha** fornecidos pelo administrador.
 3. Clique em **Entrar**. Você será direcionado ao Painel Principal (Dashboard).
-4. No **Dashboard**, você poderá visualizar widgets de atalho, como o de **Agendamento de Preceptoria**, **Questionários Pendentes**, **Pendências de Lançamento de Frequência** (com agrupamento por dia e lançamento em lote de chamada) e o de **Matrículas com Pendências** (que exibe a contagem em tempo real de matrículas com pendência de responsáveis, documentos obrigatórios faltantes, pendência de cadastro/endereço no Aluno, Responsáveis e Responsável Financeiro, além de **contrato não gerado** e **contrato não assinado** nas matrículas ativas ou pendentes); cada cartão abre a lista de Matrículas já filtrada pelo tipo de pendência.
+4. No **Dashboard**, você poderá visualizar widgets de alta performance com cache inteligente e atualização periódica:
+   - **Indicadores Gerais (Stats Overview):** Visão consolidada em tempo real de pessoas cadastradas, matrículas ativas e turmas em andamento.
+   - **Matrículas com Pendências:** Exibe a contagem categorizada de matrículas com pendência de responsáveis, documentos obrigatórios faltantes, cadastro incompleto, **contrato não gerado** e **contrato não assinado** nas matrículas ativas ou pendentes; cada cartão abre a lista de Matrículas já filtrada pelo tipo de pendência.
+   - **Pendências de Frequência:** Apresenta os últimos 3 dias com chamadas pendentes em janela recente otimizada, permitindo o lançamento em lote da chamada do dia com um clique.
+   - **Preceptoria e Questionários:** Atalhos rápidos para agendamentos e respostas pedagógicas.
+5. Em qualquer página do sistema, utilize a ação de cabeçalho **Ajuda** (ícone de interrogação no canto superior direito) para consultar orientações passo a passo, regras de negócio e ações permitidas para o seu perfil de acesso.
 
 ### 🔑 Recuperação e Alteração de Senha
 Caso tenha esquecido sua senha:

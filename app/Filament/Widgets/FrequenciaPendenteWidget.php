@@ -47,6 +47,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 
         $query = CronogramaAula::query()
             ->with(['turma.matriculas.pessoa', 'disciplina', 'professor'])
+            ->whereDate('data', '>=', now()->subDays(60)->toDateString())
             ->whereDate('data', '<=', now()->toDateString())
             ->whereRaw('
                 (SELECT COUNT(*) FROM matricula WHERE matricula.turma_id = cronograma_aula.turma_id AND (matricula.data_ativacao IS NULL OR matricula.data_ativacao <= cronograma_aula.data) AND (matricula.data_desativacao IS NULL OR matricula.data_desativacao > cronograma_aula.data)) > 
@@ -79,6 +80,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 
         $cronogramas = $query->orderBy('data', 'desc')
             ->orderBy('hora_inicio', 'asc')
+            ->limit(50)
             ->get();
 
         return $cronogramas->groupBy(function (CronogramaAula $item) {
