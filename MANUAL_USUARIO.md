@@ -752,18 +752,28 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 ### 5.1 Filtros e Gestão de Avaliações
 1. Vá em **Avaliações → Avaliações**.
 2. **Filtros Avançados:** Utilize a barra de filtros para localizar registros com precisão:
+   - **Filtro por Período Letivo:** Permite filtrar instantaneamente as avaliações de um ano letivo específico (ex: 2026, 2027), isolando históricos e facilitando a conferência das turmas ativas.
    - **Múltipla Seleção:** Os filtros de Categoria, Turma, Disciplina, Etapa e Professor permitem selecionar **várias opções simultaneamente**.
-   - **Filtro de Período:** Use o filtro de **Data Prevista** para definir um intervalo (Data Inicial e Final) e visualizar apenas as avaliações agendadas para aquele período.
+   - **Filtro de Período de Data:** Use o filtro de **Data Prevista** para definir um intervalo (Data Inicial e Final) e visualizar apenas as avaliações agendadas para aquele período.
    - **Pendência de Lançamento:** Localize rapidamente provas ou trabalhos onde ainda faltam alunos sem nota lançada.
-3. **Visibilidade Restrita:** Para garantir a organização e o foco pedagógico, usuários com o papel de **Professor** visualizam apenas as avaliações que estão vinculadas diretamente a eles. Administradores e secretaria continuam com acesso total.
-4. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
-5. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
-6. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
-7. **Restrição de Duplicidade (Prevenção de Erros):** O sistema impede a criação de avaliações duplicadas. Não é permitido salvar mais de uma avaliação com a mesma combinação de **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**. Caso tente cadastrar uma combinação idêntica, um aviso de validação será exibido e o registro não será salvo.
-8. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
-9. **Botão de Ajuda nas Telas de Cadastro, Edição e Lançamento de Notas:** Ao criar, editar uma avaliação ou lançar notas, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas ou ações que seu usuário tem permissão para realizar.
-10. **Auditoria e Segurança:** Toda criação, alteração ou exclusão de avaliação é automaticamente auditada e registrada no log de atividades, permitindo identificar qual usuário realizou cada mudança.
-11. **Seleção Clara de Turmas e Período Avaliativo:** Nos formulários de cadastro e edição de Avaliação (`admin/avaliacaos/create` e `edit`), a seleção de turmas exibe claramente o Período Letivo/Avaliativo correspondente (ex: `Berçário II (2026)` e `Berçário II (2027)`) e o turno (quando aplicável). Turmas encerradas (com status *Concluída* ou *Cancelada*) deixam de ser exibidas no select tanto na criação quanto na edição. Ao selecionar uma turma, a lista de etapas avaliativas é filtrada para o período correspondente da turma, e qualquer troca de turma redefine a disciplina e a etapa para garantir consistência.
+3. **Status Operacional da Avaliação:** Na listagem principal, cada avaliação possui um indicador colorido (badge) com o estado atual:
+   - 🔵 **Agendada:** Avaliação com data prevista no futuro.
+   - 🟡 **Em Lançamento:** Data da prova já ocorreu, lançamento em andamento dentro do prazo limite.
+   - 🔴 **Atrasada:** Prazo limite de lançamento ultrapassado e ainda com pendência de notas de alunos ativos.
+   - 🟢 **Concluída:** 100% das notas e justificativas dos alunos da turma foram lançadas.
+4. **Visibilidade Restrita:** Para garantir a organização e o foco pedagógico, usuários com o papel de **Professor** visualizam apenas as avaliações que estão vinculadas diretamente a eles. Administradores e secretaria continuam com acesso total.
+5. **Edição em Lote:** Selecione uma ou mais avaliações na tabela e utilize a ação **Editar em Lote** para atualizar de uma só vez a Categoria, a Etapa, a Data Prevista ou a Nota Máxima de todos os registros selecionados.
+6. Localize a prova/trabalho e utilize a ação de **Lançar Notas**.
+7. **Padronização de Nomes:** Para facilitar a busca e identificação, as avaliações no sistema seguem o padrão de nome: `Categoria Avaliação - Turma - Disciplina - Etapa Avaliativa`.
+8. **Restrição de Duplicidade (Prevenção de Erros):** O sistema impede a criação de avaliações duplicadas. Não é permitido salvar mais de uma avaliação com a mesma combinação de **Turma, Disciplina, Etapa Avaliativa, Categoria e Professor**. Caso tente cadastrar uma combinação idêntica, um aviso de validação será exibido e o registro não será salvo.
+9. O sistema exibirá a lista de alunos matriculados na turma vinculada para preenchimento rápido.
+10. **Botão de Ajuda nas Telas de Cadastro, Edição e Lançamento de Notas:** Ao criar, editar uma avaliação ou lançar notas, você terá à disposição um botão de **Ajuda** (ícone de interrogação cinza) no canto superior direito do cabeçalho da página. Clicando nele, você poderá consultar as instruções específicas ou ações que seu usuário tem permissão para realizar.
+11. **Auditoria e Segurança:** Toda criação, alteração ou exclusão de avaliação é automaticamente auditada e registrada no log de atividades, permitindo identificar qual usuário realizou cada mudança.
+12. **Fluxo Otimizado de Cadastro (Período Letivo → Turma → Disciplina → Etapa):** Nos formulários de cadastro e edição de Avaliação (`admin/avaliacaos/create` e `edit`):
+    - **Seleção Prévia do Período Letivo:** O primeiro campo é o **Período Letivo**, que já nasce automaticamente preenchido com o ano letivo corrente (ex: 2026). Alterar o período filtra instantaneamente apenas as turmas e etapas avaliativas daquele ano.
+    - **Select de Turmas Inteligente:** O select de turmas exibe apenas as turmas do período escolhido e omite automaticamente turmas encerradas (*Concluída* ou *Cancelada*). O nome da turma é acompanhado do turno e do ano (ex: `Berçário II - Manhã (2026)`), eliminando qualquer ambiguidade entre anos letivos.
+    - **Sugestão Automática do Professor:** Ao selecionar a Turma e a Disciplina, o sistema consulta a grade da turma e pré-preenche automaticamente o campo **Professor** com o docente titular responsável por aquela matéria.
+    - **Sincronização de Etapas e Prazos:** Ao selecionar a Etapa Avaliativa, a data limite de lançamento é calculada de forma contextual com base na data de encerramento da etapa. Trocar a turma ou o período redefine os campos dependentes para prevenir inconsistências.
 
 ### 5.2 Frequência Escolar e Cronograma de Aulas
 1. **Widget de Pendências no Dashboard:** No painel principal (**Dashboard**), o sistema exibe o widget **Pendências de Lançamento de Frequência**, agrupando automaticamente todas as aulas com chamadas não lançadas ou incompletas em datas iguais a hoje ou anteriores.
@@ -3922,9 +3932,9 @@ O sistema mantém um registro auditável de todas as mensagens eletrônicas disp
 
 O módulo **Banco de Talentos / Currículos** fica no menu **RH**, permitindo à escola cadastrar e gerenciar pessoas interessadas em fazer parte do corpo de colaboradores (professores, pedagogos, coordenadores, auxiliares, monitores e funcionários administrativos). O módulo conta com inteligência artificial multimodal (Google Gemini) para interpretar documentos e áudios de entrevista.
 
-### 79.1 Cadastro com IA a partir do Currículo (PDF ou Imagem)
+### 79.1 Cadastro com IA a partir do Currículo (PDF, Word, LibreOffice ou Imagem)
 1. Na tela de listagem de candidatos, clique no botão **Cadastrar com IA ✨** (ou abra **Novo Candidato** e anexe o arquivo no campo de currículo).
-2. Selecione o arquivo do currículo em formato **PDF** ou imagem (**JPG, PNG, WEBP**).
+2. Selecione o arquivo do currículo em formato **PDF**, **Microsoft Word** (`.docx`, `.doc`), **LibreOffice Writer** (`.odt`) ou imagens (**JPG, PNG, WEBP**).
 3. A IA inspeciona o documento e preenche automaticamente os seguintes campos do cadastro:
    - **Nome completo**, e-mail e telefone de contato.
    - **Idade e Data de nascimento** (calculada automaticamente).
@@ -3933,17 +3943,24 @@ O módulo **Banco de Talentos / Currículos** fica no menu **RH**, permitindo à
    - **Local onde mora** (bairro, cidade ou endereço residencial).
    - **Pretensão salarial** (valor numérico identificado no documento).
    - **Formação acadêmica**, experiências profissionais anteriores, habilidades pedagógicas e síntese do perfil.
-4. **Extração Automática da Foto da Pessoa:** Se o currículo possuir foto do candidato, a IA detecta a localização exata do rosto no documento e o sistema realiza o recorte com precisão, salvando a foto de perfil diretamente no módulo. Em PDFs, o sistema também inspeciona e extrai as fotos embutidas no arquivo.
+4. **Extração Automática da Foto da Pessoa:**
+   - **Documentos Word (`.docx`):** O sistema inspeciona o contêiner interno (`word/media/`) e extrai automaticamente a foto de perfil do candidato.
+   - **Documentos LibreOffice (`.odt`):** O sistema inspeciona a pasta interna de imagens (`Pictures/`) e extrai a foto de rosto do candidato.
+   - **PDFs e Word binário (`.doc`):** O sistema detecta e extrai fluxos de imagem JPEG embutidos no documento.
+   - **Imagens (JPG, PNG, WEBP):** A IA localiza as coordenadas da face (*bounding box*) e o sistema recorta a foto de rosto com precisão milimétrica via GD nativo.
+   - A foto extraída é salva na pasta pública (`candidatos/fotos/`) e exibida na ficha do candidato e na listagem.
 
-### 79.2 Interpretação de Áudios de WhatsApp da Entrevista (RH)
-1. Após conversar com o candidato, o entrevistador ou recrutador pode gravar uma mensagem de voz no **WhatsApp** com as suas percepções e impressões sobre o candidato.
-2. No formulário do candidato, na seção **Entrevista de RH & Análise de Áudio (WhatsApp)**, anexe a gravação de áudio do WhatsApp (`.ogg`, `.opus`, `.mp3`, `.m4a`, `.wav`).
-3. Clique na ação **Interpretar Áudio com IA 🎙️✨**:
+### 79.2 Modal de Entrevista de RH & Análise de Áudio (WhatsApp) em `admin/candidatos/{id}/edit`
+1. Na tela de edição do candidato (`/admin/candidatos/{id}/edit`), clique no botão do cabeçalho **"Entrevista de RH / Áudio WhatsApp 🎙️✨"** (também disponível no cabeçalho da seção ou na listagem).
+2. O sistema abrirá um **modal interativo** solicitando a gravação de voz:
+   - Faça o upload do áudio de WhatsApp (`.ogg`, `.opus`, `.mp3`, `.m4a`, `.wav`).
+   - Selecione o entrevistador responsável.
+3. Clique em **"Interpretar Áudio com IA ✨"**:
    - A IA transcreve e analisa integralmente o áudio em português.
    - Gera um parecer profissional no campo **Impressões do Entrevistador de RH**, destacando postura, didática, alinhamento cultural, pontos fortes e pontos de atenção.
    - Registra um resumo executivo dos tópicos abordados no campo **Resumo e Transcrição do Áudio**.
    - Sugere o parecer do processo seletivo (*Aprovado*, *Reprovado*, *Banco de Talentos*, *Entrevistado*).
-   - **Complementação Cadastral Inteligente:** Se o entrevistador citar no áudio informações como pretensão salarial, bairro onde mora, escola onde trabalha atualmente ou cargo de interesse, a IA identifica e preenche automaticamente esses campos caso ainda estejam em branco.
+   - **Complementação Cadastral Inteligente:** Se o entrevistador citar no áudio informações como pretensão salarial, bairro onde mora, escola onde trabalha atualmente ou cargo de interesse, a IA identifica e preenche automaticamente esses campos caso ainda estejam em branco no cadastro do candidato.
 
 ### 79.3 Auditoria e Rastreabilidade
 - **Guarda de Arquivos Originais:** O arquivo do currículo e a gravação do áudio são armazenados no sistema para auditoria, consulta futura da equipe de RH e conformidade.
@@ -3953,4 +3970,5 @@ O módulo **Banco de Talentos / Currículos** fica no menu **RH**, permitindo à
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 

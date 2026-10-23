@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Avaliacaos\Tables;
 
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Models\Avaliacao;
+use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\Turma;
 use App\Models\User;
@@ -49,6 +50,45 @@ class AvaliacaosTable
                     ->label('Data')
                     ->date('d/m/Y')
                     ->sortable(),
+                TextColumn::make('status_avaliacao')
+                    ->label('Status')
+                    ->badge()
+                    ->state(function (Avaliacao $record): string {
+                        $totalAlunos = $record->turma?->matriculas()->where('situacao', 'ativa')->count() ?? 0;
+                        $temPendencia = $record->tem_pendencia;
+
+                        if ($totalAlunos > 0 && ! $temPendencia) {
+                            return 'Concluída';
+                        }
+
+                        $hoje = now()->startOfDay();
+                        $dataLimite = $record->data_limite_lancamento ? Carbon::parse($record->data_limite_lancamento)->startOfDay() : null;
+                        $dataPrevista = $record->data_prevista ? Carbon::parse($record->data_prevista)->startOfDay() : null;
+
+                        if ($dataLimite && $hoje->isAfter($dataLimite)) {
+                            return 'Atrasada';
+                        }
+
+                        if ($dataPrevista && $hoje->isBefore($dataPrevista)) {
+                            return 'Agendada';
+                        }
+
+                        return 'Em Lançamento';
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Concluída' => 'success',
+                        'Atrasada' => 'danger',
+                        'Agendada' => 'info',
+                        'Em Lançamento' => 'warning',
+                        default => 'gray',
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'Concluída' => 'heroicon-m-check-circle',
+                        'Atrasada' => 'heroicon-m-exclamation-triangle',
+                        'Agendada' => 'heroicon-m-calendar',
+                        'Em Lançamento' => 'heroicon-m-clock',
+                        default => 'heroicon-m-minus',
+                    }),
                 IconColumn::make('tem_pendencia')
                     ->label('Pendência')
                     ->boolean()
@@ -58,6 +98,15 @@ class AvaliacaosTable
                     ->falseColor('success'),
             ])
             ->filters([
+                SelectFilter::make('periodo_letivo_id')
+                    ->label('Período Letivo')
+                    ->options(fn () => PeriodoLetivo::query()->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['value'] ?? null,
+                        fn ($q, $periodoId) => $q->whereHas('turma', fn ($tq) => $tq->where('periodo_letivo_id', $periodoId))
+                    ))
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('categoria_avaliacao_id')
                     ->relationship('categoria', 'nome')
                     ->label('Categoria')
