@@ -1,6 +1,7 @@
-# Carga Letiva Mínima e Reposição de Aulas (Onda 49) — Proposta para o Futuro
-
-> **Status: proposta.** Não há código, migration ou teste desta onda.
+# Carga Letiva Mínima e Reposição de Aulas (Onda 49)
+ 
+> **Status: Implementada em 2026-10-23.**
+> Coberta por migrations (`reposicao_aulas`), `CargaLetivaService`, `ReposicaoAulaResource` e suíte de testes `CargaLetivaEReposicaoTest`.
 
 ## Contexto
 

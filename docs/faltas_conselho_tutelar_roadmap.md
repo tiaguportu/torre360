@@ -1,6 +1,7 @@
-# Faltas Excessivas e Comunicação ao Conselho Tutelar (Onda 57) — Proposta para o Futuro
-
-> **Status: proposta.** Não há código, migration ou teste desta onda.
+# Faltas Excessivas e Comunicação ao Conselho Tutelar (Onda 57)
+ 
+> **Status: Implementada em 2026-10-23.**
+> Coberta por migrations (`frequencia_escolar.justificada`, `notificacoes_conselho_tutelar`), `FaltasConselhoTutelarService`, `NotificacaoConselhoTutelarResource` e suíte de testes `FaltasConselhoTutelarTest`.
 
 ## Contexto
 
