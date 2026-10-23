@@ -26,6 +26,36 @@ class VisualizarDocumentoController extends Controller
     ];
 
     /**
+     * Pastas do disco privado que a equipe administrativa pode abrir legitimamente no dia a dia.
+     * Lista branca estrita (M10): qualquer pasta não catalogada aqui é bloqueada com HTTP 403,
+     * impedindo a exposição acidental de diretórios sem regra de autorização.
+     */
+    private const PASTAS_ADMINISTRATIVAS_AUTORIZADAS = [
+        'pessoas_fotos/',
+        'materiais-aula/',
+        'planos-aula/',
+        'rotina-diaria/',
+        'anotacoes-os/',
+        'ordem-servicos/',
+        'portfolio/',
+        'livros/capas/',
+        'instituicao-logos/',
+        'tipos-documentos-modelos/',
+        'documentos_matricula/',
+        'filament_exports/',
+        'imports/extratos/',
+        'contratos/',
+        'audios-crm/',
+        'temp-lead-prints/',
+        'temp-lead-zips/',
+        'temp_csv_imports/',
+        'omr/uploads/',
+        'candidatos/',
+        'ponto/',
+        'video-tutoriais/',
+    ];
+
+    /**
      * Serve um arquivo protegido do disco local com autorização e sanitização contra path traversal.
      */
     public function __invoke(Request $request, string $path): Response
@@ -114,11 +144,15 @@ class VisualizarDocumentoController extends Controller
         elseif (str_starts_with($path, 'processos_funcionario/')) {
             $autorizado = $user->can('View:ProcessoFuncionario');
         }
-        // Contexto F: Demais arquivos. A equipe administrativa abre qualquer um; o professor, só as pastas liberadas.
-        elseif ($user->isEquipeAdministrativa()) {
-            $autorizado = true;
-        } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
-            $autorizado = true;
+        // Contexto F: Pastas corporativas catalogadas (lista branca).
+        // A equipe administrativa abre pastas autorizadas; o professor, apenas as liberadas à rotina pedagógica.
+        // Qualquer pasta não catalogada permanece como não autorizada (HTTP 403).
+        elseif ($this->pastaAdministrativaAutorizada($path)) {
+            if ($user->isEquipeAdministrativa()) {
+                $autorizado = true;
+            } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
+                $autorizado = true;
+            }
         }
 
         if (! $autorizado) {
@@ -126,6 +160,17 @@ class VisualizarDocumentoController extends Controller
         }
 
         return $this->servir($disk->path($path));
+    }
+
+    private function pastaAdministrativaAutorizada(string $path): bool
+    {
+        foreach (self::PASTAS_ADMINISTRATIVAS_AUTORIZADAS as $pasta) {
+            if (str_starts_with($path, $pasta)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function pastaLiberadaAoProfessor(string $path): bool

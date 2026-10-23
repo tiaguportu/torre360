@@ -12,6 +12,7 @@ use App\Services\ConsultorWhatsappService;
 use App\Services\CrmIaVendasService;
 use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -23,12 +24,19 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Arr;
+use InvalidArgumentException;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * Copiloto WhatsApp IA em duas etapas dentro do mesmo modal: o consultor escolhe objetivo e tom, a IA redige a
  * mensagem num campo editável (e pode ser chamada de novo quantas vezes quiser, dentro do limite por minuto), e só
  * então o WhatsApp é aberto com o texto que estiver no campo. A tentativa só vai para o histórico nesse momento,
  * com o texto final, e não mais antes de alguém ter lido a mensagem.
+ *
+ * Se a família respondeu por áudio, o consultor anexa as mensagens de voz antes de gerar: a IA as ouve e a mensagem
+ * responde ao que foi dito. Os arquivos só existem como upload temporário do Livewire, enquanto o modal está aberto
+ * (podem ser reaproveitados a cada "gerar de novo"); nada é gravado no histórico, e ao abrir o WhatsApp são apagados.
  */
 class CopilotoMensagemIaAction
 {
@@ -80,6 +88,20 @@ class CopilotoMensagemIaAction
                     ->placeholder('Ex: Mencionar desconto na matrícula até sexta, foco no período integral, etc.')
                     ->maxLength(255),
 
+                FileUpload::make('audios')
+                    ->label('Áudios da Família (opcional)')
+                    ->multiple()
+                    ->reorderable()
+                    ->maxFiles(CrmIaVendasService::MAX_AUDIOS_CONVERSA)
+                    ->acceptedFileTypes(array_keys(CrmIaVendasService::MIMES_AUDIO_GEMINI))
+                    ->maxSize(10240)
+                    // Só alimentam a geração: não vão para `$data` (`dehydrated`) nem são copiados para um disco
+                    // (`storeFiles`; sem isto o Filament os gravaria na pasta padrão ao enviar o formulário, e ninguém os
+                    // apagaria). Ficam como upload temporário do Livewire até `descartarAudios()`.
+                    ->dehydrated(false)
+                    ->storeFiles(false)
+                    ->helperText('Se a família respondeu por áudio, anexe as mensagens de voz do WhatsApp (.opus, .ogg, .mp3, .m4a, .wav, .aac, .flac) na ordem em que chegaram: até '.CrmIaVendasService::MAX_AUDIOS_CONVERSA.' arquivos de 10 MB. A IA ouve e a mensagem responde ao que foi dito. Os áudios não são gravados no histórico do lead.'),
+
                 Actions::make([
                     Action::make('gerarMensagemCopiloto')
                         ->label('✨ Gerar mensagem com a IA')
@@ -100,12 +122,18 @@ class CopilotoMensagemIaAction
 
                 Hidden::make('mensagem_original'),
                 Hidden::make('mensagem_contingencia')->default(false),
+                // Quantos áudios a IA de fato ouviu na última geração, para o histórico dizer em que a mensagem se baseou.
+                Hidden::make('audios_considerados')->default(0),
 
                 Toggle::make('registrar_historico')
                     ->label('Registrar esta tentativa de contato no histórico do lead')
                     ->default(true),
             ])
-            ->action(function (array $data, Interessado $record, $livewire): void {
+            ->action(function (array $data, Interessado $record, $livewire, Action $action): void {
+                // Os áudios já cumpriram o papel (gerar a mensagem): saem do servidor ao abrir o WhatsApp. O campo não
+                // é desidratado, então não vem em `$data`; os uploads temporários são lidos do estado bruto da ação.
+                self::descartarAudios($action->getRawData()['audios'] ?? []);
+
                 $telefone = app(ConsultorWhatsappService::class)->normalizarTelefone($record->pessoa?->telefone);
 
                 if (empty($telefone)) {
@@ -132,6 +160,7 @@ class CopilotoMensagemIaAction
                             contingencia: ! empty($data['mensagem_contingencia']),
                             objetivo: (string) ($data['objetivo'] ?? ''),
                             nomeModelo: $template?->nome,
+                            audios: max(0, min((int) ($data['audios_considerados'] ?? 0), CrmIaVendasService::MAX_AUDIOS_CONVERSA)),
                         ),
                         'automatico' => true,
                     ]);
@@ -179,26 +208,69 @@ class CopilotoMensagemIaAction
             ? MensagemWhatsappTemplate::ativos()->find($get('mensagem_whatsapp_template_id'))
             : null;
 
-        $resultado = app(CrmIaVendasService::class)->redigirMensagemCopiloto(
-            interessado: $record,
-            objetivo: (string) ($get('objetivo') ?: 'primeiro_contato'),
-            tom: (string) ($get('tom') ?: 'acolhedor'),
-            instrucoesExtras: filled($get('instrucoes_extras')) ? (string) $get('instrucoes_extras') : null,
-            templateBase: $template?->conteudo,
-            instrucoesModelo: $template?->instrucoes_ia,
-        );
+        $audios = self::audiosAnexados($get('audios'));
+
+        try {
+            $resultado = app(CrmIaVendasService::class)->redigirMensagemCopiloto(
+                interessado: $record,
+                objetivo: (string) ($get('objetivo') ?: 'primeiro_contato'),
+                tom: (string) ($get('tom') ?: 'acolhedor'),
+                instrucoesExtras: filled($get('instrucoes_extras')) ? (string) $get('instrucoes_extras') : null,
+                templateBase: $template?->conteudo,
+                instrucoesModelo: $template?->instrucoes_ia,
+                audios: $audios,
+            );
+        } catch (InvalidArgumentException $e) {
+            // Áudio com formato sem suporte, acima do limite ou sumido: o consultor precisa trocar o anexo, e a
+            // mensagem padrão não resolveria (ela ignoraria o que a família disse).
+            Notification::make()
+                ->title('Não foi possível usar os áudios')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
 
         $set('mensagem', $resultado['mensagem']);
         $set('mensagem_original', $resultado['mensagem']);
         $set('mensagem_contingencia', $resultado['contingencia']);
+        $set('audios_considerados', $resultado['contingencia'] ? 0 : count($audios));
 
         if ($resultado['contingencia']) {
             Notification::make()
                 ->title('A IA não respondeu agora')
-                ->body('Coloquei uma mensagem padrão no campo, sem a personalização da IA. Ajuste o texto ou clique em "Gerar mensagem com a IA" para tentar de novo.')
+                ->body('Coloquei uma mensagem padrão no campo, sem a personalização da IA'
+                    .($audios === [] ? '' : ' e sem considerar os áudios')
+                    .'. Ajuste o texto ou clique em "Gerar mensagem com a IA" para tentar de novo.')
                 ->warning()
                 ->duration(10000)
                 ->send();
+        }
+    }
+
+    /**
+     * Áudios anexados ao modal, no formato que o serviço espera. Só valem os uploads temporários do Livewire: no
+     * estado do formulário um texto no lugar do arquivo seria um caminho escolhido pelo navegador, e jamais deve
+     * ser lido no servidor para virar conteúdo enviado à IA.
+     *
+     * @return list<array{caminho: string, mime: string}>
+     */
+    private static function audiosAnexados(mixed $estado): array
+    {
+        return collect(Arr::wrap($estado))
+            ->filter(fn (mixed $arquivo): bool => $arquivo instanceof TemporaryUploadedFile)
+            ->map(fn (TemporaryUploadedFile $arquivo): array => ['caminho' => $arquivo->getRealPath(), 'mime' => $arquivo->getMimeType()])
+            ->values()
+            ->all();
+    }
+
+    private static function descartarAudios(mixed $estado): void
+    {
+        foreach (Arr::wrap($estado) as $arquivo) {
+            if ($arquivo instanceof TemporaryUploadedFile) {
+                $arquivo->delete();
+            }
         }
     }
 
@@ -216,9 +288,9 @@ class CopilotoMensagemIaAction
      * porque a IA falhou ou escrita à mão), para quem lê o histórico (e a própria IA, nas gerações seguintes) não
      * tomar um texto de contingência por uma mensagem personalizada.
      */
-    private static function relatoDoHistorico(string $mensagem, string $original, bool $contingencia, string $objetivo, ?string $nomeModelo): string
+    private static function relatoDoHistorico(string $mensagem, string $original, bool $contingencia, string $objetivo, ?string $nomeModelo, int $audios = 0): string
     {
-        $detalhe = "Objetivo: {$objetivo}".($nomeModelo ? " com base no modelo '{$nomeModelo}'" : '');
+        $detalhe = "Objetivo: {$objetivo}".($nomeModelo ? " com base no modelo '{$nomeModelo}'" : '').($audios > 0 ? ", ouvindo {$audios} áudio(s) da família" : '');
 
         $ajustada = $mensagem !== $original;
 

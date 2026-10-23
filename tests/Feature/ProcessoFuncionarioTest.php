@@ -685,6 +685,18 @@ class ProcessoFuncionarioTest extends TestCase
         $this->assertSame(StatusProcessoFuncionario::Cancelado, $outro->fresh()->status);
     }
 
+    public function test_acoes_da_pagina_do_processo_respeitam_estado_mesmo_para_super_admin(): void
+    {
+        $superAdmin = $this->usuario('super_admin');
+        $processo = $this->admissao();
+        $this->servico()->cancelar($processo, $this->admin);
+
+        Livewire::actingAs($this->como($superAdmin))
+            ->test(ViewProcessoFuncionario::class, ['record' => $processo->getRouteKey()])
+            ->assertActionHidden('concluir')
+            ->assertActionHidden('cancelar');
+    }
+
     public function test_so_o_admin_abre_a_pagina_do_processo(): void
     {
         $processo = $this->admissao();

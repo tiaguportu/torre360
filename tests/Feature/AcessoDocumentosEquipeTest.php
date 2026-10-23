@@ -222,4 +222,20 @@ class AcessoDocumentosEquipeTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
     }
+
+    public function test_pasta_desconhecida_ou_nao_catalogada_nao_abre_mesmo_para_equipe_administrativa(): void
+    {
+        Storage::disk('local')->put('pasta_desconhecida/arquivo.pdf', self::PDF);
+        Storage::disk('local')->put('backups_sistema/dados.pdf', self::PDF);
+
+        foreach (['super_admin', 'admin', 'secretaria', 'coordenador', 'professor'] as $papel) {
+            $usuario = $this->usuario($papel);
+
+            $this->actingAs($usuario)->get('/visualizar-documento/pasta_desconhecida/arquivo.pdf')
+                ->assertForbidden();
+
+            $this->actingAs($usuario)->get('/visualizar-documento/backups_sistema/dados.pdf')
+                ->assertForbidden();
+        }
+    }
 }

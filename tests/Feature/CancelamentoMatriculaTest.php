@@ -1060,4 +1060,31 @@ class CancelamentoMatriculaTest extends TestCase
             ->assertSee('2 fatura(s) vencida(s)')
             ->assertSee('R$ 2.057,67');
     }
+
+    public function test_tabela_respeita_estado_do_pedido_mesmo_para_super_admin(): void
+    {
+        $superAdmin = $this->usuario('super_admin');
+        $familia = $this->familiaDe($this->matricula);
+
+        $solicitado = $this->servico()->solicitar($this->matricula, ['motivo' => 'outro', 'data_efetiva' => '2026-11-30'], $familia);
+
+        [$outraMatricula] = $this->aluno('Bruno Alves');
+        config(['cancelamento.exige_distrato_assinado' => false, 'cancelamento.antecedencia_minima_dias' => 0]);
+        $concluido = $this->servico()->solicitar($outraMatricula, ['motivo' => 'outro', 'data_efetiva' => '2026-10-21'], $this->familiaDe($outraMatricula));
+        $this->servico()->aprovar($concluido, $this->secretaria);
+        $this->servico()->concluir($concluido, $this->secretaria);
+
+        Livewire::actingAs($this->como($superAdmin))
+            ->test(ListCancelamentosMatricula::class)
+            ->assertTableActionVisible('aprovar', $solicitado)
+            ->assertTableActionVisible('recusar', $solicitado)
+            ->assertTableActionHidden('concluir', $solicitado)
+            ->assertTableActionHidden('preparar_assinatura_eletronica', $solicitado)
+            ->assertTableActionHidden('anexar_distrato', $solicitado)
+            ->assertTableActionHidden('aprovar', $concluido)
+            ->assertTableActionHidden('recusar', $concluido)
+            ->assertTableActionHidden('concluir', $concluido)
+            ->assertTableActionHidden('preparar_assinatura_eletronica', $concluido)
+            ->assertTableActionHidden('anexar_distrato', $concluido);
+    }
 }
