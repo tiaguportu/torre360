@@ -296,6 +296,8 @@
                         </tr>
                     </table>
 
+                    @include('documentos._assinatura_digital', ['oficial' => $documento])
+
                 @elseif ($historico)
                     @php
                         $unidade = $historico->unidade ?? $historico->pessoa?->matriculas()->latest()->first()?->turma?->serie?->curso?->unidade;
@@ -358,6 +360,8 @@
                             </tr>
                         @endif
                     </table>
+
+                    @include('documentos._assinatura_digital', ['oficial' => $historico])
 
                 @elseif ($documento && ! $documento->isValido())
                     <div class="status-card danger">

@@ -274,6 +274,14 @@ class SolicitacoesDocumentos extends Page implements HasTable
                     ->url(fn (SolicitacaoDocumento $record) => route('documentos.visualizar', ['path' => $record->arquivo_path]))
                     ->openUrlInNewTab(),
 
+                Action::make('baixar_assinada')
+                    ->label('Baixar com assinatura digital')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn (SolicitacaoDocumento $record) => $record->temCopiaAssinada() && Storage::disk('local')->exists((string) $record->arquivo_assinado_path))
+                    ->url(fn (SolicitacaoDocumento $record) => route('documentos.visualizar', ['path' => $record->arquivo_assinado_path]))
+                    ->openUrlInNewTab(),
+
                 Action::make('conferir_qr')
                     ->label('Verificar QR Code')
                     ->icon('heroicon-o-qr-code')

@@ -77,6 +77,44 @@ class SignatariosSugeridosService
         ];
     }
 
+    /**
+     * A direção da unidade, para os documentos que a escola emite e assina sozinha (declarações, histórico escolar, ofício):
+     * os representantes legais, com o cargo como papel.
+     *
+     * @return array{assinantes: list<array{nome: string, email: string, papel: string}>, sem_email: list<string>}
+     */
+    public function daDirecao(?Unidade $unidade): array
+    {
+        $assinantes = collect();
+        $semEmail = [];
+
+        $adicionar = function (?Pessoa $pessoa, string $papel) use (&$assinantes, &$semEmail): void {
+            if (! $pessoa) {
+                return;
+            }
+
+            $emails = $this->emailsDa($pessoa);
+
+            if ($emails === []) {
+                $semEmail[] = $pessoa->nome;
+
+                return;
+            }
+
+            foreach ($emails as $email) {
+                $assinantes->push(['nome' => $pessoa->nome, 'email' => $email, 'papel' => $papel]);
+            }
+        };
+
+        $unidade?->loadMissing('representantesLegais.users');
+        $unidade?->representantesLegais->each(fn (Pessoa $pessoa) => $adicionar($pessoa, filled($pessoa->pivot?->cargo) ? (string) $pessoa->pivot->cargo : 'Direção'));
+
+        return [
+            'assinantes' => $this->semRepetidos($assinantes),
+            'sem_email' => array_values(array_unique($semEmail)),
+        ];
+    }
+
     private function familiaDaMatricula(Matricula $matricula, callable $adicionar): void
     {
         $matricula->loadMissing(['pessoa.responsaveis.users', 'contrato.responsaveisFinanceiros.pessoa.users', 'turma.serie.curso.unidade.representantesLegais.users']);

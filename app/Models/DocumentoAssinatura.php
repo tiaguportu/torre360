@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\NivelAssinatura;
 use App\Enums\StatusAssinante;
 use App\Enums\StatusDocumentoAssinatura;
 use App\Services\Documentos\AssinaturaDocumentoService;
@@ -38,12 +39,16 @@ class DocumentoAssinatura extends Model
         'enviado_em',
         'concluido_em',
         'criado_por_user_id',
+        'nivel_assinatura',
+        'assinatura_detalhes',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => StatusDocumentoAssinatura::class,
+            'nivel_assinatura' => NivelAssinatura::class,
+            'assinatura_detalhes' => 'array',
             'assinafy_log' => 'array',
             'expira_em' => 'date',
             'enviado_em' => 'datetime',
@@ -125,6 +130,8 @@ class DocumentoAssinatura extends Model
             CancelamentoMatricula::class => 'Cancelamento de matrícula',
             Funcionario::class => 'Funcionário',
             ItemProcessoFuncionario::class, ProcessoFuncionario::class => 'Admissão ou desligamento',
+            SolicitacaoDocumento::class => 'Declaração emitida',
+            HistoricoEscolar::class => 'Histórico escolar',
             default => 'Outro registro',
         };
     }
@@ -194,13 +201,20 @@ class DocumentoAssinatura extends Model
             return true;
         }
 
+        // Histórico escolar é do aluno, não de uma matrícula: a família é a das pessoas ligadas ao usuário.
+        if ($this->documentavel_type === HistoricoEscolar::class) {
+            $pessoaId = HistoricoEscolar::query()->whereKey($this->documentavel_id)->value('pessoa_id');
+
+            return $pessoaId !== null && $user->pessoasAcessiveis()->pluck('id')->contains($pessoaId);
+        }
+
         $matricula = $this->matriculaDoDocumento();
 
         return $matricula !== null && $matricula->isAccessibleByFamilia($user);
     }
 
     /**
-     * A matrícula a que o documento se refere, quando ele é de matrícula ou de cancelamento.
+     * A matrícula a que o documento se refere, quando ele é de matrícula, de cancelamento ou de uma declaração emitida.
      */
     public function matriculaDoDocumento(): ?Matricula
     {
@@ -209,7 +223,26 @@ class DocumentoAssinatura extends Model
             CancelamentoMatricula::class => ($matriculaId = CancelamentoMatricula::query()->whereKey($this->documentavel_id)->value('matricula_id'))
                 ? Matricula::query()->with('contrato.responsaveisFinanceiros')->find($matriculaId)
                 : null,
+            SolicitacaoDocumento::class => ($matriculaId = SolicitacaoDocumento::query()->whereKey($this->documentavel_id)->value('matricula_id'))
+                ? Matricula::query()->with('contrato.responsaveisFinanceiros')->find($matriculaId)
+                : null,
             default => null,
         };
+    }
+
+    /**
+     * Veio de um PDF que a escola já tinha (declaração ou histórico) e não de um modelo de texto.
+     */
+    public function ehDocumentoOficial(): bool
+    {
+        return in_array($this->documentavel_type, [SolicitacaoDocumento::class, HistoricoEscolar::class], true) && blank($this->template_documento_id);
+    }
+
+    /**
+     * Foi assinado fora do sistema (certificado do próprio signatário, gov.br) e anexado: não passou pelo Assinafy.
+     */
+    public function foiAssinadoFora(): bool
+    {
+        return $this->estaAssinado() && blank($this->assinafy_id);
     }
 }

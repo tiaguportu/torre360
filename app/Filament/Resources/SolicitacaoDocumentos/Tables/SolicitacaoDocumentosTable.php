@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SolicitacaoDocumentos\Tables;
 
 use App\Enums\StatusSolicitacaoDocumento;
+use App\Filament\Resources\DocumentosAssinatura\Actions\AcoesAssinaturaOficial;
 use App\Models\SolicitacaoDocumento;
 use App\Services\DocumentoService;
 use Filament\Actions\Action;
@@ -54,6 +55,12 @@ class SolicitacaoDocumentosTable
                     ->copyable()
                     ->copyMessage('Código copiado'),
 
+                TextColumn::make('assinatura_nivel')
+                    ->label('Assinatura digital')
+                    ->badge()
+                    ->placeholder('Sem assinatura digital')
+                    ->toggleable(),
+
                 TextColumn::make('data_emissao')
                     ->label('Emissão')
                     ->dateTime('d/m/Y H:i')
@@ -80,6 +87,7 @@ class SolicitacaoDocumentosTable
                     ->label('Emitir PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('primary')
+                    ->hidden(fn (SolicitacaoDocumento $record): bool => $record->temCopiaAssinada())
                     ->action(function (SolicitacaoDocumento $record, DocumentoService $service) {
                         try {
                             $service->gerarPdf($record);
@@ -105,6 +113,11 @@ class SolicitacaoDocumentosTable
                     ->visible(fn (SolicitacaoDocumento $record) => ! empty($record->arquivo_path) && (Storage::disk('local')->exists($record->arquivo_path) || Storage::disk('public')->exists($record->arquivo_path)))
                     ->url(fn (SolicitacaoDocumento $record) => route('documentos.visualizar', ['path' => $record->arquivo_path]))
                     ->openUrlInNewTab(),
+
+                AcoesAssinaturaOficial::baixarAssinada(),
+                AcoesAssinaturaOficial::enviar(),
+                AcoesAssinaturaOficial::anexar(),
+                AcoesAssinaturaOficial::verAssinatura(),
 
                 Action::make('validar')
                     ->label('Conferir QR Code')
@@ -138,8 +151,8 @@ class SolicitacaoDocumentosTable
                             ->send();
                     }),
 
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->hidden(fn (SolicitacaoDocumento $record): bool => $record->temCopiaAssinada()),
+                DeleteAction::make()->hidden(fn (SolicitacaoDocumento $record): bool => $record->temCopiaAssinada()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

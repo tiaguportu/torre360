@@ -3,6 +3,7 @@
 use App\Services\Pendencias\Fontes\AssinaturasAtrasadas;
 use App\Services\Pendencias\Fontes\CancelamentosParaAnalisar;
 use App\Services\Pendencias\Fontes\CancelamentosParaConcluir;
+use App\Services\Pendencias\Fontes\ClassificacaoContabilPendente;
 use App\Services\Pendencias\Fontes\DevolucoesPendentes;
 use App\Services\Pendencias\Fontes\DocumentosParaAssinatura;
 use App\Services\Pendencias\Fontes\GradesIncompletas;
@@ -29,6 +30,7 @@ return [
         TransferenciasEmAndamento::class,
         ProvidenciasRhVencidas::class,
         GradesIncompletas::class,
+        ClassificacaoContabilPendente::class,
     ],
 
     /*
@@ -53,6 +55,10 @@ return [
 
     // Rematrícula com os dados confirmados e sem turma definida há mais de N dias passa a "atrasada".
     'rematricula_turma_dias' => (int) env('MESA_REMATRICULA_TURMA_DIAS', 5),
+
+    // Dia do mês a partir do qual a classificação contábil do mês anterior, ainda pendente, passa a "atrasada" (o escritório
+    // costuma fechar o mês na primeira quinzena).
+    'contabilidade_dia_limite' => (int) env('MESA_CONTABILIDADE_DIA_LIMITE', 10),
 
     // Por quanto tempo (segundos) o selo do menu guarda a contagem de cada usuário.
     'selo_cache_segundos' => (int) env('MESA_SELO_CACHE_SEGUNDOS', 300),

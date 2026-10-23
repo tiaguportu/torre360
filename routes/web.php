@@ -17,6 +17,8 @@ use App\Http\Controllers\DemonstrativoDebitoPdfController;
 use App\Http\Controllers\DistratoMatriculaPdfController;
 use App\Http\Controllers\Documentos\VisualizarDocumentoController;
 use App\Http\Controllers\DossieIaPdfController;
+use App\Http\Controllers\ExecucaoRelatorioController;
+use App\Http\Controllers\ExportacaoContabilController;
 use App\Http\Controllers\Financeiro\AcordoPublicoController;
 use App\Http\Controllers\HistoricoEscolarPDFController;
 use App\Http\Controllers\InformeAnualPdfController;
@@ -181,6 +183,16 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 // Distrato de matrícula (Onda 61): existe depois da aprovação do pedido; a equipe com View:CancelamentoMatricula e a família do aluno abrem.
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/cancelamentos-matricula/{cancelamento}/distrato', [DistratoMatriculaPdfController::class, 'show'])->whereNumber('cancelamento')->name('cancelamentos-matricula.distrato');
+});
+
+// Exportação para a contabilidade (Onda 73): baixa um arquivo já gerado, só para quem tem Exportar:ExportacaoContabil.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/financeiro/exportacao-contabil/{lote}/download', [ExportacaoContabilController::class, 'download'])->whereNumber('lote')->name('financeiro.exportacao-contabil.download');
+});
+
+// Relatórios configuráveis (Onda 72): baixa o arquivo de uma execução, para o dono, os destinatários e quem vê todos.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/relatorios/execucoes/{execucao}/download', [ExecucaoRelatorioController::class, 'download'])->whereNumber('execucao')->name('relatorios.execucoes.download');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

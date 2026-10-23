@@ -90,6 +90,14 @@
                                 <x-heroicon-o-academic-cap class="h-4 w-4 text-amber-600" />
                                 Histórico Oficial
                             </a>
+
+                            @if ($this->historicoEscolar->temCopiaAssinada())
+                                <a href="{{ route('documentos.visualizar', ['path' => $this->historicoEscolar->arquivo_assinado_path]) }}" target="_blank"
+                                   class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 transition">
+                                    <x-heroicon-o-check-badge class="h-4 w-4 text-emerald-600" />
+                                    Histórico com assinatura digital
+                                </a>
+                            @endif
                         @endif
                     </div>
                 </div>

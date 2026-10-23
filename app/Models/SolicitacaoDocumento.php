@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Contracts\ReageAoDocumentoAssinado;
 use App\Enums\StatusSolicitacaoDocumento;
+use App\Models\Concerns\TemCopiaAssinada;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-class SolicitacaoDocumento extends Model
+class SolicitacaoDocumento extends Model implements ReageAoDocumentoAssinado
 {
     use HasFactory;
+    use TemCopiaAssinada;
 
     protected $table = 'solicitacao_documentos';
 

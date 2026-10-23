@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\HistoricoEscolars\Tables;
 
+use App\Filament\Resources\DocumentosAssinatura\Actions\AcoesAssinaturaOficial;
 use App\Models\HistoricoEscolar;
 use App\Services\HistoricoEscolarService;
 use Filament\Actions\Action;
@@ -65,6 +66,12 @@ class HistoricoEscolarsTable
                     ->color('primary')
                     ->alignCenter(),
 
+                TextColumn::make('assinatura_nivel')
+                    ->label('Assinatura digital')
+                    ->badge()
+                    ->placeholder('Sem assinatura digital')
+                    ->toggleable(),
+
                 TextColumn::make('data_emissao')
                     ->label('Expedição')
                     ->date('d/m/Y')
@@ -97,10 +104,17 @@ class HistoricoEscolarsTable
                     ->url(fn (HistoricoEscolar $record) => route('historicos-escolares.pdf', $record))
                     ->openUrlInNewTab(),
 
+                AcoesAssinaturaOficial::baixarAssinada(),
+                AcoesAssinaturaOficial::enviar(),
+                AcoesAssinaturaOficial::anexar(),
+                AcoesAssinaturaOficial::verAssinatura(),
+
                 Action::make('sincronizar_dados')
                     ->label('Sincronizar do Torre360')
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')
+                    // Os números mudam, o PDF assinado não: com cópia assinada, o histórico fica como foi assinado.
+                    ->hidden(fn (HistoricoEscolar $record): bool => $record->temCopiaAssinada())
                     ->requiresConfirmation()
                     ->modalHeading('Sincronizar Matrículas Internas')
                     ->modalDescription('O sistema irá importar ou atualizar automaticamente todas as matrículas, disciplinas, cargas horárias e notas do aluno cursadas no Torre360 para este Histórico Escolar.')
@@ -116,7 +130,7 @@ class HistoricoEscolarsTable
                     }),
 
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()->hidden(fn (HistoricoEscolar $record): bool => $record->temCopiaAssinada()),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

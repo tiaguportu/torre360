@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Documentos;
 
 use App\Contracts\ReageAoDocumentoAssinado;
+use App\Enums\NivelAssinatura;
 use App\Enums\StatusAssinante;
 use App\Enums\StatusDocumentoAssinatura;
 use App\Models\CancelamentoMatricula;
@@ -67,6 +68,7 @@ class AssinaturaDocumentoService
     public function __construct(
         private readonly MacrosDocumentoService $macros,
         private readonly AssinafyDocumentosClient $client,
+        private readonly AssinaturaPdfInspector $inspetor,
     ) {}
 
     // --- Criar -------------------------------------------------------------------------------------------------------
@@ -130,6 +132,148 @@ class AssinaturaDocumentoService
 
             return $documento->refresh();
         });
+    }
+
+    /**
+     * Cria o documento a partir de um PDF que a escola já emitiu (declaração, histórico escolar): não há texto de modelo,
+     * o PDF é o documento e vai como está para o Assinafy (Onda 74).
+     *
+     * @param  list<array{nome: string, email: string, papel?: ?string}>  $assinantes
+     *
+     * @throws \DomainException
+     */
+    public function criarDePdf(Model $documentavel, string $pdf, string $titulo, array $assinantes, ?User $por = null, ?CarbonInterface $expiraEm = null): DocumentoAssinatura
+    {
+        if (! str_starts_with(ltrim($pdf), '%PDF')) {
+            throw new \DomainException('O arquivo do documento não é um PDF válido.');
+        }
+
+        $assinantes = $this->normalizarAssinantes($assinantes);
+        $this->garantirSemDocumentoEmAndamento($documentavel);
+
+        return DB::transaction(function () use ($documentavel, $pdf, $titulo, $assinantes, $por, $expiraEm): DocumentoAssinatura {
+            $documento = DocumentoAssinatura::create([
+                'documentavel_type' => $documentavel::class,
+                'documentavel_id' => $documentavel->getKey(),
+                'titulo' => mb_substr(trim($titulo), 0, 200),
+                'conteudo' => 'Documento oficial emitido pela escola. O texto está no PDF enviado para assinatura.',
+                'status' => StatusDocumentoAssinatura::Rascunho,
+                'expira_em' => $expiraEm?->toDateString(),
+                'criado_por_user_id' => $por?->id,
+            ]);
+
+            foreach ($assinantes as $posicao => $assinante) {
+                $documento->assinantes()->create($assinante + ['ordem' => $posicao + 1]);
+            }
+
+            $this->guardarOriginal($documento, $pdf);
+            $this->registrarLog($documento, $por, 'Documento oficial criado para assinatura eletrônica.');
+
+            return $documento->refresh();
+        });
+    }
+
+    /**
+     * Guarda um PDF assinado fora do sistema (certificado ICP-Brasil, gov.br) como a cópia assinada do documento oficial
+     * (Onda 74). O sistema lê o PDF e registra o que ele traz (quantas assinaturas, se há marca da ICP-Brasil), mas **não
+     * valida** a cadeia nem a validade do certificado: quem precisa dessa garantia confere no Verificador do ITI.
+     *
+     * @throws \DomainException
+     */
+    public function registrarAssinadoFora(Model $documentavel, string $pdfAssinado, string $titulo, ?string $pdfOriginal = null, ?User $por = null): DocumentoAssinatura
+    {
+        $leitura = $this->inspetor->inspecionar($pdfAssinado);
+
+        if ($leitura['assinaturas'] === 0 || $leitura['nivel'] === null) {
+            throw new \DomainException('O PDF não traz assinatura digital. Assine o documento no seu certificado digital (ou no gov.br) e anexe o arquivo assinado.');
+        }
+
+        $this->garantirSemDocumentoEmAndamento($documentavel);
+
+        $documento = DB::transaction(function () use ($documentavel, $pdfAssinado, $titulo, $pdfOriginal, $por, $leitura): DocumentoAssinatura {
+            $documento = DocumentoAssinatura::create([
+                'documentavel_type' => $documentavel::class,
+                'documentavel_id' => $documentavel->getKey(),
+                'titulo' => mb_substr(trim($titulo), 0, 200),
+                'conteudo' => 'Documento oficial assinado fora do sistema. O texto está no PDF assinado.',
+                'status' => StatusDocumentoAssinatura::Assinado,
+                'concluido_em' => now(),
+                'criado_por_user_id' => $por?->id,
+                'nivel_assinatura' => $leitura['nivel'],
+                'assinatura_detalhes' => $this->detalhes($leitura, $pdfAssinado, 'anexado', $pdfOriginal),
+                'assinafy_log' => ['origem' => 'anexado_fora'],
+            ]);
+
+            if ($pdfOriginal !== null && str_starts_with(ltrim($pdfOriginal), '%PDF')) {
+                $this->guardarOriginal($documento, $pdfOriginal);
+            }
+
+            $caminho = "documentos_assinatura/{$documento->id}/assinado.pdf";
+            Storage::disk('local')->put($caminho, $pdfAssinado);
+            $documento->update(['arquivo_assinado_path' => $caminho]);
+
+            $this->registrarLog($documento, $por, 'Cópia assinada anexada ao documento oficial.', [
+                'nivel' => $leitura['nivel']->value,
+                'assinaturas' => $leitura['assinaturas'],
+            ]);
+
+            return $documento->refresh();
+        });
+
+        $this->aplicarReacao($documento);
+
+        return $documento->refresh();
+    }
+
+    /**
+     * Um documento oficial só tem uma assinatura em andamento por vez: o anterior precisa ser cancelado (ou terminar).
+     *
+     * @throws \DomainException
+     */
+    private function garantirSemDocumentoEmAndamento(Model $documentavel): void
+    {
+        $emAndamento = DocumentoAssinatura::query()
+            ->abertos()
+            ->where('documentavel_type', $documentavel::class)
+            ->where('documentavel_id', $documentavel->getKey())
+            ->exists();
+
+        if ($emAndamento) {
+            throw new \DomainException('Já existe um documento em andamento para este registro. Cancele-o ou espere o desfecho antes de continuar.');
+        }
+    }
+
+    private function guardarOriginal(DocumentoAssinatura $documento, string $pdf): void
+    {
+        $caminho = "documentos_assinatura/{$documento->id}/original.pdf";
+
+        Storage::disk('local')->put($caminho, $pdf);
+        $documento->update(['arquivo_original_path' => $caminho, 'arquivo_original_hash' => hash('sha256', $pdf)]);
+    }
+
+    /**
+     * O que ficou registrado da leitura do PDF assinado (sem os certificados): serve à tela do documento e à página pública.
+     *
+     * @param  array{assinaturas: int, formatos: list<string>, icp_brasil: bool, nivel: ?NivelAssinatura}  $leitura
+     * @return array<string, mixed>
+     */
+    private function detalhes(array $leitura, string $pdfAssinado, string $origem, ?string $pdfOriginal = null): array
+    {
+        $detalhes = [
+            'origem' => $origem,
+            'assinaturas' => $leitura['assinaturas'],
+            'formatos' => $leitura['formatos'],
+            'icp_brasil' => $leitura['icp_brasil'],
+            'hash_sha256' => hash('sha256', $pdfAssinado),
+            'lido_em' => now()->toIso8601String(),
+            'validado' => false,
+        ];
+
+        if ($pdfOriginal !== null) {
+            $detalhes['contem_original'] = $this->inspetor->contemOriginal($pdfAssinado, $pdfOriginal);
+        }
+
+        return $detalhes;
     }
 
     /**
@@ -401,7 +545,16 @@ class AssinaturaDocumentoService
             if ($bytes !== null) {
                 $caminho = "documentos_assinatura/{$documento->id}/assinado.pdf";
                 Storage::disk('local')->put($caminho, $bytes);
-                $documento->update(['arquivo_assinado_path' => $caminho]);
+
+                // O PDF certificado pode trazer assinatura digital embutida (PAdES); quando não traz, a evidência é a trilha
+                // do Assinafy e o nível é o de assinatura eletrônica.
+                $leitura = $this->inspetor->inspecionar($bytes);
+
+                $documento->update([
+                    'arquivo_assinado_path' => $caminho,
+                    'nivel_assinatura' => $leitura['nivel'] ?? NivelAssinatura::Eletronica,
+                    'assinatura_detalhes' => $this->detalhes($leitura, $bytes, 'assinafy', blank($documento->arquivo_original_path) ? null : Storage::disk('local')->get($documento->arquivo_original_path)),
+                ]);
             }
         }
 

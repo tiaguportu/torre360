@@ -49,3 +49,7 @@ Schedule::command('ponto:verificar-integridade')->dailyAt('03:20')->withoutOverl
 Schedule::command('rh:avisar-ferias')->weeklyOn(1, '07:30')->withoutOverlapping();
 Schedule::command('activitylog:clean --days=180 --force')->dailyAt('04:00')->withoutOverlapping();
 Schedule::command('audit:limpar-logs --dias=180')->dailyAt('04:10')->withoutOverlapping();
+
+// Relatórios configuráveis (Onda 72): a rodada é a cada 5 minutos, então a hora marcada vale com essa tolerância.
+Schedule::command('relatorios:executar-agendados')->everyFiveMinutes()->withoutOverlapping(10);
+Schedule::command('relatorios:limpar-arquivos')->dailyAt('04:30')->withoutOverlapping();

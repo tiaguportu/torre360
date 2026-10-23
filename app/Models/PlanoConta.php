@@ -10,7 +10,7 @@ class PlanoConta extends Model
 {
     protected $table = 'plano_contas';
 
-    protected $fillable = ['codigo', 'nome', 'tipo', 'pai_id', 'is_active'];
+    protected $fillable = ['codigo', 'codigo_contabil', 'nome', 'tipo', 'pai_id', 'is_active'];
 
     public function pai(): BelongsTo
     {
