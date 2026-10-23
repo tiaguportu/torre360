@@ -16,6 +16,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -46,7 +47,7 @@ class ItensRelationManager extends RelationManager
     }
 
     /**
-     * @return list<\Filament\Schemas\Components\Component>
+     * @return list<Component>
      */
     private function campos(): array
     {

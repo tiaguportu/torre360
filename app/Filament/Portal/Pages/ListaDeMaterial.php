@@ -6,6 +6,7 @@ namespace App\Filament\Portal\Pages;
 
 use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Portal\Concerns\InteractsWithMatriculaSelecionada;
+use App\Models\ItemListaMaterial;
 use App\Models\ListaMaterialEscolar;
 use App\Services\ListaMaterialService;
 use App\Support\HelpContent;
@@ -47,7 +48,7 @@ class ListaDeMaterial extends Page
     }
 
     /**
-     * @return Collection<string, Collection<int, \App\Models\ItemListaMaterial>>
+     * @return Collection<string, Collection<int, ItemListaMaterial>>
      */
     public function getGrupos(?ListaMaterialEscolar $lista): Collection
     {

@@ -207,7 +207,7 @@ class CensoEscolarTelaTest extends TestCase
         $turma = $this->turma(codigoInep: null);
         $matricula = $this->aluno($turma, 'Ana Lima', pessoa: ['codigo_inep' => null], matricula: ['codigo_matricula_inep' => null]);
         $conteudo = implode("\r\n", [
-            "20|12345678|T101|4455|TURMA 101|1|",
+            '20|12345678|T101|4455|TURMA 101|1|',
             "30|12345678|{$matricula->pessoa_id}|123456789012|11144477735|ANA LIMA|15/03/2014|",
             "60|12345678|{$matricula->pessoa_id}|123456789012|T101|4455|987654321098|0|",
         ]);

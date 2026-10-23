@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Avaliacaos\Tables;
 use App\Filament\Resources\Avaliacaos\AvaliacaoResource;
 use App\Models\Avaliacao;
 use App\Models\Pessoa;
+use App\Models\Turma;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use Carbon\Carbon;
@@ -36,6 +37,7 @@ class AvaliacaosTable
                     ->sortable(),
                 TextColumn::make('turma.nome')
                     ->label('Turma')
+                    ->description(fn (Avaliacao $record) => $record->turma?->periodoLetivo?->nome)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('disciplina.nome')
@@ -63,7 +65,18 @@ class AvaliacaosTable
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('turma_id')
-                    ->relationship('turma', 'nome')
+                    ->relationship('turma', 'nome', fn (Builder $query) => $query->with(['periodoLetivo', 'turno'])->orderBy('nome'))
+                    ->getOptionLabelFromRecordUsing(function (Turma $record): string {
+                        $periodo = $record->periodoLetivo?->nome;
+                        $turno = $record->turno?->nome;
+
+                        $rotulo = $record->nome ?? "Turma #{$record->id}";
+                        if ($turno) {
+                            $rotulo .= " - {$turno}";
+                        }
+
+                        return $periodo ? "{$rotulo} ({$periodo})" : $rotulo;
+                    })
                     ->label('Turma')
                     ->multiple()
                     ->searchable()
@@ -75,7 +88,8 @@ class AvaliacaosTable
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('etapa_avaliativa_id')
-                    ->relationship('etapaAvaliativa', 'nome')
+                    ->relationship('etapaAvaliativa', 'nome', fn (Builder $query) => $query->with('periodoLetivo')->orderBy('data_inicio'))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->periodoLetivo ? "{$record->nome} ({$record->periodoLetivo->nome})" : $record->nome)
                     ->label('Etapa')
                     ->multiple()
                     ->searchable()
@@ -245,6 +259,7 @@ class AvaliacaosTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['turma.periodoLetivo', 'turma.turno', 'categoria', 'disciplina', 'etapaAvaliativa']))
             ->stackedOnMobile();
     }
 }

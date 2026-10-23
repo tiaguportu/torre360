@@ -24,11 +24,30 @@ class AvaliacaoForm
                         Grid::make(3)
                             ->schema([
                                 Select::make('turma_id')
-                                    ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))
+                                    ->relationship('turma', 'nome', modifyQueryUsing: fn ($query) => $query
+                                        ->vigentes()
+                                        ->with(['periodoLetivo', 'turno'])
+                                        ->orderBy('nome')
+                                    )
+                                    ->getOptionLabelFromRecordUsing(function (Turma $record): string {
+                                        $periodo = $record->periodoLetivo?->nome;
+                                        $turno = $record->turno?->nome;
+
+                                        $rotulo = $record->nome ?? "Turma #{$record->id}";
+                                        if ($turno) {
+                                            $rotulo .= " - {$turno}";
+                                        }
+
+                                        return $periodo ? "{$rotulo} ({$periodo})" : $rotulo;
+                                    })
                                     ->required()
                                     ->live()
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->afterStateUpdated(function (callable $set) {
+                                        $set('disciplina_id', null);
+                                        $set('etapa_avaliativa_id', null);
+                                    }),
                                 Select::make('disciplina_id')
                                     ->label('Disciplina')
                                     ->required()
@@ -43,7 +62,21 @@ class AvaliacaoForm
                                         return $turma?->disciplinas->pluck('nome', 'id')->toArray() ?? [];
                                     }),
                                 Select::make('etapa_avaliativa_id')
-                                    ->relationship('etapaAvaliativa', 'nome')
+                                    ->label('Etapa Avaliativa')
+                                    ->relationship('etapaAvaliativa', 'nome', modifyQueryUsing: function ($query, callable $get) {
+                                        $turmaId = $get('turma_id');
+                                        if ($turmaId) {
+                                            $periodoId = Turma::where('id', $turmaId)->value('periodo_letivo_id');
+                                            if ($periodoId) {
+                                                $query->where('periodo_letivo_id', $periodoId);
+                                            }
+                                        }
+
+                                        return $query->with('periodoLetivo')->orderBy('data_inicio');
+                                    })
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->periodoLetivo ? "{$record->nome} ({$record->periodoLetivo->nome})" : $record->nome)
+                                    ->searchable()
+                                    ->preload()
                                     ->required(),
                             ]),
                         Grid::make(3)

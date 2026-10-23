@@ -8,6 +8,7 @@ use App\Enums\CategoriaItemMaterial;
 use App\Enums\StatusListaMaterial;
 use App\Exceptions\ListaMaterialException;
 use App\Models\Curso;
+use App\Models\ItemListaMaterial;
 use App\Models\ListaMaterialEscolar;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
@@ -17,6 +18,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Services\ListaMaterialService;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
@@ -64,7 +66,7 @@ class ListaMaterialEscolarTest extends TestCase
     /**
      * @param  array<string, mixed>  $extra
      */
-    private function item(ListaMaterialEscolar $lista, string $descricao = 'Caderno brochura 96 folhas', int $quantidade = 2, array $extra = []): \App\Models\ItemListaMaterial
+    private function item(ListaMaterialEscolar $lista, string $descricao = 'Caderno brochura 96 folhas', int $quantidade = 2, array $extra = []): ItemListaMaterial
     {
         return $this->servico()->salvarItem($lista, ['descricao' => $descricao, 'quantidade' => $quantidade] + $extra);
     }
@@ -501,7 +503,7 @@ class ListaMaterialEscolarTest extends TestCase
     {
         $this->lista();
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         $this->lista();
     }

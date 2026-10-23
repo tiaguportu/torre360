@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Educacenso;
 
+use App\Enums\SituacaoAlunoCenso;
 use App\Exceptions\CensoEscolarException;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
@@ -12,6 +13,7 @@ use App\Models\TipoVinculo;
 use App\Models\Unidade;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Gera os arquivos da 2ª etapa do Censo Escolar (Situação do Aluno) no leiaute de importação do Inep (Censo 2025,
@@ -145,7 +147,7 @@ class SituacaoAlunoCensoExporter
     }
 
     /**
-     * @param  array{matricula: Matricula, situacao: \App\Enums\SituacaoAlunoCenso|null}  $linha
+     * @param  array{matricula: Matricula, situacao: SituacaoAlunoCenso|null}  $linha
      */
     private function registro90(string $inep, array $linha): string
     {
@@ -167,7 +169,7 @@ class SituacaoAlunoCensoExporter
     /**
      * No registro 91 o código da matrícula é nulo; sem o código Inep da turma, o Inep pede a mediação e a etapa.
      *
-     * @param  array{matricula: Matricula, situacao: \App\Enums\SituacaoAlunoCenso|null, etapa: string}  $linha
+     * @param  array{matricula: Matricula, situacao: SituacaoAlunoCenso|null, etapa: string}  $linha
      */
     private function registro91(string $inep, array $linha): string
     {
@@ -208,7 +210,7 @@ class SituacaoAlunoCensoExporter
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, string>  $nomesVinculo
+     * @param  Collection<int, string>  $nomesVinculo
      * @return array{0: string, 1: string} mãe (filiação 1) e pai (filiação 2)
      */
     private function filiacao(Pessoa $pessoa, $nomesVinculo): array

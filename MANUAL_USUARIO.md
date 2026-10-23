@@ -67,6 +67,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 🚨 **Convivência e Disciplina** | Ocorrências da Rotina Escolar e Notificações aos Pais |
 | 🏥 **Saúde Escolar** | Fichas Médicas, Restrições Alimentares, Medicamentos e Ambulatório |
 | 💰 **Financeiro** | Contratos, Faturas, Régua de Cobrança, Transações Bancárias, Fornecedores, Templates de Contrato, DRE, Controladoria Escolar (Rentabilidade & Ponto de Equilíbrio por Turma), Planilha da Lei da Mensalidade (Lei 9.870/99) e Acordos & Renegociação de Inadimplência |
+| 🧑‍💼 **RH** | Banco de Talentos / Currículos com IA, Funcionários e Processos de Admissão e Desligamento |
 | 🛠️ **Operacional** | Gestão de Ordens de Serviço (Manutenção) |
 | 📚 **Biblioteca** | Gestão de Acervo, Livros, Empréstimos, Balcão de Circulação Ágil com Câmera, Inventários e Sacolas de Leitura |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
@@ -3916,4 +3917,39 @@ O sistema mantém um registro auditável de todas as mensagens eletrônicas disp
 
 ---
 
+## 💼 79. Banco de Talentos, Currículos e Recrutamento com IA (`/admin/candidatos`)
+
+O módulo **Banco de Talentos / Currículos** fica no menu **RH**, permitindo à escola cadastrar e gerenciar pessoas interessadas em fazer parte do corpo de colaboradores (professores, pedagogos, coordenadores, auxiliares, monitores e funcionários administrativos). O módulo conta com inteligência artificial multimodal (Google Gemini) para interpretar documentos e áudios de entrevista.
+
+### 79.1 Cadastro com IA a partir do Currículo (PDF ou Imagem)
+1. Na tela de listagem de candidatos, clique no botão **Cadastrar com IA ✨** (ou abra **Novo Candidato** e anexe o arquivo no campo de currículo).
+2. Selecione o arquivo do currículo em formato **PDF** ou imagem (**JPG, PNG, WEBP**).
+3. A IA inspeciona o documento e preenche automaticamente os seguintes campos do cadastro:
+   - **Nome completo**, e-mail e telefone de contato.
+   - **Idade e Data de nascimento** (calculada automaticamente).
+   - **Pretensão de Vaga / Cargo** (ex: "Professor de Matemática", "Monitor").
+   - **Escola onde trabalha atualmente** (escola ou instituição mais recente).
+   - **Local onde mora** (bairro, cidade ou endereço residencial).
+   - **Pretensão salarial** (valor numérico identificado no documento).
+   - **Formação acadêmica**, experiências profissionais anteriores, habilidades pedagógicas e síntese do perfil.
+4. **Extração Automática da Foto da Pessoa:** Se o currículo possuir foto do candidato, a IA detecta a localização exata do rosto no documento e o sistema realiza o recorte com precisão, salvando a foto de perfil diretamente no módulo. Em PDFs, o sistema também inspeciona e extrai as fotos embutidas no arquivo.
+
+### 79.2 Interpretação de Áudios de WhatsApp da Entrevista (RH)
+1. Após conversar com o candidato, o entrevistador ou recrutador pode gravar uma mensagem de voz no **WhatsApp** com as suas percepções e impressões sobre o candidato.
+2. No formulário do candidato, na seção **Entrevista de RH & Análise de Áudio (WhatsApp)**, anexe a gravação de áudio do WhatsApp (`.ogg`, `.opus`, `.mp3`, `.m4a`, `.wav`).
+3. Clique na ação **Interpretar Áudio com IA 🎙️✨**:
+   - A IA transcreve e analisa integralmente o áudio em português.
+   - Gera um parecer profissional no campo **Impressões do Entrevistador de RH**, destacando postura, didática, alinhamento cultural, pontos fortes e pontos de atenção.
+   - Registra um resumo executivo dos tópicos abordados no campo **Resumo e Transcrição do Áudio**.
+   - Sugere o parecer do processo seletivo (*Aprovado*, *Reprovado*, *Banco de Talentos*, *Entrevistado*).
+   - **Complementação Cadastral Inteligente:** Se o entrevistador citar no áudio informações como pretensão salarial, bairro onde mora, escola onde trabalha atualmente ou cargo de interesse, a IA identifica e preenche automaticamente esses campos caso ainda estejam em branco.
+
+### 79.3 Auditoria e Rastreabilidade
+- **Guarda de Arquivos Originais:** O arquivo do currículo e a gravação do áudio são armazenados no sistema para auditoria, consulta futura da equipe de RH e conformidade.
+- **Visualização Rápida:** Na listagem de candidatos, o recrutador pode ver a foto do candidato, dados de contato, escola atual, status do processo, e com um clique visualizar o currículo ou ouvir a gravação da entrevista.
+- **Dispositivos Móveis (`stackedOnMobile`):** A tabela se ajusta automaticamente em formato de cartões visuais para consulta rápida no celular por gestores escolares.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+

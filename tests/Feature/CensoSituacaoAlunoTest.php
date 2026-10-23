@@ -616,7 +616,7 @@ class CensoSituacaoAlunoTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('9 campos');
 
-        app(EducacensoRetornoImporter::class)->importarIdentificacao("90|12345678|T101|9001|1|2|3|5");
+        app(EducacensoRetornoImporter::class)->importarIdentificacao('90|12345678|T101|9001|1|2|3|5');
     }
 
     public function test_importar_fica_no_log_so_com_contagens(): void

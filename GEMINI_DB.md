@@ -1726,3 +1726,39 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 - **Regra (`DisponibilidadeProfessorService`):** sem janela, o professor está livre; `indisponivel` sempre bloqueia; havendo `disponivel`, só vale dentro delas (dia sem janela = não dá aula; janelas coladas valem como uma).
 
 > A conferência com a matriz usa `matriz_curricular.carga_horaria_semanal` (aulas por semana) e `turma_disciplina.professor_id`. A sugestão (`GradeAssistidaService`) não grava nada até a ação "Aplicar"; configuração em `config/grade_horaria.php` (`dias_da_semana`, `maximo_aulas_por_dia_da_disciplina`, `sugerir_sem_professor`). Permissão `GradeAssistida:Turma`.
+
+---
+
+## 32. Banco de Talentos, Currículos e Recrutamento com IA
+
+### `candidatos`
+- **Representa:** Candidatos e interessados em vagas de colaboradores da escola (professores, pedagogos, monitores, assistentes administrativos, etc.).
+- **Campos Principais:**
+  - `nome_completo`: Nome completo da pessoa candidata.
+  - `email`: E-mail para contato.
+  - `telefone`: Telefone ou WhatsApp com DDD.
+  - `data_nascimento`: Data de nascimento (date).
+  - `idade`: Idade computada ou informada (smallint).
+  - `cargo_pretendido`: Vaga ou função de interesse na escola (ex: "Professor de Matemática", "Pedagoga").
+  - `escola_atual`: Escola, colégio ou instituição onde trabalha atualmente ou atuou mais recentemente.
+  - `local_moradia`: Bairro, cidade ou endereço onde reside.
+  - `pretensao_salarial`: Valor numérico da pretensão salarial (decimal 12,2).
+  - `formacao_academica`: Síntese de graduações, licenciaturas, especializações e cursos.
+  - `experiencias_profissionais`: Resumo do histórico e atribuições anteriores.
+  - `habilidades`: Competências pedagógicas, diferenciais e metodologias.
+  - `resumo_perfil`: Síntese executiva elaborada por IA ou pelo RH.
+  - `curriculo_path`: Caminho no storage do arquivo original do currículo (PDF, JPG, PNG) para auditoria e conformidade.
+  - `curriculo_nome_original`: Nome original do arquivo anexado.
+  - `foto_path`: Caminho da foto de rosto do candidato, extraída automaticamente pela IA ou enviada pelo usuário.
+  - `status`: Situação do processo seletivo (Enum `StatusCandidato`: `novo`, `em_triagem`, `entrevista_agendada`, `entrevistado`, `banco_talentos`, `aprovado`, `reprovado`).
+  - `impressoes_entrevistador`: Parecer detalhado e notas do entrevistador de RH sobre a entrevista e adequação cultural.
+  - `audio_entrevista_path`: Caminho do arquivo de áudio de WhatsApp gravado pelo entrevistador.
+  - `audio_transcricao_resumo`: Resumo executivo dos pontos abordados no áudio gerado pela IA.
+  - `dados_ia`: JSON com metadados e resposta bruta dos modelos de IA para auditoria e rastreabilidade.
+  - `cadastrado_por_user_id`: Usuário que registrou o candidato (FK `users`, nullOnDelete).
+  - `entrevistador_user_id`: Usuário do RH/coordenação responsável pela entrevista (FK `users`, nullOnDelete).
+  - `deleted_at`: Soft delete para remoção segura de registros sem perda de histórico.
+- **Índices:** `idx_candidatos_status_cargo` (`status`, `cargo_pretendido`), `idx_candidatos_email`, `idx_candidatos_telefone`.
+- **Permissões:** `ViewAny`, `View`, `Create`, `Update`, `Delete`, `DeleteAny` `:Candidato` (RH).
+- **Serviços:** `CurriculoIaService` (interpretação multimodal de currículos, recorte e extração de foto via GD/PDF e análise de áudios de WhatsApp com síntese de impressões de RH).
+
