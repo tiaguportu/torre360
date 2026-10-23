@@ -134,6 +134,20 @@ class CancelamentoMatricula extends Model implements ReageAoDocumentoAssinado
         return $query->whereIn('status', [StatusCancelamentoMatricula::Solicitado->value, StatusCancelamentoMatricula::Aprovado->value]);
     }
 
+    /**
+     * Concluídos com dinheiro a devolver que ainda não foi devolvido (a mesma regra de {@see devolucaoPendente()}).
+     *
+     * @param  Builder<CancelamentoMatricula>  $query
+     * @return Builder<CancelamentoMatricula>
+     */
+    public function scopeComDevolucaoPendente(Builder $query): Builder
+    {
+        return $query
+            ->where('status', StatusCancelamentoMatricula::Concluido->value)
+            ->where('valor_a_devolver', '>', 0)
+            ->whereNull('devolucao_realizada_em');
+    }
+
     public function estaAberto(): bool
     {
         return $this->status->estaAberto();
