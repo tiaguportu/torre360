@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusVisitaInteressado;
+use App\Models\Concerns\InvalidaDossieIaDoLead;
 use Database\Factories\VisitaInteressadoFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class VisitaInteressado extends Model
 {
     /** @use HasFactory<VisitaInteressadoFactory> */
-    use HasFactory;
+    use HasFactory, InvalidaDossieIaDoLead;
 
     protected $table = 'visita_interessado';
 

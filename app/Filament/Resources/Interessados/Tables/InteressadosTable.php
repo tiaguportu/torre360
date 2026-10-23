@@ -528,13 +528,25 @@ class InteressadosTable
                         ]);
 
                         if (! empty($data['adaptar_com_ia'])) {
-                            $mensagem = app(CrmIaVendasService::class)->gerarMensagemCopiloto(
+                            $resultadoIa = app(CrmIaVendasService::class)->redigirMensagemCopiloto(
                                 interessado: $record,
                                 objetivo: 'primeiro_contato',
                                 tom: 'acolhedor',
                                 templateBase: $mensagem,
                                 instrucoesModelo: $template?->instrucoes_ia,
                             );
+                            $mensagem = $resultadoIa['mensagem'];
+
+                            // O envio rápido não tem etapa de revisão: se a IA falhou, o modelo segue só com as variáveis
+                            // preenchidas, e o consultor precisa saber que não foi personalizado.
+                            if ($resultadoIa['contingencia']) {
+                                Notification::make()
+                                    ->title('A IA não respondeu agora')
+                                    ->body('O WhatsApp foi aberto com o modelo escolhido, sem a personalização da IA. Confira o texto antes de enviar.')
+                                    ->warning()
+                                    ->duration(10000)
+                                    ->send();
+                            }
 
                             if (filled($linkPesquisa) && ! str_contains($mensagem, $linkPesquisa)) {
                                 $mensagem .= "\n\n👉 {$linkPesquisa}";
