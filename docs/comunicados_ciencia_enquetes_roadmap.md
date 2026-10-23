@@ -49,3 +49,11 @@ massa e não sabe quem viu.
 - A ciência prova que o responsável **abriu e confirmou**, não que concordou: o texto do botão deve
   ser claro.
 - Respeitar o descadastro de canais; comunicado obrigatório deve ter canal de portal sempre ativo.
+
+## Fusão sugerida
+
+Implementar junto com a **Onda 70** ([Central de Avisos à Família](central_avisos_familia_roadmap.md)) como uma onda só, "Comunicação com a família". As duas precisam do mesmo destinatário (responsáveis do aluno e responsável financeiro), do mesmo registro de entrega e do mesmo sino no Portal. O aviso transacional (cancelamento aprovado, documento para assinar) e o comunicado com ciência rastreada passam a ser dois tipos sobre o mesmo modelo, em vez de dois mecanismos de entrega.
+
+O resumo diário da equipe (Onda 47) usa as filas da Mesa de Pendências (Onda 71) e fica fora desta fusão.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

@@ -54,3 +54,9 @@ atraso. Falta o meio do caminho: saber **quais contratos têm maior chance de at
 ## Esforço
 
 Médio.
+
+## Fusão sugerida
+
+Faz parte do conjunto financeiro **cobrança real, risco e encargos**: usa os dias de atraso e o valor atualizado da [Onda 62](encargos_atraso_roadmap.md) (implementada) e, quando houver, a situação de pagamento vinda do [gateway real](gateway_pagamento_real_roadmap.md) (Onda 68), que dá o dado de pagamento em dia sem depender de extrato.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

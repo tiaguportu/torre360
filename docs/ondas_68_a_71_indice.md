@@ -35,16 +35,45 @@ As permissões novas (`ViewAny`, `View`, `Create`, `Enviar` e `Cancelar:Document
 dadas a administração, secretaria (todas) e coordenação (consulta); um papel criado à mão precisa recebê-las em
 **Perfis de acesso**. A Mesa **não** tem permissão própria: cada fila usa a permissão do módulo que a alimenta.
 
-## Fusões e ordem sugerida das propostas
+## Fusões sugeridas para dar completude
 
-1. **70 (central de avisos), idealmente fundida à 33 (comunicados com ciência e enquetes):** as duas precisam do mesmo
-   destinatário, do mesmo registro de entrega e do mesmo sino no Portal. Implementar como uma onda só, "Comunicação com
-   a família", evita dois mecanismos de entrega. Também fecha a pendência mais visível das ondas 61 e 69: a família
-   hoje só descobre o que mudou se abrir a tela certa.
-2. **68 (gateway real):** só depois de a escola escolher o provedor e simular as tarifas. Alinha multa e juros do boleto
-   aos da Onda 62; o `fake` continua nos testes.
-3. **47 (digest diário) vira consumidor da Mesa:** o catálogo de filas que ela pedia já existe
-   (`FontePendencia`). Falta só a preferência por usuário, o agendamento e o envio. Veja a nota no documento da Onda 47.
+Algumas propostas se sobrepõem em modelo de dados, tela ou público. Implementá-las separadas cria dois mecanismos para
+a mesma coisa; juntas, sai um só. Cada documento afetado tem uma seção "Fusão sugerida" com o detalhe.
+
+| Conjunto | Ondas | O que compartilham | Ordem dentro do conjunto |
+|---|---|---|---|
+| **Comunicação com a família** | 33 + 70 | Destinatário, registro de entrega e sino no Portal. O aviso transacional (cancelamento aprovado, documento para assinar) e o comunicado com ciência rastreada viram dois tipos do mesmo modelo. | Modelo de destinatário e entrega, aviso transacional, comunicado com ciência, enquete |
+| **Frequência e carga letiva** | 64 (feita) + 49 + 57 (+ 50) | A grade dá as aulas de cada turma; a 49 confere o total do ano contra o mínimo legal; a 57 usa esse total para o limite de faltas; a 50 usa as mesmas aulas para a hora-aula. | 64, 49, 57, 50 (a 57 pode ir antes com o total do calendário) |
+| **Vencimentos** | 56 + 60 + painel de férias (Onda 10, feito) | Cadastro com data de vencimento, painel e aviso semanal. Um cadastro genérico com tipo, responsável e antecedência atende as três; cada tipo vira uma fila da Mesa. | Cadastro genérico, 60, 56, migrar as férias |
+| **Casos com prazo legal** | 34 + 35 (+ 63) | Caso com protocolo, responsável, prazo legal, sigilo, histórico e resposta. Pedido do titular (LGPD, art. 19, II), denúncia e convivência escolar (Lei nº 13.185/2015) são três tipos de caso. | Motor de casos, 34, 35, 63 |
+| **Ciclo pedagógico** | 27 + 28 + 13 (feita) | O conselho decide encaminhamentos por aluno, o reforço os executa e o score de evasão deixa de ser número e vira ação com medida de efetividade. | 27, 28, ação sobre o risco de evasão |
+| **Vendas da escola** | 17 + 67 | Produto, estoque, caixa e forma de cobrança. A cantina e a loja são dois pontos de venda; o cruzamento de alérgenos (Onda 40) vale para os dois. | Cadastro único, 17, 67 |
+| **Portaria e saída** | 9 + 37 | Mesmo fluxo visto de dois lados: autorizados, registro de saída e "quem está na escola agora". | Juntas |
+| **Cobrança real, risco e encargos** | 68 + 53 (+ 62, feita) | O gateway dá o pagamento sem depender de extrato; a 62 dá dias de atraso e valor atualizado; a 53 usa os dois. Multa e juros do boleto saem das regras do contrato. | 68, 53 |
+| **Pendências e resumo diário** | 71 (feita) + 47 | A Mesa já tem o catálogo de filas que a 47 pedia. O digest é outro consumidor das mesmas filas. | 47 depois das preferências por usuário |
+
+### Ordem sugerida de entrega
+
+1. **Comunicação com a família (33 + 70).** Fecha a pendência mais visível das ondas 61 e 69: hoje a família só descobre o
+   que mudou se abrir a tela certa. É a base do digest e dos avisos de falta excessiva.
+2. **Frequência e carga letiva (57, com a 49).** A 57 é obrigação legal e usa dados que já existem.
+3. **Conformidade:** 34 (com o motor de casos) e 46 (MFA e retenção de logs), que já têm pendências abertas na revisão de
+   segurança.
+4. **Vencimentos (60 e 56).** Copiam o painel de férias e entregam fila na Mesa quase sem código novo.
+5. **68 (gateway real),** só depois de a escola escolher o provedor e simular as tarifas.
+6. **Pedagógico (27 e 28)** e, em seguida, o resto da lista das ondas 27 a 67.
+7. **66 (conferência de cláusulas dos contratos)**, pequena e sem dependência, pode entrar a qualquer momento; lê o texto
+   dos modelos pelo mesmo catálogo de variáveis da Onda 69.
+
+## Melhorias em ondas implementadas (achados da verificação de 2026-10-23)
+
+| Onda | Achado | Correção sugerida |
+|---|---|---|
+| 61 e 65 | O `Gate::before` do aplicativo dá `true` ao super admin para **qualquer** habilidade, inclusive métodos de policy. Por isso `can('aprovar', $pedido)` é verdadeiro mesmo com o pedido já aprovado. Confirmado por teste: o super admin vê *Aprovar* em pedido já aprovado e *Concluir* em processo cancelado. O serviço recusa e nada se corrompe, mas a tela erra, e os comentários das policies dizem que o estado protegeria o super admin. | Conferir o estado do registro na tela (como a Onda 69 faz com `podeEnviar()` e similares) ou limitar o `Gate::before` às habilidades por nome de permissão. Corrigir o comentário das policies. Teste: abrir as telas como super admin em cada estado. |
+| Transversal | `VisualizarDocumentoController` abre para a equipe administrativa qualquer arquivo de pasta sem regra própria. As ondas 61, 65 e 69 acrescentaram a sua regra, mas pasta nova esquecida fica aberta. Registrado em [seguranca_pendencias.md](seguranca_pendencias.md) (M10). | Inverter o padrão (pasta sem regra não abre) e um teste que liste as pastas gravadas no disco privado e exija uma regra para cada. |
+| 62 | `Matricula::hasDebitosVencidos()` repete a regra de `Fatura::emAtraso()`. | Passar a usar o escopo. |
+| 71 | Faltam filas de outros módulos. | Contratos a assinar, frequência pendente do professor, ajustes de ponto (Onda 41), pareceres (Onda 30), reservas (Onda 21), manutenção (Onda 39), férias vencendo, follow-ups do CRM, contas a pagar. |
+| Engenharia | O SQLite dos testes esconde erros que só aparecem no MySQL (agregado com `orderBy`, coluna inexistente). Seis classes rodam o `RolesSeeder` em todo teste (40 a 75 s cada). | Rodar a suíte também em MariaDB no CI; semear papéis uma vez por processo. |
 
 ## Ampliações propostas em ondas já existentes
 

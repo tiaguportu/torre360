@@ -64,3 +64,9 @@ horas do calendário.
 ## Esforço
 
 Médio.
+
+## Fusão sugerida
+
+Faz parte do conjunto **"Frequência e carga letiva"**: a [Onda 64](grade_horaria_assistida_roadmap.md) (grade, implementada) dá as aulas que cada turma deveria ter, esta onda confere o total do ano contra o mínimo legal e a [Onda 57](faltas_conselho_tutelar_roadmap.md) usa esse total para calcular o limite de faltas. A [Onda 50](hora_aula_docente_roadmap.md) usa as mesmas aulas para a hora-aula. Ordem: 64, 49, 57 e 50.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

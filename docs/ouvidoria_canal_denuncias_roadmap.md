@@ -95,3 +95,9 @@ solicitações comuns e não protege a identidade de quem relata.
   do canal precisa ser divulgado.
 - Possível exigência de canal para prevenção ao assédio em empresas com CIPA (Lei nº 14.457/2022):
   conferir com o jurídico/RH se se aplica à escola.
+
+## Fusão sugerida
+
+Veja a fusão com a [Onda 34](portal_titular_lgpd_roadmap.md): o mesmo motor de "casos com prazo legal" atende o pedido do titular, a ouvidoria e a convivência escolar (seção acima), cada um com o seu tipo, prazo e sigilo.
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

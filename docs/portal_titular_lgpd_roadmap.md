@@ -56,3 +56,9 @@ atender no prazo da lei (art. 19: formato simplificado de imediato, ou declaraç
 - É a onda de maior risco jurídico por erro de omissão (exportação incompleta). Começar mapeando
   as tabelas que referenciam `pessoa` e revisar com o encarregado.
 - Definir quem é o encarregado e o canal oficial antes de abrir o portal.
+
+## Fusão sugerida
+
+Compartilha com a [Onda 35](ouvidoria_canal_denuncias_roadmap.md) (ouvidoria e convivência escolar) o mesmo desenho: um caso com protocolo, responsável, prazo legal, histórico e resposta. Em vez de três cadastros, vale um motor de **"casos com prazo legal"** e três tipos: pedido do titular (a LGPD, art. 19, II, fixa 15 dias para a declaração completa), denúncia da ouvidoria e caso de convivência (Lei nº 13.185/2015). O prazo vencendo vira fila da Mesa de Pendências (Onda 71).
+
+Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).
