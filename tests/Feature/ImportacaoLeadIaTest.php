@@ -499,7 +499,190 @@ class ImportacaoLeadIaTest extends TestCase
         $this->assertSame($outroConsultor->id, VisitaInteressado::firstOrFail()->usuario_id);
     }
 
+    // ─── Visitas: o que conta como a mesma visita ───────────────
+
+    public function test_irmaos_com_visita_no_mesmo_dia_sao_visitas_diferentes(): void
+    {
+        $dia = now()->addDays(3);
+
+        $resultado = $this->importar($this->extraido([
+            'alunos' => [['nome' => 'Lucas Silva'], ['nome' => 'Mariana Silva']],
+            'visitas' => [
+                $this->visita($dia->copy()->setTime(10, 0), 'agendada', ['aluno' => 'Lucas Silva']),
+                $this->visita($dia->copy()->setTime(10, 30), 'agendada', ['aluno' => 'Mariana Silva']),
+            ],
+        ]));
+
+        $this->assertSame(2, $resultado['visitas']);
+
+        $porAluno = $resultado['interessado']->visitas()->with('dependente')->get()->pluck('dependente.nome_crianca')->sort()->values()->all();
+        $this->assertSame(['Lucas Silva', 'Mariana Silva'], $porAluno);
+    }
+
+    public function test_visita_da_familia_toda_e_a_mesma_do_aluno_citado_depois_no_mesmo_horario(): void
+    {
+        $dia = now()->addDays(3)->setTime(14, 0);
+
+        $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+        $segunda = $this->importar($this->extraido([
+            'alunos' => [['nome' => 'Lucas']],
+            'visitas' => [$this->visita($dia, 'agendada', ['aluno' => 'Lucas'])],
+        ]));
+
+        $this->assertSame(0, $segunda['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+    }
+
+    public function test_nome_do_aluno_abreviado_ainda_e_o_mesmo_aluno(): void
+    {
+        $dia = now()->addDays(3)->setTime(14, 0);
+
+        $this->importar($this->extraido(['alunos' => [['nome' => 'Lucas Silva']], 'visitas' => [$this->visita($dia, 'agendada', ['aluno' => 'Lucas Silva'])]]));
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia->copy()->setTime(14, 30), 'agendada', ['aluno' => 'Lucas'])]]));
+
+        $this->assertSame(0, $segunda['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+    }
+
+    public function test_mesmo_aluno_no_mesmo_dia_com_horarios_distantes_sao_visitas_diferentes(): void
+    {
+        $dia = now()->addDays(3);
+
+        $resultado = $this->importar($this->extraido(['visitas' => [
+            $this->visita($dia->copy()->setTime(9, 0), 'agendada', ['aluno' => 'Lucas']),
+            $this->visita($dia->copy()->setTime(16, 0), 'agendada', ['aluno' => 'Lucas']),
+        ]]));
+
+        $this->assertSame(2, $resultado['visitas']);
+    }
+
+    public function test_visita_repetida_na_mesma_resposta_da_ia_e_criada_uma_vez(): void
+    {
+        $dia = now()->addDays(3);
+
+        $resultado = $this->importar($this->extraido(['visitas' => [
+            $this->visita($dia->copy()->setTime(10, 0), 'agendada'),
+            $this->visita($dia->copy()->setTime(10, 30), 'agendada'),
+        ]]));
+
+        $this->assertSame(1, $resultado['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+    }
+
+    public function test_visita_so_com_o_dia_nao_duplica_visita_ja_registrada_com_horario(): void
+    {
+        $dia = now()->addDays(3)->setTime(15, 0);
+
+        $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia->format('Y-m-d'), 'agendada')]]));
+
+        $this->assertSame(0, $segunda['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+        $this->assertSame('15:00', VisitaInteressado::firstOrFail()->data_hora->format('H:i'), 'O horário real não é trocado pelo padrão.');
+        $this->assertSame([], $segunda['avisos'], 'Visita que não será criada não pede para confirmar horário.');
+    }
+
+    public function test_visita_cancelada_e_marcada_de_novo_no_mesmo_dia_e_uma_remarcacao(): void
+    {
+        $dia = now()->addDays(3)->setTime(10, 0);
+
+        $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'cancelada')]]));
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+
+        $this->assertSame(1, $segunda['visitas']);
+        $this->assertEqualsCanonicalizing(
+            ['cancelada', 'agendada'],
+            VisitaInteressado::all()->map(fn (VisitaInteressado $visita): string => $visita->status->value)->all()
+        );
+    }
+
+    public function test_cancelamento_confirmado_pela_nova_conversa_atualiza_a_visita_agendada(): void
+    {
+        $dia = now()->addDays(3)->setTime(10, 0);
+
+        $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'cancelada')]]));
+
+        $this->assertSame(1, $segunda['visitas']);
+        $this->assertSame(1, VisitaInteressado::count());
+        $this->assertSame(StatusVisitaInteressado::Cancelada, VisitaInteressado::firstOrFail()->status);
+    }
+
+    public function test_visita_repetida_nao_gera_aviso_de_conferencia_de_novo(): void
+    {
+        $dia = now()->subDays(3)->setTime(14, 0);
+
+        $primeira = $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+        $this->assertCount(1, $primeira['avisos'], 'A primeira importação avisa que a visita passada ficou sem desfecho.');
+
+        $segunda = $this->importar($this->extraido(['visitas' => [$this->visita($dia, 'agendada')]]));
+
+        $this->assertSame(0, $segunda['visitas']);
+        $this->assertSame([], $segunda['avisos'], 'A visita já existe: não há o que conferir de novo.');
+    }
+
+    // ─── Avisos em lead que já existia ──────────────────────────
+
+    public function test_avisos_da_importacao_vao_para_as_observacoes_do_lead_existente(): void
+    {
+        $pessoa = Pessoa::factory()->create(['email' => 'carla@exemplo.com']);
+        $lead = Interessado::create([
+            'pessoa_id' => $pessoa->id,
+            'origem_interessado_id' => OrigemInteressado::create(['nome' => 'Site'])->id,
+            'status_interessado_id' => $this->novo->id,
+            'observacoes' => 'Observação antiga do consultor.',
+        ]);
+
+        $resultado = $this->importar($this->extraido([
+            'responsavel_cpf' => '123.456.789-00',
+            'alunos' => [['nome' => 'Lucas', 'serie_pretendida' => 'Série que não existe']],
+            'visitas' => [$this->visita(now()->addDays(4)->format('Y-m-d'))],
+        ]));
+
+        $this->assertTrue($resultado['reaproveitado']);
+        $this->assertCount(3, $resultado['avisos']);
+
+        $observacoes = $lead->fresh()->observacoes;
+        $this->assertStringContainsString('Observação antiga do consultor.', $observacoes);
+        $this->assertStringContainsString('⚠️ Conferir: O CPF extraído pela IA', $observacoes);
+        $this->assertStringContainsString('⚠️ Conferir: A série "Série que não existe"', $observacoes);
+        $this->assertStringContainsString('⚠️ Conferir: A conversa cita a visita de', $observacoes);
+    }
+
+    public function test_conversa_sem_avisos_nao_acrescenta_linhas_de_conferencia_ao_lead_existente(): void
+    {
+        $pessoa = Pessoa::factory()->create(['email' => 'carla@exemplo.com']);
+        $lead = Interessado::create([
+            'pessoa_id' => $pessoa->id,
+            'origem_interessado_id' => OrigemInteressado::create(['nome' => 'Site'])->id,
+            'status_interessado_id' => $this->novo->id,
+        ]);
+
+        $this->importar($this->extraido());
+
+        $this->assertStringNotContainsString('⚠️ Conferir', $lead->fresh()->observacoes);
+    }
+
     // ─── Prompt e ação ──────────────────────────────────────────
+
+    public function test_prompt_de_extracao_ancora_datas_relativas_na_data_da_mensagem(): void
+    {
+        config(['services.gemini.key' => 'chave-de-teste']);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => '{"visitas": []}']]]]]], 200)]);
+
+        app(GeminiAgentService::class)->extrairLead('[10/10/2026 09:00] Carla: podemos ir amanhã às 15h?');
+
+        Http::assertSent(function ($request): bool {
+            $instrucao = $request->data()['systemInstruction']['parts'][0]['text'] ?? '';
+
+            return str_contains($instrucao, 'DATAS RELATIVAS')
+                && str_contains($instrucao, 'a partir da data da mensagem em que foram ditas')
+                && substr_count($instrucao, 'a partir da data da mensagem em que foram ditas') === 1
+                && ! str_contains($instrucao, 'Use-a para resolver datas relativas')
+                && str_contains($instrucao, 'pela regra de DATAS RELATIVAS acima');
+        });
+    }
 
     public function test_prompt_de_extracao_pede_as_visitas_a_escola(): void
     {
