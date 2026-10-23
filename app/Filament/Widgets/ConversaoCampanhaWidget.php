@@ -60,6 +60,7 @@ class ConversaoCampanhaWidget extends TableWidget
                     ->placeholder('—'),
             ])
             ->emptyStateHeading('Nenhuma campanha cadastrada')
-            ->emptyStateDescription('Cadastre campanhas em CRM / Comercial → Campanhas de Marketing.');
+            ->emptyStateDescription('Cadastre campanhas em CRM / Comercial → Campanhas de Marketing.')
+            ->stackedOnMobile();
     }
 }

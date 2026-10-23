@@ -6,6 +6,7 @@ use App\Models\CampanhaMarketing;
 use App\Models\OrigemInteressado;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Indicadores de conversão do funil de captação (lead → matrícula) por
@@ -18,25 +19,27 @@ class CrmConversaoService
      */
     public static function porCampanha(): array
     {
-        return CampanhaMarketing::query()
-            ->withCount([
-                'interessados as leads',
-                'interessados as matriculados' => fn (Builder $query) => $query->whereNotNull('data_conversao'),
-            ])
-            ->orderByDesc('leads')
-            ->get()
-            ->map(fn (CampanhaMarketing $campanha): array => [
-                'id' => $campanha->id,
-                'nome' => $campanha->nome,
-                'canal' => $campanha->canal_label,
-                'leads' => (int) $campanha->leads,
-                'matriculados' => (int) $campanha->matriculados,
-                'taxa' => self::taxa((int) $campanha->matriculados, (int) $campanha->leads),
-                'custo' => (float) $campanha->custo,
-                'custo_por_lead' => self::razao((float) $campanha->custo, (int) $campanha->leads),
-                'custo_por_matricula' => self::razao((float) $campanha->custo, (int) $campanha->matriculados),
-            ])
-            ->all();
+        return Cache::remember('crm_conversao_por_campanha', 180, function () {
+            return CampanhaMarketing::query()
+                ->withCount([
+                    'interessados as leads',
+                    'interessados as matriculados' => fn (Builder $query) => $query->whereNotNull('data_conversao'),
+                ])
+                ->orderByDesc('leads')
+                ->get()
+                ->map(fn (CampanhaMarketing $campanha): array => [
+                    'id' => $campanha->id,
+                    'nome' => $campanha->nome,
+                    'canal' => $campanha->canal_label,
+                    'leads' => (int) $campanha->leads,
+                    'matriculados' => (int) $campanha->matriculados,
+                    'taxa' => self::taxa((int) $campanha->matriculados, (int) $campanha->leads),
+                    'custo' => (float) $campanha->custo,
+                    'custo_por_lead' => self::razao((float) $campanha->custo, (int) $campanha->leads),
+                    'custo_por_matricula' => self::razao((float) $campanha->custo, (int) $campanha->matriculados),
+                ])
+                ->all();
+        });
     }
 
     /**
@@ -44,21 +47,23 @@ class CrmConversaoService
      */
     public static function porOrigem(): array
     {
-        return OrigemInteressado::query()
-            ->withCount([
-                'interessados as leads',
-                'interessados as matriculados' => fn (Builder $query) => $query->whereNotNull('data_conversao'),
-            ])
-            ->orderByDesc('leads')
-            ->get()
-            ->map(fn (OrigemInteressado $origem): array => [
-                'id' => $origem->id,
-                'nome' => $origem->nome,
-                'leads' => (int) $origem->leads,
-                'matriculados' => (int) $origem->matriculados,
-                'taxa' => self::taxa((int) $origem->matriculados, (int) $origem->leads),
-            ])
-            ->all();
+        return Cache::remember('crm_conversao_por_origem', 180, function () {
+            return OrigemInteressado::query()
+                ->withCount([
+                    'interessados as leads',
+                    'interessados as matriculados' => fn (Builder $query) => $query->whereNotNull('data_conversao'),
+                ])
+                ->orderByDesc('leads')
+                ->get()
+                ->map(fn (OrigemInteressado $origem): array => [
+                    'id' => $origem->id,
+                    'nome' => $origem->nome,
+                    'leads' => (int) $origem->leads,
+                    'matriculados' => (int) $origem->matriculados,
+                    'taxa' => self::taxa((int) $origem->matriculados, (int) $origem->leads),
+                ])
+                ->all();
+        });
     }
 
     /**

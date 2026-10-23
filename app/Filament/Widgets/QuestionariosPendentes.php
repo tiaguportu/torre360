@@ -7,6 +7,7 @@ use App\Models\QuestionarioResposta;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class QuestionariosPendentes extends Widget
 {
@@ -25,43 +26,45 @@ class QuestionariosPendentes extends Widget
             return collect();
         }
 
-        return Questionario::query()
-            ->where('is_ativo', true)
-            ->where(function ($q) {
-                $q->whereNull('inicio_aplicacao')->orWhere('inicio_aplicacao', '<=', now());
-            })
-            ->where(function ($q) {
-                $q->whereNull('fim_aplicacao')->orWhere('fim_aplicacao', '>=', now());
-            })
-            ->get()
-            ->filter(function ($q) {
-                if (! $q->is_ativo) {
-                    return false;
-                }
+        return Cache::remember("widget_questionarios_pendentes_{$user->id}", 60, function () use ($user) {
+            return Questionario::query()
+                ->where('is_ativo', true)
+                ->where(function ($q) {
+                    $q->whereNull('inicio_aplicacao')->orWhere('inicio_aplicacao', '<=', now());
+                })
+                ->where(function ($q) {
+                    $q->whereNull('fim_aplicacao')->orWhere('fim_aplicacao', '>=', now());
+                })
+                ->get()
+                ->filter(function ($q) {
+                    if (! $q->is_ativo) {
+                        return false;
+                    }
 
-                if ($q->fim_aplicacao && now()->gt($q->fim_aplicacao)) {
-                    return false;
-                }
+                    if ($q->fim_aplicacao && now()->gt($q->fim_aplicacao)) {
+                        return false;
+                    }
 
-                if ($q->inicio_aplicacao && now()->lt($q->inicio_aplicacao)) {
-                    return false;
-                }
+                    if ($q->inicio_aplicacao && now()->lt($q->inicio_aplicacao)) {
+                        return false;
+                    }
 
-                return true;
-            })
-            ->filter(fn ($q) => $q->podeSerRespondidoPor($user))
-            ->filter(function ($q) use ($user) {
-                // Se o questionário não for anônimo, verificamos se o usuário logado já respondeu
-                if (! $q->is_anonimo) {
-                    return ! QuestionarioResposta::where('questionario_id', $q->id)
-                        ->where('user_id', $user->id)
-                        ->where('status', 'enviado')
-                        ->exists();
-                }
+                    return true;
+                })
+                ->filter(fn ($q) => $q->podeSerRespondidoPor($user))
+                ->filter(function ($q) use ($user) {
+                    // Se o questionário não for anônimo, verificamos se o usuário logado já respondeu
+                    if (! $q->is_anonimo) {
+                        return ! QuestionarioResposta::where('questionario_id', $q->id)
+                            ->where('user_id', $user->id)
+                            ->where('status', 'enviado')
+                            ->exists();
+                    }
 
-                // Para questionários anônimos, mostramos sempre (pois não rastreamos o usuário)
-                return true;
-            });
+                    // Para questionários anônimos, mostramos sempre (pois não rastreamos o usuário)
+                    return true;
+                });
+        });
     }
 
     public static function canView(): bool

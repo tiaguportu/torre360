@@ -13,7 +13,9 @@ Bem-vindo ao **Torre360 - Sistema de Gestão Escolar**. Este manual foi criado p
    - **Indicadores Gerais (Stats Overview):** Visão consolidada em tempo real de pessoas cadastradas, matrículas ativas e turmas em andamento.
    - **Matrículas com Pendências:** Exibe a contagem categorizada de matrículas com pendência de responsáveis, documentos obrigatórios faltantes, cadastro incompleto, **contrato não gerado** e **contrato não assinado** nas matrículas ativas ou pendentes; cada cartão abre a lista de Matrículas já filtrada pelo tipo de pendência.
    - **Pendências de Frequência:** Apresenta os últimos 3 dias com chamadas pendentes em janela recente otimizada, permitindo o lançamento em lote da chamada do dia com um clique.
-   - **Preceptoria e Questionários:** Atalhos rápidos para agendamentos e respostas pedagógicas.
+   - **Gráficos e Indicadores Visuais:** Distribuição de alunos por turma e volumetria de interessados por status e canal de origem com dados agregados em cache.
+   - **Funil de Captação & Conversão:** Métricas de conversão de leads por campanha de marketing e canal de origem, com exibição responsiva e adaptada para dispositivos móveis (`stackedOnMobile`).
+   - **Preceptoria e Questionários:** Atalhos rápidos para agendamentos e respostas pedagógicas com detecção instantânea sem consultas repetidas.
 5. Em qualquer página do sistema, utilize a ação de cabeçalho **Ajuda** (ícone de interrogação no canto superior direito) para consultar orientações passo a passo, regras de negócio e ações permitidas para o seu perfil de acesso.
 
 ### 🔑 Recuperação e Alteração de Senha

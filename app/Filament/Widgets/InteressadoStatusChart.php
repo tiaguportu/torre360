@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Interessado;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class InteressadoStatusChart extends ChartWidget
 {
@@ -16,24 +17,28 @@ class InteressadoStatusChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Interessado::query()
-            ->visivelPara()
-            ->join('status_interessado', 'interessado.status_interessado_id', '=', 'status_interessado.id')
-            ->selectRaw('status_interessado.nome, count(*) as total, status_interessado.ordem')
-            ->groupBy('status_interessado.nome', 'status_interessado.ordem')
-            ->orderBy('status_interessado.ordem')
-            ->get();
+        $userId = auth()->id() ?? 'guest';
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Total',
-                    'data' => $data->pluck('total')->toArray(),
-                    'backgroundColor' => 'rgba(153, 102, 255, 0.6)',
+        return Cache::remember("widget_interessados_status_chart_{$userId}", 180, function () {
+            $data = Interessado::query()
+                ->visivelPara()
+                ->join('status_interessado', 'interessado.status_interessado_id', '=', 'status_interessado.id')
+                ->selectRaw('status_interessado.nome, count(*) as total, status_interessado.ordem')
+                ->groupBy('status_interessado.nome', 'status_interessado.ordem')
+                ->orderBy('status_interessado.ordem')
+                ->get();
+
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Total',
+                        'data' => $data->pluck('total')->toArray(),
+                        'backgroundColor' => 'rgba(153, 102, 255, 0.6)',
+                    ],
                 ],
-            ],
-            'labels' => $data->pluck('nome')->toArray(),
-        ];
+                'labels' => $data->pluck('nome')->toArray(),
+            ];
+        });
     }
 
     protected function getType(): string

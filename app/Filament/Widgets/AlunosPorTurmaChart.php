@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Turma;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class AlunosPorTurmaChart extends ChartWidget
 {
@@ -16,20 +17,22 @@ class AlunosPorTurmaChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Turma::ativas()->withCount('matriculas')->get();
+        return Cache::remember('widget_alunos_por_turma_chart', 300, function () {
+            $data = Turma::ativas()->withCount('matriculas')->get();
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Alunos',
-                    'data' => $data->pluck('matriculas_count')->toArray(),
-                    'backgroundColor' => [
-                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Alunos',
+                        'data' => $data->pluck('matriculas_count')->toArray(),
+                        'backgroundColor' => [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
+                        ],
                     ],
                 ],
-            ],
-            'labels' => $data->map(fn (Turma $t) => "{$t->nome} ({$t->matriculas_count})")->toArray(),
-        ];
+                'labels' => $data->map(fn (Turma $t) => "{$t->nome} ({$t->matriculas_count})")->toArray(),
+            ];
+        });
     }
 
     protected function getOptions(): array

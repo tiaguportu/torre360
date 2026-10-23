@@ -45,6 +45,7 @@ class ConversaoOrigemWidget extends TableWidget
                         default => 'gray',
                     }),
             ])
-            ->emptyStateHeading('Nenhum lead captado ainda');
+            ->emptyStateHeading('Nenhum lead captado ainda')
+            ->stackedOnMobile();
     }
 }
