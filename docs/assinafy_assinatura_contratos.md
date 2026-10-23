@@ -134,3 +134,9 @@ RODAR_SANDBOX_ASSINAFY=1 php artisan test --filter=AssinafySandboxTest
 - **Ajuda da lista de contratos** (`ListContratos::getHelpContent()`): explica cada status, a data de aceite e a ação
   **Sincronizar Assinaturas**. `AssinafyAssinaturaTest` amarra os textos aos rótulos do enum; ao criar ou renomear um
   status, atualize o enum, a Ajuda e o `MANUAL_USUARIO.md`.
+
+## Documentos avulsos (Onda 69)
+O envio de **outros documentos** (distrato de matrícula, contrato de trabalho, termos) usa as mesmas credenciais e o
+mesmo endereço de webhook, mas é um fluxo separado (`AssinaturaDocumentoService`, `AssinafyDocumentosClient`) para não
+arriscar o dos contratos. No webhook, o contrato é tentado primeiro; se o documento não for de contrato, tenta-se o
+documento avulso. Detalhes em [assinatura_eletronica_documentos_roadmap.md](assinatura_eletronica_documentos_roadmap.md).

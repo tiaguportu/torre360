@@ -3875,7 +3875,9 @@ Cuida do pedido de cancelamento, do destino de cada fatura e do distrato. Fica n
 4. Para negar, use **Recusar** e escreva o motivo: a família o lê no Portal.
 
 ### 74.3 Distrato
-Depois de aprovado, **Distrato (PDF)** gera o termo com as faturas, os valores e a nota sobre os documentos de transferência. Imprima, colha a assinatura e use **Anexar distrato assinado** (PDF ou foto). O arquivo fica em área privada.
+Depois de aprovado, **Distrato (PDF)** gera o termo com as faturas, os valores e a nota sobre os documentos de transferência. Há dois caminhos para a assinatura:
+- **No papel:** imprima, colha a assinatura e use **Anexar distrato assinado** (PDF ou foto). O arquivo fica em área privada.
+- **Eletrônica:** use **Assinatura eletrônica do distrato**. O sistema monta o distrato com o modelo ativo de "Distrato de Matrícula", você confere e envia pelo Assinafy; a família assina pelo e-mail ou pelo Portal, e a cópia certificada passa a ser a cópia assinada do pedido (seção 80). Precisa de um modelo de distrato ativo em **Modelos de Documentos**.
 
 ### 74.4 Concluir
 **Concluir** só funciona a partir da data de saída e, por padrão, com o distrato assinado anexado. Ele cancela a matrícula, cancela as faturas marcadas (tirando a cobrança do gateway), cria a fatura da multa (se houver), cancela a rematrícula do próximo ano que ainda não tinha turma nem contrato e, se marcado, abre o processo de saída em Transferências Escolares e emite a declaração. Os avisos aparecem na tela (por exemplo, uma fatura marcada para cancelar que recebeu pagamento depois da aprovação **não** é cancelada).
@@ -3962,8 +3964,6 @@ Em cada linha: **Marcar como feito** (com observação e comprovante em PDF ou f
 - O módulo **não calcula a rescisão, não gera o TRCT e não envia nada ao eSocial**: ele controla o que foi feito.
 - O motivo do desligamento e a observação ficam criptografados e fora do histórico de alterações.
 
----
-
 ## 📧 78. Manutenção Preventiva e Retenção de Histórico de E-mails (`email:limpar-logs`)
 
 O sistema mantém um registro auditável de todas as mensagens eletrônicas disparadas (comunicados em massa, envios de boletos/faturas, avisos de cobrança, follow-up de interessados e notificações do sistema) no módulo **Sistema e Segurança → E-mails Enviados**.
@@ -4013,6 +4013,99 @@ O módulo **Banco de Talentos / Currículos** fica no menu **RH**, permitindo à
 - **Guarda de Arquivos Originais:** O arquivo do currículo e a gravação do áudio são armazenados no sistema para auditoria, consulta futura da equipe de RH e conformidade.
 - **Visualização Rápida:** Na listagem de candidatos, o recrutador pode ver a foto do candidato, dados de contato, escola atual, status do processo, e com um clique visualizar o currículo ou ouvir a gravação da entrevista.
 - **Dispositivos Móveis (`stackedOnMobile`):** A tabela se ajusta automaticamente em formato de cartões visuais para consulta rápida no celular por gestores escolares.
+
+---
+
+## ✍️ 80. Documentos para Assinatura Eletrônica (`/admin/secretaria/documentos-assinatura`)
+
+Leva um documento do sistema (distrato de matrícula, contrato de trabalho, termos e declarações) para a **assinatura eletrônica pelo Assinafy**, sem imprimir. Fica no grupo **Secretaria**. A secretaria e a administração criam, enviam e cancelam; a coordenação consulta.
+
+### 80.1 O texto vem de um modelo
+Em **Modelos de Documentos** ficam os textos. Cada tipo de modelo tira os dados de um registro:
+
+| Tipo | Dados de | Variáveis de exemplo |
+|---|---|---|
+| Declarações do aluno (matrícula, frequência, quitação...) | **Aluno (matrícula)** | `{{ALUNO_NOME}}`, `{{TURMA_NOME}}`, `{{ANO_LETIVO}}` |
+| Distrato de Matrícula | **Cancelamento de matrícula** | `{{DATA_SAIDA}}`, `{{VALOR_DEVIDO}}`, `{{TABELA_FATURAS}}` |
+| Contrato de Trabalho, Termo de Confidencialidade | **Funcionário** | `{{FUNCIONARIO_NOME}}`, `{{CARGO}}`, `{{SALARIO}}` |
+
+- Ao escolher o tipo, o **guia de variáveis** da primeira aba mostra só as que existem para ele. `{{BLOCO_ASSINATURAS}}` lista os assinantes no fim do documento e vale em todos os tipos.
+- O editor **recusa ao salvar** uma variável que não existe para o tipo (por exemplo, `{{CARGO}}` em um distrato) ou escrita com espaço dentro das chaves: ela sairia impressa do jeito que foi escrita num documento que alguém vai assinar. A mensagem lista as erradas.
+- **Prévia** (botão no alto da página de edição): mostra o documento com os dados de um aluno, cancelamento ou funcionário, usando o texto que está na tela, mesmo sem salvar.
+- **Criar modelos padrão** (na lista): traz o distrato, o contrato de trabalho e o termo de confidencialidade como **rascunhos inativos**. São pontos de partida: leia, ajuste com o jurídico e o contador e só então ative.
+- Mudar o texto de um modelo **não altera** documentos que já foram criados: cada um guarda a cópia do que foi enviado.
+
+### 80.2 Criar o documento
+1. **Novo documento**: escolha o **modelo** (só aparecem os ativos) e o aluno, cancelamento ou funcionário de quem são os dados.
+2. O sistema sugere os **assinantes**: os responsáveis financeiros e o representante da escola (ou o funcionário e o representante). Confira nomes e e-mails, acrescente ou tire pessoas (de 1 a 10, cada uma com um e-mail diferente). Quem não tem e-mail cadastrado vem num aviso.
+3. Se quiser, defina o **prazo**: passado o prazo sem todas as assinaturas, o documento expira e sai do Assinafy.
+4. Ao salvar, o sistema monta o PDF e abre a página do documento. **Nada foi enviado ainda.**
+
+Atalhos: **Cancelamento de Matrícula → Assinatura eletrônica do distrato**, e **Admissão e Desligamento → Providências → Assinatura eletrônica**. Eles montam o documento e levam você até ele.
+
+### 80.3 Enviar e acompanhar
+- Na página do documento, confira o texto e use **Enviar para assinatura**. Cada assinante recebe um e-mail do Assinafy.
+- Se o e-mail não chegar, **Links de assinatura** mostra o endereço de cada pessoa que ainda não assinou, para você mandar por outro meio. O link é só daquela pessoa.
+- O andamento ("1 de 3 assinaram") se atualiza sozinho: o Assinafy avisa, o sistema consulta de hora em hora e **Atualizar situação** consulta na hora.
+- Se o envio der **erro**, o motivo aparece na página. Corrija e envie de novo: o que já foi cadastrado no Assinafy não se repete.
+
+| Situação | O que significa |
+|---|---|
+| Rascunho | Montado e ainda não enviado |
+| Aguardando assinaturas | Enviado; falta alguém |
+| Assinado | Todos assinaram; o **PDF assinado**, com o certificado, fica guardado |
+| Recusado | Alguém recusou a assinatura |
+| Cancelado | A escola cancelou; quem não assinou deixa de poder assinar |
+| Expirado | Passou do prazo sem todas as assinaturas |
+| Erro no envio | O Assinafy recusou; dá para enviar de novo |
+
+### 80.4 O que acontece quando todos assinam
+- **Distrato de matrícula:** a cópia assinada passa a ser a do pedido de cancelamento, e a conclusão não espera mais o anexo.
+- **Providência de RH:** a providência é concluída sozinha, com o PDF assinado como comprovante (se o processo ainda estiver em andamento).
+- Quem criou o documento recebe um aviso no sino.
+- No **Portal da Família › Cancelar Matrícula**, o responsável vê o botão **Assinar o distrato** com o link dele e o andamento.
+
+### 80.5 Cuidados
+- Os documentos de **funcionário** (contrato de trabalho, termos) só aparecem para quem também vê **Admissão e Desligamento**.
+- A validade jurídica da assinatura depende do tipo contratado no Assinafy e da natureza do documento. O sistema guarda o PDF certificado e a prova do que foi enviado, mas não afirma validade: confirme com o jurídico.
+- Um documento enviado **não pode ser editado**. Para corrigir um erro, cancele e crie outro.
+- Só pode haver um documento em andamento por modelo e registro.
+- Se **Enviar** avisar de configuração pendente, falta definir `ASSINAFY_API_KEY` e `ASSINAFY_ACCOUNT_ID` no servidor (fale com a equipe técnica).
+
+---
+
+## 📥 81. Minha Mesa: Pendências por Papel (`/admin/minha-mesa`)
+
+Reúne numa tela só o que está **esperando ação** do seu papel, em vez de abrir cada módulo para descobrir. Aparece no topo do menu, para quem pode resolver ao menos uma fila.
+
+### 81.1 Como ler a tela
+- No alto, dois totais: o que **espera ação** e o que **já passou do prazo**.
+- As filas vêm **agrupadas por área** (Secretaria, RH, Calendário e Horários). Cada fila mostra a quantidade, os atrasados em vermelho, uma orientação do que fazer, os cinco itens mais antigos e **Abrir a fila**.
+- Clique no nome do item para ir direto à tela onde ele se resolve.
+- As filas sem pendência ficam numa linha só ("Em dia: ..."). Se uma fila não carregar, a tela avisa qual e mostra as outras.
+- O número no menu é o de **atrasados** (vermelho); sem atrasados, o total (amarelo). Ele se atualiza a cada poucos minutos; **Atualizar** força.
+
+### 81.2 As filas
+
+| Fila | Entra quando | Atrasado quando |
+|---|---|---|
+| Pedidos de cancelamento para analisar | A família pediu e a secretaria não respondeu | Sem resposta há mais de 3 dias |
+| Cancelamentos prontos para concluir | Aprovado e a data de saída chegou | A data de saída já passou |
+| Devoluções a fazer | Cancelamento concluído com valor a devolver e sem a data da devolução | Há mais de 10 dias |
+| Documentos para enviar à assinatura | Rascunho ou envio com erro | Erro, ou rascunho há mais de 2 dias |
+| Assinaturas atrasadas | Enviado há mais de 7 dias, ou com o prazo acabando em até 3 dias | Toda a fila |
+| Rematrículas aguardando a turma | A família confirmou os dados e falta escolher a turma | Há mais de 5 dias |
+| Transferências em andamento | Entrada ou saída ainda em andamento | A data prevista passou |
+| Providências de RH vencidas | Providência não resolvida com o prazo vencido | Toda a fila |
+| Grades horárias incompletas | Turma do período em curso com aulas faltando ou turno sem tempos | O período já começou |
+
+### 81.3 Cuidados
+- Cada pessoa vê **só as filas que o papel ativo dela pode resolver**. Ao trocar de papel, a Mesa muda. O professor, por exemplo, não vê nenhuma e o item nem aparece no menu.
+- Os documentos de funcionário só entram nas filas de assinatura para quem também vê Admissão e Desligamento.
+- A Mesa **só lê**: ela não atribui, não adia nem resolve nada. Resolvido o item na tela do módulo, ele sai da fila.
+- Os prazos de dias são da escola e podem ser ajustados pela equipe técnica (`config/mesa_pendencias.php`).
+
+---
 
 ---
 

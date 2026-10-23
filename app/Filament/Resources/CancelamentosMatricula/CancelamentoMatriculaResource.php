@@ -51,7 +51,7 @@ class CancelamentoMatriculaResource extends Resource implements HasShieldPermiss
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['matricula.pessoa', 'matricula.turma.serie', 'matricula.contrato']);
+        return parent::getEloquentQuery()->with(['matricula.pessoa', 'matricula.turma.serie', 'matricula.contrato', 'documentosAssinatura']);
     }
 
     public static function form(Schema $schema): Schema

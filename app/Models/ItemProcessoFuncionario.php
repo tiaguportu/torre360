@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\ReageAoDocumentoAssinado;
 use App\Enums\CategoriaItemProcessoFuncionario;
 use App\Enums\StatusProcessoFuncionario;
+use App\Services\ProcessoFuncionarioService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Uma providência do processo de admissão ou desligamento. "Resolvido" é feito ou marcado "não se aplica" (com
  * justificativa): nos dois casos deixa de impedir a conclusão do processo.
  */
-class ItemProcessoFuncionario extends Model
+class ItemProcessoFuncionario extends Model implements ReageAoDocumentoAssinado
 {
     protected $table = 'itens_processo_funcionario';
 
@@ -54,6 +57,24 @@ class ItemProcessoFuncionario extends Model
     public function concluidoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'concluido_por_user_id');
+    }
+
+    /**
+     * Documentos mandados para assinatura eletrônica por esta providência (Onda 69), do mais recente para o mais antigo.
+     *
+     * @return MorphMany<DocumentoAssinatura, $this>
+     */
+    public function documentosAssinatura(): MorphMany
+    {
+        return $this->morphMany(DocumentoAssinatura::class, 'documentavel')->latest('id');
+    }
+
+    /**
+     * Quando o documento é assinado por todos, a providência passa a feita, com a cópia certificada como comprovante.
+     */
+    public function documentoAssinado(DocumentoAssinatura $documento): void
+    {
+        app(ProcessoFuncionarioService::class)->registrarAssinaturaEletronica($this, $documento);
     }
 
     public function estaResolvido(): bool

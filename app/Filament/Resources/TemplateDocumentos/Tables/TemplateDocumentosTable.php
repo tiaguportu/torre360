@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TemplateDocumentos\Tables;
 
 use App\Enums\TipoTemplateDocumento;
+use App\Models\TemplateDocumento;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -28,6 +29,11 @@ class TemplateDocumentosTable
                     ->label('Tipo de Documento')
                     ->badge()
                     ->sortable(),
+
+                TextColumn::make('contexto')
+                    ->label('Dados de')
+                    ->state(fn (TemplateDocumento $record): string => $record->contexto()->getLabel())
+                    ->toggleable(),
 
                 TextColumn::make('validade_dias')
                     ->label('Validade')

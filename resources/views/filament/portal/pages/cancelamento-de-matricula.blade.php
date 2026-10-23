@@ -16,6 +16,7 @@
             @php
                 $pedido = $pedidos->get($matricula->id);
                 $pendencias = $this->getPendencias($matricula);
+                $assinatura = $pedido?->estaAprovado() || $pedido?->estaConcluido() ? $this->getAssinaturaEletronica($pedido) : null;
             @endphp
 
             <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900">
@@ -54,7 +55,11 @@
                             <p class="mt-2 text-gray-600 dark:text-gray-300">A secretaria vai analisar o pedido e retornar.</p>
                         @elseif ($pedido->estaAprovado())
                             <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                Pedido aprovado. Baixe o distrato, assine e entregue na secretaria.
+                                @if ($assinatura)
+                                    Pedido aprovado. A escola enviou o distrato para assinatura eletrônica.
+                                @else
+                                    Pedido aprovado. Baixe o distrato, assine e entregue na secretaria.
+                                @endif
                                 A escola conclui o cancelamento a partir de {{ $pedido->data_efetiva->format('d/m/Y') }}.
                             </p>
                         @elseif ($pedido->estaConcluido())
@@ -80,7 +85,26 @@
                             </p>
                         @endif
 
+                        @if ($assinatura)
+                            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                @if ($assinatura['situacao'] === \App\Enums\StatusDocumentoAssinatura::Assinado)
+                                    Distrato assinado por todos eletronicamente.
+                                @else
+                                    Assinatura eletrônica do distrato: <strong>{{ $assinatura['assinaram'] }} de {{ $assinatura['total'] }}</strong> já assinaram.
+                                    @if ($assinatura['ja_assinou'])
+                                        Você já assinou. Falta(m) {{ $assinatura['total'] - $assinatura['assinaram'] }}.
+                                    @endif
+                                @endif
+                            </p>
+                        @endif
+
                         <div class="mt-3 flex flex-wrap gap-2">
+                            @if ($assinatura && $assinatura['link'])
+                                <x-filament::button tag="a" size="sm" color="primary" icon="heroicon-o-pencil" :href="$assinatura['link']" target="_blank" rel="noopener noreferrer">
+                                    Assinar o distrato
+                                </x-filament::button>
+                            @endif
+
                             @if ($pedido->temDistrato())
                                 <x-filament::button tag="a" size="sm" color="gray" icon="heroicon-o-document-text" :href="route('cancelamentos-matricula.distrato', ['cancelamento' => $pedido->id])" target="_blank">
                                     Baixar distrato

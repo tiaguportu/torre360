@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
 use App\Services\AssinafyService;
+use App\Services\Documentos\AssinaturaDocumentoService;
 use App\Services\WebhookSignatureValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class AssinafyWebhookController extends Controller
 {
-    public function __invoke(Request $request, AssinafyService $service, WebhookSignatureValidator $validator)
+    public function __invoke(Request $request, AssinafyService $service, WebhookSignatureValidator $validator, AssinaturaDocumentoService $documentos)
     {
         $payload = $request->all();
 
@@ -39,7 +40,9 @@ class AssinafyWebhookController extends Controller
             return response()->json(['message' => 'assinatura inválida'], 401);
         }
 
-        $success = $service->handleWebhook($payload);
+        // O mesmo endereço recebe os eventos dos contratos de matrícula e dos documentos avulsos (Onda 69): primeiro o
+        // contrato, que é o fluxo que já existia; se o documento não for de contrato, tenta os documentos avulsos.
+        $success = $service->handleWebhook($payload) || $documentos->processarWebhook($payload);
 
         if ($success) {
             return response()->json(['message' => 'Webhook processado com sucesso'], 200);

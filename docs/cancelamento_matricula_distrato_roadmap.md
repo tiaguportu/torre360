@@ -26,7 +26,7 @@ Base legal:
   (que ninguém chamava) e a `TransferenciaEscolar` (saída com declaração).
 - `RematriculaService::aplicarCancelamento`, que cancelava a matrícula e as faturas da **rematrícula** (outro
   fluxo), serviu de modelo.
-- O Assinafy só atende o `Contrato`; o distrato não passa por ele.
+- O Assinafy só atendia o `Contrato`; o distrato não passava por ele (desde a Onda 69 pode passar, veja abaixo).
 
 ## O que foi feito
 
@@ -89,8 +89,8 @@ encerra o pedido.
 - **Devolver o dinheiro é manual:** o sistema controla a data e o valor; a saída se lança em Movimentação
   Bancária. A fatura devolvida fica `Cancelado` e o recebimento original continua no extrato.
 - Sem proporcional do mês da saída, sem cálculo automático de multa e sem aviso à família por e-mail ou WhatsApp
-  (ela acompanha pelo Portal). O Portal não mostra o sino de avisos.
-- A assinatura é no papel (ou foto). O Assinafy não assina o distrato.
+  (ela acompanha pelo Portal). O Portal não mostra o sino de avisos: a [Onda 70](central_avisos_familia_roadmap.md) propõe esse aviso. Os pedidos parados aparecem para a secretaria na fila *Pedidos de cancelamento para analisar* da [Mesa de Pendências](mesa_pendencias_roadmap.md).
+- A assinatura pode ser no papel (anexando a cópia) ou **eletrônica pelo Assinafy** (Onda 69): a ação *Assinatura eletrônica do distrato* monta o documento com o modelo ativo de distrato, a secretaria confere e envia, a família assina pelo link (também disponível no Portal) e a cópia certificada passa a ser a cópia assinada do pedido, dispensando o anexo. Sem modelo ativo de distrato, vale o texto fixo da tela e a assinatura segue no papel. Veja [assinatura_eletronica_documentos_roadmap.md](assinatura_eletronica_documentos_roadmap.md).
 
 ## Testes
 

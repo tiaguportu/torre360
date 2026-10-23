@@ -421,6 +421,31 @@ A grade de cada turma conferida contra a matriz curricular, com sugestão dos ho
 
 ---
 
+### 32. ✍️ Assinatura Eletrônica de Documentos e Editor de Modelos (Onda 69)
+Qualquer documento do sistema pode ir para assinatura pelo Assinafy, a partir de um modelo editável. Detalhes em `docs/assinatura_eletronica_documentos_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| **Modelos de Documentos** (ampliado) | Contextos de dados (aluno, cancelamento de matrícula, funcionário), catálogo único de variáveis (`MacrosDocumentoService`), guia dinâmico, **recusa de variável inexistente**, prévia com dados de um registro, histórico de alterações e modelos padrão (distrato, contrato de trabalho e termo de confidencialidade) que nascem inativos |
+| `DocumentoAssinatura` | Documento avulso: cópia do texto, PDF com SHA-256, assinantes sugeridos (família e representante da escola, ou funcionário), envio retomável, situação por webhook, botão e rotina horária (`documentos:reconciliar-assinaturas`), certificado baixado e guardado |
+| Reação ao documento assinado | O distrato assinado vira a cópia assinada do cancelamento; o contrato de trabalho ou termo conclui a providência de RH. Acontece uma vez e só com o certificado em mãos |
+| Privacidade | PDFs em área privada, abertos para a equipe com permissão, para quem assina (pelo e-mail) e para a família do aluno; documento de RH só para quem vê Admissão e Desligamento; links de assinatura criptografados; log sem texto nem e-mails |
+| Fluxo do contrato | Intocado: o webhook tenta o contrato primeiro e, se o documento não for dele, o avulso |
+
+---
+
+### 33. 📥 Mesa de Pendências por Papel (Onda 71)
+Uma tela com o que espera ação do papel ativo, reunindo as filas dos módulos. Detalhes em `docs/mesa_pendencias_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| `FontePendencia` | Contrato de uma fila (contar, atrasados, itens, permissão, tela de resolução); cada módulo registra a sua em `config/mesa_pendencias.php` |
+| **Minha Mesa** | Nove filas iniciais: cancelamentos (analisar, concluir, devolver), documentos (enviar, assinaturas atrasadas), rematrículas sem turma, transferências em andamento, providências de RH vencidas e grades incompletas |
+| Por papel | Só aparecem as filas que o papel ativo pode resolver; a página nem aparece para quem não tem nenhuma. Fila que falha não derruba a Mesa |
+| Selo do menu | Atrasados em vermelho (ou o total em amarelo), guardado por 5 minutos por usuário e papel |
+
+---
+
 ## ⚙️ Instalação e Execução (Ambiente Local)
 
 ### Pré-requisitos
@@ -554,8 +579,13 @@ autorizada:
 | Ondas 61 a 67 (2 propostas, 4 implementadas e 1 mesclada à Onda 35), com as ampliações propostas | `docs/ondas_61_a_67_indice.md` |
 | Conferência de cláusulas dos modelos de contrato (Onda 66) | `docs/conferencia_clausulas_contrato_roadmap.md` |
 | Loja escolar opcional: uniformes e livros (Onda 67) | `docs/loja_escolar_roadmap.md` |
+| Ondas 68 a 71 (2 propostas e 2 implementadas), com as fusões sugeridas e as ampliações propostas | `docs/ondas_68_a_71_indice.md` |
+| Gateway de pagamento real: Asaas e Efí (Onda 68) | `docs/gateway_pagamento_real_roadmap.md` |
+| Central de avisos à família (Onda 70) | `docs/central_avisos_familia_roadmap.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
 Censo Escolar e a lista de material, nas seções 26 e 27; o cancelamento de matrícula, os encargos por atraso,
-a admissão e o desligamento e a grade horária assistida, nas seções 28 a 31.)
+a admissão e o desligamento e a grade horária assistida, nas seções 28 a 31; a assinatura eletrônica de documentos
+e a mesa de pendências, nas seções 32 e 33. Os documentos dessas duas ondas, 69 e 71, estão em
+`docs/assinatura_eletronica_documentos_roadmap.md` e `docs/mesa_pendencias_roadmap.md`.)

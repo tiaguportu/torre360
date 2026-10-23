@@ -4,6 +4,8 @@ namespace App\Filament\Resources\TemplateDocumentos\Schemas;
 
 use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Enums\TipoTemplateDocumento;
+use App\Services\Documentos\MacrosDocumentoService;
+use Closure;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -12,8 +14,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
 
 class TemplateDocumentoForm
 {
@@ -37,19 +39,21 @@ class TemplateDocumentoForm
                                             ->label('Tipo de Documento')
                                             ->options(TipoTemplateDocumento::class)
                                             ->default(TipoTemplateDocumento::DeclaracaoMatricula)
-                                            ->required(),
+                                            ->required()
+                                            ->live()
+                                            ->helperText(fn (Get $get): string => 'Os dados do documento vêm de: '.(self::tipo($get('tipo'))?->contexto()->getLabel() ?? '—').'. As variáveis abaixo mudam conforme o tipo.'),
 
                                         TextInput::make('validade_dias')
                                             ->label('Validade em Dias')
                                             ->numeric()
                                             ->default(30)
                                             ->required()
-                                            ->helperText('Período em que a certidão/declaração será considerada válida para autenticação online.'),
+                                            ->helperText('Só vale para a declaração emitida com QR Code: período em que ela é considerada válida para autenticação online. Para documentos que vão para assinatura eletrônica, o valor é ignorado.'),
 
                                         Toggle::make('is_ativo')
                                             ->label('Modelo Ativo')
                                             ->default(true)
-                                            ->helperText('Se desmarcado, não estará disponível para novas emissões.'),
+                                            ->helperText('Se desmarcado, não estará disponível para novas emissões nem para assinatura.'),
 
                                         Textarea::make('descricao')
                                             ->label('Descrição / Finalidade do Documento')
@@ -63,37 +67,11 @@ class TemplateDocumentoForm
                                         Placeholder::make('ajuda_macros')
                                             ->label('')
                                             ->columnSpanFull()
-                                            ->content(function () {
-                                                $html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-800">';
-                                                $html .= '<div>';
-                                                $html .= '<h5 class="font-bold text-slate-800 dark:text-slate-200 mb-1">Dados do Estudante:</h5>';
-                                                $html .= '<ul class="space-y-1 font-mono text-slate-600 dark:text-slate-400">';
-                                                $html .= '<li><code>{{ALUNO_NOME}}</code> — Nome completo</li>';
-                                                $html .= '<li><code>{{ALUNO_CPF}}</code> — CPF formatado</li>';
-                                                $html .= '<li><code>{{ALUNO_RG}}</code> — Identidade / RG</li>';
-                                                $html .= '<li><code>{{ALUNO_NASCIMENTO}}</code> — Data de nascimento</li>';
-                                                $html .= '<li><code>{{ALUNO_MAE}}</code> — Nome da Mãe</li>';
-                                                $html .= '<li><code>{{ALUNO_PAI}}</code> — Nome do Pai</li>';
-                                                $html .= '<li><code>{{ALUNO_ENDERECO}}</code> — Endereço residencial completo</li>';
-                                                $html .= '</ul>';
-                                                $html .= '</div>';
-                                                $html .= '<div>';
-                                                $html .= '<h5 class="font-bold text-slate-800 dark:text-slate-200 mb-1">Dados Acadêmicos e Instituição:</h5>';
-                                                $html .= '<ul class="space-y-1 font-mono text-slate-600 dark:text-slate-400">';
-                                                $html .= '<li><code>{{MATRICULA_ID}}</code> — Código da matrícula</li>';
-                                                $html .= '<li><code>{{CURSO_NOME}}</code> — Nome do curso</li>';
-                                                $html .= '<li><code>{{SERIE_NOME}}</code> — Série / Ano escolar</li>';
-                                                $html .= '<li><code>{{TURMA_NOME}}</code> — Turma</li>';
-                                                $html .= '<li><code>{{TURNO_NOME}}</code> — Turno</li>';
-                                                $html .= '<li><code>{{PERIODO_LETIVO}}</code> — Período letivo</li>';
-                                                $html .= '<li><code>{{UNIDADE_NOME}}</code> — Unidade escolar</li>';
-                                                $html .= '<li><code>{{TABELA_HISTORICO}}</code> — Grade curricular / disciplinas</li>';
-                                                $html .= '</ul>';
-                                                $html .= '</div>';
-                                                $html .= '</div>';
-
-                                                return new HtmlString($html);
-                                            }),
+                                            ->content(fn (Get $get) => view('filament.components.guia-variaveis', [
+                                                'catalogo' => app(MacrosDocumentoService::class)->catalogo(
+                                                    (self::tipo($get('tipo')) ?? TipoTemplateDocumento::DeclaracaoMatricula)->contexto(),
+                                                ),
+                                            ])),
                                     ]),
                             ]),
 
@@ -101,8 +79,21 @@ class TemplateDocumentoForm
                             ->schema([
                                 TinyEditor::make('conteudo')
                                     ->label('Texto Principal do Documento')
-                                    ->helperText('Utilize o editor para formatar o texto oficial. O carimbo com QR Code e informações de verificação será inserido automaticamente no rodapé do documento.')
+                                    ->helperText('Utilize o editor para formatar o texto oficial. Na declaração emitida, o carimbo com QR Code e as informações de verificação entram automaticamente no rodapé. Use "Prévia", no alto da página, para ver o documento com os dados de um registro.')
                                     ->required()
+                                    ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                        $tipo = self::tipo($get('tipo'));
+
+                                        if (! $tipo) {
+                                            return;
+                                        }
+
+                                        $desconhecidas = app(MacrosDocumentoService::class)->desconhecidas(is_string($value) ? $value : null, $tipo->contexto());
+
+                                        if ($desconhecidas !== []) {
+                                            $fail('Estas variáveis não existem para "'.$tipo->getLabel().'" e sairiam impressas no documento: '.implode(', ', $desconhecidas).'. Use só as do guia, escritas sem espaços dentro das chaves.');
+                                        }
+                                    })
                                     ->columnSpanFull(),
                             ]),
 
@@ -124,5 +115,13 @@ class TemplateDocumentoForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * O estado de um Select com enum pode chegar como o enum ou como o texto.
+     */
+    public static function tipo(mixed $valor): ?TipoTemplateDocumento
+    {
+        return $valor instanceof TipoTemplateDocumento ? $valor : TipoTemplateDocumento::tryFrom((string) $valor);
     }
 }

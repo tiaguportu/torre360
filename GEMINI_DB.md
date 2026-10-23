@@ -963,7 +963,7 @@ Estrutura de ensino e turmas.
 - **Representa:** Modelos e templates oficiais de declarações, certidões e atestados emitidos pela escola, com suporte a variáveis dinâmicas e macros de preenchimento.
 - **Campos Principais:**
   - `nome`: Nome do modelo (ex: "Declaração de Matrícula Regular", "Declaração de Frequência Escolar", "Declaração para Passe Escolar e Transporte", "Declaração de Quitação de Débitos").
-  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_conclusao`, `declaracao_transferencia`, `declaracao_transporte`, `declaracao_horario`, `historico_escolar`, `personalizado`).
+  - `tipo`: Enum `TipoTemplateDocumento` (`declaracao_matricula`, `declaracao_frequencia`, `declaracao_quitacao`, `declaracao_conclusao`, `declaracao_transferencia`, `declaracao_transporte`, `declaracao_horario`, `historico_escolar`, `personalizado`, e, desde a Onda 69, `distrato_matricula`, `contrato_trabalho`, `termo_confidencialidade`). Cada tipo tem um **contexto** de dados (Enum `ContextoDocumento`: `matricula`, `cancelamento_matricula`, `funcionario`) que define as variáveis válidas; só os tipos de contexto `matricula` entram na emissão de declarações (`TemplateDocumento::paraEmissao()`).
   - `descricao`: Finalidade descritiva apresentada nos cartões do Portal.
   - `conteudo`: HTML com macros dinâmicas (`{{ALUNO_NOME}}`, `{{ALUNO_CPF}}`, `{{HORARIO_AULAS}}`, `{{PROTOCOLO}}`, etc.).
   - `validade_dias`: Prazo padrão em dias de validade do documento emitido (ex: 30, 60, 90).
@@ -1763,3 +1763,27 @@ Módulo preditivo e tático para intervenção precoce em alunos com vulnerabili
 - **Permissões:** `ViewAny`, `View`, `Create`, `Update`, `Delete`, `DeleteAny` `:Candidato` (RH).
 - **Serviços:** `CurriculoIaService` (interpretação multimodal de currículos em PDF, Imagens, Microsoft Word `.docx`/`.doc` e LibreOffice `.odt`, extração de foto via contêineres ZIP `word/media/`, `Pictures/`, streams JPEG e GD nativo, e interpretação de áudios de WhatsApp com síntese de impressões de RH via modal interativo).
 
+
+---
+
+## 33. Assinatura Eletrônica de Documentos e Editor de Modelos (Onda 69)
+
+> `template_documentos` ganhou três tipos (`distrato_matricula`, `contrato_trabalho`, `termo_confidencialidade`) e o conceito de **contexto** (`ContextoDocumento`), sem coluna nova: o contexto sai do tipo (`TipoTemplateDocumento::contexto()`). O catálogo de variáveis de cada contexto fica em `MacrosDocumentoService::catalogo()`; salvar um modelo com variável fora do catálogo é recusado. Alterações em modelos vão para o log `modelos` (só os nomes dos campos).
+
+### `documentos_assinatura`
+- **Representa:** Um documento mandado para assinatura eletrônica no Assinafy, fora do contrato de matrícula.
+- **Campos Principais:** `template_documento_id` (FK `template_documentos`, nullOnDelete), `documentavel_type` + `documentavel_id` (registro ligado, polimórfico sem morph map: `Matricula`, `CancelamentoMatricula`, `Funcionario`, `ItemProcessoFuncionario`, `ProcessoFuncionario`), `titulo` (200), `conteudo` (longText: **cópia do texto** já preenchido, para provar o que foi assinado), `status` (Enum `StatusDocumentoAssinatura`: `rascunho`, `enviado`, `assinado`, `recusado`, `cancelado`, `expirado`, `erro`), `arquivo_original_path` / `arquivo_original_hash` (SHA-256 do PDF enviado) / `arquivo_assinado_path` (PDF certificado; disco `local`, pasta `documentos_assinatura/{id}/`), `assinafy_id`, `assinafy_status`, `assinafy_log` (JSON: `erro`, `environment_url`, `api_status`, `last_check`, `webhook_last`, `reacao_aplicada_em`, `removido_do_assinafy`, `assinado_apos_cancelamento`), `expira_em` (date), `enviado_em`, `concluido_em`, `criado_por_user_id` (FK `users`, nullOnDelete).
+- **Índices:** `documentavel_type` + `documentavel_id`, `idx_doc_assinatura_assinafy`, `idx_doc_assinatura_status`.
+- **Regras (`AssinaturaDocumentoService`):** só cria com modelo ativo e registro do contexto do modelo; 1 a 10 assinantes com e-mail válido e sem repetição; um documento em andamento por modelo e registro. Enviar é retomável (guarda `assinafy_id` antes dos passos seguintes). A situação só muda depois de consultar a API (o webhook não é assinado). O registro ligado reage uma vez (`ReageAoDocumentoAssinado`), só com o certificado baixado. Rotina horária `documentos:reconciliar-assinaturas`.
+- **Permissões:** `ViewAny`, `View`, `Create`, `Enviar`, `Cancelar` `:DocumentoAssinatura`. Documento de RH (`documentavel_type` = `Funcionario`, `ItemProcessoFuncionario` ou `ProcessoFuncionario`) exige também `View:ProcessoFuncionario`. Sem edição nem exclusão.
+- **Relacionamentos:** BelongsTo `template`, `criadoPor`; MorphTo `documentavel`; HasMany `assinantes` (por `ordem`). `CancelamentoMatricula::documentosAssinatura()` e `ItemProcessoFuncionario::documentosAssinatura()`.
+
+### `assinantes_documento`
+- **Representa:** Cada pessoa que deve assinar um documento.
+- **Campos Principais:** `documento_assinatura_id` (FK, cascade), `nome` (160), `email` (160), `papel` (40), `ordem`, `status` (Enum `StatusAssinante`: `pendente`, `assinou`, `recusou`), `assinado_em`, `assinafy_signer_id`, `link_assinatura` (text, **cifrado**: é a "chave" da assinatura daquela pessoa).
+
+---
+
+## 34. Mesa de Pendências por Papel (Onda 71)
+
+> Não há tabela nova. Cada fila (`App\Contracts\FontePendencia`, em `app/Services/Pendencias/Fontes/`) conta direto das tabelas dos módulos, com as mesmas regras das telas deles: `cancelamentos_matricula` (solicitado; aprovado com a data de saída chegada; concluído com valor a devolver e sem `devolucao_realizada_em`, escopo `comDevolucaoPendente`), `documentos_assinatura` (rascunho ou erro; enviado há mais de N dias ou com `expira_em` próximo), `rematriculas` (`aguardandoTurma()`), `transferencias_escolares` (em andamento), `itens_processo_funcionario` (`atrasados()`) e a visão geral da grade horária. A lista de filas e os prazos ficam em `config/mesa_pendencias.php`. O selo do menu guarda o resumo no cache por usuário e papel (`mesa-pendencias:{user}:{papel}`). Cada fila declara a permissão do módulo que a alimenta; a Mesa não tem permissão própria.
