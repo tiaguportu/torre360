@@ -24,6 +24,8 @@ class ContaPagar extends Model
         'centro_custo_id',
         'transacao_bancaria_id',
         'observacao',
+        'pedido_compra_id',
+        'recebimento_compra_id',
     ];
 
     protected function casts(): array
