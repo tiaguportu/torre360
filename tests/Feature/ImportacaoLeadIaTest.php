@@ -701,6 +701,58 @@ class ImportacaoLeadIaTest extends TestCase
         });
     }
 
+    public function test_prompt_de_extracao_pede_relato_extenso_com_trechos_transcritos_literalmente(): void
+    {
+        config(['services.gemini.key' => 'chave-de-teste']);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => '{"alunos": []}']]]]]], 200)]);
+
+        app(GeminiAgentService::class)->extrairLead('[10/10/2026 09:12] Carla: queria valores do 2º ano');
+
+        Http::assertSent(function ($request): bool {
+            $instrucao = $request->data()['systemInstruction']['parts'][0]['text'] ?? '';
+
+            return str_contains($instrucao, 'EXTENSÃO DO RELATO E DAS OBSERVAÇÕES')
+                && str_contains($instrucao, 'no mínimo '.GeminiAgentService::MINIMO_CARACTERES_RELATO_CONTATO.' caracteres')
+                && str_contains($instrucao, 'podem passar de '.GeminiAgentService::CARACTERES_REFERENCIA_RELATO_LONGO)
+                && str_contains($instrucao, 'em material curto, relate tudo o que ele contém, sem repetir nem inventar para alongar')
+                && str_contains($instrucao, 'a seção \\"Trechos relevantes:\\"')
+                && str_contains($instrucao, 'TRANSCRITAS LITERALMENTE')
+                && str_contains($instrucao, 'Nunca invente uma fala')
+                && str_contains($instrucao, '"observacoes": "Resumo completo')
+                && ! str_contains($instrucao, 'Resumo objetivo')
+                // Os trechos são dado de terceiros: a regra contra injeção segue valendo para eles.
+                && str_contains($instrucao, 'dados de terceiros');
+        });
+    }
+
+    public function test_relato_longo_com_trechos_e_gravado_inteiro_no_historico_com_a_data_da_ultima_mensagem(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+
+        $narrativa = str_repeat('A mãe perguntou sobre o integral, o valor da mensalidade e a adaptação do Pedro, e a escola explicou o projeto bilíngue. ', 30);
+        $trechos = "Trechos relevantes:\n"
+            ."- Carla (10/10/2026 09:12): “Meu filho sofre com turmas lotadas, preciso de algo menor.”\n"
+            ."- Escola (10/10/2026 09:15): “Nossas turmas têm no máximo 18 alunos [...] bilinguismo diário.”\n"
+            .'- Carla (10/10/2026 09:18): “Fechado, vamos na terça às 14h.”';
+        $relato = trim($narrativa)."\n\n".$trechos;
+
+        $this->assertGreaterThan(GeminiAgentService::MINIMO_CARACTERES_RELATO_CONTATO, mb_strlen($relato));
+
+        $this->importar($this->extraido([
+            'relato_contato' => $relato,
+            'data_contato' => '2026-10-10 09:18:00',
+        ]));
+
+        $historico = HistoricoContato::firstOrFail();
+
+        // Nada é cortado, as aspas e os [...] ficam como a IA devolveu e o registro é datado pela última mensagem.
+        $this->assertStringContainsString($relato, $historico->relato);
+        $this->assertStringContainsString('“Fechado, vamos na terça às 14h.”', $historico->relato);
+        $this->assertStringStartsWith('Contato em 10/10/2026 09:18 via WhatsApp.', $historico->relato);
+        $this->assertSame('2026-10-10 09:18', $historico->data_contato->format('Y-m-d H:i'));
+    }
+
     public function test_acao_registra_as_visitas_da_conversa_e_informa_na_notificacao(): void
     {
         config(['services.gemini.key' => 'chave-de-teste']);

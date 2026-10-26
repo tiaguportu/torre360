@@ -1241,8 +1241,9 @@ Você DEVE retornar estritamente um JSON válido com a seguinte estrutura:
      */
     protected function instrucaoExtensaoResumoConversa(): string
     {
-        return "\n\nEXTENSÃO DO RELATÓRIO: escreva um resumo_markdown rico e proporcional ao tamanho da conversa, com no mínimo "
-            .self::MINIMO_CARACTERES_RESUMO_CONVERSA.' caracteres (conversas longas podem passar de '.self::CARACTERES_REFERENCIA_CONVERSA_LONGA.'). '
+        return "\n\nEXTENSÃO DO RELATÓRIO: escreva um resumo_markdown rico e proporcional ao tamanho da conversa. Em conversas de porte médio ou longo, com no mínimo "
+            .self::MINIMO_CARACTERES_RESUMO_CONVERSA.' caracteres (conversas longas podem passar de '.self::CARACTERES_REFERENCIA_CONVERSA_LONGA.'); '
+            .'em conversa curta, relate tudo o que ela contém, sem repetir nem inventar para alongar. '
             .'Não encurte em poucas linhas nem omita informação comercial relevante: valores, descontos, datas, horários, nomes, séries, turnos, concorrentes, motivos de troca de escola e objeções. '
             .'Em cada seção, desenvolva os itens com o contexto de quem disse o quê, em vez de apenas listar rótulos.'
             ."\n\nTRECHOS RELEVANTES: na seção \"### 📌 Trechos Relevantes da Conversa\", transcreva LITERALMENTE, entre aspas e em ordem cronológica, as falas mais importantes (de 6 a 12 em conversas longas; menos, se a conversa for curta). "

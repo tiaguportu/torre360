@@ -253,7 +253,8 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
     frases", e o resumo saía curto e sem as falas que justificam a temperatura. Agora
     `instrucaoExtensaoResumoConversa()` exige no mínimo `MINIMO_CARACTERES_RESUMO_CONVERSA` (2.500) caracteres no
     `resumo_markdown` (referência de `CARACTERES_REFERENCIA_CONVERSA_LONGA` = 6.000 em conversas longas; o relato é
-    `text`, 64 KB) e a nova seção `### 📌 Trechos Relevantes da Conversa`, com 6 a 12 falas copiadas **literalmente**,
+    `text`, 64 KB; o piso vale para conversas de porte médio ou longo, e a curta é relatada inteira, sem encher) e a
+    nova seção `### 📌 Trechos Relevantes da Conversa`, com 6 a 12 falas copiadas **literalmente**,
     entre aspas, em ordem cronológica, com remetente e hora. Com áudio, `instrucaoAudiosConversa()` manda incluir as
     passagens faladas indicando o número do áudio. Não há `maxOutputTokens` no payload (vale o teto do modelo), então
     não há corte por tokens nem JSON truncado. As falas são geradas pelo modelo e **não são conferidas contra o
@@ -485,6 +486,18 @@ A ação aceita o `.zip` de "Exportar conversa" do WhatsApp (Android: `Conversa 
   arquivo, depois do texto; com áudio o timeout por tentativa sobe para 120 s (como no resumo de conversa) e a ação pede
   `set_time_limit(180)`. O prompt passou a dizer que o atendente da escola nunca é o lead e a usar a data/hora da última
   mensagem como `data_contato` quando o texto for uma conversa do WhatsApp (vale também para texto colado).
+- **Relato extenso com trechos transcritos (2026-10-26):** o prompt do `extrairLead` pedia só um relato "detalhado" e
+  um resumo "objetivo" nas observações, e saía um parágrafo. `GeminiAgentService::instrucaoRelatoDoContato()` agora
+  exige no `relato_contato` de conversas de porte médio ou longo no mínimo `MINIMO_CARACTERES_RELATO_CONTATO` (1.500)
+  caracteres (referência de `CARACTERES_REFERENCIA_RELATO_LONGO` = 5.000 nas muito longas; o relato é `text`, 64 KB;
+  material curto é relatado inteiro, sem encher) e fecha o relato com a seção `Trechos relevantes:`, de 5 a 12 falas
+  copiadas **literalmente**, uma por linha (`- Nome (DD/MM/AAAA HH:MM): “fala”`), em ordem cronológica, com `[...]` nos
+  cortes. As aspas são curvas para não quebrar o JSON. O print é transcrito como aparece na imagem e o áudio, como foi
+  dito, indicando o arquivo. As `observacoes` do lead viraram um "resumo completo" do perfil, sem repetir as
+  transcrições. Nada no PHP corta o texto (`ImportacaoLeadIaService::registrarContato()` grava `cabecalho + relato`
+  inteiro; só `normalizarDatas()` converte datas ISO para DD/MM/AAAA), e `extrairLead` segue sem `maxOutputTokens`.
+  As falas são geradas pelo modelo e **não são conferidas contra o texto da conversa**. O registro já era datado pela
+  última mensagem (`data_contato`, nunca no futuro). Testes: `ImportacaoLeadIaTest` (prompt e gravação íntegra).
 - **LGPD/retenção:** `.zip`, áudios e imagens são apagados no `finally` da ação; só o que a IA extrai (relato, dados
   cadastrais) entra no lead, como já era com texto e print. O texto bruto da conversa **não** é gravado.
 - **Upload:** o campo aceita até 30 MB (`ImportarLeadIaAction::ZIP_KB_MAXIMOS`). O gate de upload temporário do Livewire

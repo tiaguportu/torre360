@@ -35,7 +35,7 @@ class ImportarLeadIaAction
             // Cria pessoa, lead e dependentes e aciona o Gemini: exige poder cadastrar leads.
             ->authorize(PermissaoAcao::qualquer('Create:Interessado'))
             ->modalHeading('✨ Importar Lead a partir de Mensagem / Print / Conversa (IA)')
-            ->modalDescription('Cole uma mensagem de texto, anexe uma captura de tela (print de conversa do WhatsApp, Instagram, e-mail) ou envie o .zip exportado pelo WhatsApp (texto, áudios e imagens). A IA da Google analisará o conteúdo e extrairá os dados automaticamente.')
+            ->modalDescription('Cole uma mensagem de texto, anexe uma captura de tela (print de conversa do WhatsApp, Instagram, e-mail) ou envie o .zip exportado pelo WhatsApp (texto, áudios e imagens). A IA da Google analisará o conteúdo, extrairá os dados automaticamente e registrará no histórico um relato detalhado com os trechos mais relevantes da conversa.')
             ->modalSubmitActionLabel('Analisar e Criar Lead')
             ->form([
                 FileUpload::make('conversa_zip')
