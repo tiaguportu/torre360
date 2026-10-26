@@ -625,22 +625,30 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
 ### 3.25 SLA de 1ª Resposta em Horário Comercial (Lote D4)
 1. **Conceito de Horário Útil:**
    - O cronômetro de primeiro contato considera estritamente os dias úteis e a faixa de horário de expediente da escola (padrão: segunda a sexta-feira, das 08h às 18h).
-   - Leads recebidos à noite, em feriados ou durante fins de semana têm o cálculo iniciado apenas no primeiro minuto útil do dia útil seguinte.
+   - Leads recebidos à noite ou durante fins de semana têm o cálculo iniciado apenas no primeiro minuto útil do dia útil seguinte (ex.: lead criado na sexta às 17h com prazo de 120 minutos vence na segunda às 09h).
+   - **Feriados não são considerados:** um feriado em dia de semana conta como dia útil normal. Os dias úteis e o horário do expediente vêm da configuração do sistema (`config/crm.php`), não de um calendário de feriados.
 2. **Prazo por Lead e Institucional:**
    - Prazo padrão institucional: **120 minutos úteis** (configurável em `config/crm.php`).
    - Cada lead pode receber um prazo personalizado na ficha cadastral (campo *SLA de 1ª Resposta em minutos úteis*).
    - O prazo corre a partir da **data de cadastro do lead** e termina no **primeiro contato registrado** com a família. Qualquer um destes registros encerra o SLA: a ação **Atendimento** da tabela, a **interação rápida da Linha do Tempo 360°** e o botão **Registrar Contato** da aba *Histórico de Contatos*. Vale a data do contato informada.
    - **Não encerram o SLA:** registros automáticos do sistema (régua de e-mails, análises da IA), movimentações de etapa no funil e o reenvio do formulário do site.
-   - Só o **primeiro** contato conta: os seguintes não alteram a data. Editar ou excluir um contato depois não reabre o SLA.
+   - Só o **primeiro** contato conta: os seguintes não alteram a data.
+   - **Editar ou excluir contatos:** a data do primeiro contato acompanha o histórico. Se você mudar a data, o tipo (para *Movimentação no Funil* ou *Formulário do Site*) ou a autoria do contato que definia o primeiro contato, ou excluí-lo (inclusive em lote), o sistema recalcula a partir dos contatos da escola que restam: passa a valer o mais antigo. Se não restar nenhum, **o SLA volta a correr** e o selo deixa de ficar "Respondido". Antecipar outro contato para antes do primeiro também antecipa a data. Excluir ou editar um contato que não era o primeiro não muda nada.
+   - **Leads antigos:** se a data de primeiro contato do lead veio de outra origem (por exemplo, gravada no cadastro, sem um contato correspondente no histórico), mexer no histórico não a apaga nem reabre o SLA.
 3. **Indicador Visual na Tabela:**
-   - A coluna **SLA 1ª Resposta** exibe badges dinâmicos:
-     - 🟢 **Atendido no Prazo:** Primeiro contato efetuado antes do estouro comercial.
-     - 🔵 **Dentro do Prazo:** Lead aguardando retorno com tempo útil restante.
-     - 🔴 **SLA Estourado:** Prazo limite excedido sem registro de atendimento humano.
-   - O tooltip da coluna detalha a data/hora limite calculada e o tempo decorrido.
+   - A coluna **SLA 1ª Resposta** (pode ser ocultada ou exibida no seletor de colunas da tabela) exibe um selo com o texto e a cor do momento:
+     - 🟢 **Respondido em dd/mm HH:mm:** o primeiro contato já foi registrado (a data é a do contato). O selo **não diferencia** resposta dentro do prazo de resposta com atraso.
+     - 🟡 **SLA: resta 1h 30min útil** (ou *resta 45 min útil*): lead aguardando o primeiro contato, com o prazo ainda em curso.
+     - 🔴 **SLA Estourado há 2h 10min** (ou *há 35 min*): o prazo venceu sem primeiro contato registrado.
+     - ⚪ **Finalizado:** o lead já está numa etapa final (matriculado ou perdido) sem primeiro contato registrado; o SLA não se aplica mais.
+   - O tooltip (ao passar o mouse sobre o selo) mostra a **data e hora limite** calculada (*Limite comercial: dd/mm/aaaa HH:mm*). O tempo restante ou de atraso aparece no próprio selo.
+   - Na ficha do interessado, o campo *SLA de 1ª Resposta* mostra o mesmo texto e a data limite logo abaixo.
 4. **Monitoramento Automatizado e Alertas:**
    - Uma rotina agendada no servidor (`crm:verificar-sla-estourado`) roda a cada 15 minutos identificando estouros de SLA.
-   - Assim que um lead estoura o tempo limite, o **consultor responsável** recebe uma notificação no sino do painel com atalho direto para falar com a família.
+   - Só entram na verificação leads **sem primeiro contato registrado** e **fora de etapas finais**.
+   - Lead **com consultor:** assim que estoura o prazo, o consultor responsável recebe uma notificação no sino do painel (*SLA Estourado: [nome] sem 1ª resposta*) com o botão **Ver Lead**, que abre a ficha.
+   - Lead **sem consultor** (por exemplo, vindo do formulário público): quem recebe é a **gestão** (perfis coordenador, administrador e super administrador), em **uma notificação única por rodada** com a quantidade, até 5 nomes e o botão **Ver Leads Sem Consultor**. Se não houver nenhum gestor ativo, o aviso não é dado como enviado: o lead continua pendente e é tentado de novo na próxima rodada, e o sistema registra o problema no log.
+   - Cada lead gera no máximo **um** aviso por destinatário (consultor ou gestão); reabrir o SLA depois (por exemplo, excluindo o primeiro contato) não repete o aviso já enviado.
 
 ---
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\ContadoresCrm;
 use App\Services\CrmIaVendasService;
+use App\Services\LeadFunilService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +56,43 @@ class HistoricoContato extends Model
 
         static::saved($descartarDossie);
         static::deleted($descartarDossie);
+
+        // O primeiro contato do lead (SLA de 1ª resposta) deriva do histórico: se o registro que o definia muda de data,
+        // de tipo ou de autoria, ou é excluído, `data_primeiro_contato` acompanha. Criar já é tratado por quem cria
+        // (LeadFunilService::registrarAtendimento/registrarPrimeiroContato), por isso só `updated` e `deleted`.
+        static::updated(static function (self $historico): void {
+            if ($historico->wasChanged(['data_contato', 'tipo_contato_interessado_id', 'automatico', 'usuario_id'])) {
+                // Durante `updated` os valores originais ainda são os de antes da alteração.
+                self::reavaliarPrimeiroContatoDoLead($historico, (new self)->setRawAttributes($historico->getRawOriginal(), true));
+            }
+        });
+        static::deleted(static function (self $historico): void {
+            self::reavaliarPrimeiroContatoDoLead($historico, $historico);
+        });
+    }
+
+    private static function reavaliarPrimeiroContatoDoLead(self $atual, self $antes): void
+    {
+        $lead = Interessado::query()->find($atual->interessado_id);
+
+        if ($lead !== null) {
+            app(LeadFunilService::class)->reavaliarPrimeiroContato($lead, $antes);
+        }
+    }
+
+    /**
+     * Contatos que contam como o primeiro da escola com a família (SLA de 1ª resposta): registrados por uma pessoa
+     * (`usuario_id`; ações da própria família não têm), não automáticos e fora dos tipos administrativos
+     * (movimentação no funil, reenvio do formulário). Fonte única da regra para o backfill e a reavaliação.
+     */
+    public function scopeContatosDaEscola(Builder $query): Builder
+    {
+        return $query->interacoes()
+            ->whereNotNull('usuario_id')
+            ->whereNotIn(
+                'tipo_contato_interessado_id',
+                TipoContatoInteressado::query()->whereIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)->select('id'),
+            );
     }
 
     /**

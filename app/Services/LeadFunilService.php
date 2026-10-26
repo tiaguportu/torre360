@@ -266,12 +266,71 @@ class LeadFunilService
             return null;
         }
 
-        $administrativo = TipoContatoInteressado::query()
-            ->whereKey($historico->tipo_contato_interessado_id)
+        return $this->tipoAdministrativo($historico->tipo_contato_interessado_id) ? null : $historico->data_contato;
+    }
+
+    /**
+     * Reavalia `data_primeiro_contato` depois que um registro do histórico mudou de data, tipo ou autoria, ou foi
+     * excluído (chamado por `HistoricoContato::booted`). Sem isto, apagar o contato errado deixava o SLA "respondido"
+     * para sempre e editar a data do primeiro contato não era refletida.
+     *
+     * A data deriva dos contatos da escola (`HistoricoContato::contatosDaEscola`), mas com cautela: leads antigos têm a
+     * data vinda de outras fontes (cadastro, mesclagem) sem registro correspondente no histórico, então só se mexe
+     * quando há motivo claro:
+     *  - existe um contato da escola mais antigo que a data atual (ou não havia data): vale o mais antigo;
+     *  - o registro alterado/excluído era o que definia a data (mesmo instante): vale o mais antigo que restou e, se
+     *    não restar nenhum, a data é limpa (o SLA volta a correr);
+     *  - em qualquer outro caso a data fica como está.
+     *
+     * @param  HistoricoContato  $antes  o registro como era antes da alteração (ou o próprio registro excluído)
+     * @return bool true quando `data_primeiro_contato` mudou
+     */
+    public function reavaliarPrimeiroContato(Interessado $lead, HistoricoContato $antes): bool
+    {
+        $atual = $lead->data_primeiro_contato;
+        $maisAntigo = $this->contatoMaisAntigoDaEscola($lead);
+
+        $novo = $atual;
+
+        if ($maisAntigo !== null && ($atual === null || $maisAntigo->lt($atual))) {
+            $novo = $maisAntigo;
+        } elseif ($atual !== null && $this->definiaAData($antes, $atual) && ($maisAntigo === null || $maisAntigo->gt($atual))) {
+            $novo = $maisAntigo;
+        }
+
+        if ($novo?->timestamp === $atual?->timestamp) {
+            return false;
+        }
+
+        $lead->update(['data_primeiro_contato' => $novo]);
+
+        return true;
+    }
+
+    private function contatoMaisAntigoDaEscola(Interessado $lead): ?Carbon
+    {
+        $data = $lead->historicos()->contatosDaEscola()->min('data_contato');
+
+        return $data === null ? null : Carbon::parse($data);
+    }
+
+    /**
+     * O registro era um contato da escola e a sua data é a que está gravada no lead.
+     */
+    private function definiaAData(HistoricoContato $registro, Carbon $dataDoLead): bool
+    {
+        return ! $registro->automatico
+            && $registro->usuario_id !== null
+            && ! $this->tipoAdministrativo($registro->tipo_contato_interessado_id)
+            && $registro->data_contato?->timestamp === $dataDoLead->timestamp;
+    }
+
+    private function tipoAdministrativo(?int $tipoContatoId): bool
+    {
+        return TipoContatoInteressado::query()
+            ->whereKey($tipoContatoId)
             ->whereIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)
             ->exists();
-
-        return $administrativo ? null : $historico->data_contato;
     }
 
     /**

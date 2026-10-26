@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Interessado;
-use App\Models\TipoContatoInteressado;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
@@ -22,17 +21,10 @@ class PreencherPrimeiroContatoCommand extends Command
     {
         $aplicar = (bool) $this->option('aplicar');
 
-        $administrativos = TipoContatoInteressado::query()
-            ->whereIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)
-            ->pluck('id');
-
-        // Mesma regra de LeadFunilService::registrarPrimeiroContato(), agora sobre o histórico antigo: contato que
-        // uma pessoa registrou (usuario_id), não gerado pelo sistema nem do tipo administrativo. A data do primeiro
-        // contato é a do registro mais antigo que atende a regra.
-        $contatosQueContam = fn (Builder $query): Builder => $query
-            ->interacoes()
-            ->whereNotNull('usuario_id')
-            ->whereNotIn('tipo_contato_interessado_id', $administrativos);
+        // Mesma regra de LeadFunilService::registrarPrimeiroContato()/reavaliarPrimeiroContato(), agora sobre o
+        // histórico antigo (HistoricoContato::contatosDaEscola): contato que uma pessoa registrou (usuario_id), não
+        // gerado pelo sistema nem do tipo administrativo. A data do primeiro contato é a do registro mais antigo.
+        $contatosQueContam = fn (Builder $query): Builder => $query->contatosDaEscola();
 
         $candidatos = 0;
         $atualizados = 0;
