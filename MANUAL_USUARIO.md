@@ -507,7 +507,7 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
 
 1. **Como utilizar:**
    - Na tela de edição do lead (cabeçalho) ou no menu de ações rápidas da tabela de interessados, clique no botão **🤖 Resumo IA de Conversa**.
-   - Cole o histórico ou trecho da conversa do WhatsApp (pode conter marcação de hora e remetente ou ser apenas o texto corrido).
+   - Cole o histórico ou trecho da conversa do WhatsApp (pode conter marcação de hora e remetente ou ser apenas o texto corrido). Prefira colar com **data e hora** de cada mensagem, como o WhatsApp exporta (`[14:20, 12/10/2026] Mãe: ...`): é a partir delas que o registro na linha do tempo recebe a data certa (veja o item 4).
    - **Conversas em áudio:** anexe também os áudios (mensagens de voz) no campo **Áudios da Conversa**. Quando a família ou o consultor falaram por áudio, o texto colado passa a ser opcional: é possível analisar a conversa só com os áudios, ou combinar texto e áudios.
 2. **Áudios da Conversa (WhatsApp):**
    - Exporte o áudio no WhatsApp (**Compartilhar/Salvar**) e anexe o arquivo. Formatos aceitos: `.opus` e `.ogg` (padrão do WhatsApp), `.mp3`, `.m4a`, `.aac`, `.wav`, `.flac` e `.aiff`.
@@ -515,14 +515,16 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
    - A IA **ouve cada áudio**, identifica quem fala (família ou consultor) e usa o conteúdo falado, inclusive o tom de voz (hesitação, entusiasmo), para definir a temperatura. A síntese ganha a seção 🎙️ **Resumo dos Áudios**, com um item por áudio. Trechos inaudíveis são sinalizados em vez de inventados.
    - A análise com áudio leva mais tempo do que com texto (quanto maiores os áudios, mais demora); aguarde a notificação de conclusão. Os arquivos são usados apenas para a análise e **apagados do servidor em seguida**; o que fica no histórico do lead é só a síntese.
 3. **Síntese Executiva Gerada pelo Gemini:**
-   - A IA analisa o diálogo em segundos e estrutura:
-     - 💬 **Síntese da Conversa:** Resumo executivo dos pontos centrais debatidos.
-     - 🎯 **Dores e Critérios da Família:** Motivações reais de troca de escola, expectativas pedagógicas e prioridades.
-     - ❓ **Dúvidas e Objeções Levantadas:** Aspectos financeiros, turno, metodologia ou adaptação.
+   - A IA analisa o diálogo e entrega um **relatório detalhado**: o texto tem, no mínimo, cerca de **2.500 caracteres** e cresce com o tamanho da conversa (conversas longas passam de **6.000**), sem cortar valores, datas, nomes, séries, turnos nem objeções. Ele é estruturado em:
+     - 💬 **Síntese da Conversa:** Narrativa de 1 a 3 parágrafos, em ordem cronológica: quem é a família, o que buscou, como a conversa evoluiu, o tom de cada lado e onde terminou.
+     - 📌 **Trechos Relevantes da Conversa:** As falas mais importantes **transcritas literalmente**, entre aspas e em ordem cronológica (de 6 a 12 em conversas longas; menos nas curtas), com quem falou e a hora, quando constar. A IA prioriza o motivo da procura, dores e critérios, objeções, perguntas sobre valores, turno e vaga, reações de entusiasmo ou hesitação, e compromissos e datas combinados; saudações e mensagens sem conteúdo ficam de fora. Trechos muito longos podem aparecer cortados com `[...]`. Nos áudios, as passagens importantes entram com o número do áudio (ex.: **Mãe (Áudio 2):** "...").
+     - 🎯 **Dores e Critérios da Família:** Motivações reais de troca de escola, expectativas pedagógicas e prioridades, com o contexto e a fala que as sustenta.
+     - ❓ **Dúvidas e Objeções Levantadas:** Aspectos financeiros, turno, metodologia ou adaptação, com o que foi respondido (ou ficou sem resposta).
      - 🤝 **Acordos Firmados & Próximo Passo:** O que ficou combinado entre as partes e datas mencionadas.
      - 🎙️ **Resumo dos Áudios:** Só aparece quando há áudios anexados.
+   - As transcrições são produzidas pela IA: **confira as falas mais sensíveis** (valores, descontos, prazos) na conversa original antes de usá-las em uma negociação.
 4. **Automações em 1 Clique:**
-   - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead.
+   - **Linha do Tempo:** Salva a síntese automaticamente no **Histórico de Contatos** do lead, **datada pela última mensagem da conversa** (data e hora do carimbo mais recente do texto colado), e não pelo momento em que você colou o texto. Assim a data exibida e a posição do registro na linha do tempo refletem quando a família realmente falou com a escola. Como a síntese é um registro **automático**, ela continua não contando como contato feito pela equipe: o indicador de dias sem interação e o filtro de leads estagnados não mudam. A notificação de conclusão informa a data usada. Se o texto não trouxer **data e hora** (só horário, só a data, ou apenas áudios), ou se a data lida for inválida ou futura, o registro usa o instante em que a síntese foi feita.
    - **Temperatura:** Ajusta a percepção comercial do lead (Quente, Morno ou Frio) com base no engajamento detectado pela IA.
    - **Retorno Agendado:** Atualiza a **Data do Próximo Contato** se uma data ou prazo foi combinado na conversa, garantindo que o consultor retorne no momento exato.
 5. **Se a IA não responder:**

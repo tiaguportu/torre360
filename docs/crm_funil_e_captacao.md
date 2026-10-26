@@ -249,6 +249,30 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
   - O servidor precisa comportar o upload (`upload_max_filesize`/`post_max_size` ≥ 10 MB; o Livewire limita o
     temporário a 12 MB) e a análise mais demorada (`max_execution_time`).
   - Testes: `tests/Feature/ResumoConversaAudioTest.php` (WAV mínimo gerado em memória, Gemini simulado com Mockery).
+  - **Relatório extenso com trechos transcritos (2026-10-26):** o prompt pedia um "relatório conciso" de "2 a 3
+    frases", e o resumo saía curto e sem as falas que justificam a temperatura. Agora
+    `instrucaoExtensaoResumoConversa()` exige no mínimo `MINIMO_CARACTERES_RESUMO_CONVERSA` (2.500) caracteres no
+    `resumo_markdown` (referência de `CARACTERES_REFERENCIA_CONVERSA_LONGA` = 6.000 em conversas longas; o relato é
+    `text`, 64 KB) e a nova seção `### 📌 Trechos Relevantes da Conversa`, com 6 a 12 falas copiadas **literalmente**,
+    entre aspas, em ordem cronológica, com remetente e hora. Com áudio, `instrucaoAudiosConversa()` manda incluir as
+    passagens faladas indicando o número do áudio. Não há `maxOutputTokens` no payload (vale o teto do modelo), então
+    não há corte por tokens nem JSON truncado. As falas são geradas pelo modelo e **não são conferidas contra o
+    texto colado**: quem precisar de garantia de literalidade deve validar as aspas contra a conversa.
+  - **Registro datado pela última mensagem (2026-10-26):** o JSON da IA ganhou `data_hora_ultima_mensagem`
+    (`YYYY-MM-DD HH:MM`), lida dos carimbos do texto colado (`[14:20, 12/10/2026]`, `12/10/2026 14:20 - Mãe:`…).
+    `instrucaoDataUltimaMensagem()` informa o "agora" ao modelo (para completar dia/mês sem ano sem cair no futuro) e
+    manda devolver `null` sem data **e** hora, sem usar horário de áudio. O PHP não confia no valor:
+    `CrmIaVendasService::normalizarDataHoraUltimaMensagem()` só aceita data+hora, calendário real (`checkdate`),
+    hora/minuto válidos e instante **não posterior a agora**; o resto vira `null`. O resultado de
+    `resumirConversaWhatsapp()` traz `data_hora_ultima_mensagem` (`Y-m-d H:i:s` no fuso do app, `null` na
+    contingência). `ResumoConversaIaAction` grava `HistoricoContato.data_contato` com ela, ou `now()` quando `null`
+    (`created_at` segue sendo o instante do registro), e a notificação informa a data usada. O efeito é a data
+    exibida e a posição na linha do tempo (`Customer360TimelineService` ordena por `data_contato`). O registro segue
+    `automatico = true`, fora de `HistoricoContato::interacoes()`, então `ultimoHistorico`, `diasSemInteracao()` e
+    `scopeEstagnados()` **não** mudam (decisão original: a síntese de IA não conta como contato da equipe).
+    Limitações: carimbo só com hora (sem data) não é usado; mensagens de áudio não têm carimbo confiável; colar uma
+    conversa antiga coloca o registro mais atrás na linha do tempo.
+    Testes: `ResumoConversaAudioTest` (prompt, validação por `DataProvider` e a Action gravando a data).
 - Testes que passam por IA devem usar `Queue::fake()`/`Http::fake()` e `Http::preventStrayRequests()`: o `.env`
   local tem a chave real e o `phpunit.xml` não a sobrescreve.
 
