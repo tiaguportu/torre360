@@ -304,6 +304,7 @@ class FunilAcoesInteressadosTest extends TestCase
                 'tipo_contato_interessado_id' => $tipo->id,
                 'data_contato' => $quando,
                 'relato' => 'Conversamos por mensagem.',
+                'proxima_acao' => 'Retomar a conversa',
                 'data_proximo_contato' => now()->addDays(2),
             ])
             ->assertHasNoTableActionErrors();

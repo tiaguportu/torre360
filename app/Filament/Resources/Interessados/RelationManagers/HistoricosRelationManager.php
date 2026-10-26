@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Interessados\RelationManagers;
 use App\Models\HistoricoContato;
 use App\Services\LeadFunilService;
 use App\Services\LeadScoreService;
+use App\Services\ProximaAcaoLeadService;
+use Carbon\Carbon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -15,7 +17,9 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,6 +29,9 @@ class HistoricosRelationManager extends RelationManager
     protected static string $relationship = 'historicos';
 
     protected static ?string $title = 'Histórico de Contatos';
+
+    /** @var array{quando: mixed, acao: mixed}|null Próxima ação digitada no formulário de contato, até o `after` aplicá-la ao lead. */
+    protected ?array $proximaAcaoInformada = null;
 
     public function form(Schema $schema): Schema
     {
@@ -50,11 +57,25 @@ class HistoricosRelationManager extends RelationManager
                         'sem_interesse' => 'Sem Interesse',
                         'matriculou' => 'Efetuou Matrícula',
                         'outro' => 'Outro',
-                    ]),
+                    ])
+                    ->live(),
                 Textarea::make('relato')
                     ->label('Relato do Atendimento')
                     ->required()
                     ->columnSpanFull(),
+                // Próxima ação obrigatória (Onda 84). Não são colunas do histórico: vão para o lead ao gravar o contato.
+                TextInput::make('proxima_acao')
+                    ->label('Próxima ação')
+                    ->placeholder('Ex.: ligar para confirmar a visita')
+                    ->maxLength(160)
+                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
+                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
+                DateTimePicker::make('data_proximo_contato')
+                    ->label('Quando')
+                    ->default(now()->addDays(2))
+                    ->seconds(false)
+                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
+                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
             ]);
     }
 
@@ -116,6 +137,13 @@ class HistoricosRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['usuario_id'] = auth()->id();
 
+                        // A próxima ação é do lead, não do contato: guarda para o `after` e tira do que vai ao histórico.
+                        $this->proximaAcaoInformada = [
+                            'quando' => $data['data_proximo_contato'] ?? null,
+                            'acao' => $data['proxima_acao'] ?? null,
+                        ];
+                        unset($data['data_proximo_contato'], $data['proxima_acao']);
+
                         return $data;
                     })
                     ->after(function (HistoricoContato $record): void {
@@ -123,6 +151,20 @@ class HistoricosRelationManager extends RelationManager
 
                         // Primeiro contato da escola com a família: encerra o SLA de 1ª resposta.
                         app(LeadFunilService::class)->registrarPrimeiroContato($interessado, $record);
+
+                        $proxima = $this->proximaAcaoInformada ?? ['quando' => null, 'acao' => null];
+                        $this->proximaAcaoInformada = null;
+
+                        try {
+                            app(ProximaAcaoLeadService::class)->definir(
+                                $interessado,
+                                filled($proxima['quando']) ? Carbon::parse($proxima['quando']) : null,
+                                $proxima['acao'],
+                                $record->resultado,
+                            );
+                        } catch (\DomainException $e) {
+                            Notification::make()->title('Contato registrado, mas a próxima ação não foi marcada')->body($e->getMessage())->warning()->send();
+                        }
 
                         LeadScoreService::recalcular($interessado);
                     }),

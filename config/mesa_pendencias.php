@@ -4,12 +4,18 @@ use App\Services\Pendencias\Fontes\AssinaturasAtrasadas;
 use App\Services\Pendencias\Fontes\CancelamentosParaAnalisar;
 use App\Services\Pendencias\Fontes\CancelamentosParaConcluir;
 use App\Services\Pendencias\Fontes\ClassificacaoContabilPendente;
+use App\Services\Pendencias\Fontes\ContatosDoDia;
 use App\Services\Pendencias\Fontes\DevolucoesPendentes;
 use App\Services\Pendencias\Fontes\DocumentosParaAssinatura;
 use App\Services\Pendencias\Fontes\GradesIncompletas;
+use App\Services\Pendencias\Fontes\LeadsQuentesParados;
+use App\Services\Pendencias\Fontes\LeadsSemConsultor;
+use App\Services\Pendencias\Fontes\LeadsSemProximaAcao;
+use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
 use App\Services\Pendencias\Fontes\TransferenciasEmAndamento;
+use App\Services\Pendencias\Fontes\VisitasDoDia;
 
 return [
     /*
@@ -31,6 +37,13 @@ return [
         ProvidenciasRhVencidas::class,
         GradesIncompletas::class,
         ClassificacaoContabilPendente::class,
+        // Mesa do consultor (Onda 84): filas do CRM.
+        ContatosDoDia::class,
+        VisitasDoDia::class,
+        PrimeiraRespostaEstourada::class,
+        LeadsSemProximaAcao::class,
+        LeadsQuentesParados::class,
+        LeadsSemConsultor::class,
     ],
 
     /*

@@ -216,6 +216,18 @@ class LeadFunilService
                 $atualizacoes['data_proximo_contato'] = $dados['data_proximo_contato'];
             }
 
+            // O que fazer no próximo contato (Onda 84). Resultado que encerra o ciclo (matrícula, sem interesse) não deixa
+            // próxima ação pendurada no lead.
+            if (array_key_exists('proxima_acao', $dados)) {
+                $acao = trim((string) $dados['proxima_acao']);
+                $atualizacoes['proxima_acao'] = $acao === '' ? null : mb_substr($acao, 0, ProximaAcaoLeadService::TAMANHO_MAXIMO);
+            }
+
+            if (! app(ProximaAcaoLeadService::class)->exigidaPara($dados['resultado'] ?? null) && ! array_key_exists('data_proximo_contato', $dados)) {
+                $atualizacoes['data_proximo_contato'] = null;
+                $atualizacoes['proxima_acao'] = null;
+            }
+
             // Primeiro contato real da escola com a família (não o cadastro do lead).
             $primeiroContato = $this->dataDoPrimeiroContato($lead, $historico);
 

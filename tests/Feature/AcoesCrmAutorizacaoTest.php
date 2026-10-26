@@ -180,6 +180,8 @@ class AcoesCrmAutorizacaoTest extends TestCase
                 'tipo_contato_interessado_id' => $tipo->id,
                 'data_contato' => now()->subMinute()->format('Y-m-d H:i:s'),
                 'relato' => 'Conversa com a mãe.',
+                'proxima_acao' => 'Ligar para confirmar a visita',
+                'data_proximo_contato' => now()->addDays(2)->format('Y-m-d H:i:s'),
             ])
             ->assertNotified('Atendimento registrado com sucesso!');
 

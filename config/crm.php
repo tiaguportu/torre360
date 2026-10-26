@@ -72,6 +72,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Mesa do consultor (Onda 84): filas do CRM na Minha Mesa
+    |--------------------------------------------------------------------------
+    */
+    'mesa' => [
+        // Lead recém-cadastrado não cai em "Sem próxima ação" nas primeiras horas (o SLA de 1ª resposta cuida dele).
+        'carencia_sem_proxima_acao_horas' => (int) env('CRM_MESA_CARENCIA_HORAS', 2),
+
+        // Lead sem próxima ação há mais de N dias passa a "atrasado".
+        'sem_proxima_acao_atrasado_dias' => (int) env('CRM_MESA_SEM_PROXIMA_ACAO_DIAS', 2),
+
+        // Visita agendada cujo horário passou há mais de N horas sem resultado registrado passa a "atrasada".
+        'visita_sem_resultado_horas' => (int) env('CRM_MESA_VISITA_SEM_RESULTADO_HORAS', 4),
+
+        // Lead quente sem interação humana há N dias entra na fila (o dobro disso é "atrasado").
+        'quente_parado_dias' => (int) env('CRM_MESA_QUENTE_PARADO_DIAS', 3),
+
+        // Lead sem 1ª resposta só entra na fila de SLA se foi cadastrado nos últimos N dias.
+        'sla_janela_dias' => (int) env('CRM_MESA_SLA_JANELA_DIAS', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Kanban (Funil de Vendas)
     |--------------------------------------------------------------------------
     */

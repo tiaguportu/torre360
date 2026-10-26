@@ -31,9 +31,11 @@ use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
 use App\Services\LeadSlaService;
 use App\Services\LinkPortalAdmissaoService;
+use App\Services\ProximaAcaoLeadService;
 use App\Services\TermometroVagasService;
 use App\Services\VisitaInteressadoService;
 use App\Support\PermissaoAcao;
+use Carbon\Carbon;
 use DomainException;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -127,7 +129,9 @@ class InteressadosTable
                 TextColumn::make('data_proximo_contato')
                     ->label('Próximo contato')
                     ->dateTime('d/m/Y H:i')
-                    ->description(fn (Interessado $record): ?string => $record->data_proximo_contato?->diffForHumans())
+                    ->description(fn (Interessado $record): ?string => $record->data_proximo_contato
+                        ? trim(($record->proxima_acao ? $record->proxima_acao.' · ' : '').$record->data_proximo_contato->diffForHumans())
+                        : 'Sem próxima ação')
                     ->sortable()
                     ->color(fn ($record) => $record->precisaDeContato() ? 'danger' : null)
                     ->icon(fn ($record) => $record->precisaDeContato() ? 'heroicon-o-exclamation-triangle' : null),
@@ -463,10 +467,21 @@ class InteressadosTable
                             ->minValue(1),
                         Select::make('resultado')
                             ->label('Resultado do Contato')
-                            ->options(HistoricoContato::RESULTADOS),
+                            ->options(HistoricoContato::RESULTADOS)
+                            ->live(),
+                        // Próxima ação obrigatória (Onda 84): só some quando o contato encerra o ciclo (matrícula ou sem interesse).
+                        TextInput::make('proxima_acao')
+                            ->label('Próxima ação')
+                            ->placeholder('Ex.: ligar para confirmar a visita')
+                            ->maxLength(160)
+                            ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
+                            ->visible(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
                         DateTimePicker::make('data_proximo_contato')
-                            ->label('Data Próximo Contato')
-                            ->default(now()->addDays(2)),
+                            ->label('Quando')
+                            ->default(now()->addDays(2))
+                            ->seconds(false)
+                            ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
+                            ->visible(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
                     ])
                     ->action(function (array $data, Interessado $record) {
                         app(LeadFunilService::class)->registrarAtendimento($record, $data, auth()->id());
@@ -475,6 +490,36 @@ class InteressadosTable
                             ->title('Atendimento registrado com sucesso!')
                             ->success()
                             ->send();
+                    }),
+
+                Action::make('definirProximaAcao')
+                    ->label('Próxima ação')
+                    ->icon('heroicon-o-flag')
+                    ->color('warning')
+                    ->iconButton()
+                    ->tooltip('Marcar a próxima ação')
+                    ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
+                    ->visible(fn (Interessado $record): bool => ! ($record->status?->is_final ?? false))
+                    ->modalHeading('Próxima ação do lead')
+                    ->modalDescription('Diga o que fazer e quando. O lead sai da fila "Sem próxima ação" da Mesa e entra em "Contatos do dia" na data marcada.')
+                    ->fillForm(fn (Interessado $record): array => [
+                        'proxima_acao' => $record->proxima_acao,
+                        'data_proximo_contato' => $record->data_proximo_contato ?? now()->addDay()->setTime(9, 0),
+                    ])
+                    ->form([
+                        TextInput::make('proxima_acao')->label('O que fazer')->placeholder('Ex.: mandar a proposta e confirmar a visita')->maxLength(160)->required(),
+                        DateTimePicker::make('data_proximo_contato')->label('Quando')->seconds(false)->required(),
+                    ])
+                    ->action(function (array $data, Interessado $record): void {
+                        try {
+                            app(ProximaAcaoLeadService::class)->definir($record, Carbon::parse($data['data_proximo_contato']), $data['proxima_acao']);
+                        } catch (DomainException $e) {
+                            Notification::make()->title('Não foi possível marcar')->body($e->getMessage())->danger()->send();
+
+                            return;
+                        }
+
+                        Notification::make()->title('Próxima ação marcada')->success()->send();
                     }),
 
                 Action::make('enviarWhatsapp')

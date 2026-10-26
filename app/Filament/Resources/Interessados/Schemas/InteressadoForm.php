@@ -281,6 +281,11 @@ class InteressadoForm
                                     ->label('Próximo Contato')
                                     ->native(false),
 
+                                TextInput::make('proxima_acao')
+                                    ->label('Próxima ação')
+                                    ->placeholder('O que fazer no próximo contato')
+                                    ->maxLength(160),
+
                                 TextInput::make('sla_primeira_resposta_minutos')
                                     ->label('SLA 1ª Resposta (minutos úteis)')
                                     ->numeric()
