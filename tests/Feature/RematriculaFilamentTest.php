@@ -230,7 +230,7 @@ class RematriculaFilamentTest extends TestCase
         $this->assertNotNull($rematricula->nova_matricula_id);
         $this->assertEquals($this->turmaDestino->id, $rematricula->turma_destino_id);
 
-        $this->assertDatabaseHas('matriculas', [
+        $this->assertDatabaseHas('matricula', [
             'id' => $rematricula->nova_matricula_id,
             'pessoa_id' => $aluno->id,
             'turma_id' => $this->turmaDestino->id,

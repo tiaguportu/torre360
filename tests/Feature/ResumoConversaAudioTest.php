@@ -14,6 +14,7 @@ use App\Services\CrmIaVendasService;
 use App\Services\GeminiAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Mockery;
@@ -79,19 +80,20 @@ class ResumoConversaAudioTest extends TestCase
 
     /**
      * @param  array<string, mixed>|null  $capturado  Recebe o payload e o timeout enviados ao Gemini.
+     * @param  array<string, mixed>  $resposta  Campos que substituem os da resposta padrão da IA.
      */
-    private function simularGemini(?array &$capturado = null): void
+    private function simularGemini(?array &$capturado = null, array $resposta = []): void
     {
         $mock = Mockery::mock(GeminiAgentService::class);
-        $mock->shouldReceive('callGeminiApi')->once()->andReturnUsing(function (array $payload, int $timeout = 45) use (&$capturado): array {
+        $mock->shouldReceive('callGeminiApi')->once()->andReturnUsing(function (array $payload, int $timeout = 45) use (&$capturado, $resposta): array {
             $capturado = ['payload' => $payload, 'timeout' => $timeout];
 
-            return ['candidates' => [['content' => ['parts' => [['text' => json_encode([
+            return ['candidates' => [['content' => ['parts' => [['text' => json_encode(array_merge([
                 'temperatura_sugerida' => 'quente',
                 'data_retorno_sugerida' => null,
                 'proximo_passo_sugerido' => 'Confirmar a visita.',
                 'resumo_markdown' => "### 💬 Síntese da Conversa\nMãe pediu detalhes do integral por áudio.\n\n### 🎙️ Resumo dos Áudios\n- Áudio 1: dúvida sobre o integral.",
-            ])]]]]]];
+            ], $resposta))]]]]]];
         });
         $this->app->instance(GeminiAgentService::class, $mock);
     }
@@ -155,6 +157,119 @@ class ResumoConversaAudioTest extends TestCase
         $this->assertArrayNotHasKey('inline_data', $partes[0]);
         $this->assertStringNotContainsString('ÁUDIOS ANEXADOS', $capturado['payload']['systemInstruction']['parts'][0]['text']);
         $this->assertSame(45, $capturado['timeout']);
+    }
+
+    public function test_prompt_pede_relatorio_extenso_com_trechos_da_conversa_transcritos(): void
+    {
+        $interessado = $this->criarInteressado();
+        $this->simularGemini($capturado);
+
+        app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, 'Mãe: olá');
+
+        $sistema = $capturado['payload']['systemInstruction']['parts'][0]['text'];
+
+        $this->assertStringContainsString('### 📌 Trechos Relevantes da Conversa', $sistema);
+        $this->assertStringContainsString('transcreva LITERALMENTE', $sistema);
+        $this->assertStringContainsString('Nunca invente uma fala', $sistema);
+        $this->assertStringContainsString('no mínimo '.CrmIaVendasService::MINIMO_CARACTERES_RESUMO_CONVERSA.' caracteres', $sistema);
+        $this->assertStringContainsString('podem passar de '.CrmIaVendasService::CARACTERES_REFERENCIA_CONVERSA_LONGA, $sistema);
+        $this->assertStringNotContainsString('conciso', $sistema);
+        $this->assertStringNotContainsString('2 a 3 frases', $sistema);
+        // Sem áudio, a orientação de citar o número do áudio não faz sentido no prompt.
+        $this->assertStringNotContainsString('Áudio 2):', $sistema);
+    }
+
+    public function test_prompt_pede_a_data_e_hora_da_ultima_mensagem_e_informa_o_agora(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+        $interessado = $this->criarInteressado();
+        $this->simularGemini($capturado);
+
+        app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, '[14:20, 12/10/2026] Mãe: olá');
+
+        $sistema = $capturado['payload']['systemInstruction']['parts'][0]['text'];
+
+        $this->assertStringContainsString('"data_hora_ultima_mensagem"', $sistema);
+        $this->assertStringContainsString('DATA E HORA DA ÚLTIMA MENSAGEM: agora é 26/10/2026 10:30 (segunda-feira', $sistema);
+        $this->assertStringContainsString('Use null quando o texto não trouxer data E hora', $sistema);
+    }
+
+    public function test_resultado_traz_a_data_e_hora_da_ultima_mensagem_validada(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+        $interessado = $this->criarInteressado();
+        $this->simularGemini(resposta: ['data_hora_ultima_mensagem' => '2026-10-20 15:42']);
+
+        $resultado = app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, '[15:42, 20/10/2026] Mãe: até terça');
+
+        $this->assertSame('2026-10-20 15:42:00', $resultado['data_hora_ultima_mensagem']);
+    }
+
+    public function test_resultado_sem_carimbo_na_conversa_vem_com_data_nula(): void
+    {
+        $interessado = $this->criarInteressado();
+        $this->simularGemini();
+
+        $resultado = app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, 'Mãe: olá');
+
+        $this->assertArrayHasKey('data_hora_ultima_mensagem', $resultado);
+        $this->assertNull($resultado['data_hora_ultima_mensagem']);
+    }
+
+    /**
+     * @return array<string, array{0: mixed, 1: ?string}>
+     */
+    public static function datasDaUltimaMensagem(): array
+    {
+        return [
+            'data e hora' => ['2026-10-20 15:42', '2026-10-20 15:42:00'],
+            'com segundos' => ['2026-10-20 15:42:33', '2026-10-20 15:42:00'],
+            'formato ISO com T' => ['2026-10-20T08:05:00', '2026-10-20 08:05:00'],
+            'meia-noite' => ['2026-10-20 00:00', '2026-10-20 00:00:00'],
+            'só a data' => ['2026-10-20', null],
+            'só a hora' => ['15:42', null],
+            'no futuro' => ['2026-10-26 10:31', null],
+            'dia seguinte' => ['2026-10-27 09:00', null],
+            'dia inexistente' => ['2026-02-30 10:00', null],
+            'hora inexistente' => ['2026-10-20 25:10', null],
+            'minuto inexistente' => ['2026-10-20 10:61', null],
+            'formato brasileiro' => ['20/10/2026 15:42', null],
+            'texto livre' => ['ontem à tarde', null],
+            'vazio' => ['', null],
+            'nulo' => [null, null],
+            'não é texto' => [['2026-10-20 15:42'], null],
+        ];
+    }
+
+    #[DataProvider('datasDaUltimaMensagem')]
+    public function test_data_da_ultima_mensagem_so_vale_completa_real_e_nao_futura(mixed $valor, ?string $esperado): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+
+        $this->assertSame($esperado, CrmIaVendasService::normalizarDataHoraUltimaMensagem($valor));
+    }
+
+    public function test_data_da_ultima_mensagem_igual_ao_instante_atual_e_aceita(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+
+        $this->assertSame('2026-10-26 10:30:00', CrmIaVendasService::normalizarDataHoraUltimaMensagem('2026-10-26 10:30'));
+    }
+
+    public function test_prompt_com_audio_manda_transcrever_tambem_as_passagens_dos_audios(): void
+    {
+        $interessado = $this->criarInteressado();
+        $this->simularGemini($capturado);
+
+        app(CrmIaVendasService::class)->resumirConversaWhatsapp($interessado, '', [
+            ['caminho' => $this->arquivoTemporario($this->wavMinimo())],
+        ]);
+
+        $sistema = $capturado['payload']['systemInstruction']['parts'][0]['text'];
+
+        $this->assertStringContainsString('### 📌 Trechos Relevantes da Conversa', $sistema);
+        $this->assertStringContainsString('Nos Trechos Relevantes, inclua também as passagens importantes dos áudios', $sistema);
+        $this->assertStringContainsString('Mãe (Áudio 2):', $sistema);
     }
 
     public function test_mime_do_whatsapp_e_normalizado_para_audio_ogg(): void
@@ -324,6 +439,51 @@ class ResumoConversaAudioTest extends TestCase
 
         // O temporário não pode sobrar no disco depois da análise.
         $this->assertSame([], Storage::disk('local')->allFiles('temp-conversa-audios'));
+    }
+
+    public function test_acao_data_o_registro_pela_ultima_mensagem_da_conversa(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+        $interessado = $this->criarInteressado();
+        $this->simularGemini(resposta: ['data_hora_ultima_mensagem' => '2026-10-20 15:42']);
+
+        Livewire::actingAs($this->administrador())
+            ->test(EditInteressado::class, ['record' => $interessado->getKey()])
+            ->callAction('resumoConversaIa', [
+                'conversa_texto' => '[15:42, 20/10/2026] Mãe: fechado, até terça',
+                'audios' => [],
+                'salvar_no_historico' => true,
+                'atualizar_temperatura' => false,
+                'atualizar_proximo_contato' => false,
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotified('Resumo de Conversa IA Concluído');
+
+        $historico = $interessado->historicos()->sole();
+
+        $this->assertSame('2026-10-20 15:42', $historico->data_contato->format('Y-m-d H:i'));
+        // O criado_em continua sendo o do registro: só a data do contato acompanha a conversa.
+        $this->assertSame('2026-10-26 10:30', $historico->created_at->format('Y-m-d H:i'));
+    }
+
+    public function test_acao_sem_carimbo_na_conversa_data_o_registro_no_instante_atual(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:30:00'));
+        $interessado = $this->criarInteressado();
+        $this->simularGemini();
+
+        Livewire::actingAs($this->administrador())
+            ->test(EditInteressado::class, ['record' => $interessado->getKey()])
+            ->callAction('resumoConversaIa', [
+                'conversa_texto' => 'Mãe: fechado, até terça',
+                'audios' => [],
+                'salvar_no_historico' => true,
+                'atualizar_temperatura' => false,
+                'atualizar_proximo_contato' => false,
+            ])
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('2026-10-26 10:30', $interessado->historicos()->sole()->data_contato->format('Y-m-d H:i'));
     }
 
     public function test_ajuda_da_edicao_explica_o_uso_de_audios(): void

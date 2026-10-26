@@ -33,7 +33,7 @@ class ResumoConversaIaAction
             // Altera temperatura e próximo contato do lead além de acionar o Gemini.
             ->authorize(PermissaoAcao::qualquer('Update:Interessado'))
             ->modalHeading(fn (Interessado $record): string => "🤖 Síntese IA de Conversa: {$record->pessoa?->nome}")
-            ->modalDescription('Cole trechos ou o histórico completo da conversa do WhatsApp e/ou anexe os áudios (mensagens de voz). O Gemini irá extrair perfil, dores, dúvidas, acordos e temperatura.')
+            ->modalDescription('Cole trechos ou o histórico completo da conversa do WhatsApp e/ou anexe os áudios (mensagens de voz). O Gemini irá extrair perfil, dores, dúvidas, acordos e temperatura, e transcrever os trechos mais relevantes da conversa.')
             ->modalWidth(Width::Large)
             ->modalSubmitActionLabel('Sintetizar com IA ✨')
             ->modalCancelActionLabel('Cancelar')
@@ -138,6 +138,12 @@ class ResumoConversaIaAction
                     LeadScoreService::recalcular($record);
                 }
 
+                // O contato aconteceu quando a última mensagem foi trocada, não quando o consultor colou a conversa:
+                // sem carimbo de data e hora no texto, vale o instante do registro.
+                $dataUltimaMensagem = filled($resultado['data_hora_ultima_mensagem'] ?? null)
+                    ? Carbon::parse($resultado['data_hora_ultima_mensagem'])
+                    : null;
+
                 if (! empty($data['salvar_no_historico'])) {
                     $tipoContato = TipoContatoInteressado::firstOrCreate(['nome' => 'WhatsApp']);
 
@@ -146,12 +152,15 @@ class ResumoConversaIaAction
                         'usuario_id' => auth()->id() ?? $record->usuario_id,
                         'tipo_contato_interessado_id' => $tipoContato->id,
                         'relato' => $resultado['resumo_markdown'],
-                        'data_contato' => now(),
+                        'data_contato' => $dataUltimaMensagem ?? now(),
                         'automatico' => true,
                     ]);
                 }
 
                 $msg = 'Conversa resumida com sucesso!';
+                if ($dataUltimaMensagem !== null && ! empty($data['salvar_no_historico'])) {
+                    $msg .= ' Registro datado da última mensagem: '.$dataUltimaMensagem->format('d/m/Y H:i').'.';
+                }
                 if (! empty($updates['temperatura'])) {
                     $msg .= " Temperatura atualizada para: {$updates['temperatura']}.";
                 }

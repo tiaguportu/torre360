@@ -4284,7 +4284,67 @@ No grupo **Relatórios**, *Meus Relatórios*. Cada pessoa monta o relatório de 
 
 ---
 
+## 🔄 92. Campanhas de Rematrícula Online e Efetivação Acadêmica
+
+O módulo de Rematrícula automatiza todo o processo de renovação de matrículas para o próximo ano letivo, conectando o autoatendimento da família no Portal com a gestão de vagas e contratos da secretaria escolar.
+
+### 92.1 Configuração de Campanhas (Acadêmico > Campanhas de Rematrícula)
+Localizado em `/admin/periodo-rematriculas`:
+1. **Período Vigente (Origem) e Alvo (Destino):** Selecione o ano letivo em curso (onde os estudantes possuem matrícula ativa) e o ano letivo alvo para onde serão transferidos. O sistema impede que a origem e o destino sejam idênticos.
+2. **Exigência de Turmas Abertas para Ativação:** Por regra de segurança pedagógica, uma campanha só pode ser ativada (`is_ativo = true`) caso o período de destino já possua ao menos uma turma aberta para matrícula (status *Planejada* ou *Ativa*). Caso contrário, o sistema emite aviso orientando o cadastramento prévio das turmas em *Acadêmico → Turmas* (ou via ação *Duplicar turmas para outro período*).
+3. **Parâmetros Contratuais e Financeiros:** Defina o modelo padrão de contrato escolar (`template_contrato_id`), o valor total anual do contrato, o parcelamento padrão (ex.: 12 parcelas) e o valor de entrada/taxa de reserva.
+4. **Mensagem de Orientação:** Texto institucional exibido no banner de destaque no Portal da Família.
+5. **Situação de Vigência:** A tabela indica em tempo real o status operacional:
+   - 🟢 **Aberto / No Prazo:** Campanha ativa e data atual dentro da janela de início e término.
+   - 🟡 **Em Breve:** Campanha cadastrada com data de início futura.
+   - 🔴 **Encerrado:** Prazo final expirado.
+   - ⚪ **Inativo:** Campanha desativada manualmente pela gestão.
+
+### 92.2 Experiência da Família no Portal (Portal da Família > Rematrícula Online)
+1. **Identificação e Elegibilidade:** Responsáveis de alunos com matrícula ativa no período de origem visualizam o banner da campanha ativa.
+2. **Confirmação Cadastral:** Os pais conferem e atualizam os dados do aluno e dos responsáveis legais e financeiros.
+3. **Escolha de Série e Turno:** A família indica a série pretendida e a preferência de turno para o próximo ano.
+4. **Registro da Intenção:** Ao confirmar, o status transita para `Dados Confirmados` e o aluno entra na fila da secretaria.
+
+### 92.3 Mesa de Gestão de Rematrículas na Secretaria (Acadêmico > Rematrículas)
+Localizado em `/admin/rematriculas`:
+- **Badge Contador no Menu:** Exibe em amarelo o número exato de rematrículas com dados confirmados que aguardam a alocação de turma pela secretaria.
+- **Filtros Estratégicos:**
+  - `Aguardando turma (a efetivar)`: Filtra somente os alunos pendentes de enturmação.
+  - `Alto Risco de Evasão (≥ 60%)`: Identifica famílias propensas à evasão pelo Lead Score / Playbook de Retenção para atendimento prioritário.
+- **Ação Efetivar Rematrícula:**
+  - Abre o seletor de turmas do período de destino, exibindo a série pretendida e a ocupação em tempo real (ex.: 25/30 vagas). Turmas lotadas são desabilitadas automaticamente.
+  - Ao confirmar, o sistema cria a nova matrícula oficial na turma selecionada, gera o contrato escolar com o parcelamento parametrizado e dispara o contrato para assinatura eletrônica via Assinafy.
+- **Ação Efetivar em Lote:** Permite selecionar vários alunos de uma mesma campanha e efetivá-los simultaneamente na mesma turma. Caso a turma atinja a capacidade máxima durante o lote, o sistema encerra a alocação de forma segura e mantém os restantes pendentes.
+- **Ação Cancelar Rematrícula:** Permite registrar o cancelamento com justificativa. Caso a matrícula já estivesse efetivada, o cancelamento libera imediatamente a vaga ocupada na turma e cancela as faturas em aberto do novo contrato.
+
+---
+
+## 📜 93. Secretaria Digital: Emissão e Validação de Documentos com QR Code
+
+O Torre360 dispõe de um módulo completo para emissão instantânea e conferência pública de documentos oficiais (Declarações de Matrícula, Quitação Financeira, Transporte Escolar, Transferência e Histórico Escolar).
+
+### 93.1 Modelos de Documentos e Macros Dinâmicas (Secretaria > Modelos de Documentos)
+Em `/admin/template-documentos`, a escola cadastra os modelos em HTML com substituição automática de variáveis:
+- **Dados do Estudante:** `{{ALUNO_NOME}}`, `{{ALUNO_CPF}}`, `{{ALUNO_RG}}`, `{{ALUNO_NASCIMENTO}}`, `{{ALUNO_PAI}}`, `{{ALUNO_MAE}}`, `{{ALUNO_ENDERECO}}`.
+- **Dados Acadêmicos:** `{{TURMA_NOME}}`, `{{SERIE_NOME}}`, `{{CURSO_NOME}}`, `{{TURNO_NOME}}`, `{{PERIODO_LETIVO}}`, `{{HORARIO_AULAS}}`, `{{STATUS_FINANCEIRO}}`.
+- **Dados de Autenticidade:** `{{PROTOCOLO}}`, `{{CODIGO_VERIFICACAO}}`, `{{URL_VERIFICACAO}}`, `{{DATA_EMISSAO}}`, `{{DATA_VALIDADE}}`.
+- **Histórico Escolar Tabular:** `{{HISTORICO_NOTAS}}` e `{{TABELA_HISTORICO}}` renderizam tabelas multi-ano completas com as médias finais oficiais calculadas após exames finais.
+
+### 93.2 Mesa de Atendimento da Secretaria (Secretaria > Documentos Emitidos (QR))
+Em `/admin/solicitacao-documentos`:
+- **Acompanhamento por Protocolo:** Cada solicitação gera um código de protocolo único (`DOC-AAAA-XXXXXX`) e código de verificação criptográfico.
+- **Ação Emitir PDF:** Gera o documento oficial com formatação A4, brasão da instituição, carimbo de autenticidade e QR Code de validação.
+- **Ação Recusar Solicitação:** Para solicitações pendentes de análise, permite abrir modal para justificativa detalhada (ex.: pendência documental), notificando a família pelo Portal.
+
+### 93.3 Validação Pública de Autenticidade por QR Code
+- Qualquer pessoa ou entidade fiscalizadora pode apontar a câmera do celular para o QR Code impresso no documento ou acessar a URL pública `/validar-documento/{codigo}`.
+- O sistema exibe o status de autenticidade (Válido, Expirado ou Revogado), os dados básicos do estudante mascarados conforme a LGPD e o número do protocolo oficial registrado pela instituição.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 
