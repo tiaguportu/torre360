@@ -19,6 +19,13 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Representa:** Registro técnico de acessos e auditoria legada.
 - **Relacionamentos:** BelongsTo `users`, MorphTo `auditable`.
 
+### `sessions` (Model `UserSession`)
+- **Representa:** Sessões ativas de usuários autenticados no banco de dados (driver `database`).
+- **Propósito:** Gestão de sessões ativas e revogação remota de dispositivos conectados através do painel `/admin/sistema/sessoes-ativas`.
+- **Principais Campos:** `id` (string, chave primária da sessão), `user_id` (foreignId indexada para `users`), `ip_address` (string 45), `user_agent` (text com detalhes do navegador/SO), `payload` (longtext com sessão serializada), `last_activity` (integer com timestamp Unix da última requisição).
+- **Accessors no Model:** `is_current` (identifica se é a sessão do navegador atual), `last_active_at` (instância Carbon), `platform` (Windows, macOS, Linux, Android, iOS), `browser` (Chrome, Firefox, Safari, Edge, Opera), `is_mobile` (booleano) e `device_label`.
+- **Revogação Auditada:** O método `revogar(?User $autor = null)` deleta o registro físico e grava log no canal `auth` da tabela `activity_log`.
+
 ### `notifications`
 - **Representa:** Sistema de notificações unificado do Laravel/Filament (Sininho, E-mail e Push).
 - **Propósito:** Armazena mensagens destinadas aos usuários. Suporta canais de Banco de Dados, E-mail e Push (via `FcmChannel`).
@@ -367,6 +374,11 @@ Estrutura de ensino e turmas.
     - `valor`: Valor total líquido com descontos aplicados (absolutos ou percentuais).
     - `valor_pago`: Soma das transações bancárias de entrada vinculadas à fatura.
     - `valor_restante`: Saldo devedor pendente (`valor` − `valor_pago`).
+- **Importação e Exportação (Filament v5):**
+    - Suporte a exportação (`FaturaExporter`) e importação em lote (`FaturaImporter`) restritas ao escopo do contrato da tela (`contrato_id`).
+    - Permissões configuradas via Filament Shield: `Import:Fatura` e `Export:Fatura`.
+    - Salvaguardas estritas: impede alteração via importação de faturas com transações (`transacoes`) ou gateway (`gateway_id`), exige exatamente 1 item com quantidade 1 e impede duplicidade. Reimportações idênticas são idempotentes (aceitas sem gravar).
+    - A importação bem-sucedida em contratos já enviados ao Assinafy reseta automaticamente o estado da assinatura (`Contrato::resetAssinafyState()`).
 - **Relacionamentos:** BelongsTo `contrato`, HasMany `itens` (`item_faturas`), HasMany `transacoes` (`transacao_bancarias`).
 
 ### `transacao_bancarias`

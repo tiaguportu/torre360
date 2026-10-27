@@ -6,6 +6,7 @@ use App\Filament\Resources\Bancos\BancoResource;
 use App\Filament\Resources\CentroCustos\CentroCustoResource;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
+use App\Filament\Resources\Faturas\FaturaResource;
 use App\Filament\Resources\Fornecedores\FornecedorResource;
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Matriculas\MatriculaResource;
@@ -218,6 +219,11 @@ return [
             ContratoResource::class => [
                 'import',
                 'export',
+            ],
+            FaturaResource::class => [
+                'import',
+                'export',
+                'gerarInformeAnual',
             ],
             PessoaResource::class => [
                 'import',

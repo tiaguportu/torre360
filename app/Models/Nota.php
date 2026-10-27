@@ -5,9 +5,21 @@ namespace App\Models;
 use App\Enums\SituacaoNota;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Nota extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['avaliacao_id', 'matricula_id', 'valor', 'situacao'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
     protected $table = 'nota';
 
     protected $fillable = ['avaliacao_id', 'matricula_id', 'valor', 'situacao'];

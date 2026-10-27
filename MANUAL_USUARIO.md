@@ -4621,6 +4621,43 @@ Na tela de edição (`/admin/contratos/{id}/edit`):
 
 ---
 
+## 💳 106. Importação e Exportação de Faturas do Contrato (`/admin/contratos/{id}/edit`)
+
+Na aba **Faturas** dentro da edição de um contrato, a secretaria e o financeiro podem movimentar cobranças em lote via planilha:
+
+### 106.1 Exportação de Faturas
+- **Ação:** No cabeçalho da tabela de faturas, clique em **Exportar faturas**.
+- **Formatos:** Disponível em **CSV** e **XLSX**.
+- **Colunas exportadas:**
+  - `Nº`: Identificador numérico da fatura no sistema.
+  - `Aluno`: Nome do aluno vinculado ao contrato (protegido contra injeção de fórmulas CSV).
+  - `Vencimento`: Data no formato `dd/mm/aaaa`.
+  - `Descrição`: Descrição detalhada dos itens da fatura (itens separados por ` | `).
+  - `Valor`: Valor bruto total com ponto decimal (ex: `1234.56`).
+  - `Desconto` e `Tipo de desconto`: Valor e modalidade (`absoluto` ou `relativo`).
+  - `Status`: Situação atual (`Pendente`, `Atrasado`, `Cancelado`, `Pago`, etc.).
+  - `Valor a pagar`, `Valor pago` e `Saldo`: Indicadores financeiros calculados para conferência.
+- **Segurança de Desempenho:** A exportação carrega previamente os itens e transações em bloco (*eager loading*), operando em velocidade máxima sem gargalos de banco de dados.
+
+### 106.2 Importação de Faturas
+- **Ação:** No cabeçalho da tabela de faturas, clique em **Importar faturas**.
+- **Escopo Restrito:** A planilha importa faturas exclusivamente para o contrato que está aberto na tela. Qualquer coluna de contrato na planilha é ignorada por segurança.
+- **Estrutura por Linha:** Cada linha representa uma fatura com um item de cobrança correspondente.
+- **Criação vs. Atualização:**
+  - **Criação (sem `Nº`):** Gera uma nova fatura e seu item financeiro com quantidade 1.
+  - **Atualização (com `Nº`):** Permite alterar faturas existentes **somente se** a fatura pertencer ao contrato da tela, não possuir transações bancárias baixadas, não possuir identificador de gateway externo e tiver exatamente 1 item com quantidade 1.
+  - **Idempotência (Round-trip):** Linhas reimportadas com os mesmos dados da base são aceitas sem regravações desnecessárias, permitindo exportar, revisar e reimportar o arquivo com tranquilidade.
+- **Validação de Formatos:**
+  - **Valores Monetários:** Aceita `1234.56`, `1234,56`, `1.234,56` e `R$ 1.234,56`.
+  - **Datas:** Aceita `dd/mm/aaaa` ou `aaaa-mm-dd` com validação estrita de calendário (rejeitando datas inválidas como `31/02/2026`).
+  - **Status Permitidos:** Aceita `pendente`, `atrasado` ou `cancelado`. Por consistência financeira, os status `pago` e `parcial` são rejeitados na importação (a baixa deve ser feita pela ação específica "Dar baixa" ou via conciliação bancária).
+  - **Prevenção de Duplicidade:** Rejeita cobranças repetidas que tenham o mesmo vencimento, descrição e valor para o mesmo contrato.
+- **Regra de Assinatura Digital (Assinafy):**
+  - Caso o contrato já tenha sido enviado para assinatura no Assinafy, o modal exibe um aviso amarelo preventivo.
+  - Se novas faturas forem criadas ou valores forem alterados, a assinatura eletrônica é resetada automaticamente (`resetAssinafyState()`), garantindo que o documento assinado coincida com o plano de pagamento vigente.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

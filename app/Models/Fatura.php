@@ -9,9 +9,32 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Fatura extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'contrato_id',
+                'vencimento',
+                'status',
+                'gateway',
+                'gateway_id',
+                'status_gateway',
+                'linha_digitavel',
+                'pix_copia_e_cola',
+                'boleto_url',
+                'link_pagamento',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
     protected $table = 'faturas';
 
     protected $fillable = [

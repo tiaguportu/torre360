@@ -79,4 +79,14 @@ class FaturaPolicy
     {
         return $authUser->can('Reorder:Fatura');
     }
+
+    public function import(AuthUser $authUser, ?Fatura $fatura = null): bool
+    {
+        return $authUser->can('Import:Fatura');
+    }
+
+    public function export(AuthUser $authUser, ?Fatura $fatura = null): bool
+    {
+        return $authUser->can('Export:Fatura');
+    }
 }
