@@ -35,6 +35,8 @@ Schedule::command('crm:expurgar-rascunhos-pre-matricula')->dailyAt('03:15')->wit
 Schedule::command('crm:recalcular-lead-score')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('cobranca:executar-regua')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('financeiro:gerar-contas-recorrentes')->dailyAt('06:45')->withoutOverlapping();
+// Antes do expediente e depois da rotina de risco de evasão (06:30): a fotografia do painel pega os números do dia.
+Schedule::command('painel:fotografar')->dailyAt('06:55')->withoutOverlapping();
 Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('biblioteca:atualizar-emprestimos-atrasados')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('biblioteca:limpar-capas-pendentes')->dailyAt('03:30')->withoutOverlapping();
