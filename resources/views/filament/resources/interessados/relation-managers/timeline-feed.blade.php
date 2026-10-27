@@ -272,6 +272,29 @@
             margin-top: .625rem; padding: .625rem .75rem; overflow-wrap: anywhere; white-space: pre-line;
             background: var(--tl-sunken); border-left: 3px solid var(--tl-c); border-radius: .25rem .625rem .625rem .25rem;
         }
+        /* Relato em markdown (Resumo IA): o reset do Tailwind zera títulos, listas e citações, então tudo é redefinido aqui */
+        .tl360-md { white-space: normal; }
+        .tl360-md > :first-child { margin-top: 0; }
+        .tl360-md > :last-child { margin-bottom: 0; }
+        .tl360-md :is(h1, h2, h3, h4, h5, h6) { margin: .875rem 0 .25rem; font-size: .875rem; font-weight: 700; line-height: 1.35; color: var(--tl-text); }
+        .tl360-md :is(h1, h2) { font-size: .9375rem; }
+        .tl360-md p { margin: .375rem 0; }
+        .tl360-md :is(ul, ol) { margin: .375rem 0; padding-inline-start: 1.25rem; }
+        .tl360-md ul { list-style: disc; }
+        .tl360-md ol { list-style: decimal; }
+        .tl360-md li { margin: .1875rem 0; }
+        .tl360-md :is(ul, ol) :is(ul, ol) { margin: .1875rem 0; }
+        .tl360-md strong { font-weight: 700; color: var(--tl-text); }
+        .tl360-md em { font-style: italic; }
+        .tl360-md blockquote { margin: .5rem 0; padding: .125rem 0 .125rem .75rem; font-style: italic; border-left: 3px solid var(--tl-bd); }
+        .tl360-md hr { margin: .75rem 0; border: 0; border-top: 1px dashed var(--tl-border); }
+        .tl360-md a { color: var(--tl-accent); text-decoration: underline; }
+        .tl360-md code { padding: .0625rem .3125rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8125rem; background: rgb(127 127 127 / .16); border-radius: .25rem; }
+        .tl360-md pre { margin: .5rem 0; padding: .5rem .625rem; overflow-x: auto; background: rgb(127 127 127 / .12); border-radius: .5rem; }
+        .tl360-md pre code { padding: 0; background: none; }
+        .tl360-md table { display: block; max-width: 100%; margin: .5rem 0; overflow-x: auto; border-collapse: collapse; }
+        .tl360-md :is(th, td) { padding: .25rem .5rem; text-align: left; border: 1px solid var(--tl-border); }
+        .tl360-md th { font-weight: 700; background: var(--tl-sunken); }
         .tl360-tags { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .625rem; }
         .tl360-tag {
             display: inline-flex; align-items: center; gap: .25rem; padding: .125rem .5rem; font-size: .75rem; color: var(--tl-muted);
@@ -653,7 +676,11 @@
                                     <span class="tl360-step is-to">{{ $det['status_novo'] }}</span>
                                 </div>
                             @elseif(! empty($evento['conteudo']))
-                                <div class="tl360-note">{{ $evento['conteudo'] }}</div>
+                                @if(($evento['formato'] ?? 'texto') === 'markdown')
+                                    <div class="tl360-note tl360-md">{!! \App\Services\CrmIaVendasService::markdownRelato($evento['conteudo']) !!}</div>
+                                @else
+                                    <div class="tl360-note">{{ $evento['conteudo'] }}</div>
+                                @endif
                             @endif
 
                             {{-- Contato: duração --}}

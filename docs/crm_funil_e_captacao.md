@@ -274,6 +274,23 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
     Limitações: carimbo só com hora (sem data) não é usado; mensagens de áudio não têm carimbo confiável; colar uma
     conversa antiga coloca o registro mais atrás na linha do tempo.
     Testes: `ResumoConversaAudioTest` (prompt, validação por `DataProvider` e a Action gravando a data).
+  - **Markdown na linha do tempo (2026-10-27):** o `resumo_markdown` era exibido cru (`###`, `**`) porque o card
+    do feed usa `white-space: pre-line` e `{{ }}`. Agora `Customer360TimelineService::coletarContatos()` devolve
+    `formato = 'markdown'` só para `HistoricoContato.automatico = true` (síntese da IA) e `'texto'` para o resto;
+    `timeline-feed.blade.php` converte **na tela**, só os eventos visíveis, com
+    `CrmIaVendasService::markdownRelato()` (a lista inteira é remontada a cada busca/filtro, então converter no
+    serviço custaria o histórico todo). Relato digitado à mão (`automatico = false`, inclusive o da *Importar Lead
+    com IA*, que é texto corrido) **não** é convertido: `*`, `#` e `- ` digitados continuam literais. A busca
+    textual segue sobre o texto cru, sem as marcações HTML.
+    `markdownRelato()` parte de `markdownSeguro()` (`html_input: strip`, `allow_unsafe_links: false`, GFM do
+    `Str::markdown`) e acrescenta: `renderer.soft_break = <br>` (a fala por linha não se junta em um parágrafo);
+    `<img>` trocada pelo `alt` (imagem externa avisaria o host de que o lead foi aberto e a URL poderia carregar
+    dados da conversa); `target="_blank" rel="noopener noreferrer nofollow"` em todo `<a>`. O `markdownSeguro()` do
+    dossiê não precisa disso: ele só alimenta o PDF, e o dompdf está com `enable_remote = false`
+    (`config/dompdf.php`), então nenhuma imagem externa é buscada. O CSS fica em `.tl360-md` (o reset do Tailwind zera
+    título, lista e citação, então tudo é redefinido, com os tokens claro/escuro do feed).
+    Testes: `Customer360TimelineTest` (formato por tipo de registro, renderização, relato manual intacto, HTML/imagem/link
+    perigosos, quebra de linha, busca) e `CrmIaSegurancaTest` (`markdownRelato`).
 - Testes que passam por IA devem usar `Queue::fake()`/`Http::fake()` e `Http::preventStrayRequests()`: o `.env`
   local tem a chave real e o `phpunit.xml` não a sobrescreve.
 

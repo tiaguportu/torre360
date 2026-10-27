@@ -267,6 +267,100 @@ class Customer360TimelineTest extends TestCase
             ->assertHasErrors(['novoTipoContatoId', 'novoRelato']);
     }
 
+    private function registrarRelato(string $relato, bool $automatico): HistoricoContato
+    {
+        return HistoricoContato::create([
+            'interessado_id' => $this->interessado->id,
+            'usuario_id' => $this->user->id,
+            'tipo_contato_interessado_id' => $this->tipoWhatsapp->id,
+            'relato' => $relato,
+            'data_contato' => now(),
+            'automatico' => $automatico,
+        ]);
+    }
+
+    private function feed(): \Livewire\Features\SupportTesting\Testable
+    {
+        return Livewire::test(TimelineRelationManager::class, [
+            'ownerRecord' => $this->interessado,
+            'pageClass' => EditInteressado::class,
+        ]);
+    }
+
+    public function test_service_marca_como_markdown_so_o_relato_gravado_pela_ia(): void
+    {
+        $this->registrarRelato('### Resumo', true);
+        $this->registrarRelato('**anotado** pelo consultor', false);
+
+        $formatos = app(Customer360TimelineService::class)
+            ->obterTimeline($this->interessado)
+            ->pluck('formato', 'conteudo');
+
+        $this->assertSame('markdown', $formatos['### Resumo']);
+        $this->assertSame('texto', $formatos['**anotado** pelo consultor']);
+    }
+
+    public function test_feed_mostra_o_relato_da_ia_formatado_em_vez_do_markdown_cru(): void
+    {
+        $this->registrarRelato(
+            "### 📌 Trechos Relevantes da Conversa\n\n- **Mãe:** “Quero a simulação do 7º ano”\n- **Escola:** “Envio hoje”\n\n> falou em bolsa",
+            true
+        );
+
+        $this->feed()
+            ->assertSeeHtml('<h3>📌 Trechos Relevantes da Conversa</h3>')
+            ->assertSeeHtml('<strong>Mãe:</strong>')
+            ->assertSeeHtml('<li>')
+            ->assertSeeHtml('<blockquote>')
+            ->assertDontSee('### ', false)
+            ->assertDontSee('**Mãe:**', false);
+    }
+
+    public function test_feed_mantem_cada_fala_na_sua_linha_dentro_do_paragrafo(): void
+    {
+        $this->registrarRelato("**Mãe:** primeira fala\n**Pai:** segunda fala", true);
+
+        $this->feed()->assertSeeHtml("<strong>Mãe:</strong> primeira fala<br>\n<strong>Pai:</strong> segunda fala");
+    }
+
+    public function test_feed_nao_formata_o_relato_digitado_pelo_consultor(): void
+    {
+        $this->registrarRelato("Preço *combinado* de R\$ 1.200\n# não é título\n- item", false);
+
+        $this->feed()
+            ->assertSee('Preço *combinado* de R$ 1.200', false)
+            ->assertSee('# não é título', false)
+            ->assertDontSeeHtml('<em>combinado</em>')
+            ->assertDontSeeHtml('<h1>')
+            ->assertDontSeeHtml('<li>');
+    }
+
+    public function test_feed_neutraliza_html_imagem_e_link_perigosos_no_relato_da_ia(): void
+    {
+        $this->registrarRelato(
+            "<script>alert('x')</script>\n\n<img src=x onerror=alert(1)>\n\n![pixel](https://rastreio.example/p.gif?c=dados)\n\n[clique](javascript:alert(1)) e [site](https://escola.example/vagas)",
+            true
+        );
+
+        $this->feed()
+            ->assertDontSeeHtml('<script')
+            ->assertDontSeeHtml('<img')
+            ->assertDontSeeHtml('onerror')
+            ->assertDontSeeHtml('javascript:')
+            ->assertDontSee('rastreio.example', false)
+            ->assertSeeHtml('href="https://escola.example/vagas"')
+            ->assertSeeHtml('rel="noopener noreferrer nofollow"');
+    }
+
+    public function test_busca_continua_achando_o_texto_do_relato_em_markdown(): void
+    {
+        $this->registrarRelato("### Resumo\n\nMãe quer **natação** e período integral", true);
+
+        $achados = app(Customer360TimelineService::class)->obterTimeline($this->interessado, 'todos', 'natação');
+
+        $this->assertCount(1, $achados);
+    }
+
     public function test_usuario_sem_permissao_nao_consegue_registrar_interacao_rapida(): void
     {
         $usuarioSemPermissao = User::factory()->create(['activated_at' => now()]);

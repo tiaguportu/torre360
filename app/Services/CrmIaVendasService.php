@@ -296,6 +296,34 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
     }
 
     /**
+     * Converte em HTML o relato em markdown que a IA gravou no histórico (Resumo IA de Conversa), para a linha do tempo.
+     *
+     * Além do que {@see self::markdownSeguro()} já faz (HTML cru descartado, links `javascript:` barrados), o relato
+     * parte da conversa de terceiros e é aberto pelo consultor sem ninguém revisar: imagens são removidas (uma imagem
+     * externa avisaria quem a hospeda que o consultor abriu o lead, e a URL poderia carregar dados da conversa) e todo
+     * link abre em outra aba, sem repassar a origem. Quebra de linha simples vira `<br>`: o consultor lê as falas
+     * transcritas uma por linha, e o markdown puro as juntaria em um único parágrafo.
+     */
+    public static function markdownRelato(?string $markdown): string
+    {
+        $html = Str::markdown((string) $markdown, [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+            'renderer' => ['soft_break' => "<br>\n"],
+        ]);
+
+        // A saída do CommonMark escapa `<` e `>` dentro dos atributos, então `[^>]*` não termina antes da tag, e o
+        // `alt` já vem escapado: pode voltar ao texto como está.
+        $html = preg_replace_callback(
+            '/<img\b[^>]*>/i',
+            fn (array $img): string => preg_match('/\balt="([^"]*)"/i', $img[0], $alt) === 1 ? $alt[1] : '',
+            $html
+        ) ?? $html;
+
+        return preg_replace('/<a\s/i', '<a target="_blank" rel="noopener noreferrer nofollow" ', $html) ?? $html;
+    }
+
+    /**
      * Remove links do texto gerado para o WhatsApp: a mensagem sai com o nome da escola, e um link
      * plantado por um lead malicioso (prompt injection) viraria phishing enviado por canal oficial.
      */

@@ -180,6 +180,9 @@ class Customer360TimelineService
                 'subtitulo' => 'Registrado por '.($contato->usuario?->name ?? 'Usuário do Sistema'),
                 'autor' => $contato->usuario?->name,
                 'conteudo' => $contato->relato,
+                // O relato que a IA gravou é markdown; o digitado pelo consultor é texto corrido e segue como foi escrito.
+                // A conversão fica na tela, só para os eventos exibidos: aqui a lista inteira é montada a cada busca.
+                'formato' => $contato->automatico ? 'markdown' : 'texto',
                 'icone' => $icone,
                 'cor_icone' => $corIcone,
                 'bg_icone' => $bgIcone,
