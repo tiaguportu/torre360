@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Pendencias\Fontes\AssinaturasAtrasadas;
+use App\Services\Pendencias\Fontes\AtasPorFechar;
 use App\Services\Pendencias\Fontes\CancelamentosParaAnalisar;
 use App\Services\Pendencias\Fontes\CancelamentosParaConcluir;
 use App\Services\Pendencias\Fontes\ClassificacaoContabilPendente;
@@ -8,6 +9,8 @@ use App\Services\Pendencias\Fontes\ComprasParaCotar;
 use App\Services\Pendencias\Fontes\ContatosDoDia;
 use App\Services\Pendencias\Fontes\DevolucoesPendentes;
 use App\Services\Pendencias\Fontes\DocumentosParaAssinatura;
+use App\Services\Pendencias\Fontes\EncaminhamentosDeReuniao;
+use App\Services\Pendencias\Fontes\EncaminhamentosVencidosDaEquipe;
 use App\Services\Pendencias\Fontes\EstoqueAbaixoDoMinimo;
 use App\Services\Pendencias\Fontes\GradesIncompletas;
 use App\Services\Pendencias\Fontes\LeadsQuentesParados;
@@ -68,6 +71,10 @@ return [
         TurmasComResultadoNegativo::class,
         // Simulador do próximo ano letivo (Onda 76).
         ProjecaoDoProximoAno::class,
+        // Reuniões e atas (Ondas 27 e 32): encaminhamentos de cada um, atas por fechar e o painel da coordenação.
+        EncaminhamentosDeReuniao::class,
+        AtasPorFechar::class,
+        EncaminhamentosVencidosDaEquipe::class,
     ],
 
     /*

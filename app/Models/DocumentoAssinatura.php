@@ -132,6 +132,7 @@ class DocumentoAssinatura extends Model
             ItemProcessoFuncionario::class, ProcessoFuncionario::class => 'Admissão ou desligamento',
             SolicitacaoDocumento::class => 'Declaração emitida',
             HistoricoEscolar::class => 'Histórico escolar',
+            Reuniao::class => 'Ata de reunião',
             default => 'Outro registro',
         };
     }
