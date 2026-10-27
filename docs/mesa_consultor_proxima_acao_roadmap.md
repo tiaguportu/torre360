@@ -24,6 +24,7 @@ vazia não entra em *Precisa de contato*).
 - Nova coluna **`interessado.proxima_acao`** (até 160 caracteres): *o quê*, ao lado do *quando* (`data_proximo_contato`). Migration `add_proxima_acao_to_interessado_table`.
 - **Registrar atendimento** (botão da lista e aba *Histórico* do lead) pede a **próxima ação e a data**, a menos que o resultado encerre o ciclo (**Efetuou matrícula** ou **Sem interesse**): nesse caso os dois campos são limpos. Atendimento com resultado que segue sem próxima ação é **recusado**.
 - Botão **Próxima ação** na lista para marcar ou mudar sem registrar atendimento (`Update:Interessado`); some nos leads em status final.
+- **Registro administrativo** no histórico (tipos "Formulário do site" e "Movimentação no Funil", que o sistema grava por conta própria) **não pede nem altera** a próxima ação: não é conversa com a família.
 - A lista mostra a próxima ação sob o nome do lead. Toda a regra está em `ProximaAcaoLeadService`.
 
 ### Seis filas na Minha Mesa

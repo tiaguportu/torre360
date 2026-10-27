@@ -4366,7 +4366,7 @@ Todo atendimento passa a dizer **o que fazer depois**, e a **Minha Mesa** mostra
 2. Preencha a **próxima ação** (até 160 caracteres, ex.: "Ligar com a proposta de bolsa") e a **data**. Os dois são obrigatórios, **exceto** quando o resultado é *Efetuou matrícula* ou *Sem interesse*: aí o lead não tem mais próximo contato e os dois campos são limpos.
 3. O botão **Próxima ação** marca ou muda só isso, sem registrar contato. Ele some quando o lead já está em etapa final.
 
-A próxima ação aparece sob o nome do lead na lista.
+A próxima ação aparece sob o nome do lead na lista. Os registros que o sistema faz sozinho (reenvio do formulário do site, movimentação no funil) não pedem nem mudam a próxima ação.
 
 **Na Minha Mesa** (grupo *CRM / Comercial*), cada consultor vê a **própria carteira e os leads sem dono**; quem tem `ViewAll:Interessado` vê todos:
 - **Contatos do dia:** próximo contato de hoje ou já vencido. Fica atrasado quando passou da hora marcada.

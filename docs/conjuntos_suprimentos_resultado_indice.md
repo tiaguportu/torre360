@@ -127,20 +127,28 @@ suprimentos); `2026_10_27_100000` (contas recorrentes e colunas em `conta_pagars
 | O sistema não tem o conceito de "próxima série": a família escolhe a série de destino na rematrícula. | Onda 76 | A projeção é por série de destino; quem não escolheu entra à parte, só no total. |
 | A baixa de fatura não classifica a conta do plano (ver Onda 73), então parte das saídas e entradas fica sem classificação. | Ondas 43 e 77 | As telas avisam quanto ficou de fora; classificar o movimento é pré-requisito para os números fecharem. |
 | `ApuracaoHoraAula` é por professor e mês, sem turma. | Onda 77 | Divisão pela proporção das aulas do cronograma; o que não tem aula vai para o custo indireto e a tela avisa. |
-| **Falha que já vem da `main`**: `UploadsSegurosTest` aponta `Resources/Candidatos/Schemas/CandidatoForm.php` (campo `foto_path` sem `acceptedFileTypes`). | Fora desta entrega | Arquivo não tocado; corrigir à parte declarando a lista branca de `TiposArquivo`. |
+| **Registro administrativo no histórico do lead** (tipo "Formulário do site" ou "Movimentação no Funil") passou a exigir a próxima ação. Achado pela suíte completa (`CrmSlaPrimeiroContatoPelaFichaTest`). | Onda 84 | Corrigido: esses tipos não são conversa com a família, então não pedem nem alteram a próxima ação; teste novo cobre. |
+| **Quatro falhas que já vêm da `main`** (conferidas rodando os mesmos testes na `origin/main` pura): `UploadsSegurosTest` aponta `Resources/Candidatos/Schemas/CandidatoForm.php` (campo `foto_path` sem `acceptedFileTypes`); `EducacaoBasicaMelhoriasTest::test_can_record_atendimento_enfermagem` (o campo de saúde agora é criptografado e o teste ainda procura o texto puro); `ShieldWidgetsTest::test_questionarios_widget_requires_both_shield_permission_and_pending_questionnaires`; `UnificacaoMatriculaDocumentosTest::test_redirecionamento_suave_de_link_de_convite_legado_para_portal_unificado` (o token do link legado não é mais o esperado). | Fora desta entrega | Arquivos não tocados. Cada uma pede um ajuste próprio (lista branca de `TiposArquivo` no formulário do candidato; teste de saúde lendo o valor descriptografado; revisão dos outros dois). |
 
 ## Como foi verificado
 
 - **Testes novos (242):** `MesaDoConsultorTest` (18), `OrcamentoTest` (20), `EstoqueTest` (12), `ComprasServiceTest` (26), `ComprasTelasTest` (22),
   `ContasRecorrentesFluxoTest` (24), `ContasRecorrentesTelasTest` (16), `RentabilidadeTurmaTest` (16), `RentabilidadeTelasTest` (12),
   `PainelDirecaoTest` (27), `PainelDirecaoTelasTest` (14), `SimuladorProximoAnoTest` (20) e `SimuladorProximoAnoTelasTest` (15), mais ajustes em
-  `AcoesCrmAutorizacaoTest` e `FunilAcoesInteressadosTest`.
+  `AcoesCrmAutorizacaoTest`, `FunilAcoesInteressadosTest` e `CrmSlaPrimeiroContatoPelaFichaTest`.
+- **Suíte completa** (cerca de 3.200 testes, em 6 processos paralelos): as únicas falhas, depois da correção acima, são as **4 que também falham na
+  `origin/main` pura**. Depois do rebase sobre as novidades do CRM de outra sessão, os testes de CRM e da Minha Mesa (180) voltaram a passar.
 - **MariaDB 10.4 (banco descartável copiado de `torre360_demo`, nunca a produção):** as 10 migrations novas aplicaram, e um roteiro de fumaça
   rodou os serviços de contas recorrentes (inclusive o índice único contra duplicata), fluxo projetado nos três cenários, resultado por turma,
   estoque, orçamento, compras de ponta a ponta (requisição → cotação → aprovação → recebimento → estoque, patrimônio e conta a pagar), painel,
   simulador, todas as filas da Minha Mesa e as três fontes de relatório, sem erro. O banco foi apagado depois.
-- **Não foi verificado:** nenhuma tela foi aberta em navegador (testes de Livewire e de HTML renderizado, sem conferência visual de layout,
-  tema escuro ou celular); o recebimento com nota fiscal real em disco de produção; o desempenho das filas e do painel com o volume real da
+- **Conferência visual** (Chrome headless sobre o HTML renderizado, em desktop e em 360 px): Painel da Direção, Fluxo Projetado, Resultado
+  Realizado, Simulador, requisição de compra com o mapa de cotações, Contas Recorrentes e Orçado × Realizado. Corrigiu o nome do mês em
+  inglês e as seções de Compras em meia largura. A tabela larga do simulador rola dentro do cartão no celular. **Limite:** o CSS compilado
+  disponível na máquina é de 1º/10, sem as classes de cor e espaçamento novas (as mesmas que dez telas existentes usam), então semáforo,
+  setas de variação, faixas de aviso e alguns espaçamentos só aparecem como no desenho depois do build do deploy.
+- **Não foi verificado:** a aparência com o CSS recompilado e no tema escuro; as telas com o JavaScript do Livewire em funcionamento (a captura foi
+  do HTML sem scripts); o recebimento com nota fiscal real em disco de produção; o desempenho das filas e do painel com o volume real da
   escola (o cálculo percorre faturas, hora-aula e transações do período; as filas mais pesadas usam cache de minutos a horas); e as
   permissões em perfis feitos à mão.
 
