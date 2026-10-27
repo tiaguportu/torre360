@@ -443,6 +443,7 @@ Uma tela com o que espera ação do papel ativo, reunindo as filas dos módulos.
 | **Minha Mesa** | Nove filas iniciais: cancelamentos (analisar, concluir, devolver), documentos (enviar, assinaturas atrasadas), rematrículas sem turma, transferências em andamento, providências de RH vencidas e grades incompletas |
 | Por papel | Só aparecem as filas que o papel ativo pode resolver; a página nem aparece para quem não tem nenhuma. Fila que falha não derruba a Mesa |
 | Selo do menu | Atrasados em vermelho (ou o total em amarelo), guardado por 5 minutos por usuário e papel |
+| Filas acrescentadas depois | Classificação contábil (73), seis do CRM (84), três de compras, estoque abaixo do mínimo, orçamento estourado, três do financeiro (78), turmas com resultado negativo (77) e projeção do próximo ano (76): lista completa em `docs/mesa_pendencias_roadmap.md` |
 
 ---
 
@@ -481,6 +482,104 @@ Cópia assinada digitalmente da declaração emitida e do histórico escolar. De
 | Leitura do PDF | `AssinaturaPdfInspector` conta as assinaturas, vê o formato e a marca da ICP-Brasil e registra o nível; **não valida** a cadeia nem o certificado (Verificador do ITI) |
 | Proteção | Documento com cópia assinada não é emitido de novo, nem editado, excluído ou sincronizado; o anexo exige confirmar que é o documento do aluno |
 | Onde aparece | Coluna e seção do nível em *Documentos para Assinatura*, Portal da família e página pública de verificação |
+
+---
+
+### 37. 📞 Mesa do Consultor e Próxima Ação Obrigatória (Onda 84)
+O atendimento do CRM sempre diz o que fazer depois, e a Minha Mesa mostra ao consultor para quem ligar agora. Detalhes em `docs/mesa_consultor_proxima_acao_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Próxima ação | Coluna `interessado.proxima_acao` (o quê) ao lado de `data_proximo_contato` (quando). **Registrar atendimento** pede os dois, exceto quando o resultado encerra o ciclo (*Efetuou matrícula* ou *Sem interesse*); botão **Próxima ação** na lista |
+| Seis filas na Mesa | Contatos do dia, visitas de hoje e sem resultado, primeira resposta fora do prazo, leads sem próxima ação, leads quentes sem contato e leads sem consultor; visibilidade da lista de Interessados (a própria carteira e os sem dono) |
+| Parâmetros | `config/crm.php` → `mesa` (carência, prazos de atraso e janela do SLA) |
+
+---
+
+### 38. 🛒 Compras e Cotações (Onda 38)
+Do pedido do setor ao recebimento com a nota fiscal e a conta a pagar. Grupo **Suprimentos** do menu. Detalhes em `docs/compras_cotacoes_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Fluxo | Requisição (rascunho) → cotação → pedido → aprovação → recebimento (total ou parcial) → conta a pagar; cancelamento e recusa com motivo |
+| Cotação | Uma proposta por fornecedor com preço de **todos** os itens; **mapa comparativo** com o menor preço e o menor total, validade e fornecedor sinalizado por recebimento divergente; escolher a que não é a mais barata, ou com menos cotações que o mínimo da faixa, **exige justificativa** |
+| Alçada | Três níveis pelo valor (R$ 1.000 e R$ 10.000 por padrão, configuráveis); a aprovação mostra o **saldo do orçamento** da conta (Onda 43) e pede justificativa se o pedido passar dele |
+| Controle interno | Quem solicita não aprova e quem aprova não recebe (vale também para o super administrador) |
+| Recebimento | Item de estoque dá entrada, bem durável vira cadastro no patrimônio (um por unidade) e nasce a conta a pagar com o prazo da cotação; nota fiscal em disco privado, entregue por rota própria |
+| Visibilidade | Cada pessoa abre as próprias requisições e as que precisam dela (cotar, aprovar na sua alçada, receber); `VerTodas:RequisicaoCompra` abre as demais |
+| Minha Mesa | *Compras para cotar*, *Pedidos para aprovar* e *Compras para receber* |
+
+---
+
+### 39. 📦 Estoque de Consumíveis (Onda 16, fase 2)
+Material de limpeza, papelaria e descartáveis, com saldo, mínimo e histórico. Grupo **Suprimentos**. Detalhes em `docs/patrimonio_estoque_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Movimentos | Entrada, saída (para um centro de custo) e ajuste de inventário; saldo negativo não existe; **custo médio móvel**; cada movimento grava o saldo depois dele |
+| Trilha | Aba *Movimentações* em cada item; item com movimento não se exclui |
+| Compras | O recebimento de um pedido com destino "estoque" dá a entrada sozinho |
+| Mesa | *Estoque abaixo do mínimo* (item zerado é atrasado); permissão `Movimentar:ItemEstoque` à parte |
+
+---
+
+### 40. ⚖️ Orçamento Anual × Realizado (Onda 43)
+O previsto por conta do plano e mês, contra o que aconteceu. Grupo **Financeiro**. Detalhes em `docs/orcamento_anual_realizado_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| **Orçamento Anual** | Planilha conta × 12 meses, importação CSV e cópia de outro orçamento com reajuste; rascunho → aprovado; o aprovado **não muda** (a revisão abre uma nova versão) |
+| **Orçado × Realizado** | Previsto acumulado até o mês escolhido contra o realizado, com variação e semáforo; o realizado é o **mesmo do DRE**; avisa as saídas sem conta do plano |
+| Integrações | Saldo para a aprovação de compras (Onda 38) e a fila *Orçamento estourado* na Mesa |
+
+---
+
+### 41. 🔁 Contas Recorrentes e Fluxo de Caixa Projetado (Onda 78)
+Despesas que se repetem geram a conta a pagar sozinhas e o caixa dos próximos 90 dias é projetado. Grupo **Financeiro**. Detalhes em `docs/contas_recorrentes_fluxo_projetado_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| **Contas Recorrentes** | Periodicidade, dia, valor, vigência e antecedência; rotina diária `financeiro:gerar-contas-recorrentes` que **nunca duplica** a conta do mês e recupera 31 dias; valor estimado nasce "a revisar" e a baixa só sai depois; **Registrar reajuste** atualiza as contas abertas que seguem no valor antigo |
+| **Fluxo Projetado** | 30 a 180 dias, dia a dia: saldo bancário + faturas abertas pelo cenário (média histórica, receber tudo, não receber nada) − contas a pagar − recorrentes ainda sem conta; mostra a primeira data negativa e a situação da conciliação |
+| Mesa e relatórios | *Contas recorrentes a revisar*, *Reajustes de contrato* e *Caixa projetado negativo*; fonte nos relatórios configuráveis |
+
+---
+
+### 42. 📊 Resultado Realizado por Turma (Onda 77)
+Quanto cada turma, série, curso e unidade rendeu e custou de fato no mês, ao lado do planejado. Grupo **Financeiro**. Detalhes em `docs/rentabilidade_por_turma_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Receita | Faturas do mês líquidas de bolsa, com recebido e em atraso |
+| Custos | Docente (apuração de hora-aula dividida pelas aulas do cronograma), direto (centro de custo vinculado à turma ou ao curso) e indireto **rateado por aluno, igual por turma ou por hora-aula** — o critério aparece ao lado do número |
+| Comparações | Planejado (Controladoria de Turmas), mês anterior e mesmo mês do ano anterior; margem, custo e resultado por aluno |
+| Centro de custo | Passa a poder ser vinculado a uma turma ou a um curso, ou marcado **fora do resultado das turmas** |
+| Mesa e relatórios | *Turmas com resultado negativo*; fonte nos relatórios; `View:RentabilidadeRealizada` (dado sensível) |
+
+---
+
+### 43. 🧭 Painel da Direção (Onda 45)
+A saúde da escola em uma tela, com meta, variação e semáforo. Grupo **Relatórios**. Detalhes em `docs/painel_direcao_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Indicadores | 13 em quatro seções (alunos e vagas, financeiro, captação, pedagógico), cada um com **uma definição só** (`IndicadorDoPainel`, registrada em `config/painel_direcao.php`), reaproveitando o código dos relatórios de origem |
+| Permissão por indicador | Cada pessoa vê só o que a permissão da tela de origem permite |
+| Cartão | Valor, variação contra 30 dias atrás e contra o ano anterior, série de 90 dias, meta do ano e semáforo; filtro por unidade; lista *Atenção hoje* vinda da Minha Mesa |
+| Metas | **Metas dos Indicadores** por indicador, ano e unidade, com tolerância |
+| Fotografias | Rotina diária `painel:fotografar` guarda o valor de cada indicador; indicador que falha não derruba o painel |
+
+---
+
+### 44. 🧮 Simulador do Próximo Ano Letivo (Onda 76)
+Quantos alunos, quantas turmas e se cada turma se paga, com os dados de hoje. É projeção, não compromisso. Grupo **Relatórios**. Detalhes em `docs/simulador_proximo_ano_letivo_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Projeção | Por série de destino: rematrículas confirmadas, em andamento (pela taxa escolhida, sem quem tem risco alto de evasão), lista de espera até as vagas que sobram; quem ainda não escolheu a série entra à parte, só no total |
+| "E se" | Taxas, corte de risco, reajuste, número de turmas (zero fecha a série), capacidade e abrir turma em outra série; vagas livres, excesso e **ponto de equilíbrio** por turma; sugere as taxas da campanha anterior |
+| Cenários | Salvos com a fotografia do resultado e comparados lado a lado |
+| Mesa e relatórios | *Projeção do próximo ano* (atrasada quando a campanha termina em até 15 dias); fonte nos relatórios |
 
 ---
 
@@ -620,10 +719,13 @@ autorizada:
 | Ondas 68 a 71 (2 propostas e 2 implementadas), com as fusões sugeridas e as ampliações propostas | `docs/ondas_68_a_71_indice.md` |
 | Gateway de pagamento real: Asaas e Efí (Onda 68) | `docs/gateway_pagamento_real_roadmap.md` |
 | Central de avisos à família (Onda 70) | `docs/central_avisos_familia_roadmap.md` |
+| Ondas 72 a 79 (2 propostas e 6 implementadas), com as fusões e as ampliações propostas | `docs/ondas_72_a_79_indice.md` |
+| Conjuntos **Suprimentos** e **Resultado da escola** (ondas 16, 38, 43, 45, 76, 77, 78 e 84, implementadas em 2026-10-27) | `docs/conjuntos_suprimentos_resultado_indice.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
 Censo Escolar e a lista de material, nas seções 26 e 27; o cancelamento de matrícula, os encargos por atraso,
 a admissão e o desligamento e a grade horária assistida, nas seções 28 a 31; a assinatura eletrônica de documentos
-e a mesa de pendências, nas seções 32 e 33. Os documentos dessas duas ondas, 69 e 71, estão em
+e a mesa de pendências, nas seções 32 e 33; as ondas 72 a 74, nas seções 34 a 36; e as ondas 84, 38, 16 (estoque), 43, 78, 77, 45 e 76, nas
+seções 37 a 44. Os documentos dessas duas ondas, 69 e 71, estão em
 `docs/assinatura_eletronica_documentos_roadmap.md` e `docs/mesa_pendencias_roadmap.md`.)

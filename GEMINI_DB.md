@@ -1993,3 +1993,102 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
 ### `execucoes_relatorio`
 - **Representa:** uma rodada de um relatório.
 - **Campos:** `relatorio_salvo_id` (FK, cascade), `origem` (Enum `OrigemExecucaoRelatorio`: `manual`, `agendada`), `status` (Enum `StatusExecucaoRelatorio`: `sucesso`, `erro`), `formato`, `linhas`, `truncado` (passou do limite de linhas), `arquivo_path` / `arquivo_hash` (disco `local`, `relatorios/{id}/{uuid}`; zerados quando a retenção apaga o arquivo), `erro` (texto), `executado_por_user_id` (FK `users`, nullOnDelete), `expira_em` (date; índice).
+
+---
+
+## 43. Mesa do Consultor e Próxima Ação (Onda 84)
+
+### Coluna nova em `interessado`
+- `proxima_acao` (string 160, nullable, depois de `data_proximo_contato`): o que fazer no próximo contato. `data_proximo_contato` é o *quando*. As duas são limpas quando o atendimento termina em *Efetuou matrícula* ou *Sem interesse* (`ProximaAcaoLeadService`).
+
+> As filas da Mesa não são tabela: cada uma consulta `interessado`, `visita_interessado` e `historico_contato` com os mesmos escopos da lista de Interessados.
+
+---
+
+## 44. Orçamento Anual × Realizado (Onda 43)
+
+### `orcamentos`
+- **Representa:** uma versão do orçamento de um ano.
+- **Campos:** `ano`, `nome` (120), `versao` (única por ano: `uq_orcamento_ano_versao`), `status` (Enum `StatusOrcamento`: `rascunho`, `aprovado`, `substituido`), `origem_orcamento_id` (auto-FK, nullOnDelete: o orçamento copiado), `aprovado_por_user_id`, `aprovado_em`, `criado_por_user_id` (FK `users`, nullOnDelete), `observacao`.
+
+### `orcamento_linhas`
+- **Representa:** o previsto de uma conta (e, se houver, de um centro de custo) em um mês.
+- **Campos:** `orcamento_id` (FK, cascade), `plano_conta_id` (FK `plano_contas`, cascade), `centro_custo_id` (FK `centro_custos`, nullable, cascade), `mes` (1-12), `valor_previsto` (decimal 14,2). O realizado **não** é tabela: vem de `transacao_bancarias` pela regra do DRE.
+
+---
+
+## 45. Estoque de Consumíveis (Onda 16, fase 2)
+
+### `itens_estoque`
+- **Campos:** `codigo` (30, único, nullable), `nome` (150), `categoria`, `unidade_medida` (`un`, `cx`, `pct`, `rs`, `l`, `kg`, `m`), `unidade_id` (FK `unidade`, nullOnDelete), `estoque_minimo` e `quantidade_atual` (decimal 12,3), `custo_medio` (decimal 12,4, móvel), `plano_conta_id` (FK, nullOnDelete), `is_active`.
+
+### `movimentacoes_estoque`
+- **Representa:** cada entrada, saída e ajuste, com o saldo depois dele.
+- **Campos:** `item_estoque_id` (FK, cascade), `tipo` (Enum `TipoMovimentacaoEstoque`: `entrada`, `saida`, `ajuste`), `quantidade` (decimal 12,3; no ajuste, a diferença), `saldo_apos`, `custo_unitario` (nullable), `centro_custo_id` (FK, nullOnDelete: o setor da saída), `motivo` (160), `origem` (morph nullable: por exemplo, o `recebimentos_compra` que deu a entrada), `user_id` (FK `users`, nullOnDelete). Índice `(item_estoque_id, created_at)`.
+
+---
+
+## 46. Compras e Cotações (Onda 38)
+
+### `requisicoes_compra`
+- **Campos:** `numero` (`REQ-AAAA-NNNN`, único), `solicitante_user_id`, `centro_custo_id`, `plano_conta_id` (FKs nullOnDelete), `titulo` (160), `justificativa`, `urgencia` (`normal`, `urgente`), `status` (Enum `StatusRequisicaoCompra`: `rascunho`, `em_cotacao`, `aguardando_aprovacao`, `aprovada`, `recebida_parcial`, `recebida`, `recusada`, `cancelada`), `cotacao_dispensada_justificativa`, `motivo_recusa`, `motivo_cancelamento`, `enviada_em`.
+
+### `itens_requisicao_compra`
+- **Campos:** `requisicao_compra_id` (FK, cascade), `descricao` (200), `quantidade` (decimal 12,3), `unidade_medida`, `estimativa_unitaria` (nullable), `destino` (Enum `DestinoItemCompra`: `consumo`, `estoque`, `patrimonio`, `servico`), `item_estoque_id` (FK nullOnDelete; obrigatório quando o destino é estoque), `ordem`.
+
+### `cotacoes` e `itens_cotacao`
+- `cotacoes`: `requisicao_compra_id`, `fornecedor_id` (únicos juntos: uma proposta por fornecedor), `prazo_entrega_dias`, `prazo_pagamento_dias` (30), `condicoes`, `validade_ate`, `frete`, `escolhida`, `motivo_escolha`, `registrada_por_user_id`.
+- `itens_cotacao`: `cotacao_id`, `item_requisicao_compra_id` (únicos juntos), `preco_unitario` (decimal 12,4). Cotação cobre todos os itens.
+
+### `pedidos_compra`
+- **Representa:** nasce quando a cotação é escolhida. Um por requisição.
+- **Campos:** `numero` (`PC-AAAA-NNNN`, único), `requisicao_compra_id` (único), `cotacao_id`, `fornecedor_id`, `valor_total`, `nivel_alcada` (1-3), `aprovado_por_user_id`, `aprovado_em`, `justificativa_acima_do_orcamento`, `saldo_orcamentario` (JSON: o saldo que a pessoa viu ao aprovar).
+
+### `recebimentos_compra` e `itens_recebimento_compra`
+- `recebimentos_compra`: `pedido_compra_id`, `recebido_por_user_id`, `data_recebimento`, `nota_fiscal_numero` (40), `nota_fiscal_path` (disco `local`, `compras/notas/{pedido}/{uuid}.ext`), `observacao`, `divergencia` (alimenta o histórico do fornecedor), `valor_recebido` (o frete entra no primeiro).
+- `itens_recebimento_compra`: `recebimento_compra_id`, `item_requisicao_compra_id`, `quantidade_recebida`, `preco_unitario`.
+
+### Colunas novas em `conta_pagars`
+- `pedido_compra_id` e `recebimento_compra_id` (FKs nullOnDelete): a conta a pagar que o recebimento gera.
+
+---
+
+## 47. Contas Recorrentes e Fluxo Projetado (Onda 78)
+
+### `contas_recorrentes`
+- **Representa:** a regra de uma despesa que se repete.
+- **Campos:** `descricao` (160), `fornecedor_id`, `plano_conta_id`, `centro_custo_id` (FKs nullOnDelete), `periodicidade` (Enum `PeriodicidadeContaRecorrente`: `mensal`, `bimestral`, `trimestral`, `semestral`, `anual`), `dia_vencimento` (1-31), `valor`, `valor_estimado` (bool), `vigencia_inicio`, `vigencia_fim` (nullable), `antecedencia_dias`, `proximo_reajuste_em` (nullable), `observacao`, `is_active`.
+
+### Colunas novas em `conta_pagars`
+- `conta_recorrente_id` (FK nullOnDelete), `competencia` (date; primeiro dia do mês do vencimento) e `valor_revisado` (bool, padrão verdadeiro; falso na conta gerada de valor estimado). **Índice único `(conta_recorrente_id, competencia)`**: a mesma despesa não gera duas contas no mesmo mês.
+
+> O fluxo projetado não é tabela: `FluxoProjetadoService` o monta a partir de `transacao_bancarias`, `faturas`, `conta_pagars` e `contas_recorrentes`.
+
+---
+
+## 48. Resultado Realizado por Turma (Onda 77)
+
+### Colunas novas em `centro_custos`
+- `turma_id` (FK `turma`, nullOnDelete): as despesas do centro são custo direto dessa turma. `curso_id` (FK `curso`, nullOnDelete): custo direto do curso, dividido entre as turmas pelo número de alunos. `fora_do_resultado_das_turmas` (bool): folha dos professores (já vem da apuração de hora-aula), investimentos e impostos. Sem nenhum dos três, a despesa é custo indireto e é rateada.
+
+> O resultado não é tabela: `RentabilidadeTurmaService` o calcula na hora a partir de `faturas` (com `item_faturas` e `transacao_bancarias`), `apuracao_hora_aulas`, `cronograma_aula`, `matricula` e `transacao_bancarias` de saída classificadas em conta do plano do tipo despesa.
+
+---
+
+## 49. Painel da Direção (Onda 45)
+
+### `indicador_metas`
+- **Representa:** a meta anual de um indicador.
+- **Campos:** `indicador` (60; a chave de uma classe de `config/painel_direcao.php`), `ano`, `unidade_id` (**0 = escola toda**; sem FK, para o índice único), `meta` (decimal 14,2), `tolerancia_percentual` (decimal 5,2; a faixa amarela), `observacao`. Único `(indicador, ano, unidade_id)`.
+
+### `painel_snapshots`
+- **Representa:** o valor de um indicador em um dia.
+- **Campos:** `data`, `indicador`, `unidade_id` (0 = escola toda), `valor` (decimal 16,4, nullable: indicador sem dado no dia). Único `(data, indicador, unidade_id)`; índice `(indicador, unidade_id, data)` para as séries. A coluna `data` tem cast `date`; **consulte com `whereDate`**.
+
+---
+
+## 50. Simulador do Próximo Ano Letivo (Onda 76)
+
+### `cenarios_proximo_ano`
+- **Representa:** um cenário salvo do simulador.
+- **Campos:** `nome` (120), `periodo_rematricula_id` (FK `periodo_rematriculas`, cascade), `parametros` (JSON: taxas, corte de risco, espera, reajuste, turmas e capacidade por série), `resultado` (JSON: a fotografia da projeção no dia), `criado_por_user_id` (FK `users`, nullOnDelete). A projeção do dia não é tabela: `SimuladorProximoAnoService` a calcula de `rematriculas`, `lista_espera_matriculas`, `matricula` (risco de evasão), `turma` e `periodo_rematricula_precos`.

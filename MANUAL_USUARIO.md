@@ -4357,6 +4357,142 @@ Em `/admin/solicitacao-documentos`:
 
 ---
 
+## 📞 94. Mesa do Consultor e Próxima Ação Obrigatória (CRM / Comercial)
+
+Todo atendimento passa a dizer **o que fazer depois**, e a **Minha Mesa** mostra ao consultor para quem ligar agora.
+
+**Registrar um atendimento** (botão *Atendimento* na lista de Interessados ou aba *Histórico* do lead):
+1. Escolha o **resultado** do contato.
+2. Preencha a **próxima ação** (até 160 caracteres, ex.: "Ligar com a proposta de bolsa") e a **data**. Os dois são obrigatórios, **exceto** quando o resultado é *Efetuou matrícula* ou *Sem interesse*: aí o lead não tem mais próximo contato e os dois campos são limpos.
+3. O botão **Próxima ação** marca ou muda só isso, sem registrar contato. Ele some quando o lead já está em etapa final.
+
+A próxima ação aparece sob o nome do lead na lista.
+
+**Na Minha Mesa** (grupo *CRM / Comercial*), cada consultor vê a **própria carteira e os leads sem dono**; quem tem `ViewAll:Interessado` vê todos:
+- **Contatos do dia:** próximo contato de hoje ou já vencido. Fica atrasado quando passou da hora marcada.
+- **Visitas de hoje e sem resultado:** marque a visita como realizada (ou que a família faltou) na aba *Visitas* do lead; isso libera a pesquisa de satisfação. Atrasa 4 horas depois do horário.
+- **Primeira resposta fora do prazo:** o SLA de primeira resposta estourou (horário comercial). Registrar o atendimento encerra o SLA.
+- **Leads sem próxima ação:** o lead que ninguém sabe quando procurar. Os recém-cadastrados têm 2 horas de carência.
+- **Leads quentes sem contato:** temperatura quente ou score alto, sem contato humano há 3 dias (atrasado com o dobro).
+- **Leads sem consultor:** para quem pode assumir lead (`Update:Interessado`).
+
+**Bom saber:** lead antigo que estava sem próxima ação aparece em *Leads sem próxima ação*; resolva marcando a ação. Os prazos se ajustam por variáveis de ambiente (`CRM_MESA_*`).
+
+---
+
+## 🛒 95. Compras e Cotações (`/admin/suprimentos/compras`)
+
+No grupo **Suprimentos**, *Compras*. Do pedido do setor ao recebimento com a nota fiscal e a conta a pagar.
+
+**Pedir uma compra** (qualquer pessoa da equipe com permissão): **Nova requisição**, preencha o que precisa comprar, o setor (centro de custo), a conta do plano de despesa, a urgência, por que é necessário e os **itens**. Em cada item escolha o **destino**: *consumo direto*, *entra no estoque* (escolha o item de estoque), *bem durável* (vira cadastro no patrimônio, em unidades inteiras) ou *serviço*. A requisição fica em **rascunho**; **Enviar para cotação** a trava.
+
+**Cotar** (`Cotar:RequisicaoCompra`, normalmente compras ou financeiro):
+1. **Registrar cotação**: escolha o fornecedor e informe o **preço de todos os itens**, o frete, os prazos, a validade e as condições. Reenviar a do mesmo fornecedor substitui a anterior. **Retirar cotação** remove uma.
+2. A tela mostra o **mapa de cotações**: fornecedores lado a lado, o menor preço de cada item em verde, o menor total, as validades e, em vermelho, o fornecedor que teve **recebimento com divergência** nos últimos 12 meses.
+3. **Escolher cotação** abre o pedido. Se a escolhida **não é a de menor valor**, explique por quê. Se há **menos cotações que o mínimo** da faixa de valor (1 até R$ 500, 2 até R$ 5.000, 3 acima), justifique a dispensa. Cotação vencida não pode ser escolhida.
+
+**Aprovar** (quem tem a alçada do valor: *Coordenação* até R$ 1.000, *Direção* até R$ 10.000, *Mantenedora* acima): **Aprovar pedido** mostra o **saldo do orçamento** da conta (previsto, realizado, já comprometido e saldo). Se o pedido passa do saldo, é preciso **justificar** (ou a aprovação é bloqueada, se a escola ligou essa trava). **Recusar pedido** pede o motivo e pode **devolver para nova cotação**. **Quem solicitou a compra não a aprova.**
+
+**Receber** (`Receber:PedidoCompra`; **quem aprovou não recebe**): **Registrar recebimento** com a quantidade que chegou de cada item (entrega parcial vale), a data, o **número da nota fiscal** (obrigatório) e o arquivo da nota (PDF ou foto, até 10 MB). Marque **houve divergência** se a nota veio diferente do pedido ou faltou item, e descreva: isso fica no histórico do fornecedor. No mesmo ato, o item de estoque **entra no saldo**, o bem durável **é cadastrado no patrimônio** e nasce a **conta a pagar**.
+
+**Cancelar requisição:** o solicitante ou quem cota, antes da primeira entrega, com o motivo.
+
+**Quem vê o quê:** você abre as suas requisições e as que dependem de você (cotar, aprovar na sua alçada, receber). `VerTodas:RequisicaoCompra` abre as dos outros setores. Em **Minha Mesa**, *Compras para cotar*, *Pedidos para aprovar* e *Compras para receber*.
+
+---
+
+## 📦 96. Estoque de Consumíveis (`/admin/suprimentos/estoque`)
+
+No grupo **Suprimentos**, *Estoque*: material de limpeza, papelaria e descartáveis.
+
+1. **Novo item:** nome, unidade de medida (unidade, caixa, pacote, resma, litro, quilo ou metro), **estoque mínimo** (zero desliga o aviso) e a conta do plano. O saldo nasce com a primeira entrada.
+2. **Entrada** (material chegou), **Saída** (um setor retirou; escolha o centro de custo) e **Ajuste** (inventário: informe o que foi **contado** e o motivo; o sistema registra a diferença). Quem altera saldo precisa de `Movimentar:ItemEstoque`.
+3. A **saída não passa do saldo**. O **custo médio** se atualiza a cada entrada com custo.
+4. A aba **Movimentações** do item é o histórico completo, com o saldo depois de cada movimento. Item que já teve movimento **não se exclui**: desligue *Ativo*.
+
+O que chega por um pedido de compra com destino "estoque" **entra sozinho** no recebimento. Em **Minha Mesa**, *Estoque abaixo do mínimo* (item zerado é atrasado): é a hora de abrir uma requisição de compra.
+
+---
+
+## ⚖️ 97. Orçamento Anual e Orçado × Realizado (`/admin/financeiro/orcamentos`)
+
+No grupo **Financeiro**, *Orçamento Anual* e *Orçado × Realizado*.
+
+**Montar o orçamento:** **Novo orçamento**, informe o ano e, se quiser, **copiar outro orçamento** com um reajuste (%). **Preencher planilha** abre a grade conta × 12 meses: escolha a conta do plano (e o centro de custo, se quiser) e digite os valores mensais; **Importar planilha (CSV)** aceita código da conta, centro de custo opcional e os 12 meses (vírgula ou ponto nos decimais). Linhas com problema voltam no aviso sem derrubar as outras.
+
+**Aprovar:** só a administração. Depois de aprovado o orçamento **não muda**: **Abrir revisão** cria uma cópia em rascunho; quando ela é aprovada, a anterior fica como *Substituída por revisão*.
+
+**Acompanhar:** em *Orçado × Realizado* escolha o orçamento e o mês. A tela compara o **previsto acumulado** com o **realizado** (o mesmo valor do DRE) por conta, com a variação e um semáforo: a despesa em 90% do previsto fica em atenção, acima de 100% está estourada (na receita é o inverso). O aviso no alto diz quantas saídas do banco ainda estão **sem conta do plano** e por isso ficaram de fora.
+
+Em **Minha Mesa**, a fila *Orçamento estourado*. A aprovação de compras (seção 95) usa o saldo daqui.
+
+---
+
+## 🔁 98. Contas Recorrentes e Fluxo Projetado (`/admin/financeiro/contas-recorrentes`)
+
+No grupo **Financeiro**.
+
+**Contas Recorrentes** (aluguel, internet, serviços): **Nova despesa recorrente** com a descrição, o fornecedor, a conta do plano, o centro de custo, a **periodicidade** (mensal a anual), o **dia do vencimento**, o valor, a vigência e quantos dias antes do vencimento a conta deve existir.
+- Todo dia de manhã o sistema cria a **conta a pagar** dos vencimentos que entraram na antecedência. **Gerar contas agora** faz isso na hora. A mesma despesa **nunca gera duas contas no mesmo mês**.
+- **Valor estimado** (energia, água): a conta nasce marcada *valor estimado: a revisar* na lista de **Contas a Pagar**. Use **Revisar valor** para confirmar o valor da fatura (e, se quiser, adotá-lo como o novo valor estimado). **Não dá para dar baixa antes de revisar.**
+- **Registrar reajuste:** informe o novo valor do contrato e, se quiser, a data do próximo reajuste. As contas **abertas e ainda no valor antigo** passam para o valor novo; as que alguém editou à mão ficam como estão.
+- Encerrou o contrato? Preencha *Vale até* ou desligue *Ativa*.
+
+**Fluxo Projetado:** o caixa dos próximos 30, 60, 90 ou 180 dias. Escolha o **cenário de recebimento**: *Média histórica* (o que vence é pesado pelo que costuma ser pago), *Receber tudo* ou *Não receber nenhuma fatura aberta*. A tela destaca a **primeira data em que o saldo fica negativo**, mostra o saldo semana a semana e o que entrou na conta (faturas, contas a pagar e recorrentes ainda sem conta).
+> **É estimativa.** Ela parte do saldo das transações bancárias lançadas: se o banco não está conciliado, a tela avisa e o número perde valor. Confira a conciliação antes de decidir.
+
+Em **Minha Mesa**: *Contas recorrentes a revisar*, *Reajustes de contrato* (30 dias de antecedência) e *Caixa projetado negativo*.
+
+---
+
+## 📊 99. Resultado Realizado por Turma (`/admin/financeiro/resultado-realizado-turmas`)
+
+No grupo **Financeiro**, *Resultado Realizado*. Mostra quanto cada turma rendeu e custou **de fato** no mês e compara com o planejado da *Rentabilidade de Turmas*.
+
+1. Escolha o **mês** (a tela abre no último mês completo), o **rateio do custo indireto** e como **agrupar** (turma, série, curso ou unidade).
+2. **Faturado** é o das faturas com vencimento no mês, já descontadas as bolsas; *Recebido* e *Em atraso* dizem o que entrou e o que falta.
+3. O **custo docente** vem da apuração de hora-aula do professor, dividida entre as turmas pelas aulas que ele deu em cada uma. O **custo direto** são as despesas do mês no centro de custo da turma (ou do curso, dividido pelos alunos). O **indireto** (administração, aluguel, limpeza) é rateado pelo critério escolhido: *por aluno*, *igual por turma* ou *por hora-aula*.
+4. Veja **resultado**, **margem**, custo e resultado **por aluno**, a margem **planejada** e o mês anterior.
+
+**Para o resultado ficar certo:**
+- Em **Centros de Custo**, ligue o centro à turma ou ao curso (custo direto) ou marque **Fora do resultado das turmas** (folha dos professores, que já vem da apuração, investimentos e impostos). O que não tem ligação é rateado entre todas.
+- Classifique as saídas do banco com a **conta do plano**: saída sem conta fica de fora e a tela avisa quanto.
+
+> O critério de rateio é uma **escolha da escola**, não um fato contábil: outro critério muda a margem de cada turma, nunca o total. É contabilidade gerencial; a oficial segue com o escritório.
+
+Em **Minha Mesa**, *Turmas com resultado negativo* (negativo nos últimos 3 meses completos).
+
+---
+
+## 🧭 100. Painel da Direção (`/admin/painel-da-direcao`)
+
+No grupo **Relatórios**. A saúde da escola em uma tela, em quatro seções: *Alunos e vagas*, *Financeiro*, *Captação* e *Pedagógico*.
+
+Cada cartão mostra o **valor de agora**, a **variação contra 30 dias atrás** (▲ verde melhorou, ▼ vermelha piorou, conforme o indicador: mais matrículas é melhor, mais inadimplência é pior), a variação contra o **ano anterior**, a linha dos últimos 90 dias, a **meta do ano** e uma bolinha de **semáforo**: verde (meta atingida), amarela (pior que a meta, dentro da tolerância) e vermelha (fora da tolerância). Passe o mouse no **ⓘ** para ler a fórmula do número; clique no valor para abrir a tela de detalhe.
+
+- **Cada pessoa vê só os indicadores que pode ver:** os financeiros só aparecem para quem tem acesso às telas financeiras.
+- **Unidade:** filtra os indicadores que existem por unidade; os demais mostram a escola toda e avisam.
+- **Atenção hoje:** as filas da sua Minha Mesa que têm algo atrasado.
+- **Atualizar** refaz os números (eles ficam guardados por 10 minutos). **Guardar fotografia de hoje** (`Fotografar:PainelDirecao`) registra os números de agora; o sistema também guarda uma fotografia todo dia de manhã, e é dela que vêm a variação e a linha do cartão. Num painel novo, a variação aparece depois de alguns dias.
+
+**Metas** (*Relatórios → Metas dos Indicadores*, `Create:IndicadorMeta`): escolha o indicador, o ano, a unidade (em branco vale para a escola toda) e a meta, no formato do cartão (número, reais ou percentual sem o símbolo). A **tolerância** é a faixa amarela, em % da meta. A meta da unidade vale mais que a da escola toda.
+
+---
+
+## 🧮 101. Simulador do Próximo Ano Letivo (`/admin/simulador-proximo-ano`)
+
+No grupo **Relatórios**. Para decidir quantas turmas abrir, com quantas vagas e a que preço, com os dados de hoje. **É projeção, não compromisso.**
+
+1. Escolha a **campanha de rematrícula** (a tela abre na aberta ou na mais recente).
+2. A tabela mostra, por **série de destino**, as rematrículas **confirmadas**, as **em andamento**, a **lista de espera**, os **alunos projetados**, as turmas e vagas do período de destino, os alunos por turma, o **ponto de equilíbrio** (quantos alunos a turma precisa para se pagar), a receita mensal prevista e a situação: *dentro do esperado*, *acima da capacidade*, *demanda sem turma* ou *abaixo do equilíbrio*.
+3. Mude as **suposições** no alto: quantas rematrículas em andamento terminam, quantos dos que ainda não começaram renovam, a partir de que **risco de evasão** o aluno sai da conta, o **reajuste extra** e se a **lista de espera** entra (até as vagas que sobram). **Usar taxas de …** puxa as da campanha anterior.
+4. Em cada série, digite o **número de turmas** (zero fecha a série) e a **capacidade por turma** para ver o efeito. **Abrir turma em outra série** inclui uma série que ainda não tem turma.
+5. **Salvar cenário** guarda os parâmetros e a fotografia do resultado do dia (ex.: *Conservador*, *Esperado*, *Otimista*); a lista **Cenários salvos** os compara lado a lado. **Carregar** devolve os parâmetros à tela para recalcular com os dados de hoje; **Excluir** é de quem criou o cenário (ou de quem tem `Gerenciar:SimuladorProximoAno`).
+
+**Como ler:** as famílias que **ainda não escolheram a série** aparecem em *Sem série de destino definida* e entram só no total. O ponto de equilíbrio usa o **custo planejado** da turma (Controladoria de Turmas); sem custo cadastrado, não há equilíbrio a comparar. O prazo importa: o valor da anuidade e o reajuste precisam ser divulgados com antecedência (Lei nº 9.870/1999), e a fila *Projeção do próximo ano* da Minha Mesa fica atrasada quando a campanha termina em até 15 dias.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

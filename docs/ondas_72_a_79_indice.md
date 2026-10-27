@@ -1,10 +1,13 @@
 # Ondas 72 a 79 — Índice
 
+> Continua no [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md), que traz
+> também as ondas 16, 38, 43, 45 e 84 implementadas em 2026-10-27.
+
 Continuação do [índice das ondas 68 a 71](ondas_68_a_71_indice.md). Cada onda tem um documento próprio com contexto, o que
 já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.
 
-- **Implementadas (3):** 72, 73 e 74.
-- **Propostas (5):** 75 a 79. Não há código, migration nem teste delas.
+- **Implementadas (6):** 72, 73 e 74; 76, 77 e 78 (implementadas em 2026-10-27).
+- **Propostas (2):** 75 e 79. Não há código, migration nem teste delas.
 
 ## Visão geral
 
@@ -14,9 +17,9 @@ já existe no sistema (conferido no código), escopo, base legal, dependências 
 | 73 | Exportação para a Contabilidade | Financeiro | **Implementada** | [exportacao_contabil_roadmap.md](exportacao_contabil_roadmap.md) |
 | 74 | Declarações e Histórico com Assinatura Digital | Secretaria | **Implementada** | [assinatura_declaracoes_historico_roadmap.md](assinatura_declaracoes_historico_roadmap.md) |
 | 75 | Acesso do Contador | Financeiro / Segurança | Proposta | [acesso_contador_roadmap.md](acesso_contador_roadmap.md) |
-| 76 | Simulador do Próximo Ano Letivo | Gestão | Proposta | [simulador_proximo_ano_letivo_roadmap.md](simulador_proximo_ano_letivo_roadmap.md) |
-| 77 | Rentabilidade e Custo por Turma | Financeiro / Gestão | Proposta | [rentabilidade_por_turma_roadmap.md](rentabilidade_por_turma_roadmap.md) |
-| 78 | Contas Recorrentes e Fluxo de Caixa Projetado | Financeiro | Proposta | [contas_recorrentes_fluxo_projetado_roadmap.md](contas_recorrentes_fluxo_projetado_roadmap.md) |
+| 76 | Simulador do Próximo Ano Letivo | Gestão | **Implementada** | [simulador_proximo_ano_letivo_roadmap.md](simulador_proximo_ano_letivo_roadmap.md) |
+| 77 | Rentabilidade e Custo por Turma | Financeiro / Gestão | **Implementada** | [rentabilidade_por_turma_roadmap.md](rentabilidade_por_turma_roadmap.md) |
+| 78 | Contas Recorrentes e Fluxo de Caixa Projetado | Financeiro | **Implementada** | [contas_recorrentes_fluxo_projetado_roadmap.md](contas_recorrentes_fluxo_projetado_roadmap.md) |
 | 79 | Guarda e Descarte de Documentos Escolares | Conformidade | Proposta | [guarda_descarte_documentos_roadmap.md](guarda_descarte_documentos_roadmap.md) |
 
 ## O que mudou no que já existia
@@ -39,13 +42,32 @@ já existe no sistema (conferido no código), escopo, base legal, dependências 
 - **Novas variáveis de ambiente (opcionais):** `RELATORIOS_LIMITE_LINHAS` (20000), `RELATORIOS_LIMITE_LINHAS_PDF` (1500),
   `RELATORIOS_RETENCAO_DIAS` (30), `RELATORIOS_LIMITE_POR_RODADA` (10) e `MESA_CONTABILIDADE_DIA_LIMITE` (10).
 
+### Acrescentado em 2026-10-27 (ondas 76, 77 e 78)
+
+- **Menu:** em **Financeiro**, *Contas Recorrentes*, *Fluxo Projetado* e *Resultado Realizado*; em **Relatórios**, *Simulador do Próximo Ano*
+  (ao lado do *Painel da Direção*, da Onda 45).
+- **Contas a Pagar:** nova ação **Revisar valor**, selo "valor estimado: a revisar" no valor e filtro **Valor a revisar**. A baixa de uma
+  conta gerada de despesa de valor estimado fica **travada até a revisão**. Conta gerada por despesa recorrente tem os campos
+  `conta_recorrente_id`, `competencia` e `valor_revisado`.
+- **Centros de Custo:** o formulário ganhou a seção *Resultado por turma* (custo direto de uma turma ou de um curso, ou **fora do
+  resultado das turmas**) e a lista mostra como cada centro entra no resultado. Sem vínculo, a despesa é custo indireto e é rateada.
+- **Agendador:** `financeiro:gerar-contas-recorrentes` (diário, 06:45) e `painel:fotografar` (diário, 06:55).
+- **Minha Mesa:** filas *Contas recorrentes a revisar*, *Reajustes de contrato*, *Caixa projetado negativo*, *Turmas com resultado
+  negativo* e *Projeção do próximo ano*.
+- **Relatórios configuráveis:** três fontes novas (fluxo projetado, resultado por turma e projeção do próximo ano).
+- **Permissões novas**, criadas pela migration `create_resultado_escola_permissions`: `ViewAny`, `View`, `Create`, `Update` e
+  `Delete:ContaRecorrente`, `View:FluxoProjetado` e `View:RentabilidadeRealizada` (administração e financeiro);
+  `View:SimuladorProximoAno` (administração, secretaria, coordenação) e `Gerenciar:SimuladorProximoAno` (administração). As do Painel
+  da Direção estão no [índice dos conjuntos](conjuntos_suprimentos_resultado_indice.md). Um papel criado à mão precisa recebê-las.
+- **Novas variáveis de ambiente (opcionais):** `FINANCEIRO_SALDO_BASE` (0), e as de Compras e do Painel descritas no índice dos conjuntos.
+
 ## Fusões sugeridas para dar completude
 
 | Conjunto | Ondas | O que compartilham | Ordem dentro do conjunto |
 |---|---|---|---|
 | **Contabilidade ponta a ponta** | 73 + 75 + ampliações da 73 | O arquivo é gerado pela escola (73), entregue sem e-mail ao escritório (75), no leiaute do sistema dele e com a conta do plano por item de fatura. | 73 (feita), conta por item de fatura, 75 (depois do MFA), leiautes |
-| **Resultado da escola** | 77 + 78 + 43 + 45 | Receita, custo, orçamento, projeção e o painel da direção usam as mesmas faturas, contas a pagar, centros de custo e a hora-aula. Quatro telas viram um painel com três visões: orçado, projetado e realizado. | 43, 78, 77, 45 |
-| **Planejamento do ano** | 76 + 77 + 44 + 20 | A projeção de matrículas e o ponto de equilíbrio por turma saem dos mesmos dados (rematrícula, lista de espera, risco de evasão, reajuste, custo da hora-aula). | 77, 76 |
+| **Resultado da escola** *(implementado em 2026-10-27; falta só a visão única orçado × projetado × realizado)* | 77 + 78 + 43 + 45 | Receita, custo, orçamento, projeção e o painel da direção usam as mesmas faturas, contas a pagar, centros de custo e a hora-aula. Quatro telas viram um painel com três visões: orçado, projetado e realizado. | 43, 78, 77, 45 |
+| **Planejamento do ano** *(76 e 77 implementadas; o orçamento do próximo ano ainda não nasce do cenário escolhido)* | 76 + 77 + 44 + 20 | A projeção de matrículas e o ponto de equilíbrio por turma saem dos mesmos dados (rematrícula, lista de espera, risco de evasão, reajuste, custo da hora-aula). | 77, 76 |
 | **Dado pessoal: ciclo de vida** | 34 + 79 | O pedido de eliminação do titular e a rotina de descarte consultam a mesma tabela de temporalidade. | 34, 79 (ou juntas) |
 | **Relatórios como saída comum** | 72 + 43 + 45 + 47 | O digest diário, o painel e o orçamento podem usar os relatórios agendados e as fontes da Onda 72 como entrega, em vez de montar a sua. | Fontes novas em cada módulo |
 
@@ -58,7 +80,7 @@ já existe no sistema (conferido no código), escopo, base legal, dependências 
 | 74 (assinatura) | **Validação técnica** da assinatura (ITI), **carimbo do tempo**, **assinatura em lote** de históricos, certificados de conclusão. | O inspetor lê o PDF e não valida a cadeia; a validação fecha esse limite. |
 | 69 (assinatura) | **Lembrete automático** e **ordem de assinatura** (herdado do índice anterior). | Continua proposto. |
 | 57 (FICAI) | Emitir o **ofício a partir de um modelo editável** (Onda 69), mandar para a assinatura da direção (Onda 74) e levar para a Mesa os casos parados (sem contato com a família ou sem resposta do Conselho). | A Onda 57 já registra as tentativas de contato; falta o ofício sair pelo mesmo caminho dos demais documentos. |
-| 71 (mesa) | Filas de contas a pagar vencendo, recorrentes sem valor revisado e relatórios agendados que falharam. | Cada fila é uma classe pequena. |
+| 71 (mesa) | Filas de contas a pagar vencendo e relatórios agendados que falharam (a de recorrentes sem valor revisado já existe, da Onda 78). | Cada fila é uma classe pequena. |
 
 ## Achados da implementação
 

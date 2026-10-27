@@ -1,8 +1,7 @@
-# Orçamento Anual × Realizado (Onda 43) — Proposta para o Futuro
+# Orçamento Anual × Realizado (Onda 43)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementada** (2026-10-27). As seções *Contexto*, *O que já existe* e *Escopo* abaixo são o planejamento original;
+> o que foi entregue, com as decisões e o que ficou de fora, está em **Como foi implementado**, no fim do documento.
 
 ## Contexto
 
@@ -45,3 +44,23 @@ caixa), mas não o que **estava previsto**, então não alerta quando uma conta 
 - Qualidade da classificação: se contas a pagar não têm conta contábil/centro de custo preenchidos,
   o realizado fica incompleto. Tornar esses campos obrigatórios antes de lançar o orçamento.
 - Integra com Compras (Onda 38): saldo orçamentário na aprovação da requisição.
+
+---
+
+## Como foi implementado (2026-10-27)
+
+Menu **Financeiro → Orçamento Anual** (`/admin/financeiro/orcamentos`) e **Financeiro → Orçado × Realizado**.
+
+- **Tabelas:** `orcamentos` (ano, nome, versão, status, orçamento de origem) e `orcamento_linhas` (conta do plano, centro de custo opcional, mês, valor previsto).
+- **Situações:** `Rascunho → Aprovado → Substituído por revisão`. O orçamento aprovado **não muda**: o ajuste abre uma **revisão** (cópia em rascunho) e, quando a revisão é aprovada, a anterior fica como substituída. Um ano pode ter várias versões; a vigente é a última aprovada.
+- **Planilha** (conta × 12 meses): preenchida célula a célula ou **importada por CSV** (código da conta do plano, centro de custo opcional, janeiro a dezembro; aceita vírgula ou ponto e milhar com ponto). Linha com problema volta no relatório da importação sem derrubar o resto. **Criar a partir de outro orçamento** copia as linhas com um percentual de reajuste.
+- **Orçado × Realizado:** o previsto **acumulado até o mês escolhido** contra o realizado, por conta do plano, com variação em valor e %, e semáforo. O realizado é o do **DRE**: soma do valor das transações bancárias classificadas na conta e nas subcontas, a mesma regra, para não haver duas verdades. A tela avisa quantas saídas do período ainda estão **sem conta do plano** (ficaram fora).
+- **Semáforo** (`ORCAMENTO_ALERTA_PERCENTUAL`, padrão 90): despesa em 90% do previsto acumulado fica em atenção; acima de 100% está estourada. Na receita é o inverso: abaixo de 100% é atenção e abaixo do percentual de alerta é estouro.
+- **Saldo disponível para outras telas** (`OrcamentoService::saldoDisponivel`): é o que a aprovação de uma compra (Onda 38) consulta, já descontado o comprometido por pedidos aprovados.
+- **Minha Mesa:** fila **Orçamento estourado** (permissão `View:OrcadoRealizado`), com as despesas que chegaram perto do previsto (atenção) ou passaram dele (estouro) no acumulado do ano até o mês corrente; só o estouro é atrasado. O resultado fica em cache por alguns minutos.
+- **Permissões:** `ViewAny`, `View`, `Create`, `Update`, `Delete` e `Aprovar:Orcamento` e `View:OrcadoRealizado` (administração e financeiro; a aprovação, só a administração; o Orçado × Realizado também para a coordenação).
+- **Testes:** `tests/Feature/OrcamentoTest.php` (20).
+
+### Fora desta entrega
+
+Orçamento por centro de custo com limites que bloqueiem o lançamento (o bloqueio é só na aprovação de compras e é opcional), orçamento de receita por turma, e realizado por **competência** das contas a pagar (hoje é por caixa, como o DRE).

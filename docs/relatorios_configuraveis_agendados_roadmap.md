@@ -94,6 +94,16 @@ traz o aviso de LGPD no rodapé. Gerar e baixar entram no log de atividades.
   PDF.
 - **Sem gráficos.** É relatório tabular.
 
+## Fontes acrescentadas depois
+
+| Onda | Fonte | Permissão | Filtros |
+|---|---|---|---|
+| 78 | Fluxo de caixa projetado (semana a semana) | `View:FluxoProjetado` | cenário e horizonte |
+| 77 | Resultado realizado por turma | `View:RentabilidadeRealizada` | mês e critério de rateio |
+| 76 | Projeção do próximo ano letivo (a de hoje ou a fotografia de um cenário salvo) | `View:SimuladorProximoAno` | cenário |
+
+Cada uma é uma classe em `app/Services/Relatorios/Fontes/` e uma linha em `config/relatorios.php`.
+
 ## Testes
 
 `tests/Feature/RelatoriosConfiguraveisTest.php` (31): fontes e permissões, planilha (colunas, formato, ordem, filtros),

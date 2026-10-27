@@ -78,8 +78,30 @@ fila (o professor, por exemplo, vê só as ferramentas dele).
 3. Eager-load o que `itens()` usa: o projeto proíbe lazy loading em teste.
 4. Acrescente a classe em `config/mesa_pendencias.php` e um teste em `tests/Feature/MesaDePendenciasTest.php`.
 
-Filas acrescentadas depois da Onda 71: **Classificação contábil pendente** (Onda 73, permissão
-`View:ExportacaoContabil`), que cacheia a apuração do mês anterior pelo mesmo tempo do selo.
+Filas acrescentadas depois da Onda 71:
+
+| Onda | Fila | Área | Permissão |
+|---|---|---|---|
+| 73 | Classificação contábil pendente (cacheia a apuração do mês anterior pelo mesmo tempo do selo) | Financeiro | `View:ExportacaoContabil` |
+| 84 | Contatos do dia | CRM / Comercial | `ViewAny:Interessado` |
+| 84 | Visitas de hoje e sem resultado | CRM / Comercial | `ViewAny:Interessado` |
+| 84 | Primeira resposta fora do prazo | CRM / Comercial | `ViewAny:Interessado` |
+| 84 | Leads sem próxima ação | CRM / Comercial | `ViewAny:Interessado` |
+| 84 | Leads quentes sem contato | CRM / Comercial | `ViewAny:Interessado` |
+| 84 | Leads sem consultor | CRM / Comercial | `Update:Interessado` |
+| 38 | Compras para cotar | Suprimentos | `Cotar:RequisicaoCompra` |
+| 38 | Pedidos para aprovar (só os da alçada da pessoa) | Suprimentos | `ViewAny:RequisicaoCompra` |
+| 38 | Compras para receber (sem os que a pessoa aprovou) | Suprimentos | `Receber:PedidoCompra` |
+| 16 | Estoque abaixo do mínimo | Suprimentos | `ViewAny:ItemEstoque` |
+| 43 | Orçamento estourado (cache de alguns minutos para todos) | Financeiro | `View:OrcadoRealizado` |
+| 78 | Contas recorrentes a revisar | Financeiro | `Update:ContaPagar` |
+| 78 | Reajustes de contrato | Financeiro | `Update:ContaRecorrente` |
+| 78 | Caixa projetado negativo | Financeiro | `View:FluxoProjetado` |
+| 77 | Turmas com resultado negativo (cache de 6 horas) | Financeiro | `View:RentabilidadeRealizada` |
+| 76 | Projeção do próximo ano | Secretaria | `View:SimuladorProximoAno` |
+
+Uma fila pode filtrar o que mostra **pela pessoa** (a Mesa continua sem atribuição própria): a do CRM usa a carteira do consultor, e
+*Pedidos para aprovar* e *Compras para receber* respeitam a alçada e a segregação de funções de quem olha.
 
 ## Decisões e limites
 
