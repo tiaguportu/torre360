@@ -289,6 +289,14 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
     dossiê não precisa disso: ele só alimenta o PDF, e o dompdf está com `enable_remote = false`
     (`config/dompdf.php`), então nenhuma imagem externa é buscada. O CSS fica em `.tl360-md` (o reset do Tailwind zera
     título, lista e citação, então tudo é redefinido, com os tokens claro/escuro do feed).
+    O critério é `automatico = true`, não "veio da IA": também entram o Dossiê Estratégico (`DossieIaAction` grava
+    `dossie_conteudo`, que é markdown de verdade), a mensagem do Copiloto (`relatoDoHistorico()`), a régua, o
+    descadastro, a mesclagem, o link do portal e a leitura de documentos, que são texto corrido e saem iguais.
+    Limitações conhecidas: (1) o relato do Copiloto guarda a mensagem enviada à família, às vezes escrita pelo
+    consultor com a marcação do WhatsApp; `*negrito*` aparece em itálico e `<tag>` digitada é descartada na tela (o
+    texto gravado não muda); separar de vez exigiria um marcador de formato no registro (coluna nova), não feito;
+    (2) a aba *Histórico de Contatos* (`HistoricosRelationManager`, coluna `relato` com `limit(50)`) continua
+    mostrando o início do relato cru (`### 💬 …`), porque a célula é cortada e não comporta HTML.
     Testes: `Customer360TimelineTest` (formato por tipo de registro, renderização, relato manual intacto, HTML/imagem/link
     perigosos, quebra de linha, busca) e `CrmIaSegurancaTest` (`markdownRelato`).
 - Testes que passam por IA devem usar `Queue::fake()`/`Http::fake()` e `Http::preventStrayRequests()`: o `.env`
