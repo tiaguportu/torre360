@@ -17,6 +17,7 @@ use App\Services\Pendencias\Fontes\OrcamentoEstourado;
 use App\Services\Pendencias\Fontes\PedidosParaAprovar;
 use App\Services\Pendencias\Fontes\PedidosParaReceber;
 use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
+use App\Services\Pendencias\Fontes\ProjecaoDoProximoAno;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\ReajustesDeContrato;
 use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
@@ -65,6 +66,8 @@ return [
         SaldoProjetadoNegativo::class,
         // Rentabilidade por turma (Onda 77).
         TurmasComResultadoNegativo::class,
+        // Simulador do próximo ano letivo (Onda 76).
+        ProjecaoDoProximoAno::class,
     ],
 
     /*

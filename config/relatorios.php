@@ -8,6 +8,7 @@ use App\Services\Relatorios\Fontes\Inadimplencia;
 use App\Services\Relatorios\Fontes\MatriculasPorTurma;
 use App\Services\Relatorios\Fontes\MovimentoBancario;
 use App\Services\Relatorios\Fontes\RentabilidadeTurmas;
+use App\Services\Relatorios\Fontes\SimulacaoProximoAno;
 
 return [
     /*
@@ -27,6 +28,7 @@ return [
         DocumentosParaAssinatura::class,
         FluxoProjetadoSemanal::class,
         RentabilidadeTurmas::class,
+        SimulacaoProximoAno::class,
     ],
 
     // Máximo de linhas de um relatório em planilha e em PDF. Passou do limite, o arquivo sai cortado e a execução avisa.
