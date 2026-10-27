@@ -89,8 +89,10 @@ class EducacaoBasicaMelhoriasTest extends TestCase
         $this->assertDatabaseHas('atendimento_enfermagems', [
             'id' => $atendimento->id,
             'pessoa_id' => $aluno->id,
-            'medicamento_ministrado' => 'Dipirona 20 gotas',
+            'atendido_por_user_id' => $enfermeiro->id,
         ]);
+
+        $this->assertSame('Dipirona 20 gotas', $atendimento->fresh()->medicamento_ministrado);
     }
 
     public function test_ocorrencia_escolar_triggers_notification_when_enabled(): void

@@ -25,6 +25,7 @@ use App\Models\Turma;
 use App\Models\Unidade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -123,8 +124,13 @@ class UnificacaoMatriculaDocumentosTest extends TestCase
 
         $response = $this->get('/quero-matricular/convite/'.$lead->token_convite);
 
+        $lead->refresh();
+        $tokenEsperado = filled($lead->token_documentos_cifrado)
+            ? Crypt::decryptString($lead->token_documentos_cifrado)
+            : $lead->token_documentos;
+
         $response->assertRedirect(route('candidato.documentos.show', [
-            'token' => $lead->refresh()->token_documentos,
+            'token' => $tokenEsperado,
         ]));
     }
 

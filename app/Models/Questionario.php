@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Questionario extends Model
@@ -32,6 +33,17 @@ class Questionario extends Model
             'max_respostas_por_usuario' => 'integer',
             'ultimo_envio_aviso' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            Cache::flush();
+        });
+
+        static::deleted(function () {
+            Cache::flush();
+        });
     }
 
     /**

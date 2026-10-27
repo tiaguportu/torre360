@@ -146,6 +146,7 @@ class ShieldWidgetsTest extends TestCase
         $this->assertFalse(QuestionariosPendentes::canView(), 'Não deve exibir widget se não houver questionários pendentes mesmo com permissão Shield.');
 
         // Caso 3: Com permissão do Shield E com questionário pendente elegível
+        QuestionariosPendentes::clearCache($user->id);
         Questionario::create([
             'titulo' => 'Pesquisa de Satisfação',
             'is_ativo' => true,

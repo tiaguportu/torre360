@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Candidatos\Schemas;
 use App\Enums\StatusCandidato;
 use App\Models\User;
 use App\Services\CurriculoIaService;
+use App\Support\TiposArquivo;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -168,6 +169,7 @@ class CandidatoForm
                         FileUpload::make('foto_path')
                             ->label('Foto do Candidato')
                             ->image()
+                            ->acceptedFileTypes(TiposArquivo::imagens())
                             ->disk('public')
                             ->directory('candidatos/fotos')
                             ->helperText('Extraída automaticamente do arquivo do currículo pela IA ou atualizada manualmente.')

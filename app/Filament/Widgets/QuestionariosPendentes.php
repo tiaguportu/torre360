@@ -67,6 +67,15 @@ class QuestionariosPendentes extends Widget
         });
     }
 
+    public static function clearCache(?int $userId = null): void
+    {
+        if ($userId) {
+            Cache::forget("widget_questionarios_pendentes_{$userId}");
+        } else {
+            Cache::flush();
+        }
+    }
+
     public static function canView(): bool
     {
         if (! static::hasWidgetShieldPermission()) {

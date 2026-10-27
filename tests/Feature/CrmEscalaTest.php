@@ -175,27 +175,28 @@ class CrmEscalaTest extends TestCase
 
     public function test_selects_de_pessoa_e_lead_buscam_no_servidor_com_limite(): void
     {
-        $lead = $this->lead(['nome' => 'Beatriz Souza', 'email' => 'bia@exemplo.com'], ['lead_score' => 42]);
+        $idUnico = uniqid();
+        $lead = $this->lead(['nome' => "Beatriz Souza {$idUnico}", 'email' => "bia{$idUnico}@exemplo.com"], ['lead_score' => 42]);
         $this->lead(['nome' => 'Outro Nome']);
 
         // 60 pessoas com o mesmo prefixo: a busca nunca devolve mais que 50.
-        Pessoa::factory()->count(60)->create(['nome' => 'Silva Repetido']);
+        Pessoa::factory()->count(60)->create(['nome' => "Silva Repetido {$idUnico}"]);
 
         Livewire::actingAs($this->admin)
             ->test(CreateIndicacaoInteressado::class)
-            ->assertFormFieldExists('indicador_pessoa_id', function (Select $campo) use ($lead): bool {
-                $porNome = $campo->getSearchResults('beatriz');
-                $limitado = $campo->getSearchResults('silva repetido');
+            ->assertFormFieldExists('indicador_pessoa_id', function (Select $campo) use ($lead, $idUnico): bool {
+                $porNome = $campo->getSearchResults("Beatriz Souza {$idUnico}");
+                $limitado = $campo->getSearchResults("Silva Repetido {$idUnico}");
 
                 return array_keys($porNome) === [$lead->pessoa_id]
                     && count($limitado) === 50
                     && ! $campo->isPreloaded();
             })
-            ->assertFormFieldExists('interessado_id', function (Select $campo) use ($lead): bool {
-                $resultados = $campo->getSearchResults('bia@exemplo');
+            ->assertFormFieldExists('interessado_id', function (Select $campo) use ($lead, $idUnico): bool {
+                $resultados = $campo->getSearchResults("bia{$idUnico}@exemplo");
 
                 return array_keys($resultados) === [$lead->id]
-                    && str_contains($resultados[$lead->id], 'Beatriz Souza')
+                    && str_contains($resultados[$lead->id], "Beatriz Souza {$idUnico}")
                     && str_contains($resultados[$lead->id], 'Score: 42')
                     && ! $campo->isPreloaded();
             });
