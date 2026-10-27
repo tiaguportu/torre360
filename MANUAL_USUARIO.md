@@ -75,7 +75,7 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 | 📚 **Biblioteca** | Gestão de Acervo, Livros, Empréstimos, Balcão de Circulação Ágil com Câmera, Inventários e Sacolas de Leitura |
 | 📍 **Localização e Cadastros** | Endereços, Instituições de Ensino e Unidades |
 | ⚙️ **Configurações** | Tabelas auxiliares e parametrizações: Países, Estados, Cidades, Bancos, Código BACEN, Centro de Custo, Plano de Contas, Tributação do Curso, Tipos e Categorias diversas, Áreas de Conhecimento, Campos de Experiência, Turnos e Configuração Inicial da escola |
-| 🛡️ **Sistema e Segurança** | Usuários, Logs de Atividade e E-mails Enviados |
+| 🛡️ **Sistema e Segurança** | Usuários, Controle de Sessões Ativas, Logs de Atividade e E-mails Enviados |
 | ❓ **Ajuda** | Central de Ajuda — Vídeos Tutoriais |
 | 🔐 **Filament Shield** | Roles e permissões (Super Administrador) |
 
@@ -1267,6 +1267,27 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 - **Parcelas mensais:** A **1ª parcela** vence no dia escolhido do **mês seguinte** à Data de Aceite; as demais são distribuídas mensalmente a partir daí.
 - **Valor de cada parcela:** `(Valor Total − Valor de Entrada) ÷ Quantidade de Parcelas`.
 - O campo **Valor por Parcela (prévia)** é atualizado em tempo real para que você confirme o valor antes de gerar.
+
+### 7.1.2 Importação e Exportação de Faturas do Contrato
+Na tabela de faturas da edição do contrato (`/admin/contratos/{id}/edit`), você conta com duas ferramentas ágeis de gestão em lote:
+
+1. **Exportar Faturas:**
+   - Permite baixar as faturas daquele contrato em formato de planilha (**CSV** ou **XLSX**).
+   - O arquivo gerado traz colunas estruturadas: **Nº** (ID da fatura), **Aluno**, **Vencimento** (dd/mm/aaaa), **Descrição**, **Valor** bruto, **Desconto**, **Tipo de desconto**, **Status**, **Valor a pagar**, **Valor pago** e **Saldo**.
+   - Os valores numéricos são exportados com 2 casas decimais e ponto, sem símbolos de moeda, garantindo total compatibilidade para reimportação direta (*round-trip*).
+   - Textos são automaticamente protegidos contra injeção de fórmulas de planilha (*CSV Formula Injection - CWE-1236*).
+
+2. **Importar Faturas:**
+   - Permite cadastrar cobranças ou atualizar faturas existentes em lote a partir de uma planilha CSV.
+   - **Escopo Seguro:** A importação associa as faturas exclusivamente ao contrato da tela (`contrato_id` via sistema). Qualquer coluna de contrato contida na planilha é desconsiderada.
+   - **Criação vs. Atualização:**
+     - Linhas sem **Nº** criam uma nova fatura com seu respectivo item (`quantidade = 1`).
+     - Linhas informando o **Nº** atualizam a fatura existente, **desde que** a fatura pertença ao contrato aberto, não possua transações bancárias baixadas nem integração de gateway, e possua exatamente 1 item com quantidade 1.
+     - Linhas reimportadas sem nenhuma alteração são aceitas com sucesso sem duplicar nem regravar dados.
+   - **Validação de Status:** Aceita apenas `pendente`, `atrasado` ou `cancelado`. Os status `pago` e `parcial` são recusados, pois baixas financeiras exigem registro de transação bancária vinculada.
+   - **Prevenção de Duplicidade:** O sistema impede a criação de faturas idênticas (mesmo vencimento, descrição e valor) para o mesmo contrato.
+   - **Regra de Assinatura Digital (Assinafy):** Se o contrato já tiver sido enviado para assinatura digital, a importação de novas faturas ou alterações resetará automaticamente os dados de assinatura no Assinafy, exigindo um novo envio. Um aviso é exibido tanto no modal de importação quanto na notificação de conclusão.
+
 
 
 
@@ -4525,7 +4546,83 @@ No grupo **Acadêmico**. Para marcar o conselho de classe, a reunião pedagógic
 
 ---
 
+## 🛡️ 103. Controle de Sessões Ativas e Revogação Remota (`/admin/sistema/sessoes-ativas`)
+
+No grupo **Sistema e Segurança**, clique em **Sessões Ativas**. Esta tela permite a qualquer usuário autenticado inspecionar onde sua conta está conectada e encerrar acessos indevidos em tempo real.
+
+### 103.1 Visão Geral e Indicadores
+No topo da página, cards informativos exibem:
+- **Minhas Sessões Ativas:** Quantidade total de navegadores ou dispositivos com sua conta conectada.
+- **Dispositivo Atual:** Mostra o navegador, sistema operacional e IP do aparelho que você está usando agora.
+- **Proteção de Acesso:** Confirmação de revogação ativa no banco de dados.
+- **Visão Geral da Escola (para Administradores e Super Admins):** Total consolidado de sessões abertas e usuários ativos simultaneamente em toda a escola.
+
+### 103.2 Funcionalidades Disponíveis
+1. **Identificação da Sessão Atual:** O dispositivo em uso recebe a etiqueta verde *Esta Sessão (Atual)*.
+2. **Revogação Individual de Dispositivos:** Na coluna de ações da tabela, clique em **Revogar** em qualquer outra linha para derrubar imediatamente aquela sessão específica.
+3. **Desconectar Outras Sessões (Ação em Massa):** Utilize o botão vermelho no cabeçalho para desconectar todos os outros dispositivos de uma só vez, mantendo apenas o seu navegador atual conectado.
+4. **Visão Administrativa (Super Admins e Gestores de Usuários):** 
+   - Visualize as sessões abertas de todos os colaboradores da escola.
+   - Filtre por usuário específico ou ative o filtro *Apenas Minhas Sessões*.
+   - Revogue sessões de contas comprometidas ou de colaboradores em processo de desligamento diretamente da tabela.
+5. **Auditoria de Sessões:** Toda revogação de sessão gera registro no canal de auditoria (`auth`), detalhando o autor, a sessão encerrada, o dispositivo e o endereço IP.
+
+---
+
+## 📝 104. Auditoria Automática de Alterações em Notas e Faturas
+
+Para atender a exigências rigorosas de conformidade, integridade acadêmica e segurança financeira:
+- **Notas Acadêmicas:** Qualquer criação ou alteração no valor ou situação da nota de um aluno gera automaticamente um registro no Spatie ActivityLog, preservando o valor anterior (`old`) e o novo valor atribuído (`attributes`), com a identificação do operador responsável.
+- **Faturas Financeiras:** Alterações manuais de status de cobrança, cancelamentos, valores, prazos de vencimento ou integrações com gateways de pagamento (Pix / Boleto / Cartão) passam a ser auditados com trilha completa de modificação.
+
+---
+
+## 📜 105. Gestão Otimizada de Contratos e Assinatura Digital Assinafy (`/admin/contratos`)
+
+O módulo de **Contratos** do Torre360 centraliza a formalização jurídica das matrículas escolares e a integração com a plataforma de assinatura digital **Assinafy**, oferecendo alto desempenho, clareza visual e conformidade:
+
+### 1. Navegação e Contadores Rápidos por Status (Abas)
+A tela de listagem de contratos conta com abas superiores calculadas via agregação SQL única e instantânea:
+- **Todos:** Exibe a totalidade dos contratos emitidos.
+- **Não enviados:** Contratos recém-criados ou em elaboração que ainda não foram submetidos para assinatura digital externa.
+- **Aguardando:** Contratos enviados ao Assinafy que aguardam a assinatura de um ou mais signatários.
+- **Assinados:** Contratos formalizados com sucesso, com aceite registrado de todos os signatários.
+- **Com problema:** Contratos com pendências técnicas, rejeitados ou que necessitam de intervenção da secretaria.
+
+### 2. Tabela de Alta Performance e Identificação do Aluno
+- **Ordenação Natural:** Listagem ordenada por padrão do contrato mais recente para o mais antigo (`created_at desc`).
+- **Contexto Acadêmico Completo:** O nome do aluno exibe, como descrição logo abaixo, o curso, a série e a turma correspondente.
+- **Formatação Clara:** Valores monetários padronizados em Real (`R$ 0,00`) e datas com formatação brasileira (`dd/mm/aaaa`).
+- **Status dos Signatários com Badges Nativos:** Exibe os signatários (nome, e-mail e status individual) em etiquetas coloridas nativas do Filament:
+  - 🟢 **Verde (`success`):** Assinado.
+  - 🟡 **Amarelo (`warning`):** Pendente / Aguardando.
+  - 🔴 **Vermelho (`danger`):** Rejeitado.
+  - ⚪ **Cinza (`gray`):** Sem signatários cadastrados.
+  - Contratos com mais de 3 signatários compactam a visualização com recurso de expansão instantânea (*expandable*).
+- **Filtros e Responsividade:** Filtro direto por status do Assinafy e suporte nativo a visualização em cartões em smartphones (`stackedOnMobile`).
+
+### 3. Ações Operacionais e Produtividade
+- **Ações em Linha:**
+  - **Editar:** Acesso direto à edição do contrato.
+  - **Visualizar:** Abre a página de visualização completa do contrato renderizado com CSS de impressão e atalho para salvar em PDF.
+- **Menu de Opções Agrupadas (`...`):**
+  - **Sincronizar Assinafy:** Consulta em tempo real a API externa do Assinafy para atualizar o status e capturar assinaturas recém-concluídas.
+  - **Baixar PDF Assinado:** Faz o download imediato do documento final autenticado pela plataforma Assinafy.
+
+### 4. Edição Estruturada e Painel de Assinatura Digital
+Na tela de edição (`/admin/contratos/{id}/edit`):
+- **Painel de Situação da Assinatura:** Cartão visual no topo que apresenta o status geral, data do aceite e os cards individuais de cada signatário envolvido.
+- **Seções Lógicas:** Formulário distribuído em blocos organizados (*Matrícula e modelo*, *Valores e encargos*, *Assinatura*, *Responsáveis financeiros* e *Registro técnico* recolhido).
+- **Salvamento Direto sem Fricção:** Caso o contrato ainda não tenha sido enviado ao Assinafy, a gravação é imediata sem modais de confirmação. Apenas se o contrato já tiver sido enviado para assinatura externa, o sistema exibe o aviso preventivo informando sobre o reinício do fluxo do Assinafy.
+
+### 5. Indicadores em Tempo Real e Sem Consultas N+1
+- O badge numérico de contratos pendentes na barra lateral e os widgets do Dashboard utilizam carregamento antecipado (*eager loading*) das entidades e responsáveis, mantendo um número fixo de queries no banco de dados independentemente do volume de contratos.
+- A exportação em massa de contratos carrega antecipadamente o aluno e o template de documento, prevenindo sobrecarga do servidor durante a geração de relatórios.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 

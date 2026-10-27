@@ -142,6 +142,90 @@ class Contrato extends Model
     }
 
     /**
+     * Scope com pré-filtro dos contratos não assinados em que o usuário (ou suas pessoas vinculadas)
+     * é signatário potencial, já com eager loading das relações necessárias para getSignatarios().
+     */
+    public function scopePendentesDoUsuario(Builder $query, User $user): Builder
+    {
+        $pessoas = $user->pessoas;
+        $pessoasIds = $pessoas->pluck('id')->filter()->toArray();
+
+        if (empty($pessoasIds)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->with([
+                'templateContrato',
+                'matricula.pessoa.users',
+                'matricula.pessoa.responsaveis.users',
+                'matricula.turma.serie.curso.unidade.representantesLegais.users',
+                'responsaveisFinanceiros.pessoa.users',
+            ])
+            ->naoAssinado()
+            ->where(function (Builder $q) use ($pessoasIds) {
+                $q->whereHas('matricula', function (Builder $qMat) use ($pessoasIds) {
+                    $qMat->whereIn('pessoa_id', $pessoasIds)
+                        ->orWhereHas('pessoa.responsaveis', function (Builder $qResp) use ($pessoasIds) {
+                            $qResp->whereIn('responsavel_id', $pessoasIds);
+                        });
+                })
+                    ->orWhereHas('responsaveisFinanceiros', function (Builder $qRF) use ($pessoasIds) {
+                        $qRF->whereIn('pessoa_id', $pessoasIds);
+                    })
+                    ->orWhereHas('matricula.turma.serie.curso.unidade.representantesLegais', function (Builder $qRep) use ($pessoasIds) {
+                        $qRep->whereIn('pessoa_id', $pessoasIds);
+                    });
+            });
+    }
+
+    /**
+     * Lista de e-mails limpos do usuário e de suas pessoas associadas.
+     *
+     * @return Collection<int, string>
+     */
+    public static function emailsDoUsuario(User $user): Collection
+    {
+        $userEmails = collect([$user->email]);
+        foreach ($user->pessoas as $p) {
+            if (! empty($p->email)) {
+                $userEmails->push($p->email);
+            }
+        }
+
+        return $userEmails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
+    }
+
+    /**
+     * Retorna a lista de contratos pendentes de assinatura do usuário logado,
+     * aplicando o pré-filtro no banco e a checagem individual dos signatários em memória.
+     *
+     * @return Collection<int, self>
+     */
+    public static function pendentesAssinaturaDoUsuario(User $user): Collection
+    {
+        $emailsClean = self::emailsDoUsuario($user);
+        if ($emailsClean->isEmpty()) {
+            return collect();
+        }
+
+        return static::query()
+            ->pendentesDoUsuario($user)
+            ->latest()
+            ->get()
+            ->filter(function (self $contrato) use ($emailsClean) {
+                $statusSignatarios = $contrato->getStatusSignatarios();
+
+                return $statusSignatarios->contains(function ($sig) use ($emailsClean) {
+                    $sigEmail = strtolower(trim($sig['email'] ?? ''));
+
+                    return $emailsClean->contains($sigEmail) && ($sig['status'] ?? 'pending') === 'pending';
+                });
+            })
+            ->values();
+    }
+
+    /**
      * Retorna a lista de signatários (Pai, Mãe, Responsável Financeiro e Representante Legal) para assinatura do contrato.
      */
     public function getSignatarios(): Collection

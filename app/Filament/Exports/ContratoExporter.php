@@ -7,11 +7,17 @@ use App\Support\CsvSanitizer;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
 
 class ContratoExporter extends Exporter
 {
     protected static ?string $model = Contrato::class;
+
+    public static function modifyQuery(Builder $query): Builder
+    {
+        return $query->with(['matricula.pessoa', 'templateContrato']);
+    }
 
     public static function getColumns(): array
     {

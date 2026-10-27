@@ -12,10 +12,56 @@ use Filament\Actions\ExportAction;
 use Filament\Actions\ImportAction;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListContratos extends ListRecords
 {
     protected static string $resource = ContratoResource::class;
+
+    public function getTabs(): array
+    {
+        $statusCounts = Contrato::query()
+            ->selectRaw("COALESCE(assinafy_status, 'pendente') as status, count(*) as aggregate")
+            ->groupByRaw("COALESCE(assinafy_status, 'pendente')")
+            ->pluck('aggregate', 'status');
+
+        $total = $statusCounts->sum();
+        $naoEnviados = $statusCounts->get('pendente', 0);
+        $aguardando = $statusCounts->get('pending', 0) + $statusCounts->get('enviado', 0);
+
+        $assinados = 0;
+        foreach (Contrato::STATUS_ASSINADO as $st) {
+            $assinados += $statusCounts->get($st, 0);
+        }
+
+        $problema = $statusCounts->get('erro_envio', 0)
+            + $statusCounts->get('rejected', 0)
+            + $statusCounts->get('refused', 0)
+            + $statusCounts->get('canceled', 0)
+            + $statusCounts->get('expired', 0);
+
+        return [
+            'todos' => Tab::make('Todos')
+                ->badge($total),
+            'nao_enviados' => Tab::make('Não enviados')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where(fn (Builder $q) => $q->whereNull('assinafy_status')->orWhere('assinafy_status', 'pendente')))
+                ->badge($naoEnviados)
+                ->badgeColor('gray'),
+            'aguardando' => Tab::make('Aguardando')
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('assinafy_status', ['pending', 'enviado']))
+                ->badge($aguardando)
+                ->badgeColor('warning'),
+            'assinados' => Tab::make('Assinados')
+                ->modifyQueryUsing(fn (Builder $query) => $query->assinado())
+                ->badge($assinados)
+                ->badgeColor('success'),
+            'problema' => Tab::make('Com problema')
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('assinafy_status', ['erro_envio', 'rejected', 'refused', 'canceled', 'expired']))
+                ->badge($problema)
+                ->badgeColor('danger'),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {
@@ -46,55 +92,8 @@ class ListContratos extends ListRecords
 
     private function getHelpContent(): string
     {
-        $user = auth()->user();
-
-        $canCreate = $user->can('Create:Contrato');
-        $canUpdate = $user->can('Update:Contrato');
-        $canImport = $user->can('import', Contrato::class);
-        $canExport = $user->can('export', Contrato::class);
-
-        $html = '<p>Aqui você gerencia os contratos financeiros vinculados às matrículas.</p>';
-        $html .= '<h3>O que você pode fazer?</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Visualizar:</strong> Acompanhe o status de assinatura e valores totais dos contratos.</li>';
-
-        if ($canCreate) {
-            $html .= '<li><strong>Gerar Contrato:</strong> Normalmente os contratos são gerados a partir da matrícula, mas podem ser criados manualmente aqui se necessário.</li>';
-        }
-
-        if ($canUpdate) {
-            $html .= '<li><strong>Editar:</strong> Ajuste valores, adicione responsáveis financeiros e registre a data de aceite.</li>';
-        }
-
-        if ($canImport) {
-            $html .= '<li><strong>Importar Contratos:</strong> Permite importar contratos em lote via planilha. Ao importar com ID que já existe, os dados são atualizados; ao importar com ID que não existe, um novo contrato é criado. É possível indicar os IDs das tabelas relacionadas (Matrícula e Template) ou seus nomes equivalentes para associação automática.</li>';
-        }
-
-        if ($canExport) {
-            $html .= '<li><strong>Exportar Contratos:</strong> Permite exportar a listagem de contratos atual para uma planilha de dados.</li>';
-        }
-
-        $html .= '<li><strong>Faturas:</strong> Os contratos são a base para a geração automática das faturas mensais.</li>';
-        $html .= '</ul>';
-
-        $html .= '<h3>Coluna "Assinatura" (assinatura digital)</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Não enviado:</strong> o contrato foi criado, mas ainda não foi enviado para assinatura.</li>';
-        $html .= '<li><strong>Pendente:</strong> enviado ao Assinafy, aguardando as assinaturas.</li>';
-        $html .= '<li><strong>Todos assinaram:</strong> todas as assinaturas foram coletadas. É a primeira etapa depois da última assinatura.</li>';
-        $html .= '<li><strong>Certificando:</strong> o certificado digital do documento está sendo gerado.</li>';
-        $html .= '<li><strong>Certificado:</strong> etapa final, com o certificado gerado e o documento assinado pronto para download.</li>';
-        $html .= '<li><strong>Recusado, Cancelado, Expirado e Erro no envio:</strong> o processo foi interrompido; o contrato precisa ser enviado novamente.</li>';
-        $html .= '</ul>';
-        $html .= '<p><strong>Todos assinaram</strong>, <strong>Certificando</strong> e <strong>Certificado</strong> contam como contrato <strong>assinado</strong>: a ação passa a ser "Ver Contrato Assinado", o contrato sai da lista de pendentes e a matrícula deixa de ter a pendência "Contrato não assinado".</p>';
-
-        $html .= '<h3>Data de aceite e atualização do status</h3>';
-        $html .= '<ul>';
-        $html .= '<li><strong>Data de aceite:</strong> é o dia em que a <strong>última assinatura</strong> foi coletada (quando todos assinaram), e não o dia em que o contrato foi criado.</li>';
-        $html .= '<li><strong>Atualização automática:</strong> o Assinafy avisa o sistema a cada assinatura e o sistema também o consulta de hora em hora para recuperar avisos que não chegaram.</li>';
-        $html .= '<li><strong>Sincronizar Assinaturas:</strong> use esta ação na linha do contrato para consultar o Assinafy na hora e atualizar o status e quem já assinou.</li>';
-        $html .= '</ul>';
-
-        return $html;
+        return view('filament.resources.contratos.help-list', [
+            'user' => auth()->user(),
+        ])->render();
     }
 }

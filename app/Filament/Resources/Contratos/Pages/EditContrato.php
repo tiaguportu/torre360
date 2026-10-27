@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Contratos\Pages;
 
+use App\Filament\Resources\Contratos\Actions\AcoesContrato;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Models\Contrato;
 use App\Services\GeracaoFaturasContratoService;
@@ -25,7 +26,7 @@ class EditContrato extends EditRecord
                 ->icon('heroicon-o-banknotes')
                 ->color('success')
                 ->requiresConfirmation(false)
-                ->visible(fn ($record) => $record && ! $record->faturas()->exists())
+                ->visible(fn ($record) => $record && $record->faturas()->doesntExist())
                 ->schema([
                     TextInput::make('quantidade_parcelas')
                         ->label('Quantidade de Parcelas')
@@ -91,9 +92,13 @@ class EditContrato extends EditRecord
                 ->url(fn ($record) => route('contratos.visualizar', $record))
                 ->openUrlInNewTab(),
 
+            AcoesContrato::sincronizarAssinafy(),
+            AcoesContrato::downloadContrato(),
+
             DeleteAction::make(),
 
             Action::make('ajuda')
+                ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('gray')
                 ->form([
@@ -119,11 +124,7 @@ class EditContrato extends EditRecord
                 ->modalDescription('Atenção: Este contrato já foi enviado para a plataforma Assinafy. Ao salvar as alterações, as informações e assinaturas anteriores serão resetadas, sendo necessário submeter o contrato novamente para assinatura digital. Deseja continuar?')
                 ->modalSubmitActionLabel('Sim, alterar e resetar assinatura');
         } else {
-            $action
-                ->requiresConfirmation()
-                ->modalHeading('Confirmar Salvar Alterações')
-                ->modalDescription('Deseja realmente salvar as alterações efetuadas neste contrato?')
-                ->modalSubmitActionLabel('Sim, salvar');
+            $action->requiresConfirmation(false);
         }
 
         return $action;
@@ -147,31 +148,8 @@ class EditContrato extends EditRecord
 
     private function getHelpContent(): string
     {
-        $user = auth()->user();
-        $html = '<div class="space-y-4">';
-
-        $html .= '<p>Esta página permite editar as informações de um contrato de matrícula, gerenciar o faturamento e iniciar o processo de assinatura digital.</p>';
-
-        $html .= '<h3 class="text-lg font-bold mt-4">⚙️ Funcionalidades Disponíveis</h3>';
-        $html .= '<ul class="list-disc ml-6 space-y-1">';
-        $html .= '<li><strong>Gerar Faturas Automaticamente:</strong> Permite criar o parcelamento do contrato (entrada + parcelas). Esta ação <em>só fica visível se o contrato não possuir nenhuma fatura gerada anteriormente</em>.</li>';
-        $html .= '<li><strong>Visualizar Contrato:</strong> Abre a página de visualização do contrato, onde é possível assinar digitalmente via integração com a Assinafy ou baixar o documento PDF.</li>';
-        $html .= '</ul>';
-
-        $html .= '<hr class="my-4">';
-        $html .= '<h3 class="text-lg font-bold">🛡️ Permissões e Acesso</h3>';
-        $html .= '<ul class="list-disc ml-6 space-y-1">';
-
-        if ($user->can('Update:Contrato')) {
-            $html .= '<li>✅ Você tem permissão para editar os dados básicos do contrato.</li>';
-        }
-        if ($user->can('Delete:Contrato')) {
-            $html .= '<li>✅ Você tem permissão para excluir este contrato do sistema.</li>';
-        }
-
-        $html .= '</ul>';
-        $html .= '</div>';
-
-        return $html;
+        return view('filament.resources.contratos.help-edit', [
+            'user' => auth()->user(),
+        ])->render();
     }
 }

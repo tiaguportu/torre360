@@ -34,27 +34,7 @@ class ContratoResource extends Resource
             return null;
         }
 
-        $emails = collect([$user->email]);
-        $pessoa = $user->pessoa;
-        if ($pessoa && ! empty($pessoa->email)) {
-            $emails->push($pessoa->email);
-        }
-
-        $emailsClean = $emails->filter()->map(fn ($e) => strtolower(trim($e)))->unique();
-
-        $count = static::getModel()::query()
-            ->naoAssinado()
-            ->get()
-            ->filter(function (Contrato $contrato) use ($emailsClean) {
-                $statusSignatarios = $contrato->getStatusSignatarios();
-
-                return $statusSignatarios->contains(function ($sig) use ($emailsClean) {
-                    $sigEmail = strtolower(trim($sig['email'] ?? ''));
-
-                    return $emailsClean->contains($sigEmail) && ($sig['status'] ?? 'pending') === 'pending';
-                });
-            })
-            ->count();
+        $count = Contrato::pendentesAssinaturaDoUsuario($user)->count();
 
         return $count > 0 ? (string) $count : null;
     }
