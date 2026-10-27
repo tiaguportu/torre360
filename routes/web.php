@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\BibliotecaEtiquetasController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
+use App\Http\Controllers\CompraNotaFiscalController;
 use App\Http\Controllers\Comunicacao\DescadastroController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
 use App\Http\Controllers\Contratos\GerarAssinaturaController;
@@ -193,6 +194,11 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 // Relatórios configuráveis (Onda 72): baixa o arquivo de uma execução, para o dono, os destinatários e quem vê todos.
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/relatorios/execucoes/{execucao}/download', [ExecucaoRelatorioController::class, 'download'])->whereNumber('execucao')->name('relatorios.execucoes.download');
+});
+
+// Compras (Onda 38): a nota fiscal de um recebimento, para quem pode abrir a requisição.
+Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
+    Route::get('/compras/recebimentos/{recebimento}/nota-fiscal', CompraNotaFiscalController::class)->whereNumber('recebimento')->name('compras.nota-fiscal');
 });
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

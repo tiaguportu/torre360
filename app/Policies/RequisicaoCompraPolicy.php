@@ -11,7 +11,7 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
 /**
- * Compras (Onda 38). Cada pessoa vê as próprias requisições; `VerTodas` abre as dos outros setores. O super admin passa por qualquer
+ * Compras (Onda 38). Cada pessoa vê as próprias requisições e as que precisam dela (cotar, aprovar, receber); `VerTodas` abre as dos outros setores. O super admin passa por qualquer
  * habilidade (Gate::before), então as telas também conferem o estado da requisição, e a segregação de funções (quem solicita não
  * aprova, quem aprova não recebe) vem do próprio serviço, que vale para todos.
  */
@@ -79,6 +79,6 @@ class RequisicaoCompraPolicy
 
     private function ehDoUsuarioOuVeTodas(AuthUser $authUser, RequisicaoCompra $requisicao): bool
     {
-        return $requisicao->solicitante_user_id === $authUser->getAuthIdentifier() || $authUser->can('VerTodas:RequisicaoCompra');
+        return $requisicao->solicitante_user_id === $authUser->getAuthIdentifier() || app(ComprasService::class)->requisicoesVisiveis($authUser)->whereKey($requisicao->getKey())->exists();
     }
 }

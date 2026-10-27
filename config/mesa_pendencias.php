@@ -4,13 +4,18 @@ use App\Services\Pendencias\Fontes\AssinaturasAtrasadas;
 use App\Services\Pendencias\Fontes\CancelamentosParaAnalisar;
 use App\Services\Pendencias\Fontes\CancelamentosParaConcluir;
 use App\Services\Pendencias\Fontes\ClassificacaoContabilPendente;
+use App\Services\Pendencias\Fontes\ComprasParaCotar;
 use App\Services\Pendencias\Fontes\ContatosDoDia;
 use App\Services\Pendencias\Fontes\DevolucoesPendentes;
 use App\Services\Pendencias\Fontes\DocumentosParaAssinatura;
+use App\Services\Pendencias\Fontes\EstoqueAbaixoDoMinimo;
 use App\Services\Pendencias\Fontes\GradesIncompletas;
 use App\Services\Pendencias\Fontes\LeadsQuentesParados;
 use App\Services\Pendencias\Fontes\LeadsSemConsultor;
 use App\Services\Pendencias\Fontes\LeadsSemProximaAcao;
+use App\Services\Pendencias\Fontes\OrcamentoEstourado;
+use App\Services\Pendencias\Fontes\PedidosParaAprovar;
+use App\Services\Pendencias\Fontes\PedidosParaReceber;
 use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
@@ -44,6 +49,12 @@ return [
         LeadsSemProximaAcao::class,
         LeadsQuentesParados::class,
         LeadsSemConsultor::class,
+        // Suprimentos (Ondas 16, 38 e 43): compras, estoque e orçamento.
+        ComprasParaCotar::class,
+        PedidosParaAprovar::class,
+        PedidosParaReceber::class,
+        EstoqueAbaixoDoMinimo::class,
+        OrcamentoEstourado::class,
     ],
 
     /*

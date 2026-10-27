@@ -31,4 +31,12 @@ return [
 
     // Fornecedor com recebimento divergente nos últimos N meses vem sinalizado no mapa de cotações.
     'meses_historico_fornecedor' => (int) env('COMPRAS_MESES_HISTORICO_FORNECEDOR', 12),
+
+    // Prazos das filas da Minha Mesa: requisição esperando cotação há mais de N dias (a urgente já nasce atrasada), pedido esperando
+    // aprovação há mais de N dias e pedido aprovado sem entrega há mais de N dias quando a cotação não trouxe prazo.
+    'mesa' => [
+        'cotacao_atrasada_dias' => (int) env('COMPRAS_MESA_COTACAO_DIAS', 3),
+        'aprovacao_atrasada_dias' => (int) env('COMPRAS_MESA_APROVACAO_DIAS', 2),
+        'entrega_atrasada_dias' => (int) env('COMPRAS_MESA_ENTREGA_DIAS', 15),
+    ],
 ];

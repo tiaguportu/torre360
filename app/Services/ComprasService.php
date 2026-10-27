@@ -18,6 +18,7 @@ use App\Models\RecebimentoCompra;
 use App\Models\RequisicaoCompra;
 use App\Models\User;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,41 @@ class ComprasService
     ) {}
 
     // --- Requisição --------------------------------------------------------------------------------------------------
+
+    /**
+     * As requisições que a pessoa pode abrir: as próprias e, conforme o papel, as que precisam dela. Quem cota vê tudo que saiu do
+     * rascunho; quem aprova vê os pedidos da sua alçada; quem recebe vê as compras aprovadas. "Ver todas" abre qualquer uma.
+     *
+     * @return Builder<RequisicaoCompra>
+     */
+    public function requisicoesVisiveis(User $usuario): Builder
+    {
+        $consulta = RequisicaoCompra::query();
+
+        if ($usuario->can('VerTodas:RequisicaoCompra')) {
+            return $consulta;
+        }
+
+        $nivel = $this->nivelDeAlcada($usuario);
+        $cotador = $usuario->can('Cotar:RequisicaoCompra');
+        $recebedor = $usuario->can('Receber:PedidoCompra');
+
+        return $consulta->where(function (Builder $q) use ($usuario, $nivel, $cotador, $recebedor): void {
+            $q->where('solicitante_user_id', $usuario->id);
+
+            if ($cotador) {
+                $q->orWhere('status', '!=', StatusRequisicaoCompra::Rascunho->value);
+            }
+
+            if ($nivel > 0) {
+                $q->orWhereHas('pedido', fn (Builder $p) => $p->where('nivel_alcada', '<=', $nivel));
+            }
+
+            if ($recebedor) {
+                $q->orWhereIn('status', [StatusRequisicaoCompra::Aprovada->value, StatusRequisicaoCompra::RecebidaParcial->value, StatusRequisicaoCompra::Recebida->value]);
+            }
+        });
+    }
 
     /**
      * @param  array{titulo?: ?string, justificativa?: ?string, urgencia?: ?string, centro_custo_id?: ?int, plano_conta_id?: ?int}  $dados
@@ -525,13 +561,23 @@ class ComprasService
 
     private function temAlcada(User $usuario, int $nivelExigido): bool
     {
+        return $this->nivelDeAlcada($usuario) >= $nivelExigido;
+    }
+
+    /**
+     * O maior nível de pedido que o usuário aprova (0 = nenhum). Quem tem a alçada de um nível aprova também os de baixo.
+     */
+    public function nivelDeAlcada(User $usuario): int
+    {
+        $maior = 0;
+
         foreach ((array) config('compras.alcadas', []) as $faixa) {
-            if ((int) $faixa['nivel'] >= $nivelExigido && $usuario->can((string) $faixa['permissao'])) {
-                return true;
+            if ((int) $faixa['nivel'] > $maior && $usuario->can((string) $faixa['permissao'])) {
+                $maior = (int) $faixa['nivel'];
             }
         }
 
-        return false;
+        return $maior;
     }
 
     private function segregar(): bool
