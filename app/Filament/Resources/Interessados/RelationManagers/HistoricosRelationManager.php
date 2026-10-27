@@ -40,6 +40,7 @@ class HistoricosRelationManager extends RelationManager
                 Select::make('tipo_contato_interessado_id')
                     ->label('Tipo de Contato')
                     ->relationship('tipoContato', 'nome')
+                    ->live()
                     ->required(),
                 DateTimePicker::make('data_contato')
                     ->label('Data do Contato')
@@ -68,14 +69,14 @@ class HistoricosRelationManager extends RelationManager
                     ->label('Próxima ação')
                     ->placeholder('Ex.: ligar para confirmar a visita')
                     ->maxLength(160)
-                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
-                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
+                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaParaContato($get('resultado'), $get('tipo_contato_interessado_id')))
+                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaParaContato($get('resultado'), $get('tipo_contato_interessado_id'))),
                 DateTimePicker::make('data_proximo_contato')
                     ->label('Quando')
                     ->default(now()->addDays(2))
                     ->seconds(false)
-                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado')))
-                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaPara($get('resultado'))),
+                    ->required(fn (Get $get): bool => app(ProximaAcaoLeadService::class)->exigidaParaContato($get('resultado'), $get('tipo_contato_interessado_id')))
+                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && app(ProximaAcaoLeadService::class)->exigidaParaContato($get('resultado'), $get('tipo_contato_interessado_id'))),
             ]);
     }
 
@@ -154,6 +155,13 @@ class HistoricosRelationManager extends RelationManager
 
                         $proxima = $this->proximaAcaoInformada ?? ['quando' => null, 'acao' => null];
                         $this->proximaAcaoInformada = null;
+
+                        // Registro administrativo (funil, formulário do site) não é conversa: não toca na próxima ação do lead.
+                        if (app(ProximaAcaoLeadService::class)->tipoAdministrativo($record->tipo_contato_interessado_id)) {
+                            LeadScoreService::recalcular($interessado);
+
+                            return;
+                        }
 
                         try {
                             app(ProximaAcaoLeadService::class)->definir(

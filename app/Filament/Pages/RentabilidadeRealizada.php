@@ -79,7 +79,7 @@ class RentabilidadeRealizada extends Page
         $mes = CarbonImmutable::today()->startOfMonth();
 
         for ($i = 0; $i < 18; $i++) {
-            $opcoes[$mes->format('Y-m')] = ucfirst($mes->translatedFormat('F/Y')).($i === 0 ? ' (em andamento)' : '');
+            $opcoes[$mes->format('Y-m')] = RentabilidadeTurmaService::rotuloDoMes($mes).($i === 0 ? ' (em andamento)' : '');
             $mes = $mes->subMonthNoOverflow();
         }
 

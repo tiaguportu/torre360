@@ -710,7 +710,7 @@ autorizada:
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
-| Ondas 27 a 48 (16 propostas, 5 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+| Ondas 27 a 48 (13 propostas, 8 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
 | NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
 | Ondas 49 a 60 (10 propostas e 2 implementadas), com as ampliações propostas em ondas existentes | `docs/ondas_49_a_60_indice.md` |
 | Ondas 61 a 67 (2 propostas, 4 implementadas e 1 mesclada à Onda 35), com as ampliações propostas | `docs/ondas_61_a_67_indice.md` |

@@ -37,7 +37,17 @@ class RentabilidadeTurmaService
         'hora_aula' => 'Por hora-aula (aulas no mês)',
     ];
 
+    private const MESES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
     public function __construct(private readonly ControladoriaTurmaService $planejado) {}
+
+    /**
+     * "Setembro/2026": o nome do mês em português, sem depender do idioma configurado no servidor.
+     */
+    public static function rotuloDoMes(CarbonInterface $mes): string
+    {
+        return self::MESES[$mes->month].'/'.$mes->year;
+    }
 
     /**
      * @return array{

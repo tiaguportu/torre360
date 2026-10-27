@@ -65,7 +65,7 @@ final class RentabilidadeTurmas implements FonteDeRelatorio
         $mes = CarbonImmutable::today()->startOfMonth()->subMonthNoOverflow();
 
         for ($i = 0; $i < 18; $i++) {
-            $meses[$mes->format('Y-m')] = ucfirst($mes->translatedFormat('F/Y'));
+            $meses[$mes->format('Y-m')] = RentabilidadeTurmaService::rotuloDoMes($mes);
             $mes = $mes->subMonthNoOverflow();
         }
 

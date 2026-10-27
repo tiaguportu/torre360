@@ -150,6 +150,9 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
                 'data_contato' => $quando->format('Y-m-d H:i:s'),
                 'resultado' => 'retornar',
                 'relato' => 'Ligação de apresentação da escola.',
+                // Onda 84: contato que não encerra o ciclo pede a próxima ação.
+                'proxima_acao' => 'Ligar com a proposta de bolsa',
+                'data_proximo_contato' => now()->addDay()->format('Y-m-d H:i:s'),
             ])
             ->assertHasNoFormErrors();
 
@@ -174,5 +177,24 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
 
         $this->assertDatabaseHas('historico_contato', ['interessado_id' => $this->lead->id, 'tipo_contato_interessado_id' => $formulario->id]);
         $this->assertNull(Interessado::findOrFail($this->lead->id)->data_primeiro_contato);
+    }
+
+    public function test_registro_administrativo_no_historico_nao_pede_nem_muda_a_proxima_acao(): void
+    {
+        $this->lead->update(['proxima_acao' => 'Ligar na sexta', 'data_proximo_contato' => now()->addDays(3)]);
+        $formulario = TipoContatoInteressado::porNome(TipoContatoInteressado::FORMULARIO_SITE);
+
+        $this->historicos()
+            ->callAction(TestAction::make('create')->table(), data: [
+                'tipo_contato_interessado_id' => $formulario->id,
+                'data_contato' => now()->format('Y-m-d H:i:s'),
+                'relato' => 'Família reenviou o formulário.',
+            ])
+            ->assertHasNoFormErrors()
+            ->assertNotNotified('Contato registrado, mas a próxima ação não foi marcada');
+
+        $lead = Interessado::findOrFail($this->lead->id);
+        $this->assertSame('Ligar na sexta', $lead->proxima_acao, 'o registro administrativo não apaga a próxima ação do consultor');
+        $this->assertNotNull($lead->data_proximo_contato);
     }
 }

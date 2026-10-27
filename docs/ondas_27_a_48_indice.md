@@ -4,9 +4,10 @@ Levantamento de funcionalidades para as próximas entregas, com o que já foi fe
 continua como proposta. Cada onda tem um documento próprio com contexto, o que já existe no
 sistema, escopo e riscos.
 
-- **Implementadas (5):** 30, 39, 40, 41 e 44.
+- **Implementadas (8):** 30, 39, 40, 41 e 44; e 38, 43 e 45 (implementadas em 2026-10-27, com o estoque da Onda 16; ver o
+  [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md)).
 - **Parcialmente implementada (1):** 42 (informe anual entregue; NFS-e proposta).
-- **Propostas (16):** as demais. Não há código, migration nem teste delas.
+- **Propostas (13):** as demais. Não há código, migration nem teste delas.
 - **Melhorias em ondas anteriores (2026-10-21):** alerta de férias na Onda 10 e autoavaliação com
   plano de desenvolvimento na Onda 19 (veja o fim deste índice).
 - **Continuação:** as ondas 49 a 60 estão em [ondas_49_a_60_indice.md](ondas_49_a_60_indice.md).
@@ -26,14 +27,14 @@ sistema, escopo e riscos.
 | 35 | Ouvidoria e Canal de Denúncias | Conformidade | Proposta | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md) |
 | 36 | Egressos | Relacionamento | Proposta | [egressos_roadmap.md](egressos_roadmap.md) |
 | 37 | Portaria Digital | Operação | Proposta | [portaria_digital_roadmap.md](portaria_digital_roadmap.md) |
-| 38 | Compras e Cotações | Financeiro / Operação | Proposta | [compras_cotacoes_roadmap.md](compras_cotacoes_roadmap.md) |
+| 38 | Compras e Cotações | Financeiro / Operação | **Implementada** | [compras_cotacoes_roadmap.md](compras_cotacoes_roadmap.md) |
 | 39 | Manutenção Preventiva | Operação | **Implementada** | [manutencao_preventiva_roadmap.md](manutencao_preventiva_roadmap.md) |
 | 40 | Cardápio e Alergias | Operação | **Implementada** | [cardapio_alergias_roadmap.md](cardapio_alergias_roadmap.md) |
 | 41 | Ponto e Banco de Horas | RH | **Implementada** (controle interno; REP-A/REP-P bloqueados por requisitos legais) | [ponto_banco_horas_roadmap.md](ponto_banco_horas_roadmap.md) |
 | 42 | NFS-e e Informe Anual de Mensalidades | Financeiro | **Parcial** (informe anual implementado junto com a 44; NFS-e proposta) | [nfse_informe_mensalidades_roadmap.md](nfse_informe_mensalidades_roadmap.md) · [entrega unificada](reajuste_e_informe_anual_roadmap.md) |
-| 43 | Orçamento Anual × Realizado | Financeiro | Proposta | [orcamento_anual_realizado_roadmap.md](orcamento_anual_realizado_roadmap.md) |
+| 43 | Orçamento Anual × Realizado | Financeiro | **Implementada** | [orcamento_anual_realizado_roadmap.md](orcamento_anual_realizado_roadmap.md) |
 | 44 | Reajuste de Mensalidades | Financeiro | **Implementada** (com o informe anual da 42) | [reajuste_mensalidades_roadmap.md](reajuste_mensalidades_roadmap.md) · [entrega unificada](reajuste_e_informe_anual_roadmap.md) |
-| 45 | Painel da Direção | Gestão | Proposta | [painel_direcao_roadmap.md](painel_direcao_roadmap.md) |
+| 45 | Painel da Direção | Gestão | **Implementada** | [painel_direcao_roadmap.md](painel_direcao_roadmap.md) |
 | 46 | Segurança Reforçada (MFA, retenção de logs, criptografia de saúde) | Segurança | Proposta | [seguranca_reforcada_roadmap.md](seguranca_reforcada_roadmap.md) |
 | 47 | Digest Diário por Papel | Comunicação | Proposta | [digest_diario_papel_roadmap.md](digest_diario_papel_roadmap.md) |
 | 48 | Integrações: SSO, Google Classroom e Webhooks | Integração | Proposta | [integracoes_sso_classroom_webhooks_roadmap.md](integracoes_sso_classroom_webhooks_roadmap.md) |

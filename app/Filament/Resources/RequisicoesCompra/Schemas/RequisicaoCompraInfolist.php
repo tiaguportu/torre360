@@ -19,6 +19,7 @@ class RequisicaoCompraInfolist
     {
         return $schema->components([
             Section::make('Requisição')
+                ->columnSpanFull()
                 ->columns(3)
                 ->schema([
                     TextEntry::make('numero')->label('Número')->weight('bold'),
@@ -37,6 +38,7 @@ class RequisicaoCompraInfolist
                     TextEntry::make('motivo_cancelamento')->label('Motivo do cancelamento')->columnSpanFull()->visible(fn (RequisicaoCompra $record): bool => filled($record->motivo_cancelamento)),
                 ]),
             Section::make('Itens')
+                ->columnSpanFull()
                 ->schema([
                     RepeatableEntry::make('itens')
                         ->hiddenLabel()
@@ -51,12 +53,14 @@ class RequisicaoCompraInfolist
                         ]),
                 ]),
             Section::make('Cotações')
+                ->columnSpanFull()
                 ->description('O mapa compara os fornecedores; a mais barata vem marcada. O fornecedor com recebimento divergente nos últimos meses vem sinalizado.')
                 ->visible(fn (RequisicaoCompra $record): bool => $record->cotacoes()->exists())
                 ->schema([
                     ViewEntry::make('mapa')->hiddenLabel()->view('filament.infolists.compras-mapa-cotacoes')->columnSpanFull(),
                 ]),
             Section::make('Pedido')
+                ->columnSpanFull()
                 ->columns(3)
                 ->visible(fn (RequisicaoCompra $record): bool => $record->pedido !== null)
                 ->schema([
@@ -76,6 +80,7 @@ class RequisicaoCompraInfolist
                     TextEntry::make('pedido.justificativa_acima_do_orcamento')->label('Justificativa (acima do orçamento)')->columnSpanFull()->visible(fn (RequisicaoCompra $record): bool => filled($record->pedido?->justificativa_acima_do_orcamento)),
                 ]),
             Section::make('Recebimentos')
+                ->columnSpanFull()
                 ->visible(fn (RequisicaoCompra $record): bool => (bool) $record->pedido?->recebimentos->isNotEmpty())
                 ->schema([
                     RepeatableEntry::make('pedido.recebimentos')

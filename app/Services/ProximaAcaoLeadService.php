@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Interessado;
+use App\Models\TipoContatoInteressado;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -25,6 +26,24 @@ class ProximaAcaoLeadService
     public function exigidaPara(?string $resultado): bool
     {
         return ! in_array($resultado, self::RESULTADOS_QUE_ENCERRAM, true);
+    }
+
+    /**
+     * O tipo de contato é um registro que o sistema grava por conta própria (movimentação no funil, reenvio do formulário do site)?
+     * Não é uma conversa com a família: não pede nem muda a próxima ação.
+     */
+    public function tipoAdministrativo(mixed $tipoContatoId): bool
+    {
+        return filled($tipoContatoId)
+            && TipoContatoInteressado::query()->whereKey($tipoContatoId)->whereIn('nome', TipoContatoInteressado::ADMINISTRATIVOS)->exists();
+    }
+
+    /**
+     * A próxima ação é obrigatória neste contato? Não é, no registro administrativo nem no resultado que encerra o ciclo.
+     */
+    public function exigidaParaContato(?string $resultado, mixed $tipoContatoId): bool
+    {
+        return ! $this->tipoAdministrativo($tipoContatoId) && $this->exigidaPara($resultado);
     }
 
     /**
