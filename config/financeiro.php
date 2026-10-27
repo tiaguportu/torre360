@@ -54,4 +54,41 @@ return [
         'carencia_dias' => 0,
         'feriados' => [],
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | Contas recorrentes e fluxo projetado (Onda 78)
+    |--------------------------------------------------------------------------
+    |
+    | - dias_retroativos: a rotina que gera as contas olha também os vencimentos dos últimos N dias, para recuperar o que uma
+    |   parada do agendador deixou para trás. Modelo novo com vigência muito antiga não gera conta de meses passados.
+    | - aviso_reajuste_dias: a Mesa avisa o reajuste de contrato com N dias de antecedência.
+    | - revisao_valor_dias: conta de valor estimado entra na fila de revisão N dias antes do vencimento.
+    |
+    | Fluxo projetado:
+    | - saldo_base: soma ao saldo calculado pelas transações bancárias lançadas. Use quando o primeiro extrato importado não
+    |   começa do zero (saldo anterior ao sistema). O saldo inicial errado estraga toda a projeção.
+    | - taxa_padrao: parcela do que vence que costuma ser recebida, usada no cenário "média histórica" quando a escola ainda não
+    |   tem faturas suficientes para calcular a sua.
+    | - meses_historico: meses completos usados para calcular a taxa de recebimento.
+    | - fator_atrasadas: parcela da taxa aplicada às faturas que já venceram e continuam abertas (no cenário "média histórica").
+    | - dias_recebimento_atrasadas: em quantos dias, a partir de hoje, a projeção coloca o recebimento das faturas atrasadas.
+    | - alerta_dias / urgente_dias: a Mesa avisa o saldo negativo previsto nos próximos N dias; dentro de urgente_dias fica atrasado.
+    |
+    */
+    'recorrentes' => [
+        'dias_retroativos' => 31,
+        'aviso_reajuste_dias' => 30,
+        'revisao_valor_dias' => 7,
+    ],
+
+    'projecao' => [
+        'saldo_base' => (float) env('FINANCEIRO_SALDO_BASE', 0),
+        'taxa_padrao' => 0.85,
+        'meses_historico' => 6,
+        'fator_atrasadas' => 0.5,
+        'dias_recebimento_atrasadas' => 7,
+        'dias' => 90,
+        'alerta_dias' => 30,
+        'urgente_dias' => 14,
+    ],
 ];

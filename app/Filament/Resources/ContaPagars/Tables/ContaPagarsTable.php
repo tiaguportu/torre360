@@ -6,16 +6,22 @@ use App\Enums\StatusContaPagar;
 use App\Models\Banco;
 use App\Models\ContaPagar;
 use App\Models\TransacaoBancaria;
+use App\Services\ContaRecorrenteService;
+use App\Support\PermissaoAcao;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ContaPagarsTable
 {
@@ -39,6 +45,7 @@ class ContaPagarsTable
                 TextColumn::make('valor')
                     ->label('Valor')
                     ->money('BRL')
+                    ->description(fn (ContaPagar $record): ?string => $record->conta_recorrente_id && ! $record->valor_revisado ? 'valor estimado: a revisar' : null)
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -58,12 +65,16 @@ class ContaPagarsTable
                     ->label('Status')
                     ->options(StatusContaPagar::class)
                     ->multiple(),
+                Filter::make('a_revisar')
+                    ->label('Valor a revisar')
+                    ->query(fn (Builder $query) => $query->whereNotNull('conta_recorrente_id')->where('valor_revisado', false)),
                 SelectFilter::make('fornecedor_id')
                     ->label('Fornecedor')
                     ->relationship('fornecedor', 'razao_social')
                     ->searchable(),
             ])
             ->recordActions([
+                self::revisarValorAction(),
                 self::darBaixaAction(),
                 EditAction::make(),
             ])
@@ -74,6 +85,37 @@ class ContaPagarsTable
             ])
             ->defaultSort('vencimento', 'asc')
             ->stackedOnMobile();
+    }
+
+    /**
+     * Confirma o valor real da fatura de uma conta gerada de despesa recorrente de valor estimado (Onda 78).
+     */
+    public static function revisarValorAction(): Action
+    {
+        return Action::make('revisar_valor')
+            ->label('Revisar valor')
+            ->icon('heroicon-o-pencil-square')
+            ->color('warning')
+            ->authorize(PermissaoAcao::qualquer('Update:ContaPagar'))
+            ->visible(fn (ContaPagar $record): bool => $record->conta_recorrente_id !== null && ! $record->valor_revisado && ! in_array($record->status, [StatusContaPagar::Pago, StatusContaPagar::Cancelado], true))
+            ->modalHeading('Revisar o valor da conta')
+            ->modalDescription('Confira o valor da fatura que chegou e confirme. Marque a opção abaixo se o novo valor passa a valer para as próximas contas desta despesa.')
+            ->fillForm(fn (ContaPagar $record): array => ['valor' => (float) $record->valor])
+            ->schema([
+                TextInput::make('valor')->label('Valor da fatura (R$)')->numeric()->minValue(0.01)->required()->prefix('R$'),
+                Toggle::make('aplicar_ao_modelo')->label('Usar este valor como o novo valor estimado da despesa')->default(false),
+            ])
+            ->action(function (array $data, ContaPagar $record): void {
+                try {
+                    app(ContaRecorrenteService::class)->revisarValor($record, (float) $data['valor'], (bool) ($data['aplicar_ao_modelo'] ?? false), auth()->user());
+                } catch (\DomainException $e) {
+                    Notification::make()->title('Revisão recusada')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Valor revisado')->success()->send();
+            });
     }
 
     public static function darBaixaAction(): Action
@@ -98,6 +140,12 @@ class ContaPagarsTable
             ->modalDescription(fn (ContaPagar $record): string => "{$record->descricao} — R$ ".number_format((float) $record->valor, 2, ',', '.'))
             ->modalSubmitActionLabel('Confirmar Pagamento')
             ->action(function (array $data, ContaPagar $record): void {
+                if ($record->conta_recorrente_id && ! $record->valor_revisado) {
+                    Notification::make()->title('Revise o valor antes de pagar')->body('Esta conta nasceu de uma despesa de valor estimado: confirme o valor da fatura em "Revisar valor".')->warning()->send();
+
+                    return;
+                }
+
                 $transacao = TransacaoBancaria::create([
                     'banco_id' => $data['banco_id'],
                     'plano_conta_id' => $record->plano_conta_id,

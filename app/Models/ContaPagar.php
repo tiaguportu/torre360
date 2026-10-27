@@ -26,6 +26,9 @@ class ContaPagar extends Model
         'observacao',
         'pedido_compra_id',
         'recebimento_compra_id',
+        'conta_recorrente_id',
+        'competencia',
+        'valor_revisado',
     ];
 
     protected function casts(): array
@@ -34,6 +37,8 @@ class ContaPagar extends Model
             'status' => StatusContaPagar::class,
             'vencimento' => 'date',
             'data_pagamento' => 'date',
+            'competencia' => 'date',
+            'valor_revisado' => 'boolean',
         ];
     }
 
@@ -50,6 +55,11 @@ class ContaPagar extends Model
     public function centroCusto(): BelongsTo
     {
         return $this->belongsTo(CentroCusto::class);
+    }
+
+    public function contaRecorrente(): BelongsTo
+    {
+        return $this->belongsTo(ContaRecorrente::class, 'conta_recorrente_id');
     }
 
     public function transacaoBancaria(): BelongsTo

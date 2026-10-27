@@ -18,7 +18,10 @@ use App\Services\Pendencias\Fontes\PedidosParaAprovar;
 use App\Services\Pendencias\Fontes\PedidosParaReceber;
 use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
+use App\Services\Pendencias\Fontes\ReajustesDeContrato;
+use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
+use App\Services\Pendencias\Fontes\SaldoProjetadoNegativo;
 use App\Services\Pendencias\Fontes\TransferenciasEmAndamento;
 use App\Services\Pendencias\Fontes\VisitasDoDia;
 
@@ -55,6 +58,10 @@ return [
         PedidosParaReceber::class,
         EstoqueAbaixoDoMinimo::class,
         OrcamentoEstourado::class,
+        // Contas recorrentes e fluxo projetado (Onda 78).
+        RecorrentesParaRevisar::class,
+        ReajustesDeContrato::class,
+        SaldoProjetadoNegativo::class,
     ],
 
     /*

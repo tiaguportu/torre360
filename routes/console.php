@@ -34,6 +34,7 @@ Schedule::command('crm:executar-regua-follow-up')->hourly()->withoutOverlapping(
 Schedule::command('crm:expurgar-rascunhos-pre-matricula')->dailyAt('03:15')->withoutOverlapping();
 Schedule::command('crm:recalcular-lead-score')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('cobranca:executar-regua')->dailyAt('08:00')->withoutOverlapping();
+Schedule::command('financeiro:gerar-contas-recorrentes')->dailyAt('06:45')->withoutOverlapping();
 Schedule::command('financeiro:atualizar-contas-pagar-atrasadas')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('biblioteca:atualizar-emprestimos-atrasados')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('biblioteca:limpar-capas-pendentes')->dailyAt('03:30')->withoutOverlapping();

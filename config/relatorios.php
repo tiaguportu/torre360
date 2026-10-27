@@ -3,6 +3,7 @@
 use App\Services\Relatorios\Fontes\CasosDeFaltas;
 use App\Services\Relatorios\Fontes\ContasAPagar;
 use App\Services\Relatorios\Fontes\DocumentosParaAssinatura;
+use App\Services\Relatorios\Fontes\FluxoProjetadoSemanal;
 use App\Services\Relatorios\Fontes\Inadimplencia;
 use App\Services\Relatorios\Fontes\MatriculasPorTurma;
 use App\Services\Relatorios\Fontes\MovimentoBancario;
@@ -23,6 +24,7 @@ return [
         MovimentoBancario::class,
         CasosDeFaltas::class,
         DocumentosParaAssinatura::class,
+        FluxoProjetadoSemanal::class,
     ],
 
     // Máximo de linhas de um relatório em planilha e em PDF. Passou do limite, o arquivo sai cortado e a execução avisa.
