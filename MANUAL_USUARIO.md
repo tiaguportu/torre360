@@ -4494,6 +4494,37 @@ No grupo **Relatórios**. Para decidir quantas turmas abrir, com quantas vagas e
 
 ---
 
+## 👥 102. Reuniões e Atas (`/admin/reunioes`)
+
+No grupo **Acadêmico**. Para marcar o conselho de classe, a reunião pedagógica, a devolutiva individual e a formação, registrar quem esteve presente, escrever a ata e acompanhar o que ficou combinado.
+
+**Marcar uma reunião** (administração, coordenação e secretaria)
+
+1. **Reuniões e atas → Nova reunião.** Escolha o **tipo**, dê um título e informe início e fim (se deixar o fim em branco, vale a duração padrão do tipo; a reunião começa e termina no mesmo dia).
+2. Escolha o **espaço** para reservar o horário nele (se estiver ocupado, o sistema mostra o motivo e nada é gravado) ou escreva o **local**. Para registrar uma reunião que já aconteceu, deixe o espaço em branco: não dá para reservar um horário que passou.
+3. Convide os **participantes** e escreva a **pauta**. Cada convidado recebe um aviso e responde **Vou participar** ou **Não posso ir** abrindo a reunião; quem organiza é avisado das recusas.
+4. **Alterar** muda data, horário, espaço, pauta e lista. Mudar o horário pede nova resposta de todos e os avisa. **Cancelar reunião** exige o motivo, libera o espaço e avisa os convidados.
+
+**Conselho de classe.** Escolha a **turma** e a **etapa avaliativa**; o botão *Sugerir os da turma* traz quem dá aula para ela, o professor conselheiro (que preside) e a coordenação do curso. A aba **Alunos** mostra cada aluno ativo com **média**, **disciplinas abaixo da média**, **frequência**, **ocorrências**, **parecer publicado** e **risco de evasão**, fotografados no dia em que o conselho foi marcado. **Atualizar indicadores** refaz a fotografia de quem ainda não foi deliberado e inclui quem entrou na turma depois.
+
+**No dia**
+
+1. Depois do horário de início, **Marcar como realizada** e marque quem esteve presente (**Ajustar presença** corrige depois).
+2. **Escrever ata** guarda o texto como rascunho, quantas vezes precisar.
+3. No conselho, **Deliberar** em cada aluno: escolha a decisão do conselho (*Segue sem pendências*, *Destaque a reconhecer*, *Acompanhamento pedagógico*, *Indicar recuperação*, *Chamar a família*, *Encaminhar a apoio especializado*) e escreva as observações. As quatro últimas pedem um **encaminhamento** (o que será feito, responsável e prazo). **A deliberação não altera nota, frequência nem a matrícula.**
+4. **Fechar ata.** Exige presença registrada, texto da ata (no conselho, todos os alunos deliberados). Depois de fechada a ata **não muda mais**: use **Registrar adendo** para corrigir ou complementar.
+5. **Baixar PDF da ata** (ou a *minuta*, antes do fechamento) e **Enviar para assinatura** para colher a assinatura eletrônica dos presentes; a cópia assinada fica na reunião.
+
+**Encaminhamentos.** Na aba *Encaminhamentos* quem organiza registra o que foi combinado, com responsável e prazo. Cada pessoa vê os seus em **Meus encaminhamentos** e **conclui** contando como foi resolvido. Quem coordena tira o filtro *Somente os meus* para ver os da equipe. O que passa do prazo fica em vermelho e, uma vez, avisa o responsável e a coordenação.
+
+**Sigilo.** A **devolutiva individual** (e qualquer reunião marcada como *Reunião sigilosa*) só aparece para quem organiza e para quem participa, nem a coordenação a vê. O assunto não aparece na reserva do espaço (só "Reunião"), nos avisos nem na Minha Mesa, e a ata sigilosa **não** vai para a assinatura eletrônica.
+
+**Minha Mesa.** Três filas: *Meus encaminhamentos de reunião*, *Atas de reunião por fechar* (atrasada depois de 5 dias) e, para a coordenação, *Encaminhamentos vencidos da equipe*.
+
+**Cuidados:** a pauta é uma fotografia; se a nota mudar depois, use *Atualizar indicadores* antes de deliberar. Cancelar ou mudar a reserva pela tela de *Reservas de espaços* não muda a reunião: remarque ou cancele pela própria reunião.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 
 

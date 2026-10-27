@@ -21,8 +21,6 @@ return new class extends Migration
         'View:Reuniao' => ['super_admin', 'admin', 'secretaria', 'coordenador', 'professor'],
         'Create:Reuniao' => ['super_admin', 'admin', 'secretaria', 'coordenador'],
         'Update:Reuniao' => ['super_admin', 'admin', 'secretaria', 'coordenador'],
-        'Delete:Reuniao' => ['super_admin', 'admin'],
-        'DeleteAny:Reuniao' => ['super_admin', 'admin'],
         'VerTodas:Reuniao' => ['super_admin', 'admin', 'coordenador'],
         'Deliberar:Reuniao' => ['super_admin', 'admin', 'coordenador', 'professor'],
     ];

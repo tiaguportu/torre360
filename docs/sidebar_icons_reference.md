@@ -55,6 +55,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **RelatorioSalvo** (Meus Relatórios) | `Heroicon::OutlinedDocumentChartBar` | Filament Enum |
 | **RequisicaoCompra** | `Heroicon::OutlinedShoppingCart` | Filament Enum |
 | **ReservaEspaco** | `Heroicon::OutlinedCalendarDays` | Filament Enum |
+| **Reuniao** (Reuniões e atas) | `Heroicon::OutlinedUserGroup` | Filament Enum |
 | **ResponsavelFinanceiro** | `Heroicon::OutlinedCalculator` | Filament Enum |
 | **Serie** | `Heroicon::OutlinedDocumentText` | Filament Enum |
 | **Sexo** | `heroicon-o-identification` | String |
@@ -80,6 +81,7 @@ Este documento contém a lista de ícones utilizados nos recursos e páginas do 
 | **GradeHorariaAssistida** | `heroicon-o-squares-2x2` | String |
 | **InformeAnualMensalidades** | `heroicon-o-document-chart-bar` | String |
 | **MesaDePendencias** (Minha Mesa) | `Heroicon::OutlinedInboxStack` | Filament Enum |
+| **MeusEncaminhamentos** | `Heroicon::OutlinedClipboardDocumentCheck` | Filament Enum |
 | **OrcadoRealizado** (Orçado × Realizado) | `Heroicon::OutlinedScale` | Filament Enum |
 | **PainelDirecao** (Painel da Direção) | `Heroicon::OutlinedChartPie` | Filament Enum |
 | **PainelFerias** | `heroicon-o-sun` | String |

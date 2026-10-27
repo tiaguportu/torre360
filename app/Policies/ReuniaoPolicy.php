@@ -38,16 +38,17 @@ class ReuniaoPolicy
         return $authUser->can('Update:Reuniao') && $reuniao->estaAgendada() && $this->gerencia($authUser, $reuniao);
     }
 
+    /**
+     * A reunião não se exclui: cancela-se (com motivo) ou fecha-se a ata. Assim o histórico e a reserva do espaço não se perdem.
+     */
     public function delete(AuthUser $authUser, Reuniao $reuniao): bool
     {
-        return $authUser->can('Delete:Reuniao')
-            && ($reuniao->estaAgendada() || $reuniao->estaCancelada())
-            && $this->gerencia($authUser, $reuniao);
+        return false;
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('Delete:Reuniao');
+        return false;
     }
 
     /**

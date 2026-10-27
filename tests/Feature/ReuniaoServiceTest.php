@@ -243,6 +243,19 @@ class ReuniaoServiceTest extends TestCase
         $this->assertSame(1, $this->notificacoes($carla));
     }
 
+    public function test_remarcar_sem_informar_a_lista_mantem_os_participantes(): void
+    {
+        $reuniao = $this->agendar();
+
+        $this->servico()->reagendar($reuniao, ['inicio_em' => '2026-10-30 16:00'], $this->organizador);
+
+        $this->assertEqualsCanonicalizing(
+            [$this->organizador->id, $this->ana->id, $this->bruno->id],
+            $reuniao->participantes()->pluck('user_id')->all(),
+        );
+        $this->assertSame('16:00', $reuniao->refresh()->inicio_em->format('H:i'));
+    }
+
     public function test_so_a_reuniao_agendada_pode_ser_remarcada(): void
     {
         $reuniao = $this->realizar($this->agendar());

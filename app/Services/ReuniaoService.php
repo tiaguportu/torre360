@@ -17,6 +17,7 @@ use App\Models\Reuniao;
 use App\Models\ReuniaoAdendo;
 use App\Models\ReuniaoEncaminhamento;
 use App\Models\ReuniaoParticipante;
+use App\Models\Turma;
 use App\Models\User;
 use App\Services\Documentos\AssinaturaDocumentoService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -132,7 +133,10 @@ class ReuniaoService
             throw ReuniaoInvalidaException::com('Dê um título à reunião.');
         }
 
-        $participantes = $this->participantesNormalizados($dados['participantes'] ?? [], (int) $reuniao->organizador_user_id);
+        // Sem a chave `participantes` a lista não muda; com ela (mesmo vazia), vale o que veio.
+        $participantes = array_key_exists('participantes', $dados)
+            ? $this->participantesNormalizados((array) $dados['participantes'], (int) $reuniao->organizador_user_id)
+            : $reuniao->participantes()->pluck('papel', 'user_id')->all();
         $this->conferirDoTipo($reuniao->tipo, $dados, $participantes, (int) $reuniao->organizador_user_id, $reuniao);
 
         $mudouOHorario = ! $reuniao->inicio_em->eq($inicio) || ! $reuniao->fim_em?->eq($fim);
@@ -749,7 +753,9 @@ class ReuniaoService
             throw ReuniaoInvalidaException::com('O conselho de classe precisa de turma e de etapa avaliativa.');
         }
 
-        if ($atual === null && ! EtapaAvaliativa::query()->whereKey($etapaId)->where('turma_id', $turmaId)->exists()) {
+        $turma = Turma::query()->find($turmaId);
+
+        if ($atual === null && ($turma === null || ! EtapaAvaliativa::query()->daTurma($turma)->whereKey($etapaId)->exists())) {
             throw ReuniaoInvalidaException::com('A etapa avaliativa escolhida não é desta turma.');
         }
 

@@ -99,12 +99,14 @@ class ReuniaoForm
                     Select::make('etapa_avaliativa_id')
                         ->label('Etapa avaliativa')
                         ->options(function (Get $get): array {
-                            if (blank($get('turma_id'))) {
+                            $turma = filled($get('turma_id')) ? Turma::query()->find($get('turma_id')) : null;
+
+                            if ($turma === null) {
                                 return [];
                             }
 
                             return EtapaAvaliativa::query()
-                                ->where('turma_id', $get('turma_id'))
+                                ->daTurma($turma)
                                 ->orderBy('data_inicio')
                                 ->pluck('nome', 'id')
                                 ->all();

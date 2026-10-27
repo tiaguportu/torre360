@@ -71,7 +71,7 @@ class ReunioesTelasTest extends TestCase
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissoes = [
-            'coordenador' => ['ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny', 'VerTodas', 'Deliberar'],
+            'coordenador' => ['ViewAny', 'View', 'Create', 'Update', 'VerTodas', 'Deliberar'],
             'secretaria' => ['ViewAny', 'View', 'Create', 'Update'],
             'professor' => ['ViewAny', 'View', 'Deliberar'],
             'super_admin' => [],

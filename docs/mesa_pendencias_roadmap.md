@@ -99,6 +99,9 @@ Filas acrescentadas depois da Onda 71:
 | 78 | Caixa projetado negativo | Financeiro | `View:FluxoProjetado` |
 | 77 | Turmas com resultado negativo (cache de 6 horas) | Financeiro | `View:RentabilidadeRealizada` |
 | 76 | Projeção do próximo ano | Secretaria | `View:SimuladorProximoAno` |
+| 27/32 | Meus encaminhamentos de reunião | Acadêmico | `ViewAny:Reuniao` |
+| 27/32 | Atas de reunião por fechar (quem organiza e a coordenação, sem as sigilosas dos outros) | Acadêmico | `Update:Reuniao` |
+| 27/32 | Encaminhamentos vencidos da equipe (sem os da própria pessoa e sem os de reunião sigilosa) | Acadêmico | `VerTodas:Reuniao` |
 
 Uma fila pode filtrar o que mostra **pela pessoa** (a Mesa continua sem atribuição própria): a do CRM usa a carteira do consultor, e
 *Pedidos para aprovar* e *Compras para receber* respeitam a alçada e a segregação de funções de quem olha.

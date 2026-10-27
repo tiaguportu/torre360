@@ -581,6 +581,18 @@ Quantos alunos, quantas turmas e se cada turma se paga, com os dados de hoje. É
 | Cenários | Salvos com a fotografia do resultado e comparados lado a lado |
 | Mesa e relatórios | *Projeção do próximo ano* (atrasada quando a campanha termina em até 15 dias); fonte nos relatórios |
 
+### 45. 👥 Reuniões e Atas (Ondas 27 e 32)
+Conselho de classe, reunião pedagógica, devolutiva individual e formação, da pauta à ata fechada, com os encaminhamentos de cada reunião. Grupo **Acadêmico**. Detalhes em `docs/reunioes_e_atas_roadmap.md`.
+
+| Recurso | Descrição |
+|---|---|
+| Reunião | Tipo, data e hora, espaço (reserva o horário na Onda 21), participantes e pauta; convite com resposta, remarcação que pede nova resposta, cancelamento com motivo |
+| Ata | Presença, texto em rascunho e **fechamento**: fechada, não muda mais (correção por **adendo**); PDF e envio para a assinatura eletrônica; a cópia assinada volta para a reunião |
+| Conselho de classe | Turma e etapa; pauta com os alunos ativos e a **fotografia** de média, frequência, ocorrências, parecer e risco de evasão; deliberação por aluno (lista configurável) que gera encaminhamento e **não altera nota nem matrícula**; a ata só fecha com todos deliberados |
+| Encaminhamentos | Responsável e prazo; **Meus encaminhamentos**; lembrete diário do vencido ao responsável e à coordenação |
+| Sigilo | A devolutiva individual e a reunião confidencial só aparecem para quem organiza e participa, com o assunto fora das reservas, dos avisos, da Mesa e da assinatura eletrônica |
+| Mesa e relatórios | Três filas na Minha Mesa e a fonte *Encaminhamentos de reuniões* nos relatórios configuráveis |
+
 ---
 
 ## ⚙️ Instalação e Execução (Ambiente Local)
@@ -710,7 +722,7 @@ autorizada:
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
-| Ondas 27 a 48 (13 propostas, 8 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+| Ondas 27 a 48 (11 propostas, 10 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
 | NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
 | Ondas 49 a 60 (10 propostas e 2 implementadas), com as ampliações propostas em ondas existentes | `docs/ondas_49_a_60_indice.md` |
 | Ondas 61 a 67 (2 propostas, 4 implementadas e 1 mesclada à Onda 35), com as ampliações propostas | `docs/ondas_61_a_67_indice.md` |
@@ -721,11 +733,12 @@ autorizada:
 | Central de avisos à família (Onda 70) | `docs/central_avisos_familia_roadmap.md` |
 | Ondas 72 a 79 (2 propostas e 6 implementadas), com as fusões e as ampliações propostas | `docs/ondas_72_a_79_indice.md` |
 | Conjuntos **Suprimentos** e **Resultado da escola** (ondas 16, 38, 43, 45, 76, 77, 78 e 84, implementadas em 2026-10-27) | `docs/conjuntos_suprimentos_resultado_indice.md` |
+| **Reuniões e atas** (ondas 27 e 32, implementadas em 2026-10-28) | `docs/reunioes_e_atas_roadmap.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
 Censo Escolar e a lista de material, nas seções 26 e 27; o cancelamento de matrícula, os encargos por atraso,
 a admissão e o desligamento e a grade horária assistida, nas seções 28 a 31; a assinatura eletrônica de documentos
-e a mesa de pendências, nas seções 32 e 33; as ondas 72 a 74, nas seções 34 a 36; e as ondas 84, 38, 16 (estoque), 43, 78, 77, 45 e 76, nas
-seções 37 a 44. Os documentos dessas duas ondas, 69 e 71, estão em
+e a mesa de pendências, nas seções 32 e 33; as ondas 72 a 74, nas seções 34 a 36; as ondas 84, 38, 16 (estoque), 43, 78, 77, 45 e 76, nas
+seções 37 a 44; e as ondas 27 e 32, na seção 45. Os documentos dessas duas ondas, 69 e 71, estão em
 `docs/assinatura_eletronica_documentos_roadmap.md` e `docs/mesa_pendencias_roadmap.md`.)

@@ -4,10 +4,11 @@ Levantamento de funcionalidades para as próximas entregas, com o que já foi fe
 continua como proposta. Cada onda tem um documento próprio com contexto, o que já existe no
 sistema, escopo e riscos.
 
-- **Implementadas (8):** 30, 39, 40, 41 e 44; e 38, 43 e 45 (implementadas em 2026-10-27, com o estoque da Onda 16; ver o
-  [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md)).
+- **Implementadas (10):** 30, 39, 40, 41 e 44; 38, 43 e 45 (implementadas em 2026-10-27, com o estoque da Onda 16; ver o
+  [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md)); e 27 e 32
+  (implementadas em 2026-10-28, numa entrega só: [Reuniões e atas](reunioes_e_atas_roadmap.md)).
 - **Parcialmente implementada (1):** 42 (informe anual entregue; NFS-e proposta).
-- **Propostas (13):** as demais. Não há código, migration nem teste delas.
+- **Propostas (11):** as demais. Não há código, migration nem teste delas.
 - **Melhorias em ondas anteriores (2026-10-21):** alerta de férias na Onda 10 e autoavaliação com
   plano de desenvolvimento na Onda 19 (veja o fim deste índice).
 - **Continuação:** as ondas 49 a 60 estão em [ondas_49_a_60_indice.md](ondas_49_a_60_indice.md).
@@ -16,12 +17,12 @@ sistema, escopo e riscos.
 
 | Onda | Tema | Área | Status | Documento |
 |---|---|---|---|---|
-| 27 | Conselho de Classe e Atas | Pedagógico | Proposta | [conselho_classe_atas_roadmap.md](conselho_classe_atas_roadmap.md) |
+| 27 | Conselho de Classe e Atas | Pedagógico | **Implementada** (junto com a 32) | [conselho_classe_atas_roadmap.md](conselho_classe_atas_roadmap.md) · [entrega unificada](reunioes_e_atas_roadmap.md) |
 | 28 | Reforço e Recuperação Paralela | Pedagógico | Proposta | [reforco_recuperacao_paralela_roadmap.md](reforco_recuperacao_paralela_roadmap.md) |
 | 29 | Plano de Ensino Anual e Cobertura Curricular | Pedagógico | Proposta | [plano_ensino_anual_cobertura_roadmap.md](plano_ensino_anual_cobertura_roadmap.md) |
 | 30 | Portfólio do Aluno e Parecer Descritivo | Pedagógico | **Implementada** | [portfolio_parecer_descritivo_roadmap.md](portfolio_parecer_descritivo_roadmap.md) |
 | 31 | Atividades do Contraturno | Pedagógico / Financeiro | Proposta | [atividades_contraturno_roadmap.md](atividades_contraturno_roadmap.md) |
-| 32 | Reuniões com Professores | RH / Pedagógico | Proposta | [reunioes_professores_roadmap.md](reunioes_professores_roadmap.md) |
+| 32 | Reuniões com Professores | RH / Pedagógico | **Implementada** (junto com a 27) | [reunioes_professores_roadmap.md](reunioes_professores_roadmap.md) · [entrega unificada](reunioes_e_atas_roadmap.md) |
 | 33 | Comunicados com Ciência e Enquetes | Comunicação | Proposta | [comunicados_ciencia_enquetes_roadmap.md](comunicados_ciencia_enquetes_roadmap.md) |
 | 34 | Portal do Titular LGPD | Conformidade | Proposta | [portal_titular_lgpd_roadmap.md](portal_titular_lgpd_roadmap.md) |
 | 35 | Ouvidoria e Canal de Denúncias | Conformidade | Proposta | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md) |
@@ -51,7 +52,8 @@ Outras propostas anteriores a este levantamento continuam documentadas no `READM
 - **47 depende das fontes de pendência** de várias ondas (21, 30, 39, 41) e se beneficia da 33.
 - **45 depende de dados confiáveis** das demais (financeiro, captação, frequência).
 - **46** libera a **48** (SSO com segundo fator) e protege dados que a **30**, **40** e **41** já guardam.
-- **27** usa o parecer da **30**; **28** usa os conceitos por habilidade já existentes.
+- **27** usa o parecer da **30**; **28** usa os conceitos por habilidade já existentes e passa a receber os encaminhamentos do
+  conselho de classe (a 27 e a 32 estão implementadas).
 - **31** reaproveita a reserva de espaços (Onda 21) e o faturamento recorrente.
 
 ## Ordem sugerida das propostas

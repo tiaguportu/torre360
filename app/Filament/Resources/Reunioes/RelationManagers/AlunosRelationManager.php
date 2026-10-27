@@ -83,7 +83,8 @@ class AlunosRelationManager extends RelationManager
                 IconColumn::make('parecer')
                     ->label('Parecer')
                     ->state(fn (ReuniaoAluno $record): bool => (bool) ($record->indicadores['parecer_publicado'] ?? false))
-                    ->boolean(),
+                    ->boolean()
+                    ->falseColor('gray'),
                 TextColumn::make('risco')
                     ->label('Risco de evasão')
                     ->state(fn (ReuniaoAluno $record): ?int => $record->indicadores['risco_evasao'] ?? null)
@@ -191,6 +192,7 @@ class AlunosRelationManager extends RelationManager
                         Notification::make()->title('Deliberação registrada')->success()->send();
                     }),
             ])
+            ->stackedOnMobile()
             ->emptyStateHeading('Sem alunos na pauta')
             ->emptyStateDescription('A pauta é montada com os alunos ativos da turma quando o conselho é marcado.');
     }

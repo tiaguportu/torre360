@@ -154,6 +154,8 @@ suprimentos); `2026_10_27_100000` (contas recorrentes e colunas em `conta_pagars
 
 ## O que continua proposto
 
+> As ondas 27 e 32 foram entregues depois, em [Reuniões e atas](reunioes_e_atas_roadmap.md).
+
 Veja o [índice das ondas 72 a 79](ondas_72_a_79_indice.md) (75 e 79), o [das ondas 68 a 71](ondas_68_a_71_indice.md) (68 e 70) e os anteriores. Em
 especial o conjunto **Ciclo de vida do dado pessoal** (ondas [34](portal_titular_lgpd_roadmap.md) e [79](guarda_descarte_documentos_roadmap.md)):
 o pedido do titular (acesso, correção, eliminação) e a rotina de descarte dependem da **mesma tabela de temporalidade** — o que a escola

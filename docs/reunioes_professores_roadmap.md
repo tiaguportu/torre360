@@ -1,8 +1,8 @@
 # Reuniões com Professores (Onda 32) — Proposta para o Futuro
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementada** em 2026-10-28, junto com a Onda 27, como uma entrega só: veja
+> [Reuniões e atas](reunioes_e_atas_roadmap.md), que traz o que foi feito, as decisões em relação a
+> esta proposta e o que ficou de fora. O texto abaixo é a proposta original.
 
 ## Contexto
 

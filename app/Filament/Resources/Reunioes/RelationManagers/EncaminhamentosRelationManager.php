@@ -137,6 +137,7 @@ class EncaminhamentosRelationManager extends RelationManager
                         Notification::make()->title('Encaminhamento cancelado')->success()->send();
                     }),
             ])
+            ->stackedOnMobile()
             ->emptyStateHeading('Nenhum encaminhamento')
             ->emptyStateDescription('Registre o que ficou combinado, com responsável e prazo.');
     }

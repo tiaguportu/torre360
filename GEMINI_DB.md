@@ -2092,3 +2092,27 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
 ### `cenarios_proximo_ano`
 - **Representa:** um cenário salvo do simulador.
 - **Campos:** `nome` (120), `periodo_rematricula_id` (FK `periodo_rematriculas`, cascade), `parametros` (JSON: taxas, corte de risco, espera, reajuste, turmas e capacidade por série), `resultado` (JSON: a fotografia da projeção no dia), `criado_por_user_id` (FK `users`, nullOnDelete). A projeção do dia não é tabela: `SimuladorProximoAnoService` a calcula de `rematriculas`, `lista_espera_matriculas`, `matricula` (risco de evasão), `turma` e `periodo_rematricula_precos`.
+
+
+## 51. Reuniões e Atas (Ondas 27 e 32)
+
+### `reunioes`
+- **Representa:** uma reunião interna da escola (conselho de classe, pedagógica, devolutiva individual, formação, outra).
+- **Campos:** `tipo` (20: `conselho_classe`, `pedagogica`, `devolutiva`, `formacao`, `outra`), `titulo` (160), `status` (16: `agendada`, `realizada`, `ata_fechada`, `cancelada`), `confidencial` (bool; a devolutiva é sempre sigilosa por regra), `inicio_em`, `fim_em`, `local` (120), `sala_id` (FK `sala`, nullOnDelete), `reserva_espaco_id` (FK `reservas_espaco`, nullOnDelete), `turma_id` e `etapa_avaliativa_id` (FK; só o conselho de classe; em MySQL a etapa é do período letivo da turma e não tem `turma_id`: ver `EtapaAvaliativa::daTurma`), `organizador_user_id` (FK `users`), `pauta`, `ata` (longText), `realizada_em`, `ata_fechada_em`, `ata_fechada_por_user_id`, `motivo_cancelamento`, e as colunas da cópia assinada (`arquivo_assinado_path`, `assinado_em`, `assinatura_nivel`, as mesmas do trait `TemCopiaAssinada`).
+- **Índices:** `(status, inicio_em)` e `(tipo, turma_id)`. O nome da tabela é `reunioes` (definido no model; o plural automático seria `reuniaos`).
+- **Regras:** `Reuniao::scopeVisiveisPara` (organizador, participante ou, com `VerTodas:Reuniao`, as que não são sigilosas); ata fechada não muda (correção em `reuniao_adendos`); um conselho não cancelado por turma e etapa. O log de atividades (`reuniao`) não grava `pauta` nem `ata`.
+
+### `reuniao_participantes`
+- **Campos:** `reuniao_id` (FK, cascade), `user_id` (FK `users`, cascade), `papel` (`organizador`, `presidente`, `participante`), `convite` (`pendente`, `aceito`, `recusado`), `respondido_em`, `presente` (bool, nulo até a presença ser registrada). Único `(reuniao_id, user_id)`.
+
+### `reuniao_alunos`
+- **Representa:** o aluno na pauta do conselho de classe, com a fotografia dos indicadores e a deliberação.
+- **Campos:** `reuniao_id` (FK, cascade), `matricula_id` (FK `matricula`, cascade), `ordem`, `indicadores` (JSON: `nota_aprovacao`, `disciplinas`, `disciplinas_com_nota`, `media_geral`, `disciplinas_abaixo_da_media`, `frequencia`, `faltas`, `ocorrencias`, `ocorrencias_tipos`, `parecer_publicado`, `risco_evasao`, `fotografado_em`), `deliberacao` (24; chave da lista de `config/reunioes.php`), `observacao`, `deliberado_por_user_id`, `deliberado_em`. Único `(reuniao_id, matricula_id)`. A deliberação não altera `nota`, `frequencia_escolar` nem a situação da matrícula.
+
+### `reuniao_encaminhamentos`
+- **Campos:** `reuniao_id` (FK, cascade), `reuniao_aluno_id` (FK, nullOnDelete; preenchido quando nasce da deliberação), `matricula_id` (FK, nullOnDelete), `descricao` (300), `responsavel_user_id` (FK), `prazo` (date), `status` (`aberto`, `feito`, `cancelado`), `concluido_em`, `concluido_por_user_id`, `observacao_conclusao`, `vencimento_avisado_em`. "Vencido" é derivado: aberto com `prazo` anterior a hoje. Índices `(status, prazo)` e `(responsavel_user_id, status)`.
+
+### `reuniao_adendos`
+- **Campos:** `reuniao_id` (FK, cascade), `texto`, `user_id` (FK `users`, nullOnDelete). Correção ou complemento de ata fechada.
+
+**Permissões** (migration `2026_10_28_100100`): `ViewAny`, `View`, `Create`, `Update`, `VerTodas` e `Deliberar:Reuniao`. Parâmetros em `config/reunioes.php`. Rotina: `reunioes:lembrar-encaminhamentos` (diária, 07:15).

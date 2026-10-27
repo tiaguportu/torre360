@@ -53,6 +53,6 @@ resposta.
 
 ## Fusão sugerida
 
-Receptor dos encaminhamentos da [Onda 27](conselho_classe_atas_roadmap.md) e das ações sobre risco de evasão (Onda 13): veja o ciclo pedagógico descrito na Onda 27.
+Receptor dos encaminhamentos da [Onda 27](reunioes_e_atas_roadmap.md) (implementada: o conselho de classe já gera os encaminhamentos, falta esta onda recebê-los) e das ações sobre risco de evasão (Onda 13): veja o ciclo pedagógico descrito na Onda 27.
 
 Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).

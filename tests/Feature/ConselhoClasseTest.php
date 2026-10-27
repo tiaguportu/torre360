@@ -34,6 +34,7 @@ use App\Services\ConselhoClasseService;
 use App\Services\ReuniaoService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -209,6 +210,18 @@ class ConselhoClasseTest extends TestCase
         $this->expectExceptionMessage('não é desta turma');
 
         $this->marcarConselho(['etapa_avaliativa_id' => $etapaDaOutra->id]);
+    }
+
+    public function test_sem_a_coluna_turma_id_a_etapa_e_do_periodo_letivo(): void
+    {
+        // Em MySQL a migration `refine_educational_relationships` remove `etapa_avaliativa.turma_id`: a etapa é do período letivo.
+        $this->assertStringContainsString('"turma_id" = ?', EtapaAvaliativa::query()->daTurma($this->turma)->toSql());
+
+        Schema::partialMock()->shouldReceive('hasColumn')->with('etapa_avaliativa', 'turma_id')->andReturnFalse();
+
+        $sql = EtapaAvaliativa::query()->daTurma($this->turma)->toSql();
+        $this->assertStringContainsString('"periodo_letivo_id" = ?', $sql);
+        $this->assertStringNotContainsString('"turma_id"', $sql);
     }
 
     public function test_conselho_exige_turma_e_etapa(): void

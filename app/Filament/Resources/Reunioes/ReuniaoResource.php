@@ -32,7 +32,7 @@ class ReuniaoResource extends Resource implements HasShieldPermissions
 {
     public static function getPermissionPrefixes(): array
     {
-        return ['view', 'view_any', 'create', 'update', 'delete', 'delete_any', 'ver_todas', 'deliberar'];
+        return ['view', 'view_any', 'create', 'update', 'ver_todas', 'deliberar'];
     }
 
     protected static ?string $model = Reuniao::class;
