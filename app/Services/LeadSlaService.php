@@ -98,13 +98,18 @@ class LeadSlaService
     /**
      * Retorna resumo analítico do SLA do lead para exibição em badges e formulários.
      *
+     * `estourado` é o prazo vencido SEM resposta (o que dispara alerta); para um lead já respondido,
+     * `no_prazo` diz se o primeiro contato veio até o limite (null enquanto não há resposta).
+     *
      * @return array{
      *     respondido: bool,
      *     estourado: bool,
+     *     no_prazo: bool|null,
      *     limite: Carbon,
      *     prazo_minutos: int,
      *     texto: string,
-     *     cor: string
+     *     cor: string,
+     *     tooltip: string
      * }
      */
     public function resumoSla(Interessado $lead, ?Carbon $agora = null): array
@@ -112,15 +117,21 @@ class LeadSlaService
         $limite = $this->calcularDataLimite($lead);
         $prazo = $this->prazoMinutosParaLead($lead);
         $momentoAtual = $agora ?? now();
+        $tooltip = 'Limite comercial: '.$limite->format('d/m/Y H:i');
 
         if ($lead->data_primeiro_contato !== null) {
+            $noPrazo = ! $lead->data_primeiro_contato->greaterThan($limite);
+            $quando = $lead->data_primeiro_contato->format('d/m H:i');
+
             return [
                 'respondido' => true,
                 'estourado' => false,
+                'no_prazo' => $noPrazo,
                 'limite' => $limite,
                 'prazo_minutos' => $prazo,
-                'texto' => 'Respondido em '.$lead->data_primeiro_contato->format('d/m H:i'),
-                'cor' => 'success',
+                'texto' => $noPrazo ? "Respondido no prazo ({$quando})" : "Respondido com atraso ({$quando})",
+                'cor' => $noPrazo ? 'success' : 'warning',
+                'tooltip' => ($noPrazo ? 'Primeiro contato dentro do prazo. ' : 'Primeiro contato depois do prazo. ').$tooltip,
             ];
         }
 
@@ -128,10 +139,12 @@ class LeadSlaService
             return [
                 'respondido' => false,
                 'estourado' => false,
+                'no_prazo' => null,
                 'limite' => $limite,
                 'prazo_minutos' => $prazo,
                 'texto' => 'Finalizado',
                 'cor' => 'gray',
+                'tooltip' => $tooltip,
             ];
         }
 
@@ -144,10 +157,12 @@ class LeadSlaService
             return [
                 'respondido' => false,
                 'estourado' => true,
+                'no_prazo' => null,
                 'limite' => $limite,
                 'prazo_minutos' => $prazo,
                 'texto' => $textoEstouro,
                 'cor' => 'danger',
+                'tooltip' => $tooltip,
             ];
         }
 
@@ -159,10 +174,12 @@ class LeadSlaService
         return [
             'respondido' => false,
             'estourado' => false,
+            'no_prazo' => null,
             'limite' => $limite,
             'prazo_minutos' => $prazo,
             'texto' => $textoRestante,
             'cor' => 'warning',
+            'tooltip' => $tooltip,
         ];
     }
 

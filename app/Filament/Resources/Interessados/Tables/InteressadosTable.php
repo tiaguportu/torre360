@@ -136,7 +136,7 @@ class InteressadosTable
                     ->badge()
                     ->state(fn (Interessado $record): string => app(LeadSlaService::class)->resumoSla($record)['texto'])
                     ->color(fn (Interessado $record): string => app(LeadSlaService::class)->resumoSla($record)['cor'])
-                    ->tooltip(fn (Interessado $record): string => 'Limite comercial: '.app(LeadSlaService::class)->calcularDataLimite($record)->format('d/m/Y H:i'))
+                    ->tooltip(fn (Interessado $record): string => app(LeadSlaService::class)->resumoSla($record)['tooltip'])
                     ->toggleable(),
                 TextColumn::make('origem.nome')
                     ->label('Origem')

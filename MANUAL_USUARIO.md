@@ -638,11 +638,13 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
    - **Leads antigos:** se a data de primeiro contato do lead veio de outra origem (por exemplo, gravada no cadastro, sem um contato correspondente no histórico), mexer no histórico não a apaga nem reabre o SLA.
 3. **Indicador Visual na Tabela:**
    - A coluna **SLA 1ª Resposta** (pode ser ocultada ou exibida no seletor de colunas da tabela) exibe um selo com o texto e a cor do momento:
-     - 🟢 **Respondido em dd/mm HH:mm:** o primeiro contato já foi registrado (a data é a do contato). O selo **não diferencia** resposta dentro do prazo de resposta com atraso.
-     - 🟡 **SLA: resta 1h 30min útil** (ou *resta 45 min útil*): lead aguardando o primeiro contato, com o prazo ainda em curso.
+     - 🟢 **Respondido no prazo (dd/mm HH:mm):** o primeiro contato foi registrado até o limite comercial (a data entre parênteses é a do contato; contato feito exatamente no limite ainda conta como no prazo).
+     - 🟡 **Respondido com atraso (dd/mm HH:mm):** o primeiro contato foi registrado, mas depois do limite comercial. É só histórico: não gera alerta nem exige ação.
+     - 🟡 **SLA: resta 1h 30min útil** (ou *resta 45 min útil*): lead aguardando o primeiro contato, com o prazo ainda em curso. Tem a mesma cor do selo "com atraso"; o que diferencia é o texto (quem ainda não foi atendido começa com *SLA:*).
      - 🔴 **SLA Estourado há 2h 10min** (ou *há 35 min*): o prazo venceu sem primeiro contato registrado.
      - ⚪ **Finalizado:** o lead já está numa etapa final (matriculado ou perdido) sem primeiro contato registrado; o SLA não se aplica mais.
-   - O tooltip (ao passar o mouse sobre o selo) mostra a **data e hora limite** calculada (*Limite comercial: dd/mm/aaaa HH:mm*). O tempo restante ou de atraso aparece no próprio selo.
+   - O veredito "no prazo" ou "com atraso" usa o **prazo do próprio lead** (padrão de 120 min úteis ou o valor personalizado na ficha) e é refeito a cada exibição: mudar o prazo do lead depois, ou corrigir a data do contato, pode trocar o selo.
+   - O tooltip (ao passar o mouse sobre o selo) mostra a **data e hora limite** calculada (*Limite comercial: dd/mm/aaaa HH:mm*); nos leads já respondidos, vem antes a frase *Primeiro contato dentro do prazo.* ou *Primeiro contato depois do prazo.* O tempo restante ou de atraso de quem ainda não foi atendido aparece no próprio selo.
    - Na ficha do interessado, o campo *SLA de 1ª Resposta* mostra o mesmo texto e a data limite logo abaixo.
 4. **Monitoramento Automatizado e Alertas:**
    - Uma rotina agendada no servidor (`crm:verificar-sla-estourado`) roda a cada 15 minutos identificando estouros de SLA.
