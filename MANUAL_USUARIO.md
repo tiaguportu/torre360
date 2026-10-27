@@ -166,6 +166,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 5. **Botão Ajuda:** No topo da listagem, o botão **Ajuda** abre um guia da tela: para que serve cada aba, como ler cada coluna (inclusive o Score e a faixa vermelha), as ações por linha e em lote, os filtros, como entram novos leads, uma rotina diária sugerida e como o Score é calculado. Os itens variam conforme as suas permissões.
 ### 3.3 Qualificação de Leads
 O formulário de edição do interessado oferece ferramentas de qualificação:
+- **Duas colunas na ficha:** em telas largas (a partir de 1280 px de largura), a ficha do interessado fica dividida em duas colunas lado a lado. À **esquerda** ficam o formulário (abas *Dados do Negócio* e *Dependentes*) e os botões *Salvar alterações* e *Cancelar*; à **direita**, as abas *Linha do Tempo 360°*, *Histórico de Contatos*, *Visitas à Escola* e *Documentos de Pré-Admissão*. Assim você registra um contato ou confere a linha do tempo sem rolar a página até o fim do formulário. Em telas menores (tablet e celular), as abas passam para baixo do formulário, como antes. O botão **Ajuda** da ficha descreve esse layout.
 - **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator. No computador, o detalhamento aparece em **duas colunas** (os 12 fatores, 6 em cada); no celular e em telas estreitas, em **uma coluna**, com as barras sempre dentro da largura da tela (sem rolagem lateral). No celular, os quadros do resumo usam margens internas reduzidas para ocupar o máximo da largura disponível.
 - **SLA de 1ª Resposta (minutos úteis):** Prazo em minutos comerciais para realização do primeiro contato da escola com a família (padrão institucional: 120 minutos úteis). Conta exclusivamente os dias úteis e o horário de expediente cadastrado (ex: seg a sex, 08h às 18h). Um assistente reativo calcula e exibe em tempo real o status e a data limite comercial estimada.
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
@@ -537,7 +538,7 @@ O **Resumo IA de Conversas** resolve a sobrecarga dos consultores ao sintetizar 
 A **Linha do Tempo Omnichannel 360°** transforma a gestão de relacionamento escolar ao consolidar todos os pontos de contato da família em um feed cronológico único, interativo e ultra-responsivo:
 
 1. **Onde Acessar:**
-   - Ao abrir qualquer Interessado/Lead no painel administrativo, a **Linha do Tempo 360°** é a primeira aba em destaque.
+   - Ao abrir qualquer Interessado/Lead no painel administrativo, a **Linha do Tempo 360°** é a primeira aba em destaque, na **coluna da direita** da ficha (ao lado do formulário, em telas largas; abaixo dele, em telas menores, seção 3.3).
 
 2. **Fontes de Dados Unificadas no Feed:**
    - 💬 **Contatos & Mensagens:** Registros de ligações, e-mails, conversas de WhatsApp geradas pelos copilotos de IA ou consultores, com duração, consultor responsável e resultado (ex: *Agendou Visita*, *Retornar*). Os registros **automáticos**, gerados pela IA ou pelo sistema (a síntese do *Resumo IA de Conversa*, o *Dossiê Estratégico*, a mensagem do *Copiloto de Mensagens*, os e-mails da régua), são exibidos **formatados**: títulos, listas, negrito e citações. O que a **equipe digitou** (interação rápida, Atendimento, Histórico de Contatos) e o relato da *Importar Lead com IA* aparecem exatamente como foram escritos, sem nenhuma formatação aplicada, então um `*` ou um `#` digitado continua sendo apenas o caractere. Uma exceção: na mensagem do *Copiloto*, o negrito do WhatsApp (`*assim*`) aparece em *itálico*, sem os asteriscos; o texto que foi enviado à família não muda.
@@ -2768,7 +2769,7 @@ O **Validador Inteligente de Documentos** integra o módulo de CRM e Admissões 
 - **Feedback Educativo Instantâneo:** Se a IA detectar que uma foto está cortada, borrada ou ilegível, o portal exibe um aviso amigável sugerindo que a família envie uma foto mais nítida antes mesmo da conferência formal pela secretaria, eliminando esperas e retrabalho.
 
 ### 45.3 Painel da Secretaria: Diagnóstico Pericial e Sincronização em 1 Clique
-No painel administrativo (`/admin/interessados`), na aba inferior **Documentos de Pré-Admissão**:
+No painel administrativo (`/admin/interessados`), na aba **Documentos de Pré-Admissão** da ficha do interessado (coluna da direita em telas largas, abaixo do formulário em telas menores):
 1. **Coluna Análise IA:** Exibe imediatamente o status da pré-checagem com badge dinâmico:
    - `✨ Válido (Score %)`: Documento legível e condizente com o solicitado.
    - `⚠️ Atenção (Score %)`: Imagem de baixa nitidez, cortada ou divergente do solicitado.

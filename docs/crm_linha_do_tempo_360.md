@@ -3,6 +3,30 @@
 Aba **Linha do Tempo 360°** da edição do Interessado (`/admin/interessados/{id}/edit`).
 Guia de uso para a equipe: `MANUAL_USUARIO.md`, seção 3.21.
 
+## Posição na tela de edição
+`EditInteressado::content()` divide a página em duas colunas com um `Grid` do Filament (`['default' => 1, 'xl' => 2]`):
+à esquerda `getFormContentComponent()` (abas *Dados do Negócio* e *Dependentes*, com Salvar/Cancelar); à direita
+`getRelationManagersContentComponent()` (as abas dos relation managers: Linha do Tempo 360°, Histórico de Contatos, Visitas
+à Escola e Documentos de Pré-Admissão). Pontos que não são óbvios:
+
+- **Breakpoint `xl` (1280 px da viewport), não `lg`:** com a sidebar aberta, `lg` deixaria cada coluna estreita demais.
+  Abaixo de `xl` as colunas empilham (formulário primeiro, abas depois), como era antes da divisão.
+- **Largura total da página:** `getMaxContentWidth()` devolve `Width::Full`; no padrão do painel (7xl) as duas colunas
+  ficariam apertadas.
+- **Sem relation managers visíveis** (`getCachedRelationManagers()` vazio), a página cai no `content()` padrão do Filament:
+  formulário em largura total, sem coluna vazia.
+- **CSS:** usa só as classes do próprio `Grid` do Filament (`fi-grid`, `xl:fi-grid-cols`), que já existem no `app.css`
+  servido; nenhuma classe utilitária nova (ver "Convenções de layout" abaixo). Os campos do formulário seguem em duas
+  colunas (breakpoint `lg` da viewport) dentro da coluna da esquerda.
+- **Esta aba, na coluna da direita, ocupa cerca de metade da largura da página.** A view da timeline usa container queries
+  (ver "Convenções de layout"), que reagem à largura da coluna e não à da tela; ao mexer nela, confira o resultado na
+  coluna estreita, não só em tela cheia.
+- Não recoloque `->extraAttributes(['style' => 'align-items: start'])` no `Grid`: o atributo cai no `<div>` que **envolve** a
+  grade, não na grade, e não tem efeito.
+
+Teste de regressão: `InteressadoTest::test_pagina_de_edicao_separa_formulario_e_abas_em_duas_colunas` (a grade de duas
+colunas vem antes do formulário, que vem antes das abas, e a página usa a largura total).
+
 ## Peças
 | Arquivo | Papel |
 |---|---|

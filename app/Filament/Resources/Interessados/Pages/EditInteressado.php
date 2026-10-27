@@ -20,12 +20,40 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\DB;
 
 class EditInteressado extends EditRecord
 {
     protected static string $resource = InteressadoResource::class;
+
+    /** Duas colunas lado a lado precisam de largura: o padrão do painel (7xl) deixaria cada uma apertada. */
+    public function getMaxContentWidth(): Width|string|null
+    {
+        return Width::Full;
+    }
+
+    /**
+     * Esquerda: formulário (Dados do Negócio e Dependentes). Direita: abas dos relation managers (Linha do
+     * Tempo, Histórico, Visitas, Documentos). Abaixo de `xl` as colunas empilham, como era antes.
+     */
+    public function content(Schema $schema): Schema
+    {
+        if ($this->getCachedRelationManagers() === []) {
+            return parent::content($schema);
+        }
+
+        return $schema
+            ->components([
+                Grid::make(['default' => 1, 'xl' => 2])
+                    ->schema([
+                        $this->getFormContentComponent(),
+                        $this->getRelationManagersContentComponent(),
+                    ]),
+            ]);
+    }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
@@ -248,9 +276,10 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>🤖 Resumo IA de Conversa (WhatsApp):</strong> Cole conversas longas trocadas no WhatsApp com a família e/ou anexe os <strong>áudios</strong> (mensagens de voz: .opus, .ogg, .mp3, .m4a, .wav, .aac, .flac ou .aiff; até 5 arquivos de 10 MB, na ordem em que ocorreram). Com áudio, o texto colado é opcional. O Gemini ouve os áudios, sintetiza perfil, dores, acordos e temperatura (considerando também o tom de voz) em um relatório detalhado, transcreve os trechos mais relevantes da conversa, grava na timeline com a data e a hora da última mensagem (quando o texto as traz) e agenda o retorno ideal. Os arquivos são apagados logo após a análise, e a análise com áudio demora mais que com texto.</li>';
         $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
         $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
+        $html .= '<li><strong>Duas colunas:</strong> Em telas largas (a partir de 1280 px), a ficha se divide: à esquerda o formulário (<em>Dados do Negócio</em> e <em>Dependentes</em>) e à direita as abas <em>Linha do Tempo 360°</em>, <em>Histórico de Contatos</em>, <em>Visitas à Escola</em> e <em>Documentos de Pré-Admissão</em>. Em telas menores, as abas ficam abaixo do formulário.</li>';
         $html .= '<li><strong>📱 Linha do Tempo Omnichannel 360°:</strong> Visualize a jornada completa da família em um feed interativo unificado (contatos, WhatsApp, visitas escolares, NPS, documentos periciados por IA e mudanças no funil). Permite gravar interações rápidas no topo e recalcula o Lead Score na hora!</li>';
         $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
-        $html .= '<li><strong>📑 Documentos de Pré-Admissão com Validador IA:</strong> Na aba inferior, acompanhe o checklist de documentos. O sistema conta com pré-análise assíncrona por IA (OCR pericial com Gemini Vision) que afere legibilidade, extrai dados cruciais (CPF, RG, Data de Nascimento, Filiação), aponta divergências e permite sincronizar os dados cadastrais da família com 1 único clique, sem travamentos e em total conformidade com a LGPD.</li>';
+        $html .= '<li><strong>📑 Documentos de Pré-Admissão com Validador IA:</strong> Na aba <em>Documentos de Pré-Admissão</em>, acompanhe o checklist de documentos. O sistema conta com pré-análise assíncrona por IA (OCR pericial com Gemini Vision) que afere legibilidade, extrai dados cruciais (CPF, RG, Data de Nascimento, Filiação), aponta divergências e permite sincronizar os dados cadastrais da família com 1 único clique, sem travamentos e em total conformidade com a LGPD.</li>';
         $html .= '<li><strong>Histórico Tradicional:</strong> Na aba "Histórico de Contatos", acesse a listagem tabular detalhada de todas as interações do lead.</li>';
 
         if ($user->can('Update:Interessado')) {

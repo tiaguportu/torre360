@@ -373,6 +373,27 @@ class InteressadoTest extends TestCase
             ->assertSee('crm-abas-compactas', false);
     }
 
+    public function test_pagina_de_edicao_separa_formulario_e_abas_em_duas_colunas(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $interessado = $this->criarInteressado();
+
+        $this->actingAs($admin)
+            ->get("/admin/interessados/{$interessado->id}/edit")
+            ->assertOk()
+            // Grade de 2 colunas a partir de `xl`; a da esquerda leva o formulário (Dados do Negócio e Dependentes),
+            // a da direita as abas dos relation managers (Linha do Tempo, Histórico, Visitas, Documentos).
+            ->assertSeeInOrder([
+                '--cols-xl: repeat(2, minmax(0, 1fr))',
+                "schemaKey: 'form'",
+                'schema-component::content.relationManagerTabs',
+            ], false)
+            ->assertSee('fi-width-full', false);
+    }
+
     public function test_listagem_renderiza_com_abas_e_filtra_por_situacao(): void
     {
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
