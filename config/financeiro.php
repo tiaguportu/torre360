@@ -91,4 +91,19 @@ return [
         'alerta_dias' => 30,
         'urgente_dias' => 14,
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | Resultado realizado por turma (Onda 77)
+    |--------------------------------------------------------------------------
+    |
+    | - meses_alerta: a Minha Mesa lista a turma com resultado negativo (e receita) em todos os últimos N meses completos.
+    | - margem_critica: a turma fica "atrasada" na fila quando a margem do último mês é igual ou pior que este percentual.
+    | - criterio_padrao: rateio dos custos indiretos usado pela fila da Mesa (aluno, turma ou hora_aula).
+    |
+    */
+    'rentabilidade' => [
+        'meses_alerta' => 3,
+        'margem_critica' => -20.0,
+        'criterio_padrao' => 'aluno',
+    ],
 ];

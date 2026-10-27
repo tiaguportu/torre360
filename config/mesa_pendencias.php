@@ -23,6 +23,7 @@ use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
 use App\Services\Pendencias\Fontes\SaldoProjetadoNegativo;
 use App\Services\Pendencias\Fontes\TransferenciasEmAndamento;
+use App\Services\Pendencias\Fontes\TurmasComResultadoNegativo;
 use App\Services\Pendencias\Fontes\VisitasDoDia;
 
 return [
@@ -62,6 +63,8 @@ return [
         RecorrentesParaRevisar::class,
         ReajustesDeContrato::class,
         SaldoProjetadoNegativo::class,
+        // Rentabilidade por turma (Onda 77).
+        TurmasComResultadoNegativo::class,
     ],
 
     /*
