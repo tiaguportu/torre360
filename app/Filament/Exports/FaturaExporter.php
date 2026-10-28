@@ -7,6 +7,7 @@ namespace App\Filament\Exports;
 use App\Enums\StatusFatura;
 use App\Models\Fatura;
 use App\Support\CsvSanitizer;
+use App\Support\FaturaImportParser;
 use Carbon\Carbon;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -53,7 +54,15 @@ class FaturaExporter extends Exporter
 
             ExportColumn::make('tipo_desconto')
                 ->label('Tipo de desconto')
-                ->state(fn (Fatura $record): string => $record->itens->count() === 1 ? (string) ($record->itens->first()->tipo_desconto ?? '') : ''),
+                ->state(function (Fatura $record): string {
+                    if ($record->itens->count() !== 1) {
+                        return '';
+                    }
+
+                    $tipo = (string) ($record->itens->first()->tipo_desconto ?? '');
+
+                    return FaturaImportParser::parseTipoDesconto($tipo) ?? $tipo;
+                }),
 
             ExportColumn::make('status')
                 ->label('Status')

@@ -137,6 +137,34 @@ class FaturaImportParser
     }
 
     /**
+     * Parser tolerante de status para importação de faturas.
+     * Aceita todos os valores e rótulos do enum StatusFatura (inclusive 'pago' e 'parcial').
+     * Retorna null se vazio.
+     * Lança RowImportFailedException apenas se o valor informado for inválido/desconhecido.
+     */
+    public static function parseStatusTolerante(mixed $value): ?StatusFatura
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof StatusFatura) {
+            return $value;
+        }
+
+        $str = mb_strtolower(trim((string) $value));
+
+        return match ($str) {
+            'pendente' => StatusFatura::Pendente,
+            'pago' => StatusFatura::Pago,
+            'atrasado' => StatusFatura::Atrasado,
+            'cancelado' => StatusFatura::Cancelado,
+            'parcial', 'pago parcialmente' => StatusFatura::Parcial,
+            default => throw new RowImportFailedException("Status '{$value}' inválido. Valores aceitos: pendente, atrasado, cancelado."),
+        };
+    }
+
+    /**
      * Parser de status para importação de faturas.
      * Apenas 'pendente', 'atrasado' e 'cancelado' são permitidos.
      * 'pago' e 'parcial' são recusados com RowImportFailedException.

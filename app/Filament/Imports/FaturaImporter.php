@@ -164,19 +164,10 @@ class FaturaImporter extends Importer
             throw new RowImportFailedException("Tipo de desconto inválido: '{$rawTipoDesconto}'. Aceitos: 'absoluto', 'R$', 'relativo', '%', 'percentual'.");
         }
 
+        $id = ! empty($this->data['id']) ? (int) $this->data['id'] : null;
+
         // 6. Parsing e validação de Status
         $rawStatus = $this->data['status'] ?? null;
-        $status = FaturaImportParser::parseStatus($rawStatus);
-
-        $this->parsedVencimento = $vencimento;
-        $this->parsedDescricao = $descricao;
-        $this->parsedValor = $valor;
-        $this->parsedDesconto = $desconto;
-        $this->parsedTipoDesconto = $tipoDesconto;
-        $this->parsedStatus = $status;
-        $this->shouldSkipSave = false;
-
-        $id = ! empty($this->data['id']) ? (int) $this->data['id'] : null;
 
         if ($id) {
             $fatura = Fatura::with(['itens', 'transacoes'])->find($id);
@@ -188,46 +179,103 @@ class FaturaImporter extends Importer
                 throw new RowImportFailedException("A fatura Nº {$id} não pertence ao contrato da tela.");
             }
 
-            // Verifica se algum campo mudou
-            $vencimentoMudou = $fatura->vencimento?->toDateString() !== $vencimento;
-            $statusMudou = ($fatura->status instanceof StatusFatura ? $fatura->status->value : (string) $fatura->status) !== $status->value;
+            // Status tolerante para faturas existentes (aceita Pago, Parcial, etc.)
+            $statusTolerante = FaturaImportParser::parseStatusTolerante($rawStatus);
 
-            $item = $fatura->itens->first();
-            $descricaoMudou = $item ? ($item->descricao !== $descricao) : true;
-            $valorMudou = $item ? (abs((float) $item->valor_unitario - $valor) >= 0.001) : true;
-            $descontoMudou = $item ? (abs((float) $item->desconto - $desconto) >= 0.001) : true;
-            $tipoDescontoMudou = $item ? ($item->tipo_desconto !== $tipoDesconto) : true;
+            // Verifica se o status mudou (status vazio na atualização mantém o atual)
+            $statusMudou = ($statusTolerante !== null) && ($fatura->status !== $statusTolerante);
+            $vencimentoMudou = ($fatura->vencimento?->toDateString() !== $vencimento);
 
-            $algumCampoMudou = $vencimentoMudou || $statusMudou || $descricaoMudou || $valorMudou || $descontoMudou || $tipoDescontoMudou;
+            // Verifica os itens da fatura
+            if ($fatura->itens->count() === 1) {
+                $item = $fatura->itens->first();
+                $descricaoMudou = ($item->descricao !== $descricao);
+                $valorMudou = (abs((float) $item->valor_unitario - $valor) >= 0.001);
+                $descontoMudou = (abs((float) $item->desconto - $desconto) >= 0.001);
+                $tipoItemNormalizado = FaturaImportParser::parseTipoDesconto($item->tipo_desconto);
+                $tipoDescontoMudou = ($tipoItemNormalizado !== $tipoDesconto);
+                $quantidadeMudou = ((float) $item->quantidade !== 1.0);
 
+                $itensMudaram = $descricaoMudou || $valorMudou || $descontoMudou || $tipoDescontoMudou || $quantidadeMudou;
+            } else {
+                // Fatura com múltiplos itens ou sem itens: confere com a representação exportada
+                $descricaoExportada = $fatura->itens->pluck('descricao')->filter(fn ($v) => filled($v))->join(' | ');
+                $valorBrutoFatura = (float) $fatura->valor_bruto;
+
+                $descricaoIgual = ($descricao === $descricaoExportada);
+                $valorIgual = (abs($valorBrutoFatura - $valor) < 0.001);
+                $descontoIgual = ($desconto === 0.0);
+                $tipoDescontoAceitavel = in_array($rawTipoDesconto, [null, '', 'absoluto', 'R$'], true);
+
+                $itensMudaram = ! ($descricaoIgual && $valorIgual && $descontoIgual && $tipoDescontoAceitavel);
+            }
+
+            $algumCampoMudou = $vencimentoMudou || $statusMudou || $itensMudaram;
+
+            // Se for idêntica à fatura existente: No-Op total
             if (! $algumCampoMudou) {
                 $this->shouldSkipSave = true;
 
                 return $fatura;
             }
 
-            // Se mudou algum campo, aplica as salvaguardas rigorosas
-            if ($fatura->transacoes->isNotEmpty()) {
-                throw new RowImportFailedException("A fatura Nº {$id} possui transações bancárias e não pode ser alterada via importação.");
+            // Se mudou algum campo, aplica as salvaguardas
+            if ($fatura->estaProtegida()) {
+                if ($fatura->transacoes->isNotEmpty()) {
+                    throw new RowImportFailedException("A fatura Nº {$id} possui transações bancárias e não pode ser alterada via importação.");
+                }
+
+                if (! empty($fatura->gateway_id)) {
+                    throw new RowImportFailedException("A fatura Nº {$id} possui integração com gateway de pagamento e não pode ser alterada via importação.");
+                }
+
+                throw new RowImportFailedException("A fatura Nº {$id} possui status pago ou parcial e não pode ser alterada via importação.");
             }
 
-            if (! empty($fatura->gateway_id)) {
-                throw new RowImportFailedException("A fatura Nº {$id} possui integração com gateway de pagamento e não pode ser alterada via importação.");
+            if ($statusTolerante !== null && in_array($statusTolerante, [StatusFatura::Pago, StatusFatura::Parcial], true)) {
+                throw new RowImportFailedException("O status '{$rawStatus}' não é permitido na importação. Faturas pagas ou parciais devem ser baixadas via transações bancárias.");
             }
 
             if ($fatura->itens->count() !== 1) {
                 throw new RowImportFailedException("A fatura Nº {$id} possui {$fatura->itens->count()} itens. Apenas faturas com exatamente 1 item podem ser alteradas via importação.");
             }
 
+            $item = $fatura->itens->first();
             if ((float) $item->quantidade !== 1.0) {
                 throw new RowImportFailedException("O item da fatura Nº {$id} possui quantidade diferente de 1 e não pode ser alterado via importação.");
             }
 
+            // Preserva a grafia existente caso seja semanticamente equivalente (ex: percentual vs relativo)
+            $tipoDescontoFinal = (FaturaImportParser::parseTipoDesconto($item->tipo_desconto) === $tipoDesconto)
+                ? $item->tipo_desconto
+                : $tipoDesconto;
+
+            $statusFinal = $statusTolerante ?? $fatura->status;
+
+            $this->parsedVencimento = $vencimento;
+            $this->parsedDescricao = $descricao;
+            $this->parsedValor = $valor;
+            $this->parsedDesconto = $desconto;
+            $this->parsedTipoDesconto = $tipoDescontoFinal;
+            $this->parsedStatus = $statusFinal;
+            $this->shouldSkipSave = false;
+
             $fatura->vencimento = $vencimento;
-            $fatura->status = $status;
+            $fatura->status = $statusFinal;
 
             return $fatura;
         }
+
+        // Criação de nova fatura: status não pode ser pago/parcial
+        $status = FaturaImportParser::parseStatus($rawStatus);
+
+        $this->parsedVencimento = $vencimento;
+        $this->parsedDescricao = $descricao;
+        $this->parsedValor = $valor;
+        $this->parsedDesconto = $desconto;
+        $this->parsedTipoDesconto = $tipoDesconto;
+        $this->parsedStatus = $status;
+        $this->shouldSkipSave = false;
 
         // Criação de nova fatura: salvaguarda de duplicidade
         $duplicada = Fatura::where('contrato_id', $contratoId)

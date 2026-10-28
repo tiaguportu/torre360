@@ -4663,16 +4663,17 @@ Na aba **Faturas** dentro da edição de um contrato, a secretaria e o financeir
 - **Estrutura por Linha:** Cada linha representa uma fatura com um item de cobrança correspondente.
 - **Criação vs. Atualização:**
   - **Criação (sem `Nº`):** Gera uma nova fatura e seu item financeiro com quantidade 1.
-  - **Atualização (com `Nº`):** Permite alterar faturas existentes **somente se** a fatura pertencer ao contrato da tela, não possuir transações bancárias baixadas, não possuir identificador de gateway externo e tiver exatamente 1 item com quantidade 1.
-  - **Idempotência (Round-trip):** Linhas reimportadas com os mesmos dados da base são aceitas sem regravações desnecessárias, permitindo exportar, revisar e reimportar o arquivo com tranquilidade.
+  - **Atualização (com `Nº`):** Permite alterar faturas existentes **somente se** a fatura pertencer ao contrato da tela, não estiver protegida (sem transações bancárias, sem cobrança de gateway e sem status pago/parcial) e tiver exatamente 1 item com quantidade 1.
+  - **Idempotência Absoluta (Round-trip No-Op):** Reimportar um arquivo exportado sem alterações é uma operação totalmente neutra (*no-op*) para todos os tipos de fatura (pendentes simples, com bolsa/`percentual`, pagas, parciais, canceladas, com gateway ou com múltiplos itens). Nenhuma alteração é gravada, a assinatura no Assinafy não é resetada e o log de atividades não é alterado.
 - **Validação de Formatos:**
   - **Valores Monetários:** Aceita `1234.56`, `1234,56`, `1.234,56` e `R$ 1.234,56`.
   - **Datas:** Aceita `dd/mm/aaaa` ou `aaaa-mm-dd` com validação estrita de calendário (rejeitando datas inválidas como `31/02/2026`).
-  - **Status Permitidos:** Aceita `pendente`, `atrasado` ou `cancelado`. Por consistência financeira, os status `pago` e `parcial` são rejeitados na importação (a baixa deve ser feita pela ação específica "Dar baixa" ou via conciliação bancária).
+  - **Status Permitidos e Tolerância:** Na atualização de linhas idênticas, aceita todos os status da base (inclusive `Pago` e `Pago Parcialmente`). Na criação ou alteração com novos valores, os status `pago` e `parcial` são bloqueados (devem ser baixados via conciliação/transação). Quando o campo `Status` estiver em branco numa atualização, o status atual da fatura é preservado.
+  - **Tipos de Desconto:** Aceita e normaliza `relativo`, `%`, `percentual`, `absoluto` e `R$`, preservando a grafia semântica existente nos itens.
   - **Prevenção de Duplicidade:** Rejeita cobranças repetidas que tenham o mesmo vencimento, descrição e valor para o mesmo contrato.
 - **Regra de Assinatura Digital (Assinafy):**
   - Caso o contrato já tenha sido enviado para assinatura no Assinafy, o modal exibe um aviso amarelo preventivo.
-  - Se novas faturas forem criadas ou valores forem alterados, a assinatura eletrônica é resetada automaticamente (`resetAssinafyState()`), garantindo que o documento assinado coincida com o plano de pagamento vigente.
+  - Se novas faturas forem criadas ou valores forem efetivamente alterados, a assinatura eletrônica é resetada automaticamente (`resetAssinafyState()`), garantindo que o documento assinado coincida com o plano de pagamento vigente. Reimportações sem mudança mantêm a assinatura intacta.
 
 ---
 
@@ -4734,6 +4735,7 @@ Para assegurar o alinhamento rigoroso entre os compromissos financeiros firmados
      - **Sem faturas emitidas:** Exibe o botão verde **Gerar Faturas Automaticamente**.
      - **Com faturas já emitidas:** Exibe o botão âmbar **Regenerar Faturas**.
    - Ao acionar a regeneração, um modal de confirmação explica que as faturas atuais serão excluídas e substituídas pelas novas parcelas calculadas com base no valor atual do contrato.
+   - **Salvaguarda de Faturas Protegidas:** Caso o contrato possua qualquer fatura com pagamentos registrados (transações bancárias), cobrança emitida no gateway ou status quitado/parcial, o serviço bloqueia a regeneração e emite notificação de erro, preservando integralmente o histórico financeiro.
    - Se o contrato já tiver sido submetido ao Assinafy, os registros anteriores de assinatura eletrônica são limpos por segurança (`resetAssinafyState()`), exigindo nova coleta de assinaturas para refletir o plano de parcelamento revisado.
 
 ### 108.2 Notificação em Tempo Real no Painel ao Concluir Assinaturas
