@@ -3807,7 +3807,14 @@ O que cada família pagou à escola no ano-calendário, para a declaração do i
 
 ### 71.2 Emitindo
 1. Escolha o **ano**, filtre por **turma** ou busque o **aluno**.
-2. Clique em **PDF** na linha do aluno, ou em **Baixar PDF de todos os filtrados** (até 300 alunos por vez; acima disso, filtre por turma).
+2. **Opções de Download e Processamento:**
+   - **PDF Individual:** Clique em **PDF** na linha de qualquer aluno para emitir o informe avulso instantaneamente.
+   - **Download Direto:** Emite o relatório consolidado dos alunos filtrados diretamente no navegador (recomendado para filtros menores).
+   - **Gerar PDF em Lote (Fila):** Para relatórios volumosos de toda a escola ou turmas grandes, clique no botão azul de cabeçalho. O processamento é desacoplado da requisição HTTP e executado em segundo plano pela fila (`Queue`), prevenindo sobrecarga de memória e travamentos do servidor.
+3. **Download Seguro e Notificação:**
+   - Assim que a geração do PDF consolidado for finalizada pela fila, o usuário recebe uma notificação na interface do painel (com atalho para baixar) e no canal do sistema (`SystemNotification`).
+   - O download do arquivo gerado ocorre através de um **link temporário criptograficamente assinado** (`Signed URLs`) com validade de 24 horas, cache inteligente no disco privado e proteção estrita contra acesso não autorizado e *Path Traversal*.
+   - A geração do documento em lote gera registro automático na trilha de auditoria do sistema (`activity_log`).
 
 ### 71.3 No Portal
 A família escolhe o ano e baixa um PDF por aluno. Ela vê os alunos de que é responsável e também aqueles em cujo contrato consta como responsável financeira.
@@ -4658,7 +4665,35 @@ Na aba **Faturas** dentro da edição de um contrato, a secretaria e o financeir
 
 ---
 
+## 📄 107. Geração de Relatórios Volumosos Assíncronos na Fila (Queue) e Download Seguro
+
+Para prevenir o congelamento de requisições HTTP, estouro de tempo limite do servidor web (*Gateway Timeout 504*) e exaustão de memória ao processar centenas de páginas em PDF simultâneas, o Torre360 conta com um motor de processamento assíncrono em fila (`Queue`) para relatórios volumosos:
+
+### 107.1 Como Funciona a Geração em Lote
+1. **Disparo em Segundo Plano:**
+   - Na tela de **Informe Anual de Quitação de Mensalidades** (`/admin/informe-anual-mensalidades`) ou na emissão de **Boletins por Turma** (`/admin/turmas`), ao acionar a geração em lote, o sistema enfileira imediatamente um Job especializado (`GerarInformeAnualLotePdfJob` ou `GerarBoletinsTurmaPdfJob`).
+   - O operador é liberado instantaneamente para continuar utilizando qualquer outro módulo do sistema sem travamentos de tela.
+2. **Resiliência e Execução:**
+   - O Job roda sob supervisão de filas (`ShouldQueue`), com limite de execução estendido (`timeout = 300s`) e até 3 tentativas automáticas em caso de interrupções transitórias.
+3. **Cache Inteligente no Disco Privado:**
+   - Antes de compilar novamente os documentos, o motor calcula um *hash* determinístico baseado nos parâmetros exatos (ano-base, turma, responsáveis e data de corte).
+   - Se um relatório idêntico tiver sido compilado recentemente (janela de 6 horas) e ainda estiver íntegro no disco privado (`storage/app/relatorios_gerados/`), o sistema reaproveita o arquivo em cache instantaneamente, poupando processamento de CPU e consultas ao banco de dados.
+
+### 107.2 Entrega via Notificação com Link Temporário Assinado
+1. **Notificação Centralizada:**
+   - Assim que o processamento do PDF é concluído, uma notificação de sucesso é enviada para o usuário logado (exibida no painel de notificações do Filament e gravada no banco de dados).
+2. **Botão "Baixar PDF":**
+   - A notificação contém um botão de ação com link seguro gerado via `URL::temporarySignedRoute()`, com validade de 24 horas.
+3. **Salvaguardas de Segurança no Download (`/relatorios-gerados/{token}/download`):**
+   - **Assinatura Criptográfica HMAC (Middleware `signed`):** A URL é matematicamente assinada com a chave da aplicação (`APP_KEY`). Qualquer alteração na URL, no token ou no parâmetro de validade resulta em rejeição imediata com código HTTP `403 Forbidden`.
+   - **Validação de Usuário Ativo:** Apenas usuários autenticados e com status ativo no sistema conseguem realizar o download.
+   - **Proteção Estrita contra Path Traversal (CWE-22):** O token passa por validação com expressão regular estrita (`^[a-zA-Z0-9_\-]+$`), impedindo caracteres de navegação em diretórios (`../`, barras ou caracteres nulos).
+   - **Isolamento de Execução de Scripts:** O arquivo é servido diretamente do disco local privado (`local`) com tipo MIME forçado `application/pdf`, cabeçalho `X-Content-Type-Options: nosniff` e política de segurança `Content-Security-Policy: default-src 'none'; sandbox`, impedindo que navegadores executem códigos ou scripts maliciosos embutidos.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
+
 
 
 

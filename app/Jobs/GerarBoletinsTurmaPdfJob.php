@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\BoletimService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,6 +17,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -71,13 +74,34 @@ class GerarBoletinsTurmaPdfJob implements ShouldQueue
         $pdf = Pdf::loadView('pdfs.boletins_turma', ['boletins' => $boletins])
             ->setPaper('a4', 'portrait');
 
-        $path = 'boletins/'.$this->userId.'/'.Str::uuid().'.pdf';
+        $token = 'boletins-'.Str::uuid()->toString();
+        $path = "relatorios_gerados/{$token}.pdf";
         Storage::disk('local')->put($path, $pdf->output());
+
+        $downloadUrl = URL::temporarySignedRoute(
+            'relatorios.download-temporario',
+            now()->addHours(24),
+            ['token' => $token, 'filename' => 'boletins-turma.pdf']
+        );
+
+        Notification::make()
+            ->title('Boletins da Turma prontos para download')
+            ->body('Os boletins solicitados foram gerados com sucesso.')
+            ->icon('heroicon-o-academic-cap')
+            ->color('success')
+            ->actions([
+                NotificationAction::make('download')
+                    ->label('Baixar PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url($downloadUrl)
+                    ->openUrlInNewTab(),
+            ])
+            ->sendToDatabase($user);
 
         $user->notify(new SystemNotification(
             title: 'Boletins prontos para download',
             body: 'Os boletins solicitados foram gerados com sucesso.',
-            actionUrl: route('documentos.visualizar', ['path' => $path]),
+            actionUrl: $downloadUrl,
             actionLabel: 'Baixar PDF',
             type: 'success',
         ));

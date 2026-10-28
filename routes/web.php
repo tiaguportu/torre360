@@ -30,6 +30,7 @@ use App\Http\Controllers\OmrFolhasController;
 use App\Http\Controllers\PontoPdfController;
 use App\Http\Controllers\PortfolioAnexoController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
+use App\Http\Controllers\Relatorios\DownloadRelatorioTemporarioController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SacolaLeituraImpressaoController;
 use App\Http\Controllers\ValidarDocumentoController;
@@ -200,5 +201,10 @@ Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
 Route::middleware(['auth', 'active', 'throttle:30,1'])->group(function () {
     Route::get('/compras/recebimentos/{recebimento}/nota-fiscal', CompraNotaFiscalController::class)->whereNumber('recebimento')->name('compras.nota-fiscal');
 });
+
+// Download seguro de relatórios volumosos gerados em fila (link temporário assinado + cache privado)
+Route::get('/relatorios-gerados/{token}/download', DownloadRelatorioTemporarioController::class)
+    ->name('relatorios.download-temporario')
+    ->middleware(['signed', 'auth', 'active', 'throttle:60,1']);
 
 Route::post('/mobile/register-token', [MobileTokenController::class, 'store'])->middleware(['auth', 'active', 'throttle:10,1'])->name('mobile.register-token');

@@ -30,7 +30,7 @@ Responsável pela gestão de usuários, logs de auditoria e configurações glob
 - **Representa:** Sistema de notificações unificado do Laravel/Filament (Sininho, E-mail e Push).
 - **Propósito:** Armazena mensagens destinadas aos usuários. Suporta canais de Banco de Dados, E-mail e Push (via `FcmChannel`).
 - **Campos Principais:** `id` (UUID), `type`, `notifiable_type`, `notifiable_id`, `data` (JSON), `read_at`.
-- **Integração:** Utilizada pelo `NotificationService` para gerenciar disparos multicanal.
+- **Integração e Relatórios Assíncronos:** Utilizada pelo `NotificationService` para gerenciar disparos multicanal e pela infraestrutura de geração assíncrona de relatórios volumosos em lote (`GerarInformeAnualLotePdfJob`, `GerarBoletinsTurmaPdfJob`). A notificação armazena a action de download com link temporário assinado criptograficamente (`URL::temporarySignedRoute('relatorios.download-temporario', ...)`, validade de 24h), cujos arquivos são cacheados e retidos no disco privado `local` (`storage/app/relatorios_gerados/{token}.pdf`).
 
 ### `activity_log` (Spatie)
 - **Representa:** Registro de atividades de negócio e trilha de auditoria detalhada.
