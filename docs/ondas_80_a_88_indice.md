@@ -1,7 +1,8 @@
-# Ondas 80 a 88 — Índice
+# Ondas 80 a 90 — Índice
 
 Continuação do [índice das ondas 72 a 79](ondas_72_a_79_indice.md). Reúne as propostas para a **secretaria** (80 a 83) e para o **CRM**
-(85 a 88), que a análise de produtividade da equipe levantou depois do conjunto Suprimentos e Resultado da escola. A **Onda 84**
+(85 a 88), que a análise de produtividade da equipe levantou depois do conjunto Suprimentos e Resultado da escola, e as duas de
+**engenharia de entrega** (89 e 90), que a auditoria de 2026-10-28 levantou. A **Onda 84**
 (Mesa do consultor e próxima ação obrigatória) já foi implementada em 2026-10-27 e é a base da sequência do CRM; o documento dela está
 em [mesa_consultor_proxima_acao_roadmap.md](mesa_consultor_proxima_acao_roadmap.md).
 
@@ -9,7 +10,7 @@ Cada documento diz o que já existe **conferido no código** (para não duplicar
 riscos. Nenhuma das propostas abaixo tem código, migration nem teste.
 
 - **Implementada (1):** 84.
-- **Propostas (8):** 80, 81, 82, 83, 85, 86, 87 e 88.
+- **Propostas (10):** 80, 81, 82, 83, 85, 86, 87 e 88 (produtividade) e 89 e 90 (engenharia).
 
 ## Visão geral
 
@@ -24,6 +25,8 @@ riscos. Nenhuma das propostas abaixo tem código, migration nem teste.
 | 86 | Agendamento Online de Visitas e Eventos | CRM | Médio | Proposta | [agendamento_online_visitas_roadmap.md](agendamento_online_visitas_roadmap.md) |
 | 87 | Proposta Comercial com Aceite da Família | CRM / Financeiro | Médio | Proposta (completa a proposta que já existe) | [proposta_comercial_aceite_roadmap.md](proposta_comercial_aceite_roadmap.md) |
 | 88 | Canal WhatsApp Oficial | CRM / Comunicação | Grande, com contrato e custo | Proposta | [whatsapp_oficial_roadmap.md](whatsapp_oficial_roadmap.md) |
+| 89 | Paridade de Esquema e Testes em MariaDB | Engenharia | Médio | Proposta | [paridade_esquema_testes_mariadb_roadmap.md](paridade_esquema_testes_mariadb_roadmap.md) |
+| 90 | Publicação Segura | Engenharia / Operação | Médio a grande | Proposta | [publicacao_segura_deploy_roadmap.md](publicacao_segura_deploy_roadmap.md) |
 
 ## O que a conferência no código mostrou
 
@@ -48,7 +51,19 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 | **Atendimento da família** | 80 + 83 + 70 | Pedido e chamado têm protocolo, responsável, prazo, resposta e aviso; a Central de Avisos é a saída dos dois. Um motor de "solicitação" com tipo evita duas filas. | 70 (aviso), 83 (SLA e modelos), 80 (tipos com resultado) |
 | **Comunicação e canal** | 88 + 70 + 33 + 47 | Destinatário, consentimento, entrega e ciência são os mesmos para aviso, comunicado, cobrança e régua. O WhatsApp é um canal da escola inteira. | Unificar os canais existentes, 70 e 33, 88 por último |
 | **Obrigações com prazo** | 82 + 65 + 60 + 56 | "Algo a fazer, de alguém, até uma data, com prova": admissão e desligamento (feita), documentos com validade (feita), saúde do trabalhador e os roteiros da secretaria. Um motor e uma fila na Mesa. | Generalizar o motor da 65, depois 82 |
+| **Engenharia de entrega** | 89 + 90 + 54 | O portão de qualidade (testes também em MariaDB, esquema sem divergência), a publicação por versão com backup e volta, e o aviso de saúde depois. "Publicou" passa a querer dizer "passou, tem backup e dá para voltar". | Separar o `.env` de desenvolvimento da produção e fechar a página de atualização (pequenos, já), 89, 90, 54 |
 | **Dado cadastral** | 81 + 80 + 34 + 58 | A ficha da pessoa tem três portas: a escola corrige (81), a família atualiza (80) e o titular exerce o direito (34). O Censo (58) cobra o resultado. | 81 (independente), 80 e 34 pelo mesmo canal |
+
+## O que a auditoria de 2026-10-28 mostrou (origem das ondas 89 e 90)
+
+| Achado | Consequência |
+|---|---|
+| **Só o SQLite é testado e a produção é MySQL.** Cinco colunas existem só no esquema de testes (`dia_nao_letivo.curso_id`, `etapa_avaliativa.turma_id`, `pessoa.endereco_id`, `matricula.status`, `tipo_documento.curso_id`); a primeira é filtrada em quatro serviços e quebra no MariaDB copiado. **Produção não verificada.** | Onda 89 |
+| **A cadeia de migrations não roda do zero em MariaDB** (falha na 78ª, FK `errno 150`); não há pipeline de CI nem tag. | Onda 89 |
+| **Publicar é apertar um botão** que faz `git pull origin main` e `migrate --force`, sem backup nem volta; a página não tem `canAccess`; o build dos assets não faz parte (`public/build` é ignorado). | Onda 90 |
+| **O `.env` do checkout de desenvolvimento tem `APP_ENV=local` e `APP_DEBUG=true` e aponta para a produção** (registro das sessões anteriores). | Onda 90 |
+| **Dois recursos do painel não tinham política** e a família os abria (corrigido em 2026-10-28, com teste de guarda que cobre todo recurso novo). | Já resolvido; o guarda é o primeiro portão da Onda 89 |
+| Dependências com aviso: TinyMCE 8.9.2 (XSS alto, três telas de texto formatado), Livewire 4.4.7 (o atributo `#[Authorize]`, que o app não usa) e o Capacitor do app móvel. | Atualizar; entra no portão da 89 (`composer audit`) |
 
 ## Ordem sugerida
 

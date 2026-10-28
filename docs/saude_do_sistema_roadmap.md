@@ -10,6 +10,10 @@ delas para, ninguém é avisado; o problema aparece dias depois, quando a famíl
 segurança também aponta o ambiente de hospedagem (`APP_ENV`, `APP_DEBUG`, Debugbar) como o maior risco
 de exposição (item A4 de `docs/seguranca_pendencias.md`).
 
+> Parte da **engenharia de entrega**: a [Onda 89](paridade_esquema_testes_mariadb_roadmap.md) dá o portão de testes e a
+> [Onda 90](publicacao_segura_deploy_roadmap.md) a publicação com backup e volta; esta onda mostra o estado depois. Ver o
+> [índice das ondas 80 a 90](ondas_80_a_88_indice.md#fusões-sugeridas).
+
 ## O que já existe
 
 - `QueueSupervisorWidget` (painel da fila) e o carimbo `queue_last_run_at` gravado a cada job processado.

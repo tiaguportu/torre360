@@ -2,7 +2,7 @@
 
 > Continua no [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md), que traz
 > também as ondas 16, 38, 43, 45 e 84 implementadas em 2026-10-27. As propostas para a secretaria e o CRM (ondas 80 a 88) estão no
-> [índice das ondas 80 a 88](ondas_80_a_88_indice.md).
+> [índice das ondas 80 a 90](ondas_80_a_88_indice.md).
 
 Continuação do [índice das ondas 68 a 71](ondas_68_a_71_indice.md). Cada onda tem um documento próprio com contexto, o que
 já existe no sistema (conferido no código), escopo, base legal, dependências e riscos.

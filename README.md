@@ -734,7 +734,7 @@ autorizada:
 | Ondas 72 a 79 (2 propostas e 6 implementadas), com as fusões e as ampliações propostas | `docs/ondas_72_a_79_indice.md` |
 | Conjuntos **Suprimentos** e **Resultado da escola** (ondas 16, 38, 43, 45, 76, 77, 78 e 84, implementadas em 2026-10-27) | `docs/conjuntos_suprimentos_resultado_indice.md` |
 | **Reuniões e atas** (ondas 27 e 32, implementadas em 2026-10-28) | `docs/reunioes_e_atas_roadmap.md` |
-| Ondas 80 a 88 para a secretaria e o CRM (8 propostas, com a 84 já implementada), com as fusões e a ordem sugerida | `docs/ondas_80_a_88_indice.md` |
+| Ondas 80 a 90: secretaria e CRM (8 propostas, com a 84 já implementada) e engenharia de entrega (89, testes em MariaDB, e 90, publicação segura), com as fusões e a ordem sugerida | `docs/ondas_80_a_88_indice.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o
