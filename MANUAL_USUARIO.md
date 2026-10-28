@@ -4752,6 +4752,43 @@ Para assegurar o alinhamento rigoroso entre os compromissos financeiros firmados
    - O painel administrativo conta com consulta periódica automática de notificações no banco (`databaseNotificationsPolling('30s')`), exibindo o indicador numérico no sininho e a bolha de aviso (*toast*) sem necessidade de recarregar o navegador.
    - A notificação apresenta o título **Contrato Assinado**, informa o número do contrato e o nome do aluno matriculado, e inclui um botão de ação rápida **Ver Contrato** que abre diretamente a tela do contrato correspondente.
 
+### 108.3 Filtro e Indicador Visual de "Faturamento Divergente" na Tabela de Contratos (`/admin/contratos`)
+1. **Indicador Visual na Coluna "Valor Total":**
+   - Na listagem de contratos, a coluna **Valor Total** avalia o saldo financeiro das faturas ativas emitidas em relação ao montante contratual:
+     - **Faturado (verde):** Quando a soma das parcelas emitidas coincide perfeitamente com o valor total do contrato.
+     - **Sem faturas (cinza):** Quando ainda não foram gerados títulos de cobrança para o contrato.
+     - **Divergente (+R$ X / -R$ X) (vermelho/danger):** Quando há qualquer inconsistência monetária (para mais ou para menos), alertando imediatamente a secretaria e o financeiro sem necessidade de abrir registro por registro.
+   - O carregamento das faturas e seus respectivos itens de cobrança é otimizado (*eager loading*), mantendo a listagem ágil e responsiva.
+2. **Filtro de "Situação do Faturamento":**
+   - No painel de filtros da tabela, o campo **Situação do Faturamento** permite segmentar a base em:
+     - **Faturamento Divergente:** Isola exclusivamente os contratos cujas faturas diferem do valor total contratado.
+     - **Faturamento Alinhado:** Exibe contratos com faturas emitidas e valores perfeitamente conciliados.
+     - **Sem Faturas Emitidas:** Exibe contratos pendentes de lançamento de faturas.
+
+### 108.4 Auditoria Geral e Correção Automática em Lote via Linha de Comando (`contratos:auditar-faturas`)
+Para rotinas de compliance contábil, conciliações periódicas ou correções massivas de inconsistências decorrentes de migrações ou reajustes de planos escolares:
+1. **Comando Artisan Especializado:**
+   - Sintaxe: `php artisan contratos:auditar-faturas [opções]`
+2. **Opções Disponíveis:**
+   - `--contrato=ID`: Audita pontualmente um único contrato.
+   - `--divergentes-apenas`: Oculta contratos conciliados e foca apenas nas divergências.
+   - `--limite=N`: Define a quantidade máxima de contratos auditados (padrão: 100).
+   - `--corrigir`: Para contratos **não assinados** que apresentem divergência, regenera automaticamente o plano de faturas utilizando o motor `GeracaoFaturasContratoService`.
+3. **Auditoria Estruturada e Rastreabilidade:**
+   - Durante a execução, o comando imprime uma tabela formatada no terminal com colunas para Contrato, Aluno, Valor do Contrato, Total Faturado, Diferença e Situação.
+   - Para cada contrato com divergência constatada, um evento é registrado automaticamente no Spatie ActivityLog com o canal `contrato` e metadados completos da auditoria (`valor_contrato`, `total_faturas`, `diferenca`).
+   - Contratos que já foram assinados pelas partes são protegidos por segurança contra alterações acidentais de parcelas, mesmo ao rodar com `--corrigir`.
+
+### 108.5 Notificações no Portal da Família ao Disponibilizar Contrato para Assinatura
+1. **Aviso Imediato para os Responsáveis:**
+   - Assim que um contrato é emitido e disponibilizado para coleta de assinaturas digitais na plataforma Assinafy (status `enviado` ou `pending`), o sistema notifica automaticamente os responsáveis vinculados à matrícula.
+2. **Canais e Idempotência:**
+   - A notificação é direcionada aos usuários ativos do Portal da Família vinculados como responsáveis financeiros, pais ou ao próprio aluno maior de idade.
+   - A entrega é realizada tanto via banco de dados (persistida no sininho do Portal) quanto via broadcast em tempo real.
+   - O sistema conta com salvaguarda de idempotência (`notificacao_familia_enviada_em` registrada no histórico da requisição Assinafy), impedindo notificações duplicadas durante atualizações de status ou webhooks secundários.
+3. **Acesso Direto à Central de Documentos:**
+   - A notificação no Portal apresenta o título **Contrato Disponível para Assinatura**, informa o nome do estudante e inclui o botão de ação **Assinar Contrato**, que direciona o responsável diretamente à tela de Documentos (`/portal/documentos`) para conclusão da assinatura.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.

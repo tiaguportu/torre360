@@ -39,6 +39,8 @@ class PortalPanelProvider extends PanelProvider
                 NavigationGroup::make('Meus Dados'),
             ])
             ->favicon(asset('icon.png'))
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->colors([
                 'primary' => '#243468',
                 'secondary' => '#5C94AB',

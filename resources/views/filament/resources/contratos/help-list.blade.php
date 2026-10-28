@@ -27,6 +27,7 @@
     @endif
 
     <li><strong>Faturas:</strong> Os contratos são a base para a geração automática das faturas mensais.</li>
+    <li><strong>Situação do Faturamento:</strong> Na coluna "Valor Total", o sistema indica em tempo real se o contrato está <em>Faturado</em> (valores conciliados), <em>Sem faturas</em> ou <em>Divergente</em> (diferença entre o contrato e as faturas ativas emitidas). Use o filtro "Situação do Faturamento" para isolar divergências.</li>
 </ul>
 
 <h3>Coluna "Assinatura" (assinatura digital)</h3>

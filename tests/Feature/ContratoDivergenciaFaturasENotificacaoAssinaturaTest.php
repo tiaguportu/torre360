@@ -3,16 +3,19 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\Contratos\Pages\EditContrato;
+use App\Filament\Resources\Contratos\Pages\ListContratos;
 use App\Models\Contrato;
 use App\Models\Fatura;
 use App\Models\ItemFatura;
 use App\Models\Matricula;
 use App\Models\Pessoa;
+use App\Models\ResponsavelFinanceiro;
 use App\Models\TemplateContrato;
 use App\Models\TipoVinculo;
 use App\Models\User;
 use App\Services\AssinafyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -269,5 +272,198 @@ class ContratoDivergenciaFaturasENotificacaoAssinaturaTest extends TestCase
         Livewire::test(EditContrato::class, ['record' => $contrato->id])
             ->assertActionExists('gerarFaturas')
             ->assertSee('Regenerar Faturas');
+    }
+
+    public function test_scopes_e_filtro_de_situacao_do_faturamento_na_tabela(): void
+    {
+        // 1. Contrato alinhado (R$ 5.000 com fatura de R$ 5.000)
+        $contratoAlinhado = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 5000.00,
+            'assinafy_status' => 'pending',
+        ]);
+        $faturaAlinhada = Fatura::create([
+            'contrato_id' => $contratoAlinhado->id,
+            'vencimento' => now()->addMonth()->toDateString(),
+            'status' => 'pendente',
+        ]);
+        ItemFatura::create([
+            'fatura_id' => $faturaAlinhada->id,
+            'descricao' => 'Parcela Alinhada',
+            'valor_unitario' => 5000.00,
+            'quantidade' => 1,
+            'desconto' => 0,
+            'tipo_desconto' => 'absoluto',
+        ]);
+
+        // 2. Contrato divergente (R$ 8.000 com fatura de R$ 4.000)
+        $contratoDivergente = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 8000.00,
+            'assinafy_status' => 'pending',
+        ]);
+        $faturaDivergente = Fatura::create([
+            'contrato_id' => $contratoDivergente->id,
+            'vencimento' => now()->addMonth()->toDateString(),
+            'status' => 'pendente',
+        ]);
+        ItemFatura::create([
+            'fatura_id' => $faturaDivergente->id,
+            'descricao' => 'Parcela Divergente',
+            'valor_unitario' => 4000.00,
+            'quantidade' => 1,
+            'desconto' => 0,
+            'tipo_desconto' => 'absoluto',
+        ]);
+
+        // 3. Contrato sem faturas
+        $contratoSemFaturas = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 3000.00,
+            'assinafy_status' => 'pending',
+        ]);
+
+        // Valida scopes
+        $this->assertTrue(Contrato::comFaturamentoDivergente()->pluck('id')->contains($contratoDivergente->id));
+        $this->assertFalse(Contrato::comFaturamentoDivergente()->pluck('id')->contains($contratoAlinhado->id));
+        $this->assertFalse(Contrato::comFaturamentoDivergente()->pluck('id')->contains($contratoSemFaturas->id));
+
+        $this->assertTrue(Contrato::comFaturamentoAlinhado()->pluck('id')->contains($contratoAlinhado->id));
+        $this->assertFalse(Contrato::comFaturamentoAlinhado()->pluck('id')->contains($contratoDivergente->id));
+
+        $this->assertTrue(Contrato::semFaturasEmitidas()->pluck('id')->contains($contratoSemFaturas->id));
+        $this->assertFalse(Contrato::semFaturasEmitidas()->pluck('id')->contains($contratoDivergente->id));
+
+        // Valida ListContratos com o filtro
+        Livewire::test(ListContratos::class)
+            ->filterTable('situacao_faturamento', 'divergente')
+            ->assertCanSeeTableRecords([$contratoDivergente])
+            ->assertCanNotSeeTableRecords([$contratoAlinhado, $contratoSemFaturas]);
+    }
+
+    public function test_comando_auditar_faturas_identifica_divergencias_e_gera_log(): void
+    {
+        $contrato = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 9000.00,
+            'data_aceite' => now()->subDays(2),
+            'assinafy_status' => 'pending',
+        ]);
+        $fatura = Fatura::create([
+            'contrato_id' => $contrato->id,
+            'vencimento' => now()->addMonth()->toDateString(),
+            'status' => 'pendente',
+        ]);
+        ItemFatura::create([
+            'fatura_id' => $fatura->id,
+            'descricao' => 'Parcela 1',
+            'valor_unitario' => 3000.00,
+            'quantidade' => 1,
+            'desconto' => 0,
+            'tipo_desconto' => 'absoluto',
+        ]);
+
+        $exitCode = Artisan::call('contratos:auditar-faturas', [
+            '--contrato' => $contrato->id,
+            '--divergentes-apenas' => true,
+        ]);
+
+        $this->assertEquals(0, $exitCode);
+        $output = Artisan::output();
+        $this->assertStringContainsString('DIVERGENTE', $output);
+        $this->assertStringContainsString('R$ 9.000,00', $output);
+        $this->assertStringContainsString('R$ 3.000,00', $output);
+
+        $activity = Activity::where('log_name', 'contrato')
+            ->where('subject_id', $contrato->id)
+            ->where('properties->origem', 'auditoria_cli')
+            ->first();
+
+        $this->assertNotNull($activity, 'O comando deve registrar log no ActivityLog sobre a divergência encontrada.');
+    }
+
+    public function test_comando_auditar_faturas_com_opcao_corrigir_regenera_faturas_automaticamente(): void
+    {
+        $contrato = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 12000.00,
+            'data_aceite' => now()->subDay(),
+            'assinafy_status' => 'pending',
+        ]);
+
+        // Fatura antiga de apenas R$ 4.000 (divergência de R$ 8.000)
+        $fatura = Fatura::create([
+            'contrato_id' => $contrato->id,
+            'vencimento' => now()->addMonth()->toDateString(),
+            'status' => 'pendente',
+        ]);
+        ItemFatura::create([
+            'fatura_id' => $fatura->id,
+            'descricao' => 'Parcela 1',
+            'valor_unitario' => 4000.00,
+            'quantidade' => 1,
+            'desconto' => 0,
+            'tipo_desconto' => 'absoluto',
+        ]);
+
+        $this->assertTrue($contrato->temDivergenciaFaturamento());
+
+        $exitCode = Artisan::call('contratos:auditar-faturas', [
+            '--contrato' => $contrato->id,
+            '--corrigir' => true,
+        ]);
+
+        $this->assertEquals(0, $exitCode);
+
+        $contrato->refresh();
+        $this->assertFalse($contrato->temDivergenciaFaturamento(), 'Após a correção, o contrato não deve mais apresentar divergência.');
+        $this->assertEquals(12000.00, $contrato->totalFaturasEmitidas(), 'O somatório das faturas deve coincidir exatamente com o valor total do contrato.');
+    }
+
+    public function test_notifica_usuarios_da_familia_no_portal_quando_contrato_disponivel_para_assinatura(): void
+    {
+        // Cria responsável com usuário ativo
+        $responsavel = Pessoa::factory()->create(['nome' => 'Carlos Pai']);
+        $userResponsavel = User::factory()->create([
+            'name' => 'Carlos Pai',
+            'email' => 'carlos.pai@example.com',
+            'activated_at' => now()->subDay(),
+            'deactivated_at' => null,
+        ]);
+        $userResponsavel->pessoas()->attach($responsavel->id);
+
+        $roleResponsavel = Role::firstOrCreate(['name' => 'responsavel', 'guard_name' => 'web']);
+        $userResponsavel->assignRole($roleResponsavel);
+
+        $contrato = Contrato::create([
+            'matricula_id' => $this->matricula->id,
+            'template_contrato_id' => $this->template->id,
+            'valor_total' => 10000.00,
+            'assinafy_status' => 'pending',
+        ]);
+
+        // Associa o responsável financeiro ao contrato
+        ResponsavelFinanceiro::create([
+            'contrato_id' => $contrato->id,
+            'pessoa_id' => $responsavel->id,
+            'percentual' => 100,
+        ]);
+
+        $this->assertEquals(0, $userResponsavel->notifications()->count());
+
+        // Dispara a notificação de disponibilidade
+        $contrato->notificarDisponibilidadeAssinaturaFamilia();
+
+        $this->assertGreaterThan(0, $userResponsavel->notifications()->count(), 'O responsável da família deve receber notificação no portal.');
+
+        $notificacao = $userResponsavel->notifications()->first();
+        $this->assertEquals('Contrato Disponível para Assinatura', $notificacao->data['title']);
+        $this->assertStringContainsString("Contrato #{$contrato->id}", $notificacao->data['body']);
+        $this->assertStringContainsString('Joãozinho Silva', $notificacao->data['body']);
     }
 }

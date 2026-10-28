@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contratos\Tables;
 
 use App\Enums\StatusAssinaturaContrato;
+use App\Enums\StatusFatura;
 use App\Filament\Exports\ContratoExporter;
 use App\Filament\Resources\Contratos\Actions\AcoesContrato;
 use App\Models\Contrato;
@@ -21,12 +22,12 @@ class ContratosTable
     public static function configure(Table $table): Table
     {
         return $table
-            // A coluna de signatários (Contrato::getSignatarios) lê estas relações em cada linha; é o mesmo conjunto
-            // que AssinafyService::enviarContrato carrega.
+            // A coluna de signatários (Contrato::getSignatarios) e o indicador de faturamento leem estas relações
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([
                 'matricula.pessoa.responsaveis.users',
                 'matricula.turma.serie.curso.unidade.representantesLegais.users',
                 'responsaveisFinanceiros.pessoa.users',
+                'faturas' => fn ($q) => $q->where('status', '!=', 'cancelado')->with('itens'),
             ]))
             ->defaultSort('created_at', 'desc')
             ->columns([
@@ -72,6 +73,25 @@ class ContratosTable
                 TextColumn::make('valor_total')
                     ->label('Valor')
                     ->money('BRL')
+                    ->description(function (Contrato $record): ?string {
+                        $faturas = $record->relationLoaded('faturas')
+                            ? $record->faturas->where('status', '!=', StatusFatura::Cancelado)
+                            : $record->faturas;
+
+                        if ($faturas->isEmpty()) {
+                            return 'Sem faturas';
+                        }
+
+                        if ($record->temDivergenciaFaturamento()) {
+                            $diff = $record->diferencaFaturamento();
+                            $sinal = $diff > 0 ? '+' : '';
+
+                            return 'Divergente ('.$sinal.'R$ '.number_format($diff, 2, ',', '.').')';
+                        }
+
+                        return 'Faturado';
+                    })
+                    ->color(fn (Contrato $record): ?string => $record->temDivergenciaFaturamento() ? 'danger' : null)
                     ->sortable(),
                 TextColumn::make('data_aceite')
                     ->label('Aceite em')
@@ -94,6 +114,21 @@ class ContratosTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('situacao_faturamento')
+                    ->label('Situação do Faturamento')
+                    ->options([
+                        'divergente' => 'Faturamento divergente',
+                        'alinhado' => 'Faturamento alinhado',
+                        'sem_faturas' => 'Sem faturas emitidas',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'divergente' => $query->comFaturamentoDivergente(),
+                            'alinhado' => $query->comFaturamentoAlinhado(),
+                            'sem_faturas' => $query->semFaturasEmitidas(),
+                            default => $query,
+                        };
+                    }),
                 SelectFilter::make('assinafy_status')
                     ->label('Status de Assinatura')
                     ->options(collect(StatusAssinaturaContrato::cases())->mapWithKeys(fn (StatusAssinaturaContrato $status) => [$status->value => $status->getLabel()])),

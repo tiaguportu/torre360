@@ -36,6 +36,13 @@ class Contrato extends Model
             ) {
                 $contrato->notificarAssinaturasConcluidas();
             }
+
+            if ($contrato->wasChanged('assinafy_status')
+                && in_array($contrato->assinafy_status, ['enviado', 'pending'], true)
+                && filled($contrato->assinafy_id)
+            ) {
+                $contrato->notificarDisponibilidadeAssinaturaFamilia();
+            }
         });
     }
 
@@ -441,11 +448,65 @@ class Contrato extends Model
      */
     public function totalFaturasEmitidas(): float
     {
-        return (float) $this->faturas()
-            ->where('status', '!=', StatusFatura::Cancelado->value)
-            ->with('itens')
-            ->get()
-            ->sum('valor');
+        $faturas = $this->relationLoaded('faturas')
+            ? $this->faturas->where('status', '!=', StatusFatura::Cancelado)
+            : $this->faturas()->where('status', '!=', StatusFatura::Cancelado->value)->with('itens')->get();
+
+        return (float) $faturas->sum('valor');
+    }
+
+    /**
+     * Indica se há divergência monetária (> R$ 0,01) entre o valor total do contrato e o total das faturas ativas emitidas.
+     */
+    public function temDivergenciaFaturamento(): bool
+    {
+        $faturas = $this->relationLoaded('faturas')
+            ? $this->faturas->where('status', '!=', StatusFatura::Cancelado)
+            : $this->faturas()->where('status', '!=', StatusFatura::Cancelado->value)->with('itens')->get();
+
+        if ($faturas->isEmpty()) {
+            return false;
+        }
+
+        return abs((float) $this->valor_total - (float) $faturas->sum('valor')) > 0.01;
+    }
+
+    /**
+     * Retorna a diferença monetária entre o valor total do contrato e o total faturado.
+     */
+    public function diferencaFaturamento(): float
+    {
+        return round((float) $this->valor_total - $this->totalFaturasEmitidas(), 2);
+    }
+
+    /**
+     * Scope para filtrar contratos cujo valor_total diverge do somatório das faturas ativas emitidas.
+     */
+    public function scopeComFaturamentoDivergente(Builder $query): Builder
+    {
+        $subquery = '(SELECT COALESCE(SUM(CASE WHEN item_faturas.tipo_desconto = \'absoluto\' THEN (item_faturas.valor_unitario * item_faturas.quantidade) - item_faturas.desconto ELSE (item_faturas.valor_unitario * item_faturas.quantidade) * (1.0 - (item_faturas.desconto / 100.0)) END), 0) FROM faturas INNER JOIN item_faturas ON item_faturas.fatura_id = faturas.id WHERE faturas.contrato_id = contrato.id AND faturas.status != \'cancelado\')';
+
+        return $query->whereHas('faturas', fn ($q) => $q->where('status', '!=', 'cancelado'))
+            ->whereRaw("ABS(contrato.valor_total - {$subquery}) > 0.01");
+    }
+
+    /**
+     * Scope para filtrar contratos com faturas ativas cujo saldo coincide com o valor_total.
+     */
+    public function scopeComFaturamentoAlinhado(Builder $query): Builder
+    {
+        $subquery = '(SELECT COALESCE(SUM(CASE WHEN item_faturas.tipo_desconto = \'absoluto\' THEN (item_faturas.valor_unitario * item_faturas.quantidade) - item_faturas.desconto ELSE (item_faturas.valor_unitario * item_faturas.quantidade) * (1.0 - (item_faturas.desconto / 100.0)) END), 0) FROM faturas INNER JOIN item_faturas ON item_faturas.fatura_id = faturas.id WHERE faturas.contrato_id = contrato.id AND faturas.status != \'cancelado\')';
+
+        return $query->whereHas('faturas', fn ($q) => $q->where('status', '!=', 'cancelado'))
+            ->whereRaw("ABS(contrato.valor_total - {$subquery}) <= 0.01");
+    }
+
+    /**
+     * Scope para filtrar contratos que ainda não possuem faturas ativas emitidas.
+     */
+    public function scopeSemFaturasEmitidas(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('faturas', fn ($q) => $q->where('status', '!=', 'cancelado'));
     }
 
     /**
@@ -562,6 +623,106 @@ class Contrato extends Model
             }
         } catch (\Throwable $e) {
             Log::warning('Falha ao enviar notificação de contrato assinado.', [
+                'contrato_id' => $this->id,
+                'erro' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Retorna os usuários ativos associados à família do aluno (responsáveis financeiros, pais e o próprio aluno).
+     *
+     * @return Collection<int, User>
+     */
+    public function usuariosFamilia(): Collection
+    {
+        $pessoasIds = collect();
+
+        // 1. Responsáveis financeiros do contrato
+        foreach ($this->responsaveisFinanceiros as $rf) {
+            if ($rf->pessoa_id) {
+                $pessoasIds->push($rf->pessoa_id);
+            }
+        }
+
+        // 2. Aluno e seus responsáveis legais
+        $matricula = $this->matricula;
+        if ($matricula) {
+            if ($matricula->pessoa_id) {
+                $pessoasIds->push($matricula->pessoa_id);
+            }
+
+            if ($matricula->pessoa) {
+                foreach ($matricula->pessoa->responsaveis as $resp) {
+                    $pessoasIds->push($resp->id);
+                }
+            }
+        }
+
+        $idsValidos = $pessoasIds->unique()->filter()->all();
+
+        if (empty($idsValidos)) {
+            return collect();
+        }
+
+        return User::query()
+            ->ativos()
+            ->whereHas('pessoas', fn (Builder $q) => $q->whereIn('pessoa.id', $idsValidos))
+            ->get();
+    }
+
+    /**
+     * Dispara notificação no Portal da Família informando que o contrato foi gerado e
+     * está disponível para assinatura digital.
+     */
+    public function notificarDisponibilidadeAssinaturaFamilia(): void
+    {
+        $destinatarios = $this->usuariosFamilia();
+
+        if ($destinatarios->isEmpty()) {
+            return;
+        }
+
+        $log = $this->assinafy_request_log ?? [];
+        if (! empty($log['notificacao_familia_enviada_em'])) {
+            return;
+        }
+
+        $nomeAluno = $this->matricula?->pessoa?->nome ?? 'Aluno';
+        $titulo = 'Contrato Disponível para Assinatura';
+        $corpo = "O contrato de matrícula de {$nomeAluno} (Contrato #{$this->id}) está disponível para assinatura digital.";
+
+        try {
+            $urlPortal = route('filament.portal.pages.documentos');
+        } catch (\Throwable) {
+            $urlPortal = '/portal/documentos';
+        }
+
+        try {
+            $notificacao = Notification::make()
+                ->title($titulo)
+                ->body($corpo)
+                ->icon('heroicon-o-document-check')
+                ->iconColor('warning')
+                ->actions([
+                    Action::make('assinar')
+                        ->label('Assinar Contrato')
+                        ->button()
+                        ->url($urlPortal),
+                ]);
+
+            $notificacao->sendToDatabase($destinatarios);
+
+            try {
+                $notificacao->broadcast($destinatarios);
+            } catch (\Throwable) {
+                // Driver de broadcast opcional
+            }
+
+            $log['notificacao_familia_enviada_em'] = now()->toIso8601String();
+            $this->updateQuietly(['assinafy_request_log' => $log]);
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao enviar notificação de contrato disponível para a família.', [
                 'contrato_id' => $this->id,
                 'erro' => $e->getMessage(),
             ]);

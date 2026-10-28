@@ -135,6 +135,9 @@ RODAR_SANDBOX_ASSINAFY=1 php artisan test --filter=AssinafySandboxTest
   **Sincronizar Assinaturas**. `AssinafyAssinaturaTest` amarra os textos aos rótulos do enum; ao criar ou renomear um
   status, atualize o enum, a Ajuda e o `MANUAL_USUARIO.md`.
 - **Notificação em Tempo Real no Painel ao Concluir Assinaturas:** Ao transicionar para um status assinado (`ready`, `certificating`, `certificated`), uma notificação no banco de dados e sininho do painel administrativo (`databaseNotificationsPolling('30s')`) é enviada para os colaboradores ativos da equipe administrativa (`super_admin`, `admin`, `secretaria`, `coordenador`) e usuários com permissão Shield `View:Contrato` / `Update:Contrato`, contendo atalho direto para visualizar e gerenciar o contrato.
+- **Notificação no Portal da Família ao Disponibilizar Contrato:** Assim que o contrato é emitido ou enviado ao Assinafy (`enviado`/`pending`), os usuários ativos vinculados aos responsáveis legais e financeiros da família recebem uma notificação em tempo real no Portal da Família (`/portal`), com botão de ação rápida para assinar em `/portal/documentos`. O envio é idempotente, registrado via `assinafy_request_log.notificacao_familia_enviada_em`.
+- **Indicador e Filtro de Faturamento Divergente (`/admin/contratos`):** A tabela de contratos sinaliza visualmente na coluna "Valor Total" se o saldo das faturas ativas emitidas diverge do valor total acordado, dispondo de filtro dedicado para contratos com faturamento divergente, alinhado ou sem faturas.
+- **Auditoria e Correção de Faturas via CLI (`contratos:auditar-faturas`):** Comando Artisan para varredura e conciliação em lote, registrando divergências no Spatie ActivityLog e permitindo regenerar automaticamente as parcelas de contratos não assinados com `--corrigir`.
 
 ## Documentos avulsos (Onda 69)
 O envio de **outros documentos** (distrato de matrícula, contrato de trabalho, termos) usa as mesmas credenciais e o

@@ -205,6 +205,7 @@ class AssinafyService
                             ]);
 
                             $contrato->marcarRematriculaAguardandoAssinatura();
+                            $contrato->notificarDisponibilidadeAssinaturaFamilia();
 
                             return ['success' => true, 'redirect_url' => $signingUrl];
                         }
@@ -396,6 +397,7 @@ class AssinafyService
                 ]);
 
                 $contrato->marcarRematriculaAguardandoAssinatura();
+                $contrato->notificarDisponibilidadeAssinaturaFamilia();
 
                 return ['success' => true, 'redirect_url' => $signingUrl];
             }
