@@ -925,6 +925,7 @@ class DocumentosAssinaturaTest extends TestCase
         $funcionario = Funcionario::factory()->create([
             'pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id,
             'cargo' => 'Professora',
+            'data_admissao' => '2026-11-02',
         ]);
         $processo = app(ProcessoFuncionarioService::class)->iniciar($funcionario, TipoProcessoFuncionario::Admissao, '2026-11-02', $this->como($this->admin));
         $item = $processo->itens()->where('titulo', 'Contrato de trabalho assinado')->firstOrFail();
@@ -955,7 +956,10 @@ class DocumentosAssinaturaTest extends TestCase
 
     public function test_processo_ja_encerrado_nao_muda_quando_o_documento_e_assinado(): void
     {
-        $funcionario = Funcionario::factory()->create(['pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id]);
+        $funcionario = Funcionario::factory()->create([
+            'pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id,
+            'data_admissao' => '2026-11-02',
+        ]);
         $servicoRh = app(ProcessoFuncionarioService::class);
         $processo = $servicoRh->iniciar($funcionario, TipoProcessoFuncionario::Admissao, '2026-11-02', $this->como($this->admin));
         $item = $processo->itens()->where('titulo', 'Contrato de trabalho assinado')->firstOrFail();
@@ -1131,7 +1135,10 @@ class DocumentosAssinaturaTest extends TestCase
 
     public function test_itens_do_rh_com_documento_de_assinatura_tem_a_relacao_para_a_tela(): void
     {
-        $funcionario = Funcionario::factory()->create(['pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id]);
+        $funcionario = Funcionario::factory()->create([
+            'pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id,
+            'data_admissao' => '2026-11-02',
+        ]);
         $processo = app(ProcessoFuncionarioService::class)->iniciar($funcionario, TipoProcessoFuncionario::Admissao, '2026-11-02', $this->como($this->admin));
         $item = $processo->itens()->firstOrFail();
         $modelo = $this->modelo(TipoTemplateDocumento::TermoConfidencialidade, 'Termo', true, '<p>{{FUNCIONARIO_NOME}}</p>');

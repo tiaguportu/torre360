@@ -4003,25 +4003,37 @@ Clique em **Sugerir horários**: o sistema mostra o que colocaria e as aulas que
 
 ## 🧑‍💼 77. Admissão e Desligamento de Funcionários (`/admin/rh/admissao-desligamento`)
 
-Lista de providências com prazo e comprovante para quem entra e para quem sai. Fica em **RH**, para a administração. O número no menu mostra as providências com o prazo vencido.
+Lista de providências com prazo e comprovante para quem entra e para quem sai. Fica em **RH**, para a administração. O número no menu mostra as providências com o prazo vencido. A data oficial de admissão e de desligamento é unificada com os contratos de trabalho e documentos.
 
 ### 77.1 Iniciar
-1. Cadastre a pessoa em **Funcionários**.
-2. Em **Admissão e Desligamento** (ou na aba **Admissão e Desligamento** da página do funcionário), clique em **Iniciar admissão** (data do primeiro dia de trabalho) ou **Iniciar desligamento** (último dia de trabalho e o motivo).
-3. O sistema cria a lista de providências: documentos, exame médico, contrato e eSocial, acessos, equipamentos, treinamento e financeiro, cada uma com o prazo contado a partir da data.
+1. Cadastre a pessoa em **Funcionários** (`/admin/funcionarios`): informe os dados do cargo, regime e a **data de admissão** obrigatória. Opcionalmente, preencha o **Salário inicial (R$)** para que o sistema crie atomicamente a primeira vigência de contrato de trabalho vinculada à data de admissão. Reajustes posteriores são registrados exclusivamente como aditivo na aba *Contratos de Trabalho*.
+2. Em **Admissão e Desligamento** (ou na aba **Admissão e Desligamento** da página do funcionário), clique em **Iniciar admissão** ou **Iniciar desligamento**.
+   - **Iniciar admissão:** não solicita data. O sistema adota automaticamente a data de admissão do cadastro do funcionário.
+   - **Iniciar desligamento:** informe o último dia de trabalho (não anterior à data de admissão), o motivo da saída e uma observação opcional. Disponível apenas para funcionários ativos.
+3. O sistema cria a lista de providências: documentos, exame médico, contrato e eSocial, acessos, equipamentos, treinamento e financeiro, cada uma com o prazo contado a partir da data de início/saída.
 
 ### 77.2 Providências
 Em cada linha: **Marcar como feito** (com observação e comprovante em PDF ou foto, se quiser), **Não se aplica** (sempre com uma justificativa, mesmo nas obrigatórias), **Anexar comprovante** e **Reabrir**. **Acrescentar providência** inclui algo que a lista padrão não tem. Os comprovantes ficam em área privada, visíveis só para quem pode ver este módulo.
 
 ### 77.3 Concluir
 **Concluir processo** exige as providências **obrigatórias** resolvidas.
-- **Admissão:** encerra o processo; o cadastro do funcionário não muda.
-- **Desligamento:** só a partir do **último dia de trabalho**. Grava a data de desligamento e **retira os acessos de equipe** ao sistema. Quem também é responsável ou aluno da escola mantém a conta, só sem os papéis de equipe; sem papel nenhum, a conta é desativada. **Super administrador não é alterado**: o sistema avisa para você ajustar. Aulas na grade horária com o professor viram aviso.
+- **Admissão:** encerra o processo; o cadastro do funcionário não muda (a data de admissão já é a do cadastro).
+- **Desligamento:** só a partir do **último dia de trabalho**. Grava a data de desligamento, **encerra na mesma transação o contrato de trabalho vigente** (limitando o fim da vigência à data de desligamento) e **retira os acessos de equipe** ao sistema. Quem também é responsável ou aluno da escola mantém a conta, só sem os papéis de equipe; sem papel nenhum, a conta é desativada. **Super administrador não é alterado**: o sistema avisa para você ajustar. Aulas na grade horária com o professor viram aviso.
 
-### 77.4 Cuidados
+### 77.4 Corrigir Data de Admissão e Auditoria de Vínculo
+- **Ação "Corrigir data de admissão":** caso haja erro de digitação na admissão, a correção não é feita por edição direta do formulário. No topo da ficha do funcionário ativo, use o botão **Corrigir data de admissão** (ícone de calendário). Informe a nova data e a justificativa (mínimo de 10 caracteres, sem registrar dados de saúde ou processos trabalhistas). A ação atualiza a data de admissão do funcionário, alinha a vigência mais antiga do contrato de trabalho e registra um log permanente no ActivityLog (`rh`). A ação é bloqueada se houver processo de admissão em andamento ou se o funcionário estiver desligado.
+- **Comando de Auditoria (`rh:auditar-vinculo`):** para verificar inconsistências entre cadastros e contratos legados, a equipe de TI ou administração pode rodar `php artisan rh:auditar-vinculo`. O comando analisa cinco categorias de inconformidades:
+  - **Categoria A:** funcionário com data de desligamento e contrato de trabalho sem término ou com vigência posterior ao desligamento. Pode ser corrigido automaticamente executando com a opção interativa `--corrigir`.
+  - **Categoria B:** primeira vigência contratual divergente da data de admissão do cadastro (apenas relatório).
+  - **Categoria C:** funcionário sem nenhum contrato de trabalho cadastrado (apenas relatório).
+  - **Categoria D:** contratos com sobreposição de vigências ou lacunas temporais (apenas relatório).
+  - **Categoria E:** funcionários desligados manualmente sem processo formal de desligamento registrado (legado anterior à Onda 65).
+
+### 77.5 Cuidados
 - A lista é um ponto de partida para escola privada com contratação pela CLT. Confira prazos e exigências com o contador e o jurídico (a equipe técnica ajusta em `config/rh_processos.php`).
 - O módulo **não calcula a rescisão, não gera o TRCT e não envia nada ao eSocial**: ele controla o que foi feito.
 - O motivo do desligamento e a observação ficam criptografados e fora do histórico de alterações.
+- **Recontratações:** uma pessoa que foi desligada e venha a ser recontratada no futuro recebe um **novo cadastro de funcionário** (`/admin/funcionarios/create`), mantendo o vínculo e contratos anteriores preservados como histórico imutável.
 
 ## 📧 78. Manutenção Preventiva e Retenção de Histórico de E-mails (`email:limpar-logs`)
 

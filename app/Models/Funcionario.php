@@ -105,4 +105,15 @@ class Funcionario extends Model
     {
         return $this->data_desligamento === null;
     }
+
+    /**
+     * Resumo do vínculo sem marca de gênero para cabeçalhos de tabela.
+     */
+    public function resumoVinculo(): string
+    {
+        $admissao = $this->data_admissao ? $this->data_admissao->format('d/m/Y') : 'não informada';
+        $desligamento = $this->data_desligamento ? $this->data_desligamento->format('d/m/Y') : 'não há';
+
+        return "Admissão: {$admissao} · Desligamento: {$desligamento}";
+    }
 }

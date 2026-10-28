@@ -53,13 +53,11 @@ class ProcessoFuncionarioService
     public function iniciar(
         Funcionario $funcionario,
         TipoProcessoFuncionario $tipo,
-        CarbonInterface|string $data,
+        CarbonInterface|string|null $data = null,
         ?User $por = null,
         ?MotivoDesligamentoFuncionario $motivo = null,
         ?string $observacao = null,
     ): ProcessoFuncionario {
-        $data = Carbon::parse($data)->startOfDay();
-
         return DB::transaction(function () use ($funcionario, $tipo, $data, $por, $motivo, $observacao): ProcessoFuncionario {
             // Trava o funcionário: dois cliques viram um processo só.
             $funcionario = Funcionario::query()->lockForUpdate()->findOrFail($funcionario->id);
@@ -74,9 +72,33 @@ class ProcessoFuncionarioService
                 throw new \DomainException('Já existe '.($tipo === TipoProcessoFuncionario::Admissao ? 'uma admissão' : 'um desligamento').' em andamento para este funcionário.');
             }
 
-            if ($tipo === TipoProcessoFuncionario::Desligamento) {
+            if ($tipo === TipoProcessoFuncionario::Admissao) {
+                if (! $funcionario->isAtivo()) {
+                    throw new \DomainException('Não é possível iniciar processo de admissão para funcionário desligado.');
+                }
+
+                if ($data === null) {
+                    $dataPrevista = $funcionario->data_admissao?->startOfDay() ?? today()->startOfDay();
+                } else {
+                    $dataInformada = Carbon::parse($data)->startOfDay();
+                    if ($funcionario->data_admissao && ! $dataInformada->isSameDay($funcionario->data_admissao)) {
+                        throw new \DomainException("A data da admissão é a do cadastro ({$funcionario->data_admissao->format('d/m/Y')}). Corrija a data de admissão do funcionário antes de iniciar.");
+                    }
+                    $dataPrevista = $dataInformada;
+                }
+            } else {
                 if (! $funcionario->isAtivo()) {
                     throw new \DomainException('Este funcionário já foi desligado em '.$funcionario->data_desligamento->format('d/m/Y').'.');
+                }
+
+                if ($data === null) {
+                    throw new \DomainException('Informe o último dia de trabalho.');
+                }
+
+                $dataPrevista = Carbon::parse($data)->startOfDay();
+
+                if ($funcionario->data_admissao && $dataPrevista->lessThan($funcionario->data_admissao->startOfDay())) {
+                    throw new \DomainException("O último dia de trabalho não pode ser anterior à data de admissão ({$funcionario->data_admissao->format('d/m/Y')}).");
                 }
 
                 if ($motivo === null) {
@@ -88,7 +110,7 @@ class ProcessoFuncionarioService
                 'funcionario_id' => $funcionario->id,
                 'tipo' => $tipo,
                 'status' => StatusProcessoFuncionario::EmAndamento,
-                'data_prevista' => $data,
+                'data_prevista' => $dataPrevista,
                 'motivo' => $tipo === TipoProcessoFuncionario::Desligamento ? $motivo : null,
                 'observacao' => filled($observacao) ? trim($observacao) : null,
                 'iniciado_por_user_id' => $por?->id,
@@ -100,7 +122,7 @@ class ProcessoFuncionarioService
                     'titulo' => $item['titulo'],
                     'orientacao' => $item['orientacao'] ?? null,
                     'obrigatorio' => (bool) ($item['obrigatorio'] ?? true),
-                    'prazo' => isset($item['prazo_dias']) ? $data->copy()->addDays((int) $item['prazo_dias'])->toDateString() : null,
+                    'prazo' => isset($item['prazo_dias']) ? $dataPrevista->copy()->addDays((int) $item['prazo_dias'])->toDateString() : null,
                     'ordem' => $posicao + 1,
                 ]);
             }
@@ -297,13 +319,13 @@ class ProcessoFuncionarioService
     }
 
     /**
-     * @return array{usuarios_sem_acesso: int, usuarios_desativados: int, avisos: list<string>}
+     * @return array{usuarios_sem_acesso: int, usuarios_desativados: int, contratos_encerrados: int, avisos: list<string>}
      *
      * @throws \DomainException
      */
     public function concluir(ProcessoFuncionario $processo, User $por): array
     {
-        $resumo = ['usuarios_sem_acesso' => 0, 'usuarios_desativados' => 0, 'avisos' => []];
+        $resumo = ['usuarios_sem_acesso' => 0, 'usuarios_desativados' => 0, 'contratos_encerrados' => 0, 'avisos' => []];
 
         DB::transaction(function () use ($processo, $por, &$resumo): void {
             $atual = ProcessoFuncionario::query()->lockForUpdate()->findOrFail($processo->id);
@@ -326,6 +348,11 @@ class ProcessoFuncionarioService
                 }
 
                 $funcionario->update(['data_desligamento' => $atual->data_prevista]);
+
+                $resultadoContratos = app(VinculoFuncionarioService::class)->encerrarContratos($funcionario, $atual->data_prevista);
+                $resumo['contratos_encerrados'] = $resultadoContratos['encerrados'];
+                $resumo['avisos'] = array_merge($resumo['avisos'], $resultadoContratos['avisos']);
+
                 $this->retirarAcessos($funcionario, $resumo);
                 $this->avisarSobreAulas($funcionario, $resumo);
             }
@@ -366,7 +393,7 @@ class ProcessoFuncionarioService
     // --- Desligamento ------------------------------------------------------------------------------------------------
 
     /**
-     * @param  array{usuarios_sem_acesso: int, usuarios_desativados: int, avisos: list<string>}  $resumo
+     * @param  array{usuarios_sem_acesso: int, usuarios_desativados: int, contratos_encerrados: int, avisos: list<string>}  $resumo
      */
     private function retirarAcessos(Funcionario $funcionario, array &$resumo): void
     {
@@ -396,7 +423,7 @@ class ProcessoFuncionarioService
     }
 
     /**
-     * @param  array{usuarios_sem_acesso: int, usuarios_desativados: int, avisos: list<string>}  $resumo
+     * @param  array{usuarios_sem_acesso: int, usuarios_desativados: int, contratos_encerrados: int, avisos: list<string>}  $resumo
      */
     private function avisarSobreAulas(Funcionario $funcionario, array &$resumo): void
     {

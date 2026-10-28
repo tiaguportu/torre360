@@ -32,6 +32,7 @@ class ProcessosRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('id')
+            ->description(fn (RelationManager $livewire): string => $livewire->getOwnerRecord()->resumoVinculo())
             ->modifyQueryUsing(fn (Builder $query) => $query->withCount([
                 'itens as itens_total',
                 'itens as itens_resolvidos' => fn (Builder $itens) => $itens->whereNotNull('concluido_em'),
@@ -51,8 +52,10 @@ class ProcessosRelationManager extends RelationManager
                     ->state(fn (ProcessoFuncionario $record): string => "{$record->itens_resolvidos}/{$record->itens_total}"),
             ])
             ->headerActions([
-                IniciarProcesso::make(TipoProcessoFuncionario::Admissao, $this->getOwnerRecord()),
-                IniciarProcesso::make(TipoProcessoFuncionario::Desligamento, $this->getOwnerRecord()),
+                IniciarProcesso::make(TipoProcessoFuncionario::Admissao, $this->getOwnerRecord())
+                    ->visible(fn (): bool => $this->getOwnerRecord()->isAtivo() && (bool) auth()->user()?->can('create', ProcessoFuncionario::class)),
+                IniciarProcesso::make(TipoProcessoFuncionario::Desligamento, $this->getOwnerRecord())
+                    ->visible(fn (): bool => $this->getOwnerRecord()->isAtivo() && (bool) auth()->user()?->can('create', ProcessoFuncionario::class)),
             ])
             ->recordActions([
                 Action::make('abrir')

@@ -229,6 +229,7 @@ class DocumentosAssinaturaTelasTest extends TestCase
         $funcionario = Funcionario::factory()->create([
             'pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza', 'email' => 'marta@teste.com'])->id,
             'cargo' => 'Professora',
+            'data_admissao' => '2026-11-02',
         ]);
 
         return [$funcionario, $this->modelo(TipoTemplateDocumento::TermoConfidencialidade, 'Termo de Confidencialidade')];

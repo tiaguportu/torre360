@@ -50,18 +50,27 @@ Base legal e prática (confira com o contador e o jurídico, e ajuste `config/rh
 ### Concluir
 Exige as providências **obrigatórias** resolvidas (a mensagem diz quais faltam).
 
-- **Admissão:** encerra o processo e guarda o histórico. O cadastro do funcionário não muda (a data de admissão
-  já é obrigatória ao cadastrar).
+- **Admissão:** encerra o processo e guarda o histórico. O cadastro do funcionário não muda e a admissão não possui data própria: o primeiro dia de trabalho é a data oficial de admissão já registrada no cadastro.
 - **Desligamento:** só a partir do **último dia de trabalho** (o acesso segue até lá, no aviso prévio
-  trabalhado). Grava `data_desligamento` e **retira o acesso da pessoa ao sistema**:
+  trabalhado). Grava `data_desligamento`, **encerra na mesma transação o contrato de trabalho vigente** (vigências abertas ou posteriores passam a terminar na data de desligamento) e **retira o acesso da pessoa ao sistema**:
   - os usuários ligados à pessoa perdem todo papel que **não seja de família** (`responsavel` e `aluno`
     ficam), e as permissões dadas direto ao usuário;
   - sem nenhum papel sobrando, a conta é **desativada**. Quem também é pai, mãe ou aluno da escola continua
     com a conta, só sem os papéis de equipe;
   - **super administrador nunca é alterado em silêncio:** vira aviso para o administrador resolver;
-  - aulas na grade horária com esse professor viram aviso (reatribuir em Grade Assistida).
+  - aulas na grade horária com esse professor viram aviso (reatribuir em Grade Assistida);
+  - vigências contratuais iniciadas após o desligamento não são apagadas e geram alerta no resumo da conclusão.
 
 Cancelar o processo não muda o cadastro nem os acessos.
+
+### Unificação do vínculo (28/10/2026)
+As datas de admissão e desligamento em `funcionarios` são a fonte única da verdade para todos os módulos (férias, ponto, avaliação docente, contratos e documentos). O sistema assegura os seguintes invariantes:
+- **I1:** A vigência mais antiga de `contratos_trabalho` começa em `data_admissao`.
+- **I2:** `data_desligamento` só é gravada ao concluir um processo de Desligamento. Na mesma transação, contratos vigentes têm o fim limitado a ela.
+- **I3:** A admissão não pergunta data própria: assume a `data_admissao` do cadastro.
+- **I4:** Recontratação é sempre um **novo cadastro de funcionário** (`pessoa_id` aceita múltiplos vínculos). Admissão e desligamento só operam em funcionários ativos; funcionários desligados possuem contratos em modo somente leitura.
+- **I5:** O contrato de trabalho nasce na criação do funcionário (salário inicial) ou via "Registrar contrato inicial" se não houver nenhum. Modificações posteriores são feitas exclusivamente por aditivo.
+- **I6:** Correção na data de admissão é feita por ação própria no cabeçalho (*Corrigir data de admissão*), com justificativa obrigatória e registro auditado no Activitylog.
 
 ### Privacidade e acesso
 - Permissões `ViewAny/View/Create/Update/Concluir:ProcessoFuncionario`: só **administração** (como o resto do

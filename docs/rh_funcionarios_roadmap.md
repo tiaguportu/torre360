@@ -58,12 +58,15 @@ sub-ondas, no mesmo espírito da Onda 8.
 - `Funcionario` (`app/Models/Funcionario.php`): `pessoa_id`, `cargo`, `regime` (enum
   `RegimeContratacao`: CLT/Estatutário/PJ/Estágio), `data_admissao`, `data_desligamento`,
   `carga_horaria_semanal`, `unidade_id`. Resource em `/admin/funcionarios` (grupo **RH**).
-- **Aditivos simplificados:** em vez de um model `AditivoContratoTrabalho` separado,
-  `ContratoTrabalho` é uma tabela *append-only* — cada linha é uma vigência (admissão ou
-  reajuste). A ação "Registrar Aditivo" encerra a vigência atual (`vigencia_fim`) e cria
-  uma nova linha com o novo salário a partir do dia seguinte
-  (`ContratoTrabalho::registrarAditivo()`). O salário vigente é sempre a linha sem
-  `vigencia_fim`. Gerenciado via aba "Contratos de Trabalho" dentro do funcionário.
+- **Aditivos simplificados e Contrato Inicial Automático (28/10/2026):**
+  Ao cadastrar o funcionário, o campo opcional "Salário Inicial" já cria atomicamente a 1ª vigência
+  do contrato de trabalho iniciando na `data_admissao` (`VinculoFuncionarioService::abrirContratoInicial`).
+  Na aba "Contratos de Trabalho", caso não haja nenhum contrato, a ação "Registrar contrato inicial"
+  permite a abertura travando a vigência inicial na data de admissão.
+  Reajustes são registrados como aditivos via ação "Registrar Aditivo" na vigência aberta.
+  Para funcionários desligados, a aba passa a modo estritamente somente leitura (sem criar, sem aditivo,
+  sem excluir). A exclusão unitária opera apenas na vigência mais recente de funcionário ativo (`removerUltimaVigencia`),
+  e a exclusão em massa foi removida para proteger a integridade do histórico salarial.
 - **Férias:** `PeriodoFerias` (período aquisitivo, dias de direito/gozados, status
   Pendente/Parcial/Gozado/Vencido). Ação "Registrar Gozo" soma os dias informados e marca
   Gozado quando atinge o total. Aba "Férias" dentro do funcionário.

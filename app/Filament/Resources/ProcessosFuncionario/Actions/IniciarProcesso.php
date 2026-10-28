@@ -27,15 +27,27 @@ final class IniciarProcesso
     {
         $admissao = $tipo === TipoProcessoFuncionario::Admissao;
 
+        $descricaoModal = function () use ($admissao, $funcionario): string {
+            if ($admissao) {
+                if ($funcionario) {
+                    $dataAdmissaoStr = $funcionario->data_admissao ? $funcionario->data_admissao->format('d/m/Y') : 'não informada';
+
+                    return "O primeiro dia de trabalho é a data de admissão do cadastro: {$dataAdmissaoStr}. Para mudar, use Corrigir data de admissão na ficha.";
+                }
+
+                return 'O primeiro dia de trabalho será a data de admissão do cadastro do funcionário escolhido.';
+            }
+
+            return 'O sistema cria a lista de providências da saída. Os acessos ao sistema só são retirados ao concluir, a partir do último dia de trabalho.';
+        };
+
         return Action::make($admissao ? 'iniciar_admissao' : 'iniciar_desligamento')
             ->label($admissao ? 'Iniciar admissão' : 'Iniciar desligamento')
             ->icon($tipo->getIcon())
             ->color($admissao ? 'success' : 'danger')
             ->visible(fn (): bool => (bool) auth()->user()?->can('create', ProcessoFuncionario::class))
             ->modalHeading($admissao ? 'Iniciar a admissão' : 'Iniciar o desligamento')
-            ->modalDescription($admissao
-                ? 'O sistema cria a lista de providências (documentos, exame, contrato, acessos...) com os prazos a partir do primeiro dia de trabalho.'
-                : 'O sistema cria a lista de providências da saída. Os acessos ao sistema só são retirados ao concluir, a partir do último dia de trabalho.')
+            ->modalDescription($descricaoModal)
             ->schema([
                 Select::make('funcionario_id')
                     ->label('Funcionário')
@@ -45,10 +57,11 @@ final class IniciarProcesso
                     ->required()
                     ->visible($funcionario === null),
                 DatePicker::make('data_prevista')
-                    ->label($admissao ? 'Primeiro dia de trabalho' : 'Último dia de trabalho')
+                    ->label('Último dia de trabalho')
                     ->native(false)
-                    ->default($admissao && $funcionario?->data_admissao ? $funcionario->data_admissao : today())
-                    ->required(),
+                    ->default(today())
+                    ->required()
+                    ->visible(! $admissao),
                 Select::make('motivo')
                     ->label('Motivo do desligamento')
                     ->options(MotivoDesligamentoFuncionario::class)
@@ -60,7 +73,7 @@ final class IniciarProcesso
                     ->rows(2)
                     ->maxLength(2000),
             ])
-            ->action(function (array $data, Component $livewire) use ($tipo, $funcionario): void {
+            ->action(function (array $data, Component $livewire) use ($tipo, $admissao, $funcionario): void {
                 $alvo = $funcionario ?? Funcionario::query()->find($data['funcionario_id'] ?? null);
 
                 if (! $alvo) {
@@ -69,11 +82,13 @@ final class IniciarProcesso
                     return;
                 }
 
+                $dataPrevista = $admissao ? null : ($data['data_prevista'] ?? null);
+
                 try {
                     $processo = app(ProcessoFuncionarioService::class)->iniciar(
                         $alvo,
                         $tipo,
-                        $data['data_prevista'],
+                        $dataPrevista,
                         auth()->user(),
                         // O estado de um Select com enum pode chegar como o próprio enum.
                         isset($data['motivo']) ? ($data['motivo'] instanceof MotivoDesligamentoFuncionario ? $data['motivo'] : MotivoDesligamentoFuncionario::from($data['motivo'])) : null,
@@ -92,7 +107,7 @@ final class IniciarProcesso
     }
 
     /**
-     * Funcionários que podem receber o processo: o desligamento só vale para quem ainda está ativo.
+     * Funcionários que podem receber o processo: ambos os tipos só valem para quem ainda está ativo.
      *
      * @return array<int, string>
      */
@@ -100,7 +115,7 @@ final class IniciarProcesso
     {
         return Funcionario::query()
             ->with('pessoa')
-            ->when(! $admissao, fn ($query) => $query->whereNull('data_desligamento'))
+            ->whereNull('data_desligamento')
             ->whereHas('pessoa', fn ($query) => $query->where('nome', 'like', "%{$busca}%"))
             ->limit(50)
             ->get()

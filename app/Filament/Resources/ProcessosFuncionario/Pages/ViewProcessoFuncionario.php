@@ -40,7 +40,7 @@ class ViewProcessoFuncionario extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('Concluir o processo')
                 ->modalDescription(fn (): string => $this->getRecord()->ehDesligamento()
-                    ? 'Isso grava a data de desligamento e retira os acessos de equipe da pessoa ao sistema. Quem também é responsável ou aluno continua com a conta.'
+                    ? 'Isso grava a data de desligamento, encerra o contrato de trabalho vigente e retira os acessos de equipe da pessoa ao sistema. Quem também é responsável ou aluno continua com a conta.'
                     : 'Isso encerra a admissão. O cadastro do funcionário não muda.')
                 ->action(function (): void {
                     /** @var ProcessoFuncionario $processo */
@@ -54,8 +54,12 @@ class ViewProcessoFuncionario extends ViewRecord
                         return;
                     }
 
+                    $prefixoContrato = ($processo->ehDesligamento() && ($resumo['contratos_encerrados'] ?? 0) > 0 && $processo->data_prevista)
+                        ? "Contrato de trabalho encerrado em {$processo->data_prevista->format('d/m/Y')}. "
+                        : '';
+
                     $corpo = $processo->ehDesligamento()
-                        ? "Acesso retirado de {$resumo['usuarios_sem_acesso']} usuário(s); {$resumo['usuarios_desativados']} conta(s) desativada(s)."
+                        ? $prefixoContrato."Acesso retirado de {$resumo['usuarios_sem_acesso']} usuário(s); {$resumo['usuarios_desativados']} conta(s) desativada(s)."
                         : 'Processo concluído.';
 
                     $notificacao = Notification::make()->title('Processo concluído')->body(trim($corpo.' '.implode(' ', $resumo['avisos'])));

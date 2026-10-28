@@ -450,7 +450,10 @@ class MesaDePendenciasTest extends TestCase
 
     public function test_providencias_de_rh_vencidas_vem_do_escopo_do_processo(): void
     {
-        $funcionario = Funcionario::factory()->create(['pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza'])->id]);
+        $funcionario = Funcionario::factory()->create([
+            'pessoa_id' => Pessoa::factory()->create(['nome' => 'Marta Souza'])->id,
+            'data_admissao' => '2026-10-10',
+        ]);
         $this->como($this->admin);
         $processo = app(ProcessoFuncionarioService::class)->iniciar($funcionario, TipoProcessoFuncionario::Admissao, '2026-10-10', $this->admin);
 

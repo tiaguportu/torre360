@@ -95,9 +95,11 @@ class ProcessoFuncionarioTest extends TestCase
         ]);
     }
 
-    private function admissao(?Funcionario $funcionario = null, string $data = '2026-10-10'): ProcessoFuncionario
+    private function admissao(?Funcionario $funcionario = null, ?string $data = null): ProcessoFuncionario
     {
-        return $this->servico()->iniciar($funcionario ?? $this->funcionario(), TipoProcessoFuncionario::Admissao, $data, $this->como($this->admin));
+        $funcionario = $funcionario ?? $this->funcionario();
+
+        return $this->servico()->iniciar($funcionario, TipoProcessoFuncionario::Admissao, $data ?? $funcionario->data_admissao, $this->como($this->admin));
     }
 
     private function desligamento(?Funcionario $funcionario = null, string $data = '2026-10-20'): ProcessoFuncionario
@@ -124,7 +126,8 @@ class ProcessoFuncionarioTest extends TestCase
 
     public function test_iniciar_admissao_cria_a_lista_padrao_com_os_prazos_a_partir_do_primeiro_dia(): void
     {
-        $processo = $this->admissao(null, '2026-11-02');
+        $funcionario = $this->funcionario(['data_admissao' => '2026-11-02']);
+        $processo = $this->admissao($funcionario);
 
         $itens = $processo->itens()->get();
         $modelo = config('rh_processos.admissao');
@@ -314,7 +317,7 @@ class ProcessoFuncionarioTest extends TestCase
 
     public function test_progresso_conta_resolvidos_obrigatorios_pendentes_e_atrasados(): void
     {
-        $processo = $this->admissao(null, '2026-10-10'); // hoje é 21/10: o que vence até 7 dias depois do início já passou
+        $processo = $this->admissao($this->funcionario(['data_admissao' => '2026-10-10'])); // hoje é 21/10: o que vence até 7 dias depois do início já passou
         $modelo = collect(config('rh_processos.admissao'));
         $atrasadosEsperados = $modelo->filter(fn (array $i): bool => Carbon::parse('2026-10-10')->addDays($i['prazo_dias'])->lt(today()))->count();
         $obrigatoriosEsperados = $modelo->where('obrigatorio', true)->count();
@@ -365,7 +368,7 @@ class ProcessoFuncionarioTest extends TestCase
     public function test_opcionais_nao_impedem_a_conclusao_e_a_admissao_nao_mexe_no_cadastro(): void
     {
         $funcionario = $this->funcionario(['data_admissao' => '2026-02-02']);
-        $processo = $this->admissao($funcionario, '2026-10-10');
+        $processo = $this->admissao($funcionario);
         $this->resolverObrigatorias($processo);
 
         $this->assertGreaterThan(0, $processo->itens()->where('obrigatorio', false)->whereNull('concluido_em')->count());
@@ -505,8 +508,8 @@ class ProcessoFuncionarioTest extends TestCase
 
     public function test_escopo_atrasados_ignora_itens_resolvidos_e_processos_encerrados(): void
     {
-        $emAndamento = $this->admissao(null, '2026-10-10');
-        $cancelado = $this->admissao($this->funcionario(['pessoa_id' => Pessoa::factory()->create()->id]), '2026-10-10');
+        $emAndamento = $this->admissao($this->funcionario(['data_admissao' => '2026-10-10']));
+        $cancelado = $this->admissao($this->funcionario(['pessoa_id' => Pessoa::factory()->create()->id, 'data_admissao' => '2026-10-10']));
         $this->servico()->cancelar($cancelado, $this->admin);
 
         $atrasadosAntes = ItemProcessoFuncionario::query()->atrasados()->count();
@@ -536,7 +539,7 @@ class ProcessoFuncionarioTest extends TestCase
 
         $tela = Livewire::actingAs($this->como($this->admin))
             ->test(ListProcessosFuncionario::class)
-            ->callAction('iniciar_admissao', data: ['funcionario_id' => $funcionario->id, 'data_prevista' => '2026-11-02'])
+            ->callAction('iniciar_admissao', data: ['funcionario_id' => $funcionario->id])
             ->assertHasNoActionErrors();
 
         $processo = ProcessoFuncionario::firstOrFail();
@@ -708,7 +711,7 @@ class ProcessoFuncionarioTest extends TestCase
 
     public function test_selo_do_menu_conta_as_providencias_vencidas_e_se_atualiza(): void
     {
-        $processo = $this->admissao(null, '2026-10-10');
+        $processo = $this->admissao($this->funcionario(['data_admissao' => '2026-10-10']));
         $esperado = $this->servico()->progresso($processo)['atrasados'];
 
         $this->actingAs($this->como($this->admin));

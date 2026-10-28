@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ContratoTrabalho extends Model
 {
@@ -40,11 +42,29 @@ class ContratoTrabalho extends Model
      */
     public function registrarAditivo(string $novoSalario, string $dataAditivo): self
     {
-        $this->update(['vigencia_fim' => $dataAditivo]);
+        return DB::transaction(function () use ($novoSalario, $dataAditivo): self {
+            $funcionario = $this->funcionario()->lockForUpdate()->firstOrFail();
 
-        return $this->funcionario->contratosTrabalho()->create([
-            'vigencia_inicio' => date('Y-m-d', strtotime($dataAditivo.' +1 day')),
-            'salario' => $novoSalario,
-        ]);
+            if (! $funcionario->isAtivo()) {
+                throw new \DomainException('Não é possível registrar aditivo para funcionário desligado.');
+            }
+
+            $dataAditivoCarbon = Carbon::parse($dataAditivo)->startOfDay();
+
+            if ($this->vigencia_inicio && $dataAditivoCarbon->lessThan($this->vigencia_inicio->startOfDay())) {
+                throw new \DomainException("A data do aditivo não pode ser anterior ao início da vigência atual ({$this->vigencia_inicio->format('d/m/Y')}).");
+            }
+
+            if ($funcionario->data_desligamento && $dataAditivoCarbon->greaterThan($funcionario->data_desligamento->startOfDay())) {
+                throw new \DomainException("A data do aditivo não pode ser posterior à data de desligamento ({$funcionario->data_desligamento->format('d/m/Y')}).");
+            }
+
+            $this->update(['vigencia_fim' => $dataAditivoCarbon->toDateString()]);
+
+            return $funcionario->contratosTrabalho()->create([
+                'vigencia_inicio' => $dataAditivoCarbon->copy()->addDay()->toDateString(),
+                'salario' => $novoSalario,
+            ]);
+        });
     }
 }
