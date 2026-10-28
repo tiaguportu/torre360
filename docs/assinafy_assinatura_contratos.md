@@ -58,6 +58,13 @@ Regras:
   criação; ao serem assinados esse valor é substituído pela data da conclusão das assinaturas. Os contratos da
   **Rematrícula Online** já nascem **sem** `data_aceite` (ela só passa a existir na assinatura); as faturas deles partem
   do dia da rematrícula, então a assinatura não altera os vencimentos.
+- **Faturas não dependem do aceite.** A ordem natural é gerar as faturas **antes** da assinatura (a tabela de parcelas
+  faz parte do texto do contrato enviado ao Assinafy). Por isso `GeracaoFaturasContratoService::gerar()` não exige
+  `data_aceite`: a data-base dos vencimentos é, em ordem, a informada ao serviço → a `data_aceite` do contrato → hoje.
+  Na ação **Gerar / Regenerar Faturas** (`Contratos > Editar`) o campo **Data-base dos vencimentos** já vem preenchido
+  com a `data_aceite` (ou hoje, se não houver) e pode ser trocado. Antes, um contrato sem aceite recebia "não possui
+  data de aceite definida" e a geração ficava impossível; o mesmo bloqueio reaparecia na 2ª regeneração de um contrato já
+  enviado, porque `resetAssinafyState()` zera a `data_aceite`. Gerar faturas nunca grava nem inventa um aceite.
 - **Marcador de conclusão (`assinafy_request_log.assinaturas_concluidas_em`).** Ao registrar a conclusão, o sistema guarda
   nesse campo o mesmo instante usado na `data_aceite` (ISO 8601). Ele sobrevive a webhooks posteriores, que trocam
   `webhook_last`, e permite refazer a `data_aceite` depois mesmo que a API não informe datas por signatário. Ordem de

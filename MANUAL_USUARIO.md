@@ -1244,22 +1244,23 @@ Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
 Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), utilize o botão **Gerar Faturas Automaticamente** para criar o parcelamento do contrato de forma rápida.
 
 > [!NOTE]
-> Esta funcionalidade só ficará visível e disponível para uso se o contrato **não possuir nenhuma fatura associada** no momento. Além disso, certifique-se de que o contrato possui uma **Data de Aceite** preenchida antes de prosseguir.
+> O botão aparece como **Gerar Faturas Automaticamente** quando o contrato ainda não tem faturas e como **Regenerar Faturas** quando já tem (nesse caso as faturas atuais são substituídas; faturas com pagamento ou cobrança emitida impedem a regeneração). **Não é preciso que o contrato tenha Data de Aceite**: o normal é gerar as faturas *antes* da assinatura, porque elas constam no contrato enviado para assinar. A Data de Aceite só passa a existir depois que todos assinam.
 
 **Campos do formulário:**
 
 | Campo | Descrição |
 |---|---|
 | **Quantidade de Parcelas** | Número de parcelas em que o valor restante (valor total menos entrada) será dividido. |
-| **Dia de Vencimento** | Dia do mês (entre 1 e 28) em que cada parcela vencerá. |
 | **Valor de Entrada** | Valor a ser cobrado como entrada. Informe `0` caso não haja entrada. |
+| **Data-base dos vencimentos** | Já vem preenchida com a Data de Aceite do contrato ou, se ele ainda não foi assinado, com a data de hoje. Pode ser alterada. |
 
 **Lógica de geração:**
 
-- **Fatura de Entrada** (se valor > 0): Criada com vencimento no dia escolhido do próprio mês da Data de Aceite.
-- **Parcelas mensais:** A **1ª parcela** vence no dia escolhido do **mês seguinte** à Data de Aceite; as demais são distribuídas mensalmente a partir daí.
+- **Fatura de Entrada** (se valor > 0): vence na própria Data-base.
+- **Parcelas mensais:** a **1ª parcela** vence **5 dias úteis** depois da Data-base; as demais são distribuídas mês a mês a partir daí.
 - **Valor de cada parcela:** `(Valor Total − Valor de Entrada) ÷ Quantidade de Parcelas`.
-- O campo **Valor por Parcela (prévia)** é atualizado em tempo real para que você confirme o valor antes de gerar.
+- Gerar as faturas **não** preenche a Data de Aceite do contrato.
+- Se o contrato já tinha sido enviado para assinatura, as faturas novas mudam o texto do contrato e por isso os registros de assinatura são limpos e o contrato precisa ser enviado de novo.
 
 ### 7.1.2 Importação e Exportação de Faturas do Contrato
 Na tabela de faturas da edição do contrato (`/admin/contratos/{id}/edit`), você conta com duas ferramentas ágeis de gestão em lote:
