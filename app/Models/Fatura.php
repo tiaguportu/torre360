@@ -99,6 +99,51 @@ class Fatura extends Model
     }
 
     /**
+     * Escopo para identificar faturas protegidas contra exclusão acidental ou sobrescrita:
+     * possuem transações bancárias OU gateway_id preenchido OU status pago/parcial.
+     *
+     * @param  Builder<Fatura>  $query
+     * @return Builder<Fatura>
+     */
+    public function scopeProtegida(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q): void {
+            $q->has('transacoes')
+                ->orWhere(function (Builder $g): void {
+                    $g->whereNotNull('gateway_id')
+                        ->where('gateway_id', '!=', '');
+                })
+                ->orWhereIn('status', [
+                    StatusFatura::Pago->value,
+                    StatusFatura::Parcial->value,
+                ]);
+        });
+    }
+
+    /**
+     * Verifica se a fatura está protegida contra exclusão/regeneração ou alteração via importação.
+     * Uma fatura é considerada protegida quando possui pagamentos (transações), emissão externa
+     * via gateway ou status de quitação (pago ou parcial).
+     */
+    public function estaProtegida(): bool
+    {
+        if (! empty($this->gateway_id)) {
+            return true;
+        }
+
+        $statusVal = $this->status instanceof StatusFatura ? $this->status->value : (string) $this->status;
+        if (in_array(strtolower($statusVal), ['pago', 'parcial', 'pago parcialmente'], true)) {
+            return true;
+        }
+
+        if ($this->relationLoaded('transacoes')) {
+            return $this->transacoes->isNotEmpty();
+        }
+
+        return $this->transacoes()->exists();
+    }
+
+    /**
      * Valor total bruto da fatura (soma dos itens sem descontos)
      */
     protected function valorBruto(): Attribute

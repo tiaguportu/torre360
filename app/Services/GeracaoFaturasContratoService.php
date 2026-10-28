@@ -51,6 +51,13 @@ class GeracaoFaturasContratoService
 
         $dataAceite = $dataBase->copy();
         $primeiroVencimento = $this->adicionarDiasUteis($dataAceite, 5);
+        $faturasProtegidas = $contrato->faturas()->protegida()->count();
+        if ($faturasProtegidas > 0) {
+            throw new \InvalidArgumentException(
+                "O contrato possui {$faturasProtegidas} fatura(s) com pagamento registrado ou cobrança emitida e não pode ser regenerado. Ajuste essas faturas manualmente."
+            );
+        }
+
         $percentualBolsa = $this->percentualBolsaAtiva($contrato);
 
         return DB::transaction(function () use ($contrato, $valorEntrada, $valorParcela, $quantidadeParcelas, $dataAceite, $primeiroVencimento, $percentualBolsa): Collection {

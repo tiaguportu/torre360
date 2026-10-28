@@ -45,7 +45,7 @@ class EditContrato extends EditRecord
                 ])
                 ->modalHeading(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Regenerar Faturas do Contrato' : 'Gerar Faturas Automaticamente')
                 ->modalDescription(fn (?Contrato $record) => $record && $record->faturas()->exists()
-                    ? 'Atenção: As faturas existentes serão substituídas pelas novas parcelas calculadas com base no valor atual do contrato. Caso já tenha sido enviado para o Assinafy, os registros anteriores de assinatura serão resetados.'
+                    ? 'Atenção: As faturas existentes serão substituídas pelas novas parcelas calculadas com base no valor atual do contrato. Faturas com pagamento registrado ou cobrança emitida no gateway impedem a regeneração. Caso já tenha sido enviado para o Assinafy, os registros anteriores de assinatura serão resetados.'
                     : 'A 1ª parcela vencerá em 5 dias úteis a partir da data de aceite. As demais serão mensais a partir daí.')
                 ->modalSubmitActionLabel(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Sim, Regenerar Faturas' : 'Gerar Faturas')
                 ->action(function (array $data, EditRecord $livewire): void {
