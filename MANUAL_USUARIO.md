@@ -4619,7 +4619,7 @@ A tela de listagem de contratos conta com abas superiores calculadas via agrega�
 ### 4. Edição Estruturada e Painel de Assinatura Digital
 Na tela de edição (`/admin/contratos/{id}/edit`):
 - **Painel de Situação da Assinatura:** Cartão visual no topo que apresenta o status geral, data do aceite e os cards individuais de cada signatário envolvido.
-- **Seções Lógicas:** Formulário distribuído em blocos organizados (*Matrícula e modelo*, *Valores e encargos*, *Assinatura*, *Responsáveis financeiros* e *Registro técnico* recolhido).
+- **Seções Lógicas:** Formulário distribuído em blocos organizados (*Matrícula e modelo*, *Valores e encargos*, *Assinatura* com registro completo de data e hora do aceite, *Responsáveis financeiros* e *Registro técnico*, exibido de forma recolhida e somente leitura exclusivamente quando houver log de auditoria gravado).
 - **Salvamento Direto sem Fricção:** Caso o contrato ainda não tenha sido enviado ao Assinafy, a gravação é imediata sem modais de confirmação. Apenas se o contrato já tiver sido enviado para assinatura externa, o sistema exibe o aviso preventivo informando sobre o reinício do fluxo do Assinafy.
 
 ### 5. Indicadores em Tempo Real e Sem Consultas N+1

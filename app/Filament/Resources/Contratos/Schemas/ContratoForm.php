@@ -7,7 +7,7 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\TemplateContrato;
 use App\Services\EncargosAtrasoService;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -123,9 +123,10 @@ class ContratoForm
                 Section::make('Assinatura')
                     ->description('Registro de data de conclusão das assinaturas.')
                     ->schema([
-                        DatePicker::make('data_aceite')
+                        DateTimePicker::make('data_aceite')
                             ->label('Data de Aceite')
-                            ->helperText('Registrado automaticamente quando a última assinatura for concluída.'),
+                            ->displayFormat('d/m/Y H:i')
+                            ->helperText('Preenchida automaticamente quando a última assinatura é concluída. Pode ser informada manualmente (por exemplo, contrato assinado em papel). É a data-base da 1ª parcela das faturas.'),
                     ]),
 
                 Section::make('Responsáveis financeiros')
@@ -165,11 +166,13 @@ class ContratoForm
                 Section::make('Registro técnico')
                     ->description('Dados de auditoria interna e metadados de assinatura.')
                     ->collapsed()
+                    ->visible(fn (?Contrato $record): bool => $record !== null && filled($record->log_assinatura))
                     ->schema([
                         Textarea::make('log_assinatura')
                             ->label('Log Técnico de Assinatura')
                             ->disabled()
                             ->dehydrated(false)
+                            ->visible(fn (?Contrato $record): bool => $record !== null && filled($record->log_assinatura))
                             ->rows(4)
                             ->columnSpanFull(),
                     ]),
