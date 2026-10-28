@@ -56,6 +56,8 @@ Schedule::command('audit:limpar-logs --dias=180')->dailyAt('04:10')->withoutOver
 // Relatórios configuráveis (Onda 72): a rodada é a cada 5 minutos, então a hora marcada vale com essa tolerância.
 Schedule::command('relatorios:executar-agendados')->everyFiveMinutes()->withoutOverlapping(10);
 Schedule::command('relatorios:limpar-arquivos')->dailyAt('04:30')->withoutOverlapping();
+// Limpeza diária de relatórios temporários volumosos com mais de 1 semana (7 dias) em storage/app/relatorios_gerados/
+Schedule::command('relatorios:limpar-temporarios --dias=7')->dailyAt('04:35')->withoutOverlapping();
 
 // Reuniões e atas (Ondas 27 e 32): de manhã, antes do expediente, o responsável e a coordenação sabem o que venceu.
 Schedule::command('reunioes:lembrar-encaminhamentos')->dailyAt('07:15')->withoutOverlapping();

@@ -4701,6 +4701,14 @@ Para prevenir o congelamento de requisições HTTP, estouro de tempo limite do s
    - **Proteção Estrita contra Path Traversal (CWE-22):** O token passa por validação com expressão regular estrita (`^[a-zA-Z0-9_\-]+$`), impedindo caracteres de navegação em diretórios (`../`, barras ou caracteres nulos).
    - **Isolamento de Execução de Scripts:** O arquivo é servido diretamente do disco local privado (`local`) com tipo MIME forçado `application/pdf`, cabeçalho `X-Content-Type-Options: nosniff` e política de segurança `Content-Security-Policy: default-src 'none'; sandbox`, impedindo que navegadores executem códigos ou scripts maliciosos embutidos.
 
+### 107.3 Rotina Diária de Limpeza de Relatórios Temporários Vencidos
+Para prevenir a saturação do disco privado (`storage/app/relatorios_gerados/`) por arquivos já transferidos ou que atingiram o final do seu ciclo útil:
+1. **Comando Automatizado (`relatorios:limpar-temporarios`):**
+   - O comando Artisan `php artisan relatorios:limpar-temporarios {--dias=7} {--dry-run}` percorre os relatórios temporários gerados em lote e remove automaticamente qualquer arquivo PDF cuja última modificação tenha mais de 1 semana (7 dias).
+   - Suporta o parâmetro `--dias=N` para flexibilizar o período de retenção e a flag `--dry-run` para simulação e conferência segura sem deleção física.
+2. **Execução Noturna Agendada:**
+   - A rotina é executada diariamente às **04:35** (`dailyAt('04:35')`) com proteção contra sobreposição (`withoutOverlapping`), registrando a volumetria de arquivos eliminados e o espaço liberado em disco no canal de logs da aplicação.
+
 ---
 
 ## 📑 108. Gestão de Contratos de Matrícula: Salvaguardas de Faturamento e Notificações em Tempo Real
