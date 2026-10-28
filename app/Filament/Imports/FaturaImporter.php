@@ -186,34 +186,32 @@ class FaturaImporter extends Importer
             $statusMudou = ($statusTolerante !== null) && ($fatura->status !== $statusTolerante);
             $vencimentoMudou = ($fatura->vencimento?->toDateString() !== $vencimento);
 
-            // Verifica os itens da fatura
+            // Verifica se a linha bate exatamente com a representação exportada da fatura (No-Op)
+            $descricaoExportada = $fatura->itens->pluck('descricao')->filter(fn ($v) => filled($v))->join(' | ');
+            $valorBrutoFatura = (float) $fatura->valor_bruto;
+
+            $descricaoIgual = ($descricao === $descricaoExportada);
+            $valorIgual = (abs($valorBrutoFatura - $valor) < 0.001);
+
             if ($fatura->itens->count() === 1) {
                 $item = $fatura->itens->first();
-                $descricaoMudou = ($item->descricao !== $descricao);
-                $valorMudou = (abs((float) $item->valor_unitario - $valor) >= 0.001);
-                $descontoMudou = (abs((float) $item->desconto - $desconto) >= 0.001);
+                $descontoIgual = (abs((float) $item->desconto - $desconto) < 0.001);
                 $tipoItemNormalizado = FaturaImportParser::parseTipoDesconto($item->tipo_desconto);
-                $tipoDescontoMudou = ($tipoItemNormalizado !== $tipoDesconto);
-                $quantidadeMudou = ((float) $item->quantidade !== 1.0);
-
-                $itensMudaram = $descricaoMudou || $valorMudou || $descontoMudou || $tipoDescontoMudou || $quantidadeMudou;
+                $tipoDescontoIgual = ($tipoItemNormalizado === $tipoDesconto);
             } else {
-                // Fatura com múltiplos itens ou sem itens: confere com a representação exportada
-                $descricaoExportada = $fatura->itens->pluck('descricao')->filter(fn ($v) => filled($v))->join(' | ');
-                $valorBrutoFatura = (float) $fatura->valor_bruto;
-
-                $descricaoIgual = ($descricao === $descricaoExportada);
-                $valorIgual = (abs($valorBrutoFatura - $valor) < 0.001);
                 $descontoIgual = ($desconto === 0.0);
-                $tipoDescontoAceitavel = in_array($rawTipoDesconto, [null, '', 'absoluto', 'R$'], true);
-
-                $itensMudaram = ! ($descricaoIgual && $valorIgual && $descontoIgual && $tipoDescontoAceitavel);
+                $tipoDescontoIgual = in_array($rawTipoDesconto, [null, '', 'absoluto', 'R$'], true);
             }
 
-            $algumCampoMudou = $vencimentoMudou || $statusMudou || $itensMudaram;
+            $ehNoOp = (! $vencimentoMudou)
+                && (! $statusMudou)
+                && $descricaoIgual
+                && $valorIgual
+                && $descontoIgual
+                && $tipoDescontoIgual;
 
             // Se for idêntica à fatura existente: No-Op total
-            if (! $algumCampoMudou) {
+            if ($ehNoOp) {
                 $this->shouldSkipSave = true;
 
                 return $fatura;
