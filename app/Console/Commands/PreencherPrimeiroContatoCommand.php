@@ -12,7 +12,7 @@ class PreencherPrimeiroContatoCommand extends Command
     protected $signature = 'crm:preencher-primeiro-contato
                             {--aplicar : Grava as datas. Sem esta opção só simula e nada é alterado}';
 
-    protected $description = 'Preenche data_primeiro_contato (encerra o SLA de 1ª resposta) dos leads que já tinham contato humano lançado pela Linha do Tempo ou pelo Histórico antes da correção que passou a preenchê-la';
+    protected $description = 'Preenche data_primeiro_contato dos leads que já tinham contato humano lançado pela Linha do Tempo ou pelo Histórico antes da correção que passou a preenchê-la';
 
     /** Quantos leads de exemplo aparecem na simulação. */
     private const AMOSTRA = 10;

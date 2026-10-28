@@ -57,7 +57,7 @@ class HistoricoContato extends Model
         static::saved($descartarDossie);
         static::deleted($descartarDossie);
 
-        // O primeiro contato do lead (SLA de 1ª resposta) deriva do histórico: se o registro que o definia muda de data,
+        // O primeiro contato do lead (`data_primeiro_contato`) deriva do histórico: se o registro que o definia muda de data,
         // de tipo ou de autoria, ou é excluído, `data_primeiro_contato` acompanha. Criar já é tratado por quem cria
         // (LeadFunilService::registrarAtendimento/registrarPrimeiroContato), por isso só `updated` e `deleted`.
         static::updated(static function (self $historico): void {
@@ -81,7 +81,7 @@ class HistoricoContato extends Model
     }
 
     /**
-     * Contatos que contam como o primeiro da escola com a família (SLA de 1ª resposta): registrados por uma pessoa
+     * Contatos que contam como o primeiro da escola com a família (`data_primeiro_contato`): registrados por uma pessoa
      * (`usuario_id`; ações da própria família não têm), não automáticos e fora dos tipos administrativos
      * (movimentação no funil, reenvio do formulário). Fonte única da regra para o backfill e a reavaliação.
      */

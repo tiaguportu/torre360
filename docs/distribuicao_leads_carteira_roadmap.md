@@ -20,8 +20,9 @@ alerta de 24 horas, e o consultor mais rápido fica com os melhores leads. O pr�
 - **Assumir lead** (ação atômica, na lista e na ficha) e **atribuir consultor em lote** (avisa o consultor pelo sino).
 - **Alerta de lead sem consultor** depois de `crm.alertas.sem_consultor_apos_horas` (24 h) e, na Onda 84, a fila *Leads sem consultor*
   na Minha Mesa.
-- **SLA de primeira resposta em horário comercial** (`LeadSlaService`): avisa o consultor e, depois, a gestão (`sla_estouro_notificado_em`,
-  `sla_gestao_notificado_em`). **Só avisa; não troca de consultor.**
+- **Não existe mais SLA de primeira resposta.** O `LeadSlaService` (que avisava o consultor e a gestão) foi **retirado em 2026-10-28**
+  ([registro](crm_sla_primeira_resposta_retirado.md)). Hoje o lead novo sem atendimento só aparece em *Sem próxima ação* (depois da
+  carência) e, sem dono, no alerta de 24 h e na fila *Leads sem consultor*.
 - **O que o lead diz sobre o que quer:** o dependente tem série, unidade e turno de preferência (`InteressadoDependente`); o lead tem
   origem, campanha e UTM (`CampanhaMarketing`, `UtmTracker`).
 - **Entradas hoje**, todas sem dono: formulário público `/quero-matricular` (`CaptacaoInteressadoService`), matrícula online
@@ -39,8 +40,10 @@ alerta de 24 horas, e o consultor mais rápido fica com os melhores leads. O pr�
 - **Sem regra que sirva**, o lead continua sem dono e cai na fila *Leads sem consultor* (a rede de segurança da Onda 84).
 - A distribuição roda **na criação do lead** e num comando que redistribui os que ficaram sem dono.
 
-### Reatribuição quando o SLA estoura
-Passado o tempo configurado sem primeiro contato, o lead passa ao **próximo elegível** (com limite de trocas, e a gestão avisada
+### Reatribuição quando o prazo de primeira resposta estoura
+Esta regra **precisa de um prazo de primeira resposta**, e o SLA do CRM que a sustentava foi retirado em 2026-10-28: ao implementar,
+o prazo (em horário comercial) volta como parte desta onda, com parâmetro próprio. Passado o tempo configurado sem primeiro contato
+(`interessado.data_primeiro_contato` vazia), o lead passa ao **próximo elegível** (com limite de trocas, e a gestão avisada
 na última). Cada troca vira um registro automático no histórico do lead, que **não conta como contato** (como as demais interações
 automáticas do CRM).
 
@@ -50,7 +53,7 @@ formulários de terceiros: mapeia os campos para o mesmo serviço do formulário
 é **idempotente** pelo identificador externo e grava a origem e a campanha. Tudo entra pela mesma regra de distribuição.
 
 ### Carga e justiça
-Painel com leads em andamento, SLA médio e conversão **por consultor**, para a gestão ver se a regra está justa (o desempenho por consultor — leads, primeira resposta, contatos, visitas e
+Painel com leads em andamento, tempo médio de primeira resposta e conversão **por consultor**, para a gestão ver se a regra está justa (o desempenho por consultor — leads, primeira resposta, contatos, visitas e
 conversão — já sai de `CrmRelatoriosService::desempenhoConsultores()`). *Transferir carteira* em lote quando o consultor sai.
 
 ## Base legal
@@ -74,4 +77,4 @@ segredo, limite de requisições e registro de cada chamada.
 
 **Sequência do CRM (84 → 85 → 86 → 87).** A 84 dá a fila do dia; esta decide quem atende; o [agendamento online](agendamento_online_visitas_roadmap.md)
 (86) é a nova entrada de "visita marcada" e deve usar a mesma regra para escolher o consultor da visita; a
-[proposta](proposta_comercial_aceite_roadmap.md) (87) fecha. As três usam a carteira, o SLA e a Minha Mesa já existentes.
+[proposta](proposta_comercial_aceite_roadmap.md) (87) fecha. As três usam a carteira e a Minha Mesa já existentes.

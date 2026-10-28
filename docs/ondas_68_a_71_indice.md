@@ -87,7 +87,7 @@ Não são ondas novas: são melhorias de funcionalidades já implementadas ou do
 | 69 (assinatura) | Novos tipos de modelo: **autorização de uso de imagem** para quem não usa o Portal (a Onda 25 colhe o aceite lá), **termo de ciência do regimento**, **aditivo de contrato** e **termo de rescisão** de funcionário. | O catálogo de variáveis é um arquivo só: cada contexto novo é uma entrada. |
 | 69 (assinatura) | Unificar o envio do **contrato de matrícula** com o novo serviço. | Só vale a refatoração se o fluxo do contrato precisar de algo que o novo já tem (ordem, lembrete). |
 | 69 e 66 | A **conferência de cláusulas** (Onda 66) pode ler o texto dos modelos de contrato e de distrato com o mesmo catálogo. | |
-| 71 (mesa) | Mais filas: contratos a assinar, **frequência pendente do professor**, ajustes de ponto (Onda 41), pareceres para revisar (Onda 30), reservas (Onda 21), manutenção atrasada (Onda 39), férias vencendo, follow-ups e SLA do CRM, contas a pagar. | Cada fila é uma classe pequena e um teste. |
+| 71 (mesa) | Mais filas: contratos a assinar, **frequência pendente do professor**, ajustes de ponto (Onda 41), pareceres para revisar (Onda 30), reservas (Onda 21), manutenção atrasada (Onda 39), férias vencendo, follow-ups do CRM (o SLA do CRM, que chegou a virar fila, foi retirado em 2026-10-28), contas a pagar. | Cada fila é uma classe pequena e um teste. |
 | 71 (mesa) | **Assumir** um item (quem está cuidando) e adiar com data. | Hoje a Mesa é só leitura e por papel. |
 | 61 (cancelamento) | Aviso à família ao aprovar ou recusar. | Entra pela Onda 70. |
 | 65 (admissão) | Lembrete semanal das providências vencidas. | A fila da Mesa mostra; o e-mail semanal entra com o digest (Onda 47). |

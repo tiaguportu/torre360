@@ -76,7 +76,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'mesa' => [
-        // Lead recém-cadastrado não cai em "Sem próxima ação" nas primeiras horas (o SLA de 1ª resposta cuida dele).
+        // Lead recém-cadastrado não cai em "Sem próxima ação" nas primeiras horas: dá tempo de o consultor fazer o 1º contato.
         'carencia_sem_proxima_acao_horas' => (int) env('CRM_MESA_CARENCIA_HORAS', 2),
 
         // Lead sem próxima ação há mais de N dias passa a "atrasado".
@@ -87,9 +87,6 @@ return [
 
         // Lead quente sem interação humana há N dias entra na fila (o dobro disso é "atrasado").
         'quente_parado_dias' => (int) env('CRM_MESA_QUENTE_PARADO_DIAS', 3),
-
-        // Lead sem 1ª resposta só entra na fila de SLA se foi cadastrado nos últimos N dias.
-        'sla_janela_dias' => (int) env('CRM_MESA_SLA_JANELA_DIAS', 30),
     ],
 
     /*
@@ -167,24 +164,6 @@ return [
             'Em Atendimento' => 25.0,
             'Visita Agendada' => 50.0,
             'Proposta' => 75.0,
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | SLA de 1ª resposta e horário comercial (Lote D4)
-    |--------------------------------------------------------------------------
-    */
-    'sla' => [
-        // Prazo padrão de SLA em minutos comerciais para 1ª resposta
-        'primeira_resposta_minutos_padrao' => (int) env('CRM_SLA_PRIMEIRA_RESPOSTA_PADRAO', 120),
-
-        // Expediente de horário comercial para cálculo do SLA
-        'horario_comercial' => [
-            'inicio' => env('CRM_HORARIO_COMERCIAL_INICIO', '08:00'),
-            'fim' => env('CRM_HORARIO_COMERCIAL_FIM', '18:00'),
-            // Dias úteis: 1 (segunda) a 5 (sexta)
-            'dias_uteis' => [1, 2, 3, 4, 5],
         ],
     ],
 ];

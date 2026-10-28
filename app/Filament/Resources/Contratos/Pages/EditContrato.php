@@ -9,6 +9,7 @@ use App\Services\GeracaoFaturasContratoService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
@@ -42,19 +43,27 @@ class EditContrato extends EditRecord
                         ->minValue(0)
                         ->prefix('R$')
                         ->required(),
+                    DatePicker::make('data_base')
+                        ->label('Data-base dos vencimentos')
+                        ->helperText('A entrada (se houver) vence nesta data; a 1ª parcela, 5 dias úteis depois; as demais, mês a mês. Sugerida: a data de aceite do contrato ou, se ele ainda não foi assinado, hoje.')
+                        ->default(fn ($livewire): string => ($livewire->getRecord()->data_aceite ?? today())->toDateString())
+                        ->native(false)
+                        ->displayFormat('d/m/Y')
+                        ->required(),
                 ])
                 ->modalHeading(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Regenerar Faturas do Contrato' : 'Gerar Faturas Automaticamente')
                 ->modalDescription(fn (?Contrato $record) => $record && $record->faturas()->exists()
                     ? 'Atenção: As faturas existentes serão substituídas pelas novas parcelas calculadas com base no valor atual do contrato. Faturas com pagamento registrado ou cobrança emitida no gateway impedem a regeneração. Caso já tenha sido enviado para o Assinafy, os registros anteriores de assinatura serão resetados.'
-                    : 'A 1ª parcela vencerá em 5 dias úteis a partir da data de aceite. As demais serão mensais a partir daí.')
+                    : 'As faturas podem ser geradas antes da assinatura: elas passam a constar no contrato enviado para assinatura. Os vencimentos partem da data-base informada abaixo.')
                 ->modalSubmitActionLabel(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Sim, Regenerar Faturas' : 'Gerar Faturas')
                 ->action(function (array $data, EditRecord $livewire): void {
                     $contrato = $livewire->getRecord();
                     $qtdParcelas = (int) $data['quantidade_parcelas'];
                     $valorEntrada = (float) $data['valor_entrada'];
+                    $dataBase = filled($data['data_base'] ?? null) ? Carbon::parse($data['data_base']) : null;
 
                     try {
-                        $faturas = app(GeracaoFaturasContratoService::class)->gerar($contrato, $qtdParcelas, $valorEntrada);
+                        $faturas = app(GeracaoFaturasContratoService::class)->gerar($contrato, $qtdParcelas, $valorEntrada, $dataBase);
                     } catch (\InvalidArgumentException $e) {
                         Notification::make()
                             ->title('Erro')

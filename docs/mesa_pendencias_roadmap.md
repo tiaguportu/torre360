@@ -85,7 +85,6 @@ Filas acrescentadas depois da Onda 71:
 | 73 | Classificação contábil pendente (cacheia a apuração do mês anterior pelo mesmo tempo do selo) | Financeiro | `View:ExportacaoContabil` |
 | 84 | Contatos do dia | CRM / Comercial | `ViewAny:Interessado` |
 | 84 | Visitas de hoje e sem resultado | CRM / Comercial | `ViewAny:Interessado` |
-| 84 | Primeira resposta fora do prazo | CRM / Comercial | `ViewAny:Interessado` |
 | 84 | Leads sem próxima ação | CRM / Comercial | `ViewAny:Interessado` |
 | 84 | Leads quentes sem contato | CRM / Comercial | `ViewAny:Interessado` |
 | 84 | Leads sem consultor | CRM / Comercial | `Update:Interessado` |

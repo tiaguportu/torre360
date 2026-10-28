@@ -65,7 +65,7 @@ class ListInteressados extends ListRecords
                 ->badgeColor('info'),
             'finalizados' => Tab::make('Finalizados')
                 ->icon('heroicon-o-check-badge')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('status', fn (Builder $q) => $q->where('is_final', true)))
+                ->modifyQueryUsing(fn (Builder $query) => $query->finalizados())
                 ->badge($contadores['finalizados'])
                 ->badgeColor('gray'),
         ];

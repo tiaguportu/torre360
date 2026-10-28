@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Preceptorias\Schemas;
 
 use App\Models\Matricula;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -26,7 +26,13 @@ class PreceptoriaForm
                             ->label('Ciclo de Preceptoria')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                if ($get('tipo_selecao_data') === 'intervalo') {
+                                    PreceptoriaRecorrenciaForm::sugerirJanelaDoCiclo($get, $set);
+                                }
+                            }),
 
                         TimePicker::make('hora_inicio')
                             ->label('Hora Início')
@@ -49,10 +55,15 @@ class PreceptoriaForm
                             ->label('Modo de Seleção de Datas')
                             ->options([
                                 'datas_especificas' => 'Datas Específicas (Avulsas)',
-                                'intervalo' => 'Intervalo de Datas (Range)',
+                                'intervalo' => 'Recorrente (janela de datas)',
                             ])
                             ->default('datas_especificas')
                             ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                if ($state === 'intervalo') {
+                                    PreceptoriaRecorrenciaForm::sugerirJanelaDoCiclo($get, $set);
+                                }
+                            })
                             ->required()
                             ->visible(fn (string $operation) => $operation === 'create')
                             ->columnSpanFull(),
@@ -72,39 +83,16 @@ class PreceptoriaForm
                             ->visible(fn (string $operation, Get $get) => $operation === 'create' && $get('tipo_selecao_data') === 'datas_especificas')
                             ->columnSpanFull(),
 
-                        DatePicker::make('data_inicio_range')
-                            ->label('Data Inicial')
-                            ->required(fn (Get $get) => $get('tipo_selecao_data') === 'intervalo')
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->live()
-                            ->visible(fn (string $operation, Get $get) => $operation === 'create' && $get('tipo_selecao_data') === 'intervalo'),
-
-                        DatePicker::make('data_fim_range')
-                            ->label('Data Final')
-                            ->required(fn (Get $get) => $get('tipo_selecao_data') === 'intervalo')
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->minDate(fn (Get $get) => $get('data_inicio_range'))
-                            ->visible(fn (string $operation, Get $get) => $operation === 'create' && $get('tipo_selecao_data') === 'intervalo'),
-
-                        CheckboxList::make('dias_semana_range')
-                            ->label('Dias da Semana (Opcional - selecione para filtrar os dias no intervalo)')
-                            ->options([
-                                1 => 'Segunda-feira',
-                                2 => 'Terça-feira',
-                                3 => 'Quarta-feira',
-                                4 => 'Quinta-feira',
-                                5 => 'Sexta-feira',
-                                6 => 'Sábado',
-                                0 => 'Domingo',
-                            ])
-                            ->columns(4)
-                            ->visible(fn (string $operation, Get $get) => $operation === 'create' && $get('tipo_selecao_data') === 'intervalo')
-                            ->columnSpanFull(),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
+
+                Section::make('Recorrência')
+                    ->description('A mesma preceptoria repetida na janela de datas, pulando o que for desconsiderado.')
+                    ->schema(PreceptoriaRecorrenciaForm::componentes())
+                    ->columns(3)
+                    ->columnSpanFull()
+                    ->visible(fn (string $operation, Get $get) => $operation === 'create' && $get('tipo_selecao_data') === 'intervalo'),
 
                 Section::make('Vínculos')
                     ->schema([

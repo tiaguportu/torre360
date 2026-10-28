@@ -152,8 +152,10 @@ class Preceptoria extends Model
 
     /**
      * Envia o lembrete de agendamento para os envolvidos.
+     *
+     * @param  string|null  $reagendadoDe  quando o lembrete avisa que a preceptoria foi movida: o horário anterior ("27/10/2026 às 14:00")
      */
-    public function relembrarAgendamento(): array
+    public function relembrarAgendamento(?string $reagendadoDe = null): array
     {
         $destinatarios = $this->getNotificationRecipients();
         $countSent = 0;
@@ -161,7 +163,7 @@ class Preceptoria extends Model
 
         foreach ($destinatarios as $user) {
             try {
-                $user->notify(new LembretePreceptoriaNotification($this));
+                $user->notify(new LembretePreceptoriaNotification($this, $reagendadoDe));
                 $countSent++;
             } catch (\Throwable $e) {
                 $errorMessage = $e->getMessage();
@@ -174,8 +176,10 @@ class Preceptoria extends Model
             activity()
                 ->performedOn($this)
                 ->event('notificacao_lembrete_preceptoria')
-                ->withProperties(['destinatarios_count' => $countSent])
-                ->log("Enviado lembrete de agendamento de preceptoria para {$countSent} destinatário(s)");
+                ->withProperties(['destinatarios_count' => $countSent, 'reagendado_de' => $reagendadoDe])
+                ->log($reagendadoDe
+                    ? "Enviado aviso de reagendamento de preceptoria para {$countSent} destinatário(s)"
+                    : "Enviado lembrete de agendamento de preceptoria para {$countSent} destinatário(s)");
         }
 
         return [

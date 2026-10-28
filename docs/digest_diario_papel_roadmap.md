@@ -22,7 +22,7 @@ ação**, reduz esquecimento e dá motivo para abrir o sistema.
   - coordenação: pareceres aguardando revisão (Onda 30), ajustes de ponto pendentes (Onda 41),
     reservas aguardando aprovação (Onda 21), planos de manutenção vencidos (Onda 39);
   - professor: frequência pendente (`FrequenciaPendenteWidget`), planos de aula do dia;
-  - comercial: follow-ups e SLA (`AlertaLeadsService`, `LeadSlaService`).
+  - comercial: follow-ups (`AlertaLeadsService`). O SLA de 1ª resposta (`LeadSlaService`) foi retirado em 2026-10-28.
 - Não existe um resumo consolidado nem preferência de recebimento por usuário.
 
 ## Escopo

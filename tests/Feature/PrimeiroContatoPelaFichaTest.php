@@ -11,7 +11,6 @@ use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
-use App\Services\LeadSlaService;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
@@ -20,11 +19,11 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * O SLA de 1ª resposta só encerrava pela ação "Atendimento" da tabela. Contatos registrados na Linha do Tempo
- * 360° (interação rápida) ou na aba "Histórico de Contatos" gravavam o histórico mas deixavam
- * `data_primeiro_contato` vazia: o lead seguia "sem resposta" e podia gerar alerta de SLA estourado.
+ * `data_primeiro_contato` só era preenchida pela ação "Atendimento" da tabela. Contatos registrados na Linha do
+ * Tempo 360° (interação rápida) ou na aba "Histórico de Contatos" gravavam o histórico mas deixavam a data vazia:
+ * o lead seguia "sem resposta" no relatório de consultores.
  */
-class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
+class PrimeiroContatoPelaFichaTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -69,7 +68,7 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
         ]);
     }
 
-    public function test_interacao_rapida_da_linha_do_tempo_encerra_o_sla_e_a_segunda_nao_sobrescreve(): void
+    public function test_interacao_rapida_da_linha_do_tempo_preenche_o_primeiro_contato_e_a_segunda_nao_sobrescreve(): void
     {
         $this->assertNull($this->lead->data_primeiro_contato);
 
@@ -79,10 +78,8 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
             ->call('registrarContatoRapido')
             ->assertHasNoErrors();
 
-        $lead = Interessado::with('status')->findOrFail($this->lead->id);
+        $lead = Interessado::findOrFail($this->lead->id);
         $this->assertNotNull($lead->data_primeiro_contato);
-        $this->assertTrue(app(LeadSlaService::class)->resumoSla($lead)['respondido']);
-        $this->assertFalse(app(LeadSlaService::class)->slaEstourado($lead, now()->addYear()));
 
         $primeiro = $lead->data_primeiro_contato->timestamp;
 
@@ -140,7 +137,7 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
         $this->assertNull(Interessado::findOrFail($this->lead->id)->data_primeiro_contato);
     }
 
-    public function test_registrar_contato_do_historico_encerra_o_sla_com_a_data_do_contato(): void
+    public function test_registrar_contato_do_historico_preenche_o_primeiro_contato_com_a_data_do_contato(): void
     {
         $quando = now()->subDay()->startOfMinute();
 
@@ -156,10 +153,9 @@ class CrmSlaPrimeiroContatoPelaFichaTest extends TestCase
             ])
             ->assertHasNoFormErrors();
 
-        $lead = Interessado::with('status')->findOrFail($this->lead->id);
+        $lead = Interessado::findOrFail($this->lead->id);
         $this->assertNotNull($lead->data_primeiro_contato);
         $this->assertEquals($quando->timestamp, $lead->data_primeiro_contato->timestamp);
-        $this->assertTrue(app(LeadSlaService::class)->resumoSla($lead)['respondido']);
         $this->assertNotNull($lead->lead_score_atualizado_em);
     }
 

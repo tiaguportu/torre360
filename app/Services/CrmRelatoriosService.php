@@ -122,7 +122,7 @@ class CrmRelatoriosService
             $leads = $leadsQuery->with(['status'])->get();
             $totalLeads = $leads->count();
 
-            // SLA de 1ª resposta: tempo entre cadastro e primeiro atendimento
+            // Tempo até a 1ª resposta: entre o cadastro e o primeiro atendimento
             $leadsComResposta = $leads->filter(fn ($l) => filled($l->data_primeiro_contato) && filled($l->created_at));
             $horasRespostas = $leadsComResposta->map(function ($l) {
                 return abs(Carbon::parse($l->data_primeiro_contato)->diffInHours(Carbon::parse($l->created_at)));

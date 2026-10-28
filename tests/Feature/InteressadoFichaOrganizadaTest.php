@@ -150,7 +150,7 @@ class InteressadoFichaOrganizadaTest extends TestCase
             'Acompanhamento',
             'Contato e origem',
             'Qualificação',
-            'Prazo e redes sociais',
+            'Redes sociais',
             'Observações',
         ], $titulos);
 
@@ -161,26 +161,26 @@ class InteressadoFichaOrganizadaTest extends TestCase
 
         // Verificar estado recolhido/aberto na edição de lead sem redes sociais
         $secaoQualif = $secoes->first(fn (Section $s) => $s->getHeading() === 'Qualificação');
-        $secaoPrazo = $secoes->first(fn (Section $s) => $s->getHeading() === 'Prazo e redes sociais');
+        $secaoRedes = $secoes->first(fn (Section $s) => $s->getHeading() === 'Redes sociais');
         $secaoAcomp = $secoes->first(fn (Section $s) => $s->getHeading() === 'Acompanhamento');
         $secaoContato = $secoes->first(fn (Section $s) => $s->getHeading() === 'Contato e origem');
         $secaoObs = $secoes->first(fn (Section $s) => $s->getHeading() === 'Observações');
 
         $this->assertTrue($secaoQualif->isCollapsed());
-        $this->assertTrue($secaoPrazo->isCollapsed());
+        $this->assertTrue($secaoRedes->isCollapsed());
         $this->assertFalse($secaoAcomp->isCollapsed());
         $this->assertFalse($secaoContato->isCollapsed());
         $this->assertFalse($secaoObs->isCollapsed());
 
-        // Edição com redes sociais preenchidas: Prazo e redes sociais aberta
+        // Edição com redes sociais preenchidas: Redes sociais aberta
         $leadComRedes = $this->criarLead($this->admin, [
             'redes_sociais' => [['rede' => 'instagram', 'url' => 'https://instagram.com/teste']],
         ]);
         $testableComRedes = Livewire::actingAs($this->admin)->test(EditInteressado::class, ['record' => $leadComRedes->id]);
         $tabsComRedes = collect($testableComRedes->instance()->getSchema('form')->getComponents())->first(fn ($c) => $c instanceof Tabs);
         $tabNegocioComRedes = collect($tabsComRedes->getChildSchema()->getComponents())->first(fn ($t) => $t->getLabel() === 'Dados do Negócio');
-        $secaoPrazoComRedes = collect($tabNegocioComRedes->getChildSchema()->getComponents())->first(fn ($c) => $c instanceof Section && $c->getHeading() === 'Prazo e redes sociais');
-        $this->assertFalse($secaoPrazoComRedes->isCollapsed());
+        $secaoRedesComRedes = collect($tabNegocioComRedes->getChildSchema()->getComponents())->first(fn ($c) => $c instanceof Section && $c->getHeading() === 'Redes sociais');
+        $this->assertFalse($secaoRedesComRedes->isCollapsed());
 
         // Na criação (CreateInteressado): todas as seções abertas
         $testableCreate = Livewire::actingAs($this->admin)->test(CreateInteressado::class);

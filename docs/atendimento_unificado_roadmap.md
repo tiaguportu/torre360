@@ -17,8 +17,9 @@ família espera, e a família não sabe se alguém viu a mensagem.
   1 a 5 com comentário** e data de fechamento. `AtendimentoMensagem` (texto e anexo, de usuário ou de pessoa) e `AtendimentoSetor`
   (nome, descrição, e-mail de notificação, ordem).
 - Telas: **Central de Atendimento** no Portal (abrir, responder, avaliar) e a lista do painel, com ação de responder.
-- Para o CRM já existem as peças que faltam aqui: **SLA de primeira resposta em horário comercial** (`LeadSlaService`, parâmetros em
-  `config/crm.php`) e **mensagens rápidas** (`MensagemWhatsappTemplate`).
+- Para o CRM já existem **mensagens rápidas** (`MensagemWhatsappTemplate`). O **SLA de primeira resposta em horário comercial**
+  que o CRM tinha (`LeadSlaService`) foi **retirado em 2026-10-28**; a conta de horário comercial continua no histórico do git
+  (ver [o registro da retirada](crm_sla_primeira_resposta_retirado.md)).
 - O **assistente do painel** (`AssistantChatBubble`, `GeminiAgentService`) responde dúvidas de **uso do sistema** à equipe, com base
   no manual. Não é uma base de respostas para famílias.
 - `MacrosDocumentoService` (Onda 69): variáveis do aluno, do responsável e da escola para preencher um texto.
@@ -35,8 +36,8 @@ família espera, e a família não sabe se alguém viu a mensagem.
 1. **Avisos (primeiro, porque é o que falta de mais básico).** Chamado novo avisa o setor (o e-mail cadastrado passa a valer, e o
    sino da equipe); resposta da escola avisa a família pelo canal da [Onda 70](central_avisos_familia_roadmap.md) (e, até lá, por
    e-mail com o `CanalMensagem`); resposta da família reabre e avisa o responsável.
-2. **SLA por setor e prioridade:** prazo de primeira resposta e de resolução, contado em horário comercial (reaproveitar a conta do
-   `LeadSlaService`). O chamado mostra "vence em", e o setor vê quanto da fila está no prazo.
+2. **SLA por setor e prioridade:** prazo de primeira resposta e de resolução, contado em horário comercial (a conta do antigo
+   `LeadSlaService`, retirado do CRM, está no histórico do git e serve de ponto de partida). O chamado mostra "vence em", e o setor vê quanto da fila está no prazo.
 3. **Atribuição:** *assumir* (como o lead), reatribuir, e distribuição simples por setor (rodízio entre quem atende). Fila
    **Chamados sem resposta / com prazo estourado** na Minha Mesa.
 4. **Respostas prontas** por setor, com variáveis do aluno e do responsável (as macros da Onda 69) e revisão antes de enviar.

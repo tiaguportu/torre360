@@ -9,6 +9,7 @@ use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
+use App\Services\ContadoresCrm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -520,5 +521,59 @@ class InteressadoTest extends TestCase
 
         $this->assertEquals('frio', $lead1->fresh()->temperatura);
         $this->assertEquals('morno', $lead2->fresh()->temperatura);
+    }
+
+    public function test_aba_em_andamento_e_scope_ativos_excluem_desistentes_e_matriculados(): void
+    {
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['activated_at' => now()]);
+        $admin->assignRole('super_admin');
+
+        $statusNovo = StatusInteressado::create(['nome' => 'Novo', 'cor' => 'info', 'ordem' => 1, 'is_final' => false, 'is_ganho' => false]);
+        $statusMatriculado = StatusInteressado::create(['nome' => 'Matriculado', 'cor' => 'success', 'ordem' => 2, 'is_final' => true, 'is_ganho' => true]);
+        $statusDesistente = StatusInteressado::create(['nome' => 'Desistente', 'cor' => 'danger', 'ordem' => 3, 'is_final' => true, 'is_ganho' => false]);
+
+        $origem = OrigemInteressado::create(['nome' => 'Site']);
+
+        $leadAtivo = Interessado::create([
+            'pessoa_id' => Pessoa::factory()->create()->id,
+            'origem_interessado_id' => $origem->id,
+            'status_interessado_id' => $statusNovo->id,
+        ]);
+
+        $leadMatriculado = Interessado::create([
+            'pessoa_id' => Pessoa::factory()->create()->id,
+            'origem_interessado_id' => $origem->id,
+            'status_interessado_id' => $statusMatriculado->id,
+        ]);
+
+        $leadDesistente = Interessado::create([
+            'pessoa_id' => Pessoa::factory()->create()->id,
+            'origem_interessado_id' => $origem->id,
+            'status_interessado_id' => $statusDesistente->id,
+        ]);
+
+        // Verificação no scope
+        $ativosIds = Interessado::ativos()->pluck('id')->all();
+        $this->assertContains($leadAtivo->id, $ativosIds);
+        $this->assertNotContains($leadMatriculado->id, $ativosIds);
+        $this->assertNotContains($leadDesistente->id, $ativosIds);
+
+        $finalizadosIds = Interessado::finalizados()->pluck('id')->all();
+        $this->assertNotContains($leadAtivo->id, $finalizadosIds);
+        $this->assertContains($leadMatriculado->id, $finalizadosIds);
+        $this->assertContains($leadDesistente->id, $finalizadosIds);
+
+        // Verificação no componente Livewire da Listagem
+        ContadoresCrm::invalidar();
+
+        Livewire::actingAs($admin)
+            ->test(ListInteressados::class)
+            ->set('activeTab', 'ativos')
+            ->assertCanSeeTableRecords([$leadAtivo])
+            ->assertCanNotSeeTableRecords([$leadMatriculado, $leadDesistente])
+            ->set('activeTab', 'finalizados')
+            ->assertCanSeeTableRecords([$leadMatriculado, $leadDesistente])
+            ->assertCanNotSeeTableRecords([$leadAtivo]);
     }
 }

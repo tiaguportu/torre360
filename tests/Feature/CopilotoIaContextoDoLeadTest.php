@@ -444,10 +444,10 @@ class CopilotoIaContextoDoLeadTest extends TestCase
         $chave = CrmIaVendasService::chaveCacheDossie($lead->id);
         Cache::put($chave, ['dossie_markdown' => 'dossiê vigente'], 600);
 
-        $lead->update(['sla_estouro_notificado_em' => now(), 'lead_score_atualizado_em' => now()]);
+        $lead->update(['lead_score_atualizado_em' => now()]);
         $lead->update(['token_documentos_expira_em' => now()->addDays(7)]);
 
-        $this->assertTrue(Cache::has($chave), 'SLA, data do cálculo do score e validade do token não entram no prompt.');
+        $this->assertTrue(Cache::has($chave), 'Data do cálculo do score e validade do token não entram no prompt.');
     }
 
     public function test_dossie_em_cache_de_um_lead_nao_e_afetado_pela_mudanca_em_outro(): void

@@ -264,7 +264,7 @@ class TimelineRelationManager extends RelationManager
         }
 
         // Mesmo caminho da ação "Atendimento" da tabela: grava o contato, reagenda, recalcula o Lead Score e,
-        // sendo o primeiro contato da escola com a família, encerra o SLA de 1ª resposta.
+        // sendo o primeiro contato da escola com a família, preenche `data_primeiro_contato`.
         app(LeadFunilService::class)->registrarAtendimento($interessado, $dados, auth()->id());
 
         // 4. Limpa campos do formulário

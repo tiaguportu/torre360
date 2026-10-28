@@ -47,7 +47,7 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 
 | Conjunto | Ondas | O que compartilham | Ordem dentro do conjunto |
 |---|---|---|---|
-| **Sequência do CRM** | 84 → 85 → 86 → 87 | O lead entra e é distribuído (85), visita (86), recebe a proposta e aceita (87); tudo passa pela carteira, pelo SLA e pela Minha Mesa da 84. | 84 (feita), 85, 86 e 87 (a 87 não depende das outras e pode vir antes) |
+| **Sequência do CRM** | 84 → 85 → 86 → 87 | O lead entra e é distribuído (85), visita (86), recebe a proposta e aceita (87); tudo passa pela carteira e pela Minha Mesa da 84 (o SLA de 1ª resposta que a 84 usava foi retirado em 2026-10-28, ver [registro](crm_sla_primeira_resposta_retirado.md)). | 84 (feita), 85, 86 e 87 (a 87 não depende das outras e pode vir antes) |
 | **Atendimento da família** | 80 + 83 + 70 | Pedido e chamado têm protocolo, responsável, prazo, resposta e aviso; a Central de Avisos é a saída dos dois. Um motor de "solicitação" com tipo evita duas filas. | 70 (aviso), 83 (SLA e modelos), 80 (tipos com resultado) |
 | **Comunicação e canal** | 88 + 70 + 33 + 47 | Destinatário, consentimento, entrega e ciência são os mesmos para aviso, comunicado, cobrança e régua. O WhatsApp é um canal da escola inteira. | Unificar os canais existentes, 70 e 33, 88 por último |
 | **Obrigações com prazo** | 82 + 65 + 60 + 56 | "Algo a fazer, de alguém, até uma data, com prova": admissão e desligamento (feita), documentos com validade (feita), saúde do trabalhador e os roteiros da secretaria. Um motor e uma fila na Mesa. | Generalizar o motor da 65, depois 82 |

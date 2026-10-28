@@ -26,19 +26,17 @@ class GeracaoFaturasContratoService
      * A 1ª parcela vence 5 dias úteis após a data-base; as demais, uma por mês a partir
      * daí. A fatura de entrada (quando houver) vence na própria data-base.
      *
-     * A data-base é `$dataBase` quando informada; senão, `$contrato->data_aceite`. A
-     * Rematrícula Online informa a data da confirmação pela família porque o contrato
-     * dela só recebe `data_aceite` quando é assinado (depois de as faturas já existirem).
+     * A data-base é `$dataBase` quando informada; senão, `$contrato->data_aceite`; senão,
+     * hoje. O aceite só existe depois da assinatura, e as faturas costumam ser geradas
+     * antes dela (elas aparecem no próprio contrato), então a falta de `data_aceite` não
+     * pode impedir a geração. A Rematrícula Online informa a data da confirmação pela
+     * família pelo mesmo motivo.
      *
      * @return Collection<int, Fatura>
      */
     public function gerar(Contrato $contrato, int $quantidadeParcelas, float $valorEntrada, ?Carbon $dataBase = null): Collection
     {
-        $dataBase ??= $contrato->data_aceite ? Carbon::parse($contrato->data_aceite) : null;
-
-        if (! $dataBase) {
-            throw new \InvalidArgumentException("O contrato #{$contrato->id} não possui data de aceite definida.");
-        }
+        $dataBase ??= $contrato->data_aceite ? Carbon::parse($contrato->data_aceite) : Carbon::today();
 
         $valorTotal = (float) $contrato->valor_total;
         $valorRestante = $valorTotal - $valorEntrada;

@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Backfill de `data_primeiro_contato` dos leads com contato lançado pela Linha do Tempo/Histórico antes de
- * esses caminhos passarem a encerrar o SLA (`LeadFunilService::registrarPrimeiroContato`).
+ * esses caminhos passarem a preenchê-la (`LeadFunilService::registrarPrimeiroContato`).
  */
 class PreencherPrimeiroContatoCommandTest extends TestCase
 {

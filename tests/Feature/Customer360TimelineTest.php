@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\VisitaInteressado;
 use App\Services\Customer360TimelineService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
@@ -279,7 +280,7 @@ class Customer360TimelineTest extends TestCase
         ]);
     }
 
-    private function feed(): \Livewire\Features\SupportTesting\Testable
+    private function feed(): Testable
     {
         return Livewire::test(TimelineRelationManager::class, [
             'ownerRecord' => $this->interessado,

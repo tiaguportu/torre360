@@ -248,10 +248,9 @@ class LeadFunilService
     }
 
     /**
-     * Encerra o SLA de 1ª resposta quando um contato já gravado na ficha (Linha do Tempo ou aba Histórico
+     * Preenche `data_primeiro_contato` quando um contato já gravado na ficha (Linha do Tempo ou aba Histórico
      * de Contatos) é o primeiro da escola com a família. Sem isto, só a ação "Atendimento" da tabela
-     * preenchia `data_primeiro_contato` e o lead seguia "sem resposta" (e gerando alerta de SLA estourado)
-     * mesmo com contatos registrados por esses dois caminhos.
+     * preenchia a data e o lead seguia "sem resposta" mesmo com contatos registrados por esses dois caminhos.
      *
      * @return bool true quando `data_primeiro_contato` foi preenchida agora
      */
@@ -283,15 +282,15 @@ class LeadFunilService
 
     /**
      * Reavalia `data_primeiro_contato` depois que um registro do histórico mudou de data, tipo ou autoria, ou foi
-     * excluído (chamado por `HistoricoContato::booted`). Sem isto, apagar o contato errado deixava o SLA "respondido"
-     * para sempre e editar a data do primeiro contato não era refletida.
+     * excluído (chamado por `HistoricoContato::booted`). Sem isto, apagar o contato errado mantinha a data do primeiro
+     * contato para sempre e editar a data desse contato não era refletida.
      *
      * A data deriva dos contatos da escola (`HistoricoContato::contatosDaEscola`), mas com cautela: leads antigos têm a
      * data vinda de outras fontes (cadastro, mesclagem) sem registro correspondente no histórico, então só se mexe
      * quando há motivo claro:
      *  - existe um contato da escola mais antigo que a data atual (ou não havia data): vale o mais antigo;
      *  - o registro alterado/excluído era o que definia a data (mesmo instante): vale o mais antigo que restou e, se
-     *    não restar nenhum, a data é limpa (o SLA volta a correr);
+     *    não restar nenhum, a data é limpa;
      *  - em qualquer outro caso a data fica como está.
      *
      * @param  HistoricoContato  $antes  o registro como era antes da alteração (ou o próprio registro excluído)

@@ -51,7 +51,7 @@ class ContadoresCrm
                         ->where(fn (Builder $q) => $q->where('temperatura', 'quente')->orWhere('lead_score', '>=', $corteQuente))
                         ->count(),
                     'ativos' => $base()->ativos()->count(),
-                    'finalizados' => $base()->whereHas('status', fn (Builder $q) => $q->where('is_final', true))->count(),
+                    'finalizados' => $base()->finalizados()->count(),
                 ];
             }
         );

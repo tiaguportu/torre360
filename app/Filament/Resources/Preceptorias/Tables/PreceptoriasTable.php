@@ -32,7 +32,7 @@ class PreceptoriasTable
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query
-                ->with(['professor', 'matricula.pessoa', 'matricula.turma'])
+                ->with(['professor', 'matricula.pessoa', 'matricula.turma', 'cicloPreceptoria'])
                 ->withExists('relatorios')
             )
             ->columns([
@@ -54,6 +54,11 @@ class PreceptoriasTable
                     ->time('H:i')
                     ->placeholder('—')
                     ->sortable(),
+
+                TextColumn::make('cicloPreceptoria.nome')
+                    ->label('Ciclo')
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 TextColumn::make('professor.nome')
                     ->label('Professor(a)')
@@ -83,6 +88,12 @@ class PreceptoriasTable
 
             ->defaultSort('data', 'desc')
             ->filters([
+                SelectFilter::make('ciclo_preceptoria_id')
+                    ->label('Ciclo de Preceptoria')
+                    ->relationship('cicloPreceptoria', 'nome', fn (Builder $query) => $query->orderByDesc('data_inicio')->orderBy('nome'))
+                    ->searchable()
+                    ->preload(),
+
                 SelectFilter::make('professor_id')
                     ->label('Professor(a)')
                     ->relationship('professor', 'nome', fn (Builder $query) => $query

@@ -8,7 +8,6 @@ use App\Enums\StatusVisitaInteressado;
 use App\Observers\InteressadoObserver;
 use App\Services\ContadoresCrm;
 use App\Services\CrmIaVendasService;
-use App\Services\LeadSlaService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -57,12 +57,12 @@ class Interessado extends Model
         'Outro' => 'Outro motivo',
     ];
 
-    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_cifrado', 'token_documentos_expira_em', 'data_proximo_contato', 'proxima_acao', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'sla_primeira_resposta_minutos', 'sla_estouro_notificado_em', 'sla_gestao_notificado_em', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
+    protected $fillable = ['pessoa_id', 'usuario_id', 'origem_interessado_id', 'campanha_marketing_id', 'utm_source', 'utm_medium', 'utm_campaign', 'status_interessado_id', 'token_documentos', 'token_documentos_cifrado', 'token_documentos_expira_em', 'data_proximo_contato', 'proxima_acao', 'observacoes', 'redes_sociais', 'valor_estimado', 'temperatura', 'lead_score', 'lead_score_atualizado_em', 'faixa_distancia_escola', 'meio_transporte', 'motivo_perda', 'concorrente_id', 'fator_decisivo_concorrente', 'detalhes_concorrencia', 'data_primeiro_contato', 'data_conversao', 'token_convite', 'token_convite_expira_em', 'token_convite_usado_em', 'dados_pre_matricula', 'dados_pre_matricula_em'];
 
     /**
      * Campos do lead que entram no contexto enviado à IA (CrmIaVendasService::montarContextoLead). Quando um deles
      * muda, o Dossiê IA em cache descreve um lead que já não é o mesmo. Marcadores internos que a IA não vê
-     * (SLA, tokens, lead score recalculado em lote) não descartam o dossiê.
+     * (tokens, lead score recalculado em lote) não descartam o dossiê.
      */
     public const CAMPOS_DO_CONTEXTO_IA = [
         'pessoa_id',
@@ -111,7 +111,6 @@ class Interessado extends Model
                 'fator_decisivo_concorrente',
                 'data_proximo_contato',
                 'proxima_acao',
-                'sla_primeira_resposta_minutos',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
@@ -130,9 +129,6 @@ class Interessado extends Model
             'token_convite_expira_em' => 'datetime',
             'token_convite_usado_em' => 'datetime',
             'token_documentos_expira_em' => 'datetime',
-            'sla_primeira_resposta_minutos' => 'integer',
-            'sla_estouro_notificado_em' => 'datetime',
-            'sla_gestao_notificado_em' => 'datetime',
             // CPF, endereço e dados da família: guardados cifrados (LGPD); ver ArrayCriptografado.
             'dados_pre_matricula' => ArrayCriptografado::class,
             'dados_pre_matricula_em' => 'datetime',
@@ -259,14 +255,14 @@ class Interessado extends Model
     // ─── Scopes ─────────────────────────────────────────────────
 
     /**
-     * Filtra leads que não estão em status final (ganho/perdido).
-     */
-    /**
      * Filtra leads em etapas de ganho (matriculado).
      */
     public function scopeGanhos(Builder $query): Builder
     {
-        return $query->whereHas('status', fn (Builder $q) => $q->where('is_ganho', true));
+        return $query->whereHas('status', fn (Builder $q) => $q
+            ->where('is_ganho', true)
+            ->orWhereIn(DB::raw('LOWER(TRIM(nome))'), ['matriculado', 'matriculada', 'matrícula realizada', 'matricula realizada'])
+        );
     }
 
     /**
@@ -274,12 +270,77 @@ class Interessado extends Model
      */
     public function scopePerdidos(Builder $query): Builder
     {
-        return $query->whereHas('status', fn (Builder $q) => $q->where('is_final', true)->where('is_ganho', false));
+        return $query->whereHas('status', fn (Builder $q) => $q
+            ->where(function (Builder $sub) {
+                $sub->where('is_final', true)->where('is_ganho', false);
+            })
+            ->orWhereIn(DB::raw('LOWER(TRIM(nome))'), [
+                'desistente',
+                'desistência',
+                'desistencia',
+                'perdido',
+                'perda',
+                'cancelado',
+                'sem interesse',
+                'descarte',
+                'não matriculado',
+                'nao matriculado',
+            ])
+        );
     }
 
+    /**
+     * Filtra leads em andamento (não finalizados, excluindo matriculados e desistentes/perdidos).
+     */
     public function scopeAtivos(Builder $query): Builder
     {
-        return $query->whereHas('status', fn (Builder $q) => $q->where('is_final', false));
+        return $query->whereHas('status', fn (Builder $q) => $q
+            ->where('is_final', false)
+            ->where('is_ganho', false)
+            ->whereNotIn(DB::raw('LOWER(TRIM(nome))'), [
+                'matriculado',
+                'matriculada',
+                'matrícula realizada',
+                'matricula realizada',
+                'desistente',
+                'desistência',
+                'desistencia',
+                'perdido',
+                'perda',
+                'cancelado',
+                'sem interesse',
+                'descarte',
+                'não matriculado',
+                'nao matriculado',
+            ])
+        );
+    }
+
+    /**
+     * Filtra leads finalizados (matriculados ou desistentes/perdidos).
+     */
+    public function scopeFinalizados(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn (Builder $q) => $q
+            ->where('is_final', true)
+            ->orWhere('is_ganho', true)
+            ->orWhereIn(DB::raw('LOWER(TRIM(nome))'), [
+                'matriculado',
+                'matriculada',
+                'matrícula realizada',
+                'matricula realizada',
+                'desistente',
+                'desistência',
+                'desistencia',
+                'perdido',
+                'perda',
+                'cancelado',
+                'sem interesse',
+                'descarte',
+                'não matriculado',
+                'nao matriculado',
+            ])
+        );
     }
 
     /**
@@ -380,22 +441,6 @@ class Interessado extends Model
     }
 
     // ─── Business Methods ───────────────────────────────────────
-
-    /**
-     * Data e hora limite para primeira resposta dentro do horário comercial.
-     */
-    public function limiteSla(): Carbon
-    {
-        return app(LeadSlaService::class)->calcularDataLimite($this);
-    }
-
-    /**
-     * Indica se o lead estourou o SLA de primeira resposta.
-     */
-    public function slaEstourado(): bool
-    {
-        return app(LeadSlaService::class)->slaEstourado($this);
-    }
 
     /**
      * Verifica se o lead precisa de contato urgente.

@@ -305,7 +305,6 @@ class EditInteressado extends EditRecord
 
         if ($user->can('Update:Interessado')) {
             $html .= '<li><strong>🔀 Detecção de Duplicados & Mesclagem:</strong> O sistema detecta automaticamente possíveis duplicados com base em telefone, CPF, e-mail ou aluno dependente em comum (nome e nascimento). A opção "Mesclar Duplicados" (no menu <strong>Mais</strong> ou no aviso de duplicados no topo do formulário) permite consolidar os cadastros de forma atômica e segura, preservando todo o histórico, visitas, pesquisas NPS, documentos e dependentes sem perda de dados.</li>';
-            $html .= '<li><strong>⏱️ SLA de 1ª Resposta Comercial:</strong> O sistema monitora o tempo até o primeiro contato humano, considerando estritamente o expediente comercial (segunda a sexta, 08h às 18h). Prazos customizados podem ser ajustados na seção "Prazo e redes sociais" (padrão de 120 min úteis). Ao estourar, o consultor recebe um alerta imediato no sino do painel. Depois do primeiro contato, o selo da lista informa se a resposta veio no prazo ou com atraso.</li>';
             $html .= '<li><strong>✋ Assumir Lead:</strong> Para interessados que ainda não possuem consultor atribuído, utilize o botão "Assumir Lead" solto no cabeçalho para vincular a família diretamente à sua carteira de atendimento.</li>';
         }
 

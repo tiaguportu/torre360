@@ -16,7 +16,7 @@ class TipoContatoInteressado extends Model
 
     /**
      * Tipos que o sistema grava por conta própria: não oferecidos ao registrar atendimento e que nunca contam
-     * como o primeiro contato da escola com a família (SLA de 1ª resposta).
+     * como o primeiro contato da escola com a família (`data_primeiro_contato`).
      *
      * @var list<string>
      */

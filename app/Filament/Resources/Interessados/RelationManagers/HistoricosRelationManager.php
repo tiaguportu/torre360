@@ -150,7 +150,7 @@ class HistoricosRelationManager extends RelationManager
                     ->after(function (HistoricoContato $record): void {
                         $interessado = $this->getOwnerRecord();
 
-                        // Primeiro contato da escola com a família: encerra o SLA de 1ª resposta.
+                        // Primeiro contato da escola com a família: preenche `data_primeiro_contato`.
                         app(LeadFunilService::class)->registrarPrimeiroContato($interessado, $record);
 
                         $proxima = $this->proximaAcaoInformada ?? ['quando' => null, 'acao' => null];

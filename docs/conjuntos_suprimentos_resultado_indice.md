@@ -88,7 +88,7 @@ Cada indicador do Painel da Direção ainda exige a permissão da tela de onde o
 
 | Variável | Padrão | Para quê |
 |---|---|---|
-| `CRM_MESA_CARENCIA_HORAS`, `CRM_MESA_SEM_PROXIMA_ACAO_DIAS`, `CRM_MESA_VISITA_SEM_RESULTADO_HORAS`, `CRM_MESA_QUENTE_PARADO_DIAS`, `CRM_MESA_SLA_JANELA_DIAS` | 2, 2, 4, 3, 30 | Filas do CRM na Minha Mesa |
+| `CRM_MESA_CARENCIA_HORAS`, `CRM_MESA_SEM_PROXIMA_ACAO_DIAS`, `CRM_MESA_VISITA_SEM_RESULTADO_HORAS`, `CRM_MESA_QUENTE_PARADO_DIAS` | 2, 2, 4, 3 | Filas do CRM na Minha Mesa |
 | `COMPRAS_ALCADA_1_ATE`, `COMPRAS_ALCADA_2_ATE` | 1000, 10000 | Tetos das alçadas de aprovação |
 | `COMPRAS_COTACAO_1_ATE`, `COMPRAS_COTACAO_2_ATE` | 500, 5000 | Faixas do mínimo de cotações (1, 2 e 3) |
 | `COMPRAS_BLOQUEAR_ACIMA_DO_ORCAMENTO`, `COMPRAS_SEGREGAR_FUNCOES` | falso, verdadeiro | Travas de compras |

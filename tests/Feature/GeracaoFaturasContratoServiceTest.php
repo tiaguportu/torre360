@@ -77,12 +77,36 @@ class GeracaoFaturasContratoServiceTest extends TestCase
         $this->assertEquals(6, $contrato->faturas()->count());
     }
 
-    public function test_lanca_excecao_sem_data_aceite(): void
+    public function test_sem_data_aceite_parte_de_hoje_em_vez_de_recusar(): void
     {
+        // As faturas são geradas antes da assinatura: o contrato ainda não tem aceite.
+        Carbon::setTestNow('2026-01-10 09:00:00'); // sábado
         $contrato = $this->criarContrato(1200.0, null);
 
-        $this->expectException(\InvalidArgumentException::class);
-        app(GeracaoFaturasContratoService::class)->gerar($contrato, 12, 0.0);
+        $faturas = app(GeracaoFaturasContratoService::class)->gerar($contrato, 11, 100.0);
+
+        $this->assertCount(12, $faturas);
+        $this->assertSame('2026-01-10', $faturas[0]->vencimento->toDateString()); // entrada, hoje
+        $this->assertSame('2026-01-16', $faturas[1]->vencimento->toDateString()); // 1ª parcela, 5 dias úteis depois
+        $this->assertNull($contrato->fresh()->data_aceite);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_regenerar_apos_reset_da_assinatura_nao_exige_aceite(): void
+    {
+        // resetAssinafyState() zera data_aceite; a regeneração seguinte não pode ficar bloqueada por isso.
+        $contrato = $this->criarContrato(1200.0);
+        $contrato->update(['assinafy_id' => 'doc-1', 'assinafy_status' => 'enviado']);
+        $service = app(GeracaoFaturasContratoService::class);
+
+        $service->gerar($contrato, 12, 0.0);
+        $contrato->resetAssinafyState();
+        $this->assertNull($contrato->fresh()->data_aceite);
+
+        $service->gerar($contrato->fresh(), 6, 0.0);
+
+        $this->assertEquals(6, $contrato->faturas()->count());
     }
 
     public function test_data_base_informada_dispensa_data_aceite_e_tem_precedencia_sobre_ela(): void

@@ -3,7 +3,8 @@
 Resultado dos Lotes A, B, C e E da revisão do módulo de CRM (o Lote C, de desempenho e escala, está na seção 10; o
 Lote E, que fecha os itens 6, 10, 13 e 15 da auditoria — LGPD, régua, importação por IA e termômetro de vagas —, na
 seção 11). Complementa
-`docs/crm_captacao_campanhas_visitas.md`, `docs/crm_followup_whatsapp.md` e `docs/crm_lead_score.md`.
+`docs/crm_captacao_campanhas_visitas.md`, `docs/crm_followup_whatsapp.md` e `docs/crm_lead_score.md`. O SLA de 1ª
+resposta, retirado em 28/10/2026, está registrado em `docs/crm_sla_primeira_resposta_retirado.md`.
 
 | Peça | Onde |
 |---|---|
@@ -160,7 +161,7 @@ filtro do Kanban, atribuição em lote, importação por IA). `User::ativos()` r
 - **Dossiê em cache** (`CrmIaVendasService::dossieDoLead()`, 15 min): o modal do Filament reconstrói o formulário
   a cada interação e gerar dentro dele chamava o Gemini de novo a cada clique. A chave é descartada quando algo
   que a IA lê muda: o histórico (`HistoricoContato`), o próprio lead (só os campos de
-  `Interessado::CAMPOS_DO_CONTEXTO_IA`; SLA, score recalculado em lote e validade do token não contam) e, pelo trait
+  `Interessado::CAMPOS_DO_CONTEXTO_IA`; score recalculado em lote e validade do token não contam) e, pelo trait
   `App\Models\Concerns\InvalidaDossieIaDoLead`, visitas, pesquisa pós-visita, propostas, lista de espera,
   dependentes e documentos (`CrmIaVendasService::descartarDossie()`). Um modelo novo que entre no contexto da IA
   precisa usar o trait. Respostas de contingência (`fallback = true`) nunca são guardadas. O PDF reaproveita o mesmo
@@ -659,7 +660,7 @@ O Lote D2 implementa a tela executiva de inteligência e relatórios do CRM (`/a
 - **Página Filament:** `App\Filament\Pages\CrmRelatoriosPage` com agrupamento no grupo `CRM`, filtros reativos por período (Mês Atual, 30 Dias, 90 Dias, Ano Atual e datas manuais) e filtro por consultor.
 - **Ajuda Contextual:** Header Action `ajuda` com conformidade ao Filament Shield (`getHelpContent()`), listando apenas as ações permitidas ao perfil logado.
 - **Motivos de Perda e Concorrência:** Agrupamento por motivo base (`LeadFunilService::motivoBase`) e tabela com **coluna própria para Colégios Concorrentes**, listando volume de perdas e fator decisivo principal informado pela família.
-- **Desempenho por Consultor:** Painel com tempo médio de primeira resposta (SLA), volume de leads atribuídos, contatos humanos registrados (`automatico = false`), visitas realizadas e percentual de conversão.
+- **Desempenho por Consultor:** Painel com tempo médio de primeira resposta, volume de leads atribuídos, contatos humanos registrados (`automatico = false`), visitas realizadas e percentual de conversão.
 - **Previsão de Receita Ponderada:** Calculada sobre a carteira ativa utilizando o `valor_estimado` do lead (com fallback para `config('crm.previsao_receita.ticket_medio_padrao')`), multiplicada pela probabilidade configurada por etapa (`config('crm.previsao_receita.probabilidades_etapa')`) e comparada com a conversão histórica real apurada pelo `FunilAnaliticoService`.
 
 ### 15.2 Alertas de Detrator NPS em Visitas
@@ -694,52 +695,60 @@ O Lote D3 implementa a inteligência de identificação de duplicidades e uma ro
 
 Testes: `tests/Feature/LeadMesclagemDuplicadosTest.php`.
 
-## 17. Lote D4: SLA de 1ª Resposta em Horário Comercial
+## 17. Lote D4: primeiro contato da escola (o SLA de 1ª resposta foi retirado)
 
-O Lote D4 implementa o controle rigoroso de tempo de atendimento para novos leads, garantindo que o primeiro contato da escola com a família ocorra dentro de um prazo acordado, considerando estritamente os dias úteis e o expediente comercial da instituição.
+O Lote D4 criou o SLA de 1ª resposta em horário comercial (prazo, selo na lista, alertas e fila da Mesa). A
+funcionalidade foi **retirada em 28/10/2026**; como era, por que saiu e como recuperá-la estão em
+[`docs/crm_sla_primeira_resposta_retirado.md`](crm_sla_primeira_resposta_retirado.md). O que continua valendo é a data
+do primeiro contato, descrita abaixo. As colunas `sla_primeira_resposta_minutos`, `sla_estouro_notificado_em` e
+`sla_gestao_notificado_em` permanecem na tabela `interessado`, sem uso.
 
-### 17.1 Configuração e Modelo de Negócio
-- **Configuração Global (`config/crm.php`):**
-  - `'sla.primeira_resposta_minutos_padrao'`: 120 minutos (2 horas comerciais).
-  - `'sla.horario_comercial'`: Início (`08:00`), Fim (`18:00`) e Dias Úteis (`[1, 2, 3, 4, 5]` = Segunda a Sexta).
-- **Customização por Lead (`interessado.sla_primeira_resposta_minutos`):** Permite configurar prazos específicos por lead (ex.: 30 minutos para leads quentes, 240 minutos para campanhas gerais). Quando nulo, adota o padrão institucional.
-- **Rastreabilidade de Notificação (`interessado.sla_estouro_notificado_em`):** Previne múltiplos disparos redundantes para o mesmo lead quando o SLA estoura.
+### 17.1 `data_primeiro_contato`: quando é gravada
 
-### 17.2 Motor de Cálculo de Horário Comercial (`LeadSlaService`)
-- **Algoritmo de Janela Útil:**
-  - Se um lead for cadastrado fora do expediente (à noite ou no final de semana), o cronômetro só passa a correr a partir do primeiro minuto útil do próximo expediente escolar.
-  - O cálculo do prazo salta automaticamente intervalos noturnos e finais de semana (ex.: lead criado na sexta-feira às 17h com SLA de 120 min vencerá na segunda-feira às 09h).
-- **Primeiro Contato Efetivo:** Considera atendido quando `data_primeiro_contato` estiver preenchida (registrada no primeiro atendimento humano da escola à família). Três caminhos preenchem a data, todos via `LeadFunilService`: ação **Atendimento** da tabela e **interação rápida da Linha do Tempo 360°** (`registrarAtendimento()`), e **Registrar Contato** da aba Histórico de Contatos (`registrarPrimeiroContato()`). Antes, só o primeiro caminho preenchia: contatos lançados pela ficha deixavam o lead "sem resposta" e podiam disparar alerta de SLA estourado indevido. Não encerram o SLA: registros automáticos (régua, IA) e os tipos "Movimentação no Funil" e "Formulário do Site". Editar ou excluir o histórico depois **recalcula** a data (item seguinte). Leads que já tinham contato lançado pela ficha antes desta correção ficaram com `data_primeiro_contato` vazia; o comando **`php artisan crm:preencher-primeiro-contato`** corrige isso uma vez. Ele **só simula por padrão** (lista até 10 leads de exemplo e a quantidade, sem gravar); `--aplicar` grava. Regra: lead sem `data_primeiro_contato` com ao menos um histórico que uma pessoa registrou (`usuario_id` preenchido), não automático e que não seja dos tipos de `TipoContatoInteressado::ADMINISTRATIVOS`; a data gravada é a do registro mais antigo que atende à regra. Grava por `toBase()->update()` (não altera `updated_at` nem dispara eventos), só onde a coluna ainda está vazia, então pode ser repetido sem efeito colateral e nunca sobrescreve. Não faz parte do agendador: rodar manualmente (primeiro sem `--aplicar`, conferir a contagem, depois com `--aplicar`).
-- **Reavaliação ao editar ou excluir contatos (`LeadFunilService::reavaliarPrimeiroContato()`):** `HistoricoContato::booted()` chama o serviço nos eventos `updated` (só quando mudam `data_contato`, `tipo_contato_interessado_id`, `automatico` ou `usuario_id`) e `deleted`, o que cobre a edição, a exclusão e a **exclusão em lote** da aba Histórico, seja qual for a tela. A criação não passa por aqui: quem cria já preenche a data (itens acima). A data deriva de `HistoricoContato::contatosDaEscola()` (registrado por pessoa, não automático, fora de `TipoContatoInteressado::ADMINISTRATIVOS`; é a mesma regra do comando de backfill), mas o serviço é **conservador**, porque leads antigos têm a data vinda de outras fontes (cadastro, mesclagem) sem registro no histórico:
-  - existe contato da escola **mais antigo** que a data do lead (ou o lead não tinha data): a data passa a ser a do mais antigo;
-  - o registro alterado/excluído **era o que definia a data** (mesmo instante, e era contato da escola): vale o mais antigo que restou; se não restar nenhum, a data é **limpa** e o SLA volta a correr (`resumoSla()` deixa de dizer "Respondido");
-  - qualquer outro caso (registro administrativo/automático, ou contato com data diferente da gravada) **não mexe** na data. Por isso um lead legado nunca é reaberto por mexer num registro qualquer.
-  - Os avisos de estouro já enviados (`sla_estouro_notificado_em`, `sla_gestao_notificado_em`) não são limpos: reabrir o SLA não repete o alerta.
-  - Atualiza com `$lead->update()` (eventos normais), diferente do backfill, que é correção de dado e usa `toBase()`.
-- **Estrutura de `LeadSlaService::resumoSla()`:** devolve `respondido`, `estourado`, `no_prazo` (`bool|null`), `limite` (Carbon), `prazo_minutos`, `texto`, `cor` e `tooltip`. `estourado` continua sendo só "prazo vencido SEM resposta" (é o que dispara alerta; nunca é `true` para lead respondido). `no_prazo` só tem valor para lead respondido (`null` nos demais). Os cinco estados, na ordem em que são avaliados:
-  - **respondido no prazo** (`data_primeiro_contato` preenchida e `<= limite`, inclusive no instante exato): texto `Respondido no prazo (dd/mm HH:mm)`, cor `success`, `no_prazo = true`, tooltip `Primeiro contato dentro do prazo. Limite comercial: dd/mm/aaaa HH:mm`;
-  - **respondido com atraso** (`data_primeiro_contato` preenchida e `> limite`): texto `Respondido com atraso (dd/mm HH:mm)`, cor `warning` (mesma do "em curso"; o texto é que separa os dois), `no_prazo = false`, tooltip `Primeiro contato depois do prazo. Limite comercial: …`. Antes desta distinção o selo era verde nos dois casos (`Respondido em dd/mm HH:mm`). O veredito não é gravado: é recalculado a cada chamada com o `limite` atual (`created_at` + prazo do lead), então alterar `sla_primeira_resposta_minutos` ou a data do contato pode trocar o selo. Não há alerta nem notificação para "respondido com atraso";
-  - **finalizado** (sem resposta e `status.is_final`): texto `Finalizado`, cor `gray`;
-  - **estourado** (agora > limite): texto `SLA Estourado há XhYYmin` (ou `há N min`), cor `danger`;
-  - **em curso**: texto `SLA: resta XhYYmin útil` (ou `resta N min útil`), cor `warning`.
+`interessado.data_primeiro_contato` é o primeiro contato da *escola* com a família (não o cadastro do lead). Três
+caminhos a preenchem, todos via `LeadFunilService`: ação **Atendimento** da tabela e **interação rápida da Linha do
+Tempo 360°** (`registrarAtendimento()`), e **Registrar Contato** da aba Histórico de Contatos
+(`registrarPrimeiroContato()`). Só o **primeiro** conta; os seguintes não alteram a data. Não contam: registros
+automáticos (régua, IA) e os tipos "Movimentação no Funil" e "Formulário do Site" (`TipoContatoInteressado::ADMINISTRATIVOS`).
+Editar ou excluir o histórico depois **recalcula** a data (item 17.2).
 
-### 17.3 Monitoramento Automático e Notificações (`VerificarSlaPrimeiraRespostaCommand`)
-- **Comando Artisan:** `php artisan crm:verificar-sla-estourado`.
-- **Agendamento Contínuo:** Configurado no `routes/console.php` para execução a cada 15 minutos (`everyFifteenMinutes()->withoutOverlapping(10)`).
-- **Alerta ao Consultor:** Dispara notificação no sino do painel Filament com ícone de relógio e link de acesso rápido ao lead diretamente para o consultor responsável pelo interessado.
+**Backfill (`php artisan crm:preencher-primeiro-contato`).** Leads que já tinham contato lançado pela ficha antes de os
+três caminhos passarem a preencher a data ficaram com `data_primeiro_contato` vazia; o comando corrige isso uma vez. Ele
+**só simula por padrão** (lista até 10 leads de exemplo e a quantidade, sem gravar); `--aplicar` grava. Regra: lead sem
+`data_primeiro_contato` com ao menos um histórico que uma pessoa registrou (`usuario_id` preenchido), não automático e que
+não seja dos tipos de `TipoContatoInteressado::ADMINISTRATIVOS`; a data gravada é a do registro mais antigo que atende à
+regra. Grava por `toBase()->update()` (não altera `updated_at` nem dispara eventos), só onde a coluna ainda está vazia,
+então pode ser repetido sem efeito colateral e nunca sobrescreve. Não faz parte do agendador: rodar manualmente (primeiro
+sem `--aplicar`, conferir a contagem, depois com `--aplicar`).
 
-### 17.4 Interface Filament
-- **Formulário de Cadastro/Edição (`InteressadoForm`):** Campo "SLA de 1ª Resposta (minutos úteis)" com helper dinâmico que exibe o prazo padrão, status do atendimento e a data limite estimada em tempo real.
-- **Tabela de Interessados (`InteressadosTable`):** Coluna badge "SLA 1ª Resposta" (`toggleable()`, visível por padrão) com `texto`, `cor` e `tooltip` de `resumoSla()` (verde respondido no prazo, âmbar respondido com atraso ou em curso, vermelho estourado, cinza finalizado). O tooltip sempre traz `Limite comercial: dd/mm/aaaa HH:mm`, com a frase `Primeiro contato dentro/depois do prazo.` na frente quando o lead já foi respondido; o tempo restante ou de atraso de quem ainda não foi atendido vai no próprio texto do selo.
-- **Ajuda da Página (`EditInteressado`):** Atualização do modal contextual com as orientações completas sobre o funcionamento do SLA.
+### 17.2 Reavaliação ao editar ou excluir contatos (`LeadFunilService::reavaliarPrimeiroContato()`)
 
-### 17.5 SLA para Leads sem Consultor e Alertas da Gestão (Lotes F4 e G5)
-- **Leads sem Distribuição Automática:** Leads originados por formulários públicos ou landing pages nascem sem consultor (`usuario_id IS NULL`). Anteriormente, esses leads eram desconsiderados pelo verificador de estouro de SLA.
-- **Rastreamento Separado (`sla_gestao_notificado_em`):** Adicionada a coluna `interessado.sla_gestao_notificado_em` via migration idempotente. O controle é independente de `sla_estouro_notificado_em` (que pertence ao consultor que venha a assumir a família posteriormente).
-- **Notificação Consolidada por Execução:** A cada rodada do comando `crm:verificar-sla-estourado`, se houver leads sem consultor com SLA estourado pendentes de notificação à gestão, uma única notificação agregada é enviada aos usuários com papéis `admin`, `super_admin` e `coordenador`, contendo a contagem, até 5 nomes e link direto com filtro para atendimento rápido.
-- **Preservação de Alertas sem Gestores Ativos (Lote G5):** A gravação do timestamp `sla_gestao_notificado_em` e o incremento da contagem de notificados só acontecem quando existem destinatários gestores ativos homologados. Na ausência de gestores ativos, o sistema apenas registra um aviso em log (`Log::warning`) e preserva o lead pendente para as próximas execuções, evitando a perda silenciosa de alertas.
+`HistoricoContato::booted()` chama o serviço nos eventos `updated` (só quando mudam `data_contato`,
+`tipo_contato_interessado_id`, `automatico` ou `usuario_id`) e `deleted`, o que cobre a edição, a exclusão e a **exclusão
+em lote** da aba Histórico, seja qual for a tela. A criação não passa por aqui: quem cria já preenche a data (item 17.1).
+A data deriva de `HistoricoContato::contatosDaEscola()` (registrado por pessoa, não automático, fora de
+`TipoContatoInteressado::ADMINISTRATIVOS`; é a mesma regra do comando de backfill), mas o serviço é **conservador**,
+porque leads antigos têm a data vinda de outras fontes (cadastro, mesclagem) sem registro no histórico:
 
-Testes: `tests/Feature/CrmSlaPrimeiraRespostaTest.php`, `tests/Feature/CrmSlaGestaoSemConsultorLoteF4Test.php`, `tests/Feature/CrmSlaGestaoSemDestinatarioLoteG5Test.php`, `tests/Feature/CrmSlaPrimeiroContatoPelaFichaTest.php` (Linha do Tempo e Histórico encerram o SLA), `tests/Feature/CrmSlaPrimeiroContatoReavaliacaoTest.php` (editar/excluir/excluir em lote reavalia a data, e lead legado não é reaberto) `tests/Feature/PreencherPrimeiroContatoCommandTest.php` (backfill) e `tests/Feature/CrmSlaRespostaNoPrazoOuComAtrasoTest.php` (selo "no prazo" × "com atraso": limite exato, sexta à noite, prazo personalizado, estados sem resposta e coluna da tabela).
+- existe contato da escola **mais antigo** que a data do lead (ou o lead não tinha data): a data passa a ser a do mais antigo;
+- o registro alterado/excluído **era o que definia a data** (mesmo instante, e era contato da escola): vale o mais antigo
+  que restou; se não restar nenhum, a data é **limpa**;
+- qualquer outro caso (registro administrativo/automático, ou contato com data diferente da gravada) **não mexe** na data.
+  Por isso um lead legado nunca é alterado por mexer num registro qualquer.
+
+Atualiza com `$lead->update()` (eventos normais), diferente do backfill, que é correção de dado e usa `toBase()`.
+
+### 17.3 Quem lê a data
+
+- **Relatório Desempenho por Consultor** (`CrmRelatoriosService`): tempo médio entre o cadastro e o primeiro
+  atendimento (seção 15.1).
+- **Mesclagem de leads** (`LeadMesclagemService`): vale a data mais antiga entre origem e destino (seção 16.2).
+
+Nenhuma tela mostra mais "respondido" ou "estourado", e nenhum alerta depende da data.
+
+Testes: `tests/Feature/PrimeiroContatoPelaFichaTest.php` (Linha do Tempo e Histórico preenchem a data),
+`tests/Feature/PrimeiroContatoReavaliacaoTest.php` (editar/excluir/excluir em lote reavalia a data, e lead legado não é
+alterado) e `tests/Feature/PreencherPrimeiroContatoCommandTest.php` (backfill).
 
 ## 18. Lote D7: Escopo da Carteira do Consultor & Leads Não Atribuídos
 

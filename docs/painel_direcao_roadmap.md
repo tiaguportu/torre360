@@ -28,7 +28,7 @@ período anterior e metas. Hoje esses números estão espalhados em relatórios 
 - **Painel da Direção** com cartões (valor atual, variação, meta, semáforo) e detalhamento por
   clique, agrupados em: Alunos e vagas, Financeiro, Captação, Pedagógico, Operação.
 - Filtro por unidade e período; comparação com o mesmo período do ano anterior.
-- Lista de **atenção hoje**: itens que exigem ação (contratos pendentes, SLA estourado, OS vencidas,
+- Lista de **atenção hoje**: itens que exigem ação (contratos pendentes, leads sem próxima ação, OS vencidas,
   planos de manutenção vencidos, pareceres aguardando revisão).
 
 ### Regras

@@ -2,10 +2,14 @@
 
 > **Status: implementada** (2026-10-27). Estende a Minha Mesa de Pendências (Onda 71) com as filas do CRM e torna a próxima ação
 > do lead obrigatória em cada atendimento.
+>
+> **Atualização (2026-10-28):** o SLA de 1ª resposta e a fila *Primeira resposta fora do prazo* foram **retirados** (registro em
+> [crm_sla_primeira_resposta_retirado.md](crm_sla_primeira_resposta_retirado.md)). A Mesa tem **cinco** filas do CRM; as
+> menções ao SLA abaixo descrevem o que existia na época da entrega.
 
 ## Contexto
 
-O consultor do CRM trabalha com a lista de Interessados: abas (*Precisa de contato*, *Quentes*, *Estagnados*, *Sem consultor*), selo de SLA e
+O consultor do CRM trabalha com a lista de Interessados: abas (*Precisa de contato*, *Quentes*, *Estagnados*, *Sem consultor*), selo de SLA (retirado) e
 um alerta por e-mail. A pergunta do dia — "para quem eu ligo agora?" — exigia abrir três abas e lembrar. Pior: o atendimento podia ser
 registrado **sem dizer o que fazer depois**, e o lead sem data de próximo contato simplesmente sumia dos alertas (`data_proximo_contato`
 vazia não entra em *Precisa de contato*).
@@ -13,7 +17,7 @@ vazia não entra em *Precisa de contato*).
 ## O que já existia
 
 - `Interessado` com `data_proximo_contato` (quando), as abas e escopos `ativos`, `precisaContato`, `estagnados`, `naoAtribuidos` e `visivelPara`.
-- `LeadSlaService` (SLA de primeira resposta em horário comercial) e o comando `crm:verificar-sla-estourado`.
+- `LeadSlaService` (SLA de primeira resposta em horário comercial) e o comando `crm:verificar-sla-estourado` (retirados em 2026-10-28).
 - `VisitaInteressado` e a régua de visita (agradecimento e pesquisa de satisfação saem na "visita realizada").
 - A Minha Mesa (Onda 71): contrato `FontePendencia`, registro em `config/mesa_pendencias.php`.
 
@@ -27,7 +31,7 @@ vazia não entra em *Precisa de contato*).
 - **Registro administrativo** no histórico (tipos "Formulário do site" e "Movimentação no Funil", que o sistema grava por conta própria) **não pede nem altera** a próxima ação: não é conversa com a família.
 - A lista mostra a próxima ação sob o nome do lead. Toda a regra está em `ProximaAcaoLeadService`.
 
-### Seis filas na Minha Mesa
+### Seis filas na Minha Mesa (cinco desde 2026-10-28)
 
 A visibilidade é a da lista de Interessados: o consultor vê a **própria carteira e os leads sem dono**; quem tem `ViewAll:Interessado` vê todos. Cada fila usa os mesmos escopos das abas da lista, para a Mesa nunca contradizer a tela onde o lead se resolve.
 
@@ -35,7 +39,7 @@ A visibilidade é a da lista de Interessados: o consultor vê a **própria carte
 |---|---|---|
 | **Contatos do dia** | próximo contato marcado para hoje ou já vencido | já passou da hora |
 | **Visitas de hoje e sem resultado** | visitas agendadas para hoje ou passadas sem resultado | o horário passou há mais de 4 h sem resultado |
-| **Primeira resposta fora do prazo** | SLA de 1ª resposta estourado (horário comercial, últimos 30 dias) | sempre |
+| ~~**Primeira resposta fora do prazo**~~ (retirada) | SLA de 1ª resposta estourado (horário comercial, últimos 30 dias) | sempre |
 | **Leads sem próxima ação** | lead em andamento sem próximo contato (com carência para o recém-cadastrado) | sem próxima ação há mais de 2 dias |
 | **Leads quentes sem contato** | temperatura quente ou score alto, sem interação humana há 3 dias | o dobro do prazo |
 | **Leads sem consultor** (`Update:Interessado`) | lead em andamento sem responsável | passadas as horas do alerta de gestão |
@@ -48,7 +52,7 @@ A visibilidade é a da lista de Interessados: o consultor vê a **própria carte
 | *Sem próxima ação* atrasado após (dias) | 2 | `CRM_MESA_SEM_PROXIMA_ACAO_DIAS` |
 | Visita sem resultado atrasada após (h) | 4 | `CRM_MESA_VISITA_SEM_RESULTADO_HORAS` |
 | Lead quente parado: entra após (dias; o dobro é atrasado) | 3 | `CRM_MESA_QUENTE_PARADO_DIAS` |
-| Janela de cadastro da fila de SLA (dias) | 30 | `CRM_MESA_SLA_JANELA_DIAS` |
+| ~~Janela de cadastro da fila de SLA (dias)~~ (retirado) | 30 | `CRM_MESA_SLA_JANELA_DIAS` |
 
 ### Permissões
 

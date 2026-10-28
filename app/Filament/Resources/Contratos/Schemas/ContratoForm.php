@@ -126,7 +126,7 @@ class ContratoForm
                         DateTimePicker::make('data_aceite')
                             ->label('Data de Aceite')
                             ->displayFormat('d/m/Y H:i')
-                            ->helperText('Preenchida automaticamente quando a última assinatura é concluída. Pode ser informada manualmente (por exemplo, contrato assinado em papel). É a data-base da 1ª parcela das faturas.'),
+                            ->helperText('Preenchida automaticamente quando a última assinatura é concluída. Pode ser informada manualmente (por exemplo, contrato assinado em papel). Não é necessária para gerar as faturas: elas costumam ser geradas antes da assinatura e, sem aceite, partem da data em que são geradas.'),
                     ]),
 
                 Section::make('Responsáveis financeiros')

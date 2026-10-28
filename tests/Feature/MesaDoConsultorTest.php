@@ -20,7 +20,6 @@ use App\Services\Pendencias\Fontes\ContatosDoDia;
 use App\Services\Pendencias\Fontes\LeadsQuentesParados;
 use App\Services\Pendencias\Fontes\LeadsSemConsultor;
 use App\Services\Pendencias\Fontes\LeadsSemProximaAcao;
-use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
 use App\Services\Pendencias\Fontes\VisitasDoDia;
 use App\Services\Pendencias\MesaDePendencias;
 use App\Services\ProximaAcaoLeadService;
@@ -35,10 +34,10 @@ use Tests\Concerns\ProibeLazyLoading;
 use Tests\TestCase;
 
 /**
- * Mesa do consultor e próxima ação obrigatória (Onda 84): as seis filas do CRM na Mesa de pendências, a regra da próxima
+ * Mesa do consultor e próxima ação obrigatória (Onda 84): as cinco filas do CRM na Mesa de pendências, a regra da próxima
  * ação e as telas que a exigem.
  *
- * "Hoje" é segunda-feira, 26/10/2026, 10:00 (dia útil, dentro do horário comercial do SLA).
+ * "Hoje" é segunda-feira, 26/10/2026, 10:00.
  */
 class MesaDoConsultorTest extends TestCase
 {
@@ -268,25 +267,6 @@ class MesaDoConsultorTest extends TestCase
         $this->assertStringContainsString('Passou sem resultado', $fila->itens($this->ana, 5)[0]->detalhe);
     }
 
-    public function test_primeira_resposta_estourada_usa_o_horario_comercial_do_sla(): void
-    {
-        $this->como($this->ana);
-        // Quinta-feira 22/10 às 09:00 + 120 min úteis = 11:00 de quinta: estourou.
-        $estourado = $this->lead($this->ana, [], Carbon::parse('2026-10-22 09:00:00'));
-        $this->lead($this->ana, [], now()->subMinutes(10));
-        $this->lead($this->ana, ['data_primeiro_contato' => Carbon::parse('2026-10-22 09:30:00')], Carbon::parse('2026-10-22 09:00:00'));
-        $this->lead($this->bruno, [], Carbon::parse('2026-10-22 09:00:00'));
-        $this->lead($this->ana, [], now()->subDays(60));
-
-        $fila = new PrimeiraRespostaEstourada;
-
-        $this->assertSame(1, $fila->contar($this->ana));
-        $this->assertSame(1, $fila->atrasados($this->ana));
-        $item = $fila->itens($this->ana, 5)[0];
-        $this->assertSame($estourado->pessoa->nome, $item->titulo);
-        $this->assertTrue($item->atrasado);
-    }
-
     public function test_leads_quentes_parados(): void
     {
         $this->como($this->ana);
@@ -333,10 +313,12 @@ class MesaDoConsultorTest extends TestCase
         $this->como($this->ana);
         $filas = app(MesaDePendencias::class)->filas($this->ana)->keyBy(fn ($fila) => $fila->fonte->chave());
 
-        foreach (['contatos_do_dia', 'visitas_do_dia', 'primeira_resposta_estourada', 'leads_sem_proxima_acao', 'leads_quentes_parados', 'leads_sem_consultor'] as $chave) {
+        foreach (['contatos_do_dia', 'visitas_do_dia', 'leads_sem_proxima_acao', 'leads_quentes_parados', 'leads_sem_consultor'] as $chave) {
             $this->assertTrue($filas->has($chave), "{$chave} deveria estar na Mesa");
             $this->assertFalse($filas[$chave]->erro, "{$chave} não pode falhar");
         }
+
+        $this->assertFalse($filas->has('primeira_resposta_estourada'), 'o SLA de 1ª resposta foi retirado e a fila saiu da Mesa');
 
         $this->assertSame(1, $filas['contatos_do_dia']->total, 'só o lead da Ana');
         $this->assertSame(1, $filas['contatos_do_dia']->atrasados);

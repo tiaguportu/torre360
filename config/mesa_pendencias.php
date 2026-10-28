@@ -19,7 +19,6 @@ use App\Services\Pendencias\Fontes\LeadsSemProximaAcao;
 use App\Services\Pendencias\Fontes\OrcamentoEstourado;
 use App\Services\Pendencias\Fontes\PedidosParaAprovar;
 use App\Services\Pendencias\Fontes\PedidosParaReceber;
-use App\Services\Pendencias\Fontes\PrimeiraRespostaEstourada;
 use App\Services\Pendencias\Fontes\ProjecaoDoProximoAno;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\ReajustesDeContrato;
@@ -53,7 +52,6 @@ return [
         // Mesa do consultor (Onda 84): filas do CRM.
         ContatosDoDia::class,
         VisitasDoDia::class,
-        PrimeiraRespostaEstourada::class,
         LeadsSemProximaAcao::class,
         LeadsQuentesParados::class,
         LeadsSemConsultor::class,

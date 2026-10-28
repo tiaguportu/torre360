@@ -154,7 +154,7 @@ Controle de acesso baseado em papéis (RBAC).
 ---
 
 ### 7. 🎯 CRM e Captação
-Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_captacao_campanhas_visitas.md`, `docs/crm_lead_score.md` e `docs/crm_followup_whatsapp.md`.
+Funil de captação de alunos (menu **CRM / Comercial**). Detalhes em `docs/crm_captacao_campanhas_visitas.md`, `docs/crm_lead_score.md` e `docs/crm_followup_whatsapp.md`. O SLA de 1ª resposta foi retirado (ver `docs/crm_sla_primeira_resposta_retirado.md`).
 
 | Recurso | Descrição |
 |---|---|
@@ -443,7 +443,7 @@ Uma tela com o que espera ação do papel ativo, reunindo as filas dos módulos.
 | **Minha Mesa** | Nove filas iniciais: cancelamentos (analisar, concluir, devolver), documentos (enviar, assinaturas atrasadas), rematrículas sem turma, transferências em andamento, providências de RH vencidas e grades incompletas |
 | Por papel | Só aparecem as filas que o papel ativo pode resolver; a página nem aparece para quem não tem nenhuma. Fila que falha não derruba a Mesa |
 | Selo do menu | Atrasados em vermelho (ou o total em amarelo), guardado por 5 minutos por usuário e papel |
-| Filas acrescentadas depois | Classificação contábil (73), seis do CRM (84), três de compras, estoque abaixo do mínimo, orçamento estourado, três do financeiro (78), turmas com resultado negativo (77) e projeção do próximo ano (76): lista completa em `docs/mesa_pendencias_roadmap.md` |
+| Filas acrescentadas depois | Classificação contábil (73), cinco do CRM (84), três de compras, estoque abaixo do mínimo, orçamento estourado, três do financeiro (78), turmas com resultado negativo (77) e projeção do próximo ano (76): lista completa em `docs/mesa_pendencias_roadmap.md` |
 
 ---
 
@@ -491,8 +491,8 @@ O atendimento do CRM sempre diz o que fazer depois, e a Minha Mesa mostra ao con
 | Recurso | Descrição |
 |---|---|
 | Próxima ação | Coluna `interessado.proxima_acao` (o quê) ao lado de `data_proximo_contato` (quando). **Registrar atendimento** pede os dois, exceto quando o resultado encerra o ciclo (*Efetuou matrícula* ou *Sem interesse*); botão **Próxima ação** na lista |
-| Seis filas na Mesa | Contatos do dia, visitas de hoje e sem resultado, primeira resposta fora do prazo, leads sem próxima ação, leads quentes sem contato e leads sem consultor; visibilidade da lista de Interessados (a própria carteira e os sem dono) |
-| Parâmetros | `config/crm.php` → `mesa` (carência, prazos de atraso e janela do SLA) |
+| Cinco filas na Mesa | Contatos do dia, visitas de hoje e sem resultado, leads sem próxima ação, leads quentes sem contato e leads sem consultor; visibilidade da lista de Interessados (a própria carteira e os sem dono) |
+| Parâmetros | `config/crm.php` → `mesa` (carência e prazos de atraso) |
 
 ---
 

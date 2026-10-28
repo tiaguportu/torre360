@@ -55,12 +55,32 @@ class StatusInteressado extends Model
     }
 
     /**
-     * Etapa de perda padrão: "Perdido" ou, se renomeada, a primeira final que não é de ganho.
+     * Etapa de perda padrão: "Perdido", "Desistente" ou, se renomeada, a primeira final que não é de ganho.
      */
     public static function perdido(): ?self
     {
-        return static::query()->where('nome', 'Perdido')->first()
+        return static::query()->whereIn('nome', ['Perdido', 'Desistente'])->orderBy('ordem')->first()
             ?? static::query()->where('is_final', true)->where('is_ganho', false)->orderBy('ordem')->orderBy('id')->first();
+    }
+
+    /**
+     * Indica se este status representa um encerramento por ganho (matrícula).
+     */
+    public function isGanho(): bool
+    {
+        if ($this->is_ganho) {
+            return true;
+        }
+
+        $nomeLower = mb_strtolower(trim($this->nome));
+
+        return in_array($nomeLower, [
+            'matriculado',
+            'matriculada',
+            'matrícula realizada',
+            'matricula realizada',
+            'ganho',
+        ], true);
     }
 
     /**
@@ -85,6 +105,18 @@ class StatusInteressado extends Model
             'descarte',
             'não matriculado',
             'nao matriculado',
-        ]);
+        ], true);
+    }
+
+    /**
+     * Indica se este status representa um encerramento geral (seja ganho ou perda).
+     */
+    public function isFinal(): bool
+    {
+        if ($this->is_final) {
+            return true;
+        }
+
+        return $this->isGanho() || $this->isPerda();
     }
 }

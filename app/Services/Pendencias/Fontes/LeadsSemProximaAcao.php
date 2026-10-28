@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Lead em andamento sem próximo contato marcado (Onda 84): ninguém sabe quando ele volta a ser procurado, então ele só reaparece
- * quando alguém lembra. Lead recém-cadastrado tem uma carência (o SLA de primeira resposta cuida dele); depois de alguns dias
+ * quando alguém lembra. Lead recém-cadastrado tem uma carência (dá tempo de o consultor fazer o primeiro contato); depois de alguns dias
  * sem próxima ação a pendência passa a atrasada.
  */
 final class LeadsSemProximaAcao extends FilaDeLeads

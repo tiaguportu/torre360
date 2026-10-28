@@ -327,7 +327,7 @@ class LeadFunilServiceTest extends TestCase
             'data_contato' => now(),
         ]);
 
-        // Régua/IA e registros do funil não são conversa com a família: nada de SLA respondido.
+        // Régua/IA e registros do funil não são conversa com a família: a data do primeiro contato não é preenchida.
         $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico($ligacao->id, ['automatico' => true])));
         $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico(TipoContatoInteressado::porNome(TipoContatoInteressado::FUNIL)->id)));
         $this->assertFalse($this->funil->registrarPrimeiroContato($lead, $novoHistorico(TipoContatoInteressado::porNome(TipoContatoInteressado::FORMULARIO_SITE)->id)));

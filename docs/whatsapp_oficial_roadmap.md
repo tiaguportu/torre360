@@ -28,7 +28,8 @@ compartilhada nem registro do que a escola prometeu.
 - **Nenhuma integração com provedor:** a busca por Cloud API, Twilio, Z-API e similares no código e na configuração não acha nada.
   Não existe webhook de entrada de mensagem (`routes/api.php` só recebe Assinafy e pagamento).
 - O que o sistema precisa **registrar** quando o consultor conversa: o histórico de contato (`HistoricoContato`), a **próxima ação
-  obrigatória** (Onda 84) e o **SLA de primeira resposta** (`LeadSlaService`). Uma mensagem enviada pelo canal tem de contar para os dois.
+  obrigatória** (Onda 84) e a **data do primeiro contato** (`data_primeiro_contato`; o SLA de primeira resposta que a usava foi
+  retirado em 2026-10-28). Uma mensagem enviada pelo canal tem de contar para os três.
 
 ## Escopo proposto
 
@@ -50,7 +51,7 @@ compartilhada nem registro do que a escola prometeu.
   `ConversaWhatsapp` e `MensagemWhatsapp`, ligadas por **telefone normalizado** à `Pessoa`, ao lead e ao responsável.
 - **Caixa de conversas** (CRM e Secretaria): lista por contato, atribuição (quem atende), situação, respostas rápidas, anexos e o
   histórico do lead ao lado. Mensagem de número desconhecido vai para a triagem, **sem criar lead sozinha**.
-- Cada mensagem humana alimenta o **histórico de contato**, a **próxima ação** e o **SLA** (a primeira resposta por WhatsApp conta).
+- Cada mensagem humana alimenta o **histórico de contato**, a **próxima ação** e a **data do primeiro contato** (a primeira resposta por WhatsApp conta).
 
 ### Consentimento, limites e custo
 - **Opt-in por canal** (novo campo, separado do e-mail) com prova (data, origem, texto); **opt-out** por palavra ("SAIR") ou pela

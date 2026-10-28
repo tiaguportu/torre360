@@ -11,7 +11,6 @@ use App\Models\Interessado;
 use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Models\User;
-use App\Services\LeadSlaService;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
@@ -21,10 +20,10 @@ use Tests\TestCase;
 
 /**
  * `data_primeiro_contato` acompanha o histórico: editar a data/tipo/autoria do contato que a definia, ou excluí-lo,
- * reavalia a data (e reabre o SLA quando não sobra nenhum contato da escola). Leads antigos, com a data vinda de
- * outra fonte, não podem ser reabertos por mexer num registro qualquer.
+ * reavalia a data (e a limpa quando não sobra nenhum contato da escola). Leads antigos, com a data vinda de
+ * outra fonte, não podem ter a data limpa por mexer num registro qualquer.
  */
-class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
+class PrimeiroContatoReavaliacaoTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -106,7 +105,7 @@ class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
         $this->assertSame('2026-10-01 07:30:00', $this->dataDoLead());
     }
 
-    public function test_excluir_o_contato_que_definia_a_data_usa_o_seguinte_e_sem_nenhum_reabre_o_sla(): void
+    public function test_excluir_o_contato_que_definia_a_data_usa_o_seguinte_e_sem_nenhum_limpa_a_data(): void
     {
         $a = $this->contato('2026-10-01 09:00:00');
         $b = $this->contato('2026-10-03 10:00:00');
@@ -116,10 +115,7 @@ class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
         $this->assertSame('2026-10-03 10:00:00', $this->dataDoLead());
 
         $b->delete();
-        $this->assertNull($this->dataDoLead());
-
-        $lead = Interessado::with('status')->findOrFail($this->lead->id);
-        $this->assertFalse(app(LeadSlaService::class)->resumoSla($lead)['respondido'], 'Sem contato da escola, o SLA volta a correr.');
+        $this->assertNull($this->dataDoLead(), 'Sem contato da escola, o lead volta a ficar sem primeiro contato.');
     }
 
     public function test_excluir_contato_que_nao_definia_a_data_nao_altera_nada(): void
@@ -133,7 +129,7 @@ class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
         $this->assertSame('2026-10-01 09:00:00', $this->dataDoLead());
     }
 
-    public function test_lead_antigo_com_data_de_outra_fonte_nao_e_reaberto_ao_mexer_no_historico(): void
+    public function test_lead_antigo_com_data_de_outra_fonte_nao_tem_a_data_limpa_ao_mexer_no_historico(): void
     {
         // Data legada (gravada no cadastro, sem contato humano correspondente) + registro administrativo no mesmo instante.
         $this->definirPrimeiroContato('2026-09-01 08:00:00');
@@ -150,7 +146,7 @@ class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
         $this->assertSame('2026-09-01 08:00:00', $this->dataDoLead());
 
         $humano->delete();
-        $this->assertSame('2026-09-01 08:00:00', $this->dataDoLead(), 'A data legada não vem desse contato: não se reabre o SLA.');
+        $this->assertSame('2026-09-01 08:00:00', $this->dataDoLead(), 'A data legada não vem desse contato: não se limpa.');
     }
 
     public function test_tirar_o_contato_da_regra_por_tipo_administrativo_ou_automatico_reavalia_a_data(): void
@@ -220,7 +216,7 @@ class CrmSlaPrimeiroContatoReavaliacaoTest extends TestCase
         $this->assertSame('2026-10-03 10:00:00', $this->dataDoLead());
     }
 
-    public function test_excluir_em_lote_pela_aba_historico_reabre_o_sla_quando_nao_resta_contato(): void
+    public function test_excluir_em_lote_pela_aba_historico_limpa_a_data_quando_nao_resta_contato(): void
     {
         $a = $this->contato('2026-10-01 09:00:00');
         $b = $this->contato('2026-10-03 10:00:00');
