@@ -34,6 +34,10 @@ class FaturaPolicy
 
     public function delete(AuthUser $authUser, Fatura $fatura): bool
     {
+        if ($fatura->estaProtegida()) {
+            return false;
+        }
+
         return $authUser->can('Delete:Fatura');
     }
 

@@ -58,6 +58,15 @@ class Fatura extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Fatura $fatura): void {
+            if ($fatura->estaProtegida()) {
+                throw new \LogicException("A fatura Nº {$fatura->id} possui pagamentos, registro em gateway ou status liquidado e não pode ser excluída.");
+            }
+        });
+    }
+
     public function contrato(): BelongsTo
     {
         return $this->belongsTo(Contrato::class);

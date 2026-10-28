@@ -135,7 +135,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - **Abas de situação (topo da tabela), com contador:** *Todos*, *Precisa de contato* (contato atrasado), *Estagnados* (7+ dias sem interação), *Quentes* (temperatura quente ou score alto), *Em andamento* e *Finalizados* (matriculados/perdidos). Os contadores são guardados por até 1 minuto para a tela abrir rápido, mas são atualizados na hora quando um lead, um contato ou uma etapa do funil é alterado; se o score for recalculado em massa, o contador *Quentes* pode levar até 1 minuto para refletir.
    - **Busca:** O campo de busca encontra o interessado pelo **nome** (as palavras podem vir em qualquer ordem: `souza maria` acha `Maria Souza`), **e-mail, telefone** ou **CPF**. No telefone vale **qualquer parte do número**, e só os números contam: parênteses, espaços, traços, pontos e barras são ignorados tanto no que você digita quanto no que está cadastrado. Por exemplo, `98888`, `31 98888`, `(31) 98888-7777` e `31988887777` acham o telefone `(31) 98888-7777`. Números com menos de 3 dígitos só são procurados no nome e no e-mail.
    - **Colunas visíveis:** **Interessado** (nome e telefone logo abaixo), **Status / Consultor** (status em badge e o consultor abaixo), **Qualificação** (Score em badge e a temperatura do consultor abaixo), **Próximo contato** (data e "em/há X dias") e **Origem**. Leads com contato atrasado aparecem com uma faixa vermelha na linha.
-   - **Colunas opcionais (seletor de colunas):** SLA 1ª Resposta (badge dinâmico com tooltip da data limite comercial e tempo decorrido), Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
+   - **Colunas opcionais (seletor de colunas):** Última Visita / NPS (ex: `🏫 15/09 (NPS 10)` com badge colorido por classificação e tooltip com depoimento/consultor), Telefone (com cópia rápida), Consultor, Campanha, Temperatura, Dias no Funil, Valor Estimado, Total de Contatos, Sem Interação, Distância, Transporte, Redes Sociais e Criado em.
    - **Ordenação Padrão:** Os leads mais urgentes aparecem primeiro (ordenado por data de próximo contato).
 2. **Filtros Avançados:**
    - **Visitas à Escola:** Filtre rapidamente famílias que *"Já realizaram visita"*, *"Possuem visita agendada"* ou *"Ainda não visitaram"*.
@@ -150,7 +150,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp*, *Redes sociais*, *Enviar ao consultor* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
    - **Redes sociais (ícone de globo):** Leva direto ao perfil do lead na rede social cadastrada na ficha (veja a seção 3.3), abrindo em uma **nova aba**. Ao passar o mouse sobre o ícone, a dica diz qual rede será aberta (ex.: *Abrir Instagram*). Se o lead tem **mais de um perfil**, o clique abre uma janela com uma linha por rede e um botão **Abrir** em cada uma. O ícone só aparece para leads que têm rede social cadastrada com link válido: links que não começam com `http://` ou `https://` (por exemplo, texto solto vindo da importação com IA) são ignorados. A coluna opcional **Redes Sociais** da tabela segue a mesma regra.
    - **Mesclar Duplicados:** Quando o sistema detecta telefones, CPFs, e-mails ou alunos semelhantes entre leads, permite abrir a conciliação assistida para unificar os dados no lead vencedor sem perda de histórico. Pode ser acionado pelo menu **Mais (⋮)** do cabeçalho da edição, pelo botão direto no aviso de duplicados na ficha do lead ou no menu da tabela.
-   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo da escola com a família (cumprindo e finalizando o ciclo de SLA de 1ª resposta).
+   - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e guarda a data do primeiro contato efetivo da escola com a família (usada no relatório *Desempenho por Consultor*).
    - **Enviar ao consultor (ícone de compartilhar):** Abre o WhatsApp do consultor responsável pelo lead com a mensagem pronta: link direto para falar com o interessado (o consultor só clica), alunos, status, origem, temperatura, próximo contato, visita agendada e um resumo dos **3 últimos contatos** registrados. O ícone fica **verde** quando o consultor tem telefone cadastrado e **amarelo** quando não tem — nesse caso o WhatsApp abre com a mensagem pronta, sem destinatário, e você escolhe o contato. Só aparece para leads que têm consultor. Para o envio ir direto ao consultor, o telefone dele precisa estar preenchido no cadastro da **Pessoa** vinculada ao usuário.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
    - **Matricular:** Abre o **Assistente de Matrícula** já preenchido com os dados do lead (veja a seção 3.11). Quem não tem acesso ao Assistente vê, no lugar, **Marcar matriculado**, que conclui o lead como matriculado do mesmo modo que o assistente (status, data de conversão, indicação e documentos). Se a escola ainda não tiver uma etapa de matrícula cadastrada em *Status de Interessado*, o sistema avisa em vez de deixar o lead sem status.
@@ -177,9 +177,8 @@ O formulário de edição do interessado oferece ferramentas de qualificação o
   1. **Acompanhamento (aberta por padrão):** Status do lead, Consultor responsável, Temperatura, Data do próximo contato, Próxima ação e Motivo da perda (exibido condicionalmente se o status for de perda).
   2. **Contato e origem (aberta por padrão):** Responsável (com atalho para criação rápida de pessoa), E-mail, Telefone, Origem do lead e Campanha de marketing.
   3. **Qualificação (recolhida na edição, aberta na criação):** Distância até a escola, Meio de transporte e Valor estimado da matrícula. A seção indica com clareza: *"Entram no Lead Score"*.
-  4. **Prazo e redes sociais (recolhida na edição se não houver redes cadastradas, aberta se houver; aberta na criação):** SLA de 1ª resposta em minutos úteis e o cadastro de perfis em **Redes Sociais**.
+  4. **Redes sociais (recolhida na edição se não houver redes cadastradas, aberta se houver; aberta na criação):** o cadastro de perfis em **Redes Sociais**.
   5. **Observações (aberta por padrão):** Campo de anotações gerais em largura total.
-- **SLA de 1ª Resposta (minutos úteis):** Prazo em minutos comerciais para realização do primeiro contato da escola com a família (padrão institucional: 120 minutos úteis). Conta exclusivamente os dias úteis e o horário de expediente cadastrado (ex: seg a sex, 08h às 18h). Um assistente reativo calcula e exibe em tempo real o status e a data limite comercial estimada.
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Redes Sociais:** Na seção *Prazo e redes sociais*, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis. Na listagem de interessados, cada lead com perfil cadastrado ganha o botão **Redes sociais** (ícone de globo) para abri-lo direto (seção 3.2).
@@ -622,7 +621,7 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
    - Acesse **CRM / Comercial → Relatórios e Indicadores**.
    - **Filtros Temporais Reativos:** Analise métricas pelo Mês Atual, Últimos 30 Dias, Últimos 90 Dias, Ano Atual ou período customizado.
    - **Análise de Perdas e Concorrência:** Tabela com visualização dos motivos base e coluna dedicada aos **Colégios Concorrentes**, revelando as instituições mais citadas pelas famílias desistentes.
-   - **Painel de Consultores:** Acompanhe o tempo médio de primeira resposta (SLA), volume de leads recebidos, atendimentos manuais, visitas realizadas e conversão.
+   - **Painel de Consultores:** Acompanhe o tempo médio de primeira resposta, volume de leads recebidos, atendimentos manuais, visitas realizadas e conversão.
    - **Previsão de Receita Ponderada:** Cálculo financeiro automático sobre a carteira ativa de leads baseado no valor estimado do lead e probabilidade de conversão da etapa, confrontado com a taxa histórica real apurada pelo funil.
 2. **Alertas Instantâneos de Detratores em Visitas:**
    - Quando uma família avalia a visita com nota NPS inferior a 7, uma notificação de alta prioridade com ícone de alerta é disparada instantaneamente no painel para o consultor e para a diretoria, viabilizando contato de acolhimento antes que o lead esfrie.
@@ -636,35 +635,17 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
    - Permite escolher qual cadastro será o "Lead Principal" (vencedor).
    - O processo unifica dependentes repetidos, transfere histórico de contatos, visitas, documentos anexados, transições do funil e rascunhos de pré-matrícula com garantia atômica (`DB::transaction`).
 
-### 3.25 SLA de 1ª Resposta em Horário Comercial (Lote D4)
-1. **Conceito de Horário Útil:**
-   - O cronômetro de primeiro contato considera estritamente os dias úteis e a faixa de horário de expediente da escola (padrão: segunda a sexta-feira, das 08h às 18h).
-   - Leads recebidos à noite ou durante fins de semana têm o cálculo iniciado apenas no primeiro minuto útil do dia útil seguinte (ex.: lead criado na sexta às 17h com prazo de 120 minutos vence na segunda às 09h).
-   - **Feriados não são considerados:** um feriado em dia de semana conta como dia útil normal. Os dias úteis e o horário do expediente vêm da configuração do sistema (`config/crm.php`), não de um calendário de feriados.
-2. **Prazo por Lead e Institucional:**
-   - Prazo padrão institucional: **120 minutos úteis** (configurável em `config/crm.php`).
-   - Cada lead pode receber um prazo personalizado na ficha cadastral (campo *SLA de 1ª Resposta em minutos úteis*).
-   - O prazo corre a partir da **data de cadastro do lead** e termina no **primeiro contato registrado** com a família. Qualquer um destes registros encerra o SLA: a ação **Atendimento** da tabela, a **interação rápida da Linha do Tempo 360°** e o botão **Registrar Contato** da aba *Histórico de Contatos*. Vale a data do contato informada.
-   - **Não encerram o SLA:** registros automáticos do sistema (régua de e-mails, análises da IA), movimentações de etapa no funil e o reenvio do formulário do site.
+### 3.25 Primeiro Contato e Tempo de Resposta (Lote D4)
+> O antigo **SLA de 1ª resposta** (prazo em minutos úteis, selo "SLA 1ª Resposta" na lista, alerta de estouro no sino e fila *Primeira resposta fora do prazo* na Minha Mesa) foi **retirado em 28/10/2026**. O que o sistema continua guardando é a data do primeiro contato, que alimenta o relatório *Desempenho por Consultor*.
+
+1. **O que é o primeiro contato:** a data do primeiro atendimento humano da escola à família, contada a partir do cadastro do lead no relatório de consultores (tempo médio até a 1ª resposta).
+2. **O que registra a data:** a ação **Atendimento** da tabela, a **interação rápida da Linha do Tempo 360°** e o botão **Registrar Contato** da aba *Histórico de Contatos*. Vale a data do contato informada.
+   - **Não registram:** lançamentos automáticos do sistema (régua de e-mails, análises da IA), movimentações de etapa no funil e o reenvio do formulário do site.
    - Só o **primeiro** contato conta: os seguintes não alteram a data.
-   - **Editar ou excluir contatos:** a data do primeiro contato acompanha o histórico. Se você mudar a data, o tipo (para *Movimentação no Funil* ou *Formulário do Site*) ou a autoria do contato que definia o primeiro contato, ou excluí-lo (inclusive em lote), o sistema recalcula a partir dos contatos da escola que restam: passa a valer o mais antigo. Se não restar nenhum, **o SLA volta a correr** e o selo deixa de ficar "Respondido". Antecipar outro contato para antes do primeiro também antecipa a data. Excluir ou editar um contato que não era o primeiro não muda nada.
-   - **Leads antigos:** se a data de primeiro contato do lead veio de outra origem (por exemplo, gravada no cadastro, sem um contato correspondente no histórico), mexer no histórico não a apaga nem reabre o SLA.
-3. **Indicador Visual na Tabela:**
-   - A coluna **SLA 1ª Resposta** (pode ser ocultada ou exibida no seletor de colunas da tabela) exibe um selo com o texto e a cor do momento:
-     - 🟢 **Respondido no prazo (dd/mm HH:mm):** o primeiro contato foi registrado até o limite comercial (a data entre parênteses é a do contato; contato feito exatamente no limite ainda conta como no prazo).
-     - 🟡 **Respondido com atraso (dd/mm HH:mm):** o primeiro contato foi registrado, mas depois do limite comercial. É só histórico: não gera alerta nem exige ação.
-     - 🟡 **SLA: resta 1h 30min útil** (ou *resta 45 min útil*): lead aguardando o primeiro contato, com o prazo ainda em curso. Tem a mesma cor do selo "com atraso"; o que diferencia é o texto (quem ainda não foi atendido começa com *SLA:*).
-     - 🔴 **SLA Estourado há 2h 10min** (ou *há 35 min*): o prazo venceu sem primeiro contato registrado.
-     - ⚪ **Finalizado:** o lead já está numa etapa final (matriculado ou perdido) sem primeiro contato registrado; o SLA não se aplica mais.
-   - O veredito "no prazo" ou "com atraso" usa o **prazo do próprio lead** (padrão de 120 min úteis ou o valor personalizado na ficha) e é refeito a cada exibição: mudar o prazo do lead depois, ou corrigir a data do contato, pode trocar o selo.
-   - O tooltip (ao passar o mouse sobre o selo) mostra a **data e hora limite** calculada (*Limite comercial: dd/mm/aaaa HH:mm*); nos leads já respondidos, vem antes a frase *Primeiro contato dentro do prazo.* ou *Primeiro contato depois do prazo.* O tempo restante ou de atraso de quem ainda não foi atendido aparece no próprio selo.
-   - Na ficha do interessado, o campo *SLA de 1ª Resposta* mostra o mesmo texto e a data limite logo abaixo.
-4. **Monitoramento Automatizado e Alertas:**
-   - Uma rotina agendada no servidor (`crm:verificar-sla-estourado`) roda a cada 15 minutos identificando estouros de SLA.
-   - Só entram na verificação leads **sem primeiro contato registrado** e **fora de etapas finais**.
-   - Lead **com consultor:** assim que estoura o prazo, o consultor responsável recebe uma notificação no sino do painel (*SLA Estourado: [nome] sem 1ª resposta*) com o botão **Ver Lead**, que abre a ficha.
-   - Lead **sem consultor** (por exemplo, vindo do formulário público): quem recebe é a **gestão** (perfis coordenador, administrador e super administrador), em **uma notificação única por rodada** com a quantidade, até 5 nomes e o botão **Ver Leads Sem Consultor**. Se não houver nenhum gestor ativo, o aviso não é dado como enviado: o lead continua pendente e é tentado de novo na próxima rodada, e o sistema registra o problema no log.
-   - Cada lead gera no máximo **um** aviso por destinatário (consultor ou gestão); reabrir o SLA depois (por exemplo, excluindo o primeiro contato) não repete o aviso já enviado.
+3. **Editar ou excluir contatos:** a data acompanha o histórico. Se você mudar a data, o tipo (para *Movimentação no Funil* ou *Formulário do Site*) ou a autoria do contato que definia o primeiro contato, ou excluí-lo (inclusive em lote), o sistema recalcula a partir dos contatos da escola que restam: passa a valer o mais antigo. Se não restar nenhum, a data fica vazia. Antecipar outro contato para antes do primeiro também antecipa a data. Excluir ou editar um contato que não era o primeiro não muda nada.
+4. **Leads antigos:** se a data veio de outra origem (por exemplo, gravada no cadastro, sem um contato correspondente no histórico), mexer no histórico não a apaga.
+5. **Onde aparece:** só no relatório *Desempenho por Consultor*. Não há selo na lista, campo de prazo na ficha nem aviso no sino.
+6. **Lead novo sem atendimento:** continua aparecendo na fila **Sem próxima ação** da Minha Mesa (depois de 2 horas de carência) e na aba **Precisa de contato** da lista; lead ativo sem consultor por mais de 24 horas entra no resumo diário da gestão.
 
 ---
 
@@ -1257,6 +1238,7 @@ Em vez de títulos estáticos, o Torre360 trabalha com **Faturas**.
 1. Uma fatura pode conter múltiplos itens (Mensalidade + Taxa de Material + Uniforme).
 2. As faturas podem ser geradas em lote a partir de contratos.
 3. Na tela de edição de um Contrato (`Financeiro → Contratos → Editar`), na aba de Faturas Relacionadas, é possível visualizar, criar, editar e excluir faturas associadas a este contrato individualmente.
+   - **Salvaguarda de Faturas Protegidas:** Faturas que possuam pagamentos (transações bancárias vinculadas), registro/cobrança no gateway de pagamento ou status liquidado (`pago` ou `parcial`) são estritamente **protegidas contra exclusão**: o botão de exclusão individual fica desautorizado e oculto na tabela, e tentativas diretas de exclusão são canceladas por segurança contábil e fiscal. A regeneração em lote do contrato também é bloqueada enquanto houver faturas protegidas.
 
 ### 7.1.1 Gerar Faturas Automaticamente
 Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), utilize o botão **Gerar Faturas Automaticamente** para criar o parcelamento do contrato de forma rápida.
@@ -3330,7 +3312,7 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
 
 ---
 
-## 🎯 55. Retenção Escolar, SLA Comercial e Governança do CRM (Lote G)
+## 🎯 55. Retenção Escolar e Governança do CRM (Lote G)
 
 Implementações de refinamento, robustez e segurança operacional no módulo de CRM, Inteligência Artificial e Retenção de Alunos:
 
@@ -3350,9 +3332,8 @@ Implementações de refinamento, robustez e segurança operacional no módulo de
 2. **Vínculo Estrito por Chaves Relacionais Familiares:** Eliminado todo e qualquer casamento por similaridade textual de nome de dependente. O vínculo é estabelecido estritamente pelas chaves relacionais concretas do aluno: vínculos em `aluno_responsavel` (`Pessoa::responsaveis()`), responsáveis financeiros dos contratos vigentes da matrícula (`ResponsavelFinanceiro`) ou a própria pessoa do aluno.
 3. **Deduplicação por Responsável e Sigilo:** Fichas duplicadas de uma mesma família são deduplicadas pela `pessoa_id`, mantendo o lead mais recente. Além disso, as variáveis de interpolação da mensagem à família nunca contêm notas de corte, scores ou o termo "evasão", preservando o acolhimento pedagógico da instituição.
 
-### 55.4 SLA Comercial da Gestão com Fila Preservada (Lote G5)
-1. **Rastreamento Efetivo de Envio:** O controle de estouro de SLA da primeira resposta para novos leads sem consultor atribuído (`sla_gestao_notificado_em`) só marca o horário de notificação e contabiliza o atendimento se houver destinatários gestores ativos (`coordenador`, `admin`, `super_admin`) que realmente receberam o aviso.
-2. **Proteção contra Perda Silenciosa:** Caso a rotina execute sem gestores ativos cadastrados, o sistema registra aviso em log sem marcar a coluna, mantendo os leads pendentes de notificação para a próxima execução assim que um gestor ativo estiver presente.
+### 55.4 SLA Comercial da Gestão com Fila Preservada (Lote G5) — retirado
+O SLA de 1ª resposta e o alerta à gestão de leads sem consultor com prazo estourado foram **retirados em 28/10/2026** (ver seção 3.25 e `docs/crm_sla_primeira_resposta_retirado.md`). A gestão continua recebendo o resumo diário de lead ativo sem consultor há mais de 24 horas (`crm:notificar-pendentes`).
 
 ### 55.5 Correção do Filtro por Consultor no Kanban (Lote G6)
 1. **Filtro Direto por Consultor:** O seletor de consultor no Funil de Vendas Kanban aplica o identificador correto do usuário selecionado diretamente na consulta (`$this->filtroConsultorId`), corrigindo a anomalia em que o filtro sempre restringia incorretamente para o usuário com ID 1.
@@ -4423,7 +4404,6 @@ A próxima ação aparece sob o nome do lead na lista. Os registros que o sistem
 **Na Minha Mesa** (grupo *CRM / Comercial*), cada consultor vê a **própria carteira e os leads sem dono**; quem tem `ViewAll:Interessado` vê todos:
 - **Contatos do dia:** próximo contato de hoje ou já vencido. Fica atrasado quando passou da hora marcada.
 - **Visitas de hoje e sem resultado:** marque a visita como realizada (ou que a família faltou) na aba *Visitas* do lead; isso libera a pesquisa de satisfação. Atrasa 4 horas depois do horário.
-- **Primeira resposta fora do prazo:** o SLA de primeira resposta estourou (horário comercial). Registrar o atendimento encerra o SLA.
 - **Leads sem próxima ação:** o lead que ninguém sabe quando procurar. Os recém-cadastrados têm 2 horas de carência.
 - **Leads quentes sem contato:** temperatura quente ou score alto, sem contato humano há 3 dias (atrasado com o dobro).
 - **Leads sem consultor:** para quem pode assumir lead (`Update:Interessado`).

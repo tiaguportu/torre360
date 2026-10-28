@@ -8,6 +8,7 @@
         <li><strong>Notificações em Tempo Real:</strong> Quando todas as partes concluírem as assinaturas digitais na Assinafy, a equipe da secretaria e gestores recebem uma notificação em tempo real no painel administrativo com atalho direto para o contrato.</li>
         <li><strong>Importar Faturas:</strong> Permite carregar cobranças em lote via planilha (CSV/XLSX) diretamente para este contrato. Reimportar uma planilha exportada sem edições é um *no-op* total e seguro (não altera faturas nem reseta assinaturas). Faturas protegidas não podem ser modificadas por importação.</li>
         <li><strong>Exportar Faturas:</strong> Gera planilha (CSV/XLSX) com todas as faturas deste contrato, detalhando aluno, vencimento, itens, descontos, status e saldo restante.</li>
+        <li><strong>Exclusão de Faturas:</strong> Permite remover faturas pendentes avulsas deste contrato. Faturas protegidas (com pagamentos/transações, cobrança emitida no gateway ou status pago/parcial) são bloqueadas contra exclusão individual para preservação do histórico contábil.</li>
     </ul>
 
     <hr class="my-4">

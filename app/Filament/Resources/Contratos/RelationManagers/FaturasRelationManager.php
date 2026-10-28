@@ -79,7 +79,19 @@ class FaturasRelationManager extends RelationManager
                     motivoNotificacao: 'alterada',
                 ),
                 $this->configurarConfirmacaoResetAssinafy(
-                    DeleteAction::make(),
+                    DeleteAction::make()
+                        ->authorize(fn (Fatura $record): bool => (! $record->estaProtegida()) && (auth()->user()?->can('Delete:Fatura') ?? false))
+                        ->before(function (DeleteAction $action, Fatura $record): void {
+                            if ($record->estaProtegida()) {
+                                Notification::make()
+                                    ->title('Fatura protegida')
+                                    ->body('Esta fatura possui pagamentos registrados, cobrança em gateway ou status liquidado e não pode ser excluída.')
+                                    ->danger()
+                                    ->send();
+
+                                $action->cancel();
+                            }
+                        }),
                     tituloAcao: 'Confirmar Exclusão de Fatura',
                     descricaoAcao: 'excluir esta fatura',
                     submitLabel: 'Sim, excluir fatura e resetar assinatura',
