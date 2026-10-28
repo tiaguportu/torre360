@@ -45,6 +45,9 @@ class FaturasRelationManager extends RelationManager
                     motivoNotificacao: 'incluída',
                 ),
                 ImportAction::make()
+                    ->label('Importar faturas')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('warning')
                     ->importer(FaturaImporter::class)
                     ->options(fn (RelationManager $livewire): array => ['contrato_id' => $livewire->getOwnerRecord()->getKey()])
                     ->visible(fn (): bool => (bool) auth()->user()?->can('import', Fatura::class))
@@ -60,6 +63,9 @@ class FaturasRelationManager extends RelationManager
                         return $downloadExample;
                     }),
                 ExportAction::make()
+                    ->label('Exportar faturas')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
                     ->exporter(FaturaExporter::class)
                     ->visible(fn (): bool => (bool) auth()->user()?->can('export', Fatura::class)),
             ])

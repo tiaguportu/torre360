@@ -4626,7 +4626,7 @@ Na tela de edição (`/admin/contratos/{id}/edit`):
 Na aba **Faturas** dentro da edição de um contrato, a secretaria e o financeiro podem movimentar cobranças em lote via planilha:
 
 ### 106.1 Exportação de Faturas
-- **Ação:** No cabeçalho da tabela de faturas, clique em **Exportar faturas**.
+- **Ação:** No cabeçalho da tabela de faturas, clique em **Exportar faturas** (botão verde `success` com ícone de download `heroicon-o-arrow-down-tray`).
 - **Formatos:** Disponível em **CSV** e **XLSX**.
 - **Colunas exportadas:**
   - `Nº`: Identificador numérico da fatura no sistema.
@@ -4640,7 +4640,7 @@ Na aba **Faturas** dentro da edição de um contrato, a secretaria e o financeir
 - **Segurança de Desempenho:** A exportação carrega previamente os itens e transações em bloco (*eager loading*), operando em velocidade máxima sem gargalos de banco de dados.
 
 ### 106.2 Importação de Faturas
-- **Ação:** No cabeçalho da tabela de faturas, clique em **Importar faturas**.
+- **Ação:** No cabeçalho da tabela de faturas, clique em **Importar faturas** (botão âmbar `warning` com ícone de upload `heroicon-o-arrow-up-tray`).
 - **Escopo Restrito:** A planilha importa faturas exclusivamente para o contrato que está aberto na tela. Qualquer coluna de contrato na planilha é ignorada por segurança.
 - **Estrutura por Linha:** Cada linha representa uma fatura com um item de cobrança correspondente.
 - **Criação vs. Atualização:**
