@@ -5,7 +5,7 @@ Guia de uso para a equipe: `MANUAL_USUARIO.md`, seção 3.21.
 
 ## Posição na tela de edição
 `EditInteressado::content()` divide a página em duas colunas com um `Grid` do Filament (`['default' => 1, 'xl' => 2]`):
-à esquerda `getFormContentComponent()` (abas *Dados do Negócio* e *Dependentes*, com Salvar/Cancelar); à direita
+à esquerda `getFormContentComponent()` (com as abas *Dados do Negócio* organizada em 5 seções compactas — Acompanhamento, Contato e origem, Qualificação, Prazo e redes sociais, Observações — e *Dependentes*, com Salvar/Cancelar); à direita
 `getRelationManagersContentComponent()` (as abas dos relation managers: Linha do Tempo 360°, Histórico de Contatos, Visitas
 à Escola e Documentos de Pré-Admissão). Pontos que não são óbvios:
 

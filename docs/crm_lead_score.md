@@ -86,7 +86,10 @@ bloco **Resumo do Lead** é a view
 `resources/views/filament/resources/interessados/resumo-lead.blade.php`, alimentada por
 `LeadScoreService::detalhar()` (uma linha por fator, com `fator`, `pontos` e `maximo`). O
 "Detalhamento do score" é uma barra de progresso por fator, cor por % do máximo
-(≥ 70% verde, ≥ 35% âmbar, abaixo disso vermelho).
+(≥ 70% verde, ≥ 35% âmbar, abaixo disso vermelho). Para evitar poluição visual e rolagem excessiva,
+o card de Detalhamento do score inicia **recolhido por padrão** via Alpine (`x-data="{ aberto: false }"` e
+`wire:ignore.self`), podendo ser expandido pelo botão interativo "Ver como o score foi calculado" (com chevron rotacionável
+e acessibilidade `aria-expanded`). O estado é protegido contra reset em re-renderizações Livewire.
 
 Layout responsivo (CSS em `<style>` na própria view, classe `.lead-score-fatores`):
 
@@ -100,10 +103,15 @@ Layout responsivo (CSS em `<style>` na própria view, classe `.lead-score-fatore
   `minmax(min(100%, 150px), 1fr)`: o mínimo da coluna nunca excede a largura disponível, o que
   antes causava estouro horizontal em celulares de ~360px.
 
-**Recuos (margens internas) do Resumo.** O tema do painel
-(`resources/css/filament/admin/theme.css`) aplica `.fi-section { padding: 1.5rem !important }` em
-**toda** seção, e os cartões do Resumo usam a classe `fi-section` pelo visual de caixa. Por ser
-`!important`, um `padding` inline ou de classe simples **nunca vale**: somavam-se aba (24px) +
+**Recuos (margens internas) e isolamento do tema.** O tema do painel
+(`resources/css/filament/admin/theme.css` e `public/css/filament/admin/theme.css`) aplica
+`.fi-section { padding: 1.5rem !important; border-width: 0 !important; background: #fff !important }` em
+**toda** seção. Por ser `!important`, um `padding` inline ou de classe simples **nunca vale**.
+Essa especificidade do tema foi superada através de seletores escopados de maior especificidade com `!important`:
+- No Resumo do Lead: `.lead-resumo-secao ...` com recuo compacto;
+- Nas seções compactas do formulário (`InteressadoForm`): classe `crm-secao-compacta` com seletor
+  `.fi-sc-section.crm-secao-compacta section.fi-section { padding: 1rem !important; }` no desktop e `0.75rem !important`
+  em telas até 640px. Ambas as cópias de `theme.css` contêm exatamente as mesmas regras escopadas. somavam-se aba (24px) +
 seção (24px) + conteúdo da seção (24px) + cartão (24px) por lado, e em 360px sobravam ~136px de
 largura útil. A correção é local ao Resumo, sem mexer no tema:
 

@@ -15,6 +15,7 @@ use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ViewField;
@@ -140,125 +141,145 @@ class EditInteressado extends EditRecord
                         ->success()
                         ->send();
                 }),
-            Action::make('termometroVagas')
-                ->label('Termômetro de Vagas')
-                ->icon('heroicon-o-chart-bar')
-                ->color('warning')
-                ->modalHeading('📊 Termômetro de Ocupação e Vagas por Série')
-                ->modalWidth(Width::Large)
-                ->modalContent(fn () => view('filament.crm.modal-termometro-vagas', [
-                    'destaqueSerieId' => $this->record->dependentes()->first()?->serie_pretendida_id,
-                ]))
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Fechar'),
-            BattlecardAction::make(),
-            DossieIaAction::make(),
-            CopilotoMensagemIaAction::make(),
-            ResumoConversaIaAction::make(),
-            Action::make('mesclarLead')
-                ->label('Mesclar Duplicados')
-                ->icon('heroicon-o-arrows-pointing-in')
-                ->color('warning')
-                ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicadosVisiveis($this->record, auth()->user())) > 0 ? $c : null)
-                ->visible(fn (): bool => auth()->user()?->can('Update:Interessado') ?? false)
-                ->modalHeading('Mesclar Lead Duplicado')
-                ->modalDescription('Esta ação une os cadastros duplicados, preservando todos os contatos, visitas, pesquisas de satisfação, documentos, dependentes e tokens sem perda de dados.')
-                ->form([
-                    Select::make('lead_origem_id')
-                        ->label('Lead a ser absorvido')
-                        ->helperText('Selecione qual lead será mesclado neste registro.')
-                        ->options(function (): array {
-                            $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($this->record, auth()->user());
-                            $duplicadosVisiveis = $duplicados->reject(fn ($item) => ! empty($item['fora_carteira']));
 
-                            if ($duplicadosVisiveis->isNotEmpty()) {
-                                return $duplicadosVisiveis->mapWithKeys(function ($item) {
-                                    $outro = $item['interessado'];
-                                    $motivosTxt = implode(', ', $item['motivos']);
-                                    $statusTxt = $outro->status?->nome ?? 'Sem etapa';
-                                    $dataTxt = $outro->created_at?->format('d/m/Y') ?? '';
+            ActionGroup::make([
+                BattlecardAction::make(),
+                DossieIaAction::make(),
+                CopilotoMensagemIaAction::make(),
+                ResumoConversaIaAction::make(),
+            ])
+                ->label('Apoio ao atendimento')
+                ->icon('heroicon-o-sparkles')
+                ->color('primary')
+                ->button()
+                ->visible(fn (): bool => auth()->user()?->can('Update:Interessado') || auth()->user()?->can('Create:HistoricoContato')),
 
-                                    return [$outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} ({$statusTxt} | Criado: {$dataTxt} | Motivo: {$motivosTxt})"];
-                                })->all();
+            ActionGroup::make([
+                Action::make('termometroVagas')
+                    ->label('Termômetro de Vagas')
+                    ->icon('heroicon-o-chart-bar')
+                    ->color('warning')
+                    ->modalHeading('📊 Termômetro de Ocupação e Vagas por Série')
+                    ->modalWidth(Width::Large)
+                    ->modalContent(fn () => view('filament.crm.modal-termometro-vagas', [
+                        'destaqueSerieId' => $this->record->dependentes()->first()?->serie_pretendida_id,
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
+
+                Action::make('mesclarLead')
+                    ->label('Mesclar Duplicados')
+                    ->icon('heroicon-o-arrows-pointing-in')
+                    ->color('warning')
+                    ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicadosVisiveis($this->record, auth()->user())) > 0 ? $c : null)
+                    ->visible(fn (): bool => auth()->user()?->can('Update:Interessado') ?? false)
+                    ->modalHeading('Mesclar Lead Duplicado')
+                    ->modalDescription('Esta ação une os cadastros duplicados, preservando todos os contatos, visitas, pesquisas de satisfação, documentos, dependentes e tokens sem perda de dados.')
+                    ->form([
+                        Select::make('lead_origem_id')
+                            ->label('Lead a ser absorvido')
+                            ->helperText('Selecione qual lead será mesclado neste registro.')
+                            ->options(function (): array {
+                                $duplicados = app(LeadDuplicadoDetectorService::class)->detectar($this->record, auth()->user());
+                                $duplicadosVisiveis = $duplicados->reject(fn ($item) => ! empty($item['fora_carteira']));
+
+                                if ($duplicadosVisiveis->isNotEmpty()) {
+                                    return $duplicadosVisiveis->mapWithKeys(function ($item) {
+                                        $outro = $item['interessado'];
+                                        $motivosTxt = implode(', ', $item['motivos']);
+                                        $statusTxt = $outro->status?->nome ?? 'Sem etapa';
+                                        $dataTxt = $outro->created_at?->format('d/m/Y') ?? '';
+
+                                        return [$outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} ({$statusTxt} | Criado: {$dataTxt} | Motivo: {$motivosTxt})"];
+                                    })->all();
+                                }
+
+                                return Interessado::query()
+                                    ->visivelPara(auth()->user())
+                                    ->where('id', '!=', $this->record->id)
+                                    ->with(['pessoa', 'status'])
+                                    ->latest('id')
+                                    ->limit(50)
+                                    ->get()
+                                    ->mapWithKeys(fn (Interessado $outro) => [
+                                        $outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} (".($outro->status?->nome ?? 'Sem etapa').')',
+                                    ])
+                                    ->all();
+                            })
+                            ->searchable()
+                            ->required(),
+                        Select::make('preferir_destino')
+                            ->label('Qual lead deve ser preservado como principal?')
+                            ->options([
+                                'mais_antigo' => 'Preservar o lead mais antigo (Padrão)',
+                                'este' => "Preservar este lead (#{$this->record->id})",
+                                'outro' => 'Preservar o outro lead selecionado',
+                            ])
+                            ->default('mais_antigo')
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $outroLead = Interessado::query()
+                            ->visivelPara(auth()->user())
+                            ->findOrFail($data['lead_origem_id']);
+
+                        $preferir = match ($data['preferir_destino']) {
+                            'este' => $this->record,
+                            'outro' => $outroLead,
+                            default => null,
+                        };
+
+                        try {
+                            $preservado = app(LeadMesclagemService::class)->mesclar(
+                                $this->record,
+                                $outroLead,
+                                auth()->id(),
+                                $preferir
+                            );
+
+                            Notification::make()
+                                ->title('Leads mesclados com sucesso!')
+                                ->body("Os registros foram consolidados no Lead #{$preservado->id}. Visitas, documentos e históricos foram unificados.")
+                                ->success()
+                                ->send();
+
+                            if ($preservado->id !== $this->record->id) {
+                                $this->redirect(InteressadoResource::getUrl('edit', ['record' => $preservado]));
+                            } else {
+                                $this->refreshFormData(['dependentes', 'observacoes']);
                             }
-
-                            return Interessado::query()
-                                ->visivelPara(auth()->user())
-                                ->where('id', '!=', $this->record->id)
-                                ->with(['pessoa', 'status'])
-                                ->latest('id')
-                                ->limit(50)
-                                ->get()
-                                ->mapWithKeys(fn (Interessado $outro) => [
-                                    $outro->id => "Lead #{$outro->id} - {$outro->pessoa?->nome} (".($outro->status?->nome ?? 'Sem etapa').')',
-                                ])
-                                ->all();
-                        })
-                        ->searchable()
-                        ->required(),
-                    Select::make('preferir_destino')
-                        ->label('Qual lead deve ser preservado como principal?')
-                        ->options([
-                            'mais_antigo' => 'Preservar o lead mais antigo (Padrão)',
-                            'este' => "Preservar este lead (#{$this->record->id})",
-                            'outro' => 'Preservar o outro lead selecionado',
-                        ])
-                        ->default('mais_antigo')
-                        ->required(),
-                ])
-                ->action(function (array $data): void {
-                    $outroLead = Interessado::query()
-                        ->visivelPara(auth()->user())
-                        ->findOrFail($data['lead_origem_id']);
-
-                    $preferir = match ($data['preferir_destino']) {
-                        'este' => $this->record,
-                        'outro' => $outroLead,
-                        default => null,
-                    };
-
-                    try {
-                        $preservado = app(LeadMesclagemService::class)->mesclar(
-                            $this->record,
-                            $outroLead,
-                            auth()->id(),
-                            $preferir
-                        );
-
-                        Notification::make()
-                            ->title('Leads mesclados com sucesso!')
-                            ->body("Os registros foram consolidados no Lead #{$preservado->id}. Visitas, documentos e históricos foram unificados.")
-                            ->success()
-                            ->send();
-
-                        if ($preservado->id !== $this->record->id) {
-                            $this->redirect(InteressadoResource::getUrl('edit', ['record' => $preservado]));
-                        } else {
-                            $this->refreshFormData(['dependentes', 'observacoes']);
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Erro ao mesclar leads')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
                         }
-                    } catch (\Throwable $e) {
-                        Notification::make()
-                            ->title('Erro ao mesclar leads')
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
-            DeleteAction::make(),
-            Action::make('ajuda')
-                ->label('Ajuda')
-                ->icon('heroicon-o-question-mark-circle')
+                    }),
+
+                Action::make('ajuda')
+                    ->label('Ajuda')
+                    ->icon('heroicon-o-question-mark-circle')
+                    ->color('gray')
+                    ->modalHeading('Ajuda: Editar Interessado')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar')
+                    ->form([
+                        ViewField::make('help_content')
+                            ->view('filament.components.help-content')
+                            ->viewData([
+                                'content' => $this->getHelpContent(),
+                            ]),
+                    ]),
+
+                DeleteAction::make(),
+            ])
+                ->label('Mais')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->tooltip('Mais ações')
                 ->color('gray')
-                ->modalHeading('Ajuda: Editar Interessado')
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Fechar')
-                ->form([
-                    ViewField::make('help_content')
-                        ->view('filament.components.help-content')
-                        ->viewData([
-                            'content' => $this->getHelpContent(),
-                        ]),
-                ]),
+                ->badge(fn (): ?int => ($c = app(LeadDuplicadoDetectorService::class)->contarDuplicadosVisiveis($this->record, auth()->user())) > 0 ? $c : null)
+                ->badgeColor('warning'),
         ];
     }
 
@@ -269,13 +290,13 @@ class EditInteressado extends EditRecord
         $html = '<p>Nesta página você pode editar os dados de um interessado (lead) no sistema CRM.</p>';
         $html .= '<h3>O que você pode fazer:</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Consulte a ocupação real de cada série/turma em tempo real e o nível de escassez para negociar com urgência e segurança.</li>';
-        $html .= '<li><strong>🛡️ Battlecards & Objeções:</strong> Acesse a inteligência competitiva da escola contra colégios concorrentes, matriz de contorno de objeções com scripts verbais, perguntas de virada e o radar de motivos de perda.</li>';
-        $html .= '<li><strong>✨ Dossiê IA do Lead:</strong> Clique no botão roxo no cabeçalho para gerar uma análise profunda em tempo real com o Gemini, avaliando dores, momento familiar, temperatura e plano de ação comercial.</li>';
-        $html .= '<li><strong>💬 Copiloto WhatsApp IA:</strong> Redija mensagens persuasivas sob medida para este lead com base em objetivos (primeiro contato, tour presencial, superar objeção, fechamento). Clique em <em>Gerar mensagem com a IA</em>, revise e ajuste o texto no próprio campo e então abra no WhatsApp. Se a família respondeu por <strong>áudio</strong>, anexe as mensagens de voz antes de gerar (até 5 arquivos de 10 MB, na ordem em que chegaram): a IA as ouve e a mensagem responde ao que foi dito. Os arquivos são apagados ao abrir o WhatsApp.</li>';
-        $html .= '<li><strong>🤖 Resumo IA de Conversa (WhatsApp):</strong> Cole conversas longas trocadas no WhatsApp com a família e/ou anexe os <strong>áudios</strong> (mensagens de voz: .opus, .ogg, .mp3, .m4a, .wav, .aac, .flac ou .aiff; até 5 arquivos de 10 MB, na ordem em que ocorreram). Com áudio, o texto colado é opcional. O Gemini ouve os áudios, sintetiza perfil, dores, acordos e temperatura (considerando também o tom de voz) em um relatório detalhado, transcreve os trechos mais relevantes da conversa, grava na timeline com a data e a hora da última mensagem (quando o texto as traz) e agenda o retorno ideal. Os arquivos são apagados logo após a análise, e a análise com áudio demora mais que com texto.</li>';
-        $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado.</li>';
-        $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado.</li>';
+        $html .= '<li><strong>📊 Termômetro de Vagas:</strong> Disponível no menu <strong>Mais</strong> (três pontos), consulte a ocupação real de cada série/turma em tempo real e o nível de escassez para negociar com urgência e segurança.</li>';
+        $html .= '<li><strong>🛡️ Battlecards & Objeções:</strong> No menu <strong>Apoio ao atendimento</strong>, acesse a inteligência competitiva da escola contra colégios concorrentes, matriz de contorno de objeções com scripts verbais, perguntas de virada e o radar de motivos de perda.</li>';
+        $html .= '<li><strong>✨ Dossiê IA do Lead:</strong> Acesse no menu <strong>Apoio ao atendimento</strong> para gerar uma análise profunda em tempo real com o Gemini, avaliando dores, momento familiar, temperatura e plano de ação comercial.</li>';
+        $html .= '<li><strong>💬 Copiloto WhatsApp IA:</strong> No menu <strong>Apoio ao atendimento</strong>, redija mensagens persuasivas sob medida para este lead com base em objetivos (primeiro contato, tour presencial, superar objeção, fechamento). Clique em <em>Gerar mensagem com a IA</em>, revise e ajuste o texto no próprio campo e então abra no WhatsApp. Se a família respondeu por <strong>áudio</strong>, anexe as mensagens de voz antes de gerar (até 5 arquivos de 10 MB, na ordem em que chegaram): a IA as ouve e a mensagem responde ao que foi dito. Os arquivos são apagados ao abrir o WhatsApp.</li>';
+        $html .= '<li><strong>🤖 Resumo IA de Conversa (WhatsApp):</strong> No menu <strong>Apoio ao atendimento</strong>, cole conversas longas trocadas no WhatsApp com a família e/ou anexe os <strong>áudios</strong> (mensagens de voz: .opus, .ogg, .mp3, .m4a, .wav, .aac, .flac ou .aiff; até 5 arquivos de 10 MB, na ordem em que ocorreram). Com áudio, o texto colado é opcional. O Gemini ouve os áudios, sintetiza perfil, dores, acordos e temperatura (considerando também o tom de voz) em um relatório detalhado, transcreve os trechos mais relevantes da conversa, grava na timeline com a data e a hora da última mensagem (quando o texto as traz) e agenda o retorno ideal. Os arquivos são apagados logo após a análise, e a análise com áudio demora mais que com texto.</li>';
+        $html .= '<li><strong>Dados do Negócio:</strong> Atualize o status, origem, consultor responsável, temperatura e valor estimado, organizados em seções compactas por uso do dia a dia.</li>';
+        $html .= '<li><strong>Dependentes:</strong> Gerencie os alunos vinculados ao interessado na aba ao lado.</li>';
         $html .= '<li><strong>Duas colunas:</strong> Em telas largas (a partir de 1280 px), a ficha se divide: à esquerda o formulário (<em>Dados do Negócio</em> e <em>Dependentes</em>) e à direita as abas <em>Linha do Tempo 360°</em>, <em>Histórico de Contatos</em>, <em>Visitas à Escola</em> e <em>Documentos de Pré-Admissão</em>. Em telas menores, as abas ficam abaixo do formulário.</li>';
         $html .= '<li><strong>📱 Linha do Tempo Omnichannel 360°:</strong> Visualize a jornada completa da família em um feed interativo unificado (contatos, WhatsApp, visitas escolares, NPS, documentos periciados por IA e mudanças no funil). Permite gravar interações rápidas no topo e recalcula o Lead Score na hora!</li>';
         $html .= '<li><strong>⭐ Tour Escolar & Pesquisa NPS:</strong> Na aba "Visitas à Escola", agende visitas presenciais. Ao marcar como Realizada, o sistema gera automaticamente a pesquisa de satisfação pós-tour (NPS), permitindo o envio do link via WhatsApp e a leitura dos feedbacks da família.</li>';
@@ -283,17 +304,17 @@ class EditInteressado extends EditRecord
         $html .= '<li><strong>Histórico Tradicional:</strong> Na aba "Histórico de Contatos", acesse a listagem tabular detalhada de todas as interações do lead.</li>';
 
         if ($user->can('Update:Interessado')) {
-            $html .= '<li><strong>🔀 Detecção de Duplicados & Mesclagem:</strong> O sistema detecta automaticamente possíveis duplicados com base em telefone, CPF, e-mail ou aluno dependente em comum (nome e nascimento). O botão "Mesclar Duplicados" no topo permite consolidar os cadastros de forma atômica e segura, preservando todo o histórico, visitas, pesquisas NPS, documentos e dependentes sem perda de dados.</li>';
-            $html .= '<li><strong>⏱️ SLA de 1ª Resposta Comercial:</strong> O sistema monitora o tempo até o primeiro contato humano, considerando estritamente o expediente comercial (segunda a sexta, 08h às 18h). Prazos customizados podem ser ajustados por lead (padrão de 120 min úteis). Ao estourar, o consultor recebe um alerta imediato no sino do painel. Depois do primeiro contato, o selo da lista informa se a resposta veio no prazo ou com atraso.</li>';
-            $html .= '<li><strong>✋ Assumir Lead:</strong> Para interessados que ainda não possuem consultor atribuído, utilize o botão "Assumir Lead" no topo para vincular a família diretamente à sua carteira de atendimento.</li>';
+            $html .= '<li><strong>🔀 Detecção de Duplicados & Mesclagem:</strong> O sistema detecta automaticamente possíveis duplicados com base em telefone, CPF, e-mail ou aluno dependente em comum (nome e nascimento). A opção "Mesclar Duplicados" (no menu <strong>Mais</strong> ou no aviso de duplicados no topo do formulário) permite consolidar os cadastros de forma atômica e segura, preservando todo o histórico, visitas, pesquisas NPS, documentos e dependentes sem perda de dados.</li>';
+            $html .= '<li><strong>⏱️ SLA de 1ª Resposta Comercial:</strong> O sistema monitora o tempo até o primeiro contato humano, considerando estritamente o expediente comercial (segunda a sexta, 08h às 18h). Prazos customizados podem ser ajustados na seção "Prazo e redes sociais" (padrão de 120 min úteis). Ao estourar, o consultor recebe um alerta imediato no sino do painel. Depois do primeiro contato, o selo da lista informa se a resposta veio no prazo ou com atraso.</li>';
+            $html .= '<li><strong>✋ Assumir Lead:</strong> Para interessados que ainda não possuem consultor atribuído, utilize o botão "Assumir Lead" solto no cabeçalho para vincular a família diretamente à sua carteira de atendimento.</li>';
         }
 
         if ($user->can('Delete:Interessado')) {
-            $html .= '<li><strong>Excluir:</strong> Use o botão vermelho "Excluir" para remover o lead.</li>';
+            $html .= '<li><strong>Excluir:</strong> Use a opção "Excluir" dentro do menu <strong>Mais</strong> (três pontos) para remover o lead.</li>';
         }
 
         $html .= '</ul>';
-        $html .= '<p><strong>Dica:</strong> Mantenha o campo "Próximo Contato" sempre atualizado. O sistema alerta automaticamente quando o contato está atrasado.</p>';
+        $html .= '<p><strong>Dica:</strong> Mantenha o campo "Próximo Contato" sempre atualizado. O sistema alerta automaticamente com uma faixa no topo quando o contato está atrasado.</p>';
 
         return $html;
     }

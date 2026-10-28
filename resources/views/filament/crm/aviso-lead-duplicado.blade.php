@@ -18,8 +18,23 @@
                     </span>
                 </div>
                 <p class="mt-1 text-xs text-amber-800/90 dark:text-amber-300/80">
-                    Foram encontrados outros registros cadastrados com o mesmo telefone, CPF, e-mail ou aluno dependente. Use o botão <strong>"Mesclar Duplicados"</strong> no topo da página para unificar as fichas sem perder visitas nem documentos.
+                    Foram encontrados outros registros cadastrados com o mesmo telefone, CPF, e-mail ou aluno dependente. Unifique as fichas sem perder visitas nem documentos pelo botão abaixo ou pelo menu <strong>Mais</strong> (três pontos) no topo da página.
                 </p>
+
+                @if(auth()->user()?->can('Update:Interessado'))
+                    <div class="mt-2.5">
+                        <button
+                            type="button"
+                            wire:click="mountAction('mesclarLead')"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-amber-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-gray-950"
+                        >
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                            </svg>
+                            <span>Mesclar Duplicados</span>
+                        </button>
+                    </div>
+                @endif
 
                 <div class="mt-3 space-y-2">
                     @foreach($duplicados as $item)

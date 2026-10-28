@@ -35,13 +35,97 @@ body {
     padding: 1.5rem !important; /* spacing.6 */
 }
 
+/* Seções compactas da ficha do lead (InteressadoForm): sobrepõe o padding de 1.5rem do .fi-section com especificidade */
+.fi-sc-section.crm-secao-compacta section.fi-section {
+    padding: 1.25rem !important;
+    margin-bottom: 0.75rem;
+}
+
+.fi-sc-section.crm-secao-compacta .fi-section-header {
+    padding-bottom: 0.5rem !important;
+}
+
+.fi-sc-section.crm-secao-compacta .fi-section-content {
+    padding: 0 !important;
+}
+
+/* Faixa de alerta de contato urgente compacto */
+.crm-alerta-urgente {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    padding: 0.625rem 0.875rem !important;
+    background-color: #fef2f2 !important; /* bg-red-50 */
+    border: 1px solid #fca5a5 !important; /* border-red-300 */
+    border-radius: 0.5rem !important;
+    color: #991b1b !important; /* text-red-800 */
+    margin-bottom: 1rem !important;
+}
+
+.crm-alerta-urgente .fi-sc-actions-label-ctn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+}
+
+.crm-alerta-urgente .fi-sc-actions-label {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    color: #991b1b !important;
+    line-height: 1.25 !important;
+}
+
+.crm-alerta-urgente .fi-ac {
+    margin: 0 !important;
+}
+
 /* Abas do CRM (ficha do interessado): no celular, o `p-6` das abas "contained" do Filament (24px de cada lado)
    comia largura do formulário e do Resumo do Lead. A classe vem de InteressadoForm (Tabs::make('CRM')->extraAttributes).
-   Especificidade maior que a do Filament (.fi-sc-tabs.fi-contained .fi-sc-tabs-tab.fi-active), sem precisar de !important. */
+   Especificidade maior que a do Filament (.fi-sc-tabs.crm-abas-compactas.fi-contained .fi-sc-tabs-tab.fi-active), sem precisar de !important. */
 @media (max-width: 640px) {
     .fi-sc-tabs.crm-abas-compactas.fi-contained .fi-sc-tabs-tab.fi-active {
         padding: 0.75rem;
     }
+
+    /* No celular (360px): reduz o padding para não empilhar com o recuo das abas (crm-abas-compactas) */
+    .fi-sc-section.crm-secao-compacta section.fi-section {
+        padding: 0.75rem !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .fi-sc-section.crm-secao-compacta .fi-section-header {
+        padding: 0.375rem 0.5rem !important;
+    }
+
+    .fi-sc-section.crm-secao-compacta .fi-section-content {
+        padding: 0 !important;
+    }
+
+    .crm-alerta-urgente {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 0.5rem 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+
+    .crm-alerta-urgente .fi-ac {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+}
+
+.dark .crm-alerta-urgente {
+    background-color: rgba(69, 10, 10, 0.4) !important;
+    border-color: rgba(153, 27, 27, 0.5) !important;
+    color: #fecaca !important;
+}
+
+.dark .crm-alerta-urgente .fi-sc-actions-label {
+    color: #fecaca !important;
 }
 
 /* Editorial Data Tables (No Horizontal lines except header) */

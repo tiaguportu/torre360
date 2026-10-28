@@ -103,23 +103,51 @@
 </div>
 
 {{-- Detalhamento --}}
-<div class="fi-section lead-resumo-card lead-resumo-detalhe">
-    <div style="font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin-bottom:.75rem;">Detalhamento do score</div>
-    <div class="lead-score-fatores">
-        @foreach($fatores as $f)
-            @php
-                $pct = $f['maximo'] > 0 ? round($f['pontos'] / $f['maximo'] * 100) : 0;
-                $corF = $pct >= 70 ? '#16a34a' : ($pct >= 35 ? '#d97706' : '#dc2626');
-            @endphp
-            <div style="min-width:0;">
-                <div style="display:flex; justify-content:space-between; gap:.5rem; font-size:.8rem; margin-bottom:.2rem;">
-                    <span style="min-width:0; overflow-wrap:anywhere;">{{ $f['fator'] }}</span>
-                    <span style="flex:none; white-space:nowrap; font-weight:600;">{{ $f['pontos'] }}<span style="opacity:.5; font-weight:400;"> / {{ $f['maximo'] }}</span></span>
+<div
+    x-data="{ aberto: false }"
+    wire:ignore.self
+    class="fi-section lead-resumo-card lead-resumo-detalhe"
+>
+    <button
+        type="button"
+        @click="aberto = ! aberto"
+        :aria-expanded="aberto.toString()"
+        aria-controls="lead-score-fatores-bloco"
+        style="width:100%; display:flex; align-items:center; justify-content:space-between; background:transparent; border:none; padding:0; cursor:pointer; text-align:left; color:inherit;"
+    >
+        <div style="display:flex; flex-direction:column; gap:.2rem;">
+            <div style="font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.7;">Detalhamento do score</div>
+            <div style="font-size:.75rem; color:#2563eb; text-decoration:underline;">Ver como o score foi calculado</div>
+        </div>
+        <div style="transition:transform .2s ease;" :style="aberto ? 'transform:rotate(180deg)' : ''">
+            <svg style="width:1.25rem; height:1.25rem; opacity:.7;" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+        </div>
+    </button>
+
+    <div
+        id="lead-score-fatores-bloco"
+        x-show="aberto"
+        x-cloak
+        style="margin-top:.75rem; padding-top:.75rem; border-top:1px solid rgba(128,128,128,.15);"
+    >
+        <div class="lead-score-fatores">
+            @foreach($fatores as $f)
+                @php
+                    $pct = $f['maximo'] > 0 ? round($f['pontos'] / $f['maximo'] * 100) : 0;
+                    $corF = $pct >= 70 ? '#16a34a' : ($pct >= 35 ? '#d97706' : '#dc2626');
+                @endphp
+                <div style="min-width:0;">
+                    <div style="display:flex; justify-content:space-between; gap:.5rem; font-size:.8rem; margin-bottom:.2rem;">
+                        <span style="min-width:0; overflow-wrap:anywhere;">{{ $f['fator'] }}</span>
+                        <span style="flex:none; white-space:nowrap; font-weight:600;">{{ $f['pontos'] }}<span style="opacity:.5; font-weight:400;"> / {{ $f['maximo'] }}</span></span>
+                    </div>
+                    <div style="height:6px; border-radius:999px; background:rgba(128,128,128,.2); overflow:hidden;">
+                        <div style="height:100%; width:{{ $pct }}%; background:{{ $corF }}; border-radius:999px;"></div>
+                    </div>
                 </div>
-                <div style="height:6px; border-radius:999px; background:rgba(128,128,128,.2); overflow:hidden;">
-                    <div style="height:100%; width:{{ $pct }}%; background:{{ $corF }}; border-radius:999px;"></div>
-                </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     </div>
 </div>

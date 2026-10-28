@@ -32,7 +32,7 @@ Serviço: `App\Services\UtmTracker`
 4. UTM sem campanha correspondente (ou campanha inativa) é preservado nos campos
    `utm_*`; só o `campanha_marketing_id` fica vazio.
 
-A campanha pode ser ajustada manualmente na ficha do lead (aba **Dados do Negócio**).
+A campanha pode ser ajustada manualmente na ficha do lead (aba **Dados do Negócio**, na seção **Contato e origem**).
 Na tabela de Interessados há a coluna (oculta por padrão) e o filtro **Campanha**.
 
 > O cadastro em si (pessoa, lead, dependentes, reenvio do formulário) é feito por

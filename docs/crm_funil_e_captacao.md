@@ -690,7 +690,7 @@ O Lote D3 implementa a inteligência de identificação de duplicidades e uma ro
 - **Tokens e Pré-Matrícula:** Preserva tokens de convite e portal de documentos válidos, além de mesclar rascunhos de pré-matrícula criptografados.
 - **Resolução de Conflitos:** Completa campos nulos no lead de destino e concatena observações de forma cronológica com identificação do lead absorvido.
 - **Auditoria e Linha do Tempo:** Registra a mesclagem no `activity_log` e adiciona um evento na linha do tempo do lead consolidado.
-- **Proteção e UI:** Ação "Mesclar Duplicados" disponível no cabeçalho de `EditInteressado` e na tabela de interessados (`InteressadosTable`), protegida pela permissão Shield `Update:Interessado`.
+- **Proteção e UI:** Ação "Mesclar Duplicados" disponível no menu agrupado **Mais (⋮)** do cabeçalho de `EditInteressado` (com badge de quantidade), diretamente pelo botão "Mesclar Duplicados" no card de aviso de duplicados na ficha (`aviso-lead-duplicado.blade.php`), e na tabela de interessados (`InteressadosTable`), protegida pela permissão Shield `Update:Interessado`.
 
 Testes: `tests/Feature/LeadMesclagemDuplicadosTest.php`.
 

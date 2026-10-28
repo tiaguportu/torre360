@@ -32,6 +32,7 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 
 class InteressadoForm
@@ -100,10 +101,10 @@ class InteressadoForm
                             ->schema([
                                 Actions::make([
                                     Action::make('alerta_contato')
-                                        ->label('ATENÇÃO: Este interessado precisa de contato urgente! Clique aqui para alertar o consultor.')
-                                        ->icon('heroicon-m-exclamation-triangle')
+                                        ->label('Alertar consultor')
+                                        ->icon('heroicon-m-bell-alert')
                                         ->color('danger')
-                                        ->badge()
+                                        ->size('sm')
                                         ->action(function (Interessado $record) {
                                             $consultor = $record->usuario;
 
@@ -141,13 +142,22 @@ class InteressadoForm
                                         ->requiresConfirmation()
                                         ->modalHeading('Enviar Alerta de Acompanhamento?')
                                         ->modalDescription(fn (Interessado $record): HtmlString => self::descricaoDoAlerta($record))
-                                        ->modalSubmitActionLabel('Sim, enviar alerta')
-                                        ->extraAttributes([
-                                            'class' => 'w-full justify-center py-4 text-lg font-bold animate-pulse',
-                                        ]),
+                                        ->modalSubmitActionLabel('Sim, enviar alerta'),
                                 ])
                                     ->key('alertaContato')
                                     ->columnSpanFull()
+                                    ->label(function (?Interessado $record): string {
+                                        if (! $record || ! $record->data_proximo_contato) {
+                                            return 'Atenção: Este interessado precisa de contato urgente.';
+                                        }
+
+                                        $data = Carbon::parse($record->data_proximo_contato)->format('d/m/Y H:i');
+
+                                        return "Contato urgente pendente: o próximo contato agendado para {$data} está vencido.";
+                                    })
+                                    ->extraAttributes([
+                                        'class' => 'crm-alerta-urgente',
+                                    ])
                                     ->visible(fn (?Interessado $record) => $record?->precisaDeContato() ?? false),
 
                                 // Resumo Visual (somente na edição)
@@ -167,173 +177,213 @@ class InteressadoForm
                                     ->extraAttributes(['class' => 'lead-resumo-secao'])
                                     ->visible(fn (?Interessado $record) => $record !== null),
 
-                                Select::make('pessoa_id')
-                                    ->label('Pessoa / Interessado')
-                                    ->relationship('pessoa', 'nome')
-                                    ->searchable()
-                                    // Sem `preload()`: carregaria todas as pessoas do sistema (alunos, responsáveis, funcionários)
-                                    // a cada abertura da ficha. A busca vem do servidor, limitada, por nome/e-mail/telefone/CPF.
-                                    ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()->busca($search)->orderBy('nome')->limit(50)->pluck('nome', 'id')->all())
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, $state) {
-                                        if ($state) {
-                                            $pessoa = Pessoa::find($state);
-                                            $set('pessoa_email', $pessoa?->email);
-                                            $set('pessoa_telefone', $pessoa?->telefone);
-                                        } else {
-                                            $set('pessoa_email', null);
-                                            $set('pessoa_telefone', null);
-                                        }
-                                    })
-                                    ->createOptionForm(fn (Schema $schema) => PessoaForm::configure($schema)->getComponents()),
-
-                                TextInput::make('pessoa_email')
-                                    ->label('E-mail')
-                                    ->email()
-                                    ->maxLength(255)
-                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_email', Pessoa::find($get('pessoa_id'))?->email)),
-
-                                TextInput::make('pessoa_telefone')
-                                    ->label('Telefone')
-                                    ->tel()
-                                    ->placeholder('(11) 98888-7777')
-                                    ->mask(RawJs::make(<<<'JS'
-                                        $input.replace(/\D/g, '').length > 10 ? '(99) 99999-9999' : '(99) 9999-99999'
-                                        JS))
-                                    ->maxLength(20)
-                                    ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone)),
-
-                                Select::make('status_interessado_id')
-                                    ->label('Status')
-                                    ->relationship('status', 'nome')
-                                    ->required()
-                                    ->native(false),
-
-                                Select::make('origem_interessado_id')
-                                    ->label('Origem')
-                                    ->relationship('origem', 'nome')
-                                    ->required()
-                                    ->native(false),
-
-                                Select::make('campanha_marketing_id')
-                                    ->label('Campanha de Marketing')
-                                    ->relationship('campanha', 'nome')
-                                    ->searchable()
-                                    ->preload()
-                                    ->native(false)
-                                    ->helperText(fn (?Interessado $record): ?string => filled($record?->utm_source) || filled($record?->utm_campaign)
-                                        ? 'UTM capturado: '.collect([$record->utm_source, $record->utm_medium, $record->utm_campaign])->filter()->implode(' / ')
-                                        : null),
-
-                                // Só quem pode atender leads aparece (contas de famílias, professores etc. ficam de fora);
-                                // o consultor atual segue na lista mesmo que tenha perdido a permissão depois.
-                                Select::make('usuario_id')
-                                    ->label('Consultor Responsável')
-                                    ->relationship(
-                                        'usuario',
-                                        'name',
-                                        modifyQueryUsing: fn (Builder $query, ?Interessado $record) => $query
-                                            ->where(fn (Builder $q) => $q->consultoresCrm()->orWhere($q->getModel()->getQualifiedKeyName(), $record?->usuario_id)),
-                                    )
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->native(false),
-
-                                Select::make('temperatura')
-                                    ->label('Temperatura (percepção do consultor)')
-                                    ->options([
-                                        'quente' => '🔥 Quente',
-                                        'morno' => '🟡 Morno',
-                                        'frio' => '🔵 Frio',
-                                    ])
-                                    ->native(false)
-                                    ->helperText('Avaliação manual do consultor. Não é calculada automaticamente, mas entra no "Lead Score" com o maior peso.'),
-
-                                Select::make('faixa_distancia_escola')
-                                    ->label('Distância até a Escola')
-                                    ->options([
-                                        'ate_2km' => 'Até 2km',
-                                        'de_2_a_5km' => '2 a 5km',
-                                        'de_5_a_10km' => '5 a 10km',
-                                        'mais_de_10km' => 'Mais de 10km',
-                                    ])
-                                    ->native(false),
-
-                                Select::make('meio_transporte')
-                                    ->label('Meio de Transporte')
-                                    ->options([
-                                        'carro_proprio' => 'Carro próprio',
-                                        'van_escolar' => 'Van escolar',
-                                        'transporte_publico' => 'Transporte público',
-                                        'a_pe_ou_bicicleta' => 'A pé / Bicicleta',
-                                    ])
-                                    ->native(false),
-
-                                TextInput::make('valor_estimado')
-                                    ->label('Valor Estimado (R$)')
-                                    ->numeric()
-                                    ->prefix('R$')
-                                    ->minValue(0),
-
-                                DateTimePicker::make('data_proximo_contato')
-                                    ->label('Próximo Contato')
-                                    ->native(false),
-
-                                TextInput::make('proxima_acao')
-                                    ->label('Próxima ação')
-                                    ->placeholder('O que fazer no próximo contato')
-                                    ->maxLength(160),
-
-                                TextInput::make('sla_primeira_resposta_minutos')
-                                    ->label('SLA 1ª Resposta (minutos úteis)')
-                                    ->numeric()
-                                    ->minValue(1)
-                                    ->placeholder('Padrão: 120 min úteis')
-                                    ->helperText(function (?Interessado $record): string {
-                                        if (! $record || ! $record->exists) {
-                                            return 'Prazo em minutos comerciais (segunda a sexta, 08h-18h) para a 1ª resposta. Em branco usa o padrão da escola.';
-                                        }
-
-                                        $resumo = app(LeadSlaService::class)->resumoSla($record);
-
-                                        return "{$resumo['texto']} • Limite comercial: {$resumo['limite']->format('d/m/Y H:i')}.";
-                                    }),
-
-                                Select::make('motivo_perda')
-                                    ->label('Motivo da Perda')
-                                    ->options(Interessado::MOTIVOS_PERDA)
-                                    ->searchable()
-                                    ->visible(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
-                                    ->required(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
-                                    ->columnSpanFull(),
-
-                                Repeater::make('redes_sociais')
-                                    ->label('Redes Sociais')
+                                // 1. Acompanhamento (aberta)
+                                Section::make('Acompanhamento')
+                                    ->icon('heroicon-o-clipboard-document-check')
                                     ->schema([
-                                        Select::make('rede')
-                                            ->label('Rede')
-                                            ->options(Interessado::REDES_SOCIAIS)
+                                        Select::make('status_interessado_id')
+                                            ->label('Status')
+                                            ->relationship('status', 'nome')
+                                            ->required()
+                                            ->native(false),
+
+                                        Select::make('usuario_id')
+                                            ->label('Consultor Responsável')
+                                            ->relationship(
+                                                'usuario',
+                                                'name',
+                                                modifyQueryUsing: fn (Builder $query, ?Interessado $record) => $query
+                                                    ->where(fn (Builder $q) => $q->consultoresCrm()->orWhere($q->getModel()->getQualifiedKeyName(), $record?->usuario_id)),
+                                            )
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->native(false),
+
+                                        Select::make('temperatura')
+                                            ->label('Temperatura (percepção do consultor)')
+                                            ->options([
+                                                'quente' => '🔥 Quente',
+                                                'morno' => '🟡 Morno',
+                                                'frio' => '🔵 Frio',
+                                            ])
                                             ->native(false)
-                                            ->required(),
-                                        TextInput::make('url')
-                                            ->label('Link do perfil')
-                                            ->url()
-                                            ->placeholder('https://instagram.com/usuario')
-                                            ->maxLength(255)
-                                            ->required(),
+                                            ->helperText('Avaliação manual do consultor. Não é calculada automaticamente, mas entra no "Lead Score" com o maior peso.'),
+
+                                        DateTimePicker::make('data_proximo_contato')
+                                            ->label('Próximo Contato')
+                                            ->native(false),
+
+                                        TextInput::make('proxima_acao')
+                                            ->label('Próxima ação')
+                                            ->placeholder('O que fazer no próximo contato')
+                                            ->maxLength(160),
+
+                                        Select::make('motivo_perda')
+                                            ->label('Motivo da Perda')
+                                            ->options(Interessado::MOTIVOS_PERDA)
+                                            ->searchable()
+                                            ->visible(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
+                                            ->required(fn (Get $get) => self::isStatusPerdido($get('status_interessado_id')))
+                                            ->columnSpanFull(),
                                     ])
                                     ->columns(2)
-                                    ->addActionLabel('Adicionar rede social')
-                                    ->defaultItems(0)
-                                    ->collapsible()
-                                    ->itemLabel(fn (array $state): ?string => Interessado::REDES_SOCIAIS[$state['rede'] ?? ''] ?? null)
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
 
-                                Textarea::make('observacoes')
-                                    ->label('Observações')
-                                    ->columnSpanFull(),
+                                // 2. Contato e origem (aberta)
+                                Section::make('Contato e origem')
+                                    ->icon('heroicon-o-identification')
+                                    ->schema([
+                                        Select::make('pessoa_id')
+                                            ->label('Pessoa / Interessado')
+                                            ->relationship('pessoa', 'nome')
+                                            ->searchable()
+                                            ->getSearchResultsUsing(fn (string $search): array => Pessoa::query()->busca($search)->orderBy('nome')->limit(50)->pluck('nome', 'id')->all())
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(function (Set $set, $state) {
+                                                if ($state) {
+                                                    $pessoa = Pessoa::find($state);
+                                                    $set('pessoa_email', $pessoa?->email);
+                                                    $set('pessoa_telefone', $pessoa?->telefone);
+                                                } else {
+                                                    $set('pessoa_email', null);
+                                                    $set('pessoa_telefone', null);
+                                                }
+                                            })
+                                            ->createOptionForm(fn (Schema $schema) => PessoaForm::configure($schema)->getComponents()),
+
+                                        TextInput::make('pessoa_email')
+                                            ->label('E-mail')
+                                            ->email()
+                                            ->maxLength(255)
+                                            ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_email', Pessoa::find($get('pessoa_id'))?->email)),
+
+                                        TextInput::make('pessoa_telefone')
+                                            ->label('Telefone')
+                                            ->tel()
+                                            ->placeholder('(11) 98888-7777')
+                                            ->mask(RawJs::make(<<<'JS'
+                                                $input.replace(/\D/g, '').length > 10 ? '(99) 99999-9999' : '(99) 9999-99999'
+                                                JS))
+                                            ->maxLength(20)
+                                            ->afterStateHydrated(fn (Set $set, Get $get) => $set('pessoa_telefone', Pessoa::find($get('pessoa_id'))?->telefone)),
+
+                                        Select::make('origem_interessado_id')
+                                            ->label('Origem')
+                                            ->relationship('origem', 'nome')
+                                            ->required()
+                                            ->native(false),
+
+                                        Select::make('campanha_marketing_id')
+                                            ->label('Campanha de Marketing')
+                                            ->relationship('campanha', 'nome')
+                                            ->searchable()
+                                            ->preload()
+                                            ->native(false)
+                                            ->helperText(fn (?Interessado $record): ?string => filled($record?->utm_source) || filled($record?->utm_campaign)
+                                                ? 'UTM capturado: '.collect([$record->utm_source, $record->utm_medium, $record->utm_campaign])->filter()->implode(' / ')
+                                                : null),
+                                    ])
+                                    ->columns(2)
+                                    ->columnSpanFull()
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
+
+                                // 3. Qualificação (recolhida na edição, aberta na criação)
+                                Section::make('Qualificação')
+                                    ->icon('heroicon-o-sparkles')
+                                    ->description('Entram no Lead Score')
+                                    ->schema([
+                                        Select::make('faixa_distancia_escola')
+                                            ->label('Distância até a Escola')
+                                            ->options([
+                                                'ate_2km' => 'Até 2km',
+                                                'de_2_a_5km' => '2 a 5km',
+                                                'de_5_a_10km' => '5 a 10km',
+                                                'mais_de_10km' => 'Mais de 10km',
+                                            ])
+                                            ->native(false),
+
+                                        Select::make('meio_transporte')
+                                            ->label('Meio de Transporte')
+                                            ->options([
+                                                'carro_proprio' => 'Carro próprio',
+                                                'van_escolar' => 'Van escolar',
+                                                'transporte_publico' => 'Transporte público',
+                                                'a_pe_ou_bicicleta' => 'A pé / Bicicleta',
+                                            ])
+                                            ->native(false),
+
+                                        TextInput::make('valor_estimado')
+                                            ->label('Valor Estimado (R$)')
+                                            ->numeric()
+                                            ->prefix('R$')
+                                            ->minValue(0),
+                                    ])
+                                    ->columns(2)
+                                    ->columnSpanFull()
+                                    ->collapsible()
+                                    ->collapsed(fn (?Interessado $record) => $record !== null)
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
+
+                                // 4. Prazo e redes sociais (recolhida na edição se vazio, aberta se preenchido; aberta na criação)
+                                Section::make('Prazo e redes sociais')
+                                    ->icon('heroicon-o-clock')
+                                    ->schema([
+                                        TextInput::make('sla_primeira_resposta_minutos')
+                                            ->label('SLA 1ª Resposta (minutos úteis)')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->placeholder('Padrão: 120 min úteis')
+                                            ->helperText(function (?Interessado $record): string {
+                                                if (! $record || ! $record->exists) {
+                                                    return 'Prazo em minutos comerciais (segunda a sexta, 08h-18h) para a 1ª resposta. Em branco usa o padrão da escola.';
+                                                }
+
+                                                $resumo = app(LeadSlaService::class)->resumoSla($record);
+
+                                                return "{$resumo['texto']} • Limite comercial: {$resumo['limite']->format('d/m/Y H:i')}.";
+                                            }),
+
+                                        Repeater::make('redes_sociais')
+                                            ->label('Redes Sociais')
+                                            ->schema([
+                                                Select::make('rede')
+                                                    ->label('Rede')
+                                                    ->options(Interessado::REDES_SOCIAIS)
+                                                    ->native(false)
+                                                    ->required(),
+                                                TextInput::make('url')
+                                                    ->label('Link do perfil')
+                                                    ->url()
+                                                    ->placeholder('https://instagram.com/usuario')
+                                                    ->maxLength(255)
+                                                    ->required(),
+                                            ])
+                                            ->columns(2)
+                                            ->addActionLabel('Adicionar rede social')
+                                            ->defaultItems(0)
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => Interessado::REDES_SOCIAIS[$state['rede'] ?? ''] ?? null)
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2)
+                                    ->columnSpanFull()
+                                    ->collapsible()
+                                    ->collapsed(fn (?Interessado $record) => $record !== null && empty($record->redes_sociais))
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
+
+                                // 5. Observações (aberta)
+                                Section::make('Observações')
+                                    ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                                    ->schema([
+                                        Textarea::make('observacoes')
+                                            ->label('Observações')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columnSpanFull()
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
                             ])->columns(2),
 
                         Tab::make('Dependentes')

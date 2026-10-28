@@ -149,7 +149,7 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
    - Os filtros ficam recolhidos acima da tabela e são lembrados durante a sessão.
 3. **Ações Rápidas na Tabela:** *Atendimento*, *WhatsApp*, *Redes sociais*, *Enviar ao consultor* e *Editar* aparecem como ícones em cada linha; as demais ficam no menu **⋮ Mais ações**.
    - **Redes sociais (ícone de globo):** Leva direto ao perfil do lead na rede social cadastrada na ficha (veja a seção 3.3), abrindo em uma **nova aba**. Ao passar o mouse sobre o ícone, a dica diz qual rede será aberta (ex.: *Abrir Instagram*). Se o lead tem **mais de um perfil**, o clique abre uma janela com uma linha por rede e um botão **Abrir** em cada uma. O ícone só aparece para leads que têm rede social cadastrada com link válido: links que não começam com `http://` ou `https://` (por exemplo, texto solto vindo da importação com IA) são ignorados. A coluna opcional **Redes Sociais** da tabela segue a mesma regra.
-   - **Mesclar Duplicados:** Quando o sistema detecta telefones, CPFs, e-mails ou alunos semelhantes entre leads, permite abrir a conciliação assistida para unificar os dados no lead vencedor sem perda de histórico.
+   - **Mesclar Duplicados:** Quando o sistema detecta telefones, CPFs, e-mails ou alunos semelhantes entre leads, permite abrir a conciliação assistida para unificar os dados no lead vencedor sem perda de histórico. Pode ser acionado pelo menu **Mais (⋮)** do cabeçalho da edição, pelo botão direto no aviso de duplicados na ficha do lead ou no menu da tabela.
    - **Registrar Atendimento:** Registre um contato diretamente da tabela, informando tipo, **quando aconteceu** (por padrão, agora; ajuste se o contato foi antes), relato, duração, resultado e próximo contato. O sistema identifica automaticamente quem registrou e marca o primeiro contato efetivo da escola com a família (cumprindo e finalizando o ciclo de SLA de 1ª resposta).
    - **Enviar ao consultor (ícone de compartilhar):** Abre o WhatsApp do consultor responsável pelo lead com a mensagem pronta: link direto para falar com o interessado (o consultor só clica), alunos, status, origem, temperatura, próximo contato, visita agendada e um resumo dos **3 últimos contatos** registrados. O ícone fica **verde** quando o consultor tem telefone cadastrado e **amarelo** quando não tem — nesse caso o WhatsApp abre com a mensagem pronta, sem destinatário, e você escolhe o contato. Só aparece para leads que têm consultor. Para o envio ir direto ao consultor, o telefone dele precisa estar preenchido no cadastro da **Pessoa** vinculada ao usuário.
    - **Agendar Visita:** Marque uma visita do lead à escola (data e hora, aluno e observações). Veja a seção 3.10.
@@ -165,14 +165,25 @@ O módulo de CRM permite gerenciar o processo de captação de novos alunos ante
 
 5. **Botão Ajuda:** No topo da listagem, o botão **Ajuda** abre um guia da tela: para que serve cada aba, como ler cada coluna (inclusive o Score e a faixa vermelha), as ações por linha e em lote, os filtros, como entram novos leads, uma rotina diária sugerida e como o Score é calculado. Os itens variam conforme as suas permissões.
 ### 3.3 Qualificação de Leads
-O formulário de edição do interessado oferece ferramentas de qualificação:
+O formulário de edição do interessado oferece ferramentas de qualificação organizadas para priorizar o atendimento do dia a dia:
 - **Duas colunas na ficha:** em telas largas (a partir de 1280 px de largura), a ficha do interessado fica dividida em duas colunas lado a lado. À **esquerda** ficam o formulário (abas *Dados do Negócio* e *Dependentes*) e os botões *Salvar alterações* e *Cancelar*; à **direita**, as abas *Linha do Tempo 360°*, *Histórico de Contatos*, *Visitas à Escola* e *Documentos de Pré-Admissão*. Assim você registra um contato ou confere a linha do tempo sem rolar a página até o fim do formulário. Em telas menores (tablet e celular), as abas passam para baixo do formulário, como antes. O botão **Ajuda** da ficha descreve esse layout.
-- **Resumo do Lead:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando o lead está estagnado, 7 dias ou mais) e o detalhamento do score em barras de progresso por fator. No computador, o detalhamento aparece em **duas colunas** (os 12 fatores, 6 em cada); no celular e em telas estreitas, em **uma coluna**, com as barras sempre dentro da largura da tela (sem rolagem lateral). No celular, os quadros do resumo usam margens internas reduzidas para ocupar o máximo da largura disponível.
+- **Cabeçalho Inteligente e Menus Agrupados:** O cabeçalho da edição exibe no máximo 3 botões visíveis para manter o foco e evitar poluição visual:
+  - **Assumir Lead:** Ação direta e destacada, visível exclusivamente quando o lead ainda não possui consultor responsável;
+  - **Apoio ao atendimento:** Menu agrupado (ícone de brilho ✨) reunindo as ferramentas de inteligência: *Battlecards de Concorrentes*, *Dossiê do Lead (IA)*, *Copiloto WhatsApp (IA)* e *Resumo da Conversa (IA)*;
+  - **Mais (⋮):** Menu suspenso reunindo *Termômetro de Vagas*, *Mesclar Duplicados* (com badge dinâmico indicando a quantidade de duplicados encontrados), *Ajuda* e a ação de *Excluir*.
+- **Alerta de Contato Urgente Compacto:** Se o lead estiver com contato atrasado (regra do sistema), uma faixa compacta discreta em vermelho aparece no topo do formulário com o motivo do vencimento e o botão **Alertar consultor**, substituindo o antigo botão gigante pulsante.
+- **Resumo do Lead com Detalhamento Recolhível:** Painel no topo da edição com o **Lead Score** em anel (verde ≥ 70, âmbar 40–69, vermelho < 40), cartões de *dias no funil*, *total de contatos* e *dias sem interação* (destacado em vermelho quando estagnado). Para evitar rolagem desnecessária, o bloco **Detalhamento do score** (12 fatores) inicia **recolhido por padrão** e pode ser expandido a qualquer momento pelo controle **Ver como o score foi calculado**. No computador, o detalhamento expandido é exibido em duas colunas; no celular, em uma coluna responsiva.
+- **Aba Dados do Negócio em 5 Seções Compactas:** Os campos foram agrupados por momento de uso, trazendo o que o consultor mais precisa logo no topo:
+  1. **Acompanhamento (aberta por padrão):** Status do lead, Consultor responsável, Temperatura, Data do próximo contato, Próxima ação e Motivo da perda (exibido condicionalmente se o status for de perda).
+  2. **Contato e origem (aberta por padrão):** Responsável (com atalho para criação rápida de pessoa), E-mail, Telefone, Origem do lead e Campanha de marketing.
+  3. **Qualificação (recolhida na edição, aberta na criação):** Distância até a escola, Meio de transporte e Valor estimado da matrícula. A seção indica com clareza: *"Entram no Lead Score"*.
+  4. **Prazo e redes sociais (recolhida na edição se não houver redes cadastradas, aberta se houver; aberta na criação):** SLA de 1ª resposta em minutos úteis e o cadastro de perfis em **Redes Sociais**.
+  5. **Observações (aberta por padrão):** Campo de anotações gerais em largura total.
 - **SLA de 1ª Resposta (minutos úteis):** Prazo em minutos comerciais para realização do primeiro contato da escola com a família (padrão institucional: 120 minutos úteis). Conta exclusivamente os dias úteis e o horário de expediente cadastrado (ex: seg a sex, 08h às 18h). Um assistente reativo calcula e exibe em tempo real o status e a data limite comercial estimada.
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
-- **Redes Sociais:** Na aba *Dados do Negócio*, em **Redes Sociais**, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis. Na listagem de interessados, cada lead com perfil cadastrado ganha o botão **Redes sociais** (ícone de globo) para abri-lo direto (seção 3.2).
-- **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente.
+- **Redes Sociais:** Na seção *Prazo e redes sociais*, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis. Na listagem de interessados, cada lead com perfil cadastrado ganha o botão **Redes sociais** (ícone de globo) para abri-lo direto (seção 3.2).
+- **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente na seção *Acompanhamento*.
 - **Telefone:** O campo tem máscara no padrão Brasil com DDD, aceitando fixo `(11) 3333-4444` ou celular `(11) 98888-7777`. A máscara se ajusta sozinha conforme a quantidade de dígitos digitada.
 
 ### 3.4 Registro de Histórico de Contato
@@ -445,7 +456,7 @@ O **Termômetro de Vagas por Série** fornece à equipe de admissões e consulto
    - 🟢 **Disponível:** Vagas abertas para captação padrão.
 
 3. **Modal Executivo "Termômetro de Vagas":**
-   - **Onde acessar:** Disponível no topo da listagem de Interessados, no topo do Funil de Vendas (Kanban) e no cabeçalho de Edição do Lead através do botão amarelo **Termômetro de Vagas** (ícone `📊`).
+   - **Onde acessar:** Disponível no topo da listagem de Interessados, no topo do Funil de Vendas (Kanban) e na tela de Edição do Lead dentro do menu agrupado **Mais (⋮)**.
    - **Indicadores Globais:** Exibe cartões com *Capacidade Total*, *Matrículas Ativas*, *Vagas Restantes* e *Ocupação Geral da Escola*.
    - **Visão por Série:** Barra de progresso visual com percentual de ocupação, total de turmas e detalhamento individual de cada turma (capacidade, alunos matriculados, turno e vagas livres).
 
@@ -621,7 +632,7 @@ Os **Battlecards Comerciais & Inteligência de Objeções** capacitam os consult
    - O sistema monitora ativamente duplicidades comparando telefone normalizado (últimos 10/11 dígitos), CPF, e-mail e dependentes com o mesmo nome e data de nascimento.
    - Quando um lead possui possíveis duplicados, um card de alerta em destaque aparece no topo da ficha do interessado.
 2. **Mesclagem Assistida em 1 Clique:**
-   - Ação **Mesclar Duplicados** disponível no cabeçalho de edição do lead e na tabela de interessados.
+   - Ação **Mesclar Duplicados** disponível no menu **Mais (⋮)** do cabeçalho de edição do lead, no botão direto do banner de alerta de duplicados na ficha e na tabela de interessados.
    - Permite escolher qual cadastro será o "Lead Principal" (vencedor).
    - O processo unifica dependentes repetidos, transfere histórico de contatos, visitas, documentos anexados, transições do funil e rascunhos de pré-matrícula com garantia atômica (`DB::transaction`).
 
@@ -3292,7 +3303,7 @@ Implementações de blindagem do sistema contra ataques de injeção, upload mal
    - **E-mail Normalizado:** Compara os e-mails de forma estrita em caixa baixa e sem espaços residuais;
    - **Aluno Dependente em Comum:** Cruza o nome normalizado da criança e a data de nascimento entre fichas distintas.
 2. **Aviso Visual em Destaque na Ficha do Lead:** Ao abrir a edição de um interessado duplicado, um banner de alerta âmbar exibe a quantidade de correspondências encontradas, os motivos (telefone, CPF, e-mail ou dependente) e links rápidos para inspecionar os outros cadastros.
-3. **Ação "Mesclar Duplicados" (Atômica e Protegida):** Usuários com permissão Shield `Update:Interessado` podem acionar o botão de mesclagem no topo da ficha ou na linha da tabela. A consolidação:
+3. **Ação "Mesclar Duplicados" (Atômica e Protegida):** Usuários com permissão Shield `Update:Interessado` podem acionar o botão de mesclagem no menu **Mais (⋮)** no topo da ficha (com indicador numérico de duplicados), diretamente pelo botão **Mesclar Duplicados** no banner de alerta âmbar da ficha ou na linha da tabela. A consolidação:
    - Preserva o lead mais antigo por padrão (ou permite escolher explicitamente qual deve ser o registro mantido);
    - **Nunca perde dados:** Transfere todas as visitas agendadas e realizadas, pesquisas pós-tour (NPS), documentos inseridos com análise de IA, históricos de contato, transições de etapas do funil, propostas e indicações;
    - **Unifica Dependentes sem Duplicar:** Alunos com o mesmo nome normalizado têm seus dados completados (série, unidade, turno, data de nascimento) e suas visitas e documentos redirecionados para o registro definitivo;
