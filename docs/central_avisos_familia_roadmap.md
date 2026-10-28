@@ -98,5 +98,9 @@ por evento, quem avisar e por qual canal.
 - **Com a Onda 33 (comunicados com ciência e enquetes):** os dois precisam do mesmo destinatário, do mesmo registro
   de entrega e do mesmo sino. A recomendação é implementar como **uma só onda de "Comunicação com a família"**: aviso
   transacional (esta onda) e comunicado com ciência rastreada (Onda 33) sobre o mesmo modelo de destinatário.
+- **Com as ondas 80 e 83 (requerimentos e atendimento):** o Portal da família **não tem sino** e o chamado de hoje não avisa ninguém;
+  as duas respondem para ninguém sem esta onda. Ver o [índice das ondas 80 a 88](ondas_80_a_88_indice.md#fusões-sugeridas).
+- **Com a Onda 88 (WhatsApp oficial):** é o canal de entrega que esta onda e a 33 devem usar, depois que os três "canais" atuais forem
+  unificados ([documento da 88](whatsapp_oficial_roadmap.md)).
 - **Com a Onda 47 (digest diário):** a equipe recebe o resumo; a família, os avisos. Compartilham o agendamento e as
   preferências por canal.

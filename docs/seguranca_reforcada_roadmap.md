@@ -1,8 +1,8 @@
 # Segurança Reforçada: MFA, Retenção de Logs e Criptografia de Saúde (Onda 46) — Proposta para o Futuro
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda. Reúne três itens já levantados em `docs/seguranca_pendencias.md` e
+> **Status: parcialmente implementado.** Em 2026-10-23 entraram a **retenção de logs** (comandos agendados `activitylog:clean` e
+> `audit:limpar-logs`, 180 dias, e `email:limpar-logs`, 365 dias) e a **criptografia dos dados de saúde** (migration
+> `criptografar_dados_saude_alunos`). O **MFA** continua proposto: não há código dele. O texto abaixo é a proposta original. Reúne três itens já levantados em `docs/seguranca_pendencias.md` e
 > `docs/melhoria_mfa_painel.md`.
 
 ## Contexto

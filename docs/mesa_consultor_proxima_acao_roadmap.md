@@ -65,4 +65,4 @@ Nenhuma nova: cada fila usa a permissão do módulo (`ViewAny:Interessado`; *Lea
 
 ## Fora desta entrega
 
-Distribuição automática de leads por rodízio ou carga, prioridade calculada dentro de cada fila (cada uma tem a sua ordem natural: horário, atraso ou score) e o resumo do dia por WhatsApp ao consultor.
+Distribuição automática de leads por rodízio ou carga (proposta na [Onda 85](distribuicao_leads_carteira_roadmap.md)), prioridade calculada dentro de cada fila (cada uma tem a sua ordem natural: horário, atraso ou score) e o resumo do dia por WhatsApp ao consultor (depende da [Onda 88](whatsapp_oficial_roadmap.md)). A sequência do CRM continua no [índice das ondas 80 a 88](ondas_80_a_88_indice.md).

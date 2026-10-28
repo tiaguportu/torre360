@@ -722,7 +722,7 @@ autorizada:
 | Cantina escolar com saldo pré-pago | `docs/cantina_escolar_roadmap.md` |
 | Repositório de conteúdo pedagógico digital | `docs/conteudo_pedagogico_digital_roadmap.md` |
 | Atendimento Educacional Especializado (AEE) / Plano Individualizado | `docs/atendimento_educacional_especializado_roadmap.md` |
-| Ondas 27 a 48 (11 propostas, 10 implementadas e 1 parcial), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
+| Ondas 27 a 48 (10 propostas, 10 implementadas e 2 parciais), com ordem sugerida | `docs/ondas_27_a_48_indice.md` |
 | NFS-e das mensalidades (parte ainda não feita da Onda 42) | `docs/nfse_informe_mensalidades_roadmap.md` |
 | Ondas 49 a 60 (10 propostas e 2 implementadas), com as ampliações propostas em ondas existentes | `docs/ondas_49_a_60_indice.md` |
 | Ondas 61 a 67 (2 propostas, 4 implementadas e 1 mesclada à Onda 35), com as ampliações propostas | `docs/ondas_61_a_67_indice.md` |
@@ -734,6 +734,7 @@ autorizada:
 | Ondas 72 a 79 (2 propostas e 6 implementadas), com as fusões e as ampliações propostas | `docs/ondas_72_a_79_indice.md` |
 | Conjuntos **Suprimentos** e **Resultado da escola** (ondas 16, 38, 43, 45, 76, 77, 78 e 84, implementadas em 2026-10-27) | `docs/conjuntos_suprimentos_resultado_indice.md` |
 | **Reuniões e atas** (ondas 27 e 32, implementadas em 2026-10-28) | `docs/reunioes_e_atas_roadmap.md` |
+| Ondas 80 a 88 para a secretaria e o CRM (8 propostas, com a 84 já implementada), com as fusões e a ordem sugerida | `docs/ondas_80_a_88_indice.md` |
 
 (A avaliação de desempenho docente e a reserva de espaços, que constavam aqui, já foram implementadas e
 estão nas seções 19 e 20 dos módulos. O reajuste de mensalidades e o informe anual estão na seção 25; o

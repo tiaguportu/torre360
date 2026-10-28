@@ -625,7 +625,8 @@ Testes: `LeadFunilServiceTest`, `FunilAcoesInteressadosTest`, `CaptacaoReenvioTe
 
 ## 13. Fora do escopo destes lotes
 
-Distribuição automática de leads, WhatsApp como canal da régua, funil analítico e demais upgrades (Lote D);
+Distribuição automática de leads (hoje proposta na [Onda 85](distribuicao_leads_carteira_roadmap.md)), WhatsApp como canal da régua (proposto na
+[Onda 88](whatsapp_oficial_roadmap.md)), funil analítico e demais upgrades (Lote D);
 padronização da visibilidade por consultor; Política de Privacidade, Encarregado (DPO) e RIPD (a escola define);
 confirmação do consentimento por e-mail (double opt-in); criptografia de outros dados pessoais do CRM
 (`observacoes`, telefone e e-mail da pessoa); minimização dos dados enviados ao Gemini no resumo de conversa e na
