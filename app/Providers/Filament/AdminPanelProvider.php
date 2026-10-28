@@ -75,6 +75,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->favicon(asset('icon.png'))
             ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->colors([
                 'primary' => '#243468', // Dark Blue from TORRE
                 'secondary' => '#5C94AB', // Teal from tower body

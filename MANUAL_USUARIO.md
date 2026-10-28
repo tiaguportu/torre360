@@ -4692,11 +4692,48 @@ Para prevenir o congelamento de requisições HTTP, estouro de tempo limite do s
 
 ---
 
+## 📑 108. Gestão de Contratos de Matrícula: Salvaguardas de Faturamento e Notificações em Tempo Real
+
+Para assegurar o alinhamento rigoroso entre os compromissos financeiros firmados nos contratos escolares e os títulos de cobrança emitidos, bem como manter a secretaria e a administração informadas sobre o ciclo de vida dos documentos, o Torre360 conta com salvaguardas automáticas de faturamento e avisos em tempo real:
+
+### 108.1 Alerta e Auditoria de Divergência entre Valor do Contrato e Faturamento
+1. **Detecção Automática de Divergência:**
+   - Sempre que o campo **Valor Total** (`valor_total`) de um contrato for alterado e o contrato já possuir faturas emitidas (ativas e não canceladas), o sistema calcula instantaneamente o somatório das faturas existentes e compara com o novo valor acordado.
+   - Caso haja diferença monetária superior a 1 centavo, uma salvaguarda é ativada imediatamente.
+2. **Registro Explícito no Spatie ActivityLog:**
+   - O sistema grava um registro auditável no log de atividades (`contrato`), capturando:
+     - `valor_contrato_anterior`: Valor anterior do contrato.
+     - `valor_contrato_novo`: Novo valor contratual salvo.
+     - `saldo_faturas_emitidas`: Somatório das faturas ativas já emitidas.
+     - `diferenca`: Diferença apurada entre o novo valor e o faturado.
+     - `sugestao`: Recomendação expressa `"Regenerar Faturas"`.
+     - Descrição detalhada: `"Alerta de divergência: O valor do contrato (#ID) foi alterado de R$ X para R$ Y, divergindo do saldo das faturas já emitidas (R$ Z). Sugere-se ao operador rodar 'Regenerar Faturas'."`
+3. **Alerta Visual na Edição do Contrato:**
+   - Ao salvar a alteração na tela de edição do contrato (`/admin/contratos/{id}/edit`), o operador recebe uma notificação de aviso (*warning*) destacando a divergência encontrada e orientando o uso da ação de cabeçalho.
+4. **Ação Inteligente "Regenerar Faturas":**
+   - No topo da página de edição do contrato, a ação de geração se adapta automaticamente à situação do contrato:
+     - **Sem faturas emitidas:** Exibe o botão verde **Gerar Faturas Automaticamente**.
+     - **Com faturas já emitidas:** Exibe o botão âmbar **Regenerar Faturas**.
+   - Ao acionar a regeneração, um modal de confirmação explica que as faturas atuais serão excluídas e substituídas pelas novas parcelas calculadas com base no valor atual do contrato.
+   - Se o contrato já tiver sido submetido ao Assinafy, os registros anteriores de assinatura eletrônica são limpos por segurança (`resetAssinafyState()`), exigindo nova coleta de assinaturas para refletir o plano de parcelamento revisado.
+
+### 108.2 Notificação em Tempo Real no Painel ao Concluir Assinaturas
+1. **Disparo Automático de Conclusão:**
+   - Quando todas as partes signatárias (pai, mãe, responsável financeiro e representantes da unidade escolar) concluem a assinatura digital do contrato na plataforma Assinafy, o sistema dispara uma notificação imediata no painel administrativo.
+2. **Canais Integrados:**
+   - O disparo ocorre de maneira transparente e unificada através de:
+     - **Webhooks da Assinafy:** Eventos de conclusão recebidos em tempo real (`document_ready`, `document_signed`).
+     - **Reconciliação Automática:** Comando agendado (`php artisan assinafy:reconciliar`) executado periodicamente em segundo plano.
+     - **Sincronização Manual:** Ação "Sincronizar Assinaturas" executada pelo operador na tela de Contratos.
+3. **Destinatários Elegíveis:**
+   - A notificação é entregue na central de notificações de todos os colaboradores ativos com perfil administrativo ou autorização de contratos:
+     - Papéis: `super_admin`, `admin`, `secretaria` e `coordenador`.
+     - Permissões Shield: Usuários com `View:Contrato` ou `Update:Contrato`.
+4. **Experiência em Tempo Real:**
+   - O painel administrativo conta com consulta periódica automática de notificações no banco (`databaseNotificationsPolling('30s')`), exibindo o indicador numérico no sininho e a bolha de aviso (*toast*) sem necessidade de recarregar o navegador.
+   - A notificação apresenta o título **Contrato Assinado**, informa o número do contrato e o nome do aluno matriculado, e inclui um botão de ação rápida **Ver Contrato** que abre diretamente a tela do contrato correspondente.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
-
-
-
-
-
-
 

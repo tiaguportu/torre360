@@ -640,6 +640,10 @@ class AssinafyService
         if ($assinadoAgora) {
             $this->confirmarRematricula($contrato);
         }
+
+        if (! $assinadoAntes && $assinadoAgora) {
+            $contrato->notificarAssinaturasConcluidas();
+        }
     }
 
     /**

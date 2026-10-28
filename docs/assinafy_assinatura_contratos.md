@@ -134,6 +134,7 @@ RODAR_SANDBOX_ASSINAFY=1 php artisan test --filter=AssinafySandboxTest
 - **Ajuda da lista de contratos** (`ListContratos::getHelpContent()`): explica cada status, a data de aceite e a ação
   **Sincronizar Assinaturas**. `AssinafyAssinaturaTest` amarra os textos aos rótulos do enum; ao criar ou renomear um
   status, atualize o enum, a Ajuda e o `MANUAL_USUARIO.md`.
+- **Notificação em Tempo Real no Painel ao Concluir Assinaturas:** Ao transicionar para um status assinado (`ready`, `certificating`, `certificated`), uma notificação no banco de dados e sininho do painel administrativo (`databaseNotificationsPolling('30s')`) é enviada para os colaboradores ativos da equipe administrativa (`super_admin`, `admin`, `secretaria`, `coordenador`) e usuários com permissão Shield `View:Contrato` / `Update:Contrato`, contendo atalho direto para visualizar e gerenciar o contrato.
 
 ## Documentos avulsos (Onda 69)
 O envio de **outros documentos** (distrato de matrícula, contrato de trabalho, termos) usa as mesmas credenciais e o

@@ -3,19 +3,41 @@
 namespace App\Models;
 
 use App\Enums\StatusAssinaturaContrato;
+use App\Enums\StatusFatura;
 use App\Enums\StatusRematricula;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Contrato extends Model
 {
     use LogsActivity;
+
+    protected bool $notificacaoAssinaturaEnviada = false;
+
+    protected static function booted(): void
+    {
+        static::updated(function (Contrato $contrato): void {
+            if ($contrato->wasChanged('valor_total') && $contrato->faturas()->exists()) {
+                $contrato->registrarDivergenciaValorFaturasSeNecessario();
+            }
+
+            if ($contrato->wasChanged('assinafy_status')
+                && in_array($contrato->assinafy_status, self::STATUS_ASSINADO, true)
+                && ! in_array($contrato->getOriginal('assinafy_status'), self::STATUS_ASSINADO, true)
+            ) {
+                $contrato->notificarAssinaturasConcluidas();
+            }
+        });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -410,6 +432,138 @@ class Contrato extends Model
                 'assinafy_status' => 'pending',
                 'assinafy_request_log' => null,
                 'data_aceite' => null,
+            ]);
+        }
+    }
+
+    /**
+     * Retorna o somatório dos valores das faturas ativas emitidas para este contrato.
+     */
+    public function totalFaturasEmitidas(): float
+    {
+        return (float) $this->faturas()
+            ->where('status', '!=', StatusFatura::Cancelado->value)
+            ->with('itens')
+            ->get()
+            ->sum('valor');
+    }
+
+    /**
+     * Registra um alerta explícito no Spatie ActivityLog caso o valor_total do contrato
+     * tenha sido alterado e divirja do saldo das faturas ativas já emitidas.
+     */
+    public function registrarDivergenciaValorFaturasSeNecessario(): void
+    {
+        $faturasAtivas = $this->faturas()
+            ->where('status', '!=', StatusFatura::Cancelado->value)
+            ->with('itens')
+            ->get();
+
+        if ($faturasAtivas->isEmpty()) {
+            return;
+        }
+
+        $totalFaturas = (float) $faturasAtivas->sum('valor');
+        $novoValor = (float) $this->valor_total;
+        $valorAnterior = (float) $this->getOriginal('valor_total');
+
+        if (abs($novoValor - $totalFaturas) > 0.01) {
+            $diferenca = round($novoValor - $totalFaturas, 2);
+
+            activity('contrato')
+                ->performedOn($this)
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'tipo' => 'divergencia_faturamento',
+                    'valor_contrato_anterior' => $valorAnterior,
+                    'valor_contrato_novo' => $novoValor,
+                    'saldo_faturas_emitidas' => $totalFaturas,
+                    'diferenca' => $diferenca,
+                    'sugestao' => 'Regenerar Faturas',
+                    'quantidade_faturas' => $faturasAtivas->count(),
+                ])
+                ->log(sprintf(
+                    'Alerta de divergência: O valor do contrato (#%d) foi alterado de R$ %s para R$ %s, divergindo do saldo das faturas já emitidas (R$ %s, diferença de R$ %s). Sugere-se ao operador rodar "Regenerar Faturas".',
+                    $this->id,
+                    number_format($valorAnterior, 2, ',', '.'),
+                    number_format($novoValor, 2, ',', '.'),
+                    number_format($totalFaturas, 2, ',', '.'),
+                    number_format(abs($diferenca), 2, ',', '.')
+                ));
+        }
+    }
+
+    /**
+     * Retorna os usuários ativos elegíveis para receberem a notificação de assinaturas concluídas.
+     *
+     * @return Collection<int, User>
+     */
+    public function usuariosNotificacaoAssinatura(): Collection
+    {
+        $rolesAdmin = ['super_admin', 'admin', 'secretaria', 'coordenador'];
+
+        return User::query()
+            ->ativos()
+            ->where(function (Builder $query) use ($rolesAdmin) {
+                $query->whereHas('roles', fn ($q) => $q->whereIn('name', $rolesAdmin))
+                    ->orWhereHas('roles.permissions', fn ($q) => $q->whereIn('name', ['View:Contrato', 'ViewAny:Contrato', 'Update:Contrato']))
+                    ->orWhereHas('permissions', fn ($q) => $q->whereIn('name', ['View:Contrato', 'ViewAny:Contrato', 'Update:Contrato']));
+            })
+            ->get();
+    }
+
+    /**
+     * Dispara notificação em tempo real no painel Filament avisando que as assinaturas
+     * do contrato foram concluídas.
+     */
+    public function notificarAssinaturasConcluidas(): void
+    {
+        if ($this->notificacaoAssinaturaEnviada) {
+            return;
+        }
+
+        $this->notificacaoAssinaturaEnviada = true;
+
+        $destinatarios = $this->usuariosNotificacaoAssinatura();
+
+        if ($destinatarios->isEmpty()) {
+            return;
+        }
+
+        $nomeAluno = $this->matricula?->pessoa?->nome ?? 'Aluno';
+        $titulo = 'Contrato Assinado';
+        $corpo = "Todas as assinaturas do Contrato #{$this->id} ({$nomeAluno}) foram concluídas.";
+
+        try {
+            $urlContrato = route('filament.admin.resources.contratos.edit', ['record' => $this->id]);
+        } catch (\Throwable) {
+            $urlContrato = "/admin/contratos/{$this->id}/edit";
+        }
+
+        try {
+            $notificacao = Notification::make()
+                ->title($titulo)
+                ->body($corpo)
+                ->icon('heroicon-o-check-badge')
+                ->iconColor('success')
+                ->actions([
+                    Action::make('visualizar')
+                        ->label('Ver Contrato')
+                        ->button()
+                        ->url($urlContrato),
+                ]);
+
+            $notificacao->sendToDatabase($destinatarios);
+
+            try {
+                $notificacao->broadcast($destinatarios);
+            } catch (\Throwable) {
+                // Driver de broadcast opcional
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao enviar notificação de contrato assinado.', [
+                'contrato_id' => $this->id,
+                'erro' => $e->getMessage(),
             ]);
         }
     }

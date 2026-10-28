@@ -22,11 +22,11 @@ class EditContrato extends EditRecord
     {
         return [
             Action::make('gerarFaturas')
-                ->label('Gerar Faturas Automaticamente')
-                ->icon('heroicon-o-banknotes')
-                ->color('success')
+                ->label(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Regenerar Faturas' : 'Gerar Faturas Automaticamente')
+                ->icon(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'heroicon-o-arrow-path' : 'heroicon-o-banknotes')
+                ->color(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'warning' : 'success')
                 ->requiresConfirmation(false)
-                ->visible(fn ($record) => $record && $record->faturas()->doesntExist())
+                ->visible(fn (?Contrato $record) => $record !== null)
                 ->schema([
                     TextInput::make('quantidade_parcelas')
                         ->label('Quantidade de Parcelas')
@@ -43,9 +43,11 @@ class EditContrato extends EditRecord
                         ->prefix('R$')
                         ->required(),
                 ])
-                ->modalHeading('Gerar Faturas Automaticamente')
-                ->modalDescription('A 1ª parcela vencerá em 5 dias úteis a partir da data de aceite. As demais serão mensais a partir daí.')
-                ->modalSubmitActionLabel('Gerar Faturas')
+                ->modalHeading(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Regenerar Faturas do Contrato' : 'Gerar Faturas Automaticamente')
+                ->modalDescription(fn (?Contrato $record) => $record && $record->faturas()->exists()
+                    ? 'Atenção: As faturas existentes serão substituídas pelas novas parcelas calculadas com base no valor atual do contrato. Caso já tenha sido enviado para o Assinafy, os registros anteriores de assinatura serão resetados.'
+                    : 'A 1ª parcela vencerá em 5 dias úteis a partir da data de aceite. As demais serão mensais a partir daí.')
+                ->modalSubmitActionLabel(fn (?Contrato $record) => $record && $record->faturas()->exists() ? 'Sim, Regenerar Faturas' : 'Gerar Faturas')
                 ->action(function (array $data, EditRecord $livewire): void {
                     $contrato = $livewire->getRecord();
                     $qtdParcelas = (int) $data['quantidade_parcelas'];
@@ -74,6 +76,17 @@ class EditContrato extends EditRecord
                         )
                         ->success()
                         ->send();
+
+                    activity('contrato')
+                        ->performedOn($contrato)
+                        ->causedBy(auth()->user())
+                        ->withProperties([
+                            'tipo' => 'geracao_faturas',
+                            'quantidade_parcelas' => $qtdParcelas,
+                            'valor_entrada' => $valorEntrada,
+                            'valor_total_contrato' => (float) $contrato->valor_total,
+                        ])
+                        ->log("Faturas do Contrato #{$contrato->id} foram processadas pelo operador.");
 
                     if ($contrato->jaEnviadoAssinafy()) {
                         $contrato->resetAssinafyState();
@@ -143,6 +156,30 @@ class EditContrato extends EditRecord
                 ->body('Como o contrato foi modificado, as informações anteriores de assinatura foram limpas. Um novo envio poderá ser realizado ao visualizar o contrato.')
                 ->warning()
                 ->send();
+        }
+    }
+
+    protected function afterSave(): void
+    {
+        /** @var Contrato $contrato */
+        $contrato = $this->getRecord();
+
+        if ($contrato->faturas()->exists()) {
+            $totalFaturas = $contrato->totalFaturasEmitidas();
+            $valorContrato = (float) $contrato->valor_total;
+
+            if (abs($valorContrato - $totalFaturas) > 0.01) {
+                Notification::make()
+                    ->title('Divergência entre Contrato e Faturas')
+                    ->body(sprintf(
+                        'O valor contratual (R$ %s) divergiu do saldo das faturas já emitidas (R$ %s). Recomendamos utilizar a ação "Regenerar Faturas" no topo da página para sincronizar as cobranças.',
+                        number_format($valorContrato, 2, ',', '.'),
+                        number_format($totalFaturas, 2, ',', '.')
+                    ))
+                    ->warning()
+                    ->persistent()
+                    ->send();
+            }
         }
     }
 
