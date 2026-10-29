@@ -1132,8 +1132,8 @@ Para garantir que todos os alunos aproveitem os momentos de preceptoria, o siste
 2. No formulário de criação, selecione o **Ciclo de Preceptoria**, a **Hora Início**, a **Hora Fim**, o **Professor** responsável e, opcionalmente, a **Matrícula / Aluno**.
 3. **Modo de Seleção de Datas:** Escolha entre as duas modalidades disponíveis:
    - **Datas Específicas (Avulsas):** Adicione uma ou mais datas específicas clicando em *"Adicionar outra data"*.
-   - **Intervalo de Datas (Range):** Informe uma **Data Inicial** e uma **Data Final**. Opcionalmente, marque os **dias da semana** desejados (ex: *Terça-feira e Quinta-feira*) para que o sistema gere instâncias de preceptoria apenas para esses dias dentro do período.
-4. Ao salvar, o sistema criará automaticamente uma instância de preceptoria separada para cada dia gerado ou selecionado.
+   - **Recorrente (janela de datas):** Informe uma **Data Inicial** e uma **Data Final** (ao escolher o ciclo, a janela dele é sugerida). Opcionalmente, marque os **dias da semana** desejados (ex: *Terça-feira e Quinta-feira*) e escolha de quantas em quantas semanas repetir (toda semana, quinzenal, a cada 3 ou 4 semanas). Por padrão ficam **de fora** os **finais de semana**, os **feriados nacionais** e os **dias não letivos** do período letivo do ciclo; desligue qualquer uma das três chaves para incluí-los. Feriados municipais e estaduais entram como dia não letivo (**Calendário → Dias Não Letivos**). A **Prévia da recorrência** mostra quantas preceptorias serão criadas, em quais datas, o que foi ignorado e por quê.
+4. Ao salvar, o sistema criará automaticamente uma instância de preceptoria separada para cada dia gerado ou selecionado. Na recorrência, datas em que o **professor já tem preceptoria no mesmo horário** são puladas (rodar a mesma recorrência duas vezes não duplica nada), e cada geração é limitada a **400 preceptorias**.
 5. **Ajuda Integrada:** Em todas as páginas da gestão de preceptorias (Listagem, Cadastro, Edição e Agendamento), utilize o botão de **Ajuda** no cabeçalho para obter orientações específicas da tela.
 
 ### 6.2 Gestão de Documentos
@@ -1743,8 +1743,8 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
    - **Hora Fim** (opcional).
    - **Professor(a)** — qualquer Pessoa cadastrada no sistema (obrigatório). Para usuários com o papel de **Professor**, este campo exibirá apenas as pessoas associadas ao seu usuário. Caso possua **apenas um vínculo**, o campo será pré-preenchido e bloqueado; caso possua múltiplos, permitirá a escolha entre eles.
    - **Matrícula (Aluno)** — busca pela matrícula com formato `Período - Turma - Aluno` (opcional).
-4. Na listagem, a coluna **Relatório** indica (com ícone verde) se já existe um relatório associado àquela preceptoria.
-5. O filtro **Sem Relatório** permite localizar rapidamente preceptorias que ainda não têm relatório criado.
+4. Na listagem, a coluna **Relatório** indica (com ícone verde) se já existe um relatório associado àquela preceptoria. A coluna **Ciclo** mostra o ciclo de cada uma.
+5. O filtro **Sem Relatório** permite localizar rapidamente preceptorias que ainda não têm relatório criado. O filtro **Ciclo de Preceptoria** mostra só as preceptorias de um ciclo (os ciclos mais recentes aparecem primeiro).
 6. **Ações em Lote:** Para facilitar a gestão de múltiplos horários, você pode selecionar várias preceptorias na tabela e utilizar:
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
    - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
@@ -1754,6 +1754,19 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
    - **Badge de Alerta:** Na listagem de preceptorias, a data de agendamentos previstos para **amanhã** aparecerá destacada em vermelho com um ícone de alerta, facilitando a identificação de compromissos imediatos.
    - **Botão Relembrar:** Para cada preceptoria completamente agendada (com data, horário, professor e aluno) que ocorrerá no futuro, o botão **Relembrar** (ícone de envelope amarelo) estará disponível. Ao acioná-lo, o sistema enviará um lembrete automático por e-mail, push e sininho para o professor, para o aluno e para os responsáveis vinculados.
    - Os lembretes (individuais ou em lote) são enviados de forma assíncrona por uma fila (queue), garantindo que a tela não trave enquanto os e-mails são processados.
+
+#### 18.3.1 Calendário de Preceptorias (arrastar e soltar)
+
+Em **Preceptoria → Calendário de Preceptorias** (ou no botão **Calendário** da listagem) as preceptorias aparecem como blocos num calendário, com o professor preceptor e, quando já agendada, o aluno. Verde = agendada, cinza = livre; faixas vermelhas = feriados nacionais e dias não letivos.
+
+1. **Filtros:** ciclo de preceptoria, professores e situação (agendadas ou livres). Ao escolher um ciclo fora do período atual, o calendário vai para o início dele.
+2. **Visões:** mês, semana (padrão), dia e lista. A chave *Mostrar fins de semana* esconde sábado e domingo.
+3. **Mover:** arraste o bloco para outro dia ou horário (exige a permissão de **editar** preceptorias). Se o professor já tiver preceptoria que se sobreponha ao novo horário, o sistema recusa e o bloco volta. Soltar num fim de semana, feriado ou dia não letivo é permitido, mas o sistema avisa.
+4. **Mudar a duração:** estique a borda inferior do bloco (visões de semana e dia).
+5. **Preceptoria já agendada:** o sistema pede confirmação e, ao mover, avisa o aluno, os responsáveis e o professor (e-mail, push e sininho) informando o horário anterior.
+6. **Criar um horário:** nas visões de semana e dia, clique e arraste num espaço vazio (exige a permissão de **criar**); o cadastro abre com o dia e a hora escolhidos.
+7. **Gerar recorrência:** o botão do cabeçalho abre o mesmo formulário de recorrência do cadastro (§6.5.1), com prévia, para criar uma série na janela de datas.
+8. **Abrir o registro:** clique no bloco. Professores veem só as próprias preceptorias; responsáveis e alunos, as de seus dependentes (sem arrastar).
 
 ---
 

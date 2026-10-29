@@ -4,9 +4,7 @@ namespace App\Filament\Resources\Preceptorias\Pages;
 
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaRecorrenciaForm;
-use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
-use DomainException;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
@@ -77,41 +75,11 @@ class CreatePreceptoria extends CreateRecord
      */
     private function criarRecorrencia(array $data): Model
     {
-        $regras = PreceptoriaRecorrenciaForm::regras($data);
-        $base = Arr::only($data, ['ciclo_preceptoria_id', 'professor_id', 'matricula_id', 'hora_inicio', 'hora_fim']);
+        $criadas = PreceptoriaRecorrenciaForm::criar($data);
 
-        try {
-            $resultado = app(PreceptoriaAgendaService::class)->gerarSerie($base, $regras);
-        } catch (DomainException $e) {
-            Notification::make()->title('Recorrência não criada')->body($e->getMessage())->danger()->send();
-
+        if ($criadas === null) {
             throw new Halt;
         }
-
-        $criadas = $resultado['criadas'];
-        $ignoradas = count($resultado['ignoradas']);
-        $conflitos = count($resultado['conflitos']);
-
-        if ($criadas === []) {
-            Notification::make()
-                ->title('Nenhuma preceptoria criada')
-                ->body('Todas as datas da janela foram desconsideradas ou já têm preceptoria deste professor no horário.')
-                ->warning()
-                ->send();
-
-            throw new Halt;
-        }
-
-        $detalhes = array_filter([
-            $ignoradas ? "{$ignoradas} data(s) desconsiderada(s) (fim de semana, feriado ou dia não letivo)" : null,
-            $conflitos ? "{$conflitos} data(s) puladas por já terem preceptoria do professor no horário" : null,
-        ]);
-
-        Notification::make()
-            ->title(count($criadas).' preceptoria(s) criada(s)')
-            ->body($detalhes ? implode('; ', $detalhes).'.' : null)
-            ->success()
-            ->send();
 
         $this->criouSerie = count($criadas) > 1;
 

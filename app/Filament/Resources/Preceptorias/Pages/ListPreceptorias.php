@@ -15,6 +15,12 @@ class ListPreceptorias extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('calendario')
+                ->label('Calendário')
+                ->color('gray')
+                ->icon('heroicon-o-calendar')
+                ->url(fn () => $this->getResource()::getUrl('calendario')),
+
             Action::make('agendar')
                 ->label('Agendar Preceptoria')
                 ->color('info')
@@ -65,6 +71,8 @@ class ListPreceptorias extends ListRecords
             $html .= '<li><strong>Meus Atendimentos:</strong> Você verá apenas os horários em que você é o preceptor.</li>';
         }
 
+        $html .= '<li><strong>Filtrar por ciclo:</strong> Use o filtro "Ciclo de Preceptoria" para ver só as preceptorias de um ciclo.</li>';
+        $html .= '<li><strong>Calendário:</strong> O botão "Calendário" abre a agenda visual, onde dá para arrastar uma preceptoria para outro dia ou horário e gerar preceptorias recorrentes.</li>';
         $html .= '<li><strong>Ações de Tabela:</strong> Utilize os ícones na tabela para registrar o que foi conversado ou visualizar o histórico.</li>';
         $html .= '</ul>';
 

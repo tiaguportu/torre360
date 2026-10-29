@@ -3,15 +3,20 @@
 namespace App\Filament\Resources\Preceptorias\Schemas;
 
 use App\Models\CicloPreceptoria;
+use App\Models\Preceptoria;
 use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
+use DomainException;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -31,7 +36,7 @@ class PreceptoriaRecorrenciaForm
     ];
 
     /**
-     * @return array<int, \Filament\Schemas\Components\Component>
+     * @return array<int, Component>
      */
     public static function componentes(): array
     {
@@ -142,6 +147,51 @@ class PreceptoriaRecorrenciaForm
             'ignorar_dias_nao_letivos' => $estado['ignorar_dias_nao_letivos'] ?? true,
             'periodo_letivo_id' => $ciclo?->periodo_letivo_id,
         ];
+    }
+
+    /**
+     * Cria a série a partir do estado do formulário e avisa o resultado (criadas, ignoradas, puladas).
+     *
+     * @param  array<string, mixed>  $estado  ciclo_preceptoria_id, professor_id, matricula_id, hora_inicio, hora_fim e os campos de recorrência
+     * @return array<int, Preceptoria>|null as criadas; null quando nada foi criado (já avisado ao usuário)
+     */
+    public static function criar(array $estado): ?array
+    {
+        $base = Arr::only($estado, ['ciclo_preceptoria_id', 'professor_id', 'matricula_id', 'hora_inicio', 'hora_fim']);
+
+        try {
+            $resultado = app(PreceptoriaAgendaService::class)->gerarSerie($base, self::regras($estado));
+        } catch (DomainException $e) {
+            Notification::make()->title('Recorrência não criada')->body($e->getMessage())->danger()->send();
+
+            return null;
+        }
+
+        if ($resultado['criadas'] === []) {
+            Notification::make()
+                ->title('Nenhuma preceptoria criada')
+                ->body('Todas as datas da janela foram desconsideradas ou já têm preceptoria deste professor no horário.')
+                ->warning()
+                ->send();
+
+            return null;
+        }
+
+        $ignoradas = count($resultado['ignoradas']);
+        $puladas = count($resultado['conflitos']);
+
+        $detalhes = array_filter([
+            $ignoradas ? "{$ignoradas} data(s) desconsiderada(s) (fim de semana, feriado ou dia não letivo)" : null,
+            $puladas ? "{$puladas} data(s) puladas por já terem preceptoria do professor no horário" : null,
+        ]);
+
+        Notification::make()
+            ->title(count($resultado['criadas']).' preceptoria(s) criada(s)')
+            ->body($detalhes ? implode('; ', $detalhes).'.' : null)
+            ->success()
+            ->send();
+
+        return $resultado['criadas'];
     }
 
     /**
