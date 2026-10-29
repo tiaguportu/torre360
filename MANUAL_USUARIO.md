@@ -1262,6 +1262,30 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 - Gerar as faturas **não** preenche a Data de Aceite do contrato.
 - Se o contrato já tinha sido enviado para assinatura, as faturas novas mudam o texto do contrato e por isso os registros de assinatura são limpos e o contrato precisa ser enviado de novo.
 
+### 7.1.1.1 Gerar Faturas com IA (parcelamento descrito em texto)
+Quando o parcelamento não é "entrada + parcelas mensais" (por exemplo, parcelas semestrais ou datas combinadas com a família), use o botão **Gerar Faturas com IA** (**Regenerar Faturas com IA** se o contrato já tem faturas), ao lado do botão de geração automática, na tela de edição do contrato. Ele usa a mesma chave do Gemini já configurada no sistema (`GEMINI_API_KEY`).
+
+**Como usar:**
+
+1. Escreva como as faturas devem ser geradas. Exemplos:
+   - *"Divida o valor do contrato em 2 parcelas pagas semestralmente no final da primeira quinzena do primeiro mês de cada semestre, a partir do ano subsequente."* → 2 faturas de metade do valor, vencendo em 15/01 e 15/07 do ano seguinte.
+   - *"Entrada de 30% em 10/11/2026 e o restante em 4 vezes, todo dia 10, a partir de dezembro."*
+   - *"Matrícula de R$ 500,00 no ato e o saldo em 10 parcelas mensais no dia 5, a partir de março de 2027."*
+2. Clique em **Interpretar e conferir**. A IA entende **quantas** faturas são e **quando** vencem; os **valores são calculados pelo sistema** (e não pela IA) a partir do valor total do contrato.
+3. Confira a tela de prévia: resumo do que a IA entendeu, suposições que ela fez (ex.: qual ano considerou), e a tabela com descrição, vencimento e valor de cada fatura, comparando o total com o valor do contrato.
+4. Clique em **Confirmar e gerar faturas**. Enquanto você não confirma, nenhuma fatura é criada, alterada ou apagada. Se a prévia não estiver certa, cancele e reescreva a instrução com mais detalhes.
+
+**Regras de cálculo:**
+
+- Fatura sem valor citado na instrução recebe uma parte **igual** do que sobra do valor do contrato; os centavos de arredondamento ficam na última delas.
+- Valor em reais ou percentual citados para uma fatura (entrada, matrícula, material) são respeitados.
+- A soma das faturas **precisa fechar com o valor do contrato**; se não fechar (ex.: a instrução cita valores que somam menos que o contrato), o sistema recusa e mostra a diferença.
+- Máximo de 60 faturas por instrução e vencimentos entre 2 anos atrás e 6 anos à frente.
+- A bolsa vigente da matrícula é aplicada como desconto em cada fatura, como na geração automática.
+- Valem as mesmas salvaguardas da geração automática: faturas com pagamento ou cobrança emitida impedem a regeneração e, se o contrato já foi enviado ao Assinafy, os registros de assinatura são limpos.
+- Só a instrução digitada e o valor/datas do contrato vão para a IA (sem nome do aluno ou da família). Há um limite de consultas de IA por minuto por usuário, o mesmo do CRM. A geração fica registrada no log de atividades do contrato, com a instrução usada.
+- Se a IA não entender, ela explica o que faltou (ex.: quantas parcelas ou em que datas) e a janela continua aberta para você ajustar o texto.
+
 ### 7.1.2 Importação e Exportação de Faturas do Contrato
 Na tabela de faturas da edição do contrato (`/admin/contratos/{id}/edit`), você conta com duas ferramentas ágeis de gestão em lote:
 

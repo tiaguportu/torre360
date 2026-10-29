@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contratos\Pages;
 
 use App\Filament\Resources\Contratos\Actions\AcoesContrato;
+use App\Filament\Resources\Contratos\Actions\GerarFaturasIaAction;
 use App\Filament\Resources\Contratos\ContratoResource;
 use App\Models\Contrato;
 use App\Services\GeracaoFaturasContratoService;
@@ -107,6 +108,8 @@ class EditContrato extends EditRecord
                     }
                 }),
 
+            GerarFaturasIaAction::make(),
+
             Action::make('visualizarContrato')
                 ->label('Visualizar Contrato')
                 ->icon('heroicon-o-document-magnifying-glass')
@@ -133,6 +136,12 @@ class EditContrato extends EditRecord
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Fechar'),
         ];
+    }
+
+    /** Segunda etapa de "Gerar Faturas com IA": aberta pela primeira ação, mostra o plano calculado e só ela grava. */
+    public function confirmarFaturasIaAction(): Action
+    {
+        return GerarFaturasIaAction::confirmar();
     }
 
     protected function getSaveFormAction(): Action
