@@ -25,8 +25,7 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
      * Create a new notification instance.
      */
     public function __construct(
-        public Preceptoria $preceptoria,
-        public ?string $reagendadoDe = null, // horário anterior, quando o lembrete avisa que a preceptoria foi movida
+        public Preceptoria $preceptoria
     ) {}
 
     /**
@@ -60,11 +59,9 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
         $nome = $notifiable instanceof User ? $notifiable->name : $notifiable->nome;
 
         return (new MailMessage)
-            ->subject($this->reagendadoDe ? 'Preceptoria Reagendada' : 'Lembrete de Agendamento de Preceptoria')
+            ->subject('Lembrete de Agendamento de Preceptoria')
             ->greeting("Olá, {$nome}!")
-            ->line($this->reagendadoDe
-                ? "Uma preceptoria sua foi reagendada (antes: {$this->reagendadoDe})."
-                : 'Este é um lembrete de que você possui uma preceptoria agendada.')
+            ->line('Este é um lembrete de que você possui uma preceptoria agendada.')
             ->line("Aluno: {$aluno}")
             ->line("Professor: {$professor}")
             ->line("Data: {$dataF}")
@@ -84,10 +81,8 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
         $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
         return FilamentNotification::make()
-            ->title($this->reagendadoDe ? 'Preceptoria Reagendada' : 'Lembrete de Preceptoria')
-            ->body($this->reagendadoDe
-                ? "Preceptoria entre {$aluno} e {$professor} reagendada para {$dataF} às {$horaF} (antes: {$this->reagendadoDe})."
-                : "Lembrete: Preceptoria entre {$aluno} e {$professor} agendada para {$dataF} às {$horaF}.")
+            ->title('Lembrete de Preceptoria')
+            ->body("Lembrete: Preceptoria entre {$aluno} e {$professor} agendada para {$dataF} às {$horaF}.")
             ->actions([
                 Action::make('view')
                     ->label('Ver Preceptoria')
@@ -108,10 +103,8 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
         $professor = $this->preceptoria->professor?->nome ?? 'N/D';
 
         return [
-            'title' => $this->reagendadoDe ? 'Preceptoria Reagendada' : 'Lembrete de Preceptoria',
-            'body' => $this->reagendadoDe
-                ? "Preceptoria reagendada para {$dataF} às {$horaF} (antes: {$this->reagendadoDe}) - {$aluno} e {$professor}."
-                : "Lembrete: Preceptoria em {$dataF} às {$horaF} ({$aluno} e {$professor}).",
+            'title' => 'Lembrete de Preceptoria',
+            'body' => "Lembrete: Preceptoria em {$dataF} às {$horaF} ({$aluno} e {$professor}).",
             'data' => [
                 'url' => PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], absolute: false),
                 'preceptoria_id' => $this->preceptoria->id,

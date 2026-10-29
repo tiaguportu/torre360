@@ -106,8 +106,6 @@ class Preceptoria extends Model
      */
     public function getNotificationRecipients(): Collection
     {
-        $destinatarios = collect();
-
         // Lista de pessoas que devem ser notificadas
         $pessoas = collect();
 
@@ -127,9 +125,20 @@ class Preceptoria extends Model
             }
         }
 
-        $pessoas = $pessoas->unique('id');
+        return static::destinatariosDasPessoas($pessoas);
+    }
 
-        foreach ($pessoas as $pessoa) {
+    /**
+     * Das pessoas aos destinatários que de fato recebem: a própria pessoa (se tiver e-mail) e os
+     * usuários vinculados a ela. Exige `users` carregado em cada pessoa.
+     *
+     * @param  Collection<int, Pessoa>  $pessoas
+     */
+    public static function destinatariosDasPessoas(Collection $pessoas): Collection
+    {
+        $destinatarios = collect();
+
+        foreach ($pessoas->unique('id') as $pessoa) {
             // Adicionar a própria pessoa se tiver e-mail (notificável via e-mail)
             if ($pessoa->email) {
                 $destinatarios->push($pessoa);
@@ -152,10 +161,8 @@ class Preceptoria extends Model
 
     /**
      * Envia o lembrete de agendamento para os envolvidos.
-     *
-     * @param  string|null  $reagendadoDe  quando o lembrete avisa que a preceptoria foi movida: o horário anterior ("27/10/2026 às 14:00")
      */
-    public function relembrarAgendamento(?string $reagendadoDe = null): array
+    public function relembrarAgendamento(): array
     {
         $destinatarios = $this->getNotificationRecipients();
         $countSent = 0;
@@ -163,7 +170,7 @@ class Preceptoria extends Model
 
         foreach ($destinatarios as $user) {
             try {
-                $user->notify(new LembretePreceptoriaNotification($this, $reagendadoDe));
+                $user->notify(new LembretePreceptoriaNotification($this));
                 $countSent++;
             } catch (\Throwable $e) {
                 $errorMessage = $e->getMessage();
@@ -176,10 +183,8 @@ class Preceptoria extends Model
             activity()
                 ->performedOn($this)
                 ->event('notificacao_lembrete_preceptoria')
-                ->withProperties(['destinatarios_count' => $countSent, 'reagendado_de' => $reagendadoDe])
-                ->log($reagendadoDe
-                    ? "Enviado aviso de reagendamento de preceptoria para {$countSent} destinatário(s)"
-                    : "Enviado lembrete de agendamento de preceptoria para {$countSent} destinatário(s)");
+                ->withProperties(['destinatarios_count' => $countSent])
+                ->log("Enviado lembrete de agendamento de preceptoria para {$countSent} destinatário(s)");
         }
 
         return [
@@ -201,6 +206,38 @@ class Preceptoria extends Model
             ->first();
 
         return $lastActivity?->created_at;
+    }
+
+    /**
+     * Eventos do log de atividades que contam a história de uma preceptoria, com o rótulo exibido.
+     *
+     * @var array<string, string>
+     */
+    public const EVENTOS_HISTORICO = [
+        'agendamento_preceptoria' => 'Agendamento',
+        'liberacao_preceptoria' => 'Liberação',
+        'troca_aluno_preceptoria' => 'Troca de aluno',
+        'troca_professor_preceptoria' => 'Troca de professor',
+        'reagendamento_preceptoria' => 'Reagendamento',
+        'notificacao_alteracao_preceptoria' => 'Aviso enviado',
+        'notificacao_lembrete_preceptoria' => 'Lembrete enviado',
+    ];
+
+    /**
+     * Mudanças e avisos desta preceptoria, do mais recente para o mais antigo.
+     *
+     * @return Collection<int, Activity>
+     */
+    public function historico(?int $limite = null): Collection
+    {
+        return Activity::query()
+            ->where('subject_type', $this->getMorphClass())
+            ->where('subject_id', $this->getKey())
+            ->whereIn('event', array_keys(self::EVENTOS_HISTORICO))
+            ->with('causer')
+            ->latest('id')
+            ->when($limite, fn ($query) => $query->limit($limite))
+            ->get();
     }
 
     public function getLabelExibicaoAttribute(): string

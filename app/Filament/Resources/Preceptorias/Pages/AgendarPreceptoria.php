@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
+use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
@@ -48,36 +49,10 @@ class AgendarPreceptoria extends Page implements HasForms
 
     protected function getMatriculasAcessiveis(): Collection
     {
-        $user = auth()->user();
-        $activeRole = session('active_role');
-
-        if (in_array($activeRole, ['super_admin', 'admin', 'secretaria'])) {
-            return Matricula::with(['pessoa', 'turma', 'periodoLetivo'])->get();
-        }
-
-        $pessoasIds = $user->pessoas()->pluck('pessoa.id')->toArray();
-        if (empty($pessoasIds)) {
-            return collect();
-        }
-
-        $query = Matricula::query()->whereIn('pessoa_id', $pessoasIds);
-
-        // Se o usuário for responsável, buscar também as matrículas dos alunos vinculados a ele
-        if ($activeRole === 'responsavel') {
-            $query->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoasIds) {
-                $q->whereIn('responsavel_id', $pessoasIds);
-            });
-        }
-
-        // Também mantemos a lógica de alunos() vinculados diretamente às pessoas do usuário
-        foreach ($user->pessoas as $pessoa) {
-            $alunosIds = $pessoa->alunos()->pluck('pessoa.id')->toArray();
-            if (! empty($alunosIds)) {
-                $query->orWhereIn('pessoa_id', $alunosIds);
-            }
-        }
-
-        return $query->with(['pessoa', 'turma', 'periodoLetivo'])->get();
+        return app(PreceptoriaAgendaService::class)
+            ->matriculasAcessiveis(auth()->user(), session('active_role'))
+            ->with(['pessoa', 'turma', 'periodoLetivo'])
+            ->get();
     }
 
     protected function getProfessoresDaMatricula(int $matriculaId): Collection
@@ -113,7 +88,16 @@ class AgendarPreceptoria extends Page implements HasForms
 
         $this->enviarNotificacoes($preceptoria, 'liberacao');
 
+        $aluno = $preceptoria->matricula?->pessoa?->nome;
+
         $preceptoria->update(['matricula_id' => null]);
+
+        app(PreceptoriaAgendaService::class)->registrarHistorico(
+            $preceptoria,
+            'liberacao_preceptoria',
+            'Horário liberado (o aluno era '.($aluno ?? 'não informado').')',
+            ['antes' => $aluno, 'depois' => null],
+        );
 
         Notification::make()
             ->title('Agendamento cancelado com sucesso!')
@@ -378,6 +362,15 @@ class AgendarPreceptoria extends Page implements HasForms
             ]);
 
             $preceptoria = $preceptoria->fresh(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users']);
+
+            $aluno = $preceptoria->matricula?->pessoa?->nome;
+
+            app(PreceptoriaAgendaService::class)->registrarHistorico(
+                $preceptoria,
+                'agendamento_preceptoria',
+                'Aluno agendado: '.($aluno ?? 'não informado'),
+                ['antes' => null, 'depois' => $aluno],
+            );
 
             $this->enviarNotificacoes($preceptoria, 'agendamento');
 

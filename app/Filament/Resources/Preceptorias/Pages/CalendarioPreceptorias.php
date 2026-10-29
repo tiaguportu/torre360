@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Preceptorias\Pages;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaRecorrenciaForm;
 use App\Models\CicloPreceptoria;
+use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Services\PreceptoriaAgendaService;
@@ -18,6 +19,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -140,6 +142,7 @@ class CalendarioPreceptorias extends Page implements HasForms
                 'textColor' => '#ffffff',
                 'editable' => $podeEditar,
                 'extendedProps' => [
+                    'gerenciavel' => $podeEditar,
                     'agendado' => $agendado,
                     'professor' => $professor,
                     'aluno' => $aluno,
@@ -251,6 +254,116 @@ class CalendarioPreceptorias extends Page implements HasForms
     }
 
     /**
+     * Aberto ao clicar numa preceptoria (o JS passa o id como argumento): troca o professor e/ou o aluno,
+     * ou libera o horário. Quem pode editar mexe no professor; quem também pode agendar mexe no aluno.
+     */
+    public function gerenciarPreceptoriaAction(): Action
+    {
+        return Action::make('gerenciarPreceptoria')
+            ->modalHeading('Gerenciar preceptoria')
+            ->modalDescription(function (array $arguments) {
+                $preceptoria = $this->preceptoriaGerenciavel($arguments['id'] ?? null);
+
+                return $preceptoria
+                    ? sprintf(
+                        '%s às %s%s',
+                        $preceptoria->data->format('d/m/Y'),
+                        $preceptoria->hora_inicio->format('H:i'),
+                        $preceptoria->cicloPreceptoria ? " · {$preceptoria->cicloPreceptoria->nome}" : '',
+                    )
+                    : 'Preceptoria não encontrada.';
+            })
+            ->modalSubmitActionLabel('Salvar')
+            ->modalWidth('2xl')
+            ->visible(fn () => (bool) auth()->user()?->can('Update:Preceptoria'))
+            ->schema(function (array $arguments) {
+                $preceptoria = $this->preceptoriaGerenciavel($arguments['id'] ?? null);
+
+                if (! $preceptoria) {
+                    return [];
+                }
+
+                return [
+                    $this->campoProfessor()
+                        ->helperText('Trocar o professor avisa o anterior, o novo e, se houver aluno, ele e os responsáveis.'),
+
+                    Select::make('matricula_id')
+                        ->label('Aluno (matrícula)')
+                        ->placeholder('Livre (sem aluno)')
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search) => $this->matriculasParaBuscar($search))
+                        ->getOptionLabelUsing(fn ($value) => Matricula::with(['pessoa', 'turma', 'periodoLetivo'])->find($value)?->label_exibicao)
+                        ->helperText('Escolha outro aluno para trocar ou esvazie para liberar o horário; quem sai e quem entra são avisados.')
+                        ->visible(fn () => (bool) auth()->user()?->can('Agendar:Preceptoria')),
+
+                    Section::make('Últimas alterações')
+                        ->description('O histórico completo fica no registro da preceptoria.')
+                        ->collapsible()
+                        ->collapsed()
+                        ->schema([
+                            ViewField::make('historico')
+                                ->view('filament.components.preceptoria-historico')
+                                ->viewData(['preceptoria' => $preceptoria, 'limite' => 5]),
+                        ]),
+                ];
+            })
+            ->fillForm(function (array $arguments) {
+                $preceptoria = $this->preceptoriaGerenciavel($arguments['id'] ?? null);
+
+                return [
+                    'professor_id' => $preceptoria?->professor_id,
+                    'matricula_id' => $preceptoria?->matricula_id,
+                ];
+            })
+            ->extraModalFooterActions(function (array $arguments) {
+                $preceptoria = $this->preceptoriaGerenciavel($arguments['id'] ?? null);
+
+                return $preceptoria
+                    ? [
+                        Action::make('abrirRegistro')
+                            ->label('Abrir registro completo')
+                            ->color('gray')
+                            ->url(PreceptoriaResource::getUrl('edit', ['record' => $preceptoria])),
+                    ]
+                    : [];
+            })
+            ->action(function (array $data, array $arguments, Action $action) {
+                $preceptoria = $this->preceptoriaGerenciavel($arguments['id'] ?? null);
+
+                if (! $preceptoria) {
+                    $this->recusar('Preceptoria não encontrada.');
+                    $this->recarregarCalendario();
+
+                    return;
+                }
+
+                // sem o campo (quem não pode agendar), o aluno fica como está
+                $mexeNoAluno = array_key_exists('matricula_id', $data);
+
+                $resultado = app(PreceptoriaAgendaService::class)->atualizarParticipantes(
+                    $preceptoria,
+                    (int) $data['professor_id'],
+                    $mexeNoAluno && filled($data['matricula_id']) ? (int) $data['matricula_id'] : null,
+                    alterarAluno: $mexeNoAluno,
+                );
+
+                if (! $resultado['ok']) {
+                    $this->recusar($resultado['mensagem']);
+
+                    $action->halt();
+                }
+
+                Notification::make()
+                    ->title($resultado['mensagem'])
+                    ->body($resultado['notificados'] ? "{$resultado['notificados']} pessoa(s) avisada(s) da mudança." : null)
+                    ->success()
+                    ->send();
+
+                $this->recarregarCalendario();
+            });
+    }
+
+    /**
      * Cria a série recorrente numa janela (mesmas regras do cadastro de preceptorias).
      */
     public function gerarRecorrenciaAction(): Action
@@ -329,7 +442,9 @@ class CalendarioPreceptorias extends Page implements HasForms
         if ($user?->can('Update:Preceptoria')) {
             $html .= '<li><strong>Mover:</strong> arraste um bloco para outro dia ou horário. Se o professor já tiver preceptoria no novo horário, o sistema recusa e o bloco volta. Soltar num fim de semana, feriado ou dia não letivo é permitido, mas o sistema avisa.</li>';
             $html .= '<li><strong>Mudar a duração:</strong> estique a borda inferior do bloco (visões de semana e dia).</li>';
-            $html .= '<li><strong>Preceptoria já agendada:</strong> ao mover, o sistema pede confirmação e avisa o aluno, os responsáveis e o professor do novo horário.</li>';
+            $html .= '<li><strong>Preceptoria já agendada:</strong> ao mover, o sistema pede confirmação e avisa o aluno, os responsáveis e o professor do novo horário. Se o horário estava livre, só o professor é avisado (e só quando outra pessoa fez a mudança).</li>';
+            $html .= '<li><strong>Trocar professor ou aluno:</strong> clique no bloco. Escolha outro professor (que não pode ter preceptoria no mesmo horário) e, se você pode agendar, outro aluno (que não pode ter outra preceptoria no mesmo ciclo) ou deixe o aluno vazio para liberar o horário. Quem perde e quem ganha o horário é avisado. O botão "Abrir registro completo" leva à edição de todos os campos.</li>';
+            $html .= '<li><strong>Histórico:</strong> as últimas alterações aparecem no modal; o histórico completo, com os avisos enviados, está no botão "Histórico de Alterações" do registro.</li>';
         }
 
         if ($user?->can('Create:Preceptoria')) {
@@ -337,7 +452,9 @@ class CalendarioPreceptorias extends Page implements HasForms
             $html .= '<li><strong>Gerar recorrência:</strong> repete o mesmo horário numa janela de datas (ex.: toda terça e quinta do ciclo). Por padrão ficam de fora fins de semana, feriados nacionais e dias não letivos; a prévia mostra o que será criado e o que foi ignorado.</li>';
         }
 
-        $html .= '<li><strong>Abrir o registro:</strong> clique no bloco para abrir a preceptoria.</li>';
+        $html .= '<li><strong>Abrir o registro:</strong> '.($user?->can('Update:Preceptoria')
+            ? 'no modal de gestão, use "Abrir registro completo".'
+            : 'clique no bloco para abrir a preceptoria.').'</li>';
         $html .= '</ul>';
 
         return $html;
@@ -356,6 +473,37 @@ class CalendarioPreceptorias extends Page implements HasForms
         }
 
         $this->dispatch('preceptorias-recarregar', irPara: $irPara);
+    }
+
+    /**
+     * A preceptoria que o usuário pode ver (mesma regra da listagem), com o que o modal de gestão mostra.
+     */
+    private function preceptoriaGerenciavel(int|string|null $id): ?Preceptoria
+    {
+        if (blank($id)) {
+            return null;
+        }
+
+        return PreceptoriaResource::getEloquentQuery()
+            ->with(['professor', 'matricula.pessoa', 'cicloPreceptoria'])
+            ->find($id);
+    }
+
+    /**
+     * Matrículas que o usuário pode agendar cujo aluno tem o nome buscado.
+     *
+     * @return array<int, string>
+     */
+    private function matriculasParaBuscar(string $busca): array
+    {
+        return app(PreceptoriaAgendaService::class)
+            ->matriculasAcessiveis(auth()->user(), session('active_role'))
+            ->whereHas('pessoa', fn (Builder $query) => $query->where('nome', 'like', "%{$busca}%"))
+            ->with(['pessoa', 'turma', 'periodoLetivo'])
+            ->limit(50)
+            ->get()
+            ->mapWithKeys(fn (Matricula $matricula) => [$matricula->id => $matricula->label_exibicao])
+            ->all();
     }
 
     private function queryFiltrada(): Builder

@@ -20,6 +20,7 @@
         @if ($podeEditar)
             <p class="prec-cal-dica">
                 Arraste uma preceptoria para mudar o dia ou o horário; estique a borda inferior para mudar a duração.
+                Clique nela para trocar o professor ou o aluno.
                 @if ($podeCriar)
                     Clique e arraste num espaço vazio (semana ou dia) para criar um horário.
                 @endif
@@ -161,6 +162,13 @@
                         if (p.especial || !p.url) return;
 
                         info.jsEvent.preventDefault();
+
+                        // quem edita troca professor/aluno no modal (que tem o link para o registro completo)
+                        if (p.gerenciavel) {
+                            $wire.mountAction('gerenciarPreceptoria', { id: Number(info.event.id) });
+                            return;
+                        }
+
                         window.location.href = p.url;
                     },
                     select: (info) => {

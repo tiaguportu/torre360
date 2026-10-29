@@ -3,18 +3,28 @@
 namespace App\Services;
 
 use App\Models\DiaNaoLetivo;
+use App\Models\Matricula;
+use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use App\Models\User;
+use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
+use App\Notifications\Preceptorias\PreceptoriaNotification;
 use Carbon\CarbonInterface;
 use DomainException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Agenda de preceptorias: gera séries recorrentes numa janela de tempo (pulando fins de semana,
- * feriados nacionais e dias não letivos quando pedido), detecta choque de horário do professor
- * e reagenda uma preceptoria existente (o que o calendário de arrastar e soltar chama).
+ * feriados nacionais e dias não letivos quando pedido), detecta choque de horário do professor,
+ * reagenda uma preceptoria existente (o que o calendário de arrastar e soltar chama) e troca o
+ * professor ou o aluno dela, avisando os envolvidos e deixando tudo no histórico.
  */
 class PreceptoriaAgendaService
 {
@@ -340,9 +350,16 @@ class PreceptoriaAgendaService
             ->log("Preceptoria reagendada de {$antes} para {$novoInicio->format('d/m/Y')} às {$horaInicio}");
 
         $notificados = 0;
-        if ($notificar && $preceptoria->matricula_id && $novoInicio->isFuture()) {
+        if ($notificar && $novoInicio->isFuture()) {
+            // com aluno, avisa professor, aluno e responsáveis; sem aluno, só o professor (se não foi ele quem mexeu)
             $preceptoria->refresh()->load(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users']);
-            $notificados = $preceptoria->relembrarAgendamento($antes)['enviados'];
+
+            $notificados = $this->enviarAviso(
+                collect([$preceptoria->professor])->filter()->concat($this->circuloDoAluno($preceptoria->matricula?->pessoa)),
+                new PreceptoriaAlteradaNotification($preceptoria, PreceptoriaAlteradaNotification::HORARIO, $antes, auth()->user()?->name),
+                $preceptoria,
+                'reagendamento',
+            );
         }
 
         $motivo = $this->motivoDiaEspecial($novoInicio, $preceptoria->cicloPreceptoria?->periodo_letivo_id);
@@ -353,6 +370,276 @@ class PreceptoriaAgendaService
             'aviso' => $motivo ? "Atenção: {$novoInicio->format('d/m/Y')} é {$motivo}." : null,
             'notificados' => $notificados,
         ];
+    }
+
+    /**
+     * Matrículas que o usuário pode agendar numa preceptoria: todas para a gestão; para os demais,
+     * as suas e as dos alunos vinculados a ele.
+     *
+     * @return Builder<Matricula>
+     */
+    public function matriculasAcessiveis(User $user, ?string $papelAtivo): Builder
+    {
+        if (in_array($papelAtivo, ['super_admin', 'admin', 'secretaria'])) {
+            return Matricula::query();
+        }
+
+        $pessoasIds = $user->pessoas()->pluck('pessoa.id')->toArray();
+        if (empty($pessoasIds)) {
+            return Matricula::query()->whereRaw('1 = 0');
+        }
+
+        // agrupado em um where só: quem chama pode acrescentar filtros (busca por nome) sem desfazer a restrição
+        return Matricula::query()->where(function (Builder $query) use ($user, $papelAtivo, $pessoasIds) {
+            $query->whereIn('pessoa_id', $pessoasIds);
+
+            // Se o usuário for responsável, buscar também as matrículas dos alunos vinculados a ele
+            if ($papelAtivo === 'responsavel') {
+                $query->orWhereHas('pessoa.responsaveis', function ($q) use ($pessoasIds) {
+                    $q->whereIn('responsavel_id', $pessoasIds);
+                });
+            }
+
+            // Também mantemos a lógica de alunos() vinculados diretamente às pessoas do usuário
+            foreach ($user->pessoas as $pessoa) {
+                $alunosIds = $pessoa->alunos()->pluck('pessoa.id')->toArray();
+                if (! empty($alunosIds)) {
+                    $query->orWhereIn('pessoa_id', $alunosIds);
+                }
+            }
+        });
+    }
+
+    /**
+     * Troca o professor e/ou o aluno de uma preceptoria. Tudo é conferido antes de gravar (nada fica
+     * pela metade): o novo professor não pode ter outra preceptoria no mesmo horário e o aluno não
+     * pode ter outra no mesmo ciclo. Quem perde ou ganha o horário é avisado, e a mudança vai para o histórico.
+     *
+     * @param  int|null  $matriculaId  null deixa o horário livre; só vale quando $alterarAluno é true
+     * @param  bool  $alterarAluno  false mexe só no professor (quem não pode agendar não troca o aluno)
+     * @return array{ok: bool, mensagem: string, aviso: string|null, notificados: int}
+     */
+    public function atualizarParticipantes(Preceptoria $preceptoria, ?int $professorId, ?int $matriculaId, bool $alterarAluno = true, bool $notificar = true): array
+    {
+        $preceptoria->loadMissing(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users']);
+
+        $professorAntes = $preceptoria->professor;
+        $alunoAntes = $preceptoria->matricula?->pessoa;
+        $mudouProfessor = $professorId !== null && $professorId !== (int) $preceptoria->professor_id;
+        $mudouAluno = $alterarAluno && $matriculaId !== ($preceptoria->matricula_id === null ? null : (int) $preceptoria->matricula_id);
+
+        if (! $mudouProfessor && ! $mudouAluno) {
+            return $this->resultado(true, 'Nada a alterar.');
+        }
+
+        $professor = $professorAntes;
+        if ($mudouProfessor) {
+            $professor = Pessoa::with('users')->find($professorId);
+
+            if (! $professor) {
+                return $this->resultado(false, 'Professor não encontrado.');
+            }
+
+            $data = $preceptoria->data->toDateString();
+            $conflito = $this->conflitosDoProfessor($professorId, [$data], $preceptoria->hora_inicio, $preceptoria->hora_fim, $preceptoria->getKey())[$data] ?? null;
+
+            if ($conflito) {
+                return $this->resultado(false, sprintf(
+                    'Conflito: %s já tem uma preceptoria em %s das %s às %s.',
+                    $professor->nome,
+                    $preceptoria->data->format('d/m/Y'),
+                    $conflito->hora_inicio->format('H:i'),
+                    $conflito->hora_fim?->format('H:i') ?? 'fim não informado',
+                ));
+            }
+        }
+
+        $matricula = null;
+        if ($mudouAluno && $matriculaId !== null) {
+            $matricula = Matricula::with(['pessoa.responsaveis.users', 'pessoa.users'])->find($matriculaId);
+
+            if (! $matricula) {
+                return $this->resultado(false, 'Matrícula não encontrada.');
+            }
+
+            $outra = $preceptoria->ciclo_preceptoria_id
+                ? Preceptoria::query()
+                    ->where('matricula_id', $matriculaId)
+                    ->where('ciclo_preceptoria_id', $preceptoria->ciclo_preceptoria_id)
+                    ->whereKeyNot($preceptoria->getKey())
+                    ->first()
+                : null;
+
+            if ($outra) {
+                return $this->resultado(false, sprintf(
+                    '%s já tem uma preceptoria neste ciclo (%s às %s).',
+                    $matricula->pessoa?->nome ?? 'O aluno',
+                    $outra->data->format('d/m/Y'),
+                    $outra->hora_inicio->format('H:i'),
+                ));
+            }
+        }
+
+        $mensagens = [];
+
+        DB::transaction(function () use ($preceptoria, $mudouProfessor, $mudouAluno, $professorId, $matriculaId, $professorAntes, $professor, $alunoAntes, $matricula, &$mensagens) {
+            $campos = [];
+
+            if ($mudouProfessor) {
+                $campos['professor_id'] = $professorId;
+                $mensagens[] = $this->registrarHistorico(
+                    $preceptoria,
+                    'troca_professor_preceptoria',
+                    sprintf('Professor alterado de %s para %s', $professorAntes?->nome ?? 'sem professor', $professor->nome),
+                    ['antes' => $professorAntes?->nome, 'depois' => $professor->nome],
+                );
+            }
+
+            if ($mudouAluno) {
+                $campos['matricula_id'] = $matriculaId;
+                $depois = $matricula?->pessoa?->nome;
+                $antes = $alunoAntes?->nome;
+
+                [$evento, $descricao] = match (true) {
+                    $antes !== null && $depois !== null => ['troca_aluno_preceptoria', "Aluno trocado de {$antes} para {$depois}"],
+                    $depois !== null => ['agendamento_preceptoria', "Aluno agendado: {$depois}"],
+                    default => ['liberacao_preceptoria', "Horário liberado (o aluno era {$antes})"],
+                };
+
+                $mensagens[] = $this->registrarHistorico($preceptoria, $evento, $descricao, ['antes' => $antes, 'depois' => $depois]);
+            }
+
+            $preceptoria->update($campos);
+        });
+
+        // o registro já mudou: os avisos precisam enxergar o estado novo
+        $preceptoria->setRelation('professor', $professor);
+        if ($mudouAluno) {
+            $preceptoria->setRelation('matricula', $matricula);
+        }
+
+        $notificados = $notificar
+            ? $this->avisarTroca($preceptoria, $professorAntes, $alunoAntes, $mudouProfessor, $mudouAluno)
+            : 0;
+
+        return [
+            'ok' => true,
+            'mensagem' => 'Preceptoria atualizada: '.implode('; ', $mensagens).'.',
+            'aviso' => null,
+            'notificados' => $notificados,
+        ];
+    }
+
+    /**
+     * Anota no histórico da preceptoria (o que aparece na tela) e devolve a descrição.
+     *
+     * @param  array<string, mixed>  $propriedades
+     */
+    public function registrarHistorico(Preceptoria $preceptoria, string $evento, string $descricao, array $propriedades = []): string
+    {
+        activity()
+            ->performedOn($preceptoria)
+            ->event($evento)
+            ->withProperties($propriedades)
+            ->log($descricao);
+
+        return $descricao;
+    }
+
+    /**
+     * Quem precisa saber de cada parte da troca: o professor que perdeu e o que ganhou o horário, o
+     * aluno que saiu (e os responsáveis), o aluno que entrou (e os responsáveis). Quem fez a mudança não é avisado.
+     */
+    private function avisarTroca(Preceptoria $preceptoria, ?Pessoa $professorAntes, ?Pessoa $alunoAntes, bool $mudouProfessor, bool $mudouAluno): int
+    {
+        $professor = $preceptoria->professor;
+        $aluno = $preceptoria->matricula?->pessoa;
+        $avisos = [];
+
+        if ($mudouProfessor) {
+            // se o aluno também mudou, ele e os responsáveis recebem o aviso de agendamento/liberação
+            $quem = collect([$professorAntes, $professor])->filter();
+            if (! $mudouAluno) {
+                $quem = $quem->concat($this->circuloDoAluno($aluno));
+            }
+
+            $avisos[] = [
+                $quem,
+                new PreceptoriaAlteradaNotification($preceptoria, PreceptoriaAlteradaNotification::PROFESSOR, $professorAntes?->nome ?? 'sem professor', auth()->user()?->name),
+                'troca de professor',
+            ];
+        }
+
+        if ($mudouAluno && $alunoAntes) {
+            $quem = $this->circuloDoAluno($alunoAntes);
+            // sem aluno novo e sem troca de professor, o professor é quem fica com o horário vago
+            if (! $aluno && ! $mudouProfessor && $professor) {
+                $quem->push($professor);
+            }
+
+            $avisos[] = [$quem, new PreceptoriaNotification($preceptoria, 'liberacao', alunoAnterior: $alunoAntes->nome), 'liberação de horário'];
+        }
+
+        if ($mudouAluno && $aluno) {
+            $quem = $this->circuloDoAluno($aluno);
+            if (! $mudouProfessor && $professor) {
+                $quem->push($professor);
+            }
+
+            $avisos[] = [$quem, new PreceptoriaNotification($preceptoria, 'agendamento'), 'novo agendamento'];
+        }
+
+        return array_sum(array_map(
+            fn (array $aviso) => $this->enviarAviso($aviso[0], $aviso[1], $preceptoria, $aviso[2]),
+            $avisos,
+        ));
+    }
+
+    /**
+     * O aluno e seus responsáveis (com `users` carregados).
+     *
+     * @return Collection<int, Pessoa>
+     */
+    private function circuloDoAluno(?Pessoa $aluno): Collection
+    {
+        return $aluno ? collect([$aluno])->concat($aluno->responsaveis) : collect();
+    }
+
+    /**
+     * Manda a notificação para as pessoas (e seus usuários), menos para quem está fazendo a mudança,
+     * e registra no histórico quantos receberam.
+     *
+     * @param  Collection<int, Pessoa>  $pessoas
+     * @return int quantos destinatários receberam
+     */
+    private function enviarAviso(Collection $pessoas, Notification $notificacao, Preceptoria $preceptoria, string $assunto): int
+    {
+        $autor = auth()->user();
+        $enviados = 0;
+
+        foreach (Preceptoria::destinatariosDasPessoas($pessoas) as $destinatario) {
+            if ($autor && $destinatario instanceof User && $destinatario->is($autor)) {
+                continue;
+            }
+
+            try {
+                $destinatario->notify($notificacao);
+                $enviados++;
+            } catch (\Throwable $e) {
+                Log::error("Erro ao avisar {$destinatario->email} ({$assunto}) na preceptoria {$preceptoria->id}: ".$e->getMessage());
+            }
+        }
+
+        if ($enviados > 0) {
+            $this->registrarHistorico(
+                $preceptoria,
+                'notificacao_alteracao_preceptoria',
+                "Aviso de {$assunto} enviado para {$enviados} destinatário(s)",
+                ['destinatarios_count' => $enviados],
+            );
+        }
+
+        return $enviados;
     }
 
     /**

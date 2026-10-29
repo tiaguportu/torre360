@@ -26,7 +26,8 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
     public function __construct(
         public Preceptoria $preceptoria,
         public string $tipo, // 'agendamento' ou 'liberacao'
-        public bool $paraSolicitante = false
+        public bool $paraSolicitante = false,
+        public ?string $alunoAnterior = null, // na liberação: quem estava agendado (o registro já não guarda mais)
     ) {}
 
     /**
@@ -73,7 +74,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
             ->subject('Preceptoria Cancelada/Liberada')
             ->greeting("Olá, {$notifiable->name}!")
             ->line($intro)
-            ->line("Aluno (era): {$aluno}")
+            ->line('Aluno (era): '.($this->alunoAnterior ?? $aluno))
             ->line("Professor: {$professor}")
             ->line("Data: {$dataF}")
             ->line("Horário: {$horaF}")

@@ -1787,10 +1787,21 @@ Em **Preceptoria → Calendário de Preceptorias** (ou no botão **Calendário**
 2. **Visões:** mês, semana (padrão), dia e lista. A chave *Mostrar fins de semana* esconde sábado e domingo.
 3. **Mover:** arraste o bloco para outro dia ou horário (exige a permissão de **editar** preceptorias). Se o professor já tiver preceptoria que se sobreponha ao novo horário, o sistema recusa e o bloco volta. Soltar num fim de semana, feriado ou dia não letivo é permitido, mas o sistema avisa.
 4. **Mudar a duração:** estique a borda inferior do bloco (visões de semana e dia).
-5. **Preceptoria já agendada:** o sistema pede confirmação e, ao mover, avisa o aluno, os responsáveis e o professor (e-mail, push e sininho) informando o horário anterior.
-6. **Criar um horário:** nas visões de semana e dia, clique e arraste num espaço vazio (exige a permissão de **criar**); o cadastro abre com o dia e a hora escolhidos.
-7. **Gerar recorrência:** o botão do cabeçalho abre o mesmo formulário de recorrência do cadastro (§6.5.1), com prévia, para criar uma série na janela de datas.
-8. **Abrir o registro:** clique no bloco. Professores veem só as próprias preceptorias; responsáveis e alunos, as de seus dependentes (sem arrastar).
+5. **Preceptoria já agendada:** o sistema pede confirmação e, ao mover, avisa o aluno, os responsáveis e o professor (e-mail, push e sininho) com a notificação **Preceptoria Reagendada**, que informa o horário anterior, o novo horário e quem fez a mudança. Se o horário estava livre, só o professor é avisado, e apenas quando foi outra pessoa que mexeu na agenda dele. Quem fez a mudança nunca recebe o próprio aviso.
+6. **Trocar o professor ou o aluno:** clique no bloco (exige a permissão de **editar**). No modal **Gerenciar preceptoria**:
+   - **Professor(a):** escolha outro professor. Ele não pode ter outra preceptoria no mesmo horário (o sistema recusa e nada é alterado). O professor anterior, o novo e, se houver aluno, o aluno e os responsáveis recebem o aviso **Professor da Preceptoria Alterado**.
+   - **Aluno (matrícula):** só aparece para quem também tem a permissão de **agendar**. Escolha outro aluno para trocar, ou apague o campo para **liberar o horário**. O aluno não pode ter outra preceptoria no mesmo ciclo. Quem sai e quem entra (e os responsáveis de cada um) são avisados, e o professor recebe o aviso de novo agendamento ou de horário liberado. A busca mostra as mesmas matrículas da tela *Agendar Preceptoria*.
+   - **Últimas alterações:** seção recolhida com as cinco mudanças mais recentes.
+   - **Abrir registro completo:** leva à edição de todos os campos.
+7. **Criar um horário:** nas visões de semana e dia, clique e arraste num espaço vazio (exige a permissão de **criar**); o cadastro abre com o dia e a hora escolhidos.
+8. **Gerar recorrência:** o botão do cabeçalho abre o mesmo formulário de recorrência do cadastro (§6.5.1), com prévia, para criar uma série na janela de datas.
+9. **Quem só consulta:** clicar no bloco abre a visualização da preceptoria. Professores veem só as próprias preceptorias; responsáveis e alunos, as de seus dependentes (sem arrastar nem trocar).
+
+#### 18.3.2 Histórico de Alterações
+
+Na página de detalhes de uma preceptoria, o botão **Histórico de Alterações** (visível para quem pode editar preceptorias) lista, do mais recente para o mais antigo: agendamentos, liberações, trocas de aluno ou de professor, reagendamentos, **avisos enviados** (com o número de destinatários) e lembretes. Cada item mostra data, hora e quem fez. Os agendamentos e liberações feitos na tela *Agendar Preceptoria* também entram. O histórico traz nomes de alunos, por isso não aparece para responsáveis e alunos; eles acompanham pelo sininho.
+
+> Alterações feitas direto na tela de edição (todos os campos) ainda não entram no histórico.
 
 ---
 

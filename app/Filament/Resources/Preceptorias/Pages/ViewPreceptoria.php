@@ -32,6 +32,22 @@ class ViewPreceptoria extends ViewRecord
                         ]),
                 ]),
 
+            // quem agenda mexe no horário/professor/aluno; o histórico traz nomes de alunos, então fica só para a equipe
+            Action::make('historicoAlteracoes')
+                ->label('Histórico de Alterações')
+                ->icon('heroicon-o-clock')
+                ->color('gray')
+                ->visible(fn () => (bool) auth()->user()?->can('Update:Preceptoria'))
+                ->modalHeading('Histórico de Alterações')
+                ->modalDescription('Agendamentos, trocas de aluno ou professor, reagendamentos e os avisos enviados.')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Fechar')
+                ->schema([
+                    ViewField::make('historico_content')
+                        ->view('filament.components.preceptoria-historico')
+                        ->viewData(['preceptoria' => $this->record]),
+                ]),
+
             EditAction::make(),
 
             Action::make('ajuda')
@@ -65,6 +81,10 @@ class ViewPreceptoria extends ViewRecord
         $html .= '</div>';
 
         if ($user?->can('Update:Preceptoria')) {
+            $html .= '<div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">';
+            $html .= '<h4 class="font-semibold text-gray-900 dark:text-white mb-1">🕘 Histórico de Alterações:</h4>';
+            $html .= '<p>O botão <strong>"Histórico de Alterações"</strong> lista quem agendou, liberou ou trocou o aluno e o professor, os reagendamentos e os avisos enviados, com data, hora e autor.</p>';
+            $html .= '</div>';
             $html .= '<p class="text-xs text-emerald-600 dark:text-emerald-400">✓ Você possui permissão para editar os dados deste agendamento.</p>';
         }
 

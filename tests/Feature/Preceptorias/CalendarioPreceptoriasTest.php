@@ -8,7 +8,10 @@ use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Models\User;
+use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
+use App\Notifications\Preceptorias\PreceptoriaNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -251,5 +254,135 @@ class CalendarioPreceptoriasTest extends TestCase
         Livewire::actingAs($user)
             ->test(CalendarioPreceptorias::class)
             ->assertActionHidden('gerarRecorrencia');
+    }
+
+    public function test_so_quem_edita_abre_o_modal_de_gestao_ao_clicar(): void
+    {
+        $preceptoria = Preceptoria::factory()->create(['data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        $comEdicao = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria']);
+        $evento = collect(Livewire::actingAs($comEdicao)->test(CalendarioPreceptorias::class)->instance()->getEventos('2026-09-01', '2026-10-01'))
+            ->firstWhere('id', (string) $preceptoria->id);
+        $this->assertTrue($evento['extendedProps']['gerenciavel']);
+
+        $somenteLeitura = $this->usuarioCom(['ViewAny:Preceptoria'], 'secretaria');
+        $evento = collect(Livewire::actingAs($somenteLeitura)->test(CalendarioPreceptorias::class)->instance()->getEventos('2026-09-01', '2026-10-01'))
+            ->firstWhere('id', (string) $preceptoria->id);
+        $this->assertFalse($evento['extendedProps']['gerenciavel']);
+
+        Livewire::actingAs($somenteLeitura)->test(CalendarioPreceptorias::class)->assertActionHidden('gerenciarPreceptoria');
+    }
+
+    public function test_gerenciar_troca_professor_e_aluno_avisa_e_deixa_historico(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria', 'Agendar:Preceptoria']);
+        $antigo = Pessoa::factory()->create(['email' => 'antigo@example.com']);
+        $novo = Pessoa::factory()->create(['email' => 'novo@example.com']);
+        $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
+        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => null, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: [
+                'professor_id' => $novo->id,
+                'matricula_id' => $matricula->id,
+            ], arguments: ['id' => $preceptoria->id])
+            ->assertHasNoFormErrors();
+
+        $preceptoria->refresh();
+        $this->assertSame($novo->id, $preceptoria->professor_id);
+        $this->assertSame($matricula->id, $preceptoria->matricula_id);
+
+        Notification::assertSentTo($antigo, PreceptoriaAlteradaNotification::class);
+        Notification::assertSentTo($aluno, PreceptoriaNotification::class, fn ($n) => $n->tipo === 'agendamento');
+        $this->assertEqualsCanonicalizing(
+            ['troca_professor_preceptoria', 'agendamento_preceptoria', 'notificacao_alteracao_preceptoria', 'notificacao_alteracao_preceptoria'],
+            $preceptoria->historico()->pluck('event')->all(),
+        );
+    }
+
+    public function test_gerenciar_esvaziar_o_aluno_libera_o_horario(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria', 'Agendar:Preceptoria']);
+        $professor = Pessoa::factory()->create();
+        $matricula = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create(['email' => 'aluno@example.com'])->id]);
+        $preceptoria = Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => $matricula->id]);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: [
+                'professor_id' => $professor->id,
+                'matricula_id' => null,
+            ], arguments: ['id' => $preceptoria->id])
+            ->assertHasNoFormErrors();
+
+        $this->assertNull($preceptoria->fresh()->matricula_id);
+        $this->assertContains('liberacao_preceptoria', $preceptoria->historico()->pluck('event')->all());
+    }
+
+    public function test_gerenciar_sem_permissao_de_agendar_nao_mexe_no_aluno(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria']);
+        $antigo = Pessoa::factory()->create();
+        $novo = Pessoa::factory()->create();
+        $matricula = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create()->id]);
+        $outra = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create()->id]);
+        $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => $matricula->id]);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: [
+                'professor_id' => $novo->id,
+                'matricula_id' => $outra->id,
+            ], arguments: ['id' => $preceptoria->id]);
+
+        $preceptoria->refresh();
+        $this->assertSame($novo->id, $preceptoria->professor_id);
+        $this->assertSame($matricula->id, $preceptoria->matricula_id);
+    }
+
+    public function test_gerenciar_recusa_professor_com_choque_de_horario(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria']);
+        $antigo = Pessoa::factory()->create();
+        $ocupado = Pessoa::factory()->create();
+        Preceptoria::factory()->create(['professor_id' => $ocupado->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'data' => '2026-09-08', 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: ['professor_id' => $ocupado->id], arguments: ['id' => $preceptoria->id]);
+
+        $this->assertSame($antigo->id, $preceptoria->fresh()->professor_id);
+        Notification::assertNothingSent();
+    }
+
+    public function test_gerenciar_nao_alcanca_preceptoria_de_outro_professor(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria'], 'professor');
+        $minha = Pessoa::factory()->create();
+        $user->pessoas()->attach($minha->id);
+        $deOutro = Preceptoria::factory()->create();
+        $professorOriginal = $deOutro->professor_id;
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            // sem acesso ao registro o modal não tem formulário: a ação roda direto e só avisa
+            ->callAction('gerenciarPreceptoria', arguments: ['id' => $deOutro->id]);
+
+        $this->assertSame($professorOriginal, $deOutro->fresh()->professor_id);
+        $this->assertCount(0, $deOutro->historico());
+        Notification::assertNothingSent();
     }
 }

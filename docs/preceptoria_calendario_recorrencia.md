@@ -1,6 +1,8 @@
 # Preceptoria: filtro por ciclo, calendário com arrastar e soltar e recorrência
 
-> **Status: implementada** em 2026-10-28. Manual: §6.5.1 (cadastro recorrente) e §18.3.1 (calendário).
+> **Status: implementada** em 2026-10-28; troca de professor/aluno pelo calendário, notificação própria
+> de reagendamento e histórico na tela em 2026-10-29. Manual: §6.5.1 (cadastro recorrente), §18.3.1
+> (calendário) e §18.3.2 (histórico).
 
 ## O pedido
 
@@ -48,13 +50,46 @@ FullCalendar 6.1.11 pela CDN (a mesma versão dos outros calendários do projeto
   `Update:Preceptoria`). Recusa choque de horário do professor (o bloco volta), término em outro dia
   e data inválida. Soltar em fim de semana, feriado ou dia não letivo é **permitido com aviso**.
 - Preceptoria **já agendada**: confirmação no navegador e, se o novo horário é futuro, aviso a aluno,
-  responsáveis e professor por `LembretePreceptoriaNotification` com o horário anterior
-  (`reagendadoDe`). Cada reagendamento grava `activity` (`reagendamento_preceptoria`).
+  responsáveis e professor pela notificação própria `PreceptoriaAlteradaNotification` (mudança
+  `horario`, com o horário anterior e quem alterou). Horário livre: só o professor é avisado. Quem
+  fez a mudança não recebe o próprio aviso. Cada reagendamento grava `activity` (`reagendamento_preceptoria`).
 - **Selecionar** um intervalo vazio (semana/dia) abre "Novo horário" com dia e hora (`Create:Preceptoria`).
 - **Gerar recorrência**: ação do cabeçalho com o mesmo formulário e a mesma prévia do cadastro.
-- Clicar no bloco abre a edição (ou a visualização, sem permissão de editar).
+- Clicar no bloco abre o modal **Gerenciar preceptoria** (`gerenciarPreceptoria`, só com
+  `Update:Preceptoria`); sem essa permissão, abre a visualização. Ver "Trocar professor e aluno".
 - Entrada própria na navegação do grupo Preceptoria e botão "Calendário" na listagem. Acesso: quem
   pode ver a listagem (`viewAny`).
+
+### 4. Trocar professor e aluno pelo calendário (`PreceptoriaAgendaService::atualizarParticipantes`)
+Modal com **Professor(a)**, **Aluno (matrícula)** (esvaziar libera o horário), as cinco últimas
+alterações e o atalho "Abrir registro completo".
+
+- O aluno só pode ser mexido por quem também tem `Agendar:Preceptoria`; sem ela o campo some e
+  `alterarAluno` vai `false`. A busca de matrículas usa a mesma regra da tela "Agendar Preceptoria"
+  (`matriculasAcessiveis`, agora no serviço e compartilhada; a restrição ficou agrupada num único
+  `where` para a busca por nome não a desfazer).
+- **Tudo é conferido antes de gravar**: o novo professor não pode ter preceptoria sobreposta; o aluno
+  não pode ter outra preceptoria no mesmo ciclo (como a tela de agendar faz). Se falha, nada muda.
+- **Avisos** (quem fez a mudança fica de fora):
+
+  | Mudança | Recebe |
+  |---|---|
+  | Professor, aluno igual | professor antigo, novo, aluno e responsáveis: `PreceptoriaAlteradaNotification` (professor) |
+  | Aluno novo | aluno novo e responsáveis, e o professor (se não trocou): `PreceptoriaNotification` agendamento |
+  | Aluno que sai | aluno e responsáveis; o professor, se o horário ficou livre: `PreceptoriaNotification` liberação |
+  | Professor e aluno juntos | professores só pelo aviso de professor; alunos pelos avisos de agendamento/liberação |
+
+- O e-mail de liberação leva o nome de quem saiu (`alunoAnterior`): o registro já foi alterado quando
+  o job da fila monta a mensagem.
+
+### 5. Histórico na tela
+- `Preceptoria::historico()` lê o log de atividades nos eventos de `Preceptoria::EVENTOS_HISTORICO`
+  (agendamento, liberação, troca de aluno, troca de professor, reagendamento, aviso enviado, lembrete
+  enviado). Cada aviso grava `notificacao_alteracao_preceptoria` com o número de destinatários.
+- Aparece no botão **Histórico de Alterações** do registro (`ViewPreceptoria`) e, resumido, no modal
+  do calendário (partial `filament.components.preceptoria-historico`). Só para quem tem
+  `Update:Preceptoria`: o texto traz nomes de alunos.
+- A tela "Agendar Preceptoria" passou a gravar `agendamento_preceptoria` e `liberacao_preceptoria`.
 
 ## Decisões
 
@@ -72,21 +107,27 @@ FullCalendar 6.1.11 pela CDN (a mesma versão dos outros calendários do projeto
 
 `app/Services/PreceptoriaAgendaService.php` · `app/Filament/Resources/Preceptorias/Schemas/PreceptoriaRecorrenciaForm.php`
 · `…/Pages/CalendarioPreceptorias.php` · `resources/views/filament/resources/preceptorias/pages/calendario-preceptorias.blade.php`
-· alterados: `PreceptoriaForm`, `CreatePreceptoria`, `ListPreceptorias`, `PreceptoriasTable`,
-`PreceptoriaResource`, `Preceptoria::relembrarAgendamento`, `LembretePreceptoriaNotification`.
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest}.php`.
+· `app/Notifications/Preceptorias/PreceptoriaAlteradaNotification.php` · `resources/views/filament/components/preceptoria-historico.blade.php`
+· alterados: `PreceptoriaForm`, `CreatePreceptoria`, `ListPreceptorias`, `ViewPreceptoria`, `AgendarPreceptoria`,
+`PreceptoriasTable`, `PreceptoriaResource`, `Preceptoria` (`historico()`, `destinatariosDasPessoas()`),
+`PreceptoriaNotification` (`alunoAnterior`). O `LembretePreceptoriaNotification` voltou a ser só lembrete.
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest}.php`.
 
 ## O que ficou de fora
 
 - **Série sem identidade**: as preceptorias geradas não guardam um `serie_id`; não há "editar/excluir a
   série inteira". Hoje: filtrar por ciclo/professor na listagem e usar as ações em lote.
-- **Trocar professor ou aluno pelo calendário**: o clique abre a edição completa. Agendar o aluno num
-  horário livre continua na tela "Agendar Preceptoria".
+- **Arrastar um aluno** para um horário livre no calendário: a troca/agendamento é pelo modal (clique no bloco).
+- **Professor da turma**: o modal do calendário não restringe aos professores da turma do aluno (a tela
+  "Agendar Preceptoria" só oferece horários deles); quem tem permissão decide.
 - **Feriados**: só os nacionais fixos e a Sexta-Feira Santa; Carnaval, Corpus Christi e feriados
   estaduais/municipais entram como dia não letivo cadastrado.
 - **Corrida entre dois usuários**: o conflito é checado na hora, sem restrição no banco.
-- **Aviso de reagendamento** reaproveita o canal do lembrete (e-mail, push, sininho); não há uma
-  notificação própria nem histórico na tela.
+- **Histórico incompleto**: só entram as mudanças feitas pelo calendário, pelo reagendamento e pela
+  tela "Agendar Preceptoria". Alterações na edição completa (formulário) e nas ações em lote não são
+  registradas nem avisam ninguém (o modelo não usa `LogsActivity`).
+- **Liberação pela tela "Agendar Preceptoria"** continua montando o e-mail "Aluno (era)" a partir do
+  registro, que já foi alterado quando a fila processa (o calendário não tem esse problema, passa o nome pronto).
 - O JavaScript do calendário (arrastar, esticar, selecionar) não tem teste automatizado: os testes
   cobrem o servidor (eventos, reagendar, ações de criar e gerar).
 - Suspeita **não verificada**, fora do escopo: a ação em lote "Clonar" chama `replicate()` sobre
