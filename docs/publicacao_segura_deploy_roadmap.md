@@ -14,8 +14,8 @@ maior que o de qualquer onda de produtividade.
 ## O que já existe (conferido no código)
 
 - **A página `GitPull`** (`/admin/git-pull`, fora do menu): executa `git pull origin main`, depois `optimize:clear` e `migrate --force`, e
-  mostra a saída. Só o botão confere `hasRole('super_admin')`; a **página não tem `canAccess`** e abre para qualquer conta ativa (a
-  família entra no painel admin).
+  mostra a saída. A página (`canAccess`, desde 2026-04-06) e cada botão só aceitam `super_admin`. *(Este roteiro dizia que a página não
+  tinha `canAccess`; conferido no código em 2026-10-30, tinha.)*
 - **A `main` é a produção:** não há tag, release, branch de homologação nem pipeline (nenhum `.github`). Várias pessoas e sessões
   publicam direto na `main`; um clique no botão leva tudo.
 - **O build dos assets não faz parte da publicação:** `public/build` é ignorado pelo Git e a página não roda `npm run build`. O CSS

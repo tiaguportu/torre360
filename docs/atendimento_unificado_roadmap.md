@@ -29,7 +29,8 @@ família espera, e a família não sabe se alguém viu a mensagem.
 - **Nenhum aviso**: abrir ou responder um chamado não avisa a equipe nem a família (os `Notification::make()` das telas são só a
   mensagem de tela, não notificação gravada). O campo **`AtendimentoSetor.email_notificacao` é cadastrado e nunca lido**: a tela
   promete um e-mail que o sistema não envia.
-- O Portal não tem sino (sem `databaseNotifications`), então a resposta só chega a quem volta à Central para olhar.
+- O painel do Portal **ganhou o sino** (`databaseNotifications`, atualização a cada 30 s) em 2026-10-28 (`a76a29e3`). Como o chamado ainda
+  não grava notificação, a resposta continua chegando só a quem volta à Central para olhar.
 
 ## Escopo proposto
 

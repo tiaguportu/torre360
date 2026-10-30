@@ -38,7 +38,7 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 | Achado | Onde | Consequência |
 |---|---|---|
 | **O chamado não avisa ninguém.** Abrir ou responder não notifica a equipe nem a família, e o campo `AtendimentoSetor.email_notificacao` é cadastrado e **nunca lido**: a tela promete um e-mail que não sai. | Central de Atendimento | O primeiro item da Onda 83 é pequeno e vale sozinho: fazer o aviso existir. |
-| **O Portal da família não tem sino** (o painel do Portal não liga `databaseNotifications`; o do admin liga). | Portal | As ondas 80 e 83 respondem para ninguém sem a Onda 70 (ou, no mínimo, e-mail por mudança de situação). |
+| **O Portal da família ganhou o sino em 2026-10-28** (`databaseNotifications`, antes só o painel admin o ligava), mas **nada grava notificação para a família** a partir do chamado. | Portal | As ondas 80 e 83 ainda respondem para ninguém sem gravar o aviso (Onda 70) ou, no mínimo, e-mail por mudança de situação. |
 | **A proposta comercial existe e o ciclo dela para na aprovação.** `AceitaPelaFamilia`, `Convertida` e `Expirada` estão no enum e **nenhum código muda a proposta para elas**; o Assistente de Matrícula pré-preenche os dados, mas o **desconto negociado não chega ao contrato**. | Proposta comercial | A Onda 87 não cria uma proposta: completa a existente (aceite, expiração e do desconto à bolsa). |
 | **O conceito de "canal" existe três vezes** sem que um use o outro: `CanalMensagemManager` (e-mail e push), `CanalReguaFollowUp` e o `canal` da régua de cobrança (via `NotificationService`). | Comunicação | A Onda 88 começa unificando; senão o WhatsApp seria o quarto. |
 | **Lembrete de visita só vai ao consultor.** A família só recebe se a régua tiver regra para `visita_lembrete`. | Visitas | A Onda 86 garante o lembrete à família. |
@@ -63,7 +63,7 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 |---|---|
 | **Só o SQLite é testado e a produção é MySQL.** Cinco colunas existem só no esquema de testes (`dia_nao_letivo.curso_id`, `etapa_avaliativa.turma_id`, `pessoa.endereco_id`, `matricula.status`, `tipo_documento.curso_id`); a primeira é filtrada em quatro serviços e quebra no MariaDB copiado. **Produção não verificada.** | Onda 89 |
 | **A cadeia de migrations não roda do zero em MariaDB** (falha na 78ª, FK `errno 150`); não há pipeline de CI nem tag. | Onda 89 |
-| **Publicar é apertar um botão** que faz `git pull origin main` e `migrate --force`, sem backup nem volta; a página não tem `canAccess`; o build dos assets não faz parte (`public/build` é ignorado). | Onda 90 |
+| **Publicar é apertar um botão** que faz `git pull origin main` e `migrate --force`, sem backup nem volta (a página e os botões só aceitam `super_admin`; o registro anterior dizendo que faltava `canAccess` estava errado); o build dos assets não faz parte (`public/build` é ignorado). | Onda 90 |
 | **O `.env` do checkout de desenvolvimento tem `APP_ENV=local` e `APP_DEBUG=true` e aponta para a produção** (registro das sessões anteriores). | Onda 90 |
 | **Dois recursos do painel não tinham política** e a família os abria (corrigido em 2026-10-28, com teste de guarda que cobre todo recurso novo). | Já resolvido; o guarda é o primeiro portão da Onda 89 |
 | Dependências com aviso: TinyMCE 8.9.2 (XSS alto, três telas de texto formatado), Livewire 4.4.7 (o atributo `#[Authorize]`, que o app não usa) e o Capacitor do app móvel. | Atualizar; entra no portão da 89 (`composer audit`) |
@@ -90,3 +90,8 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 
 A proposta de **Fechamento do mês financeiro** (checklist calculado pelo próprio sistema, com conciliação, saídas sem classificação, contas a
 revisar, apuração e exportação contábil) foi sugerida na análise anterior e **continua só em conversa**; não tem documento.
+
+## Estabilização antes de novas funcionalidades
+
+A análise de 2026-10-30 (funções entregues pela metade, menu com grupos duplicados, custo fixo de cada onda e a recomendação de pausar as
+funções grandes até fechar as Ondas 89 e 90) está em [estabilizacao_antes_de_novas_funcionalidades.md](estabilizacao_antes_de_novas_funcionalidades.md).

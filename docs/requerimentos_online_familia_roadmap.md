@@ -56,8 +56,8 @@ em vez de nascer como uma tela paralela.
 
 ## Dependências e riscos
 
-- **Aviso à família:** o Portal da família **não tem sino** (o painel do Portal não liga `databaseNotifications`), e o chamado atual
-  não avisa ninguém. Sem a [Central de Avisos (Onda 70)](central_avisos_familia_roadmap.md) ou, no mínimo, um e-mail por mudança
+- **Aviso à família:** o Portal da família **ganhou o sino** (`databaseNotifications`) em 2026-10-28, mas o chamado atual não grava
+  notificação nem avisa ninguém. Sem a [Central de Avisos (Onda 70)](central_avisos_familia_roadmap.md) ou, no mínimo, um e-mail por mudança
   de situação, o pedido responde para ninguém. É pré-requisito prático.
 - **Formulário configurável é a parte cara.** Começar com campos fixos por tipo (código) e só depois abrir a edição pelo
   administrador.
