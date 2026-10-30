@@ -12,7 +12,7 @@ O sistema é construído sobre uma pilha tecnológica robusta de última geraç�
 | Framework Core | Laravel 12.0 |
 | Painel Admin | Filament v5 |
 | Banco de Dados | SQLite / MySQL (Eloquent ORM) |
-| Frontend | TailwindCSS, Alpine.js, Livewire 3+ |
+| Frontend | TailwindCSS, Alpine.js, Livewire 4 |
 | Permissões (RBAC) | Spatie Laravel Permission + Filament Shield |
 
 ---

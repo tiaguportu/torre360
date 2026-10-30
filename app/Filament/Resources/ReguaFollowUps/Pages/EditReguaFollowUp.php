@@ -7,24 +7,10 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
-use Throwable;
 
 class EditReguaFollowUp extends EditRecord
 {
     protected static string $resource = ReguaFollowUpResource::class;
-
-    public function boot(): void
-    {
-        if (! Schema::hasTable('regua_follow_ups')) {
-            try {
-                Artisan::call('migrate', ['--force' => true]);
-            } catch (Throwable $e) {
-                report($e);
-            }
-        }
-    }
 
     protected function getHeaderActions(): array
     {

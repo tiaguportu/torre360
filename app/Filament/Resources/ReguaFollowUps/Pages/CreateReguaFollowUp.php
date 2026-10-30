@@ -6,24 +6,10 @@ use App\Filament\Resources\ReguaFollowUps\ReguaFollowUpResource;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
-use Throwable;
 
 class CreateReguaFollowUp extends CreateRecord
 {
     protected static string $resource = ReguaFollowUpResource::class;
-
-    public function boot(): void
-    {
-        if (! Schema::hasTable('regua_follow_ups')) {
-            try {
-                Artisan::call('migrate', ['--force' => true]);
-            } catch (Throwable $e) {
-                report($e);
-            }
-        }
-    }
 
     protected function getHeaderActions(): array
     {
