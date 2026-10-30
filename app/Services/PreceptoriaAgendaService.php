@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\ConflitoDeHorarioException;
+use App\Exceptions\ExclusaoDePreceptoriaRecusadaException;
+use App\Models\CicloPreceptoria;
 use App\Models\CronogramaAula;
 use App\Models\DiaNaoLetivo;
 use App\Models\Matricula;
@@ -10,11 +12,13 @@ use App\Models\Pessoa;
 use App\Models\Preceptoria;
 use App\Models\User;
 use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
+use App\Notifications\Preceptorias\PreceptoriaCanceladaNotification;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
 use Carbon\CarbonInterface;
 use Closure;
 use DomainException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -584,11 +588,7 @@ class PreceptoriaAgendaService
                 $depois = $matricula?->pessoa?->nome;
                 $antes = $alunoAntes?->nome;
 
-                [$evento, $descricao] = match (true) {
-                    $antes !== null && $depois !== null => ['troca_aluno_preceptoria', "Aluno trocado de {$antes} para {$depois}"],
-                    $depois !== null => ['agendamento_preceptoria', "Aluno agendado: {$depois}"],
-                    default => ['liberacao_preceptoria', "Horário liberado (o aluno era {$antes})"],
-                };
+                [$evento, $descricao] = $this->descreverTrocaDeAluno($antes, $depois);
 
                 $mensagens[] = $this->registrarHistorico($preceptoria, $evento, $descricao, ['antes' => $antes, 'depois' => $depois]);
             }
@@ -619,6 +619,363 @@ class PreceptoriaAgendaService
             'aviso' => null,
             'notificados' => $notificados,
         ];
+    }
+
+    /**
+     * Grava a edição de uma preceptoria feita fora do calendário (formulário completo, edição em lote)
+     * deixando o mesmo rastro das outras telas: o que mudou (professor, aluno, horário, ciclo) entra
+     * no histórico e, sendo uma preceptoria futura, quem é afetado é avisado. Se a gravação for
+     * recusada por choque de horário, nada é registrado nem avisado.
+     *
+     * @param  array<string, mixed>  $dados  atributos a gravar
+     * @param  bool  $notificar  false só registra no histórico
+     * @return array{mensagens: array<int, string>, notificados: int}
+     *
+     * @throws ConflitoDeHorarioException
+     */
+    public function atualizarComHistorico(Preceptoria $preceptoria, array $dados, bool $notificar = true): array
+    {
+        $antes = $this->retrato($preceptoria, doBanco: true);
+        $alteracoes = null;
+
+        // a gravação e o histórico andam juntos: se um falhar, o outro não fica
+        DB::transaction(function () use ($preceptoria, $dados, $antes, &$alteracoes) {
+            $preceptoria->update($dados);
+
+            $alteracoes = $this->registrarAlteracoes($preceptoria, $antes);
+        });
+
+        if ($alteracoes === null) {
+            return ['mensagens' => [], 'notificados' => 0];
+        }
+
+        // corrigir o cadastro de uma preceptoria que já passou não vira aviso para ninguém
+        $notificados = $notificar && $preceptoria->isAgendamentoFuturo()
+            ? $this->avisarAlteracoes($preceptoria, $alteracoes)
+            : 0;
+
+        return ['mensagens' => $alteracoes['mensagens'], 'notificados' => $notificados];
+    }
+
+    /** O que o aviso de cancelamento e o de restauração precisam enxergar para dizer quem são os envolvidos. */
+    private const RELACOES_DO_AVISO = ['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users'];
+
+    /**
+     * O que acontece se essas preceptorias forem excluídas: quantas serão recusadas (por terem relatório)
+     * e quantos destinatários receberão o aviso de cancelamento (só as futuras que têm aluno avisam).
+     *
+     * @param  iterable<int, Preceptoria>  $preceptorias
+     * @return array{total: int, recusadas: int, avisados: int}
+     */
+    public function previaDaExclusao(iterable $preceptorias): array
+    {
+        $preceptorias = new EloquentCollection(collect($preceptorias)->all());
+        $preceptorias->loadMissing(self::RELACOES_DO_AVISO);
+
+        $comRelatorio = Preceptoria::query()
+            ->whereKey($preceptorias->modelKeys())
+            ->whereHas('relatorios')
+            ->pluck('id');
+
+        $avisados = $preceptorias
+            ->reject(fn (Preceptoria $preceptoria) => $comRelatorio->contains($preceptoria->getKey()))
+            ->sum(fn (Preceptoria $preceptoria) => $this->destinatariosDoCancelamento($preceptoria)->count());
+
+        return ['total' => $preceptorias->count(), 'recusadas' => $comRelatorio->count(), 'avisados' => $avisados];
+    }
+
+    /**
+     * Exclui a preceptoria (o registro fica guardado e pode ser restaurado) deixando o rastro no
+     * histórico: o que era, quem excluiu e quando. Sendo uma preceptoria futura com aluno, o professor, o
+     * aluno e os responsáveis são avisados do cancelamento (quem excluiu não recebe).
+     *
+     * Preceptoria com relatório não é excluída: o relatório é o registro do encontro. Para devolver o
+     * horário à agenda, basta liberar o aluno.
+     *
+     * @param  bool  $notificar  false só registra no histórico
+     * @return array{mensagem: string, notificados: int}
+     *
+     * @throws ExclusaoDePreceptoriaRecusadaException
+     */
+    public function excluirComHistorico(Preceptoria $preceptoria, bool $notificar = true): array
+    {
+        $preceptoria->unsetRelation('professor')->unsetRelation('matricula')->unsetRelation('cicloPreceptoria');
+        $preceptoria->load([...self::RELACOES_DO_AVISO, 'cicloPreceptoria']);
+
+        $retrato = $this->retrato($preceptoria);
+        $horario = $this->rotuloHorario($retrato);
+        $professor = $preceptoria->professor?->nome;
+        $aluno = $preceptoria->matricula?->pessoa?->nome;
+        $destinatarios = $notificar ? $this->destinatariosDoCancelamento($preceptoria) : collect();
+
+        $detalhe = ($aluno ? "aluno: {$aluno}" : 'horário livre').'; professor: '.($professor ?? 'sem professor');
+        $descricao = "Preceptoria de {$horario} excluída ({$detalhe})";
+
+        // a exclusão e o histórico andam juntos; o relatório é conferido dentro, com o registro já lido
+        DB::transaction(function () use ($preceptoria, $descricao, $horario, $professor, $aluno) {
+            $relatorios = $preceptoria->relatorios()->count();
+
+            if ($relatorios > 0) {
+                throw ExclusaoDePreceptoriaRecusadaException::comRelatorios($preceptoria, $relatorios);
+            }
+
+            $this->registrarHistorico($preceptoria, 'exclusao_preceptoria', $descricao, [
+                'horario' => $horario,
+                'professor' => $professor,
+                'aluno' => $aluno,
+                'ciclo' => $preceptoria->cicloPreceptoria?->nome,
+            ]);
+
+            $preceptoria->delete();
+        });
+
+        $notificados = $destinatarios->isEmpty()
+            ? 0
+            : $this->enviarAviso(
+                collect([$preceptoria->professor])->filter()->concat($this->circuloDoAluno($preceptoria->matricula?->pessoa)),
+                new PreceptoriaCanceladaNotification(
+                    $preceptoria->data->format('d/m/Y'),
+                    $this->horasDaPreceptoria($retrato),
+                    $professor,
+                    $aluno,
+                    auth()->user()?->name,
+                ),
+                $preceptoria,
+                'cancelamento',
+            );
+
+        return ['mensagem' => $descricao, 'notificados' => $notificados];
+    }
+
+    /**
+     * Devolve à agenda uma preceptoria excluída, desde que o professor e o aluno continuem livres no
+     * horário dela (nesse tempo podem ter marcado outra). Sendo futura e com aluno, os envolvidos são
+     * avisados de que o horário voltou.
+     *
+     * @return int quantos destinatários foram avisados
+     *
+     * @throws ConflitoDeHorarioException
+     */
+    public function restaurarComHistorico(Preceptoria $preceptoria, bool $notificar = true): int
+    {
+        DB::transaction(function () use ($preceptoria) {
+            $this->travarEConferir(
+                $preceptoria,
+                $preceptoria->professor_id ? (int) $preceptoria->professor_id : null,
+                $preceptoria->matricula_id ? (int) $preceptoria->matricula_id : null,
+            );
+
+            $preceptoria->restore();
+
+            $this->registrarHistorico(
+                $preceptoria,
+                'restauracao_preceptoria',
+                'Preceptoria restaurada: '.$this->rotuloHorario($this->retrato($preceptoria)),
+            );
+        });
+
+        $preceptoria->unsetRelation('professor')->unsetRelation('matricula');
+        $preceptoria->load(self::RELACOES_DO_AVISO);
+
+        if (! $notificar || $this->destinatariosDoCancelamento($preceptoria)->isEmpty()) {
+            return 0;
+        }
+
+        return $this->enviarAviso(
+            collect([$preceptoria->professor])->filter()->concat($this->circuloDoAluno($preceptoria->matricula?->pessoa)),
+            new PreceptoriaNotification($preceptoria, 'agendamento'),
+            $preceptoria,
+            'restauração',
+        );
+    }
+
+    /**
+     * Quem recebe o aviso de cancelamento (ou de volta do horário): só quando a preceptoria é futura e tem
+     * aluno; horário livre ou que já passou não avisa ninguém. Exige as relações de RELACOES_DO_AVISO.
+     */
+    private function destinatariosDoCancelamento(Preceptoria $preceptoria): Collection
+    {
+        if (! $preceptoria->matricula_id || ! $preceptoria->isAgendamentoFuturo()) {
+            return collect();
+        }
+
+        return $this->destinatariosSemAutor(
+            collect([$preceptoria->professor])->filter()->concat($this->circuloDoAluno($preceptoria->matricula?->pessoa)),
+        );
+    }
+
+    /**
+     * "07:15" ou, com término, "07:15 às 07:45".
+     *
+     * @param  array<string, mixed>  $retrato
+     */
+    private function horasDaPreceptoria(array $retrato): string
+    {
+        $inicio = $retrato['hora_inicio'] ?? '—';
+
+        return $retrato['hora_fim'] ? "{$inicio} às {$retrato['hora_fim']}" : $inicio;
+    }
+
+    /**
+     * O que interessa ao histórico de uma preceptoria, em valores comparáveis (ids como inteiros,
+     * data e horas como texto), para dizer depois de uma gravação o que mudou.
+     *
+     * $doBanco lê o que está gravado, ignorando o que já foi atribuído ao model e ainda não salvo: o
+     * seletor de relação do Filament (professor, aluno, ciclo) associa a chave estrangeira ao model
+     * antes de a página chamar a gravação, então o valor "atual" dele já é o novo.
+     *
+     * @return array{professor_id: int|null, matricula_id: int|null, ciclo_preceptoria_id: int|null, data: string|null, hora_inicio: string|null, hora_fim: string|null}
+     */
+    private function retrato(Preceptoria $preceptoria, bool $doBanco = false): array
+    {
+        $valor = fn (string $campo) => $doBanco ? $preceptoria->getOriginal($campo) : $preceptoria->getAttribute($campo);
+        $id = fn (string $campo) => $valor($campo) ? (int) $valor($campo) : null;
+
+        return [
+            'professor_id' => $id('professor_id'),
+            'matricula_id' => $id('matricula_id'),
+            'ciclo_preceptoria_id' => $id('ciclo_preceptoria_id'),
+            'data' => $valor('data')?->toDateString(),
+            'hora_inicio' => $valor('hora_inicio')?->format('H:i'),
+            'hora_fim' => $valor('hora_fim')?->format('H:i'),
+        ];
+    }
+
+    /**
+     * Compara o registro já gravado com o retrato de antes e anota cada mudança no histórico.
+     *
+     * @param  array<string, mixed>  $antes  o retrato tirado antes da gravação
+     * @return array{professor: bool, aluno: bool, horario: bool, ciclo: bool, professorAntes: Pessoa|null, alunoAntes: Pessoa|null, horarioAntes: string, mensagens: array<int, string>}|null null quando nada mudou
+     */
+    private function registrarAlteracoes(Preceptoria $preceptoria, array $antes): ?array
+    {
+        $depois = $this->retrato($preceptoria);
+        $camposDoHorario = ['data', 'hora_inicio', 'hora_fim'];
+
+        $mudouProfessor = $antes['professor_id'] !== $depois['professor_id'];
+        $mudouAluno = $antes['matricula_id'] !== $depois['matricula_id'];
+        $mudouCiclo = $antes['ciclo_preceptoria_id'] !== $depois['ciclo_preceptoria_id'];
+        $mudouHorario = Arr::only($antes, $camposDoHorario) !== Arr::only($depois, $camposDoHorario);
+
+        if (! $mudouProfessor && ! $mudouAluno && ! $mudouCiclo && ! $mudouHorario) {
+            return null;
+        }
+
+        // quem e o que era antes: o registro já mudou, então vem do banco (só o que mudou)
+        $professorAntes = $mudouProfessor && $antes['professor_id']
+            ? Pessoa::with('users')->find($antes['professor_id'])
+            : null;
+        $alunoAntes = $mudouAluno && $antes['matricula_id']
+            ? Matricula::with(['pessoa.responsaveis.users', 'pessoa.users'])->find($antes['matricula_id'])?->pessoa
+            : null;
+        $cicloAntes = $mudouCiclo && $antes['ciclo_preceptoria_id']
+            ? CicloPreceptoria::find($antes['ciclo_preceptoria_id'])
+            : null;
+
+        // as relações que a listagem já carregou ainda são as de antes da gravação
+        $preceptoria->unsetRelation('professor')->unsetRelation('matricula')->unsetRelation('cicloPreceptoria');
+        $preceptoria->load(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users', 'cicloPreceptoria']);
+
+        $mensagens = [];
+        $horarioAntes = $this->rotuloHorario($antes);
+
+        if ($mudouProfessor) {
+            $de = $professorAntes?->nome ?? 'sem professor';
+            $para = $preceptoria->professor?->nome ?? 'sem professor';
+
+            $mensagens[] = $this->registrarHistorico($preceptoria, 'troca_professor_preceptoria', "Professor alterado de {$de} para {$para}", ['antes' => $de, 'depois' => $para]);
+        }
+
+        if ($mudouAluno) {
+            $de = $alunoAntes?->nome;
+            $para = $preceptoria->matricula?->pessoa?->nome;
+            [$evento, $descricao] = $this->descreverTrocaDeAluno($de, $para);
+
+            $mensagens[] = $this->registrarHistorico($preceptoria, $evento, $descricao, ['antes' => $de, 'depois' => $para]);
+        }
+
+        if ($mudouHorario) {
+            $para = $this->rotuloHorario($depois);
+
+            $mensagens[] = $this->registrarHistorico($preceptoria, 'reagendamento_preceptoria', "Preceptoria reagendada de {$horarioAntes} para {$para}", ['antes' => $horarioAntes, 'depois' => $para]);
+        }
+
+        if ($mudouCiclo) {
+            $de = $cicloAntes?->nome ?? 'sem ciclo';
+            $para = $preceptoria->cicloPreceptoria?->nome ?? 'sem ciclo';
+
+            $mensagens[] = $this->registrarHistorico($preceptoria, 'troca_ciclo_preceptoria', "Ciclo alterado de {$de} para {$para}", ['antes' => $de, 'depois' => $para]);
+        }
+
+        return [
+            'professor' => $mudouProfessor,
+            'aluno' => $mudouAluno,
+            'horario' => $mudouHorario,
+            'ciclo' => $mudouCiclo,
+            'professorAntes' => $professorAntes,
+            'alunoAntes' => $alunoAntes,
+            'horarioAntes' => $horarioAntes,
+            'mensagens' => $mensagens,
+        ];
+    }
+
+    /**
+     * Avisa o que mudou (a troca de ciclo é só do histórico). Mudando o horário junto com o professor
+     * ou o aluno, o aviso da troca já mostra o horário novo e, no do professor, o anterior; o aviso de
+     * reagendamento é só para quando o horário foi a única mudança que afeta as pessoas.
+     *
+     * @param  array{professor: bool, aluno: bool, horario: bool, professorAntes: Pessoa|null, alunoAntes: Pessoa|null, horarioAntes: string}  $alteracoes
+     */
+    private function avisarAlteracoes(Preceptoria $preceptoria, array $alteracoes): int
+    {
+        $avisados = $this->avisarTroca(
+            $preceptoria,
+            $alteracoes['professorAntes'],
+            $alteracoes['alunoAntes'],
+            $alteracoes['professor'],
+            $alteracoes['aluno'],
+            $alteracoes['horario'] ? $alteracoes['horarioAntes'] : null,
+        );
+
+        if ($alteracoes['horario'] && ! $alteracoes['professor'] && ! $alteracoes['aluno']) {
+            $avisados += $this->enviarAviso(
+                collect([$preceptoria->professor])->filter()->concat($this->circuloDoAluno($preceptoria->matricula?->pessoa)),
+                new PreceptoriaAlteradaNotification($preceptoria, PreceptoriaAlteradaNotification::HORARIO, $alteracoes['horarioAntes'], auth()->user()?->name),
+                $preceptoria,
+                'reagendamento',
+            );
+        }
+
+        return $avisados;
+    }
+
+    /**
+     * "24/08/2026 às 07:15" ou, com término, "24/08/2026 das 07:15 às 07:45".
+     *
+     * @param  array<string, mixed>  $retrato
+     */
+    private function rotuloHorario(array $retrato): string
+    {
+        $data = $retrato['data'] ? Carbon::parse($retrato['data'])->format('d/m/Y') : 'sem data';
+        $inicio = $retrato['hora_inicio'] ?? '—';
+
+        return $retrato['hora_fim']
+            ? "{$data} das {$inicio} às {$retrato['hora_fim']}"
+            : "{$data} às {$inicio}";
+    }
+
+    /**
+     * O evento e o texto do histórico para o aluno que saiu e/ou entrou na preceptoria.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function descreverTrocaDeAluno(?string $antes, ?string $depois): array
+    {
+        return match (true) {
+            $antes !== null && $depois !== null => ['troca_aluno_preceptoria', "Aluno trocado de {$antes} para {$depois}"],
+            $depois !== null => ['agendamento_preceptoria', "Aluno agendado: {$depois}"],
+            default => ['liberacao_preceptoria', "Horário liberado (o aluno era {$antes})"],
+        };
     }
 
     /**
@@ -697,30 +1054,41 @@ class PreceptoriaAgendaService
         }
 
         return DB::transaction(function () use ($preceptoria, $professorId, $matriculaId, $gravar) {
-            $pessoaDoAluno = $matriculaId ? Matricula::query()->whereKey($matriculaId)->value('pessoa_id') : null;
-
-            // sempre na ordem do id, para duas gravações cruzadas não travarem uma à outra
-            Pessoa::query()
-                ->whereIn('id', array_filter([$professorId, $pessoaDoAluno]))
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->pluck('id');
-
-            $conflito = $this->conflito(
-                $professorId,
-                $matriculaId,
-                $preceptoria->data->toDateString(),
-                $preceptoria->hora_inicio,
-                $preceptoria->hora_fim,
-                $preceptoria->exists ? $preceptoria->getKey() : null,
-            );
-
-            if ($conflito) {
-                throw $conflito;
-            }
+            $this->travarEConferir($preceptoria, $professorId, $matriculaId);
 
             return $gravar();
         });
+    }
+
+    /**
+     * Trava a linha das pessoas (sempre na ordem do id, para duas gravações cruzadas não travarem uma à
+     * outra) e confere se o professor e o aluno estão livres no horário da preceptoria. Só vale dentro de
+     * uma transação.
+     *
+     * @throws ConflitoDeHorarioException
+     */
+    private function travarEConferir(Preceptoria $preceptoria, ?int $professorId, ?int $matriculaId): void
+    {
+        $pessoaDoAluno = $matriculaId ? Matricula::query()->whereKey($matriculaId)->value('pessoa_id') : null;
+
+        Pessoa::query()
+            ->whereIn('id', array_filter([$professorId, $pessoaDoAluno]))
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->pluck('id');
+
+        $conflito = $this->conflito(
+            $professorId,
+            $matriculaId,
+            $preceptoria->data->toDateString(),
+            $preceptoria->hora_inicio,
+            $preceptoria->hora_fim,
+            $preceptoria->exists ? $preceptoria->getKey() : null,
+        );
+
+        if ($conflito) {
+            throw $conflito;
+        }
     }
 
     /**
@@ -743,7 +1111,7 @@ class PreceptoriaAgendaService
      * Quem precisa saber de cada parte da troca: o professor que perdeu e o que ganhou o horário, o
      * aluno que saiu (e os responsáveis), o aluno que entrou (e os responsáveis). Quem fez a mudança não é avisado.
      */
-    private function avisarTroca(Preceptoria $preceptoria, ?Pessoa $professorAntes, ?Pessoa $alunoAntes, bool $mudouProfessor, bool $mudouAluno): int
+    private function avisarTroca(Preceptoria $preceptoria, ?Pessoa $professorAntes, ?Pessoa $alunoAntes, bool $mudouProfessor, bool $mudouAluno, ?string $horarioAnterior = null): int
     {
         $professor = $preceptoria->professor;
         $aluno = $preceptoria->matricula?->pessoa;
@@ -758,7 +1126,7 @@ class PreceptoriaAgendaService
 
             $avisos[] = [
                 $quem,
-                new PreceptoriaAlteradaNotification($preceptoria, PreceptoriaAlteradaNotification::PROFESSOR, $professorAntes?->nome ?? 'sem professor', auth()->user()?->name),
+                new PreceptoriaAlteradaNotification($preceptoria, PreceptoriaAlteradaNotification::PROFESSOR, $professorAntes?->nome ?? 'sem professor', auth()->user()?->name, $horarioAnterior),
                 'troca de professor',
             ];
         }
@@ -807,14 +1175,9 @@ class PreceptoriaAgendaService
      */
     private function enviarAviso(Collection $pessoas, Notification $notificacao, Preceptoria $preceptoria, string $assunto): int
     {
-        $autor = auth()->user();
         $enviados = 0;
 
-        foreach (Preceptoria::destinatariosDasPessoas($pessoas) as $destinatario) {
-            if ($autor && $destinatario instanceof User && $destinatario->is($autor)) {
-                continue;
-            }
-
+        foreach ($this->destinatariosSemAutor($pessoas) as $destinatario) {
             try {
                 $destinatario->notify($notificacao);
                 $enviados++;
@@ -833,6 +1196,21 @@ class PreceptoriaAgendaService
         }
 
         return $enviados;
+    }
+
+    /**
+     * Quem de fato recebe o aviso para essas pessoas (a própria pessoa e seus usuários), menos quem está
+     * fazendo a mudança.
+     *
+     * @param  Collection<int, Pessoa>  $pessoas
+     */
+    private function destinatariosSemAutor(Collection $pessoas): Collection
+    {
+        $autor = auth()->user();
+
+        return Preceptoria::destinatariosDasPessoas($pessoas)
+            ->reject(fn ($destinatario) => $autor && $destinatario instanceof User && $destinatario->is($autor))
+            ->values();
     }
 
     /**

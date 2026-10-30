@@ -1782,7 +1782,8 @@ Antes de criar agendamentos, é necessário que existam ciclos cadastrados (ex: 
 6. O filtro **Sem Relatório** permite localizar rapidamente preceptorias que ainda não têm relatório criado. O filtro **Ciclo de Preceptoria** mostra só as preceptorias de um ciclo (os ciclos mais recentes aparecem primeiro) e, por padrão, oferece apenas os ciclos que **ainda não venceram** (término hoje ou depois, inclusive os que ainda não começaram). **Ciclos vencidos:** por padrão a listagem **não mostra** as preceptorias de ciclos cujo término já passou; as preceptorias sem ciclo continuam aparecendo. Para ver as antigas, abra os filtros e desmarque **Ocultar ciclos de preceptoria vencidos** (o botão de limpar filtros volta a marcá-lo). Ao desmarcar a chave, os ciclos vencidos **também passam a aparecer no seletor de ciclo**, para você escolher um deles se quiser; basta clicar em **Aplicar** para a lista acompanhar. Se você já tinha escolhido um ciclo vencido e marcar a chave de novo, esse ciclo continua visível no seletor (a lista ficará vazia até você trocá-lo ou limpá-lo).
 7. **Ações em Lote:** Para facilitar a gestão de múltiplos horários, você pode selecionar várias preceptorias na tabela e utilizar:
    - **Clonar em Lote:** Cria cópias exatas dos horários selecionados (data, hora e professor), mas **remove o vínculo com o aluno**. Útil para replicar slots de atendimento para outros dias.
-   - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais.
+   - **Editar em Lote:** Permite alterar a data, o horário ou o professor de todos os registros selecionados de uma só vez. Campos deixados em branco no formulário de edição em lote não serão alterados nos registros originais. Cada preceptoria que mudar entra no **Histórico de Alterações** (§18.3.2) e, se for futura, os envolvidos são avisados; o aviso de conclusão informa quantos avisos saíram.
+   - **Excluir:** (também no botão **Excluir** da tela de edição) tira a preceptoria da agenda, mas ela **fica guardada** e pode ser restaurada (§18.3.3). O modal de confirmação diz quantos destinatários serão avisados. **Preceptoria com relatório não é excluída** (o relatório é o registro do encontro): para devolver o horário à agenda, tire o aluno dele. Na exclusão em lote, as que têm relatório ficam e o aviso de conclusão diz quantas.
    - **Enviar Lembretes em Lote:** Selecione várias preceptorias (por exemplo, todas as do dia ou da semana) e clique em **Enviar Lembretes em Lote** para disparar de uma só vez o lembrete de agendamento (e-mail, push e sininho) para todas as elegíveis. O modal de confirmação informa quantas preceptorias selecionadas serão realmente notificadas e quantas serão ignoradas por não estarem completamente agendadas ou já terem ocorrido.
 8. **Visualização de Detalhes:** Clique no botão de visualização (ícone de olho) na coluna de ações da tabela de preceptorias para acessar a página de detalhes, onde você pode conferir todas as informações do agendamento em uma interface limpa e organizada.
 9. **Alertas e Lembretes:**
@@ -1810,9 +1811,28 @@ Em **Preceptoria → Calendário de Preceptorias** (ou no botão **Calendário**
 
 #### 18.3.2 Histórico de Alterações
 
-Na página de detalhes de uma preceptoria, o botão **Histórico de Alterações** (visível para quem pode editar preceptorias) lista, do mais recente para o mais antigo: agendamentos, liberações, trocas de aluno ou de professor, reagendamentos, **avisos enviados** (com o número de destinatários) e lembretes. Cada item mostra data, hora e quem fez. Os agendamentos e liberações feitos na tela *Agendar Preceptoria* também entram. O histórico traz nomes de alunos, por isso não aparece para responsáveis e alunos; eles acompanham pelo sininho.
+Na página de detalhes de uma preceptoria, o botão **Histórico de Alterações** (visível para quem pode editar preceptorias) lista, do mais recente para o mais antigo: agendamentos, liberações, trocas de aluno, de professor ou de **ciclo**, reagendamentos, **avisos enviados** (com o número de destinatários) e lembretes. Cada item mostra data, hora e quem fez. Os agendamentos e liberações feitos na tela *Agendar Preceptoria* também entram. O histórico traz nomes de alunos, por isso não aparece para responsáveis e alunos; eles acompanham pelo sininho.
 
-> Alterações feitas direto na tela de edição (todos os campos) ainda não entram no histórico.
+**Alterações pela edição completa e pela edição em lote** também entram no histórico e avisam as pessoas, do mesmo modo que o calendário:
+
+1. Ao salvar a tela **Editar Preceptoria** (ou concluir a **Editar em Lote**), o sistema compara com o que estava gravado e registra cada mudança: professor, aluno (agendado, trocado ou liberado), horário (data, início ou término) e ciclo. Se nada mudou, nada é registrado. Se o sistema recusar a gravação por choque de horário, também não fica registro nem aviso.
+2. **Quem é avisado** (e-mail, push e sininho; quem salvou não recebe):
+   - **Só o horário mudou:** o professor, o aluno e os responsáveis recebem **Preceptoria Reagendada**, com o horário anterior e o novo.
+   - **O professor mudou:** o professor anterior, o novo e, havendo aluno, o aluno e os responsáveis recebem **Professor da Preceptoria Alterado**. Se o horário mudou junto, o mesmo aviso traz o horário anterior (ninguém recebe dois avisos).
+   - **O aluno mudou:** quem saiu e quem entrou (e os responsáveis de cada um) são avisados, e o professor recebe o aviso de novo agendamento ou de horário liberado.
+   - **Só o ciclo mudou:** fica no histórico, sem aviso.
+3. **Só preceptorias futuras geram aviso.** Corrigir o cadastro de uma que já passou é registrado no histórico, mas não manda nada para ninguém.
+4. Na tela de edição, a mensagem de confirmação diz quantos destinatários foram avisados.
+
+> Ainda **sem histórico e sem aviso**: criar horários (avulsos ou recorrentes) e **Clonar em Lote**.
+
+#### 18.3.3 Excluir e restaurar
+
+1. **Excluir** (botão da tela de edição ou ação em lote da listagem) não apaga a preceptoria: ela sai da agenda, do calendário e do Portal, **o horário volta a ficar livre** para o professor e o aluno, e o cancelamento entra no histórico (horário, professor, aluno, ciclo e quem excluiu; consulte em **Logs de Atividade**).
+2. **Quem é avisado:** se a preceptoria é **futura e tem aluno**, o professor, o aluno e os responsáveis recebem **Preceptoria Cancelada** (e-mail, push e sininho); quem excluiu não recebe. Horário livre ou preceptoria que já passou são excluídos sem aviso. Na exclusão em lote cada preceptoria gera o seu aviso.
+3. **Com relatório, não exclui.** A tela explica o motivo e nada é alterado.
+4. **Restaurar:** na listagem, abra os filtros e escolha **Registros excluídos → Somente registros excluídos**; use **Restaurar** na linha (ou em lote). Quem tem permissão de excluir também restaura. Se nesse meio-tempo o professor ou o aluno marcou outra preceptoria no mesmo horário, a restauração é recusada e o aviso diz qual é o choque. Restaurada uma preceptoria futura com aluno, o professor, o aluno e os responsáveis recebem o aviso de agendamento (o horário voltou).
+5. Uma preceptoria excluída não abre nas telas de detalhes e de edição; só pode ser restaurada.
 
 ---
 

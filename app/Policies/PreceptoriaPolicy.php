@@ -42,9 +42,10 @@ class PreceptoriaPolicy
         return $authUser->can('DeleteAny:Preceptoria');
     }
 
+    // quem exclui, restaura: o desfazer da exclusão não pede uma permissão à parte
     public function restore(AuthUser $authUser, Preceptoria $preceptoria): bool
     {
-        return $authUser->can('Restore:Preceptoria');
+        return $authUser->can('Restore:Preceptoria') || $authUser->can('Delete:Preceptoria');
     }
 
     public function forceDelete(AuthUser $authUser, Preceptoria $preceptoria): bool
@@ -59,7 +60,7 @@ class PreceptoriaPolicy
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Preceptoria');
+        return $authUser->can('RestoreAny:Preceptoria') || $authUser->can('DeleteAny:Preceptoria');
     }
 
     public function replicate(AuthUser $authUser, Preceptoria $preceptoria): bool

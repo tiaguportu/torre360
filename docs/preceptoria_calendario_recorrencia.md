@@ -109,8 +109,10 @@ alterações e o atalho "Abrir registro completo".
 
 ### 5. Histórico na tela
 - `Preceptoria::historico()` lê o log de atividades nos eventos de `Preceptoria::EVENTOS_HISTORICO`
-  (agendamento, liberação, troca de aluno, troca de professor, reagendamento, aviso enviado, lembrete
-  enviado). Cada aviso grava `notificacao_alteracao_preceptoria` com o número de destinatários.
+  (agendamento, liberação, troca de aluno, troca de professor, troca de ciclo, reagendamento,
+  exclusão, restauração, aviso enviado, lembrete enviado). Cada aviso grava
+  `notificacao_alteracao_preceptoria` com o número de destinatários. As mudanças feitas pela edição
+  completa e em lote entram do mesmo jeito (§7); a exclusão e a restauração, em §8.
 - Aparece no botão **Histórico de Alterações** do registro (`ViewPreceptoria`) e, resumido, no modal
   do calendário (partial `filament.components.preceptoria-historico`). Só para quem tem
   `Update:Preceptoria`: o texto traz nomes de alunos.
@@ -146,6 +148,74 @@ Horários que só se encostam não conflitam; sem hora de fim vale 30 min.
   recorrência (`PreceptoriaRecorrenciaForm::avisarResultado`).
 - **Clonar sem nova data** agora é recusado: cairia exatamente em cima do original.
 
+### 7. Edição completa e em lote: histórico e avisos
+`PreceptoriaAgendaService::atualizarComHistorico(Preceptoria, array $dados, bool $notificar = true)` é por
+onde passam a **edição completa** (`EditPreceptoria::handleRecordUpdate`) e a ação em lote **Editar em
+Lote** (uma preceptoria por vez, em `PreceptoriasTable`). Ele tira um retrato do que está gravado, faz
+o `update` (com a regra de horários concorrentes) e compara.
+
+- **O "antes" vem do banco (`getOriginal`)**, não dos atributos do model. O seletor de relação do
+  Filament (professor, aluno, ciclo) faz `associate()` da chave estrangeira no model *antes* de a página
+  chamar `handleRecordUpdate`, então o valor "atual" de `professor_id` já é o novo; data e hora, que são
+  campos comuns, ainda não. Lendo o atual, só a troca de horário era percebida (os testes pegaram isso).
+- **Histórico**: sempre, na mesma transação da gravação. Eventos: `troca_professor_preceptoria`,
+  `agendamento_` / `troca_aluno_` / `liberacao_preceptoria`, `reagendamento_preceptoria` (texto
+  "24/08/2026 das 10:00 às 10:30") e o novo `troca_ciclo_preceptoria` ("Troca de ciclo"). Nada mudou:
+  nada é registrado. Conflito recusado: a transação desfaz e nada é registrado nem avisado.
+- **Avisos**, só se a preceptoria é **futura** (`isAgendamentoFuturo()`): corrigir o cadastro de uma que
+  já passou não manda nada, mas o histórico registra. Quem fez a mudança não recebe.
+
+  | Mudou | Recebe |
+  |---|---|
+  | Só o horário | professor, aluno e responsáveis: `PreceptoriaAlteradaNotification` (horário) |
+  | Professor | como no calendário (§4); se o horário mudou junto, o aviso de professor leva também o **horário anterior** (`horarioAnterior`), então ninguém recebe dois |
+  | Aluno | como no calendário (§4); os avisos de agendamento/liberação já mostram o horário novo, sem aviso extra de reagendamento |
+  | Só o ciclo | ninguém (só o histórico) |
+
+- A tela de edição acrescenta ao "Salvo" quantos destinatários foram avisados; o lote, ao resumo.
+- **Push**: `PreceptoriaAlteradaNotification::toPush` chamava `getUrl(..., absolute: false)`, mas o
+  parâmetro do Filament é `isAbsolute`; o `Error` era engolido pelo `FcmChannel` (que só registra no
+  log) e o push nunca saía. Corrigido nela, com teste. **`PreceptoriaNotification` e
+  `LembretePreceptoriaNotification` têm o mesmo defeito** (anterior a esta mudança) e não foram
+  alteradas, porque corrigir faz o push passar a ser enviado em produção.
+
+### 8. Exclusão e restauração
+Excluir uma preceptoria deixou de apagar a linha: `Preceptoria` usa `SoftDeletes` (migration
+`2026_10_30_100000_add_soft_deletes_to_preceptoria_table`, só acrescenta `deleted_at`; validada em
+MariaDB: aplica, é idempotente e reverte). O escopo do soft delete tira a excluída das listas, do
+calendário, do Portal e **das consultas de horário concorrente**, então o horário volta a ficar livre
+para o professor e o aluno.
+
+- **Por onde passa**: `PreceptoriaAgendaService::excluirComHistorico(Preceptoria, bool $notificar = true)`,
+  chamado pelo botão **Excluir** de `EditPreceptoria` e pela exclusão em lote de `PreceptoriasTable`
+  (ambos com `->using()`; é o `delete()` do model que continua sendo usado, só que agora lógico).
+  Uma exclusão feita direto no model (Tinker, outro código) também é lógica, mas não deixa histórico
+  nem avisa: o rastro é do serviço, como no resto.
+- **Com relatório, não exclui** (`ExclusaoDePreceptoriaRecusadaException`): a chave de `relatorio_preceptoria`
+  é `cascade` e o relatório é o registro do encontro (pode ser público para a família). A conferência
+  roda dentro da transação, depois de ler o registro. Para devolver o horário à agenda, basta liberar o
+  aluno. No lote, as que têm relatório ficam e o aviso de conclusão diz quantas.
+- **Histórico** (`exclusao_preceptoria`, "Exclusão"): na mesma transação do `delete()`, com horário,
+  professor, aluno e ciclo como texto nas propriedades. Como a tela da excluída não abre, o rastro se
+  consulta no log global de atividades (ao restaurar, o histórico completo volta ao registro).
+- **Aviso** (`PreceptoriaCanceladaNotification`): só se a preceptoria é **futura e tem aluno**; vai para
+  o professor, o aluno e os responsáveis (e-mail, sininho e push), menos quem excluiu. Horário livre e
+  preceptoria que já passou só registram. A notificação é enfileirada e **leva só texto** (data,
+  horário, nomes, quem cancelou): a fila a remonta depois de a preceptoria sair das listas e ela não
+  pode depender de reencontrar o model. O link do e-mail/sininho/push é a listagem.
+- **Prévia no modal** (`previaDaExclusao`): diz quantas serão recusadas por relatório e quantos
+  destinatários receberão o aviso, antes de confirmar.
+- **Restaurar** (`restaurarComHistorico`): filtro **Registros excluídos** (`TrashedFilter`, só para quem tem
+  `DeleteAny:Preceptoria`) com a ação de linha e a ação em lote **Restaurar**. Confere de novo o choque
+  de horário do professor e do aluno (travando as pessoas, como `gravarSemConflito`; o `restore()`
+  sozinho não conferiria, porque só `deleted_at` muda) e, se nesse tempo alguém marcou outra no
+  horário, recusa com o motivo. Registra `restauracao_preceptoria` e, sendo futura e com aluno, avisa
+  o professor, o aluno e os responsáveis com o aviso de agendamento (o horário voltou).
+- **Permissão**: a policy aceita `Delete:`/`DeleteAny:` também para `restore`/`restoreAny`: quem exclui
+  restaura, sem uma permissão nova para cadastrar. `ForceDelete` não é oferecido em tela.
+- Uma excluída não abre na tela de detalhes nem de edição (a rota não enxerga o soft delete); na
+  listagem só a ação **Restaurar** aparece nela.
+
 ## Decisões
 
 - **Sem serviço de calendário de terceiros pago**: a visão "uma coluna por professor" é recurso
@@ -162,12 +232,13 @@ Horários que só se encostam não conflitam; sem hora de fim vale 30 min.
 
 `app/Services/PreceptoriaAgendaService.php` · `app/Filament/Resources/Preceptorias/Schemas/PreceptoriaRecorrenciaForm.php`
 · `…/Pages/CalendarioPreceptorias.php` · `resources/views/filament/resources/preceptorias/pages/calendario-preceptorias.blade.php`
-· `app/Notifications/Preceptorias/PreceptoriaAlteradaNotification.php` · `resources/views/filament/components/preceptoria-historico.blade.php`
+· `app/Notifications/Preceptorias/{PreceptoriaAlteradaNotification,PreceptoriaCanceladaNotification}.php` · `app/Exceptions/ExclusaoDePreceptoriaRecusadaException.php`
+· `database/migrations/2026_10_30_100000_add_soft_deletes_to_preceptoria_table.php` · `app/Policies/PreceptoriaPolicy.php` · `resources/views/filament/components/preceptoria-historico.blade.php`
 · alterados: `PreceptoriaForm`, `CreatePreceptoria`, `ListPreceptorias`, `ViewPreceptoria`, `AgendarPreceptoria`,
 `PreceptoriasTable`, `PreceptoriaResource`, `Preceptoria` (`historico()`, `destinatariosDasPessoas()`),
 `PreceptoriaNotification` (`alunoAnterior`), `EditPreceptoria`, `Portal\Pages\Preceptoria`, `App\Exceptions\ConflitoDeHorarioException`.
 O `LembretePreceptoriaNotification` voltou a ser só lembrete.
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest}.php`.
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest}.php`.
 
 ## O que ficou de fora
 
@@ -181,11 +252,17 @@ Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPrec
 - **Feriados**: só os nacionais fixos e a Sexta-Feira Santa; Carnaval, Corpus Christi e feriados
   estaduais/municipais entram como dia não letivo cadastrado.
 - **Dados antigos já sobrepostos** (de antes da regra) continuam no banco; não há relatório que os liste.
-- **Histórico incompleto**: só entram as mudanças feitas pelo calendário, pelo reagendamento e pelas
-  telas de agendar (admin e Portal). Alterações na edição completa (formulário) e nas ações em lote não
-  são registradas nem avisam ninguém (o modelo não usa `LogsActivity`).
+- **Histórico e avisos**: calendário, reagendamento, telas de agendar, edição completa, Editar em
+  Lote, exclusão e restauração registram e avisam (§4, §7, §8). Continuam **sem rastro**: o
+  **cadastro** (avulso e recorrente) e o **Clonar em Lote**, que criam registros novos e livres. O
+  modelo não usa `LogsActivity`: o histórico é gravado pelo serviço, então uma alteração feita fora
+  dele (Tinker, `DB::table`, outro código) não aparece.
+- **Exclusão**: não há exclusão definitiva em tela (`ForceDelete`); uma excluída fica guardada. A
+  exclusão em lote manda um aviso por preceptoria (quem tiver várias recebe várias). Preceptoria com
+  relatório não é excluída. O `lockForUpdate` da restauração, como o da gravação, só vale em MySQL.
+- **Os avisos da edição completa e do lote** saem sempre que a preceptoria é futura (não há chave
+  "não avisar"), como no calendário.
 - O JavaScript do calendário (arrastar, esticar, selecionar) não tem teste automatizado: os testes
   cobrem o servidor (eventos, reagendar, ações de criar e gerar).
-- Suspeita **não verificada**, fora do escopo: a ação em lote "Clonar" chama `replicate()` sobre
-  registros carregados com `withExists('relatorios')`; o atributo `relatorios_exists` pode ir para o
-  INSERT (o mesmo problema que já apareceu em `TurmaDuplicacaoService`). Vale testar a ação.
+- Push de `PreceptoriaNotification` e `LembretePreceptoriaNotification` não sai (`absolute:` no lugar de
+  `isAbsolute:`; ver §7).

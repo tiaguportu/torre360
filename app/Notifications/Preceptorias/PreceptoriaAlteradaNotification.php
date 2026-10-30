@@ -33,12 +33,14 @@ class PreceptoriaAlteradaNotification extends Notification implements ShouldQueu
      * @param  string  $mudanca  HORARIO ou PROFESSOR
      * @param  string  $antes  o valor anterior, pronto para exibir ("24/08/2026 às 07:15" ou o nome do professor)
      * @param  string|null  $alteradoPor  nome de quem fez a mudança
+     * @param  string|null  $horarioAnterior  quando o horário mudou junto com o professor, o horário de antes
      */
     public function __construct(
         public Preceptoria $preceptoria,
         public string $mudanca,
         public string $antes,
         public ?string $alteradoPor = null,
+        public ?string $horarioAnterior = null,
     ) {}
 
     /**
@@ -75,6 +77,10 @@ class PreceptoriaAlteradaNotification extends Notification implements ShouldQueu
             ->line("Data: {$this->data()}")
             ->line("Horário: {$this->hora()}");
 
+        if ($this->horarioAnterior) {
+            $mensagem->line("Horário anterior: {$this->horarioAnterior}");
+        }
+
         if ($this->alteradoPor) {
             $mensagem->line("Alterado por: {$this->alteradoPor}");
         }
@@ -108,7 +114,7 @@ class PreceptoriaAlteradaNotification extends Notification implements ShouldQueu
             'title' => $this->titulo(),
             'body' => $this->resumo(),
             'data' => [
-                'url' => PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], absolute: false),
+                'url' => PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], isAbsolute: false),
                 'preceptoria_id' => $this->preceptoria->id,
             ],
         ];
@@ -134,9 +140,13 @@ class PreceptoriaAlteradaNotification extends Notification implements ShouldQueu
     {
         $alunoEProfessor = "{$this->aluno('sem aluno')} e {$this->professor()}";
 
-        return $this->mudanca === self::PROFESSOR
-            ? "Preceptoria de {$this->data()} às {$this->hora()} ({$alunoEProfessor}): o professor era {$this->antes}."
-            : "Preceptoria entre {$alunoEProfessor} reagendada para {$this->data()} às {$this->hora()} (antes: {$this->antes}).";
+        if ($this->mudanca === self::PROFESSOR) {
+            $horario = $this->horarioAnterior ? " O horário anterior era {$this->horarioAnterior}." : '';
+
+            return "Preceptoria de {$this->data()} às {$this->hora()} ({$alunoEProfessor}): o professor era {$this->antes}.{$horario}";
+        }
+
+        return "Preceptoria entre {$alunoEProfessor} reagendada para {$this->data()} às {$this->hora()} (antes: {$this->antes}).";
     }
 
     private function data(): string

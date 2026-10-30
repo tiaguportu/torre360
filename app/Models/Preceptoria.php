@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
@@ -17,6 +18,7 @@ use Spatie\Activitylog\Models\Activity;
 class Preceptoria extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'preceptoria';
 
@@ -231,7 +233,10 @@ class Preceptoria extends Model
         'liberacao_preceptoria' => 'Liberação',
         'troca_aluno_preceptoria' => 'Troca de aluno',
         'troca_professor_preceptoria' => 'Troca de professor',
+        'troca_ciclo_preceptoria' => 'Troca de ciclo',
         'reagendamento_preceptoria' => 'Reagendamento',
+        'exclusao_preceptoria' => 'Exclusão',
+        'restauracao_preceptoria' => 'Restauração',
         'notificacao_alteracao_preceptoria' => 'Aviso enviado',
         'notificacao_lembrete_preceptoria' => 'Lembrete enviado',
     ];

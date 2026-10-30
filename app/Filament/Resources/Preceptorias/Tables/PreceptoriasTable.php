@@ -3,14 +3,18 @@
 namespace App\Filament\Resources\Preceptorias\Tables;
 
 use App\Exceptions\ConflitoDeHorarioException;
+use App\Exceptions\ExclusaoDePreceptoriaRecusadaException;
 use App\Models\Matricula;
 use App\Models\Preceptoria;
+use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -22,6 +26,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -233,11 +238,17 @@ class PreceptoriasTable
 
                         return $indicators;
                     }),
+
+                // as excluídas ficam guardadas: quem pode excluir também as vê e restaura
+                TrashedFilter::make()
+                    ->visible(fn () => (bool) auth()->user()?->can('DeleteAny:Preceptoria')),
             ])
 
             ->actions([
-                ViewAction::make(),
-                EditAction::make(),
+                // a tela de uma preceptoria excluída não abre: ela só pode ser restaurada
+                ViewAction::make()->hidden(fn (Preceptoria $record) => $record->trashed()),
+                EditAction::make()->hidden(fn (Preceptoria $record) => $record->trashed()),
+                self::acaoRestaurar(),
                 Action::make('relembrar')
                     ->label('Relembrar')
                     ->tooltip(fn (Preceptoria $record) => $record->getLastLembreteNotificationDate()
@@ -245,7 +256,7 @@ class PreceptoriasTable
                         : 'Enviar lembrete de agendamento por e-mail e notificação (Nenhum envio anterior)')
                     ->icon(Heroicon::OutlinedEnvelope)
                     ->color('warning')
-                    ->visible(fn (Preceptoria $record) => $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo())
+                    ->visible(fn (Preceptoria $record) => ! $record->trashed() && $record->isCompletamenteAgendada() && $record->isAgendamentoFuturo())
                     ->requiresConfirmation()
                     ->modalHeading('Confirmar Envio de Lembrete')
                     ->modalDescription(function (Preceptoria $record) {
@@ -491,12 +502,15 @@ class PreceptoriasTable
                             }
 
                             $atualizadas = 0;
+                            $avisados = 0;
                             $recusadas = [];
+                            $servico = app(PreceptoriaAgendaService::class);
 
-                            // uma a uma: as que causariam choque de horário (do professor ou do aluno) ficam como estavam
-                            $records->each(function (Preceptoria $record) use ($updateData, &$atualizadas, &$recusadas) {
+                            // uma a uma: as que causariam choque de horário (do professor ou do aluno) ficam como estavam;
+                            // as que mudaram entram no histórico e quem é afetado é avisado
+                            $records->each(function (Preceptoria $record) use ($updateData, $servico, &$atualizadas, &$avisados, &$recusadas) {
                                 try {
-                                    $record->update($updateData);
+                                    $avisados += $servico->atualizarComHistorico($record, $updateData)['notificados'];
                                     $atualizadas++;
                                 } catch (ConflitoDeHorarioException $e) {
                                     $recusadas[] = $e->getMessage();
@@ -506,6 +520,7 @@ class PreceptoriasTable
                             if ($atualizadas > 0) {
                                 Notification::make()
                                     ->title("{$atualizadas} preceptorias atualizadas com sucesso!")
+                                    ->body($avisados > 0 ? "{$avisados} aviso(s) enviado(s) aos envolvidos." : null)
                                     ->success()
                                     ->send();
                             }
@@ -521,12 +536,113 @@ class PreceptoriasTable
                         ->deselectRecordsAfterCompletion()
                         ->requiresConfirmation()
                         ->modalHeading('Editar Preceptorias em Lote')
-                        ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
+                        ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados. As mudanças ficam no histórico de cada preceptoria e, se for futura, os envolvidos são avisados.')
                         ->modalSubmitActionLabel('Atualizar Selecionadas'),
 
-                    DeleteBulkAction::make(),
+                    self::acaoExcluirEmLote(),
+                    self::acaoRestaurarEmLote(),
                 ]),
             ])
             ->stackedOnMobile();
+    }
+
+    /**
+     * O que o modal de confirmação da exclusão diz: o que acontece com o registro e quem será avisado.
+     *
+     * @param  array{total: int, recusadas: int, avisados: int}  $previa
+     */
+    public static function descricaoDaExclusao(array $previa): HtmlString
+    {
+        $excluidas = $previa['total'] - $previa['recusadas'];
+
+        $html = '<div class="space-y-2">';
+
+        if ($excluidas > 0) {
+            $html .= '<div>'.($excluidas === 1 ? 'A preceptoria sai' : "{$excluidas} preceptorias saem").' da agenda e fica(m) guardada(s): dá para restaurar depois, pelo filtro de registros excluídos.</div>';
+        }
+
+        if ($previa['recusadas'] > 0) {
+            $html .= "<div class=\"text-danger-600 font-bold\">{$previa['recusadas']} tem(têm) relatório e não será(ão) excluída(s). Para devolver o horário à agenda, tire o aluno dele.</div>";
+        }
+
+        if ($previa['avisados'] > 0) {
+            $html .= "<div>{$previa['avisados']} destinatário(s) (professor, aluno e responsáveis) receberá(ão) o aviso de cancelamento.</div>";
+        }
+
+        return new HtmlString($html.'</div>');
+    }
+
+    private static function acaoExcluirEmLote(): DeleteBulkAction
+    {
+        $servico = app(PreceptoriaAgendaService::class);
+        $avisados = 0;
+
+        return DeleteBulkAction::make()
+            ->modalDescription(fn (Collection $records) => self::descricaoDaExclusao($servico->previaDaExclusao($records)))
+            ->using(function (Collection $records, DeleteBulkAction $action) use ($servico, &$avisados) {
+                $records->each(function (Preceptoria $record) use ($action, $servico, &$avisados) {
+                    try {
+                        $avisados += $servico->excluirComHistorico($record)['notificados'];
+                    } catch (ExclusaoDePreceptoriaRecusadaException) {
+                        $action->reportBulkProcessingFailure('com_relatorio', fn (int $count) => $count === 1
+                            ? '1 preceptoria tem relatório e não foi excluída.'
+                            : "{$count} preceptorias têm relatório e não foram excluídas.");
+                    } catch (\Throwable $e) {
+                        report($e);
+                        $action->reportBulkProcessingFailure();
+                    }
+                });
+            })
+            // por referência: uma fn() capturaria o 0 de antes da exclusão
+            ->successNotification(function (Notification $notification) use (&$avisados) {
+                return $notification->body($avisados > 0 ? "{$avisados} aviso(s) de cancelamento enviado(s)." : null);
+            });
+    }
+
+    private static function acaoRestaurar(): RestoreAction
+    {
+        $avisados = 0;
+
+        return RestoreAction::make()
+            ->modalDescription('O horário volta à agenda. Sendo futuro e com aluno, o professor, o aluno e os responsáveis são avisados.')
+            ->using(function (Preceptoria $record) use (&$avisados) {
+                try {
+                    $avisados = app(PreceptoriaAgendaService::class)->restaurarComHistorico($record);
+
+                    return true;
+                } catch (ConflitoDeHorarioException $e) {
+                    // nesse tempo o professor ou o aluno marcou outra no horário
+                    Notification::make()->title('Não foi possível restaurar')->body($e->getMessage())->danger()->send();
+
+                    return false;
+                }
+            })
+            ->successNotification(function (Notification $notification) use (&$avisados) {
+                return $notification->body($avisados > 0 ? "{$avisados} aviso(s) enviado(s) aos envolvidos." : null);
+            });
+    }
+
+    private static function acaoRestaurarEmLote(): RestoreBulkAction
+    {
+        $servico = app(PreceptoriaAgendaService::class);
+        $avisados = 0;
+
+        return RestoreBulkAction::make()
+            ->modalDescription('Os horários voltam à agenda; os que baterem com outra preceptoria do professor ou do aluno ficam como estão. Os futuros com aluno avisam os envolvidos.')
+            ->using(function (Collection $records, RestoreBulkAction $action) use ($servico, &$avisados) {
+                $records->each(function (Preceptoria $record) use ($action, $servico, &$avisados) {
+                    try {
+                        $avisados += $servico->restaurarComHistorico($record);
+                    } catch (ConflitoDeHorarioException $e) {
+                        $action->reportBulkProcessingFailure($e->getMessage(), $e->getMessage());
+                    } catch (\Throwable $e) {
+                        report($e);
+                        $action->reportBulkProcessingFailure();
+                    }
+                });
+            })
+            ->successNotification(function (Notification $notification) use (&$avisados) {
+                return $notification->body($avisados > 0 ? "{$avisados} aviso(s) enviado(s) aos envolvidos." : null);
+            });
     }
 }
