@@ -80,7 +80,7 @@ class PreceptoriaCiclosVencidosTest extends TestCase
             ->assertCanSeeTableRecords([$doVencido, $doEmCurso]);
     }
 
-    public function test_o_seletor_de_ciclo_oferece_so_os_ciclos_que_nao_venceram(): void
+    public function test_o_seletor_de_ciclo_acompanha_a_chave_de_ciclos_vencidos(): void
     {
         $this->ciclo('Vencido', now()->subMonths(3)->toDateString(), now()->subDay()->toDateString());
         $this->ciclo('Termina hoje', now()->subMonth()->toDateString(), now()->toDateString());
@@ -88,12 +88,47 @@ class PreceptoriaCiclosVencidosTest extends TestCase
 
         $teste = Livewire::actingAs($this->usuario())->test(ListPreceptorias::class);
 
+        // chave ligada (padrão): só os ciclos que não venceram
         $this->assertEqualsCanonicalizing(['Termina hoje', 'Futuro'], $this->opcoesDoSeletorDeCiclo($teste));
 
-        // com a chave desligada o seletor continua só com os válidos
-        $teste->filterTable('ocultar_ciclos_vencidos', false);
+        // ao desmarcar a chave (ainda sem "Aplicar") os vencidos entram na lista
+        $teste->set('tableDeferredFilters.ocultar_ciclos_vencidos.isActive', false);
+        $this->assertEqualsCanonicalizing(['Vencido', 'Termina hoje', 'Futuro'], $this->opcoesDoSeletorDeCiclo($teste));
 
+        // e saem de novo ao religar
+        $teste->set('tableDeferredFilters.ocultar_ciclos_vencidos.isActive', true);
         $this->assertEqualsCanonicalizing(['Termina hoje', 'Futuro'], $this->opcoesDoSeletorDeCiclo($teste));
+    }
+
+    public function test_ciclo_vencido_ja_escolhido_continua_na_lista_se_a_chave_for_religada(): void
+    {
+        $vencido = $this->ciclo('Vencido', now()->subMonths(3)->toDateString(), now()->subDay()->toDateString());
+        $this->ciclo('Em curso', now()->subMonth()->toDateString(), now()->addMonth()->toDateString());
+
+        $teste = Livewire::actingAs($this->usuario())->test(ListPreceptorias::class);
+
+        $teste->set('tableDeferredFilters.ocultar_ciclos_vencidos.isActive', false)
+            ->set('tableDeferredFilters.ciclo_preceptoria_id.value', $vencido->id)
+            ->set('tableDeferredFilters.ocultar_ciclos_vencidos.isActive', true);
+
+        // o rótulo do ciclo escolhido não some; os demais vencidos continuam de fora
+        $this->assertEqualsCanonicalizing(['Vencido', 'Em curso'], $this->opcoesDoSeletorDeCiclo($teste));
+    }
+
+    public function test_depois_de_aplicar_o_filtro_de_um_ciclo_vencido_mostra_as_preceptorias_dele(): void
+    {
+        $vencido = $this->ciclo('Vencido', now()->subMonths(3)->toDateString(), now()->subDay()->toDateString());
+        $emCurso = $this->ciclo('Em curso', now()->subMonth()->toDateString(), now()->addMonth()->toDateString());
+
+        $doVencido = $this->preceptoria($vencido, '08:00:00');
+        $doEmCurso = $this->preceptoria($emCurso, '10:00:00');
+
+        Livewire::actingAs($this->usuario())
+            ->test(ListPreceptorias::class)
+            ->filterTable('ocultar_ciclos_vencidos', false)
+            ->filterTable('ciclo_preceptoria_id', $vencido->id)
+            ->assertCanSeeTableRecords([$doVencido])
+            ->assertCanNotSeeTableRecords([$doEmCurso]);
     }
 
     /**

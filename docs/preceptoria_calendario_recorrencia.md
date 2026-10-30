@@ -27,9 +27,11 @@ término já passou, e o seletor de ciclo só oferece os ciclos que não vencera
   desligar a chave é o "optar por exibir". "Limpar filtros" volta a ligá-la. Usa
   `excludeWhenResolvingRecord()` para não atrapalhar ações sobre um registro específico.
 - Preceptoria **sem ciclo** continua aparecendo (não é de ciclo vencido).
-- O seletor **continua só com os válidos mesmo com a chave desligada**: as de ciclos vencidos aparecem
-  na lista, mas não dá para filtrar por um ciclo vencido específico. Se isso incomodar, basta o seletor
-  seguir o estado da chave.
+- O seletor **acompanha a chave**: ligada, só os ciclos válidos; desmarcada, todos (os vencidos podem ser
+  escolhidos). A chave é `live()` e o seletor lê o estado do formulário de filtros
+  (`getTableFilterFormState`, que com filtros adiados é o ainda não aplicado), então a lista muda
+  assim que a chave é mexida, sem esperar o "Aplicar". Um ciclo vencido já escolhido permanece na lista
+  se a chave for religada (para o rótulo não sumir); a listagem fica vazia até o usuário trocá-lo.
 - Só a listagem: o calendário (`/admin/preceptorias/calendario`), o seletor de ciclo dos formulários de
   cadastro e o dashboard não mudaram.
 

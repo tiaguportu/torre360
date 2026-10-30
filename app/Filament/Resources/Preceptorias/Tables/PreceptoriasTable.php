@@ -29,6 +29,20 @@ use Illuminate\Support\HtmlString;
 
 class PreceptoriasTable
 {
+    /**
+     * A chave "Ocultar ciclos vencidos" como o usuário a vê agora (com filtros adiados, antes de "Aplicar").
+     * Sem estado ainda, vale o padrão: ligada.
+     */
+    private static function ocultandoCiclosVencidos($livewire): bool
+    {
+        return (bool) ($livewire->getTableFilterFormState('ocultar_ciclos_vencidos')['isActive'] ?? true);
+    }
+
+    private static function cicloEscolhido($livewire): int|string|null
+    {
+        return $livewire->getTableFilterFormState('ciclo_preceptoria_id')['value'] ?? null;
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -94,15 +108,26 @@ class PreceptoriasTable
                     ->label('Ocultar ciclos de preceptoria vencidos')
                     ->toggle()
                     ->default()
+                    // live: o seletor de ciclo logo abaixo muda assim que a chave é mexida, antes de "Aplicar"
+                    ->modifyFormFieldUsing(fn ($field) => $field->live())
                     ->query(fn (Builder $query) => $query->where(fn (Builder $preceptorias) => $preceptorias
                         ->whereNull('ciclo_preceptoria_id')
                         ->orWhereHas('cicloPreceptoria', fn (Builder $ciclos) => $ciclos->naoVencidos())))
                     ->excludeWhenResolvingRecord(),
 
-                // só os ciclos ainda válidos (término hoje ou depois)
+                // com a chave ligada só os ciclos ainda válidos (término hoje ou depois); desligada, todos
                 SelectFilter::make('ciclo_preceptoria_id')
                     ->label('Ciclo de Preceptoria')
-                    ->relationship('cicloPreceptoria', 'nome', fn (Builder $query) => $query->naoVencidos()->orderByDesc('data_inicio')->orderBy('nome'))
+                    ->relationship('cicloPreceptoria', 'nome', fn (Builder $query, $livewire) => $query
+                        ->when(
+                            self::ocultandoCiclosVencidos($livewire),
+                            // o ciclo já escolhido fica na lista, para o rótulo não sumir se a chave for religada
+                            fn (Builder $ciclos) => $ciclos->where(fn (Builder $validos) => $validos
+                                ->naoVencidos()
+                                ->when(self::cicloEscolhido($livewire), fn (Builder $q, $id) => $q->orWhere('id', $id))),
+                        )
+                        ->orderByDesc('data_inicio')
+                        ->orderBy('nome'))
                     ->searchable()
                     ->preload(),
 
