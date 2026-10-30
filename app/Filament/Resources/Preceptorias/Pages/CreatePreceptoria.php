@@ -4,10 +4,10 @@ namespace App\Filament\Resources\Preceptorias\Pages;
 
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaRecorrenciaForm;
+use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ViewField;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
@@ -49,24 +49,17 @@ class CreatePreceptoria extends CreateRecord
             $datasFinais = [$data['data'] ?? now()->format('Y-m-d')];
         }
 
-        $records = [];
-        foreach ($datasFinais as $dStr) {
-            $recordData = array_merge($data, [
-                'data' => $dStr,
-            ]);
+        // datas em que o professor (ou o aluno) já tem preceptoria no horário são puladas, como na recorrência
+        $resultado = app(PreceptoriaAgendaService::class)->gerarNasDatas($data, $datasFinais);
+        $criadas = $resultado['criadas'];
 
-            $records[] = static::getModel()::create($recordData);
+        if ($criadas === [] || count($criadas) > 1 || $resultado['conflitos'] !== [] || $resultado['conflitos_aluno'] !== []) {
+            if (PreceptoriaRecorrenciaForm::avisarResultado($resultado) === null) {
+                throw new Halt;
+            }
         }
 
-        $quantidade = count($records);
-        if ($quantidade > 1) {
-            Notification::make()
-                ->title("{$quantidade} preceptorias criadas com sucesso!")
-                ->success()
-                ->send();
-        }
-
-        return $records[0];
+        return $criadas[0];
     }
 
     /**
@@ -121,7 +114,7 @@ class CreatePreceptoria extends CreateRecord
         $html .= '<li><strong>Ciclo de Preceptoria:</strong> Selecione o ciclo letivo ou avaliativo correspondente.</li>';
         $html .= '<li><strong>Modo de Seleção de Datas:</strong> Escolha entre:';
         $html .= '<ul>';
-        $html .= '<li><em>Datas Específicas:</em> Selecione um ou múltiplos dias avulsos.</li>';
+        $html .= '<li><em>Datas Específicas:</em> Selecione um ou múltiplos dias avulsos. Datas em que o professor (ou o aluno, se já informado) tem outra preceptoria no mesmo horário são puladas.</li>';
         $html .= '<li><em>Recorrente (janela de datas):</em> Informe a Data Inicial e a Final (ao escolher o ciclo, a janela dele é sugerida), os dias da semana (ex: só terças e quintas) e de quantas em quantas semanas repetir. Por padrão ficam de fora os finais de semana, os feriados nacionais e os dias não letivos do período letivo do ciclo; desligue qualquer um para incluí-los. A prévia mostra o que será criado e o que foi ignorado, e datas em que o professor já tem preceptoria no horário são puladas.</li>';
         $html .= '</ul>';
         $html .= '</li>';

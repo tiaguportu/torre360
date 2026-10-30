@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Preceptorias;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Models\CicloPreceptoria;
+use App\Models\CronogramaAula;
 use App\Models\DiaNaoLetivo;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use App\Models\Turma;
 use App\Models\User;
 use App\Notifications\Preceptorias\LembretePreceptoriaNotification;
 use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
@@ -16,6 +19,7 @@ use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -52,6 +56,16 @@ class PreceptoriaAgendaServiceTest extends TestCase
             'ignorar_feriados' => false,
             'ignorar_dias_nao_letivos' => false,
         ], $extra);
+    }
+
+    /**
+     * Matrícula de um aluno na turma de um professor (o conselheiro): é com ele que o aluno faz preceptoria.
+     */
+    private function matriculaDe(Pessoa $aluno, ?Pessoa $professor = null): Matricula
+    {
+        $turma = Turma::factory()->create($professor ? ['professor_conselheiro_id' => $professor->id] : []);
+
+        return Matricula::factory()->create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id]);
     }
 
     public function test_sem_nenhum_ignorar_gera_todos_os_dias_da_janela(): void
@@ -341,7 +355,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $aluno->responsaveis()->attach($responsavel->id);
         $preceptoria = Preceptoria::factory()->create([
             'professor_id' => $antigo->id,
-            'matricula_id' => Matricula::factory()->create(['pessoa_id' => $aluno->id])->id,
+            'matricula_id' => $this->matriculaDe($aluno, $novo)->id,
             'data' => '2026-09-08',
             'hora_inicio' => '10:00:00',
             'hora_fim' => '10:30:00',
@@ -386,7 +400,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
 
         $professor = Pessoa::factory()->create(['email' => 'professor@example.com']);
         $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
-        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $matricula = $this->matriculaDe($aluno, $professor);
         $preceptoria = Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => null, 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
 
         $resultado = $this->servico->atualizarParticipantes($preceptoria, $professor->id, $matricula->id);
@@ -427,10 +441,10 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $professor = Pessoa::factory()->create(['email' => 'professor@example.com']);
         $saiu = Pessoa::factory()->create(['email' => 'saiu@example.com']);
         $entrou = Pessoa::factory()->create(['email' => 'entrou@example.com']);
-        $nova = Matricula::factory()->create(['pessoa_id' => $entrou->id]);
+        $nova = $this->matriculaDe($entrou, $professor);
         $preceptoria = Preceptoria::factory()->create([
             'professor_id' => $professor->id,
-            'matricula_id' => Matricula::factory()->create(['pessoa_id' => $saiu->id])->id,
+            'matricula_id' => $this->matriculaDe($saiu, $professor)->id,
             'hora_inicio' => '10:00:00',
             'hora_fim' => '10:30:00',
         ]);
@@ -451,12 +465,13 @@ class PreceptoriaAgendaServiceTest extends TestCase
         Notification::fake();
 
         $ciclo = CicloPreceptoria::create(['nome' => 'Ciclo', 'data_inicio' => '2026-09-01', 'data_fim' => '2026-09-30']);
+        $professor = Pessoa::factory()->create();
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno Ocupado']);
-        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
-        Preceptoria::factory()->create(['ciclo_preceptoria_id' => $ciclo->id, 'matricula_id' => $matricula->id, 'data' => '2026-09-02', 'hora_inicio' => '09:00:00']);
-        $livre = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $ciclo->id, 'matricula_id' => null, 'data' => '2026-09-09', 'hora_inicio' => '10:00:00']);
+        $matricula = $this->matriculaDe($aluno, $professor);
+        Preceptoria::factory()->create(['ciclo_preceptoria_id' => $ciclo->id, 'professor_id' => $professor->id, 'matricula_id' => $matricula->id, 'data' => '2026-09-02', 'hora_inicio' => '09:00:00']);
+        $livre = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $ciclo->id, 'professor_id' => $professor->id, 'matricula_id' => null, 'data' => '2026-09-09', 'hora_inicio' => '10:00:00']);
 
-        $resultado = $this->servico->atualizarParticipantes($livre, $livre->professor_id, $matricula->id);
+        $resultado = $this->servico->atualizarParticipantes($livre, $professor->id, $matricula->id);
 
         $this->assertFalse($resultado['ok']);
         $this->assertStringContainsString('Aluno Ocupado já tem uma preceptoria neste ciclo', $resultado['mensagem']);
@@ -464,9 +479,9 @@ class PreceptoriaAgendaServiceTest extends TestCase
 
         // em outro ciclo não há essa trava
         $outroCiclo = CicloPreceptoria::create(['nome' => 'Outro', 'data_inicio' => '2026-10-01', 'data_fim' => '2026-10-31']);
-        $deOutroCiclo = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $outroCiclo->id, 'matricula_id' => null, 'data' => '2026-10-09', 'hora_inicio' => '10:00:00']);
+        $deOutroCiclo = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $outroCiclo->id, 'professor_id' => $professor->id, 'matricula_id' => null, 'data' => '2026-10-09', 'hora_inicio' => '10:00:00']);
 
-        $this->assertTrue($this->servico->atualizarParticipantes($deOutroCiclo, $deOutroCiclo->professor_id, $matricula->id)['ok']);
+        $this->assertTrue($this->servico->atualizarParticipantes($deOutroCiclo, $professor->id, $matricula->id)['ok']);
     }
 
     public function test_sem_permissao_de_agendar_so_o_professor_muda(): void
@@ -476,7 +491,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $antigo = Pessoa::factory()->create();
         $novo = Pessoa::factory()->create();
         $aluno = Pessoa::factory()->create();
-        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $matricula = $this->matriculaDe($aluno, $novo);
         $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => $matricula->id]);
 
         $resultado = $this->servico->atualizarParticipantes($preceptoria, $novo->id, null, alterarAluno: false);
@@ -530,5 +545,218 @@ class PreceptoriaAgendaServiceTest extends TestCase
 
         $this->assertSame([$minha->id], $ids);
         $this->assertContains($alheia->id, $this->servico->matriculasAcessiveis($user, 'admin')->pluck('id')->all());
+    }
+
+    public function test_conflito_do_aluno_vale_para_a_pessoa_com_qualquer_professor_e_qualquer_matricula(): void
+    {
+        $aluno = Pessoa::factory()->create();
+        $outraMatricula = $this->matriculaDe($aluno);
+        $existente = Preceptoria::factory()->create(['matricula_id' => $outraMatricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $matricula = $this->matriculaDe($aluno);
+
+        $sobrepoe = $this->servico->conflitosDoAluno($matricula->id, ['2026-09-08'], '10:15', '10:45');
+        $this->assertSame([$existente->id], array_map(fn (Preceptoria $p) => $p->id, array_values($sobrepoe)));
+
+        // só se encostam: não é conflito; outro dia também não
+        $this->assertSame([], $this->servico->conflitosDoAluno($matricula->id, ['2026-09-08'], '10:30', '11:00'));
+        $this->assertSame([], $this->servico->conflitosDoAluno($matricula->id, ['2026-09-09'], '10:00', '10:30'));
+        // a própria preceptoria não conta contra si mesma
+        $this->assertSame([], $this->servico->conflitosDoAluno($outraMatricula->id, ['2026-09-08'], '10:00', '10:30', $existente->id));
+    }
+
+    public function test_gravar_recusa_professor_em_horario_concorrente(): void
+    {
+        $professor = Pessoa::factory()->create(['nome' => 'Prof Ocupado']);
+        Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        try {
+            Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+            $this->fail('Esperava ConflitoDeHorarioException');
+        } catch (ConflitoDeHorarioException $e) {
+            $this->assertStringContainsString('Prof Ocupado já tem uma preceptoria em 08/09/2026 das 10:00 às 10:30', $e->getMessage());
+        }
+
+        $this->assertSame(1, Preceptoria::count());
+
+        // encostar é permitido
+        Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:30:00', 'hora_fim' => '11:00:00']);
+        $this->assertSame(2, Preceptoria::count());
+    }
+
+    public function test_gravar_recusa_aluno_em_horario_concorrente_mesmo_com_outro_professor(): void
+    {
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluna Ocupada']);
+        $matricula = $this->matriculaDe($aluno);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        try {
+            Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+            $this->fail('Esperava ConflitoDeHorarioException');
+        } catch (ConflitoDeHorarioException $e) {
+            $this->assertStringContainsString('Aluna Ocupada já tem uma preceptoria em 08/09/2026 das 10:00 às 10:30 (com ', $e->getMessage());
+        }
+
+        $this->assertSame(1, Preceptoria::count());
+    }
+
+    public function test_editar_para_horario_concorrente_e_recusado_e_a_gravacao_nao_acontece(): void
+    {
+        $professor = Pessoa::factory()->create();
+        Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $outra = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '11:00:00', 'hora_fim' => '11:30:00']);
+
+        try {
+            $outra->update(['hora_inicio' => '10:20:00', 'hora_fim' => '10:50:00']);
+            $this->fail('Esperava ConflitoDeHorarioException');
+        } catch (ConflitoDeHorarioException) {
+            $this->assertSame('11:00', $outra->fresh()->hora_inicio->format('H:i'));
+        }
+    }
+
+    public function test_liberar_o_aluno_nao_e_barrado_por_sobreposicao_antiga_do_professor(): void
+    {
+        $professor = Pessoa::factory()->create();
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $professor);
+        $primeira = Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        // dado antigo, gravado antes da regra existir
+        DB::table('preceptoria')->insert([
+            'professor_id' => $professor->id,
+            'data' => '2026-09-08',
+            'hora_inicio' => '10:10:00',
+            'hora_fim' => '10:40:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $primeira->update(['matricula_id' => null]);
+
+        $this->assertNull($primeira->fresh()->matricula_id);
+    }
+
+    public function test_reagendar_recusa_horario_em_que_o_aluno_ja_tem_preceptoria_com_outro_professor(): void
+    {
+        Notification::fake();
+
+        $professor = Pessoa::factory()->create();
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Duplo']);
+        $matricula = $this->matriculaDe($aluno, $professor);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-09', 'hora_inicio' => '09:00:00', 'hora_fim' => '09:30:00']);
+        $agendada = Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '09:00:00', 'hora_fim' => '09:30:00']);
+
+        $resultado = $this->servico->reagendar($agendada, '2026-09-09T09:15:00');
+
+        $this->assertFalse($resultado['ok']);
+        $this->assertStringContainsString('Aluno Duplo já tem uma preceptoria em 09/09/2026', $resultado['mensagem']);
+        $this->assertSame('2026-09-08', $agendada->fresh()->data->toDateString());
+    }
+
+    public function test_trocar_aluno_recusa_quem_ja_tem_preceptoria_no_mesmo_horario(): void
+    {
+        Notification::fake();
+
+        $professor = Pessoa::factory()->create();
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno Ocupado']);
+        $matricula = $this->matriculaDe($aluno, $professor);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+
+        $resultado = $this->servico->atualizarParticipantes($livre, $professor->id, $matricula->id);
+
+        $this->assertFalse($resultado['ok']);
+        $this->assertStringContainsString('Aluno Ocupado já tem uma preceptoria em 08/09/2026 das 10:00 às 10:30', $resultado['mensagem']);
+        $this->assertNull($livre->fresh()->matricula_id);
+        $this->assertCount(0, $livre->historico());
+    }
+
+    public function test_aluno_so_faz_preceptoria_com_o_conselheiro_ou_professor_do_cronograma_da_turma(): void
+    {
+        Notification::fake();
+
+        $conselheiro = Pessoa::factory()->create();
+        $doCronograma = Pessoa::factory()->create();
+        $estranho = Pessoa::factory()->create(['nome' => 'Prof Estranho']);
+        $aluno = Pessoa::factory()->create(['nome' => 'Aluno da Turma']);
+        $matricula = $this->matriculaDe($aluno, $conselheiro);
+        CronogramaAula::factory()->create(['turma_id' => $matricula->turma_id, 'pessoa_id' => $doCronograma->id]);
+
+        $this->assertEqualsCanonicalizing([$conselheiro->id, $doCronograma->id], $this->servico->professoresDaMatricula($matricula->id)->pluck('id')->all());
+
+        $datas = ['2026-09-10', '2026-09-11'];
+        foreach ([$conselheiro, $doCronograma] as $i => $professor) {
+            $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => $datas[$i], 'matricula_id' => null]);
+            $this->assertTrue($this->servico->atualizarParticipantes($livre, $professor->id, $matricula->id, notificar: false)['ok']);
+        }
+
+        $deEstranho = Preceptoria::factory()->create(['professor_id' => $estranho->id, 'data' => '2026-09-20', 'matricula_id' => null]);
+        $resultado = $this->servico->atualizarParticipantes($deEstranho, $estranho->id, $matricula->id);
+
+        $this->assertFalse($resultado['ok']);
+        $this->assertStringContainsString('Prof Estranho não é professor de Aluno da Turma', $resultado['mensagem']);
+        $this->assertNull($deEstranho->fresh()->matricula_id);
+    }
+
+    public function test_trocar_o_professor_de_horario_agendado_so_para_professor_do_aluno(): void
+    {
+        Notification::fake();
+
+        $conselheiro = Pessoa::factory()->create();
+        $estranho = Pessoa::factory()->create(['nome' => 'Prof Estranho']);
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $conselheiro);
+        $agendada = Preceptoria::factory()->create(['professor_id' => $conselheiro->id, 'matricula_id' => $matricula->id]);
+
+        $resultado = $this->servico->atualizarParticipantes($agendada, $estranho->id, null, alterarAluno: false);
+
+        $this->assertFalse($resultado['ok']);
+        $this->assertSame($conselheiro->id, $agendada->fresh()->professor_id);
+
+        // sem aluno, qualquer professor serve
+        $livre = Preceptoria::factory()->create(['professor_id' => $conselheiro->id, 'matricula_id' => null, 'data' => '2026-09-21']);
+        $this->assertTrue($this->servico->atualizarParticipantes($livre, $estranho->id, null)['ok']);
+    }
+
+    public function test_matriculas_do_professor_filtra_pelo_conselheiro_e_pelo_cronograma(): void
+    {
+        $professor = Pessoa::factory()->create();
+        $doConselheiro = $this->matriculaDe(Pessoa::factory()->create(), $professor);
+        $doCronograma = $this->matriculaDe(Pessoa::factory()->create());
+        CronogramaAula::factory()->create(['turma_id' => $doCronograma->turma_id, 'pessoa_id' => $professor->id]);
+        $deOutro = $this->matriculaDe(Pessoa::factory()->create(), Pessoa::factory()->create());
+
+        $ids = $this->servico->matriculasDoProfessor(Matricula::query(), $professor->id)->pluck('id')->all();
+
+        $this->assertEqualsCanonicalizing([$doConselheiro->id, $doCronograma->id], $ids);
+        $this->assertNotContains($deOutro->id, $ids);
+    }
+
+    public function test_datas_avulsas_pulam_as_que_conflitam_com_professor_ou_aluno(): void
+    {
+        $professor = Pessoa::factory()->create();
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $professor);
+        Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-09', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        $resultado = $this->servico->gerarNasDatas(
+            ['professor_id' => $professor->id, 'matricula_id' => $matricula->id, 'hora_inicio' => '10:00', 'hora_fim' => '10:30'],
+            ['2026-09-08', '2026-09-09', '2026-09-10'],
+        );
+
+        $this->assertSame(['2026-09-10'], array_map(fn (Preceptoria $p) => $p->data->toDateString(), $resultado['criadas']));
+        $this->assertSame(['2026-09-08'], array_keys($resultado['conflitos']));
+        $this->assertSame(['2026-09-09'], array_keys($resultado['conflitos_aluno']));
+    }
+
+    public function test_serie_de_um_aluno_pula_as_datas_em_que_ele_ja_tem_preceptoria(): void
+    {
+        $professor = Pessoa::factory()->create();
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $professor);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-02', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+
+        $resultado = $this->servico->gerarSerie(
+            ['professor_id' => $professor->id, 'matricula_id' => $matricula->id, 'hora_inicio' => '10:00', 'hora_fim' => '10:30'],
+            $this->regras('2026-09-01', '2026-09-03'),
+        );
+
+        $this->assertSame(['2026-09-01', '2026-09-03'], array_map(fn (Preceptoria $p) => $p->data->toDateString(), $resultado['criadas']));
+        $this->assertSame(['2026-09-02'], array_keys($resultado['conflitos_aluno']));
     }
 }

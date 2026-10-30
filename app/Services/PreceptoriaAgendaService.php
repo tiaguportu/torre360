@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Exceptions\ConflitoDeHorarioException;
+use App\Models\CronogramaAula;
 use App\Models\DiaNaoLetivo;
 use App\Models\Matricula;
 use App\Models\Pessoa;
@@ -10,6 +12,7 @@ use App\Models\User;
 use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
 use Carbon\CarbonInterface;
+use Closure;
 use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notification;
@@ -109,34 +112,34 @@ class PreceptoriaAgendaService
     }
 
     /**
-     * Calcula a série e separa o que seria criado do que bate com outra preceptoria do professor.
-     * Serve tanto para a prévia do formulário quanto para a criação de verdade.
+     * Calcula a série e separa o que seria criado do que bate com outra preceptoria do professor
+     * (ou do aluno, quando a série já é de um aluno). Serve tanto para a prévia do formulário
+     * quanto para a criação de verdade.
      *
      * @param  array<string, mixed>  $regras  as mesmas de calcularDatas()
-     * @return array{datas: array<int, string>, ignoradas: array<int, array{data: string, tipo: string, motivo: string}>, conflitos: array<string, Preceptoria>}
+     * @return array{datas: array<int, string>, ignoradas: array<int, array{data: string, tipo: string, motivo: string}>, conflitos: array<string, Preceptoria>, conflitos_aluno: array<string, Preceptoria>}
      */
-    public function simular(array $regras, ?int $professorId, mixed $horaInicio, mixed $horaFim = null): array
+    public function simular(array $regras, ?int $professorId, mixed $horaInicio, mixed $horaFim = null, ?int $matriculaId = null): array
     {
         $calculo = $this->calcularDatas($regras);
-
-        $conflitos = $professorId && $horaInicio
-            ? $this->conflitosDoProfessor($professorId, $calculo['datas'], $horaInicio, $horaFim)
-            : [];
+        $separado = $this->separarConflitos($calculo['datas'], $professorId, $matriculaId, $horaInicio, $horaFim);
 
         return [
-            'datas' => array_values(array_filter($calculo['datas'], fn (string $data) => ! isset($conflitos[$data]))),
+            'datas' => $separado['livres'],
             'ignoradas' => $calculo['ignoradas'],
-            'conflitos' => $conflitos,
+            'conflitos' => $separado['conflitos'],
+            'conflitos_aluno' => $separado['conflitos_aluno'],
         ];
     }
 
     /**
-     * Cria a série. Datas em que o professor já tem uma preceptoria sobreposta são puladas (rodar
-     * a mesma recorrência duas vezes não duplica nada) e voltam em `conflitos`.
+     * Cria a série. Datas em que o professor (ou o aluno) já tem uma preceptoria sobreposta são
+     * puladas (rodar a mesma recorrência duas vezes não duplica nada) e voltam em `conflitos` e
+     * `conflitos_aluno`.
      *
      * @param  array<string, mixed>  $base  ciclo_preceptoria_id, professor_id, hora_inicio, hora_fim, matricula_id
      * @param  array<string, mixed>  $regras  as mesmas de calcularDatas()
-     * @return array{criadas: array<int, Preceptoria>, ignoradas: array<int, array{data: string, tipo: string, motivo: string}>, conflitos: array<string, Preceptoria>}
+     * @return array{criadas: array<int, Preceptoria>, ignoradas: array<int, array{data: string, tipo: string, motivo: string}>, conflitos: array<string, Preceptoria>, conflitos_aluno: array<string, Preceptoria>}
      *
      * @throws DomainException quando a janela geraria mais que LIMITE_SERIE preceptorias
      */
@@ -147,6 +150,7 @@ class PreceptoriaAgendaService
             isset($base['professor_id']) ? (int) $base['professor_id'] : null,
             $base['hora_inicio'] ?? null,
             $base['hora_fim'] ?? null,
+            filled($base['matricula_id'] ?? null) ? (int) $base['matricula_id'] : null,
         );
 
         if (count($simulacao['datas']) > self::LIMITE_SERIE) {
@@ -157,14 +161,38 @@ class PreceptoriaAgendaService
             ));
         }
 
-        $campos = Arr::only($base, ['ciclo_preceptoria_id', 'professor_id', 'matricula_id', 'hora_inicio', 'hora_fim']);
+        return [
+            'criadas' => $this->criarNasDatas($base, $simulacao['datas']),
+            'ignoradas' => $simulacao['ignoradas'],
+            'conflitos' => $simulacao['conflitos'],
+            'conflitos_aluno' => $simulacao['conflitos_aluno'],
+        ];
+    }
 
-        $criadas = DB::transaction(fn () => array_map(
-            fn (string $data) => Preceptoria::create([...$campos, 'data' => $data]),
-            $simulacao['datas'],
-        ));
+    /**
+     * Cria a mesma preceptoria em datas avulsas, pulando as em que o professor (ou o aluno) já tem
+     * outra no horário.
+     *
+     * @param  array<string, mixed>  $base  ciclo_preceptoria_id, professor_id, hora_inicio, hora_fim, matricula_id
+     * @param  array<int, string>  $datas  Y-m-d
+     * @return array{criadas: array<int, Preceptoria>, ignoradas: array<int, never>, conflitos: array<string, Preceptoria>, conflitos_aluno: array<string, Preceptoria>}
+     */
+    public function gerarNasDatas(array $base, array $datas): array
+    {
+        $separado = $this->separarConflitos(
+            $datas,
+            isset($base['professor_id']) ? (int) $base['professor_id'] : null,
+            filled($base['matricula_id'] ?? null) ? (int) $base['matricula_id'] : null,
+            $base['hora_inicio'] ?? null,
+            $base['hora_fim'] ?? null,
+        );
 
-        return ['criadas' => $criadas, 'ignoradas' => $simulacao['ignoradas'], 'conflitos' => $simulacao['conflitos']];
+        return [
+            'criadas' => $this->criarNasDatas($base, $separado['livres']),
+            'ignoradas' => [],
+            'conflitos' => $separado['conflitos'],
+            'conflitos_aluno' => $separado['conflitos_aluno'],
+        ];
     }
 
     /**
@@ -177,14 +205,54 @@ class PreceptoriaAgendaService
      */
     public function conflitosDoProfessor(int $professorId, array $datas, mixed $horaInicio, mixed $horaFim = null, ?int $ignorarId = null): array
     {
+        return $this->sobreposicoes(
+            Preceptoria::query()->where('professor_id', $professorId),
+            $datas,
+            $horaInicio,
+            $horaFim,
+            $ignorarId,
+        );
+    }
+
+    /**
+     * O mesmo para o aluno: vale a pessoa, então outra matrícula dela também conta (um aluno não
+     * está em dois lugares ao mesmo tempo, seja com qual professor for).
+     *
+     * @param  array<int, string>  $datas  Y-m-d
+     * @return array<string, Preceptoria> indexado pela data
+     */
+    public function conflitosDoAluno(int $matriculaId, array $datas, mixed $horaInicio, mixed $horaFim = null, ?int $ignorarId = null): array
+    {
+        $pessoaId = Matricula::query()->whereKey($matriculaId)->value('pessoa_id');
+
+        if (! $pessoaId) {
+            return [];
+        }
+
+        return $this->sobreposicoes(
+            Preceptoria::query()->whereHas('matricula', fn (Builder $query) => $query->where('pessoa_id', $pessoaId)),
+            $datas,
+            $horaInicio,
+            $horaFim,
+            $ignorarId,
+        );
+    }
+
+    /**
+     * @param  Builder<Preceptoria>  $query  as preceptorias da pessoa que se confere
+     * @param  array<int, string>  $datas  Y-m-d
+     * @return array<string, Preceptoria> indexado pela data
+     */
+    private function sobreposicoes(Builder $query, array $datas, mixed $horaInicio, mixed $horaFim, ?int $ignorarId): array
+    {
         if ($datas === [] || ! $horaInicio) {
             return [];
         }
 
         [$inicio, $fim] = $this->intervaloEmMinutos($horaInicio, $horaFim);
 
-        $porData = Preceptoria::query()
-            ->where('professor_id', $professorId)
+        $porData = $query
+            ->with(['professor', 'matricula.pessoa'])
             ->whereDate('data', '>=', min($datas))
             ->whereDate('data', '<=', max($datas))
             ->when($ignorarId, fn ($query) => $query->whereKeyNot($ignorarId))
@@ -318,30 +386,31 @@ class PreceptoriaAgendaService
             return $this->resultado(true, 'Nada a alterar.');
         }
 
-        $conflito = $this->conflitosDoProfessor(
-            $preceptoria->professor_id,
-            [$data],
+        $conflito = $this->conflito(
+            (int) $preceptoria->professor_id,
+            $preceptoria->matricula_id ? (int) $preceptoria->matricula_id : null,
+            $data,
             $horaInicio,
             $horaFim,
             $preceptoria->getKey(),
-        )[$data] ?? null;
+        );
 
         if ($conflito) {
-            return $this->resultado(false, sprintf(
-                'Conflito: o professor já tem uma preceptoria em %s das %s às %s.',
-                $novoInicio->format('d/m/Y'),
-                $conflito->hora_inicio->format('H:i'),
-                $conflito->hora_fim?->format('H:i') ?? 'fim não informado',
-            ));
+            return $this->resultado(false, $conflito->getMessage());
         }
 
         $antes = sprintf('%s às %s', Carbon::parse($dataAntes)->format('d/m/Y'), $horaInicioAntes ?? '—');
 
-        $preceptoria->update([
-            'data' => $data,
-            'hora_inicio' => $horaInicio,
-            'hora_fim' => $horaFim,
-        ]);
+        try {
+            $preceptoria->update([
+                'data' => $data,
+                'hora_inicio' => $horaInicio,
+                'hora_fim' => $horaFim,
+            ]);
+        } catch (ConflitoDeHorarioException $e) {
+            // outro usuário ocupou o horário entre a conferência e a gravação
+            return $this->resultado(false, $e->getMessage());
+        }
 
         activity()
             ->performedOn($preceptoria)
@@ -439,19 +508,6 @@ class PreceptoriaAgendaService
             if (! $professor) {
                 return $this->resultado(false, 'Professor não encontrado.');
             }
-
-            $data = $preceptoria->data->toDateString();
-            $conflito = $this->conflitosDoProfessor($professorId, [$data], $preceptoria->hora_inicio, $preceptoria->hora_fim, $preceptoria->getKey())[$data] ?? null;
-
-            if ($conflito) {
-                return $this->resultado(false, sprintf(
-                    'Conflito: %s já tem uma preceptoria em %s das %s às %s.',
-                    $professor->nome,
-                    $preceptoria->data->format('d/m/Y'),
-                    $conflito->hora_inicio->format('H:i'),
-                    $conflito->hora_fim?->format('H:i') ?? 'fim não informado',
-                ));
-            }
         }
 
         $matricula = null;
@@ -461,7 +517,35 @@ class PreceptoriaAgendaService
             if (! $matricula) {
                 return $this->resultado(false, 'Matrícula não encontrada.');
             }
+        }
 
+        // nem o novo professor nem o novo aluno podem ter outra preceptoria que se sobreponha a esta
+        $conflito = $this->conflito(
+            $mudouProfessor ? $professorId : null,
+            $matricula?->getKey(),
+            $preceptoria->data->toDateString(),
+            $preceptoria->hora_inicio,
+            $preceptoria->hora_fim,
+            $preceptoria->getKey(),
+        );
+
+        if ($conflito) {
+            return $this->resultado(false, $conflito->getMessage());
+        }
+
+        // o aluno só faz preceptoria com os professores dele (conselheiro e cronograma da turma), como na tela de agendar
+        $matriculaFinal = $mudouAluno ? $matricula : $preceptoria->matricula;
+
+        if ($matriculaFinal && $professor && ($mudouProfessor || $mudouAluno)
+            && ! $this->professoresDaMatricula($matriculaFinal->getKey())->contains('id', $professor->getKey())) {
+            return $this->resultado(false, sprintf(
+                '%s não é professor de %s: o aluno só pode ser agendado com o professor conselheiro ou com os professores do cronograma da turma.',
+                $professor->nome,
+                $matriculaFinal->pessoa?->nome ?? 'o aluno',
+            ));
+        }
+
+        if ($matricula) {
             $outra = $preceptoria->ciclo_preceptoria_id
                 ? Preceptoria::query()
                     ->where('matricula_id', $matriculaId)
@@ -482,7 +566,7 @@ class PreceptoriaAgendaService
 
         $mensagens = [];
 
-        DB::transaction(function () use ($preceptoria, $mudouProfessor, $mudouAluno, $professorId, $matriculaId, $professorAntes, $professor, $alunoAntes, $matricula, &$mensagens) {
+        $gravar = function () use ($preceptoria, $mudouProfessor, $mudouAluno, $professorId, $matriculaId, $professorAntes, $professor, $alunoAntes, $matricula, &$mensagens) {
             $campos = [];
 
             if ($mudouProfessor) {
@@ -510,7 +594,14 @@ class PreceptoriaAgendaService
             }
 
             $preceptoria->update($campos);
-        });
+        };
+
+        try {
+            DB::transaction($gravar);
+        } catch (ConflitoDeHorarioException $e) {
+            // outro usuário ocupou o horário entre a conferência e a gravação; o histórico também foi desfeito
+            return $this->resultado(false, $e->getMessage());
+        }
 
         // o registro já mudou: os avisos precisam enxergar o estado novo
         $preceptoria->setRelation('professor', $professor);
@@ -528,6 +619,108 @@ class PreceptoriaAgendaService
             'aviso' => null,
             'notificados' => $notificados,
         ];
+    }
+
+    /**
+     * Os professores do aluno: o conselheiro da turma e quem está no cronograma dela. É com eles
+     * que a preceptoria do aluno pode ser marcada.
+     *
+     * @return Collection<int, Pessoa>
+     */
+    public function professoresDaMatricula(int $matriculaId): Collection
+    {
+        $matricula = Matricula::with(['turma'])->find($matriculaId);
+
+        if (! $matricula || ! $matricula->turma) {
+            return collect();
+        }
+
+        $professoresIds = collect();
+
+        if ($matricula->turma->professor_conselheiro_id) {
+            $professoresIds->push($matricula->turma->professor_conselheiro_id);
+        }
+
+        $cronogramaProfessoresIds = CronogramaAula::where('turma_id', $matricula->turma_id)
+            ->whereNotNull('pessoa_id')
+            ->pluck('pessoa_id');
+
+        $professoresIds = $professoresIds->concat($cronogramaProfessoresIds)->unique();
+
+        if ($professoresIds->isEmpty()) {
+            return collect();
+        }
+
+        return Pessoa::whereIn('id', $professoresIds)->get();
+    }
+
+    /**
+     * Só as matrículas cujo aluno tem o professor entre os seus (o inverso de professoresDaMatricula).
+     *
+     * @param  Builder<Matricula>  $matriculas
+     * @return Builder<Matricula>
+     */
+    public function matriculasDoProfessor(Builder $matriculas, int $professorId): Builder
+    {
+        return $matriculas->where(function (Builder $query) use ($professorId) {
+            $query->whereHas('turma', fn (Builder $turma) => $turma->where('professor_conselheiro_id', $professorId))
+                ->orWhereIn('turma_id', CronogramaAula::query()->where('pessoa_id', $professorId)->select('turma_id'));
+        });
+    }
+
+    /**
+     * Grava a preceptoria só se o professor e o aluno não tiverem outra no mesmo horário. A conferência
+     * e a gravação acontecem juntas, com a linha das pessoas travada, para dois usuários marcando o
+     * mesmo professor (ou aluno) ao mesmo tempo não passarem os dois pela conferência.
+     *
+     * Só confere o que mudou: liberar o aluno de um horário, por exemplo, não reabre a conferência do
+     * professor (uma sobreposição antiga não impede o ajuste).
+     *
+     * @param  Closure(): bool  $gravar
+     *
+     * @throws ConflitoDeHorarioException
+     */
+    public function gravarSemConflito(Preceptoria $preceptoria, Closure $gravar): bool
+    {
+        $mudouHorario = ! $preceptoria->exists || $preceptoria->isDirty(['data', 'hora_inicio', 'hora_fim']);
+        $temHorario = $preceptoria->data && $preceptoria->hora_inicio;
+
+        $professorId = $temHorario && $preceptoria->professor_id && ($mudouHorario || $preceptoria->isDirty('professor_id'))
+            ? (int) $preceptoria->professor_id
+            : null;
+        $matriculaId = $temHorario && $preceptoria->matricula_id && ($mudouHorario || $preceptoria->isDirty('matricula_id'))
+            ? (int) $preceptoria->matricula_id
+            : null;
+
+        if ($professorId === null && $matriculaId === null) {
+            return $gravar();
+        }
+
+        return DB::transaction(function () use ($preceptoria, $professorId, $matriculaId, $gravar) {
+            $pessoaDoAluno = $matriculaId ? Matricula::query()->whereKey($matriculaId)->value('pessoa_id') : null;
+
+            // sempre na ordem do id, para duas gravações cruzadas não travarem uma à outra
+            Pessoa::query()
+                ->whereIn('id', array_filter([$professorId, $pessoaDoAluno]))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->pluck('id');
+
+            $conflito = $this->conflito(
+                $professorId,
+                $matriculaId,
+                $preceptoria->data->toDateString(),
+                $preceptoria->hora_inicio,
+                $preceptoria->hora_fim,
+                $preceptoria->exists ? $preceptoria->getKey() : null,
+            );
+
+            if ($conflito) {
+                throw $conflito;
+            }
+
+            return $gravar();
+        });
     }
 
     /**
@@ -640,6 +833,60 @@ class PreceptoriaAgendaService
         }
 
         return $enviados;
+    }
+
+    /**
+     * O primeiro choque de horário numa data: primeiro o do professor, depois o do aluno. Cada lado
+     * só é conferido se o id foi informado.
+     */
+    private function conflito(?int $professorId, ?int $matriculaId, string $data, mixed $horaInicio, mixed $horaFim, ?int $ignorarId): ?ConflitoDeHorarioException
+    {
+        if ($professorId && ($outra = $this->conflitosDoProfessor($professorId, [$data], $horaInicio, $horaFim, $ignorarId)[$data] ?? null)) {
+            return ConflitoDeHorarioException::doProfessor($outra);
+        }
+
+        if ($matriculaId && ($outra = $this->conflitosDoAluno($matriculaId, [$data], $horaInicio, $horaFim, $ignorarId)[$data] ?? null)) {
+            return ConflitoDeHorarioException::doAluno($outra);
+        }
+
+        return null;
+    }
+
+    /**
+     * Separa as datas livres das que batem com outra preceptoria do professor ou do aluno.
+     *
+     * @param  array<int, string>  $datas  Y-m-d
+     * @return array{livres: array<int, string>, conflitos: array<string, Preceptoria>, conflitos_aluno: array<string, Preceptoria>}
+     */
+    private function separarConflitos(array $datas, ?int $professorId, ?int $matriculaId, mixed $horaInicio, mixed $horaFim): array
+    {
+        $conflitos = $professorId && $horaInicio
+            ? $this->conflitosDoProfessor($professorId, $datas, $horaInicio, $horaFim)
+            : [];
+        $conflitosAluno = $matriculaId && $horaInicio
+            ? $this->conflitosDoAluno($matriculaId, $datas, $horaInicio, $horaFim)
+            : [];
+
+        return [
+            'livres' => array_values(array_filter($datas, fn (string $data) => ! isset($conflitos[$data]) && ! isset($conflitosAluno[$data]))),
+            'conflitos' => $conflitos,
+            'conflitos_aluno' => $conflitosAluno,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $base
+     * @param  array<int, string>  $datas  Y-m-d
+     * @return array<int, Preceptoria>
+     */
+    private function criarNasDatas(array $base, array $datas): array
+    {
+        $campos = Arr::only($base, ['ciclo_preceptoria_id', 'professor_id', 'matricula_id', 'hora_inicio', 'hora_fim']);
+
+        return DB::transaction(fn () => array_map(
+            fn (string $data) => Preceptoria::create([...$campos, 'data' => $data]),
+            $datas,
+        ));
     }
 
     /**

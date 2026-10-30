@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Preceptorias\Pages;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Filament\Resources\Preceptorias\Schemas\PreceptoriaRecorrenciaForm;
 use App\Models\CicloPreceptoria;
@@ -20,6 +21,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -229,23 +231,14 @@ class CalendarioPreceptorias extends Page implements HasForms
                 'hora_fim' => $arguments['hora_fim'] ?? null,
             ])
             ->action(function (array $data, Action $action) {
-                $conflito = app(PreceptoriaAgendaService::class)->conflitosDoProfessor(
-                    (int) $data['professor_id'],
-                    [Carbon::parse($data['data'])->toDateString()],
-                    $data['hora_inicio'],
-                    $data['hora_fim'] ?? null,
-                );
-
-                if ($conflito !== []) {
-                    Notification::make()
-                        ->title('O professor já tem uma preceptoria nesse horário.')
-                        ->danger()
-                        ->send();
+                try {
+                    // a própria gravação confere o choque de horário do professor (e vale mesmo se outro usuário ocupar o horário agora)
+                    Preceptoria::create($data);
+                } catch (ConflitoDeHorarioException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
 
                     $action->halt();
                 }
-
-                Preceptoria::create($data);
 
                 Notification::make()->title('Horário criado.')->success()->send();
 
@@ -284,16 +277,18 @@ class CalendarioPreceptorias extends Page implements HasForms
                 }
 
                 return [
-                    $this->campoProfessor()
-                        ->helperText('Trocar o professor avisa o anterior, o novo e, se houver aluno, ele e os responsáveis.'),
+                    $this->campoProfessor(doAluno: true)
+                        ->live()
+                        ->helperText('Trocar o professor avisa o anterior, o novo e, se houver aluno, ele e os responsáveis. Com aluno agendado, só vale um professor dele.'),
 
                     Select::make('matricula_id')
                         ->label('Aluno (matrícula)')
                         ->placeholder('Livre (sem aluno)')
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $search) => $this->matriculasParaBuscar($search))
+                        ->live()
+                        ->getSearchResultsUsing(fn (string $search, Get $get) => $this->matriculasParaBuscar($search, filled($get('professor_id')) ? (int) $get('professor_id') : null))
                         ->getOptionLabelUsing(fn ($value) => Matricula::with(['pessoa', 'turma', 'periodoLetivo'])->find($value)?->label_exibicao)
-                        ->helperText('Escolha outro aluno para trocar ou esvazie para liberar o horário; quem sai e quem entra são avisados.')
+                        ->helperText('Aparecem os alunos do professor escolhido (conselheiro ou professor do cronograma da turma). Escolha outro para trocar ou esvazie para liberar o horário; quem sai e quem entra são avisados.')
                         ->visible(fn () => (bool) auth()->user()?->can('Agendar:Preceptoria')),
 
                     Section::make('Últimas alterações')
@@ -440,10 +435,10 @@ class CalendarioPreceptorias extends Page implements HasForms
         $html .= '<li><strong>Trocar a visão:</strong> mês, semana, dia ou lista, nos botões do topo do calendário. Dias em vermelho são feriados nacionais ou dias não letivos.</li>';
 
         if ($user?->can('Update:Preceptoria')) {
-            $html .= '<li><strong>Mover:</strong> arraste um bloco para outro dia ou horário. Se o professor já tiver preceptoria no novo horário, o sistema recusa e o bloco volta. Soltar num fim de semana, feriado ou dia não letivo é permitido, mas o sistema avisa.</li>';
+            $html .= '<li><strong>Mover:</strong> arraste um bloco para outro dia ou horário. Se o professor (ou o aluno, quando o horário já tem aluno) já tiver preceptoria num horário que se sobreponha ao novo, o sistema recusa e o bloco volta. Soltar num fim de semana, feriado ou dia não letivo é permitido, mas o sistema avisa.</li>';
             $html .= '<li><strong>Mudar a duração:</strong> estique a borda inferior do bloco (visões de semana e dia).</li>';
             $html .= '<li><strong>Preceptoria já agendada:</strong> ao mover, o sistema pede confirmação e avisa o aluno, os responsáveis e o professor do novo horário. Se o horário estava livre, só o professor é avisado (e só quando outra pessoa fez a mudança).</li>';
-            $html .= '<li><strong>Trocar professor ou aluno:</strong> clique no bloco. Escolha outro professor (que não pode ter preceptoria no mesmo horário) e, se você pode agendar, outro aluno (que não pode ter outra preceptoria no mesmo ciclo) ou deixe o aluno vazio para liberar o horário. Quem perde e quem ganha o horário é avisado. O botão "Abrir registro completo" leva à edição de todos os campos.</li>';
+            $html .= '<li><strong>Trocar professor ou aluno:</strong> clique no bloco. Escolha outro professor (que não pode ter preceptoria num horário que se sobreponha; se o horário tem aluno, precisa ser um professor dele) e, se você pode agendar, outro aluno (que não pode ter outra preceptoria num horário que se sobreponha nem outra no mesmo ciclo, e cujo professor é o escolhido) ou deixe o aluno vazio para liberar o horário. Quem perde e quem ganha o horário é avisado. O botão "Abrir registro completo" leva à edição de todos os campos.</li>';
             $html .= '<li><strong>Histórico:</strong> as últimas alterações aparecem no modal; o histórico completo, com os avisos enviados, está no botão "Histórico de Alterações" do registro.</li>';
         }
 
@@ -490,15 +485,19 @@ class CalendarioPreceptorias extends Page implements HasForms
     }
 
     /**
-     * Matrículas que o usuário pode agendar cujo aluno tem o nome buscado.
+     * Matrículas que o usuário pode agendar cujo aluno tem o nome buscado e, com o professor
+     * escolhido, que têm esse professor entre os seus.
      *
      * @return array<int, string>
      */
-    private function matriculasParaBuscar(string $busca): array
+    private function matriculasParaBuscar(string $busca, ?int $professorId = null): array
     {
-        return app(PreceptoriaAgendaService::class)
+        $servico = app(PreceptoriaAgendaService::class);
+
+        return $servico
             ->matriculasAcessiveis(auth()->user(), session('active_role'))
             ->whereHas('pessoa', fn (Builder $query) => $query->where('nome', 'like', "%{$busca}%"))
+            ->when($professorId, fn (Builder $query) => $servico->matriculasDoProfessor($query, $professorId))
             ->with(['pessoa', 'turma', 'periodoLetivo'])
             ->limit(50)
             ->get()
@@ -568,16 +567,27 @@ class CalendarioPreceptorias extends Page implements HasForms
             ->required();
     }
 
-    private function campoProfessor(): Select
+    /**
+     * @param  bool  $doAluno  com um aluno escolhido (campo matricula_id), oferece só os professores dele
+     */
+    private function campoProfessor(bool $doAluno = false): Select
     {
         $professor = auth()->user()?->atuaComoProfessor();
 
         return Select::make('professor_id')
             ->label('Professor(a)')
             ->options(fn () => $professor ? auth()->user()->pessoas->pluck('nome', 'id') : [])
-            ->getSearchResultsUsing(fn (string $search) => $professor
+            ->getSearchResultsUsing(fn (string $search, Get $get) => $professor
                 ? auth()->user()->pessoas->filter(fn (Pessoa $p) => str_contains(mb_strtolower($p->nome), mb_strtolower($search)))->pluck('nome', 'id')
-                : Pessoa::query()->where('nome', 'like', "%{$search}%")->orderBy('nome')->limit(50)->pluck('nome', 'id'))
+                : Pessoa::query()
+                    ->where('nome', 'like', "%{$search}%")
+                    ->when($doAluno && filled($get('matricula_id')), fn (Builder $query) => $query->whereIn(
+                        'id',
+                        app(PreceptoriaAgendaService::class)->professoresDaMatricula((int) $get('matricula_id'))->modelKeys(),
+                    ))
+                    ->orderBy('nome')
+                    ->limit(50)
+                    ->pluck('nome', 'id'))
             ->getOptionLabelUsing(fn ($value) => Pessoa::find($value)?->nome)
             ->searchable()
             ->required();

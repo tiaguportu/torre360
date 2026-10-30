@@ -7,6 +7,7 @@ use App\Models\CicloPreceptoria;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
+use App\Models\Turma;
 use App\Models\User;
 use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
@@ -43,6 +44,16 @@ class CalendarioPreceptoriasTest extends TestCase
         session(['active_role' => $papelAtivo]);
 
         return $user;
+    }
+
+    /**
+     * Matrícula de um aluno na turma de um professor (o conselheiro): é com ele que o aluno faz preceptoria.
+     */
+    private function matriculaDe(Pessoa $aluno, ?Pessoa $professor = null): Matricula
+    {
+        $turma = Turma::factory()->create($professor ? ['professor_conselheiro_id' => $professor->id] : []);
+
+        return Matricula::factory()->create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id]);
     }
 
     private function ciclo(string $nome = 'Ciclo Setembro'): CicloPreceptoria
@@ -281,7 +292,7 @@ class CalendarioPreceptoriasTest extends TestCase
         $antigo = Pessoa::factory()->create(['email' => 'antigo@example.com']);
         $novo = Pessoa::factory()->create(['email' => 'novo@example.com']);
         $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
-        $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id]);
+        $matricula = $this->matriculaDe($aluno, $novo);
         $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => null, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
 
         Livewire::actingAs($user)
@@ -332,7 +343,7 @@ class CalendarioPreceptoriasTest extends TestCase
         $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria']);
         $antigo = Pessoa::factory()->create();
         $novo = Pessoa::factory()->create();
-        $matricula = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create()->id]);
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $novo);
         $outra = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create()->id]);
         $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => $matricula->id]);
 
@@ -384,5 +395,64 @@ class CalendarioPreceptoriasTest extends TestCase
         $this->assertSame($professorOriginal, $deOutro->fresh()->professor_id);
         $this->assertCount(0, $deOutro->historico());
         Notification::assertNothingSent();
+    }
+
+    public function test_gerenciar_recusa_aluno_que_ja_tem_preceptoria_no_horario(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria', 'Agendar:Preceptoria']);
+        $professor = Pessoa::factory()->create();
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(['nome' => 'Aluno Ocupado']), $professor);
+        Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => '2026-09-08', 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: [
+                'professor_id' => $professor->id,
+                'matricula_id' => $matricula->id,
+            ], arguments: ['id' => $livre->id]);
+
+        $this->assertNull($livre->fresh()->matricula_id);
+        Notification::assertNothingSent();
+    }
+
+    public function test_gerenciar_recusa_professor_que_nao_e_do_aluno(): void
+    {
+        Notification::fake();
+
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria', 'Agendar:Preceptoria']);
+        $conselheiro = Pessoa::factory()->create();
+        $estranho = Pessoa::factory()->create();
+        $matricula = $this->matriculaDe(Pessoa::factory()->create(), $conselheiro);
+        $livre = Preceptoria::factory()->create(['professor_id' => $estranho->id, 'data' => '2026-09-08']);
+
+        Livewire::actingAs($user)
+            ->test(CalendarioPreceptorias::class)
+            ->callAction('gerenciarPreceptoria', data: [
+                'professor_id' => $estranho->id,
+                'matricula_id' => $matricula->id,
+            ], arguments: ['id' => $livre->id]);
+
+        $this->assertNull($livre->fresh()->matricula_id);
+        Notification::assertNothingSent();
+    }
+
+    public function test_busca_de_alunos_do_modal_traz_so_os_do_professor_escolhido(): void
+    {
+        $user = $this->usuarioCom(['ViewAny:Preceptoria', 'Update:Preceptoria', 'Agendar:Preceptoria']);
+        $professor = Pessoa::factory()->create();
+        $dele = $this->matriculaDe(Pessoa::factory()->create(['nome' => 'Bia Dele']), $professor);
+        $deOutro = $this->matriculaDe(Pessoa::factory()->create(['nome' => 'Bia De Outro']), Pessoa::factory()->create());
+
+        $pagina = Livewire::actingAs($user)->test(CalendarioPreceptorias::class)->instance();
+        $buscar = new \ReflectionMethod($pagina, 'matriculasParaBuscar');
+
+        $semProfessor = $buscar->invoke($pagina, 'Bia');
+        $this->assertEqualsCanonicalizing([$dele->id, $deOutro->id], array_keys($semProfessor));
+
+        $doProfessor = $buscar->invoke($pagina, 'Bia', $professor->id);
+        $this->assertSame([$dele->id], array_keys($doProfessor));
     }
 }

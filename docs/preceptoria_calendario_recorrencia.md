@@ -31,11 +31,11 @@ O modo "Intervalo de Datas (Range)" do cadastro virou **Recorrente (janela de da
 
 - A **prévia** no formulário (`PreceptoriaRecorrenciaForm`) mostra o que será criado, o que foi
   ignorado e por quê, e as datas puladas por conflito.
-- **Conflito**: data em que o mesmo professor já tem preceptoria com horário sobreposto é pulada
-  (horários que só se encostam, 14:00–14:30 e 14:30–15:00, não conflitam; sem hora de fim vale
-  30 min). Rodar a mesma recorrência duas vezes não duplica nada.
+- **Conflito**: data em que o mesmo professor (ou o aluno, se a série já é de um aluno) já tem preceptoria
+  com horário sobreposto é pulada (ver "Horários concorrentes"). Rodar a mesma recorrência duas vezes
+  não duplica nada.
 - **Teto** de 400 preceptorias por geração (`PreceptoriaAgendaService::LIMITE_SERIE`).
-- O modo "Datas Específicas" não mudou (continua sem checar conflito).
+- O modo "Datas Específicas" também pula as datas em conflito (`PreceptoriaAgendaService::gerarNasDatas`).
 - Quando nada é criado (tudo ignorado ou em conflito) o cadastro avisa e não cria o registro "de
   hoje" que o modo antigo criava como valor de reserva.
 
@@ -68,8 +68,15 @@ alterações e o atalho "Abrir registro completo".
   `alterarAluno` vai `false`. A busca de matrículas usa a mesma regra da tela "Agendar Preceptoria"
   (`matriculasAcessiveis`, agora no serviço e compartilhada; a restrição ficou agrupada num único
   `where` para a busca por nome não a desfazer).
-- **Tudo é conferido antes de gravar**: o novo professor não pode ter preceptoria sobreposta; o aluno
-  não pode ter outra preceptoria no mesmo ciclo (como a tela de agendar faz). Se falha, nada muda.
+- **Tudo é conferido antes de gravar**: o novo professor e o novo aluno não podem ter outra
+  preceptoria sobreposta ("Horários concorrentes"); o aluno não pode ter outra no mesmo ciclo (como a
+  tela de agendar faz); e, havendo aluno, o professor tem de ser **do aluno**
+  (`professoresDaMatricula`: conselheiro da turma + professores do cronograma dela), a mesma regra
+  que a tela "Agendar Preceptoria" aplica ao listar horários. Vale tanto ao pôr um aluno quanto ao
+  trocar o professor de um horário já agendado. Se falha, nada muda (nem o histórico).
+- No modal, os dois campos se filtram mutuamente (`live`): escolhido o professor, a busca de alunos
+  traz só os dele (`matriculasDoProfessor`); escolhido o aluno, a busca de professores traz só os dele.
+  O serviço confere de novo, então a lista é só conforto.
 - **Avisos** (quem fez a mudança fica de fora):
 
   | Mudança | Recebe |
@@ -89,7 +96,37 @@ alterações e o atalho "Abrir registro completo".
 - Aparece no botão **Histórico de Alterações** do registro (`ViewPreceptoria`) e, resumido, no modal
   do calendário (partial `filament.components.preceptoria-historico`). Só para quem tem
   `Update:Preceptoria`: o texto traz nomes de alunos.
-- A tela "Agendar Preceptoria" passou a gravar `agendamento_preceptoria` e `liberacao_preceptoria`.
+- As telas "Agendar Preceptoria" (admin e Portal) passaram a gravar `agendamento_preceptoria` e
+  `liberacao_preceptoria`. O aviso de liberação delas agora leva o nome de quem saiu
+  (`PreceptoriaNotification::alunoAnterior`, passado por `enviarNotificacoes`): o e-mail é montado
+  pela fila quando o registro já não tem o aluno, e antes saía "Aluno (era): N/D".
+
+### 6. Horários concorrentes (mesmo professor ou mesmo aluno)
+Regra: **um professor ou um aluno não pode ter duas preceptorias em horários que se sobrepõem**.
+Horários que só se encostam não conflitam; sem hora de fim vale 30 min.
+
+- **Onde vive**: `Preceptoria::save()` passa por `PreceptoriaAgendaService::gravarSemConflito`. Como
+  `create`, `update`, `replicate()->save()` e as factories chamam `save()`, a regra vale em qualquer
+  caminho (cadastro avulso e recorrente, edição, clonar, editar em lote, tela de agendar do admin e
+  do Portal, calendário). Só a gravação direta no banco (`DB::table`, `Query::update`) escapa.
+- **Aluno = a pessoa**: `conflitosDoAluno` compara por `matricula.pessoa_id`, então duas matrículas do
+  mesmo aluno também conflitam, com qualquer professor.
+- **Só confere o que mudou**: o professor se `professor_id`, data ou hora mudaram (ou é registro novo);
+  o aluno se `matricula_id`, data ou hora mudaram. Liberar o aluno de um horário não reabre a conferência
+  do professor, então dado antigo que já se sobrepõe não trava o ajuste; só aparece quando alguém
+  mexe no professor, na data ou no horário.
+- **Corrida entre dois usuários**: a conferência e a gravação rodam numa transação que trava
+  (`lockForUpdate`, na ordem do id) a linha de `pessoa` do professor e do aluno. Dois usuários marcando o mesmo
+  professor/aluno ao mesmo tempo se enfileiram e o segundo enxerga a gravação do primeiro. Em SQLite
+  (testes) o `lockForUpdate` é ignorado, então a trava em si só vale em MySQL/MariaDB e **não tem
+  teste automatizado** (o teste cobre a conferência, não a concorrência real).
+- **Exceção**: `ConflitoDeHorarioException` (um `DomainException`) com mensagem pronta para o usuário.
+  Cada tela a captura e avisa: edição ("Horário em conflito", formulário aberto), cadastro avulso
+  (pula a data, como a recorrência), clonar/editar em lote (as que dão choque ficam como estavam e o
+  aviso lista os motivos), agendar admin/Portal e calendário (arrastar, "Novo horário", modal).
+- **Datas avulsas** passam por `gerarNasDatas`, que pula as datas em conflito e usa o mesmo aviso da
+  recorrência (`PreceptoriaRecorrenciaForm::avisarResultado`).
+- **Clonar sem nova data** agora é recusado: cairia exatamente em cima do original.
 
 ## Decisões
 
@@ -110,24 +147,25 @@ alterações e o atalho "Abrir registro completo".
 · `app/Notifications/Preceptorias/PreceptoriaAlteradaNotification.php` · `resources/views/filament/components/preceptoria-historico.blade.php`
 · alterados: `PreceptoriaForm`, `CreatePreceptoria`, `ListPreceptorias`, `ViewPreceptoria`, `AgendarPreceptoria`,
 `PreceptoriasTable`, `PreceptoriaResource`, `Preceptoria` (`historico()`, `destinatariosDasPessoas()`),
-`PreceptoriaNotification` (`alunoAnterior`). O `LembretePreceptoriaNotification` voltou a ser só lembrete.
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest}.php`.
+`PreceptoriaNotification` (`alunoAnterior`), `EditPreceptoria`, `Portal\Pages\Preceptoria`, `App\Exceptions\ConflitoDeHorarioException`.
+O `LembretePreceptoriaNotification` voltou a ser só lembrete.
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest}.php`.
 
 ## O que ficou de fora
 
 - **Série sem identidade**: as preceptorias geradas não guardam um `serie_id`; não há "editar/excluir a
   série inteira". Hoje: filtrar por ciclo/professor na listagem e usar as ações em lote.
 - **Arrastar um aluno** para um horário livre no calendário: a troca/agendamento é pelo modal (clique no bloco).
-- **Professor da turma**: o modal do calendário não restringe aos professores da turma do aluno (a tela
-  "Agendar Preceptoria" só oferece horários deles); quem tem permissão decide.
+- **Professor da turma na edição completa**: a regra "só professor do aluno" vale no modal do calendário
+  (e na tela "Agendar Preceptoria", que só lista horários deles). A **edição completa** do registro e o
+  cadastro ainda deixam a equipe combinar qualquer professor com qualquer aluno (o formulário só filtra a
+  lista de alunos pelo professor escolhido); é a porta de exceção, por escolha.
 - **Feriados**: só os nacionais fixos e a Sexta-Feira Santa; Carnaval, Corpus Christi e feriados
   estaduais/municipais entram como dia não letivo cadastrado.
-- **Corrida entre dois usuários**: o conflito é checado na hora, sem restrição no banco.
-- **Histórico incompleto**: só entram as mudanças feitas pelo calendário, pelo reagendamento e pela
-  tela "Agendar Preceptoria". Alterações na edição completa (formulário) e nas ações em lote não são
-  registradas nem avisam ninguém (o modelo não usa `LogsActivity`).
-- **Liberação pela tela "Agendar Preceptoria"** continua montando o e-mail "Aluno (era)" a partir do
-  registro, que já foi alterado quando a fila processa (o calendário não tem esse problema, passa o nome pronto).
+- **Dados antigos já sobrepostos** (de antes da regra) continuam no banco; não há relatório que os liste.
+- **Histórico incompleto**: só entram as mudanças feitas pelo calendário, pelo reagendamento e pelas
+  telas de agendar (admin e Portal). Alterações na edição completa (formulário) e nas ações em lote não
+  são registradas nem avisam ninguém (o modelo não usa `LogsActivity`).
 - O JavaScript do calendário (arrastar, esticar, selecionar) não tem teste automatizado: os testes
   cobrem o servidor (eventos, reagendar, ações de criar e gerar).
 - Suspeita **não verificada**, fora do escopo: a ação em lote "Clonar" chama `replicate()` sobre

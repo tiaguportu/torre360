@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Preceptorias\Tables;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Models\Matricula;
 use App\Models\Preceptoria;
 use Carbon\Carbon;
@@ -301,12 +302,14 @@ class PreceptoriasTable
                                 ->preload(),
                         ])
                         ->action(function (Collection $records, array $data) {
-                            $count = $records->count();
                             $updateData = array_filter($data);
+                            $clonadas = 0;
+                            $recusadas = [];
 
-                            $records->each(function (Preceptoria $record) use ($updateData) {
+                            $records->each(function (Preceptoria $record) use ($updateData, &$clonadas, &$recusadas) {
                                 $newRecord = $record->replicate([
                                     'matricula_id', // Não copiar o aluno
+                                    'relatorios_exists', // vem de withExists() na listagem; não é coluna
                                 ]);
 
                                 if (isset($updateData['data'])) {
@@ -321,13 +324,29 @@ class PreceptoriasTable
                                     $newRecord->ciclo_preceptoria_id = $updateData['ciclo_preceptoria_id'];
                                 }
 
-                                $newRecord->save();
+                                // sem nova data o clone cairia sobre o original: o professor não pode ter duas no mesmo horário
+                                try {
+                                    $newRecord->save();
+                                    $clonadas++;
+                                } catch (ConflitoDeHorarioException $e) {
+                                    $recusadas[] = $e->getMessage();
+                                }
                             });
 
-                            Notification::make()
-                                ->title("{$count} preceptorias clonadas com sucesso!")
-                                ->success()
-                                ->send();
+                            if ($clonadas > 0) {
+                                Notification::make()
+                                    ->title("{$clonadas} preceptorias clonadas com sucesso!")
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($recusadas !== []) {
+                                Notification::make()
+                                    ->title(count($recusadas).' preceptoria(s) não clonada(s) por conflito de horário')
+                                    ->body(implode(' ', array_slice(array_unique($recusadas), 0, 3)))
+                                    ->danger()
+                                    ->send();
+                            }
                         })
                         ->deselectRecordsAfterCompletion(),
 
@@ -435,13 +454,33 @@ class PreceptoriasTable
                                 return;
                             }
 
-                            $count = $records->count();
-                            $records->each(fn (Preceptoria $record) => $record->update($updateData));
+                            $atualizadas = 0;
+                            $recusadas = [];
 
-                            Notification::make()
-                                ->title("{$count} preceptorias atualizadas com sucesso!")
-                                ->success()
-                                ->send();
+                            // uma a uma: as que causariam choque de horário (do professor ou do aluno) ficam como estavam
+                            $records->each(function (Preceptoria $record) use ($updateData, &$atualizadas, &$recusadas) {
+                                try {
+                                    $record->update($updateData);
+                                    $atualizadas++;
+                                } catch (ConflitoDeHorarioException $e) {
+                                    $recusadas[] = $e->getMessage();
+                                }
+                            });
+
+                            if ($atualizadas > 0) {
+                                Notification::make()
+                                    ->title("{$atualizadas} preceptorias atualizadas com sucesso!")
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($recusadas !== []) {
+                                Notification::make()
+                                    ->title(count($recusadas).' preceptoria(s) não atualizada(s) por conflito de horário')
+                                    ->body(implode(' ', array_slice(array_unique($recusadas), 0, 3)))
+                                    ->danger()
+                                    ->send();
+                            }
                         })
                         ->deselectRecordsAfterCompletion()
                         ->requiresConfirmation()

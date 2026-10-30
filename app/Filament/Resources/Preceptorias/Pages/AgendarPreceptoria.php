@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Preceptorias\Pages;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Filament\Resources\Preceptorias\PreceptoriaResource;
 use App\Models\CicloPreceptoria;
-use App\Models\CronogramaAula;
 use App\Models\Matricula;
 use App\Models\Pessoa;
 use App\Models\Preceptoria;
@@ -57,38 +57,17 @@ class AgendarPreceptoria extends Page implements HasForms
 
     protected function getProfessoresDaMatricula(int $matriculaId): Collection
     {
-        $matricula = Matricula::with(['turma'])->find($matriculaId);
-
-        if (! $matricula || ! $matricula->turma) {
-            return collect();
-        }
-
-        $professoresIds = collect();
-
-        if ($matricula->turma->professor_conselheiro_id) {
-            $professoresIds->push($matricula->turma->professor_conselheiro_id);
-        }
-
-        $cronogramaProfessoresIds = CronogramaAula::where('turma_id', $matricula->turma_id)
-            ->whereNotNull('pessoa_id')
-            ->pluck('pessoa_id');
-
-        $professoresIds = $professoresIds->concat($cronogramaProfessoresIds)->unique();
-
-        if ($professoresIds->isEmpty()) {
-            return collect();
-        }
-
-        return Pessoa::whereIn('id', $professoresIds)->get();
+        return app(PreceptoriaAgendaService::class)->professoresDaMatricula($matriculaId);
     }
 
     public function liberarHorario(int $id): void
     {
         $preceptoria = Preceptoria::with(['professor.users', 'matricula.pessoa.responsaveis.users'])->findOrFail($id);
 
-        $this->enviarNotificacoes($preceptoria, 'liberacao');
-
+        // o e-mail é montado pela fila, quando o registro já não tem o aluno: o nome vai pronto
         $aluno = $preceptoria->matricula?->pessoa?->nome;
+
+        $this->enviarNotificacoes($preceptoria, 'liberacao', $aluno);
 
         $preceptoria->update(['matricula_id' => null]);
 
@@ -107,19 +86,19 @@ class AgendarPreceptoria extends Page implements HasForms
         $this->form->fill(['matricula_id' => $this->data['matricula_id'] ?? null]);
     }
 
-    protected function enviarNotificacoes(Preceptoria $preceptoria, string $tipo): void
+    protected function enviarNotificacoes(Preceptoria $preceptoria, string $tipo, ?string $alunoAnterior = null): void
     {
         // 1) Usuário que realizou o agendamento (Solicitante)
         $solicitante = auth()->user();
         if ($solicitante) {
-            $solicitante->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true));
+            $solicitante->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true, alunoAnterior: $alunoAnterior));
         }
 
         // 2) Usuários relacionados com Pessoa Professor configurado para a Preceptoria escolhida
         if ($preceptoria->professor) {
-            $preceptoria->professor->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $preceptoria->professor->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                 if ($user->id !== $solicitante?->id) {
-                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                 }
             });
         }
@@ -129,17 +108,17 @@ class AgendarPreceptoria extends Page implements HasForms
             $alunoPessoa = $preceptoria->matricula->pessoa;
 
             // Notificar Usuários do Aluno (se houver)
-            $alunoPessoa->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $alunoPessoa->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                 if ($user->id !== $solicitante?->id) {
-                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                 }
             });
 
             // Notificar Usuários dos Responsáveis
-            $alunoPessoa->responsaveis->each(function ($responsavel) use ($preceptoria, $tipo, $solicitante) {
-                $responsavel->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $alunoPessoa->responsaveis->each(function ($responsavel) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
+                $responsavel->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                     if ($user->id !== $solicitante?->id) {
-                        $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                        $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                     }
                 });
             });
@@ -381,6 +360,12 @@ class AgendarPreceptoria extends Page implements HasForms
 
             $this->form->fill();
 
+        } catch (ConflitoDeHorarioException $e) {
+            Notification::make()
+                ->title('Horário em conflito')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Erro ao agendar')

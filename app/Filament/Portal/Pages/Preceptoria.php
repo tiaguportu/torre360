@@ -2,13 +2,13 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Filament\Concerns\HasAjudaAction;
 use App\Models\CicloPreceptoria;
-use App\Models\CronogramaAula;
 use App\Models\Matricula;
-use App\Models\Pessoa;
 use App\Models\Preceptoria as PreceptoriaModel;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
+use App\Services\PreceptoriaAgendaService;
 use App\Support\HelpContent;
 use BackedEnum;
 use Carbon\Carbon;
@@ -69,29 +69,7 @@ class Preceptoria extends Page implements HasForms
 
     protected function getProfessoresDaMatricula(int $matriculaId): Collection
     {
-        $matricula = Matricula::with(['turma'])->find($matriculaId);
-
-        if (! $matricula || ! $matricula->turma) {
-            return collect();
-        }
-
-        $professoresIds = collect();
-
-        if ($matricula->turma->professor_conselheiro_id) {
-            $professoresIds->push($matricula->turma->professor_conselheiro_id);
-        }
-
-        $cronogramaProfessoresIds = CronogramaAula::where('turma_id', $matricula->turma_id)
-            ->whereNotNull('pessoa_id')
-            ->pluck('pessoa_id');
-
-        $professoresIds = $professoresIds->concat($cronogramaProfessoresIds)->unique();
-
-        if ($professoresIds->isEmpty()) {
-            return collect();
-        }
-
-        return Pessoa::whereIn('id', $professoresIds)->get();
+        return app(PreceptoriaAgendaService::class)->professoresDaMatricula($matriculaId);
     }
 
     public function liberarHorario(int $id): void
@@ -107,9 +85,19 @@ class Preceptoria extends Page implements HasForms
             return;
         }
 
-        $this->enviarNotificacoes($preceptoria, 'liberacao');
+        // o e-mail é montado pela fila, quando o registro já não tem o aluno: o nome vai pronto
+        $aluno = $preceptoria->matricula?->pessoa?->nome;
+
+        $this->enviarNotificacoes($preceptoria, 'liberacao', $aluno);
 
         $preceptoria->update(['matricula_id' => null]);
+
+        app(PreceptoriaAgendaService::class)->registrarHistorico(
+            $preceptoria,
+            'liberacao_preceptoria',
+            'Horário liberado (o aluno era '.($aluno ?? 'não informado').')',
+            ['antes' => $aluno, 'depois' => null],
+        );
 
         Notification::make()
             ->title('Agendamento cancelado com sucesso!')
@@ -119,17 +107,17 @@ class Preceptoria extends Page implements HasForms
         $this->form->fill(['matricula_id' => $this->data['matricula_id'] ?? null]);
     }
 
-    protected function enviarNotificacoes(PreceptoriaModel $preceptoria, string $tipo): void
+    protected function enviarNotificacoes(PreceptoriaModel $preceptoria, string $tipo, ?string $alunoAnterior = null): void
     {
         $solicitante = auth()->user();
         if ($solicitante) {
-            $solicitante->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true));
+            $solicitante->notify(new PreceptoriaNotification($preceptoria, $tipo, paraSolicitante: true, alunoAnterior: $alunoAnterior));
         }
 
         if ($preceptoria->professor) {
-            $preceptoria->professor->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $preceptoria->professor->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                 if ($user->id !== $solicitante?->id) {
-                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                 }
             });
         }
@@ -137,16 +125,16 @@ class Preceptoria extends Page implements HasForms
         if ($preceptoria->matricula?->pessoa) {
             $alunoPessoa = $preceptoria->matricula->pessoa;
 
-            $alunoPessoa->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $alunoPessoa->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                 if ($user->id !== $solicitante?->id) {
-                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                    $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                 }
             });
 
-            $alunoPessoa->responsaveis->each(function ($responsavel) use ($preceptoria, $tipo, $solicitante) {
-                $responsavel->users->each(function ($user) use ($preceptoria, $tipo, $solicitante) {
+            $alunoPessoa->responsaveis->each(function ($responsavel) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
+                $responsavel->users->each(function ($user) use ($preceptoria, $tipo, $solicitante, $alunoAnterior) {
                     if ($user->id !== $solicitante?->id) {
-                        $user->notify(new PreceptoriaNotification($preceptoria, $tipo));
+                        $user->notify(new PreceptoriaNotification($preceptoria, $tipo, alunoAnterior: $alunoAnterior));
                     }
                 });
             });
@@ -309,6 +297,15 @@ class Preceptoria extends Page implements HasForms
 
             $preceptoria = $preceptoria->fresh(['professor.users', 'matricula.pessoa.responsaveis.users', 'matricula.pessoa.users']);
 
+            $aluno = $preceptoria->matricula?->pessoa?->nome;
+
+            app(PreceptoriaAgendaService::class)->registrarHistorico(
+                $preceptoria,
+                'agendamento_preceptoria',
+                'Aluno agendado: '.($aluno ?? 'não informado'),
+                ['antes' => null, 'depois' => $aluno],
+            );
+
             $this->enviarNotificacoes($preceptoria, 'agendamento');
 
             Notification::make()
@@ -317,6 +314,12 @@ class Preceptoria extends Page implements HasForms
                 ->send();
 
             $this->form->fill();
+        } catch (ConflitoDeHorarioException $e) {
+            Notification::make()
+                ->title('Horário em conflito')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Erro ao agendar')

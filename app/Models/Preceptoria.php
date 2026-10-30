@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Notifications\Preceptorias\LembretePreceptoriaNotification;
+use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +29,17 @@ class Preceptoria extends Model
             'hora_inicio' => 'datetime',
             'hora_fim' => 'datetime',
         ];
+    }
+
+    /**
+     * Nem o professor nem o aluno podem ter duas preceptorias em horários que se sobrepõem: vale para
+     * toda gravação (cadastro, edição, ações em lote, agendamento, calendário).
+     *
+     * @throws ConflitoDeHorarioException
+     */
+    public function save(array $options = []): bool
+    {
+        return app(PreceptoriaAgendaService::class)->gravarSemConflito($this, fn () => parent::save($options));
     }
 
     public function professor(): BelongsTo

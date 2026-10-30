@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Preceptorias\Schemas;
 
+use App\Exceptions\ConflitoDeHorarioException;
 use App\Models\CicloPreceptoria;
 use App\Models\Preceptoria;
 use App\Services\PreceptoriaAgendaService;
@@ -167,10 +168,29 @@ class PreceptoriaRecorrenciaForm
             return null;
         }
 
+        return self::avisarResultado($resultado);
+    }
+
+    /**
+     * Avisa o que a geração fez: criadas, desconsideradas (fim de semana, feriado, dia não letivo) e
+     * puladas por choque de horário do professor ou do aluno.
+     *
+     * @param  array{criadas: array<int, Preceptoria>, ignoradas: array<int, mixed>, conflitos: array<string, Preceptoria>, conflitos_aluno: array<string, Preceptoria>}  $resultado
+     * @return array<int, Preceptoria>|null as criadas; null quando nada foi criado
+     */
+    public static function avisarResultado(array $resultado): ?array
+    {
         if ($resultado['criadas'] === []) {
+            $motivos = collect($resultado['conflitos'])
+                ->map(fn (Preceptoria $outra) => ConflitoDeHorarioException::doProfessor($outra)->getMessage())
+                ->concat(collect($resultado['conflitos_aluno'])->map(fn (Preceptoria $outra) => ConflitoDeHorarioException::doAluno($outra)->getMessage()))
+                ->unique()
+                ->take(3)
+                ->implode(' ');
+
             Notification::make()
                 ->title('Nenhuma preceptoria criada')
-                ->body('Todas as datas da janela foram desconsideradas ou já têm preceptoria deste professor no horário.')
+                ->body(trim('Todas as datas foram desconsideradas ou o professor (ou o aluno) já tem preceptoria no horário. '.$motivos))
                 ->warning()
                 ->send();
 
@@ -179,10 +199,12 @@ class PreceptoriaRecorrenciaForm
 
         $ignoradas = count($resultado['ignoradas']);
         $puladas = count($resultado['conflitos']);
+        $puladasAluno = count(array_diff_key($resultado['conflitos_aluno'], $resultado['conflitos']));
 
         $detalhes = array_filter([
             $ignoradas ? "{$ignoradas} data(s) desconsiderada(s) (fim de semana, feriado ou dia não letivo)" : null,
             $puladas ? "{$puladas} data(s) puladas por já terem preceptoria do professor no horário" : null,
+            $puladasAluno ? "{$puladasAluno} data(s) puladas por o aluno já ter preceptoria no horário" : null,
         ]);
 
         Notification::make()
@@ -224,6 +246,7 @@ class PreceptoriaRecorrenciaForm
             $get('professor_id') ? (int) $get('professor_id') : null,
             $get('hora_inicio'),
             $get('hora_fim'),
+            $get('matricula_id') ? (int) $get('matricula_id') : null,
         );
 
         $dia = fn (string $data) => Carbon::parse($data)->format('d/m');
@@ -252,6 +275,13 @@ class PreceptoriaRecorrenciaForm
         if ($simulacao['conflitos'] !== []) {
             $linhas[] = '<span style="color:#b45309">Já existe preceptoria deste professor em: '
                 .e(collect($simulacao['conflitos'])->keys()->map($dia)->implode(', '))
+                .' (essas datas serão puladas).</span>';
+        }
+
+        $soDoAluno = array_diff_key($simulacao['conflitos_aluno'], $simulacao['conflitos']);
+        if ($soDoAluno !== []) {
+            $linhas[] = '<span style="color:#b45309">O aluno já tem preceptoria em: '
+                .e(collect($soDoAluno)->keys()->map($dia)->implode(', '))
                 .' (essas datas serão puladas).</span>';
         }
 
