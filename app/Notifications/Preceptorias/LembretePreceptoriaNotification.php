@@ -106,7 +106,7 @@ class LembretePreceptoriaNotification extends Notification implements ShouldQueu
             'title' => 'Lembrete de Preceptoria',
             'body' => "Lembrete: Preceptoria em {$dataF} às {$horaF} ({$aluno} e {$professor}).",
             'data' => [
-                'url' => PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], absolute: false),
+                'url' => PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], isAbsolute: false),
                 'preceptoria_id' => $this->preceptoria->id,
             ],
         ];

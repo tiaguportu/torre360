@@ -144,7 +144,7 @@ class PreceptoriaNotification extends Notification implements ShouldQueue
             'body' => $body,
             'data' => [
                 'url' => $this->tipo === 'agendamento'
-                    ? PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], absolute: false)
+                    ? PreceptoriaResource::getUrl('view', ['record' => $this->preceptoria], isAbsolute: false)
                     : '/admin/preceptorias',
                 'preceptoria_id' => $this->preceptoria->id,
             ],

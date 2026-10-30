@@ -175,9 +175,14 @@ o `update` (com a regra de horários concorrentes) e compara.
 - A tela de edição acrescenta ao "Salvo" quantos destinatários foram avisados; o lote, ao resumo.
 - **Push**: `PreceptoriaAlteradaNotification::toPush` chamava `getUrl(..., absolute: false)`, mas o
   parâmetro do Filament é `isAbsolute`; o `Error` era engolido pelo `FcmChannel` (que só registra no
-  log) e o push nunca saía. Corrigido nela, com teste. **`PreceptoriaNotification` e
-  `LembretePreceptoriaNotification` têm o mesmo defeito** (anterior a esta mudança) e não foram
-  alteradas, porque corrigir faz o push passar a ser enviado em produção.
+  log) e o push nunca saía. **`PreceptoriaNotification` (agendamento) e
+  `LembretePreceptoriaNotification` tinham o mesmo defeito**, anterior às mudanças desta frente. As
+  três foram corrigidas (`isAbsolute: false`) e têm teste do `toPush`
+  (`PreceptoriaPushTest`, `PreceptoriaEdicaoHistoricoTest`). Efeito em produção: a partir do deploy,
+  agendamento e lembrete passam a gerar push para quem tem `fcm_token` (antes só e-mail e sininho). O
+  envio usa `storage/app/firebase-credentials.json`; sem o arquivo o `FcmService` só grava um aviso no
+  log. Como o `FcmChannel` engole qualquer exceção, um `toPush` que lança não aparece em lugar nenhum:
+  por isso os testes chamam o `toPush` direto.
 
 ### 8. Exclusão e restauração
 Excluir uma preceptoria deixou de apagar a linha: `Preceptoria` usa `SoftDeletes` (migration
@@ -238,7 +243,7 @@ para o professor e o aluno.
 `PreceptoriasTable`, `PreceptoriaResource`, `Preceptoria` (`historico()`, `destinatariosDasPessoas()`),
 `PreceptoriaNotification` (`alunoAnterior`), `EditPreceptoria`, `Portal\Pages\Preceptoria`, `App\Exceptions\ConflitoDeHorarioException`.
 O `LembretePreceptoriaNotification` voltou a ser só lembrete.
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest}.php`.
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest,PreceptoriaPushTest}.php`.
 
 ## O que ficou de fora
 
@@ -264,5 +269,5 @@ Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPrec
   "não avisar"), como no calendário.
 - O JavaScript do calendário (arrastar, esticar, selecionar) não tem teste automatizado: os testes
   cobrem o servidor (eventos, reagendar, ações de criar e gerar).
-- Push de `PreceptoriaNotification` e `LembretePreceptoriaNotification` não sai (`absolute:` no lugar de
-  `isAbsolute:`; ver §7).
+- O push só chega a quem instalou o aplicativo e tem `fcm_token`; a entrega real ao Firebase não é
+  coberta por teste (os testes conferem o conteúdo do `toPush`, não o envio).
