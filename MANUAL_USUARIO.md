@@ -1258,7 +1258,7 @@ Na tela de edição de um contrato (`Financeiro → Contratos → Editar`), util
 
 - **Fatura de Entrada** (se valor > 0): vence na própria Data-base.
 - **Parcelas mensais:** a **1ª parcela** vence **5 dias úteis** depois da Data-base; as demais são distribuídas mês a mês a partir daí.
-- **Valor de cada parcela:** `(Valor Total − Valor de Entrada) ÷ Quantidade de Parcelas`.
+- **Valor de cada parcela:** `(Valor Total − Valor de Entrada) ÷ Quantidade de Parcelas`. Quando a divisão não é exata, os centavos que sobram ficam na **1ª parcela** (R$ 1.000,00 em 3 parcelas = R$ 333,34 + R$ 333,33 + R$ 333,33), de modo que a soma das faturas sempre bate com o valor do contrato. A fatura de entrada nunca recebe a sobra.
 - Gerar as faturas **não** preenche a Data de Aceite do contrato.
 - Se o contrato já tinha sido enviado para assinatura, as faturas novas mudam o texto do contrato e por isso os registros de assinatura são limpos e o contrato precisa ser enviado de novo.
 
@@ -1277,7 +1277,7 @@ Quando o parcelamento não é "entrada + parcelas mensais" (por exemplo, parcela
 
 **Regras de cálculo:**
 
-- Fatura sem valor citado na instrução recebe uma parte **igual** do que sobra do valor do contrato; os centavos de arredondamento ficam na última delas.
+- Fatura sem valor citado na instrução recebe uma parte **igual** do que sobra do valor do contrato; se a divisão não for exata, os centavos que sobram ficam na primeira delas (a de vencimento mais cedo), como na geração automática.
 - Valor em reais ou percentual citados para uma fatura (entrada, matrícula, material) são respeitados.
 - A soma das faturas **precisa fechar com o valor do contrato**; se não fechar (ex.: a instrução cita valores que somam menos que o contrato), o sistema recusa e mostra a diferença.
 - Máximo de 60 faturas por instrução e vencimentos entre 2 anos atrás e 6 anos à frente.

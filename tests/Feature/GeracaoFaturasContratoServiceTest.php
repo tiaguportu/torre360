@@ -127,6 +127,67 @@ class GeracaoFaturasContratoServiceTest extends TestCase
         $this->assertSame('2026-01-16', $faturas->first()->vencimento->toDateString());
     }
 
+    /** @return list<string> valor de cada fatura, em reais com duas casas, na ordem de vencimento */
+    private function valoresDasFaturas(Contrato $contrato): array
+    {
+        return $contrato->faturas()->with('itens')->orderBy('vencimento')->orderBy('id')->get()
+            ->map(fn ($fatura): string => number_format((float) $fatura->itens->first()->valor_unitario, 2, '.', ''))
+            ->all();
+    }
+
+    public function test_divisao_inexata_deixa_os_centavos_que_sobram_na_primeira_parcela(): void
+    {
+        $contrato = $this->criarContrato(1000.0);
+
+        app(GeracaoFaturasContratoService::class)->gerar($contrato, 3, 0.0);
+
+        $this->assertSame(['333.34', '333.33', '333.33'], $this->valoresDasFaturas($contrato));
+    }
+
+    public function test_a_soma_das_parcelas_fecha_com_o_contrato_mesmo_quando_arredondar_passaria(): void
+    {
+        // 100,00 / 6 = 16,666...: arredondar cada uma para 16,67 somaria 100,02.
+        $contrato = $this->criarContrato(100.0);
+
+        app(GeracaoFaturasContratoService::class)->gerar($contrato, 6, 0.0);
+
+        $valores = $this->valoresDasFaturas($contrato);
+        $this->assertSame(['16.70', '16.66', '16.66', '16.66', '16.66', '16.66'], $valores);
+        $this->assertEqualsWithDelta(100.0, array_sum(array_map('floatval', $valores)), 0.001);
+    }
+
+    public function test_com_entrada_os_centavos_sobrantes_vao_para_a_primeira_parcela_e_nao_para_a_entrada(): void
+    {
+        // Saldo de 900,00 em 7 parcelas = 128,571...: entrada intacta, sobra de 1 centavo na Parcela 1.
+        $contrato = $this->criarContrato(1000.0);
+
+        $faturas = app(GeracaoFaturasContratoService::class)->gerar($contrato, 7, 100.0);
+
+        $this->assertSame(
+            ['100.00', '128.58', '128.57', '128.57', '128.57', '128.57', '128.57', '128.57'],
+            $this->valoresDasFaturas($contrato)
+        );
+        $this->assertSame('Entrada', $faturas->first()->itens->first()->descricao);
+        $this->assertSame('Parcela 1 de 7', $faturas->get(1)->itens->first()->descricao);
+    }
+
+    public function test_dividir_em_centavos(): void
+    {
+        $servico = app(GeracaoFaturasContratoService::class);
+
+        $this->assertSame([3334, 3333, 3333], $servico->dividirEmCentavos(10000, 3));
+        $this->assertSame([2500, 2500, 2500, 2500], $servico->dividirEmCentavos(10000, 4));
+        $this->assertSame([3, 1, 1], $servico->dividirEmCentavos(5, 3));
+        $this->assertSame([10000], $servico->dividirEmCentavos(10000, 1));
+    }
+
+    public function test_dividir_em_centavos_exige_ao_menos_uma_parte(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        app(GeracaoFaturasContratoService::class)->dividirEmCentavos(10000, 0);
+    }
+
     public function test_lanca_excecao_quando_entrada_maior_que_total(): void
     {
         $contrato = $this->criarContrato(100.0);

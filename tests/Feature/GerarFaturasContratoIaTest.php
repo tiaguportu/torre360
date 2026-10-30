@@ -115,14 +115,39 @@ class GerarFaturasContratoIaTest extends TestCase
         $this->assertSame('Parcela 1 de 2', $plano[0]['descricao']);
     }
 
-    public function test_resolver_joga_o_resto_de_centavos_na_ultima_parcela(): void
+    public function test_resolver_joga_o_resto_de_centavos_na_primeira_parcela(): void
     {
         $plano = app(GeracaoFaturasContratoService::class)->resolverPlano($this->criarContrato(1000.0), [
             ['vencimento' => '2026-11-10'], ['vencimento' => '2026-12-10'], ['vencimento' => '2027-01-10'],
         ]);
 
-        $this->assertSame([333.33, 333.33, 333.34], array_column($plano, 'valor'));
+        $this->assertSame([333.34, 333.33, 333.33], array_column($plano, 'valor'));
         $this->assertEqualsWithDelta(1000.0, array_sum(array_column($plano, 'valor')), 0.001);
+    }
+
+    public function test_resolver_da_o_resto_a_parcela_livre_de_vencimento_mais_cedo_mesmo_fora_de_ordem(): void
+    {
+        // 1.000,01 - 100,00 de entrada = 900,01 para duas parcelas livres: 450,00 + 450,00 + 1 centavo na primeira (por data).
+        $plano = app(GeracaoFaturasContratoService::class)->resolverPlano($this->criarContrato(1000.01), [
+            ['descricao' => 'B', 'vencimento' => '2027-02-10'],
+            ['descricao' => 'Entrada', 'vencimento' => '2026-11-01', 'valor' => 100],
+            ['descricao' => 'A', 'vencimento' => '2027-01-10'],
+        ]);
+
+        $this->assertSame(['Entrada', 'A', 'B'], array_column($plano, 'descricao'));
+        $this->assertSame([100.0, 450.01, 450.0], array_column($plano, 'valor'));
+    }
+
+    public function test_resolver_absorve_o_arredondamento_de_percentuais_redondos_na_primeira_parcela(): void
+    {
+        // 33,33% x 3 de R$ 100,00 = 99,99: o centavo que falta vai para a primeira.
+        $plano = app(GeracaoFaturasContratoService::class)->resolverPlano($this->criarContrato(100.0), [
+            ['vencimento' => '2026-11-10', 'percentual' => 33.33],
+            ['vencimento' => '2026-12-10', 'percentual' => 33.33],
+            ['vencimento' => '2027-01-10', 'percentual' => 33.33],
+        ]);
+
+        $this->assertSame([33.34, 33.33, 33.33], array_column($plano, 'valor'));
     }
 
     public function test_resolver_combina_percentual_valor_fixo_e_parcelas_livres(): void

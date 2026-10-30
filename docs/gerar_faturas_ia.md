@@ -39,12 +39,17 @@ então **nada é gravado antes de o operador ver a prévia** e confirmar.
 - Falha de rede/API vira `RuntimeException` com mensagem genérica ("Tente novamente em instantes", sem detalhe
   técnico nem chave; a exceção original é só reportada). Sem `GEMINI_API_KEY`, avisa sem chamar a API.
 
-### 2. `GeracaoFaturasContratoService` (refatorado, comportamento do `gerar()` preservado)
+### 2. `GeracaoFaturasContratoService` (refatorado; `gerar()` mantém datas, descrições e entrada, mas passou a dividir em centavos)
+- `dividirEmCentavos(int $totalCentavos, int $partes)` — **única regra de divisão**, usada por `gerar()` e por
+  `resolverPlano()`: partes iguais em centavos inteiros e, se a divisão não for exata, **a primeira parte fica
+  com todos os centavos que sobram** (R$ 100,00 ÷ 3 = 33,34 + 33,33 + 33,33). A soma sempre fecha com o total.
 - `resolverPlano(Contrato, array $parcelas, ?Carbon $referencia)` — **função pura**, sem gravar:
   - parcela com `valor` ou `percentual` fica com esse valor (se vierem os dois, vale `valor`);
-  - parcelas sem nenhum dos dois dividem **igualmente** o saldo; o resto de centavos vai para a última;
+  - parcelas sem nenhum dos dois dividem **igualmente** o saldo (`dividirEmCentavos`); o resto de centavos vai
+    para a primeira delas **por data de vencimento** (o plano é ordenado antes de dividir, não importa a ordem em
+    que a IA listou), nunca para uma parcela de valor definido como "Entrada";
   - sem parcelas livres, a soma precisa fechar com o contrato (tolerância de 1 centavo por parcela, para
-    percentuais redondos como 33,33% × 3, absorvida pela última); senão `InvalidArgumentException` com os dois valores;
+    percentuais redondos como 33,33% × 3, absorvida pela primeira); senão `InvalidArgumentException` com os dois valores;
   - recusa data inexistente (30/02), data fora de [hoje − 2 anos, hoje + 6 anos], menos de 1 ou mais de
     `MAX_PARCELAS_PLANO` (60) parcelas, valor/percentual inválido, saldo que não chega a 1 centavo por parcela livre;
   - descrição sem HTML, espaços colapsados, máximo de 120 caracteres; resultado ordenado por vencimento.
@@ -91,21 +96,29 @@ então **nada é gravado antes de o operador ver a prévia** e confirmar.
   fatura passar a ter pagamento nesse intervalo, `gerarPlano()` recusa na confirmação.
 - A prévia **avisa** de fatura protegida, mas o botão de confirmar continua ativo; o bloqueio efetivo é do serviço
   (notificação de erro ao clicar).
-- O caminho antigo (`gerar()`) continua dividindo com `round(saldo / parcelas, 2)` sem ajustar o resto de
-  centavos (as parcelas podem somar alguns centavos a menos que o contrato). O caminho por IA fecha o total
-  exatamente. Unificar exigiria mudar valores de faturas já esperados por testes e relatórios; ficou fora do escopo.
+- **Centavos (corrigido em 2026-10-29):** o botão "Gerar Faturas Automaticamente" (`gerar()`) dividia com
+  `round(saldo / parcelas, 2)` em float, e a soma das parcelas podia passar ou ficar abaixo do contrato
+  (R$ 100,00 em 6 parcelas dava 16,67 × 6 = 100,02, o que o alerta de divergência de `EditContrato::afterSave`
+  e a auditoria `AuditarFaturasContratosCommand --corrigir` tratavam como divergência). Agora os dois caminhos
+  usam `dividirEmCentavos()`: a 1ª parcela fica com os centavos que sobram e a soma fecha exatamente. Divisões
+  exatas (1.200 ÷ 12 = 100) não mudam. Faturas **já geradas** não são alteradas; só as novas gerações/regenerações.
+  A entrada nunca recebe a sobra.
 - O limite por minuto é o mesmo do CRM (`services.gemini.limite_por_minuto`, padrão 10 por usuário).
 - Verificado por testes automatizados; a tela não foi aberta em navegador porque o `.env` local aponta para o
   banco de produção.
 
 ## Testes
 
-`tests/Feature/GerarFaturasContratoIaTest.php` (26 testes, Gemini simulado com `Http::fake`):
-`resolverPlano` (divisão igual, resto de centavos, percentual + fixo + livres, ordenação, soma que não fecha,
+`tests/Feature/GerarFaturasContratoIaTest.php` (28 testes, Gemini simulado com `Http::fake`):
+`resolverPlano` (divisão igual, resto de centavos na primeira parcela por data, inclusive com a lista fora de
+ordem e com percentuais redondos, percentual + fixo + livres, ordenação, soma que não fecha,
 saldo esgotado, data inexistente, data absurda, teto, HTML na descrição), `gerarPlano` (substituição, fatura
 paga intocada), o serviço de IA (exemplo do pedido, contexto do prompt sem dados do aluno, tag de dados não
 fechável pela instrução, conta errada da IA, "não entendi", resposta não-JSON, sem chave, falha de rede sem
 vazar a chave) e as ações (prévia antes de gravar, cancelar não altera, falha mantém o modal, plano
 adulterado recusado, reset do Assinafy) mais a renderização da prévia (HTML escapado).
-Regressão: `GeracaoFaturasContratoServiceTest`, `GeracaoFaturasComBolsaTest`, `EditContratoGerarFaturasTest`,
+`GeracaoFaturasContratoServiceTest` ganhou 6 testes da divisão do botão manual: 1.000 ÷ 3 com a sobra na 1ª
+parcela, 100 ÷ 6 somando exatamente 100,00 (arredondar daria 100,02), entrada intacta com 7 parcelas, e
+`dividirEmCentavos`.
+Regressão: `GeracaoFaturasComBolsaTest`, `EditContratoGerarFaturasTest`,
 `ContratoGerarFaturasAntesDoAceiteTest`, `FaturaImportExportRoundTripTest` e os testes de Rematrícula seguem verdes.

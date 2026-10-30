@@ -41,33 +41,54 @@ class GeracaoFaturasContratoService
     {
         $dataBase ??= $contrato->data_aceite ? Carbon::parse($contrato->data_aceite) : Carbon::today();
 
-        $valorTotal = (float) $contrato->valor_total;
-        $valorRestante = $valorTotal - $valorEntrada;
+        $entradaCentavos = (int) round($valorEntrada * 100);
+        $restanteCentavos = (int) round((float) $contrato->valor_total * 100) - $entradaCentavos;
 
-        if ($valorRestante < 0) {
+        if ($restanteCentavos < 0) {
             throw new \InvalidArgumentException('O valor de entrada não pode ser maior que o valor total do contrato.');
         }
 
-        $valorParcela = $quantidadeParcelas > 0 ? round($valorRestante / $quantidadeParcelas, 2) : 0;
+        // Em centavos inteiros: dividir em reais com float arredondava para cima ou para baixo (100 ÷ 6 = 16,67 × 6 = 100,02)
+        // e a soma das faturas deixava de bater com o contrato. Sobrando centavos, a 1ª parcela fica com eles.
+        $valoresParcelas = $quantidadeParcelas > 0 ? $this->dividirEmCentavos($restanteCentavos, $quantidadeParcelas) : [];
 
         $dataAceite = $dataBase->copy();
         $primeiroVencimento = $this->adicionarDiasUteis($dataAceite, 5);
 
         $plano = [];
 
-        if ($valorEntrada > 0) {
-            $plano[] = ['descricao' => 'Entrada', 'vencimento' => $dataAceite->toDateString(), 'valor' => $valorEntrada];
+        if ($entradaCentavos > 0) {
+            $plano[] = ['descricao' => 'Entrada', 'vencimento' => $dataAceite->toDateString(), 'valor' => $entradaCentavos / 100.0];
         }
 
         for ($i = 0; $i < $quantidadeParcelas; $i++) {
             $plano[] = [
                 'descricao' => 'Parcela '.($i + 1).' de '.$quantidadeParcelas,
                 'vencimento' => $primeiroVencimento->copy()->addMonths($i)->toDateString(),
-                'valor' => $valorParcela,
+                'valor' => $valoresParcelas[$i] / 100.0,
             ];
         }
 
         return $this->gerarPlano($contrato, $plano);
+    }
+
+    /**
+     * Divide um total em centavos em partes iguais. Se a divisão não for exata, a primeira parte recebe todos os
+     * centavos que sobram (100,00 ÷ 3 = 33,34 + 33,33 + 33,33), de modo que a soma sempre fecha com o total.
+     *
+     * @return list<int> centavos de cada parte, na ordem das parcelas
+     */
+    public function dividirEmCentavos(int $totalCentavos, int $partes): array
+    {
+        if ($partes < 1) {
+            throw new \InvalidArgumentException('A divisão precisa de ao menos uma parte.');
+        }
+
+        $base = intdiv($totalCentavos, $partes);
+        $valores = array_fill(0, $partes, $base);
+        $valores[0] += $totalCentavos - $base * $partes;
+
+        return $valores;
     }
 
     /**
@@ -126,7 +147,8 @@ class GeracaoFaturasContratoService
      *
      * Cada parcela traz `vencimento` (AAAA-MM-DD) e, opcionalmente, `valor` (reais) ou `percentual` (do valor total
      * do contrato). As parcelas sem nenhum dos dois dividem igualmente o que sobra do total; o resto de centavos
-     * fica na última delas. Sem parcelas "livres", a soma tem de fechar com o valor do contrato.
+     * fica na primeira delas (a de vencimento mais cedo), como em `gerar()`. Sem parcelas "livres", a soma tem de
+     * fechar com o valor do contrato.
      *
      * @param  list<array<string, mixed>>  $parcelas
      * @return list<array{descricao: string, vencimento: string, valor: float}>
@@ -153,7 +175,6 @@ class GeracaoFaturasContratoService
 
         $linhas = [];
         $somaDefinida = 0;
-        $livres = [];
 
         foreach (array_values($parcelas) as $indice => $parcela) {
             $vencimento = $this->normalizarVencimento($parcela['vencimento'] ?? null);
@@ -189,12 +210,15 @@ class GeracaoFaturasContratoService
                 }
 
                 $somaDefinida += $centavos;
-            } else {
-                $livres[] = $indice;
             }
 
             $linhas[] = ['descricao' => $descricao, 'vencimento' => $vencimento, 'centavos' => $centavos, 'ordem' => $indice];
         }
+
+        // Ordenar antes de distribuir: "primeira parcela" é a de vencimento mais cedo, não a que a IA listou primeiro.
+        usort($linhas, fn (array $a, array $b): int => [$a['vencimento']->timestamp, $a['ordem']] <=> [$b['vencimento']->timestamp, $b['ordem']]);
+
+        $livres = array_keys(array_filter($linhas, fn (array $linha): bool => $linha['centavos'] === null));
 
         if ($livres !== []) {
             $saldo = $totalCentavos - $somaDefinida;
@@ -203,14 +227,11 @@ class GeracaoFaturasContratoService
                 throw new \InvalidArgumentException('As parcelas com valor definido já consomem todo o valor do contrato; não sobra saldo para dividir entre as demais.');
             }
 
-            $porParcela = intdiv($saldo, count($livres));
-            $sobra = $saldo - $porParcela * count($livres);
-
-            foreach ($livres as $posicao => $indice) {
-                $linhas[$indice]['centavos'] = $porParcela + ($posicao === count($livres) - 1 ? $sobra : 0);
+            foreach ($this->dividirEmCentavos($saldo, count($livres)) as $posicao => $centavos) {
+                $linhas[$livres[$posicao]]['centavos'] = $centavos;
             }
         } else {
-            // Percentuais redondos (33,33% × 3) deixam alguns centavos de fora: até 1 centavo por parcela vai para a última.
+            // Percentuais redondos (33,33% × 3) deixam alguns centavos de fora: até 1 centavo por parcela vai para a primeira.
             $diferenca = $totalCentavos - $somaDefinida;
 
             if (abs($diferenca) > $quantidade) {
@@ -221,15 +242,12 @@ class GeracaoFaturasContratoService
                 ));
             }
 
-            $ultimo = array_key_last($linhas);
-            $linhas[$ultimo]['centavos'] += $diferenca;
+            $linhas[0]['centavos'] += $diferenca;
 
-            if ($linhas[$ultimo]['centavos'] <= 0) {
-                throw new \InvalidArgumentException('Os valores informados não deixam saldo para a última parcela.');
+            if ($linhas[0]['centavos'] <= 0) {
+                throw new \InvalidArgumentException('Os valores informados não deixam saldo para a primeira parcela.');
             }
         }
-
-        usort($linhas, fn (array $a, array $b): int => [$a['vencimento']->timestamp, $a['ordem']] <=> [$b['vencimento']->timestamp, $b['ordem']]);
 
         return array_map(fn (array $linha): array => [
             'descricao' => $linha['descricao'],
