@@ -1,7 +1,27 @@
-# Qualidade dos Cadastros (Onda 81) — Proposta para o Futuro
+# Qualidade dos Cadastros (Onda 81) — Parcialmente implementada
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for autorizada.
-> Não há código, migration ou teste desta funcionalidade. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md).
+> **Status: parcial.** Está implementada **só a detecção de pessoas possivelmente duplicadas** (fila 5 do escopo; ver
+> [Implementado](#implementado-em-2026-10-30-detecção-de-pessoas-duplicadas)). **Continuam propostos:** as demais filas na Minha Mesa,
+> a correção guiada, a **mesclagem** de pessoas e o indicador de completude. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md).
+
+## Implementado em 2026-10-30: detecção de pessoas duplicadas
+
+- **Tela:** *Secretaria > Cadastros duplicados* (`App\Filament\Pages\PessoasDuplicadas`). Lista **pares** de cadastros, do mais provável ao
+  menos, com os vínculos de cada um (matrículas, responsáveis, acesso, CRM) e o CPF parcialmente oculto. **Só aponta:** não une, não apaga e
+  não altera cadastro. Abre com `ViewAny:Pessoa`; o link para o cadastro e o botão *Não é duplicata* exigem `Update:Pessoa` (sem permissão nova).
+- **Serviço:** `PessoaDuplicadaDetectorService::pares()`. Critérios: (1) **CPF igual** (só dígitos; CPF de preenchimento como `000.000.000-00` e
+  valor repartido por mais de 6 cadastros são ignorados); (2) **mesmo nome e mesmo nascimento** (nome sem acento, caixa e pontuação, com ao
+  menos duas palavras); (3) **mesmo nome e mesmo e-mail ou telefone**, desde que os nascimentos não se contradigam e os CPFs não sejam diferentes.
+- **O que nunca entra** (o "falso positivo é o inimigo da fila" da seção de riscos): contato igual **sem** o mesmo nome (a família
+  compartilha), gêmeos (nomes diferentes), pai e filho com o mesmo nome (nascimentos diferentes), nome de uma palavra só, e responsável e
+  aluno ligados diretamente em `aluno_responsavel`.
+- **"Não é duplicata" lembrado:** tabela `pessoa_nao_duplicada` (par em ordem, único), migration `2026_10_30_100000`. O par marcado não volta.
+- **Custo:** varre `pessoa` em lotes de 2.000, só com as colunas necessárias, e agrupa em PHP por valor normalizado (sem comparar todos com
+  todos). O resultado fica 2 minutos em cache; *Recalcular* o refaz.
+- **Limites conhecidos (decisão, não esquecimento):** o nome precisa ser **igual** depois de normalizado ("Maria da Silva" e "Maria Silva"
+  não casam); contato igual com nomes parecidos não casa; a lista não tem fila na Minha Mesa nem aviso ao criar uma pessoa; e **não existe
+  mesclagem**: quem confere corrige pelo cadastro de pessoa.
+- **Testes:** `tests/Feature/PessoaDuplicadaTest.php`.
 
 ## Contexto
 
@@ -18,7 +38,7 @@ do Censo acusa, o contrato trava, a régua não encontra o e-mail). Falta olhar 
   `comCadastroCompleto()`: aluno, responsáveis e responsáveis financeiros de uma matrícula. Servem de filtro na lista de matrículas.
 - `App\Rules\Cpf` (validação do dígito verificador **na digitação**) e `pessoa.cpf` único e anulável.
 - `LeadDuplicadoDetectorService` e `LeadMesclagemService`: detectam e mesclam **leads** duplicados (telefone, CPF, e-mail e
-  aluno em comum). Não existe nada equivalente para `Pessoa`.
+  aluno em comum). Para `Pessoa` existe agora só a **detecção** (`PessoaDuplicadaDetectorService`, ver acima); a mesclagem não existe.
 - A página do **Censo Escolar** lista as matrículas com pendência para o arquivo da situação do aluno (Onda 58), mas só o que o Censo pede.
 - A **Minha Mesa** (`FontePendencia`) e as filas de cadastro do CRM.
 

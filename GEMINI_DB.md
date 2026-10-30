@@ -2133,3 +2133,11 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
 - **Campos:** `reuniao_id` (FK, cascade), `texto`, `user_id` (FK `users`, nullOnDelete). Correção ou complemento de ata fechada.
 
 **Permissões** (migration `2026_10_28_100100`): `ViewAny`, `View`, `Create`, `Update`, `VerTodas` e `Deliberar:Reuniao`. Parâmetros em `config/reunioes.php`. Rotina: `reunioes:lembrar-encaminhamentos` (diária, 07:15).
+
+
+## 52. Cadastros Duplicados de Pessoa (Onda 81, parcial)
+
+### `pessoa_nao_duplicada`
+- **Representa:** um par de cadastros de `pessoa` que a secretaria conferiu e confirmou serem pessoas diferentes (gêmeos, homônimos); o detector não o sugere de novo.
+- **Campos:** `pessoa_menor_id` e `pessoa_maior_id` (FK `pessoa`, cascade; o par é gravado em ordem, menor id primeiro, então A+B e B+A são o mesmo registro), `user_id` (FK `users`, nullOnDelete; quem marcou). Único `(pessoa_menor_id, pessoa_maior_id)`.
+- **Regras:** `PessoaDuplicadaDetectorService::pares()` não grava nada: calcula os pares em PHP (CPF igual; mesmo nome e nascimento; mesmo nome e e-mail ou telefone) sobre `pessoa`, descarta os ligados em `aluno_responsavel` e os desta tabela, e guarda o resultado 2 min em cache. Sem permissão nova: a tela usa `ViewAny:Pessoa` (abrir) e `Update:Pessoa` (marcar).

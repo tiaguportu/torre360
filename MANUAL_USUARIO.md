@@ -796,6 +796,16 @@ Na tela de edição de qualquer **Pessoa**, o sistema oferece abas dedicadas par
 2. **Transtornos de Aprendizagem:** Permite categorizar transtornos diagnosticados ou observados (ex: *Discalculia, Dislexia, TDAH, TPAC*), com campo livre para detalhar pareceres e observações.
 3. **Recursos de Acessibilidade:** Permite definir os recursos de apoio que a pessoa necessita no dia a dia ou em exames/avaliações (ex: *Tradutor-intérprete de Libras, Prova ampliada (Fonte 18), Auxílio ledor, Prova em Braille, Tempo adicional*).
 
+### 4.5 Cadastros Duplicados (Secretaria > Cadastros duplicados)
+A página lista os **pares de pessoas que parecem ser a mesma**, do mais provável ao menos provável, para você conferir. Ela só aponta: **não une, não apaga e não altera nenhum cadastro**. Quem pode ver pessoas abre a lista; clicar no nome (para quem pode editar pessoas) abre o cadastro. Sob cada nome aparecem a data de nascimento, o CPF parcialmente oculto (`***.456.789-**`), o e-mail, o telefone e os vínculos (matrículas, responsáveis, acesso ao sistema, CRM), para decidir qual cadastro manter.
+
+Um par entra na lista por um destes motivos:
+1. **CPF igual** (com ou sem pontos e traço; CPF de preenchimento como `000.000.000-00` é ignorado).
+2. **Mesmo nome e nascimento** (o nome é comparado sem acento, maiúsculas ou pontuação e precisa ter ao menos duas palavras).
+3. **Mesmo nome e contato**: o mesmo nome e o mesmo e-mail ou telefone, desde que as datas de nascimento não sejam diferentes e os CPFs não sejam diferentes.
+
+Não entram na lista: gêmeos (nomes diferentes), pai e filho com o mesmo nome (nascimentos diferentes), pessoas que só compartilham e-mail ou telefone, e responsável e aluno ligados entre si. Se os dois cadastros são mesmo pessoas diferentes, use **Não é duplicata** (exige poder editar pessoas): o par não aparece de novo. A lista é guardada por poucos minutos; **Recalcular** (no alto da página) a refaz na hora.
+
 ---
 
 ## 🎓 5. Acadêmico — Ensino e Avaliação

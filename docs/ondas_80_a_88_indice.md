@@ -11,14 +11,15 @@ riscos. Nenhuma das propostas abaixo tem código, migration nem teste. A **Onda 
 pedido da escola e já foi implementada em 2026-10-29.
 
 - **Implementadas (2):** 84 e 91.
-- **Propostas (10):** 80, 81, 82, 83, 85, 86, 87 e 88 (produtividade) e 89 e 90 (engenharia).
+- **Parcial (1):** 81 (só a detecção de pessoas duplicadas, em 2026-10-30; o resto continua proposto).
+- **Propostas (9):** 80, 82, 83, 85, 86, 87 e 88 (produtividade) e 89 e 90 (engenharia).
 
 ## Visão geral
 
 | Onda | Tema | Área | Esforço | Status | Documento |
 |---|---|---|---|---|---|
 | 80 | Requerimentos Online da Família | Secretaria / Portal | Médio | Proposta | [requerimentos_online_familia_roadmap.md](requerimentos_online_familia_roadmap.md) |
-| 81 | Qualidade dos Cadastros | Secretaria / Conformidade | Pequeno | Proposta | [qualidade_cadastros_roadmap.md](qualidade_cadastros_roadmap.md) |
+| 81 | Qualidade dos Cadastros | Secretaria / Conformidade | Pequeno | **Parcial** (detecção de pessoas duplicadas feita) | [qualidade_cadastros_roadmap.md](qualidade_cadastros_roadmap.md) |
 | 82 | Roteiros da Secretaria | Secretaria | Pequeno a médio | Proposta | [roteiros_secretaria_roadmap.md](roteiros_secretaria_roadmap.md) |
 | 83 | Atendimento Unificado | Secretaria / Portal | Médio | Proposta | [atendimento_unificado_roadmap.md](atendimento_unificado_roadmap.md) |
 | 84 | Mesa do Consultor e Próxima Ação Obrigatória | CRM | Pequeno | **Implementada** | [mesa_consultor_proxima_acao_roadmap.md](mesa_consultor_proxima_acao_roadmap.md) |
@@ -41,7 +42,7 @@ Ao escrever os documentos, cada afirmação sobre "o que já existe" foi conferi
 | **A proposta comercial existe e o ciclo dela para na aprovação.** `AceitaPelaFamilia`, `Convertida` e `Expirada` estão no enum e **nenhum código muda a proposta para elas**; o Assistente de Matrícula pré-preenche os dados, mas o **desconto negociado não chega ao contrato**. | Proposta comercial | A Onda 87 não cria uma proposta: completa a existente (aceite, expiração e do desconto à bolsa). |
 | **O conceito de "canal" existe três vezes** sem que um use o outro: `CanalMensagemManager` (e-mail e push), `CanalReguaFollowUp` e o `canal` da régua de cobrança (via `NotificationService`). | Comunicação | A Onda 88 começa unificando; senão o WhatsApp seria o quarto. |
 | **Lembrete de visita só vai ao consultor.** A família só recebe se a régua tiver regra para `visita_lembrete`. | Visitas | A Onda 86 garante o lembrete à família. |
-| **A detecção e a mesclagem de duplicados são só de lead** (`LeadDuplicadoDetectorService`, `LeadMesclagemService`). Para `Pessoa` não há nada; `Matricula::comCadastroIncompleto()` já existe e serve de fila pronta. | Cadastros | A Onda 81 reaproveita os dois: a fila de incompletos é quase de graça; a mescla de pessoas é a parte de risco. |
+| **A detecção e a mesclagem de duplicados eram só de lead** (`LeadDuplicadoDetectorService`, `LeadMesclagemService`). Para `Pessoa` a **detecção** foi feita em 2026-10-30 (`PessoaDuplicadaDetectorService`, tela *Cadastros duplicados*); a **mesclagem** continua não existindo. `Matricula::comCadastroIncompleto()` já existe e serve de fila pronta. | Cadastros | A Onda 81 reaproveita os dois: a fila de incompletos é quase de graça; a mescla de pessoas é a parte de risco. |
 | **A *Landing Page* do menu do CRM é do produto** (escolas pedindo demonstração), não das famílias da escola. | CRM | Não é canal de entrada de lead de matrícula; a entrada automática (Onda 85) é nova. |
 | O motor de checklist com prazo e comprovante **já existe**, feito só para o RH (`ProcessoFuncionario`, `config/rh_processos.php`). | RH | A Onda 82 deve generalizar esse motor, não copiá-lo. |
 
