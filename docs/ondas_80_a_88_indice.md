@@ -1,4 +1,4 @@
-# Ondas 80 a 90 — Índice
+# Ondas 80 a 91 — Índice
 
 Continuação do [índice das ondas 72 a 79](ondas_72_a_79_indice.md). Reúne as propostas para a **secretaria** (80 a 83) e para o **CRM**
 (85 a 88), que a análise de produtividade da equipe levantou depois do conjunto Suprimentos e Resultado da escola, e as duas de
@@ -7,9 +7,10 @@ Continuação do [índice das ondas 72 a 79](ondas_72_a_79_indice.md). Reúne as
 em [mesa_consultor_proxima_acao_roadmap.md](mesa_consultor_proxima_acao_roadmap.md).
 
 Cada documento diz o que já existe **conferido no código** (para não duplicar), o escopo, a base legal quando há, as dependências e os
-riscos. Nenhuma das propostas abaixo tem código, migration nem teste.
+riscos. Nenhuma das propostas abaixo tem código, migration nem teste. A **Onda 91** (resumo diário de faltas à família) nasceu de um
+pedido da escola e já foi implementada em 2026-10-29.
 
-- **Implementada (1):** 84.
+- **Implementadas (2):** 84 e 91.
 - **Propostas (10):** 80, 81, 82, 83, 85, 86, 87 e 88 (produtividade) e 89 e 90 (engenharia).
 
 ## Visão geral
@@ -27,6 +28,7 @@ riscos. Nenhuma das propostas abaixo tem código, migration nem teste.
 | 88 | Canal WhatsApp Oficial | CRM / Comunicação | Grande, com contrato e custo | Proposta | [whatsapp_oficial_roadmap.md](whatsapp_oficial_roadmap.md) |
 | 89 | Paridade de Esquema e Testes em MariaDB | Engenharia | Médio | Proposta | [paridade_esquema_testes_mariadb_roadmap.md](paridade_esquema_testes_mariadb_roadmap.md) |
 | 90 | Publicação Segura | Engenharia / Operação | Médio a grande | Proposta | [publicacao_segura_deploy_roadmap.md](publicacao_segura_deploy_roadmap.md) |
+| 91 | Resumo Diário de Faltas à Família | Frequência / Comunicação | Pequeno | **Implementada** | [resumo_diario_faltas_roadmap.md](resumo_diario_faltas_roadmap.md) |
 
 ## O que a conferência no código mostrou
 

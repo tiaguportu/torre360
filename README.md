@@ -175,7 +175,7 @@ Canais de mensagem e disparo em massa. Detalhes em `docs/comunicacao_canais_aler
 | Recurso | Descrição |
 |---|---|
 | `CanalMensagem` (contrato) | Abstração de envio por e-mail (`EmailCanal`) ou push (`FcmCanal`), resolvida por `CanalMensagemManager` |
-| Alerta de falta | Observer em `FrequenciaEscolar`: ao lançar falta, notifica o(s) responsável(is) por e-mail, sino e push |
+| Resumo diário de faltas | Observer em `FrequenciaEscolar` marca a falta como pendente; `frequencia:enviar-resumo-diario` (18:00, `FALTAS_RESUMO_HORARIO`) manda um único aviso por responsável, por e-mail, sino e push |
 | `ComunicacaoEmMassa` | Envio de e-mail segmentado (leads do CRM por status/origem, ou responsáveis por turma) ou para uma seleção explícita, processado em fila |
 | `Pessoa.aceita_comunicacao` | Opt-out de comunicações em massa (LGPD); não afeta notificações individuais obrigatórias |
 

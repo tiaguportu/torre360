@@ -60,3 +60,7 @@ Schedule::command('relatorios:limpar-temporarios --dias=7')->dailyAt('04:35')->w
 
 // Reuniões e atas (Ondas 27 e 32): de manhã, antes do expediente, o responsável e a coordenação sabem o que venceu.
 Schedule::command('reunioes:lembrar-encaminhamentos')->dailyAt('07:15')->withoutOverlapping();
+
+// Faltas: um único aviso por responsável no fim do dia, no lugar de um e-mail por aula. Todo dia, porque o que está pendente é
+// o que foi lançado e ainda não avisado (inclui aula antiga lançada hoje); sem pendência, nada sai. O horário é `FALTAS_RESUMO_HORARIO`.
+Schedule::command('frequencia:enviar-resumo-diario')->dailyAt((string) config('frequencia.resumo_horario', '18:00'))->withoutOverlapping();

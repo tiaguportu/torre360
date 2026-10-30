@@ -307,7 +307,8 @@ Estrutura de ensino e turmas.
 - **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronograma_aula`.
 - **Campos Principais:** `matricula_id`, `cronograma_aula_id`, `situacao` (Enum/String: 'presente', 'ausente').
 - **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: frequencia_escolar`), gravando ações de criação, alteração e exclusão das frequências com a identificação do aluno, aula e situação atribuída.
-- **Observer:** `FrequenciaFaltaObserver` (registrado via atributo `#[ObservedBy]` no model) dispara `FrequenciaAusenciaNotification` para o(s) responsável(is) do aluno sempre que `situacao` é criada ou alterada para `'ausente'`. Não notifica quando a data da aula está fora do intervalo `data_ativacao`–`data_desativacao` da matrícula. Ver seção 14.
+- **Observer:** `FrequenciaFaltaObserver` (registrado via atributo `#[ObservedBy]` no model) marca `aviso_resumo_pendente` (evento `saving`) sempre que `situacao` é criada ou alterada para `'ausente'`; corrigir para outro valor limpa a marca. Não marca quando a data da aula está fora do intervalo `data_ativacao`–`data_desativacao` da matrícula. O aviso à família não sai na hora: o comando `frequencia:enviar-resumo-diario` (Onda 91, 18:00) manda um `FrequenciaResumoDiarioNotification` por responsável com todas as faltas pendentes. Ver seção 14 e `docs/resumo_diario_faltas_roadmap.md`.
+- **Resumo diário (Onda 91):** `aviso_resumo_pendente` (boolean, padrão `false`, indexado: a falta aguarda o resumo do dia) e `aviso_resumo_enviado_em` (timestamp anulável: quando o envio a reservou). Faltas anteriores à migration ficam com `false` e nunca entram no primeiro resumo.
 
 ### `avaliacao_gabaritos`
 - **Representa:** Configuração e gabarito oficial de respostas de uma avaliação com suporte a correção OMR (1:1 com `avaliacao`).

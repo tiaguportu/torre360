@@ -3,53 +3,48 @@
 namespace App\Observers;
 
 use App\Models\FrequenciaEscolar;
-use App\Notifications\FrequenciaAusenciaNotification;
-use Illuminate\Support\Facades\Notification;
 
 /**
- * Ao registrar (ou alterar para) uma falta, avisa o(s) responsável(is) do
- * aluno. Não notifica se a aula ocorreu fora da janela em que a matrícula
- * estava ativa (evita alarme para lançamentos retroativos/fora de vigência).
+ * Ao registrar (ou alterar para) uma falta, marca-a como pendente de resumo: o aviso à família sai uma vez por dia,
+ * junto com as demais faltas (`ResumoFaltasDiarioService`), em vez de um e-mail por aula. Não marca se a aula ocorreu
+ * fora da janela em que a matrícula estava ativa (evita alarme para lançamentos retroativos/fora de vigência).
+ *
+ * A marca é gravada junto com a própria falta (evento `saving`), sem segunda consulta. Os responsáveis só são
+ * resolvidos na hora do envio, então quem for cadastrado antes do resumo do dia também recebe.
  */
 class FrequenciaFaltaObserver
 {
-    public function created(FrequenciaEscolar $frequencia): void
+    public function saving(FrequenciaEscolar $frequencia): void
     {
+        // Só a transição conta: salvar de novo uma falta que já era falta não a reenvia nem desfaz um envio já feito.
+        if (! $frequencia->isDirty('situacao')) {
+            return;
+        }
+
         if ($frequencia->situacao === 'ausente') {
-            $this->notificar($frequencia);
+            $frequencia->aviso_resumo_pendente = $this->deveAvisar($frequencia);
+
+            return;
+        }
+
+        // Corrigida antes do resumo (ausente -> presente): sai da fila de avisos.
+        if ($frequencia->aviso_resumo_pendente) {
+            $frequencia->aviso_resumo_pendente = false;
         }
     }
 
-    public function updated(FrequenciaEscolar $frequencia): void
+    private function deveAvisar(FrequenciaEscolar $frequencia): bool
     {
-        if ($frequencia->situacao === 'ausente' && $frequencia->getOriginal('situacao') !== 'ausente') {
-            $this->notificar($frequencia);
-        }
-    }
-
-    private function notificar(FrequenciaEscolar $frequencia): void
-    {
-        $frequencia->loadMissing(['matricula.pessoa.responsaveis.users', 'cronogramaAula']);
+        $frequencia->loadMissing(['matricula.pessoa', 'cronogramaAula']);
 
         $matricula = $frequencia->matricula;
-        $aluno = $matricula?->pessoa;
         $aula = $frequencia->cronogramaAula;
 
-        if (! $matricula || ! $aluno || ! $aula) {
-            return;
+        if (! $matricula || ! $matricula->pessoa || ! $aula) {
+            return false;
         }
 
-        if (! $this->matriculaEstavaAtivaEm($matricula, $aula->data)) {
-            return;
-        }
-
-        $usuarios = $aluno->responsaveis
-            ->flatMap(fn ($responsavel) => $responsavel->users)
-            ->unique('id');
-
-        if ($usuarios->isNotEmpty()) {
-            Notification::send($usuarios, new FrequenciaAusenciaNotification($frequencia));
-        }
+        return $this->matriculaEstavaAtivaEm($matricula, $aula->data);
     }
 
     private function matriculaEstavaAtivaEm($matricula, $dataAula): bool

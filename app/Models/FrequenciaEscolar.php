@@ -29,6 +29,8 @@ class FrequenciaEscolar extends Model
     {
         return [
             'justificada' => 'boolean',
+            'aviso_resumo_pendente' => 'boolean',
+            'aviso_resumo_enviado_em' => 'datetime',
         ];
     }
 

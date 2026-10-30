@@ -50,23 +50,28 @@ e do convite de matrícula online (Onda 7) — não são reimplementados a cada 
 
 Model: `App\Models\FrequenciaEscolar` — agora com `#[ObservedBy(FrequenciaFaltaObserver::class)]`.
 Observer: `App\Observers\FrequenciaFaltaObserver`.
-Notificação: `App\Notifications\FrequenciaAusenciaNotification` (mail + sino + push,
+Notificação: `App\Notifications\FrequenciaResumoDiarioNotification` (mail + sino + push,
 mesmo formato de `OcorrenciaRegistradaNotification`).
 
-- Dispara em `created` e em `updated` quando `situacao` **passa a ser** `'ausente'`
-  (`getOriginal('situacao') !== 'ausente'`). Marcar presença não notifica; manter
-  a falta já registrada (sem mudança de valor) não reenvia.
-- **Guarda de vigência:** não notifica se a data da aula (`cronograma_aula.data`)
+> **Mudou na Onda 91 (2026-10-29):** a falta **não avisa mais na hora**. Antes, cada falta gerava
+> um e-mail, um item no sino e um push por aula e por responsável (`FrequenciaAusenciaNotification`,
+> removida). Agora o Observer só marca a falta como pendente e o comando `frequencia:enviar-resumo-diario`
+> manda **um aviso por responsável por dia** (18:00 por padrão). Detalhes e regras em
+> [resumo_diario_faltas_roadmap.md](resumo_diario_faltas_roadmap.md).
+
+- O Observer marca `frequencia_escolar.aviso_resumo_pendente` no evento `saving` quando `situacao`
+  **passa a ser** `'ausente'` (`isDirty('situacao')`). Marcar presença não marca; salvar de novo uma
+  falta já registrada não a recoloca na fila; corrigir para presente antes do resumo a tira da fila.
+- **Guarda de vigência:** não marca se a data da aula (`cronograma_aula.data`)
   for anterior a `matricula.data_ativacao` ou igual/posterior a
   `matricula.data_desativacao` — evita alarme por lançamento retroativo de uma
   matrícula ainda não ativa, ou de um aluno já desligado.
-- Destinatários: todos os usuários (`User`) vinculados aos responsáveis
-  (`Pessoa::responsaveis` → `Pessoa::users`) do aluno da matrícula. Sem
-  responsável com usuário vinculado, não há o que notificar.
-- Reaproveita o padrão de `OcorrenciaEscolar` (que faz o mesmo via
-  `enviarNotificacaoResponsaveis()` no próprio model); aqui a lógica fica no
-  Observer porque a notificação é ligada à mudança do campo, não a uma ação
-  explícita da secretaria.
+- Destinatários, resolvidos **na hora do envio**: todos os usuários (`User`) vinculados aos
+  responsáveis (`Pessoa::responsaveis` → `Pessoa::users`) do aluno da matrícula. Sem
+  responsável com usuário vinculado, a falta é descartada.
+- Reaproveita o padrão de `OcorrenciaEscolar` (marcador na própria linha, `notificacao_enviada_em`);
+  aqui a marca é gravada junto com a falta, no Observer, porque o aviso é ligado à mudança do campo,
+  não a uma ação explícita da secretaria.
 
 ## 3. Disparo em massa por e-mail (CRM)
 

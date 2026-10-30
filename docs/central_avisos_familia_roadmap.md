@@ -25,8 +25,9 @@ por evento, quem avisar e por qual canal.
 
 - `CanalMensagem`, `EmailCanal`, `FcmCanal` e `CanalMensagemManager`: enviam a uma `Pessoa` pelo canal escolhido.
   WhatsApp é apoio manual à equipe, não canal de disparo.
-- Notificações do Laravel com e-mail, banco e push (`FrequenciaAusenciaNotification`,
-  `OcorrenciaRegistradaNotification`) e o `NotificationService`/`FcmService`.
+- Notificações do Laravel com e-mail, banco e push (`FrequenciaResumoDiarioNotification`, um aviso por dia
+  desde a [Onda 91](resumo_diario_faltas_roadmap.md), e `OcorrenciaRegistradaNotification`) e o
+  `NotificationService`/`FcmService`.
 - Sino de avisos do **painel da equipe** (notificações do Filament no banco). O **Portal da Família não mostra o sino**.
 - `ComunicacaoEmMassa` com descadastro (`DescadastroController`) e a Central de Atendimento (conversa, não aviso).
 - Relação responsável ↔ aluno (`Pessoa::users`, responsáveis financeiros do contrato) para saber quem avisar.

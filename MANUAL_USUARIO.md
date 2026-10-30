@@ -1419,7 +1419,7 @@ O Torre360 possui um sistema central de notificações em tempo real que garante
 
 ### 11.2 Principais Notificações
 - **Documentos Pendentes:** Disparada automaticamente quando a secretaria identifica que faltam documentos obrigatórios ou que algum documento enviado foi recusado. Chega por e-mail e push para os alunos e seus responsáveis financeiros.
-- **Falta do Aluno:** Enviada ao(s) responsável(is) sempre que uma falta é lançada para o aluno (veja a seção 5.2).
+- **Faltas do Aluno (resumo do dia):** Enviada ao(s) responsável(is) **uma vez por dia, no fim da tarde (às 18:00, por padrão)**, reunindo todas as faltas lançadas para os alunos dele: um único e-mail (e um único item no sininho e no push), com disciplina, professor e horário de cada aula. A falta lançada depois desse horário, ou de uma aula antiga, sai no resumo do dia seguinte. Se você corrigir a falta para presença antes das 18:00, o responsável não é avisado. A página **Frequência** do Portal continua mostrando cada falta na hora.
 - **Lançamento de Frequência Pendente:** Alerta enviado aos professores quando uma aula em seu cronograma ainda não teve a frequência lançada. Agora também disponível via Push e Sininho.
 - **Agendamento de Preceptoria:** Notificação multicanal disparada sempre que uma nova preceptoria é marcada ou cancelada. São notificados o solicitante, o professor, o aluno e seus responsáveis legais.
 - **Auditoria de Documentos (ADM):** Usuários com papel de 'super_admin' ou 'secretaria' recebem notificações sempre que um novo documento é inserido ou removido.
