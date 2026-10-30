@@ -38,3 +38,6 @@ backup_banco_*/
 # Git Worktrees locais
 worktree-*/
 
+# Exportacoes de boletim (contem dados de alunos): nunca versionar
+inspiracao/boletim/
+
