@@ -5,8 +5,11 @@ namespace App\Filament\Pages;
 use App\Enums\SituacaoNota;
 use App\Models\Avaliacao;
 use App\Models\Disciplina;
+use App\Models\Nota;
+use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Models\VideoTutorial;
+use App\Services\MediaParcialService;
 use App\Services\NotaLancamentoService;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -18,6 +21,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -25,6 +29,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use UnitEnum;
 
@@ -46,6 +51,18 @@ class LancamentoNotasGrade extends Page implements HasForms
     public ?array $data = [];
 
     public ?Avaliacao $avaliacaoAtual = null;
+
+    /**
+     * Cache da requisição (propriedade protegida: o Livewire não a leva de uma requisição para a outra).
+     *
+     * @var array{avaliacao: Avaliacao, avaliacoes: Collection<int, Avaliacao>, notas: Collection<int, Collection<int, Nota>>, periodo: PeriodoLetivo}|null
+     */
+    protected ?array $contextoMedias = null;
+
+    /**
+     * @var array<string, array{texto: string, cor: string, dica: string}>
+     */
+    protected array $mediasDasLinhas = [];
 
     public function mount(): void
     {
@@ -108,7 +125,7 @@ class LancamentoNotasGrade extends Page implements HasForms
                                 return $this->baseAvaliacaoQuery()
                                     ->where('turma_id', $turmaId)
                                     ->where('disciplina_id', $disciplinaId)
-                                    ->with(['categoria', 'etapaAvaliativa'])
+                                    ->with(['categoria', 'etapaAvaliativa', 'turma', 'disciplina'])
                                     ->get()
                                     ->sortBy(fn (Avaliacao $a) => $a->etapaAvaliativa?->id ?? 0)
                                     ->mapWithKeys(fn (Avaliacao $a) => [$a->id => $a->label_exibicao]);
@@ -121,6 +138,7 @@ class LancamentoNotasGrade extends Page implements HasForms
                     ->columns(3),
 
                 Section::make('Notas dos Alunos')
+                    ->description(fn (): ?string => ($contexto = $this->contextoMedias()) ? app(MediaParcialService::class)->legenda($contexto) : null)
                     ->visible(fn () => $this->avaliacaoAtual !== null)
                     ->schema([
                         Repeater::make('notas')
@@ -150,10 +168,18 @@ class LancamentoNotasGrade extends Page implements HasForms
                                         'max' => 'A nota não pode ser maior que a nota máxima da avaliação (:max).',
                                     ])
                                     ->columnSpan(1)
-                                    ->live()
+                                    ->live(debounce: 400)
                                     ->extraInputAttributes(['wire:keydown.enter' => 'salvarNotas']),
+                                // Só leitura: a média do aluno na etapa com a nota digitada, antes de salvar.
+                                TextEntry::make('media_parcial')
+                                    ->label('Média parcial')
+                                    ->state(fn (Get $get): string => $this->mediaDaLinha($get)['texto'])
+                                    ->badge()
+                                    ->color(fn (Get $get): string => $this->mediaDaLinha($get)['cor'])
+                                    ->tooltip(fn (Get $get): string => $this->mediaDaLinha($get)['dica'])
+                                    ->columnSpan(['default' => 'full', 'md' => 1]),
                             ])
-                            ->columns(['default' => 3, 'md' => 4])
+                            ->columns(['default' => 3, 'md' => 5])
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false),
@@ -195,6 +221,7 @@ class LancamentoNotasGrade extends Page implements HasForms
         $html .= '<ul>';
         $html .= '<li><strong>Turma → Disciplina → Avaliação:</strong> Selecione em sequência para carregar a grade de alunos. A Avaliação já precisa ter sido cadastrada antes, em "Avaliações".</li>';
         $html .= '<li><strong>Grade de Notas:</strong> Digite a nota de cada aluno; o valor máximo é validado conforme a nota máxima configurada na avaliação.</li>';
+        $html .= '<li><strong>Média parcial:</strong> A coluna ao lado da nota mostra a média do aluno na disciplina, dentro da etapa, já com a nota que você digitou e antes de salvar. Verde: a partir da nota de aprovação do período letivo; âmbar: a partir da nota de recuperação; vermelho: abaixo disso. É uma projeção: a situação final sai no Fechamento do Ciclo.</li>';
         $html .= '<li><strong>Salvar Notas:</strong> Clique no botão para gravar todas as notas lançadas de uma vez, ou pressione Enter em qualquer campo.</li>';
         $html .= '<li><strong>Situação (Faltou / Não se aplica):</strong> Para avaliações aplicadas só a alguns alunos, ou quando o aluno faltou, escolha a situação no lugar de digitar a nota. O aluno deixa de constar como pendência de lançamento e a avaliação não entra na média dele.</li>';
         $html .= '<li><strong>Deixar em branco:</strong> Remove a nota do aluno, caso já exista uma lançada. Sem nota e sem situação, o aluno continua como pendente.</li>';
@@ -223,6 +250,61 @@ class LancamentoNotasGrade extends Page implements HasForms
     {
         $this->avaliacaoAtual = null;
         $this->data['notas'] = [];
+        $this->esquecerMedias();
+    }
+
+    /**
+     * Contexto da média parcial, montado uma vez por requisição (duas consultas para todas as linhas da grade).
+     *
+     * @return array{avaliacao: Avaliacao, avaliacoes: Collection<int, Avaliacao>, notas: Collection<int, Collection<int, Nota>>, periodo: PeriodoLetivo}|null
+     */
+    private function contextoMedias(): ?array
+    {
+        if (! $this->avaliacaoAtual) {
+            return null;
+        }
+
+        return $this->contextoMedias ??= app(MediaParcialService::class)->contexto($this->avaliacaoAtual);
+    }
+
+    private function esquecerMedias(): void
+    {
+        $this->contextoMedias = null;
+        $this->mediasDasLinhas = [];
+    }
+
+    /**
+     * Texto, cor (verde, âmbar ou vermelho, pela regra do fechamento do ciclo) e dica da média parcial de uma linha.
+     * O cálculo roda uma vez por linha e por requisição: texto, cor e dica leem o mesmo resultado.
+     *
+     * @return array{texto: string, cor: string, dica: string}
+     */
+    private function mediaDaLinha(Get $get): array
+    {
+        $contexto = $this->contextoMedias();
+        $matriculaId = (int) $get('matricula_id');
+
+        if ($contexto === null || $matriculaId === 0) {
+            return ['texto' => '—', 'cor' => 'gray', 'dica' => 'Sem média'];
+        }
+
+        // Faltou / Não se aplica não tem valor: a nota da avaliação aberta sai da conta.
+        $valor = filled($get('situacao')) ? null : $get('valor');
+        $chave = $matriculaId.'|'.json_encode($valor);
+
+        if (isset($this->mediasDasLinhas[$chave])) {
+            return $this->mediasDasLinhas[$chave];
+        }
+
+        $servico = app(MediaParcialService::class);
+        $media = $servico->media($contexto, $matriculaId, $valor);
+        $faixa = $servico->situacao($contexto, $media);
+
+        return $this->mediasDasLinhas[$chave] = [
+            'texto' => $media === null ? '—' : $servico->formatar($media),
+            'cor' => $faixa ? (string) $faixa->getColor() : 'gray',
+            'dica' => $faixa ? "{$faixa->getLabel()}, se a média se mantiver" : 'Sem notas lançadas nesta etapa',
+        ];
     }
 
     public function carregarGrade(): void
@@ -249,6 +331,7 @@ class LancamentoNotasGrade extends Page implements HasForms
         }
 
         $this->avaliacaoAtual = $avaliacao;
+        $this->esquecerMedias();
 
         $this->getSchema('content')->fill([
             'turma_id' => $this->data['turma_id'] ?? null,

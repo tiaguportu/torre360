@@ -48,7 +48,8 @@ final class FrequenciaMedia30Dias extends IndicadorBase
     {
         $registros = FrequenciaEscolar::query()
             ->whereHas('cronogramaAula', fn ($q) => $q->whereDate('data', '>=', $contexto->hoje->subDays(30)->toDateString())->whereDate('data', '<=', $contexto->hoje->toDateString()))
-            ->selectRaw("count(*) as total, sum(case when situacao = 'ausente' then 1 else 0 end) as ausentes")
+            // Falta abonada não conta como falta (a só justificada continua contando): a mesma regra do risco de evasão.
+            ->selectRaw("count(*) as total, sum(case when situacao = 'ausente' and abonada = 0 then 1 else 0 end) as ausentes")
             ->first();
 
         $total = (int) ($registros?->total ?? 0);

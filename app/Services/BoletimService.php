@@ -341,7 +341,7 @@ class BoletimService
         $frequencias = FrequenciaEscolar::query()
             ->where('matricula_id', $matriculaId)
             ->whereIn('cronograma_aula_id', $cronogramas->pluck('id'))
-            ->get(['cronograma_aula_id', 'situacao']);
+            ->get(['cronograma_aula_id', 'situacao', 'abonada']);
 
         $totalRegistrado = $frequencias->count();
         if ($totalRegistrado === 0) {
@@ -354,9 +354,11 @@ class BoletimService
             ];
         }
 
-        $presencas = $frequencias->where('situacao', 'presente')->count();
+        // A falta abonada não conta como falta: entra como presença e fica fora da lista de datas de falta. A justificada
+        // sem abono continua sendo falta.
+        $presencas = $frequencias->filter(fn (FrequenciaEscolar $f): bool => $f->contaComoPresenca())->count();
 
-        $faltasIds = $frequencias->where('situacao', 'ausente')->pluck('cronograma_aula_id')->toArray();
+        $faltasIds = $frequencias->filter(fn (FrequenciaEscolar $f): bool => $f->situacao === 'ausente' && ! $f->abonada)->pluck('cronograma_aula_id')->toArray();
         $faltasDatas = $cronogramas->whereIn('id', $faltasIds)
             ->pluck('data')
             ->map(fn ($d) => Carbon::parse($d)->format('d/m'))

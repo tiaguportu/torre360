@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Documentos;
 
 use App\Http\Controllers\Controller;
 use App\Models\AtendimentoMensagem;
+use App\Models\AtestadoAluno;
 use App\Models\CancelamentoMatricula;
 use App\Models\DocumentoAssinatura;
 use App\Models\DocumentoInserido;
@@ -138,6 +139,11 @@ class VisualizarDocumentoController extends Controller
             $documento = DocumentoAssinatura::query()->where('arquivo_original_path', $path)->orWhere('arquivo_assinado_path', $path)->first();
 
             $autorizado = $documento?->isAccessibleBy($user) ?? false;
+        }
+        // Contexto E2: Comprovante de atestado do aluno: dado de saúde, só de quem tem a permissão específica (secretaria e
+        // coordenação). Professor e família não abrem, mesmo sendo equipe/responsáveis do aluno. Arquivo sem atestado não abre.
+        elseif (str_starts_with($path, 'atestados_aluno/')) {
+            $autorizado = $user->can('View:AtestadoAluno') && AtestadoAluno::query()->where('arquivo_path', $path)->exists();
         }
         // Contexto E: Comprovantes de admissão e desligamento de funcionários (Onda 65): RH é da administração, então
         // secretaria e coordenação só abrem se tiverem a permissão específica.

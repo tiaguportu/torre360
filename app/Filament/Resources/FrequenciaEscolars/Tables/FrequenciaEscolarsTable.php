@@ -5,6 +5,7 @@ namespace App\Filament\Resources\FrequenciaEscolars\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,6 +40,15 @@ class FrequenciaEscolarsTable
                     ->searchable(['cronogramaAula.data', 'cronogramaAula.turma.nome', 'cronogramaAula.disciplina.nome']),
                 TextColumn::make('situacao')
                     ->searchable(),
+                IconColumn::make('justificada')
+                    ->label('Justificada')
+                    ->boolean()
+                    ->alignCenter(),
+                IconColumn::make('abonada')
+                    ->label('Abonada')
+                    ->boolean()
+                    ->tooltip('Falta abonada não conta na frequência; a só justificada conta.')
+                    ->alignCenter(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

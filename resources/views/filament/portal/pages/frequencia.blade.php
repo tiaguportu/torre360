@@ -40,6 +40,10 @@
                 </div>
             </div>
 
+            @if (($resumo['abonadas'] ?? 0) > 0)
+                <p class="pf-muted">{{ $resumo['abonadas'] }} {{ $resumo['abonadas'] === 1 ? 'falta abonada não conta' : 'faltas abonadas não contam' }} na frequência (já estão fora dos números acima).</p>
+            @endif
+
             <section class="pf-box">
                 <h3>Por disciplina</h3>
                 <div class="pf-scroll">

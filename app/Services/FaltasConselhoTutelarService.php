@@ -46,9 +46,13 @@ class FaltasConselhoTutelarService
 
         $frequencias = FrequenciaEscolar::where('matricula_id', $matricula->id)->get();
 
+        // A falta abonada não conta como falta (nem justificada, nem injustificada): sai de todos os números. As demais se
+        // dividem em justificadas sem abono (ainda contam na frequência) e injustificadas.
+        $ausentes = $frequencias->where('situacao', 'ausente');
+        $faltasAbonadas = $ausentes->where('abonada', true)->count();
         $presencas = $frequencias->where('situacao', 'presente')->count();
-        $faltasTotais = $frequencias->where('situacao', 'ausente')->count();
-        $faltasJustificadas = $frequencias->where('situacao', 'ausente')->where('justificada', true)->count();
+        $faltasTotais = $ausentes->count() - $faltasAbonadas;
+        $faltasJustificadas = $ausentes->where('abonada', false)->where('justificada', true)->count();
         $faltasInjustificadas = $faltasTotais - $faltasJustificadas;
 
         $percentualFaltas = round(($faltasTotais / $totalAulasPrevistas) * 100, 2);
@@ -68,6 +72,7 @@ class FaltasConselhoTutelarService
             'faltas_totais' => $faltasTotais,
             'faltas_justificadas' => $faltasJustificadas,
             'faltas_injustificadas' => $faltasInjustificadas,
+            'faltas_abonadas' => $faltasAbonadas,
             'percentual_faltas' => $percentualFaltas,
             'percentual_injustificadas' => $percentualFaltasInjustificadas,
             'atingiu_alerta_preventivo' => $atingiuAlertaPreventivo,

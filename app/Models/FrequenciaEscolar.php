@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Observers\FrequenciaFaltaObserver;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -22,13 +23,16 @@ class FrequenciaEscolar extends Model
         'cronograma_aula_id',
         'situacao',
         'justificada',
+        'abonada',
         'motivo_justificativa',
+        'atestado_aluno_id',
     ];
 
     protected function casts(): array
     {
         return [
             'justificada' => 'boolean',
+            'abonada' => 'boolean',
             'aviso_resumo_pendente' => 'boolean',
             'aviso_resumo_enviado_em' => 'datetime',
         ];
@@ -37,7 +41,7 @@ class FrequenciaEscolar extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['matricula_id', 'cronograma_aula_id', 'situacao', 'justificada', 'motivo_justificativa'])
+            ->logOnly(['matricula_id', 'cronograma_aula_id', 'situacao', 'justificada', 'abonada', 'motivo_justificativa'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('frequencia_escolar')
@@ -76,5 +80,33 @@ class FrequenciaEscolar extends Model
     public function cronogramaAula(): BelongsTo
     {
         return $this->belongsTo(CronogramaAula::class);
+    }
+
+    /**
+     * Faltas que contam contra a frequência: ausente e não abonada. A falta justificada continua contando; só o abono a
+     * tira da conta (abonar exige justificar, mas justificar não abona).
+     *
+     * @param  Builder<FrequenciaEscolar>  $query
+     * @return Builder<FrequenciaEscolar>
+     */
+    public function scopeContaComoFalta(Builder $query): Builder
+    {
+        return $query->where($this->qualifyColumn('situacao'), 'ausente')->where($this->qualifyColumn('abonada'), false);
+    }
+
+    /**
+     * A aula entra na frequência como presença: presente, ou falta abonada.
+     */
+    public function contaComoPresenca(): bool
+    {
+        return $this->situacao === 'presente' || ($this->situacao === 'ausente' && $this->abonada);
+    }
+
+    /**
+     * Atestado que justificou esta falta (nulo na falta justificada à mão ou sem justificativa).
+     */
+    public function atestadoAluno(): BelongsTo
+    {
+        return $this->belongsTo(AtestadoAluno::class);
     }
 }

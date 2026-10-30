@@ -30,6 +30,9 @@ tentou resolver antes.
 - Falta justificada (atestado, por exemplo) como marcação nova em `FrequenciaEscolar`. A lei fala em
   faltas; o ECA, em faltas injustificadas: a tela mostra os dois números e a decisão de notificar é da
   direção.
+  - **Atualização (2026-10-30):** a justificativa passou a ter tela (atestado e falta isolada) e ganhou o **abono**,
+    que é outra coisa: a falta só justificada continua contando; a abonada sai de todos os números da apuração
+    (`faltas_abonadas`). Ver `docs/atestados_e_media_parcial.md`.
 
 ### Fluxo
 1. A lista **Alunos acima do limite** aparece para a coordenação com o motivo e o histórico.

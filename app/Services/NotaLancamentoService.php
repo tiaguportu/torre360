@@ -52,7 +52,9 @@ class NotaLancamentoService
                 continue;
             }
 
-            $situacao = SituacaoNota::tryFrom((string) ($item['situacao'] ?? ''));
+            // A grade entrega o estado do Select já como enum; a outra tela e o CSV entregam o texto.
+            $situacaoBruta = $item['situacao'] ?? '';
+            $situacao = $situacaoBruta instanceof SituacaoNota ? $situacaoBruta : SituacaoNota::tryFrom((string) $situacaoBruta);
 
             if ($situacao) {
                 // Justificativa (faltou / não se aplica) prevalece e descarta qualquer valor digitado.

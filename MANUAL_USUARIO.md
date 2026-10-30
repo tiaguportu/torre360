@@ -1015,6 +1015,9 @@ Para agilizar o lançamento de uma avaliação já cadastrada, sem precisar nave
 5. O sistema valida que nenhuma nota ultrapasse a **Nota Máxima** configurada na avaliação; deixar um campo em branco remove a nota daquele aluno, caso já exista uma.
    - **Faltou / Não se aplica:** Ao lado de cada aluno há o campo **Situação**. Use **Faltou** quando o aluno não fez a avaliação, ou **Não se aplica** quando a avaliação é destinada apenas a alguns alunos (ex.: prova de adaptação ou de segunda chamada). Ao escolher uma situação, o campo de nota é limpo e bloqueado. O aluno deixa de aparecer como **pendência de lançamento** e a avaliação **não entra na média** dele. Para voltar a lançar nota, selecione **Com nota** no campo Situação. Se o aluno ficar sem nota e sem situação, ele continua como pendente.
    - O mesmo campo **Situação** existe na tela **Lançar Notas** aberta a partir da listagem de Avaliações.
+   - **Média parcial em tempo real:** À direita de cada aluno, a coluna **Média parcial** mostra a média dele na disciplina, **dentro da etapa (bimestre/trimestre) da avaliação**, já com a nota que você acabou de digitar, **antes de salvar**. A conta é a mesma do boletim: média ponderada pelos pesos das avaliações da etapa, com as categorias de recuperação que substituem a menor nota. A nota digitada substitui a que já estava salva nesta avaliação; campo em branco, **Faltou** e **Não se aplica** tiram a avaliação da conta, e um valor acima da nota máxima é ignorado (a gravação o recusaria). Aluno sem nenhuma nota na etapa mostra "—".
+   - **Cores da média parcial:** as mesmas faixas do Fechamento do Ciclo, configuradas no **Período Letivo**: **verde** = a partir da **Nota Mínima para Aprovação** (padrão 7,0); **âmbar** = a partir da **Nota Mínima para Recuperação** (padrão 5,0); **vermelho** = abaixo disso. Passe o mouse sobre o número para ver a faixa ("Aprovado", "Recuperação" ou "Reprovado, se a média se mantiver"). É uma projeção: a situação final só sai no Fechamento do Ciclo, com todas as etapas.
+   - A média aparece depois de uma curta pausa na digitação (menos de meio segundo) e não é gravada: só a nota e a situação vão para o banco.
 6. **Visibilidade Restrita:** Assim como na listagem de Avaliações, professores só conseguem selecionar turmas, disciplinas e avaliações vinculadas a si mesmos. Administradores, secretaria e coordenação têm acesso a todas.
 
 ### 5.10 Fechamento do Ciclo Letivo e Situação Final
@@ -4862,6 +4865,46 @@ Para rotinas de compliance contábil, conciliações periódicas ou correções 
    - O sistema conta com salvaguarda de idempotência (`notificacao_familia_enviada_em` registrada no histórico da requisição Assinafy), impedindo notificações duplicadas durante atualizações de status ou webhooks secundários.
 3. **Acesso Direto à Central de Documentos:**
    - A notificação no Portal apresenta o título **Contrato Disponível para Assinatura**, informa o nome do estudante e inclui o botão de ação **Assinar Contrato**, que direciona o responsável diretamente à tela de Documentos (`/portal/documentos`) para conclusão da assinatura.
+
+## 🩺 109. Atestados e Abono de Faltas (`/admin/atestados-aluno`)
+
+Quando a família entrega o atestado do aluno, a secretaria o registra uma vez e o sistema justifica sozinho as faltas do período, sem precisar abrir falta por falta. **Justificar e abonar são coisas diferentes**: o atestado sempre justifica; só abona (a falta deixa de contar na frequência) se for registrado como abono.
+
+### 109.1 Registrar um atestado
+1. Vá em **Acadêmico → Atestados e Abono de Faltas** e clique em **Registrar atestado**.
+2. Escolha o **aluno** (aparecem as matrículas ativas; digite parte do nome), informe o **primeiro e o último dia do afastamento** (pode ser o mesmo dia; máximo de 180 dias, para uma data digitada errada não justificar anos de faltas) e anexe o **comprovante** (PDF ou foto, até 10 MB).
+3. **Registrar também como abono de falta:** marque só se a escola abona as faltas desse atestado. Desmarcado (o padrão), o atestado **só justifica**. Veja a diferença em 109.2.
+4. A **observação** é opcional, fica **criptografada** e não precisa de diagnóstico nem CID.
+5. Ao salvar, o sistema mostra quantas faltas foram justificadas (e se ficaram abonadas). Todas as faltas do aluno nas aulas do período (chamada com **Ausente**) passam a **justificadas**, com o motivo **"Atestado médico (dd/mm/aaaa a dd/mm/aaaa)"**.
+6. As faltas **lançadas depois** pelo professor, dentro do período, já entram justificadas (e abonadas, se o atestado for abono). Por isso a secretaria pode registrar o atestado **antes** dos dias passarem.
+7. Registrar de novo um atestado vigente do mesmo aluno com o **mesmo período** é recusado (evita duplicidade).
+
+### 109.2 Justificar não é abonar
+Uma falta pode estar em três situações, e cada uma pesa diferente:
+
+| Situação da falta | Conta na frequência? | Aviso diário à família | Conselho Tutelar |
+|---|---|---|---|
+| **Injustificada** | Sim, como falta | Sim | Injustificada |
+| **Justificada** (sem abono) | **Sim, continua sendo falta** | Não | Justificada |
+| **Justificada e abonada** | **Não**: conta como presença | Não | Fica de fora dos números |
+
+- O **abono exige justificativa** (com o motivo registrado): uma falta não pode ser abonada sem estar justificada.
+- Onde o abono vale: **percentual de frequência** do boletim e da lista de datas de falta, **Portal da Família** (a falta abonada entra como presença e há um aviso com quantas são), **Censo Escolar**, **Histórico Escolar**, **risco de evasão** e o indicador de frequência do painel. A falta só justificada continua contando em todos eles.
+- Uma falta que **outra pessoa já justificou à mão** não é alterada pelo atestado (nem promovida a abono), e **não é desfeita** se o atestado for cancelado: o sistema só desfaz o que ele mesmo fez.
+- Se a chamada de uma falta justificada pelo atestado for corrigida para **Presente**, a justificativa e o abono saem junto; se voltar a ser falta dentro de um atestado vigente, é reavaliada.
+
+### 109.3 Corrigir período / abono ou cancelar
+- **Corrigir período / abono:** informe as novas datas e, se for o caso, marque ou desmarque o abono. As faltas que ficarem fora voltam a injustificadas e as novas do período são justificadas. Mudar o abono vale para **todas** as faltas do atestado: marcar abona as que só estavam justificadas; desmarcar devolve as abonadas a "só justificadas" (voltam a contar, mas seguem justificadas).
+- **Cancelar atestado:** informe o motivo (lançado por engano, atestado de outro aluno etc.). As faltas que ele justificou (e abonou) voltam a injustificadas e a contar na frequência, **a menos que outro atestado vigente do mesmo aluno também cubra o dia**. O comprovante continua guardado para o histórico. Atestado cancelado não pode ser corrigido nem cancelado de novo.
+- Não existe exclusão: o histórico não se reescreve.
+
+### 109.4 Justificar ou abonar uma falta isolada (sem atestado)
+Em **Acadêmico → Frequência Escolar**, abra o registro de uma falta (situação `ausente`): a seção **Justificativa e abono da falta** tem **Falta justificada**, **Registrar como abono de falta** (só aparece com a justificativa) e o **Motivo** (obrigatório para justificar; não escreva diagnóstico). Tirar a justificativa tira também o abono e o motivo. A lista mostra as colunas **Justificada** e **Abonada**. A falta justificada por um atestado aparece bloqueada nessa tela: altere pelo atestado.
+
+### 109.5 Privacidade e permissões
+- O atestado traz **dado de saúde**: o comprovante fica em área privada e só abre para quem tem a permissão `View:AtestadoAluno` (a **secretaria** e a **coordenação**, por padrão). **Professores e famílias não abrem o comprovante.**
+- **Registrar, corrigir e cancelar** são da secretaria e da administração; a coordenação apenas consulta. As permissões (`ViewAny`, `View`, `Create`, `Update` e `Cancelar` de `AtestadoAluno`) aparecem no Shield e podem ser ajustadas por papel.
+- O histórico de alterações registra quem, quando e o período, **nunca a observação**. O motivo gravado em cada falta só diz "Atestado médico" e o período.
 
 ---
 

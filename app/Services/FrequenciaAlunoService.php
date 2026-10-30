@@ -9,7 +9,8 @@ use App\Models\Matricula;
 
 /**
  * Resumo de frequência de um aluno para o Portal da Família.
- * Considera apenas registros com situação definida (presente/ausente).
+ * Considera apenas registros com situação definida (presente/ausente). A falta abonada conta como presença e não como
+ * falta (`abonadas` informa quantas são); a falta apenas justificada continua sendo falta.
  */
 class FrequenciaAlunoService
 {
@@ -19,7 +20,7 @@ class FrequenciaAlunoService
     public const FREQUENCIA_MINIMA = 75.0;
 
     /**
-     * @return array{total: int, presencas: int, faltas: int, percentual: ?float, abaixo_minimo: bool, por_disciplina: list<array{disciplina_id: int, nome: string, total: int, presencas: int, faltas: int, percentual: ?float, abaixo_minimo: bool}>}
+     * @return array{total: int, presencas: int, faltas: int, abonadas: int, percentual: ?float, abaixo_minimo: bool, por_disciplina: list<array{disciplina_id: int, nome: string, total: int, presencas: int, faltas: int, percentual: ?float, abaixo_minimo: bool}>}
      */
     public function resumo(Matricula $matricula): array
     {
@@ -32,7 +33,9 @@ class FrequenciaAlunoService
             ->whereIn("{$frequencias}.situacao", ['presente', 'ausente'])
             ->selectRaw("{$aulas}.disciplina_id as disciplina_id")
             ->selectRaw('count(*) as total')
-            ->selectRaw("sum(case when {$frequencias}.situacao = 'presente' then 1 else 0 end) as presencas")
+            // A falta abonada entra como presença: só o abono tira a falta da conta (justificar não tira).
+            ->selectRaw("sum(case when {$frequencias}.situacao = 'presente' or {$frequencias}.abonada = 1 then 1 else 0 end) as presencas")
+            ->selectRaw("sum(case when {$frequencias}.situacao = 'ausente' and {$frequencias}.abonada = 1 then 1 else 0 end) as abonadas")
             ->groupBy("{$aulas}.disciplina_id")
             ->get();
 
@@ -58,6 +61,7 @@ class FrequenciaAlunoService
             'total' => $total,
             'presencas' => $presencas,
             'faltas' => $total - $presencas,
+            'abonadas' => (int) $linhas->sum('abonadas'),
             'percentual' => $percentual,
             'abaixo_minimo' => $percentual !== null && $percentual < self::FREQUENCIA_MINIMA,
             'por_disciplina' => $porDisciplina->all(),

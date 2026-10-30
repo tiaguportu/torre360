@@ -73,8 +73,20 @@ class Frequencia extends Page implements HasTable
                 TextColumn::make('situacao')
                     ->label('Situação')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => $state === 'ausente' ? 'Falta' : 'Presente')
-                    ->color(fn (?string $state): string => $state === 'ausente' ? 'danger' : 'success'),
+                    ->formatStateUsing(fn (?string $state, FrequenciaEscolar $record): string => match (true) {
+                        $state !== 'ausente' => 'Presente',
+                        $record->abonada => 'Falta abonada',
+                        $record->justificada => 'Falta justificada',
+                        default => 'Falta',
+                    })
+                    // Abonada não conta na frequência (azul); justificada sem abono continua contando (amarelo).
+                    ->color(fn (?string $state, FrequenciaEscolar $record): string => match (true) {
+                        $state !== 'ausente' => 'success',
+                        $record->abonada => 'info',
+                        $record->justificada => 'warning',
+                        default => 'danger',
+                    })
+                    ->tooltip(fn (?string $state, FrequenciaEscolar $record): ?string => $state === 'ausente' && $record->justificada ? ($record->abonada ? 'Falta justificada e abonada: não conta na frequência.' : 'Falta justificada: continua contando na frequência.') : null),
             ])
             ->filters([
                 SelectFilter::make('situacao')

@@ -73,7 +73,8 @@ class HistoricoEscolarService
 
             // Cálculo da frequência percentual
             $totalAulas = FrequenciaEscolar::where('matricula_id', $matricula->id)->count();
-            $faltas = FrequenciaEscolar::where('matricula_id', $matricula->id)->where('situacao', 'ausente')->count();
+            // Falta abonada não conta como falta (a só justificada continua contando).
+            $faltas = FrequenciaEscolar::where('matricula_id', $matricula->id)->contaComoFalta()->count();
             $frequenciaPercentual = $totalAulas > 0
                 ? round((($totalAulas - $faltas) / $totalAulas) * 100, 2)
                 : 100.00;

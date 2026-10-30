@@ -335,7 +335,8 @@ class SituacaoAlunoCensoService
         return FrequenciaEscolar::query()
             ->whereIn('matricula_id', $ids)
             ->whereIn('situacao', ['presente', 'ausente'])
-            ->selectRaw('matricula_id, count(*) as total, sum(case when situacao = ? then 1 else 0 end) as presencas', ['presente'])
+            // A falta abonada conta como presença; a só justificada continua sendo falta.
+            ->selectRaw('matricula_id, count(*) as total, sum(case when situacao = ? or abonada = 1 then 1 else 0 end) as presencas', ['presente'])
             ->groupBy('matricula_id')
             ->get()
             ->mapWithKeys(fn ($l): array => [(int) $l->matricula_id => (int) $l->total > 0 ? round((int) $l->presencas / (int) $l->total * 100, 1) : 100.0])

@@ -354,7 +354,8 @@ class RiscoEvasaoService
             return 0;
         }
 
-        $percentualFaltas = ($registros->where('situacao', 'ausente')->count() / $total) * 100;
+        // Falta abonada não conta como falta (a só justificada continua contando).
+        $percentualFaltas = ($registros->where('situacao', 'ausente')->where('abonada', false)->count() / $total) * 100;
 
         foreach (config('risco_evasao.frequencia') as $faixa) {
             if ($percentualFaltas >= $faixa['minimo']) {
