@@ -51,4 +51,15 @@ class CicloPreceptoria extends Model
         return $query->where('data_inicio', '<=', $today)
             ->where('data_fim', '>=', $today);
     }
+
+    /**
+     * Ciclos que ainda não venceram: o término é hoje ou depois (ou não há término). Inclui os que
+     * ainda não começaram, ao contrário de vigentes().
+     */
+    public function scopeNaoVencidos($query)
+    {
+        return $query->where(fn ($ciclos) => $ciclos
+            ->whereNull('data_fim')
+            ->orWhere('data_fim', '>=', now()->toDateString()));
+    }
 }

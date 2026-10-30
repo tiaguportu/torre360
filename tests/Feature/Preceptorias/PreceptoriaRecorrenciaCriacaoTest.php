@@ -214,8 +214,9 @@ class PreceptoriaRecorrenciaCriacaoTest extends TestCase
     public function test_listagem_filtra_por_ciclo_de_preceptoria(): void
     {
         $user = $this->usuarioCom(['ViewAny:Preceptoria']);
-        $cicloA = CicloPreceptoria::create(['nome' => 'Ciclo A', 'data_inicio' => '2026-03-01', 'data_fim' => '2026-05-31']);
-        $cicloB = CicloPreceptoria::create(['nome' => 'Ciclo B', 'data_inicio' => '2026-08-01', 'data_fim' => '2026-10-31']);
+        // ciclos ainda válidos (a listagem esconde os vencidos por padrão); datas relativas a hoje
+        $cicloA = CicloPreceptoria::create(['nome' => 'Ciclo A', 'data_inicio' => now()->subMonths(2)->toDateString(), 'data_fim' => now()->addMonth()->toDateString()]);
+        $cicloB = CicloPreceptoria::create(['nome' => 'Ciclo B', 'data_inicio' => now()->addMonth()->toDateString(), 'data_fim' => now()->addMonths(4)->toDateString()]);
 
         $doA = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $cicloA->id, 'hora_inicio' => '09:00:00']);
         $doB = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $cicloB->id, 'hora_inicio' => '10:00:00']);

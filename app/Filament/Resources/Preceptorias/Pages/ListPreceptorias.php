@@ -71,7 +71,8 @@ class ListPreceptorias extends ListRecords
             $html .= '<li><strong>Meus Atendimentos:</strong> Você verá apenas os horários em que você é o preceptor.</li>';
         }
 
-        $html .= '<li><strong>Filtrar por ciclo:</strong> Use o filtro "Ciclo de Preceptoria" para ver só as preceptorias de um ciclo.</li>';
+        $html .= '<li><strong>Ciclos vencidos:</strong> Por padrão a lista não mostra as preceptorias de ciclos cujo término já passou (as sem ciclo continuam aparecendo). Para ver as antigas, abra os filtros e desligue "Ocultar ciclos de preceptoria vencidos".</li>';
+        $html .= '<li><strong>Filtrar por ciclo:</strong> Use o filtro "Ciclo de Preceptoria" para ver só as preceptorias de um ciclo; ele oferece apenas os ciclos que ainda não venceram.</li>';
         $html .= '<li><strong>Calendário:</strong> O botão "Calendário" abre a agenda visual, onde dá para arrastar uma preceptoria para outro dia ou horário e gerar preceptorias recorrentes.</li>';
         $html .= '<li><strong>Ações de Tabela:</strong> Utilize os ícones na tabela para registrar o que foi conversado ou visualizar o histórico.</li>';
         $html .= '</ul>';

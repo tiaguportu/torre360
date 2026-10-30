@@ -49,8 +49,8 @@ class PreceptoriaConflitoHorarioTest extends TestCase
 
     private function ocupada(Pessoa $professor, string $data = '2026-09-08', string $inicio = '10:00:00', string $fim = '10:30:00'): Preceptoria
     {
-        // o formulário de edição exige o ciclo
-        $ciclo = CicloPreceptoria::firstOrCreate(['nome' => 'Ciclo de Teste'], ['data_inicio' => '2026-09-01', 'data_fim' => '2026-09-30']);
+        // o formulário de edição exige o ciclo; ainda válido, porque a listagem esconde os vencidos
+        $ciclo = CicloPreceptoria::firstOrCreate(['nome' => 'Ciclo de Teste'], ['data_inicio' => now()->subMonth()->toDateString(), 'data_fim' => now()->addMonth()->toDateString()]);
 
         return Preceptoria::factory()->create([
             'ciclo_preceptoria_id' => $ciclo->id,

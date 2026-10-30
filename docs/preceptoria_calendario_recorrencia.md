@@ -17,6 +17,22 @@ desconsiderando feriados, dias não letivos e finais de semana (ou não).
 `PreceptoriasTable`: `SelectFilter` `ciclo_preceptoria_id` (ciclos mais recentes primeiro) e coluna
 **Ciclo** (alternável), com `cicloPreceptoria` no eager loading da tabela.
 
+**Ciclos vencidos (2026-10-29)**: a listagem esconde, por padrão, as preceptorias de ciclos cujo
+término já passou, e o seletor de ciclo só oferece os ciclos que não venceram.
+
+- "Vencido" = `data_fim` anterior a hoje (`CicloPreceptoria::scopeNaoVencidos`: término hoje ou depois,
+  ou sem término). Ciclos que ainda não começaram contam como válidos, ao contrário de `vigentes()`.
+- Filtro `ocultar_ciclos_vencidos`: uma chave **ligada por padrão** ("Ocultar ciclos de preceptoria
+  vencidos"). Foi feito assim porque o Filament só roda o callback de um filtro quando ele está ativo;
+  desligar a chave é o "optar por exibir". "Limpar filtros" volta a ligá-la. Usa
+  `excludeWhenResolvingRecord()` para não atrapalhar ações sobre um registro específico.
+- Preceptoria **sem ciclo** continua aparecendo (não é de ciclo vencido).
+- O seletor **continua só com os válidos mesmo com a chave desligada**: as de ciclos vencidos aparecem
+  na lista, mas não dá para filtrar por um ciclo vencido específico. Se isso incomodar, basta o seletor
+  seguir o estado da chave.
+- Só a listagem: o calendário (`/admin/preceptorias/calendario`), o seletor de ciclo dos formulários de
+  cadastro e o dashboard não mudaram.
+
 ### 2. Recorrência (`PreceptoriaAgendaService`)
 O modo "Intervalo de Datas (Range)" do cadastro virou **Recorrente (janela de datas)**:
 

@@ -89,9 +89,20 @@ class PreceptoriasTable
 
             ->defaultSort('data', 'desc')
             ->filters([
+                // ligado por padrão: quem quer ver o que já passou desliga a chave. Preceptoria sem ciclo não é de ciclo vencido.
+                Filter::make('ocultar_ciclos_vencidos')
+                    ->label('Ocultar ciclos de preceptoria vencidos')
+                    ->toggle()
+                    ->default()
+                    ->query(fn (Builder $query) => $query->where(fn (Builder $preceptorias) => $preceptorias
+                        ->whereNull('ciclo_preceptoria_id')
+                        ->orWhereHas('cicloPreceptoria', fn (Builder $ciclos) => $ciclos->naoVencidos())))
+                    ->excludeWhenResolvingRecord(),
+
+                // só os ciclos ainda válidos (término hoje ou depois)
                 SelectFilter::make('ciclo_preceptoria_id')
                     ->label('Ciclo de Preceptoria')
-                    ->relationship('cicloPreceptoria', 'nome', fn (Builder $query) => $query->orderByDesc('data_inicio')->orderBy('nome'))
+                    ->relationship('cicloPreceptoria', 'nome', fn (Builder $query) => $query->naoVencidos()->orderByDesc('data_inicio')->orderBy('nome'))
                     ->searchable()
                     ->preload(),
 
