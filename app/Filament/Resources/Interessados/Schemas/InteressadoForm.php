@@ -184,6 +184,8 @@ class InteressadoForm
                                             ->label('Status')
                                             ->relationship('status', 'nome')
                                             ->required()
+                                            // Sem live(), o "Motivo da Perda" só reavalia a visibilidade ao salvar.
+                                            ->live()
                                             ->native(false),
 
                                         Select::make('usuario_id')

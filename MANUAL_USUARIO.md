@@ -182,7 +182,7 @@ O formulário de edição do interessado oferece ferramentas de qualificação o
 - **Temperatura:** Defina manualmente a sua percepção (Quente/Morno/Frio). Ela não é calculada pelo sistema, mas **entra no Lead Score com o maior peso** (padrão: 20 de 100: quente 20, morno 10, frio 0).
 - **Valor Estimado:** Registre o valor potencial da matrícula para projeções de receita.
 - **Redes Sociais:** Na seção *Prazo e redes sociais*, clique em *Adicionar rede social*, escolha a rede (Instagram, Facebook, LinkedIn, TikTok, X, YouTube ou Outra) e cole o link do perfil (precisa começar com `https://`). É possível cadastrar vários perfis. Na listagem de interessados, cada lead com perfil cadastrado ganha o botão **Redes sociais** (ícone de globo) para abri-lo direto (seção 3.2).
-- **Motivo de Perda:** Quando o status muda para "Perdido", o campo de motivo aparece automaticamente na seção *Acompanhamento*.
+- **Motivo de Perda:** Assim que você escolhe, no campo *Status*, uma etapa de perda (*Perdido*, *Desistente* ou qualquer etapa de encerramento sem matrícula), o campo **Motivo da Perda** aparece na hora na seção *Acompanhamento*, antes de salvar, e passa a ser obrigatório. Se voltar para uma etapa ativa (como *Novo*), o campo some.
 - **Telefone:** O campo tem máscara no padrão Brasil com DDD, aceitando fixo `(11) 3333-4444` ou celular `(11) 98888-7777`. A máscara se ajusta sozinha conforme a quantidade de dígitos digitada.
 
 ### 3.4 Registro de Histórico de Contato

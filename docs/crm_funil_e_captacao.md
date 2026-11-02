@@ -58,6 +58,12 @@ não é de ganho). O formulário público não usa mais `?? 1` (id fixo) como fa
   a etapa só corrige leads que **já** estão perdidos; ao **alterar a etapa**, leads já matriculados são
   pulados (a notificação informa quantos e eles não recebem nenhuma outra alteração do lote). Os campos
   simples (consultor, temperatura, origem…) seguem como antes quando a etapa não muda.
+- **Formulário de edição (`InteressadoForm`):** o Select `status_interessado_id` é `->live()`. O `motivo_perda`
+  depende dele (`visible`/`required` via `isStatusPerdido()`, que usa `StatusInteressado::isPerda()`); sem
+  `live()` o navegador não avisa o servidor da troca de status e o campo só aparecia ao salvar, junto do erro de
+  obrigatório. O gatilho é a **etapa de perda** (final e não ganha, ou "Perdido"/"Desistente" pelo nome), não um
+  nome fixo. Teste: `InteressadoMotivoPerdaFormularioTest` (o de reatividade confere `isLive()`, pois o
+  `fillForm` do teste muda o estado no servidor e passaria mesmo sem `live()`).
 - **Atribuir consultor:** só aceita usuários de `User::consultoresCrm()` e **avisa o consultor** pelo sino.
 - **Atendimento:** o formulário aceita a data/hora real do contato e não oferece os tipos internos do sistema.
 - **Link de pré-matrícula:** o token era gerado dentro do `form()` da ação, ou seja, a cada renderização do
