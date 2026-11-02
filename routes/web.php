@@ -6,6 +6,7 @@ use App\Http\Controllers\BibliotecaEtiquetasController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
 use App\Http\Controllers\Comercial\PropostaPublicaController;
+use App\Http\Controllers\Comercial\VisitaPublicaController;
 use App\Http\Controllers\CompraNotaFiscalController;
 use App\Http\Controllers\Comunicacao\DescadastroController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
@@ -110,6 +111,14 @@ Route::get('/ouvidoria/enviada', [OuvidoriaPublicaController::class, 'enviada'])
 Route::get('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'acompanhar'])->name('ouvidoria.acompanhar');
 Route::post('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'consultar'])->middleware('throttle:30,1')->name('ouvidoria.acompanhar.consultar');
 Route::post('/ouvidoria/acompanhar/complemento', [OuvidoriaPublicaController::class, 'complementar'])->middleware('throttle:20,1')->name('ouvidoria.acompanhar.complementar');
+
+// Agendamento online de visitas (Onda 86): a família escolhe o horário e recebe os links para trocar ou cancelar.
+Route::get('/visita', [VisitaPublicaController::class, 'agendar'])->middleware('throttle:60,1')->name('visita.publica.agendar');
+Route::post('/visita', [VisitaPublicaController::class, 'reservar'])->middleware('throttle:20,1')->name('visita.publica.reservar');
+Route::get('/visita/{token}', [VisitaPublicaController::class, 'mostrar'])->middleware('throttle:60,1')->name('visita.publica.mostrar');
+Route::post('/visita/{token}/cancelar', [VisitaPublicaController::class, 'cancelar'])->middleware('throttle:20,1')->name('visita.publica.cancelar');
+Route::get('/visita/{token}/reagendar', [VisitaPublicaController::class, 'reagendarForm'])->middleware('throttle:60,1')->name('visita.publica.reagendar');
+Route::post('/visita/{token}/reagendar', [VisitaPublicaController::class, 'reagendar'])->middleware('throttle:20,1')->name('visita.publica.reagendar.salvar');
 
 // Proposta comercial com aceite da família (Onda 87): link com token longo, leitura e aceite.
 Route::get('/proposta/{token}', [PropostaPublicaController::class, 'show'])->middleware('throttle:60,1')->name('proposta.publica.show');

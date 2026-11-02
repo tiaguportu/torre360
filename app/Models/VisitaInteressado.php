@@ -20,13 +20,30 @@ class VisitaInteressado extends Model
 
     protected $fillable = ['interessado_id', 'interessado_dependente_id', 'usuario_id', 'data_hora', 'status', 'observacoes', 'lembrete_enviado_em'];
 
+    /**
+     * O token dos links de reagendar e cancelar (Onda 86), a origem e o lembrete da família ficam fora do `$fillable`: só
+     * `AgendaVisitaService` e `VisitaInteressadoService` os gravam.
+     */
+    protected $hidden = ['token_agendamento'];
+
     protected function casts(): array
     {
         return [
             'data_hora' => 'datetime',
             'lembrete_enviado_em' => 'datetime',
+            'lembrete_familia_enviado_em' => 'datetime',
             'status' => StatusVisitaInteressado::class,
         ];
+    }
+
+    public function unidade(): BelongsTo
+    {
+        return $this->belongsTo(Unidade::class);
+    }
+
+    public function marcadaOnline(): bool
+    {
+        return $this->origem === 'online';
     }
 
     public function interessado(): BelongsTo

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\AgendaVisitaService;
 use App\Services\AlertaLeadsService;
 use App\Services\VisitaInteressadoService;
 use Illuminate\Console\Command;
@@ -18,6 +19,13 @@ class NotificarInteressadosPendentesCommand extends Command
 
         if ($lembretesVisita > 0) {
             $this->info("Lembretes de visita enviados: {$lembretesVisita}.");
+        }
+
+        // Onda 86: a família que marcou a visita pela página pública recebe o lembrete (se a régua não tiver regra própria).
+        $lembretesFamilia = app(AgendaVisitaService::class)->enviarLembretesDaFamilia();
+
+        if ($lembretesFamilia > 0) {
+            $this->info("Lembretes de visita enviados às famílias: {$lembretesFamilia}.");
         }
 
         $resultado = $alertas->executar();

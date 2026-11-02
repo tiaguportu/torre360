@@ -7,7 +7,6 @@ use App\Filament\Resources\DenunciaComites\Pages\ManageDenunciaComites;
 use App\Models\DenunciaComite;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
-use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -62,7 +61,6 @@ class DenunciaComiteResource extends Resource implements HasShieldPermissions
                 TextColumn::make('user.name')->label('Pessoa')->searchable(),
                 TextColumn::make('categoria')->label('Categoria')->badge()->placeholder('Todas'),
             ])
-            ->headerActions([CreateAction::make()])
             ->recordActions([EditAction::make(), DeleteAction::make()]);
     }
 
