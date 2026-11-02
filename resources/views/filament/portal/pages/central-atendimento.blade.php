@@ -155,6 +155,23 @@
                             </div>
                         </div>
 
+                        @if($this->categoriasDoSetor->isNotEmpty())
+                            <!-- Categoria do assunto -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
+                                    Tipo de assunto
+                                </label>
+                                <select
+                                    wire:model="novoCategoriaId"
+                                    class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm focus:ring-primary-500 focus:border-primary-500">
+                                    <option value="">Outro assunto</option>
+                                    @foreach($this->categoriasDoSetor as $categoria)
+                                        <option value="{{ $categoria->id }}">{{ $categoria->nome }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
                         <!-- Assunto -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
@@ -238,6 +255,15 @@
                                     — Aluno: <strong>{{ $chamado->matricula->pessoa?->nome }}</strong>
                                 @endif
                             </p>
+                            @if($chamado->resultado)
+                                <p class="text-xs mt-1 font-semibold {{ $chamado->resultado->value === 'atendido' ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
+                                    Resultado: {{ $chamado->resultado->getLabel() }}
+                                </p>
+                            @elseif($chamado->estaEmAberto() && $chamado->prazo_resolucao_em)
+                                <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                                    Previsão de conclusão: até {{ $chamado->prazo_resolucao_em->format('d/m/Y') }}.
+                                </p>
+                            @endif
                         </div>
                         <button wire:click="$set('showConversaModal', false)" class="text-gray-400 hover:text-gray-500">
                             <x-heroicon-o-x-mark class="w-6 h-6" />

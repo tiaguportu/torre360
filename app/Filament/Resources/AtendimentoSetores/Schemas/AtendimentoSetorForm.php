@@ -47,6 +47,39 @@ class AtendimentoSetorForm
                         Toggle::make('ativo')
                             ->label('Setor Ativo para Abertura de Chamados')
                             ->default(true),
+
+                        Toggle::make('recebe_requerimentos')
+                            ->label('Recebe os requerimentos da família')
+                            ->helperText('Pedidos como atestado, atualização cadastral e troca de turma caem neste setor. Se nenhum setor estiver marcado, o primeiro setor ativo recebe.')
+                            ->default(false),
+                    ]),
+
+                Section::make('Prazos de atendimento')
+                    ->description('Contados em horas úteis (segunda a sexta, no horário da escola). Deixe em branco para não cobrar prazo deste setor.')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
+                                TextInput::make('prazo_primeira_resposta_horas')
+                                    ->label('Primeira resposta (horas úteis)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(720)
+                                    ->default(24),
+
+                                TextInput::make('prazo_resolucao_horas')
+                                    ->label('Resolução (horas úteis)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(2400)
+                                    ->default(72),
+
+                                TextInput::make('fecha_aguardando_dias')
+                                    ->label('Encerrar sozinho após (dias sem resposta da família)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(90)
+                                    ->default(7),
+                            ]),
                     ]),
             ]);
     }

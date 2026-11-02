@@ -4,10 +4,11 @@ namespace App\Filament\Portal\Pages;
 
 use App\Enums\StatusChamado;
 use App\Filament\Concerns\HasAjudaAction;
+use App\Models\AtendimentoCategoria;
 use App\Models\AtendimentoChamado;
-use App\Models\AtendimentoMensagem;
 use App\Models\AtendimentoSetor;
 use App\Models\Matricula;
+use App\Services\AtendimentoService;
 use App\Support\HelpContent;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -63,9 +64,28 @@ class CentralAtendimento extends Page
 
     public string $comentarioAvaliacao = '';
 
+    public ?int $novoCategoriaId = null;
+
     public function getSetoresProperty(): Collection
     {
         return AtendimentoSetor::where('ativo', true)->orderBy('ordem')->get();
+    }
+
+    /**
+     * Assuntos do setor escolhido (Onda 83). Vazio enquanto nenhum setor foi escolhido ou se o setor não cadastrou categorias.
+     */
+    public function getCategoriasDoSetorProperty(): Collection
+    {
+        if (! $this->novoSetorId) {
+            return collect();
+        }
+
+        return AtendimentoCategoria::query()->where('setor_id', $this->novoSetorId)->where('ativo', true)->orderBy('ordem')->orderBy('nome')->get();
+    }
+
+    public function updatedNovoSetorId(): void
+    {
+        $this->novoCategoriaId = null;
     }
 
     public function getMatriculasAcessiveisProperty(): Collection
@@ -134,18 +154,16 @@ class CentralAtendimento extends Page
 
         $solicitanteId = auth()->user()->pessoa?->id ?: auth()->user()->pessoasAcessiveis()->first()?->id;
 
-        $chamado = AtendimentoChamado::create([
+        // A categoria só vale se for do setor escolhido: o formulário filtra, mas o valor chega do navegador.
+        $categoriaId = $this->categoriasDoSetor->firstWhere('id', $this->novoCategoriaId)?->id;
+
+        $chamado = app(AtendimentoService::class)->abrir([
             'setor_id' => $this->novoSetorId,
             'matricula_id' => $this->novoMatriculaId ?: null,
+            'categoria_id' => $categoriaId,
             'solicitante_id' => $solicitanteId,
             'assunto' => $this->novoAssunto,
             'prioridade' => $this->novaPrioridade,
-            'status' => StatusChamado::Aberto,
-        ]);
-
-        AtendimentoMensagem::create([
-            'chamado_id' => $chamado->id,
-            'pessoa_id' => $solicitanteId,
             'mensagem' => $this->novaMensagemInicial,
             'anexo_path' => $anexoPath,
         ]);
@@ -202,17 +220,8 @@ class CentralAtendimento extends Page
 
         $solicitanteId = auth()->user()->pessoa?->id ?: auth()->user()->pessoasAcessiveis()->first()?->id;
 
-        AtendimentoMensagem::create([
-            'chamado_id' => $chamado->id,
-            'pessoa_id' => $solicitanteId,
-            'mensagem' => $this->respostaTexto,
-            'anexo_path' => $anexoPath,
-        ]);
-
-        // Se o chamado estava aguardando o solicitante ou resolvido, reabre para em andamento
-        if (in_array($chamado->status, [StatusChamado::AguardandoSolicitante, StatusChamado::Resolvido])) {
-            $chamado->update(['status' => StatusChamado::EmAndamento]);
-        }
+        // Reabre o chamado que estava aguardando a família ou resolvido e avisa quem atende.
+        app(AtendimentoService::class)->responderFamilia($chamado, (int) $solicitanteId, $this->respostaTexto, $anexoPath);
 
         $this->reset(['respostaTexto', 'respostaAnexo']);
 

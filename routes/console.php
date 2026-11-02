@@ -64,3 +64,6 @@ Schedule::command('reunioes:lembrar-encaminhamentos')->dailyAt('07:15')->without
 // Faltas: um único aviso por responsável no fim do dia, no lugar de um e-mail por aula. Todo dia, porque o que está pendente é
 // o que foi lançado e ainda não avisado (inclui aula antiga lançada hoje); sem pendência, nada sai. O horário é `FALTAS_RESUMO_HORARIO`.
 Schedule::command('frequencia:enviar-resumo-diario')->dailyAt((string) config('frequencia.resumo_horario', '18:00'))->withoutOverlapping();
+
+// Atendimento da família (Onda 83): chamado que espera a família há dias demais fica resolvido sozinho, com aviso.
+Schedule::command('atendimento:resolver-aguardando')->dailyAt('07:20')->withoutOverlapping();

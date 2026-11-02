@@ -27,6 +27,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ListaMaterialPdfController;
 use App\Http\Controllers\MatriculaOnlineController;
 use App\Http\Controllers\OmrFolhasController;
+use App\Http\Controllers\Ouvidoria\OuvidoriaPublicaController;
 use App\Http\Controllers\PontoPdfController;
 use App\Http\Controllers\PortfolioAnexoController;
 use App\Http\Controllers\QuestionarioRespostaPDFController;
@@ -100,6 +101,14 @@ Route::post('/admissao/{token}/enviar', [PortalDocumentosCandidatoController::cl
 Route::delete('/admissao/{token}/remover/{documento}', [PortalDocumentosCandidatoController::class, 'remover'])
     ->middleware('throttle:30,1')
     ->name('candidato.documentos.remover');
+
+// Ouvidoria e convivência escolar (Ondas 35 e 63): canal público, anônimo ou identificado, com acompanhamento por código.
+Route::get('/ouvidoria', [OuvidoriaPublicaController::class, 'formulario'])->name('ouvidoria.formulario');
+Route::post('/ouvidoria', [OuvidoriaPublicaController::class, 'enviar'])->middleware('throttle:20,1')->name('ouvidoria.enviar');
+Route::get('/ouvidoria/enviada', [OuvidoriaPublicaController::class, 'enviada'])->name('ouvidoria.enviada');
+Route::get('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'acompanhar'])->name('ouvidoria.acompanhar');
+Route::post('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'consultar'])->middleware('throttle:30,1')->name('ouvidoria.acompanhar.consultar');
+Route::post('/ouvidoria/acompanhar/complemento', [OuvidoriaPublicaController::class, 'complementar'])->middleware('throttle:20,1')->name('ouvidoria.acompanhar.complementar');
 
 // Central de Acordos Online & Confissão de Dívida (Família)
 Route::get('/acordo/{token}', [AcordoPublicoController::class, 'show'])

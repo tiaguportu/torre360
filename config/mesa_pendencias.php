@@ -4,9 +4,11 @@ use App\Services\Pendencias\Fontes\AssinaturasAtrasadas;
 use App\Services\Pendencias\Fontes\AtasPorFechar;
 use App\Services\Pendencias\Fontes\CancelamentosParaAnalisar;
 use App\Services\Pendencias\Fontes\CancelamentosParaConcluir;
+use App\Services\Pendencias\Fontes\ChamadosComPrazoEstourado;
 use App\Services\Pendencias\Fontes\ClassificacaoContabilPendente;
 use App\Services\Pendencias\Fontes\ComprasParaCotar;
 use App\Services\Pendencias\Fontes\ContatosDoDia;
+use App\Services\Pendencias\Fontes\DenunciasParaTratar;
 use App\Services\Pendencias\Fontes\DevolucoesPendentes;
 use App\Services\Pendencias\Fontes\DocumentosParaAssinatura;
 use App\Services\Pendencias\Fontes\EncaminhamentosDeReuniao;
@@ -24,6 +26,7 @@ use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\ReajustesDeContrato;
 use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
+use App\Services\Pendencias\Fontes\RequerimentosParaAtender;
 use App\Services\Pendencias\Fontes\SaldoProjetadoNegativo;
 use App\Services\Pendencias\Fontes\TransferenciasEmAndamento;
 use App\Services\Pendencias\Fontes\TurmasComResultadoNegativo;
@@ -73,6 +76,11 @@ return [
         EncaminhamentosDeReuniao::class,
         AtasPorFechar::class,
         EncaminhamentosVencidosDaEquipe::class,
+        // Atendimento da família (Ondas 83, 80 e 34): chamados fora do prazo e requerimentos para atender.
+        ChamadosComPrazoEstourado::class,
+        RequerimentosParaAtender::class,
+        // Ouvidoria e convivência escolar (Ondas 35 e 63): denúncias para triar e apurar.
+        DenunciasParaTratar::class,
     ],
 
     /*

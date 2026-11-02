@@ -5,6 +5,8 @@ namespace App\Filament\Resources\AtendimentoSetores;
 use App\Filament\Resources\AtendimentoSetores\Pages\CreateAtendimentoSetor;
 use App\Filament\Resources\AtendimentoSetores\Pages\EditAtendimentoSetor;
 use App\Filament\Resources\AtendimentoSetores\Pages\ListAtendimentoSetores;
+use App\Filament\Resources\AtendimentoSetores\RelationManagers\CategoriasRelationManager;
+use App\Filament\Resources\AtendimentoSetores\RelationManagers\RespostasProntasRelationManager;
 use App\Filament\Resources\AtendimentoSetores\Schemas\AtendimentoSetorForm;
 use App\Filament\Resources\AtendimentoSetores\Tables\AtendimentoSetoresTable;
 use App\Models\AtendimentoSetor;
@@ -53,7 +55,10 @@ class AtendimentoSetorResource extends Resource implements HasShieldPermissions
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            CategoriasRelationManager::class,
+            RespostasProntasRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

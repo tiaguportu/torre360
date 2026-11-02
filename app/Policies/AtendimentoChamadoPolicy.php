@@ -19,7 +19,15 @@ class AtendimentoChamadoPolicy
 
     public function view(AuthUser $authUser, AtendimentoChamado $atendimentoChamado): bool
     {
-        return $authUser->can('View:AtendimentoChamado');
+        return $authUser->can('View:AtendimentoChamado') && $this->podeVerRestrito($authUser, $atendimentoChamado);
+    }
+
+    /**
+     * O pedido do titular da LGPD (restrito) é lido só por quem tem a permissão própria, mesmo que veja os outros chamados.
+     */
+    private function podeVerRestrito(AuthUser $authUser, AtendimentoChamado $atendimentoChamado): bool
+    {
+        return ! $atendimentoChamado->restrito || $authUser->can('VerRestritos:AtendimentoChamado');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,7 +37,7 @@ class AtendimentoChamadoPolicy
 
     public function update(AuthUser $authUser, AtendimentoChamado $atendimentoChamado): bool
     {
-        return $authUser->can('Update:AtendimentoChamado');
+        return $authUser->can('Update:AtendimentoChamado') && $this->podeVerRestrito($authUser, $atendimentoChamado);
     }
 
     public function delete(AuthUser $authUser, AtendimentoChamado $atendimentoChamado): bool

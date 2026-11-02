@@ -12,6 +12,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AtendimentoChamadoResource extends Resource implements HasShieldPermissions
 {
@@ -38,7 +39,18 @@ class AtendimentoChamadoResource extends Resource implements HasShieldPermission
             'update',
             'delete',
             'delete_any',
+            // Onda 80/34: aplicar a alteração pedida num requerimento e ler os pedidos restritos do titular (LGPD).
+            'aplicar',
+            'ver_restritos',
         ];
+    }
+
+    /**
+     * Pedido do titular da LGPD (restrito) só aparece para quem tem a permissão própria, na lista e no link direto.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->restritosVisiveisPara(auth()->user());
     }
 
     public static function form(Schema $schema): Schema
