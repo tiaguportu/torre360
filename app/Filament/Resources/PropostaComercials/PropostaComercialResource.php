@@ -13,6 +13,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class PropostaComercialResource extends Resource implements HasShieldPermissions
@@ -45,6 +46,15 @@ class PropostaComercialResource extends Resource implements HasShieldPermissions
     protected static ?string $recordTitleAttribute = 'codigo';
 
     protected static ?int $navigationSort = 35;
+
+    /**
+     * A tabela mostra série, curso, unidade e consultor de cada linha: sem isto cada linha fazia quatro consultas a mais (e o
+     * app proíbe carga preguiçosa fora de produção).
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['serie', 'curso', 'unidade', 'solicitante']);
+    }
 
     public static function form(Schema $schema): Schema
     {

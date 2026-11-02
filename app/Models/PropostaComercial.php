@@ -62,8 +62,21 @@ class PropostaComercial extends Model
             'quantidade_parcelas' => 'integer',
             'aprovado_em' => 'datetime',
             'validade' => 'date',
+            'enviada_em' => 'datetime',
+            'visualizada_em' => 'datetime',
+            'aceita_em' => 'datetime',
+            'expirada_em' => 'datetime',
+            'convertida_em' => 'datetime',
+            'avisada_3d_em' => 'datetime',
+            'avisada_1d_em' => 'datetime',
         ];
     }
+
+    /**
+     * Campos do aceite e do ciclo (Onda 87) ficam fora do `$fillable` de propósito: só `PropostaAceiteService` os grava, nunca
+     * um formulário do painel.
+     */
+    protected $hidden = ['token_publico'];
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -71,6 +84,7 @@ class PropostaComercial extends Model
             ->logOnly([
                 'codigo', 'status', 'desconto_solicitado', 'valor_liquido_mensal',
                 'nivel_alcada_necessario', 'aprovado_por_user_id', 'aprovado_em',
+                'aceita_em', 'expirada_em', 'convertida_em',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
@@ -109,6 +123,34 @@ class PropostaComercial extends Model
     public function interessado(): BelongsTo
     {
         return $this->belongsTo(Interessado::class);
+    }
+
+    public function matricula(): BelongsTo
+    {
+        return $this->belongsTo(Matricula::class);
+    }
+
+    /**
+     * A família ainda pode aceitar: a proposta foi aprovada, o prazo não passou e ninguém a cancelou nem a converteu.
+     */
+    public function aceitavel(): bool
+    {
+        return in_array($this->status, [StatusPropostaComercial::Aprovada, StatusPropostaComercial::AprovadaAutomatica], true)
+            && ($this->validade === null || ! $this->validade->copy()->endOfDay()->isPast());
+    }
+
+    /**
+     * Proposta cujo link público pode ser aberto (só leitura se já aceita): aprovada, aceita ou convertida.
+     */
+    public function visivelPelaFamilia(): bool
+    {
+        return in_array($this->status, [
+            StatusPropostaComercial::Aprovada,
+            StatusPropostaComercial::AprovadaAutomatica,
+            StatusPropostaComercial::AceitaPelaFamilia,
+            StatusPropostaComercial::Convertida,
+            StatusPropostaComercial::Expirada,
+        ], true);
     }
 
     public function unidade(): BelongsTo

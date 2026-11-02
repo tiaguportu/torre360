@@ -22,6 +22,8 @@ use App\Services\Pendencias\Fontes\OrcamentoEstourado;
 use App\Services\Pendencias\Fontes\PedidosParaAprovar;
 use App\Services\Pendencias\Fontes\PedidosParaReceber;
 use App\Services\Pendencias\Fontes\ProjecaoDoProximoAno;
+use App\Services\Pendencias\Fontes\PropostasAguardandoAprovacao;
+use App\Services\Pendencias\Fontes\PropostasAVencer;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
 use App\Services\Pendencias\Fontes\ReajustesDeContrato;
 use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
@@ -58,6 +60,9 @@ return [
         LeadsSemProximaAcao::class,
         LeadsQuentesParados::class,
         LeadsSemConsultor::class,
+        // Proposta comercial com aceite da família (Onda 87).
+        PropostasAVencer::class,
+        PropostasAguardandoAprovacao::class,
         // Suprimentos (Ondas 16, 38 e 43): compras, estoque e orçamento.
         ComprasParaCotar::class,
         PedidosParaAprovar::class,

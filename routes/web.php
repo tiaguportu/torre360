@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\MobileTokenController;
 use App\Http\Controllers\BibliotecaEtiquetasController;
 use App\Http\Controllers\BoletimPDFController;
 use App\Http\Controllers\Captacao\CaptacaoInteressadoController;
+use App\Http\Controllers\Comercial\PropostaPublicaController;
 use App\Http\Controllers\CompraNotaFiscalController;
 use App\Http\Controllers\Comunicacao\DescadastroController;
 use App\Http\Controllers\Contratos\DownloadContratoController;
@@ -109,6 +110,10 @@ Route::get('/ouvidoria/enviada', [OuvidoriaPublicaController::class, 'enviada'])
 Route::get('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'acompanhar'])->name('ouvidoria.acompanhar');
 Route::post('/ouvidoria/acompanhar', [OuvidoriaPublicaController::class, 'consultar'])->middleware('throttle:30,1')->name('ouvidoria.acompanhar.consultar');
 Route::post('/ouvidoria/acompanhar/complemento', [OuvidoriaPublicaController::class, 'complementar'])->middleware('throttle:20,1')->name('ouvidoria.acompanhar.complementar');
+
+// Proposta comercial com aceite da família (Onda 87): link com token longo, leitura e aceite.
+Route::get('/proposta/{token}', [PropostaPublicaController::class, 'show'])->middleware('throttle:60,1')->name('proposta.publica.show');
+Route::post('/proposta/{token}/aceitar', [PropostaPublicaController::class, 'aceitar'])->middleware('throttle:10,1')->name('proposta.publica.aceitar');
 
 // Central de Acordos Online & Confissão de Dívida (Família)
 Route::get('/acordo/{token}', [AcordoPublicoController::class, 'show'])

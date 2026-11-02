@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Models\VideoTutorial;
 use App\Notifications\WelcomeUserMail;
 use App\Services\InteressadoMatriculaService;
+use App\Services\PropostaAceiteService;
 use App\Services\TurmaVagasService;
 use App\Services\ViaCepService;
 use App\Support\TiposArquivo;
@@ -93,6 +94,13 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
     #[Locked]
     public ?int $interessadoId = null;
 
+    /**
+     * Proposta comercial que originou a matrícula (rota `?proposta_id={id}`). Ao concluir, o desconto negociado vira bolsa
+     * (Onda 87). Travado como o lead: o cliente não troca a proposta entre as requisições.
+     */
+    #[Locked]
+    public ?int $propostaId = null;
+
     public function mount(?int $interessado = null): void
     {
         $dados = [
@@ -152,6 +160,7 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 }
 
                 if ($propostaValida) {
+                    $this->propostaId = $proposta->id;
                     $dados['unidade_id'] = $proposta->unidade_id;
                     $dados['curso_id'] = $proposta->curso_id;
                     if ($proposta->turma_id) {
@@ -797,6 +806,9 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
                 // ── Integração CRM: marcar conversão ────────────────────
                 $this->marcarConversaoCRM($aluno);
 
+                // ── Proposta comercial: o desconto negociado vira bolsa ─
+                $this->converterPropostaComercial($matricula);
+
                 $alunosPessoa[] = ['aluno' => $aluno, 'contrato' => $contrato, 'matricula' => $matricula];
             }
 
@@ -950,6 +962,40 @@ class EnrollmentWizard extends Page implements HasForms, HasShieldPermissions
             'naturalidade_id' => $dados['naturalidade_id'] ?? null,
             'cor_raca' => $dados['cor_raca'] ?? null,
         ]);
+    }
+
+    /**
+     * Quando a matrícula nasceu de uma proposta comercial, marca a proposta como convertida e leva o desconto negociado ao
+     * contrato como bolsa (Onda 87). Proposta vencida ou sem aprovação não trava a matrícula: ela segue sem o desconto e a
+     * pessoa é avisada.
+     */
+    private function converterPropostaComercial(Matricula $matricula): void
+    {
+        if (! $this->propostaId) {
+            return;
+        }
+
+        $proposta = PropostaComercial::find($this->propostaId);
+
+        if (! $proposta) {
+            return;
+        }
+
+        $resultado = app(PropostaAceiteService::class)->converter($proposta, $matricula);
+
+        if ($resultado['motivo']) {
+            Notification::make()->warning()->title('Matrícula criada sem o desconto da proposta')->body($resultado['motivo'])->persistent()->send();
+
+            return;
+        }
+
+        if ($resultado['bolsa']) {
+            Notification::make()
+                ->success()
+                ->title('Desconto da proposta aplicado')
+                ->body("Bolsa \"Desconto comercial\" de {$resultado['bolsa']->percentual}% criada para a matrícula (proposta {$proposta->codigo}).".($resultado['arredondada'] ? ' O percentual foi arredondado: confira o valor líquido nas faturas.' : ''))
+                ->send();
+        }
     }
 
     /**

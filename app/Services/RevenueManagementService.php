@@ -326,6 +326,7 @@ class RevenueManagementService
             ."• *Mensalidade com Desconto:* 👉 *R$ {$valorPor}*\n"
             ."• Plano: {$proposta->quantidade_parcelas} parcelas (Total Anual: R$ {$valorAnual})\n\n"
             ."⏳ *Validade da Proposta:* Esta condição exclusiva é válida até *{$validade}*.\n\n"
+            .($proposta->token_publico ? '🔗 *Veja a proposta e aceite aqui:* '.route('proposta.publica.show', ['token' => $proposta->token_publico])."\n\n" : '')
             .'Ficamos à disposição para dar o próximo passo e garantir a vaga!';
     }
 }

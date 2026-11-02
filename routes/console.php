@@ -67,3 +67,6 @@ Schedule::command('frequencia:enviar-resumo-diario')->dailyAt((string) config('f
 
 // Atendimento da família (Onda 83): chamado que espera a família há dias demais fica resolvido sozinho, com aviso.
 Schedule::command('atendimento:resolver-aguardando')->dailyAt('07:20')->withoutOverlapping();
+
+// Proposta comercial (Onda 87): aviso 3 e 1 dia antes de vencer e expiração das que passaram da validade, antes do expediente.
+Schedule::command('crm:expirar-propostas')->dailyAt('07:25')->withoutOverlapping();

@@ -6,12 +6,14 @@ use App\Enums\NivelAlcadaComercial;
 use App\Enums\StatusPropostaComercial;
 use App\Models\PropostaComercial;
 use App\Models\User;
+use App\Services\PropostaAceiteService;
 use App\Services\RevenueManagementService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -141,6 +143,45 @@ class PropostaComercialsTable
 
                         return "https://api.whatsapp.com/send?phone={$destinatario}&text=".urlencode($texto);
                     }, shouldOpenInNewTab: true),
+
+                Action::make('link_publico')
+                    ->label('Link para a família')
+                    ->icon('heroicon-o-link')
+                    ->color('gray')
+                    ->visible(fn (PropostaComercial $record) => in_array($record->status, [StatusPropostaComercial::Aprovada, StatusPropostaComercial::AprovadaAutomatica, StatusPropostaComercial::AceitaPelaFamilia]))
+                    ->modalHeading(fn (PropostaComercial $record) => "Link da proposta {$record->codigo}")
+                    ->modalDescription('A família lê as condições e aceita por este link, sem login. Envie pelo canal que preferir; o link vale até a validade da proposta.')
+                    ->fillForm(function (PropostaComercial $record): array {
+                        try {
+                            return ['link' => app(PropostaAceiteService::class)->gerarLink($record)];
+                        } catch (\DomainException $e) {
+                            return ['link' => $e->getMessage()];
+                        }
+                    })
+                    ->form([
+                        TextInput::make('link')->label('Link')->readOnly()->copyable(),
+                    ])
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
+
+                Action::make('renovar')
+                    ->label('Renovar')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->visible(fn (PropostaComercial $record) => $record->status === StatusPropostaComercial::Expirada && $record->aprovado_em !== null)
+                    ->requiresConfirmation()
+                    ->modalDescription('Renova a validade sem nova aprovação, se a mensalidade de tabela da turma não mudou.')
+                    ->action(function (PropostaComercial $record): void {
+                        try {
+                            app(PropostaAceiteService::class)->renovar($record, auth()->user());
+                        } catch (\DomainException $e) {
+                            Notification::make()->title('Não foi possível renovar')->body($e->getMessage())->danger()->send();
+
+                            return;
+                        }
+
+                        Notification::make()->title('Proposta renovada.')->success()->send();
+                    }),
 
                 Action::make('espelho')
                     ->label('Ver Proposta')
