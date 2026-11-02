@@ -45,6 +45,7 @@ class RespostasProntasRelationManager extends RelationManager
                 IconColumn::make('ativo')->label('Ativo')->boolean(),
             ])
             ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->stackedOnMobile();
     }
 }

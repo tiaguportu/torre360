@@ -41,6 +41,7 @@ class CategoriasRelationManager extends RelationManager
             ])
             ->defaultSort('ordem')
             ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->stackedOnMobile();
     }
 }

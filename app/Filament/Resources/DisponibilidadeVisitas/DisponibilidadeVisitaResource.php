@@ -93,7 +93,8 @@ class DisponibilidadeVisitaResource extends Resource implements HasShieldPermiss
                 IconColumn::make('ativo')->label('Ativo')->boolean(),
             ])
             ->defaultSort('dia_semana')
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->stackedOnMobile();
     }
 
     public static function getPages(): array

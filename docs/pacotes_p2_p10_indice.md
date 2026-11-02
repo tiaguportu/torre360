@@ -141,7 +141,10 @@ Um papel criado à mão precisa receber as permissões em **Perfis de acesso**.
 
 ## Como foi verificado
 
-- **Testes novos (102):** `HorarioComercialTest` (7), `AtendimentoSolicitacoesTest` (23), `OuvidoriaTest` (26), `PropostaAceiteTest` (25) e `AgendaVisitasOnlineTest` (21), mais
+- **Suíte completa** (3.737 testes, em 7 processos paralelos): passou, com três exceções que a própria rodada achou e que foram resolvidas: duas telas novas sem o botão *Ajuda* (testes de
+  cobertura da navegação e das páginas de recurso), quatro tabelas novas sem `stackedOnMobile` e a tela `/visita` sem o token do reCAPTCHA (esta, achada à parte). O único vermelho que sobra
+  fora do código é `ValidarDocumentoIaTest`, que exige `GEMINI_API_KEY` no `.env` e passa com uma chave de teste; as quatro falhas antigas da `main` listadas em outros índices não apareceram.
+- **Testes novos (103):** `HorarioComercialTest` (7), `AtendimentoSolicitacoesTest` (23), `OuvidoriaTest` (26), `PropostaAceiteTest` (25) e `AgendaVisitasOnlineTest` (22), mais
   as suítes existentes de Central de Atendimento, Mesa, Propostas, Visitas e do guarda de políticas, que continuaram passando.
 - **MariaDB 10.4 (banco descartável copiado de `torre360_demo`, nunca a produção):** as seis migrations de estrutura e as duas de permissão aplicaram, fizeram
   `rollback` dos sete últimos passos e aplicaram de novo; um roteiro de fumaça rodou os serviços (chamado, requerimento aplicado, pedido restrito, ouvidoria, proposta até a bolsa

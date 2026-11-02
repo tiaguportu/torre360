@@ -61,7 +61,8 @@ class DenunciaComiteResource extends Resource implements HasShieldPermissions
                 TextColumn::make('user.name')->label('Pessoa')->searchable(),
                 TextColumn::make('categoria')->label('Categoria')->badge()->placeholder('Todas'),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->stackedOnMobile();
     }
 
     public static function getPages(): array
