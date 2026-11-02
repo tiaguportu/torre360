@@ -1,8 +1,8 @@
-# Agendamento Online de Visitas e Eventos (Onda 86) — Proposta para o Futuro
+# Agendamento Online de Visitas e Eventos (Onda 86) — Implementada (parcial, sem a Onda 85)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for autorizada.
-> Não há código, migration ou teste desta funcionalidade. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md) e continua a
-> [Onda 85](distribuicao_leads_carteira_roadmap.md) (distribuição de leads).
+> **Status: implementada em 2026-11-02**, no pacote P10, **sem a Onda 85** (distribuição de leads): o consultor da visita sai de uma regra mínima, descrita abaixo.
+> A visita individual está pronta; os eventos *portas abertas* ficaram para depois (ver *Implementação*, no fim). O texto abaixo é o escopo original.
+> Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md).
 
 ## Contexto
 
@@ -77,3 +77,21 @@ CRM (`crm.lgpd`).
 **Sequência do CRM (84 → 85 → 86 → 87).** O horário que a família escolhe é um lead novo com visita marcada: entra pela distribuição
 (85), aparece na Mesa do consultor (84) e chega à [proposta](proposta_comercial_aceite_roadmap.md) (87) depois da visita. O
 **acolhimento** de quem acabou de se matricular (checklist e pesquisa 30 dias depois) cabe como gatilho novo da régua, sem onda própria.
+
+## Implementação (2026-11-02)
+
+**Entregue** (`AgendaVisitaService`, `VisitaPublicaController`, `DisponibilidadeVisitaResource`, migration `2026_11_02_140000`):
+
+- **Agenda do consultor** (*CRM / Comercial → Agenda de Visitas*): dia da semana, faixa, duração de cada visita, antecedência mínima (padrão 24 h) e máxima (padrão 30 dias) e, opcionalmente, a unidade.
+- **Página pública `/visita`** (sem login, não indexável): a família escolhe unidade, dia e horário entre os **livres** (sem os dias não letivos, sem o que o consultor já tem marcado e dentro da
+  antecedência), informa responsável, estudante, série e turno e dá o consentimento. Campo-armadilha, reCAPTCHA (quando configurado, como nos formulários atuais) e limite por origem.
+- **Reserva.** Uma trava por horário e a conferência dentro dela evitam que duas famílias peguem o mesmo horário. O lead entra pelas regras do formulário público (reconhece quem já existe, sem
+  duplicar), a visita nasce com token e a família recebe a confirmação por e-mail, com o que levar e os links para **trocar o horário** ou **cancelar**; o consultor é avisado no sino. Trocar mantém o
+  consultor quando ele está livre e libera o horário antigo na hora; cancelar libera o horário e avisa o consultor (em destaque se faltam menos de 4 horas).
+- **Consultor sem a Onda 85.** Com mais de um consultor no horário, vale quem tem menos visitas no dia (empate: o de menor id). Lead novo e sem dono passa a ser do consultor da visita.
+- **Lembrete à família.** Vale a régua de follow-up (a migration da régua cria uma regra ativa de `visita_lembrete`); se a escola a desligar, `crm:notificar-pendentes` envia um lembrete direto às
+  visitas marcadas online.
+
+**Fora desta entrega:** eventos *portas abertas* e *aula experimental* com inscrição pública, lista de presença no dia, lembrete 2 h antes e a regra de distribuição da Onda 85.
+
+**Testes:** `AgendaVisitasOnlineTest`.

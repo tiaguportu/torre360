@@ -4908,5 +4908,67 @@ Em **Acadêmico → Frequência Escolar**, abra o registro de uma falta (situaç
 
 ---
 
+## 💬 110. Central de Atendimento: prazos, avisos e requerimentos (`/admin/atendimento-chamados`)
+
+O chamado que a família abre pelo Portal agora tem **prazo**, **avisos** e uma fila. O mesmo caminho recebe os **requerimentos** (atestado, atualização de cadastro, troca de turma e outros) e o **pedido do titular de dados** (LGPD).
+
+### 110.1 Para a equipe
+- **Quem é avisado.** Chamado novo avisa quem pode atender (sino e e-mail) e o **e-mail do setor** (campo *E-mail para Notificação*, que antes não era usado). Quando a família responde, o aviso vai ao atendente (ou ao setor, se ninguém assumiu).
+- **Prazo.** O setor define o prazo da **primeira resposta** e o da **resolução**, em **horas úteis** (segunda a sexta, das 8h às 18h; padrão 24 h e 72 h). A coluna **Responder até** fica vermelha quando vence. Filtros: *Prazo estourado*, *Ninguém assumiu* e *Só os meus*. O chamado que espera a família não conta prazo.
+- **Assumir e reatribuir.** *Assumir* fica com quem clicou primeiro (se dois clicam juntos, só um fica). *Reatribuir* passa o chamado a outra pessoa e avisa.
+- **Responder.** O campo **Resposta pronta** preenche o texto com os dados do chamado (`{{ SOLICITANTE }}`, `{{ ALUNO }}`, `{{ PROTOCOLO }}`, `{{ ESCOLA }}`); **revise antes de enviar**. Mudar a situação para *Aguardando resposta da família* começa a contar os dias de espera.
+- **Encerramento automático.** Chamado aguardando a família há mais dias que o setor define (padrão 7) fica **Resolvido** sozinho, com aviso. Se a família responder, ele **reabre**.
+- **Cadastros do setor** (*Configurações → Setores de Atendimento*): prazos, a marca **Recebe os requerimentos da família**, as **Categorias de assunto** (a família escolhe ao abrir o chamado) e as **Respostas prontas**.
+- **Minha Mesa:** *Chamados com prazo estourado* e *Requerimentos para atender*.
+
+### 110.2 Requerimentos
+A família abre em **Portal → Requerimentos**: atualizar telefone, e-mail ou endereço; enviar atestado médico; autorizar outra pessoa a retirar o aluno; pedir troca de turma ou de turno; trocar o responsável financeiro; e *Direitos sobre os meus dados*. Cada pedido vira um chamado com **protocolo e prazo** (2 a 10 dias úteis, conforme o tipo).
+Para atender, abra o pedido e use **Concluir pedido**:
+1. **Confira** o que a família pediu (para telefone e e-mail, o dado atual aparece riscado ao lado do novo).
+2. Escolha **Atendido** ou **Indeferido**. **Indeferir exige a mensagem**: a família a lê.
+3. Para atualização de cadastro e atestado, marque **Aplicar a alteração no sistema agora** (só quem tem a permissão `Aplicar:AtendimentoChamado`). **Nada muda no cadastro sem esse passo**, e fica registrado quem aplicou. O **endereço** é digitado à mão na ficha. No atestado, decida se **abona** as faltas.
+4. A família recebe o aviso (só com o protocolo e um link) e vê o resultado em *Meus pedidos*.
+
+### 110.3 Pedido do titular de dados (LGPD)
+Chega como requerimento **restrito**, com prazo de **15 dias corridos**. Só quem tem a permissão `VerRestritos:AtendimentoChamado` (a administração, por padrão) o vê na lista, no link direto e na Minha Mesa; o aviso não traz o assunto e não vai ao e-mail geral do setor. A **exportação automática dos dados da pessoa não existe**: o encarregado levanta os dados, responde pela conversa do chamado e, se negar, escreve a justificativa.
+
+---
+
+## 🛡️ 111. Ouvidoria e convivência escolar (`/ouvidoria` e `/admin/ouvidoria`)
+
+Canal para relatar bullying, assédio, discriminação, violência ou desvio de conduta, com sigilo.
+
+### 111.1 Como a família ou o funcionário usa
+Em `/ouvidoria` (sem login) a pessoa escolhe o assunto, conta o que aconteceu, indica as pessoas envolvidas e escolhe **anônima** ou **identificada**. Ao enviar recebe um **protocolo e um código de acompanhamento que aparecem uma única vez**: sem eles não há como recuperar. Em `/ouvidoria/acompanhar` ela vê a situação e as respostas da escola e pode acrescentar informações.
+- **Anônima:** a manifestação não guarda nome, usuário, contato, endereço de rede nem navegador. O texto fica criptografado.
+
+### 111.2 Para o comitê
+- **Quem lê.** Em **Secretaria → Comitê da Ouvidoria** a administração indica quem acompanha cada categoria (ou todas). A pessoa também precisa da permissão `ViewAny/View:Denuncia` (a administração tem `VerTodas`). Quem não é do comitê **não vê a manifestação nem pelo link**.
+- **Tratar.** Em **Secretaria → Ouvidoria**: *Assumir a apuração*, *Registrar andamento* (**parecer interno** e **comunicação ao Conselho Tutelar** só o comitê vê; **devolutiva ao autor** o autor lê pelo código) e *Encerrar* com a conclusão (**não cite nomes de terceiros**).
+- **Prazos.** 10 dias para a primeira providência; **2 dias** para *suspeita de violência contra criança ou adolescente*, que também aparece marcada. A comunicação ao Conselho Tutelar (ECA, art. 13) segue o procedimento definido com o jurídico da escola; o sistema registra que ela foi feita.
+- **Minha Mesa:** *Ouvidoria: manifestações para tratar* (só o protocolo e o assunto, nunca o relato).
+
+---
+
+## 🤝 112. Proposta comercial com aceite da família (`/admin/proposta-comercials`)
+
+- **Link para a família.** Em uma proposta **aprovada**, a ação **Link para a família** gera o endereço (`/proposta/…`) para enviar por WhatsApp ou e-mail. A página mostra série, valores, desconto, parcelas e validade, e **não substitui o contrato**. O botão *WhatsApp* passa a incluir o link.
+- **Aceite.** A família digita o nome e confirma. A proposta passa a **Aceita pela família** e o consultor é avisado. Fica gravado quando, de que endereço de rede e por quem.
+- **Validade.** Todo dia o sistema avisa o consultor **3 e 1 dia antes** de vencer e marca como **Expirada** a aprovada fora da validade. A aceita **não expira sozinha**. **Renovar** devolve a proposta expirada à aprovação, com nova validade (padrão 5 dias), **sem nova aprovação**, se a mensalidade de tabela da turma não mudou.
+- **Do aceite ao contrato.** Ao matricular pelo Assistente de Matrícula (botão *Matricular* da proposta), a proposta vira **Convertida** e o desconto negociado vira a bolsa **Desconto comercial**. **O percentual da bolsa é inteiro:** um desconto de R$ 75 sobre R$ 1.000 (7,5%) vira 8%, e o aviso do assistente diz quando houve arredondamento; confira o valor nas faturas. Se a proposta venceu ou não foi aprovada, a matrícula é criada **sem o desconto** e o aviso explica.
+- **Minha Mesa:** *Propostas a vencer* (o consultor vê as suas) e *Propostas para aprovar* (as que a sua alçada cobre).
+
+---
+
+## 📅 113. Agenda de visitas e agendamento online (`/admin/agenda-visitas` e `/visita`)
+
+- **Agenda do consultor.** Em **CRM / Comercial → Agenda de Visitas** cada consultor cadastra os dias e as faixas em que recebe visitas, a **duração** de cada uma, a **antecedência mínima** (padrão 24 h) e quantos dias à frente oferecer. Sem unidade, o horário vale para qualquer unidade.
+- **Página pública `/visita`.** A família escolhe unidade, dia e horário entre os **livres** (sem os dias não letivos, sem o que o consultor já tem marcado), informa os dados e confirma. Ela recebe um **e-mail com o horário, o que levar e os links para trocar ou cancelar**; o consultor recebe o aviso no sino.
+- **Quem recebe a visita.** Com mais de um consultor no mesmo horário, fica com quem tem **menos visitas naquele dia**. Se a família ainda não era lead, o lead é criado (ou reconhecido, sem duplicar) e passa a ser do consultor da visita.
+- **Trocar ou cancelar.** O horário antigo volta a ficar livre na hora. Cancelamento com menos de 4 horas chega ao consultor em destaque.
+- **Lembrete.** A régua de follow-up envia o lembrete de 1 dia antes (regra *Lembrete de Visita à Escola*). Se essa regra for desligada, as visitas marcadas online ainda recebem um lembrete direto.
+
+---
+
 > **Torre360** — Gestão inteligente para instituições de ensino.
 

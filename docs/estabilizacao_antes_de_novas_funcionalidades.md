@@ -64,3 +64,13 @@ chamado). Uma rodada de estabilização, em quatro frentes:
 - [Onda 81](qualidade_cadastros_roadmap.md), parcial: detecção de pessoas possivelmente duplicadas (tela *Secretaria > Cadastros duplicados*).
 - Correção de afirmações dos roteiros: a página *Atualizar Sistema* tem `canAccess` restrito a `super_admin` desde 2026-04-06 (o roteiro da
   Onda 90 dizia que não); o painel do Portal ganhou o sino de notificações em 2026-10-28.
+
+## O que foi feito em 2026-11-02
+
+Duas das quatro "funções entregues pela metade" foram completadas nos [pacotes P2 e P10](pacotes_p2_p10_indice.md):
+
+- **Central de Atendimento:** o chamado agora avisa (e o `email_notificacao` do setor passou a ser lido) e tem prazo, atendente, respostas prontas e categorias.
+- **Proposta comercial:** os estados `AceitaPelaFamilia`, `Convertida` e `Expirada` passaram a ser atribuídos, e o desconto negociado chega ao contrato como bolsa.
+
+Continuam abertas: as permissões usadas no código sem migration ou seeder que as crie, o menu com grupos duplicados e os três "canais" de mensagem. O registro de uso de telas
+já existe (`AuditMiddleware`) e só falta o relatório da [Onda 106](uso_das_telas_roadmap.md).

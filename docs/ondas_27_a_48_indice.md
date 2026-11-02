@@ -4,12 +4,13 @@ Levantamento de funcionalidades para as próximas entregas, com o que já foi fe
 continua como proposta. Cada onda tem um documento próprio com contexto, o que já existe no
 sistema, escopo e riscos.
 
-- **Implementadas (10):** 30, 39, 40, 41 e 44; 38, 43 e 45 (implementadas em 2026-10-27, com o estoque da Onda 16; ver o
+- **Implementadas (12):** 30, 39, 40, 41 e 44; 38, 43 e 45 (implementadas em 2026-10-27, com o estoque da Onda 16; ver o
   [índice dos conjuntos Suprimentos e Resultado da escola](conjuntos_suprimentos_resultado_indice.md)); e 27 e 32
-  (implementadas em 2026-10-28, numa entrega só: [Reuniões e atas](reunioes_e_atas_roadmap.md)).
+  (implementadas em 2026-10-28, numa entrega só: [Reuniões e atas](reunioes_e_atas_roadmap.md)); e 34 e 35 (implementadas em 2026-11-02, nos [pacotes P2 e P10](pacotes_p2_p10_indice.md): o pedido do
+  titular da 34, sem a exportação dos dados, e a ouvidoria da 35 com a convivência escolar da 63).
 - **Parcialmente implementadas (2):** 42 (informe anual entregue; NFS-e proposta) e 46 (retenção de logs e criptografia de saúde entregues em
   2026-10-23; MFA proposto).
-- **Propostas (10):** as demais. Não há código, migration nem teste delas.
+- **Propostas (8):** as demais. Não há código, migration nem teste delas.
 - **Melhorias em ondas anteriores (2026-10-21):** alerta de férias na Onda 10 e autoavaliação com
   plano de desenvolvimento na Onda 19 (veja o fim deste índice).
 - **Continuação:** as ondas 49 a 60 estão em [ondas_49_a_60_indice.md](ondas_49_a_60_indice.md).
@@ -25,8 +26,8 @@ sistema, escopo e riscos.
 | 31 | Atividades do Contraturno | Pedagógico / Financeiro | Proposta | [atividades_contraturno_roadmap.md](atividades_contraturno_roadmap.md) |
 | 32 | Reuniões com Professores | RH / Pedagógico | **Implementada** (junto com a 27) | [reunioes_professores_roadmap.md](reunioes_professores_roadmap.md) · [entrega unificada](reunioes_e_atas_roadmap.md) |
 | 33 | Comunicados com Ciência e Enquetes | Comunicação | Proposta | [comunicados_ciencia_enquetes_roadmap.md](comunicados_ciencia_enquetes_roadmap.md) |
-| 34 | Portal do Titular LGPD | Conformidade | Proposta | [portal_titular_lgpd_roadmap.md](portal_titular_lgpd_roadmap.md) |
-| 35 | Ouvidoria e Canal de Denúncias | Conformidade | Proposta | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md) |
+| 34 | Portal do Titular LGPD | Conformidade | **Implementada (parcial)** em 2026-11-02: o pedido; falta a exportação dos dados | [portal_titular_lgpd_roadmap.md](portal_titular_lgpd_roadmap.md) |
+| 35 | Ouvidoria e Canal de Denúncias | Conformidade | **Implementada (parcial)** em 2026-11-02, com a 63 | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md) |
 | 36 | Egressos | Relacionamento | Proposta | [egressos_roadmap.md](egressos_roadmap.md) |
 | 37 | Portaria Digital | Operação | Proposta | [portaria_digital_roadmap.md](portaria_digital_roadmap.md) |
 | 38 | Compras e Cotações | Financeiro / Operação | **Implementada** | [compras_cotacoes_roadmap.md](compras_cotacoes_roadmap.md) |

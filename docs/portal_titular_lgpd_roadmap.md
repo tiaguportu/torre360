@@ -1,8 +1,8 @@
-# Portal do Titular LGPD (Onda 34) — Proposta para o Futuro
+# Portal do Titular LGPD (Onda 34) — Implementada (parcial)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementada em 2026-11-02, só a parte do pedido** (registro com protocolo, prazo legal, restrição de acesso e resposta), como tipo restrito de
+> requerimento no pacote P2. **Não foram feitos** a exportação dos dados da pessoa, o registro das operações de tratamento (ROPA) nem a página do encarregado
+> (ver *Implementação*, no fim). O texto abaixo é o escopo original. Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md).
 
 ## Contexto
 
@@ -62,3 +62,23 @@ atender no prazo da lei (art. 19: formato simplificado de imediato, ou declaraç
 Compartilha com a [Onda 35](ouvidoria_canal_denuncias_roadmap.md) (ouvidoria e convivência escolar) o mesmo desenho: um caso com protocolo, responsável, prazo legal, histórico e resposta. Em vez de três cadastros, vale um motor de **"casos com prazo legal"** e três tipos: pedido do titular (a LGPD, art. 19, II, fixa 15 dias para a declaração completa), denúncia da ouvidoria e caso de convivência (Lei nº 13.185/2015). O prazo vencendo vira fila da Mesa de Pendências (Onda 71).
 
 Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).
+
+## Implementação (2026-11-02)
+
+**Entregue** (tipo `pedido_titular` de `CatalogoRequerimentos`, página *Requerimentos* do Portal):
+
+- O responsável escolhe o direito (confirmação, acesso, correção, anonimização, portabilidade, eliminação, compartilhamento ou revogação de consentimento), descreve o pedido
+  e recebe um **protocolo**. O pedido vira um chamado `restrito` com prazo de **15 dias corridos** (LGPD, art. 19, II), configurável em `ATENDIMENTO_PRAZO_PEDIDO_TITULAR_DIAS`.
+- **Acesso restrito:** só quem tem `VerRestritos:AtendimentoChamado` (administração, por padrão) vê o pedido na lista, no link direto e nas filas da Minha Mesa. O aviso à
+  equipe não traz o assunto nem a mensagem e **não vai ao e-mail geral do setor**.
+- O pedido só nasce de um responsável com acesso (regra do Portal). A resposta é registrada na conversa do chamado; indeferir **exige justificativa**, e a família a recebe.
+- O prazo vence na fila *Requerimentos para atender* da Minha Mesa.
+
+**Fora desta entrega (e por quê):**
+
+- **Exportação dos dados da pessoa** (acesso e portabilidade): é a parte de maior risco jurídico (omitir uma tabela é entregar dado incompleto). Precisa do mapa das tabelas que
+  referenciam `pessoa`, revisado pelo encarregado, e de uma decisão sobre o formato. Hoje o encarregado atende o pedido manualmente e registra a resposta no chamado.
+- Registro das operações de tratamento (ROPA, art. 37), cadastro do encarregado e sua exibição no site (art. 41), e as exceções de eliminação (guarda de documento escolar e fiscal),
+  que dependem da tabela de temporalidade da [Onda 79](guarda_descarte_documentos_roadmap.md).
+
+**Testes:** `AtendimentoSolicitacoesTest` (restrição, prazo e fila).

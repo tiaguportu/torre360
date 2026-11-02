@@ -2141,3 +2141,60 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
 - **Representa:** um par de cadastros de `pessoa` que a secretaria conferiu e confirmou serem pessoas diferentes (gêmeos, homônimos); o detector não o sugere de novo.
 - **Campos:** `pessoa_menor_id` e `pessoa_maior_id` (FK `pessoa`, cascade; o par é gravado em ordem, menor id primeiro, então A+B e B+A são o mesmo registro), `user_id` (FK `users`, nullOnDelete; quem marcou). Único `(pessoa_menor_id, pessoa_maior_id)`.
 - **Regras:** `PessoaDuplicadaDetectorService::pares()` não grava nada: calcula os pares em PHP (CPF igual; mesmo nome e nascimento; mesmo nome e e-mail ou telefone) sobre `pessoa`, descarta os ligados em `aluno_responsavel` e os desta tabela, e guarda o resultado 2 min em cache. Sem permissão nova: a tela usa `ViewAny:Pessoa` (abrir) e `Update:Pessoa` (marcar).
+
+
+## 53. Atendimento da Família: prazos, requerimentos e restrição (Ondas 83, 80 e 34)
+
+### `atendimento_setores` (colunas novas)
+- `prazo_primeira_resposta_horas` (padrão 24) e `prazo_resolucao_horas` (padrão 72): horas **úteis**; nulos = sem prazo. `fecha_aguardando_dias` (padrão 7): dias esperando a família até o chamado ficar *Resolvido*. `recebe_requerimentos` (bool): o setor que recebe os requerimentos (sem marca, vale o primeiro setor ativo).
+
+### `atendimento_chamados` (colunas novas)
+- `categoria_id` (FK `atendimento_categorias`, nullOnDelete). `tipo_requerimento` (chave do catálogo `CatalogoRequerimentos`; nulo = chamado comum) e `dados` (JSON com os campos do formulário; o comprovante de atestado guarda o caminho do arquivo no disco `local`).
+- `restrito` (bool): pedido do titular da LGPD; só lê quem tem `VerRestritos:AtendimentoChamado` (`AtendimentoChamado::scopeRestritosVisiveisPara`).
+- `prazo_primeira_resposta_em`, `prazo_resolucao_em`, `primeira_resposta_em`, `aguardando_solicitante_desde`: prazos calculados na abertura por `AtendimentoService::prazos()` e marcas de ciclo.
+- `resultado` (`atendido`, `indeferido`), `resultado_justificativa`, `aplicado_em` e `aplicado_por_user_id` (FK `users`, nullOnDelete): quem aplicou a alteração do requerimento, depois da conferência.
+
+### `atendimento_categorias`
+- `setor_id` (FK, cascade), `nome`, `ativo`, `ordem`. Assunto que a família escolhe ao abrir o chamado.
+
+### `atendimento_respostas_prontas`
+- `setor_id` (FK nulo, cascade; nulo = vale para todos os setores), `titulo`, `texto` (com `{{ SOLICITANTE }}`, `{{ ALUNO }}`, `{{ PROTOCOLO }}`, `{{ ESCOLA }}`), `ativo`.
+
+**Permissões** (migration `2026_11_02_120000`): `Aplicar:AtendimentoChamado` e `VerRestritos:AtendimentoChamado`. Parâmetros em `config/atendimento.php`.
+
+
+## 54. Ouvidoria e Convivência Escolar (Ondas 35 e 63)
+
+### `denuncias`
+- **Representa:** uma manifestação do canal público. **Não guarda IP nem agente de navegador.**
+- **Campos:** `protocolo` (único, `OUV-AAAA-XXXXXX`), `codigo_hash` (HMAC-SHA256 do código de acompanhamento com a `APP_KEY`; **o código nunca é gravado**), `categoria` (`CategoriaDenuncia`), `descricao`, `local_data`, `envolvidos` (JSON de `nome` e `papel`) e `identificacao` (JSON de nome e contato, só quando identificada), todos **criptografados** (`encrypted`); `anonima`, `user_id` (FK `users`, nulo sempre que anônima), `status` (`recebida`, `em_apuracao`, `concluida`, `arquivada`), `suspeita_violencia`, `prazo_em`, `responsavel_user_id`, `conclusao` e `encerrada_em`.
+
+### `denuncia_movimentacoes`
+- **Campos:** `denuncia_id` (FK, cascade), `user_id` (FK nulo: o autor ou o sistema), `tipo` (`TipoMovimentacaoDenuncia`), `texto` (criptografado), `visivel_ao_autor`. Parecer interno e comunicação ao Conselho Tutelar nascem **invisíveis ao autor**.
+
+### `denuncia_comites`
+- **Campos:** `user_id` (FK, cascade), `categoria` (nulo = todas); única por par. `Denuncia::scopeVisiveisPara()` junta isto com `VerTodas:Denuncia`.
+
+**Permissões** (migration `2026_11_02_120000`): `ViewAny`, `View`, `Tratar` e `VerTodas:Denuncia`; `Gerenciar:DenunciaComite`. Parâmetros em `config/ouvidoria.php`.
+
+
+## 55. Proposta Comercial: aceite e ciclo (Onda 87)
+
+### `proposta_comercials` (colunas novas)
+- `token_publico` (48 caracteres, único, oculto em `toArray`), `enviada_em`, `visualizada_em` e `visualizacoes`.
+- `aceita_em`, `aceite_nome` e `aceite_ip`: a prova do aceite. Só `PropostaAceiteService` grava (fora do `$fillable`).
+- `expirada_em`, `avisada_3d_em` e `avisada_1d_em`: expiração e os avisos de vencimento (um de cada).
+- `convertida_em` e `matricula_id` (FK `matricula`, nullOnDelete): a primeira matrícula que usou a proposta. A bolsa criada fica em `bolsa_concedida` com tipo **Desconto comercial** e a observação `Proposta {codigo}: …`; o percentual é inteiro (`tinyint`).
+
+Parâmetro em `config/propostas.php` (`PROPOSTAS_RENOVACAO_DIAS`).
+
+
+## 56. Agenda de Visitas e Agendamento Online (Onda 86)
+
+### `disponibilidade_visitas`
+- **Campos:** `user_id` (FK `users`, cascade; o consultor), `unidade_id` (FK `unidade`, nullOnDelete; nulo = qualquer unidade), `dia_semana` (1 = segunda a 7 = domingo), `hora_inicio`, `hora_fim`, `duracao_minutos` (30), `antecedencia_minima_horas` (24), `antecedencia_maxima_dias` (30), `ativo`.
+
+### `visita_interessado` (colunas novas)
+- `token_agendamento` (único, oculto): os links de trocar e cancelar. `origem` (`interna` ou `online`), `unidade_id` (FK `unidade`, nullOnDelete) e `lembrete_familia_enviado_em`.
+
+**Permissões** (migration `2026_11_02_150000`): `ViewAny`, `View`, `Create`, `Update` e `Delete:DisponibilidadeVisita`. Parâmetros em `config/visitas.php`.

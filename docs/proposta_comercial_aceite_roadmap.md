@@ -1,9 +1,8 @@
-# Proposta Comercial com Aceite da Família (Onda 87) — Proposta para o Futuro
+# Proposta Comercial com Aceite da Família (Onda 87) — Implementada (parcial)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for autorizada.
-> Não há código, migration ou teste desta funcionalidade. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md) e fecha a
-> sequência do CRM depois das ondas [85](distribuicao_leads_carteira_roadmap.md) e [86](agendamento_online_visitas_roadmap.md).
-> **Atenção:** já existe uma *Proposta Comercial* no sistema; esta onda **completa o ciclo dela**, não cria outra.
+> **Status: implementada em 2026-11-02**, no pacote P10. O ciclo da proposta existente foi completado (link público, aceite, expiração, renovação e do desconto à
+> bolsa). O simulador, os indicadores e o aceite com assinatura eletrônica ficaram para depois (ver *Implementação*, no fim). O texto abaixo é o escopo original.
+> Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md).
 
 ## Contexto
 
@@ -76,3 +75,22 @@ para essas situações** (a busca no `app/` só os acha no próprio enum, na tra
 **Sequência do CRM (84 → 85 → 86 → 87).** A proposta é o último degrau: o lead entra e é distribuído (85), visita (86), recebe a
 proposta e aceita (esta), e o contrato sai pela matrícula online já existente. A rotina de expiração e as filas usam a Minha Mesa da
 Onda 84.
+
+## Implementação (2026-11-02)
+
+**Entregue** (`PropostaAceiteService`, `PropostaPublicaController`, `ExpirarPropostasComerciaisCommand`, migration `2026_11_02_130000`):
+
+1. **Página pública `/proposta/{token}`** (token de 48 caracteres, não indexável, só abre proposta aprovada, aceita, convertida ou expirada; as demais respondem 404 como um link que não
+   existe). Mostra série, valores, desconto, parcelas, total e validade, sem a alçada nem o motivo do desconto, e diz que o **aceite não substitui o contrato**. A ação *Link para a família*
+   gera o link; o texto do WhatsApp passa a levá-lo.
+2. **Aceite.** Nome completo e confirmação; grava data, IP e nome, muda para *Aceita pela família* e avisa o consultor. Aceitar duas vezes não duplica o aviso. Proposta vencida não aceita.
+3. **Expiração.** `crm:expirar-propostas` (diário) marca *Expirada* a aprovada fora da validade e avisa o consultor **3 e 1 dia antes** (uma vez cada). A **aceita não expira** (a condição foi prometida).
+   *Renovar* devolve a proposta à aprovação anterior com nova validade (padrão 5 dias) **sem refazer a aprovação**, desde que a mensalidade de tabela da turma não tenha mudado.
+4. **Da proposta ao contrato.** No Assistente de Matrícula (`?proposta_id=`), ao criar a matrícula a proposta vira *Convertida* e o desconto vira a bolsa **"Desconto comercial"**
+   (percentual da proposta, pelo número de parcelas a partir de hoje), que o gerador de faturas já aplica. Para mais de um irmão, cada matrícula recebe a bolsa. **Percentual inteiro:** o desconto
+   fixo ou fracionado é arredondado (R$ 75 sobre R$ 1.000 vira 8%), e a observação da bolsa e o aviso dizem isso. Proposta vencida ou não aprovada: a matrícula segue sem o desconto, com aviso persistente.
+6. **Minha Mesa:** *Propostas a vencer* (aprovadas a 3 dias do fim e aceitas ainda sem matrícula; o consultor vê as suas) e *Propostas para aprovar* (só as que a alçada do usuário cobre).
+
+**Fora desta entrega:** 5 (simulador de mensalidade), 7 (indicadores e taxa de conversão por faixa de desconto), PDF da proposta e aceite com assinatura eletrônica (Onda 69).
+
+**Testes:** `PropostaAceiteTest`.

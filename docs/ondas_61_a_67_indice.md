@@ -6,7 +6,7 @@ contexto, o que já existe no sistema (conferido no código), escopo, base legal
 - **Implementadas (4):** 61, 62, 64 e 65.
 - **Propostas (2):** 66 e 67. Não há código, migration nem teste delas.
 - **Mesclada (1):** a 63 (convivência escolar e bullying) virou uma seção da Onda 35 (ouvidoria e canal de
-  denúncias), porque usa o mesmo cadastro de casos e o mesmo comitê. Continua proposta.
+  denúncias), porque usa o mesmo cadastro de casos e o mesmo comitê. Foi **implementada junto com a 35 em 2026-11-02** (categorias de convivência; falta o plano de ação).
 
 ## Visão geral
 
@@ -14,7 +14,7 @@ contexto, o que já existe no sistema (conferido no código), escopo, base legal
 |---|---|---|---|---|
 | 61 | Cancelamento de Matrícula e Distrato | Secretaria / Financeiro | **Implementada** | [cancelamento_matricula_distrato_roadmap.md](cancelamento_matricula_distrato_roadmap.md) |
 | 62 | Encargos por Atraso: Multa e Juros | Financeiro | **Implementada** | [encargos_atraso_roadmap.md](encargos_atraso_roadmap.md) |
-| 63 | Convivência Escolar e Prevenção ao Bullying | Conformidade | Mesclada à Onda 35 (proposta) | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md#ampliação-programa-de-convivência-escolar-e-prevenção-ao-bullying) |
+| 63 | Convivência Escolar e Prevenção ao Bullying | Conformidade | Mesclada à Onda 35 (**implementada** em 2026-11-02) | [ouvidoria_canal_denuncias_roadmap.md](ouvidoria_canal_denuncias_roadmap.md#ampliação-programa-de-convivência-escolar-e-prevenção-ao-bullying) |
 | 64 | Grade Horária Assistida | Calendário / Pedagógico | **Implementada** | [grade_horaria_assistida_roadmap.md](grade_horaria_assistida_roadmap.md) |
 | 65 | Admissão e Desligamento de Funcionários | RH | **Implementada** | [admissao_desligamento_funcionarios_roadmap.md](admissao_desligamento_funcionarios_roadmap.md) |
 | 66 | Conferência de Cláusulas dos Modelos de Contrato | Jurídico / Financeiro | Proposta | [conferencia_clausulas_contrato_roadmap.md](conferencia_clausulas_contrato_roadmap.md) |

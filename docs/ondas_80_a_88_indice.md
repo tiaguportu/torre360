@@ -1,5 +1,8 @@
 # Ondas 80 a 91 — Índice
 
+> Continua no [índice das ondas 92 a 106](ondas_92_a_106_indice.md) (funcionalidades que a [proposta de unificação](unificacao_de_ondas_proposta.md) apontou) e, para a ordem de entrega, na própria proposta.
+> **Em 2026-11-02 foram implementadas as ondas 80, 83, 86 e 87** ([pacotes P2 e P10](pacotes_p2_p10_indice.md)); a **85** ficou de fora de propósito.
+
 Continuação do [índice das ondas 72 a 79](ondas_72_a_79_indice.md). Reúne as propostas para a **secretaria** (80 a 83) e para o **CRM**
 (85 a 88), que a análise de produtividade da equipe levantou depois do conjunto Suprimentos e Resultado da escola, e as duas de
 **engenharia de entrega** (89 e 90), que a auditoria de 2026-10-28 levantou. A **Onda 84**
@@ -10,22 +13,22 @@ Cada documento diz o que já existe **conferido no código** (para não duplicar
 riscos. Nenhuma das propostas abaixo tem código, migration nem teste. A **Onda 91** (resumo diário de faltas à família) nasceu de um
 pedido da escola e já foi implementada em 2026-10-29.
 
-- **Implementadas (2):** 84 e 91.
+- **Implementadas (6):** 84 e 91; 80, 83, 86 e 87 em 2026-11-02, as quatro parcialmente (ver o fim de cada documento).
 - **Parcial (1):** 81 (só a detecção de pessoas duplicadas, em 2026-10-30; o resto continua proposto).
-- **Propostas (9):** 80, 82, 83, 85, 86, 87 e 88 (produtividade) e 89 e 90 (engenharia).
+- **Propostas (5):** 82, 85 e 88 (produtividade) e 89 e 90 (engenharia).
 
 ## Visão geral
 
 | Onda | Tema | Área | Esforço | Status | Documento |
 |---|---|---|---|---|---|
-| 80 | Requerimentos Online da Família | Secretaria / Portal | Médio | Proposta | [requerimentos_online_familia_roadmap.md](requerimentos_online_familia_roadmap.md) |
+| 80 | Requerimentos Online da Família | Secretaria / Portal | Médio | **Implementada (parcial)** | [requerimentos_online_familia_roadmap.md](requerimentos_online_familia_roadmap.md) |
 | 81 | Qualidade dos Cadastros | Secretaria / Conformidade | Pequeno | **Parcial** (detecção de pessoas duplicadas feita) | [qualidade_cadastros_roadmap.md](qualidade_cadastros_roadmap.md) |
 | 82 | Roteiros da Secretaria | Secretaria | Pequeno a médio | Proposta | [roteiros_secretaria_roadmap.md](roteiros_secretaria_roadmap.md) |
-| 83 | Atendimento Unificado | Secretaria / Portal | Médio | Proposta | [atendimento_unificado_roadmap.md](atendimento_unificado_roadmap.md) |
+| 83 | Atendimento Unificado | Secretaria / Portal | Médio | **Implementada (parcial)** | [atendimento_unificado_roadmap.md](atendimento_unificado_roadmap.md) |
 | 84 | Mesa do Consultor e Próxima Ação Obrigatória | CRM | Pequeno | **Implementada** | [mesa_consultor_proxima_acao_roadmap.md](mesa_consultor_proxima_acao_roadmap.md) |
 | 85 | Distribuição de Leads e Carteira | CRM | Médio | Proposta | [distribuicao_leads_carteira_roadmap.md](distribuicao_leads_carteira_roadmap.md) |
-| 86 | Agendamento Online de Visitas e Eventos | CRM | Médio | Proposta | [agendamento_online_visitas_roadmap.md](agendamento_online_visitas_roadmap.md) |
-| 87 | Proposta Comercial com Aceite da Família | CRM / Financeiro | Médio | Proposta (completa a proposta que já existe) | [proposta_comercial_aceite_roadmap.md](proposta_comercial_aceite_roadmap.md) |
+| 86 | Agendamento Online de Visitas e Eventos | CRM | Médio | **Implementada (parcial, sem a 85)** | [agendamento_online_visitas_roadmap.md](agendamento_online_visitas_roadmap.md) |
+| 87 | Proposta Comercial com Aceite da Família | CRM / Financeiro | Médio | **Implementada (parcial)**: completa a proposta que já existia | [proposta_comercial_aceite_roadmap.md](proposta_comercial_aceite_roadmap.md) |
 | 88 | Canal WhatsApp Oficial | CRM / Comunicação | Grande, com contrato e custo | Proposta | [whatsapp_oficial_roadmap.md](whatsapp_oficial_roadmap.md) |
 | 89 | Paridade de Esquema e Testes em MariaDB | Engenharia | Médio | Proposta | [paridade_esquema_testes_mariadb_roadmap.md](paridade_esquema_testes_mariadb_roadmap.md) |
 | 90 | Publicação Segura | Engenharia / Operação | Médio a grande | Proposta | [publicacao_segura_deploy_roadmap.md](publicacao_segura_deploy_roadmap.md) |

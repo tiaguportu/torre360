@@ -1,7 +1,8 @@
-# Requerimentos Online da Família (Onda 80) — Proposta para o Futuro
+# Requerimentos Online da Família (Onda 80) — Implementada (parcial)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for autorizada.
-> Não há código, migration ou teste desta funcionalidade. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md).
+> **Status: implementada em 2026-11-02**, no pacote P2, **sobre o chamado da Central de Atendimento** (a fusão sugerida com a Onda 83): o requerimento é um
+> chamado com tipo, formulário e prazo, e não uma tabela nova. Seis tipos entraram; a edição do formulário pelo administrador e a aplicação automática de
+> alguns tipos ficaram para depois (ver *Implementação*, no fim). O texto abaixo é o escopo original. Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md).
 
 ## Contexto
 
@@ -70,3 +71,26 @@ em vez de nascer como uma tela paralela.
 **Atendimento da família (80 + 83 + 70).** Requerimento e chamado têm o mesmo ciclo (protocolo, responsável, prazo, resposta,
 aviso). A diferença é o resultado: o requerimento termina em documento ou alteração; o chamado, numa conversa. Um motor de
 "solicitação" com tipo atende os dois e evita duas filas e dois históricos. Ver o [índice](ondas_80_a_88_indice.md#fusões-sugeridas).
+
+## Implementação (2026-11-02)
+
+**Entregue** (`CatalogoRequerimentos`, `AtendimentoService::abrirRequerimento` e `concluirRequerimento`, página *Requerimentos* do Portal):
+
+| Tipo | Prazo | O que acontece ao concluir |
+|---|---|---|
+| Atualizar telefone, e-mail ou endereço | 5 dias úteis | *Aplicar* grava telefone e e-mail no cadastro depois da conferência (antes e depois lado a lado); o **endereço** é pedido em texto e digitado à mão na ficha |
+| Enviar atestado médico do aluno | 2 dias úteis | *Aplicar* cria o **atestado do aluno** (justifica as faltas do período); abonar é uma escolha da secretaria na hora |
+| Autorizar outra pessoa a retirar o aluno | 2 dias úteis | Registro com atendimento manual |
+| Pedir troca de turma ou de turno | 10 dias úteis | Registro com atendimento manual (depende de vaga) |
+| Trocar o responsável financeiro | 5 dias úteis | Registro com atendimento manual (altera contrato e exige assinatura) |
+| Direitos sobre os meus dados (LGPD) | 15 dias corridos | Ver a [Onda 34](portal_titular_lgpd_roadmap.md): restrito |
+
+- **Regras cumpridas:** nenhuma alteração é aplicada sozinha; só a **permissão `Aplicar:AtendimentoChamado`** aplica; quem pede é o responsável com acesso ao
+  aluno (a mesma regra do Portal; um aluno de outra família é recusado); **indeferir exige a justificativa**, que a família lê; um requerimento concluído não conclui de novo.
+- **Declarações e histórico** continuam em *Solicitações de documentos* (o Portal mostra o atalho), sem migrar nada.
+- **Minha Mesa:** fila *Requerimentos para atender* (atrasada quando passa do prazo do tipo).
+
+**Fora desta entrega:** edição dos campos pelo administrador (os tipos ficam em `CatalogoRequerimentos`); aplicação automática de troca de turma, de responsável financeiro e de
+retirada; o *autorizado eventual* da Onda 101; o registro no Portal do Titular da correção cadastral além de telefone e e-mail.
+
+**Testes:** `AtendimentoSolicitacoesTest`.

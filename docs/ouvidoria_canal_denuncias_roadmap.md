@@ -1,8 +1,8 @@
-# Ouvidoria e Canal de Denúncias (Onda 35) — Proposta para o Futuro
+# Ouvidoria e Canal de Denúncias (Onda 35) — Implementada (parcial)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a
-> implementação for autorizada — não há código, migration ou teste desta funcionalidade no
-> sistema ainda.
+> **Status: implementada em 2026-11-02** (inclui a **Onda 63**, convivência escolar e bullying, que já estava mesclada aqui), no pacote P2. O canal, o
+> anonimato, a fila restrita, a apuração e a devolutiva estão prontos; os anexos, o plano de ação e o impedimento de quem é citado ficaram para depois (ver
+> *Implementação*, no fim). O texto abaixo é o escopo original. Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md).
 
 ## Contexto
 
@@ -101,3 +101,27 @@ solicitações comuns e não protege a identidade de quem relata.
 Veja a fusão com a [Onda 34](portal_titular_lgpd_roadmap.md): o mesmo motor de "casos com prazo legal" atende o pedido do titular, a ouvidoria e a convivência escolar (seção acima), cada um com o seu tipo, prazo e sigilo.
 
 Veja o [índice das ondas 68 a 71](ondas_68_a_71_indice.md#fusões-sugeridas-para-dar-completude).
+
+## Implementação (2026-11-02)
+
+**Entregue** (`Denuncia`, `DenunciaMovimentacao`, `DenunciaComite`, `OuvidoriaService`, `OuvidoriaPublicaController`, `DenunciaResource`, migration `2026_11_02_110000`):
+
+- **Página pública `/ouvidoria`**, sem login e não indexável: assunto (inclui as categorias de convivência da Onda 63: bullying, cyberbullying, agressão física, discriminação,
+  exposição de imagem, assédio, suspeita de violência e desvio de conduta), relato, local e data, pessoas envolvidas com papel (vítima, autor, testemunha) e a escolha entre
+  **anônima** e **identificada**.
+- **Anonimato real.** A manifestação anônima **não grava usuário, nome, contato, IP nem navegador** (mesmo que a pessoa esteja logada). Relato, local, envolvidos e identificação ficam
+  **criptografados**. O servidor mantém, como em qualquer site, um registro técnico de sessão por algumas horas, que não é ligado à manifestação (a tela diz isso).
+- **Protocolo e código de acompanhamento** (`OUV-AAAA-XXXXXX` e `XXXXX-XXXXX`): o código aparece **uma única vez**, por sessão (nunca na URL), e só o hash (HMAC) fica no banco. Em
+  `/ouvidoria/acompanhar` o autor vê a situação e **só os andamentos que a equipe escreveu para ele** (parecer interno e comunicação ao Conselho Tutelar nunca aparecem) e pode acrescentar informação. Protocolo
+  ou código errado dá a mesma resposta; há limite de tentativas.
+- **Comitê.** Quem lê é o comitê da categoria (cadastro em *Secretaria → Comitê da Ouvidoria*; categoria em branco acompanha todas) ou quem tem `VerTodas:Denuncia`. Ter só a permissão não basta. Ninguém cria, edita ou apaga o
+  relato pelo painel: ele só muda por andamentos registrados.
+- **Tratamento.** Assumir a apuração (atômico), registrar andamento (parecer interno, devolutiva ao autor ou comunicação ao Conselho Tutelar) e encerrar (concluída ou arquivada) com a
+  conclusão que o autor lê. Prazo da primeira providência de 10 dias, e de **2 dias** para *suspeita de violência contra criança ou adolescente* (ECA, art. 13; Lei nº 13.431/2017), com destaque na tela.
+- **Aviso e fila.** O comitê é avisado só com protocolo, categoria e prazo (o relato não vai por e-mail); fila *Ouvidoria: manifestações para tratar* na Minha Mesa.
+- **Sem reCAPTCHA** (enviaria o endereço de quem denuncia a um terceiro): campo-armadilha, limite de envios e de consultas por origem.
+
+**Fora desta entrega:** anexos (disco privado), plano de ação com prazo e responsável (Onda 63), impedimento de quem é citado participar da apuração, fluxo formal de comunicação ao
+Conselho Tutelar (o sistema registra a comunicação; o procedimento é definido com o jurídico da escola) e o relatório agregado por categoria.
+
+**Testes:** `OuvidoriaTest`.

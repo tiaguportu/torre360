@@ -1,7 +1,8 @@
-# Atendimento Unificado (Onda 83) — Proposta para o Futuro
+# Atendimento Unificado (Onda 83) — Implementada (parcial)
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for autorizada.
-> Não há código, migration ou teste desta funcionalidade. Faz parte do [índice das ondas 80 a 88](ondas_80_a_88_indice.md).
+> **Status: implementada em 2026-11-02**, no pacote P2 (junto com as ondas 80, 34, 35 e 63). Ficaram de fora as perguntas frequentes, o
+> relatório de tempo de resposta e a distribuição automática entre atendentes (ver *Implementação*, no fim). O texto abaixo é o escopo
+> original e continua como registro da proposta. Veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md) e o [índice das ondas 80 a 91](ondas_80_a_88_indice.md).
 
 ## Contexto
 
@@ -69,3 +70,23 @@ também o canal do titular e **tem prazo**. Pedidos do titular entram como assun
 **Atendimento da família (83 + 80 + 70).** Chamado e [requerimento](requerimentos_online_familia_roadmap.md) têm protocolo,
 responsável, prazo, resposta e aviso. Um motor de solicitação com tipo evita duas filas; a Central de Avisos é o canal de saída dos
 dois. Ver o [índice](ondas_80_a_88_indice.md#fusões-sugeridas).
+
+## Implementação (2026-11-02)
+
+**Entregue** (`AtendimentoService`, `AtendimentoChamadosTable`, `CentralAtendimento`, migration `2026_11_02_100000`):
+
+1. **Avisos.** Chamado novo avisa quem pode atender (sino e e-mail) e o **e-mail do setor**, que passou a ser lido. Resposta da escola avisa a família (sino do
+   Portal, e-mail e push), **só com o protocolo e um link**. Resposta da família reabre o chamado e avisa o atendente (ou o setor, se ninguém assumiu).
+2. **Prazo em horas úteis** (segunda a sexta, 08:00 às 18:00, configurável): primeira resposta e resolução por setor (padrão 24 h e 72 h). A lista mostra *Responder
+   até* (vermelho quando vence) e tem o filtro *Prazo estourado*. Os feriados não entram na conta.
+3. **Atribuição.** *Assumir* (atômico: dois cliques simultâneos não sobrescrevem), *Reatribuir* (avisa a pessoa) e as filas *Chamados com prazo estourado* e
+   *Requerimentos para atender* na Minha Mesa. Rodízio automático não foi feito.
+4. **Respostas prontas** por setor (ou gerais), com `{{ SOLICITANTE }}`, `{{ ALUNO }}`, `{{ PROTOCOLO }}` e `{{ ESCOLA }}`. O atendente escolhe, revisa e envia.
+5. **Categorias de assunto** por setor, escolhidas pela família ao abrir o chamado.
+7. **Encerramento por inatividade.** `atendimento:resolver-aguardando` (diário) resolve o chamado que espera a família há mais dias que o setor define (padrão 7) e avisa.
+   Se ela responder, o chamado **reabre** (sem limite de prazo).
+
+**Fora desta entrega:** 6 (perguntas frequentes no Portal, de preferência escritas por pessoas), 8 (relatório como fonte da Onda 72) e a distribuição simples entre
+atendentes. O prazo de *resolução* de um requerimento usa o do tipo (dias úteis), e não o do setor.
+
+**Testes:** `AtendimentoSolicitacoesTest` e `HorarioComercialTest`.
