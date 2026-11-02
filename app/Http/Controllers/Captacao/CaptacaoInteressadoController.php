@@ -74,7 +74,7 @@ class CaptacaoInteressadoController extends Controller
         $this->notificarEquipeInterna($resultado);
 
         // Redireciona com dados para personalizar a página de sucesso
-        $primeiraUnidade = $primeiraUnidadeId ? Unidade::find($primeiraUnidadeId) : Unidade::where('flag_ativo', true)->first();
+        $primeiraUnidade = $primeiraUnidadeId ? Unidade::find($primeiraUnidadeId) : Unidade::emAtividade()->first();
 
         return redirect()
             ->route('captacao.interessado.sucesso')

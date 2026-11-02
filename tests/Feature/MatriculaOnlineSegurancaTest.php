@@ -48,7 +48,7 @@ class MatriculaOnlineSegurancaTest extends TestCase
 
         TipoVinculo::firstOrCreate(['nome' => 'Responsável Legal']);
 
-        $unidade = Unidade::create(['nome' => 'Unidade Central', 'flag_ativo' => true]);
+        $unidade = Unidade::create(['nome' => 'Unidade Central']);
         $curso = Curso::create(['nome_externo' => 'Fundamental II', 'nome_interno' => 'EF II', 'unidade_id' => $unidade->id]);
         $serie = Serie::create(['nome' => '7º Ano', 'curso_id' => $curso->id, 'sistema_avaliacao' => 'Nota']);
         $periodo = PeriodoLetivo::create(['nome' => '2026', 'data_inicio' => '2026-02-01', 'data_fim' => '2026-12-20']);

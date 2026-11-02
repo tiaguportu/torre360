@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +13,15 @@ class Unidade extends Model
     protected $table = 'unidade';
 
     protected $fillable = ['instituicao_ensino_id', 'endereco_id', 'nome', 'cnpj', 'codigo_inep', 'situacao_funcionamento', 'telefone', 'email', 'codigo_orgao_regional_ensino', 'localizacao_zona', 'localizacao_diferenciada', 'dependencia_administrativa', 'celular_whatsapp', 'instagram', 'facebook', 'youtube'];
+
+    /**
+     * Unidades em funcionamento (situação 1 do Censo). Substitui o antigo `flag_ativo`,
+     * removido da tabela `unidade` na migration do leiaute Inep.
+     */
+    public function scopeEmAtividade(Builder $query): Builder
+    {
+        return $query->where('situacao_funcionamento', '1');
+    }
 
     public function cursos(): HasMany
     {

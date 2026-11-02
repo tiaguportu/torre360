@@ -255,3 +255,24 @@ essas linhas forem removidas.
 ## 6. Matrícula online pública: regras de segurança
 
 O fluxo `/matricular-online` (`MatriculaOnlineWizard` + `MatriculaOnlineService`) não exige login; por isso o CPF/e-mail digitado não altera cadastro existente, não vincula responsável a aluno já conhecido, exige reCAPTCHA e tem limite de tentativas por IP, e a página de confirmação só abre por link assinado. As regras completas, os motivos e o risco residual estão em [seguranca_hardening.md](seguranca_hardening.md) (seção "Matrícula online pública").
+
+## 7. Unidades oferecidas: só as em atividade
+
+O seletor de unidade do wizard (`MatriculaOnlineWizard::getUnidadesProperty`), a unidade pré-selecionada no `mount()` e a unidade usada na página de sucesso da captação (`CaptacaoInteressadoController`) vêm do escopo `Unidade::emAtividade()`, que filtra `situacao_funcionamento = '1'` (leiaute do Censo: 1 em atividade, 2 paralisada, 3 extinta). Se nenhuma unidade estiver em atividade, a pré-seleção do `mount()` cai na primeira unidade cadastrada (como antes) e o seletor fica vazio.
+
+### O que quebrou em 2026-11-02 e por quê
+
+`GET /matricular-online` respondia 500 em produção: `Unknown column 'flag_ativo' in 'where clause'` na tabela `unidade`. A migration `2026_07_29_230000_update_instituicao_ensinos_and_unidades_table_for_inep` (commit `e92b4adb`) removeu `unidade.flag_ativo` e a substituiu por `situacao_funcionamento`, mas o wizard e o controller de captação continuaram filtrando pela coluna antiga. A rota ficou fora do ar desde que essa migration rodou no servidor.
+
+A suíte não acusou nada porque ela roda em SQLite e o SQLite trata um identificador inexistente entre aspas como texto: `where "flag_ativo" = 1` não falha, só não encontra linha. Os testes ainda criavam `Unidade::create([... 'flag_ativo' => true])`, atributo que nem é mais preenchível (`$fillable`), e o `Unidade::first()` de reserva escondia o filtro vazio.
+
+### Regras para não repetir
+
+- `unidade.flag_ativo` não existe mais. Para "unidade em funcionamento" use `Unidade::emAtividade()`; não escreva `where('flag_ativo', ...)` em `Unidade`. Quem ainda tem `flag_ativo` são `InstituicaoEnsino` e `DiaNaoLetivo`.
+- Ao remover ou renomear uma coluna em migration, procure o nome em `app/`, `resources/` e `tests/` (`grep -rn nome_da_coluna`) antes de publicar. Um teste em SQLite verde não prova que a coluna existe.
+- O teste `test_wizard_so_oferece_unidades_em_atividade` (`MatriculaOnlineSelfServiceTest`) cobre a regra: com a unidade antiga paralisada e uma nova em atividade, o wizard pré-seleciona e lista só a ativa. Com a condição antiga ele falha, o que foi conferido.
+- A correção estrutural do "SQLite não acusa coluna inexistente" é a Onda 89 ([paridade_esquema_testes_mariadb_roadmap.md](paridade_esquema_testes_mariadb_roadmap.md)): rodar um subconjunto da suíte em MariaDB.
+
+### Deploy
+
+Só código; não há migration nova. Depois de publicar, abrir `/matricular-online` em produção e conferir que o seletor lista as unidades em atividade.

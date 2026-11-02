@@ -97,7 +97,7 @@ class MatriculaOnlineWizard extends Component
 
     public function mount(): void
     {
-        $primeiraUnidade = Unidade::where('flag_ativo', true)->first() ?? Unidade::first();
+        $primeiraUnidade = Unidade::emAtividade()->first() ?? Unidade::first();
         if ($primeiraUnidade) {
             $this->unidade_id = $primeiraUnidade->id;
         }
@@ -110,7 +110,7 @@ class MatriculaOnlineWizard extends Component
 
     public function getUnidadesProperty(): Collection
     {
-        return Unidade::where('flag_ativo', true)->orderBy('nome')->get();
+        return Unidade::emAtividade()->orderBy('nome')->get();
     }
 
     public function getCursosProperty(): Collection

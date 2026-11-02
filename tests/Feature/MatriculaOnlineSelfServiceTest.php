@@ -54,7 +54,6 @@ class MatriculaOnlineSelfServiceTest extends TestCase
 
         $this->unidade = Unidade::create([
             'nome' => 'Unidade Central Torre360',
-            'flag_ativo' => true,
         ]);
 
         $this->curso = Curso::create([
@@ -96,6 +95,18 @@ class MatriculaOnlineSelfServiceTest extends TestCase
         $response->assertStatus(200);
         $response->assertSeeLivewire(MatriculaOnlineWizard::class);
         $response->assertSee('Matrícula Online para Novos Alunos');
+    }
+
+    public function test_wizard_so_oferece_unidades_em_atividade(): void
+    {
+        // `unidade.flag_ativo` não existe mais: a situação vem do leiaute Inep (1 = em atividade).
+        $this->unidade->update(['situacao_funcionamento' => '2']);
+        $ativa = Unidade::create(['nome' => 'Unidade Ativa Torre360']);
+
+        Livewire::test(MatriculaOnlineWizard::class)
+            ->assertSet('unidade_id', $ativa->id)
+            ->assertSee('Unidade Ativa Torre360')
+            ->assertDontSee('Unidade Central Torre360');
     }
 
     public function test_wizard_avanca_etapas_com_validacao_reativa(): void
