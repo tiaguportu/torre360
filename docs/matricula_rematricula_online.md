@@ -276,3 +276,13 @@ A suíte não acusou nada porque ela roda em SQLite e o SQLite trata um identifi
 ### Deploy
 
 Só código; não há migration nova. Depois de publicar, abrir `/matricular-online` em produção e conferir que o seletor lista as unidades em atividade.
+
+## 8. Selo "Matrículas abertas" do cabeçalho público
+
+O cabeçalho do layout público (`resources/views/layouts/public.blade.php`, usado por `/matricular-online` e pelas demais páginas públicas) mostra o selo verde "Matrículas abertas". Ele já dizia "Matrículas Abertas 2026", com o ano escrito à mão no Blade, e ficou errado quando o ano mudou; em 2026-11-02 o ano saiu e o texto passou a ser "Matrículas abertas".
+
+- O selo é texto fixo: não consulta campanha, período letivo nem turma com vaga. Ele aparece mesmo que as matrículas estejam encerradas. Se isso passar a importar, a condição precisa vir de um dado (por exemplo, turma com vaga em período letivo vigente), nunca de um ano no texto.
+- Não ponha ano nem data nesse selo: o texto envelhece sozinho e ninguém é lembrado de trocar.
+- O teste `test_rota_publica_de_matricula_online_carrega_com_sucesso` (`MatriculaOnlineSelfServiceTest`) exige "Matrículas abertas" e rejeita o texto antigo.
+
+Só visual; sem migration.

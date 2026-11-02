@@ -95,6 +95,9 @@ class MatriculaOnlineSelfServiceTest extends TestCase
         $response->assertStatus(200);
         $response->assertSeeLivewire(MatriculaOnlineWizard::class);
         $response->assertSee('Matrícula Online para Novos Alunos');
+        // O selo do cabeçalho não leva ano fixo (já ficou desatualizado).
+        $response->assertSee('Matrículas abertas');
+        $response->assertDontSee('Matrículas Abertas 2026');
     }
 
     public function test_wizard_so_oferece_unidades_em_atividade(): void
