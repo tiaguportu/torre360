@@ -4,9 +4,11 @@ namespace App\Filament\Resources\Denuncias\Pages;
 
 use App\Enums\StatusDenuncia;
 use App\Enums\TipoMovimentacaoDenuncia;
+use App\Filament\Concerns\HasAjudaAction;
 use App\Filament\Resources\Denuncias\DenunciaResource;
 use App\Models\Denuncia;
 use App\Services\OuvidoriaService;
+use App\Support\HelpContent;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -16,11 +18,15 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewDenuncia extends ViewRecord
 {
+    use HasAjudaAction;
+
     protected static string $resource = DenunciaResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->ajudaAction('Manifestação da ouvidoria', $this->getHelpContent()),
+
             Action::make('assumir')
                 ->label('Assumir a apuração')
                 ->icon('heroicon-o-hand-raised')
@@ -90,6 +96,17 @@ class ViewDenuncia extends ViewRecord
                     $this->refreshFormData(['status', 'conclusao', 'encerrada_em']);
                 }),
         ];
+    }
+
+    private function getHelpContent(): HelpContent
+    {
+        return HelpContent::make('🛡️', 'Manifestação da ouvidoria', 'Leia o relato, assuma a apuração e registre cada passo até encerrar.')
+            ->passos('🚀 O que fazer aqui', [
+                '"Assumir a apuração" deixa a manifestação com você e muda a situação para "Em apuração".',
+                '"Registrar andamento": parecer interno e comunicação ao Conselho Tutelar só o comitê vê; a devolutiva o autor lê pelo protocolo e código.',
+                '"Encerrar" pede a conclusão, que o autor lê. Não cite nomes de terceiros nela.',
+            ])
+            ->dica('Suspeita de violência contra criança ou adolescente tem prazo de 2 dias e pede a comunicação ao Conselho Tutelar, no procedimento definido com o jurídico da escola.');
     }
 
     private function podeTratar(): bool

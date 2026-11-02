@@ -39,5 +39,6 @@
         <div class="marca">{{ config('app.name', 'Torre360') }}</div>
         @yield('conteudo')
     </div>
+    @stack('scripts')
 </body>
 </html>

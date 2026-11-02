@@ -33,9 +33,10 @@
                 <div class="aviso">Confira os campos destacados e envie de novo.</div>
             @endif
 
-            <form method="POST" action="{{ route('visita.publica.reservar') }}" class="card" autocomplete="off">
+            <form method="POST" action="{{ route('visita.publica.reservar') }}" class="card" autocomplete="off" id="formVisita">
                 @csrf
                 <input type="hidden" name="unidade_id" value="{{ $unidadeId }}">
+                <input type="hidden" name="recaptcha_token" id="recaptchaToken">
                 <div class="oculto-de-robo" aria-hidden="true"><label>Não preencha <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 
                 <h2>Dia e horário</h2>
@@ -103,3 +104,26 @@
         @endif
     @endif
 @endsection
+
+{{-- reCAPTCHA v3, como no formulário de captação: sem as chaves configuradas, a página envia direto e a regra de validação não exige o token. --}}
+@if (config('services.recaptcha.site_key'))
+    @push('scripts')
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+        <script>
+            (function () {
+                var form = document.getElementById('formVisita');
+                if (!form) { return; }
+                form.addEventListener('submit', function (e) {
+                    if (typeof grecaptcha === 'undefined') { return; }
+                    e.preventDefault();
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', { action: 'agendar_visita' }).then(function (token) {
+                            document.getElementById('recaptchaToken').value = token;
+                            form.submit();
+                        });
+                    });
+                });
+            })();
+        </script>
+    @endpush
+@endif

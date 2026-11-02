@@ -157,6 +157,20 @@ class AgendaVisitasOnlineTest extends TestCase
 
     // --- Marcação pela página pública ---------------------------------------------------------------------------------
 
+    public function test_pagina_gera_o_token_do_recaptcha_quando_as_chaves_estao_configuradas(): void
+    {
+        // A regra de validação exige o token com as chaves configuradas; sem o script a página nunca o geraria e ninguém marcaria.
+        $this->get('/visita')->assertOk()->assertDontSee('www.google.com/recaptcha', false);
+
+        config(['services.recaptcha.site_key' => 'chave-publica-de-teste', 'services.recaptcha.secret' => 'segredo-de-teste']);
+
+        $this->get('/visita')
+            ->assertOk()
+            ->assertSee('name="recaptcha_token"', false)
+            ->assertSee('www.google.com/recaptcha/api.js?render=chave-publica-de-teste', false)
+            ->assertSee("action: 'agendar_visita'", false);
+    }
+
     public function test_pagina_publica_mostra_os_horarios_livres(): void
     {
         $this->get('/visita')
