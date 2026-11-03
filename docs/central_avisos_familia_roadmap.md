@@ -1,7 +1,8 @@
 # Central de Avisos à Família (Onda 70) — Proposta para o Futuro
 
-> **Status: não implementado.** Este documento registra o escopo planejado para quando a implementação for
-> autorizada — não há código, migration ou teste desta funcionalidade no sistema ainda.
+> **Status: parcial.** Em 2026-11-02 entrou o **resolvedor único de destinatários** (`DestinatariosDaFamilia`), o primeiro passo do pacote P1: as cinco regras de "quem,
+> da família, recebe o aviso" viraram uma (ver *Implementação*, no fim). O catálogo de avisos, o histórico no Portal, a deduplicação, as preferências e o conteúdo mínimo
+> nas notificações antigas continuam propostos. O texto abaixo é o escopo original.
 
 ## Contexto
 
@@ -28,7 +29,9 @@ por evento, quem avisar e por qual canal.
 - Notificações do Laravel com e-mail, banco e push (`FrequenciaResumoDiarioNotification`, um aviso por dia
   desde a [Onda 91](resumo_diario_faltas_roadmap.md), e `OcorrenciaRegistradaNotification`) e o
   `NotificationService`/`FcmService`.
-- Sino de avisos do **painel da equipe** (notificações do Filament no banco). O **Portal da Família não mostra o sino**.
+- Sino de avisos do painel da equipe **e do Portal da Família** (`databaseNotifications`, atualização a cada 30 s, desde 2026-10-28). Várias notificações já gravam no
+  banco para a família (resumo de faltas, ocorrência, questionário, vaga, preceptoria, documentos pendentes e, desde 2026-11-02, o chamado). Falta o catálogo de tipos, o histórico
+  próprio, a deduplicação e as preferências.
 - `ComunicacaoEmMassa` com descadastro (`DescadastroController`) e a Central de Atendimento (conversa, não aviso).
 - Relação responsável ↔ aluno (`Pessoa::users`, responsáveis financeiros do contrato) para saber quem avisar.
 
@@ -105,3 +108,30 @@ por evento, quem avisar e por qual canal.
   unificados ([documento da 88](whatsapp_oficial_roadmap.md)).
 - **Com a Onda 47 (digest diário):** a equipe recebe o resumo; a família, os avisos. Compartilham o agendamento e as
   preferências por canal.
+
+## Implementação (2026-11-02): resolvedor único de destinatários
+
+**Antes.** Cada aviso montava "da pessoa para a conta" do seu jeito: `Matricula::getNotificationRecipients`, `ListaEsperaMatricula::getNotificationRecipients`,
+`Preceptoria::destinatariosDasPessoas`, o resumo diário de faltas e o chamado (`AtendimentoService`). As regras eram parecidas e diferentes (com ou sem o aluno, com ou sem o
+responsável financeiro, só conta ativa ou qualquer uma, pessoa sem conta ou não), e um aviso novo copiava a que estivesse mais à mão.
+
+**Agora** (`App\Services\DestinatariosDaFamilia`), cada regra tem nome, está num lugar só e tem teste (`DestinatariosDaFamiliaTest`, 11 casos):
+
+| Regra | Quem recebe | Quem usa |
+|---|---|---|
+| `responsaveisDoAluno` | As contas dos responsáveis, **sem a do próprio aluno** (opcional: só contas ativas) | Resumo diário de faltas |
+| `daMatricula` | O aluno, os responsáveis financeiros do contrato e os responsáveis do aluno; contas com e-mail | Documentos pendentes, possibilidade de preceptoria, avisos da lista de matrículas |
+| `daListaDeEspera` | O aluno, os responsáveis e quem registrou a entrada | Vaga disponível |
+| `notificaveisDasPessoas` | A pessoa com e-mail (notificada direto) e as contas dela, **uma vez por e-mail** (fica a conta, que também recebe push e sino) | Preceptoria |
+| `doChamado` | A conta de quem abriu, ou as dos responsáveis do aluno; **só contas ativas** | Chamado e requerimentos |
+
+Os métodos antigos continuam existindo e **só delegam**: nenhum chamador mudou, e **ninguém passou a receber de forma diferente** (as suítes de preceptoria, lista de espera,
+resumo de faltas, atestado e chamado continuaram passando).
+
+**Fora do resolvedor, de propósito:**
+- **Assinatura de contrato** (`AssinafyService`, `SignatariosSugeridosService`, `Contrato`): ali o que importa é quem assina, não quem é avisado; a regra é outra.
+- **As telas de preceptoria** (`Portal/Pages/Preceptoria` e `AgendarPreceptoria`) ainda montam à mão a lista de quem avisar. Trocar pelo resolvedor passaria a avisar também a pessoa
+  sem conta que só tem e-mail (como já faz o serviço de preceptoria), o que muda quem recebe: fica como decisão.
+
+**Próximos passos do P1:** o catálogo de tipos de aviso e o histórico no Portal (esta onda), o conteúdo mínimo nas notificações antigas (a da ocorrência ainda leva o relato inteiro no
+e-mail) e a ciência por responsável (Onda 33). Quem for criar um aviso novo para a família usa uma das regras acima, ou acrescenta a sua em `DestinatariosDaFamilia`.

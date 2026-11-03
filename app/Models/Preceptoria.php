@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Exceptions\ConflitoDeHorarioException;
 use App\Notifications\Preceptorias\LembretePreceptoriaNotification;
+use App\Services\DestinatariosDaFamilia;
 use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -151,27 +152,7 @@ class Preceptoria extends Model
      */
     public static function destinatariosDasPessoas(Collection $pessoas): Collection
     {
-        $destinatarios = collect();
-
-        foreach ($pessoas->unique('id') as $pessoa) {
-            // Adicionar a própria pessoa se tiver e-mail (notificável via e-mail)
-            if ($pessoa->email) {
-                $destinatarios->push($pessoa);
-            }
-
-            // Adicionar todos os usuários vinculados (notificáveis via e-mail, push e sininho)
-            foreach ($pessoa->users as $user) {
-                if ($user->email) {
-                    $destinatarios->push($user);
-                }
-            }
-        }
-
-        // Retorna coleção única baseada no e-mail para evitar duplicatas.
-        // Se houver uma Pessoa e um User com o mesmo e-mail, priorizamos o User para garantir o envio via Push/Sininho.
-        return $destinatarios->groupBy('email')->map(function ($group) {
-            return $group->first(fn ($item) => $item instanceof User) ?? $group->first();
-        })->values();
+        return app(DestinatariosDaFamilia::class)->notificaveisDasPessoas($pessoas);
     }
 
     /**

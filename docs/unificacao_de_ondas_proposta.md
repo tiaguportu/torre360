@@ -9,6 +9,7 @@
 > Base conferida: `main` em `24f3849a` mais `origin/main` até `be285ea6` (atestados, média parcial, motivo da perda).
 >
 > **Atualização de 2026-11-02:** os pacotes **P2** (solicitações e casos) e **P10** (funil comercial, sem a Onda 85) foram implementados; veja o [índice dos pacotes P2 e P10](pacotes_p2_p10_indice.md). As ondas 92 a 106 estão no [índice próprio](ondas_92_a_106_indice.md).
+> O primeiro passo do **P1** também foi dado: o resolvedor único de destinatários (`DestinatariosDaFamilia`), descrito na [Onda 70](central_avisos_familia_roadmap.md#implementação-2026-11-02-resolvedor-único-de-destinatários).
 
 ## 1. Onde estamos
 

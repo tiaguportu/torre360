@@ -10,7 +10,6 @@ use App\Enums\StatusChamado;
 use App\Models\AtendimentoChamado;
 use App\Models\AtendimentoMensagem;
 use App\Models\AtendimentoSetor;
-use App\Models\Pessoa;
 use App\Models\User;
 use App\Notifications\ChamadoParaEquipeNotification;
 use App\Notifications\ChamadoRespondidoNotification;
@@ -297,15 +296,7 @@ class AtendimentoService
      */
     public function destinatariosDaFamilia(AtendimentoChamado $chamado): Collection
     {
-        $chamado->loadMissing(['solicitante.users', 'matricula.pessoa.responsaveis.users']);
-
-        $usuarios = $chamado->solicitante?->users ?? collect();
-
-        if ($usuarios->isEmpty()) {
-            $usuarios = $chamado->matricula?->pessoa?->responsaveis->flatMap(fn (Pessoa $responsavel) => $responsavel->users) ?? collect();
-        }
-
-        return $usuarios->filter(fn (User $usuario): bool => $usuario->is_active)->unique('id')->values();
+        return app(DestinatariosDaFamilia::class)->doChamado($chamado);
     }
 
     /**

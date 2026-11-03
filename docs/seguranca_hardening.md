@@ -150,6 +150,14 @@ Testes em `SecurityHardeningTest`:
   - `android:allowBackup="false"`: impede extração do sandbox local do app via `adb backup`.
   - `android:usesCleartextTraffic="false"`: força comunicação exclusivamente criptografada (HTTPS).
 
+## Páginas com token fora dos buscadores (2026-11-02)
+
+As páginas públicas abertas por link com token ou que mostram dado de criança, de dívida ou de denúncia (`/acordo`, `/pesquisa-visita`, `/proposta`, `/visita`, `/ouvidoria`,
+`/admissao`, `/quero-matricular/convite`, `/comunicacao/descadastrar`, `/matricular-online/sucesso` e `/validar-documento`) respondem com `X-Robots-Tag: noindex, nofollow, noarchive`, em
+qualquer resposta (200, 404 ou redirecionamento). A regra está em `SecurityHeaders` e a lista, em `config/seguranca.php` (`noindex`). O `robots.txt` **não** foi alterado de propósito:
+bloquear a busca impediria o buscador de ver o cabeçalho, e a URL poderia aparecer só com o endereço. O formulário de captação e a matrícula online continuam indexáveis. Teste:
+`NaoIndexarPaginasComTokenTest`.
+
 ## Pendências conhecidas
 
 - **Autenticação de dois fatores** para contas administrativas: plano em [melhoria_mfa_painel.md](melhoria_mfa_painel.md).

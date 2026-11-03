@@ -10,6 +10,7 @@ use App\Enums\TipoPendenciaMatricula;
 use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
 use App\Observers\MatriculaVagaObserver;
+use App\Services\DestinatariosDaFamilia;
 use App\Support\PendenciasMatricula;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -433,39 +434,7 @@ class Matricula extends Model
      */
     public function getNotificationRecipients(): Collection
     {
-        $pessoasEnvolvidas = collect();
-
-        // 1. O Aluno
-        if ($this->pessoa) {
-            $pessoasEnvolvidas->push($this->pessoa);
-        }
-
-        // 2. Responsáveis Financeiros do Contrato
-        if ($this->contrato) {
-            foreach ($this->contrato->responsaveisFinanceiros as $resp) {
-                if ($resp->pessoa) {
-                    $pessoasEnvolvidas->push($resp->pessoa);
-                }
-            }
-        }
-
-        // 3. Responsáveis Gerais do Aluno
-        if ($this->pessoa) {
-            foreach ($this->pessoa->responsaveis as $resp) {
-                $pessoasEnvolvidas->push($resp);
-            }
-        }
-
-        if ($pessoasEnvolvidas->isEmpty()) {
-            return collect();
-        }
-
-        // Pegar todos os usuários vinculados a essas pessoas que possuem e-mail
-        return User::query()
-            ->whereHas('pessoas', fn ($query) => $query->whereIn('pessoa.id', $pessoasEnvolvidas->pluck('id')->unique()))
-            ->whereNotNull('email')
-            ->get()
-            ->unique('id');
+        return app(DestinatariosDaFamilia::class)->daMatricula($this);
     }
 
     public function lastNotification(): MorphOne

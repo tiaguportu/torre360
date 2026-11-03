@@ -100,7 +100,7 @@ class ResumoFaltasDiarioService
         foreach ($faltas as $falta) {
             $aluno = $falta->matricula?->pessoa;
             $aula = $falta->cronogramaAula;
-            $usuarios = $aluno?->responsaveis->flatMap(fn ($responsavel) => $responsavel->users)->unique('id');
+            $usuarios = $aluno ? app(DestinatariosDaFamilia::class)->responsaveisDoAluno($aluno) : null;
 
             if (! $aluno || ! $aula || $usuarios === null || $usuarios->isEmpty()) {
                 $descartadas[] = $falta->id;

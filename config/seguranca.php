@@ -51,4 +51,28 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Páginas que buscador não deve indexar
+    |--------------------------------------------------------------------------
+    |
+    | Padrões de caminho (`Request::is`) das páginas públicas abertas por link com token ou que mostram dado de criança, de dívida ou de denúncia.
+    | Recebem `X-Robots-Tag: noindex, nofollow, noarchive` (ver `SecurityHeaders`). O formulário de captação e a matrícula online continuam indexáveis.
+    */
+
+    'noindex' => [
+        'acordo/*',
+        'pesquisa-visita/*',
+        'proposta/*',
+        'visita',
+        'visita/*',
+        'ouvidoria',
+        'ouvidoria/*',
+        'admissao/*',
+        'quero-matricular/convite/*',
+        'comunicacao/descadastrar/*',
+        'matricular-online/sucesso/*',
+        'validar-documento',
+        'validar-documento/*',
+    ],
 ];

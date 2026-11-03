@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\StatusListaEspera;
 use App\Models\Concerns\InvalidaDossieIaDoLead;
 use App\Notifications\ListaEspera\VagaDisponivelNotification;
+use App\Services\DestinatariosDaFamilia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,17 +74,7 @@ class ListaEsperaMatricula extends Model
      */
     public function getNotificationRecipients(): Collection
     {
-        $pessoas = collect([$this->pessoa])
-            ->merge($this->pessoa?->responsaveis ?? [])
-            ->filter();
-
-        $destinatarios = $pessoas->flatMap(fn (Pessoa $pessoa) => $pessoa->users);
-
-        if ($this->criadoPor) {
-            $destinatarios->push($this->criadoPor);
-        }
-
-        return $destinatarios->unique('id');
+        return app(DestinatariosDaFamilia::class)->daListaDeEspera($this);
     }
 
     /**
