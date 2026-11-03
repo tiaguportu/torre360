@@ -58,6 +58,11 @@ série ou origem e reatribuição por prazo continuam sendo a Onda 85.
 - **Lembrete de visita:** o lembrete à família (24 h antes) sai pela régua de follow-up quando há regra ativa para `visita_lembrete` (a migration da régua cria uma por
   padrão). Se a escola a desligar, as visitas marcadas online ainda recebem um lembrete direto.
 - **Minha Mesa:** filas novas *Chamados com prazo estourado*, *Requerimentos para atender*, *Ouvidoria: manifestações para tratar*, *Propostas a vencer* e *Propostas para aprovar*.
+- **Quem da família recebe o aviso do chamado (2026-11-02, depois da entrega):** a regra saiu do `AtendimentoService` e foi para `DestinatariosDaFamilia`, o resolvedor único
+  que também serve matrícula, lista de espera, preceptoria e resumo de faltas (ver a [Onda 70](central_avisos_familia_roadmap.md#implementação-2026-11-02-resolvedor-único-de-destinatários)).
+  Ninguém passou a receber de forma diferente.
+- **Páginas com token fora dos buscadores:** `/proposta`, `/visita` e `/ouvidoria` respondem com `X-Robots-Tag: noindex, nofollow, noarchive`, como as demais páginas abertas por link
+  (lista em `config/seguranca.php`, chave `noindex`; ver [seguranca_hardening.md](seguranca_hardening.md)).
 
 ## Permissões novas (migrations `2026_11_02_120000` e `2026_11_02_150000`)
 
