@@ -8,7 +8,9 @@ use App\Models\AtestadoAluno;
 use App\Models\CancelamentoMatricula;
 use App\Models\DocumentoAssinatura;
 use App\Models\DocumentoInserido;
+use App\Models\Pessoa;
 use App\Models\SolicitacaoDocumento;
+use App\Models\User;
 use App\Support\TiposArquivo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -151,12 +153,15 @@ class VisualizarDocumentoController extends Controller
             $autorizado = $user->can('View:ProcessoFuncionario');
         }
         // Contexto F: Pastas corporativas catalogadas (lista branca).
-        // A equipe administrativa abre pastas autorizadas; o professor, apenas as liberadas à rotina pedagógica.
+        // A equipe administrativa abre pastas autorizadas; o professor, apenas as liberadas à rotina pedagógica; a família,
+        // só a foto de quem está no seu Portal (ela mesma e os dependentes).
         // Qualquer pasta não catalogada permanece como não autorizada (HTTP 403).
         elseif ($this->pastaAdministrativaAutorizada($path)) {
             if ($user->isEquipeAdministrativa()) {
                 $autorizado = true;
             } elseif ($user->isStaff() && $this->pastaLiberadaAoProfessor($path)) {
+                $autorizado = true;
+            } elseif (str_starts_with($path, 'pessoas_fotos/') && $this->fotoDePessoaDaFamilia($user, $path)) {
                 $autorizado = true;
             }
         }
@@ -177,6 +182,18 @@ class VisualizarDocumentoController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * A foto é a de alguém que o usuário enxerga no Portal: o próprio aluno/responsável ou um dependente seu. O menu do
+     * responsável mostra a foto de cada filho por este endereço, então sem esta regra a imagem do filho dava 403.
+     */
+    private function fotoDePessoaDaFamilia(User $user, string $path): bool
+    {
+        return Pessoa::query()
+            ->where('foto', $path)
+            ->whereIn('id', $user->pessoasAcessiveis()->pluck('id'))
+            ->exists();
     }
 
     private function pastaLiberadaAoProfessor(string $path): bool

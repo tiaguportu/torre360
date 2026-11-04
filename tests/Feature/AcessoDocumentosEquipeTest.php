@@ -165,6 +165,59 @@ class AcessoDocumentosEquipeTest extends TestCase
         $this->actingAs($outra)->get('/visualizar-documento/documentos_alunos/rg-aluno.pdf')->assertForbidden();
     }
 
+    public function test_familia_abre_a_foto_do_proprio_filho_e_a_propria_e_nao_a_de_outra_familia(): void
+    {
+        // O menu do responsável mostra a foto de cada filho por /visualizar-documento: sem a regra da família, dava 403.
+        $this->aluno->update(['foto' => 'pessoas_fotos/aluno.pdf']);
+
+        $responsavel = Pessoa::create(['nome' => 'Mãe do Aluno', 'cpf' => '55566677788', 'foto' => 'pessoas_fotos/mae.pdf']);
+        $responsavel->alunos()->attach($this->aluno);
+        Storage::disk('local')->put('pessoas_fotos/mae.pdf', self::PDF);
+        $mae = User::factory()->create(['activated_at' => now()]);
+        $mae->assignRole('responsavel');
+        $mae->pessoas()->attach($responsavel);
+
+        $outra = User::factory()->create(['activated_at' => now()]);
+        $outra->assignRole('responsavel');
+        $outra->pessoas()->attach(Pessoa::create(['nome' => 'Outra Família', 'cpf' => '99988877766']));
+
+        $this->actingAs($mae)->get('/visualizar-documento/pessoas_fotos/aluno.pdf')->assertOk();
+        $this->actingAs($mae)->get('/visualizar-documento/pessoas_fotos/mae.pdf')->assertOk();
+
+        $this->actingAs($outra)->get('/visualizar-documento/pessoas_fotos/aluno.pdf')->assertForbidden();
+        $this->actingAs($outra)->get('/visualizar-documento/pessoas_fotos/mae.pdf')->assertForbidden();
+    }
+
+    public function test_aluno_abre_a_propria_foto_mas_nao_a_do_colega(): void
+    {
+        $this->aluno->update(['foto' => 'pessoas_fotos/aluno.pdf']);
+        Pessoa::create(['nome' => 'Colega', 'cpf' => '32132132132', 'foto' => 'pessoas_fotos/colega.pdf']);
+        Storage::disk('local')->put('pessoas_fotos/colega.pdf', self::PDF);
+
+        $usuarioAluno = User::factory()->create(['activated_at' => now()]);
+        $usuarioAluno->assignRole('responsavel');
+        $usuarioAluno->pessoas()->attach($this->aluno);
+
+        $this->actingAs($usuarioAluno)->get('/visualizar-documento/pessoas_fotos/aluno.pdf')->assertOk();
+        $this->actingAs($usuarioAluno)->get('/visualizar-documento/pessoas_fotos/colega.pdf')->assertForbidden();
+    }
+
+    public function test_familia_continua_sem_abrir_outras_pastas_da_equipe(): void
+    {
+        $this->aluno->update(['foto' => 'pessoas_fotos/aluno.pdf']);
+
+        $responsavel = Pessoa::create(['nome' => 'Mãe do Aluno', 'cpf' => '55566677788']);
+        $responsavel->alunos()->attach($this->aluno);
+        $mae = User::factory()->create(['activated_at' => now()]);
+        $mae->assignRole('responsavel');
+        $mae->pessoas()->attach($responsavel);
+
+        // A foto de um filho não abre a porta de outras pastas: materiais, rotina e exportações seguem da equipe.
+        foreach (['materiais-aula/apostila.pdf', 'rotina-diaria/foto.pdf', 'filament_exports/1/pessoas.pdf', 'contratos/contrato-9.pdf'] as $caminho) {
+            $this->actingAs($mae)->get('/visualizar-documento/'.$caminho)->assertForbidden();
+        }
+    }
+
     public function test_regras_de_acesso_dos_modelos(): void
     {
         $professor = $this->usuario('professor');

@@ -115,7 +115,7 @@ Testes: `AcessoDocumentosEquipeTest`, `PagamentoWebhookTest` e `GatewayPagamento
 - Novo `User::isEquipeAdministrativa()` (`super_admin`, `admin`, `secretaria`, `coordenador`). `isStaff()` continua existindo para o acesso amplo ao painel.
 - **Documentos pessoais** (`DocumentoInserido`), **documentos emitidos** (`SolicitacaoDocumento`), **contratos** (`Contrato`), **histórico escolar** (`HistoricoEscolarPDFController`) e **dossiê do CRM** (`DossieIaPdfController`): equipe administrativa ou a permissão específica do Shield (`View:DocumentoInserido`, `View:SolicitacaoDocumento`, `View:Contrato`, `View:HistoricoEscolar`, `View:Interessado`); demais, só a própria família.
 - `Matricula::isAccessibleByFamilia()` separa o vínculo familiar do papel na equipe, para que documentos e anexos não herdem o acesso amplo do professor via `Matricula::isAccessibleBy()` (que segue liberando o professor para boletim e listas de turma).
-- `VisualizarDocumentoController`: documentos sem registro, anexos de atendimento e demais arquivos só para a equipe administrativa (anexos de atendimento também para quem tem `View:AtendimentoChamado`). O professor abre apenas as pastas `pessoas_fotos/`, `materiais-aula/`, `planos-aula/`, `rotina-diaria/`, `anotacoes-os/` e `ordem-servicos/` (constante `PASTAS_LIBERADAS_AO_PROFESSOR`). **Se uma pasta nova de arquivos precisar ser aberta por professores, acrescente-a ali.**
+- `VisualizarDocumentoController`: documentos sem registro, anexos de atendimento e demais arquivos só para a equipe administrativa (anexos de atendimento também para quem tem `View:AtendimentoChamado`). O professor abre apenas as pastas `pessoas_fotos/`, `materiais-aula/`, `planos-aula/`, `rotina-diaria/`, `anotacoes-os/` e `ordem-servicos/` (constante `PASTAS_LIBERADAS_AO_PROFESSOR`). **Se uma pasta nova de arquivos precisar ser aberta por professores, acrescente-a ali.** A família abre só a foto de quem está no seu Portal (ver [Foto de pessoa para a família](#foto-de-pessoa-para-a-família-2026-11-04)).
 - **Efeito na operação:** professores perdem o que nunca deveriam ter tido. Se algum precisar (ex.: coordenação pedagógica atuando como professor), conceda a permissão específica em *Papéis e Permissões*.
 - Limite conhecido: o professor ainda vê matrícula/boletim de qualquer aluno (não há escopo por turma no modelo atual); restringir por turma é uma evolução.
 
@@ -157,6 +157,20 @@ As páginas públicas abertas por link com token ou que mostram dado de criança
 qualquer resposta (200, 404 ou redirecionamento). A regra está em `SecurityHeaders` e a lista, em `config/seguranca.php` (`noindex`). O `robots.txt` **não** foi alterado de propósito:
 bloquear a busca impediria o buscador de ver o cabeçalho, e a URL poderia aparecer só com o endereço. O formulário de captação e a matrícula online continuam indexáveis. Teste:
 `NaoIndexarPaginasComTokenTest`.
+
+## Foto de pessoa para a família (2026-11-04)
+
+**Sintoma:** o pai/responsável recebia `403 — Acesso não autorizado a este documento` ao abrir `/visualizar-documento/pessoas_fotos/<arquivo>.jpg`, a foto do próprio filho.
+
+**Causa:** `pessoas_fotos/` estava só na lista de pastas da equipe (`PASTAS_ADMINISTRATIVAS_AUTORIZADAS`), aberta à equipe administrativa e, por `PASTAS_LIBERADAS_AO_PROFESSOR`, ao professor. Não havia regra para a família. O menu lateral do responsável (`EnsureActiveRole`) e a prévia da foto no formulário de *Dados Cadastrais* servem a imagem por esse mesmo endereço, então a foto do filho nunca abria para quem era dono dela.
+
+**Regra atual** (`VisualizarDocumentoController::fotoDePessoaDaFamilia()`): quem não é da equipe abre uma foto de `pessoas_fotos/` se ela for a de alguém que `User::pessoasAcessiveis()` devolve, isto é, a própria pessoa (aluno ou responsável) e os dependentes dela (`aluno_responsavel`). A consulta é feita pelo caminho do arquivo em `pessoa.foto` (`Aluno` usa a mesma tabela). Foto de outra família segue em 403, assim como as demais pastas (materiais, rotina diária, exportações, contratos): a regra vale **só** para `pessoas_fotos/`. Equipe administrativa e professor não mudam.
+
+- **Fora da regra de propósito:** o responsável financeiro do contrato que não esteja em `aluno_responsavel` não abre a foto (`Matricula::isAccessibleByFamilia()` o inclui, mas o menu do Portal só lista os dependentes de `aluno_responsavel`).
+- **Se o 403 persistir** para um responsável, o vínculo é o suspeito: o usuário precisa estar ligado à pessoa responsável (`pessoa_user`) e o aluno ligado a ela (`aluno_responsavel`). Sem eles o nome do filho nem aparece no menu.
+- Sem migration; basta publicar o código.
+
+Testes em `AcessoDocumentosEquipeTest`: `test_familia_abre_a_foto_do_proprio_filho_e_a_propria_e_nao_a_de_outra_familia`, `test_aluno_abre_a_propria_foto_mas_nao_a_do_colega` e `test_familia_continua_sem_abrir_outras_pastas_da_equipe`.
 
 ## Pendências conhecidas
 
