@@ -1,8 +1,9 @@
 # Preceptoria: filtro por ciclo, calendário com arrastar e soltar e recorrência
 
 > **Status: implementada** em 2026-10-28; troca de professor/aluno pelo calendário, notificação própria
-> de reagendamento e histórico na tela em 2026-10-29. Manual: §6.5.1 (cadastro recorrente), §18.3.1
-> (calendário) e §18.3.2 (histórico).
+> de reagendamento e histórico na tela em 2026-10-29; professores designados por matrícula na tela de
+> agendar em 2026-11-04 (§9). Manual: §5.7 (professores de preceptoria da matrícula), §6.5.1 (cadastro
+> recorrente), §18.3.1 (calendário), §18.3.2 (histórico) e §18.6 (agendar).
 
 ## O pedido
 
@@ -89,9 +90,9 @@ alterações e o atalho "Abrir registro completo".
 - **Tudo é conferido antes de gravar**: o novo professor e o novo aluno não podem ter outra
   preceptoria sobreposta ("Horários concorrentes"); o aluno não pode ter outra no mesmo ciclo (como a
   tela de agendar faz); e, havendo aluno, o professor tem de ser **do aluno**
-  (`professoresDaMatricula`: conselheiro da turma + professores do cronograma dela), a mesma regra
-  que a tela "Agendar Preceptoria" aplica ao listar horários. Vale tanto ao pôr um aluno quanto ao
-  trocar o professor de um horário já agendado. Se falha, nada muda (nem o histórico).
+  (`professoresDaMatricula`: conselheiro da turma + professores designados na matrícula, §9), a mesma
+  regra que a tela "Agendar Preceptoria" aplica ao listar horários. Vale tanto ao pôr um aluno quanto
+  ao trocar o professor de um horário já agendado. Se falha, nada muda (nem o histórico).
 - No modal, os dois campos se filtram mutuamente (`live`): escolhido o professor, a busca de alunos
   traz só os dele (`matriculasDoProfessor`); escolhido o aluno, a busca de professores traz só os dele.
   O serviço confere de novo, então a lista é só conforto.
@@ -221,8 +222,53 @@ para o professor e o aluno.
 - Uma excluída não abre na tela de detalhes nem de edição (a rota não enxerga o soft delete); na
   listagem só a ação **Restaurar** aparece nela.
 
+### 9. Professores da matrícula: quem aparece na tela de agendar (2026-11-04)
+
+**O pedido**: em `admin/preceptorias/agendar?matricula_id=…` só podem aparecer horários do professor
+da matrícula: o da turma ou o designado especificamente para aquela matrícula/aluno.
+
+**Por que mudou**: `professoresDaMatricula` juntava o conselheiro com **todos** os professores do
+cronograma da turma (na matrícula 183 eram 14), e não existia como designar um professor para um aluno.
+
+**Regra** (`PreceptoriaAgendaService::professoresDaMatricula`, e o inverso `matriculasDoProfessor`):
+
+- o **professor conselheiro** da turma (`turma.professor_conselheiro_id`), **mais**
+- os **professores designados** na matrícula, campo **Professores de preceptoria** do cadastro dela
+  (`MatriculaForm`; relação `Matricula::professoresDePreceptoria`, tabela `matricula_professor_preceptoria`).
+
+Quem só dá aula para a turma (`cronograma_aula.pessoa_id`) **não** entra. O vínculo é com a
+**matrícula**, não com a pessoa do aluno: matrícula nova (outra turma ou período) começa só com o
+conselheiro. Os mesmos dois conjuntos valem para a tela do admin, o Portal, a busca do modal do
+calendário e a conferência de `atualizarParticipantes`, porque todos chamam o serviço.
+
+**Tabela** `matricula_professor_preceptoria`: `matricula_id` e `professor_id` (→ `pessoa`), ambos com
+`cascadeOnDelete`, índice único do par, `timestamps`. Migration
+`2026_11_04_100000_create_matricula_professor_preceptoria_table.php`; validada em MySQL (sobe, desce,
+chaves e unicidade).
+
+**Atalho do painel**: a tela agora lê `?matricula_id=` no `mount()` e já abre com o aluno escolhido,
+**só se** a matrícula estiver entre as que o usuário pode agendar (`matriculasAcessiveis`); senão ignora
+o parâmetro. Antes o parâmetro (gerado por `PreceptoriaSchedulingWidget`) era ignorado.
+
+**Deploy**: a migration **precisa rodar junto com o código**; sem a tabela a tela de agendar dá erro
+(a consulta carrega `professoresDePreceptoria`). Depois do deploy nenhuma matrícula tem designados:
+cada uma mostra só o conselheiro até a secretaria preencher o campo. Preceptorias **já agendadas** com
+professores do cronograma não mudam; a regra vale para os horários oferecidos e para trocas dali em diante.
+
+**Também corrigido**: com a matrícula sem nenhum professor, `professoresDaMatricula` devolvia uma
+coleção comum, sem `modelKeys()`, e a busca de professores do calendário quebrava; agora devolve sempre
+uma coleção de `Pessoa`, vazia se for o caso.
+
+**Testes**: `AgendarPreceptoriaProfessoresDaMatriculaTest` (horários oferecidos, designado de uma
+matrícula não vale para outra do mesmo aluno nem da turma, agendar com horário de professor que não é
+da matrícula é recusado, agendar com o do designado funciona, `?matricula_id=` com e sem acesso, campo do
+cadastro grava) e os dois testes do serviço que antes afirmavam o cronograma.
+
 ## Decisões
 
+- **Designação por matrícula, não por aluno nem por turma**: pedida assim; um mesmo aluno pode ter
+  designados diferentes em matrículas diferentes. O conselheiro continua valendo sem precisar ser
+  designado, para a turma funcionar sem cadastro extra.
 - **Sem serviço de calendário de terceiros pago**: a visão "uma coluna por professor" é recurso
   premium do FullCalendar (Scheduler); no lugar, filtro por professor e título com professor/aluno.
 - **Feriado e dia não letivo são avisos, não bloqueios, no arrastar**: a coordenação às vezes
@@ -243,15 +289,21 @@ para o professor e o aluno.
 `PreceptoriasTable`, `PreceptoriaResource`, `Preceptoria` (`historico()`, `destinatariosDasPessoas()`),
 `PreceptoriaNotification` (`alunoAnterior`), `EditPreceptoria`, `Portal\Pages\Preceptoria`, `App\Exceptions\ConflitoDeHorarioException`.
 O `LembretePreceptoriaNotification` voltou a ser só lembrete.
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest,PreceptoriaPushTest}.php`.
+Professores da matrícula (§9): `database/migrations/2026_11_04_100000_create_matricula_professor_preceptoria_table.php`
+· `app/Models/Matricula.php` (`professoresDePreceptoria`) · `app/Filament/Resources/Matriculas/Schemas/MatriculaForm.php`
+· `AgendarPreceptoria` (`mount()` e ajuda) · `PreceptoriaAgendaService` (`professoresDaMatricula`, `matriculasDoProfessor`).
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest,PreceptoriaPushTest,AgendarPreceptoriaProfessoresDaMatriculaTest}.php`.
 
 ## O que ficou de fora
 
 - **Série sem identidade**: as preceptorias geradas não guardam um `serie_id`; não há "editar/excluir a
   série inteira". Hoje: filtrar por ciclo/professor na listagem e usar as ações em lote.
 - **Arrastar um aluno** para um horário livre no calendário: a troca/agendamento é pelo modal (clique no bloco).
-- **Professor da turma na edição completa**: a regra "só professor do aluno" vale no modal do calendário
-  (e na tela "Agendar Preceptoria", que só lista horários deles). A **edição completa** do registro e o
+- **Designação sem rastro e sem lote**: quem altera o campo **Professores de preceptoria** não gera
+  histórico (o cadastro da matrícula não o registra) e não há ação em lote para designar o mesmo
+  professor a várias matrículas; é matrícula por matrícula, no cadastro.
+- **Professor da turma na edição completa**: a regra "só professor do aluno" (conselheiro + designados,
+  §9) vale no modal do calendário (e na tela "Agendar Preceptoria", que só lista horários deles). A **edição completa** do registro e o
   cadastro ainda deixam a equipe combinar qualquer professor com qualquer aluno (o formulário só filtra a
   lista de alunos pelo professor escolhido); é a porta de exceção, por escolha.
 - **Feriados**: só os nacionais fixos e a Sexta-Feira Santa; Carnaval, Corpus Christi e feriados

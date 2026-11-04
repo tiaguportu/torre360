@@ -217,6 +217,15 @@ class Matricula extends Model
         return $this->hasMany(Preceptoria::class);
     }
 
+    /**
+     * Professores designados para a preceptoria desta matrícula, além do conselheiro da turma.
+     * Quem pode ter preceptoria com o aluno está em PreceptoriaAgendaService::professoresDaMatricula().
+     */
+    public function professoresDePreceptoria(): BelongsToMany
+    {
+        return $this->belongsToMany(Pessoa::class, 'matricula_professor_preceptoria', 'matricula_id', 'professor_id')->withTimestamps();
+    }
+
     public function situacoesFinais(): HasMany
     {
         return $this->hasMany(SituacaoFinalDisciplina::class);

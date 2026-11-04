@@ -86,6 +86,14 @@ class MatriculaForm
                     ->required()
                     ->disabled(fn ($livewire) => $livewire instanceof RelationManager && $livewire->getOwnerRecord() instanceof Turma)
                     ->dehydrated(),
+                Select::make('professoresDePreceptoria')
+                    ->label('Professores de preceptoria')
+                    ->relationship('professoresDePreceptoria', 'nome', modifyQueryUsing: fn (Builder $query) => $query->whereNotNull('nome'))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nome.($record->cpf ? " - {$record->cpf}" : ''))
+                    ->multiple()
+                    ->searchable(['nome', 'cpf'])
+                    ->preload()
+                    ->helperText('Além do professor conselheiro da turma, só os professores indicados aqui aparecem com horário na agenda de preceptoria deste aluno. O vínculo é desta matrícula, não do cadastro do aluno.'),
                 Select::make('situacao')
                     ->label('Situação')
                     ->options(SituacaoMatricula::class)

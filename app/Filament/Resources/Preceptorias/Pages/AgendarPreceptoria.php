@@ -44,7 +44,12 @@ class AgendarPreceptoria extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
+        // o atalho do painel abre a tela com ?matricula_id=; só vale para uma matrícula que o usuário pode agendar
+        $matriculaId = (int) request()->query('matricula_id');
+        $acessivel = $matriculaId > 0
+            && app(PreceptoriaAgendaService::class)->matriculasAcessiveis(auth()->user(), session('active_role'))->whereKey($matriculaId)->exists();
+
+        $this->form->fill($acessivel ? ['matricula_id' => $matriculaId] : []);
     }
 
     protected function getMatriculasAcessiveis(): Collection
@@ -322,7 +327,7 @@ class AgendarPreceptoria extends Page implements HasForms
 
         $html .= '<h3>Dúvidas Frequentes:</h3>';
         $html .= '<ul>';
-        $html .= '<li><strong>Não vejo horários para meu filho:</strong> Os horários só aparecem se os professores vinculados à turma (Professor Regente ou Professores do Cronograma) tiverem liberado agendas futuras no sistema.</li>';
+        $html .= '<li><strong>Não vejo horários para meu filho:</strong> Os horários só aparecem se o professor conselheiro da turma, ou um professor designado para a matrícula do aluno, tiver liberado agendas futuras no sistema. Professores que apenas dão aula para a turma não entram.</li>';
         $html .= '<li><strong>Como cancelar?</strong> Se houver um agendamento vigente, aparecerá um botão vermelho "Desagendar / Liberar Horário" logo abaixo da seleção do aluno.</li>';
         $html .= '</ul>';
 

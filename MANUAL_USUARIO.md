@@ -917,6 +917,8 @@ Além da situação, a **Matrícula** registra as seguintes datas de acompanhame
 - **Data de Ativação:** Data em que a matrícula foi ativada e o vínculo letivo com o aluno iniciou.
 - **Data de Desativação:** Data em que a matrícula foi encerrada, desativada, trancada, cancelada ou concluída.
 
+**Professores de preceptoria (designação por matrícula):** no cadastro da matrícula (**Acadêmico → Matrículas → Editar**), o campo **Professores de preceptoria** indica, além do professor conselheiro da turma, quais professores podem atender **este aluno** em preceptoria. Os horários desses professores (e os do conselheiro) são os únicos que aparecem para o aluno em **Agendar Preceptoria** (§18.6), no Portal e no calendário (§18.3.1); quem apenas dá aula para a turma **não** aparece. O vínculo é da **matrícula**, não do cadastro do aluno: numa matrícula nova (outra turma ou outro período), o aluno começa só com o conselheiro da turma, e a secretaria designa de novo, se for o caso. O campo pode ficar vazio.
+
 - **Regra de Pendência de Chamada por Data:** Para ser contabilizado no diário de classe e na pendência de lançamento de chamada de um determinado Cronograma de Aula, o aluno deve ter sua **Data de Ativação menor ou igual à data da aula** e (**Data de Desativação posterior à data da aula ou nula**). Se um aluno for matriculado na data X, ele só contabilizará presença/falta e pendência a partir da data X, não sendo cobrado em aulas de datas anteriores (X-1, X-2, etc.).
 
 - **Permissão de Chamada do Professor Regente:** O professor regente/conselheiro da turma (definido no cadastro da turma) possui autorização total para visualizar pendências e realizar o lançamento de frequência para **todas as aulas da sua turma**, mesmo quando a aula estiver cadastrada no nome de outro professor ou ministrada por um docente convidado/substituto.
@@ -1804,7 +1806,7 @@ Em **Preceptoria → Calendário de Preceptorias** (ou no botão **Calendário**
 4. **Mudar a duração:** estique a borda inferior do bloco (visões de semana e dia).
 5. **Preceptoria já agendada:** o sistema pede confirmação e, ao mover, avisa o aluno, os responsáveis e o professor (e-mail, push e sininho) com a notificação **Preceptoria Reagendada**, que informa o horário anterior, o novo horário e quem fez a mudança. Se o horário estava livre, só o professor é avisado, e apenas quando foi outra pessoa que mexeu na agenda dele. Quem fez a mudança nunca recebe o próprio aviso.
 6. **Trocar o professor ou o aluno:** clique no bloco (exige a permissão de **editar**). No modal **Gerenciar preceptoria**:
-   - **Professor(a):** escolha outro professor. Ele não pode ter outra preceptoria num horário que se sobreponha (o sistema recusa e nada é alterado). Se a preceptoria já tem aluno, só vale um **professor do aluno**: o conselheiro da turma ou quem está no cronograma dela. A lista de professores já mostra só esses. O professor anterior, o novo e, se houver aluno, o aluno e os responsáveis recebem o aviso **Professor da Preceptoria Alterado**.
+   - **Professor(a):** escolha outro professor. Ele não pode ter outra preceptoria num horário que se sobreponha (o sistema recusa e nada é alterado). Se a preceptoria já tem aluno, só vale um **professor do aluno**: o conselheiro da turma ou um professor designado no campo **Professores de preceptoria** da matrícula (§5.7); quem apenas dá aula para a turma não vale. A lista de professores já mostra só esses. O professor anterior, o novo e, se houver aluno, o aluno e os responsáveis recebem o aviso **Professor da Preceptoria Alterado**.
    - **Aluno (matrícula):** só aparece para quem também tem a permissão de **agendar**. Escolha outro aluno para trocar, ou apague o campo para **liberar o horário**. A lista mostra os alunos do professor escolhido (e só as matrículas que você pode agendar, como na tela *Agendar Preceptoria*). O aluno não pode ter outra preceptoria num horário que se sobreponha (com qualquer professor) nem outra no mesmo ciclo. Quem sai e quem entra (e os responsáveis de cada um) são avisados, e o professor recebe o aviso de novo agendamento ou de horário liberado.
    - **Últimas alterações:** seção recolhida com as cinco mudanças mais recentes.
    - **Abrir registro completo:** leva à edição de todos os campos.
@@ -1873,7 +1875,7 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
 2. **Seleção da Matrícula:**
    - Se você for um **Aluno**, suas matrículas serão exibidas automaticamente.
    - Se você for um **Responsável**, verá as matrículas de todos os alunos aos quais está vinculado.
-3. **Seleção do Horário:** Após escolher a matrícula, o sistema filtra automaticamente os horários disponíveis apenas de professores que possuem vínculo acadêmico direto com o aluno.
+3. **Seleção do Horário:** Após escolher a matrícula, o sistema filtra automaticamente os horários disponíveis apenas dos professores da matrícula: o **professor conselheiro da turma** e os **professores designados** para aquela matrícula (§5.7). Professores que só dão aula para a turma não aparecem. Se o atalho do painel (§18.7) abriu a tela, a matrícula já vem escolhida.
 - **Relacionamentos:** 
   - BelongsTo `CicloPreceptoria`.
   - BelongsTo `Pessoa` (Professor).
@@ -1897,7 +1899,7 @@ Responsáveis e alunos podem agendar suas próprias preceptorias diretamente pel
    - O Aluno e seus Responsáveis Legais vinculados à matrícula.
 
 > [!TIP]
-> Caso o professor desejado não apareça com horários disponíveis, entre em contato com a secretaria para que novos "slots" de preceptoria sejam criados no sistema.
+> Caso o professor desejado não apareça com horários disponíveis, entre em contato com a secretaria: ou ainda não há "slots" de preceptoria criados para ele, ou ele não é o conselheiro da turma nem foi designado para a matrícula do aluno (campo **Professores de preceptoria**, §5.7).
 
 ---
 
@@ -1918,7 +1920,7 @@ Para facilitar o acesso à agenda pedagógica, o sistema exibe um widget informa
 Para garantir a privacidade e o foco pedagógico, a visualização das preceptorias é filtrada conforme o papel do usuário:
 - **Professores:** Cada professor visualiza apenas as preceptorias (agendamentos e registros) associadas à sua própria Pessoa. Eles não têm visibilidade sobre a agenda de outros colegas.
 - **Responsáveis e Alunos:** Visualizam agendamentos vinculados à sua própria matrícula ou de seus dependentes.
-- **Regras de Agendamento (Todos os Usuários):** Na tela de agendamento, independente do papel (mesmo para Administradores), a visualização de horários disponíveis é restrita apenas aos professores que possuem vínculo acadêmico direto com o aluno (Professor Conselheiro da Turma ou professores que ministram aulas constantes no Cronograma de Aula da turma do aluno).
+- **Regras de Agendamento (Todos os Usuários):** Na tela de agendamento, independente do papel (mesmo para Administradores), a visualização de horários disponíveis é restrita apenas aos professores da matrícula do aluno: o Professor Conselheiro da Turma e os professores designados para aquela matrícula no campo **Professores de preceptoria** (§5.7). Os professores do Cronograma de Aula da turma **não** entram só por darem aula.
 - **Administradores/Secretaria:** Possuem visibilidade total de todos os agendamentos e registros já realizados no sistema, embora o agendamento de novos horários siga as restrições de vínculo descritas acima.
 
 ---
@@ -2338,7 +2340,7 @@ O Portal usa o **mesmo login e senha** do painel principal — é só um caminho
 3. **Financeiro (`/portal/financeiro`):** Lista as faturas do(s) aluno(s), com vencimento, valor, valor pago, saldo devedor e status.
 4. **Documentos (`/portal/documentos`):** Lista os contratos vinculados, com opções para visualizar, baixar o PDF, iniciar/continuar a assinatura digital (Assinafy) ou baixar o contrato já assinado.
 5. **Ocorrências (`/portal/ocorrencias`):** Lista as ocorrências escolares (elogios, advertências, atrasos etc.) registradas para o(s) aluno(s), com o mesmo destaque de gravidade por cor usado no admin.
-6. **Preceptoria (`/portal/preceptoria`):** Permite agendar (ou desagendar) um horário de preceptoria para o aluno diretamente pelo Portal, com a mesma regra de antecedência mínima de 2 dias já usada no admin. A lista de horários mostra apenas os professores vinculados à turma do aluno (professor conselheiro ou do cronograma de aulas).
+6. **Preceptoria (`/portal/preceptoria`):** Permite agendar (ou desagendar) um horário de preceptoria para o aluno diretamente pelo Portal, com a mesma regra de antecedência mínima de 2 dias já usada no admin. A lista de horários mostra apenas os professores da matrícula do aluno (o professor conselheiro da turma e os professores designados para a matrícula, §5.7).
 7. **Notas (`/portal/notas`):** Mostra as notas do aluno por etapa avaliativa (bimestre/trimestre), com uma linha por disciplina: nota de cada categoria de avaliação, **média**, **média da turma** e **frequência**. É o mesmo cálculo do boletim. Médias abaixo da nota mínima de aprovação do período letivo (padrão 7,0) e frequências abaixo de 75% aparecem em vermelho; notas substituídas por uma avaliação de recuperação aparecem riscadas. Para turmas avaliadas por habilidades (Educação Infantil/BNCC), a tela também exibe o **conceito** de cada habilidade (Realiza bem, Em desenvolvimento, Não realiza, Não observado) e a observação do professor.
 8. **Frequência (`/portal/frequencia`):** Mostra o percentual geral de presença, o total de aulas registradas, presenças e faltas, o resumo **por disciplina** e a lista aula a aula (data, disciplina, horário e situação), com filtros por situação (faltas/presenças) e disciplina. Quando a frequência geral fica abaixo do mínimo exigido (75%), aparece um aviso no topo da tela.
 9. **Horários (`/portal/horarios`):** Mostra as aulas da semana do aluno, dia a dia, em ordem de horário, com disciplina, professor e — quando o professor registrou — conteúdo e dever de casa. Dias não letivos (feriados/recessos) aparecem destacados. Use **Anterior**, **Hoje** e **Próxima** para navegar entre as semanas; sábado e domingo só aparecem quando há aula ou dia não letivo. Os horários vêm do cronograma de aulas cadastrado pela escola.

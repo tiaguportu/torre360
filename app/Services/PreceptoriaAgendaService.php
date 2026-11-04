@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Exceptions\ConflitoDeHorarioException;
 use App\Exceptions\ExclusaoDePreceptoriaRecusadaException;
 use App\Models\CicloPreceptoria;
-use App\Models\CronogramaAula;
 use App\Models\DiaNaoLetivo;
 use App\Models\Matricula;
 use App\Models\Pessoa;
@@ -537,13 +536,13 @@ class PreceptoriaAgendaService
             return $this->resultado(false, $conflito->getMessage());
         }
 
-        // o aluno só faz preceptoria com os professores dele (conselheiro e cronograma da turma), como na tela de agendar
+        // o aluno só faz preceptoria com os professores da matrícula (conselheiro da turma e designados), como na tela de agendar
         $matriculaFinal = $mudouAluno ? $matricula : $preceptoria->matricula;
 
         if ($matriculaFinal && $professor && ($mudouProfessor || $mudouAluno)
             && ! $this->professoresDaMatricula($matriculaFinal->getKey())->contains('id', $professor->getKey())) {
             return $this->resultado(false, sprintf(
-                '%s não é professor de %s: o aluno só pode ser agendado com o professor conselheiro ou com os professores do cronograma da turma.',
+                '%s não é professor de %s: o aluno só pode ser agendado com o professor conselheiro da turma ou com um professor designado para a matrícula.',
                 $professor->nome,
                 $matriculaFinal->pessoa?->nome ?? 'o aluno',
             ));
@@ -979,40 +978,32 @@ class PreceptoriaAgendaService
     }
 
     /**
-     * Os professores do aluno: o conselheiro da turma e quem está no cronograma dela. É com eles
-     * que a preceptoria do aluno pode ser marcada.
+     * Os professores da matrícula: o conselheiro da turma e os designados para ela (o vínculo é com a
+     * matrícula, não com a pessoa do aluno). É só com eles que a preceptoria do aluno pode ser marcada;
+     * os professores do cronograma da turma não entram só por darem aula.
      *
      * @return Collection<int, Pessoa>
      */
     public function professoresDaMatricula(int $matriculaId): Collection
     {
-        $matricula = Matricula::with(['turma'])->find($matriculaId);
+        $matricula = Matricula::with(['turma', 'professoresDePreceptoria'])->find($matriculaId);
 
-        if (! $matricula || ! $matricula->turma) {
-            return collect();
+        if (! $matricula) {
+            return new EloquentCollection;
         }
 
-        $professoresIds = collect();
+        $professoresIds = $matricula->professoresDePreceptoria->modelKeys();
 
-        if ($matricula->turma->professor_conselheiro_id) {
-            $professoresIds->push($matricula->turma->professor_conselheiro_id);
+        if ($matricula->turma?->professor_conselheiro_id) {
+            $professoresIds[] = $matricula->turma->professor_conselheiro_id;
         }
 
-        $cronogramaProfessoresIds = CronogramaAula::where('turma_id', $matricula->turma_id)
-            ->whereNotNull('pessoa_id')
-            ->pluck('pessoa_id');
-
-        $professoresIds = $professoresIds->concat($cronogramaProfessoresIds)->unique();
-
-        if ($professoresIds->isEmpty()) {
-            return collect();
-        }
-
-        return Pessoa::whereIn('id', $professoresIds)->get();
+        return Pessoa::whereIn('id', array_unique($professoresIds))->get();
     }
 
     /**
-     * Só as matrículas cujo aluno tem o professor entre os seus (o inverso de professoresDaMatricula).
+     * Só as matrículas que têm o professor entre os seus: conselheiro da turma ou designado (o inverso
+     * de professoresDaMatricula).
      *
      * @param  Builder<Matricula>  $matriculas
      * @return Builder<Matricula>
@@ -1021,7 +1012,7 @@ class PreceptoriaAgendaService
     {
         return $matriculas->where(function (Builder $query) use ($professorId) {
             $query->whereHas('turma', fn (Builder $turma) => $turma->where('professor_conselheiro_id', $professorId))
-                ->orWhereIn('turma_id', CronogramaAula::query()->where('pessoa_id', $professorId)->select('turma_id'));
+                ->orWhereHas('professoresDePreceptoria', fn (Builder $designados) => $designados->whereKey($professorId));
         });
     }
 

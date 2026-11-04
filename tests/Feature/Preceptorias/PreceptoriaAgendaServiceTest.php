@@ -668,21 +668,23 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $this->assertCount(0, $livre->historico());
     }
 
-    public function test_aluno_so_faz_preceptoria_com_o_conselheiro_ou_professor_do_cronograma_da_turma(): void
+    public function test_aluno_so_faz_preceptoria_com_o_conselheiro_ou_professor_designado_na_matricula(): void
     {
         Notification::fake();
 
         $conselheiro = Pessoa::factory()->create();
-        $doCronograma = Pessoa::factory()->create();
+        $designado = Pessoa::factory()->create();
         $estranho = Pessoa::factory()->create(['nome' => 'Prof Estranho']);
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno da Turma']);
         $matricula = $this->matriculaDe($aluno, $conselheiro);
-        CronogramaAula::factory()->create(['turma_id' => $matricula->turma_id, 'pessoa_id' => $doCronograma->id]);
+        $matricula->professoresDePreceptoria()->attach($designado->id);
+        // dar aula para a turma não basta
+        CronogramaAula::factory()->create(['turma_id' => $matricula->turma_id, 'pessoa_id' => $estranho->id]);
 
-        $this->assertEqualsCanonicalizing([$conselheiro->id, $doCronograma->id], $this->servico->professoresDaMatricula($matricula->id)->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$conselheiro->id, $designado->id], $this->servico->professoresDaMatricula($matricula->id)->pluck('id')->all());
 
         $datas = ['2026-09-10', '2026-09-11'];
-        foreach ([$conselheiro, $doCronograma] as $i => $professor) {
+        foreach ([$conselheiro, $designado] as $i => $professor) {
             $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => $datas[$i], 'matricula_id' => null]);
             $this->assertTrue($this->servico->atualizarParticipantes($livre, $professor->id, $matricula->id, notificar: false)['ok']);
         }
@@ -714,17 +716,20 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $this->assertTrue($this->servico->atualizarParticipantes($livre, $estranho->id, null)['ok']);
     }
 
-    public function test_matriculas_do_professor_filtra_pelo_conselheiro_e_pelo_cronograma(): void
+    public function test_matriculas_do_professor_filtra_pelo_conselheiro_e_pelos_designados(): void
     {
         $professor = Pessoa::factory()->create();
         $doConselheiro = $this->matriculaDe(Pessoa::factory()->create(), $professor);
-        $doCronograma = $this->matriculaDe(Pessoa::factory()->create());
-        CronogramaAula::factory()->create(['turma_id' => $doCronograma->turma_id, 'pessoa_id' => $professor->id]);
+        $designada = $this->matriculaDe(Pessoa::factory()->create());
+        $designada->professoresDePreceptoria()->attach($professor->id);
+        $soDaTurma = $this->matriculaDe(Pessoa::factory()->create());
+        CronogramaAula::factory()->create(['turma_id' => $soDaTurma->turma_id, 'pessoa_id' => $professor->id]);
         $deOutro = $this->matriculaDe(Pessoa::factory()->create(), Pessoa::factory()->create());
 
         $ids = $this->servico->matriculasDoProfessor(Matricula::query(), $professor->id)->pluck('id')->all();
 
-        $this->assertEqualsCanonicalizing([$doConselheiro->id, $doCronograma->id], $ids);
+        $this->assertEqualsCanonicalizing([$doConselheiro->id, $designada->id], $ids);
+        $this->assertNotContains($soDaTurma->id, $ids);
         $this->assertNotContains($deOutro->id, $ids);
     }
 
