@@ -2712,7 +2712,8 @@ O módulo de **Histórico Escolar Oficial Multi-Ano** atende a uma das exigênci
 ### 40.1 Visão Geral e Benefícios
 - **Matriz Curricular Tabular Oficial:** Apresenta todas as séries/anos cursados lado a lado em colunas, com os componentes curriculares organizados por Área do Conhecimento (Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Parte Diversificada).
 - **Histórico Híbrido (Interno + Externo):** Permite registrar anos letivos cursados no Torre360 e também lançar notas, cargas horárias e estabelecimentos de ensino onde o aluno estudou antes de se transferir para a escola.
-- **Sincronização com 1 Clique:** O sistema lê todas as matrículas ativas ou concluídas do estudante no Torre360, buscando as médias finais fechadas, cargas horárias da matriz curricular e taxas de frequência, montando a matriz automaticamente sem necessidade de digitação manual.
+- **Sincronização com 1 Clique:** O sistema lê as matrículas do estudante no Torre360 (ativas, concluídas, trancadas, canceladas e de evasão; vaga em reserva e matrícula pendente ainda não cursaram o ano e ficam de fora), buscando as médias finais fechadas, cargas horárias da matriz curricular e taxas de frequência, montando a matriz automaticamente sem necessidade de digitação manual.
+- **Apuração Automática do Resultado do Ano:** A secretaria não precisa mais conferir nota a nota. Ao sincronizar, o sistema decide se a disciplina foi aprovada usando a **nota de aprovação do período letivo** e aplica as regras da LDB para o resultado do ano (veja a seção 40.3).
 - **Emissão Oficial em PDF (A4 Paisagem):** Gera o documento timbrado oficial com cabeçalho institucional, dados do estudante, tabela matricial de desempenho, resumo cronológico de estabelecimentos cursados, termo formal de certificação de conclusão e assinaturas da Secretaria e Direção Escolar.
 - **Carimbo Digital e QR Code de Autenticidade:** Cada histórico emitido possui um código alfanumérico único e QR Code criptográfico que permite a qualquer cartório, universidade ou escola de destino validar a autenticidade do documento em tempo real através do portal público (`/validar-documento`).
 
@@ -2734,6 +2735,29 @@ O módulo de **Histórico Escolar Oficial Multi-Ano** atende a uma das exigênci
    - Para anos cursados em outra escola anterior, clique em **Adicionar Ano / Série**, selecione a origem como *Externo (Outra Escola)* e informe o nome do estabelecimento de ensino, cidade/UF, carga horária e as disciplinas com notas correspondentes.
 6. **Aba Certificação e Observações:**
    - Personalize o texto oficial da certidão de conclusão ou adicione amparos legais específicos (ex: convalidações de estudos no exterior, exames de classificação, etc.).
+
+### 40.3 Como o Sistema Apura o Resultado do Ano (Dependência e Reprovação por Faltas)
+Cada vez que a secretaria salva um histórico novo ou clica em **Sincronizar** (botão do histórico ou da lista), o sistema recalcula o resultado de cada ano cursado no Torre360. Os anos lançados à mão (*Externo*) não são alterados.
+
+**1. Resultado de cada disciplina**
+- A nota de corte é a **Nota de Aprovação do Período Letivo** (cadastro do período; o padrão é 7,0). Se a escola configurar outro valor, o histórico passa a respeitá-lo: com corte 8,0, uma média 7,5 sai como *Reprovado*.
+- Se a disciplina teve **Exame Final**, vale o resultado do exame: a nota que aparece no histórico é a **média pós-exame** e a situação é a definitiva (*Aprovado* ou *Reprovado*), não a média anterior.
+- Disciplina **sem nenhuma nota** fica como *Pendente* e não conta como reprovação; confira antes de emitir o documento.
+
+**2. Resultado do ano (somente para matrícula Concluída)**
+
+| Situação | Quando acontece |
+|----------|-----------------|
+| **Reprovado por Faltas** | Frequência do ano **abaixo de 75%** (LDB, art. 24, VI), mesmo que as notas sejam altas. Exatamente 75% ainda cumpre a exigência. |
+| **Aprovado** | Frequência de 75% ou mais e nenhuma disciplina reprovada. |
+| **Aprovado com Dependência** | Frequência de 75% ou mais e **1 ou 2 disciplinas reprovadas** (progressão parcial: o aluno avança de ano e cursa a dependência). |
+| **Reprovado** | Frequência de 75% ou mais e **3 ou mais disciplinas reprovadas** (retenção). |
+
+- Matrícula **Ativa** aparece como *Cursando*; matrícula **Cancelada, Trancada ou de Evasão** aparece como *Transferido*.
+- A frequência considera as faltas abonadas como presença; falta apenas justificada continua contando como falta.
+- No PDF, o resultado aparece na linha **Resultado Final do Ano Letivo**: em vermelho para *Reprovado* e *Reprovado por Faltas*, em âmbar para *Aprovado com Dependência*. As notas de disciplinas reprovadas ficam em destaque na tabela.
+- Corrigiu uma nota ou a frequência depois? Clique em **Sincronizar** de novo: o ano é atualizado, sem duplicar a coluna.
+- O limite de **2 disciplinas** para a dependência é o adotado pelo sistema; se o regimento da escola for diferente, avise a equipe de suporte para ajustar.
 ---
 
 ## 🏛️ 41. Auto-Atendimento de Declarações e Documentos Oficiais no Portal da Família (`/portal/solicitacoes-documentos`)

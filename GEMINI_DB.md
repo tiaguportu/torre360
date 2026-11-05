@@ -954,7 +954,7 @@ Estrutura de ensino e turmas.
   - `dias_letivos`: Total de dias letivos (padrão: 200).
   - `carga_horaria_total`: Carga horária total cumprida no ano letivo (em horas).
   - `frequencia_percentual`: Taxa percentual de frequência global no ano (ex: 98.50).
-  - `situacao_ano`: Resultado final do ano letivo (`Aprovado`, `Reprovado`, `Classificado`, `Transferido`, `Cursando`).
+  - `situacao_ano`: Resultado final do ano letivo (`Aprovado`, `Aprovado com Dependência`, `Reprovado`, `Reprovado por Faltas`, `Classificado`, `Transferido`, `Cursando`). Nos anos `interno` o valor é **apurado** por `HistoricoEscolarService::sincronizarMatriculasInternas()` depois de gravar as disciplinas, só para matrícula `concluido`: `frequencia_percentual` < 75 → `Reprovado por Faltas` (LDB, art. 24, VI; vale mesmo com notas altas); com frequência cumprida, 0 disciplinas `Reprovado` → `Aprovado`, 1 ou 2 → `Aprovado com Dependência` (progressão parcial), 3 ou mais → `Reprovado`. Matrícula `ativa` → `Cursando`; `cancelada`, `trancada` e `evasao` → `Transferido`; `reserva` e `pendente` não geram ano. Os anos `externo` são digitados pela secretaria.
   - `observacoes`: Anotações ou ressalvas específicas do ano escolar.
 - **Relacionamentos:** BelongsTo `HistoricoEscolar`, BelongsTo `Matricula`, BelongsTo `Serie`, HasMany `disciplinas` (`HistoricoEscolarDisciplina`).
 
@@ -968,7 +968,7 @@ Estrutura de ensino e turmas.
   - `carga_horaria`: Carga horária anual da disciplina (em horas).
   - `nota_final`: Média final obtida no ano (decimal:2).
   - `conceito`: Conceito avaliativo alternativo quando a avaliação não for puramente numérica.
-  - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`).
+  - `situacao`: Situação da disciplina (`Aprovado`, `Reprovado`, `Dispensado`, `Pendente`). Na sincronização, a nota de corte é `periodo_letivo.nota_aprovacao` (padrão 7,00); quando há exame final em `situacao_final_disciplina`, `media_final_pos_exame` vira `nota_final` e `situacao_final_pos_exame` define o resultado (sem essa situação, vale `periodo_letivo.nota_aprovacao_pos_exame`). Sem nota nenhuma, fica `Pendente` e não conta como reprovação.
   - `ordem`: Sequência de ordenação vertical.
 - **Relacionamentos:** BelongsTo `ano` (`HistoricoEscolarAno`), BelongsTo `disciplina` (`Disciplina`).
 

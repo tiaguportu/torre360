@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\SituacaoFinal;
+use App\Enums\SituacaoMatricula;
+use App\Models\Disciplina;
 use App\Models\FrequenciaEscolar;
 use App\Models\HistoricoEscolar;
 use App\Models\HistoricoEscolarAno;
@@ -15,10 +18,17 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdfInstance;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class HistoricoEscolarService
 {
+    /** LDB (Lei 9.394/1996), art. 24, VI: frequência mínima de 75% do total de horas letivas. */
+    private const FREQUENCIA_MINIMA = 75.00;
+
+    /** Progressão parcial (dependência) do regimento: até este número de disciplinas reprovadas; acima, retenção. */
+    private const MAX_DISCIPLINAS_DEPENDENCIA = 2;
+
     public function __construct(
         protected QrCodeService $qrCodeService,
         protected FechamentoCicloService $fechamentoCicloService,
@@ -41,6 +51,8 @@ class HistoricoEscolarService
         $query = Matricula::query()
             ->where('pessoa_id', $aluno->id)
             ->whereNotNull('turma_id')
+            // Vaga reservada e matrícula pendente ainda não cursaram o ano: não entram no histórico.
+            ->whereNotIn('situacao', [SituacaoMatricula::RESERVA->value, SituacaoMatricula::PENDENTE->value])
             ->with(['turma.serie.curso', 'turma.disciplinas.areaConhecimento', 'periodoLetivo']);
 
         if ($historico->curso_id) {
@@ -79,96 +91,158 @@ class HistoricoEscolarService
                 ? round((($totalAulas - $faltas) / $totalAulas) * 100, 2)
                 : 100.00;
 
-            // Situação do ano
-            $situacaoAno = match ($matricula->situacao?->value ?? (string) $matricula->situacao) {
-                'concluido' => 'Aprovado',
-                'ativa' => 'Cursando',
-                'cancelada', 'trancada', 'evasao' => 'Transferido',
-                default => 'Aprovado',
-            };
+            $ordem = $ordemAno++;
 
-            // Criar ou atualizar o ano
-            $historicoAno = HistoricoEscolarAno::updateOrCreate(
-                [
-                    'historico_escolar_id' => $historico->id,
-                    'matricula_id' => $matricula->id,
-                ],
-                [
-                    'ano_letivo' => $anoLetivo,
-                    'serie_id' => $serie?->id,
-                    'serie_nome' => $serieNome,
-                    'ordem' => $ordemAno++,
-                    'tipo' => 'interno',
-                    'escola_nome' => $escolaNome,
-                    'escola_cidade' => $escolaCidade,
-                    'escola_uf' => $escolaUf,
-                    'dias_letivos' => $diasLetivos,
-                    'carga_horaria_total' => $cargaHorariaTotal,
-                    'frequencia_percentual' => $frequenciaPercentual,
-                    'situacao_ano' => $situacaoAno,
-                ]
-            );
-
-            $totalAnos++;
-
-            // Sincronizar disciplinas da turma
-            $disciplinas = $matricula->turma?->disciplinas ?? collect();
-            $ordemDisc = 1;
-
-            foreach ($disciplinas as $disciplina) {
-                $areaNome = $disciplina->areaConhecimento?->nome ?? 'Base Nacional Comum';
-
-                // Carga horária da disciplina a partir da matriz curricular ou semanal
-                $matrizItem = $serie ? MatrizCurricular::where('serie_id', $serie->id)->where('disciplina_id', $disciplina->id)->first() : null;
-                $chSemanal = $matrizItem?->carga_horaria_semanal ?? $disciplina->carga_horaria_semanal ?? 4;
-                $chAnual = (int) ($chSemanal * 40); // 40 semanas letivas por ano (200 dias)
-
-                // Buscar nota final calculada/fechada
-                $situacaoFinal = SituacaoFinalDisciplina::where('matricula_id', $matricula->id)
-                    ->where('disciplina_id', $disciplina->id)
-                    ->first();
-
-                $notaFinal = null;
-                if ($situacaoFinal && $situacaoFinal->media_final !== null) {
-                    $notaFinal = (float) $situacaoFinal->media_final;
-                } elseif ($matricula->periodoLetivo) {
-                    // Tentar calcular via serviço se ainda não estiver gravado
-                    try {
-                        $calc = $this->fechamentoCicloService->calcularSituacaoFinal($matricula, $disciplina, $matricula->periodoLetivo);
-                        $notaFinal = $calc['media_final'] ?? null;
-                    } catch (\Throwable) {
-                        $notaFinal = null;
-                    }
-                }
-
-                $situacaoDisc = 'Aprovado';
-                if ($notaFinal !== null && $notaFinal < 6.0) {
-                    $situacaoDisc = 'Reprovado';
-                }
-
-                HistoricoEscolarDisciplina::updateOrCreate(
+            // O ano e as disciplinas entram juntos: a situação do ano só é conhecida depois de apurar as disciplinas.
+            $totalDisciplinas += DB::transaction(function () use ($historico, $matricula, $anoLetivo, $serie, $serieNome, $ordem, $escolaNome, $escolaCidade, $escolaUf, $diasLetivos, $cargaHorariaTotal, $frequenciaPercentual): int {
+                $historicoAno = HistoricoEscolarAno::updateOrCreate(
                     [
-                        'historico_escolar_ano_id' => $historicoAno->id,
-                        'disciplina_id' => $disciplina->id,
+                        'historico_escolar_id' => $historico->id,
+                        'matricula_id' => $matricula->id,
                     ],
                     [
-                        'disciplina_nome' => $disciplina->nome,
-                        'area_conhecimento' => $areaNome,
-                        'carga_horaria' => $chAnual,
-                        'nota_final' => $notaFinal,
-                        'situacao' => $situacaoDisc,
-                        'ordem' => $ordemDisc++,
+                        'ano_letivo' => $anoLetivo,
+                        'serie_id' => $serie?->id,
+                        'serie_nome' => $serieNome,
+                        'ordem' => $ordem,
+                        'tipo' => 'interno',
+                        'escola_nome' => $escolaNome,
+                        'escola_cidade' => $escolaCidade,
+                        'escola_uf' => $escolaUf,
+                        'dias_letivos' => $diasLetivos,
+                        'carga_horaria_total' => $cargaHorariaTotal,
+                        'frequencia_percentual' => $frequenciaPercentual,
                     ]
                 );
 
-                $totalDisciplinas++;
-            }
+                $disciplinas = $this->sincronizarDisciplinas($historicoAno, $matricula);
+
+                $historicoAno->update([
+                    'situacao_ano' => $this->apurarSituacaoAno($matricula->situacao, $frequenciaPercentual, $disciplinas['reprovadas']),
+                ]);
+
+                return $disciplinas['total'];
+            });
+
+            $totalAnos++;
         }
 
         return [
             'anos_sincronizados' => $totalAnos,
             'disciplinas_sincronizadas' => $totalDisciplinas,
         ];
+    }
+
+    /**
+     * Grava as disciplinas da turma no ano do histórico, já com a situação apurada.
+     *
+     * @return array{total: int, reprovadas: int}
+     */
+    private function sincronizarDisciplinas(HistoricoEscolarAno $historicoAno, Matricula $matricula): array
+    {
+        $serie = $matricula->turma?->serie;
+        $disciplinas = $matricula->turma?->disciplinas ?? collect();
+        $ordemDisc = 1;
+        $reprovadas = 0;
+
+        foreach ($disciplinas as $disciplina) {
+            $areaNome = $disciplina->areaConhecimento?->nome ?? 'Base Nacional Comum';
+
+            // Carga horária da disciplina a partir da matriz curricular ou semanal
+            $matrizItem = $serie ? MatrizCurricular::where('serie_id', $serie->id)->where('disciplina_id', $disciplina->id)->first() : null;
+            $chSemanal = $matrizItem?->carga_horaria_semanal ?? $disciplina->carga_horaria_semanal ?? 4;
+            $chAnual = (int) ($chSemanal * 40); // 40 semanas letivas por ano (200 dias)
+
+            ['nota' => $notaFinal, 'situacao' => $situacaoDisc] = $this->apurarDisciplina($matricula, $disciplina);
+
+            if ($situacaoDisc === 'Reprovado') {
+                $reprovadas++;
+            }
+
+            HistoricoEscolarDisciplina::updateOrCreate(
+                [
+                    'historico_escolar_ano_id' => $historicoAno->id,
+                    'disciplina_id' => $disciplina->id,
+                ],
+                [
+                    'disciplina_nome' => $disciplina->nome,
+                    'area_conhecimento' => $areaNome,
+                    'carga_horaria' => $chAnual,
+                    'nota_final' => $notaFinal,
+                    'situacao' => $situacaoDisc,
+                    'ordem' => $ordemDisc++,
+                ]
+            );
+        }
+
+        return ['total' => $disciplinas->count(), 'reprovadas' => $reprovadas];
+    }
+
+    /**
+     * Nota e situação de uma disciplina no histórico. A nota de corte vem do período letivo da turma
+     * (nunca fixa no código) e o exame final, quando lançado, prevalece sobre a média do período.
+     *
+     * @return array{nota: ?float, situacao: string}
+     */
+    private function apurarDisciplina(Matricula $matricula, Disciplina $disciplina): array
+    {
+        $periodoLetivo = $matricula->periodoLetivo;
+        $notaAprovacao = (float) ($periodoLetivo?->nota_aprovacao ?? 7.0);
+        $notaAprovacaoPosExame = (float) ($periodoLetivo?->nota_aprovacao_pos_exame ?? 5.0);
+
+        // Buscar nota final calculada/fechada
+        $situacaoFinal = SituacaoFinalDisciplina::where('matricula_id', $matricula->id)
+            ->where('disciplina_id', $disciplina->id)
+            ->first();
+
+        $notaFinal = null;
+        if ($situacaoFinal && $situacaoFinal->media_final !== null) {
+            $notaFinal = (float) $situacaoFinal->media_final;
+        } elseif ($periodoLetivo) {
+            // Tentar calcular via serviço se ainda não estiver gravado
+            try {
+                $calc = $this->fechamentoCicloService->calcularSituacaoFinal($matricula, $disciplina, $periodoLetivo);
+                $notaFinal = $calc['media_final'] ?? null;
+            } catch (\Throwable) {
+                $notaFinal = null;
+            }
+        }
+
+        $mediaPosExame = $situacaoFinal?->media_final_pos_exame;
+        if ($mediaPosExame !== null) {
+            $notaFinal = (float) $mediaPosExame;
+        }
+
+        $situacaoPosExame = $situacaoFinal?->situacao_final_pos_exame;
+
+        $situacao = match (true) {
+            $situacaoPosExame !== null => $situacaoPosExame === SituacaoFinal::APROVADO ? 'Aprovado' : 'Reprovado',
+            $notaFinal === null => 'Pendente',
+            // Média pós-exame sem a situação gravada: vale o corte do pós-exame do período.
+            $mediaPosExame !== null => $notaFinal >= $notaAprovacaoPosExame ? 'Aprovado' : 'Reprovado',
+            default => $notaFinal >= $notaAprovacao ? 'Aprovado' : 'Reprovado',
+        };
+
+        return ['nota' => $notaFinal, 'situacao' => $situacao];
+    }
+
+    /**
+     * Resultado do ano letivo no histórico. Só a matrícula concluída recebe resultado final:
+     * frequência abaixo de 75% reprova por faltas (LDB, art. 24, VI), qualquer que seja a nota; com a
+     * frequência cumprida, até duas disciplinas reprovadas avançam com dependência e três ou mais retêm.
+     */
+    private function apurarSituacaoAno(?SituacaoMatricula $situacaoMatricula, float $frequenciaPercentual, int $disciplinasReprovadas): string
+    {
+        return match ($situacaoMatricula) {
+            SituacaoMatricula::CANCELADA, SituacaoMatricula::TRANCADA, SituacaoMatricula::EVASAO => 'Transferido',
+            SituacaoMatricula::CONCLUIDA => match (true) {
+                $frequenciaPercentual < self::FREQUENCIA_MINIMA => 'Reprovado por Faltas',
+                $disciplinasReprovadas === 0 => 'Aprovado',
+                $disciplinasReprovadas <= self::MAX_DISCIPLINAS_DEPENDENCIA => 'Aprovado com Dependência',
+                default => 'Reprovado',
+            },
+            default => 'Cursando',
+        };
     }
 
     /**

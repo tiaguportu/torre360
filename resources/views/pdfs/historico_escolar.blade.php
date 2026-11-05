@@ -354,7 +354,7 @@
                                 $dado = $valoresPorAno[$ano->id] ?? null;
                                 $notaFormatada = $dado && $dado['nota'] !== null ? number_format($dado['nota'], 1, ',', '.') : ($dado['conceito'] ?? '-');
                                 $chFormatada = $dado && $dado['ch'] ? $dado['ch'] : '-';
-                                $isReprovado = $dado && $dado['nota'] !== null && $dado['nota'] < 6.0;
+                                $isReprovado = $dado && ($dado['situacao'] ?? null) === 'Reprovado';
                             @endphp
                             <td class="{{ $isReprovado ? 'reprovado' : '' }}">{{ $notaFormatada }}</td>
                             <td>{{ $chFormatada }}</td>
@@ -394,9 +394,13 @@
             <tr class="totais-row" style="background-color: #e2e8f0; font-size: 7.6pt;">
                 <td style="text-align: left; padding-left: 6px; color: #2c5282;">RESULTADO FINAL DO ANO LETIVO</td>
                 @foreach($anos as $ano)
-                    @php $t = $totaisAnos[$ano->id] ?? null; @endphp
-                    <td colspan="2" style="color: {{ ($t['situacao'] ?? '') === 'Reprovado' ? '#c53030' : '#22543d' }};">
-                        {{ mb_strtoupper($t['situacao'] ?? 'APROVADO') }}
+                    @php
+                        $t = $totaisAnos[$ano->id] ?? null;
+                        $resultadoAno = $t['situacao'] ?? 'Aprovado';
+                        $corResultado = str_starts_with($resultadoAno, 'Reprovado') ? '#c53030' : ($resultadoAno === 'Aprovado com Dependência' ? '#b7791f' : '#22543d');
+                    @endphp
+                    <td colspan="2" style="color: {{ $corResultado }};">
+                        {{ mb_strtoupper($resultadoAno) }}
                     </td>
                 @endforeach
             </tr>
