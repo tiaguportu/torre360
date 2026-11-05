@@ -83,7 +83,8 @@ A barra lateral esquerda é dividida em grupos para facilitar o dia a dia:
 
 Para facilitar a navegação de pais e responsáveis, o Torre360 adapta automaticamente a barra lateral quando detecta que você possui este perfil:
 
-- **Grupos por Aluno:** Em vez de uma lista genérica de recursos, o sistema cria grupos específicos com o nome de cada um de seus filhos vinculados (ex: *Aluno: João Silva*).
+- **Grupos por Aluno:** Em vez de uma lista genérica de recursos, o sistema cria grupos específicos com o nome de cada um de seus filhos vinculados (ex: *Aluno: João Silva*). O grupo aparece enquanto o aluno tiver ao menos uma matrícula **Ativa**, **Pendente** ou em **Reserva**; matrículas trancadas, canceladas, concluídas ou com evasão não entram.
+- **Mais de uma matrícula do mesmo aluno:** os atalhos continuam num único grupo do aluno (com um só *Dados Cadastrais*), e os de cada matrícula levam o **Período Letivo** no nome — por exemplo, *Documentos · 2026* e *Documentos · 2027 (Reserva)*. A situação aparece entre parênteses quando não é Ativa, e a matrícula ativa vem primeiro, seguida das mais recentes. Se duas matrículas forem do mesmo período e situação (cursos diferentes), o nome da turma completa o rótulo.
 - **Acesso Direto:** Dentro do grupo de cada aluno, você encontrará atalhos diretos para as informações dele:
     - **Dados Cadastrais:** Atalho para consultar e atualizar as informações básicas do aluno (pessoa).
     - **Boletim Escolar:** Acesso rápido às notas, médias e frequências do aluno.
