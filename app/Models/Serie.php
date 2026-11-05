@@ -22,11 +22,6 @@ class Serie extends Model
         return $this->hasMany(Turma::class);
     }
 
-    public function habilidades(): HasMany
-    {
-        return $this->hasMany(Habilidade::class);
-    }
-
     public function matrizCurricular(): HasMany
     {
         return $this->hasMany(MatrizCurricular::class);

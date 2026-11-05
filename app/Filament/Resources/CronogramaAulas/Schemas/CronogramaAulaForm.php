@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\CronogramaAulas\Schemas;
 
+use App\Models\CronogramaAula;
+use App\Models\PeriodoLetivo;
 use App\Models\Turma;
 use App\Support\TiposArquivo;
 use Carbon\Carbon;
@@ -25,13 +27,21 @@ class CronogramaAulaForm
     {
         return $schema
             ->components([
+                // A aula não guarda período letivo: ele é o da turma escolhida. O campo só ajuda a achar a turma e
+                // não é gravado (a coluna saiu de cronograma_aula).
                 Select::make('periodo_letivo_id')
                     ->label('Período Letivo')
-                    ->relationship('periodoLetivo', 'nome')
+                    ->options(fn () => PeriodoLetivo::query()->whereNotNull('nome')->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                    ->afterStateHydrated(function (Select $component, ?CronogramaAula $record): void {
+                        if ($record && $component->getState() === null) {
+                            $component->state($record->loadMissing('turma')->turma?->periodo_letivo_id);
+                        }
+                    })
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->dehydrated(false),
 
                 Select::make('turma_id')
                     ->relationship('turma', 'nome', fn ($query, $record) => $query->vigentes($record?->turma_id))

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CronogramaAulas\Tables;
 
 use App\Filament\Resources\CronogramaAulas\CronogramaAulaResource;
 use App\Models\Matricula;
+use App\Models\PeriodoLetivo;
 use App\Notifications\FrequenciaPendenteNotification;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -60,9 +61,14 @@ class CronogramaAulasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                // o período é o da turma da aula (cronograma_aula não tem a coluna)
                 SelectFilter::make('periodo_letivo_id')
                     ->label('Período Letivo')
-                    ->relationship('periodoLetivo', 'nome')
+                    ->options(fn () => PeriodoLetivo::query()->whereNotNull('nome')->orderByDesc('data_inicio')->pluck('nome', 'id'))
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        filled($data['value'] ?? null),
+                        fn (Builder $aulas) => $aulas->whereHas('turma', fn (Builder $turma) => $turma->where('periodo_letivo_id', $data['value'])),
+                    ))
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('turma_id')
@@ -227,11 +233,6 @@ class CronogramaAulasTable
                         ->label('Editar em Lote')
                         ->icon('heroicon-o-pencil-square')
                         ->form([
-                            Select::make('periodo_letivo_id')
-                                ->label('Período Letivo')
-                                ->relationship('periodoLetivo', 'nome')
-                                ->searchable()
-                                ->preload(),
                             Select::make('turma_id')
                                 ->label('Turma')
                                 ->relationship('turma', 'nome')
@@ -353,11 +354,6 @@ class CronogramaAulasTable
                                 ->label('Nova Data')
                                 ->native(false)
                                 ->displayFormat('d/m/Y'),
-                            Select::make('periodo_letivo_id')
-                                ->label('Período Letivo')
-                                ->relationship('periodoLetivo', 'nome')
-                                ->searchable()
-                                ->preload(),
                             Select::make('turma_id')
                                 ->label('Turma')
                                 ->relationship('turma', 'nome')

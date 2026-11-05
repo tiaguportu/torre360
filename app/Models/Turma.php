@@ -122,11 +122,6 @@ class Turma extends Model
         return $this->belongsTo(Pessoa::class, 'professor_conselheiro_id');
     }
 
-    public function etapaAvaliativa(): BelongsTo
-    {
-        return $this->belongsTo(EtapaAvaliativa::class);
-    }
-
     public function periodoLetivo(): BelongsTo
     {
         return $this->belongsTo(PeriodoLetivo::class);

@@ -1459,6 +1459,12 @@ O módulo de Cronograma permite a visualização e gestão das aulas planejadas 
 3. Defina uma **Data Início** e/ou uma **Data Fim**.
 4. O sistema filtrará automaticamente todas as aulas cuja data esteja compreendida entre o intervalo selecionado, facilitando o planejamento semanal ou mensal.
 
+**Período letivo da aula.** A aula não guarda um período letivo próprio: ele é sempre o da **turma** dela.
+- No cadastro e na edição da aula, o campo **Período Letivo** só ajuda a encontrar a turma (ele não é gravado); ao escolher a turma, o período dela é preenchido.
+- Na listagem, o filtro **Período Letivo** mostra as aulas das turmas daquele período.
+- **Editar em Lote** e **Clonar Selecionadas** não têm um campo de período à parte: trocar a **Turma** troca também o período.
+- Ao marcar **Replicar aulas até o final do período letivo** no cadastro, as aulas repetidas seguem o período da turma escolhida.
+
 ### 12.2 Visibilidade Dinâmica por Perfil (Role)
 Para garantir a privacidade e organização, a visualização das aulas e avaliações no calendário se adapta automaticamente ao seu papel (role) ativo:
 - **Professores:** Visualizam apenas as suas próprias aulas e avaliações agendadas, facilitando a gestão do seu dia a dia pedagógico.

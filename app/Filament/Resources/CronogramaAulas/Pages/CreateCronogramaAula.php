@@ -31,7 +31,9 @@ class CreateCronogramaAula extends CreateRecord
             return;
         }
 
-        $periodoLetivo = PeriodoLetivo::with('diasNaoLetivos')->find($data['periodo_letivo_id']);
+        // o período é o da turma da aula criada; o campo do formulário só ajuda a escolher a turma
+        $periodoLetivoId = $this->record->loadMissing('turma')->turma?->periodo_letivo_id ?? ($data['periodo_letivo_id'] ?? null);
+        $periodoLetivo = $periodoLetivoId ? PeriodoLetivo::with('diasNaoLetivos')->find($periodoLetivoId) : null;
 
         if (! $periodoLetivo || ! $periodoLetivo->data_fim) {
             return;

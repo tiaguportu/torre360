@@ -29,11 +29,6 @@ class Disciplina extends Model
         return $this->belongsTo(AreaConhecimento::class, 'area_id');
     }
 
-    public function habilidades(): HasMany
-    {
-        return $this->hasMany(Habilidade::class);
-    }
-
     public function cronogramasAula(): HasMany
     {
         return $this->hasMany(CronogramaAula::class);
@@ -42,11 +37,6 @@ class Disciplina extends Model
     public function turmas(): BelongsToMany
     {
         return $this->belongsToMany(Turma::class, 'turma_disciplina')->withPivot('professor_id')->withTimestamps();
-    }
-
-    public function professor(): BelongsTo
-    {
-        return $this->belongsTo(Pessoa::class, 'professor_id');
     }
 
     public function avaliacoes(): HasMany

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class CronogramaAula extends Model
 {
@@ -48,9 +49,12 @@ class CronogramaAula extends Model
         return $this->belongsTo(Pessoa::class, 'pessoa_id');
     }
 
-    public function periodoLetivo(): BelongsTo
+    /**
+     * A aula não guarda período letivo (a coluna saiu da tabela): ele é o da turma, como na matrícula.
+     */
+    public function periodoLetivo(): HasOneThrough
     {
-        return $this->belongsTo(PeriodoLetivo::class);
+        return $this->hasOneThrough(PeriodoLetivo::class, Turma::class, 'id', 'id', 'turma_id', 'periodo_letivo_id');
     }
 
     public function hasPendingFrequencies(): bool
