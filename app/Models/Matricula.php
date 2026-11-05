@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\Activitylog\Models\Activity;
 
@@ -42,6 +43,43 @@ class Matricula extends Model
      * @var array<int, SituacaoMatricula>
      */
     public const SITUACOES_QUE_EXIGEM_CONTRATO = [SituacaoMatricula::ATIVA, SituacaoMatricula::PENDENTE];
+
+    /**
+     * Registros acadêmicos, financeiros e legais que existem por causa da matrícula e que o banco apaga junto com ela
+     * (`cascadeOnDelete`; o contrato ainda deixaria as faturas órfãs). Quem tem qualquer um deles não pode ser excluído:
+     * o caminho é o Cancelamento de Matrícula, que encerra o vínculo e preserva o histórico.
+     * `TabelasComMatriculaTest` falha se surgir tabela com chave para `matricula` que não esteja aqui nem na lista de
+     * descartáveis do teste.
+     *
+     * Formato: tabela => [coluna da matrícula, rótulo no plural para a mensagem].
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    public const HISTORICO_QUE_IMPEDE_EXCLUSAO = [
+        'frequencia_escolar' => ['matricula_id', 'registros de frequência'],
+        'nota' => ['matricula_id', 'notas'],
+        'nota_habilidades' => ['matricula_id', 'avaliações de habilidades'],
+        'situacao_final_disciplina' => ['matricula_id', 'resultados finais'],
+        'ocorrencia_escolars' => ['matricula_id', 'ocorrências'],
+        'pareceres_descritivos' => ['matricula_id', 'pareceres descritivos'],
+        'portfolio_itens' => ['matricula_id', 'itens de portfólio'],
+        'atestados_aluno' => ['matricula_id', 'atestados'],
+        'notificacoes_conselho_tutelar' => ['matricula_id', 'notificações ao Conselho Tutelar'],
+        'transferencias_escolares' => ['matricula_id', 'transferências'],
+        'rematriculas' => ['matricula_origem_id', 'rematrículas'],
+        'bolsa_concedidas' => ['matricula_id', 'bolsas'],
+        'emprestimos' => ['matricula_id', 'empréstimos da biblioteca'],
+        'acordo_inadimplencias' => ['matricula_id', 'acordos de inadimplência'],
+        'contrato' => ['matricula_id', 'contratos'],
+        'cancelamentos_matricula' => ['matricula_id', 'cancelamentos'],
+        'solicitacao_documentos' => ['matricula_id', 'solicitações de documentos'],
+        'censo_situacoes_aluno' => ['matricula_id', 'ajustes do Censo Escolar'],
+        'omr_correcoes' => ['matricula_id', 'correções de gabarito'],
+        'reuniao_alunos' => ['matricula_id', 'participações em reuniões'],
+        'registro_rotina_diarias' => ['matricula_id', 'registros da rotina diária'],
+        'plano_aula_adaptacoes' => ['matricula_id', 'adaptações curriculares'],
+        'consentimento_matriculas' => ['matricula_id', 'consentimentos'],
+    ];
 
     /**
      * Período letivo e série da matrícula NÃO são colunas: vêm sempre da turma
@@ -80,6 +118,57 @@ class Matricula extends Model
             'risco_evasao_atualizado_em' => 'datetime',
             'risco_evasao_alerta_em' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Matricula $matricula): void {
+            $historico = $matricula->historicoQueImpedeExclusao();
+
+            if ($historico !== []) {
+                throw new \LogicException("A matrícula Nº {$matricula->id} possui histórico ({$matricula->descreverHistorico($historico)}) e não pode ser excluída. Para encerrá-la sem perder o histórico, use o Cancelamento de Matrícula.");
+            }
+        });
+    }
+
+    /**
+     * O que a matrícula tem de histórico acadêmico, financeiro ou legal (ver `HISTORICO_QUE_IMPEDE_EXCLUSAO`), só
+     * com o que existe: rótulo => quantidade. Vazio quando pode ser excluída.
+     *
+     * @return array<string, int>
+     */
+    public function historicoQueImpedeExclusao(): array
+    {
+        $historico = [];
+
+        foreach (self::HISTORICO_QUE_IMPEDE_EXCLUSAO as $tabela => [$coluna, $rotulo]) {
+            $total = DB::table($tabela)->where($coluna, $this->getKey())->count();
+
+            if ($total > 0) {
+                $historico[$rotulo] = $total;
+            }
+        }
+
+        return $historico;
+    }
+
+    public function possuiHistorico(): bool
+    {
+        foreach (self::HISTORICO_QUE_IMPEDE_EXCLUSAO as $tabela => [$coluna]) {
+            if (DB::table($tabela)->where($coluna, $this->getKey())->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, int>  $historico  retorno de `historicoQueImpedeExclusao()`
+     */
+    public function descreverHistorico(array $historico): string
+    {
+        return collect($historico)->map(fn (int $total, string $rotulo): string => "{$rotulo}: {$total}")->implode(', ');
     }
 
     public function retencaoTarefas(): HasMany

@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Pessoas\RelationManagers;
 
+use App\Filament\Resources\Matriculas\Actions\ExcluirMatriculaAction;
+use App\Filament\Resources\Matriculas\Actions\ExcluirMatriculasEmLoteAction;
 use App\Filament\Resources\Matriculas\Schemas\MatriculaForm;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -50,11 +50,11 @@ class MatriculasRelationManager extends RelationManager
             ])
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+                ExcluirMatriculaAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    ExcluirMatriculasEmLoteAction::make(),
                 ]),
             ])
             ->stackedOnMobile();

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Matriculas\Tables;
 use App\Enums\SituacaoMatricula;
 use App\Enums\TipoPendenciaMatricula;
 use App\Filament\Resources\Contratos\ContratoResource;
+use App\Filament\Resources\Matriculas\Actions\ExcluirMatriculasEmLoteAction;
 use App\Filament\Resources\Matriculas\Pages\BoletimMatricula;
 use App\Filament\Resources\Matriculas\Pages\DocumentosMatricula;
 use App\Filament\Resources\Pessoas\PessoaResource;
@@ -19,7 +20,6 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -699,7 +699,7 @@ class MatriculasTable
                         ->modalHeading('Editar Matrículas em Lote')
                         ->modalDescription('Selecione os novos valores para os campos que deseja atualizar. Campos vazios não serão alterados.')
                         ->modalSubmitActionLabel('Atualizar Selecionadas'),
-                    DeleteBulkAction::make()
+                    ExcluirMatriculasEmLoteAction::make()
                         ->color('danger'),
                 ]),
             ])

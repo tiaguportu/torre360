@@ -6,6 +6,7 @@ use App\Enums\CorRaca;
 use App\Enums\Nacionalidade;
 use App\Enums\Sexo;
 use App\Filament\Exports\PessoaExporter;
+use App\Filament\Resources\Pessoas\Actions\ExcluirPessoaAction;
 use App\Models\Pessoa;
 use App\Models\TemplateCracha;
 use App\Models\TemplateCrachaV3;
@@ -14,7 +15,6 @@ use App\Services\TemplateCrachaV3Service;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ExportBulkAction;
@@ -105,21 +105,7 @@ class PessoasTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    ->before(function (DeleteAction $action, Pessoa $record) {
-                        $reasons = $record->getInviabilityReasons();
-
-                        if (! empty($reasons)) {
-                            Notification::make()
-                                ->danger()
-                                ->title('Não é possível excluir esta pessoa')
-                                ->body('Existem vínculos ativos que impedem a exclusão: '.implode(', ', $reasons))
-                                ->persistent()
-                                ->send();
-
-                            $action->cancel();
-                        }
-                    }),
+                ExcluirPessoaAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

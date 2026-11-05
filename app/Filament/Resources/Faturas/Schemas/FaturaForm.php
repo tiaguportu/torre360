@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Faturas\Schemas;
 
 use App\Enums\StatusFatura;
 use App\Models\Contrato;
+use App\Models\ItemFatura;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -44,18 +45,12 @@ class FaturaForm
                         $itens = $get('itens') ?? [];
                         $total = 0;
                         foreach ($itens as $item) {
-                            $vlr = (float) ($item['valor_unitario'] ?? 0);
-                            $qtd = (float) ($item['quantidade'] ?? 0);
-                            $desc = (float) ($item['desconto'] ?? 0);
-                            $tipo = $item['tipo_desconto'] ?? 'absoluto';
-
-                            $totalItem = $vlr * $qtd;
-                            if ($tipo === 'absoluto') {
-                                $totalItem -= $desc;
-                            } else {
-                                $totalItem -= ($totalItem * ($desc / 100));
-                            }
-                            $total += $totalItem;
+                            $total += ItemFatura::calcularTotalLiquido(
+                                $item['valor_unitario'] ?? 0,
+                                $item['quantidade'] ?? 0,
+                                $item['desconto'] ?? 0,
+                                $item['tipo_desconto'] ?? 'absoluto',
+                            );
                         }
 
                         return 'R$ '.number_format($total, 2, ',', '.');
@@ -101,22 +96,10 @@ class FaturaForm
                             ->live(),
                         Placeholder::make('valor_total_item')
                             ->label('Total Item')
-                            ->content(function (Get $get) {
-                                $vlr = (float) $get('valor_unitario');
-                                $qtd = (float) $get('quantidade');
-                                $desc = (float) $get('desconto');
-                                $tipo = $get('tipo_desconto');
-
-                                $total = $vlr * $qtd;
-
-                                if ($tipo === 'absoluto') {
-                                    $total -= $desc;
-                                } else {
-                                    $total -= ($total * ($desc / 100));
-                                }
-
-                                return 'R$ '.number_format($total, 2, ',', '.');
-                            }),
+                            ->content(fn (Get $get): string => 'R$ '.number_format(
+                                ItemFatura::calcularTotalLiquido($get('valor_unitario'), $get('quantidade'), $get('desconto'), $get('tipo_desconto')),
+                                2, ',', '.',
+                            )),
                     ])
                     ->columns(6)
                     ->columnSpanFull()

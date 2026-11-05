@@ -153,54 +153,44 @@ class Fatura extends Model
     }
 
     /**
-     * Valor total bruto da fatura (soma dos itens sem descontos)
+     * Valor total bruto da fatura (soma dos itens sem descontos), em centavos inteiros.
      */
     protected function valorBruto(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->itens->sum(fn ($item) => $item->valor_unitario * $item->quantidade)
+            get: fn (): float => round((float) $this->itens->sum(fn (ItemFatura $item): float => $item->totalBruto()), 2)
         );
     }
 
     /**
-     * Valor total bruto da fatura (soma dos itens com seus respectivos descontos)
+     * Valor da fatura (soma dos itens com seus respectivos descontos), em centavos inteiros. Cada item é arredondado
+     * a centavos (`ItemFatura::calcularTotalLiquido`): é o valor que a família vê, paga e que o gateway cobra.
      */
     protected function valor(): Attribute
     {
         return Attribute::make(
-            get: function () {
-                return $this->itens->reduce(function ($carry, $item) {
-                    $totalItem = $item->valor_unitario * $item->quantidade;
-
-                    if ($item->tipo_desconto === 'absoluto') {
-                        $totalItem -= $item->desconto;
-                    } else {
-                        $totalItem -= ($totalItem * ($item->desconto / 100));
-                    }
-
-                    return $carry + $totalItem;
-                }, 0);
-            }
+            get: fn (): float => round((float) $this->itens->sum(fn (ItemFatura $item): float => $item->totalLiquido()), 2)
         );
     }
 
     /**
-     * Valor total já pago (soma das transações bancárias vinculadas)
+     * Valor total já pago (soma das transações bancárias de entrada), em centavos inteiros.
      */
     protected function valorPago(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->transacoes->where('tipo', 'entrada')->sum('valor')
+            get: fn (): float => round((float) $this->transacoes->where('tipo', 'entrada')->sum('valor'), 2)
         );
     }
 
     /**
-     * Valor que ainda resta ser pago
+     * Valor que ainda resta ser pago, em centavos inteiros. Tem de ser exatamente 0.0 quando a fatura foi paga pelo
+     * valor cobrado: quem decide Paga/Parcial e se a régua de cobrança ainda avisa compara com `<= 0`.
      */
     protected function valorRestante(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->valor - $this->valor_pago
+            get: fn (): float => round($this->valor - $this->valor_pago, 2)
         );
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\Pessoas\Pages;
 
 use App\Filament\Concerns\HasAjudaAction;
+use App\Filament\Resources\Pessoas\Actions\ExcluirPessoaAction;
 use App\Filament\Resources\Pessoas\PessoaResource;
 use App\Support\HelpContent;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditPessoa extends EditRecord
@@ -17,7 +17,7 @@ class EditPessoa extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            ExcluirPessoaAction::make(),
             $this->ajudaAction('Dados Cadastrais', $this->getHelpContent()),
         ];
     }

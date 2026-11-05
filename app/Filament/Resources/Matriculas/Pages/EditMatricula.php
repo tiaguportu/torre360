@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Matriculas\Pages;
 
+use App\Filament\Resources\Matriculas\Actions\ExcluirMatriculaAction;
 use App\Filament\Resources\Matriculas\MatriculaResource;
 use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\ViewField;
 use Filament\Resources\Pages\EditRecord;
 
@@ -15,7 +15,7 @@ class EditMatricula extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            ExcluirMatriculaAction::make(),
             Action::make('ajuda')
                 ->label('Ajuda')
                 ->icon('heroicon-o-question-mark-circle')
@@ -45,7 +45,7 @@ class EditMatricula extends EditRecord
         }
 
         if ($user && $user->can('Delete:Matricula')) {
-            $html .= '<li><strong>Excluir:</strong> Permite remover este registro caso não possua vínculos dependentes.</li>';
+            $html .= '<li><strong>Excluir:</strong> Remove o registro apenas se a matrícula não tiver histórico (frequência, notas, resultado final, contrato, bolsas e similares). Com histórico, use o Cancelamento de Matrícula, que encerra o vínculo e preserva tudo.</li>';
         }
 
         if ($user && $user->can('View:Matricula')) {

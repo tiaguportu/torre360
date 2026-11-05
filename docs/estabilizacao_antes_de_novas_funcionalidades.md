@@ -86,3 +86,16 @@ Duas correções de uma nova análise do código, em [frequencia_unica_e_fila_lo
 - O esquema do SQLite dos testes ganhou mais um alinhamento com a produção (`frequencia_escolar.situacao` aceita nulo), ver a
   [Onda 89](paridade_esquema_testes_mariadb_roadmap.md).
 - O doc de OMR dizia que `GerarFolhasTurmaPdfJob` rodava em fila; nenhuma tela o despacha (só o teste). Corrigido.
+
+Mais duas correções da segunda análise do mesmo dia, em [exclusao_de_matricula_e_centavos_da_fatura.md](exclusao_de_matricula_e_centavos_da_fatura.md):
+
+- **Exclusão de matrícula protegida:** quem tem frequência, notas, resultado final, contrato, bolsas e similares (23 tabelas) não é mais excluído,
+  na edição, em lote ou por código (antes o `cascade` apagava o histórico e deixava o contrato órfão). O caminho é o Cancelamento de Matrícula.
+  Teste de guarda: tabela nova ligada a `matricula` precisa ser classificada.
+- **Fatura em centavos:** o total do item é arredondado a centavos (`ItemFatura::calcularTotalLiquido`) e o saldo é `round(valor − pago, 2)`,
+  então a fatura paga pelo valor cobrado fica Paga (a bolsa percentual deixava resíduo e a fatura ficava Parcial). O comando
+  `faturas:corrigir-quitadas` acerta as que já ficaram presas.
+
+Ficaram de fora, da mesma análise: corrida no agendamento de preceptoria (`update` incondicional), pacote de idioma `pt_BR` (mensagens de validação
+em inglês nos formulários públicos), checagem explícita de posse na emissão de documentos pelo Portal e a exclusão de **Pessoa** que ainda apaga
+matrículas por `cascade` no banco.
