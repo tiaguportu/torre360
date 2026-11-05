@@ -305,7 +305,8 @@ Estrutura de ensino e turmas.
 ### `frequencia_escolar`
 - **Representa:** Presença ou falta dos alunos em uma aula do cronograma.
 - **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronograma_aula`.
-- **Campos Principais:** `matricula_id`, `cronograma_aula_id`, `situacao` (Enum/String: 'presente', 'ausente').
+- **Campos Principais:** `matricula_id`, `cronograma_aula_id`, `situacao` (Enum/String: 'presente', 'ausente'; anulável: a chamada cria a linha sem situação até o professor marcar).
+- **Unicidade:** índice único `frequencia_escolar_matricula_aula_unique` em (`matricula_id`, `cronograma_aula_id`): um aluno tem um registro por aula. A migration `2026_11_05_120100` apagou as duplicatas antigas (ficou a linha com situação lançada, depois a com justificativa/abono/atestado, depois a mais recente). `Matricula::matriculadasEm($data)` é o critério de quem entra na chamada da aula. Ver `docs/frequencia_unica_e_fila_longa.md`.
 - **Auditoria:** Mapeado para o log de atividades (`activity_log` com `log_name: frequencia_escolar`), gravando ações de criação, alteração e exclusão das frequências com a identificação do aluno, aula e situação atribuída.
 - **Observer:** `FrequenciaFaltaObserver` (registrado via atributo `#[ObservedBy]` no model) marca `aviso_resumo_pendente` (evento `saving`) sempre que `situacao` é criada ou alterada para `'ausente'`; corrigir para outro valor limpa a marca. Não marca quando a data da aula está fora do intervalo `data_ativacao`–`data_desativacao` da matrícula. O aviso à família não sai na hora: o comando `frequencia:enviar-resumo-diario` (Onda 91, 18:00) manda um `FrequenciaResumoDiarioNotification` por responsável com todas as faltas pendentes. Ver seção 14 e `docs/resumo_diario_faltas_roadmap.md`.
 - **Resumo diário (Onda 91):** `aviso_resumo_pendente` (boolean, padrão `false`, indexado: a falta aguarda o resumo do dia) e `aviso_resumo_enviado_em` (timestamp anulável: quando o envio a reservou). Faltas anteriores à migration ficam com `false` e nunca entram no primeiro resumo.
@@ -1887,6 +1888,7 @@ Módulo dedicado ao registro médico e atendimentos de enfermagem aos alunos, co
   - `situacao`: `presente` ou `ausente`.
   - `justificada`: Boolean indicando se a ausência foi devidamente justificada perante a secretaria/coordenação.
   - `motivo_justificativa`: Descrição ou referência do atestado médico/justificativa apresentada.
+- **Índices:** único (`matricula_id`, `cronograma_aula_id`) e o índice comum de mesmas colunas, que ficou redundante.
 - **Relacionamentos:** BelongsTo `matricula`, BelongsTo `cronogramaAula`.
 
 ### `reposicao_aulas` (Onda 49)

@@ -149,6 +149,23 @@ class Matricula extends Model
         return $query->whereHas('turma', fn (Builder $turma) => $turma->where('serie_id', $serieId));
     }
 
+    /**
+     * Matrículas que estavam em vigor na data: ativadas até ela e ainda não desativadas. Sem data de ativação ou de
+     * desativação, a ponta correspondente fica aberta. É o critério da chamada: quem entrou depois da aula ou saiu antes
+     * dela não deve aparecer no diário daquele dia.
+     *
+     * @param  Builder<Matricula>  $query
+     * @return Builder<Matricula>
+     */
+    public function scopeMatriculadasEm(Builder $query, mixed $data): Builder
+    {
+        $dia = Carbon::parse($data)->toDateString();
+
+        return $query
+            ->where(fn (Builder $q) => $q->whereNull('data_ativacao')->orWhereDate('data_ativacao', '<=', $dia))
+            ->where(fn (Builder $q) => $q->whereNull('data_desativacao')->orWhereDate('data_desativacao', '>', $dia));
+    }
+
     public function contrato(): HasOne
     {
         return $this->hasOne(Contrato::class);

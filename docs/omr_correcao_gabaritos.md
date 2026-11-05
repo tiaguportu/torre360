@@ -137,16 +137,16 @@ As permissões seguem o padrão canônico `PascalCase` com dois-pontos:
 
 ## 6. Operação da Fila de Processamento
 
-A geração do PDF da turma inteira roda em fila (`GerarFolhasTurmaPdfJob`). **A leitura das fotos roda de forma síncrona** na própria requisição da tela de conferência (até `OMR_MAX_ARQUIVOS` imagens por envio, reduzidas a ~1600 px): um lote grande pode demorar. O job `ProcessarGabaritoOmrJob` existe, mas **ainda não está ligado à interface**.
+**A leitura das fotos roda de forma síncrona** na própria requisição da tela de conferência (até `OMR_MAX_ARQUIVOS` imagens por envio, reduzidas a ~1600 px): um lote grande pode demorar. Os jobs `GerarFolhasTurmaPdfJob` (PDF da turma inteira) e `ProcessarGabaritoOmrJob` (uma foto) existem, mas **nenhuma tela os despacha hoje**: só o teste `OmrGabaritoPdfTest` os usa. Quando forem ligados à interface, rodarão em fila.
 
 ### Filas Utilizadas:
-- `OMR_FILA` (padrão: `default`):
-  - Job: `App\Jobs\GerarFolhasTurmaPdfJob` (monta o PDF de toda a turma em background).
-  - Job: `App\Jobs\ProcessarGabaritoOmrJob` (processa uma foto; reservado para o processamento assíncrono).
+- Com a fila do sistema no banco (`QUEUE_CONNECTION=database`), os dois jobs vão para a **fila dos jobs longos** (conexão `database_longa`, fila `longas`), atendida pelo worker agendado em `routes/console.php`. Ver [frequencia_unica_e_fila_longa.md](frequencia_unica_e_fila_longa.md).
+- `OMR_FILA` (padrão: `default`): se definida com outro nome, **só** `ProcessarGabaritoOmrJob` usa essa fila, na conexão padrão e com worker próprio (o `retry_after` de 90 s dessa conexão é menor que o `timeout` de 180 s do job; prefira deixar o padrão).
 
 ### Como iniciar o Worker de Fila em Produção:
+Com `schedule:run` a cada minuto (cron), nada a fazer: o agendador inicia o worker da fila longa. Com Supervisor próprio:
 ```bash
-php artisan queue:work --queue=omr,default --tries=3 --timeout=120 --memory=512
+php artisan queue:work database_longa --queue=longas --tries=3 --timeout=600 --memory=512
 ```
 
 ---

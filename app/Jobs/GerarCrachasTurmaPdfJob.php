@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Models\TemplateCracha;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Support\FilaLonga;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,7 +36,9 @@ class GerarCrachasTurmaPdfJob implements ShouldQueue
         public array $turmaIds,
         public int $templateCrachaId,
         public int $userId,
-    ) {}
+    ) {
+        FilaLonga::direcionar($this);
+    }
 
     public function handle(): void
     {

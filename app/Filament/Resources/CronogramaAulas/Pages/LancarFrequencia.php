@@ -27,6 +27,9 @@ class LancarFrequencia extends EditRecord
 
     protected static ?string $title = 'Lançamento Rápido no Diário';
 
+    /** @var array<int, string>|null */
+    private ?array $nomesDosAlunos = null;
+
     public function authorizeAccess(): void
     {
         $this->authorize('lancarFrequencia', $this->getRecord());
@@ -99,24 +102,40 @@ class LancarFrequencia extends EditRecord
 
         $this->record->load(['frequencias', 'habilidades']);
 
-        $matriculasDaTurma = Matricula::where('turma_id', $this->record->turma_id)->get();
-        $frequenciasExistentes = $this->record->frequencias->pluck('matricula_id')->toArray();
+        // Só quem estava matriculado na data da aula entra na chamada (a mesma regra das pendências de frequência).
+        $faltantes = Matricula::query()
+            ->where('turma_id', $this->record->turma_id)
+            ->matriculadasEm($this->record->data)
+            ->whereNotIn('id', $this->record->frequencias->pluck('matricula_id'))
+            ->pluck('id');
 
-        $newRecords = false;
-        foreach ($matriculasDaTurma as $matricula) {
-            if (! in_array($matricula->id, $frequenciasExistentes)) {
-                $this->record->frequencias()->create([
-                    'matricula_id' => $matricula->id,
-                    'situacao' => null,
-                ]);
-                $newRecords = true;
-            }
+        foreach ($faltantes as $matriculaId) {
+            // A unicidade (matrícula, aula) é do banco: se outra aba ou outro professor criou a linha entre a leitura
+            // acima e esta gravação, devolve a que já existe em vez de duplicar o aluno na chamada.
+            $this->record->frequencias()->createOrFirst(['matricula_id' => $matriculaId], ['situacao' => null]);
         }
 
-        if ($newRecords) {
+        if ($faltantes->isNotEmpty()) {
             $this->record->load('frequencias');
             $this->fillForm();
         }
+    }
+
+    /**
+     * Nome de cada aluno da turma, pelo id da matrícula. O campo do Repeater pede as opções uma vez por linha da
+     * chamada; calculadas aqui, a turma inteira é lida uma vez só por requisição. Fica a turma toda (e não só quem
+     * estava matriculado na aula) porque uma linha já gravada precisa mostrar o nome do aluno que ela cita.
+     *
+     * @return array<int, string>
+     */
+    private function nomesDosAlunos(): array
+    {
+        return $this->nomesDosAlunos ??= Matricula::query()
+            ->where('turma_id', $this->record->turma_id)
+            ->with('pessoa')
+            ->get()
+            ->mapWithKeys(fn (Matricula $m): array => [$m->id => (string) $m->pessoa?->nome])
+            ->all();
     }
 
     public function form(Schema $schema): Schema
@@ -190,12 +209,7 @@ class LancarFrequencia extends EditRecord
                                 Select::make('matricula_id')
                                     ->label('Aluno')
                                     ->hiddenLabel()
-                                    ->options(fn (): array => Matricula::where('turma_id', $this->record->turma_id)
-                                        ->with(['pessoa', 'periodoLetivo', 'turma'])
-                                        ->get()
-                                        ->mapWithKeys(fn ($m) => [$m->id => "{$m->pessoa?->nome}"])
-                                        ->toArray()
-                                    )
+                                    ->options(fn (): array => $this->nomesDosAlunos())
                                     ->required()
                                     ->disabled()
                                     ->dehydrated()

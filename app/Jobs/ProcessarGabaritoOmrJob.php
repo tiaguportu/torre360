@@ -8,6 +8,7 @@ use App\Models\Avaliacao;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\Omr\OmrService;
+use App\Support\FilaLonga;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,7 +31,14 @@ class ProcessarGabaritoOmrJob implements ShouldQueue
         public ?int $userId = null,
         public ?int $matriculaIdManual = null,
     ) {
-        $this->onQueue((string) config('omr.fila', 'default'));
+        $fila = (string) config('omr.fila', 'default');
+
+        // Fila escolhida à mão (OMR_FILA) é respeitada; sem escolha, a leitura (até 180 s) vai para a fila dos jobs longos.
+        if (! in_array($fila, ['', 'default'], true)) {
+            $this->onQueue($fila);
+        } else {
+            FilaLonga::direcionar($this);
+        }
     }
 
     public function handle(OmrService $omrService): void

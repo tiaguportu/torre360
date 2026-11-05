@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\BoletimService;
+use App\Support\FilaLonga;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -38,7 +39,9 @@ class GerarBoletinsTurmaPdfJob implements ShouldQueue
         public array $turmaIds,
         public ?int $etapaId,
         public int $userId,
-    ) {}
+    ) {
+        FilaLonga::direcionar($this);
+    }
 
     public function handle(BoletimService $boletimService): void
     {

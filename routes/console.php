@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\FilaLonga;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -23,6 +24,19 @@ if ($filaIa !== '' && $filaIa !== $filaPadrao) {
     Schedule::command("queue:work --queue={$filaIa} --stop-when-empty --tries=3 --timeout=85 --max-time=55")
         ->everyMinute()
         ->withoutOverlapping(5)
+        ->runInBackground();
+}
+
+// Worker da fila dos jobs longos (PDF em lote, envio em massa, leitura de gabarito; ver App\Support\FilaLonga). Eles
+// levam minutos: na fila padrão seguravam o worker e atrasavam e-mails e notificações, e passavam do `retry_after`
+// (90 s), voltando para a fila enquanto ainda rodavam. A conexão `database_longa` tem `retry_after` de 720 s, acima do
+// `--timeout` (600 s, o maior dos jobs). O mutex dura mais que o maior job, para uma segunda execução não entrar no meio.
+$filaLonga = (string) config('queue.connections.'.FilaLonga::CONEXAO.'.queue', 'longas');
+
+if ($filaLonga !== '') {
+    Schedule::command(sprintf('queue:work %s --queue=%s --stop-when-empty --tries=3 --timeout=%d --max-time=55', FilaLonga::CONEXAO, $filaLonga, FilaLonga::TIMEOUT_MAXIMO))
+        ->everyMinute()
+        ->withoutOverlapping(15)
         ->runInBackground();
 }
 Schedule::command('assinafy:reconciliar')->hourly()->withoutOverlapping();

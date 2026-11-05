@@ -42,7 +42,9 @@ return [
     | Fila de Processamento
     |--------------------------------------------------------------------------
     |
-    | Nome da fila para os jobs assíncronos de OMR.
+    | Nome da fila para os jobs assíncronos de OMR. Com "default" (ou vazio), vão para a fila dos jobs longos
+    | (App\Support\FilaLonga), porque a leitura de um lote pode passar do `retry_after` da fila padrão. Qualquer outro
+    | nome é usado como está, na conexão padrão, e precisa de um worker próprio.
     |
     */
     'fila' => env('OMR_FILA', 'default'),

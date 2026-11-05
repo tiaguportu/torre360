@@ -7,6 +7,7 @@ use App\Models\ComunicacaoEmMassa;
 use App\Models\Pessoa;
 use App\Services\CanalMensagemManager;
 use App\Services\ComunicacaoEmMassaService;
+use App\Support\FilaLonga;
 use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +25,10 @@ class EnviarComunicacaoEmMassaJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(public ComunicacaoEmMassa $comunicacao) {}
+    public function __construct(public ComunicacaoEmMassa $comunicacao)
+    {
+        FilaLonga::direcionar($this);
+    }
 
     public function handle(ComunicacaoEmMassaService $service): void
     {

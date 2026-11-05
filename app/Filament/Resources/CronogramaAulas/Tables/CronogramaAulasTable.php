@@ -326,8 +326,11 @@ class CronogramaAulasTable
                         })
                         ->action(function (Collection $records, array $data): void {
                             foreach ($records as $record) {
-                                // Pega apenas as matrículas que pertencem à turma deste cronograma
-                                $matriculasDaTurma = Matricula::where('turma_id', $record->turma_id)->pluck('id')->toArray();
+                                // Pega apenas as matrículas da turma deste cronograma que estavam em vigor na data da aula
+                                $matriculasDaTurma = Matricula::where('turma_id', $record->turma_id)
+                                    ->matriculadasEm($record->data)
+                                    ->pluck('id')
+                                    ->toArray();
 
                                 foreach ($data['frequencias'] as $frequenciaData) {
                                     if (in_array($frequenciaData['matricula_id'], $matriculasDaTurma)) {

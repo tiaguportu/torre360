@@ -44,6 +44,20 @@ return [
             'after_commit' => false,
         ],
 
+        // Jobs que levam minutos (PDF em lote, envio em massa, leitura de gabarito). Mesma tabela `jobs`, mas outra
+        // conexão para ter outro `retry_after`: com os 90 s da conexão padrão, um job de 5 a 10 minutos voltava para a
+        // fila enquanto ainda rodava e podia ser executado duas vezes. O valor precisa ficar acima do maior `timeout` dos
+        // jobs desta fila (600 s, envio em massa). Quem despacha é App\Support\FilaLonga; o worker é agendado em
+        // routes/console.php.
+        'database_longa' => [
+            'driver' => 'database',
+            'connection' => env('DB_QUEUE_CONNECTION'),
+            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue' => env('DB_QUEUE_LONGA', 'longas'),
+            'retry_after' => (int) env('DB_QUEUE_LONGA_RETRY_AFTER', 720),
+            'after_commit' => false,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),

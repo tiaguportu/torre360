@@ -36,6 +36,9 @@ em toda a suíte (cerca de 3.300 testes) e quebraria em produção.
 
 **Produção não foi verificada**: os números acima são do banco copiado. Se a produção tiver as colunas, os erros não acontecem; se não
 tiver, as quatro telas da primeira linha já falham hoje.
+- **A divergência não é só de colunas que existem.** A de **anulabilidade** também aparece: `frequencia_escolar.situacao` era `NOT NULL` no
+  SQLite e anulável na produção (a migration que a tornou nula pula o SQLite), e a chamada grava linhas sem situação. Corrigido em 2026-11-05
+  por uma migration só de SQLite; o `schema:comparar` proposto abaixo deve comparar também `NULL`/`NOT NULL` e índices únicos.
 - Já existem **testes de guarda** que travam um tipo de erro inteiro: cobertura de ajuda por tela, permissão das filas da Minha Mesa,
   lista de tipos de arquivo dos uploads e, desde 2026-10-28, política para todo recurso do painel.
 

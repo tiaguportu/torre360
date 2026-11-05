@@ -8,6 +8,7 @@ use App\Models\Avaliacao;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\Omr\FolhaGabaritoPdfService;
+use App\Support\FilaLonga;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,9 @@ class GerarFolhasTurmaPdfJob implements ShouldQueue
     public function __construct(
         public int $avaliacaoId,
         public int $userId,
-    ) {}
+    ) {
+        FilaLonga::direcionar($this);
+    }
 
     public function handle(FolhaGabaritoPdfService $pdfService): void
     {

@@ -298,14 +298,7 @@ class FrequenciaPendenteWidget extends Widget implements HasActions, HasForms
 
                 foreach ($aulasObjetos as $ca) {
                     $matriculasTurma = Matricula::where('turma_id', $ca->turma_id)
-                        ->where(function ($q) use ($ca) {
-                            $q->whereNull('data_ativacao')
-                                ->orWhereDate('data_ativacao', '<=', $ca->data);
-                        })
-                        ->where(function ($q) use ($ca) {
-                            $q->whereNull('data_desativacao')
-                                ->orWhereDate('data_desativacao', '>', $ca->data);
-                        })
+                        ->matriculadasEm($ca->data)
                         ->pluck('id')
                         ->toArray();
 

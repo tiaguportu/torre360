@@ -74,3 +74,15 @@ Duas das quatro "funções entregues pela metade" foram completadas nos [pacotes
 
 Continuam abertas: as permissões usadas no código sem migration ou seeder que as crie, o menu com grupos duplicados e os três "canais" de mensagem. O registro de uso de telas
 já existe (`AuditMiddleware`) e só falta o relatório da [Onda 106](uso_das_telas_roadmap.md).
+
+## O que foi feito em 2026-11-05
+
+Duas correções de uma nova análise do código, em [frequencia_unica_e_fila_longa.md](frequencia_unica_e_fila_longa.md):
+
+- **Frequência sem duplicata:** índice único (aluno, aula) em `frequencia_escolar`, com a limpeza das duplicatas existentes; a chamada deixou de
+  criar linha em dobro e de listar quem não estava matriculado na data. Escopo `Matricula::matriculadasEm()`.
+- **Fila dos jobs longos:** os seis jobs com `timeout` acima de 90 s (PDF em lote, envio em massa, gabarito) saíram da fila padrão, cujo `retry_after`
+  os deixava ser entregues duas vezes, para uma conexão própria com worker agendado. Teste de guarda: `timeout` de job tem de caber no `retry_after`.
+- O esquema do SQLite dos testes ganhou mais um alinhamento com a produção (`frequencia_escolar.situacao` aceita nulo), ver a
+  [Onda 89](paridade_esquema_testes_mariadb_roadmap.md).
+- O doc de OMR dizia que `GerarFolhasTurmaPdfJob` rodava em fila; nenhuma tela o despacha (só o teste). Corrigido.

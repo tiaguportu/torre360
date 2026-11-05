@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Services\InformeAnualMensalidadesService;
+use App\Support\FilaLonga;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -41,7 +42,9 @@ class GerarInformeAnualLotePdfJob implements ShouldQueue
         public ?int $turmaId,
         public ?string $busca,
         public int $userId,
-    ) {}
+    ) {
+        FilaLonga::direcionar($this);
+    }
 
     public function handle(InformeAnualMensalidadesService $informesService): void
     {

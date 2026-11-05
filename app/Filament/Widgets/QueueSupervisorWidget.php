@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Support\FilaLonga;
 use App\Traits\HasCustomWidgetShield;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -69,6 +70,20 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
             ->implode(',');
     }
 
+    /**
+     * Conexão, fila e tempo limite do worker dos jobs longos (App\Support\FilaLonga), ou null quando a fila padrão não é
+     * a do banco. O botão "Processar Fila Agora" também a esvazia: ela está na conexão `database_longa`, que o worker da
+     * fila padrão não atende.
+     *
+     * @return array{conexao: string, fila: string, timeout: int}|null
+     */
+    public static function filaLongaParaProcessar(): ?array
+    {
+        $conexao = FilaLonga::conexao();
+
+        return $conexao === null ? null : ['conexao' => $conexao, 'fila' => (string) FilaLonga::fila(), 'timeout' => FilaLonga::TIMEOUT_MAXIMO];
+    }
+
     public function processQueueAction(): Action
     {
         return Action::make('processQueue')
@@ -88,6 +103,12 @@ class QueueSupervisorWidget extends Widget implements HasActions, HasForms
                     $artisanPath = escapeshellarg(base_path('artisan'));
                     $filas = escapeshellarg(self::filasParaProcessar());
                     shell_exec("{$phpBinary} {$artisanPath} queue:work --queue={$filas} --stop-when-empty > /dev/null 2>&1 &");
+
+                    if ($longa = self::filaLongaParaProcessar()) {
+                        $conexao = escapeshellarg($longa['conexao']);
+                        $filaLonga = escapeshellarg($longa['fila']);
+                        shell_exec("{$phpBinary} {$artisanPath} queue:work {$conexao} --queue={$filaLonga} --stop-when-empty --timeout={$longa['timeout']} > /dev/null 2>&1 &");
+                    }
 
                     // Atualiza o heartbeat
                     Cache::put('queue_last_run_at', now()->toDateTimeString(), now()->addHours(24));

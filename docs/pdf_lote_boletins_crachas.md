@@ -14,6 +14,10 @@ geração recebe uma notificação do sistema com o resultado.
 - `tries = 3`, com `backoff` de 30s, 120s e 300s.
 - `timeout = 300` (5 minutos) por tentativa. O padrão do `queue:work` do Laravel é 60 segundos, pouco para renderizar o
   PDF de uma turma grande.
+- Os jobs de PDF em lote rodam na **fila dos jobs longos** (conexão `database_longa`, fila `longas`, `retry_after` de
+  720 s), não na fila padrão: com os 90 s da fila padrão, um PDF de 5 minutos voltava para a fila enquanto ainda era
+  gerado e podia sair em dobro, e segurava o worker dos e-mails. Ver
+  [frequencia_unica_e_fila_longa.md](frequencia_unica_e_fila_longa.md).
 - `failed(Throwable)` é chamado quando as tentativas acabam: registra o erro no log (com `turma_ids`, `user_id` e o
   `etapa_id` ou `template_cracha_id`) e avisa o usuário. Antes, a falha era silenciosa e o usuário ficava esperando.
 
