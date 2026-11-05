@@ -20,6 +20,7 @@ use App\Models\Unidade;
 use App\Models\User;
 use App\Services\HistoricoEscolarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -516,6 +517,131 @@ class HistoricoEscolarTest extends TestCase
 
         $this->assertStringContainsString('REPROVADO POR FALTAS', $html);
         $this->assertStringContainsString('color: #c53030', $html);
+    }
+
+    // --- Reapuração em lote (historico:reapurar-resultados) ---------------------------------------------------------------
+
+    /**
+     * Histórico como ficava antes da apuração automática: ano sincronizado, mas com resultado "Aprovado",
+     * frequência 100%, disciplinas todas "Aprovado" e uma ordem editada à mão.
+     *
+     * @param  array<int, float>  $medias
+     * @return array{historico: HistoricoEscolar, matricula: Matricula, disciplinas: array<int, Disciplina>}
+     */
+    private function cenarioDesatualizado(array $medias, int $presencas = 8, int $faltas = 2): array
+    {
+        $cenario = $this->cenarioDeApuracao($medias, $presencas, $faltas);
+        app(HistoricoEscolarService::class)->sincronizarMatriculasInternas($cenario['historico']);
+
+        $anos = $cenario['historico']->anos();
+        HistoricoEscolarDisciplina::whereIn('historico_escolar_ano_id', $anos->pluck('id'))->update(['situacao' => 'Aprovado']);
+        $anos->update(['situacao_ano' => 'Aprovado', 'frequencia_percentual' => 100, 'ordem' => 5]);
+
+        return $cenario;
+    }
+
+    public function test_comando_sem_aplicar_apenas_simula_e_nao_grava(): void
+    {
+        $cenario = $this->cenarioDesatualizado([4.0, 5.0, 8.0, 9.0]);
+
+        $this->artisan('historico:reapurar-resultados')
+            ->expectsOutputToContain('SIMULAÇÃO')
+            // Frequência e resultado saem na mesma linha da tabela, e cada linha de saída vale para uma expectativa só.
+            ->expectsOutputToContain('100,00% → 80,00% | Aprovado → Aprovado com Dependência')
+            ->expectsOutputToContain('Nada foi gravado')
+            ->assertSuccessful();
+
+        $ano = $cenario['historico']->anos()->first();
+        $this->assertSame('Aprovado', $ano->situacao_ano);
+        $this->assertEquals(100.00, (float) $ano->frequencia_percentual);
+        $this->assertSame(0, $ano->disciplinas()->where('situacao', 'Reprovado')->count());
+    }
+
+    public function test_comando_com_aplicar_grava_a_nova_apuracao_e_preserva_a_ordem(): void
+    {
+        $cenario = $this->cenarioDesatualizado([4.0, 5.0, 8.0, 9.0]);
+
+        $this->artisan('historico:reapurar-resultados --aplicar --force')
+            ->expectsOutputToContain('APLICANDO')
+            ->expectsOutputToContain('Anos com mudança: 1')
+            ->assertSuccessful();
+
+        $ano = $cenario['historico']->anos()->first();
+        $this->assertSame('Aprovado com Dependência', $ano->situacao_ano);
+        $this->assertEquals(80.00, (float) $ano->frequencia_percentual);
+        $this->assertSame(5, $ano->ordem);
+        $this->assertSame(2, $ano->disciplinas()->where('situacao', 'Reprovado')->count());
+    }
+
+    public function test_comando_com_aplicar_pede_confirmacao_e_nao_grava_se_recusada(): void
+    {
+        $cenario = $this->cenarioDesatualizado([4.0, 4.0, 4.0]);
+        $banco = DB::connection()->getDatabaseName();
+
+        $this->artisan('historico:reapurar-resultados --aplicar')
+            ->expectsConfirmation("Gravar a nova apuração no banco {$banco}?", 'no')
+            ->expectsOutputToContain('nada foi alterado')
+            ->assertFailed();
+
+        $this->assertSame('Aprovado', $cenario['historico']->anos()->first()->situacao_ano);
+    }
+
+    public function test_comando_nao_cria_ano_novo_nem_altera_ano_externo(): void
+    {
+        // Matrícula concluída que nunca foi sincronizada + um ano externo digitado pela secretaria.
+        $cenario = $this->cenarioDeApuracao([4.0, 4.0, 4.0]);
+        $externo = HistoricoEscolarAno::create([
+            'historico_escolar_id' => $cenario['historico']->id,
+            'ano_letivo' => 2023,
+            'serie_nome' => '6º Ano',
+            'ordem' => 1,
+            'tipo' => 'externo',
+            'escola_nome' => 'Outra Escola',
+            'situacao_ano' => 'Aprovado',
+        ]);
+
+        $this->artisan('historico:reapurar-resultados --aplicar --force')
+            ->expectsOutputToContain('Nenhum histórico com ano interno')
+            ->assertSuccessful();
+
+        $this->assertSame(1, $cenario['historico']->anos()->count());
+        $this->assertSame('Aprovado', $externo->fresh()->situacao_ano);
+    }
+
+    public function test_comando_deixa_para_revisao_o_ano_de_matricula_pendente(): void
+    {
+        $cenario = $this->cenarioDeApuracao([4.0], situacaoMatricula: 'pendente');
+        $ano = HistoricoEscolarAno::create([
+            'historico_escolar_id' => $cenario['historico']->id,
+            'matricula_id' => $cenario['matricula']->id,
+            'ano_letivo' => 2025,
+            'serie_nome' => '7º Ano',
+            'ordem' => 1,
+            'tipo' => 'interno',
+            'escola_nome' => 'Torre de Marfim',
+            'situacao_ano' => 'Aprovado',
+        ]);
+
+        $this->artisan('historico:reapurar-resultados --aplicar --force')
+            ->expectsOutputToContain('ignorado(s) para revisão manual')
+            ->expectsOutputToContain('matrícula em reserva ou pendente')
+            ->assertSuccessful();
+
+        $this->assertSame('Aprovado', $ano->fresh()->situacao_ano);
+        $this->assertSame(0, $ano->disciplinas()->count());
+    }
+
+    public function test_comando_com_opcao_historico_reapura_so_o_escolhido(): void
+    {
+        $escolhido = $this->cenarioDesatualizado([4.0, 4.0, 4.0]);
+        $outro = $this->cenarioDesatualizado([4.0, 4.0, 4.0]);
+
+        $this->artisan('historico:reapurar-resultados --aplicar --force --historico='.$escolhido['historico']->id)
+            ->expectsOutputToContain('Históricos analisados: 1')
+            ->assertSuccessful();
+
+        $this->assertSame('Reprovado', $escolhido['historico']->anos()->first()->situacao_ano);
+        $this->assertSame('Aprovado', $outro['historico']->anos()->first()->situacao_ano);
     }
 
     /**

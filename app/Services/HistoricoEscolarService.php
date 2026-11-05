@@ -83,13 +83,7 @@ class HistoricoEscolarService
             $cargaHorariaTotal = (int) ($matricula->turma?->carga_horaria_total ?: 800);
             $diasLetivos = 200; // Padrão LDB
 
-            // Cálculo da frequência percentual
-            $totalAulas = FrequenciaEscolar::where('matricula_id', $matricula->id)->count();
-            // Falta abonada não conta como falta (a só justificada continua contando).
-            $faltas = FrequenciaEscolar::where('matricula_id', $matricula->id)->contaComoFalta()->count();
-            $frequenciaPercentual = $totalAulas > 0
-                ? round((($totalAulas - $faltas) / $totalAulas) * 100, 2)
-                : 100.00;
+            $frequenciaPercentual = $this->frequenciaPercentual($matricula);
 
             $ordem = $ordemAno++;
 
@@ -131,6 +125,83 @@ class HistoricoEscolarService
             'anos_sincronizados' => $totalAnos,
             'disciplinas_sincronizadas' => $totalDisciplinas,
         ];
+    }
+
+    /**
+     * Reapura os anos internos que o histórico já tem (frequência, disciplinas e resultado do ano), com as mesmas
+     * regras da sincronização, mas sem criar ano novo, sem mexer na ordem e sem tocar nos anos externos. Ano de
+     * matrícula em reserva ou pendente (gravado antes de essas matrículas saírem da sincronização) fica como está
+     * e volta na lista para revisão manual.
+     *
+     * @return list<array{ano: HistoricoEscolarAno, frequencia_antes: ?float, frequencia_depois: ?float, antes: ?string, depois: ?string, disciplinas_alteradas: int, ignorado: ?string}>
+     */
+    public function reapurarAnosInternos(HistoricoEscolar $historico): array
+    {
+        $anos = $historico->anos()
+            ->where('tipo', 'interno')
+            ->whereNotNull('matricula_id')
+            ->with(['matricula.turma.serie', 'matricula.turma.disciplinas.areaConhecimento', 'matricula.periodoLetivo'])
+            ->orderBy('ordem')
+            ->get();
+
+        $resultado = [];
+
+        foreach ($anos as $ano) {
+            $matricula = $ano->matricula;
+            $linha = [
+                'ano' => $ano,
+                'frequencia_antes' => $ano->frequencia_percentual !== null ? (float) $ano->frequencia_percentual : null,
+                'frequencia_depois' => null,
+                'antes' => $ano->situacao_ano,
+                'depois' => null,
+                'disciplinas_alteradas' => 0,
+                'ignorado' => null,
+            ];
+
+            if (! $matricula?->turma) {
+                $resultado[] = ['ignorado' => 'matrícula ou turma não encontrada'] + $linha;
+
+                continue;
+            }
+
+            if (in_array($matricula->situacao, [SituacaoMatricula::RESERVA, SituacaoMatricula::PENDENTE], true)) {
+                $resultado[] = ['ignorado' => 'matrícula em reserva ou pendente: revisar o ano à mão'] + $linha;
+
+                continue;
+            }
+
+            $resultado[] = DB::transaction(function () use ($ano, $matricula, $linha): array {
+                $disciplinasAntes = $ano->disciplinas()->pluck('situacao', 'disciplina_id')->all();
+                $frequencia = $this->frequenciaPercentual($matricula);
+
+                $ano->update(['frequencia_percentual' => $frequencia]);
+                $disciplinas = $this->sincronizarDisciplinas($ano, $matricula);
+                $ano->update(['situacao_ano' => $this->apurarSituacaoAno($matricula->situacao, $frequencia, $disciplinas['reprovadas'])]);
+
+                $disciplinasDepois = $ano->disciplinas()->pluck('situacao', 'disciplina_id')->all();
+
+                return [
+                    'frequencia_depois' => $frequencia,
+                    'depois' => $ano->situacao_ano,
+                    'disciplinas_alteradas' => count(array_filter($disciplinasDepois, fn ($situacao, $id) => ($disciplinasAntes[$id] ?? null) !== $situacao, ARRAY_FILTER_USE_BOTH)),
+                ] + $linha;
+            });
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Frequência do aluno no ano (%): a falta abonada vale presença, a só justificada continua sendo falta.
+     */
+    private function frequenciaPercentual(Matricula $matricula): float
+    {
+        $totalAulas = FrequenciaEscolar::where('matricula_id', $matricula->id)->count();
+        $faltas = FrequenciaEscolar::where('matricula_id', $matricula->id)->contaComoFalta()->count();
+
+        return $totalAulas > 0
+            ? round((($totalAulas - $faltas) / $totalAulas) * 100, 2)
+            : 100.00;
     }
 
     /**

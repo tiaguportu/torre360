@@ -2763,6 +2763,7 @@ Cada vez que a secretaria salva um histórico novo ou clica em **Sincronizar** (
 - A frequência considera as faltas abonadas como presença; falta apenas justificada continua contando como falta.
 - No PDF, o resultado aparece na linha **Resultado Final do Ano Letivo**: em vermelho para *Reprovado* e *Reprovado por Faltas*, em âmbar para *Aprovado com Dependência*. As notas de disciplinas reprovadas ficam em destaque na tabela.
 - Corrigiu uma nota ou a frequência depois? Clique em **Sincronizar** de novo: o ano é atualizado, sem duplicar a coluna.
+- Históricos que já estavam salvos antes desta regra continuam com o resultado antigo até serem sincronizados. Para atualizar todos de uma vez, peça à equipe de suporte: ela faz uma **simulação** que mostra, histórico por histórico, o que vai mudar, e só grava depois de você conferir. Anos de matrícula pendente ou em reserva não são alterados e vêm numa lista para revisão.
 - O limite de **2 disciplinas** para a dependência é o adotado pelo sistema; se o regimento da escola for diferente, avise a equipe de suporte para ajustar.
 ---
 

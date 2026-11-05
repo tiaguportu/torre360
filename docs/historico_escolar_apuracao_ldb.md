@@ -58,8 +58,35 @@ abonada vale presença).
 A linha "Resultado final do ano letivo" pinta de vermelho `Reprovado` e `Reprovado por Faltas`, de âmbar
 `Aprovado com Dependência` e de verde os demais. `montarMatrizTabular()` repassa `situacao_ano` sem alterá-lo.
 
+## Reprocessar os históricos que já existem
+
+O deploy não recalcula nada: os anos gravados antes da apuração (muitos como `Aprovado`) só mudam quando alguém
+sincroniza o histórico. Para fazer isso de uma vez há o comando (para a equipe técnica; não é tela):
+
+```
+php artisan historico:reapurar-resultados                # simula e mostra o que mudaria, não grava
+php artisan historico:reapurar-resultados --aplicar      # grava, depois de confirmar o banco
+php artisan historico:reapurar-resultados --historico=12 --historico=40   # só estes históricos
+```
+
+- **Simula por padrão.** A apuração roda de verdade dentro de uma transação que é desfeita; a tabela mostrada
+  (frequência, resultado do ano antes → depois, disciplinas alteradas) é o que `--aplicar` gravaria. Só entram na tabela
+  os anos que mudam.
+- **`--aplicar` mostra o banco** (`driver / nome`) e pede confirmação. `--force` pula a pergunta (uso em script). Como o
+  `.env` local aponta para produção, leia essa linha antes de confirmar.
+- **Cada histórico é atômico:** se um falha, nada dele é gravado, o erro aparece no fim e o código de saída é de falha;
+  os demais seguem.
+- **Só reapura anos internos que o histórico já tem** (`HistoricoEscolarService::reapurarAnosInternos()`): não cria ano
+  novo (quem quiser importar anos que faltam usa **Sincronizar**), não mexe na `ordem` e não toca nos anos externos.
+  Atualiza `frequencia_percentual`, as disciplinas da turma e `situacao_ano`.
+- **Anos de matrícula em reserva ou pendente** (gravados antes de essas matrículas saírem da sincronização) não são
+  alterados: aparecem no fim em "ignorados para revisão manual".
+- Reexecutar é seguro: com os mesmos dados o resultado é o mesmo e a tabela sai vazia.
+
 ## Testes
 
 `tests/Feature/HistoricoEscolarTest.php`: corte do período (8,0 reprova 7,5; 6,0 aprova 6,5), exame final aprovando e
 reprovando, disciplina sem nota, 0/2/3 reprovações, 70% e exatos 75% de frequência, matrícula ativa/cancelada,
-reserva/pendente fora do histórico, ressincronização sem duplicar, matriz tabular e PDF.
+reserva/pendente fora do histórico, ressincronização sem duplicar, matriz tabular e PDF. Do comando: simulação sem
+gravar, `--aplicar` (preservando a `ordem`), confirmação recusada, não criar ano nem alterar ano externo, ano de
+matrícula pendente deixado para revisão e a opção `--historico`.
