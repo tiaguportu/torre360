@@ -2,8 +2,9 @@
 
 > **Status: implementada** em 2026-10-28; troca de professor/aluno pelo calendário, notificação própria
 > de reagendamento e histórico na tela em 2026-10-29; professores designados por matrícula na tela de
-> agendar em 2026-11-04 (§9). Manual: §5.7 (professores de preceptoria da matrícula), §6.5.1 (cadastro
-> recorrente), §18.3.1 (calendário), §18.3.2 (histórico) e §18.6 (agendar).
+> agendar em 2026-11-04 (§9); só ciclo do período letivo da matrícula em 2026-11-04 (§10). Manual: §5.7
+> (professores de preceptoria da matrícula), §6.5 (aviso por e-mail), §6.5.1 (cadastro recorrente),
+> §18.3.1 (calendário), §18.3.2 (histórico), §18.6 (agendar) e §18.7 (widget).
 
 ## O pedido
 
@@ -264,7 +265,55 @@ matrícula não vale para outra do mesmo aluno nem da turma, agendar com horári
 da matrícula é recusado, agendar com o do designado funciona, `?matricula_id=` com e sem acesso, campo do
 cadastro grava) e os dois testes do serviço que antes afirmavam o cronograma.
 
+### 10. Ciclo de preceptoria do período letivo da matrícula (2026-11-04)
+
+**O pedido**: a preceptoria tem um ciclo, e o ciclo tem um período letivo. Matrícula cujo período letivo
+não é o de um ciclo de preceptoria **válido** não pode ter opção de agendar.
+
+**Regra** (`PreceptoriaAgendaService`):
+
+- `ciclosParaAgendar($matriculaId)`: ciclos que **ainda não venceram** (`CicloPreceptoria::naoVencidos`,
+  o mesmo "válido" da listagem; inclui os que ainda não começaram) **e** cujo `periodo_letivo_id` é o do
+  período da turma da matrícula (`Matricula::periodo_letivo_id`). Matrícula sem período, ou ciclo sem
+  período, não casa com nada.
+- `horariosLivres($matriculaId)`: horários sem aluno, de professor da matrícula (§9) **e** de um desses
+  ciclos. Horário sem ciclo não é oferecido. As telas acrescentam a antecedência mínima.
+- `podeAgendar($matriculaId)`: há ciclo válido para a matrícula e o aluno não tem preceptoria no ciclo
+  vigente dele (`cicloAtualDaMatricula`: o vigente dentre os `ciclosParaAgendar`, não mais o primeiro
+  vigente do sistema).
+- `periodosComHorariosLivres()`: períodos com ciclo válido e horário livre daqui em diante; a lista de
+  matrículas consulta uma vez por renderização e confere o período de cada linha.
+
+**Onde vale**:
+
+| Tela | Efeito |
+|---|---|
+| Agendar Preceptoria (admin) e Preceptoria do Portal | Sem ciclo válido no período: aviso amarelo (`sem_ciclo_valido`), lista de horários e botão **Confirmar Agendamento** escondidos. Com ciclo: só horários dele. `agendar()` confere de novo no servidor (o estado do formulário vem do navegador) e recusa com "Horário indisponível". |
+| Modal do calendário (`atualizarParticipantes`) | Pôr um aluno numa preceptoria exige que o ciclo dela seja do período da matrícula; recusa dizendo os dois períodos, ou que a preceptoria não tem ciclo. Não exige que o ciclo não tenha vencido: a equipe ainda pode corrigir um registro antigo. |
+| Widget "Preceptoria Disponível" do painel | Só aparece se há horário que a matrícula poderia escolher (professor dela + ciclo do período), num ciclo em que o aluno ainda não agendou. Antes bastava existir qualquer horário livre no sistema. |
+| Lista de Matrículas: **Avisar preceptoria por e-mail** (individual e em lote) | Só para matrícula cujo período tem ciclo válido com horário livre (`Matricula::hasAvailablePreceptoriaWindows`); o aviso diz à família que há horários, então não pode sair quando ela não conseguiria agendar. |
+
+**Por que "válido" = não vencido, e não "vigente"**: em 2026-11-04 o único ciclo vigente era o 4º trimestre
+(2026-10-01 a 12-31) e os 141 horários livres estavam todos no 3º trimestre, que só começa em 11-09. Com
+"vigente", ninguém conseguiria agendar até lá. "Não vencido" também é o critério já usado para esconder os
+ciclos vencidos na listagem e no seletor de ciclo (§1).
+
+**Dados na produção (2026-11-04, só leitura)**: 4 ciclos, todos com período letivo (3); nenhuma preceptoria
+sem ciclo. A matrícula 183 é do período 3, então continua agendando. Quem for de outro período fica sem
+opção até a secretaria criar o ciclo desse período.
+
+**Fora do alcance**: a edição completa do registro e o cadastro (a "porta de exceção" da §"O que ficou de fora")
+continuam sem esta conferência. O "um agendamento por ciclo" na tela de agendar segue olhando só o ciclo
+**vigente**: um aluno com horário marcado num ciclo que ainda não começou ainda pode marcar outro no mesmo
+ciclo por ali (o modal do calendário já recusa).
+
+**Testes**: `AgendarPreceptoriaCicloDoPeriodoTest` (só ciclo do período; vencido não e futuro sim; sem ciclo
+válido avisa, esconde botão e recusa horário forçado; ciclo atual só do período da matrícula; modal do
+calendário; janelas por período; horário já agendado não conta; ação de e-mail; widget).
+
 ## Decisões
+
+- **"Ciclo válido" é "não vencido"** (§10), igual à listagem de ciclos.
 
 - **Designação por matrícula, não por aluno nem por turma**: pedida assim; um mesmo aluno pode ter
   designados diferentes em matrículas diferentes. O conselheiro continua valendo sem precisar ser
@@ -292,7 +341,11 @@ O `LembretePreceptoriaNotification` voltou a ser só lembrete.
 Professores da matrícula (§9): `database/migrations/2026_11_04_100000_create_matricula_professor_preceptoria_table.php`
 · `app/Models/Matricula.php` (`professoresDePreceptoria`) · `app/Filament/Resources/Matriculas/Schemas/MatriculaForm.php`
 · `AgendarPreceptoria` (`mount()` e ajuda) · `PreceptoriaAgendaService` (`professoresDaMatricula`, `matriculasDoProfessor`).
-Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest,PreceptoriaPushTest,AgendarPreceptoriaProfessoresDaMatriculaTest}.php`.
+Ciclo do período letivo (§10): `PreceptoriaAgendaService` (`ciclosParaAgendar`, `cicloAtualDaMatricula`, `horariosLivres`,
+`podeAgendar`, `periodosComHorariosLivres`, checagem em `atualizarParticipantes`) · `AgendarPreceptoria` e `Portal\Pages\Preceptoria`
+(aviso `sem_ciclo_valido`, trava em `agendar()`) · `PreceptoriaSchedulingWidget` · `Matricula::hasAvailablePreceptoriaWindows` ·
+`MatriculasTable` (ação de e-mail) · `PreceptoriaFactory::comCicloValido()` (estado para testes que agendam aluno).
+Testes: `tests/Feature/Preceptorias/{PreceptoriaAgendaServiceTest,CalendarioPreceptoriasTest,PreceptoriaRecorrenciaCriacaoTest,PreceptoriaHistoricoTest,PreceptoriaConflitoHorarioTest,PreceptoriaCiclosVencidosTest,PreceptoriaEdicaoHistoricoTest,PreceptoriaExclusaoTest,PreceptoriaPushTest,AgendarPreceptoriaProfessoresDaMatriculaTest,AgendarPreceptoriaCicloDoPeriodoTest}.php`.
 
 ## O que ficou de fora
 

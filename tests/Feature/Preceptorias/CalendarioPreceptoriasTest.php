@@ -293,7 +293,7 @@ class CalendarioPreceptoriasTest extends TestCase
         $novo = Pessoa::factory()->create(['email' => 'novo@example.com']);
         $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
         $matricula = $this->matriculaDe($aluno, $novo);
-        $preceptoria = Preceptoria::factory()->create(['professor_id' => $antigo->id, 'matricula_id' => null, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $preceptoria = Preceptoria::factory()->comCicloValido()->create(['professor_id' => $antigo->id, 'matricula_id' => null, 'data' => '2026-09-08', 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
 
         Livewire::actingAs($user)
             ->test(CalendarioPreceptorias::class)

@@ -515,7 +515,7 @@ class PreceptoriaAgendaService
 
         $matricula = null;
         if ($mudouAluno && $matriculaId !== null) {
-            $matricula = Matricula::with(['pessoa.responsaveis.users', 'pessoa.users'])->find($matriculaId);
+            $matricula = Matricula::with(['pessoa.responsaveis.users', 'pessoa.users', 'periodoLetivo'])->find($matriculaId);
 
             if (! $matricula) {
                 return $this->resultado(false, 'Matrícula não encontrada.');
@@ -546,6 +546,27 @@ class PreceptoriaAgendaService
                 $professor->nome,
                 $matriculaFinal->pessoa?->nome ?? 'o aluno',
             ));
+        }
+
+        // o ciclo da preceptoria pertence a um período letivo: a matrícula de outro período não entra nele
+        if ($matricula) {
+            $preceptoria->loadMissing('cicloPreceptoria.periodoLetivo');
+            $ciclo = $preceptoria->cicloPreceptoria;
+            $alunoNome = $matricula->pessoa?->nome ?? 'o aluno';
+
+            if (! $ciclo?->periodo_letivo_id) {
+                return $this->resultado(false, "Não é possível agendar {$alunoNome} nesta preceptoria: ela não tem ciclo de preceptoria com período letivo.");
+            }
+
+            if ((int) $ciclo->periodo_letivo_id !== (int) $matricula->periodo_letivo_id) {
+                return $this->resultado(false, sprintf(
+                    'Não é possível agendar %s nesta preceptoria: a matrícula é do período letivo %s e o ciclo "%s" é do período %s.',
+                    $alunoNome,
+                    $matricula->periodoLetivo?->nome ?? 'sem período',
+                    $ciclo->nome,
+                    $ciclo->periodoLetivo?->nome ?? 'sem período',
+                ));
+            }
         }
 
         if ($matricula) {
@@ -999,6 +1020,88 @@ class PreceptoriaAgendaService
         }
 
         return Pessoa::whereIn('id', array_unique($professoresIds))->get();
+    }
+
+    /**
+     * Os ciclos em que a matrícula pode agendar: os que ainda não venceram (inclusive os que não
+     * começaram) e são do período letivo da turma dela. O ciclo pertence a um período letivo; matrícula
+     * de outro período não agenda nele. Matrícula sem período, ou ciclo sem período, não casa com nada.
+     *
+     * @return Builder<CicloPreceptoria>
+     */
+    public function ciclosParaAgendar(int $matriculaId): Builder
+    {
+        $periodoLetivoId = Matricula::query()->find($matriculaId)?->periodo_letivo_id;
+
+        return CicloPreceptoria::query()
+            ->naoVencidos()
+            ->when(
+                $periodoLetivoId,
+                fn (Builder $ciclos) => $ciclos->where('periodo_letivo_id', $periodoLetivoId),
+                fn (Builder $ciclos) => $ciclos->whereRaw('1 = 0'),
+            );
+    }
+
+    /**
+     * O ciclo vigente (em andamento) entre os que a matrícula pode agendar: é nele que se confere se o
+     * aluno já tem preceptoria marcada.
+     */
+    public function cicloAtualDaMatricula(int $matriculaId): ?CicloPreceptoria
+    {
+        return $this->ciclosParaAgendar($matriculaId)->vigentes()->first();
+    }
+
+    /**
+     * Os horários livres que a matrícula pode escolher: de um professor dela (conselheiro ou designado)
+     * e de um ciclo do período letivo dela que não venceu. Quem chama acrescenta a antecedência mínima.
+     *
+     * @return Builder<Preceptoria>
+     */
+    public function horariosLivres(int $matriculaId): Builder
+    {
+        return Preceptoria::query()
+            ->whereNull('matricula_id')
+            ->whereIn('professor_id', $this->professoresDaMatricula($matriculaId)->modelKeys())
+            ->whereIn('ciclo_preceptoria_id', $this->ciclosParaAgendar($matriculaId)->select('id'));
+    }
+
+    /**
+     * Se a tela de agendar pode oferecer horários à matrícula: precisa haver ciclo válido no período
+     * dela e o aluno não pode ter preceptoria no ciclo vigente.
+     */
+    public function podeAgendar(int $matriculaId): bool
+    {
+        if (! $this->ciclosParaAgendar($matriculaId)->exists()) {
+            return false;
+        }
+
+        $cicloAtual = $this->cicloAtualDaMatricula($matriculaId);
+
+        return ! $cicloAtual || ! Preceptoria::query()
+            ->where('matricula_id', $matriculaId)
+            ->where('ciclo_preceptoria_id', $cicloAtual->getKey())
+            ->exists();
+    }
+
+    /**
+     * Os períodos letivos que têm ciclo válido com horário livre daqui em diante. Serve aos avisos de
+     * "há horários": a lista de matrículas consulta uma vez e confere o período de cada linha.
+     *
+     * @return array<int, int>
+     */
+    public function periodosComHorariosLivres(): array
+    {
+        return CicloPreceptoria::query()
+            ->naoVencidos()
+            ->whereNotNull('periodo_letivo_id')
+            ->whereHas('preceptorias', fn (Builder $horarios) => $horarios
+                ->whereNull('matricula_id')
+                ->where('data', '>=', now()->toDateString()))
+            ->pluck('periodo_letivo_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

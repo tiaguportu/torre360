@@ -45,7 +45,8 @@ class AgendarPreceptoriaProfessoresDaMatriculaTest extends TestCase
 
     private function horarioLivre(Pessoa $professor, string $data): Preceptoria
     {
-        return Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => null, 'data' => $data]);
+        // o horário só é oferecido se o ciclo for do período letivo da matrícula (a turma da fábrica usa o período padrão)
+        return Preceptoria::factory()->comCicloValido()->create(['professor_id' => $professor->id, 'matricula_id' => null, 'data' => $data]);
     }
 
     private function matriculaComTurmaDe(Pessoa $conselheiro): Matricula

@@ -87,7 +87,7 @@ class PortalPreceptoriaOcorrenciasTest extends TestCase
     {
         $dados = $this->criarAlunoComMatricula();
 
-        $slot = PreceptoriaModel::factory()->create([
+        $slot = PreceptoriaModel::factory()->comCicloValido()->create([
             'professor_id' => $dados['professor']->id,
             'data' => now()->addDays(3)->toDateString(),
             'matricula_id' => null,

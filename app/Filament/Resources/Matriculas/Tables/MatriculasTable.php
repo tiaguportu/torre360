@@ -13,6 +13,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\PeriodoLetivo;
 use App\Models\ResponsavelFinanceiro;
+use App\Services\PreceptoriaAgendaService;
 use App\Services\RiscoEvasaoService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -44,10 +45,13 @@ class MatriculasTable
      */
     public static function configure(Table $table, bool $comFiltroSituacao = false): Table
     {
-        // Janelas de preceptoria independem da matrícula: consulta uma única vez por renderização.
-        $haJanelasDePreceptoria = null;
-        $consultaJanelasDePreceptoria = function (Matricula $record) use (&$haJanelasDePreceptoria): bool {
-            return $haJanelasDePreceptoria ??= $record->hasAvailablePreceptoriaWindows();
+        // Os períodos que têm horário de preceptoria livre num ciclo válido não dependem da linha: consulta
+        // uma única vez por renderização e confere o período de cada matrícula (o ciclo é de um período).
+        $periodosComJanelasDePreceptoria = null;
+        $consultaJanelasDePreceptoria = function (Matricula $record) use (&$periodosComJanelasDePreceptoria): bool {
+            $periodosComJanelasDePreceptoria ??= app(PreceptoriaAgendaService::class)->periodosComHorariosLivres();
+
+            return in_array((int) $record->periodo_letivo_id, $periodosComJanelasDePreceptoria, true);
         };
 
         return $table

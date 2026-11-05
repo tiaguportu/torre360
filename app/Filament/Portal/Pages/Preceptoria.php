@@ -4,7 +4,6 @@ namespace App\Filament\Portal\Pages;
 
 use App\Exceptions\ConflitoDeHorarioException;
 use App\Filament\Concerns\HasAjudaAction;
-use App\Models\CicloPreceptoria;
 use App\Models\Matricula;
 use App\Models\Preceptoria as PreceptoriaModel;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
@@ -65,11 +64,6 @@ class Preceptoria extends Page implements HasForms
         }
 
         return $this->getMatriculasAcessiveis()->contains('id', $matriculaId);
-    }
-
-    protected function getProfessoresDaMatricula(int $matriculaId): Collection
-    {
-        return app(PreceptoriaAgendaService::class)->professoresDaMatricula($matriculaId);
     }
 
     public function liberarHorario(int $id): void
@@ -156,6 +150,24 @@ class Preceptoria extends Page implements HasForms
                             ->live()
                             ->afterStateUpdated(fn () => $this->data['preceptoria_id'] = null),
 
+                        // o ciclo pertence a um período letivo: matrícula de outro período não tem onde agendar
+                        Placeholder::make('sem_ciclo_valido')
+                            ->hiddenLabel()
+                            ->visible(fn (Get $get) => filled($get('matricula_id'))
+                                && ! app(PreceptoriaAgendaService::class)->ciclosParaAgendar((int) $get('matricula_id'))->exists())
+                            ->content(function (Get $get) {
+                                $periodo = Matricula::with('periodoLetivo')->find((int) $get('matricula_id'))?->periodoLetivo?->nome;
+                                $dela = $periodo ? 'do período letivo <strong>'.e($periodo).'</strong>' : 'de uma turma sem período letivo';
+
+                                return new HtmlString("
+                                    <div class='p-3 bg-warning-50 border border-warning-200 rounded-lg dark:bg-warning-900/10 dark:border-warning-800'>
+                                        <p class='text-sm text-warning-700 dark:text-warning-400'>
+                                            Ainda não é possível agendar preceptoria para esta matrícula: ela é {$dela} e a escola não tem ciclo de preceptoria válido nesse período. Procure a secretaria.
+                                        </p>
+                                    </div>
+                                ");
+                            }),
+
                         Placeholder::make('agendamento_vigente')
                             ->label('Agendamento Vigente')
                             ->visible(function (Get $get) {
@@ -164,7 +176,7 @@ class Preceptoria extends Page implements HasForms
                                     return false;
                                 }
 
-                                $cicloAtual = CicloPreceptoria::vigentes()->first();
+                                $cicloAtual = app(PreceptoriaAgendaService::class)->cicloAtualDaMatricula((int) $mid);
                                 if (! $cicloAtual) {
                                     return false;
                                 }
@@ -175,7 +187,7 @@ class Preceptoria extends Page implements HasForms
                             })
                             ->content(function (Get $get) {
                                 $mid = $get('matricula_id');
-                                $cicloAtual = CicloPreceptoria::vigentes()->first();
+                                $cicloAtual = app(PreceptoriaAgendaService::class)->cicloAtualDaMatricula((int) $mid);
 
                                 $p = PreceptoriaModel::where('matricula_id', $mid)
                                     ->where('ciclo_preceptoria_id', $cicloAtual?->id)
@@ -205,7 +217,7 @@ class Preceptoria extends Page implements HasForms
                                     ->requiresConfirmation()
                                     ->action(function (Get $get) {
                                         $mid = $get('matricula_id');
-                                        $cicloAtual = CicloPreceptoria::vigentes()->first();
+                                        $cicloAtual = app(PreceptoriaAgendaService::class)->cicloAtualDaMatricula((int) $mid);
 
                                         $p = PreceptoriaModel::where('matricula_id', $mid)
                                             ->where('ciclo_preceptoria_id', $cicloAtual?->id)
@@ -221,21 +233,9 @@ class Preceptoria extends Page implements HasForms
 
                 Section::make('Horários Disponíveis')
                     ->description('Por regra de antecedência, só é possível agendar horários com no mínimo 2 dias de antecedência.')
-                    ->visible(function (Get $get) {
-                        $mid = $get('matricula_id');
-                        if (! $mid) {
-                            return false;
-                        }
-
-                        $cicloAtual = CicloPreceptoria::vigentes()->first();
-                        if (! $cicloAtual) {
-                            return true;
-                        }
-
-                        return ! PreceptoriaModel::where('matricula_id', $mid)
-                            ->where('ciclo_preceptoria_id', $cicloAtual->id)
-                            ->exists();
-                    })
+                    // Esconde sem matrícula, sem ciclo válido no período dela ou com agendamento no ciclo atual
+                    ->visible(fn (Get $get) => filled($get('matricula_id'))
+                        && app(PreceptoriaAgendaService::class)->podeAgendar((int) $get('matricula_id')))
                     ->schema([
                         Select::make('preceptoria_id')
                             ->label('Horário Disponível')
@@ -248,12 +248,9 @@ class Preceptoria extends Page implements HasForms
 
                                 $minDate = now()->addDays(2)->toDateString();
 
-                                $professoresIds = $this->getProfessoresDaMatricula((int) $matriculaId)->pluck('id');
-
-                                return PreceptoriaModel::query()
-                                    ->whereNull('matricula_id')
+                                // só horários de professor da matrícula, em ciclo válido do período letivo dela
+                                return app(PreceptoriaAgendaService::class)->horariosLivres((int) $matriculaId)
                                     ->where('data', '>=', $minDate)
-                                    ->whereIn('professor_id', $professoresIds)
                                     ->with('professor')
                                     ->orderBy('data')
                                     ->orderBy('hora_inicio')
@@ -282,6 +279,19 @@ class Preceptoria extends Page implements HasForms
         if (! $this->matriculaEhAcessivel((int) ($raw['matricula_id'] ?? null))) {
             Notification::make()
                 ->title('Você não tem permissão para agendar para este aluno.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // a lista já vem filtrada, mas o estado do formulário vem do navegador: confere o horário de novo
+        $servico = app(PreceptoriaAgendaService::class);
+        $matriculaId = (int) $raw['matricula_id'];
+
+        if (! $servico->podeAgendar($matriculaId) || ! $servico->horariosLivres($matriculaId)->whereKey($raw['preceptoria_id'])->exists()) {
+            Notification::make()
+                ->title('Esse horário não está disponível para este aluno.')
                 ->danger()
                 ->send();
 
@@ -332,18 +342,8 @@ class Preceptoria extends Page implements HasForms
     public function mostrarBotaoAgendar(): bool
     {
         $mid = $this->data['matricula_id'] ?? null;
-        if (! $mid) {
-            return false;
-        }
 
-        $cicloAtual = CicloPreceptoria::vigentes()->first();
-        if (! $cicloAtual) {
-            return true;
-        }
-
-        return ! PreceptoriaModel::where('matricula_id', $mid)
-            ->where('ciclo_preceptoria_id', $cicloAtual->id)
-            ->exists();
+        return filled($mid) && app(PreceptoriaAgendaService::class)->podeAgendar((int) $mid);
     }
 
     protected function getHeaderActions(): array
@@ -365,6 +365,6 @@ class Preceptoria extends Page implements HasForms
                 ['👁️', 'Agendamento vigente', 'Veja o horário que já está marcado.'],
                 ['❌', 'Desagendar / Liberar Horário', 'Cancele o agendamento para liberar o horário.'],
             ])
-            ->dica('Você será notificado quando o agendamento for feito ou cancelado.');
+            ->dica('Você será notificado quando o agendamento for feito ou cancelado. Se a tela avisar que não há ciclo de preceptoria para o período do aluno, procure a secretaria.');
     }
 }

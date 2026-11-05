@@ -17,6 +17,7 @@ use App\Notifications\Preceptorias\PreceptoriaAlteradaNotification;
 use App\Notifications\Preceptorias\PreceptoriaNotification;
 use App\Services\PreceptoriaAgendaService;
 use Carbon\Carbon;
+use Database\Factories\PeriodoLetivoFactory;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -401,7 +402,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $professor = Pessoa::factory()->create(['email' => 'professor@example.com']);
         $aluno = Pessoa::factory()->create(['email' => 'aluno@example.com']);
         $matricula = $this->matriculaDe($aluno, $professor);
-        $preceptoria = Preceptoria::factory()->create(['professor_id' => $professor->id, 'matricula_id' => null, 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
+        $preceptoria = Preceptoria::factory()->comCicloValido()->create(['professor_id' => $professor->id, 'matricula_id' => null, 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
 
         $resultado = $this->servico->atualizarParticipantes($preceptoria, $professor->id, $matricula->id);
 
@@ -442,7 +443,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $saiu = Pessoa::factory()->create(['email' => 'saiu@example.com']);
         $entrou = Pessoa::factory()->create(['email' => 'entrou@example.com']);
         $nova = $this->matriculaDe($entrou, $professor);
-        $preceptoria = Preceptoria::factory()->create([
+        $preceptoria = Preceptoria::factory()->comCicloValido()->create([
             'professor_id' => $professor->id,
             'matricula_id' => $this->matriculaDe($saiu, $professor)->id,
             'hora_inicio' => '10:00:00',
@@ -464,7 +465,8 @@ class PreceptoriaAgendaServiceTest extends TestCase
     {
         Notification::fake();
 
-        $ciclo = CicloPreceptoria::create(['nome' => 'Ciclo', 'data_inicio' => '2026-09-01', 'data_fim' => '2026-09-30']);
+        $periodoLetivoId = PeriodoLetivoFactory::idPadrao();
+        $ciclo = CicloPreceptoria::create(['nome' => 'Ciclo', 'data_inicio' => '2026-09-01', 'data_fim' => '2026-09-30', 'periodo_letivo_id' => $periodoLetivoId]);
         $professor = Pessoa::factory()->create();
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno Ocupado']);
         $matricula = $this->matriculaDe($aluno, $professor);
@@ -478,7 +480,7 @@ class PreceptoriaAgendaServiceTest extends TestCase
         $this->assertNull($livre->fresh()->matricula_id);
 
         // em outro ciclo não há essa trava
-        $outroCiclo = CicloPreceptoria::create(['nome' => 'Outro', 'data_inicio' => '2026-10-01', 'data_fim' => '2026-10-31']);
+        $outroCiclo = CicloPreceptoria::create(['nome' => 'Outro', 'data_inicio' => '2026-10-01', 'data_fim' => '2026-10-31', 'periodo_letivo_id' => $periodoLetivoId]);
         $deOutroCiclo = Preceptoria::factory()->create(['ciclo_preceptoria_id' => $outroCiclo->id, 'professor_id' => $professor->id, 'matricula_id' => null, 'data' => '2026-10-09', 'hora_inicio' => '10:00:00']);
 
         $this->assertTrue($this->servico->atualizarParticipantes($deOutroCiclo, $professor->id, $matricula->id)['ok']);
@@ -683,13 +685,16 @@ class PreceptoriaAgendaServiceTest extends TestCase
 
         $this->assertEqualsCanonicalizing([$conselheiro->id, $designado->id], $this->servico->professoresDaMatricula($matricula->id)->pluck('id')->all());
 
+        // um ciclo do período da matrícula para cada horário: o aluno só entra uma vez por ciclo
+        $novoCiclo = fn (string $nome) => CicloPreceptoria::create(['nome' => $nome, 'data_inicio' => '2026-09-01', 'data_fim' => '2026-12-31', 'periodo_letivo_id' => PeriodoLetivoFactory::idPadrao()])->id;
+
         $datas = ['2026-09-10', '2026-09-11'];
         foreach ([$conselheiro, $designado] as $i => $professor) {
-            $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => $datas[$i], 'matricula_id' => null]);
+            $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => $datas[$i], 'matricula_id' => null, 'ciclo_preceptoria_id' => $novoCiclo("Ciclo {$i}")]);
             $this->assertTrue($this->servico->atualizarParticipantes($livre, $professor->id, $matricula->id, notificar: false)['ok']);
         }
 
-        $deEstranho = Preceptoria::factory()->create(['professor_id' => $estranho->id, 'data' => '2026-09-20', 'matricula_id' => null]);
+        $deEstranho = Preceptoria::factory()->create(['professor_id' => $estranho->id, 'data' => '2026-09-20', 'matricula_id' => null, 'ciclo_preceptoria_id' => $novoCiclo('Ciclo estranho')]);
         $resultado = $this->servico->atualizarParticipantes($deEstranho, $estranho->id, $matricula->id);
 
         $this->assertFalse($resultado['ok']);

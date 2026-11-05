@@ -108,7 +108,7 @@ class PreceptoriaHistoricoTest extends TestCase
         $aluno = Pessoa::factory()->create(['nome' => 'Aluno da Tela', 'email' => 'aluno@example.com']);
         $turma = Turma::factory()->create(['professor_conselheiro_id' => $professor->id]);
         $matricula = Matricula::factory()->create(['pessoa_id' => $aluno->id, 'turma_id' => $turma->id]);
-        $preceptoria = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => now()->addDays(3)->toDateString()]);
+        $preceptoria = Preceptoria::factory()->comCicloValido()->create(['professor_id' => $professor->id, 'data' => now()->addDays(3)->toDateString()]);
 
         Livewire::actingAs($user)
             ->test(AgendarPreceptoria::class)

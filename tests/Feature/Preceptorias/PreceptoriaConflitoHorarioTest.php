@@ -176,7 +176,7 @@ class PreceptoriaConflitoHorarioTest extends TestCase
         $matricula = Matricula::factory()->create(['pessoa_id' => Pessoa::factory()->create()->id, 'turma_id' => $turma->id]);
         // o aluno já está ocupado com outro professor nesse horário
         Preceptoria::factory()->create(['matricula_id' => $matricula->id, 'data' => now()->addDays(3)->toDateString(), 'hora_inicio' => '10:00:00', 'hora_fim' => '10:30:00']);
-        $livre = Preceptoria::factory()->create(['professor_id' => $professor->id, 'data' => now()->addDays(3)->toDateString(), 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
+        $livre = Preceptoria::factory()->comCicloValido()->create(['professor_id' => $professor->id, 'data' => now()->addDays(3)->toDateString(), 'hora_inicio' => '10:15:00', 'hora_fim' => '10:45:00']);
 
         Livewire::actingAs($user)
             ->test(AgendarPreceptoria::class)

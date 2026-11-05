@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Matricula;
 use App\Models\Preceptoria;
 use App\Models\User;
+use App\Services\PreceptoriaAgendaService;
 use App\Traits\HasCustomWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -62,7 +63,8 @@ class PreceptoriaSchedulingWidget extends BaseWidget
 
         // 1. Matrículas onde o usuário é o próprio aluno (Role: Aluno ou Super Admin)
         if (in_array($activeRole, ['aluno', 'super_admin'])) {
-            $matriculasProprias = Matricula::whereIn('pessoa_id', $pessoasIds)
+            $matriculasProprias = Matricula::with('pessoa')
+                ->whereIn('pessoa_id', $pessoasIds)
                 ->where('situacao', 'ativa')
                 ->get();
             $todasMatriculas = $todasMatriculas->concat($matriculasProprias);
@@ -70,9 +72,10 @@ class PreceptoriaSchedulingWidget extends BaseWidget
 
         // 2. Matrículas onde o usuário é responsável por um aluno (Role: Responsável ou Super Admin)
         if (in_array($activeRole, ['responsavel', 'super_admin'])) {
-            $matriculasDependentes = Matricula::whereHas('pessoa.responsaveis', function ($query) use ($pessoasIds) {
-                $query->whereIn('responsavel_id', $pessoasIds);
-            })
+            $matriculasDependentes = Matricula::with('pessoa')
+                ->whereHas('pessoa.responsaveis', function ($query) use ($pessoasIds) {
+                    $query->whereIn('responsavel_id', $pessoasIds);
+                })
                 ->where('situacao', 'ativa')
                 ->get();
             $todasMatriculas = $todasMatriculas->concat($matriculasDependentes);
@@ -105,8 +108,9 @@ class PreceptoriaSchedulingWidget extends BaseWidget
                     ->whereNotNull('ciclo_preceptoria_id')
                     ->select('ciclo_preceptoria_id');
 
-                // Verificar se existem horários disponíveis no sistema em um ciclo que o aluno AINDA NÃO agendou
-                $temJanelasDisponiveis = Preceptoria::whereNull('matricula_id')
+                // Verificar se existem horários que esta matrícula pode escolher (professor dela, ciclo válido do
+                // período letivo dela) em um ciclo que o aluno AINDA NÃO agendou
+                $temJanelasDisponiveis = app(PreceptoriaAgendaService::class)->horariosLivres($matricula->id)
                     ->where('data', '>=', now()->toDateString())
                     ->whereNotIn('ciclo_preceptoria_id', $ciclosAgendadosQuery)
                     ->exists();

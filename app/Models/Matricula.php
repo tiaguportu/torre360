@@ -11,6 +11,7 @@ use App\Notifications\DocumentosPendentesNotification;
 use App\Notifications\Preceptorias\PossibilidadePreceptoriaNotification;
 use App\Observers\MatriculaVagaObserver;
 use App\Services\DestinatariosDaFamilia;
+use App\Services\PreceptoriaAgendaService;
 use App\Support\PendenciasMatricula;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -260,14 +261,16 @@ class Matricula extends Model
     }
 
     /**
-     * Verifica se existem janelas de preceptoria disponíveis para agendamento.
+     * Verifica se existem janelas de preceptoria disponíveis para agendamento: horário livre, daqui em
+     * diante, num ciclo válido do período letivo desta matrícula.
      */
     public function hasAvailablePreceptoriaWindows(): bool
     {
-        return Preceptoria::query()
-            ->whereNull('matricula_id')
-            ->where('data', '>=', now()->toDateString())
-            ->exists();
+        return in_array(
+            (int) $this->periodo_letivo_id,
+            app(PreceptoriaAgendaService::class)->periodosComHorariosLivres(),
+            true,
+        );
     }
 
     public function tiposDocumentos(): BelongsToMany
