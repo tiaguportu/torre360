@@ -124,6 +124,7 @@ class ListInteressados extends ListRecords
                 ['👤', 'Interessado', 'Nome do responsável e, logo abaixo, o telefone. Clique no cabeçalho para ordenar por nome.'],
                 ['🏷️', 'Status / Consultor', 'Etapa atual do lead no funil (badge colorido) e, abaixo, o consultor responsável.'],
                 ['📊', 'Qualificação', 'O badge mostra o Score (0 a 100, calculado automaticamente: verde = alto, âmbar = médio, vermelho = baixo). Abaixo aparece a temperatura (Quente, Morno ou Frio), que é a percepção do consultor e também pesa no score.'],
+                ['🧭', 'Roteiro', 'Roteiro de qualificação: "Qualificado" quando a família já respondeu o que é preciso para marcar a visita (série, nascimento, turno, bairro, situação atual, motivo da busca, quem decide, se vai à visita e prazo), "Em qualificação" quando faltam campos e "Não iniciada" quando nada foi respondido. Os detalhes ficam na aba "Roteiro de qualificação" da ficha.'],
                 ['📆', 'Próximo contato', 'Data combinada para o próximo contato e quanto falta ou quanto está atrasado. Fica em vermelho, com ícone de alerta, quando está atrasado.'],
                 ['📍', 'Origem', 'De onde o lead veio (site, indicação, Instagram etc.).'],
                 ['🟥', 'Faixa vermelha na linha', 'Indica que o lead precisa de contato agora.'],
@@ -142,6 +143,7 @@ class ListInteressados extends ListRecords
                 ['🧑‍💼', 'Consultor', 'Mostra apenas os leads de um consultor.'],
                 ['⏰', 'Precisa de contato e Estagnado', 'Complementam as abas e podem ser combinados com elas.'],
                 ['🌡️', 'Temperatura', 'Quente, morno ou frio.'],
+                ['🧭', 'Roteiro de qualificação', 'Não iniciada, em qualificação ou qualificada para a visita.'],
             ])
             ->secao('📦 Ações em lote (selecione várias linhas)', [
                 $canUpdate ? ['✏️', 'Editar em lote', 'Altere em conjunto Status, Consultor, Temperatura, Origem, Campanha, Próximo Contato, Distância ou Transporte dos leads selecionados. Campos em branco permanecem inalterados.'] : null,

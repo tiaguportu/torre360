@@ -4,8 +4,10 @@ namespace App\Filament\Resources\Interessados\Schemas;
 
 use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Filament\Resources\Pessoas\Schemas\PessoaForm;
+use App\Models\Concorrente;
 use App\Models\Interessado;
 use App\Models\InteressadoDependente;
+use App\Models\InteressadoQualificacao;
 use App\Models\Pessoa;
 use App\Models\StatusInteressado;
 use App\Models\User;
@@ -13,11 +15,13 @@ use App\Notifications\AcompanhamentoInteressadoNotification;
 use App\Services\ConsultorWhatsappService;
 use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadScoreService;
+use App\Services\Qualificacao\QualificacaoService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification as FilamentNotification;
@@ -372,6 +376,71 @@ class InteressadoForm
                                     ->extraAttributes(['class' => 'crm-secao-compacta']),
                             ])->columns(2),
 
+                        // Roteiro de qualificação (SDR): o que a família já disse e o que falta perguntar. Só na edição.
+                        Tab::make('Roteiro de qualificação')
+                            ->icon('heroicon-o-clipboard-document-list')
+                            ->visible(fn (?Interessado $record): bool => (bool) $record?->exists)
+                            ->schema([
+                                View::make('filament.resources.interessados.roteiro-qualificacao')
+                                    ->viewData(fn (?Interessado $record): array => [
+                                        'painel' => $record?->exists ? app(QualificacaoService::class)->painel($record) : null,
+                                    ])
+                                    ->columnSpanFull(),
+
+                                Section::make('O que a família disse')
+                                    ->icon('heroicon-o-chat-bubble-left-right')
+                                    ->description('Série, nascimento, turno e escola atual de cada aluno ficam na aba Dependentes.')
+                                    ->relationship('qualificacao')
+                                    ->schema([
+                                        TextInput::make('bairro')
+                                            ->label('Bairro')
+                                            ->maxLength(120)
+                                            ->helperText(self::estadoDoCampo('bairro')),
+
+                                        Select::make('motivo_busca')
+                                            ->label('Motivo da busca')
+                                            ->options(InteressadoQualificacao::MOTIVOS_BUSCA)
+                                            ->native(false)
+                                            ->helperText(self::estadoDoCampo('motivo_busca')),
+
+                                        Select::make('decisor_tipo')
+                                            ->label('Quem decide')
+                                            ->options(InteressadoQualificacao::DECISOR_TIPOS)
+                                            ->native(false)
+                                            ->helperText(self::estadoDoCampo('decisor_tipo')),
+
+                                        Select::make('decisor_vai_visita')
+                                            ->label('Quem decide vai à visita?')
+                                            ->options(InteressadoQualificacao::DECISOR_VAI_VISITA)
+                                            ->native(false)
+                                            ->helperText(self::estadoDoCampo('decisor_vai_visita')),
+
+                                        Select::make('prazo_decisao')
+                                            ->label('Prazo de decisão')
+                                            ->options(InteressadoQualificacao::PRAZOS_DECISAO)
+                                            ->native(false)
+                                            ->helperText(self::estadoDoCampo('prazo_decisao')),
+
+                                        Select::make('faixa_mensalidade')
+                                            ->label('Faixa de mensalidade')
+                                            ->options(InteressadoQualificacao::faixasMensalidade())
+                                            ->native(false)
+                                            ->visible(fn (): bool => InteressadoQualificacao::faixasMensalidade() !== [])
+                                            ->helperText(fn ($livewire): ?string => self::estadoDoCampo('faixa_mensalidade')($livewire)
+                                                ?? 'Pergunte por último, e só se a família abrir o assunto.'),
+
+                                        TagsInput::make('escolas_em_comparacao')
+                                            ->label('Escolas em comparação')
+                                            ->placeholder('Digite o nome e tecle Enter')
+                                            ->suggestions(fn (): array => Concorrente::query()->where('is_ativo', true)->orderBy('nome')->pluck('nome')->all())
+                                            ->columnSpanFull()
+                                            ->helperText(self::estadoDoCampo('escolas_em_comparacao')),
+                                    ])
+                                    ->columns(2)
+                                    ->columnSpanFull()
+                                    ->extraAttributes(['class' => 'crm-secao-compacta']),
+                            ]),
+
                         Tab::make('Dependentes')
                             ->schema([
                                 Repeater::make('dependentes')
@@ -394,6 +463,22 @@ class InteressadoForm
                                         DatePicker::make('data_nascimento')
                                             ->label('Data de Nascimento')
                                             ->native(false),
+                                        // Roteiro de qualificação: onde o aluno estuda hoje.
+                                        Select::make('situacao_atual')
+                                            ->label('Situação atual')
+                                            ->options(InteressadoDependente::SITUACOES_ATUAIS)
+                                            ->native(false)
+                                            ->live(),
+                                        TextInput::make('escola_atual')
+                                            ->label('Escola atual')
+                                            ->maxLength(120)
+                                            ->visible(fn (Get $get): bool => $get('situacao_atual') === 'em_outra_escola'),
+                                        Select::make('escola_atual_concorrente_id')
+                                            ->label('Escola atual (concorrente cadastrado)')
+                                            ->options(fn (): array => Concorrente::query()->where('is_ativo', true)->orderBy('nome')->pluck('nome', 'id')->all())
+                                            ->searchable()
+                                            ->native(false)
+                                            ->visible(fn (Get $get): bool => $get('situacao_atual') === 'em_outra_escola'),
                                         Select::make('vinculo')
                                             ->label('Vínculo')
                                             ->options([
@@ -413,6 +498,19 @@ class InteressadoForm
                     ->extraAttributes(['class' => 'crm-abas-compactas'])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * Texto de apoio de um campo do roteiro de qualificação: de onde veio a resposta (ou "já perguntado", "preferiu não
+     * informar"). O campo mora numa seção ligada à relação `qualificacao`, então o lead vem da página, não do `$record`.
+     */
+    private static function estadoDoCampo(string $chave): \Closure
+    {
+        return function ($livewire) use ($chave): ?string {
+            $lead = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
+
+            return $lead instanceof Interessado ? app(QualificacaoService::class)->textoDeEstado($lead, $chave) : null;
+        };
     }
 
     /**

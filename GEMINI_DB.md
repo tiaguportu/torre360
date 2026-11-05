@@ -478,6 +478,7 @@ Estrutura de ensino e turmas.
 - **Representa:** Os potenciais alunos vinculados a um interessado principal.
 - **Campos Principais:** `interessado_id`, `nome_crianca`, `serie_id` (nullable), `unidade_id` (FK `unidade`, nullable — unidade de preferência), `turno_preferencia` (string nullable: Manhã, Tarde, Integral, Sem preferência), `vinculo` (Pai, Mãe, Parente, Tutor), `data_nascimento` (cast `date`).
 - **Reenvio do formulário:** o dependente é reconhecido pelo nome normalizado (`InteressadoDependente::nomeNormalizado()`) e só recebe campos vazios; nenhum dependente é apagado.
+- **Roteiro de qualificação:** colunas `situacao_atual`, `escola_atual`, `escola_atual_concorrente_id` e `qualificacao_meta` (ver a seção 57).
 
 ### `historico_contato`
 - **Representa:** Registro de cada interação com o interessado (ligação, visita, etc).
@@ -2200,3 +2201,18 @@ Parâmetro em `config/propostas.php` (`PROPOSTAS_RENOVACAO_DIAS`).
 - `token_agendamento` (único, oculto): os links de trocar e cancelar. `origem` (`interna` ou `online`), `unidade_id` (FK `unidade`, nullOnDelete) e `lembrete_familia_enviado_em`.
 
 **Permissões** (migration `2026_11_02_150000`): `ViewAny`, `View`, `Create`, `Update` e `Delete:DisponibilidadeVisita`. Parâmetros em `config/visitas.php`.
+
+## 57. Roteiro de qualificação do lead (SDR, Lote 1)
+
+Migration `2026_11_05_130000_create_interessado_qualificacao` (idempotente). Regras e telas em `docs/crm_qualificacao_sdr.md`.
+
+### `interessado_qualificacao`
+- **Representa:** o que a família disse ao lead (quem decide, motivo, prazo, bairro, mensalidade) mais a procedência de cada resposta. Uma linha por lead, criada só quando algo é respondido, perguntado ou recusado.
+- **Campos:** `interessado_id` (FK `interessado`, **único**, `cascadeOnDelete`), `decisor_tipo` (sozinho, com_conjuge, outro_familiar, empresa_convenio), `decisor_vai_visita` (sim, nao, a_definir), `motivo_busca` (primeira_escola, insatisfacao_pedagogica, insatisfacao_atendimento, preco_escola_atual, mudanca, horario_jornada, seguranca_estrutura, serie_seguinte_indisponivel, indicacao, outro), `prazo_decisao` (esta_semana, este_mes, antes_do_inicio_das_aulas, sem_prazo), `bairro` (texto, 120), `escolas_em_comparacao` (json: lista de nomes), `faixa_mensalidade` (chave de `crm.qualificacao.faixas_mensalidade`), `resultado` (nao_iniciada, em_qualificacao, qualificado; indexado; calculado pelo `QualificacaoService`), `qualificado_em`, `campos` (json por campo: `estado` perguntado/respondido/recusou, `fonte` formulario/consultor/ia_confirmada/importacao, `evidencia` até 500 caracteres, `atualizado_em`, `atualizado_por`).
+- **Modelo:** `InteressadoQualificacao` (trait `InvalidaDossieIaDoLead`). `resultado`, `qualificado_em` e `campos` ficam fora do `$fillable`; o gancho `saving` grava a procedência "consultor" para colunas editadas pela ficha. Relação `Interessado::qualificacao()` (HasOne).
+
+### `interessado_dependente` (colunas novas)
+- `situacao_atual` (primeira_escola, em_outra_escola, em_casa_ou_cuidador), `escola_atual` (120), `escola_atual_concorrente_id` (FK `crm_concorrentes`, nullOnDelete; **não** é o `interessado.concorrente_id`, que significa "escolheu esta escola" na perda) e `qualificacao_meta` (json, mesmo formato de `campos`; fora do `$fillable`).
+- Salvar ou excluir um aluno recalcula o resultado do roteiro do lead (`InteressadoDependente::booted()`, sem nunca bloquear o cadastro).
+
+**Comando:** `php artisan crm:reavaliar-qualificacao [--todos]`. **Fila da Mesa:** `leads_qualificacao_incompleta`. **Configuração:** `crm.qualificacao.*` e `crm.mesa.qualificacao_incompleta_dias`.

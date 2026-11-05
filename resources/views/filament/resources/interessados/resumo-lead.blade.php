@@ -12,6 +12,10 @@
         ['rotulo' => 'Total de contatos', 'valor' => $record->totalContatos(), 'sufixo' => 'contato(s)', 'icone' => 'heroicon-o-chat-bubble-left-right'],
         ['rotulo' => 'Sem interação há', 'valor' => $semInteracao, 'sufixo' => $semInteracao === 1 ? 'dia' : 'dias', 'icone' => 'heroicon-o-clock', 'alerta' => $estagnado],
     ];
+
+    // Roteiro de qualificação (SDR): quantos campos-chave para a visita a família já respondeu.
+    $roteiro = app(\App\Services\Qualificacao\QualificacaoService::class)->avaliar($record);
+    $metricas[] = ['rotulo' => 'Roteiro de qualificação', 'valor' => $roteiro['respondidos'].'/'.$roteiro['total'], 'sufixo' => $roteiro['gate_ok'] ? 'pronto p/ visita' : 'campos-chave', 'icone' => 'heroicon-o-clipboard-document-list'];
 @endphp
 
 {{--

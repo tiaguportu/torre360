@@ -5007,6 +5007,22 @@ Em `/ouvidoria` (sem login) a pessoa escolhe o assunto, conta o que aconteceu, i
 - **Trocar ou cancelar.** O horário antigo volta a ficar livre na hora. Cancelamento com menos de 4 horas chega ao consultor em destaque.
 - **Lembrete.** A régua de follow-up envia o lembrete de 1 dia antes (regra *Lembrete de Visita à Escola*). Se essa regra for desligada, as visitas marcadas online ainda recebem um lembrete direto.
 
+## 🧭 114. Roteiro de qualificação do lead (aba na ficha do lead)
+
+O roteiro organiza o que a escola precisa saber da família **antes de marcar a visita**, para o consultor chegar sabendo com quem vai falar. Ele não pontua nem decide nada sozinho: mostra o que já foi respondido e o que falta.
+
+- **Onde.** Na ficha do lead (CRM → Interessados → lápis), aba **Roteiro de qualificação**. Só aparece na edição, não no cadastro novo.
+- **O painel do topo** mostra o resultado (**Não iniciada**, **Em qualificação** ou **Qualificado para a visita**), a barra de progresso e o estado de cada campo: ✔ respondido, … já perguntado à família, ⊘ a família preferiu não informar, ○ ainda não perguntado. Os campos em destaque são os necessários para marcar a visita.
+- **O que preencher.** Na seção **O que a família disse**: bairro, motivo da busca, quem decide, se quem decide vai à visita, prazo de decisão, faixa de mensalidade e escolas em comparação. Cada campo mostra de onde veio a resposta (consultor, formulário, IA confirmada...). Na aba **Dependentes**, por aluno: série, data de nascimento, turno, **situação atual** (primeira escola, estuda em outra escola, em casa ou com cuidador) e, para quem estuda em outra escola, a **escola atual**.
+- **Pronto para a visita.** O lead fica "Qualificado" quando todos os campos em destaque foram respondidos (ou a família preferiu não informar). **A mensalidade nunca é exigida**: pergunte por último e só se a família abrir o assunto.
+- **Avisos.** O painel pode mostrar avisos para conferir: série sem vagas, idade abaixo da mínima da série na data de corte (31/03) ou mais de 10 km da escola. Eles não mudam o lead; se for o caso de encerrar, use *Perdido* com o motivo.
+- **Sugestão de etapa.** Se a administração informar em `CRM_ETAPA_QUALIFICADO` o nome de uma etapa do funil, o lead qualificado ganha o botão **Mover para "etapa"** no topo da ficha. O sistema nunca move o lead sozinho nem cria etapas.
+- **Na lista de leads.** Coluna **Roteiro** (pode ser ocultada pelo ícone de colunas) e filtro **Roteiro de qualificação**. No Resumo do Lead, o cartão mostra quantos campos-chave já foram respondidos.
+- **Minha Mesa.** A fila **Leads com qualificação incompleta** reúne os leads que já tiveram o primeiro contato e ainda não estão qualificados, citando o que falta. Fica atrasada depois de 3 dias.
+- **Privacidade.** O roteiro não guarda renda exata nem informações de saúde ou necessidades especiais da criança; esses assuntos seguem no processo de matrícula, com o consentimento da família.
+
+> Para o administrador: depois da atualização, rodar uma vez `php artisan crm:reavaliar-qualificacao` para calcular o resultado dos leads que já existiam. Detalhes em `docs/crm_qualificacao_sdr.md`.
+
 ---
 
 > **Torre360** — Gestão inteligente para instituições de ensino.

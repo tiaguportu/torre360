@@ -25,6 +25,7 @@ use App\Services\Pendencias\Fontes\ProjecaoDoProximoAno;
 use App\Services\Pendencias\Fontes\PropostasAguardandoAprovacao;
 use App\Services\Pendencias\Fontes\PropostasAVencer;
 use App\Services\Pendencias\Fontes\ProvidenciasRhVencidas;
+use App\Services\Pendencias\Fontes\QualificacaoIncompleta;
 use App\Services\Pendencias\Fontes\ReajustesDeContrato;
 use App\Services\Pendencias\Fontes\RecorrentesParaRevisar;
 use App\Services\Pendencias\Fontes\RematriculasAguardandoTurma;
@@ -60,6 +61,8 @@ return [
         LeadsSemProximaAcao::class,
         LeadsQuentesParados::class,
         LeadsSemConsultor::class,
+        // Roteiro de qualificação do lead (SDR): leads já contatados que ainda não estão prontos para a visita.
+        QualificacaoIncompleta::class,
         // Proposta comercial com aceite da família (Onda 87).
         PropostasAVencer::class,
         PropostasAguardandoAprovacao::class,

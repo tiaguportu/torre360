@@ -172,6 +172,12 @@ class Interessado extends Model
         return $this->hasMany(InteressadoDependente::class);
     }
 
+    /** Roteiro de qualificação (SDR): o que a família disse sobre quem decide, motivo, prazo, bairro e mensalidade. */
+    public function qualificacao(): HasOne
+    {
+        return $this->hasOne(InteressadoQualificacao::class);
+    }
+
     public function historicos(): HasMany
     {
         return $this->hasMany(HistoricoContato::class);

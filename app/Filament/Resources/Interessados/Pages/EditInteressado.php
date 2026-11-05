@@ -10,10 +10,14 @@ use App\Filament\Resources\Interessados\InteressadoResource;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
 use App\Models\Pessoa;
+use App\Models\StatusInteressado;
 use App\Models\TipoContatoInteressado;
 use App\Services\LeadDuplicadoDetectorService;
+use App\Services\LeadFunilService;
 use App\Services\LeadMesclagemService;
 use App\Services\LeadScoreService;
+use App\Services\Qualificacao\QualificacaoService;
+use DomainException;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -73,11 +77,52 @@ class EditInteressado extends EditRecord
     protected function afterSave(): void
     {
         LeadScoreService::recalcular($this->record);
+
+        // Roteiro de qualificação (SDR): a aba e os alunos acabaram de ser salvos; recalcula o resultado do lead.
+        app(QualificacaoService::class)->reavaliar($this->record);
+    }
+
+    /**
+     * Etapa do funil que o roteiro de qualificação sugere para este lead (só quando ele está qualificado e a escola
+     * configurou `crm.qualificacao.etapa_qualificado`).
+     */
+    private function etapaSugerida(): ?StatusInteressado
+    {
+        return app(QualificacaoService::class)->sugerirEtapa($this->record);
     }
 
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('moverParaEtapaQualificada')
+                ->label(fn (): string => 'Mover para "'.($this->etapaSugerida()?->nome ?? '').'"')
+                ->icon('heroicon-o-arrow-trending-up')
+                ->color('success')
+                ->visible(fn (): bool => $this->etapaSugerida() !== null && (auth()->user()?->can('Update:Interessado') ?? false))
+                ->requiresConfirmation()
+                ->modalHeading('Mover o lead para a etapa sugerida?')
+                ->modalDescription(fn (): string => 'O roteiro de qualificação está completo. O lead passará para a etapa "'.($this->etapaSugerida()?->nome ?? '').'" do funil.')
+                ->action(function (): void {
+                    $etapa = $this->etapaSugerida();
+
+                    if ($etapa === null || ! auth()->user()?->can('Update:Interessado')) {
+                        return;
+                    }
+
+                    try {
+                        app(LeadFunilService::class)->moverParaEtapaAtiva($this->record, $etapa, auth()->id());
+                    } catch (DomainException $e) {
+                        Notification::make()->title('Não foi possível mover o lead')->body($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+
+                    $this->record->refresh();
+                    $this->fillForm();
+
+                    Notification::make()->title('Lead movido para "'.$etapa->nome.'".')->success()->send();
+                }),
+
             Action::make('assumirLead')
                 ->label('Assumir Lead')
                 ->icon('heroicon-o-hand-raised')

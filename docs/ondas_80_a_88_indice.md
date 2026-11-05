@@ -98,3 +98,10 @@ revisar, apuração e exportação contábil) foi sugerida na análise anterior 
 
 A análise de 2026-10-30 (funções entregues pela metade, menu com grupos duplicados, custo fixo de cada onda e a recomendação de pausar as
 funções grandes até fechar as Ondas 89 e 90) está em [estabilizacao_antes_de_novas_funcionalidades.md](estabilizacao_antes_de_novas_funcionalidades.md).
+
+## Qualificação do lead (SDR com IA)
+
+O **roteiro de qualificação** (quem decide, motivo, prazo, bairro, situação e escola atual, mensalidade) é o alicerce de um SDR com IA e
+**precede** as Ondas 85 e 88: o agente só consegue perguntar e passar o lead ao consultor com contexto se o que a família responde virar
+dado. O Lote 1 (campos, aba da ficha, fila na Minha Mesa) está implementado e documentado em [crm_qualificacao_sdr.md](crm_qualificacao_sdr.md), que
+também traz o plano das fases seguintes (Copiloto "Conhecer a família", extração na Síntese de Conversa, distribuição, WhatsApp e agente).

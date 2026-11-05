@@ -87,6 +87,33 @@ return [
 
         // Lead quente sem interação humana há N dias entra na fila (o dobro disso é "atrasado").
         'quente_parado_dias' => (int) env('CRM_MESA_QUENTE_PARADO_DIAS', 3),
+
+        // Lead já contatado cujo roteiro de qualificação segue incompleto há mais de N dias passa a "atrasado".
+        'qualificacao_incompleta_dias' => (int) env('CRM_MESA_QUALIFICACAO_INCOMPLETA_DIAS', 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roteiro de qualificação do lead (SDR)
+    |--------------------------------------------------------------------------
+    | Ver docs/crm_qualificacao_sdr.md e App\Support\Qualificacao\Roteiro.
+    */
+    'qualificacao' => [
+        // Nome (como cadastrado em Etapas do Funil) da etapa que o lead qualificado poderia ocupar. Vazio = sem sugestão.
+        // O sistema nunca cria a etapa nem move o lead sozinho: só sugere.
+        'etapa_qualificado' => env('CRM_ETAPA_QUALIFICADO'),
+
+        // Quantas perguntas do roteiro entram numa mesma mensagem (WhatsApp com questionário parece interrogatório).
+        'max_perguntas_por_mensagem' => (int) env('CRM_QUALIFICACAO_MAX_PERGUNTAS', 2),
+
+        // Faixas de mensalidade oferecidas no roteiro (chave => rótulo). Ajuste à tabela de preços da escola; a lista
+        // vazia esconde o campo.
+        'faixas_mensalidade' => [
+            'ate_1000' => 'Até R$ 1.000',
+            'de_1000_a_1500' => 'De R$ 1.000 a R$ 1.500',
+            'de_1500_a_2500' => 'De R$ 1.500 a R$ 2.500',
+            'acima_de_2500' => 'Acima de R$ 2.500',
+        ],
     ],
 
     /*

@@ -18,6 +18,7 @@ use App\Models\ComunicacaoEmMassa;
 use App\Models\Concorrente;
 use App\Models\HistoricoContato;
 use App\Models\Interessado;
+use App\Models\InteressadoQualificacao;
 use App\Models\MensagemWhatsappTemplate;
 use App\Models\OrigemInteressado;
 use App\Models\StatusInteressado;
@@ -82,7 +83,7 @@ class InteressadosTable
         return $table
             // Eager loading do render: a ação "Enviar ao consultor" monta a mensagem de cada linha
             // e `precisaDeContato()` (destaque da linha) consulta o último histórico.
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico', 'visitas.pesquisa', 'visitas.usuario']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([...ConsultorWhatsappService::RELACOES, 'ultimoHistorico', 'visitas.pesquisa', 'visitas.usuario', 'qualificacao']))
             ->defaultSort('data_proximo_contato', 'asc')
             ->striped()
             // O termo chega inteiro à busca: dividido por espaço, "(31) 98888" viraria "(31)" + "98888", e o pedaço
@@ -125,6 +126,18 @@ class InteressadosTable
                     })
                     ->sortable()
                     ->tooltip('Score: indicador automático 0-100. Abaixo, a temperatura definida pelo consultor.'),
+                TextColumn::make('qualificacao.resultado')
+                    ->label('Roteiro')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => InteressadoQualificacao::RESULTADOS[$state ?? InteressadoQualificacao::RESULTADO_NAO_INICIADA] ?? 'Não iniciada')
+                    ->color(fn (?string $state): string => match ($state) {
+                        InteressadoQualificacao::RESULTADO_QUALIFICADO => 'success',
+                        InteressadoQualificacao::RESULTADO_EM_QUALIFICACAO => 'warning',
+                        default => 'gray',
+                    })
+                    ->placeholder('Não iniciada')
+                    ->tooltip('Roteiro de qualificação: o que a família já disse (quem decide, prazo, motivo, bairro...). "Qualificado" = pronto para marcar a visita.')
+                    ->toggleable(),
                 TextColumn::make('data_proximo_contato')
                     ->label('Próximo contato')
                     ->dateTime('d/m/Y H:i')
@@ -371,6 +384,25 @@ class InteressadosTable
                         'morno' => '🟡 Morno',
                         'frio' => '🔵 Frio',
                     ]),
+                SelectFilter::make('roteiro_qualificacao')
+                    ->label('Roteiro de qualificação')
+                    ->options(InteressadoQualificacao::RESULTADOS)
+                    ->query(function (Builder $query, array $data): Builder {
+                        $valor = $data['value'] ?? null;
+
+                        if (blank($valor)) {
+                            return $query;
+                        }
+
+                        // Lead sem linha de qualificação ainda não começou o roteiro.
+                        if ($valor === InteressadoQualificacao::RESULTADO_NAO_INICIADA) {
+                            return $query->where(fn (Builder $q) => $q
+                                ->whereDoesntHave('qualificacao')
+                                ->orWhereHas('qualificacao', fn (Builder $r) => $r->where('resultado', InteressadoQualificacao::RESULTADO_NAO_INICIADA)));
+                        }
+
+                        return $query->whereHas('qualificacao', fn (Builder $q) => $q->where('resultado', $valor));
+                    }),
                 TernaryFilter::make('estagnado')
                     ->label('Estagnado (7+ dias sem interação)')
                     ->queries(

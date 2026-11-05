@@ -868,3 +868,9 @@ O Lote D9 integra o CRM à vida acadêmica dos alunos matriculados, transformand
 ### 20.4 Limitação Operacional Conhecida: Famílias sem Lead Cadastrado
 - Famílias de alunos matriculados que ingressaram por vias históricas sem passagem pelo CRM (portanto, sem registro correspondente na tabela `interessado`) **não têm lead gerado automaticamente pelo gatilho de evasão**.
 - Essa diretriz protege o funil comercial contra poluição de dados e respeita o ciclo de consentimento LGPD. O acompanhamento dessas famílias ocorre diretamente pelas ferramentas acadêmicas da coordenação (`RetencaoTarefaResource`) ou mediante cadastro assistido no módulo de rematrícula.
+
+## 21. Roteiro de qualificação do lead (SDR com IA)
+
+O lead ganhou um **roteiro de qualificação estruturado** (quem decide, motivo da busca, prazo, bairro, situação e escola atual do aluno, mensalidade), com o estado e a procedência de cada resposta, o resultado "não iniciada / em qualificação / qualificado para a visita", uma aba na ficha, coluna e filtro na lista e a fila *Leads com qualificação incompleta* na Minha Mesa. É o alicerce para o Copiloto IA perguntar o que falta e para a Síntese de Conversa preencher os campos. Documentação completa, regras, limites e as próximas fases em [crm_qualificacao_sdr.md](crm_qualificacao_sdr.md).
+
+Pontos que tocam este documento: a seção **Qualificação** da ficha (distância, transporte e valor estimado, que entram no Lead Score) **não mudou**; o roteiro é um indicador à parte, na aba **Roteiro de qualificação**. Registros `automatico = true` continuam não contando como interação (seção 4); uma conversa conduzida pela IA com a família exigirá um tipo próprio (ver a Fase 5 do documento novo).
