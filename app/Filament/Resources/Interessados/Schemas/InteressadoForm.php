@@ -16,6 +16,7 @@ use App\Services\ConsultorWhatsappService;
 use App\Services\LeadDuplicadoDetectorService;
 use App\Services\LeadScoreService;
 use App\Services\Qualificacao\QualificacaoService;
+use App\Support\Qualificacao\Roteiro;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -395,37 +396,42 @@ class InteressadoForm
                                         TextInput::make('bairro')
                                             ->label('Bairro')
                                             ->maxLength(120)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('bairro'))
                                             ->helperText(self::estadoDoCampo('bairro')),
 
                                         Select::make('motivo_busca')
                                             ->label('Motivo da busca')
                                             ->options(InteressadoQualificacao::MOTIVOS_BUSCA)
                                             ->native(false)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('motivo_busca'))
                                             ->helperText(self::estadoDoCampo('motivo_busca')),
 
                                         Select::make('decisor_tipo')
                                             ->label('Quem decide')
                                             ->options(InteressadoQualificacao::DECISOR_TIPOS)
                                             ->native(false)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('decisor_tipo'))
                                             ->helperText(self::estadoDoCampo('decisor_tipo')),
 
                                         Select::make('decisor_vai_visita')
                                             ->label('Quem decide vai à visita?')
                                             ->options(InteressadoQualificacao::DECISOR_VAI_VISITA)
                                             ->native(false)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('decisor_vai_visita'))
                                             ->helperText(self::estadoDoCampo('decisor_vai_visita')),
 
                                         Select::make('prazo_decisao')
                                             ->label('Prazo de decisão')
                                             ->options(InteressadoQualificacao::PRAZOS_DECISAO)
                                             ->native(false)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('prazo_decisao'))
                                             ->helperText(self::estadoDoCampo('prazo_decisao')),
 
                                         Select::make('faixa_mensalidade')
                                             ->label('Faixa de mensalidade')
                                             ->options(InteressadoQualificacao::faixasMensalidade())
                                             ->native(false)
-                                            ->visible(fn (): bool => InteressadoQualificacao::faixasMensalidade() !== [])
+                                            ->visible(fn (): bool => InteressadoQualificacao::faixasMensalidade() !== [] && Roteiro::estaAtivo('faixa_mensalidade'))
                                             ->helperText(fn ($livewire): ?string => self::estadoDoCampo('faixa_mensalidade')($livewire)
                                                 ?? 'Pergunte por último, e só se a família abrir o assunto.'),
 
@@ -434,6 +440,7 @@ class InteressadoForm
                                             ->placeholder('Digite o nome e tecle Enter')
                                             ->suggestions(fn (): array => Concorrente::query()->where('is_ativo', true)->orderBy('nome')->pluck('nome')->all())
                                             ->columnSpanFull()
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('escolas_em_comparacao'))
                                             ->helperText(self::estadoDoCampo('escolas_em_comparacao')),
                                     ])
                                     ->columns(2)
@@ -468,17 +475,18 @@ class InteressadoForm
                                             ->label('Situação atual')
                                             ->options(InteressadoDependente::SITUACOES_ATUAIS)
                                             ->native(false)
+                                            ->visible(fn (): bool => Roteiro::estaAtivo('situacao_atual'))
                                             ->live(),
                                         TextInput::make('escola_atual')
                                             ->label('Escola atual')
                                             ->maxLength(120)
-                                            ->visible(fn (Get $get): bool => $get('situacao_atual') === 'em_outra_escola'),
+                                            ->visible(fn (Get $get): bool => Roteiro::estaAtivo('escola_atual') && $get('situacao_atual') === 'em_outra_escola'),
                                         Select::make('escola_atual_concorrente_id')
                                             ->label('Escola atual (concorrente cadastrado)')
                                             ->options(fn (): array => Concorrente::query()->where('is_ativo', true)->orderBy('nome')->pluck('nome', 'id')->all())
                                             ->searchable()
                                             ->native(false)
-                                            ->visible(fn (Get $get): bool => $get('situacao_atual') === 'em_outra_escola'),
+                                            ->visible(fn (Get $get): bool => Roteiro::estaAtivo('escola_atual') && $get('situacao_atual') === 'em_outra_escola'),
                                         Select::make('vinculo')
                                             ->label('Vínculo')
                                             ->options([

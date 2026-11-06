@@ -35,6 +35,7 @@ class ConfiguracaoCopilotoIa extends Page implements HasForms
         'quebra_objecao' => '🛡️ Superar Dúvidas / Objeções',
         'reativacao' => '🔄 Reativar Família Sumida',
         'fechamento' => '🎓 Fechamento de Matrícula',
+        'conhecer_familia' => '🔎 Conhecer a Família (perguntas de qualificação)',
     ];
 
     private const ROTULOS_TONS = [

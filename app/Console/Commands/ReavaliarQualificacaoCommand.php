@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Interessado;
 use App\Models\InteressadoQualificacao;
 use App\Services\Qualificacao\QualificacaoService;
 use Illuminate\Console\Command;
@@ -19,16 +18,7 @@ class ReavaliarQualificacaoCommand extends Command
 
     public function handle(QualificacaoService $servico): int
     {
-        $total = 0;
-
-        Interessado::query()
-            ->when(! $this->option('todos'), fn ($consulta) => $consulta->ativos())
-            ->chunkById(200, function ($leads) use ($servico, &$total): void {
-                foreach ($leads as $lead) {
-                    $servico->reavaliar($lead);
-                    $total++;
-                }
-            });
+        $total = $servico->reavaliarTodos((bool) $this->option('todos'));
 
         $porResultado = InteressadoQualificacao::query()
             ->selectRaw('resultado, COUNT(*) as total')

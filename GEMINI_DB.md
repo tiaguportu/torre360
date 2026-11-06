@@ -2216,3 +2216,10 @@ Migration `2026_11_05_130000_create_interessado_qualificacao` (idempotente). Reg
 - Salvar ou excluir um aluno recalcula o resultado do roteiro do lead (`InteressadoDependente::booted()`, sem nunca bloquear o cadastro).
 
 **Comando:** `php artisan crm:reavaliar-qualificacao [--todos]`. **Fila da Mesa:** `leads_qualificacao_incompleta`. **Configuração:** `crm.qualificacao.*` e `crm.mesa.qualificacao_incompleta_dias`.
+
+### `qualificacao_roteiro_configuracoes` (Lote 2: roteiro editável)
+- **Representa:** a personalização do roteiro de qualificação feita pela secretaria (CRM / Comercial → Roteiro de qualificação). Uma linha por salvamento; **vale a mais recente**; *Restaurar padrão* apaga todas. Migration `2026_11_05_140000` (idempotente).
+- **Campos:** `valores` (JSON: `{"campos": {"<chave>": {"pergunta": string até 300, "ordem": int, "gate": bool, "ativo": bool}}}`), `atualizado_por` (FK `users`, nullOnDelete), timestamps. Chave ausente, ou valor inválido, cai no padrão de `App\Support\Qualificacao\Roteiro::padroes()`; a mensalidade nunca vai para o `gate`; a lista de campos é fechada (chave desconhecida é ignorada).
+- **Modelo:** `QualificacaoRoteiroConfiguracao` (cache `qualificacao_roteiro_configuracao`, limpo ao salvar/apagar; `Roteiro::esquecer()` descarta a memória da requisição). Mudar o gate ou os campos ativos dispara `ReavaliarQualificacaoJob` (fila longa).
+- **Permissão** (migration `2026_11_05_140100`): `View:ConfiguracaoRoteiroQualificacao`, concedida a `super_admin` e `admin`.
+- O objetivo `conhecer_familia` do Copiloto fica em `config/copiloto_ia.php` (`objetivos`), sem tabela nova; "perguntado" mora em `interessado_qualificacao.campos` e `interessado_dependente.qualificacao_meta`.

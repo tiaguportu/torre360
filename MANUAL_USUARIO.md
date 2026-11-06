@@ -333,6 +333,7 @@ O CRM do Torre360 conta com ferramentas nativas de Inteligência Artificial Gene
      - *🛡️ Superar Dúvidas / Objeções (Metodologia, Preço, etc.)*
      - *🔄 Reativar Família Sumida (Follow-up carinhoso)*
      - *🎓 Fechamento de Matrícula (Garantia de vaga)*
+     - *🔎 Conhecer a Família (perguntas de qualificação)*: a IA reescreve, com naturalidade, as próximas **1 ou 2 perguntas** do roteiro de qualificação que ainda faltam neste lead (quem decide, prazo, motivo da busca, bairro...). Veja a seção 114.
    - **Tom de voz:** Escolha entre *Acolhedor & Educacional*, *Objetivo & Prático* ou *Inspirador & Entusiasta*.
    - **Instruções Extras:** Adicione instruções específicas se desejar (ex: "destacar o contraturno e bolsa especial até sexta").
    - **Ajuste fino do comportamento da IA:** Quem tem acesso pode mudar a "personalidade" do Copiloto sem depender da equipe de TI, em **CRM / Comercial → Modelos de WhatsApp → Comportamento do Copiloto IA** (veja o item 3 abaixo).
@@ -5020,6 +5021,24 @@ O roteiro organiza o que a escola precisa saber da família **antes de marcar a 
 - **Na lista de leads.** Coluna **Roteiro** (pode ser ocultada pelo ícone de colunas) e filtro **Roteiro de qualificação**. No Resumo do Lead, o cartão mostra quantos campos-chave já foram respondidos.
 - **Minha Mesa.** A fila **Leads com qualificação incompleta** reúne os leads que já tiveram o primeiro contato e ainda não estão qualificados, citando o que falta. Fica atrasada depois de 3 dias.
 - **Privacidade.** O roteiro não guarda renda exata nem informações de saúde ou necessidades especiais da criança; esses assuntos seguem no processo de matrícula, com o consentimento da família.
+
+### 114.1 Ajustar o roteiro (CRM / Comercial → Roteiro de qualificação)
+Quem tem acesso (administração) adapta o roteiro à conversa da escola, sem depender da TI:
+- **Ordem:** arraste os campos (ou use as setas) para a ordem em que a conversa deve percorrê-los.
+- **Pergunta sugerida:** o texto que o Copiloto IA reescreve com naturalidade. Escreva como a escola fala; evite valores, descontos e promessas.
+- **Necessário para marcar a visita:** marque os campos que o lead precisa ter respondido para ficar **Qualificado**. Precisa haver pelo menos um. A mensalidade nunca é exigida.
+- **Usar este campo no roteiro:** desligado, o campo some do painel, das perguntas e da ficha (o que já foi respondido continua guardado).
+- Ao salvar, a mudança vale na hora. Se mudou o que é necessário para a visita, os leads em andamento são reavaliados em segundo plano. **Restaurar padrão** volta à configuração original do sistema.
+- Os campos em si não mudam: renda exata e informações de saúde não fazem parte do roteiro.
+
+### 114.2 Objetivo "Conhecer a Família" no Copiloto WhatsApp IA
+1. Na ficha do lead, abra **Copiloto WhatsApp IA** e escolha o objetivo **🔎 Conhecer a Família**.
+2. Clique em **Gerar mensagem com a IA**. A mensagem agradece, responde o que a família perguntou e faz só as **próximas 1 ou 2 perguntas** que faltam, na ordem do roteiro (nunca a mensalidade, nunca o que a família já respondeu ou preferiu não informar).
+3. Revise e ajuste o texto e clique em **Abrir no WhatsApp**. Só nesse momento as perguntas ficam marcadas como **perguntadas** na aba do roteiro, e o histórico do lead cita quais foram.
+4. Quando a família responder, preencha a aba **Roteiro de qualificação** (ou os alunos, na aba Dependentes). Na próxima vez, o Copiloto pergunta a pergunta seguinte.
+5. Se o roteiro estiver completo, o Copiloto avisa e sugere o *Convite para Tour Pedagógico*, sem gastar uma consulta de IA.
+- Se a IA estiver fora do ar, a mensagem é uma saudação com as perguntas do roteiro (o aviso de texto padrão aparece, como nos outros objetivos).
+- Ao Gemini só vão as respostas de categoria fechada (quem decide, motivo, prazo...). Bairro, mensalidade e escolas em comparação não são enviados.
 
 > Para o administrador: depois da atualização, rodar uma vez `php artisan crm:reavaliar-qualificacao` para calcular o resultado dos leads que já existiam. Detalhes em `docs/crm_qualificacao_sdr.md`.
 

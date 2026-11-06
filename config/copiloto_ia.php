@@ -36,6 +36,7 @@ Sua função é redigir uma mensagem de WhatsApp sob medida para o responsável 
         'quebra_objecao' => 'Superação de receios ou dúvidas levantadas pela família (como preço, adaptação escolar, rotina, segurança ou metodologia), com argumentos empáticos e seguros.',
         'reativacao' => 'Reengajamento gentil de uma família que parou de responder há alguns dias, mostrando que a escola se lembra com carinho deles e verificando se ainda buscam vaga.',
         'fechamento' => 'Incentivo ao fechamento da matrícula, destacando a reserva da vaga para a série desejada e oferecendo auxílio para o preenchimento da pré-matrícula online.',
+        'conhecer_familia' => 'Conhecer melhor a família com naturalidade: agradecer o contato, responder o que ela perguntou e fazer apenas as próximas perguntas do roteiro de qualificação que ainda faltam (quem decide, prazo, motivo da busca, bairro...), sem parecer um questionário.',
     ],
 
     'tons' => [

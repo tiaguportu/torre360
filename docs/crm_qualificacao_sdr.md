@@ -1,9 +1,10 @@
-# Roteiro de qualificação do lead (SDR com IA): Lote 1
+# Roteiro de qualificação do lead (SDR com IA): Lotes 1 e 2
 
 Primeiro passo para um SDR comercial (responder rápido, qualificar, marcar a visita e passar ao consultor com contexto) com o
 Gemini. Antes dele o CRM era um **copiloto do consultor**: a IA gerava texto ou JSON quando alguém clicava, e o que a família
-respondia ficava em texto livre (`observacoes`), sem como filtrar, pontuar ou perguntar o que falta. Este lote entrega o
-**alicerce**: o roteiro de qualificação como dado estruturado. As etapas seguintes (Copiloto "Conhecer a família", extração na
+respondia ficava em texto livre (`observacoes`), sem como filtrar, pontuar ou perguntar o que falta. O **Lote 1** entregou o
+**alicerce**: o roteiro de qualificação como dado estruturado. O **Lote 2** (seção 11) torna o roteiro editável pela secretaria
+e leva a IA a perguntar o que falta: o objetivo **"Conhecer a família"** do Copiloto WhatsApp IA. As etapas seguintes (extração na
 Síntese de Conversa, distribuição, WhatsApp oficial e agente) estão na seção 9.
 
 | Peça | Onde |
@@ -16,6 +17,9 @@ Síntese de Conversa, distribuição, WhatsApp oficial e agente) estão na seç�
 | Fila da Minha Mesa | `App\Services\Pendencias\Fontes\QualificacaoIncompleta` |
 | Recalcular leads antigos | `php artisan crm:reavaliar-qualificacao` |
 | Configuração | `config/crm.php` (`qualificacao.*` e `mesa.qualificacao_incompleta_dias`) |
+| **Lote 2:** personalização do roteiro (pergunta, ordem, necessário para a visita, ativo) | `App\Models\QualificacaoRoteiroConfiguracao`, página `ConfiguracaoRoteiroQualificacao` |
+| **Lote 2:** objetivo "Conhecer a família" do Copiloto | `CrmIaVendasService` (`OBJETIVO_CONHECER_FAMILIA`), `CopilotoMensagemIaAction` |
+| **Lote 2:** recálculo em segundo plano | `App\Jobs\ReavaliarQualificacaoJob`, `QualificacaoService::reavaliarTodos()` |
 
 ## 1. O roteiro
 
@@ -153,14 +157,18 @@ primeiro contato a pendência é atender o lead, que as outras filas já mostram
 2. **Leads que já existiam**: rodar uma vez `php artisan crm:reavaliar-qualificacao` (só leads em andamento; `--todos` inclui os
    encerrados). Sem isso, o resultado só aparece quando alguém mexer no lead ou nos alunos.
 3. Opcional: definir `CRM_ETAPA_QUALIFICADO` e ajustar `crm.qualificacao.faixas_mensalidade`.
-4. Não há permissão nova: a aba e a fila usam as de *Interessado*.
+4. A aba e a fila usam as permissões de *Interessado*. **Lote 2:** a página *Roteiro de qualificação* usa a permissão nova
+   `View:ConfiguracaoRoteiroQualificacao`, que a migration `2026_11_05_140100` concede a `super_admin` e `admin` (outros papéis:
+   *Perfis de acesso*). A migration `2026_11_05_140000` cria a tabela da personalização (idempotente, reversível).
+5. **Lote 2:** o recálculo em segundo plano usa a fila longa (`database_longa`); sem worker nela, mudar o que é necessário para a
+   visita só reavalia os leads existentes quando alguém mexer neles (ou ao rodar `crm:reavaliar-qualificacao`).
 
 ## 8. Limites conhecidos
 
 - A **mesclagem de leads** (`LeadMesclagemService`) não transfere a linha de qualificação do lead de origem: ao excluir a origem,
   ela é apagada junto (cascata), e o lead de destino mantém a própria. Os alunos movidos entram no cálculo do destino.
-- A lista de opções (motivos, prazos, faixas) ainda não passou pela secretaria: são configuráveis em código/config, e a tela de
-  edição do roteiro (texto, ordem e obrigatoriedade das perguntas) é o Lote 2.
+- A lista de opções (motivos, prazos, faixas) ainda não passou pela secretaria: continuam em código/config. A secretaria já edita
+  o texto, a ordem e a obrigatoriedade das **perguntas** (Lote 2, seção 11), mas não as opções de resposta.
 - `escolas_em_comparacao` guarda nomes (com sugestão a partir dos concorrentes cadastrados), não ids.
 - A checagem de idade usa a premissa da seção 3 sobre `idade_minima`; é só um aviso.
 - O `bairro` é texto livre. O endereço da pessoa em produção é a pivot `endereco_pessoa` (a coluna `pessoa.endereco_id` só existe no
@@ -172,7 +180,7 @@ primeiro contato a pendência é atender o lead, que as outras filas já mostram
 | Fase | O quê | Situação |
 |---|---|---|
 | **1, Lote 1** | Campos, estados, aba da ficha, fila na Mesa (este documento) | **Entregue** |
-| 1, Lote 2 | Tela para a secretaria editar o texto, a ordem e a obrigatoriedade das perguntas; objetivo **"Conhecer a família"** no Copiloto IA (o PHP escolhe as 1–2 perguntas; a IA só reescreve; "perguntado" é marcado ao abrir o WhatsApp) | Planejado |
+| **1, Lote 2** | Tela para a secretaria editar o texto, a ordem e a obrigatoriedade das perguntas; objetivo **"Conhecer a família"** no Copiloto IA (o PHP escolhe as 1–2 perguntas; a IA só reescreve; "perguntado" é marcado ao abrir o WhatsApp) | **Entregue** (seção 11) |
 | 1, Lote 3 | A **Síntese IA de Conversa** passa a propor os valores dos campos, com o trecho que os justifica; o consultor revisa antes de gravar (nada sobrescreve; evidência conferida contra o texto colado) | Planejado |
 | 2 | Campos de segunda onda (critérios, dor, início desejado, bolsa...), tabela de bairros, 2 perguntas opcionais nos formulários públicos, calibragem do gate com `FunilAnaliticoService` | Planejado |
 | 3 | Entrada e distribuição de leads (Onda 85: rodízio, prazo de primeira resposta, webhook de anúncios) | Depende de autorização |
@@ -191,4 +199,57 @@ próprio, ou o lead mais bem atendido apareceria como parado.
 
 `QualificacaoServiceTest` (estados, gravação sem sobrescrever, gate, recusa, perguntas, alertas, corte etário, sugestão de
 etapa, painel), `QualificacaoFichaTest` (aba, salvar, painel, Resumo, ação de mover, filtro da lista, comando) e
-`QualificacaoMesaTest` (fila, atraso, carteira, Mesa).
+`QualificacaoMesaTest` (fila, atraso, carteira, Mesa). Lote 2: `QualificacaoRoteiroConfiguracaoTest` (personalização, página,
+job, ficha) e `CopilotoConhecerFamiliaTest` (prompt, regra fixa, contingência, fluxo do modal).
+
+## 11. Lote 2: roteiro editável e objetivo "Conhecer a família"
+
+### 11.1 A secretaria edita o roteiro (CRM / Comercial → Roteiro de qualificação)
+
+Página `ConfiguracaoRoteiroQualificacao` (permissão `View:ConfiguracaoRoteiroQualificacao`), no molde da *Comportamento do Copiloto
+IA*. Um item por campo, que se reordena arrastando (ou pelas setas):
+
+| Ajuste | Efeito |
+|---|---|
+| **Ordem** (posição do item) | Ordem em que o painel lista os campos e em que o Copiloto escolhe a próxima pergunta. Vira 10, 20, 30... ao salvar. |
+| **Pergunta sugerida** (até 300 caracteres) | O texto que o Copiloto reescreve com naturalidade; também é a mensagem de contingência quando a IA falha. |
+| **Necessário para marcar a visita** | Entra no *gate*. A **mensalidade nunca entra**, qualquer que seja o formulário. Precisa haver ao menos um campo ativo marcado. |
+| **Usar este campo no roteiro** | Desligado, o campo some do painel, das perguntas, do gate e da ficha (formulário do lead e dos alunos). A resposta já gravada fica no banco. |
+
+A **lista de campos continua fechada** e em código (sem renda exata nem dados de saúde). Campo desconhecido enviado pelo formulário é
+ignorado. Cada salvamento é uma linha em `qualificacao_roteiro_configuracoes` (a mais recente vale; *Restaurar padrão* apaga todas), com
+cache; `Roteiro::todos()` mescla os padrões do código com a personalização e guarda o resultado por requisição (`WeakMap` por
+aplicação, descartado em `Roteiro::esquecer()`). Valor ausente ou inválido cai no padrão do campo.
+
+**Reavaliação.** Mudar o que é necessário para a visita, ou quais campos estão ativos, muda o resultado dos leads existentes. A página
+compara o gate antes e depois de salvar (ou de restaurar) e, só se mudou, dispara `ReavaliarQualificacaoJob` (fila longa), que chama
+`QualificacaoService::reavaliarTodos()`. Mudar só o texto ou a ordem não reprocessa nada. Sem nenhum campo necessário, `avaliar()` não
+qualifica ninguém (`gate_ok` exige `total > 0`).
+
+### 11.2 Objetivo "Conhecer a família" no Copiloto WhatsApp IA
+
+Sexto objetivo do Copiloto (chave fixa `conhecer_familia`; a descrição é editável em *Comportamento do Copiloto IA*, como as outras).
+
+1. **O PHP escolhe, a IA reescreve.** `QualificacaoService::proximasPerguntas()` devolve as próximas 1 ou 2 perguntas (campos ativos,
+   na ordem configurada, quem nunca foi perguntado antes de quem já foi, sem os recusados, sem a mensalidade). O prompt leva o bloco
+   "Roteiro de qualificação da escola", **fora** das marcações de dado não confiável porque o texto é da própria escola, com o que já se
+   sabe e as perguntas desta mensagem.
+2. **Regra fixa em código** (não editável, como a proibição de links): fazer somente as perguntas listadas (no máximo
+   `crm.qualificacao.max_perguntas_por_mensagem`), sem numerar nem parecer questionário; responder primeiro o que a família perguntou; não
+   repetir o que já respondeu; nunca perguntar renda, salário, saúde, laudos ou necessidades especiais, nem pedir documentos; nunca citar
+   valores, descontos ou condições de pagamento.
+3. **Minimização de dados.** Ao Gemini vão só os **valores de categoria fechada** (quem decide, se vai à visita, motivo, prazo, situação
+   atual). Bairro, mensalidade e escolas em comparação seguem como "informado" (`QualificacaoService::resumoParaIa()`).
+4. **Sem IA, ainda funciona.** Se o Gemini falha, a mensagem é a saudação com as perguntas do roteiro (as que a secretaria redigiu) e
+   `contingencia = true`; o aviso de texto padrão aparece como nos outros objetivos.
+5. **Sem perguntas pendentes** não há chamada à IA nem consumo do limite por minuto: o modal avisa "Roteiro de qualificação completo" e
+   sugere o *Convite para Tour Pedagógico*.
+6. **"Perguntado" só ao abrir o WhatsApp.** Gerar a mensagem guarda as chaves no campo oculto `campos_perguntados`; ao clicar em
+   *Abrir no WhatsApp* (e só se o objetivo continua sendo "Conhecer a família"), `QualificacaoService::marcarPerguntado()` marca os
+   campos, independentemente de registrar a tentativa no histórico. As chaves vêm do navegador e só valem se o roteiro as conhece. O
+   histórico cita as perguntas (", perguntando: Série pretendida, Turno").
+7. O retorno de `redigirMensagemCopiloto()` só ganha `perguntas` (e `sem_perguntas`) neste objetivo; nos demais fica idêntico.
+
+**Limite conhecido.** A marcação diz "oferecida", não "enviada como escrita": se o consultor apagar a pergunta do texto antes de abrir o
+WhatsApp, o campo fica "perguntado" assim mesmo. A resposta da família ainda precisa voltar para os campos à mão; trazê-la
+automaticamente da conversa colada é o Lote 3.

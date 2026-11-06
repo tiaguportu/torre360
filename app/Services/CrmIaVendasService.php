@@ -13,6 +13,8 @@ use App\Models\Interessado;
 use App\Models\Unidade;
 use App\Models\User;
 use App\Models\VisitaInteressado;
+use App\Services\Qualificacao\QualificacaoService;
+use App\Support\Qualificacao\CampoQualificacao;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Support\Carbon;
@@ -28,6 +30,12 @@ class CrmIaVendasService
      * Limite padrão de requisições às IAs do CRM por usuário por minuto.
      */
     public const LIMITE_PADRAO_IA_POR_MINUTO = 10;
+
+    /**
+     * Objetivo do Copiloto que usa o roteiro de qualificação: a mensagem faz as próximas 1 ou 2 perguntas que faltam
+     * (escolhidas pelo PHP, ver QualificacaoService::proximasPerguntas) e a IA só as reescreve com naturalidade.
+     */
+    public const OBJETIVO_CONHECER_FAMILIA = 'conhecer_familia';
 
     /**
      * Retorna o nome da escola configurado explicitamente no sistema, ou null se não houver.
@@ -359,8 +367,11 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
      * para a mensagem responder ao que foi dito. Áudio inválido (formato sem suporte, arquivo ausente, tamanho acima do
      * teto) é erro de quem anexou, não falha da IA: a exceção sobe em vez de virar a mensagem de contingência.
      *
+     * No objetivo {@see self::OBJETIVO_CONHECER_FAMILIA} o retorno traz também `perguntas` (as chaves dos campos do roteiro
+     * que a mensagem pergunta) e, se não há mais nada a perguntar, `sem_perguntas = true` e nenhuma chamada à IA.
+     *
      * @param  array<int, array{caminho: string, mime?: ?string}>  $audios  Arquivos de áudio em disco.
-     * @return array{mensagem: string, contingencia: bool}
+     * @return array{mensagem: string, contingencia: bool, perguntas?: list<string>, sem_perguntas?: bool}
      *
      * @throws \InvalidArgumentException Quando um áudio não existe, tem formato sem suporte ou excede os limites.
      */
@@ -375,6 +386,15 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
     ): array {
         $partesAudio = $this->montarPartesAudio($audios);
         $temAudios = $partesAudio !== [];
+
+        // "Conhecer a família": o PHP escolhe as perguntas; sem nenhuma pendente não há o que pedir à IA.
+        $conhecerFamilia = $objetivo === self::OBJETIVO_CONHECER_FAMILIA;
+        $perguntas = $conhecerFamilia ? app(QualificacaoService::class)->proximasPerguntas($interessado) : [];
+        $chavesPerguntadas = array_map(fn (CampoQualificacao $campo): string => $campo->chave, $perguntas);
+
+        if ($conhecerFamilia && $perguntas === []) {
+            return ['mensagem' => '', 'contingencia' => false, 'perguntas' => [], 'sem_perguntas' => true];
+        }
 
         $contexto = $this->montarContextoLead($interessado);
 
@@ -395,6 +415,9 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         }
         if (filled($instrucoesExtras)) {
             $userPrompt .= "\nInstruções extras do consultor para este disparo: {$instrucoesExtras}\n";
+        }
+        if ($perguntas !== []) {
+            $userPrompt .= "\n".$this->blocoRoteiroParaIa($interessado, $perguntas)."\n";
         }
 
         // Com áudio, o pedido final vem depois das mídias: o modelo as ouve já com a tarefa em mente.
@@ -437,7 +460,7 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
                 throw new \RuntimeException('A IA devolveu uma mensagem vazia.');
             }
 
-            return ['mensagem' => $mensagem, 'contingencia' => false];
+            return ['mensagem' => $mensagem, 'contingencia' => false] + ($conhecerFamilia ? ['perguntas' => $chavesPerguntadas] : []);
         } catch (Throwable $e) {
             Log::warning('Falha ao gerar a mensagem do Copiloto IA; usando a mensagem de contingência.', [
                 'interessado_id' => $interessado->id,
@@ -446,6 +469,18 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
 
             $primeiroNome = explode(' ', trim((string) ($interessado->pessoa?->nome ?? '')))[0] ?: 'Família';
             $filho = $interessado->dependentes->first()?->nome_crianca ?? 'seu(sua) filho(a)';
+
+            // Sem a IA, "Conhecer a família" ainda funciona: a mensagem é a saudação com as perguntas do roteiro, que a
+            // secretaria já redigiu, e "perguntas" diz quais foram oferecidas (com um modelo de template elas se perderiam).
+            if ($conhecerFamilia) {
+                $textoDasPerguntas = implode(' ', array_map(fn (CampoQualificacao $campo): string => $campo->pergunta, $perguntas));
+
+                return [
+                    'contingencia' => true,
+                    'mensagem' => 'Olá, '.$primeiroNome.'! Tudo bem? Sou da equipe da '.self::nomeEscola().'. Para receber vocês da melhor forma, posso fazer '.(count($perguntas) === 1 ? 'uma pergunta rápida' : 'algumas perguntas rápidas').'? '.$textoDasPerguntas,
+                    'perguntas' => $chavesPerguntadas,
+                ];
+            }
 
             if (filled($templateBase)) {
                 $nomeResponsavel = $interessado->pessoa?->nome ?? 'Família';
@@ -541,6 +576,10 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         $regras[] = 'NÃO inclua links, URLs nem endereços de sites na mensagem.';
         $regras[] = 'Retorne APENAS o texto puro da mensagem que será copiado e colado no WhatsApp, sem aspas, sem introduções ou explicações.';
 
+        if ($objetivo === self::OBJETIVO_CONHECER_FAMILIA) {
+            $regras[] = $this->regraConhecerFamilia();
+        }
+
         if ($usaModeloBase) {
             $regras[] = 'A escola forneceu um MODELO INSTITUCIONAL DE REFERÊNCIA. Você DEVE utilizá-lo como base para o comunicado, adaptando-o e enriquecendo-o de forma humana, empática e fluida para este lead específico, mantendo os pontos institucionais principais mas eliminando qualquer frieza ou marcação genérica de template.';
         }
@@ -579,6 +618,46 @@ Retorne APENAS o JSON puro sem cercas markdown.'.self::REGRA_DADOS_NAO_CONFIAVEI
         }
 
         return $texto.self::REGRA_DADOS_NAO_CONFIAVEIS;
+    }
+
+    /**
+     * Regra fixa do objetivo "Conhecer a família" (não editável, como a proibição de links): é ela que mantém a conversa
+     * dentro do roteiro e longe de assuntos sensíveis, qualquer que seja a persona configurada.
+     */
+    private function regraConhecerFamilia(): string
+    {
+        $maximo = max(1, (int) config('crm.qualificacao.max_perguntas_por_mensagem', 2));
+
+        return 'Neste contato você quer conhecer melhor a família. Faça SOMENTE as perguntas listadas em "Roteiro de qualificação da escola" (no máximo '.$maximo.'), com naturalidade, sem numerá-las e sem parecer um questionário. '
+            .'Se a família fez uma pergunta ou comentário no histórico, responda a isso primeiro, em uma ou duas frases. '
+            .'Não repita o que a família já respondeu. Nunca pergunte renda, salário, saúde, laudos ou necessidades especiais da criança, nem peça documentos, e nunca cite valores, descontos ou condições de pagamento.';
+    }
+
+    /**
+     * O que o objetivo "Conhecer a família" mostra à IA do roteiro: o que já se sabe (só valores de categoria fechada, ver
+     * QualificacaoService::resumoParaIa), o que a família preferiu não informar e as perguntas desta mensagem. O texto das
+     * perguntas é da própria escola (a secretaria o edita), por isso fica fora das marcações de dado não confiável.
+     *
+     * @param  list<CampoQualificacao>  $perguntas
+     */
+    private function blocoRoteiroParaIa(Interessado $interessado, array $perguntas): string
+    {
+        $resumo = app(QualificacaoService::class)->resumoParaIa($interessado);
+
+        $linhas = ['Roteiro de qualificação da escola (texto interno da escola, não é dado da família):'];
+        $linhas[] = 'Já sabemos: '.($resumo['conhecido'] === [] ? 'nada do roteiro ainda' : implode('; ', $resumo['conhecido'])).'.';
+
+        if ($resumo['recusado'] !== []) {
+            $linhas[] = 'A família preferiu não informar: '.implode(', ', $resumo['recusado']).' (não volte a perguntar).';
+        }
+
+        $linhas[] = 'Perguntas desta mensagem (faça só estas, nesta ordem):';
+
+        foreach ($perguntas as $posicao => $campo) {
+            $linhas[] = ($posicao + 1).'. '.$campo->rotulo.': '.$campo->pergunta;
+        }
+
+        return implode("\n", $linhas);
     }
 
     /**

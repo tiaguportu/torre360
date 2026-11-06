@@ -162,7 +162,8 @@ final class QualificacaoService
             }
         }
 
-        $gateOk = $faltando === [];
+        // Sem nenhum campo necessário (a secretaria desligou todos), ninguém "se qualifica" sozinho: a configuração exige ao menos um.
+        $gateOk = $total > 0 && $faltando === [];
 
         return [
             'resultado' => match (true) {
@@ -435,7 +436,60 @@ final class QualificacaoService
         $lead->setRelation('qualificacao', $qualificacao);
     }
 
+    /**
+     * Recalcula o resultado de todos os leads em andamento (ou de todos, com `$comEncerrados`). Usado pelo comando
+     * `crm:reavaliar-qualificacao` e pelo job que roda quando a secretaria muda o que é necessário para a visita.
+     *
+     * @return int Quantos leads foram reavaliados.
+     */
+    public function reavaliarTodos(bool $comEncerrados = false): int
+    {
+        $total = 0;
+
+        Interessado::query()
+            ->when(! $comEncerrados, fn ($consulta) => $consulta->ativos())
+            ->chunkById(200, function ($leads) use (&$total): void {
+                foreach ($leads as $lead) {
+                    $this->reavaliar($lead);
+                    $total++;
+                }
+            });
+
+        return $total;
+    }
+
+    /**
+     * O que o Copiloto "Conhecer a família" pode saber do roteiro. Vão **só** os valores de campos de categoria fechada
+     * (quem decide, motivo, prazo, situação atual): bairro, mensalidade e escolas em comparação seguem apenas como
+     * "informado", porque a IA não precisa deles para escolher a próxima pergunta (minimização de dados, LGPD).
+     *
+     * @return array{conhecido: list<string>, recusado: list<string>}
+     */
+    public function resumoParaIa(Interessado $lead): array
+    {
+        $lead->loadMissing('dependentes.serie');
+        $estados = $this->estados($lead);
+        $conhecido = [];
+        $recusado = [];
+
+        foreach (Roteiro::campos() as $campo) {
+            $estado = $estados[$campo->chave]['estado'];
+
+            if ($estado === Roteiro::ESTADO_RECUSOU) {
+                $recusado[] = $campo->rotulo;
+            } elseif ($estado === Roteiro::ESTADO_RESPONDIDO) {
+                $valor = in_array($campo->chave, self::VALORES_QUE_VAO_PARA_A_IA, true) ? $this->valorLegivel($campo, $lead) : null;
+                $conhecido[] = $valor !== null ? "{$campo->rotulo}: {$valor}" : "{$campo->rotulo}: informado";
+            }
+        }
+
+        return ['conhecido' => $conhecido, 'recusado' => $recusado];
+    }
+
     // ─── Internos ───────────────────────────────────────────────
+
+    /** Campos de categoria fechada cujo valor pode seguir ao Gemini. */
+    private const VALORES_QUE_VAO_PARA_A_IA = ['decisor_tipo', 'decisor_vai_visita', 'motivo_busca', 'prazo_decisao', 'situacao_atual'];
 
     /**
      * @param  array{estado: string, fonte: ?string, evidencia: ?string, atualizado_em: ?string}  $estado

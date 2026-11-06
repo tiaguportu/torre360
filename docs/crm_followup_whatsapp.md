@@ -159,7 +159,8 @@ ajusta isso em dois níveis:
    `2026_10_07_210002_grant_configuracao_copiloto_ia_permissions`). Edita:
    - `persona` e `diretrizes` (lista numerada automaticamente);
    - `mencionar` / `evitar` (texto livre, uma ideia por linha);
-   - descrição dos 5 `objetivos` e dos 3 `tons` (as **chaves são fixas**, pois os
+   - descrição dos 6 `objetivos` (o sexto, `conhecer_familia`, faz as perguntas do roteiro de
+     qualificação: ver `docs/crm_qualificacao_sdr.md`, seção 11) e dos 3 `tons` (as **chaves são fixas**, pois os
      selects do Copiloto e o envio rápido dependem delas; só a descrição muda);
    - `gemini.temperature` (0 a 1) e `gemini.max_output_tokens` (200 a 2000).
 

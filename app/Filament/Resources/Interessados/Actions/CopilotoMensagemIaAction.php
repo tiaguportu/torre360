@@ -10,7 +10,9 @@ use App\Models\MensagemWhatsappTemplate;
 use App\Models\TipoContatoInteressado;
 use App\Services\ConsultorWhatsappService;
 use App\Services\CrmIaVendasService;
+use App\Services\Qualificacao\QualificacaoService;
 use App\Support\PermissaoAcao;
+use App\Support\Qualificacao\Roteiro;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -68,8 +70,13 @@ class CopilotoMensagemIaAction
                         'quebra_objecao' => '🛡️ Superar Dúvidas / Objeções (Metodologia, Preço, etc.)',
                         'reativacao' => '🔄 Reativar Família Sumida (Follow-up carinhoso)',
                         'fechamento' => '🎓 Fechamento de Matrícula (Garantia de vaga)',
+                        CrmIaVendasService::OBJETIVO_CONHECER_FAMILIA => '🔎 Conhecer a Família (perguntas de qualificação)',
                     ])
                     ->default('primeiro_contato')
+                    ->helperText(fn (Get $get): ?string => $get('objetivo') === CrmIaVendasService::OBJETIVO_CONHECER_FAMILIA
+                        ? 'A IA reescreve as próximas 1 ou 2 perguntas que faltam no roteiro de qualificação deste lead. Ao abrir o WhatsApp, elas ficam marcadas como "perguntadas".'
+                        : null)
+                    ->live()
                     ->required(),
 
                 Radio::make('tom')
@@ -122,6 +129,8 @@ class CopilotoMensagemIaAction
 
                 Hidden::make('mensagem_original'),
                 Hidden::make('mensagem_contingencia')->default(false),
+                // "Conhecer a família": chaves dos campos do roteiro que a mensagem gerada pergunta (viram "perguntado" ao abrir o WhatsApp).
+                Hidden::make('campos_perguntados')->default([]),
                 // Quantos áudios a IA de fato ouviu na última geração, para o histórico dizer em que a mensagem se baseou.
                 Hidden::make('audios_considerados')->default(0),
 
@@ -144,6 +153,14 @@ class CopilotoMensagemIaAction
 
                 $mensagem = trim((string) ($data['mensagem'] ?? ''));
 
+                // As perguntas só viram "perguntadas" quando o WhatsApp é aberto (e não quando a IA as redige), e só se o
+                // objetivo continua sendo o de conhecer a família: trocar de objetivo depois de gerar anula a marcação.
+                $camposPerguntados = self::camposPerguntados($data);
+
+                if ($camposPerguntados !== []) {
+                    app(QualificacaoService::class)->marcarPerguntado($record, $camposPerguntados, auth()->id());
+                }
+
                 if (! empty($data['registrar_historico'])) {
                     $template = filled($data['mensagem_whatsapp_template_id'] ?? null)
                         ? MensagemWhatsappTemplate::find($data['mensagem_whatsapp_template_id'])
@@ -161,6 +178,7 @@ class CopilotoMensagemIaAction
                             objetivo: (string) ($data['objetivo'] ?? ''),
                             nomeModelo: $template?->nome,
                             audios: max(0, min((int) ($data['audios_considerados'] ?? 0), CrmIaVendasService::MAX_AUDIOS_CONVERSA)),
+                            camposPerguntados: $camposPerguntados,
                         ),
                         'automatico' => true,
                     ]);
@@ -192,6 +210,16 @@ class CopilotoMensagemIaAction
             return;
         }
 
+        $objetivo = (string) ($get('objetivo') ?: 'primeiro_contato');
+
+        // "Conhecer a família" sem nada a perguntar: o roteiro está completo, então nem gasta uma chamada de IA.
+        if ($objetivo === CrmIaVendasService::OBJETIVO_CONHECER_FAMILIA && app(QualificacaoService::class)->proximasPerguntas($record) === []) {
+            $set('campos_perguntados', []);
+            self::avisarRoteiroCompleto();
+
+            return;
+        }
+
         $rateLimit = CrmIaVendasService::verificarIncrementarRateLimit();
 
         if (! $rateLimit['permitido']) {
@@ -213,7 +241,7 @@ class CopilotoMensagemIaAction
         try {
             $resultado = app(CrmIaVendasService::class)->redigirMensagemCopiloto(
                 interessado: $record,
-                objetivo: (string) ($get('objetivo') ?: 'primeiro_contato'),
+                objetivo: $objetivo,
                 tom: (string) ($get('tom') ?: 'acolhedor'),
                 instrucoesExtras: filled($get('instrucoes_extras')) ? (string) $get('instrucoes_extras') : null,
                 templateBase: $template?->conteudo,
@@ -232,9 +260,17 @@ class CopilotoMensagemIaAction
             return;
         }
 
+        if (! empty($resultado['sem_perguntas'])) {
+            $set('campos_perguntados', []);
+            self::avisarRoteiroCompleto();
+
+            return;
+        }
+
         $set('mensagem', $resultado['mensagem']);
         $set('mensagem_original', $resultado['mensagem']);
         $set('mensagem_contingencia', $resultado['contingencia']);
+        $set('campos_perguntados', $resultado['perguntas'] ?? []);
         $set('audios_considerados', $resultado['contingencia'] ? 0 : count($audios));
 
         if ($resultado['contingencia']) {
@@ -283,14 +319,48 @@ class CopilotoMensagemIaAction
             ->send();
     }
 
+    private static function avisarRoteiroCompleto(): void
+    {
+        Notification::make()
+            ->title('Roteiro de qualificação completo')
+            ->body('Não há mais perguntas pendentes para este lead. Que tal o objetivo "Convite para Tour Pedagógico"?')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * Campos do roteiro que a mensagem pergunta, a marcar como "perguntados" ao abrir o WhatsApp. Só vale se o objetivo
+     * escolhido é "Conhecer a família", e só entram chaves que o roteiro conhece (o campo oculto vem do navegador).
+     *
+     * @param  array<string, mixed>  $data
+     * @return list<string>
+     */
+    private static function camposPerguntados(array $data): array
+    {
+        if (($data['objetivo'] ?? null) !== CrmIaVendasService::OBJETIVO_CONHECER_FAMILIA) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(
+            (array) ($data['campos_perguntados'] ?? []),
+            fn (mixed $chave): bool => is_string($chave) && Roteiro::campo($chave) !== null,
+        )));
+    }
+
     /**
      * Texto do registro no histórico: diz de onde veio a mensagem (IA, IA ajustada pelo consultor, texto padrão
      * porque a IA falhou ou escrita à mão), para quem lê o histórico (e a própria IA, nas gerações seguintes) não
      * tomar um texto de contingência por uma mensagem personalizada.
+     *
+     * @param  list<string>  $camposPerguntados  Chaves dos campos do roteiro de qualificação que a mensagem pergunta.
      */
-    private static function relatoDoHistorico(string $mensagem, string $original, bool $contingencia, string $objetivo, ?string $nomeModelo, int $audios = 0): string
+    private static function relatoDoHistorico(string $mensagem, string $original, bool $contingencia, string $objetivo, ?string $nomeModelo, int $audios = 0, array $camposPerguntados = []): string
     {
-        $detalhe = "Objetivo: {$objetivo}".($nomeModelo ? " com base no modelo '{$nomeModelo}'" : '').($audios > 0 ? ", ouvindo {$audios} áudio(s) da família" : '');
+        $rotulos = array_map(fn (string $chave): string => Roteiro::campo($chave)?->rotulo ?? $chave, $camposPerguntados);
+        $detalhe = "Objetivo: {$objetivo}"
+            .($nomeModelo ? " com base no modelo '{$nomeModelo}'" : '')
+            .($audios > 0 ? ", ouvindo {$audios} áudio(s) da família" : '')
+            .($rotulos !== [] ? ', perguntando: '.implode(', ', $rotulos) : '');
 
         $ajustada = $mensagem !== $original;
 
